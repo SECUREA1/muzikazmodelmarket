@@ -470,3 +470,63 @@ background:url('trait_avatars_row_2.png') center/contain no-repeat}
 .safety-art{min-height:300px}
 .safety-copy h3{font-size:40px}
 }
+
+/* Restored original landing-page flow and wired storefront controls */
+.icon-button{
+  border:0;
+  background:transparent;
+  color:inherit;
+  padding:0;
+  font:inherit;
+}
+.icon-button:hover{
+  background:transparent;
+  color:var(--lime);
+}
+.status-message{
+  width:96%;
+  margin:18px auto 0;
+  color:var(--muted);
+  text-align:center;
+  text-transform:none;
+}
+.model-detail{
+  width:min(960px, 96%);
+  margin:18px auto 0;
+  display:grid;
+  grid-template-columns:300px 1fr;
+  gap:24px;
+  align-items:center;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:linear-gradient(145deg, rgba(10,14,8,.96), rgba(0,0,0,.9));
+  padding:22px;
+  box-shadow:0 0 30px rgba(156,255,0,.08);
+}
+.model-detail[hidden]{display:none}
+.model-detail-art{
+  min-height:230px;
+  border:1px solid var(--lime2);
+  border-radius:12px;
+  background:#111 center/cover no-repeat;
+}
+.model-detail h3{
+  font-family:Bangers, cursive;
+  font-size:52px;
+  line-height:.95;
+  margin:0 0 12px;
+  color:var(--lime);
+}
+.model-detail p:not(.kicker){
+  color:#fff;
+  font-size:18px;
+  line-height:1.45;
+  text-transform:none;
+}
+.products button{
+  margin-top:8px;
+  padding:10px 16px;
+}
+@media(max-width:950px){
+  .model-detail{grid-template-columns:1fr}
+}
