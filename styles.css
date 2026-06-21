@@ -387,3 +387,126 @@ width:48px;
 height:48px}
 }
 
+
+.start-page{
+min-height:100vh;
+position:relative;
+display:grid;
+place-items:center;
+padding:48px 24px;
+overflow:hidden;
+background:#000}
+.start-bg{
+position:absolute;
+inset:0;
+background:linear-gradient(90deg, rgba(0,0,0,.88), rgba(0,0,0,.38), rgba(0,0,0,.9)), url('smoke_energy_background_large_2x.png') center/cover no-repeat;
+filter:saturate(1.2)}
+.start-panel{
+position:relative;
+z-index:1;
+width:min(1180px, 100%);
+border:1px solid var(--line);
+border-radius:22px;
+background:rgba(2, 4, 2, .82);
+box-shadow:0 0 60px rgba(156,255,0,.14);
+padding:36px}
+.start-wordmark{
+display:block;
+width:min(420px, 92%);
+margin:0 auto 18px;
+filter:drop-shadow(0 0 22px rgba(156,255,0,.35))}
+.eyebrow{
+color:var(--lime);
+font-weight:900;
+letter-spacing:3px;
+text-align:center;
+margin:0 0 10px}
+.start-panel h1{
+font-family:Bangers, cursive;
+font-size:clamp(46px, 7vw, 92px);
+line-height:.9;
+text-align:center;
+margin:0}
+.start-intro{
+max-width:760px;
+margin:22px auto 32px;
+text-align:center;
+font-size:20px;
+line-height:1.45;
+text-transform:none;
+color:var(--muted)}
+.site-choices{
+display:grid;
+grid-template-columns:repeat(2, minmax(0, 1fr));
+gap:24px}
+.site-choice{
+min-height:440px;
+position:relative;
+overflow:hidden;
+border:1px solid var(--lime2);
+border-radius:18px;
+background:#070907}
+.site-choice:before{
+content:"";
+position:absolute;
+inset:0;
+background:linear-gradient(0deg, rgba(0,0,0,.96) 0%, rgba(0,0,0,.54) 48%, rgba(0,0,0,.08) 100%);
+z-index:1}
+.site-choice img{
+width:100%;
+height:100%;
+object-fit:cover;
+position:absolute;
+inset:0;
+transition:transform .25s ease}
+.site-choice:hover img{
+transform:scale(1.05)}
+.site-choice div{
+position:absolute;
+z-index:2;
+left:24px;
+right:24px;
+bottom:24px}
+.site-choice span{
+color:var(--lime);
+font-weight:900;
+font-size:13px}
+.site-choice h2{
+font-family:Bangers, cursive;
+font-size:46px;
+margin:4px 0}
+.site-choice p{
+text-transform:none;
+line-height:1.45;
+color:#fff}
+.hero-logo{
+max-width:min(380px, 90%);
+margin-bottom:24px;
+filter:drop-shadow(0 0 20px rgba(156,255,0,.25))}
+.icon-button{
+padding:0;
+width:44px;
+height:44px;
+justify-content:center;
+border-radius:50%;
+font-size:24px}
+.status-message{
+text-align:center;
+color:var(--lime);
+font-weight:900;
+min-height:24px}
+.products button{
+padding:9px 20px;
+margin-top:8px}
+.mini-cast{
+width:100%;
+max-width:260px;
+justify-self:end;
+filter:drop-shadow(0 0 18px rgba(156,255,0,.28))}
+@media(max-width:950px){
+.start-panel{padding:24px 16px}
+.site-choices{grid-template-columns:1fr}
+.site-choice{min-height:360px}
+.icons{display:none}
+.mini-cast{justify-self:start}
+}

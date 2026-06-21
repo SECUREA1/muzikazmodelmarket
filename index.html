@@ -10,26 +10,57 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <section class="start-page" id="start" aria-labelledby="start-title">
+      <div class="start-bg" aria-hidden="true"></div>
+      <div class="start-panel">
+        <img class="start-wordmark" src="muzikaz_wordmark_crop_2x_transparent.png" alt="MUZIKAZ" />
+        <p class="eyebrow">Choose your destination</p>
+        <h1 id="start-title">Two MUZIKAZ worlds. One launch pad.</h1>
+        <p class="start-intro">Jump into the model market for character assets or open the merch drop for crew gear and collectibles.</p>
+        <div class="site-choices" aria-label="Website choices">
+          <article class="site-choice">
+            <img src="futuristic_armored_wolf_humanoid.png" alt="Armored wolf model preview" />
+            <div>
+              <span>Website 01</span>
+              <h2>Model Market</h2>
+              <p>Browse Originals, Legends, Beasts, Crew, and Chaos model collections.</p>
+              <button class="btn choice-btn" type="button" data-target="models">Open model market</button>
+            </div>
+          </article>
+          <article class="site-choice">
+            <img src="a_comprehensive_asset_pack_for_a_fictional_brand.png" alt="MUZIKAZ merch and brand asset preview" />
+            <div>
+              <span>Website 02</span>
+              <h2>Merch Drops</h2>
+              <p>Shop hoodies, caps, accessories, and weekly crew event drops.</p>
+              <button class="btn choice-btn" type="button" data-target="merch">Open merch drops</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <div class="topbar">
       <span>Free drops every Friday</span>
       <span>Neon collectible models, merch, and crew gear</span>
     </div>
 
     <header class="site-header">
-      <a class="logo" href="#home" aria-label="MUZIKAZ home">
+      <a class="logo" href="#start" aria-label="MUZIKAZ start page">
         <span class="bolt">ϟ</span>
         <span>MUZIKAZ</span>
       </a>
       <nav class="nav" id="primary-navigation" aria-label="Primary navigation">
-        <a class="active" href="#home">Home</a>
+        <a class="active" href="#start">Start</a>
+        <a href="#home">Home</a>
         <a href="#models">Models</a>
         <a href="#merch">Merch</a>
         <a href="#crew">Crew</a>
         <a href="#contact">Contact</a>
       </nav>
       <div class="icons" aria-label="Store shortcuts">
-        <span aria-hidden="true">⌕</span>
-        <span class="cart" aria-label="Cart">🛒<b>3</b></span>
+        <button class="icon-button" type="button" data-action="search" aria-label="Search collections">⌕</button>
+        <button class="icon-button cart" type="button" data-action="cart" aria-label="Cart">🛒<b id="cart-count">0</b></button>
       </div>
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">☰</button>
     </header>
@@ -38,6 +69,7 @@
       <section class="hero" aria-labelledby="hero-title">
         <div></div>
         <div class="hero-copy">
+          <img class="hero-logo" src="brand_name_tagline_panel_2x_transparent.png" alt="MUZIKAZ brand and tagline" />
           <h1 id="hero-title">Launch the <em>model</em> market</h1>
           <p>Shop wild character models, animated-ready concepts, and electric MUZIKAZ merch built for creators who live the beat.</p>
           <a class="btn" href="#models">Shop collection <span aria-hidden="true">→</span></a>
@@ -54,23 +86,24 @@
       <section class="section-block" id="models">
         <div class="section-title"><span></span><h2>New legends unlocked</h2><a href="#merch">View merch</a></div>
         <div class="collection-grid">
-          <article class="card monkey"><div><h3>Originals</h3><p>Classic crew starters</p><button type="button">View</button></div></article>
-          <article class="card robot"><div><h3>Legends</h3><p>Armored future icons</p><button type="button">View</button></div></article>
-          <article class="card beast"><div><h3>Beasts</h3><p>Monster power renders</p><button type="button">View</button></div></article>
-          <article class="card penguin"><div><h3>Crew</h3><p>Street-smart mascots</p><button type="button">View</button></div></article>
-          <article class="card chaos"><div><h3>Chaos</h3><p>High-energy hybrids</p><button type="button">View</button></div></article>
+          <article class="card monkey"><div><h3>Originals</h3><p>Classic crew starters</p><button type="button" data-model="Originals">View</button></div></article>
+          <article class="card robot"><div><h3>Legends</h3><p>Armored future icons</p><button type="button" data-model="Legends">View</button></div></article>
+          <article class="card beast"><div><h3>Beasts</h3><p>Monster power renders</p><button type="button" data-model="Beasts">View</button></div></article>
+          <article class="card penguin"><div><h3>Crew</h3><p>Street-smart mascots</p><button type="button" data-model="Crew">View</button></div></article>
+          <article class="card chaos"><div><h3>Chaos</h3><p>High-energy hybrids</p><button type="button" data-model="Chaos">View</button></div></article>
         </div>
+        <p class="status-message" id="model-status" role="status">Select a model card to preview its collection.</p>
       </section>
 
       <section class="section-block" id="merch">
         <div class="section-title"><span></span><h2>Classic favorites</h2><a href="#contact">Join drops</a></div>
         <div class="products">
-          <article><i>Hot</i><div class="product-img">🧥</div><strong>Neon Hoodie</strong><p>$64.00</p></article>
-          <article><i>New</i><div class="product-img">🧢</div><strong>Crew Cap</strong><p>$28.00</p></article>
-          <article><div class="product-img">🥤</div><strong>Beat Bottle</strong><p>$22.00</p></article>
-          <article><div class="product-img">🔑</div><strong>Bolt Keychain</strong><p>$12.00</p></article>
-          <article><i>Drop</i><div class="product-img">⌚</div><strong>Wristband</strong><p>$16.00</p></article>
-          <article><div class="product-img">🎫</div><strong>Lanyard</strong><p>$14.00</p></article>
+          <article><i>Hot</i><div class="product-img">🧥</div><strong>Neon Hoodie</strong><p>$64.00</p><button type="button" data-product="Neon Hoodie">Add</button></article>
+          <article><i>New</i><div class="product-img">🧢</div><strong>Crew Cap</strong><p>$28.00</p><button type="button" data-product="Crew Cap">Add</button></article>
+          <article><div class="product-img">🥤</div><strong>Beat Bottle</strong><p>$22.00</p><button type="button" data-product="Beat Bottle">Add</button></article>
+          <article><div class="product-img">🔑</div><strong>Bolt Keychain</strong><p>$12.00</p><button type="button" data-product="Bolt Keychain">Add</button></article>
+          <article><i>Drop</i><div class="product-img">⌚</div><strong>Wristband</strong><p>$16.00</p><button type="button" data-product="Wristband">Add</button></article>
+          <article><div class="product-img">🎫</div><strong>Lanyard</strong><p>$14.00</p><button type="button" data-product="Lanyard">Add</button></article>
         </div>
       </section>
 
@@ -83,17 +116,17 @@
           <input type="email" placeholder="you@example.com" aria-label="Email address" required />
           <button type="submit">Sign up</button>
         </form>
-        <div class="mini-cast" aria-hidden="true">🐺 🐧 👹</div>
+        <img class="mini-cast" src="trait_avatars_row_1_2x.png" alt="MUZIKAZ character avatar row" />
       </section>
     </main>
 
     <footer id="contact">
       <div>
-        <a class="logo" href="#home"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
+        <a class="logo" href="#start"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
         <p>Neon model-market landing page powered by the included MUZIKAZ asset pack.</p>
       </div>
       <div><h4>Shop</h4><a href="#models">Models</a><a href="#merch">Merch</a></div>
-      <div><h4>Support</h4><a href="#contact">Contact</a><a href="#crew">Drops</a></div>
+      <div><h4>Support</h4><a href="mailto:crew@muzikaz.example">Contact</a><a href="#crew">Drops</a></div>
       <div><h4>Company</h4><a href="#crew">Crew</a><a href="#home">About</a></div>
       <div><h4>Follow</h4><p class="socials">◎ ♫ ✕</p></div>
     </footer>
