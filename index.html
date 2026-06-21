@@ -54,6 +54,7 @@
         <a class="active" href="#start">Start</a>
         <a href="#home">Home</a>
         <a href="#models">Models</a>
+        <a href="#safety">Safety</a>
         <a href="#merch">Merch</a>
         <a href="#crew">Crew</a>
         <a href="#contact">Contact</a>
@@ -69,9 +70,8 @@
       <section class="hero" aria-labelledby="hero-title">
         <div></div>
         <div class="hero-copy">
-          <img class="hero-logo" src="brand_name_tagline_panel_2x_transparent.png" alt="MUZIKAZ brand and tagline" />
-          <h1 id="hero-title">Launch the <em>model</em> market</h1>
-          <p>Shop wild character models, animated-ready concepts, and electric MUZIKAZ merch built for creators who live the beat.</p>
+          <h1 id="hero-title">Launch the <em>safe</em> model market</h1>
+          <p>Shop wild character models, animated-ready concepts, and electric MUZIKAZ merch built with clear, age-friendly presentation rules for creators who live the beat.</p>
           <a class="btn" href="#models">Shop collection <span aria-hidden="true">→</span></a>
         </div>
       </section>
@@ -79,7 +79,7 @@
       <section class="feature-strip" aria-label="Store benefits">
         <article><b>⚡</b><div><strong>Instant Files</strong><span>Preview-ready assets load from this page.</span></div></article>
         <article><b>🎧</b><div><strong>Beat Culture</strong><span>Neon streetwear energy for every drop.</span></div></article>
-        <article><b>🛡️</b><div><strong>Creator Safe</strong><span>Clear packs for mockups, banners, and pages.</span></div></article>
+        <article><b>🛡️</b><div><strong>Creator Safe</strong><span>Character classes include content-safe use notes.</span></div></article>
         <article><b>🚚</b><div><strong>Fast Drops</strong><span>New legends and merch collections weekly.</span></div></article>
       </section>
 
@@ -95,15 +95,32 @@
         <p class="status-message" id="model-status" role="status">Select a model card to preview its collection.</p>
       </section>
 
+      <section class="section-block safety-block" id="safety" aria-labelledby="safety-title">
+        <div class="section-title"><span></span><h2 id="safety-title">Safe character design</h2><a href="#models">Browse types</a></div>
+        <div class="safety-layout">
+          <div class="safety-art" role="img" aria-label="MUZIKAZ character graphics from the asset hub"></div>
+          <div class="safety-copy">
+            <p class="kicker">Hub-built graphics, safe-by-default presentation</p>
+            <h3>Different character types, one clear standard.</h3>
+            <p>Every mascot, beast, robot, and chaos render keeps the loud MUZIKAZ look while avoiding graphic harm, hateful symbolism, and unsafe real-world behavior cues.</p>
+            <div class="safety-rules">
+              <article><strong>Originals & Crew</strong><span>Friendly expressions, inclusive styling, and no real-person targeting.</span></article>
+              <article><strong>Legends & Robots</strong><span>Armor reads as sci-fi costume design, not tactical instruction.</span></article>
+              <article><strong>Beasts & Chaos</strong><span>Fierce fantasy energy without gore, injury detail, or threatening copy.</span></article>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="section-block" id="merch">
         <div class="section-title"><span></span><h2>Classic favorites</h2><a href="#contact">Join drops</a></div>
         <div class="products">
-          <article><i>Hot</i><div class="product-img">🧥</div><strong>Neon Hoodie</strong><p>$64.00</p><button type="button" data-product="Neon Hoodie">Add</button></article>
-          <article><i>New</i><div class="product-img">🧢</div><strong>Crew Cap</strong><p>$28.00</p><button type="button" data-product="Crew Cap">Add</button></article>
-          <article><div class="product-img">🥤</div><strong>Beat Bottle</strong><p>$22.00</p><button type="button" data-product="Beat Bottle">Add</button></article>
-          <article><div class="product-img">🔑</div><strong>Bolt Keychain</strong><p>$12.00</p><button type="button" data-product="Bolt Keychain">Add</button></article>
-          <article><i>Drop</i><div class="product-img">⌚</div><strong>Wristband</strong><p>$16.00</p><button type="button" data-product="Wristband">Add</button></article>
-          <article><div class="product-img">🎫</div><strong>Lanyard</strong><p>$14.00</p><button type="button" data-product="Lanyard">Add</button></article>
+          <article><i>Hot</i><div class="product-img hoodie" role="img" aria-label="MUZIKAZ hoodie graphic"></div><strong>Neon Hoodie</strong><p>$64.00</p></article>
+          <article><i>New</i><div class="product-img cap" role="img" aria-label="MUZIKAZ cap graphic"></div><strong>Crew Cap</strong><p>$28.00</p></article>
+          <article><div class="product-img bottle" role="img" aria-label="MUZIKAZ bottle graphic"></div><strong>Beat Bottle</strong><p>$22.00</p></article>
+          <article><div class="product-img keychain" role="img" aria-label="MUZIKAZ keychain graphic"></div><strong>Bolt Keychain</strong><p>$12.00</p></article>
+          <article><i>Drop</i><div class="product-img wristband" role="img" aria-label="MUZIKAZ wristband graphic"></div><strong>Wristband</strong><p>$16.00</p></article>
+          <article><div class="product-img lanyard" role="img" aria-label="MUZIKAZ lanyard graphic"></div><strong>Lanyard</strong><p>$14.00</p></article>
         </div>
       </section>
 
@@ -116,7 +133,7 @@
           <input type="email" placeholder="you@example.com" aria-label="Email address" required />
           <button type="submit">Sign up</button>
         </form>
-        <img class="mini-cast" src="trait_avatars_row_1_2x.png" alt="MUZIKAZ character avatar row" />
+        <div class="mini-cast" aria-hidden="true"></div>
       </section>
     </main>
 
