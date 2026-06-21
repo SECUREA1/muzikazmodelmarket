@@ -2,7 +2,7 @@ services:
   - type: web
     name: muzikazmodelmarket
     runtime: rust
-    buildCommand: npm ci && npm run build && cargo build --release
+    buildCommand: cargo build --release
     startCommand: ./target/release/muzikazmodelmarket
     envVars:
       - key: RUST_LOG
