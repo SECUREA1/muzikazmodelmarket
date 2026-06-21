@@ -1,7 +1,9 @@
 const menuButton = document.querySelector('.menu-toggle');
 const nav = document.querySelector('.nav');
+
 menuButton?.addEventListener('click', () => {
-  nav.style.display = nav.style.display === 'flex' ? 'none' : 'flex';
+  const isOpen = nav.style.display === 'flex';
+  nav.style.display = isOpen ? 'none' : 'flex';
   nav.style.position = 'absolute';
   nav.style.top = '78px';
   nav.style.left = '0';
@@ -9,6 +11,7 @@ menuButton?.addEventListener('click', () => {
   nav.style.padding = '22px';
   nav.style.background = '#000';
   nav.style.flexDirection = 'column';
+  menuButton.setAttribute('aria-expanded', String(!isOpen));
 });
 
 document.querySelector('.newsletter form')?.addEventListener('submit', (event) => {
