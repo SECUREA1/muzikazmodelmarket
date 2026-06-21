@@ -1,0 +1,19 @@
+{
+  "package": "MUZIKAZ high-level image asset pack",
+  "source_reference": "7DC15C9F-BF7D-4EA3-8DE5-D065C8AFE42C.jpeg",
+  "folders": {
+    "01_brand": "Logo panel, symbol crop, wordmark crop, tagline crop, editable SVG logo.",
+    "02_hero": "Hero banner crop for homepage or landing page.",
+    "03_characters": "Character trait overview crops from the reference board.",
+    "04_collection_tiles": "Collection panel and individual tile crops.",
+    "05_merch": "Merch panel and product tile crops.",
+    "06_ui_icons_buttons": "CTA buttons, UI icons, and editable SVG lightning.",
+    "07_context_boxes": "Feature/context boxes.",
+    "08_footer": "Footer layout panel crop.",
+    "09_section_banners": "Six web section banner crops.",
+    "10_backgrounds_effects": "Smoke/energy effect crops.",
+    "11_generated_highres": "Fresh high-res generated artwork assets for the Muzikaz look.",
+    "12_transparent_attempts": "PNG assets with dark backgrounds removed where practical. Keep originals for final editing."
+  },
+  "note": "The uploaded board is a flattened image. Crops are production starter assets; true layered assets require individual character/object renders or manual masking."
+}
