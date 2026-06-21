@@ -387,3 +387,86 @@ width:48px;
 height:48px}
 }
 
+
+/* Hub graphics and safe character system */
+.hero:before{
+background-image:url('hero_banner_full_transparent.png'), url('dark_smoke_green_fx.png'), url('reference.png');
+background-position:center top, center, center top;
+background-size:cover, cover, cover;
+opacity:.86}
+.safety-block{
+padding-top:34px}
+.safety-layout{
+display:grid;
+grid-template-columns:minmax(280px, .95fr) 1.05fr;
+gap:24px;
+width:96%;
+margin:0 auto;
+align-items:stretch}
+.safety-art{
+min-height:390px;
+border:1px solid var(--lime2);
+border-radius:14px;
+background:linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.82)), url('character_traits_overview_panel.png') center/cover no-repeat, #060806;
+box-shadow:0 0 34px rgba(156,255,0,.08)}
+.safety-copy{
+border:1px solid var(--line);
+border-radius:14px;
+background:radial-gradient(circle at 88% 10%, rgba(156,255,0,.15), transparent 28%), linear-gradient(145deg, rgba(10,14,8,.95), rgba(0,0,0,.92));
+padding:32px;
+display:flex;
+flex-direction:column;
+justify-content:center}
+.kicker{
+color:var(--lime);
+font-weight:900;
+letter-spacing:1px;
+margin:0 0 10px}
+.safety-copy h3{
+font-family:Bangers, cursive;
+font-size:48px;
+line-height:.95;
+margin:0 0 14px}
+.safety-copy p:not(.kicker){
+text-transform:none;
+color:var(--muted);
+font-size:17px;
+line-height:1.55;
+margin:0 0 22px}
+.safety-rules{
+display:grid;
+gap:12px}
+.safety-rules article{
+border:1px solid rgba(156,255,0,.35);
+border-radius:10px;
+padding:16px 18px;
+background:rgba(0,0,0,.45)}
+.safety-rules strong{
+color:var(--lime);
+display:block;
+margin-bottom:6px}
+.safety-rules span{
+text-transform:none;
+color:#fff;
+font-size:14px;
+line-height:1.4}
+.product-img{
+background-color:#101210;
+background-image:linear-gradient(145deg, rgba(21,21,21,.72), rgba(8,8,8,.95));
+background-position:center;
+background-repeat:no-repeat;
+background-size:contain}
+.product-img.hoodie{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('classic_favorites_banner_transparent.png')}
+.product-img.cap{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('brand_name_tagline_panel_transparent.png')}
+.product-img.bottle{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('accessories_banner_transparent.png')}
+.product-img.keychain{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('cta_shop_collection_transparent.png')}
+.product-img.wristband{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('button_styles_panel_transparent.png')}
+.product-img.lanyard{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('accessories_banner_2x_transparent.png')}
+.mini-cast{
+min-height:112px;
+background:url('trait_avatars_row_2.png') center/contain no-repeat}
+@media(max-width:950px){
+.safety-layout{grid-template-columns:1fr;width:100%}
+.safety-art{min-height:300px}
+.safety-copy h3{font-size:40px}
+}
