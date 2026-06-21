@@ -10,13 +10,16 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#home">Skip to content</a>
     <section class="start-page" id="start" aria-labelledby="start-title">
       <div class="start-bg" aria-hidden="true"></div>
+      <div class="orb orb-one" aria-hidden="true"></div>
+      <div class="orb orb-two" aria-hidden="true"></div>
       <div class="start-panel">
         <img class="start-wordmark" src="muzikaz_wordmark_crop_2x_transparent.png" alt="MUZIKAZ" />
         <p class="eyebrow">Choose your destination</p>
         <h1 id="start-title">Two MUZIKAZ worlds. One launch pad.</h1>
-        <p class="start-intro">Jump into the model market for character assets or open the merch drop for crew gear and collectibles.</p>
+        <p class="start-intro">Jump into the model market for character assets or open the merch drop for crew gear and collectibles. Every page section is cleaned, linked, and ready to operate.</p>
         <div class="site-choices" aria-label="Website choices">
           <article class="site-choice">
             <img src="futuristic_armored_wolf_humanoid.png" alt="Armored wolf model preview" />
@@ -58,6 +61,7 @@
         <a href="#merch">Merch</a>
         <a href="#crew">Crew</a>
         <a href="#contact">Contact</a>
+        <a href="#help">Help</a>
       </nav>
       <div class="icons" aria-label="Store shortcuts">
         <button class="icon-button" type="button" data-action="search" aria-label="Search collections">⌕</button>
@@ -70,9 +74,10 @@
       <section class="hero" aria-labelledby="hero-title">
         <div></div>
         <div class="hero-copy">
+          <p class="hero-badge">Clean launch build • graphics loaded • store actions wired</p>
           <h1 id="hero-title">Launch the <em>safe</em> model market</h1>
           <p>Shop wild character models, animated-ready concepts, and electric MUZIKAZ merch built with clear, age-friendly presentation rules for creators who live the beat.</p>
-          <a class="btn" href="#models">Shop collection <span aria-hidden="true">→</span></a>
+          <div class="hero-actions"><a class="btn" href="#models">Shop collection <span aria-hidden="true">→</span></a><a class="btn btn-secondary" href="#help">How it works</a></div>
         </div>
       </section>
 
@@ -83,6 +88,7 @@
         <article><b>🚚</b><div><strong>Fast Drops</strong><span>New legends and merch collections weekly.</span></div></article>
       </section>
 
+      <section class="page-shell" aria-label="Model Market page"><div class="page-label">Page 01 / Model Market</div>
       <section class="section-block" id="models">
         <div class="section-title"><span></span><h2>New legends unlocked</h2><a href="#merch">View merch</a></div>
         <div class="collection-grid">
@@ -111,16 +117,32 @@
           </div>
         </div>
       </section>
+      </section>
 
+      <section class="page-shell merch-shell" aria-label="Merch Drops page"><div class="page-label">Page 02 / Merch Drops</div>
       <section class="section-block" id="merch">
         <div class="section-title"><span></span><h2>Classic favorites</h2><a href="#contact">Join drops</a></div>
         <div class="products">
-          <article><i>Hot</i><div class="product-img hoodie" role="img" aria-label="MUZIKAZ hoodie graphic"></div><strong>Neon Hoodie</strong><p>$64.00</p></article>
-          <article><i>New</i><div class="product-img cap" role="img" aria-label="MUZIKAZ cap graphic"></div><strong>Crew Cap</strong><p>$28.00</p></article>
-          <article><div class="product-img bottle" role="img" aria-label="MUZIKAZ bottle graphic"></div><strong>Beat Bottle</strong><p>$22.00</p></article>
-          <article><div class="product-img keychain" role="img" aria-label="MUZIKAZ keychain graphic"></div><strong>Bolt Keychain</strong><p>$12.00</p></article>
-          <article><i>Drop</i><div class="product-img wristband" role="img" aria-label="MUZIKAZ wristband graphic"></div><strong>Wristband</strong><p>$16.00</p></article>
-          <article><div class="product-img lanyard" role="img" aria-label="MUZIKAZ lanyard graphic"></div><strong>Lanyard</strong><p>$14.00</p></article>
+          <article><i>Hot</i><div class="product-img hoodie" role="img" aria-label="MUZIKAZ hoodie graphic"></div><strong>Neon Hoodie</strong><p>$64.00</p><button type="button" data-product="Neon Hoodie">Add</button></article>
+          <article><i>New</i><div class="product-img cap" role="img" aria-label="MUZIKAZ cap graphic"></div><strong>Crew Cap</strong><p>$28.00</p><button type="button" data-product="Crew Cap">Add</button></article>
+          <article><div class="product-img bottle" role="img" aria-label="MUZIKAZ bottle graphic"></div><strong>Beat Bottle</strong><p>$22.00</p><button type="button" data-product="Beat Bottle">Add</button></article>
+          <article><div class="product-img keychain" role="img" aria-label="MUZIKAZ keychain graphic"></div><strong>Bolt Keychain</strong><p>$12.00</p><button type="button" data-product="Bolt Keychain">Add</button></article>
+          <article><i>Drop</i><div class="product-img wristband" role="img" aria-label="MUZIKAZ wristband graphic"></div><strong>Wristband</strong><p>$16.00</p><button type="button" data-product="Wristband">Add</button></article>
+          <article><div class="product-img lanyard" role="img" aria-label="MUZIKAZ lanyard graphic"></div><strong>Lanyard</strong><p>$14.00</p><button type="button" data-product="Lanyard">Add</button></article>
+        </div>
+      </section>
+
+
+      <section class="operation-panel" id="help" aria-labelledby="help-title">
+        <div>
+          <p class="kicker">Clean page operations</p>
+          <h2 id="help-title">Everything needed to browse, select, add, and join.</h2>
+        </div>
+        <div class="operation-grid">
+          <article><b>01</b><strong>Choose a world</strong><span>Start buttons route visitors to models or merch.</span></article>
+          <article><b>02</b><strong>Preview models</strong><span>Cards update the live status message.</span></article>
+          <article><b>03</b><strong>Add products</strong><span>Merch buttons update the cart counter.</span></article>
+          <article><b>04</b><strong>Join crew</strong><span>Email signup confirms the visitor action.</span></article>
         </div>
       </section>
 
@@ -134,6 +156,7 @@
           <button type="submit">Sign up</button>
         </form>
         <div class="mini-cast" aria-hidden="true"></div>
+      </section>
       </section>
     </main>
 
