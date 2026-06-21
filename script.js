@@ -2,16 +2,15 @@ const menuButton = document.querySelector('.menu-toggle');
 const nav = document.querySelector('.nav');
 
 menuButton?.addEventListener('click', () => {
-  const isOpen = nav.style.display === 'flex';
-  nav.style.display = isOpen ? 'none' : 'flex';
-  nav.style.position = 'absolute';
-  nav.style.top = '78px';
-  nav.style.left = '0';
-  nav.style.right = '0';
-  nav.style.padding = '22px';
-  nav.style.background = '#000';
-  nav.style.flexDirection = 'column';
-  menuButton.setAttribute('aria-expanded', String(!isOpen));
+  const isOpen = nav.classList.toggle('is-open');
+  menuButton.setAttribute('aria-expanded', String(isOpen));
+});
+
+nav?.addEventListener('click', (event) => {
+  if (event.target instanceof HTMLAnchorElement) {
+    nav.classList.remove('is-open');
+    menuButton?.setAttribute('aria-expanded', 'false');
+  }
 });
 
 document.querySelector('.newsletter form')?.addEventListener('submit', (event) => {

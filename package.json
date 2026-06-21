@@ -1,0 +1,14 @@
+{
+  "name": "muzikazmodelmarket",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static MUZIKAZ Model Market landing page.",
+  "scripts": {
+    "build": "node scripts/build-static.mjs",
+    "start": "python3 -m http.server 4173 --directory dist",
+    "check": "node scripts/check-static.mjs"
+  },
+  "engines": {
+    "node": ">=20 <25"
+  }
+}
