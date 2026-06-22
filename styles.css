@@ -734,3 +734,41 @@ box-shadow:inset 0 0 45px rgba(156,255,0,.08)}
 @media(max-width:950px){
 body{overflow-x:hidden}.topbar{font-size:12px}.site-header{position:sticky;height:72px;padding:10px 14px;gap:12px}.nav{display:flex;position:fixed;top:72px;left:12px;right:12px;z-index:30;max-height:calc(100vh - 92px);overflow:auto;padding:16px;background:rgba(0,0,0,.96);border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 55px rgba(0,0,0,.72);flex-direction:column;gap:8px;transform:translateY(-18px);opacity:0;pointer-events:none;transition:opacity .2s ease, transform .2s ease}.nav.is-open{opacity:1;pointer-events:auto;transform:translateY(0)}.nav a{padding:14px 12px;border:1px solid rgba(156,255,0,.14);border-radius:12px}.nav a.active,.nav a:hover{padding:14px 12px;border-bottom:1px solid var(--lime);background:rgba(156,255,0,.1)}.icons{display:flex;margin-left:auto;gap:8px}.icon-button{min-width:44px;padding:8px}.menu-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:48px}.hero{min-height:560px;padding:54px 20px 34px;grid-template-columns:1fr}.hero-copy{max-width:620px}.hero h1{font-size:clamp(52px, 17vw, 72px)}.hero p{font-size:18px}.feature-strip,.collection-grid,.products,.newsletter,footer{grid-template-columns:1fr}.products{gap:18px}.product-img{height:220px}.section-block{padding:26px 14px}.section-title{grid-template-columns:1fr;gap:8px;text-align:center}.section-title span{display:none}.section-title a{justify-self:center}.newsletter{width:calc(100% - 24px);padding:22px;gap:16px}.newsletter form{flex-direction:column;gap:10px}.newsletter input,.newsletter form button{border-radius:8px}.start-page{padding:28px 12px}.start-panel{border-radius:20px}.site-choice div{padding:18px}.site-choice h2{font-size:38px}.model-detail{padding:14px}.model-detail-art{min-height:260px}.page-shell{margin:18px auto;padding:12px 4px 18px}.operation-grid{grid-template-columns:1fr}.footer{padding-bottom:calc(34px + var(--safe-bottom))}}
 @media(max-width:520px){.logo span:last-child{display:none}.bolt{width:44px;height:44px;font-size:32px}.icons{gap:6px}.collection-grid{gap:14px}.card{height:330px}.card h3{font-size:32px}.products article{padding:10px}.start-panel h1{font-size:44px}.start-intro{font-size:16px}.site-choice{min-height:330px}.hero-actions .btn,.hero-actions button,.btn,button{width:100%}.feature-strip article{padding:18px}.footer,footer{padding-left:20px;padding-right:20px}}
+
+/* Original platform entry: keep the login and market graphics aligned with the early index. */
+body.original-platform{
+background:radial-gradient(circle at 50% 0, #162200 0, #040504 42%, #000 100%)}
+body.original-platform::before{content:none}
+body.original-platform .start-bg{
+background:linear-gradient(90deg, rgba(0,0,0,.92), rgba(0,0,0,.42), rgba(0,0,0,.92)), url('smoke_energy_background_large_2x.png') center/cover no-repeat}
+body.original-platform .hero{
+grid-template-columns:320px 1fr}
+body.original-platform .hero:before{
+background:url('reference.png') center top/cover no-repeat;
+opacity:.72;
+filter:saturate(1.15) contrast(1.05)}
+body.original-platform .hero:after{
+background:linear-gradient(90deg, #000 0%, rgba(0, 0, 0, .77) 27%, rgba(0, 0, 0, .15) 70%, #000 100%)}
+body.original-platform .hero-logo{filter:none}
+body.original-platform .card{
+background:#111 center/cover;
+box-shadow:none}
+body.original-platform .card:after{content:none}
+body.original-platform .monkey{background-image:url('reference.png');background-position:16% 48%}
+body.original-platform .robot{background-image:url('reference.png');background-position:58% 25%}
+body.original-platform .beast{background-image:url('reference.png');background-position:50% 40%}
+body.original-platform .penguin{background-image:url('reference.png');background-position:65% 66%}
+body.original-platform .chaos{background-image:url('reference.png');background-position:80% 34%}
+body.original-platform .product-img{
+background:linear-gradient(145deg, #151515, #080808);
+font-size:72px;
+box-shadow:none}
+body.original-platform .mini-cast{
+min-height:auto;
+background:none;
+font-size:64px;
+text-align:right}
+@media(max-width:950px){
+body.original-platform .hero{grid-template-columns:1fr}
+body.original-platform .mini-cast{text-align:left}
+}
