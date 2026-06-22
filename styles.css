@@ -639,11 +639,11 @@ margin:0 0 8px}
 text-transform:none;
 color:var(--muted);
 line-height:1.5}
-.model-detail-art.monkey{background-image:url('reference.png');background-position:16% 48%}
-.model-detail-art.robot{background-image:url('reference.png');background-position:58% 25%}
-.model-detail-art.beast{background-image:url('reference.png');background-position:50% 40%}
-.model-detail-art.penguin{background-image:url('reference.png');background-position:65% 66%}
-.model-detail-art.chaos{background-image:url('reference.png');background-position:80% 34%}
+.model-detail-art.monkey{background-image:url('new_legends_unlocked_2x_transparent.png'), url('character_traits_overview_panel.png');background-size:80% auto, cover;background-repeat:no-repeat;background-position:center 18px, 11% center}
+.model-detail-art.robot{background-image:url('futuristic_armored_wolf_humanoid.png');background-position:center 18%;background-size:cover}
+.model-detail-art.beast{background-image:url('fierce_demon_hybrid_in_action.png');background-position:center 28%;background-size:cover}
+.model-detail-art.penguin{background-image:url('the_crew_banner_2x_transparent.png'), url('trait_avatars_row_2_2x.png');background-size:76% auto, auto 82%;background-repeat:no-repeat;background-position:center 16px, 52% 44%}
+.model-detail-art.chaos{background-image:url('character_traits_overview_panel_2x.png');background-position:72% center;background-size:auto 100%}
 @media(max-width:950px){.model-detail{grid-template-columns:1fr}.model-detail-art{min-height:240px}}
 
 /* Final visual overrides from the edd229a index styling. */
@@ -754,11 +754,11 @@ body.original-platform .card{
 background:#111 center/cover;
 box-shadow:none}
 body.original-platform .card:after{content:none}
-body.original-platform .monkey{background-image:url('reference.png');background-position:16% 48%}
-body.original-platform .robot{background-image:url('reference.png');background-position:58% 25%}
-body.original-platform .beast{background-image:url('reference.png');background-position:50% 40%}
-body.original-platform .penguin{background-image:url('reference.png');background-position:65% 66%}
-body.original-platform .chaos{background-image:url('reference.png');background-position:80% 34%}
+body.original-platform .monkey{background-image:url('new_legends_unlocked_2x_transparent.png'), url('character_traits_overview_panel.png');background-size:88% auto, cover;background-repeat:no-repeat;background-position:center 24px, 11% center}
+body.original-platform .robot{background-image:url('futuristic_armored_wolf_humanoid.png');background-position:center 18%;background-size:cover}
+body.original-platform .beast{background-image:url('fierce_demon_hybrid_in_action.png');background-position:center 28%;background-size:cover}
+body.original-platform .penguin{background-image:url('the_crew_banner_2x_transparent.png'), url('trait_avatars_row_2_2x.png');background-size:82% auto, auto 82%;background-repeat:no-repeat;background-position:center 22px, 52% 44%}
+body.original-platform .chaos{background-image:url('character_traits_overview_panel_2x.png');background-position:72% center;background-size:auto 100%}
 body.original-platform .product-img{
 background:linear-gradient(145deg, #151515, #080808);
 font-size:72px;
