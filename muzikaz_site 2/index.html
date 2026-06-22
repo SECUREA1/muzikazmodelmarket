@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MUZIKAZ Merch Line</title>
+  <meta name="description" content="MUZIKAZ character collection, merch customizer, and marketing storefront." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#home" aria-label="Muzikaz home">
+      <span class="bolt">ϟ</span><span>MUZIKAZ</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Open menu">☰</button>
+    <nav class="nav" id="nav">
+      <a href="#home">Home</a>
+      <a href="#collection">Collection</a>
+      <a href="#merch">Merch Builder</a>
+      <a href="#marketing">Marketing</a>
+      <a href="#events">Events</a>
+    </nav>
+    <button class="cart-button" id="cartButton">Cart <b id="cartCount">0</b></button>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-copy">
+        <p class="eyebrow">New legends unlocked</p>
+        <h1>Loud. Proud. <span>MUZIKAZ.</span></h1>
+        <p>Every character tile is now cleaned up into a unified product-ready card layout, with merch customization, campaign copy, and click-through marketing tools built into one functional HTML storefront.</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#collection">Explore Collection</a>
+          <a class="btn ghost" href="#merch">Customize Products</a>
+        </div>
+        <div class="hero-badges">
+          <span>Unified tile fit</span>
+          <span>Live customizer</span>
+          <span>Character marketing kits</span>
+        </div>
+      </div>
+      <div class="hero-card">
+        <img src="assets/source/web-preview.jpeg" alt="MUZIKAZ website preview" />
+      </div>
+    </section>
+
+    <section class="feature-strip" aria-label="Store features">
+      <article><b>◇ Clean Unified Graphics</b><span>Each tile is framed with a consistent fit and product-ready presentation.</span></article>
+      <article><b>✎ Live Product Builder</b><span>Swap product type, size, colorway, print style, and placement.</span></article>
+      <article><b>☊ Character Marketing</b><span>Every mascot gets campaign copy, event uses, and launch messaging.</span></article>
+      <article><b>♫ Ready To Expand</b><span>Connect to Shopify, Stripe, WooCommerce, or Render deployment later.</span></article>
+    </section>
+
+    <section class="section" id="collection">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">Clickable program tiles</p>
+          <h2>The Collection</h2>
+        </div>
+        <p>All graphics are displayed in a cleaner unified tile system. Click a character to update the merch builder, copy, and product catalog instantly.</p>
+      </div>
+      <div class="filters" id="filters"></div>
+      <div class="character-grid" id="characterGrid"></div>
+    </section>
+
+    <section class="detail-panel" id="characterDetail" aria-live="polite">
+      <div class="detail-image-wrap">
+        <div class="detail-image"><img id="detailImg" alt="Selected character" /></div>
+        <div class="detail-stat-grid" id="detailStats"></div>
+      </div>
+      <div class="detail-copy">
+        <p class="eyebrow" id="detailCategory">Featured legend</p>
+        <h2 id="detailName">Sparky</h2>
+        <h3 id="detailRole">The Inventor</h3>
+        <p id="detailBio"></p>
+        <p class="slogan" id="detailSlogan"></p>
+        <div class="trait-list" id="detailTraits"></div>
+
+        <div class="copy-block-grid">
+          <article class="copy-card">
+            <span class="copy-label">Drop Headline</span>
+            <p id="headlineCopy"></p>
+          </article>
+          <article class="copy-card">
+            <span class="copy-label">Social Caption</span>
+            <p id="captionCopy"></p>
+          </article>
+          <article class="copy-card wide">
+            <span class="copy-label">Launch Notes</span>
+            <p id="launchCopy"></p>
+          </article>
+        </div>
+
+        <div class="detail-actions">
+          <a class="btn primary" href="#merch">View Merch Builder</a>
+          <button class="btn ghost" id="copyCampaign">Copy Campaign Text</button>
+          <button class="btn ghost" id="copyMarketing">Copy Marketing Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="merch">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">Shop-ready product tiles</p>
+          <h2>Character Merch Builder</h2>
+        </div>
+        <p>Choose a character, pick a product, then define the exact merch setup with a more detailed customization panel.</p>
+      </div>
+
+      <div class="merch-layout">
+        <div>
+          <div class="merch-grid" id="merchGrid"></div>
+        </div>
+
+        <aside class="customizer-panel">
+          <p class="eyebrow">Live Product Configurator</p>
+          <h3 id="customizerTitle">Sparky Graphic Tee</h3>
+          <div class="custom-preview">
+            <div class="custom-preview-media">
+              <img id="customPreviewImg" alt="Customizer preview" />
+              <span class="preview-badge" id="customPreviewBadge">Graphic Tee</span>
+            </div>
+            <div class="custom-preview-copy">
+              <p id="customSummary">Build a detailed product around the selected character.</p>
+              <div class="price-block">
+                <span>Total Price</span>
+                <strong id="customPrice">$29.99</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="customizer-form">
+            <label>
+              Product
+              <select id="productSelect"></select>
+            </label>
+            <label>
+              Colorway
+              <select id="colorSelect"></select>
+            </label>
+            <label>
+              Size / Format
+              <select id="sizeSelect"></select>
+            </label>
+            <label>
+              Print Placement
+              <select id="placementSelect"></select>
+            </label>
+            <label>
+              Finish
+              <select id="finishSelect"></select>
+            </label>
+            <label>
+              Quantity
+              <input id="qtyInput" type="number" min="1" max="250" value="1" />
+            </label>
+            <label>
+              Personalization Note
+              <textarea id="noteInput" rows="3" placeholder="Example: add event date, custom slogan, mascot name, or booth version."></textarea>
+            </label>
+          </div>
+
+          <div class="config-specs">
+            <div><span>Character</span><strong id="configCharacter">Sparky</strong></div>
+            <div><span>Product Focus</span><strong id="configFocus">Event merch, posters, collectibles</strong></div>
+            <div><span>Recommended Use</span><strong id="configUse">Launch drops and crew apparel</strong></div>
+          </div>
+
+          <div class="detail-actions stacked-actions">
+            <button class="btn primary" id="addCustomToCart">Add Customized Item</button>
+            <button class="btn ghost" id="copyCustomization">Copy Product Spec</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="poster-section" id="marketing">
+      <div>
+        <p class="eyebrow">Marketing board</p>
+        <h2>Launch Toolkit + Promo Board</h2>
+        <p>Use the poster image as a landing page visual, event banner, QR flyer, marketplace teaser, or collection drop asset. Pair it with the live merch customizer to pitch each mascot as a full brand channel.</p>
+        <div class="marketing-grid" id="marketingGrid"></div>
+      </div>
+      <img src="assets/source/merch-line.jpeg" alt="MUZIKAZ merch line poster" />
+    </section>
+
+    <section class="section" id="events">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">Activation ideas</p>
+          <h2>Merch + Marketing Uses</h2>
+        </div>
+        <p>The storefront can now act like a pitch deck, storefront mockup, event board, and customization demo all at once.</p>
+      </div>
+      <div class="use-grid">
+        <article><h3>Pop-Up Booth</h3><p>Run the page on a tablet and let customers tap characters, customize products, and build a cart.</p></article>
+        <article><h3>Event Presale</h3><p>Gather preorder interest by sharing direct links to a mascot and its merch builder configuration.</p></article>
+        <article><h3>Collection Lore</h3><p>Use the traits, slogans, and headlines as lore for avatars, NFTs, posters, and branded drops.</p></article>
+        <article><h3>Marketing Workflow</h3><p>Copy social captions, product specs, and launch notes directly from the page for promotion.</p></article>
+      </div>
+    </section>
+  </main>
+
+  <aside class="cart-drawer" id="cartDrawer" aria-label="Cart drawer">
+    <button class="close" id="closeCart">×</button>
+    <h2>Cart Preview</h2>
+    <div id="cartItems"></div>
+    <p class="cart-note">Demo cart only. Hook these buttons to your real checkout when ready.</p>
+  </aside>
+
+  <footer class="footer">
+    <div class="brand"><span class="bolt">ϟ</span><span>MUZIKAZ</span></div>
+    <p>Loud. Proud. Muzikaz. Built for merch, mascots, events, character drops, and customizable product marketing.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

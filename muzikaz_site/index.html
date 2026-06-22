@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MUZIKAZ Merch Line</title>
+  <meta name="description" content="MUZIKAZ character collection, merch tiles, and marketing pages." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#home" aria-label="Muzikaz home">
+      <span class="bolt">ϟ</span><span>MUZIKAZ</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Open menu">☰</button>
+    <nav class="nav" id="nav">
+      <a href="#home">Home</a>
+      <a href="#collection">Collection</a>
+      <a href="#merch">Merch</a>
+      <a href="#marketing">Marketing</a>
+      <a href="#events">Events</a>
+    </nav>
+    <button class="cart-button" id="cartButton">Cart <b id="cartCount">0</b></button>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-copy">
+        <p class="eyebrow">New legends unlocked</p>
+        <h1>Loud. Proud. <span>MUZIKAZ.</span></h1>
+        <p>Build a full merch and marketing storefront around every character tile. Click a character to open their campaign page, traits, product line, and creative direction.</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#collection">Explore Collection</a>
+          <a class="btn ghost" href="#merch">Shop Gear</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <img src="assets/source/web-preview.jpeg" alt="MUZIKAZ website preview" />
+      </div>
+    </section>
+
+    <section class="feature-strip" aria-label="Store features">
+      <article><b>◇ Premium Quality</b><span>Built to last.</span></article>
+      <article><b>✎ Bold Designs</b><span>Stand out. Stay loud.</span></article>
+      <article><b>☊ For The Crew</b><span>Mascots, fans, everyone.</span></article>
+      <article><b>♫ Live The Beat</b><span>More than merch. It’s a vibe.</span></article>
+    </section>
+
+    <section class="section" id="collection">
+      <div class="section-title">
+        <p class="eyebrow">Clickable program tiles</p>
+        <h2>The Collection</h2>
+        <p>Every tile is wired to a detail page section with merch products and marketing copy.</p>
+      </div>
+      <div class="filters" id="filters"></div>
+      <div class="character-grid" id="characterGrid"></div>
+    </section>
+
+    <section class="detail-panel" id="characterDetail" aria-live="polite">
+      <div class="detail-image"><img id="detailImg" alt="Selected character" /></div>
+      <div class="detail-copy">
+        <p class="eyebrow" id="detailCategory">Featured legend</p>
+        <h2 id="detailName">Sparky</h2>
+        <h3 id="detailRole">The Inventor</h3>
+        <p id="detailBio"></p>
+        <div class="trait-list" id="detailTraits"></div>
+        <div class="detail-actions">
+          <a class="btn primary" href="#merch">View Merch</a>
+          <button class="btn ghost" id="copyCampaign">Copy Campaign Text</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="merch">
+      <div class="section-title">
+        <p class="eyebrow">Shop-ready product tiles</p>
+        <h2>Character Merch</h2>
+        <p>The same merch template changes automatically based on the selected character.</p>
+      </div>
+      <div class="merch-grid" id="merchGrid"></div>
+    </section>
+
+    <section class="poster-section" id="marketing">
+      <div>
+        <p class="eyebrow">Marketing board</p>
+        <h2>Drop Poster + Event Graphic</h2>
+        <p>Use this page as a landing page, marketplace board, QR flyer, social media link page, or Render-hosted merch demo.</p>
+        <ul class="checklist">
+          <li>Clickable character cards</li>
+          <li>Individual merch tiles</li>
+          <li>Copy-ready campaign text</li>
+          <li>Mobile responsive layout</li>
+        </ul>
+      </div>
+      <img src="assets/source/merch-line.jpeg" alt="MUZIKAZ merch line poster" />
+    </section>
+
+    <section class="section" id="events">
+      <div class="section-title">
+        <p class="eyebrow">Activation ideas</p>
+        <h2>Merch + Marketing Uses</h2>
+      </div>
+      <div class="use-grid">
+        <article><h3>Pop-Up Booth</h3><p>Run the page on a tablet so customers can tap characters and pick gear.</p></article>
+        <article><h3>Social Drop</h3><p>Send fans directly to a specific character campaign using anchor links.</p></article>
+        <article><h3>Preorder List</h3><p>Connect the cart buttons later to Shopify, Stripe, Square, or WooCommerce.</p></article>
+        <article><h3>NFT / Avatar Lore</h3><p>Use the traits and bios as collection lore for each mascot.</p></article>
+      </div>
+    </section>
+  </main>
+
+  <aside class="cart-drawer" id="cartDrawer" aria-label="Cart drawer">
+    <button class="close" id="closeCart">×</button>
+    <h2>Cart Preview</h2>
+    <div id="cartItems"></div>
+    <p class="cart-note">Demo cart only. Hook these buttons to your real checkout when ready.</p>
+  </aside>
+
+  <footer class="footer">
+    <div class="brand"><span class="bolt">ϟ</span><span>MUZIKAZ</span></div>
+    <p>Loud. Proud. Muzikaz. Built for merch, mascots, events, and character drops.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

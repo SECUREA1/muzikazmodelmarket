@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: muzikaz-static-site
+    runtime: static
+    staticPublishPath: .
