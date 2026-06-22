@@ -22,6 +22,12 @@ function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+
+function closeMenu() {
+  nav?.classList.remove('is-open');
+  menuButton?.setAttribute('aria-expanded', 'false');
+}
+
 function updateCart(button, label = 'Added') {
   cartItems += 1;
   if (cartCount) cartCount.textContent = String(cartItems);
@@ -40,8 +46,7 @@ nav?.addEventListener('click', (event) => {
   if (event.target instanceof HTMLAnchorElement) {
     document.querySelectorAll('.nav a').forEach((link) => link.classList.remove('active'));
     event.target.classList.add('active');
-    nav.classList.remove('is-open');
-    menuButton?.setAttribute('aria-expanded', 'false');
+    closeMenu();
   }
 });
 
@@ -92,4 +97,16 @@ document.querySelector('.newsletter form')?.addEventListener('submit', (event) =
   const input = event.currentTarget.querySelector('input');
   alert(`Welcome to the crew${input.value ? ', ' + input.value : ''}!`);
   input.value = '';
+});
+
+
+document.querySelectorAll('.choice-btn[data-target]').forEach((button) => {
+  button.addEventListener('click', () => {
+    scrollToSection(button.dataset.target);
+    closeMenu();
+  });
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeMenu();
 });
