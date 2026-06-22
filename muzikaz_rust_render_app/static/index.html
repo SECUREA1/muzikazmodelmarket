@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MUZIKAZ Merch Store</title>
+  <meta name="description" content="MUZIKAZ merch, characters, drops, and custom branded products." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="#home"><span class="bolt">⚡</span><span>MUZIKAZ</span><small>Loud. Proud. Muzikaz.</small></a>
+    <button class="menu-btn" id="menuBtn">☰</button>
+    <nav id="nav">
+      <a href="#home">Home</a>
+      <a href="#merch">Merch</a>
+      <a href="#collection">Collection</a>
+      <a href="#customize">Customize</a>
+      <a href="#cart">Cart <span id="cartCount">0</span></a>
+    </nav>
+  </header>
+
+  <main id="home">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Free shipping on orders $75+</p>
+        <h1>Rep the sound.<br><span>Wear the legacy.</span></h1>
+        <p>High quality merch for the IonCore crew. Swap graphics, update products, launch drops, and customize gear.</p>
+        <a class="btn" href="#merch">Shop all merch ⚡</a>
+      </div>
+      <div class="hero-card">
+        <img src="assets/muzikaz-reference.jpeg" alt="MUZIKAZ store reference" />
+      </div>
+    </section>
+
+    <section class="stats">
+      <article><strong>100+</strong><span>Designs</span></article>
+      <article><strong>50+</strong><span>Products</span></article>
+      <article><strong>10+</strong><span>Categories</span></article>
+      <article><strong>1</strong><span>Loud Crew</span></article>
+    </section>
+
+    <section id="merch" class="section">
+      <div class="section-title"><h2>Shop by Category</h2><p>Every tile is generated from editable data.</p></div>
+      <div class="grid" id="categoryGrid"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-title"><h2>Best Sellers</h2><p>Add to cart, filter, and manage products inside app.js.</p></div>
+      <div class="toolbar" id="filters"></div>
+      <div class="grid products" id="productGrid"></div>
+    </section>
+
+    <section id="customize" class="customizer section">
+      <div class="section-title"><h2>Customize it. Make it you.</h2><p>Live preview for name, number, product, color, and character.</p></div>
+      <div class="custom-layout">
+        <form id="customForm" class="panel">
+          <label>Product<select id="customProduct"></select></label>
+          <label>Character<select id="customCharacter"></select></label>
+          <label>Name / Text<input id="customName" value="YOUR NAME" maxlength="14"></label>
+          <label>Number<input id="customNumber" value="00" maxlength="2"></label>
+          <label>Color<input id="customColor" type="color" value="#a6ff00"></label>
+          <button type="button" class="btn" id="addCustom">Add Custom Item</button>
+        </form>
+        <div class="preview panel">
+          <div class="mock-product" id="mockProduct">
+            <span id="mockChar">⚡</span>
+            <b id="mockName">YOUR NAME</b>
+            <strong id="mockNumber">00</strong>
+            <em>MUZIKAZ</em>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="collection" class="section">
+      <div class="section-title"><h2>Character Collection</h2><p>Swap avatars and traits any time.</p></div>
+      <div class="grid characters" id="characterGrid"></div>
+    </section>
+
+    <section id="cart" class="section cart-section">
+      <div class="section-title"><h2>Your Cart</h2><p>Demo checkout flow ready to connect to Stripe later.</p></div>
+      <div id="cartItems" class="cart-items"></div>
+      <div class="cart-total"><span>Total</span><strong id="cartTotal">$0.00</strong></div>
+      <button class="btn" id="checkoutBtn">Checkout Demo</button>
+    </section>
+  </main>
+
+  <footer>
+    <div class="logo"><span class="bolt">⚡</span><span>MUZIKAZ</span></div>
+    <p>Built different. Made for the crew.</p>
+    <form id="newsletter"><input placeholder="Enter your email"><button>Join Now</button></form>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
