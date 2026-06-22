@@ -661,3 +661,76 @@ background:none;
 font-size:64px;
 text-align:right}
 @media(max-width:950px){.mini-cast{text-align:left}}
+
+/* Enhanced graphics, mobile layout, and interaction polish */
+:root{
+--glow:0 0 30px rgba(156,255,0,.22);
+--safe-bottom:env(safe-area-inset-bottom, 0px)}
+body{
+background:
+radial-gradient(circle at 18% 8%, rgba(156,255,0,.16), transparent 24%),
+radial-gradient(circle at 80% 18%, rgba(116,185,0,.12), transparent 28%),
+linear-gradient(180deg, #050705 0%, #000 100%)}
+body::before{
+content:"";
+position:fixed;
+inset:0;
+pointer-events:none;
+z-index:-1;
+background:
+linear-gradient(rgba(156,255,0,.035) 1px, transparent 1px),
+linear-gradient(90deg, rgba(156,255,0,.025) 1px, transparent 1px);
+background-size:42px 42px;
+mask-image:linear-gradient(180deg, rgba(0,0,0,.9), transparent 78%)}
+.site-header{
+box-shadow:0 12px 34px rgba(0,0,0,.38)}
+.hero{
+grid-template-columns:minmax(0, .8fr) minmax(320px, 1fr);
+border-bottom:1px solid rgba(156,255,0,.18)}
+.hero:before{
+background-image:url('hero_banner_full_transparent.png'), url('dark_smoke_green_fx.png'), url('reference.png');
+background-position:center top, center, center top;
+background-size:cover, cover, cover;
+opacity:.88;
+filter:saturate(1.24) contrast(1.08)}
+.hero:after{
+background:
+radial-gradient(circle at 62% 38%, rgba(156,255,0,.12), transparent 20%),
+linear-gradient(90deg, #000 0%, rgba(0,0,0,.76) 34%, rgba(0,0,0,.22) 72%, #000 100%)}
+.hero-logo{
+max-width:min(520px, 86vw);
+filter:drop-shadow(0 14px 30px rgba(0,0,0,.75)) drop-shadow(0 0 18px rgba(156,255,0,.18))}
+.btn, button{
+min-height:48px;
+justify-content:center;
+box-shadow:inset 0 0 0 1px rgba(255,255,255,.05), 0 0 0 rgba(156,255,0,0);
+transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease}
+.btn:hover, button:hover,.btn:focus-visible,button:focus-visible{
+transform:translateY(-2px);
+box-shadow:0 12px 26px rgba(0,0,0,.32), var(--glow);
+outline:0}
+.card{
+background-image:var(--card-art);
+box-shadow:inset 0 -120px 100px rgba(0,0,0,.72)}
+.card:after{
+content:"";
+position:absolute;
+inset:0;
+background:linear-gradient(135deg, rgba(156,255,0,.16), transparent 32%, rgba(255,255,255,.06) 50%, transparent 62%);
+opacity:.55;
+mix-blend-mode:screen}
+.monkey{--card-art:url('new_legends_unlocked_transparent.png');background-position:center}.robot{--card-art:url('futuristic_armored_wolf_humanoid.png');background-position:center 24%}.beast{--card-art:url('fierce_demon_hybrid_in_action.png');background-position:center}.penguin{--card-art:url('the_crew_banner_transparent.png');background-position:center}.chaos{--card-art:url('character_traits_overview_panel.png');background-position:center}
+.product-img{
+background-color:#101210;
+background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88));
+background-position:center;
+background-repeat:no-repeat;
+background-size:contain;
+font-size:0;
+box-shadow:inset 0 0 45px rgba(156,255,0,.08)}
+.product-img.hoodie{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('classic_favorites_banner_transparent.png')}.product-img.cap{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('brand_name_tagline_panel_transparent.png')}.product-img.bottle{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('accessories_banner_transparent.png')}.product-img.keychain{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('cta_shop_collection_transparent.png')}.product-img.wristband{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('button_styles_panel_transparent.png')}.product-img.lanyard{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('accessories_banner_2x_transparent.png')}
+.mini-cast{min-height:112px;background:url('trait_avatars_row_2.png') center/contain no-repeat;font-size:0;text-align:right}
+@media(max-width:1100px){.collection-grid{grid-template-columns:repeat(2, minmax(0,1fr))}.products{grid-template-columns:repeat(3, minmax(0,1fr))}.feature-strip{grid-template-columns:repeat(2, 1fr)}}
+@media(max-width:950px){
+body{overflow-x:hidden}.topbar{font-size:12px}.site-header{position:sticky;height:72px;padding:10px 14px;gap:12px}.nav{display:flex;position:fixed;top:72px;left:12px;right:12px;z-index:30;max-height:calc(100vh - 92px);overflow:auto;padding:16px;background:rgba(0,0,0,.96);border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 55px rgba(0,0,0,.72);flex-direction:column;gap:8px;transform:translateY(-18px);opacity:0;pointer-events:none;transition:opacity .2s ease, transform .2s ease}.nav.is-open{opacity:1;pointer-events:auto;transform:translateY(0)}.nav a{padding:14px 12px;border:1px solid rgba(156,255,0,.14);border-radius:12px}.nav a.active,.nav a:hover{padding:14px 12px;border-bottom:1px solid var(--lime);background:rgba(156,255,0,.1)}.icons{display:flex;margin-left:auto;gap:8px}.icon-button{min-width:44px;padding:8px}.menu-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:48px}.hero{min-height:560px;padding:54px 20px 34px;grid-template-columns:1fr}.hero-copy{max-width:620px}.hero h1{font-size:clamp(52px, 17vw, 72px)}.hero p{font-size:18px}.feature-strip,.collection-grid,.products,.newsletter,footer{grid-template-columns:1fr}.products{gap:18px}.product-img{height:220px}.section-block{padding:26px 14px}.section-title{grid-template-columns:1fr;gap:8px;text-align:center}.section-title span{display:none}.section-title a{justify-self:center}.newsletter{width:calc(100% - 24px);padding:22px;gap:16px}.newsletter form{flex-direction:column;gap:10px}.newsletter input,.newsletter form button{border-radius:8px}.start-page{padding:28px 12px}.start-panel{border-radius:20px}.site-choice div{padding:18px}.site-choice h2{font-size:38px}.model-detail{padding:14px}.model-detail-art{min-height:260px}.page-shell{margin:18px auto;padding:12px 4px 18px}.operation-grid{grid-template-columns:1fr}.footer{padding-bottom:calc(34px + var(--safe-bottom))}}
+@media(max-width:520px){.logo span:last-child{display:none}.bolt{width:44px;height:44px;font-size:32px}.icons{gap:6px}.collection-grid{gap:14px}.card{height:330px}.card h3{font-size:32px}.products article{padding:10px}.start-panel h1{font-size:44px}.start-intro{font-size:16px}.site-choice{min-height:330px}.hero-actions .btn,.hero-actions button,.btn,button{width:100%}.feature-strip article{padding:18px}.footer,footer{padding-left:20px;padding-right:20px}}
