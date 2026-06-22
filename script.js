@@ -48,30 +48,30 @@ nav?.addEventListener('click', (event) => {
 document.querySelectorAll('[data-model]').forEach((button) => {
   button.addEventListener('click', () => {
     selectedModel = button.dataset.model;
-    modelStatus.textContent = `${selectedModel} collection selected. Preview is open and ready to add to cart.`;
-    modelDetailTitle.textContent = selectedModel;
-    modelDetailCopy.textContent = modelCopy[selectedModel] || 'MUZIKAZ model collection ready to preview.';
-    modelDetailArt.className = `model-detail-art ${button.closest('.card')?.classList[1] || ''}`;
-    modelDetail.hidden = false;
+    if (modelStatus) modelStatus.textContent = `${selectedModel} collection selected. Preview is open and ready to add to cart.`;
+    if (modelDetailTitle) modelDetailTitle.textContent = selectedModel;
+    if (modelDetailCopy) modelDetailCopy.textContent = modelCopy[selectedModel] || 'MUZIKAZ model collection ready to preview.';
+    if (modelDetailArt) modelDetailArt.className = `model-detail-art ${button.closest('.card')?.classList[1] || ''}`;
+    if (modelDetail) modelDetail.hidden = false;
     scrollToSection('model-detail');
   });
 });
 
 addModelButton?.addEventListener('click', () => {
   if (!selectedModel) {
-    modelStatus.textContent = 'Choose a model collection before adding it to cart.';
-    scrollToSection('collection');
+    if (modelStatus) modelStatus.textContent = 'Choose a model collection before adding it to cart.';
+    scrollToSection('models');
     return;
   }
   updateCart(addModelButton, 'Model added');
-  modelStatus.textContent = `${selectedModel} model added to your cart.`;
+  if (modelStatus) modelStatus.textContent = `${selectedModel} model added to your cart.`;
 });
 
 document.querySelector('[data-show-all]')?.addEventListener('click', (event) => {
   event.preventDefault();
-  modelDetail.hidden = true;
-  modelStatus.textContent = 'All MUZIKAZ model collections are visible.';
-  scrollToSection('collection');
+  if (modelDetail) modelDetail.hidden = true;
+  if (modelStatus) modelStatus.textContent = 'All MUZIKAZ model collections are visible.';
+  scrollToSection('models');
 });
 
 document.querySelectorAll('[data-product]').forEach((button) => {
@@ -79,8 +79,8 @@ document.querySelectorAll('[data-product]').forEach((button) => {
 });
 
 document.querySelector('[data-action="search"]')?.addEventListener('click', () => {
-  scrollToSection('collection');
-  modelStatus.textContent = 'Search shortcut opened the model collections.';
+  scrollToSection('models');
+  if (modelStatus) modelStatus.textContent = 'Search shortcut opened the model collections.';
 });
 
 document.querySelector('[data-action="cart"]')?.addEventListener('click', () => {
