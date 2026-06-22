@@ -612,3 +612,52 @@ margin:0 0 20px}
 .card,.products article,.site-choice{transition:transform .2s ease, box-shadow .2s ease}.card:hover,.products article:hover,.site-choice:hover{transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.35), 0 0 24px rgba(156,255,0,.12)}
 @media(max-width:950px){
 .topbar{height:auto;gap:10px;align-items:flex-start;flex-direction:column;padding:10px 16px}.site-choices,.operation-grid{grid-template-columns:1fr}.start-panel{padding:22px}.site-choice{min-height:280px}.page-shell{width:96%}.hero-actions{align-items:stretch;flex-direction:column}.operation-panel{background-image:none}}
+
+/* Preserve the single-page index look from edd229a while keeping previews playable. */
+.model-detail{
+width:min(920px, 100%);
+margin:18px auto 0;
+border:1px solid var(--line);
+border-radius:14px;
+background:linear-gradient(135deg, rgba(0,0,0,.94), rgba(17,27,8,.9));
+display:grid;
+grid-template-columns:240px 1fr;
+gap:22px;
+padding:20px;
+align-items:center}
+.model-detail[hidden]{display:none}
+.model-detail-art{
+min-height:190px;
+border:1px solid var(--lime2);
+border-radius:10px;
+background:#111 center/cover no-repeat}
+.model-detail h3{
+font-family:Bangers, cursive;
+font-size:44px;
+margin:0 0 8px}
+.model-detail p:not(.kicker){
+text-transform:none;
+color:var(--muted);
+line-height:1.5}
+.model-detail-art.monkey{background-image:url('reference.png');background-position:16% 48%}
+.model-detail-art.robot{background-image:url('reference.png');background-position:58% 25%}
+.model-detail-art.beast{background-image:url('reference.png');background-position:50% 40%}
+.model-detail-art.penguin{background-image:url('reference.png');background-position:65% 66%}
+.model-detail-art.chaos{background-image:url('reference.png');background-position:80% 34%}
+@media(max-width:950px){.model-detail{grid-template-columns:1fr}.model-detail-art{min-height:240px}}
+
+/* Final visual overrides from the edd229a index styling. */
+.hero:before{
+background:url('reference.png') center top/cover no-repeat;
+opacity:.72;
+filter:saturate(1.15) contrast(1.05)}
+.product-img{
+background:linear-gradient(145deg, #151515, #080808);
+background-image:linear-gradient(145deg, #151515, #080808);
+font-size:72px}
+.mini-cast{
+min-height:auto;
+background:none;
+font-size:64px;
+text-align:right}
+@media(max-width:950px){.mini-cast{text-align:left}}
