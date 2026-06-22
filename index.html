@@ -1,113 +1,52 @@
-<!doctype html>
+<!doctype html><!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MUZIKAZ Model Market</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="topbar">
-      <span>Free drops every Friday</span>
-      <span>Neon collectible models, merch, and crew gear</span>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="MUZIKAZ merch, mascot collection, accessories, and loud neon streetwear." />
+<link rel="stylesheet" href="css/styles.css" />
+
+<title>MUZIKAZ | Loud. Proud. Muzikaz.</title>
+</head>
+<body data-page="home" data-prefix="" data-slug="">
+  <div class="topbar"><span>LOUD. PROUD. <b>MUZIKAZ.</b></span><span>🚚 FREE SHIPPING ON ORDERS $75+</span></div>
+  <header class="site-header">
+    <a class="brand" href="index.html"><img src="assets/brand/lightning_mark_transparent.png" alt="MUZIKAZ bolt"><span>MUZIKAZ</span></a>
+    <button class="menu-toggle" aria-label="Open menu">☰</button>
+    <nav class="nav"><a href="index.html" class="active">Home</a><a href="merch.html" class="">Merch</a><a href="collections.html" class="">Collections</a><a href="crew.html" class="">The Crew</a><a href="assets.html" class="">Assets</a></nav>
+    <div class="header-actions"><span>⌕</span><span>♙</span><span class="cart-pill">🛒<b class="cart-count">0</b></span></div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">New merch drop</span>
+        <h1>Loud.<br>Proud.<br><em>Muzikaz.</em></h1>
+        <p>Legends aren’t born. They’re unleashed. Build the crew, wear the brand, and keep the energy loud.</p>
+        <div class="actions"><a class="primary link-button" href="merch.html">Shop the collection</a><a class="ghost link-button" href="crew.html">Meet the crew</a></div>
+      </div>
+    </section>
+    <section class="feature-strip">
+      <article><img src="assets/collections/feature_icons_strip.png" alt=""><div><h3>Premium Quality</h3><p>Built different. Made to last.</p></div></article>
+      <article><img src="assets/ui/lightning_icon_editable.svg" alt=""><div><h3>Bold Designs</h3><p>Stand out. Stay loud.</p></div></article>
+      <article><img src="assets/brand/lightning_mark_transparent.png" alt=""><div><h3>For The Crew</h3><p>Mascots, fans, everyone.</p></div></article>
+      <article><img src="assets/ui/ui_icon_row.png" alt=""><div><h3>Live The Beat</h3><p>More than merch. It’s a vibe.</p></div></article>
+    </section>
+    <section class="section" id="collection"><div class="section-title"><h2>Explore the collection</h2></div><div id="collection-grid" class="grid collections-grid"></div></section>
+    <section class="section dark" id="new"><div class="section-title"><h2>New arrivals</h2></div><div id="new-arrivals" class="grid products-grid"></div></section>
+    <section class="section"><div class="banner-row"><img src="assets/banners/new_legends_unlocked.png" alt="New legends unlocked"><img src="assets/banners/the_crew_banner.png" alt="The crew"><img src="assets/banners/accessories_banner.png" alt="Accessories"></div></section>
+    <section class="newsletter-wrap"><div class="newsletter"><div><h2>Join the <em>Crew</em></h2><p>Get exclusive drops, early access, and more loud content.</p></div><form><input type="email" placeholder="Enter your email"><button>Join</button></form><img src="assets/collections/newsletter_mascots.png" alt="Mascots"></div></section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div><a class="brand" href="index.html"><img src="assets/brand/lightning_mark_transparent.png" alt="MUZIKAZ"><span>MUZIKAZ</span></a><p>LOUD. PROUD. MUZIKAZ.</p><p>GitHub-ready static website package.</p></div>
+      <div><h4>Shop</h4><a href="merch.html">All merch</a><a href="merch.html#new-arrivals">New arrivals</a><a href="merch.html#accessories">Accessories</a></div>
+      <div><h4>Collections</h4><a href="collections/originals.html">Originals</a><a href="collections/legends.html">Legends</a><a href="collections/crew.html">Crew</a></div>
+      <div><h4>Support</h4><a href="#">Shipping</a><a href="#">Returns</a><a href="#">Contact</a><a href="#">FAQ</a></div>
+      <div><h4>Follow</h4><p>Instagram · TikTok · YouTube · X</p><p>© 2026 MUZIKAZ</p></div>
     </div>
-
-    <header class="site-header">
-      <a class="logo" href="#home" aria-label="MUZIKAZ home">
-        <span class="bolt">ϟ</span>
-        <span>MUZIKAZ</span>
-      </a>
-      <nav class="nav" id="primary-navigation" aria-label="Primary navigation">
-        <a class="active" href="#home">Home</a>
-        <a href="#models">Models</a>
-        <a href="#merch">Merch</a>
-        <a href="#crew">Crew</a>
-        <a href="#contact">Contact</a>
-      </nav>
-      <div class="icons" aria-label="Store shortcuts">
-        <button class="icon-button" type="button" data-action="search" aria-label="Search collections">⌕</button>
-        <button class="icon-button cart" type="button" data-action="cart" aria-label="Cart">🛒<b id="cart-count">0</b></button>
-      </div>
-      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">☰</button>
-    </header>
-
-    <main id="home">
-      <section class="hero" aria-labelledby="hero-title">
-        <div></div>
-        <div class="hero-copy">
-          <h1 id="hero-title">Launch the <em>model</em> market</h1>
-          <p>Shop wild character models, animated-ready concepts, and electric MUZIKAZ merch built for creators who live the beat.</p>
-          <a class="btn" href="#models">Shop collection <span aria-hidden="true">→</span></a>
-        </div>
-      </section>
-
-      <section class="feature-strip" aria-label="Store benefits">
-        <article><b>⚡</b><div><strong>Instant Files</strong><span>Preview-ready assets load from this page.</span></div></article>
-        <article><b>🎧</b><div><strong>Beat Culture</strong><span>Neon streetwear energy for every drop.</span></div></article>
-        <article><b>🛡️</b><div><strong>Creator Safe</strong><span>Clear packs for mockups, banners, and pages.</span></div></article>
-        <article><b>🚚</b><div><strong>Fast Drops</strong><span>New legends and merch collections weekly.</span></div></article>
-      </section>
-
-      <section class="section-block" id="models">
-        <div class="section-title"><span></span><h2>New legends unlocked</h2><a href="#merch">View merch</a></div>
-        <div class="collection-grid">
-          <article class="card monkey"><div><h3>Originals</h3><p>Classic crew starters</p><button type="button" data-model="Originals">View</button></div></article>
-          <article class="card robot"><div><h3>Legends</h3><p>Armored future icons</p><button type="button" data-model="Legends">View</button></div></article>
-          <article class="card beast"><div><h3>Beasts</h3><p>Monster power renders</p><button type="button" data-model="Beasts">View</button></div></article>
-          <article class="card penguin"><div><h3>Crew</h3><p>Street-smart mascots</p><button type="button" data-model="Crew">View</button></div></article>
-          <article class="card chaos"><div><h3>Chaos</h3><p>High-energy hybrids</p><button type="button" data-model="Chaos">View</button></div></article>
-        </div>
-        <p class="status-message" id="model-status" role="status">Select a model card to preview its collection, then add it to your cart.</p>
-        <div class="model-detail" id="model-detail" hidden>
-          <div class="model-detail-art" id="model-detail-art" aria-hidden="true"></div>
-          <div>
-            <p class="kicker">Model preview</p>
-            <h3 id="model-detail-title">Originals</h3>
-            <p id="model-detail-copy">Classic crew starters with the loud MUZIKAZ look.</p>
-            <button type="button" data-add-model>Add model to cart</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="section-block" id="merch">
-        <div class="section-title"><span></span><h2>Classic favorites</h2><a href="#crew">Join drops</a></div>
-        <div class="products">
-          <article><i>Hot</i><div class="product-img">🧥</div><strong>Neon Hoodie</strong><p>$64.00</p><button type="button" data-product="Neon Hoodie">Add</button></article>
-          <article><i>New</i><div class="product-img">🧢</div><strong>Crew Cap</strong><p>$28.00</p><button type="button" data-product="Crew Cap">Add</button></article>
-          <article><div class="product-img">🥤</div><strong>Beat Bottle</strong><p>$22.00</p><button type="button" data-product="Beat Bottle">Add</button></article>
-          <article><div class="product-img">🔑</div><strong>Bolt Keychain</strong><p>$12.00</p><button type="button" data-product="Bolt Keychain">Add</button></article>
-          <article><i>Drop</i><div class="product-img">⌚</div><strong>Wristband</strong><p>$16.00</p><button type="button" data-product="Wristband">Add</button></article>
-          <article><div class="product-img">🎫</div><strong>Lanyard</strong><p>$14.00</p><button type="button" data-product="Lanyard">Add</button></article>
-        </div>
-      </section>
-
-      <section class="newsletter" id="crew">
-        <div>
-          <h2>Join the <em>crew</em></h2>
-          <p>Get collection alerts, render previews, and exclusive online event codes.</p>
-        </div>
-        <form>
-          <input type="email" placeholder="you@example.com" aria-label="Email address" required />
-          <button type="submit">Sign up</button>
-        </form>
-        <div class="mini-cast" aria-hidden="true">🐺 🐧 👹</div>
-      </section>
-    </main>
-
-    <footer id="contact">
-      <div>
-        <a class="logo" href="#home"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
-        <p>Neon model-market landing page powered by the included MUZIKAZ asset pack.</p>
-      </div>
-      <div><h4>Shop</h4><a href="#models">Models</a><a href="#merch">Merch</a></div>
-      <div><h4>Support</h4><a href="#contact">Contact</a><a href="#crew">Drops</a></div>
-      <div><h4>Company</h4><a href="#crew">Crew</a><a href="#home">About</a></div>
-      <div><h4>Follow</h4><p class="socials">◎ ♫ ✕</p></div>
-    </footer>
-
-    <script src="script.js"></script>
-  </body>
+  </footer>
+  <script type="module" src="js/main.js"></script>
+</body>
 </html>
