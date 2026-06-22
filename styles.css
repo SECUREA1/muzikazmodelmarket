@@ -760,13 +760,23 @@ body.original-platform .beast{background-image:url('fierce_demon_hybrid_in_actio
 body.original-platform .penguin{background-image:url('the_crew_banner_2x_transparent.png'), url('trait_avatars_row_2_2x.png');background-size:82% auto, auto 82%;background-repeat:no-repeat;background-position:center 22px, 52% 44%}
 body.original-platform .chaos{background-image:url('character_traits_overview_panel_2x.png');background-position:72% center;background-size:auto 100%}
 body.original-platform .product-img{
-background:linear-gradient(145deg, #151515, #080808);
-font-size:72px;
-box-shadow:none}
+background-color:#101210;
+background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88));
+background-position:center;
+background-repeat:no-repeat;
+background-size:contain;
+font-size:0;
+box-shadow:inset 0 0 45px rgba(156,255,0,.08)}
+body.original-platform .product-img.hoodie{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('classic_favorites_banner_transparent.png')}
+body.original-platform .product-img.cap{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('brand_name_tagline_panel_transparent.png')}
+body.original-platform .product-img.bottle{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('accessories_banner_transparent.png')}
+body.original-platform .product-img.keychain{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('cta_shop_collection_transparent.png')}
+body.original-platform .product-img.wristband{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('button_styles_panel_transparent.png')}
+body.original-platform .product-img.lanyard{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('accessories_banner_2x_transparent.png')}
 body.original-platform .mini-cast{
-min-height:auto;
-background:none;
-font-size:64px;
+min-height:112px;
+background:url('trait_avatars_row_2.png') center/contain no-repeat;
+font-size:0;
 text-align:right}
 @media(max-width:950px){
 body.original-platform .hero{grid-template-columns:1fr}
