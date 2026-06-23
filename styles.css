@@ -456,12 +456,18 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.72), rgba(8,8,8,.95));
 background-position:center;
 background-repeat:no-repeat;
 background-size:contain}
-.product-img.hoodie{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('classic_favorites_banner_transparent.png')}
-.product-img.cap{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('brand_name_tagline_panel_transparent.png')}
-.product-img.bottle{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('accessories_banner_transparent.png')}
-.product-img.keychain{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('cta_shop_collection_transparent.png')}
-.product-img.wristband{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('button_styles_panel_transparent.png')}
-.product-img.lanyard{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('accessories_banner_2x_transparent.png')}
+.product-img.hoodie{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/hoodie_tile_2x.png')}
+.product-img.cap{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/cap_tile_2x.png')}
+.product-img.bottle{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/bottle_tile_2x.png')}
+.product-img.keychain{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/keychain_tile_2x.png')}
+.product-img.wristband{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/wristband_tile_2x.png')}
+.product-img.lanyard{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/lanyard_tile_2x.png')}
+.product-img.hero-banner{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('hero_banner_full_2x_transparent.png')}
+.product-img.tagline-tee{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('tagline_crop_2x_transparent.png')}
+.product-img.avatar-stickers{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('trait_avatars_row_2_2x.png')}
+.product-img.event-pass{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('available_online_events_banner_transparent.png')}
+.product-img.logo-patch{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('logo_symbol_crop_2x_transparent.png')}
+.product-img.wordmark-print{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_wordmark_crop_2x_transparent.png')}
 .mini-cast{
 min-height:112px;
 background:url('trait_avatars_row_2.png') center/contain no-repeat}
@@ -728,7 +734,7 @@ background-repeat:no-repeat;
 background-size:contain;
 font-size:0;
 box-shadow:inset 0 0 45px rgba(156,255,0,.08)}
-.product-img.hoodie{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('classic_favorites_banner_transparent.png')}.product-img.cap{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('brand_name_tagline_panel_transparent.png')}.product-img.bottle{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('accessories_banner_transparent.png')}.product-img.keychain{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('cta_shop_collection_transparent.png')}.product-img.wristband{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('button_styles_panel_transparent.png')}.product-img.lanyard{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('accessories_banner_2x_transparent.png')}
+.product-img.hoodie{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/hoodie_tile_2x.png')}.product-img.cap{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/cap_tile_2x.png')}.product-img.bottle{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/bottle_tile_2x.png')}.product-img.keychain{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/keychain_tile_2x.png')}.product-img.wristband{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/wristband_tile_2x.png')}.product-img.lanyard{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/lanyard_tile_2x.png')}
 .mini-cast{min-height:112px;background:url('trait_avatars_row_2.png') center/contain no-repeat;font-size:0;text-align:right}
 @media(max-width:1100px){.collection-grid{grid-template-columns:repeat(2, minmax(0,1fr))}.products{grid-template-columns:repeat(3, minmax(0,1fr))}.feature-strip{grid-template-columns:repeat(2, 1fr)}}
 @media(max-width:950px){
@@ -767,12 +773,12 @@ background-repeat:no-repeat;
 background-size:contain;
 font-size:0;
 box-shadow:inset 0 0 45px rgba(156,255,0,.08)}
-body.original-platform .product-img.hoodie{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('classic_favorites_banner_transparent.png')}
-body.original-platform .product-img.cap{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('brand_name_tagline_panel_transparent.png')}
-body.original-platform .product-img.bottle{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('accessories_banner_transparent.png')}
-body.original-platform .product-img.keychain{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('cta_shop_collection_transparent.png')}
-body.original-platform .product-img.wristband{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('button_styles_panel_transparent.png')}
-body.original-platform .product-img.lanyard{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('accessories_banner_2x_transparent.png')}
+body.original-platform .product-img.hoodie{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/hoodie_tile_2x.png')}
+body.original-platform .product-img.cap{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/cap_tile_2x.png')}
+body.original-platform .product-img.bottle{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/bottle_tile_2x.png')}
+body.original-platform .product-img.keychain{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/keychain_tile_2x.png')}
+body.original-platform .product-img.wristband{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/wristband_tile_2x.png')}
+body.original-platform .product-img.lanyard{background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), url('muzikaz_high_level_image_pack1/05_merch/lanyard_tile_2x.png')}
 body.original-platform .mini-cast{
 min-height:112px;
 background:url('trait_avatars_row_2.png') center/contain no-repeat;
