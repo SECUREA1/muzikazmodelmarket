@@ -961,3 +961,34 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
   .checkout-panel{position:static}
   .checkout-options{grid-template-columns:1fr}
 }
+
+/* Highlighted AR file viewer and mobile pop-out controls */
+.ar-viewer-block{
+  padding-top:34px;
+}
+.ar-viewer-layout{
+  width:96%;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:360px 1fr;
+  gap:20px;
+  align-items:stretch;
+}
+.ar-file-panel,
+.ar-stage-card{
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:radial-gradient(circle at 82% 0, rgba(156,255,0,.16), transparent 30%), linear-gradient(145deg, rgba(7,10,7,.98), rgba(0,0,0,.88));
+  box-shadow:0 18px 42px rgba(0,0,0,.38), 0 0 28px rgba(156,255,0,.08);
+}
+.ar-file-panel{padding:22px;display:flex;flex-direction:column;gap:16px}
+.ar-file-panel h3{font-family:Bangers,cursive;font-size:44px;line-height:.95;margin:0}
+.ar-file-panel p:not(.kicker),.ar-file-drop small,.ar-file-meta{color:var(--muted);line-height:1.45;text-transform:none}
+.ar-file-drop{border:2px dashed rgba(156,255,0,.45);border-radius:16px;padding:18px;background:rgba(156,255,0,.07);cursor:pointer;display:grid;gap:8px}
+.ar-file-drop input{display:none}.ar-file-drop span{color:var(--lime);font-weight:900}.ar-file-meta{border:1px solid rgba(156,255,0,.24);border-radius:12px;padding:12px;background:rgba(0,0,0,.36)}
+.ar-popout-button{width:100%;font-size:18px;background:var(--lime);color:#000;border-color:#fff;box-shadow:0 0 0 4px rgba(156,255,0,.16),0 0 34px rgba(156,255,0,.32);animation:arPulse 1.8s ease-in-out infinite}
+@keyframes arPulse{0%,100%{transform:translateY(0);box-shadow:0 0 0 4px rgba(156,255,0,.16),0 0 34px rgba(156,255,0,.32)}50%{transform:translateY(-2px);box-shadow:0 0 0 8px rgba(156,255,0,.1),0 0 48px rgba(156,255,0,.46)}}
+.ar-stage-card{padding:18px}.ar-stage-toolbar{display:flex;gap:14px;justify-content:space-between;align-items:center;margin-bottom:14px}.ar-stage-toolbar label{display:grid;gap:6px;color:var(--lime);font-size:12px;font-weight:900}.ar-stage-toolbar select{min-width:240px;border:1px solid var(--line);border-radius:9px;padding:11px;background:#050705;color:#fff;text-transform:none}.ar-stage-toolbar strong{color:var(--lime)}
+.ar-device-frame{min-height:520px;border:1px solid rgba(156,255,0,.34);border-radius:28px;background:radial-gradient(circle at 50% 20%, rgba(156,255,0,.16), transparent 35%), #030403;display:grid;place-items:center;overflow:hidden;position:relative}.ar-device-frame:before{content:"AR";position:absolute;top:18px;right:18px;border:1px solid var(--lime);border-radius:999px;padding:8px 12px;color:var(--lime);font-weight:900;background:rgba(0,0,0,.55)}.ar-device-frame img,.ar-device-frame model-viewer{width:100%;height:100%;max-height:520px;object-fit:contain}.ar-device-frame img{filter:drop-shadow(0 22px 34px rgba(0,0,0,.8))}
+.ar-character-strip{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px}.ar-character-chip{width:100%;padding:8px;border-radius:14px;border-color:rgba(156,255,0,.25);background:rgba(0,0,0,.62);display:grid;gap:6px}.ar-character-chip img{width:100%;aspect-ratio:1;object-fit:contain;border-radius:10px;background:#020302}.ar-character-chip span{font-size:11px;color:#fff}.ar-character-chip.active{background:rgba(156,255,0,.2);border-color:var(--lime);box-shadow:0 0 22px rgba(156,255,0,.14)}
+@media(max-width:950px){.ar-viewer-layout{grid-template-columns:1fr;width:100%}.ar-stage-toolbar{align-items:stretch;flex-direction:column}.ar-stage-toolbar select{min-width:0;width:100%}.ar-device-frame{min-height:420px}}

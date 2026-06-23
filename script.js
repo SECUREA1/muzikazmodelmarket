@@ -349,5 +349,98 @@ document.addEventListener('click', (event) => {
 renderModelCards();
 renderMerchOptions();
 seedDesigner();
+
+const arCharacterSelect = document.querySelector('#ar-character-select');
+const arCharacterStrip = document.querySelector('#ar-character-strip');
+const arPreviewImg = document.querySelector('#ar-preview-img');
+const arModelViewer = document.querySelector('#ar-model-viewer');
+const arFileInput = document.querySelector('#ar-file-input');
+const arFileMeta = document.querySelector('#ar-file-meta');
+const arPopoutButton = document.querySelector('#ar-popout-button');
+let customArFileUrl = '';
+
+function selectedArCharacter() {
+  return siteTwoCharacters[Number(arCharacterSelect?.value)] || siteTwoCharacters[0];
+}
+
+function updateArViewer(useCustomFile = Boolean(customArFileUrl)) {
+  if (!arCharacterSelect) return;
+  const character = selectedArCharacter();
+  const characterSrc = characterImage(character);
+  document.querySelector('#ar-character-name').textContent = `${character.name} AR viewer`;
+  document.querySelector('#ar-character-copy').textContent = `${character.bio} Open the highlighted pop-out button to launch this character preview on iPhone Quick Look or Android Scene Viewer when a GLB/USDZ AR file is available.`;
+  if (arPreviewImg) {
+    arPreviewImg.src = characterSrc;
+    arPreviewImg.hidden = useCustomFile && /\.(glb|gltf|usdz|reality)$/i.test(customArFileUrl);
+  }
+  if (arModelViewer) {
+    const isModelFile = useCustomFile && /\.(glb|gltf|usdz|reality)$/i.test(customArFileUrl);
+    arModelViewer.hidden = !isModelFile;
+    if (isModelFile) {
+      if (/\.usdz$/i.test(customArFileUrl) || /\.reality$/i.test(customArFileUrl)) {
+        arModelViewer.setAttribute('ios-src', customArFileUrl);
+      } else {
+        arModelViewer.src = customArFileUrl;
+      }
+      arModelViewer.poster = characterSrc;
+    }
+  }
+  document.querySelectorAll('[data-ar-character]').forEach((button) => button.classList.toggle('active', button.dataset.arCharacter === arCharacterSelect.value));
+  if (arFileMeta && !customArFileUrl) arFileMeta.textContent = `Previewing ${character.name} from the built-in collection artwork.`;
+}
+
+function seedArViewer() {
+  if (!arCharacterSelect || !arCharacterStrip) return;
+  arCharacterSelect.innerHTML = siteTwoCharacters.map((character, index) => `<option value="${index}">${character.name}</option>`).join('');
+  arCharacterStrip.innerHTML = siteTwoCharacters.map((character, index) => `
+    <button class="ar-character-chip" type="button" data-ar-character="${index}">
+      <img src="${characterImage(character)}" alt="${character.name}"><span>${character.name}</span>
+    </button>`).join('');
+  updateArViewer(false);
+}
+
+arCharacterSelect?.addEventListener('change', () => {
+  customArFileUrl = '';
+  updateArViewer(false);
+});
+arCharacterStrip?.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-ar-character]');
+  if (!button || !arCharacterSelect) return;
+  arCharacterSelect.value = button.dataset.arCharacter;
+  customArFileUrl = '';
+  updateArViewer(false);
+});
+arFileInput?.addEventListener('change', (event) => {
+  const [file] = event.currentTarget.files;
+  if (!file) return;
+  if (customArFileUrl) URL.revokeObjectURL(customArFileUrl);
+  customArFileUrl = URL.createObjectURL(file);
+  if (arFileMeta) arFileMeta.textContent = `${file.name} loaded for ${selectedArCharacter().name}.`;
+  if (/^image\//.test(file.type)) {
+    if (arPreviewImg) {
+      arPreviewImg.hidden = false;
+      arPreviewImg.src = customArFileUrl;
+    }
+    if (arModelViewer) arModelViewer.hidden = true;
+  } else {
+    updateArViewer(true);
+  }
+});
+arPopoutButton?.addEventListener('click', () => {
+  if (arModelViewer && !arModelViewer.hidden && typeof arModelViewer.activateAR === 'function') {
+    arModelViewer.activateAR();
+    return;
+  }
+  const character = selectedArCharacter();
+  const popup = window.open('', `muzikaz-ar-${character.file}`, 'popup,width=430,height=740');
+  if (!popup) {
+    alert('Allow pop-ups to open the AR viewer window. Upload a GLB or USDZ file for native AR launch on mobile.');
+    return;
+  }
+  popup.document.write(`<!doctype html><title>${character.name} AR Preview</title><style>body{margin:0;background:#020302;color:#9cff00;font-family:system-ui;text-align:center;text-transform:uppercase}main{min-height:100vh;display:grid;place-items:center;padding:18px}img{max-width:100%;max-height:72vh;object-fit:contain;filter:drop-shadow(0 20px 30px #000)}p{text-transform:none;color:#fff}</style><main><div><h1>${character.name}</h1><img src="${arPreviewImg?.src || characterImage(character)}" alt="${character.name}"><p>Upload a GLB, GLTF, USDZ, or Reality file in the main page to launch native AR on iPhone or Android.</p></div></main>`);
+  popup.document.close();
+});
+
 renderMarketplace();
 seedCharacterCheckout();
+seedArViewer();
