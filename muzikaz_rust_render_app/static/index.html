@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MUZIKAZ Merch Store</title>
-  <meta name="description" content="MUZIKAZ merch, characters, drops, and custom branded products." />
+  <title>MUZIKAZ Live Merch Designer</title>
+  <meta name="description" content="MUZIKAZ live merch designer with all characters, product types, and web 3D AR previews." />
   <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
 <body>
   <header class="site-header">
@@ -16,6 +17,7 @@
       <a href="#merch">Merch</a>
       <a href="#collection">Collection</a>
       <a href="#customize">Customize</a>
+      <a href="#ar-display">AR Display</a>
       <a href="#cart">Cart <span id="cartCount">0</span></a>
     </nav>
   </header>
@@ -25,7 +27,7 @@
       <div class="hero-copy">
         <p class="eyebrow">Free shipping on orders $75+</p>
         <h1>Rep the sound.<br><span>Wear the legacy.</span></h1>
-        <p>High quality merch for the IonCore crew. Swap graphics, update products, launch drops, and customize gear.</p>
+        <p>High quality merch for the full MUZIKAZ crew. Swap every character, product, design type, color, and AR-ready 3D preview in one live designer.</p>
         <a class="btn" href="#merch">Shop all merch ⚡</a>
       </div>
       <div class="hero-card">
@@ -34,10 +36,10 @@
     </section>
 
     <section class="stats">
-      <article><strong>100+</strong><span>Designs</span></article>
-      <article><strong>50+</strong><span>Products</span></article>
-      <article><strong>10+</strong><span>Categories</span></article>
-      <article><strong>1</strong><span>Loud Crew</span></article>
+      <article><strong>25</strong><span>Characters</span></article>
+      <article><strong>12</strong><span>Products</span></article>
+      <article><strong>12</strong><span>Categories</span></article>
+      <article><strong>6</strong><span>Design Types</span></article>
     </section>
 
     <section id="merch" class="section">
@@ -52,11 +54,12 @@
     </section>
 
     <section id="customize" class="customizer section">
-      <div class="section-title"><h2>Customize it. Make it you.</h2><p>Live preview for name, number, product, color, and character.</p></div>
+      <div class="section-title"><h2>Live merch designer</h2><p>Choose any character, product, decoration type, color, name, number, and AR display preview.</p></div>
       <div class="custom-layout">
         <form id="customForm" class="panel">
           <label>Product<select id="customProduct"></select></label>
           <label>Character<select id="customCharacter"></select></label>
+          <label>Design Type<select id="customType"></select></label>
           <label>Name / Text<input id="customName" value="YOUR NAME" maxlength="14"></label>
           <label>Number<input id="customNumber" value="00" maxlength="2"></label>
           <label>Color<input id="customColor" type="color" value="#a6ff00"></label>
@@ -67,14 +70,29 @@
             <span id="mockChar">⚡</span>
             <b id="mockName">YOUR NAME</b>
             <strong id="mockNumber">00</strong>
-            <em>MUZIKAZ</em>
+            <em id="mockProductName">MUZIKAZ</em>
+            <small id="mockType">Front Print</small>
           </div>
+        </div>
+      </div>
+      <div class="type-guide" id="typeGuide"></div>
+    </section>
+
+    <section id="ar-display" class="section ar-section">
+      <div class="section-title"><h2>3D / AR displayer</h2><p>Powered by Google model-viewer with WebXR, Scene Viewer, and Quick Look fallbacks for basic browser AR.</p></div>
+      <div class="ar-layout panel">
+        <model-viewer id="arViewer" camera-controls auto-rotate ar ar-modes="webxr scene-viewer quick-look" shadow-intensity="1" exposure="1" interaction-prompt="auto"></model-viewer>
+        <div class="ar-copy">
+          <p class="eyebrow">Live AR preview</p>
+          <h3 id="arProductLabel">Character × Product · Type</h3>
+          <p>Select product, character, and design type above. On supported mobile browsers, tap the AR button in the viewer to place the item in your space.</p>
+          <a class="btn" href="#customize">Edit Design</a>
         </div>
       </div>
     </section>
 
     <section id="collection" class="section">
-      <div class="section-title"><h2>Character Collection</h2><p>Swap avatars and traits any time.</p></div>
+      <div class="section-title"><h2>Character Collection</h2><p>All available MUZIKAZ characters are loaded into the designer and collection grid.</p></div>
       <div class="grid characters" id="characterGrid"></div>
     </section>
 
