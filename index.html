@@ -57,6 +57,7 @@
             <a href="#merch">Merch</a>
             <a href="#designer">Designer</a>
             <a href="#character-shop">3D Checkout</a>
+            <a href="#ar-viewer">AR Viewer</a>
             <a href="#marketplace">Marketplace</a>
             <a href="#admin">Admin</a>
             <a href="#crew">Crew</a>
@@ -180,6 +181,36 @@
             </div>
         </section>
 
+
+        <section class="section-block ar-viewer-block" id="ar-viewer">
+            <div class="section-title"><span></span><h2>Pop-out AR character viewer</h2><a href="#character-shop">Choose checkout</a></div>
+            <div class="ar-viewer-layout">
+                <aside class="ar-file-panel">
+                    <p class="kicker">File viewer</p>
+                    <h3 id="ar-character-name">Select a character</h3>
+                    <p id="ar-character-copy">Pick any MUZIKAZ character from the collection list, preview the character file, then launch the highlighted AR pop-out on Android or Apple iPhone.</p>
+                    <label class="ar-file-drop">
+                        <input type="file" id="ar-file-input" accept="image/*,.glb,.gltf,.usdz,.reality" />
+                        <span>Upload optional AR file</span>
+                        <small>Images preview instantly. GLB/GLTF/ USDZ files can replace the selected character source.</small>
+                    </label>
+                    <div class="ar-file-meta" id="ar-file-meta">Using built-in character collection artwork.</div>
+                    <button class="ar-popout-button" type="button" id="ar-popout-button">🚀 Pop out AR viewer</button>
+                </aside>
+                <div class="ar-stage-card">
+                    <div class="ar-stage-toolbar">
+                        <label>Character <select id="ar-character-select"></select></label>
+                        <strong id="ar-device-label">iPhone + Android ready</strong>
+                    </div>
+                    <div class="ar-device-frame" id="ar-device-frame">
+                        <img id="ar-preview-img" alt="Selected MUZIKAZ character AR preview" />
+                        <model-viewer id="ar-model-viewer" camera-controls touch-action="pan-y" ar ar-modes="webxr scene-viewer quick-look" shadow-intensity="1" exposure="1" alt="Selected MUZIKAZ AR model" hidden></model-viewer>
+                    </div>
+                    <div class="ar-character-strip" id="ar-character-strip" aria-label="AR character picker"></div>
+                </div>
+            </div>
+        </section>
+
         <section class="section-block marketplace-block" id="marketplace">
             <div class="section-title"><span></span><h2>Marketplace engine</h2><a href="#admin">Manage store</a></div>
             <div class="market-tabs" id="market-tabs"></div>
@@ -219,6 +250,7 @@
         <div><h4>Follow</h4><p class="socials">◎ ♫ ✕</p></div>
     </footer>
 
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
