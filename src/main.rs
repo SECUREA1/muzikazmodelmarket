@@ -6,6 +6,7 @@ use std::path::{Component, Path, PathBuf};
 use std::thread;
 
 const NOT_FOUND_BODY: &str = "404 - File not found";
+const LOGIN_REDIRECT_PATH: &str = "/login.html";
 
 fn main() -> std::io::Result<()> {
     let port = env::var("PORT").unwrap_or_else(|_| "4173".to_string());
@@ -66,6 +67,10 @@ fn handle_connection(mut stream: TcpStream, site_root: &Path) -> std::io::Result
         );
     }
 
+    if is_login_request(target) {
+        return write_redirect(&mut stream, "/", method == "HEAD");
+    }
+
     let path = match requested_path(site_root, target) {
         Some(path) => path,
         None => {
@@ -101,6 +106,14 @@ fn handle_connection(mut stream: TcpStream, site_root: &Path) -> std::io::Result
             method == "HEAD",
         ),
     }
+}
+
+fn is_login_request(target: &str) -> bool {
+    target
+        .split(['?', '#'])
+        .next()
+        .unwrap_or("/")
+        .eq_ignore_ascii_case(LOGIN_REDIRECT_PATH)
 }
 
 fn requested_path(site_root: &Path, target: &str) -> Option<PathBuf> {
@@ -179,6 +192,21 @@ fn write_response(
 
     if !head_only {
         stream.write_all(body)?;
+    }
+
+    stream.flush()
+}
+
+fn write_redirect(stream: &mut TcpStream, location: &str, head_only: bool) -> std::io::Result<()> {
+    let body = format!("Redirecting to {location}");
+    write!(
+        stream,
+        "HTTP/1.1 302 Found\r\nContent-Length: {}\r\nContent-Type: text/plain; charset=utf-8\r\nLocation: {location}\r\nConnection: close\r\n\r\n",
+        body.len()
+    )?;
+
+    if !head_only {
+        stream.write_all(body.as_bytes())?;
     }
 
     stream.flush()
