@@ -56,6 +56,7 @@
             <a href="#models">Models</a>
             <a href="#merch">Merch</a>
             <a href="#designer">Designer</a>
+            <a href="#character-shop">3D Checkout</a>
             <a href="#marketplace">Marketplace</a>
             <a href="#admin">Admin</a>
             <a href="#crew">Crew</a>
@@ -107,6 +108,7 @@
                         <button type="button" data-add-model>Add model to cart</button>
                         <a class="btn" href="#marketplace">Find connected listings</a>
                         <a class="btn ghost" href="#merch">Shop related merch</a>
+                        <a class="btn ghost" href="#character-shop">Customize character checkout</a>
                     </div>
                 </div>
             </div>
@@ -142,6 +144,33 @@
                     <div class="mockup" id="designer-mockup"><span id="preview-character">Inferno</span><strong id="preview-name">MUZIKAZ</strong><b id="preview-number">88</b><small id="preview-sleeve">LIVE THE BEAT</small></div>
                     <div><p class="kicker" id="preview-meta">Premium Hoodie · M · Lightning Crest</p><h3 id="preview-title">Inferno custom drop</h3><button type="button" data-add-custom>Add custom design</button></div>
                 </article>
+            </div>
+        </section>
+
+        <section class="section-block character-shop-block" id="character-shop">
+            <div class="section-title"><span></span><h2>3D model character checkout</h2><a href="#marketplace">View marketplace</a></div>
+            <div class="checkout-layout">
+                <aside class="checkout-panel">
+                    <p class="kicker">Muzikaz Site 2 product picker</p>
+                    <h3 id="checkout-character-name">Select a character</h3>
+                    <p id="checkout-character-copy">Pick any MUZIKAZ character, then checkout any product style for that mascot.</p>
+                    <div class="checkout-preview">
+                        <img id="checkout-character-img" alt="Selected MUZIKAZ character" />
+                    </div>
+                    <div class="checkout-options">
+                        <label>Character <select id="checkout-character-select"></select></label>
+                        <label>Product <select id="checkout-product-select"></select></label>
+                        <label>Size / format <select id="checkout-size-select"></select></label>
+                        <label>Colorway <select id="checkout-color-select"></select></label>
+                        <label>Quantity <input id="checkout-qty" type="number" min="1" max="99" value="1" /></label>
+                    </div>
+                    <div class="checkout-total"><span>Ready checkout</span><strong id="checkout-total">$0.00</strong></div>
+                    <button type="button" id="checkout-add">Checkout selected character product</button>
+                </aside>
+                <div>
+                    <div class="character-catalog" id="character-catalog"></div>
+                    <div class="product-catalog" id="checkout-product-catalog"></div>
+                </div>
             </div>
         </section>
 
