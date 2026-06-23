@@ -43,20 +43,6 @@ nav?.addEventListener('click', (event) => {
   }
 });
 
-document.querySelectorAll('[data-model]').forEach((button) => {
-  button.addEventListener('click', () => {
-    selectedModel = button.dataset.model;
-    const model = getModel(selectedModel);
-    if (modelStatus) modelStatus.textContent = `${selectedModel} collection selected. 3D page, retail matches, and marketplace listings are connected.`;
-    if (modelDetailTitle) modelDetailTitle.textContent = `${selectedModel} · ${model.character}`;
-    if (modelDetailCopy) modelDetailCopy.textContent = model.copy;
-    if (modelDetailArt) modelDetailArt.className = `model-detail-art ${model.css}`;
-    renderLinkedData(model);
-    renderMarketplace('All', selectedModel);
-    if (modelDetail) modelDetail.hidden = false;
-    scrollToSection('model-detail');
-  });
-});
 
 addModelButton?.addEventListener('click', () => {
   if (!selectedModel) {
@@ -75,9 +61,6 @@ document.querySelector('[data-show-all]')?.addEventListener('click', (event) => 
   scrollToSection('models');
 });
 
-document.querySelectorAll('[data-product]').forEach((button) => {
-  button.addEventListener('click', () => updateCart(button));
-});
 
 document.querySelector('#model-linked-data')?.addEventListener('click', (event) => {
   if (event.target instanceof HTMLElement && selectedModel) focusMarketplaceForModel(selectedModel);
@@ -118,6 +101,10 @@ const assetCatalog = {
     { id: 'beasts', name: 'Beasts', css: 'beast', character: 'Red Beast', type: '3D Model Packs', file: 'fierce_demon_hybrid_in_action.png', price: '$58.00', copy: 'Monster-power render pack connected to safe fantasy presentation rules.', merch: ['Wristband', 'Lanyard'] },
     { id: 'crew', name: 'Crew', css: 'penguin', character: 'Crew Penguin', type: 'Character Models', file: 'the_crew_banner_2x_transparent.png', price: '$44.00', copy: 'Street-smart mascot assets for friendly drops, banners, and fan pages.', merch: ['Crew Cap', 'Lanyard'] },
     { id: 'chaos', name: 'Chaos', css: 'chaos', character: 'Chaos Ape', type: '3D Model Packs', file: 'character_traits_overview_panel_2x.png', price: '$69.00', copy: 'High-energy hybrid concepts for the loudest MUZIKAZ creator collection.', merch: ['Neon Hoodie', 'Wristband'] },
+    { id: 'new-legends', name: 'New Legends', css: 'new-legends', character: 'Unlocked Crew', type: 'Character Models', file: 'new_legends_unlocked_2x_transparent.png', price: '$52.00', copy: 'Expanded platform collection art for fresh mascot launches and hero tiles.', merch: ['Hero Banner', 'Tagline Tee'] },
+    { id: 'trait-avatars', name: 'Trait Avatars', css: 'trait-avatars', character: 'Avatar Lineup', type: 'Character Models', file: 'trait_avatars_row_1_2x.png', price: '$46.00', copy: 'Row-ready mascot avatars built for picker graphics, social posts, and profile drops.', merch: ['Avatar Sticker Sheet', 'Crew Cap'] },
+    { id: 'online-events', name: 'Online Events', css: 'online-events', character: 'Event Crew', type: 'Event Model Packs', file: 'available_online_events_banner_2x_transparent.png', price: '$55.00', copy: 'Event-ready visual set for stream drops, ticket pages, and online campaigns.', merch: ['Event Pass', 'Lanyard'] },
+    { id: 'brand-kit', name: 'Brand Kit', css: 'brand-kit', character: 'Logo System', type: 'Brand Asset Packs', file: 'logo_panel_2x_transparent.png', price: '$36.00', copy: 'Built-in MUZIKAZ logo graphics packaged for badges, cards, and marketplace pages.', merch: ['Logo Patch', 'Bolt Keychain'] },
   ],
   retail: [
     { id: 'hoodie', name: 'Neon Hoodie', category: 'Hoodies', price: '$64.00', asset: 'classic_favorites_banner_transparent.png', connectsTo: ['Originals', 'Chaos'] },
@@ -125,7 +112,13 @@ const assetCatalog = {
     { id: 'bottle', name: 'Beat Bottle', category: 'Drinkware', price: '$22.00', asset: 'accessories_banner_transparent.png', connectsTo: ['Legends'] },
     { id: 'keychain', name: 'Bolt Keychain', category: 'Accessories', price: '$12.00', asset: 'cta_shop_collection_transparent.png', connectsTo: ['Originals'] },
     { id: 'wristband', name: 'Wristband', category: 'Accessories', price: '$16.00', asset: 'button_styles_panel_transparent.png', connectsTo: ['Beasts', 'Chaos'] },
-    { id: 'lanyard', name: 'Lanyard', category: 'Accessories', price: '$14.00', asset: 'accessories_banner_2x_transparent.png', connectsTo: ['Beasts', 'Crew'] },
+    { id: 'lanyard', name: 'Lanyard', category: 'Accessories', price: '$14.00', asset: 'accessories_banner_2x_transparent.png', connectsTo: ['Beasts', 'Crew', 'Online Events'] },
+    { id: 'hero-banner', name: 'Hero Banner', category: 'Wall Art', price: '$34.00', asset: 'hero_banner_full_2x_transparent.png', connectsTo: ['New Legends'] },
+    { id: 'tagline-tee', name: 'Tagline Tee', category: 'Tees', price: '$32.00', asset: 'tagline_crop_2x_transparent.png', connectsTo: ['New Legends'] },
+    { id: 'avatar-stickers', name: 'Avatar Sticker Sheet', category: 'Stickers', price: '$18.00', asset: 'trait_avatars_row_2_2x.png', connectsTo: ['Trait Avatars'] },
+    { id: 'event-pass', name: 'Event Pass', category: 'Collectibles', price: '$20.00', asset: 'available_online_events_banner_transparent.png', connectsTo: ['Online Events'] },
+    { id: 'logo-patch', name: 'Logo Patch', category: 'Patches', price: '$15.00', asset: 'logo_symbol_crop_2x_transparent.png', connectsTo: ['Brand Kit'] },
+    { id: 'wordmark-print', name: 'Wordmark Print', category: 'Wall Art', price: '$24.00', asset: 'muzikaz_wordmark_crop_2x_transparent.png', connectsTo: ['Brand Kit'] },
   ],
 };
 
@@ -137,6 +130,53 @@ const marketplaceListings = [
   { type: 'Custom Orders', name: 'Team Sleeve Text Run', price: 'Quote request', copy: 'Custom name, number, logo style, sleeve text, product, and character selections flow from the same catalog.' },
   { type: 'Limited Drops', name: 'Friday Connected Drop', price: 'Locks at sellout', copy: 'Bundles one model pack, one retail item, and one custom designer preset.' },
 ];
+
+
+function renderModelCards() {
+  const collectionGrid = document.querySelector('.collection-grid');
+  if (!collectionGrid) return;
+  collectionGrid.innerHTML = assetCatalog.models.map((model) => `
+    <article class="card ${model.css}" style="--card-art:url('${model.file}')">
+      <div><h3>${model.name}</h3><p>${model.character}</p><button type="button" data-model="${model.name}">View</button></div>
+    </article>`).join('');
+}
+
+function renderMerchOptions() {
+  const productGrid = document.querySelector('.products');
+  if (!productGrid) return;
+  productGrid.innerHTML = assetCatalog.retail.map((product, index) => `
+    <article>
+      ${index < 3 ? `<i>${index === 0 ? 'Hot' : index === 1 ? 'New' : 'Drop'}</i>` : ''}
+      <div class="product-img" style="--product-art:url('${product.asset}')" role="img" aria-label="${product.name} graphic"></div>
+      <strong>${product.name}</strong><p>${product.price}</p><button type="button" data-product="${product.name}">Add</button>
+    </article>`).join('');
+}
+
+function selectModel(modelName) {
+  selectedModel = modelName;
+  const model = getModel(selectedModel);
+  if (modelStatus) modelStatus.textContent = `${selectedModel} collection selected. 3D page, retail matches, and marketplace listings are connected.`;
+  if (modelDetailTitle) modelDetailTitle.textContent = `${selectedModel} · ${model.character}`;
+  if (modelDetailCopy) modelDetailCopy.textContent = model.copy;
+  if (modelDetailArt) {
+    modelDetailArt.className = `model-detail-art ${model.css}`;
+    modelDetailArt.style.setProperty('--model-art', `url('${model.file}')`);
+  }
+  renderLinkedData(model);
+  renderMarketplace('All', selectedModel);
+  if (modelDetail) modelDetail.hidden = false;
+  scrollToSection('model-detail');
+}
+
+document.addEventListener('click', (event) => {
+  const modelButton = event.target.closest('[data-model]');
+  if (modelButton) {
+    selectModel(modelButton.dataset.model);
+    return;
+  }
+  const productButton = event.target.closest('[data-product]');
+  if (productButton) updateCart(productButton);
+});
 
 const productSelect = document.querySelector('#design-product');
 const characterSelect = document.querySelector('#design-character');
@@ -188,7 +228,6 @@ function renderMarketplace(filter = 'All', modelFocus = '') {
   const listings = marketplaceListings.filter((listing) => (filter === 'All' || listing.type === filter) && (!modelFocus || listing.model === modelFocus || listing.copy.includes(modelFocus)));
   marketGrid.innerHTML = listings.map((listing) => `<article><span class="pill">${listing.type}</span><h3>${listing.name}</h3><p>${listing.copy}</p><p class="price">${listing.price}</p><button type="button" data-product="${listing.name}">Add</button></article>`).join('') || '<article><h3>No matches</h3><p>Choose another marketplace tab or model.</p></article>';
   marketTabs.querySelectorAll('[data-market-filter]').forEach((button) => button.addEventListener('click', () => renderMarketplace(button.dataset.marketFilter)));
-  marketGrid.querySelectorAll('[data-product]').forEach((button) => button.addEventListener('click', () => updateCart(button)));
 }
 
 designerControls?.addEventListener('input', updatePreview);
@@ -199,5 +238,7 @@ document.querySelector('#asset-upload')?.addEventListener('change', (event) => {
   document.querySelector('#asset-list').innerHTML = files || '<li>No files selected</li>';
 });
 
+renderModelCards();
+renderMerchOptions();
 seedDesigner();
 renderMarketplace();
