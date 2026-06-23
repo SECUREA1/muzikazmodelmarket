@@ -20,6 +20,13 @@ for (const page of htmlPages) {
   }
 }
 
+const mainHtml = await readFile('dist/index.html', 'utf8');
+for (const id of ['model-detail', 'merch', 'designer', 'marketplace']) {
+  if (!mainHtml.includes(`id="${id}"`)) {
+    throw new Error(`index.html is missing connected section #${id}`);
+  }
+}
+
 const css = await readFile('dist/styles.css', 'utf8');
 if (!css.includes("url('reference.png')")) {
   throw new Error('styles.css does not reference the hero artwork.');

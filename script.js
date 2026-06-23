@@ -10,13 +10,6 @@ const addModelButton = document.querySelector('[data-add-model]');
 let cartItems = 0;
 let selectedModel = '';
 
-const modelCopy = {
-  Originals: 'The Icons: classic crew starters, mascot poses, and brand-ready character assets.',
-  Legends: 'The Unstoppable: armored future icons with neon stage presence and bold silhouettes.',
-  Beasts: 'The Untamed: monster-powered renders with fantasy energy and safe presentation rules.',
-  Crew: 'The Squad: street-smart mascots, fan favorites, and friendly drop-ready characters.',
-  Chaos: 'The Wildcards: high-energy hybrids for creators who want the loudest MUZIKAZ look.',
-};
 
 function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -53,10 +46,13 @@ nav?.addEventListener('click', (event) => {
 document.querySelectorAll('[data-model]').forEach((button) => {
   button.addEventListener('click', () => {
     selectedModel = button.dataset.model;
-    if (modelStatus) modelStatus.textContent = `${selectedModel} collection selected. Preview is open and ready to add to cart.`;
-    if (modelDetailTitle) modelDetailTitle.textContent = selectedModel;
-    if (modelDetailCopy) modelDetailCopy.textContent = modelCopy[selectedModel] || 'MUZIKAZ model collection ready to preview.';
-    if (modelDetailArt) modelDetailArt.className = `model-detail-art ${button.closest('.card')?.classList[1] || ''}`;
+    const model = getModel(selectedModel);
+    if (modelStatus) modelStatus.textContent = `${selectedModel} collection selected. 3D page, retail matches, and marketplace listings are connected.`;
+    if (modelDetailTitle) modelDetailTitle.textContent = `${selectedModel} · ${model.character}`;
+    if (modelDetailCopy) modelDetailCopy.textContent = model.copy;
+    if (modelDetailArt) modelDetailArt.className = `model-detail-art ${model.css}`;
+    renderLinkedData(model);
+    renderMarketplace('All', selectedModel);
     if (modelDetail) modelDetail.hidden = false;
     scrollToSection('model-detail');
   });
@@ -81,6 +77,10 @@ document.querySelector('[data-show-all]')?.addEventListener('click', (event) => 
 
 document.querySelectorAll('[data-product]').forEach((button) => {
   button.addEventListener('click', () => updateCart(button));
+});
+
+document.querySelector('#model-linked-data')?.addEventListener('click', (event) => {
+  if (event.target instanceof HTMLElement && selectedModel) focusMarketplaceForModel(selectedModel);
 });
 
 document.querySelector('[data-action="search"]')?.addEventListener('click', () => {
@@ -111,28 +111,31 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeMenu();
 });
 
-const designerCharacters = [
-  { id: 'inferno', name: 'Inferno', traits: ['Fire', 'Loud', 'Chaos'] },
-  { id: 'blacksheep', name: 'Black Sheep', traits: ['Rare', 'Leader'] },
-  { id: 'doge', name: 'Doge', traits: ['Loyal', 'Meme'] },
-  { id: 'penguin', name: 'Penguin', traits: ['Crew', 'Cool'] },
-  { id: 'ape', name: 'Ape', traits: ['Original', 'Power'] },
-];
+const assetCatalog = {
+  models: [
+    { id: 'originals', name: 'Originals', css: 'monkey', character: 'Ape', type: 'Character Models', file: 'reference.png', price: '$39.00', copy: 'Classic starter poses, mascot turnarounds, and brand-ready preview files.', merch: ['Neon Hoodie', 'Bolt Keychain'] },
+    { id: 'legends', name: 'Legends', css: 'robot', character: 'Cyber Wolf', type: '3D Model Packs', file: 'futuristic_armored_wolf_humanoid.png', price: '$64.00', copy: 'Armored future icon with dramatic neon render support and creator-safe styling.', merch: ['Crew Cap', 'Beat Bottle'] },
+    { id: 'beasts', name: 'Beasts', css: 'beast', character: 'Red Beast', type: '3D Model Packs', file: 'fierce_demon_hybrid_in_action.png', price: '$58.00', copy: 'Monster-power render pack connected to safe fantasy presentation rules.', merch: ['Wristband', 'Lanyard'] },
+    { id: 'crew', name: 'Crew', css: 'penguin', character: 'Crew Penguin', type: 'Character Models', file: 'the_crew_banner_2x_transparent.png', price: '$44.00', copy: 'Street-smart mascot assets for friendly drops, banners, and fan pages.', merch: ['Crew Cap', 'Lanyard'] },
+    { id: 'chaos', name: 'Chaos', css: 'chaos', character: 'Chaos Ape', type: '3D Model Packs', file: 'character_traits_overview_panel_2x.png', price: '$69.00', copy: 'High-energy hybrid concepts for the loudest MUZIKAZ creator collection.', merch: ['Neon Hoodie', 'Wristband'] },
+  ],
+  retail: [
+    { id: 'hoodie', name: 'Neon Hoodie', category: 'Hoodies', price: '$64.00', asset: 'classic_favorites_banner_transparent.png', connectsTo: ['Originals', 'Chaos'] },
+    { id: 'cap', name: 'Crew Cap', category: 'Headwear', price: '$28.00', asset: 'brand_name_tagline_panel_transparent.png', connectsTo: ['Legends', 'Crew'] },
+    { id: 'bottle', name: 'Beat Bottle', category: 'Drinkware', price: '$22.00', asset: 'accessories_banner_transparent.png', connectsTo: ['Legends'] },
+    { id: 'keychain', name: 'Bolt Keychain', category: 'Accessories', price: '$12.00', asset: 'cta_shop_collection_transparent.png', connectsTo: ['Originals'] },
+    { id: 'wristband', name: 'Wristband', category: 'Accessories', price: '$16.00', asset: 'button_styles_panel_transparent.png', connectsTo: ['Beasts', 'Chaos'] },
+    { id: 'lanyard', name: 'Lanyard', category: 'Accessories', price: '$14.00', asset: 'accessories_banner_2x_transparent.png', connectsTo: ['Beasts', 'Crew'] },
+  ],
+};
 
-const designerProducts = [
-  { id: 'hoodie', name: 'Premium Hoodie', category: 'Hoodies', price: 59.99 },
-  { id: 'tee', name: 'Graphic T-Shirt', category: 'T-Shirts', price: 29.99 },
-  { id: 'cap', name: 'Crew Cap', category: 'Headwear', price: 28.00 },
-  { id: 'bottle', name: 'IonCore Bottle', category: 'Drinkware', price: 24.99 },
-  { id: 'poster', name: 'Drop Poster', category: 'Posters', price: 19.99 },
-];
-
+const designerCharacters = assetCatalog.models.map((model) => ({ id: model.id, name: model.character, traits: [model.name, model.type] }));
+const designerProducts = assetCatalog.retail.map((product) => ({ id: product.id, name: product.name, category: product.category, price: Number(product.price.replace(/[^0-9.]/g, '')) }));
 const marketplaceListings = [
-  { type: 'Product Listings', name: 'Inferno Hoodie', price: '$59.99', copy: 'Buy-now apparel generated from the character system.' },
-  { type: 'Auctions', name: 'Black Sheep 1/1 Sample', price: 'Current bid $112', copy: 'Timed auction concept for rare production samples.' },
-  { type: 'Character Merch', name: 'Penguin Crew Pack', price: '$74.00', copy: 'Bundle with cap, sticker pack, and poster.' },
-  { type: 'Custom Orders', name: 'Team Sleeve Text Run', price: 'Quote request', copy: 'Custom name, number, logo style, and sleeve text.' },
-  { type: 'Limited Drops', name: 'Doge Friday Drop', price: 'Locks at sellout', copy: 'Countdown-ready limited product card.' },
+  ...assetCatalog.models.map((model) => ({ type: model.type, name: `${model.name} 3D Model Pack`, price: model.price, copy: `${model.copy} Source: ${model.file}`, model: model.name })),
+  ...assetCatalog.retail.map((product) => ({ type: 'Retail Pages', name: product.name, price: product.price, copy: `${product.category} connected to ${product.connectsTo.join(' + ')} model data.`, product: product.name })),
+  { type: 'Custom Orders', name: 'Team Sleeve Text Run', price: 'Quote request', copy: 'Custom name, number, logo style, sleeve text, product, and character selections flow from the same catalog.' },
+  { type: 'Limited Drops', name: 'Friday Connected Drop', price: 'Locks at sellout', copy: 'Bundles one model pack, one retail item, and one custom designer preset.' },
 ];
 
 const productSelect = document.querySelector('#design-product');
@@ -140,6 +143,22 @@ const characterSelect = document.querySelector('#design-character');
 const designerControls = document.querySelector('#designer-controls');
 const marketTabs = document.querySelector('#market-tabs');
 const marketGrid = document.querySelector('#market-grid');
+const linkedData = document.querySelector('#model-linked-data');
+
+function getModel(name) {
+  return assetCatalog.models.find((model) => model.name === name) || assetCatalog.models[0];
+}
+
+function renderLinkedData(model) {
+  if (!linkedData) return;
+  const relatedMerch = assetCatalog.retail.filter((product) => product.connectsTo.includes(model.name));
+  linkedData.innerHTML = `<strong>Connected repo data</strong><ul>${relatedMerch.map((product) => `<li>${product.name} · ${product.category} · ${product.price}</li>`).join('')}</ul>`;
+}
+
+function focusMarketplaceForModel(modelName) {
+  renderMarketplace('All', modelName);
+  scrollToSection('marketplace');
+}
 
 function seedDesigner() {
   if (!productSelect || !characterSelect) return;
@@ -162,12 +181,12 @@ function updatePreview() {
   document.querySelector('#preview-meta').textContent = `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${character.traits.join(' / ')}`;
 }
 
-function renderMarketplace(filter = 'All') {
+function renderMarketplace(filter = 'All', modelFocus = '') {
   if (!marketTabs || !marketGrid) return;
   const tabs = ['All', ...new Set(marketplaceListings.map((listing) => listing.type))];
   marketTabs.innerHTML = tabs.map((tab) => `<button type="button" class="${tab === filter ? 'active' : ''}" data-market-filter="${tab}">${tab}</button>`).join('');
-  const listings = filter === 'All' ? marketplaceListings : marketplaceListings.filter((listing) => listing.type === filter);
-  marketGrid.innerHTML = listings.map((listing) => `<article><span class="pill">${listing.type}</span><h3>${listing.name}</h3><p>${listing.copy}</p><p class="price">${listing.price}</p><button type="button" data-product="${listing.name}">Add</button></article>`).join('');
+  const listings = marketplaceListings.filter((listing) => (filter === 'All' || listing.type === filter) && (!modelFocus || listing.model === modelFocus || listing.copy.includes(modelFocus)));
+  marketGrid.innerHTML = listings.map((listing) => `<article><span class="pill">${listing.type}</span><h3>${listing.name}</h3><p>${listing.copy}</p><p class="price">${listing.price}</p><button type="button" data-product="${listing.name}">Add</button></article>`).join('') || '<article><h3>No matches</h3><p>Choose another marketplace tab or model.</p></article>';
   marketTabs.querySelectorAll('[data-market-filter]').forEach((button) => button.addEventListener('click', () => renderMarketplace(button.dataset.marketFilter)));
   marketGrid.querySelectorAll('[data-product]').forEach((button) => button.addEventListener('click', () => updateCart(button)));
 }
