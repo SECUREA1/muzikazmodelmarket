@@ -55,6 +55,9 @@
             <a href="#home">Home</a>
             <a href="#models">Models</a>
             <a href="#merch">Merch</a>
+            <a href="#designer">Designer</a>
+            <a href="#marketplace">Marketplace</a>
+            <a href="#admin">Admin</a>
             <a href="#crew">Crew</a>
             <a href="#contact">Contact</a>
         </nav>
@@ -104,6 +107,42 @@
                 <article><div class="product-img keychain" role="img" aria-label="MUZIKAZ bolt keychain graphic"></div><strong>Bolt Keychain</strong><p>$12.00</p><button type="button" data-product="Bolt Keychain">Add</button></article>
                 <article><i>Drop</i><div class="product-img wristband" role="img" aria-label="MUZIKAZ wristband graphic"></div><strong>Wristband</strong><p>$16.00</p><button type="button" data-product="Wristband">Add</button></article>
                 <article><div class="product-img lanyard" role="img" aria-label="MUZIKAZ lanyard graphic"></div><strong>Lanyard</strong><p>$14.00</p><button type="button" data-product="Lanyard">Add</button></article>
+            </div>
+        </section>
+
+
+        <section class="section-block designer-block" id="designer">
+            <div class="section-title"><span></span><h2>Live merch designer</h2><a href="#marketplace">Open marketplace</a></div>
+            <div class="designer-layout">
+                <form class="designer-controls" id="designer-controls">
+                    <label>Product <select name="product" id="design-product"></select></label>
+                    <label>Character <select name="character" id="design-character"></select></label>
+                    <label>Color <input type="color" name="color" value="#9cff00" /></label>
+                    <label>Size <select name="size"><option>S</option><option selected>M</option><option>L</option><option>XL</option><option>2XL</option></select></label>
+                    <label>Name <input name="name" maxlength="16" value="MUZIKAZ" /></label>
+                    <label>Number <input name="number" maxlength="2" value="88" /></label>
+                    <label>Logo Style <select name="logo"><option>Lightning Crest</option><option>Wordmark</option><option>Badge Patch</option></select></label>
+                    <label>Sleeve Text <input name="sleeve" maxlength="22" value="LIVE THE BEAT" /></label>
+                </form>
+                <article class="designer-preview" aria-live="polite">
+                    <div class="mockup" id="designer-mockup"><span id="preview-character">Inferno</span><strong id="preview-name">MUZIKAZ</strong><b id="preview-number">88</b><small id="preview-sleeve">LIVE THE BEAT</small></div>
+                    <div><p class="kicker" id="preview-meta">Premium Hoodie · M · Lightning Crest</p><h3 id="preview-title">Inferno custom drop</h3><button type="button" data-add-custom>Add custom design</button></div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section-block marketplace-block" id="marketplace">
+            <div class="section-title"><span></span><h2>Marketplace engine</h2><a href="#admin">Manage store</a></div>
+            <div class="market-tabs" id="market-tabs"></div>
+            <div class="market-grid" id="market-grid"></div>
+        </section>
+
+        <section class="section-block admin-block" id="admin">
+            <div class="section-title"><span></span><h2>Admin command center</h2><a href="#crew">Join drops</a></div>
+            <div class="admin-layout">
+                <label class="upload-zone">Upload Graphics<input type="file" id="asset-upload" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" multiple /><span>PNG · JPG · GIF · SVG · WEBP</span></label>
+                <div class="admin-list"><h3>Generated assets</h3><ul id="asset-list"><li>Thumbnails ready</li><li>Store tiles ready</li><li>Product previews ready</li></ul></div>
+                <div class="analytics"><h3>Analytics</h3><p><b id="metric-orders">128</b> Orders</p><p><b id="metric-inventory">842</b> Inventory units</p><p><b id="metric-conversion">7.4%</b> Conversion</p></div>
             </div>
         </section>
 
