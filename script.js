@@ -94,6 +94,38 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeMenu();
 });
 
+
+const siteTwoCharacters = [
+  {name:'Sparky', role:'The Inventor', file:'sparky', group:'New Legends', bio:'Brilliant, chaotic, and unstoppable for inventor-themed merch drops.'},
+  {name:'Nexus', role:'The Sentinel', file:'nexus', group:'New Legends', bio:'Future-forward sentinel for premium apparel and high-tech product presentation.'},
+  {name:'Inferno', role:'The Unleashed', file:'inferno', group:'New Legends', bio:'Raw heat and chaos for aggressive campaign art and darker merch designs.'},
+  {name:'Rumble', role:'The Brute', file:'rumble', group:'New Legends', bio:'Big strength and big attitude for statement hoodies and event banners.'},
+  {name:'Chillz', role:'The Strategist', file:'chillz', group:'New Legends', bio:'Cool, calm, and three steps ahead for caps, stickers, and confidence gear.'},
+  {name:'Bax', role:'The Rebel', file:'bax', group:'The Crew', bio:'A red-hot rebel mascot for loud streetwear and underground promo drops.'},
+  {name:'Ion Wolf', role:'The Night Runner', file:'ion-wolf', group:'The Crew', bio:'A neon wolf with night-runner style for jackets, hats, and limited drops.'},
+  {name:'Flick', role:'The Spark', file:'flick', group:'The Crew', bio:'Bright and fan-friendly for youth gear, stickers, and family events.'},
+  {name:'Byte', role:'The Signal', file:'byte', group:'The Crew', bio:'Tech duck mascot for audio culture, digital promos, and signal-themed merch.'},
+  {name:'Luna', role:'The Soft Power', file:'luna', group:'The Crew', bio:'A softer mascot for cozy hoodies, plush ideas, and lifestyle products.'},
+  {name:'Muz Cat', role:'The Producer', file:'muz-cat', group:'The Crew', bio:'Studio cat built for creator merch, desk mats, posters, and music drops.'},
+  {name:'Grump', role:'The Enforcer', file:'grump', group:'The Crew', bio:'A serious heavy-hitter for classic tees and no-nonsense campaigns.'},
+  {name:'Sharko', role:'The Finisher', file:'sharko', group:'The Crew', bio:'Sharp mascot for performance gear, bold posters, and aggressive launches.'},
+  {name:'Buzz', role:'The Hype Bee', file:'buzz', group:'The Crew', bio:'Bright bee mascot for stickers, kid-friendly merch, and social campaigns.'},
+  {name:'Wild', role:'The Pilot Pug', file:'wild', group:'The Crew', bio:'Adventure dog for hats, keychains, pins, and travel-themed event mascots.'},
+  {name:'Grok', role:'The Survivor', file:'grok', group:'New Additions', bio:'Rugged mascot for outdoor-style apparel, patches, and tough accessories.'},
+  {name:'Buzz Jr.', role:'The Mini Hype', file:'buzz-jr', group:'New Additions', bio:'Mini hype mascot for stickers, small accessories, and family bundles.'}
+];
+
+const siteTwoProducts = [
+  {id:'tee', name:'Graphic Tee', price:29.99, desc:'Front print tee with character art and optional back hit.', sizes:['XS','S','M','L','XL','2XL','3XL'], colors:['Black','Acid Green','White','Stone Grey']},
+  {id:'hoodie', name:'Premium Hoodie', price:59.99, desc:'Heavy fleece hoodie with oversized artwork and sleeve logo detailing.', sizes:['S','M','L','XL','2XL','3XL'], colors:['Black','Shadow Purple','Army Green','Ash Grey']},
+  {id:'poster', name:'Poster Print', price:19.99, desc:'Promotional art poster for booths, launches, and room decor.', sizes:['11x17','18x24','24x36'], colors:['Full Color','Monochrome Green','Blackout Edition']},
+  {id:'hat', name:'Snapback Cap', price:27.99, desc:'Structured cap with mascot logo, icon mark, or side detail.', sizes:['One Size'], colors:['Black','Charcoal','Neon Green','Cream']},
+  {id:'bottle', name:'Water Bottle', price:24.99, desc:'Matte bottle with vertical graphic and slogan placement.', sizes:['20 oz','24 oz'], colors:['Black','Lime Fade','Steel Grey','Purple Haze']},
+  {id:'lanyard', name:'Lanyard', price:12.99, desc:'Event-ready woven lanyard with repeat logos and mascot color cues.', sizes:['Standard'], colors:['Black / Green','Purple / Lime','Grey / Green']},
+  {id:'pin', name:'Enamel Pin', price:9.99, desc:'Collectible character icon pin for jackets, hats, and accessories.', sizes:['1.25 in','1.5 in'], colors:['Signature Colors','Blackout Metal','Glow Green']},
+  {id:'sticker', name:'Sticker Pack', price:7.99, desc:'Mascot sticker bundle with logo hits, slogans, and collectible extras.', sizes:['5-Pack','8-Pack','12-Pack'], colors:['Mixed Set','Green Monochrome','Character Palette']}
+];
+
 const assetCatalog = {
   models: [
     { id: 'originals', name: 'Originals', css: 'monkey', character: 'Ape', type: 'Character Models', file: 'reference.png', price: '$39.00', copy: 'Classic starter poses, mascot turnarounds, and brand-ready preview files.', merch: ['Neon Hoodie', 'Bolt Keychain'] },
@@ -238,7 +270,84 @@ document.querySelector('#asset-upload')?.addEventListener('change', (event) => {
   document.querySelector('#asset-list').innerHTML = files || '<li>No files selected</li>';
 });
 
+
+function characterImage(character) {
+  return `muzikaz_site 2/assets/characters/${character.file}.jpg`;
+}
+
+function money(amount) {
+  return `$${amount.toFixed(2)}`;
+}
+
+function seedCharacterCheckout() {
+  const characterSelect = document.querySelector('#checkout-character-select');
+  const productSelect = document.querySelector('#checkout-product-select');
+  const catalog = document.querySelector('#character-catalog');
+  const productCatalog = document.querySelector('#checkout-product-catalog');
+  if (!characterSelect || !productSelect || !catalog || !productCatalog) return;
+  characterSelect.innerHTML = siteTwoCharacters.map((character, index) => `<option value="${index}">${character.name}</option>`).join('');
+  productSelect.innerHTML = siteTwoProducts.map((product, index) => `<option value="${index}">${product.name}</option>`).join('');
+  catalog.innerHTML = siteTwoCharacters.map((character, index) => `
+    <button class="character-tile" type="button" data-checkout-character="${index}">
+      <img src="${characterImage(character)}" alt="${character.name}">
+      <span>${character.group}</span><strong>${character.name}</strong><small>${character.role}</small>
+    </button>`).join('');
+  productCatalog.innerHTML = siteTwoProducts.map((product, index) => `
+    <button class="checkout-product-tile" type="button" data-checkout-product="${index}">
+      <span>${product.name}</span><strong>${money(product.price)}</strong><small>${product.desc}</small>
+    </button>`).join('');
+  updateCharacterCheckout();
+}
+
+function updateCharacterCheckout() {
+  const characterSelect = document.querySelector('#checkout-character-select');
+  const productSelect = document.querySelector('#checkout-product-select');
+  if (!characterSelect || !productSelect) return;
+  const character = siteTwoCharacters[Number(characterSelect.value)] || siteTwoCharacters[0];
+  const product = siteTwoProducts[Number(productSelect.value)] || siteTwoProducts[0];
+  document.querySelector('#checkout-character-name').textContent = `${character.name} · ${product.name}`;
+  document.querySelector('#checkout-character-copy').textContent = `${character.bio} Choose a ${product.name.toLowerCase()}, colorway, format, and quantity, then add the exact character-product combo to checkout.`;
+  const image = document.querySelector('#checkout-character-img');
+  if (image) image.src = characterImage(character);
+  const sizeSelect = document.querySelector('#checkout-size-select');
+  const colorSelect = document.querySelector('#checkout-color-select');
+  if (sizeSelect) sizeSelect.innerHTML = product.sizes.map((size) => `<option>${size}</option>`).join('');
+  if (colorSelect) colorSelect.innerHTML = product.colors.map((color) => `<option>${color}</option>`).join('');
+  updateCheckoutTotal();
+  document.querySelectorAll('[data-checkout-character]').forEach((button) => button.classList.toggle('active', button.dataset.checkoutCharacter === characterSelect.value));
+  document.querySelectorAll('[data-checkout-product]').forEach((button) => button.classList.toggle('active', button.dataset.checkoutProduct === productSelect.value));
+}
+
+function updateCheckoutTotal() {
+  const product = siteTwoProducts[Number(document.querySelector('#checkout-product-select')?.value)] || siteTwoProducts[0];
+  const qty = Math.max(1, Number(document.querySelector('#checkout-qty')?.value) || 1);
+  document.querySelector('#checkout-total').textContent = money(product.price * qty);
+}
+
+document.querySelector('#checkout-character-select')?.addEventListener('change', updateCharacterCheckout);
+document.querySelector('#checkout-product-select')?.addEventListener('change', updateCharacterCheckout);
+document.querySelector('#checkout-qty')?.addEventListener('input', updateCheckoutTotal);
+document.querySelector('#checkout-add')?.addEventListener('click', (event) => {
+  const character = siteTwoCharacters[Number(document.querySelector('#checkout-character-select')?.value)] || siteTwoCharacters[0];
+  const product = siteTwoProducts[Number(document.querySelector('#checkout-product-select')?.value)] || siteTwoProducts[0];
+  updateCart(event.currentTarget, 'Checkout added');
+  alert(`${character.name} ${product.name} is in your cart. Connect this demo checkout to Shopify, Stripe, WooCommerce, or your preferred product checkout.`);
+});
+document.addEventListener('click', (event) => {
+  const characterButton = event.target.closest('[data-checkout-character]');
+  if (characterButton) {
+    document.querySelector('#checkout-character-select').value = characterButton.dataset.checkoutCharacter;
+    updateCharacterCheckout();
+  }
+  const productButton = event.target.closest('[data-checkout-product]');
+  if (productButton) {
+    document.querySelector('#checkout-product-select').value = productButton.dataset.checkoutProduct;
+    updateCharacterCheckout();
+  }
+});
+
 renderModelCards();
 renderMerchOptions();
 seedDesigner();
 renderMarketplace();
+seedCharacterCheckout();
