@@ -10,6 +10,11 @@ const addModelButton = document.querySelector('[data-add-model]');
 const modelPageLink = document.querySelector('#model-page-link');
 let cartItems = 0;
 let selectedModel = '';
+const ownedProfilesSeed = {
+  'crew@muzikaz.example': ['Originals 3D Model Pack', 'Neon Hoodie', 'Beat Bottle'],
+  'collector@muzikaz.example': ['Legends 3D Model Pack', 'Crew Cap', 'Hero Banner'],
+};
+let currentMemberEmail = window.localStorage.getItem('muzikazBottleMemberEmail') || '';
 
 
 function scrollToSection(id) {
@@ -30,6 +35,82 @@ function updateCart(button, label = 'Added') {
   button.textContent = label;
   window.setTimeout(() => { button.textContent = originalText; }, 1200);
 }
+
+function normalizeMemberEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+function readOwnedProfiles() {
+  const saved = window.localStorage.getItem('muzikazOwnedProfiles');
+  if (saved) {
+    try {
+      return { ...ownedProfilesSeed, ...JSON.parse(saved) };
+    } catch (error) {
+      return { ...ownedProfilesSeed };
+    }
+  }
+  return { ...ownedProfilesSeed };
+}
+
+function writeOwnedProfiles(profiles) {
+  window.localStorage.setItem('muzikazOwnedProfiles', JSON.stringify(profiles));
+}
+
+function claimOwnedAsset(assetName, source = 'Marketplace claim') {
+  const owner = normalizeMemberEmail(currentMemberEmail);
+  if (!owner || !assetName) return;
+  const profiles = readOwnedProfiles();
+  const owned = profiles[owner] || [];
+  const item = `${assetName} · ${source}`;
+  if (!owned.some((entry) => entry.startsWith(assetName))) {
+    owned.push(item);
+    profiles[owner] = owned;
+    writeOwnedProfiles(profiles);
+  }
+  renderOwnedCollection(owner);
+}
+
+function ownedAssetDetail(assetName) {
+  const model = assetCatalog.models.find((item) => assetName.includes(item.name));
+  if (model) return { title: assetName, type: model.type, image: model.file, copy: model.copy };
+  const product = assetCatalog.retail.find((item) => assetName.includes(item.name));
+  if (product) return { title: assetName, type: product.category, image: product.asset, copy: `Connected to ${product.connectsTo.join(' + ')} and tied to the owner's account.` };
+  return { title: assetName, type: 'Uploaded asset', image: 'logo_panel_2x_transparent.png', copy: 'Member-uploaded file saved to this account collection.' };
+}
+
+function renderOwnedCollection(preferredOwner = currentMemberEmail) {
+  const current = document.querySelector('#owned-current-user');
+  const copy = document.querySelector('#owned-current-copy');
+  const select = document.querySelector('#owned-profile-select');
+  const summary = document.querySelector('#owned-assets-summary');
+  const grid = document.querySelector('#owned-assets-grid');
+  if (!current || !copy || !select || !summary || !grid) return;
+  const profiles = readOwnedProfiles();
+  const owner = normalizeMemberEmail(preferredOwner || currentMemberEmail);
+  if (!currentMemberEmail) {
+    current.textContent = 'Login required';
+    copy.textContent = 'Log in above to tie purchased, uploaded, and claimed assets to your account.';
+    summary.innerHTML = '<article><strong>Locked</strong><span>Member collections unlock after login.</span></article>';
+    grid.innerHTML = '';
+    return;
+  }
+  if (!profiles[currentMemberEmail]) {
+    profiles[currentMemberEmail] = ['Brand Kit 3D Model Pack · Starter owner asset'];
+    writeOwnedProfiles(profiles);
+  }
+  const owners = Object.keys(profiles).sort((a, b) => (a === currentMemberEmail ? -1 : b === currentMemberEmail ? 1 : a.localeCompare(b)));
+  select.disabled = false;
+  select.innerHTML = owners.map((profile) => `<option value="${profile}" ${profile === owner ? 'selected' : ''}>${profile}${profile === currentMemberEmail ? ' (you)' : ''}</option>`).join('');
+  current.textContent = currentMemberEmail;
+  copy.textContent = owner === currentMemberEmail ? 'Your login is connected to every claimed product, model pack, and upload below.' : `Viewing ${owner}'s shared account assets while logged in as ${currentMemberEmail}.`;
+  const assets = profiles[owner] || [];
+  summary.innerHTML = `<article><strong>${assets.length}</strong><span>Total owned assets</span></article><article><strong>${owner === currentMemberEmail ? 'Owner' : 'Viewer'}</strong><span>${owner}</span></article><article><strong>Shared</strong><span>Logged-in members can view account collections.</span></article>`;
+  grid.innerHTML = assets.map((asset) => {
+    const detail = ownedAssetDetail(asset);
+    return `<article><img src="${detail.image}" alt="${detail.title}"><span class="pill">${detail.type}</span><h3>${detail.title}</h3><p>${detail.copy}</p></article>`;
+  }).join('') || '<article><h3>No assets yet</h3><p>Add marketplace drops, checkout character products, or upload graphics to build this account collection.</p></article>';
+}
+
 
 menuButton?.addEventListener('click', () => {
   const isOpen = nav.classList.toggle('is-open');
@@ -221,7 +302,10 @@ document.addEventListener('click', (event) => {
     return;
   }
   const productButton = event.target.closest('[data-product]');
-  if (productButton) updateCart(productButton);
+  if (productButton) {
+    updateCart(productButton);
+    claimOwnedAsset(productButton.dataset.product, 'Added from storefront');
+  }
 });
 
 const productSelect = document.querySelector('#design-product');
@@ -278,10 +362,14 @@ function renderMarketplace(filter = 'All', modelFocus = '') {
 
 designerControls?.addEventListener('input', updatePreview);
 designerControls?.addEventListener('change', updatePreview);
-document.querySelector('[data-add-custom]')?.addEventListener('click', (event) => updateCart(event.currentTarget, 'Design added'));
+document.querySelector('[data-add-custom]')?.addEventListener('click', (event) => {
+  updateCart(event.currentTarget, 'Design added');
+  claimOwnedAsset(document.querySelector('#preview-title')?.textContent || 'Custom design', 'Designer save');
+});
 document.querySelector('#asset-upload')?.addEventListener('change', (event) => {
   const files = [...event.currentTarget.files].map((file) => `<li>${file.name} → thumbnails, tiles, cards, previews queued</li>`).join('');
   document.querySelector('#asset-list').innerHTML = files || '<li>No files selected</li>';
+  [...event.currentTarget.files].forEach((file) => claimOwnedAsset(file.name, 'Uploaded graphic'));
 });
 
 
@@ -345,7 +433,8 @@ document.querySelector('#checkout-add')?.addEventListener('click', (event) => {
   const character = siteTwoCharacters[Number(document.querySelector('#checkout-character-select')?.value)] || siteTwoCharacters[0];
   const product = siteTwoProducts[Number(document.querySelector('#checkout-product-select')?.value)] || siteTwoProducts[0];
   updateCart(event.currentTarget, 'Checkout added');
-  alert(`${character.name} ${product.name} is in your cart. Connect this demo checkout to Shopify, Stripe, WooCommerce, or your preferred product checkout.`);
+  claimOwnedAsset(`${character.name} ${product.name}`, 'Character checkout');
+  alert(`${character.name} ${product.name} is in your cart and saved to ${currentMemberEmail || 'the active'} owned collection. Connect this demo checkout to Shopify, Stripe, WooCommerce, or your preferred product checkout.`);
 });
 document.addEventListener('click', (event) => {
   const characterButton = event.target.closest('[data-checkout-character]');
@@ -465,13 +554,18 @@ function initBottleLogin() {
     if (status) status.textContent = message;
   };
   if (window.localStorage.getItem('muzikazBottleMember') === 'true') {
-    unlock('Bottle member access is active. Subscriber tools are unlocked.');
+    currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
+    unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`);
+    renderOwnedCollection(currentMemberEmail);
   }
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const data = new FormData(form);
+    currentMemberEmail = normalizeMemberEmail(data.get('email'));
     window.localStorage.setItem('muzikazBottleMember', 'true');
-    unlock(`${data.get('email')} is logged in. Custom uploads, AR viewer, designer, and legendary drops are unlocked.`);
+    window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+    renderOwnedCollection(currentMemberEmail);
+    unlock(`${currentMemberEmail} is logged in. Owned assets are tied to this account, and shared member collections are viewable.`);
     scrollToSection('member-locked-content');
   });
 }
@@ -479,4 +573,6 @@ function initBottleLogin() {
 renderMarketplace();
 seedCharacterCheckout();
 seedArViewer();
+document.querySelector('#owned-profile-select')?.addEventListener('change', (event) => renderOwnedCollection(event.currentTarget.value));
+renderOwnedCollection();
 initBottleLogin();
