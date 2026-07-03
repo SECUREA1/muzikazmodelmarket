@@ -7,6 +7,7 @@ const modelDetailArt = document.querySelector('#model-detail-art');
 const modelDetailTitle = document.querySelector('#model-detail-title');
 const modelDetailCopy = document.querySelector('#model-detail-copy');
 const addModelButton = document.querySelector('[data-add-model]');
+const modelPageLink = document.querySelector('#model-page-link');
 let cartItems = 0;
 let selectedModel = '';
 
@@ -92,6 +93,11 @@ document.querySelectorAll('.choice-btn[data-target]').forEach((button) => {
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeMenu();
+  const card = event.target instanceof HTMLElement ? event.target.closest('[data-preview-model]') : null;
+  if (card && (event.key === 'Enter' || event.key === ' ')) {
+    event.preventDefault();
+    selectModel(card.dataset.previewModel);
+  }
 });
 
 
@@ -128,15 +134,15 @@ const siteTwoProducts = [
 
 const assetCatalog = {
   models: [
-    { id: 'originals', name: 'Originals', css: 'monkey', character: 'Ape', type: 'Character Models', file: 'reference.png', price: '$39.00', copy: 'Classic starter poses, mascot turnarounds, and brand-ready preview files.', merch: ['Neon Hoodie', 'Bolt Keychain'] },
-    { id: 'legends', name: 'Legends', css: 'robot', character: 'Cyber Wolf', type: '3D Model Packs', file: 'futuristic_armored_wolf_humanoid.png', price: '$64.00', copy: 'Armored future icon with dramatic neon render support and creator-safe styling.', merch: ['Crew Cap', 'Beat Bottle'] },
-    { id: 'beasts', name: 'Beasts', css: 'beast', character: 'Red Beast', type: '3D Model Packs', file: 'fierce_demon_hybrid_in_action.png', price: '$58.00', copy: 'Monster-power render pack connected to safe fantasy presentation rules.', merch: ['Wristband', 'Lanyard'] },
-    { id: 'crew', name: 'Crew', css: 'penguin', character: 'Crew Penguin', type: 'Character Models', file: 'the_crew_banner_2x_transparent.png', price: '$44.00', copy: 'Street-smart mascot assets for friendly drops, banners, and fan pages.', merch: ['Crew Cap', 'Lanyard'] },
-    { id: 'chaos', name: 'Chaos', css: 'chaos', character: 'Chaos Ape', type: '3D Model Packs', file: 'character_traits_overview_panel_2x.png', price: '$69.00', copy: 'High-energy hybrid concepts for the loudest MUZIKAZ creator collection.', merch: ['Neon Hoodie', 'Wristband'] },
-    { id: 'new-legends', name: 'New Legends', css: 'new-legends', character: 'Unlocked Crew', type: 'Character Models', file: 'new_legends_unlocked_2x_transparent.png', price: '$52.00', copy: 'Expanded platform collection art for fresh mascot launches and hero tiles.', merch: ['Hero Banner', 'Tagline Tee'] },
-    { id: 'trait-avatars', name: 'Trait Avatars', css: 'trait-avatars', character: 'Avatar Lineup', type: 'Character Models', file: 'trait_avatars_row_1_2x.png', price: '$46.00', copy: 'Row-ready mascot avatars built for picker graphics, social posts, and profile drops.', merch: ['Avatar Sticker Sheet', 'Crew Cap'] },
-    { id: 'online-events', name: 'Online Events', css: 'online-events', character: 'Event Crew', type: 'Event Model Packs', file: 'available_online_events_banner_2x_transparent.png', price: '$55.00', copy: 'Event-ready visual set for stream drops, ticket pages, and online campaigns.', merch: ['Event Pass', 'Lanyard'] },
-    { id: 'brand-kit', name: 'Brand Kit', css: 'brand-kit', character: 'Logo System', type: 'Brand Asset Packs', file: 'logo_panel_2x_transparent.png', price: '$36.00', copy: 'Built-in MUZIKAZ logo graphics packaged for badges, cards, and marketplace pages.', merch: ['Logo Patch', 'Bolt Keychain'] },
+    { id: 'originals', page: 'originals.html', name: 'Originals', css: 'monkey', character: 'Ape', type: 'Character Models', file: 'reference.png', price: '$39.00', copy: 'Classic starter poses, mascot turnarounds, and brand-ready preview files.', merch: ['Neon Hoodie', 'Bolt Keychain'] },
+    { id: 'legends', page: 'legends.html', name: 'Legends', css: 'robot', character: 'Cyber Wolf', type: '3D Model Packs', file: 'futuristic_armored_wolf_humanoid.png', price: '$64.00', copy: 'Armored future icon with dramatic neon render support and creator-safe styling.', merch: ['Crew Cap', 'Beat Bottle'] },
+    { id: 'beasts', page: 'beasts.html', name: 'Beasts', css: 'beast', character: 'Red Beast', type: '3D Model Packs', file: 'fierce_demon_hybrid_in_action.png', price: '$58.00', copy: 'Monster-power render pack connected to safe fantasy presentation rules.', merch: ['Wristband', 'Lanyard'] },
+    { id: 'crew', page: 'crew-market.html', name: 'Crew', css: 'penguin', character: 'Crew Penguin', type: 'Character Models', file: 'the_crew_banner_2x_transparent.png', price: '$44.00', copy: 'Street-smart mascot assets for friendly drops, banners, and fan pages.', merch: ['Crew Cap', 'Lanyard'] },
+    { id: 'chaos', page: 'chaos.html', name: 'Chaos', css: 'chaos', character: 'Chaos Ape', type: '3D Model Packs', file: 'character_traits_overview_panel_2x.png', price: '$69.00', copy: 'High-energy hybrid concepts for the loudest MUZIKAZ creator collection.', merch: ['Neon Hoodie', 'Wristband'] },
+    { id: 'new-legends', page: 'members.html#models', name: 'New Legends', css: 'new-legends', character: 'Unlocked Crew', type: 'Character Models', file: 'new_legends_unlocked_2x_transparent.png', price: '$52.00', copy: 'Expanded platform collection art for fresh mascot launches and hero tiles.', merch: ['Hero Banner', 'Tagline Tee'] },
+    { id: 'trait-avatars', page: 'members.html#models', name: 'Trait Avatars', css: 'trait-avatars', character: 'Avatar Lineup', type: 'Character Models', file: 'trait_avatars_row_1_2x.png', price: '$46.00', copy: 'Row-ready mascot avatars built for picker graphics, social posts, and profile drops.', merch: ['Avatar Sticker Sheet', 'Crew Cap'] },
+    { id: 'online-events', page: 'members.html#marketplace', name: 'Online Events', css: 'online-events', character: 'Event Crew', type: 'Event Model Packs', file: 'available_online_events_banner_2x_transparent.png', price: '$55.00', copy: 'Event-ready visual set for stream drops, ticket pages, and online campaigns.', merch: ['Event Pass', 'Lanyard'] },
+    { id: 'brand-kit', page: 'brand-kit.html', name: 'Brand Kit', css: 'brand-kit', character: 'Logo System', type: 'Brand Asset Packs', file: 'logo_panel_2x_transparent.png', price: '$36.00', copy: 'Built-in MUZIKAZ logo graphics packaged for badges, cards, and marketplace pages.', merch: ['Logo Patch', 'Bolt Keychain'] },
   ],
   retail: [
     { id: 'hoodie', name: 'Neon Hoodie', category: 'Hoodies', price: '$64.00', asset: 'classic_favorites_banner_transparent.png', connectsTo: ['Originals', 'Chaos'] },
@@ -169,8 +175,8 @@ function renderModelCards() {
   if (!collectionGrid) return;
   const visibleModels = document.body.classList.contains('members-page') ? assetCatalog.models : assetCatalog.models.filter((model) => !['new-legends', 'trait-avatars', 'online-events'].includes(model.id));
   collectionGrid.innerHTML = visibleModels.map((model) => `
-    <article class="card ${model.css}" style="--card-art:url('${model.file}')">
-      <div><h3>${model.name}</h3><p>${model.character}</p><button type="button" data-model="${model.name}">View</button></div>
+    <article class="card ${model.css}" style="--card-art:url('${model.file}')" data-preview-model="${model.name}" tabindex="0" aria-label="Preview ${model.name} collection">
+      <div><h3>${model.name}</h3><p>${model.character}</p><a class="card-link" href="${model.page}">View</a></div>
     </article>`).join('');
 }
 
@@ -195,6 +201,7 @@ function selectModel(modelName) {
   if (modelStatus) modelStatus.textContent = `${selectedModel} collection selected. 3D page, retail matches, and marketplace listings are connected.`;
   if (modelDetailTitle) modelDetailTitle.textContent = `${selectedModel} · ${model.character}`;
   if (modelDetailCopy) modelDetailCopy.textContent = model.copy;
+  if (modelPageLink) modelPageLink.href = model.page;
   if (modelDetailArt) {
     modelDetailArt.className = `model-detail-art ${model.css}`;
     modelDetailArt.style.setProperty('--model-art', `url('${model.file}')`);
@@ -207,8 +214,10 @@ function selectModel(modelName) {
 
 document.addEventListener('click', (event) => {
   const modelButton = event.target.closest('[data-model]');
-  if (modelButton) {
-    selectModel(modelButton.dataset.model);
+  const modelCard = event.target.closest('[data-preview-model]');
+  if (modelButton || (modelCard && !(event.target instanceof HTMLAnchorElement))) {
+    const modelName = modelButton?.dataset.model || modelCard?.dataset.previewModel;
+    if (modelName) selectModel(modelName);
     return;
   }
   const productButton = event.target.closest('[data-product]');
