@@ -177,7 +177,11 @@ function renderModelCards() {
 function renderMerchOptions() {
   const productGrid = document.querySelector('.products');
   if (!productGrid) return;
-  productGrid.innerHTML = assetCatalog.retail.map((product, index) => `
+  const gatedProductIds = new Set(['hero-banner', 'tagline-tee', 'avatar-stickers', 'event-pass']);
+  const visibleProducts = document.body.classList.contains('members-page')
+    ? assetCatalog.retail
+    : assetCatalog.retail.filter((product) => !gatedProductIds.has(product.id));
+  productGrid.innerHTML = visibleProducts.map((product, index) => `
     <article>
       ${index < 3 ? `<i>${index === 0 ? 'Hot' : index === 1 ? 'New' : 'Drop'}</i>` : ''}
       <div class="product-img" style="--product-art:url('${product.asset}')" role="img" aria-label="${product.name} graphic"></div>
