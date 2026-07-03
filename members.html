@@ -23,6 +23,7 @@
             <a href="#ar-viewer">AR Viewer</a>
             <a href="#admin">Uploads</a>
             <a href="#marketplace">Drops</a>
+            <a href="#owned-collection">Owned Assets</a>
         </nav>
         <div class="icons" aria-label="Store shortcuts"><button class="icon-button cart" type="button" data-action="cart" aria-label="Cart">🛒<b id="cart-count">0</b></button></div>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">☰</button>
@@ -48,6 +49,22 @@
                 <article><h3>Product upgrades</h3><p>Early colorways, sleeve-text presets, logo placements, character bundles, and priority custom product slots.</p></article>
                 <article><h3>Custom graphics</h3><p>Upload sticker sheets, mascot graphics, logo patches, and event art into a private generated-asset queue.</p></article>
                 <article><h3>Legendary drops</h3><p>Access new legends, limited Friday drops, connected marketplace bundles, and avatar viewer previews before public release.</p></article>
+            </div>
+        </section>
+
+        <section class="section-block owned-assets-block" id="owned-collection" aria-labelledby="owned-assets-title">
+            <div class="section-title"><span></span><h2 id="owned-assets-title">Owned collection</h2><a href="#marketplace">Add drops</a></div>
+            <div class="owned-assets-layout">
+                <aside class="owned-profile-card">
+                    <p class="kicker">Logged-in owner</p>
+                    <h3 id="owned-current-user">Login required</h3>
+                    <p id="owned-current-copy">Log in above to tie purchased, uploaded, and claimed assets to your account.</p>
+                    <label>View member collection <select id="owned-profile-select" disabled><option>Login to view members</option></select></label>
+                </aside>
+                <div class="owned-assets-board">
+                    <div class="owned-assets-summary" id="owned-assets-summary"></div>
+                    <div class="owned-assets-grid" id="owned-assets-grid"></div>
+                </div>
             </div>
         </section>
         <div class="member-locked-content" id="member-locked-content" data-locked="true">
