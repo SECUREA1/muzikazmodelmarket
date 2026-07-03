@@ -1,6 +1,6 @@
 use axum::{routing::get, Json, Router};
 use serde::Serialize;
-use std::{env, net::SocketAddr};
+use std::{env, net::SocketAddr, path::PathBuf};
 use tower_http::{cors::CorsLayer, services::ServeDir};
 
 #[derive(Serialize)]
@@ -25,9 +25,11 @@ async fn main() {
         .parse()
         .expect("PORT must be a number");
 
+    let static_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("static");
+
     let app = Router::new()
         .route("/api/health", get(health))
-        .nest_service("/", ServeDir::new("static").append_index_html_on_directories(true))
+        .nest_service("/", ServeDir::new(static_dir).append_index_html_on_directories(true))
         .layer(CorsLayer::permissive());
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
