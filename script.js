@@ -226,12 +226,12 @@ const assetCatalog = {
     { id: 'brand-kit', page: 'brand-kit.html', name: 'Brand Kit', css: 'brand-kit', character: 'Logo System', type: 'Brand Asset Packs', file: 'logo_panel_2x_transparent.png', price: '$36.00', copy: 'Built-in MUZIKAZ logo graphics packaged for badges, cards, and marketplace pages.', merch: ['Logo Patch', 'Bolt Keychain'] },
   ],
   retail: [
-    { id: 'hoodie', name: 'Neon Hoodie', category: 'Hoodies', price: '$64.00', asset: 'classic_favorites_banner_transparent.png', connectsTo: ['Originals', 'Chaos'] },
-    { id: 'cap', name: 'Crew Cap', category: 'Headwear', price: '$28.00', asset: 'brand_name_tagline_panel_transparent.png', connectsTo: ['Legends', 'Crew'] },
-    { id: 'bottle', name: 'Beat Bottle', category: 'Drinkware', price: '$22.00', asset: 'accessories_banner_transparent.png', connectsTo: ['Legends'] },
-    { id: 'keychain', name: 'Bolt Keychain', category: 'Accessories', price: '$12.00', asset: 'cta_shop_collection_transparent.png', connectsTo: ['Originals'] },
-    { id: 'wristband', name: 'Wristband', category: 'Accessories', price: '$16.00', asset: 'button_styles_panel_transparent.png', connectsTo: ['Beasts', 'Chaos'] },
-    { id: 'lanyard', name: 'Lanyard', category: 'Accessories', price: '$14.00', asset: 'accessories_banner_2x_transparent.png', connectsTo: ['Beasts', 'Crew', 'Online Events'] },
+    { id: 'hoodie', name: 'Neon Hoodie', category: 'Hoodies', price: '$64.00', asset: 'muzikaz_high_level_image_pack1/05_merch/hoodie_tile_2x.png', connectsTo: ['Originals', 'Chaos'] },
+    { id: 'cap', name: 'Crew Cap', category: 'Headwear', price: '$28.00', asset: 'muzikaz_high_level_image_pack1/05_merch/cap_tile_2x.png', connectsTo: ['Legends', 'Crew'] },
+    { id: 'bottle', name: 'Beat Bottle', category: 'Drinkware', price: '$22.00', asset: 'muzikaz_high_level_image_pack1/05_merch/bottle_tile_2x.png', connectsTo: ['Legends'] },
+    { id: 'keychain', name: 'Bolt Keychain', category: 'Accessories', price: '$12.00', asset: 'muzikaz_high_level_image_pack1/05_merch/keychain_tile_2x.png', connectsTo: ['Originals'] },
+    { id: 'wristband', name: 'Wristband', category: 'Accessories', price: '$16.00', asset: 'muzikaz_high_level_image_pack1/05_merch/wristband_tile_2x.png', connectsTo: ['Beasts', 'Chaos'] },
+    { id: 'lanyard', name: 'Lanyard', category: 'Accessories', price: '$14.00', asset: 'muzikaz_high_level_image_pack1/05_merch/lanyard_tile_2x.png', connectsTo: ['Beasts', 'Crew', 'Online Events'] },
     { id: 'hero-banner', name: 'Hero Banner', category: 'Wall Art', price: '$34.00', asset: 'hero_banner_full_2x_transparent.png', connectsTo: ['New Legends'] },
     { id: 'tagline-tee', name: 'Tagline Tee', category: 'Tees', price: '$32.00', asset: 'tagline_crop_2x_transparent.png', connectsTo: ['New Legends'] },
     { id: 'avatar-stickers', name: 'Avatar Sticker Sheet', category: 'Stickers', price: '$18.00', asset: 'trait_avatars_row_2_2x.png', connectsTo: ['Trait Avatars'] },
@@ -264,7 +264,7 @@ function renderModelCards() {
 function renderMerchOptions() {
   const productGrid = document.querySelector('.products');
   if (!productGrid) return;
-  const gatedProductIds = new Set(['hero-banner', 'tagline-tee', 'avatar-stickers', 'event-pass']);
+  const gatedProductIds = new Set(['hero-banner', 'tagline-tee', 'event-pass']);
   const visibleProducts = document.body.classList.contains('members-page')
     ? assetCatalog.retail
     : assetCatalog.retail.filter((product) => !gatedProductIds.has(product.id));
