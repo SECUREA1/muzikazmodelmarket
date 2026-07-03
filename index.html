@@ -55,11 +55,7 @@
             <a href="#home">Home</a>
             <a href="#models">Models</a>
             <a href="#merch">Merch</a>
-            <a href="#designer">Designer</a>
-            <a href="#character-shop">3D Checkout</a>
-            <a href="#ar-viewer">AR Viewer</a>
-            <a href="#marketplace">Marketplace</a>
-            <a href="#admin">Admin</a>
+            <a href="members.html">Bottle Login</a>
             <a href="#crew">Crew</a>
             <a href="#contact">Contact</a>
         </nav>
@@ -89,7 +85,7 @@
         </section>
 
         <section class="section-block" id="models">
-            <div class="section-title"><span></span><h2>New legends unlocked</h2><a href="#merch">View merch</a></div>
+            <div class="section-title"><span></span><h2>Starter model market</h2><a href="members.html">Unlock legendary drops</a></div>
             <div class="collection-grid">
                 <article class="card monkey"><div><h3>Originals</h3><p>Classic crew starters</p><button type="button" data-model="Originals">View</button></div></article>
                 <article class="card robot"><div><h3>Legends</h3><p>Armored future icons</p><button type="button" data-model="Legends">View</button></div></article>
@@ -134,95 +130,21 @@
         </section>
 
 
-        <section class="section-block designer-block" id="designer">
-            <div class="section-title"><span></span><h2>Live merch designer</h2><a href="#marketplace">Open marketplace</a></div>
-            <div class="designer-layout">
-                <form class="designer-controls" id="designer-controls">
-                    <label>Product <select name="product" id="design-product"></select></label>
-                    <label>Character <select name="character" id="design-character"></select></label>
-                    <label>Color <input type="color" name="color" value="#9cff00" /></label>
-                    <label>Size <select name="size"><option>S</option><option selected>M</option><option>L</option><option>XL</option><option>2XL</option></select></label>
-                    <label>Name <input name="name" maxlength="16" value="MUZIKAZ" /></label>
-                    <label>Number <input name="number" maxlength="2" value="88" /></label>
-                    <label>Logo Style <select name="logo"><option>Lightning Crest</option><option>Wordmark</option><option>Badge Patch</option></select></label>
-                    <label>Sleeve Text <input name="sleeve" maxlength="22" value="LIVE THE BEAT" /></label>
-                </form>
-                <article class="designer-preview" aria-live="polite">
-                    <div class="mockup" id="designer-mockup"><span id="preview-character">Inferno</span><strong id="preview-name">MUZIKAZ</strong><b id="preview-number">88</b><small id="preview-sleeve">LIVE THE BEAT</small></div>
-                    <div><p class="kicker" id="preview-meta">Premium Hoodie · M · Lightning Crest</p><h3 id="preview-title">Inferno custom drop</h3><button type="button" data-add-custom>Add custom design</button></div>
-                </article>
-            </div>
-        </section>
-
-        <section class="section-block character-shop-block" id="character-shop">
-            <div class="section-title"><span></span><h2>3D model character checkout</h2><a href="#marketplace">View marketplace</a></div>
-            <div class="checkout-layout">
-                <aside class="checkout-panel">
-                    <p class="kicker">Muzikaz Site 2 product picker</p>
-                    <h3 id="checkout-character-name">Select a character</h3>
-                    <p id="checkout-character-copy">Pick any MUZIKAZ character, then checkout any product style for that mascot.</p>
-                    <div class="checkout-preview">
-                        <img id="checkout-character-img" alt="Selected MUZIKAZ character" />
-                    </div>
-                    <div class="checkout-options">
-                        <label>Character <select id="checkout-character-select"></select></label>
-                        <label>Product <select id="checkout-product-select"></select></label>
-                        <label>Size / format <select id="checkout-size-select"></select></label>
-                        <label>Colorway <select id="checkout-color-select"></select></label>
-                        <label>Quantity <input id="checkout-qty" type="number" min="1" max="99" value="1" /></label>
-                    </div>
-                    <div class="checkout-total"><span>Ready checkout</span><strong id="checkout-total">$0.00</strong></div>
-                    <button type="button" id="checkout-add">Checkout selected character product</button>
-                </aside>
+        <section class="section-block bottle-lock-preview" id="bottle-login-preview">
+            <div class="section-title"><span></span><h2>Bottle login vault</h2><a href="members.html">Open subscriber login</a></div>
+            <div class="bottle-gate-card">
+                <div class="bottle-gate-art" role="img" aria-label="MUZIKAZ beat bottle subscriber vault"></div>
                 <div>
-                    <div class="character-catalog" id="character-catalog"></div>
-                    <div class="product-catalog" id="checkout-product-catalog"></div>
+                    <p class="kicker">Subscriber upgrades</p>
+                    <h3>Unlock the custom drop lab behind the bottle.</h3>
+                    <p>Log in or subscribe to access custom sticker and graphics uploads, the pop-out AR avatar viewer, the live merch designer, character-product checkout, marketplace drops, and the new legendary collections.</p>
+                    <ul>
+                        <li>Special product upgrade presets and subscriber-only design slots.</li>
+                        <li>Early legendary model drops and connected merch bundles.</li>
+                        <li>Private upload queue for sticker sheets, logo patches, and graphics.</li>
+                    </ul>
+                    <a class="btn" href="members.html">Enter bottle login <span aria-hidden="true">→</span></a>
                 </div>
-            </div>
-        </section>
-
-
-        <section class="section-block ar-viewer-block" id="ar-viewer">
-            <div class="section-title"><span></span><h2>Pop-out AR character viewer</h2><a href="#character-shop">Choose checkout</a></div>
-            <div class="ar-viewer-layout">
-                <aside class="ar-file-panel">
-                    <p class="kicker">File viewer</p>
-                    <h3 id="ar-character-name">Select a character</h3>
-                    <p id="ar-character-copy">Pick any MUZIKAZ character from the collection list, preview the character file, then launch the highlighted AR pop-out on Android or Apple iPhone.</p>
-                    <label class="ar-file-drop">
-                        <input type="file" id="ar-file-input" accept="image/*,.glb,.gltf,.usdz,.reality" />
-                        <span>Upload optional AR file</span>
-                        <small>Images preview instantly. GLB/GLTF/ USDZ files can replace the selected character source.</small>
-                    </label>
-                    <div class="ar-file-meta" id="ar-file-meta">Using built-in character collection artwork.</div>
-                    <button class="ar-popout-button" type="button" id="ar-popout-button">🚀 Pop out AR viewer</button>
-                </aside>
-                <div class="ar-stage-card">
-                    <div class="ar-stage-toolbar">
-                        <label>Character <select id="ar-character-select"></select></label>
-                        <strong id="ar-device-label">iPhone + Android ready</strong>
-                    </div>
-                    <div class="ar-device-frame" id="ar-device-frame">
-                        <img id="ar-preview-img" alt="Selected MUZIKAZ character AR preview" />
-                        <model-viewer id="ar-model-viewer" camera-controls touch-action="pan-y" ar ar-modes="webxr scene-viewer quick-look" shadow-intensity="1" exposure="1" alt="Selected MUZIKAZ AR model" hidden></model-viewer>
-                    </div>
-                    <div class="ar-character-strip" id="ar-character-strip" aria-label="AR character picker"></div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section-block marketplace-block" id="marketplace">
-            <div class="section-title"><span></span><h2>Marketplace engine</h2><a href="#admin">Manage store</a></div>
-            <div class="market-tabs" id="market-tabs"></div>
-            <div class="market-grid" id="market-grid"></div>
-        </section>
-
-        <section class="section-block admin-block" id="admin">
-            <div class="section-title"><span></span><h2>Admin command center</h2><a href="#crew">Join drops</a></div>
-            <div class="admin-layout">
-                <label class="upload-zone">Upload Graphics<input type="file" id="asset-upload" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" multiple /><span>PNG · JPG · GIF · SVG · WEBP</span></label>
-                <div class="admin-list"><h3>Generated assets</h3><ul id="asset-list"><li>Thumbnails ready</li><li>Store tiles ready</li><li>Product previews ready</li></ul></div>
-                <div class="analytics"><h3>Analytics</h3><p><b id="metric-orders">128</b> Orders</p><p><b id="metric-inventory">842</b> Inventory units</p><p><b id="metric-conversion">7.4%</b> Conversion</p></div>
             </div>
         </section>
 

@@ -167,7 +167,8 @@ const marketplaceListings = [
 function renderModelCards() {
   const collectionGrid = document.querySelector('.collection-grid');
   if (!collectionGrid) return;
-  collectionGrid.innerHTML = assetCatalog.models.map((model) => `
+  const visibleModels = document.body.classList.contains('members-page') ? assetCatalog.models : assetCatalog.models.filter((model) => !['new-legends', 'trait-avatars', 'online-events'].includes(model.id));
+  collectionGrid.innerHTML = visibleModels.map((model) => `
     <article class="card ${model.css}" style="--card-art:url('${model.file}')">
       <div><h3>${model.name}</h3><p>${model.character}</p><button type="button" data-model="${model.name}">View</button></div>
     </article>`).join('');
@@ -441,6 +442,28 @@ arPopoutButton?.addEventListener('click', () => {
   popup.document.close();
 });
 
+function initBottleLogin() {
+  const form = document.querySelector('#bottle-login-form');
+  const lockedContent = document.querySelector('#member-locked-content');
+  const status = document.querySelector('#bottle-login-status');
+  if (!form || !lockedContent) return;
+  const unlock = (message) => {
+    lockedContent.dataset.locked = 'false';
+    if (status) status.textContent = message;
+  };
+  if (window.localStorage.getItem('muzikazBottleMember') === 'true') {
+    unlock('Bottle member access is active. Subscriber tools are unlocked.');
+  }
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    window.localStorage.setItem('muzikazBottleMember', 'true');
+    unlock(`${data.get('email')} is logged in. Custom uploads, AR viewer, designer, and legendary drops are unlocked.`);
+    scrollToSection('member-locked-content');
+  });
+}
+
 renderMarketplace();
 seedCharacterCheckout();
 seedArViewer();
+initBottleLogin();

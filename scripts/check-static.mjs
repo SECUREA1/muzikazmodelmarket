@@ -1,6 +1,6 @@
 import { access, readFile } from 'node:fs/promises';
 
-const htmlPages = ['index.html', 'index0.html', 'index1.html'];
+const htmlPages = ['index.html', 'index0.html', 'index1.html', 'members.html'];
 const requiredFiles = [
   ...htmlPages.map((page) => `dist/${page}`),
   'dist/styles.css',
@@ -21,9 +21,16 @@ for (const page of htmlPages) {
 }
 
 const mainHtml = await readFile('dist/index.html', 'utf8');
-for (const id of ['model-detail', 'merch', 'designer', 'marketplace']) {
+for (const id of ['model-detail', 'merch', 'bottle-login-preview']) {
   if (!mainHtml.includes(`id="${id}"`)) {
-    throw new Error(`index.html is missing connected section #${id}`);
+    throw new Error(`index.html is missing public section #${id}`);
+  }
+}
+
+const membersHtml = await readFile('dist/members.html', 'utf8');
+for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace']) {
+  if (!membersHtml.includes(`id="${id}"`)) {
+    throw new Error(`members.html is missing subscriber section #${id}`);
   }
 }
 
@@ -32,4 +39,4 @@ if (!css.includes("url('reference.png')")) {
   throw new Error('styles.css does not reference the hero artwork.');
 }
 
-console.log('Static build output contains all index pages and required references.');
+console.log('Static build output contains all public and member pages with required references.');
