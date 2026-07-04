@@ -1,6 +1,6 @@
 import { access, readFile } from 'node:fs/promises';
 
-const htmlPages = ['index.html', 'index0.html', 'index1.html', 'members.html'];
+const htmlPages = ['index.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html'];
 const requiredFiles = [
   ...htmlPages.map((page) => `dist/${page}`),
   'dist/styles.css',
@@ -21,7 +21,7 @@ for (const page of htmlPages) {
 }
 
 const mainHtml = await readFile('dist/index.html', 'utf8');
-for (const id of ['model-detail', 'merch', 'bottle-login-preview']) {
+for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-preview']) {
   if (!mainHtml.includes(`id="${id}"`)) {
     throw new Error(`index.html is missing public section #${id}`);
   }
