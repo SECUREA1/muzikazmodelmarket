@@ -147,7 +147,18 @@
 
         <section class="section-block marketplace-block" id="marketplace">
             <div class="section-title"><span></span><h2>Marketplace engine</h2><a href="#admin">Manage store</a></div>
-            <div class="market-tabs" id="market-tabs"></div>
+            <div class="market-controls" aria-label="Marketplace filters and quality controls">
+                <div>
+                    <p class="kicker">Process quality</p>
+                    <label class="quality-toggle"><input type="checkbox" id="market-quality-toggle" checked /> <span>Curated quality only</span></label>
+                </div>
+                <div>
+                    <p class="kicker">Category</p>
+                    <div class="market-categories" id="market-categories" role="group" aria-label="Marketplace categories"></div>
+                </div>
+            </div>
+            <div class="market-tabs" id="market-tabs" role="group" aria-label="Marketplace listing types"></div>
+            <p class="market-status" id="market-status" role="status">Loading marketplace listings.</p>
             <div class="market-grid" id="market-grid"></div>
         </section>
 

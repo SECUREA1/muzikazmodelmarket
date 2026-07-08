@@ -244,11 +244,13 @@ const assetCatalog = {
 const designerCharacters = assetCatalog.models.map((model) => ({ id: model.id, name: model.character, traits: [model.name, model.type] }));
 const designerProducts = assetCatalog.retail.map((product) => ({ id: product.id, name: product.name, category: product.category, price: Number(product.price.replace(/[^0-9.]/g, '')) }));
 const marketplaceListings = [
-  ...assetCatalog.models.map((model) => ({ type: model.type, name: `${model.name} 3D Model Pack`, price: model.price, copy: `${model.copy} Source: ${model.file}`, model: model.name })),
-  ...assetCatalog.retail.map((product) => ({ type: 'Retail Pages', name: product.name, price: product.price, copy: `${product.category} connected to ${product.connectsTo.join(' + ')} model data.`, product: product.name })),
-  { type: 'Custom Orders', name: 'Team Sleeve Text Run', price: 'Quote request', copy: 'Custom name, number, logo style, sleeve text, product, and character selections flow from the same catalog.' },
-  { type: 'Limited Drops', name: 'Friday Connected Drop', price: 'Locks at sellout', copy: 'Bundles one model pack, one retail item, and one custom designer preset.' },
+  ...assetCatalog.models.map((model) => ({ type: model.type, category: model.name, quality: 'curated', name: `${model.name} 3D Model Pack`, price: model.price, copy: `${model.copy} Source: ${model.file}`, model: model.name })),
+  ...assetCatalog.retail.map((product) => ({ type: 'Retail Pages', category: product.category, quality: 'curated', name: product.name, price: product.price, copy: `${product.category} connected to ${product.connectsTo.join(' + ')} model data.`, product: product.name })),
+  { type: 'Custom Orders', category: 'Custom Builds', quality: 'curated', name: 'Team Sleeve Text Run', price: 'Quote request', copy: 'Custom name, number, logo style, sleeve text, product, and character selections flow from the same catalog.' },
+  { type: 'Limited Drops', category: 'Drop Bundles', quality: 'review', name: 'Friday Connected Drop', price: 'Locks at sellout', copy: 'Bundles one model pack, one retail item, and one custom designer preset.' },
 ];
+
+const marketplaceState = { type: 'All', category: 'All', modelFocus: '', curatedOnly: true };
 
 
 function renderModelCards() {
@@ -312,6 +314,9 @@ const productSelect = document.querySelector('#design-product');
 const characterSelect = document.querySelector('#design-character');
 const designerControls = document.querySelector('#designer-controls');
 const marketTabs = document.querySelector('#market-tabs');
+const marketCategories = document.querySelector('#market-categories');
+const marketQualityToggle = document.querySelector('#market-quality-toggle');
+const marketStatus = document.querySelector('#market-status');
 const marketGrid = document.querySelector('#market-grid');
 const linkedData = document.querySelector('#model-linked-data');
 
@@ -326,7 +331,10 @@ function renderLinkedData(model) {
 }
 
 function focusMarketplaceForModel(modelName) {
-  renderMarketplace('All', modelName);
+  marketplaceState.type = 'All';
+  marketplaceState.category = 'All';
+  marketplaceState.modelFocus = modelName;
+  renderMarketplace();
   scrollToSection('marketplace');
 }
 
@@ -351,13 +359,35 @@ function updatePreview() {
   document.querySelector('#preview-meta').textContent = `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${character.traits.join(' / ')}`;
 }
 
-function renderMarketplace(filter = 'All', modelFocus = '') {
+function renderMarketplace(type = marketplaceState.type, modelFocus = marketplaceState.modelFocus) {
   if (!marketTabs || !marketGrid) return;
-  const tabs = ['All', ...new Set(marketplaceListings.map((listing) => listing.type))];
-  marketTabs.innerHTML = tabs.map((tab) => `<button type="button" class="${tab === filter ? 'active' : ''}" data-market-filter="${tab}">${tab}</button>`).join('');
-  const listings = marketplaceListings.filter((listing) => (filter === 'All' || listing.type === filter) && (!modelFocus || listing.model === modelFocus || listing.copy.includes(modelFocus)));
-  marketGrid.innerHTML = listings.map((listing) => `<article><span class="pill">${listing.type}</span><h3>${listing.name}</h3><p>${listing.copy}</p><p class="price">${listing.price}</p><button type="button" data-product="${listing.name}">Add</button></article>`).join('') || '<article><h3>No matches</h3><p>Choose another marketplace tab or model.</p></article>';
-  marketTabs.querySelectorAll('[data-market-filter]').forEach((button) => button.addEventListener('click', () => renderMarketplace(button.dataset.marketFilter)));
+  marketplaceState.type = type || 'All';
+  marketplaceState.modelFocus = modelFocus || '';
+  marketplaceState.curatedOnly = marketQualityToggle ? marketQualityToggle.checked : marketplaceState.curatedOnly;
+  const types = ['All', ...new Set(marketplaceListings.map((listing) => listing.type))];
+  const categories = ['All', ...new Set(marketplaceListings.map((listing) => listing.category))];
+  marketTabs.innerHTML = types.map((tab) => `<button type="button" class="${tab === marketplaceState.type ? 'active' : ''}" aria-pressed="${tab === marketplaceState.type}" data-market-filter="${tab}">${tab}</button>`).join('');
+  if (marketCategories) {
+    marketCategories.innerHTML = categories.map((category) => `<button type="button" class="${category === marketplaceState.category ? 'active' : ''}" aria-pressed="${category === marketplaceState.category}" data-market-category="${category}">${category}</button>`).join('');
+  }
+  const listings = marketplaceListings.filter((listing) => {
+    const typeMatch = marketplaceState.type === 'All' || listing.type === marketplaceState.type;
+    const categoryMatch = marketplaceState.category === 'All' || listing.category === marketplaceState.category;
+    const focusMatch = !marketplaceState.modelFocus || listing.model === marketplaceState.modelFocus || listing.copy.includes(marketplaceState.modelFocus);
+    const qualityMatch = !marketplaceState.curatedOnly || listing.quality === 'curated';
+    return typeMatch && categoryMatch && focusMatch && qualityMatch;
+  });
+  marketGrid.innerHTML = listings.map((listing) => `<article><span class="pill">${listing.type}</span><span class="pill category-pill">${listing.category}</span><h3>${listing.name}</h3><p>${listing.copy}</p><p class="price">${listing.price}</p><button type="button" data-product="${listing.name}">Add</button></article>`).join('') || '<article><h3>No matches</h3><p>Choose another category, type, or turn off curated quality only.</p></article>';
+  if (marketStatus) {
+    const focusCopy = marketplaceState.modelFocus ? ` for ${marketplaceState.modelFocus}` : '';
+    marketStatus.textContent = `${listings.length} listing${listings.length === 1 ? '' : 's'} shown${focusCopy}. Category: ${marketplaceState.category}. Type: ${marketplaceState.type}.`;
+  }
+  marketTabs.querySelectorAll('[data-market-filter]').forEach((button) => button.addEventListener('click', () => renderMarketplace(button.dataset.marketFilter, marketplaceState.modelFocus)));
+  marketCategories?.querySelectorAll('[data-market-category]').forEach((button) => button.addEventListener('click', () => {
+    marketplaceState.category = button.dataset.marketCategory || 'All';
+    marketplaceState.modelFocus = '';
+    renderMarketplace(marketplaceState.type);
+  }));
 }
 
 designerControls?.addEventListener('input', updatePreview);
@@ -570,6 +600,7 @@ function initBottleLogin() {
   });
 }
 
+marketQualityToggle?.addEventListener('change', () => renderMarketplace());
 renderMarketplace();
 seedCharacterCheckout();
 seedArViewer();
