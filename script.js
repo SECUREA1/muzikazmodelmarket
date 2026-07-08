@@ -576,3 +576,72 @@ seedArViewer();
 document.querySelector('#owned-profile-select')?.addEventListener('change', (event) => renderOwnedCollection(event.currentTarget.value));
 renderOwnedCollection();
 initBottleLogin();
+
+
+const publicModelViewer = document.querySelector('#public-model-viewer');
+const publicModelFile = document.querySelector('#public-model-file');
+const publicModelStatus = document.querySelector('#public-model-status');
+const lockModelButton = document.querySelector('#lock-model-button');
+const unlockModelButton = document.querySelector('#unlock-model-button');
+const lockedModelSummary = document.querySelector('#locked-model-summary');
+const resetViewButton = document.querySelector('#reset-view-button');
+const environmentSelect = document.querySelector('#environment-select');
+let publicModelObjectUrl = '';
+let publicModelName = 'Default Astronaut demo model';
+
+function renderLockedModelSummary() {
+  if (!lockedModelSummary) return;
+  const locked = window.localStorage.getItem('muzikazLockedPublicModel');
+  lockedModelSummary.textContent = locked ? `${locked} is locked in for this browser.` : 'No public model is locked yet.';
+}
+
+function setPublicModelStatus(message) {
+  if (publicModelStatus) publicModelStatus.textContent = message;
+}
+
+publicModelFile?.addEventListener('change', (event) => {
+  const [file] = event.currentTarget.files;
+  if (!file || !publicModelViewer) return;
+  if (publicModelObjectUrl) URL.revokeObjectURL(publicModelObjectUrl);
+  publicModelObjectUrl = URL.createObjectURL(file);
+  publicModelName = file.name;
+  if (/\.(usdz|reality)$/i.test(file.name)) {
+    publicModelViewer.setAttribute('ios-src', publicModelObjectUrl);
+    setPublicModelStatus(`${file.name} is ready for iPhone Quick Look AR. Add a GLB version to orbit it directly in the browser.`);
+    return;
+  }
+  publicModelViewer.src = publicModelObjectUrl;
+  publicModelViewer.removeAttribute('ios-src');
+  setPublicModelStatus(`${file.name} loaded. Drag, zoom, pan, or tap View in your space on supported devices.`);
+});
+
+lockModelButton?.addEventListener('click', () => {
+  window.localStorage.setItem('muzikazLockedPublicModel', publicModelName);
+  renderLockedModelSummary();
+  setPublicModelStatus(`${publicModelName} is locked in. The selection is saved locally for this user.`);
+  updateCart(lockModelButton, 'Locked in');
+});
+
+unlockModelButton?.addEventListener('click', () => {
+  window.localStorage.removeItem('muzikazLockedPublicModel');
+  renderLockedModelSummary();
+  setPublicModelStatus('Model lock cleared. Upload or preview another model when ready.');
+});
+
+resetViewButton?.addEventListener('click', () => {
+  if (publicModelViewer) {
+    publicModelViewer.cameraOrbit = '0deg 75deg 105%';
+    publicModelViewer.fieldOfView = 'auto';
+    publicModelViewer.jumpCameraToGoal?.();
+  }
+  setPublicModelStatus('3D camera view has been reset.');
+});
+
+environmentSelect?.addEventListener('change', () => {
+  if (!publicModelViewer) return;
+  const value = environmentSelect.value;
+  publicModelViewer.setAttribute('environment-image', value === 'legacy' ? 'legacy' : value === 'moon' ? 'https://modelviewer.dev/shared-assets/environments/moon_1k.hdr' : 'neutral');
+  setPublicModelStatus(`Stage lighting changed to ${environmentSelect.options[environmentSelect.selectedIndex].text}.`);
+});
+
+renderLockedModelSummary();
