@@ -1,6 +1,6 @@
 import { access, readFile } from 'node:fs/promises';
 
-const htmlPages = ['index.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html', 'model-explorer.html'];
+const htmlPages = ['index.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html', 'checkout.html'];
 const requiredFiles = [
   ...htmlPages.map((page) => `dist/${page}`),
   'dist/styles.css',
@@ -31,6 +31,13 @@ const membersHtml = await readFile('dist/members.html', 'utf8');
 for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace']) {
   if (!membersHtml.includes(`id="${id}"`)) {
     throw new Error(`members.html is missing subscriber section #${id}`);
+  }
+}
+
+const checkoutHtml = await readFile('dist/checkout.html', 'utf8');
+for (const id of ['payment-form', 'checkout-items', 'confirmation-panel']) {
+  if (!checkoutHtml.includes(`id="${id}"`)) {
+    throw new Error(`checkout.html is missing checkout section #${id}`);
   }
 }
 

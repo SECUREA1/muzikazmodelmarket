@@ -9,6 +9,43 @@ const modelDetailCopy = document.querySelector('#model-detail-copy');
 const addModelButton = document.querySelector('[data-add-model]');
 const modelPageLink = document.querySelector('#model-page-link');
 let cartItems = 0;
+const CART_KEY = 'muzikazCheckoutCart';
+
+function parsePrice(value) {
+  return Number(String(value || '').replace(/[^0-9.]/g, '')) || 0;
+}
+
+function readCart() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(CART_KEY) || '[]');
+    return Array.isArray(saved) ? saved : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function writeCart(items) {
+  window.localStorage.setItem(CART_KEY, JSON.stringify(items));
+  syncCartCount();
+}
+
+function syncCartCount() {
+  cartItems = readCart().reduce((total, item) => total + (Number(item.quantity) || 1), 0);
+  if (cartCount) cartCount.textContent = String(cartItems);
+}
+
+function addCartLine(name, price, meta = '') {
+  if (!name) return;
+  const items = readCart();
+  const key = `${name}|${meta}`;
+  const existing = items.find((item) => item.key === key);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    items.push({ key, name, price: Number(price) || 0, meta, quantity: 1 });
+  }
+  writeCart(items);
+}
 let selectedModel = '';
 const ownedProfilesSeed = {
   'crew@muzikaz.example': ['Originals 3D Model Pack', 'Neon Hoodie', 'Beat Bottle'],
@@ -28,8 +65,7 @@ function closeMenu() {
 }
 
 function updateCart(button, label = 'Added') {
-  cartItems += 1;
-  if (cartCount) cartCount.textContent = String(cartItems);
+  syncCartCount();
   if (!button) return;
   const originalText = button.textContent;
   button.textContent = label;
@@ -132,6 +168,8 @@ addModelButton?.addEventListener('click', () => {
     scrollToSection('models');
     return;
   }
+  const model = getModel(selectedModel);
+  addCartLine(`${selectedModel} 3D Model Pack`, parsePrice(model.price), model.type);
   updateCart(addModelButton, 'Model added');
   if (modelStatus) modelStatus.textContent = `${selectedModel} model added to your cart.`;
 });
@@ -154,7 +192,11 @@ document.querySelector('[data-action="search"]')?.addEventListener('click', () =
 });
 
 document.querySelector('[data-action="cart"]')?.addEventListener('click', () => {
-  alert(cartItems ? `Cart ready with ${cartItems} item${cartItems === 1 ? '' : 's'}.` : 'Your MUZIKAZ cart is empty. Add merch or models to begin.');
+  if (cartItems) {
+    window.location.href = 'checkout.html';
+  } else {
+    alert('Your MUZIKAZ cart is empty. Add merch or models to begin.');
+  }
 });
 
 document.querySelector('.newsletter form')?.addEventListener('submit', (event) => {
@@ -244,11 +286,13 @@ const assetCatalog = {
 const designerCharacters = assetCatalog.models.map((model) => ({ id: model.id, name: model.character, traits: [model.name, model.type] }));
 const designerProducts = assetCatalog.retail.map((product) => ({ id: product.id, name: product.name, category: product.category, price: Number(product.price.replace(/[^0-9.]/g, '')) }));
 const marketplaceListings = [
-  ...assetCatalog.models.map((model) => ({ type: model.type, name: `${model.name} 3D Model Pack`, price: model.price, copy: `${model.copy} Source: ${model.file}`, model: model.name })),
-  ...assetCatalog.retail.map((product) => ({ type: 'Retail Pages', name: product.name, price: product.price, copy: `${product.category} connected to ${product.connectsTo.join(' + ')} model data.`, product: product.name })),
-  { type: 'Custom Orders', name: 'Team Sleeve Text Run', price: 'Quote request', copy: 'Custom name, number, logo style, sleeve text, product, and character selections flow from the same catalog.' },
-  { type: 'Limited Drops', name: 'Friday Connected Drop', price: 'Locks at sellout', copy: 'Bundles one model pack, one retail item, and one custom designer preset.' },
+  ...assetCatalog.models.map((model) => ({ type: model.type, category: model.name, quality: 'curated', name: `${model.name} 3D Model Pack`, price: model.price, copy: `${model.copy} Source: ${model.file}`, model: model.name })),
+  ...assetCatalog.retail.map((product) => ({ type: 'Retail Pages', category: product.category, quality: 'curated', name: product.name, price: product.price, copy: `${product.category} connected to ${product.connectsTo.join(' + ')} model data.`, product: product.name })),
+  { type: 'Custom Orders', category: 'Custom Builds', quality: 'curated', name: 'Team Sleeve Text Run', price: 'Quote request', copy: 'Custom name, number, logo style, sleeve text, product, and character selections flow from the same catalog.' },
+  { type: 'Limited Drops', category: 'Drop Bundles', quality: 'review', name: 'Friday Connected Drop', price: 'Locks at sellout', copy: 'Bundles one model pack, one retail item, and one custom designer preset.' },
 ];
+
+const marketplaceState = { type: 'All', category: 'All', modelFocus: '', curatedOnly: true };
 
 
 function renderModelCards() {
@@ -303,8 +347,11 @@ document.addEventListener('click', (event) => {
   }
   const productButton = event.target.closest('[data-product]');
   if (productButton) {
+    const productName = productButton.dataset.product;
+    const product = assetCatalog.retail.find((item) => item.name === productName) || marketplaceListings.find((item) => item.name === productName);
+    addCartLine(productName, parsePrice(product?.price), product?.category || product?.type || 'Store item');
     updateCart(productButton);
-    claimOwnedAsset(productButton.dataset.product, 'Added from storefront');
+    claimOwnedAsset(productName, 'Added from storefront');
   }
 });
 
@@ -312,6 +359,9 @@ const productSelect = document.querySelector('#design-product');
 const characterSelect = document.querySelector('#design-character');
 const designerControls = document.querySelector('#designer-controls');
 const marketTabs = document.querySelector('#market-tabs');
+const marketCategories = document.querySelector('#market-categories');
+const marketQualityToggle = document.querySelector('#market-quality-toggle');
+const marketStatus = document.querySelector('#market-status');
 const marketGrid = document.querySelector('#market-grid');
 const linkedData = document.querySelector('#model-linked-data');
 
@@ -326,7 +376,10 @@ function renderLinkedData(model) {
 }
 
 function focusMarketplaceForModel(modelName) {
-  renderMarketplace('All', modelName);
+  marketplaceState.type = 'All';
+  marketplaceState.category = 'All';
+  marketplaceState.modelFocus = modelName;
+  renderMarketplace();
   scrollToSection('marketplace');
 }
 
@@ -351,20 +404,44 @@ function updatePreview() {
   document.querySelector('#preview-meta').textContent = `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${character.traits.join(' / ')}`;
 }
 
-function renderMarketplace(filter = 'All', modelFocus = '') {
+function renderMarketplace(type = marketplaceState.type, modelFocus = marketplaceState.modelFocus) {
   if (!marketTabs || !marketGrid) return;
-  const tabs = ['All', ...new Set(marketplaceListings.map((listing) => listing.type))];
-  marketTabs.innerHTML = tabs.map((tab) => `<button type="button" class="${tab === filter ? 'active' : ''}" data-market-filter="${tab}">${tab}</button>`).join('');
-  const listings = marketplaceListings.filter((listing) => (filter === 'All' || listing.type === filter) && (!modelFocus || listing.model === modelFocus || listing.copy.includes(modelFocus)));
-  marketGrid.innerHTML = listings.map((listing) => `<article><span class="pill">${listing.type}</span><h3>${listing.name}</h3><p>${listing.copy}</p><p class="price">${listing.price}</p><button type="button" data-product="${listing.name}">Add</button></article>`).join('') || '<article><h3>No matches</h3><p>Choose another marketplace tab or model.</p></article>';
-  marketTabs.querySelectorAll('[data-market-filter]').forEach((button) => button.addEventListener('click', () => renderMarketplace(button.dataset.marketFilter)));
+  marketplaceState.type = type || 'All';
+  marketplaceState.modelFocus = modelFocus || '';
+  marketplaceState.curatedOnly = marketQualityToggle ? marketQualityToggle.checked : marketplaceState.curatedOnly;
+  const types = ['All', ...new Set(marketplaceListings.map((listing) => listing.type))];
+  const categories = ['All', ...new Set(marketplaceListings.map((listing) => listing.category))];
+  marketTabs.innerHTML = types.map((tab) => `<button type="button" class="${tab === marketplaceState.type ? 'active' : ''}" aria-pressed="${tab === marketplaceState.type}" data-market-filter="${tab}">${tab}</button>`).join('');
+  if (marketCategories) {
+    marketCategories.innerHTML = categories.map((category) => `<button type="button" class="${category === marketplaceState.category ? 'active' : ''}" aria-pressed="${category === marketplaceState.category}" data-market-category="${category}">${category}</button>`).join('');
+  }
+  const listings = marketplaceListings.filter((listing) => {
+    const typeMatch = marketplaceState.type === 'All' || listing.type === marketplaceState.type;
+    const categoryMatch = marketplaceState.category === 'All' || listing.category === marketplaceState.category;
+    const focusMatch = !marketplaceState.modelFocus || listing.model === marketplaceState.modelFocus || listing.copy.includes(marketplaceState.modelFocus);
+    const qualityMatch = !marketplaceState.curatedOnly || listing.quality === 'curated';
+    return typeMatch && categoryMatch && focusMatch && qualityMatch;
+  });
+  marketGrid.innerHTML = listings.map((listing) => `<article><span class="pill">${listing.type}</span><span class="pill category-pill">${listing.category}</span><h3>${listing.name}</h3><p>${listing.copy}</p><p class="price">${listing.price}</p><button type="button" data-product="${listing.name}">Add</button></article>`).join('') || '<article><h3>No matches</h3><p>Choose another category, type, or turn off curated quality only.</p></article>';
+  if (marketStatus) {
+    const focusCopy = marketplaceState.modelFocus ? ` for ${marketplaceState.modelFocus}` : '';
+    marketStatus.textContent = `${listings.length} listing${listings.length === 1 ? '' : 's'} shown${focusCopy}. Category: ${marketplaceState.category}. Type: ${marketplaceState.type}.`;
+  }
+  marketTabs.querySelectorAll('[data-market-filter]').forEach((button) => button.addEventListener('click', () => renderMarketplace(button.dataset.marketFilter, marketplaceState.modelFocus)));
+  marketCategories?.querySelectorAll('[data-market-category]').forEach((button) => button.addEventListener('click', () => {
+    marketplaceState.category = button.dataset.marketCategory || 'All';
+    marketplaceState.modelFocus = '';
+    renderMarketplace(marketplaceState.type);
+  }));
 }
 
 designerControls?.addEventListener('input', updatePreview);
 designerControls?.addEventListener('change', updatePreview);
 document.querySelector('[data-add-custom]')?.addEventListener('click', (event) => {
+  const title = document.querySelector('#preview-title')?.textContent || 'Custom design';
+  addCartLine(title, 74.99, 'Custom merch designer');
   updateCart(event.currentTarget, 'Design added');
-  claimOwnedAsset(document.querySelector('#preview-title')?.textContent || 'Custom design', 'Designer save');
+  claimOwnedAsset(title, 'Designer save');
 });
 document.querySelector('#asset-upload')?.addEventListener('change', (event) => {
   const files = [...event.currentTarget.files].map((file) => `<li>${file.name} → thumbnails, tiles, cards, previews queued</li>`).join('');
@@ -432,6 +509,8 @@ document.querySelector('#checkout-qty')?.addEventListener('input', updateCheckou
 document.querySelector('#checkout-add')?.addEventListener('click', (event) => {
   const character = siteTwoCharacters[Number(document.querySelector('#checkout-character-select')?.value)] || siteTwoCharacters[0];
   const product = siteTwoProducts[Number(document.querySelector('#checkout-product-select')?.value)] || siteTwoProducts[0];
+  const qty = Math.max(1, Number(document.querySelector('#checkout-qty')?.value) || 1);
+  for (let index = 0; index < qty; index += 1) addCartLine(`${character.name} ${product.name}`, product.price, `${document.querySelector('#checkout-size-select')?.value || ''} · ${document.querySelector('#checkout-color-select')?.value || ''}`);
   updateCart(event.currentTarget, 'Checkout added');
   claimOwnedAsset(`${character.name} ${product.name}`, 'Character checkout');
   alert(`${character.name} ${product.name} is in your cart and saved to ${currentMemberEmail || 'the active'} owned collection. Connect this demo checkout to Shopify, Stripe, WooCommerce, or your preferred product checkout.`);
@@ -451,6 +530,7 @@ document.addEventListener('click', (event) => {
 
 renderModelCards();
 renderMerchOptions();
+syncCartCount();
 seedDesigner();
 
 const arCharacterSelect = document.querySelector('#ar-character-select');
@@ -570,6 +650,7 @@ function initBottleLogin() {
   });
 }
 
+marketQualityToggle?.addEventListener('change', () => renderMarketplace());
 renderMarketplace();
 seedCharacterCheckout();
 seedArViewer();
@@ -577,71 +658,65 @@ document.querySelector('#owned-profile-select')?.addEventListener('change', (eve
 renderOwnedCollection();
 initBottleLogin();
 
+const checkoutItems = document.querySelector('#checkout-items');
+const paymentForm = document.querySelector('#payment-form');
 
-const publicModelViewer = document.querySelector('#public-model-viewer');
-const publicModelFile = document.querySelector('#public-model-file');
-const publicModelStatus = document.querySelector('#public-model-status');
-const lockModelButton = document.querySelector('#lock-model-button');
-const unlockModelButton = document.querySelector('#unlock-model-button');
-const lockedModelSummary = document.querySelector('#locked-model-summary');
-const resetViewButton = document.querySelector('#reset-view-button');
-const environmentSelect = document.querySelector('#environment-select');
-let publicModelObjectUrl = '';
-let publicModelName = 'Default Astronaut demo model';
-
-function renderLockedModelSummary() {
-  if (!lockedModelSummary) return;
-  const locked = window.localStorage.getItem('muzikazLockedPublicModel');
-  lockedModelSummary.textContent = locked ? `${locked} is locked in for this browser.` : 'No public model is locked yet.';
+function formatCheckoutMoney(amount) {
+  return `$${Number(amount || 0).toFixed(2)}`;
 }
 
-function setPublicModelStatus(message) {
-  if (publicModelStatus) publicModelStatus.textContent = message;
+function renderCheckoutPage() {
+  if (!checkoutItems) return;
+  const items = readCart();
+  if (!items.length) {
+    checkoutItems.innerHTML = '<article class="empty-cart"><strong>Your cart is empty.</strong><span>Add models or merch before processing checkout.</span></article>';
+  } else {
+    checkoutItems.innerHTML = items.map((item) => `
+      <article class="checkout-item">
+        <div><strong>${item.name}</strong><span>${item.meta || 'MUZIKAZ store item'} · Qty ${item.quantity}</span></div>
+        <b>${formatCheckoutMoney(item.price * item.quantity)}</b>
+      </article>`).join('');
+  }
+  const subtotal = items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const shipping = subtotal > 0 && subtotal < 75 ? 8.95 : 0;
+  const tax = subtotal * 0.0825;
+  const total = subtotal + shipping + tax;
+  document.querySelector('#summary-subtotal').textContent = formatCheckoutMoney(subtotal);
+  document.querySelector('#summary-shipping').textContent = subtotal ? (shipping ? formatCheckoutMoney(shipping) : 'Free') : '$0.00';
+  document.querySelector('#summary-tax').textContent = formatCheckoutMoney(tax);
+  document.querySelector('#summary-total').textContent = formatCheckoutMoney(total);
+  document.querySelector('#pay-button-total').textContent = formatCheckoutMoney(total);
+  document.querySelector('#pay-button').disabled = !items.length;
 }
 
-publicModelFile?.addEventListener('change', (event) => {
-  const [file] = event.currentTarget.files;
-  if (!file || !publicModelViewer) return;
-  if (publicModelObjectUrl) URL.revokeObjectURL(publicModelObjectUrl);
-  publicModelObjectUrl = URL.createObjectURL(file);
-  publicModelName = file.name;
-  if (/\.(usdz|reality)$/i.test(file.name)) {
-    publicModelViewer.setAttribute('ios-src', publicModelObjectUrl);
-    setPublicModelStatus(`${file.name} is ready for iPhone Quick Look AR. Add a GLB version to orbit it directly in the browser.`);
+document.querySelector('#checkout-clear-cart')?.addEventListener('click', () => {
+  writeCart([]);
+  renderCheckoutPage();
+  document.querySelector('#payment-status').textContent = 'Cart cleared. Add products to process a new payment.';
+});
+
+paymentForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const items = readCart();
+  const status = document.querySelector('#payment-status');
+  if (!items.length) {
+    status.textContent = 'Add at least one item before processing payment.';
     return;
   }
-  publicModelViewer.src = publicModelObjectUrl;
-  publicModelViewer.removeAttribute('ios-src');
-  setPublicModelStatus(`${file.name} loaded. Drag, zoom, pan, or tap View in your space on supported devices.`);
+  if (!paymentForm.reportValidity()) return;
+  const data = new FormData(paymentForm);
+  const orderId = `MZ-${Date.now().toString().slice(-6)}`;
+  const total = document.querySelector('#summary-total').textContent;
+  const receipt = { orderId, total, email: data.get('email'), items, paidAt: new Date().toISOString(), method: data.get('method') };
+  window.localStorage.setItem('muzikazLastReceipt', JSON.stringify(receipt));
+  items.forEach((item) => claimOwnedAsset(item.name, `Paid order ${orderId}`));
+  writeCart([]);
+  renderCheckoutPage();
+  status.textContent = `Payment processed for ${total}. Receipt ${orderId} sent to ${data.get('email')}.`;
+  document.querySelector('#confirmation-copy').textContent = `Receipt ${orderId} is confirmed for ${total} by ${data.get('method')}. Your ${items.length} cart line${items.length === 1 ? '' : 's'} are ready for fulfillment.`;
+  document.querySelector('#confirmation-panel').hidden = false;
+  document.querySelector('#confirmation-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  paymentForm.reset();
 });
 
-lockModelButton?.addEventListener('click', () => {
-  window.localStorage.setItem('muzikazLockedPublicModel', publicModelName);
-  renderLockedModelSummary();
-  setPublicModelStatus(`${publicModelName} is locked in. The selection is saved locally for this user.`);
-  updateCart(lockModelButton, 'Locked in');
-});
-
-unlockModelButton?.addEventListener('click', () => {
-  window.localStorage.removeItem('muzikazLockedPublicModel');
-  renderLockedModelSummary();
-  setPublicModelStatus('Model lock cleared. Upload or preview another model when ready.');
-});
-
-resetViewButton?.addEventListener('click', () => {
-  if (publicModelViewer) {
-    publicModelViewer.cameraOrbit = '0deg 75deg 105%';
-    publicModelViewer.fieldOfView = 'auto';
-    publicModelViewer.jumpCameraToGoal?.();
-  }
-  setPublicModelStatus('3D camera view has been reset.');
-});
-
-environmentSelect?.addEventListener('change', () => {
-  if (!publicModelViewer) return;
-  const value = environmentSelect.value;
-  publicModelViewer.setAttribute('environment-image', value === 'legacy' ? 'legacy' : value === 'moon' ? 'https://modelviewer.dev/shared-assets/environments/moon_1k.hdr' : 'neutral');
-  setPublicModelStatus(`Stage lighting changed to ${environmentSelect.options[environmentSelect.selectedIndex].text}.`);
-});
-
-renderLockedModelSummary();
+renderCheckoutPage();
