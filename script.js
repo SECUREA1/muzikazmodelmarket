@@ -849,3 +849,186 @@ function initPublicModelExplorer() {
 }
 
 initPublicModelExplorer();
+
+function initHouseExplorer() {
+  const canvas = document.querySelector('#house-explorer-canvas');
+  if (!(canvas instanceof HTMLCanvasElement)) return;
+  const ctx = canvas.getContext('2d');
+  const status = document.querySelector('#house-status');
+  const resetButton = document.querySelector('#house-reset');
+  const avatarButton = document.querySelector('#add-avatar');
+  const handButton = document.querySelector('#hand-toggle');
+  const preview = document.querySelector('#hand-preview');
+  const handStatus = document.querySelector('#hand-status');
+  const keys = new Set();
+  const defaultCamera = { x: 0, y: 1.55, z: -6.2, yaw: 0, pitch: -0.03, fov: 520 };
+  const camera = { ...defaultCamera };
+  const avatars = [{ x: 2.2, z: 1.4, hue: 92 }, { x: -2.7, z: 5.8, hue: 175 }];
+  const walls = [
+    [[-5, 0], [5, 0]], [[5, 0], [5, 9]], [[5, 9], [-5, 9]], [[-5, 9], [-5, 0]],
+    [[-1.6, 0], [-1.6, 3.2]], [[1.8, 3.2], [5, 3.2]], [[-5, 5.9], [1.1, 5.9]], [[1.1, 5.9], [1.1, 9]],
+  ];
+  let dragging = false;
+  let lastPointer = null;
+  let handEnabled = false;
+  let handStream = null;
+  let handController = null;
+
+  function setStatus(message) {
+    if (status) status.textContent = message;
+  }
+
+  function loadScriptOnce(src) {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src=\"${src}\"]`);
+      if (existing) { resolve(); return; }
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.append(script);
+    });
+  }
+
+  async function startMediaPipeHands() {
+    await Promise.all([
+      loadScriptOnce('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js'),
+      loadScriptOnce('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js'),
+    ]);
+    if (!window.Hands || !window.Camera || !preview) return false;
+    const hands = new window.Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: .65, minTrackingConfidence: .55 });
+    hands.onResults((results) => {
+      const tip = results.multiHandLandmarks?.[0]?.[8];
+      if (!tip) return;
+      camera.yaw += (tip.x - .5) * .035;
+      camera.pitch = Math.max(-.8, Math.min(.55, camera.pitch + (tip.y - .5) * .025));
+      if (tip.y < .34) move('forward', .08);
+      if (tip.y > .72) move('back', .08);
+    });
+    handController = new window.Camera(preview, { onFrame: async () => hands.send({ image: preview }), width: 320, height: 180 });
+    handController.start();
+    return true;
+  }
+
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = Math.max(320, Math.floor(rect.width * ratio));
+    canvas.height = Math.max(240, Math.floor(rect.height * ratio));
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  }
+
+  function project(point) {
+    const dx = point.x - camera.x;
+    const dy = point.y - camera.y;
+    const dz = point.z - camera.z;
+    const cy = Math.cos(camera.yaw), sy = Math.sin(camera.yaw);
+    const cp = Math.cos(camera.pitch), sp = Math.sin(camera.pitch);
+    const x = dx * cy - dz * sy;
+    const z = dx * sy + dz * cy;
+    const y = dy * cp - z * sp;
+    const depth = dy * sp + z * cp;
+    if (depth <= 0.12) return null;
+    const rect = canvas.getBoundingClientRect();
+    return { x: rect.width / 2 + (x * camera.fov) / depth, y: rect.height / 2 - (y * camera.fov) / depth, d: depth };
+  }
+
+  function drawPolygon(points, fill, stroke = 'rgba(156,255,0,.22)') {
+    const projected = points.map(project);
+    if (projected.some((p) => !p)) return;
+    ctx.beginPath();
+    projected.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 1;
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  function drawLine(a, b, color, width = 2) {
+    const pa = project(a), pb = project(b);
+    if (!pa || !pb) return;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(pa.x, pa.y);
+    ctx.lineTo(pb.x, pb.y);
+    ctx.stroke();
+  }
+
+  function render() {
+    const rect = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, rect.width, rect.height);
+    const gradient = ctx.createLinearGradient(0, 0, 0, rect.height);
+    gradient.addColorStop(0, '#06110c'); gradient.addColorStop(1, '#010201');
+    ctx.fillStyle = gradient; ctx.fillRect(0, 0, rect.width, rect.height);
+    drawPolygon([{x:-5,y:0,z:0},{x:5,y:0,z:0},{x:5,y:0,z:9},{x:-5,y:0,z:9}], 'rgba(12,24,16,.94)');
+    drawPolygon([{x:-5,y:3,z:0},{x:-5,y:3,z:9},{x:5,y:3,z:9},{x:5,y:3,z:0}], 'rgba(4,12,10,.72)');
+    for (let i = -5; i <= 5; i += 1) drawLine({x:i,y:.01,z:0},{x:i,y:.01,z:9}, 'rgba(156,255,0,.13)', 1);
+    for (let z = 0; z <= 9; z += 1) drawLine({x:-5,y:.01,z},{x:5,y:.01,z}, 'rgba(156,255,0,.13)', 1);
+    walls.forEach(([a, b]) => drawPolygon([{x:a[0],y:0,z:a[1]},{x:b[0],y:0,z:b[1]},{x:b[0],y:2.7,z:b[1]},{x:a[0],y:2.7,z:a[1]}], 'rgba(14,35,27,.82)', 'rgba(156,255,0,.45)'));
+    avatars.forEach((avatar) => {
+      const p = project({ x: avatar.x, y: .95, z: avatar.z });
+      if (!p) return;
+      const size = Math.max(10, 240 / p.d);
+      ctx.fillStyle = `hsl(${avatar.hue} 100% 58%)`; ctx.shadowBlur = 18; ctx.shadowColor = ctx.fillStyle;
+      ctx.beginPath(); ctx.arc(p.x, p.y - size * .6, size * .28, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(p.x - size * .22, p.y - size * .35, size * .44, size * .85); ctx.shadowBlur = 0;
+    });
+    requestAnimationFrame(render);
+  }
+
+  function move(direction, amount) {
+    const forwardX = Math.sin(camera.yaw), forwardZ = Math.cos(camera.yaw);
+    const rightX = Math.cos(camera.yaw), rightZ = -Math.sin(camera.yaw);
+    if (direction === 'forward') { camera.x += forwardX * amount; camera.z += forwardZ * amount; }
+    if (direction === 'back') { camera.x -= forwardX * amount; camera.z -= forwardZ * amount; }
+    if (direction === 'right') { camera.x += rightX * amount; camera.z += rightZ * amount; }
+    if (direction === 'left') { camera.x -= rightX * amount; camera.z -= rightZ * amount; }
+    camera.x = Math.max(-4.5, Math.min(4.5, camera.x)); camera.z = Math.max(-.4, Math.min(8.5, camera.z));
+  }
+
+  function tickMovement() {
+    const speed = .065;
+    if (keys.has('w') || keys.has('arrowup')) move('forward', speed);
+    if (keys.has('s') || keys.has('arrowdown')) move('back', speed);
+    if (keys.has('a') || keys.has('arrowleft')) move('left', speed);
+    if (keys.has('d') || keys.has('arrowright')) move('right', speed);
+    if (keys.has('q')) camera.y = Math.max(.8, camera.y - .025);
+    if (keys.has('e')) camera.y = Math.min(2.4, camera.y + .025);
+    requestAnimationFrame(tickMovement);
+  }
+
+  canvas.addEventListener('pointerdown', (event) => { dragging = true; lastPointer = { x: event.clientX, y: event.clientY }; canvas.setPointerCapture(event.pointerId); });
+  canvas.addEventListener('pointermove', (event) => {
+    if (!dragging || !lastPointer) return;
+    camera.yaw += (event.clientX - lastPointer.x) * .005;
+    camera.pitch = Math.max(-.8, Math.min(.55, camera.pitch + (event.clientY - lastPointer.y) * .004));
+    lastPointer = { x: event.clientX, y: event.clientY };
+  });
+  canvas.addEventListener('pointerup', () => { dragging = false; lastPointer = null; });
+  canvas.addEventListener('wheel', (event) => { event.preventDefault(); camera.fov = Math.max(320, Math.min(760, camera.fov - event.deltaY * .25)); }, { passive: false });
+  document.addEventListener('keydown', (event) => keys.add(event.key.toLowerCase()));
+  document.addEventListener('keyup', (event) => keys.delete(event.key.toLowerCase()));
+  document.querySelectorAll('[data-mobile-move]').forEach((button) => button.addEventListener('click', () => move(button.dataset.mobileMove, .42)));
+  resetButton?.addEventListener('click', () => { Object.assign(camera, defaultCamera); avatars.splice(0, avatars.length, { x: 2.2, z: 1.4, hue: 92 }, { x: -2.7, z: 5.8, hue: 175 }); setStatus('Explorer reset to the default inside-camera view.'); });
+  avatarButton?.addEventListener('click', () => { avatars.push({ x: (Math.random() * 8) - 4, z: Math.random() * 7.5 + .6, hue: Math.floor(Math.random() * 260) + 70 }); setStatus(`Avatar added. Total avatars: ${avatars.length}.`); });
+  handButton?.addEventListener('click', async () => {
+    handEnabled = !handEnabled; handButton.setAttribute('aria-pressed', String(handEnabled)); handButton.textContent = handEnabled ? 'Disable hand control' : 'Enable hand control';
+    if (!handEnabled) { handController?.stop?.(); handStream?.getTracks().forEach((track) => track.stop()); handStream = null; if (handStatus) handStatus.textContent = 'Camera preview inactive. MediaPipe Hands loads only when enabled.'; return; }
+    try {
+      handStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (preview) { preview.srcObject = handStream; await preview.play(); }
+      const mediaPipeReady = await startMediaPipeHands();
+      if (handStatus) handStatus.textContent = mediaPipeReady ? 'MediaPipe Hands active: move your index finger to steer the camera.' : 'Camera preview enabled; MediaPipe Hands could not be loaded, so manual controls remain active.';
+    }
+    catch (error) { handEnabled = false; handButton.setAttribute('aria-pressed', 'false'); if (handStatus) handStatus.textContent = 'Camera or MediaPipe unavailable; keyboard, mouse, and mobile controls still work.'; }
+  });
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas(); render(); tickMovement();
+}
+
+initHouseExplorer();
