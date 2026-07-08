@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MUZIKAZ 3D Model Explorer</title>
+  <meta name="description" content="Public GLB and USDZ model viewer for exploring MUZIKAZ drops in interactive 3D and locking in a selected model." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="model-explorer-page">
+  <div class="topbar">
+    <span>Public 3D model lab</span>
+    <span>Upload GLB/USDZ files, rotate, zoom, launch AR, then lock it in</span>
+  </div>
+
+  <header class="site-header">
+    <a class="logo" href="index.html#home" aria-label="MUZIKAZ home page">
+      <span class="bolt">ϟ</span>
+      <span>MUZIKAZ</span>
+    </a>
+    <nav class="nav" id="primary-navigation" aria-label="Primary navigation">
+      <a href="index.html#home">Home</a>
+      <a href="index.html#models">Models</a>
+      <a class="active" href="model-explorer.html">3D Explorer</a>
+      <a href="members.html">Bottle Login</a>
+      <a href="index.html#contact">Contact</a>
+    </nav>
+    <div class="icons" aria-label="Store shortcuts">
+      <button class="icon-button" type="button" data-action="search" aria-label="Search collections">⌕</button>
+      <button class="icon-button cart" type="button" data-action="cart" aria-label="Cart">🛒<b id="cart-count">0</b></button>
+    </div>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">☰</button>
+  </header>
+
+  <main class="explorer-shell" id="model-explorer">
+    <section class="explorer-hero" aria-labelledby="explorer-title">
+      <div class="explorer-copy">
+        <p class="kicker">GLB + USDZ ready</p>
+        <h1 id="explorer-title">Explore the model in 3D space</h1>
+        <p>Everyone can rotate, pinch, pan, zoom, swap environments, upload a GLB or USDZ model, and touch the lock button to save the current pick in this browser.</p>
+        <div class="hero-actions">
+          <label class="btn upload-btn" for="public-model-file">Upload GLB / USDZ</label>
+          <button class="btn" type="button" id="lock-model-button">🔒 Lock it in</button>
+          <button class="btn ghost" type="button" id="reset-view-button">Reset view</button>
+        </div>
+        <input id="public-model-file" class="visually-hidden" type="file" accept=".glb,.gltf,.usdz,.reality,model/gltf-binary,model/gltf+json,model/vnd.usdz+zip" />
+        <p class="status-message" id="public-model-status" role="status">Default demo model is loaded. Upload your own GLB or USDZ to explore a custom drop.</p>
+      </div>
+
+      <div class="explorer-stage" aria-label="Interactive 3D model viewer">
+        <model-viewer
+          id="public-model-viewer"
+          src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
+          ios-src="https://modelviewer.dev/shared-assets/models/Astronaut.usdz"
+          poster="logo_panel_2x_transparent.png"
+          alt="Interactive MUZIKAZ 3D model preview"
+          camera-controls
+          touch-action="pan-y"
+          ar
+          ar-modes="webxr scene-viewer quick-look"
+          auto-rotate
+          shadow-intensity="1"
+          exposure="1"
+          camera-orbit="0deg 75deg 105%"
+          min-camera-orbit="auto auto 35%"
+          max-camera-orbit="auto auto 240%"
+          interaction-prompt="auto">
+          <button class="ar-hotspot" slot="hotspot-1" data-position="0m 1.45m 0m" data-normal="0m 1m 0m">Tap + drag to inspect</button>
+          <button class="ar-button" slot="ar-button">View in your space</button>
+        </model-viewer>
+      </div>
+    </section>
+
+    <section class="explorer-controls" aria-label="3D viewer controls">
+      <article>
+        <h2>3D controls</h2>
+        <ul>
+          <li>Drag with one finger or mouse to orbit the model.</li>
+          <li>Pinch or scroll to zoom in and out.</li>
+          <li>Use two fingers or right-click drag to pan around the stage.</li>
+          <li>On mobile, tap <strong>View in your space</strong> for AR when the device supports it.</li>
+        </ul>
+      </article>
+      <article>
+        <h2>Lock status</h2>
+        <p id="locked-model-summary">No public model is locked yet.</p>
+        <button type="button" id="unlock-model-button">Unlock selection</button>
+      </article>
+      <article>
+        <h2>Lighting</h2>
+        <label for="environment-select">Stage look</label>
+        <select id="environment-select">
+          <option value="neutral">Neutral studio</option>
+          <option value="legacy">Legacy lighting</option>
+          <option value="moon">Moon glow</option>
+        </select>
+      </article>
+    </section>
+  </main>
+
+  <footer id="contact">
+    <div>
+      <a class="logo" href="index.html#home"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
+      <p>Public model explorer for GLB, GLTF, USDZ, and Reality files.</p>
+    </div>
+    <div><h4>Explore</h4><a href="index.html#models">Models</a><a href="model-explorer.html">3D Viewer</a></div>
+    <div><h4>Support</h4><a href="mailto:crew@muzikaz.example">Contact</a><a href="members.html">Bottle Login</a></div>
+  </footer>
+
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
