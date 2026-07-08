@@ -9,6 +9,43 @@ const modelDetailCopy = document.querySelector('#model-detail-copy');
 const addModelButton = document.querySelector('[data-add-model]');
 const modelPageLink = document.querySelector('#model-page-link');
 let cartItems = 0;
+const CART_KEY = 'muzikazCheckoutCart';
+
+function parsePrice(value) {
+  return Number(String(value || '').replace(/[^0-9.]/g, '')) || 0;
+}
+
+function readCart() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(CART_KEY) || '[]');
+    return Array.isArray(saved) ? saved : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function writeCart(items) {
+  window.localStorage.setItem(CART_KEY, JSON.stringify(items));
+  syncCartCount();
+}
+
+function syncCartCount() {
+  cartItems = readCart().reduce((total, item) => total + (Number(item.quantity) || 1), 0);
+  if (cartCount) cartCount.textContent = String(cartItems);
+}
+
+function addCartLine(name, price, meta = '') {
+  if (!name) return;
+  const items = readCart();
+  const key = `${name}|${meta}`;
+  const existing = items.find((item) => item.key === key);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    items.push({ key, name, price: Number(price) || 0, meta, quantity: 1 });
+  }
+  writeCart(items);
+}
 let selectedModel = '';
 const ownedProfilesSeed = {
   'crew@muzikaz.example': ['Originals 3D Model Pack', 'Neon Hoodie', 'Beat Bottle'],
@@ -28,8 +65,7 @@ function closeMenu() {
 }
 
 function updateCart(button, label = 'Added') {
-  cartItems += 1;
-  if (cartCount) cartCount.textContent = String(cartItems);
+  syncCartCount();
   if (!button) return;
   const originalText = button.textContent;
   button.textContent = label;
@@ -132,6 +168,8 @@ addModelButton?.addEventListener('click', () => {
     scrollToSection('models');
     return;
   }
+  const model = getModel(selectedModel);
+  addCartLine(`${selectedModel} 3D Model Pack`, parsePrice(model.price), model.type);
   updateCart(addModelButton, 'Model added');
   if (modelStatus) modelStatus.textContent = `${selectedModel} model added to your cart.`;
 });
@@ -154,7 +192,11 @@ document.querySelector('[data-action="search"]')?.addEventListener('click', () =
 });
 
 document.querySelector('[data-action="cart"]')?.addEventListener('click', () => {
-  alert(cartItems ? `Cart ready with ${cartItems} item${cartItems === 1 ? '' : 's'}.` : 'Your MUZIKAZ cart is empty. Add merch or models to begin.');
+  if (cartItems) {
+    window.location.href = 'checkout.html';
+  } else {
+    alert('Your MUZIKAZ cart is empty. Add merch or models to begin.');
+  }
 });
 
 document.querySelector('.newsletter form')?.addEventListener('submit', (event) => {
@@ -305,8 +347,11 @@ document.addEventListener('click', (event) => {
   }
   const productButton = event.target.closest('[data-product]');
   if (productButton) {
+    const productName = productButton.dataset.product;
+    const product = assetCatalog.retail.find((item) => item.name === productName) || marketplaceListings.find((item) => item.name === productName);
+    addCartLine(productName, parsePrice(product?.price), product?.category || product?.type || 'Store item');
     updateCart(productButton);
-    claimOwnedAsset(productButton.dataset.product, 'Added from storefront');
+    claimOwnedAsset(productName, 'Added from storefront');
   }
 });
 
@@ -393,8 +438,10 @@ function renderMarketplace(type = marketplaceState.type, modelFocus = marketplac
 designerControls?.addEventListener('input', updatePreview);
 designerControls?.addEventListener('change', updatePreview);
 document.querySelector('[data-add-custom]')?.addEventListener('click', (event) => {
+  const title = document.querySelector('#preview-title')?.textContent || 'Custom design';
+  addCartLine(title, 74.99, 'Custom merch designer');
   updateCart(event.currentTarget, 'Design added');
-  claimOwnedAsset(document.querySelector('#preview-title')?.textContent || 'Custom design', 'Designer save');
+  claimOwnedAsset(title, 'Designer save');
 });
 document.querySelector('#asset-upload')?.addEventListener('change', (event) => {
   const files = [...event.currentTarget.files].map((file) => `<li>${file.name} → thumbnails, tiles, cards, previews queued</li>`).join('');
@@ -462,6 +509,8 @@ document.querySelector('#checkout-qty')?.addEventListener('input', updateCheckou
 document.querySelector('#checkout-add')?.addEventListener('click', (event) => {
   const character = siteTwoCharacters[Number(document.querySelector('#checkout-character-select')?.value)] || siteTwoCharacters[0];
   const product = siteTwoProducts[Number(document.querySelector('#checkout-product-select')?.value)] || siteTwoProducts[0];
+  const qty = Math.max(1, Number(document.querySelector('#checkout-qty')?.value) || 1);
+  for (let index = 0; index < qty; index += 1) addCartLine(`${character.name} ${product.name}`, product.price, `${document.querySelector('#checkout-size-select')?.value || ''} · ${document.querySelector('#checkout-color-select')?.value || ''}`);
   updateCart(event.currentTarget, 'Checkout added');
   claimOwnedAsset(`${character.name} ${product.name}`, 'Character checkout');
   alert(`${character.name} ${product.name} is in your cart and saved to ${currentMemberEmail || 'the active'} owned collection. Connect this demo checkout to Shopify, Stripe, WooCommerce, or your preferred product checkout.`);
@@ -481,6 +530,7 @@ document.addEventListener('click', (event) => {
 
 renderModelCards();
 renderMerchOptions();
+syncCartCount();
 seedDesigner();
 
 const arCharacterSelect = document.querySelector('#ar-character-select');
@@ -607,3 +657,66 @@ seedArViewer();
 document.querySelector('#owned-profile-select')?.addEventListener('change', (event) => renderOwnedCollection(event.currentTarget.value));
 renderOwnedCollection();
 initBottleLogin();
+
+const checkoutItems = document.querySelector('#checkout-items');
+const paymentForm = document.querySelector('#payment-form');
+
+function formatCheckoutMoney(amount) {
+  return `$${Number(amount || 0).toFixed(2)}`;
+}
+
+function renderCheckoutPage() {
+  if (!checkoutItems) return;
+  const items = readCart();
+  if (!items.length) {
+    checkoutItems.innerHTML = '<article class="empty-cart"><strong>Your cart is empty.</strong><span>Add models or merch before processing checkout.</span></article>';
+  } else {
+    checkoutItems.innerHTML = items.map((item) => `
+      <article class="checkout-item">
+        <div><strong>${item.name}</strong><span>${item.meta || 'MUZIKAZ store item'} · Qty ${item.quantity}</span></div>
+        <b>${formatCheckoutMoney(item.price * item.quantity)}</b>
+      </article>`).join('');
+  }
+  const subtotal = items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const shipping = subtotal > 0 && subtotal < 75 ? 8.95 : 0;
+  const tax = subtotal * 0.0825;
+  const total = subtotal + shipping + tax;
+  document.querySelector('#summary-subtotal').textContent = formatCheckoutMoney(subtotal);
+  document.querySelector('#summary-shipping').textContent = subtotal ? (shipping ? formatCheckoutMoney(shipping) : 'Free') : '$0.00';
+  document.querySelector('#summary-tax').textContent = formatCheckoutMoney(tax);
+  document.querySelector('#summary-total').textContent = formatCheckoutMoney(total);
+  document.querySelector('#pay-button-total').textContent = formatCheckoutMoney(total);
+  document.querySelector('#pay-button').disabled = !items.length;
+}
+
+document.querySelector('#checkout-clear-cart')?.addEventListener('click', () => {
+  writeCart([]);
+  renderCheckoutPage();
+  document.querySelector('#payment-status').textContent = 'Cart cleared. Add products to process a new payment.';
+});
+
+paymentForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const items = readCart();
+  const status = document.querySelector('#payment-status');
+  if (!items.length) {
+    status.textContent = 'Add at least one item before processing payment.';
+    return;
+  }
+  if (!paymentForm.reportValidity()) return;
+  const data = new FormData(paymentForm);
+  const orderId = `MZ-${Date.now().toString().slice(-6)}`;
+  const total = document.querySelector('#summary-total').textContent;
+  const receipt = { orderId, total, email: data.get('email'), items, paidAt: new Date().toISOString(), method: data.get('method') };
+  window.localStorage.setItem('muzikazLastReceipt', JSON.stringify(receipt));
+  items.forEach((item) => claimOwnedAsset(item.name, `Paid order ${orderId}`));
+  writeCart([]);
+  renderCheckoutPage();
+  status.textContent = `Payment processed for ${total}. Receipt ${orderId} sent to ${data.get('email')}.`;
+  document.querySelector('#confirmation-copy').textContent = `Receipt ${orderId} is confirmed for ${total} by ${data.get('method')}. Your ${items.length} cart line${items.length === 1 ? '' : 's'} are ready for fulfillment.`;
+  document.querySelector('#confirmation-panel').hidden = false;
+  document.querySelector('#confirmation-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  paymentForm.reset();
+});
+
+renderCheckoutPage();
