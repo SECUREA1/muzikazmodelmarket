@@ -720,3 +720,132 @@ paymentForm?.addEventListener('submit', (event) => {
 });
 
 renderCheckoutPage();
+
+function initPublicModelExplorer() {
+  const viewer = document.querySelector('#public-model-viewer');
+  const fileInput = document.querySelector('#public-model-file');
+  const status = document.querySelector('#public-model-status');
+  const lockButton = document.querySelector('#lock-model-button');
+  const unlockButton = document.querySelector('#unlock-model-button');
+  const resetButton = document.querySelector('#reset-view-button');
+  const centerButton = document.querySelector('#center-cursor-button');
+  const summary = document.querySelector('#locked-model-summary');
+  const environmentSelect = document.querySelector('#environment-select');
+  const zoomRange = document.querySelector('#zoom-range');
+  const scaleRange = document.querySelector('#scale-range');
+  const scaleOutput = document.querySelector('#scale-output');
+  const cursorSelect = document.querySelector('#cursor-select');
+  const cursorModel = document.querySelector('#cursor-model');
+  const floorGrid = document.querySelector('#floor-grid');
+  const floorTarget = document.querySelector('#floor-target');
+  if (!viewer || !floorGrid || !cursorModel) return;
+
+  const lockKey = 'muzikazPublicLockedModel';
+  const state = {
+    name: 'Default Astronaut GLB/USDZ demo',
+    source: viewer.getAttribute('src') || '',
+    iosSource: viewer.getAttribute('ios-src') || '',
+    zoom: 105,
+    scale: 100,
+    cursor: cursorModel.textContent || '🐺',
+    cursorLabel: 'Legends wolf',
+    cursorX: 50,
+    cursorY: 64,
+    environment: 'neutral',
+  };
+
+  function updateScaleZoom() {
+    const scaleValue = Number(scaleRange?.value || state.scale);
+    const zoomValue = Number(zoomRange?.value || state.zoom);
+    state.scale = scaleValue;
+    state.zoom = zoomValue;
+    const modelScale = scaleValue / 100;
+    viewer.setAttribute('scale', `${modelScale} ${modelScale} ${modelScale}`);
+    viewer.setAttribute('camera-orbit', `0deg 75deg ${zoomValue}%`);
+    cursorModel.style.setProperty('--cursor-scale', String(Math.max(.7, Math.min(1.5, modelScale))));
+    if (scaleOutput) scaleOutput.textContent = `Scale ${scaleValue}% · Zoom ${zoomValue}%`;
+  }
+
+  function setCursorPosition(x, y) {
+    state.cursorX = Math.max(4, Math.min(96, x));
+    state.cursorY = Math.max(12, Math.min(88, y));
+    cursorModel.style.setProperty('--cursor-x', `${state.cursorX}%`);
+    cursorModel.style.setProperty('--cursor-y', `${state.cursorY}%`);
+    floorTarget?.style.setProperty('--target-x', `${state.cursorX}%`);
+    floorTarget?.style.setProperty('--target-y', `${state.cursorY}%`);
+    if (status) status.textContent = `${state.cursorLabel} cursor moved to floor position ${Math.round(state.cursorX)}%, ${Math.round(state.cursorY)}%.`;
+  }
+
+  function setEnvironment(value) {
+    state.environment = value;
+    const maps = { neutral: 'neutral', legacy: 'legacy', moon: 'moon_1k' };
+    viewer.setAttribute('environment-image', maps[value] || 'neutral');
+    viewer.setAttribute('skybox-image', value === 'moon' ? 'moon_1k' : '');
+    if (status) status.textContent = `${value} stage lighting selected.`;
+  }
+
+  function renderLockedSummary() {
+    const locked = JSON.parse(window.localStorage.getItem(lockKey) || 'null');
+    if (!summary) return;
+    summary.textContent = locked ? `Locked: ${locked.name} with ${locked.cursorLabel} cursor, ${locked.scale}% scale, ${locked.zoom}% zoom, floor ${Math.round(locked.cursorX)}% / ${Math.round(locked.cursorY)}%.` : 'No public model is locked yet.';
+  }
+
+  fileInput?.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    state.name = file.name;
+    if (file.name.toLowerCase().endsWith('.usdz') || file.name.toLowerCase().endsWith('.reality')) {
+      viewer.setAttribute('ios-src', url);
+      state.iosSource = url;
+      if (status) status.textContent = `${file.name} is loaded as an iOS AR file. Add a GLB too for full browser preview.`;
+    } else {
+      viewer.setAttribute('src', url);
+      state.source = url;
+      if (status) status.textContent = `${file.name} is loaded. Rotate, zoom, scale, walk the cursor, then lock it in.`;
+    }
+  });
+
+  floorGrid.addEventListener('pointerdown', (event) => {
+    const rect = floorGrid.getBoundingClientRect();
+    setCursorPosition(((event.clientX - rect.left) / rect.width) * 100, ((event.clientY - rect.top) / rect.height) * 100);
+  });
+
+  cursorSelect?.addEventListener('change', () => {
+    const selected = cursorSelect.selectedOptions[0];
+    state.cursor = cursorSelect.value;
+    state.cursorLabel = selected?.dataset.label || selected?.textContent || 'Selected model';
+    cursorModel.textContent = state.cursor;
+    if (status) status.textContent = `${state.cursorLabel} is now the floor cursor model.`;
+  });
+
+  scaleRange?.addEventListener('input', updateScaleZoom);
+  zoomRange?.addEventListener('input', updateScaleZoom);
+  environmentSelect?.addEventListener('change', () => setEnvironment(environmentSelect.value));
+  centerButton?.addEventListener('click', () => setCursorPosition(50, 64));
+  resetButton?.addEventListener('click', () => {
+    if (scaleRange) scaleRange.value = '100';
+    if (zoomRange) zoomRange.value = '105';
+    updateScaleZoom();
+    setCursorPosition(50, 64);
+    viewer.cameraOrbit = '0deg 75deg 105%';
+    viewer.jumpCameraToGoal?.();
+  });
+  lockButton?.addEventListener('click', () => {
+    updateScaleZoom();
+    window.localStorage.setItem(lockKey, JSON.stringify({ ...state, lockedAt: new Date().toISOString() }));
+    renderLockedSummary();
+    if (status) status.textContent = `${state.name} is locked in with ${state.cursorLabel} as the move cursor.`;
+  });
+  unlockButton?.addEventListener('click', () => {
+    window.localStorage.removeItem(lockKey);
+    renderLockedSummary();
+    if (status) status.textContent = 'Public model selection unlocked. Pick or upload another model.';
+  });
+
+  updateScaleZoom();
+  setCursorPosition(state.cursorX, state.cursorY);
+  renderLockedSummary();
+}
+
+initPublicModelExplorer();
