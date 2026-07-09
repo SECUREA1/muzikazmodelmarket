@@ -285,6 +285,20 @@ const assetCatalog = {
 
 const designerCharacters = assetCatalog.models.map((model) => ({ id: model.id, name: model.character, traits: [model.name, model.type] }));
 const designerProducts = assetCatalog.retail.map((product) => ({ id: product.id, name: product.name, category: product.category, price: Number(product.price.replace(/[^0-9.]/g, '')) }));
+const productPrintTemplates = {
+  'avatar-stickers': { shape: 'sheet', label: 'Sticker sheet cutlines · drag art onto any sticker' },
+  hoodie: { shape: 'front', label: 'Hoodie front print zone · chest-safe placement' },
+  cap: { shape: 'patch', label: 'Cap badge / patch print zone' },
+  bottle: { shape: 'wrap', label: 'Bottle wrap label print zone' },
+  keychain: { shape: 'patch', label: 'Keychain charm print zone' },
+  wristband: { shape: 'wrap', label: 'Wristband repeat print zone' },
+  lanyard: { shape: 'wrap', label: 'Lanyard repeat print zone' },
+  'hero-banner': { shape: 'poster', label: 'Banner safe area · edge bleed visible' },
+  'tagline-tee': { shape: 'front', label: 'Tee front print zone' },
+  'event-pass': { shape: 'poster', label: 'Event pass safe area' },
+  'logo-patch': { shape: 'patch', label: 'Patch embroidery / print shape' },
+  'wordmark-print': { shape: 'poster', label: 'Wall art safe area' }
+};
 const marketplaceListings = [
   ...assetCatalog.models.map((model) => ({ type: model.type, category: model.name, quality: 'curated', name: `${model.name} 3D Model Pack`, price: model.price, copy: `${model.copy} Source: ${model.file}`, model: model.name })),
   ...assetCatalog.retail.map((product) => ({ type: 'Retail Pages', category: product.category, quality: 'curated', name: product.name, price: product.price, copy: `${product.category} connected to ${product.connectsTo.join(' + ')} model data.`, product: product.name })),
@@ -407,7 +421,11 @@ function updatePreview() {
   const { data, product, character } = designerData();
   const mockup = document.querySelector('#designer-mockup');
   mockup?.style.setProperty('--design-color', data.get('color'));
+  const selectedShape = data.get('printShape') === 'auto' ? (productPrintTemplates[product.id]?.shape || 'front') : data.get('printShape');
   mockup?.setAttribute('data-product-template', product.id);
+  mockup?.setAttribute('data-print-shape', selectedShape);
+  document.querySelector('#print-template-label').textContent = productPrintTemplates[product.id]?.label || `${product.name} print zone`;
+  document.querySelector('#sticker-stage')?.setAttribute('data-print-shape', selectedShape);
   document.querySelector('#preview-character').textContent = character.name;
   document.querySelector('#preview-name').textContent = data.get('name') || 'MUZIKAZ';
   document.querySelector('#preview-number').textContent = data.get('number') || '88';
@@ -568,10 +586,11 @@ function exportDesignerOrder() {
     logoStyle: data.get('logo'),
     sleeveText: data.get('sleeve'),
     layout: data.get('layout'),
+    printShape: data.get('printShape'),
     quantity: Number(data.get('quantity') || 1),
     notes: data.get('notes') || '',
     uploads: uploadState.layers.map(({ id, name }) => ({ id, name })),
-    preview: 'Live layered DOM merch preview'
+    preview: 'Live product-specific print template with draggable layers'
   };
 }
 
@@ -629,7 +648,7 @@ document.querySelector('#duplicate-design')?.addEventListener('click', () => {
 });
 document.querySelector('#edit-design')?.addEventListener('click', () => {
   document.querySelector('#product')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  setDesignerStatus('Correction mode open: revise product options, text, upload layers, or order notes before finalizing.');
+  setDesignerStatus('Correction mode open: choose a product, print shape, text, uploads, and drag layers directly on the selected item template before finalizing.');
 });
 document.querySelector('[data-add-custom]')?.addEventListener('click', (event) => {
   const order = exportDesignerOrder();
