@@ -611,27 +611,59 @@ document.querySelector('#upload-rotate')?.addEventListener('input', (event) => {
 });
 document.querySelectorAll('[data-layer-action]').forEach((button) => button.addEventListener('click', () => handleLayerAction(button.dataset.layerAction)));
 document.querySelectorAll('[data-studio-jump]').forEach((button) => button.addEventListener('click', () => document.getElementById(button.dataset.studioJump)?.scrollIntoView({ behavior: 'smooth', block: 'center' })));
-document.querySelector('#upload-layer-zone')?.addEventListener('pointerdown', (event) => {
-  const layer = event.target.closest('.uploaded-design-layer');
-  if (!layer) return;
-  selectUploadLayer(layer);
-  layer.setPointerCapture(event.pointerId);
-  const zone = document.querySelector('#upload-layer-zone').getBoundingClientRect();
-  const move = (moveEvent) => {
-    const snap = moveEvent.shiftKey ? 10 : 1;
-    const x = Math.round(((moveEvent.clientX - zone.left) / zone.width) * 100 / snap) * snap;
-    const y = Math.round(((moveEvent.clientY - zone.top) / zone.height) * 100 / snap) * snap;
-    layer.style.left = `${Math.max(6, Math.min(94, x))}%`;
-    layer.style.top = `${Math.max(6, Math.min(94, y))}%`;
+function stagePercentPosition(pointerEvent, stage, dragStart, snap) {
+  const stageRect = stage.getBoundingClientRect();
+  const targetX = pointerEvent.clientX - dragStart.offsetX + dragStart.anchorX;
+  const targetY = pointerEvent.clientY - dragStart.offsetY + dragStart.anchorY;
+  const rawX = ((targetX - stageRect.left) / stageRect.width) * 100;
+  const rawY = ((targetY - stageRect.top) / stageRect.height) * 100;
+  return {
+    x: Math.round(rawX / snap) * snap,
+    y: Math.round(rawY / snap) * snap
   };
-  const stop = () => {
-    layer.removeEventListener('pointermove', move);
-    layer.removeEventListener('pointerup', stop);
-    setDesignerStatus('Layer placement updated. Hold Shift while dragging to snap to 10% placement zones.');
-  };
-  layer.addEventListener('pointermove', move);
-  layer.addEventListener('pointerup', stop);
-});
+}
+
+function enableStickerStageDragging() {
+  const stage = document.querySelector('#sticker-stage');
+  if (!stage) return;
+  stage.addEventListener('pointerdown', (event) => {
+    const layer = event.target.closest('.sticker-cutline');
+    if (!layer || !stage.contains(layer)) return;
+    event.preventDefault();
+    const isUploadedLayer = layer.classList.contains('uploaded-design-layer');
+    if (isUploadedLayer) selectUploadLayer(layer);
+    layer.classList.add('active');
+    layer.setPointerCapture?.(event.pointerId);
+    layer.style.right = 'auto';
+    layer.style.bottom = 'auto';
+    const layerRect = layer.getBoundingClientRect();
+    const dragStart = {
+      offsetX: event.clientX - layerRect.left,
+      offsetY: event.clientY - layerRect.top,
+      anchorX: isUploadedLayer ? layerRect.width / 2 : 0,
+      anchorY: isUploadedLayer ? layerRect.height / 2 : 0
+    };
+    const move = (moveEvent) => {
+      const snap = moveEvent.shiftKey ? 10 : 1;
+      const { x, y } = stagePercentPosition(moveEvent, stage, dragStart, snap);
+      layer.style.left = `${Math.max(0, Math.min(94, x))}%`;
+      layer.style.top = `${Math.max(0, Math.min(94, y))}%`;
+    };
+    const stop = () => {
+      layer.releasePointerCapture?.(event.pointerId);
+      layer.removeEventListener('pointermove', move);
+      layer.removeEventListener('pointerup', stop);
+      layer.removeEventListener('pointercancel', stop);
+      if (!layer.classList.contains('uploaded-design-layer')) layer.classList.remove('active');
+      setDesignerStatus('Sticker placement updated. Drag any sticker or upload again; hold Shift to snap to 10% zones.');
+    };
+    layer.addEventListener('pointermove', move);
+    layer.addEventListener('pointerup', stop);
+    layer.addEventListener('pointercancel', stop);
+  });
+}
+
+enableStickerStageDragging();
 document.querySelector('#save-design')?.addEventListener('click', () => {
   uploadState.saved = exportDesignerOrder();
   localStorage.setItem('muzikazSavedDesign', JSON.stringify(uploadState.saved));
