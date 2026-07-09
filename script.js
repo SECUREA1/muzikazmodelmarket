@@ -276,7 +276,7 @@ const assetCatalog = {
     { id: 'lanyard', name: 'Lanyard', category: 'Accessories', price: '$14.00', asset: 'muzikaz_high_level_image_pack1/05_merch/lanyard_tile_2x.png', connectsTo: ['Beasts', 'Crew', 'Online Events'] },
     { id: 'hero-banner', name: 'Hero Banner', category: 'Wall Art', price: '$34.00', asset: 'hero_banner_full_2x_transparent.png', connectsTo: ['New Legends'] },
     { id: 'tagline-tee', name: 'Tagline Tee', category: 'Tees', price: '$32.00', asset: 'tagline_crop_2x_transparent.png', connectsTo: ['New Legends'] },
-    { id: 'avatar-stickers', name: 'Avatar Sticker Sheet', category: 'Stickers', price: '$18.00', asset: 'trait_avatars_row_2_2x.png', connectsTo: ['Trait Avatars'] },
+    { id: 'avatar-stickers', name: 'Avatar Sticker Sheet', category: 'Stickers', price: '$18.00', asset: 'trait_avatars_row_2_2x.png', connectsTo: ['Trait Avatars', 'Chaos'] },
     { id: 'event-pass', name: 'Event Pass', category: 'Collectibles', price: '$20.00', asset: 'available_online_events_banner_transparent.png', connectsTo: ['Online Events'] },
     { id: 'logo-patch', name: 'Logo Patch', category: 'Patches', price: '$15.00', asset: 'logo_symbol_crop_2x_transparent.png', connectsTo: ['Brand Kit'] },
     { id: 'wordmark-print', name: 'Wordmark Print', category: 'Wall Art', price: '$24.00', asset: 'muzikaz_wordmark_crop_2x_transparent.png', connectsTo: ['Brand Kit'] },
@@ -383,25 +383,52 @@ function focusMarketplaceForModel(modelName) {
   scrollToSection('marketplace');
 }
 
+const uploadState = { layers: [], activeId: null, saved: null };
+const allowedDesignTypes = ['image/png', 'image/jpeg', 'image/svg+xml'];
+
 function seedDesigner() {
   if (!productSelect || !characterSelect) return;
   productSelect.innerHTML = designerProducts.map((product) => `<option value="${product.id}">${product.name}</option>`).join('');
   characterSelect.innerHTML = designerCharacters.map((character) => `<option value="${character.id}">${character.name}</option>`).join('');
+  productSelect.value = 'avatar-stickers';
+  characterSelect.value = 'chaos';
   updatePreview();
+}
+
+function designerData() {
+  const data = new FormData(designerControls);
+  const product = designerProducts.find((item) => item.id === data.get('product')) || designerProducts.find((item) => item.id === 'avatar-stickers') || designerProducts[0];
+  const character = designerCharacters.find((item) => item.id === data.get('character')) || designerCharacters.find((item) => item.id === 'chaos') || designerCharacters[0];
+  return { data, product, character };
 }
 
 function updatePreview() {
   if (!designerControls) return;
-  const data = new FormData(designerControls);
-  const product = designerProducts.find((item) => item.id === data.get('product')) || designerProducts[0];
-  const character = designerCharacters.find((item) => item.id === data.get('character')) || designerCharacters[0];
-  document.querySelector('#designer-mockup')?.style.setProperty('--design-color', data.get('color'));
+  const { data, product, character } = designerData();
+  const mockup = document.querySelector('#designer-mockup');
+  mockup?.style.setProperty('--design-color', data.get('color'));
+  mockup?.setAttribute('data-product-template', product.id);
   document.querySelector('#preview-character').textContent = character.name;
   document.querySelector('#preview-name').textContent = data.get('name') || 'MUZIKAZ';
   document.querySelector('#preview-number').textContent = data.get('number') || '88';
   document.querySelector('#preview-sleeve').textContent = data.get('sleeve') || 'LIVE THE BEAT';
-  document.querySelector('#preview-title').textContent = `${character.name} custom ${product.category.toLowerCase()} drop`;
-  document.querySelector('#preview-meta').textContent = `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${character.traits.join(' / ')}`;
+  const isSticker = product.id === 'avatar-stickers';
+  document.querySelector('#preview-title').textContent = isSticker ? `${character.name} custom stickers drop` : `${character.name} custom ${product.category.toLowerCase()} drop`;
+  document.querySelector('#preview-meta').textContent = `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${data.get('layout') || character.traits.join(' / ')}`;
+  const values = [character.name, data.get('name') || 'MUZIKAZ', data.get('number') || '88', data.get('sleeve') || 'LIVE THE BEAT', `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${data.get('layout') || character.traits.join(' / ')}`];
+  const previewValues = document.querySelector('#preview-values');
+  if (previewValues) previewValues.innerHTML = values.map((value) => `<li>${value}</li>`).join('');
+  renderOrderSummary();
+}
+
+function renderOrderSummary() {
+  const summary = document.querySelector('#designer-order-summary');
+  if (!summary || !designerControls) return;
+  const { data, product, character } = designerData();
+  const quantity = Number(data.get('quantity') || 1);
+  const total = product.price * quantity;
+  const uploads = uploadState.layers.length ? uploadState.layers.map((layer) => layer.name).join(', ') : 'No custom upload yet';
+  summary.innerHTML = `<strong>${product.name} custom order</strong><span>${character.name} · ${data.get('size')} · Qty ${quantity} · $${total.toFixed(2)}</span><span>Text: ${data.get('name')} / ${data.get('number')} / ${data.get('sleeve')}</span><span>Uploaded art: ${uploads}</span><span>Notes: ${data.get('notes') || 'None'}</span>`;
 }
 
 function renderMarketplace(type = marketplaceState.type, modelFocus = marketplaceState.modelFocus) {
@@ -435,13 +462,183 @@ function renderMarketplace(type = marketplaceState.type, modelFocus = marketplac
   }));
 }
 
+
+function setDesignerStatus(message) {
+  const status = document.querySelector('#designer-status');
+  if (status) status.textContent = message;
+}
+
+function activeUploadLayer() {
+  return document.querySelector(`.uploaded-design-layer[data-layer-id="${uploadState.activeId}"]`) || document.querySelector('.uploaded-design-layer');
+}
+
+function applyLayerTransform(layer) {
+  if (!layer) return;
+  const scale = Number(layer.dataset.scale || 1);
+  const rotate = Number(layer.dataset.rotate || 0);
+  const flipX = layer.dataset.flipX === 'true' ? -1 : 1;
+  const flipY = layer.dataset.flipY === 'true' ? -1 : 1;
+  layer.style.transform = `translate(-50%, -50%) rotate(${rotate}deg) scale(${scale * flipX}, ${scale * flipY})`;
+}
+
+function selectUploadLayer(layer) {
+  document.querySelectorAll('.uploaded-design-layer').forEach((item) => item.classList.remove('active'));
+  if (!layer) return;
+  layer.classList.add('active');
+  uploadState.activeId = layer.dataset.layerId;
+  document.querySelector('#upload-scale').value = Math.round(Number(layer.dataset.scale || 1) * 100);
+  document.querySelector('#upload-rotate').value = Number(layer.dataset.rotate || 0);
+}
+
+function makeUploadLayer(src, name) {
+  const zone = document.querySelector('#upload-layer-zone');
+  if (!zone) return;
+  const id = `upload-${Date.now()}-${uploadState.layers.length}`;
+  const layer = document.createElement('img');
+  layer.className = 'uploaded-design-layer sticker-cutline';
+  layer.dataset.layerId = id;
+  layer.dataset.scale = '1';
+  layer.dataset.rotate = '0';
+  layer.dataset.flipX = 'false';
+  layer.dataset.flipY = 'false';
+  layer.alt = `${name} custom uploaded design`;
+  layer.src = src;
+  layer.style.left = '50%';
+  layer.style.top = '50%';
+  layer.draggable = false;
+  zone.appendChild(layer);
+  uploadState.layers.push({ id, name, src });
+  selectUploadLayer(layer);
+  applyLayerTransform(layer);
+  renderOrderSummary();
+  setDesignerStatus(`${name} added. Drag it, resize it, rotate it, flip it, duplicate it, or include it in the custom order.`);
+}
+
+function handleDesignUpload(event) {
+  const file = event.currentTarget.files?.[0];
+  if (!file) return;
+  if (!allowedDesignTypes.includes(file.type)) {
+    setDesignerStatus('Upload failed: use PNG, JPG, JPEG, or SVG artwork. Transparent PNG is preferred.');
+    event.currentTarget.value = '';
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    setDesignerStatus('Upload failed: keep custom design files under 5 MB for this live preview.');
+    event.currentTarget.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => makeUploadLayer(reader.result, file.name);
+  reader.readAsDataURL(file);
+}
+
+function handleLayerAction(action) {
+  const layer = activeUploadLayer();
+  if (!layer) {
+    setDesignerStatus('Upload a custom design before using layer controls.');
+    return;
+  }
+  if (action === 'center') { layer.style.left = '50%'; layer.style.top = '50%'; }
+  if (action === 'front') layer.style.zIndex = String((Number(layer.style.zIndex) || 10) + 1);
+  if (action === 'back') layer.style.zIndex = String(Math.max(1, (Number(layer.style.zIndex) || 10) - 1));
+  if (action === 'flip-x') layer.dataset.flipX = layer.dataset.flipX === 'true' ? 'false' : 'true';
+  if (action === 'flip-y') layer.dataset.flipY = layer.dataset.flipY === 'true' ? 'false' : 'true';
+  if (action === 'delete') {
+    uploadState.layers = uploadState.layers.filter((item) => item.id !== layer.dataset.layerId);
+    layer.remove();
+    uploadState.activeId = null;
+    renderOrderSummary();
+    setDesignerStatus('Custom design layer deleted from the preview.');
+    return;
+  }
+  if (action === 'duplicate') makeUploadLayer(layer.src, `${layer.alt.replace(' custom uploaded design', '')} copy`);
+  applyLayerTransform(layer);
+  renderOrderSummary();
+}
+
+function exportDesignerOrder() {
+  const { data, product, character } = designerData();
+  return {
+    product: product.name,
+    character: character.name,
+    color: data.get('color'),
+    size: data.get('size'),
+    name: data.get('name'),
+    number: data.get('number'),
+    logoStyle: data.get('logo'),
+    sleeveText: data.get('sleeve'),
+    layout: data.get('layout'),
+    quantity: Number(data.get('quantity') || 1),
+    notes: data.get('notes') || '',
+    uploads: uploadState.layers.map(({ id, name }) => ({ id, name })),
+    preview: 'Live layered DOM merch preview'
+  };
+}
+
 designerControls?.addEventListener('input', updatePreview);
 designerControls?.addEventListener('change', updatePreview);
+document.querySelector('#design-upload')?.addEventListener('change', handleDesignUpload);
+document.querySelector('#upload-scale')?.addEventListener('input', (event) => {
+  const layer = activeUploadLayer();
+  if (!layer) return;
+  layer.dataset.scale = String(Number(event.currentTarget.value) / 100);
+  applyLayerTransform(layer);
+});
+document.querySelector('#upload-rotate')?.addEventListener('input', (event) => {
+  const layer = activeUploadLayer();
+  if (!layer) return;
+  layer.dataset.rotate = event.currentTarget.value;
+  applyLayerTransform(layer);
+});
+document.querySelectorAll('[data-layer-action]').forEach((button) => button.addEventListener('click', () => handleLayerAction(button.dataset.layerAction)));
+document.querySelectorAll('[data-studio-jump]').forEach((button) => button.addEventListener('click', () => document.getElementById(button.dataset.studioJump)?.scrollIntoView({ behavior: 'smooth', block: 'center' })));
+document.querySelector('#upload-layer-zone')?.addEventListener('pointerdown', (event) => {
+  const layer = event.target.closest('.uploaded-design-layer');
+  if (!layer) return;
+  selectUploadLayer(layer);
+  layer.setPointerCapture(event.pointerId);
+  const zone = document.querySelector('#upload-layer-zone').getBoundingClientRect();
+  const move = (moveEvent) => {
+    const snap = moveEvent.shiftKey ? 10 : 1;
+    const x = Math.round(((moveEvent.clientX - zone.left) / zone.width) * 100 / snap) * snap;
+    const y = Math.round(((moveEvent.clientY - zone.top) / zone.height) * 100 / snap) * snap;
+    layer.style.left = `${Math.max(6, Math.min(94, x))}%`;
+    layer.style.top = `${Math.max(6, Math.min(94, y))}%`;
+  };
+  const stop = () => {
+    layer.removeEventListener('pointermove', move);
+    layer.removeEventListener('pointerup', stop);
+    setDesignerStatus('Layer placement updated. Hold Shift while dragging to snap to 10% placement zones.');
+  };
+  layer.addEventListener('pointermove', move);
+  layer.addEventListener('pointerup', stop);
+});
+document.querySelector('#save-design')?.addEventListener('click', () => {
+  uploadState.saved = exportDesignerOrder();
+  localStorage.setItem('muzikazSavedDesign', JSON.stringify(uploadState.saved));
+  setDesignerStatus('Design saved as a draft and ready to reload or edit before checkout.');
+});
+document.querySelector('#load-design')?.addEventListener('click', () => {
+  uploadState.saved = JSON.parse(localStorage.getItem('muzikazSavedDesign') || 'null');
+  setDesignerStatus(uploadState.saved ? `Loaded saved ${uploadState.saved.product} design summary.` : 'No saved design draft found yet.');
+});
+document.querySelector('#duplicate-design')?.addEventListener('click', () => {
+  const layer = activeUploadLayer();
+  if (layer) handleLayerAction('duplicate');
+  setDesignerStatus('Design duplicated for reuse on another product template.');
+});
+document.querySelector('#edit-design')?.addEventListener('click', () => {
+  document.querySelector('#product')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setDesignerStatus('Correction mode open: revise product options, text, upload layers, or order notes before finalizing.');
+});
 document.querySelector('[data-add-custom]')?.addEventListener('click', (event) => {
-  const title = document.querySelector('#preview-title')?.textContent || 'Custom design';
-  addCartLine(title, 74.99, 'Custom merch designer');
+  const order = exportDesignerOrder();
+  const title = `${order.character} ${order.product} custom order`;
+  const product = designerProducts.find((item) => item.name === order.product) || { price: 74.99 };
+  addCartLine(title, product.price * order.quantity, `Custom merch designer · ${order.uploads.length} upload(s) · ${order.logoStyle}`);
   updateCart(event.currentTarget, 'Design added');
   claimOwnedAsset(title, 'Designer save');
+  setDesignerStatus('Checkout-ready custom order added with final summary, text, upload references, quantity, and notes.');
 });
 document.querySelector('#asset-upload')?.addEventListener('change', (event) => {
   const files = [...event.currentTarget.files].map((file) => `<li>${file.name} → thumbnails, tiles, cards, previews queued</li>`).join('');
