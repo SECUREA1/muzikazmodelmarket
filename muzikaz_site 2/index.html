@@ -118,8 +118,12 @@
           <h3 id="customizerTitle">Sparky Graphic Tee</h3>
           <div class="custom-preview">
             <div class="custom-preview-media">
-              <img id="customPreviewImg" alt="Customizer preview" />
+              <div class="product-mockup-stage" id="customMockupStage" aria-label="Drag the character art to place it on the selected product">
+                <div class="product-base" id="customProductBase"></div>
+                <img id="customPreviewImg" class="design-layer" alt="Draggable character artwork" />
+              </div>
               <span class="preview-badge" id="customPreviewBadge">Graphic Tee</span>
+              <span class="drag-help">Drag artwork on product</span>
             </div>
             <div class="custom-preview-copy">
               <p id="customSummary">Build a detailed product around the selected character.</p>
@@ -152,6 +156,14 @@
               <select id="finishSelect"></select>
             </label>
             <label>
+              Artwork Size
+              <input id="artScaleInput" type="range" min="35" max="135" value="78" />
+            </label>
+            <label>
+              Artwork Rotation
+              <input id="artRotateInput" type="range" min="-30" max="30" value="0" />
+            </label>
+            <label>
               Quantity
               <input id="qtyInput" type="number" min="1" max="250" value="1" />
             </label>
@@ -169,6 +181,7 @@
 
           <div class="detail-actions stacked-actions">
             <button class="btn primary" id="addCustomToCart">Add Customized Item</button>
+            <button class="btn ghost" id="resetArtworkPlacement">Reset Artwork Placement</button>
             <button class="btn ghost" id="copyCustomization">Copy Product Spec</button>
           </div>
         </aside>

@@ -214,3 +214,56 @@ main{width:min(1500px,96vw);margin:auto}
   .hero h1{font-size:48px}
   .product-actions{grid-template-columns:1fr}
 }
+
+/* Live merch designer mockups */
+.product-mockup-stage{
+  position:relative;
+  width:100%;
+  height:100%;
+  min-height:220px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border-radius:12px;
+  background:radial-gradient(circle at 50% 20%,rgba(158,230,0,.18),transparent 32%),linear-gradient(180deg,#141a10,#050704);
+}
+.product-mockup-stage.mini{min-height:0;aspect-ratio:4/5;pointer-events:none}
+.product-base{position:absolute;inset:7% 10%;filter:drop-shadow(0 18px 18px rgba(0,0,0,.5));}
+.product-base::before,.product-base::after{content:"";position:absolute;display:block}
+.design-layer{
+  position:absolute;
+  z-index:3;
+  left:50%;
+  top:48%;
+  width:78%;
+  max-width:none;
+  aspect-ratio:4/5;
+  object-fit:cover;
+  object-position:center top;
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:10px;
+  box-shadow:0 0 22px rgba(158,230,0,.2);
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+}
+.design-layer:active{cursor:grabbing}
+.product-mockup-stage.mini .design-layer{left:50%;top:48%;width:55%;transform:translate(-50%,-50%);cursor:default}
+.drag-help{position:absolute;right:16px;top:16px;z-index:4;border:1px solid var(--line);background:rgba(5,8,3,.88);border-radius:999px;padding:7px 10px;color:var(--muted);font:700 11px Inter,Arial,sans-serif;text-transform:uppercase;letter-spacing:.7px}
+.mockup-tee{inset:8% 14% 6%;background:linear-gradient(180deg,#20271b,#090b08);clip-path:polygon(30% 3%,70% 3%,86% 18%,100% 30%,84% 45%,78% 36%,78% 96%,22% 96%,22% 36%,16% 45%,0 30%,14% 18%);border:2px solid rgba(255,255,255,.1)}
+.mockup-hoodie{inset:6% 12%;background:linear-gradient(180deg,#252b22,#080a08);clip-path:polygon(33% 5%,42% 0,58% 0,67% 5%,90% 20%,100% 48%,83% 56%,75% 36%,78% 98%,22% 98%,25% 36%,17% 56%,0 48%,10% 20%)}
+.mockup-hoodie::before{left:34%;top:0;width:32%;height:24%;border:2px solid rgba(158,230,0,.22);border-radius:45% 45% 35% 35%;background:rgba(0,0,0,.18)}
+.mockup-poster{inset:5% 17%;background:linear-gradient(145deg,#f4f7ee,#b8c0b0);border-radius:6px;border:8px solid #080b06;box-shadow:inset 0 0 0 2px rgba(158,230,0,.35)}
+.mockup-hat{inset:18% 9% 24%;background:linear-gradient(180deg,#1e241a,#070907);clip-path:ellipse(43% 28% at 50% 42%)}
+.mockup-hat::after{left:48%;top:45%;width:42%;height:18%;background:#10150d;border-radius:50%;transform:skewX(-18deg)}
+.mockup-bottle{inset:8% 34%;background:linear-gradient(90deg,#060806,#242b20 42%,#090c07);border-radius:18px 18px 30px 30px;border:2px solid rgba(255,255,255,.12)}
+.mockup-bottle::before{left:28%;right:28%;top:-8%;height:14%;background:#151b11;border-radius:8px 8px 2px 2px;border:2px solid rgba(255,255,255,.12)}
+.mockup-lanyard{inset:2% 15%;border:18px solid #20271b;border-bottom-color:transparent;border-radius:48% 48% 18% 18%;background:transparent}
+.mockup-lanyard::after{left:39%;top:62%;width:22%;height:25%;background:#10150d;border:2px solid rgba(158,230,0,.35);border-radius:8px}
+.mockup-pin{inset:18%;background:radial-gradient(circle at 35% 25%,#f4f7ee,#9ee600 45%,#11160d 68%);border-radius:50%;border:8px solid #070907}
+.mockup-sticker{inset:14%;background:linear-gradient(145deg,#f4f7ee,#b9c3ae);clip-path:polygon(8% 0,92% 0,100% 8%,100% 82%,82% 100%,8% 100%,0 92%,0 8%);border-radius:16px}
+.custom-preview-media .product-mockup-stage{min-height:280px}
+.custom-preview-media>.design-layer{display:none}
+.product-art-shell .design-layer,.custom-preview-media .design-layer{height:auto;object-fit:cover;opacity:1}
+.product-art-shell .product-mockup-stage.mini .design-layer{left:50%;top:48%;width:55%;height:auto;transform:translate(-50%,-50%)}
+.custom-preview-media .design-layer{width:78%;height:auto}
