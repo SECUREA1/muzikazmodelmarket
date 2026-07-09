@@ -52,6 +52,18 @@ const products = [
     finishes:['Standard Print','Embroidery + Print','Puff Print']
   },
   {
+    id:'sweater',
+    visualClass:'mockup-sweater',
+    name:'Crewneck Sweater',
+    basePrice:49.99,
+    desc:'Soft crewneck sweater template with front artwork, cuff marks, and cozy drop styling.',
+    specs:['Apparel','Crewneck Frame','Cozy Drop'],
+    colors:['Black','Heather Grey','Forest Green','Cream'],
+    sizes:['XS','S','M','L','XL','2XL','3XL'],
+    placements:['Full Front','Left Chest + Back','Front + Sleeve'],
+    finishes:['Standard Print','Embroidery + Print','Puff Print']
+  },
+  {
     id:'poster',
     visualClass:'mockup-poster',
     name:'Poster Print',
@@ -212,7 +224,7 @@ const grid = document.getElementById('characterGrid');
 const filters = document.getElementById('filters');
 const merchGrid = document.getElementById('merchGrid');
 const marketingGrid = document.getElementById('marketingGrid');
-const groups = ['All', ...new Set(characters.map(c => c.group))];
+let groups = ['All', ...new Set(characters.map(c => c.group))];
 
 const productSelect = document.getElementById('productSelect');
 const colorSelect = document.getElementById('colorSelect');
@@ -280,22 +292,43 @@ function updateArtworkPosition(){
 }
 
 function productMockupMarkup(p, imgAlt){
-  return `<div class="product-mockup-stage mini" aria-label="${imgAlt} mockup"><div class="product-base ${p.visualClass}"></div><img class="design-layer" src="assets/characters/${selected.file}.jpg" alt="${imgAlt} artwork"></div>`;
+  return `<div class="product-mockup-stage product-template mini" data-template="${p.name}" aria-label="${imgAlt} mockup template"><div class="product-base ${p.visualClass}"></div><div class="template-frame" aria-hidden="true"></div><img class="design-layer" src="assets/characters/${selected.file}.jpg" alt="${imgAlt} artwork"><span class="template-label">${p.name} frame</span></div>`;
 }
 
-function renderFilters(){
-  filters.innerHTML = groups.map((g,i)=>`<button class="filter ${i===0?'active':''}" data-group="${g}">${g}</button>`).join('');
-  filters.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
-    filters.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    renderCharacters(btn.dataset.group);
-  }));
+function renderFilters(activeGroup = document.querySelector('.filter.active')?.dataset.group || 'All'){
+  filters.innerHTML = groups.map(g=>`<button class="filter ${g===activeGroup?'active':''}" data-group="${g}" draggable="true" aria-label="Show and drag ${g} category">${g}<small>drag</small></button>`).join('');
+  filters.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      filters.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderCharacters(btn.dataset.group);
+    });
+    btn.addEventListener('dragstart', event=>{
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/category', btn.dataset.group);
+      btn.classList.add('dragging');
+    });
+    btn.addEventListener('dragend', ()=>btn.classList.remove('dragging'));
+    btn.addEventListener('dragover', event=>event.preventDefault());
+    btn.addEventListener('drop', event=>{
+      event.preventDefault();
+      const from = event.dataTransfer.getData('text/category');
+      const to = btn.dataset.group;
+      if(!from || from === to) return;
+      const next = groups.filter(g=>g !== from);
+      next.splice(next.indexOf(to), 0, from);
+      groups = next;
+      renderFilters(activeGroup);
+      renderCharacters(activeGroup);
+    });
+  });
 }
+
 
 function renderCharacters(group='All'){
   const list = group === 'All' ? characters : characters.filter(c=>c.group===group);
   grid.innerHTML = list.map(c=>`
-    <article class="character-card ${c.name===selected.name ? 'active' : ''}" tabindex="0" data-name="${c.name}">
+    <article class="character-card ${c.name===selected.name ? 'active' : ''}" tabindex="0" data-name="${c.name}" draggable="true">
       <span class="tag">${c.group.includes('New') ? 'NEW!' : c.group.split(' ')[0]}</span>
       <div class="character-art">
         <img src="assets/characters/${c.file}.jpg" alt="${c.name} ${c.role}">
@@ -310,6 +343,12 @@ function renderCharacters(group='All'){
     const activate=()=>selectCharacter(characters.find(c=>c.name===card.dataset.name), true);
     card.addEventListener('click', activate);
     card.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); activate(); } });
+    card.addEventListener('dragstart', event=>{
+      event.dataTransfer.effectAllowed = 'copy';
+      event.dataTransfer.setData('text/character', card.dataset.name);
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', ()=>card.classList.remove('dragging'));
   });
 }
 
@@ -358,7 +397,7 @@ function selectCharacter(c, jump=false){
 
 function renderMerch(){
   merchGrid.innerHTML = products.map(p=>`
-    <article class="product-card">
+    <article class="product-card" draggable="true" data-product-id="${p.id}">
       <div class="product-art-shell">
         ${productMockupMarkup(p, `${selected.name} ${p.name}`)}
         <span class="product-pill">${p.name}</span>
@@ -376,6 +415,15 @@ function renderMerch(){
         <button class="btn primary quick-add" data-product-id="${p.id}">Add Default</button>
       </div>
     </article>`).join('');
+
+  merchGrid.querySelectorAll('.product-card').forEach(card=>{
+    card.addEventListener('dragstart', event=>{
+      event.dataTransfer.effectAllowed = 'copy';
+      event.dataTransfer.setData('text/product', card.dataset.productId);
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', ()=>card.classList.remove('dragging'));
+  });
 
   merchGrid.querySelectorAll('.customize-product').forEach(btn=>btn.addEventListener('click',()=>{
     setActiveProduct(btn.dataset.productId);
@@ -457,6 +505,7 @@ function updateCustomizer(updateMarkup = true){
   document.getElementById('customizerTitle').textContent = `${selected.name} ${activeProduct.name}`;
   document.getElementById('customPreviewBadge').textContent = activeProduct.name;
   customPreviewImg.src = `assets/characters/${selected.file}.jpg`;
+  customMockupStage.dataset.template = activeProduct.name;
   customProductBase.className = `product-base ${activeProduct.visualClass}`;
   updateArtworkPosition();
   const total = calculatePrice();
@@ -501,6 +550,23 @@ async function copyText(text, fallbackLabel){
   }
 }
 
+
+
+customMockupStage.addEventListener('dragover', event=>{
+  if(event.dataTransfer.types.includes('text/product') || event.dataTransfer.types.includes('text/character')){
+    event.preventDefault();
+    customMockupStage.classList.add('drop-ready');
+  }
+});
+customMockupStage.addEventListener('dragleave', ()=>customMockupStage.classList.remove('drop-ready'));
+customMockupStage.addEventListener('drop', event=>{
+  event.preventDefault();
+  customMockupStage.classList.remove('drop-ready');
+  const productId = event.dataTransfer.getData('text/product');
+  const characterName = event.dataTransfer.getData('text/character');
+  if(productId) setActiveProduct(productId);
+  if(characterName) selectCharacter(characters.find(c=>c.name===characterName));
+});
 
 let dragOffset = {x:0,y:0};
 customPreviewImg.addEventListener('pointerdown', event=>{
