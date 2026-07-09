@@ -69,23 +69,45 @@
             </div>
         </section>
         <div class="member-locked-content" id="member-locked-content" data-locked="true">
-        <section class="section-block designer-block" id="designer">
+        <section class="section-block designer-block live-merch-studio" id="designer">
             <div class="section-title"><span></span><h2>Live merch designer</h2><a href="#marketplace">Open marketplace</a></div>
-            <div class="designer-layout">
-                <form class="designer-controls" id="designer-controls">
-                    <label>Product <select name="product" id="design-product"></select></label>
-                    <label>Character <select name="character" id="design-character"></select></label>
-                    <label>Color <input type="color" name="color" value="#9cff00" /></label>
-                    <label>Size <select name="size"><option>S</option><option selected>M</option><option>L</option><option>XL</option><option>2XL</option></select></label>
-                    <label>Name <input name="name" maxlength="16" value="MUZIKAZ" /></label>
-                    <label>Number <input name="number" maxlength="2" value="88" /></label>
-                    <label>Logo Style <select name="logo"><option>Lightning Crest</option><option>Wordmark</option><option>Badge Patch</option></select></label>
-                    <label>Sleeve Text <input name="sleeve" maxlength="22" value="LIVE THE BEAT" /></label>
-                </form>
-                <article class="designer-preview" aria-live="polite">
-                    <div class="mockup" id="designer-mockup"><span id="preview-character">Inferno</span><strong id="preview-name">MUZIKAZ</strong><b id="preview-number">88</b><small id="preview-sleeve">LIVE THE BEAT</small></div>
-                    <div><p class="kicker" id="preview-meta">Premium Hoodie · M · Lightning Crest</p><h3 id="preview-title">Inferno custom drop</h3><button type="button" data-add-custom>Add custom design</button></div>
+            <div class="designer-callout">
+                <p class="kicker">Featured open marketplace drop</p>
+                <h3>Chaos Ape custom stickers drop</h3>
+                <p>Start with the corrected Avatar Sticker Sheet configuration, upload your own art, position layers in real time, save a draft, and send a checkout-ready custom order.</p>
+            </div>
+            <div class="studio-tabs" aria-label="Customizer sections">
+                <button type="button" data-studio-jump="product">Product</button><button type="button" data-studio-jump="character">Character</button><button type="button" data-studio-jump="text">Text</button><button type="button" data-studio-jump="logo">Logo</button><button type="button" data-studio-jump="upload">Custom Upload</button><button type="button" data-studio-jump="layout">Layout</button><button type="button" data-studio-jump="order">Order Summary</button>
+            </div>
+            <div class="designer-layout studio-layout">
+                <article class="designer-preview studio-preview" aria-live="polite">
+                    <div class="mockup sticker-sheet-mockup" id="designer-mockup" data-product-template="sticker-sheet">
+                        <div class="sticker-sheet-stage" id="sticker-stage">
+                            <span class="sticker-cutline main-character" id="preview-character">Chaos Ape</span>
+                            <strong class="sticker-cutline logo-sticker" id="preview-name">MUZIKAZ</strong>
+                            <b class="sticker-cutline number-sticker" id="preview-number">88</b>
+                            <small class="sticker-cutline sleeve-sticker" id="preview-sleeve">LIVE THE BEAT</small>
+                            <span class="sticker-cutline mini-sticker">CHAOS</span>
+                            <div class="upload-layer-zone" id="upload-layer-zone" aria-label="Uploaded custom art layer zone"></div>
+                        </div>
+                    </div>
+                    <div class="preview-copy">
+                        <p class="kicker" id="preview-meta">Avatar Sticker Sheet · M · Wordmark · Chaos / 3D Model Packs</p>
+                        <h3 id="preview-title">Chaos Ape custom stickers drop</h3>
+                        <ul class="preview-values" id="preview-values"><li>Chaos Ape</li><li>MUZIKAZ</li><li>88</li><li>LIVE THE BEAT</li></ul>
+                        <div class="preview-actions"><button type="button" id="save-design">Save design</button><button type="button" id="load-design">Load saved</button><button type="button" id="duplicate-design">Duplicate design</button></div>
+                        <p class="status-message studio-status" id="designer-status" role="status">Upload PNG, JPG, JPEG, or SVG artwork to place it on the merch preview.</p>
+                    </div>
                 </article>
+                <form class="designer-controls studio-controls" id="designer-controls">
+                    <fieldset id="product"><legend>Product</legend><label>Product <select name="product" id="design-product"></select></label><label>Size <select name="size"><option>S</option><option selected>M</option><option>L</option><option>XL</option><option>2XL</option></select></label><label>Color <input type="color" name="color" value="#9cff00" /></label><label>Layout style <select name="layout"><option>Chaos / 3D Model Packs</option><option>Sticker Grid</option><option>Streetwear Front Panel</option><option>Packaging Mockup</option></select></label></fieldset>
+                    <fieldset id="character"><legend>Character</legend><label>Character <select name="character" id="design-character"></select></label></fieldset>
+                    <fieldset id="text"><legend>Text</legend><label>Name <input name="name" maxlength="16" value="MUZIKAZ" /></label><label>Number <input name="number" maxlength="2" value="88" /></label><label>Sleeve Text <input name="sleeve" maxlength="22" value="LIVE THE BEAT" /></label></fieldset>
+                    <fieldset id="logo"><legend>Logo</legend><label>Logo Style <select name="logo"><option selected>Wordmark</option><option>Lightning Crest</option><option>Badge Patch</option><option>Custom Upload Logo</option></select></label></fieldset>
+                    <fieldset id="upload"><legend>Custom Upload</legend><label class="design-upload-drop">Upload custom design <input type="file" id="design-upload" accept="image/png,image/jpeg,image/jpg,image/svg+xml" /></label><div class="upload-tools"><button type="button" data-layer-action="center">Center align</button><button type="button" data-layer-action="front">Move front</button><button type="button" data-layer-action="back">Move back</button><button type="button" data-layer-action="duplicate">Duplicate</button><button type="button" data-layer-action="flip-x">Flip H</button><button type="button" data-layer-action="flip-y">Flip V</button><button type="button" data-layer-action="delete">Delete</button></div><label>Resize <input type="range" id="upload-scale" min="40" max="220" value="100" /></label><label>Rotate <input type="range" id="upload-rotate" min="-180" max="180" value="0" /></label></fieldset>
+                    <fieldset id="layout"><legend>Layers</legend><ol class="layer-stack" id="layer-stack"><li>Base product</li><li>Product color</li><li>Character art</li><li>Logo / wordmark</li><li>Name</li><li>Number</li><li>Sleeve text</li><li>Uploaded custom art</li><li>Effects or outlines</li></ol></fieldset>
+                    <fieldset id="order"><legend>Order Summary</legend><label>Quantity <input name="quantity" type="number" min="1" max="99" value="1" /></label><label>Design notes <textarea name="notes" rows="3" placeholder="Add print notes, correction requests, or placement instructions"></textarea></label><div class="order-summary" id="designer-order-summary"></div><button type="button" data-add-custom>Add to cart / order</button><button type="button" id="edit-design">Make a Correction / Edit Design</button></fieldset>
+                </form>
             </div>
         </section>
 
