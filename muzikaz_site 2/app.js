@@ -29,6 +29,7 @@ const characters = [
 const products = [
   {
     id:'tee',
+    visualClass:'mockup-tee',
     name:'Graphic Tee',
     basePrice:29.99,
     desc:'Front print tee with character art, MUZIKAZ mark, and optional back hit.',
@@ -40,6 +41,7 @@ const products = [
   },
   {
     id:'hoodie',
+    visualClass:'mockup-hoodie',
     name:'Premium Hoodie',
     basePrice:59.99,
     desc:'Heavy fleece hoodie with oversized artwork and sleeve logo detailing.',
@@ -51,6 +53,7 @@ const products = [
   },
   {
     id:'poster',
+    visualClass:'mockup-poster',
     name:'Poster Print',
     basePrice:19.99,
     desc:'Promotional art poster for booths, launch drops, and room decor.',
@@ -62,6 +65,7 @@ const products = [
   },
   {
     id:'hat',
+    visualClass:'mockup-hat',
     name:'Snapback Cap',
     basePrice:27.99,
     desc:'Structured cap with front mascot logo or icon mark and optional side detail.',
@@ -73,6 +77,7 @@ const products = [
   },
   {
     id:'bottle',
+    visualClass:'mockup-bottle',
     name:'Water Bottle',
     basePrice:24.99,
     desc:'Matte bottle with vertical graphic, slogan placement, and accessory appeal.',
@@ -84,6 +89,7 @@ const products = [
   },
   {
     id:'lanyard',
+    visualClass:'mockup-lanyard',
     name:'Lanyard',
     basePrice:12.99,
     desc:'Event-ready woven lanyard with repeat logos and mascot color cues.',
@@ -95,6 +101,7 @@ const products = [
   },
   {
     id:'pin',
+    visualClass:'mockup-pin',
     name:'Enamel Pin',
     basePrice:9.99,
     desc:'Collectible character icon pin for jackets, hats, and accessories.',
@@ -106,6 +113,7 @@ const products = [
   },
   {
     id:'sticker',
+    visualClass:'mockup-sticker',
     name:'Sticker Pack',
     basePrice:7.99,
     desc:'Mascot sticker bundle with logo hits, slogans, and collectible extras.',
@@ -192,6 +200,10 @@ const customization = {
   size: activeProduct.sizes[0],
   placement: activeProduct.placements[0],
   finish: activeProduct.finishes[0],
+  designX: 50,
+  designY: 48,
+  designScale: 78,
+  designRotation: 0,
   qty: 1,
   note: ''
 };
@@ -208,6 +220,11 @@ const sizeSelect = document.getElementById('sizeSelect');
 const placementSelect = document.getElementById('placementSelect');
 const finishSelect = document.getElementById('finishSelect');
 const qtyInput = document.getElementById('qtyInput');
+const artScaleInput = document.getElementById('artScaleInput');
+const artRotateInput = document.getElementById('artRotateInput');
+const customMockupStage = document.getElementById('customMockupStage');
+const customProductBase = document.getElementById('customProductBase');
+const customPreviewImg = document.getElementById('customPreviewImg');
 const noteInput = document.getElementById('noteInput');
 
 function slugify(text){
@@ -216,6 +233,54 @@ function slugify(text){
 
 function productById(id){
   return products.find(p=>p.id===id) || products[0];
+}
+
+const placementPresets = {
+  'Full Front':{x:50,y:47,scale:82,rotation:0},
+  'Left Chest + Back':{x:38,y:36,scale:46,rotation:0},
+  'Front + Sleeve':{x:50,y:45,scale:70,rotation:0},
+  'Front + Back':{x:50,y:45,scale:78,rotation:0},
+  'Left Chest + Full Back':{x:38,y:36,scale:46,rotation:0},
+  'Front + Both Sleeves':{x:50,y:42,scale:64,rotation:0},
+  'Single-Sided':{x:50,y:50,scale:86,rotation:0},
+  'Alt Variant':{x:58,y:50,scale:76,rotation:-6},
+  'Front Logo':{x:50,y:42,scale:42,rotation:0},
+  'Front + Side Hit':{x:50,y:42,scale:38,rotation:0},
+  'Front + Back Hit':{x:50,y:42,scale:38,rotation:0},
+  'Wrap Print':{x:50,y:50,scale:58,rotation:-7},
+  'Front Graphic + Logo':{x:50,y:46,scale:52,rotation:0},
+  'Minimal Vertical Mark':{x:55,y:50,scale:38,rotation:90},
+  'Full Strap Pattern':{x:50,y:48,scale:36,rotation:-28},
+  'Pattern + Badge':{x:50,y:60,scale:42,rotation:0},
+  'Pattern + Charm':{x:55,y:66,scale:34,rotation:0},
+  'Face Icon':{x:50,y:50,scale:62,rotation:0},
+  'Logo + Character':{x:50,y:50,scale:58,rotation:0},
+  'Slogan Badge':{x:50,y:50,scale:48,rotation:0},
+  'Character Set':{x:50,y:50,scale:58,rotation:-4},
+  'Character + Logo':{x:50,y:50,scale:56,rotation:0},
+  'Character + Slogan':{x:50,y:50,scale:54,rotation:4}
+};
+
+function applyPlacementPreset(){
+  const preset = placementPresets[customization.placement] || {x:50,y:48,scale:78,rotation:0};
+  customization.designX = preset.x;
+  customization.designY = preset.y;
+  customization.designScale = preset.scale;
+  customization.designRotation = preset.rotation;
+  if(artScaleInput) artScaleInput.value = customization.designScale;
+  if(artRotateInput) artRotateInput.value = customization.designRotation;
+}
+
+function updateArtworkPosition(){
+  if(!customPreviewImg) return;
+  customPreviewImg.style.left = `${customization.designX}%`;
+  customPreviewImg.style.top = `${customization.designY}%`;
+  customPreviewImg.style.width = `${customization.designScale}%`;
+  customPreviewImg.style.transform = `translate(-50%, -50%) rotate(${customization.designRotation}deg)`;
+}
+
+function productMockupMarkup(p, imgAlt){
+  return `<div class="product-mockup-stage mini" aria-label="${imgAlt} mockup"><div class="product-base ${p.visualClass}"></div><img class="design-layer" src="assets/characters/${selected.file}.jpg" alt="${imgAlt} artwork"></div>`;
 }
 
 function renderFilters(){
@@ -295,7 +360,7 @@ function renderMerch(){
   merchGrid.innerHTML = products.map(p=>`
     <article class="product-card">
       <div class="product-art-shell">
-        <img src="assets/characters/${selected.file}.jpg" alt="${selected.name} ${p.name}">
+        ${productMockupMarkup(p, `${selected.name} ${p.name}`)}
         <span class="product-pill">${p.name}</span>
       </div>
       <div class="product-meta">
@@ -344,6 +409,7 @@ function setActiveProduct(productId){
   customization.size = activeProduct.sizes[0];
   customization.placement = activeProduct.placements[0];
   customization.finish = activeProduct.finishes[0];
+  applyPlacementPreset();
   customization.qty = Number(qtyInput?.value || 1);
   updateCustomizer();
 }
@@ -357,7 +423,7 @@ function buildProductControls(){
 
   colorSelect.addEventListener('change',()=>{customization.color = colorSelect.value; updateCustomizer();});
   sizeSelect.addEventListener('change',()=>{customization.size = sizeSelect.value; updateCustomizer();});
-  placementSelect.addEventListener('change',()=>{customization.placement = placementSelect.value; updateCustomizer();});
+  placementSelect.addEventListener('change',()=>{customization.placement = placementSelect.value; applyPlacementPreset(); updateCustomizer();});
   finishSelect.addEventListener('change',()=>{customization.finish = finishSelect.value; updateCustomizer();});
   qtyInput.addEventListener('input',()=>{
     const value = Math.max(1, Math.min(250, Number(qtyInput.value || 1)));
@@ -365,6 +431,8 @@ function buildProductControls(){
     customization.qty = value;
     updateCustomizer();
   });
+  artScaleInput.addEventListener('input',()=>{ customization.designScale = Number(artScaleInput.value); updateCustomizer(false); });
+  artRotateInput.addEventListener('input',()=>{ customization.designRotation = Number(artRotateInput.value); updateCustomizer(false); });
   noteInput.addEventListener('input',()=>{ customization.note = noteInput.value.trim(); updateCustomizer(false); });
 }
 
@@ -388,10 +456,12 @@ function updateCustomizer(updateMarkup = true){
   }
   document.getElementById('customizerTitle').textContent = `${selected.name} ${activeProduct.name}`;
   document.getElementById('customPreviewBadge').textContent = activeProduct.name;
-  document.getElementById('customPreviewImg').src = `assets/characters/${selected.file}.jpg`;
+  customPreviewImg.src = `assets/characters/${selected.file}.jpg`;
+  customProductBase.className = `product-base ${activeProduct.visualClass}`;
+  updateArtworkPosition();
   const total = calculatePrice();
   document.getElementById('customPrice').textContent = `$${total.toFixed(2)}`;
-  document.getElementById('customSummary').textContent = `${selected.name} on a ${activeProduct.name.toLowerCase()} with ${customization.color.toLowerCase()}, ${customization.placement.toLowerCase()}, and ${customization.finish.toLowerCase()} finishing. ${customization.note ? 'Note: ' + customization.note : 'Use this as a launch-ready merch spec.'}`;
+  document.getElementById('customSummary').textContent = `${selected.name} on a ${activeProduct.name.toLowerCase()} with ${customization.color.toLowerCase()}, ${customization.placement.toLowerCase()}, and ${customization.finish.toLowerCase()} finishing, placed at ${Math.round(customization.designX)}% / ${Math.round(customization.designY)}%. ${customization.note ? 'Note: ' + customization.note : 'Use this as a launch-ready merch spec.'}`;
   renderMarketing();
 }
 
@@ -403,6 +473,8 @@ function customSpecText(){
     `Size / Format: ${customization.size}`,
     `Placement: ${customization.placement}`,
     `Finish: ${customization.finish}`,
+    `Artwork Position: ${Math.round(customization.designX)}% x ${Math.round(customization.designY)}%`,
+    `Artwork Size / Rotation: ${customization.designScale}% / ${customization.designRotation}°`,
     `Quantity: ${customization.qty}`,
     `Estimated Total: $${calculatePrice().toFixed(2)}`,
     `Product Focus: ${selected.focus}`,
@@ -429,6 +501,32 @@ async function copyText(text, fallbackLabel){
   }
 }
 
+
+let dragOffset = {x:0,y:0};
+customPreviewImg.addEventListener('pointerdown', event=>{
+  event.preventDefault();
+  customPreviewImg.setPointerCapture(event.pointerId);
+  const rect = customMockupStage.getBoundingClientRect();
+  dragOffset = {
+    x: event.clientX - (rect.left + rect.width * customization.designX / 100),
+    y: event.clientY - (rect.top + rect.height * customization.designY / 100)
+  };
+});
+customPreviewImg.addEventListener('pointermove', event=>{
+  if(!customPreviewImg.hasPointerCapture(event.pointerId)) return;
+  const rect = customMockupStage.getBoundingClientRect();
+  customization.designX = Math.max(8, Math.min(92, ((event.clientX - dragOffset.x - rect.left) / rect.width) * 100));
+  customization.designY = Math.max(8, Math.min(92, ((event.clientY - dragOffset.y - rect.top) / rect.height) * 100));
+  updateCustomizer(false);
+});
+customPreviewImg.addEventListener('pointerup', event=>{
+  if(customPreviewImg.hasPointerCapture(event.pointerId)) customPreviewImg.releasePointerCapture(event.pointerId);
+});
+document.getElementById('resetArtworkPlacement').addEventListener('click',()=>{
+  applyPlacementPreset();
+  updateCustomizer(false);
+});
+
 buildProductControls();
 renderFilters();
 renderCharacters();
@@ -443,7 +541,7 @@ setActiveProduct(activeProduct.id);
 const addCustomToCart = document.getElementById('addCustomToCart');
 addCustomToCart.addEventListener('click',()=>{
   cart.push({
-    name:`${selected.name} ${activeProduct.name} — ${customization.color} / ${customization.size} / ${customization.placement} / ${customization.finish}${customization.note ? ` / Note: ${customization.note}` : ''}`,
+    name:`${selected.name} ${activeProduct.name} — ${customization.color} / ${customization.size} / ${customization.placement} / ${customization.finish} / Art ${Math.round(customization.designX)}% x ${Math.round(customization.designY)}%${customization.note ? ` / Note: ${customization.note}` : ''}`,
     price:calculatePrice()
   });
   updateCart(true);
