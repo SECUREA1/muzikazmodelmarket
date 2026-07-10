@@ -1108,175 +1108,68 @@ function initHouseExplorer() {
   const handButton = document.querySelector('#hand-toggle');
   const preview = document.querySelector('#hand-preview');
   const handStatus = document.querySelector('#hand-status');
+  const presenceCount = document.querySelector('#house-presence-count');
   const keys = new Set();
+  const HOUSE_ID = 'ioncore-house';
+  const API_BASE = window.MUZIKAZ_SHARED_AVATAR_API || '';
   const defaultCamera = { x: 0, y: 1.55, z: -6.2, yaw: 0, pitch: -0.03, fov: 520 };
   const camera = { ...defaultCamera };
-  const avatars = [{ x: 2.2, z: 1.4, hue: 92 }, { x: -2.7, z: 5.8, hue: 175 }];
-  const walls = [
-    [[-5, 0], [5, 0]], [[5, 0], [5, 9]], [[5, 9], [-5, 9]], [[-5, 9], [-5, 0]],
-    [[-1.6, 0], [-1.6, 3.2]], [[1.8, 3.2], [5, 3.2]], [[-5, 5.9], [1.1, 5.9]], [[1.1, 5.9], [1.1, 9]],
-  ];
-  let dragging = false;
-  let lastPointer = null;
-  let handEnabled = false;
-  let handStream = null;
-  let handController = null;
+  const demoAvatars = [{ x: 2.2, z: 1.4, hue: 92 }, { x: -2.7, z: 5.8, hue: 175 }];
+  const walls = [[[-5, 0], [5, 0]], [[5, 0], [5, 9]], [[5, 9], [-5, 9]], [[-5, 9], [-5, 0]], [[-1.6, 0], [-1.6, 3.2]], [[1.8, 3.2], [5, 3.2]], [[-5, 5.9], [1.1, 5.9]], [[1.1, 5.9], [1.1, 9]]];
+  const sharedAvatarObjects = new Map();
+  const avatarPlacementState = { active: false, previewObject: null, selectedAvatar: null, position: { x: 0, y: 0, z: 2.5 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } };
+  window.sharedAvatarObjects = sharedAvatarObjects;
+  let dragging = false, lastPointer = null, handEnabled = false, handStream = null, handController = null, lastPresenceAt = 0;
+  const sessionId = getSessionId();
 
-  function setStatus(message) {
-    if (status) status.textContent = message;
-  }
-
-  function loadScriptOnce(src) {
-    return new Promise((resolve, reject) => {
-      const existing = document.querySelector(`script[src=\"${src}\"]`);
-      if (existing) { resolve(); return; }
-      const script = document.createElement('script');
-      script.src = src;
-      script.async = true;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.append(script);
-    });
-  }
-
-  async function startMediaPipeHands() {
-    await Promise.all([
-      loadScriptOnce('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js'),
-      loadScriptOnce('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js'),
-    ]);
-    if (!window.Hands || !window.Camera || !preview) return false;
-    const hands = new window.Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
-    hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: .65, minTrackingConfidence: .55 });
-    hands.onResults((results) => {
-      const tip = results.multiHandLandmarks?.[0]?.[8];
-      if (!tip) return;
-      camera.yaw += (tip.x - .5) * .035;
-      camera.pitch = Math.max(-.8, Math.min(.55, camera.pitch + (tip.y - .5) * .025));
-      if (tip.y < .34) move('forward', .08);
-      if (tip.y > .72) move('back', .08);
-    });
-    handController = new window.Camera(preview, { onFrame: async () => hands.send({ image: preview }), width: 320, height: 180 });
-    handController.start();
-    return true;
-  }
-
-  function resizeCanvas() {
-    const rect = canvas.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
-    canvas.width = Math.max(320, Math.floor(rect.width * ratio));
-    canvas.height = Math.max(240, Math.floor(rect.height * ratio));
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  }
-
-  function project(point) {
-    const dx = point.x - camera.x;
-    const dy = point.y - camera.y;
-    const dz = point.z - camera.z;
-    const cy = Math.cos(camera.yaw), sy = Math.sin(camera.yaw);
-    const cp = Math.cos(camera.pitch), sp = Math.sin(camera.pitch);
-    const x = dx * cy - dz * sy;
-    const z = dx * sy + dz * cy;
-    const y = dy * cp - z * sp;
-    const depth = dy * sp + z * cp;
-    if (depth <= 0.12) return null;
-    const rect = canvas.getBoundingClientRect();
-    return { x: rect.width / 2 + (x * camera.fov) / depth, y: rect.height / 2 - (y * camera.fov) / depth, d: depth };
-  }
-
-  function drawPolygon(points, fill, stroke = 'rgba(156,255,0,.22)') {
-    const projected = points.map(project);
-    if (projected.some((p) => !p)) return;
-    ctx.beginPath();
-    projected.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-    ctx.closePath();
-    ctx.fillStyle = fill;
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = 1;
-    ctx.fill();
-    ctx.stroke();
-  }
-
-  function drawLine(a, b, color, width = 2) {
-    const pa = project(a), pb = project(b);
-    if (!pa || !pb) return;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
-    ctx.beginPath();
-    ctx.moveTo(pa.x, pa.y);
-    ctx.lineTo(pb.x, pb.y);
-    ctx.stroke();
-  }
-
-  function render() {
-    const rect = canvas.getBoundingClientRect();
-    ctx.clearRect(0, 0, rect.width, rect.height);
-    const gradient = ctx.createLinearGradient(0, 0, 0, rect.height);
-    gradient.addColorStop(0, '#06110c'); gradient.addColorStop(1, '#010201');
-    ctx.fillStyle = gradient; ctx.fillRect(0, 0, rect.width, rect.height);
-    drawPolygon([{x:-5,y:0,z:0},{x:5,y:0,z:0},{x:5,y:0,z:9},{x:-5,y:0,z:9}], 'rgba(12,24,16,.94)');
-    drawPolygon([{x:-5,y:3,z:0},{x:-5,y:3,z:9},{x:5,y:3,z:9},{x:5,y:3,z:0}], 'rgba(4,12,10,.72)');
-    for (let i = -5; i <= 5; i += 1) drawLine({x:i,y:.01,z:0},{x:i,y:.01,z:9}, 'rgba(156,255,0,.13)', 1);
-    for (let z = 0; z <= 9; z += 1) drawLine({x:-5,y:.01,z},{x:5,y:.01,z}, 'rgba(156,255,0,.13)', 1);
-    walls.forEach(([a, b]) => drawPolygon([{x:a[0],y:0,z:a[1]},{x:b[0],y:0,z:b[1]},{x:b[0],y:2.7,z:b[1]},{x:a[0],y:2.7,z:a[1]}], 'rgba(14,35,27,.82)', 'rgba(156,255,0,.45)'));
-    avatars.forEach((avatar) => {
-      const p = project({ x: avatar.x, y: .95, z: avatar.z });
-      if (!p) return;
-      const size = Math.max(10, 240 / p.d);
-      ctx.fillStyle = `hsl(${avatar.hue} 100% 58%)`; ctx.shadowBlur = 18; ctx.shadowColor = ctx.fillStyle;
-      ctx.beginPath(); ctx.arc(p.x, p.y - size * .6, size * .28, 0, Math.PI * 2); ctx.fill();
-      ctx.fillRect(p.x - size * .22, p.y - size * .35, size * .44, size * .85); ctx.shadowBlur = 0;
-    });
-    requestAnimationFrame(render);
-  }
-
-  function move(direction, amount) {
-    const forwardX = Math.sin(camera.yaw), forwardZ = Math.cos(camera.yaw);
-    const rightX = Math.cos(camera.yaw), rightZ = -Math.sin(camera.yaw);
-    if (direction === 'forward') { camera.x += forwardX * amount; camera.z += forwardZ * amount; }
-    if (direction === 'back') { camera.x -= forwardX * amount; camera.z -= forwardZ * amount; }
-    if (direction === 'right') { camera.x += rightX * amount; camera.z += rightZ * amount; }
-    if (direction === 'left') { camera.x -= rightX * amount; camera.z -= rightZ * amount; }
-    camera.x = Math.max(-4.5, Math.min(4.5, camera.x)); camera.z = Math.max(-.4, Math.min(8.5, camera.z));
-  }
-
-  function tickMovement() {
-    const speed = .065;
-    if (keys.has('w') || keys.has('arrowup')) move('forward', speed);
-    if (keys.has('s') || keys.has('arrowdown')) move('back', speed);
-    if (keys.has('a') || keys.has('arrowleft')) move('left', speed);
-    if (keys.has('d') || keys.has('arrowright')) move('right', speed);
-    if (keys.has('q')) camera.y = Math.max(.8, camera.y - .025);
-    if (keys.has('e')) camera.y = Math.min(2.4, camera.y + .025);
-    requestAnimationFrame(tickMovement);
-  }
-
-  canvas.addEventListener('pointerdown', (event) => { dragging = true; lastPointer = { x: event.clientX, y: event.clientY }; canvas.setPointerCapture(event.pointerId); });
-  canvas.addEventListener('pointermove', (event) => {
-    if (!dragging || !lastPointer) return;
-    camera.yaw += (event.clientX - lastPointer.x) * .005;
-    camera.pitch = Math.max(-.8, Math.min(.55, camera.pitch + (event.clientY - lastPointer.y) * .004));
-    lastPointer = { x: event.clientX, y: event.clientY };
-  });
-  canvas.addEventListener('pointerup', () => { dragging = false; lastPointer = null; });
-  canvas.addEventListener('wheel', (event) => { event.preventDefault(); camera.fov = Math.max(320, Math.min(760, camera.fov - event.deltaY * .25)); }, { passive: false });
-  document.addEventListener('keydown', (event) => keys.add(event.key.toLowerCase()));
-  document.addEventListener('keyup', (event) => keys.delete(event.key.toLowerCase()));
-  document.querySelectorAll('[data-mobile-move]').forEach((button) => button.addEventListener('click', () => move(button.dataset.mobileMove, .42)));
-  resetButton?.addEventListener('click', () => { Object.assign(camera, defaultCamera); avatars.splice(0, avatars.length, { x: 2.2, z: 1.4, hue: 92 }, { x: -2.7, z: 5.8, hue: 175 }); setStatus('Explorer reset to the default inside-camera view.'); });
-  avatarButton?.addEventListener('click', () => { avatars.push({ x: (Math.random() * 8) - 4, z: Math.random() * 7.5 + .6, hue: Math.floor(Math.random() * 260) + 70 }); setStatus(`Avatar added. Total avatars: ${avatars.length}.`); });
-  handButton?.addEventListener('click', async () => {
-    handEnabled = !handEnabled; handButton.setAttribute('aria-pressed', String(handEnabled)); handButton.textContent = handEnabled ? 'Disable hand control' : 'Enable hand control';
-    if (!handEnabled) { handController?.stop?.(); handStream?.getTracks().forEach((track) => track.stop()); handStream = null; if (handStatus) handStatus.textContent = 'Camera preview inactive. MediaPipe Hands loads only when enabled.'; return; }
-    try {
-      handStream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (preview) { preview.srcObject = handStream; await preview.play(); }
-      const mediaPipeReady = await startMediaPipeHands();
-      if (handStatus) handStatus.textContent = mediaPipeReady ? 'MediaPipe Hands active: move your index finger to steer the camera.' : 'Camera preview enabled; MediaPipe Hands could not be loaded, so manual controls remain active.';
-    }
-    catch (error) { handEnabled = false; handButton.setAttribute('aria-pressed', 'false'); if (handStatus) handStatus.textContent = 'Camera or MediaPipe unavailable; keyboard, mouse, and mobile controls still work.'; }
-  });
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas(); render(); tickMovement();
+  function getSessionId() { const key = 'muzikazHouseSessionId'; let id = window.localStorage.getItem(key); if (!id) { id = (crypto.randomUUID && crypto.randomUUID()) || 'session-' + Date.now() + '-' + Math.random().toString(16).slice(2); window.localStorage.setItem(key, id); } return id; }
+  function setStatus(message) { if (status) status.textContent = message; }
+  function showAvatarStatus(message) { setStatus(message); }
+  function hideAvatarStatus() { setStatus('Ready: drag to look around, then move through the rooms.'); }
+  function safeText(value, fallback = '') { return String(value || fallback).replace(/[<>]/g, '').slice(0, 140); }
+  function calculateRoomId(position) { if (position.z < 3.2 && position.x < -1.6) return 'front-west'; if (position.z < 3.2) return 'front-hall'; if (position.z < 5.9) return 'middle-gallery'; return position.x < 1.1 ? 'back-lounge' : 'back-east'; }
+  function clampPosition(position) { return { x: Math.max(-4.65, Math.min(4.65, Number(position.x) || 0)), y: 0, z: Math.max(.35, Math.min(8.65, Number(position.z) || 0)) }; }
+  function sanitizeAvatarRecord(record) { if (!record || record.houseId !== HOUSE_ID) return null; const position = clampPosition(record.position || {}); const scaleValue = Math.max(.35, Math.min(2.4, Number(record.scale?.x) || 1)); const url = String(record.avatarUrl || ''); if (/^javascript:/i.test(url)) return null; return { id: safeText(record.id, (crypto.randomUUID && crypto.randomUUID()) || String(Date.now())), houseId: HOUSE_ID, ownerId: safeText(record.ownerId, sessionId), username: safeText(record.username, 'Guest'), avatarName: safeText(record.avatarName, 'Shared avatar'), avatarType: safeText(record.avatarType, 'image-sprite'), avatarUrl: url, thumbnailUrl: String(record.thumbnailUrl || ''), message: safeText(record.message, ''), position, rotation: { x: 0, y: 0, z: Number(record.rotation?.z) || 0 }, scale: { x: scaleValue, y: scaleValue, z: scaleValue }, roomId: safeText(record.roomId, calculateRoomId(position)), visibility: 'public', createdAt: record.createdAt || new Date().toISOString(), updatedAt: record.updatedAt || new Date().toISOString() }; }
+  function validateAvatarPlacement() { const p = clampPosition(avatarPlacementState.position); avatarPlacementState.position = p; return Number.isFinite(p.x) && Number.isFinite(p.z); }
+  function loadImage(url) { if (!url) return null; const img = new Image(); img.crossOrigin = 'anonymous'; img.src = url; return img; }
+  function createAvatarSceneObject(record) { return { record, image: loadImage(record.avatarUrl), selected: false, kind: 'shared-avatar' }; }
+  function renderSharedAvatar(record) { const safe = sanitizeAvatarRecord(record); if (!safe) return; if (sharedAvatarObjects.has(safe.id)) { updateSharedAvatar(safe); return; } sharedAvatarObjects.set(safe.id, createAvatarSceneObject(safe)); }
+  function updateSharedAvatar(record) { const safe = sanitizeAvatarRecord(record); if (!safe) return; const existing = sharedAvatarObjects.get(safe.id); if (!existing) { renderSharedAvatar(safe); return; } existing.record = safe; if (existing.image?.src !== safe.avatarUrl) existing.image = loadImage(safe.avatarUrl); }
+  function removeSharedAvatar(avatarId) { sharedAvatarObjects.delete(avatarId); closeAvatarInfoPanel(); }
+  function focusCameraOnAvatar(avatarId) { const object = sharedAvatarObjects.get(avatarId); if (!object) return; camera.x = object.record.position.x; camera.z = Math.max(-.2, object.record.position.z - 2.2); camera.yaw = 0; camera.pitch = -.06; setStatus('Focused on ' + object.record.avatarName + '.'); }
+  function drawAvatarObject(object, isPreview = false) { const record = object.record; const feet = project({ x: record.position.x, y: 0, z: record.position.z }); const head = project({ x: record.position.x, y: 1.85 * record.scale.y, z: record.position.z }); if (!feet || !head) return null; const height = Math.max(26, Math.abs(feet.y - head.y)); const width = height * .58; ctx.save(); ctx.translate(feet.x, feet.y); ctx.rotate(record.rotation.z || 0); ctx.globalAlpha = isPreview ? .72 : 1; ctx.shadowBlur = object.selected || isPreview ? 22 : 10; ctx.shadowColor = isPreview ? '#9cff00' : 'rgba(156,255,0,.65)'; if (object.image?.complete && object.image.naturalWidth) ctx.drawImage(object.image, -width / 2, -height, width, height); else { ctx.fillStyle = isPreview ? 'rgba(156,255,0,.9)' : '#9cff00'; ctx.beginPath(); ctx.arc(0, -height * .78, width * .24, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(-width * .28, -height * .62, width * .56, height * .58); } ctx.restore(); if (object.selected || isPreview) { ctx.strokeStyle = '#9cff00'; ctx.lineWidth = 2; ctx.strokeRect(feet.x - width / 2, feet.y - height, width, height); } return { x: feet.x, y: feet.y - height / 2, width, height, depth: feet.d }; }
+  function screenToFloor(clientX, clientY) { const rect = canvas.getBoundingClientRect(); const sx = clientX - rect.left - rect.width / 2, screenY = rect.height / 2 - (clientY - rect.top); const cy = Math.cos(camera.yaw), syaw = Math.sin(camera.yaw), cp = Math.cos(camera.pitch), sp = Math.sin(camera.pitch); const camX = sx / camera.fov, camY = screenY / camera.fov, camZ = 1; const ry = camY * cp + camZ * sp, rzPitch = -camY * sp + camZ * cp; const rx = camX * cy + rzPitch * syaw, rz = -camX * syaw + rzPitch * cy; if (Math.abs(ry) < .0001) return null; const t = -camera.y / ry; if (t <= 0) return null; return clampPosition({ x: camera.x + rx * t, y: 0, z: camera.z + rz * t }); }
+  function openAvatarPlacementPanel() { ensureAvatarPanel(); document.querySelector('#avatar-placement-panel').hidden = false; setStatus('Choose or upload an avatar, then tap a valid floor location.'); }
+  function createAvatarPreview() { const record = sanitizeAvatarRecord({ id: 'preview-avatar', houseId: HOUSE_ID, ownerId: sessionId, username: 'You', avatarName: avatarPlacementState.selectedAvatar?.name || 'Preview avatar', avatarType: 'image-sprite', avatarUrl: avatarPlacementState.selectedAvatar?.url || 'logo_symbol_crop_2x_transparent.png', position: avatarPlacementState.position, rotation: avatarPlacementState.rotation, scale: avatarPlacementState.scale }); avatarPlacementState.previewObject = createAvatarSceneObject(record); }
+  function startAvatarPlacement() { avatarPlacementState.active = true; avatarPlacementState.selectedAvatar ||= { name: 'MUZIKAZ Bolt', url: 'logo_symbol_crop_2x_transparent.png' }; createAvatarPreview(); setStatus('Placement mode active: click or tap the house floor to position the avatar.'); }
+  function updateAvatarPreviewPosition(position) { if (!avatarPlacementState.active) return; avatarPlacementState.position = clampPosition(position); if (avatarPlacementState.previewObject) { avatarPlacementState.previewObject.record.position = avatarPlacementState.position; avatarPlacementState.previewObject.record.roomId = calculateRoomId(avatarPlacementState.position); } }
+  async function publishPlacedAvatar() { if (!validateAvatarPlacement()) { setStatus('Choose a floor location inside the house before publishing.'); return; } const payload = sanitizeAvatarRecord({ id: (crypto.randomUUID && crypto.randomUUID()) || 'avatar-' + Date.now(), houseId: HOUSE_ID, ownerId: sessionId, username: window.localStorage.getItem('muzikazBottleMemberEmail') || 'Guest', avatarName: avatarPlacementState.selectedAvatar?.name || 'Shared avatar', avatarType: 'image-sprite', avatarUrl: avatarPlacementState.selectedAvatar?.url || 'logo_symbol_crop_2x_transparent.png', message: document.querySelector('#avatar-caption')?.value || '', position: avatarPlacementState.position, rotation: avatarPlacementState.rotation, scale: avatarPlacementState.scale, roomId: calculateRoomId(avatarPlacementState.position) }); try { const response = await fetch(API_BASE + '/api/houses/' + HOUSE_ID + '/avatars', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error('publish failed'); renderSharedAvatar(await response.json()); setStatus('Avatar published inside the shared 3D house.'); cancelAvatarPlacement(false); } catch (error) { setStatus('Shared avatars are temporarily offline. The house remains available.'); } }
+  async function loadSharedAvatars(houseId) { const response = await fetch(API_BASE + '/api/houses/' + houseId + '/avatars', { headers: { 'X-MUZIKAZ-Session': sessionId } }); if (!response.ok) throw new Error('load failed'); return response.json(); }
+  function subscribeToAvatarEvents(houseId) { try { const eventSource = new EventSource(API_BASE + '/api/houses/' + houseId + '/events?sessionId=' + encodeURIComponent(sessionId)); ['avatar-created', 'avatar-updated'].forEach((type) => eventSource.addEventListener(type, (event) => renderSharedAvatar(JSON.parse(event.data)))); eventSource.addEventListener('avatar-deleted', (event) => removeSharedAvatar(JSON.parse(event.data).id)); eventSource.addEventListener('house-presence-updated', (event) => { const data = JSON.parse(event.data); if (presenceCount) presenceCount.textContent = 'Live in the house: ' + (data.count || 1); }); eventSource.onerror = () => setStatus('Shared avatars are temporarily offline.'); } catch (error) { setStatus('Shared avatars are temporarily offline.'); } }
+  async function initializeSharedHouseAvatars() { try { showAvatarStatus('Loading shared avatars…'); (await loadSharedAvatars(HOUSE_ID)).map(sanitizeAvatarRecord).filter(Boolean).forEach(renderSharedAvatar); subscribeToAvatarEvents(HOUSE_ID); initializeHousePresence(); hideAvatarStatus(); } catch (error) { setStatus('Shared avatars are temporarily offline.'); } }
+  function initializeHousePresence() { const send = () => { const now = Date.now(); if (now - lastPresenceAt < 8000) return; lastPresenceAt = now; fetch(API_BASE + '/api/houses/' + HOUSE_ID + '/presence', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId }, body: JSON.stringify({ roomId: calculateRoomId(camera), lastActiveAt: new Date().toISOString() }) }).catch(() => {}); }; send(); window.setInterval(send, 10000); window.addEventListener('beforeunload', () => navigator.sendBeacon?.(API_BASE + '/api/houses/' + HOUSE_ID + '/presence/leave?sessionId=' + encodeURIComponent(sessionId))); }
+  function selectSharedAvatar(avatarId) { sharedAvatarObjects.forEach((object) => { object.selected = object.record.id === avatarId; }); const object = sharedAvatarObjects.get(avatarId); if (object) openAvatarInfoPanel(object.record); }
+  function cancelAvatarPlacement(hide = true) { avatarPlacementState.active = false; avatarPlacementState.previewObject = null; if (hide) document.querySelector('#avatar-placement-panel')?.setAttribute('hidden', ''); setStatus('Avatar placement closed. Normal explorer controls restored.'); }
+  function ensureAvatarPanel() { if (document.querySelector('#avatar-placement-panel')) return; const panel = document.createElement('div'); panel.id = 'avatar-placement-panel'; panel.className = 'avatar-placement-panel'; panel.hidden = true; panel.innerHTML = '<strong>Place shared avatar</strong><label>Avatar asset <select id="avatar-choice"><option value="logo_symbol_crop_2x_transparent.png">MUZIKAZ Bolt</option><option value="reference.png">Reference Character</option><option value="futuristic_armored_wolf_humanoid.png">Ion Wolf</option></select></label><label>Upload image <input id="avatar-upload" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"></label><label>Caption <input id="avatar-caption" maxlength="120" placeholder="Optional caption"></label><div class="avatar-placement-buttons"><button type="button" data-avatar-nudge="forward">Move Avatar</button><button type="button" data-avatar-rotate="-1">Rotate Left</button><button type="button" data-avatar-rotate="1">Rotate Right</button><button type="button" data-avatar-scale="1">Increase Size</button><button type="button" data-avatar-scale="-1">Decrease Size</button><button type="button" id="publish-avatar">Publish Avatar</button><button type="button" id="cancel-avatar">Cancel Placement</button></div>'; canvas.closest('.house-stage')?.append(panel); panel.querySelector('#avatar-choice').addEventListener('change', (event) => { avatarPlacementState.selectedAvatar = { name: event.target.selectedOptions[0].textContent, url: event.target.value }; createAvatarPreview(); }); panel.querySelector('#avatar-upload').addEventListener('change', async (event) => { const file = event.target.files?.[0]; if (!file || !/^image\/(png|jpeg|webp)$/.test(file.type) || file.size > 3000000) { setStatus('Upload rejected. Use PNG, JPG, or WebP up to 3 MB.'); return; } const form = new FormData(); form.append('avatar', file); try { const response = await fetch(API_BASE + '/api/uploads/avatar', { method: 'POST', headers: { 'X-MUZIKAZ-Session': sessionId }, body: form }); if (!response.ok) throw new Error('upload failed'); const data = await response.json(); avatarPlacementState.selectedAvatar = { name: file.name.replace(/\.[^.]+$/, ''), url: data.avatarUrl }; createAvatarPreview(); } catch { const reader = new FileReader(); reader.onload = () => { avatarPlacementState.selectedAvatar = { name: file.name.replace(/\.[^.]+$/, ''), url: reader.result }; createAvatarPreview(); setStatus('Upload service offline; preview is local and cannot be published until backend returns.'); }; reader.readAsDataURL(file); } }); panel.addEventListener('click', (event) => { const target = event.target; if (!(target instanceof HTMLElement)) return; if (target.dataset.avatarRotate) { avatarPlacementState.rotation.z += Number(target.dataset.avatarRotate) * .18; createAvatarPreview(); } if (target.dataset.avatarScale) { const next = Math.max(.35, Math.min(2.4, avatarPlacementState.scale.x + Number(target.dataset.avatarScale) * .12)); avatarPlacementState.scale = { x: next, y: next, z: next }; createAvatarPreview(); } if (target.id === 'publish-avatar') publishPlacedAvatar(); if (target.id === 'cancel-avatar') cancelAvatarPlacement(); if (target.dataset.avatarNudge) updateAvatarPreviewPosition({ ...avatarPlacementState.position, z: avatarPlacementState.position.z + .25 }); }); }
+  function openAvatarInfoPanel(record) { let panel = document.querySelector('#avatar-info-panel'); if (!panel) { panel = document.createElement('div'); panel.id = 'avatar-info-panel'; panel.className = 'avatar-info-panel'; canvas.closest('.house-stage')?.append(panel); } const own = record.ownerId === sessionId; panel.innerHTML = '<strong>' + record.avatarName + '</strong><span>Posted by ' + record.username + '</span><span>' + (record.message || 'No caption') + '</span><span>' + new Date(record.createdAt).toLocaleString() + '</span><button type="button" data-focus="' + record.id + '">Focus camera</button>' + (own ? '<button type="button" data-remove="' + record.id + '">Remove avatar</button>' : ''); panel.hidden = false; panel.onclick = async (event) => { const target = event.target; if (!(target instanceof HTMLElement)) return; if (target.dataset.focus) focusCameraOnAvatar(target.dataset.focus); if (target.dataset.remove) { await fetch(API_BASE + '/api/houses/' + HOUSE_ID + '/avatars/' + target.dataset.remove, { method: 'DELETE', headers: { 'X-MUZIKAZ-Session': sessionId } }).catch(() => {}); removeSharedAvatar(target.dataset.remove); } }; }
+  function closeAvatarInfoPanel() { const panel = document.querySelector('#avatar-info-panel'); if (panel) panel.hidden = true; }
+  Object.assign(window, { initializeSharedHouseAvatars, openAvatarPlacementPanel, startAvatarPlacement, createAvatarPreview, updateAvatarPreviewPosition, validateAvatarPlacement, publishPlacedAvatar, loadSharedAvatars, subscribeToAvatarEvents, renderSharedAvatar, updateSharedAvatar, removeSharedAvatar, selectSharedAvatar, focusCameraOnAvatar, cancelAvatarPlacement, initializeHousePresence, sanitizeAvatarRecord });
+  function loadScriptOnce(src) { return new Promise((resolve, reject) => { const existing = document.querySelector('script[src="' + src + '"]'); if (existing) { resolve(); return; } const script = document.createElement('script'); script.src = src; script.async = true; script.onload = resolve; script.onerror = reject; document.head.append(script); }); }
+  async function startMediaPipeHands() { await Promise.all([loadScriptOnce('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js'), loadScriptOnce('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js')]); if (!window.Hands || !window.Camera || !preview) return false; const hands = new window.Hands({ locateFile: (file) => 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/' + file }); hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: .65, minTrackingConfidence: .55 }); hands.onResults((results) => { const tip = results.multiHandLandmarks?.[0]?.[8]; if (!tip) return; camera.yaw += (tip.x - .5) * .035; camera.pitch = Math.max(-.8, Math.min(.55, camera.pitch + (tip.y - .5) * .025)); if (tip.y < .34) move('forward', .08); if (tip.y > .72) move('back', .08); }); handController = new window.Camera(preview, { onFrame: async () => hands.send({ image: preview }), width: 320, height: 180 }); handController.start(); return true; }
+  function resizeCanvas() { const rect = canvas.getBoundingClientRect(); const ratio = window.devicePixelRatio || 1; canvas.width = Math.max(320, Math.floor(rect.width * ratio)); canvas.height = Math.max(240, Math.floor(rect.height * ratio)); ctx.setTransform(ratio, 0, 0, ratio, 0, 0); }
+  function project(point) { const dx = point.x - camera.x, dy = point.y - camera.y, dz = point.z - camera.z; const cy = Math.cos(camera.yaw), sy = Math.sin(camera.yaw), cp = Math.cos(camera.pitch), sp = Math.sin(camera.pitch); const x = dx * cy - dz * sy, z = dx * sy + dz * cy, y = dy * cp - z * sp, depth = dy * sp + z * cp; if (depth <= 0.12) return null; const rect = canvas.getBoundingClientRect(); return { x: rect.width / 2 + (x * camera.fov) / depth, y: rect.height / 2 - (y * camera.fov) / depth, d: depth }; }
+  function drawPolygon(points, fill, stroke = 'rgba(156,255,0,.22)') { const projected = points.map(project); if (projected.some((p) => !p)) return; ctx.beginPath(); projected.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.closePath(); ctx.fillStyle = fill; ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.fill(); ctx.stroke(); }
+  function drawLine(a, b, color, width = 2) { const pa = project(a), pb = project(b); if (!pa || !pb) return; ctx.strokeStyle = color; ctx.lineWidth = width; ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke(); }
+  function render() { const rect = canvas.getBoundingClientRect(); ctx.clearRect(0, 0, rect.width, rect.height); const gradient = ctx.createLinearGradient(0, 0, 0, rect.height); gradient.addColorStop(0, '#06110c'); gradient.addColorStop(1, '#010201'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, rect.width, rect.height); drawPolygon([{x:-5,y:0,z:0},{x:5,y:0,z:0},{x:5,y:0,z:9},{x:-5,y:0,z:9}], 'rgba(12,24,16,.94)'); drawPolygon([{x:-5,y:3,z:0},{x:-5,y:3,z:9},{x:5,y:3,z:9},{x:5,y:3,z:0}], 'rgba(4,12,10,.72)'); for (let i = -5; i <= 5; i += 1) drawLine({x:i,y:.01,z:0},{x:i,y:.01,z:9}, 'rgba(156,255,0,.13)', 1); for (let z = 0; z <= 9; z += 1) drawLine({x:-5,y:.01,z},{x:5,y:.01,z}, 'rgba(156,255,0,.13)', 1); walls.forEach(([a, b]) => drawPolygon([{x:a[0],y:0,z:a[1]},{x:b[0],y:0,z:b[1]},{x:b[0],y:2.7,z:b[1]},{x:a[0],y:2.7,z:a[1]}], 'rgba(14,35,27,.82)', 'rgba(156,255,0,.45)')); const hitboxes = []; demoAvatars.forEach((avatar) => { const p = project({ x: avatar.x, y: .95, z: avatar.z }); if (!p) return; const size = Math.max(10, 240 / p.d); ctx.fillStyle = 'hsl(' + avatar.hue + ' 100% 58%)'; ctx.shadowBlur = 18; ctx.shadowColor = ctx.fillStyle; ctx.beginPath(); ctx.arc(p.x, p.y - size * .6, size * .28, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(p.x - size * .22, p.y - size * .35, size * .44, size * .85); ctx.shadowBlur = 0; }); [...sharedAvatarObjects.values()].sort((a,b)=> (project(b.record.position)?.d || 0) - (project(a.record.position)?.d || 0)).forEach((object) => { const box = drawAvatarObject(object); if (box) hitboxes.push({ ...box, id: object.record.id }); }); if (avatarPlacementState.active && avatarPlacementState.previewObject) drawAvatarObject(avatarPlacementState.previewObject, true); canvas._avatarHitboxes = hitboxes; requestAnimationFrame(render); }
+  function move(direction, amount) { const forwardX = Math.sin(camera.yaw), forwardZ = Math.cos(camera.yaw), rightX = Math.cos(camera.yaw), rightZ = -Math.sin(camera.yaw); if (direction === 'forward') { camera.x += forwardX * amount; camera.z += forwardZ * amount; } if (direction === 'back') { camera.x -= forwardX * amount; camera.z -= forwardZ * amount; } if (direction === 'right') { camera.x += rightX * amount; camera.z += rightZ * amount; } if (direction === 'left') { camera.x -= rightX * amount; camera.z -= rightZ * amount; } camera.x = Math.max(-4.5, Math.min(4.5, camera.x)); camera.z = Math.max(-.4, Math.min(8.5, camera.z)); }
+  function tickMovement() { const speed = .065; if (avatarPlacementState.active) { if (keys.has('w') || keys.has('arrowup')) updateAvatarPreviewPosition({ ...avatarPlacementState.position, z: avatarPlacementState.position.z + speed }); if (keys.has('s') || keys.has('arrowdown')) updateAvatarPreviewPosition({ ...avatarPlacementState.position, z: avatarPlacementState.position.z - speed }); if (keys.has('a') || keys.has('arrowleft')) updateAvatarPreviewPosition({ ...avatarPlacementState.position, x: avatarPlacementState.position.x - speed }); if (keys.has('d') || keys.has('arrowright')) updateAvatarPreviewPosition({ ...avatarPlacementState.position, x: avatarPlacementState.position.x + speed }); if (keys.has('q')) avatarPlacementState.rotation.z -= .025; if (keys.has('e')) avatarPlacementState.rotation.z += .025; } else { if (keys.has('w') || keys.has('arrowup')) move('forward', speed); if (keys.has('s') || keys.has('arrowdown')) move('back', speed); if (keys.has('a') || keys.has('arrowleft')) move('left', speed); if (keys.has('d') || keys.has('arrowright')) move('right', speed); if (keys.has('q')) camera.y = Math.max(.8, camera.y - .025); if (keys.has('e')) camera.y = Math.min(2.4, camera.y + .025); } requestAnimationFrame(tickMovement); }
+  canvas.addEventListener('pointerdown', (event) => { const rect = canvas.getBoundingClientRect(); const x = event.clientX - rect.left, y = event.clientY - rect.top; const hit = [...(canvas._avatarHitboxes || [])].reverse().find((box) => x >= box.x - box.width / 2 && x <= box.x + box.width / 2 && y >= box.y - box.height / 2 && y <= box.y + box.height / 2); if (hit && !avatarPlacementState.active) { selectSharedAvatar(hit.id); return; } if (avatarPlacementState.active) { const floor = screenToFloor(event.clientX, event.clientY); if (floor) updateAvatarPreviewPosition(floor); return; } dragging = true; lastPointer = { x: event.clientX, y: event.clientY }; canvas.setPointerCapture(event.pointerId); });
+  canvas.addEventListener('pointermove', (event) => { if (!dragging || !lastPointer || avatarPlacementState.active) return; camera.yaw += (event.clientX - lastPointer.x) * .005; camera.pitch = Math.max(-.8, Math.min(.55, camera.pitch + (event.clientY - lastPointer.y) * .004)); lastPointer = { x: event.clientX, y: event.clientY }; });
+  canvas.addEventListener('pointerup', () => { dragging = false; lastPointer = null; }); canvas.addEventListener('wheel', (event) => { event.preventDefault(); camera.fov = Math.max(320, Math.min(760, camera.fov - event.deltaY * .25)); }, { passive: false });
+  document.addEventListener('keydown', (event) => { if (avatarPlacementState.active && ['+','='].includes(event.key)) { const n = Math.min(2.4, avatarPlacementState.scale.x + .1); avatarPlacementState.scale = { x:n, y:n, z:n }; createAvatarPreview(); } if (avatarPlacementState.active && ['-','_'].includes(event.key)) { const n = Math.max(.35, avatarPlacementState.scale.x - .1); avatarPlacementState.scale = { x:n, y:n, z:n }; createAvatarPreview(); } if (avatarPlacementState.active && event.key === 'Enter') publishPlacedAvatar(); if (avatarPlacementState.active && event.key === 'Escape') cancelAvatarPlacement(); keys.add(event.key.toLowerCase()); }); document.addEventListener('keyup', (event) => keys.delete(event.key.toLowerCase()));
+  document.querySelectorAll('[data-mobile-move]').forEach((button) => button.addEventListener('click', () => move(button.dataset.mobileMove, .42))); resetButton?.addEventListener('click', () => { Object.assign(camera, defaultCamera); setStatus('Explorer reset to the default inside-camera view.'); }); avatarButton?.addEventListener('click', () => { openAvatarPlacementPanel(); startAvatarPlacement(); });
+  handButton?.addEventListener('click', async () => { handEnabled = !handEnabled; handButton.setAttribute('aria-pressed', String(handEnabled)); handButton.textContent = handEnabled ? 'Disable hand control' : 'Enable hand control'; if (!handEnabled) { handController?.stop?.(); handStream?.getTracks().forEach((track) => track.stop()); handStream = null; if (handStatus) handStatus.textContent = 'Camera preview inactive. MediaPipe Hands loads only when enabled.'; return; } try { handStream = await navigator.mediaDevices.getUserMedia({ video: true }); if (preview) { preview.srcObject = handStream; await preview.play(); } const mediaPipeReady = await startMediaPipeHands(); if (handStatus) handStatus.textContent = mediaPipeReady ? 'MediaPipe Hands active: move your index finger to steer the camera.' : 'Camera preview enabled; MediaPipe Hands could not be loaded, so manual controls remain active.'; } catch (error) { handEnabled = false; handButton.setAttribute('aria-pressed', 'false'); if (handStatus) handStatus.textContent = 'Camera or MediaPipe unavailable; keyboard, mouse, and mobile controls still work.'; } });
+  window.addEventListener('resize', resizeCanvas); resizeCanvas(); render(); tickMovement(); initializeSharedHouseAvatars();
 }
 
 initHouseExplorer();
