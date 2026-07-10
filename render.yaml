@@ -1,6 +1,17 @@
 services:
   - type: web
-    name: muzikaz-static-site
-    runtime: static
+    name: muzikaz-model-market
+    runtime: node
     buildCommand: npm ci --omit=dev && npm run build && npm run check
-    staticPublishPath: dist
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: MUZIKAZ_DATA_DIR
+        value: /var/data
+      - key: MUZIKAZ_UPLOAD_DIR
+        value: /var/data/uploads/avatars
+    disk:
+      name: muzikaz-shared-house-data
+      mountPath: /var/data
+      sizeGB: 1
