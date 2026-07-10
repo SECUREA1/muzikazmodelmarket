@@ -35,99 +35,44 @@
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">☰</button>
   </header>
 
-  <main class="explorer-shell" id="model-explorer">
-    <section class="explorer-hero" aria-labelledby="explorer-title">
-      <div class="explorer-copy">
-        <p class="kicker">GLB + USDZ ready</p>
-        <h1 id="explorer-title">Explore the model in 3D space</h1>
-        <p>Everyone can rotate, pinch, pan, zoom, scale the model, pick a cursor character, move it across the floor, upload a GLB or USDZ model, and touch the lock button to save the current 3D setup in this browser.</p>
-        <div class="hero-actions">
-          <label class="btn upload-btn" for="public-model-file">Upload GLB / USDZ</label>
-          <button class="btn" type="button" id="lock-model-button">🔒 Lock it in</button>
-          <button class="btn ghost" type="button" id="reset-view-button">Reset view</button>
-          <button class="btn ghost" type="button" id="center-cursor-button">Center cursor</button>
+  <main id="home">
+    <section class="section-block house-explorer" id="house-explorer" aria-labelledby="house-explorer-title">
+      <div class="section-title"><span></span><h2 id="house-explorer-title">3D House Explorer</h2><a href="#house-explorer-canvas">Enter interior</a></div>
+      <div class="house-explorer-shell">
+        <div class="house-stage">
+          <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
+          <div class="house-reticle" aria-hidden="true">+</div>
+          <div class="house-status" id="house-status" role="status">Ready: drag to look around, then move through the rooms.</div>
         </div>
-        <input id="public-model-file" class="visually-hidden" type="file" accept=".glb,.gltf,.usdz,.reality,model/gltf-binary,model/gltf+json,model/vnd.usdz+zip" />
-        <p class="status-message" id="public-model-status" role="status">Default demo model is loaded. Upload your own GLB or USDZ to explore a custom drop.</p>
+        <aside class="house-hud" aria-label="3D House Explorer controls">
+          <p class="kicker">IonCore interior sim</p>
+          <h3>Walk the neon floor plan.</h3>
+          <div class="hud-pill-grid">
+            <span>WASD / arrows: move</span>
+            <span>Mouse drag: pan + tilt</span>
+            <span>Wheel: zoom</span>
+            <span>Q / E: camera height</span>
+            <span id="house-presence-count">Live in the house: 1</span>
+          </div>
+          <div class="house-actions">
+            <button type="button" id="house-reset">Reset view</button>
+            <button type="button" id="hand-toggle" aria-pressed="false">Enable hand control</button>
+            <button type="button" id="add-avatar">Add Avatar</button>
+          </div>
+          <div class="camera-preview-panel">
+            <video id="hand-preview" playsinline muted></video>
+            <span id="hand-status">Camera preview inactive. MediaPipe Hands loads only when enabled.</span>
+          </div>
+          <div class="mobile-move-pad" aria-label="Mobile movement controls">
+            <button type="button" data-mobile-move="forward">▲</button>
+            <button type="button" data-mobile-move="left">◀</button>
+            <button type="button" data-mobile-move="back">▼</button>
+            <button type="button" data-mobile-move="right">▶</button>
+          </div>
+        </aside>
       </div>
-
-      <div class="explorer-stage" id="explorer-stage" aria-label="Interactive 3D model viewer and floor navigation space">
-        <div class="floor-grid" id="floor-grid" role="application" aria-label="Interactive floor. Click or tap anywhere on the grid to move the selected cursor model.">
-          <div class="floor-target" id="floor-target" aria-hidden="true"></div>
-          <button class="cursor-model" id="cursor-model" type="button" aria-label="Selected cursor model on the 3D floor" style="--cursor-x:50%;--cursor-y:64%;--cursor-scale:1;">🐺</button>
-        </div>
-        <model-viewer
-          id="public-model-viewer"
-          src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
-          ios-src="https://modelviewer.dev/shared-assets/models/Astronaut.usdz"
-          poster="logo_panel_2x_transparent.png"
-          alt="Interactive MUZIKAZ 3D model preview"
-          camera-controls
-          touch-action="pan-y"
-          ar
-          ar-modes="webxr scene-viewer quick-look"
-          auto-rotate
-          shadow-intensity="1"
-          exposure="1"
-          camera-orbit="0deg 75deg 105%"
-          min-camera-orbit="auto auto 35%"
-          max-camera-orbit="auto auto 240%"
-          interaction-prompt="auto"
-          scale="1 1 1">
-          <button class="ar-hotspot" slot="hotspot-1" data-position="0m 1.45m 0m" data-normal="0m 1m 0m">Tap + drag to inspect</button>
-          <button class="ar-button" slot="ar-button">View in your space</button>
-        </model-viewer>
-      </div>
-    </section>
-
-    <section class="explorer-controls" aria-label="3D viewer controls">
-      <article>
-        <h2>3D controls</h2>
-        <ul>
-          <li>Drag with one finger or mouse to orbit the model.</li>
-          <li>Pinch or scroll to zoom in and out.</li>
-          <li>Use two fingers or right-click drag to pan around the stage.</li>
-          <li>Click or tap the floor grid to move the selected cursor model in the 3D space.</li>
-          <li>On mobile, tap <strong>View in your space</strong> for AR when the device supports it.</li>
-        </ul>
-      </article>
-      <article>
-        <h2>Lock status</h2>
-        <p id="locked-model-summary">No public model is locked yet.</p>
-        <button type="button" id="unlock-model-button">Unlock selection</button>
-      </article>
-      <article>
-        <h2>Zoom + scale</h2>
-        <label for="zoom-range">Camera zoom</label>
-        <input id="zoom-range" type="range" min="35" max="240" value="105" />
-        <label for="scale-range">Model scale</label>
-        <input id="scale-range" type="range" min="50" max="180" value="100" />
-        <output id="scale-output" for="scale-range zoom-range">Scale 100% · Zoom 105%</output>
-      </article>
-      <article>
-        <h2>Cursor model</h2>
-        <label for="cursor-select">Move with</label>
-        <select id="cursor-select">
-          <option value="🐺" data-label="Legends wolf">Legends wolf</option>
-          <option value="🦍" data-label="Originals ape">Originals ape</option>
-          <option value="👾" data-label="Chaos hybrid">Chaos hybrid</option>
-          <option value="🐧" data-label="Crew mascot">Crew mascot</option>
-          <option value="⚡" data-label="MUZIKAZ bolt">MUZIKAZ bolt</option>
-        </select>
-        <p class="control-note">The selected model becomes the floor cursor users move through the 3D space.</p>
-      </article>
-      <article>
-        <h2>Lighting</h2>
-        <label for="environment-select">Stage look</label>
-        <select id="environment-select">
-          <option value="neutral">Neutral studio</option>
-          <option value="legacy">Legacy lighting</option>
-          <option value="moon">Moon glow</option>
-        </select>
-      </article>
     </section>
   </main>
-
   <footer id="contact">
     <div>
       <a class="logo" href="index.html#home"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
