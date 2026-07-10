@@ -191,10 +191,43 @@
 
         <section class="section-block admin-block" id="admin">
             <div class="section-title"><span></span><h2>Admin command center</h2><a href="#crew">Join drops</a></div>
-            <div class="admin-layout">
-                <label class="upload-zone">Upload Graphics<input type="file" id="asset-upload" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" multiple /><span>PNG · JPG · GIF · SVG · WEBP</span></label>
-                <div class="admin-list"><h3>Generated assets</h3><ul id="asset-list"><li>Thumbnails ready</li><li>Store tiles ready</li><li>Product previews ready</li></ul></div>
-                <div class="analytics"><h3>Analytics</h3><p><b id="metric-orders">128</b> Orders</p><p><b id="metric-inventory">842</b> Inventory units</p><p><b id="metric-conversion">7.4%</b> Conversion</p></div>
+            <div class="admin-layout asset-command-center" data-asset-dashboard>
+                <form class="upload-zone asset-upload-panel" id="graphic-upload-form">
+                    <strong>Upload Graphics</strong>
+                    <input type="file" id="asset-upload" name="file" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" multiple />
+                    <span>PNG · JPG · GIF · SVG · WEBP</span>
+                    <small>Drag files here or use the file picker. SVG files are sanitized server-side.</small>
+                    <progress id="graphic-upload-progress" max="100" value="0"></progress>
+                    <div id="graphic-preview" class="asset-preview-grid"></div>
+                    <input name="title" placeholder="Title" />
+                    <textarea name="description" placeholder="Description"></textarea>
+                    <input name="creator" placeholder="Creator name" />
+                    <input name="category" placeholder="Category" />
+                    <input name="tags" placeholder="Tags" />
+                    <select name="visibility"><option value="private">Private</option><option value="public">Public after approval</option></select>
+                    <select name="intendedUse"><option>3D model texture</option><option>Model thumbnail</option><option>Marketplace tile</option><option>Product preview</option><option>Homepage banner</option><option>Avatar image</option><option>Sticker design</option><option>Merch graphic</option><option>Environment background</option><option>Promotional graphic</option></select>
+                    <input name="relatedModelId" placeholder="Related model ID" />
+                    <input name="productAssignment" placeholder="Product assignment" />
+                    <input name="collectionAssignment" placeholder="Collection assignment" />
+                    <input name="publishLocation" placeholder="Publish location" />
+                    <div class="button-row"><button type="submit" name="status" value="pending_review">Submit for approval</button><button type="submit" name="status" value="draft">Save as draft</button><button type="button" id="cancel-graphic-upload">Cancel upload</button><button type="button" id="retry-graphic-upload">Retry failed upload</button></div>
+                </form>
+                <form class="upload-zone asset-upload-panel" id="model-upload-form">
+                    <strong>Upload 3D Model</strong>
+                    <input type="file" name="file" accept=".glb,.gltf,.usdz,.reality" required />
+                    <input type="file" name="usdz" accept=".usdz" /><input type="file" name="thumbnail" accept="image/*" /><input type="file" name="textures" accept="image/*,.bin,.mtl,.obj" multiple />
+                    <input name="title" placeholder="Model title" /><textarea name="description" placeholder="Description"></textarea><input name="category" placeholder="Category" /><input name="creator" placeholder="Creator" /><input name="tags" placeholder="Tags" />
+                    <input name="defaultScale" placeholder="Default scale" /><input name="defaultRotation" placeholder="Default rotation" /><input name="defaultPosition" placeholder="Default position" />
+                    <input name="environment" placeholder="Environment selection" /><input name="animation" placeholder="Animation selector" />
+                    <label><input type="checkbox" name="autoRotate" checked /> Auto-rotate</label><label><input type="checkbox" name="cameraControls" checked /> Camera controls</label><label><input type="checkbox" name="arEnabled" /> AR enabled</label><label><input type="checkbox" name="shadow" /> Shadow</label><input name="background" placeholder="Background setting" />
+                    <select name="visibility"><option value="private">Private</option><option value="public">Public after approval</option></select>
+                    <div class="button-row"><button type="submit" name="status" value="draft">Save draft</button><button type="button" id="preview-model-upload">Preview</button><button type="submit" name="status" value="pending_review">Submit for approval</button><button type="submit" name="status" value="published" data-admin-only>Publish</button></div>
+                    <model-viewer id="model-upload-preview" camera-controls auto-rotate hidden></model-viewer>
+                </form>
+                <div class="admin-list"><h3>Generated assets</h3><ul id="asset-list"><li><b id="metric-thumbnails">0</b> Thumbnails ready</li><li><b id="metric-store-tiles">0</b> Store tiles ready</li><li><b id="metric-product-previews">0</b> Product previews ready</li></ul><button type="button" id="regenerate-derivatives">Regenerate derivatives</button></div>
+                <div class="analytics"><h3>Analytics</h3><p><b id="metric-orders">128</b> Orders</p><p><b id="metric-inventory">842</b> Inventory units</p><p><b id="metric-conversion">7.4%</b> Conversion</p><p><b id="metric-uploads">0</b> Uploads</p><p><b id="metric-pending">0</b> Pending approvals</p><p><b id="metric-storage">0</b> Storage bytes</p></div>
+                <div class="asset-library"><h3>Shared Asset Library</h3><div class="asset-tabs" id="asset-tabs"></div><p id="asset-status" aria-live="polite">Loading assets…</p><div class="asset-card-grid" id="asset-card-grid"></div></div>
+                <div class="user-dashboard"><h3>User upload dashboard</h3><p>My models · My graphics · Drafts · Pending review · Approved · Published · Rejected · Storage used</p><div class="button-row"><button type="button" data-tab-jump="Images">Upload new graphic</button><button type="button" data-tab-jump="3D Models">Upload new 3D model</button><button type="button" data-tab-jump="My Uploads">Assign graphic to model</button></div></div>
             </div>
         </section>
 
