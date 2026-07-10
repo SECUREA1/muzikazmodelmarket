@@ -30,6 +30,68 @@ struct Model {
     environment: String,
 }
 #[derive(Clone, Debug)]
+struct Asset {
+    id: String,
+    owner_user_id: String,
+    owner_display_name: String,
+    owner_email: String,
+    uploaded_by_role: String,
+    title: String,
+    description: String,
+    original_filename: String,
+    stored_filename: String,
+    file_type: String,
+    mime_type: String,
+    file_size: usize,
+    public_url: String,
+    thumbnail_url: String,
+    category: String,
+    tags: String,
+    status: String,
+    visibility: String,
+    intended_use: String,
+    related_model_id: String,
+    product_assignment: String,
+    collection_assignment: String,
+    publish_location: String,
+    approved_by: String,
+    approved_at: String,
+    published_at: String,
+    moderator_note: String,
+    featured: bool,
+    archived: bool,
+    created_at: String,
+    updated_at: String,
+}
+#[derive(Clone, Debug)]
+struct AssetModelAssignment {
+    id: String,
+    asset_id: String,
+    model_id: String,
+    owner_user_id: String,
+    display_type: String,
+    material_slot: String,
+    position: String,
+    rotation: String,
+    scale: String,
+    opacity: f64,
+    repeat_x: f64,
+    repeat_y: f64,
+    approved: bool,
+    published: bool,
+    created_at: String,
+    updated_at: String,
+}
+#[derive(Clone, Debug)]
+struct AssetDerivative {
+    id: String,
+    asset_id: String,
+    kind: String,
+    url: String,
+    status: String,
+    created_at: String,
+}
+#[derive(Clone, Debug)]
 struct Avatar {
     id: String,
     house_id: String,
@@ -58,6 +120,9 @@ struct State {
     admin_token: String,
     models: Arc<RwLock<Vec<Model>>>,
     avatars: Arc<RwLock<Vec<Avatar>>>,
+    assets: Arc<RwLock<Vec<Asset>>>,
+    assignments: Arc<RwLock<Vec<AssetModelAssignment>>>,
+    derivatives: Arc<RwLock<Vec<AssetDerivative>>>,
 }
 fn main() -> std::io::Result<()> {
     let port = env::var("PORT").unwrap_or("4173".into());
@@ -73,6 +138,13 @@ fn main() -> std::io::Result<()> {
             &data.join("published-models.json"),
         ))),
         avatars: Arc::new(RwLock::new(load_avatars(&data.join("house-avatars.json")))),
+        assets: Arc::new(RwLock::new(load_assets(&data.join("assets.json")))),
+        assignments: Arc::new(RwLock::new(load_assignments(
+            &data.join("asset-model-assignments.json"),
+        ))),
+        derivatives: Arc::new(RwLock::new(load_derivatives(
+            &data.join("asset-derivatives.json"),
+        ))),
         data,
         uploads,
         public_base: env::var("PUBLIC_BASE_URL").unwrap_or_default(),
@@ -173,6 +245,15 @@ fn api(
             "Service healthy",
             false,
         ),
+        ("GET", "/api/assets") => list_assets(s, st, headers, "all"),
+        ("GET", "/api/assets/mine") => list_assets(s, st, headers, "mine"),
+        ("GET", "/api/assets/public") => list_assets(s, st, headers, "public"),
+        ("POST", "/api/assets/upload") => upload_asset(s, st, headers, body),
+        ("GET", "/api/admin/assets/pending") => admin_pending(s, st, headers),
+        ("GET", "/api/admin/analytics") => admin_analytics(s, st, headers),
+        ("GET", "/api/admin/storage") => admin_storage(s, st, headers),
+        ("GET", "/api/models/mine") => list_models(s, st, headers, "mine"),
+        ("GET", "/api/models/public") => list_models(s, st, headers, "public"),
         ("GET", "/api/models") => {
             let mut v: Vec<_> = st
                 .models
@@ -195,7 +276,7 @@ fn api(
                 false,
             )
         }
-        ("POST", "/api/models/upload") => upload(s, st, headers, body),
+        ("POST", "/api/models/upload") => upload_model_asset(s, st, headers, body),
         ("POST", "/api/uploads/avatar") => upload_avatar(s, st, headers, body),
         ("POST", "/api/models") => create(s, st, body),
         _ if method == "GET" && path.starts_with("/api/houses/") && path.ends_with("/avatars") => {
@@ -218,6 +299,89 @@ fn api(
         }
         _ if method == "GET" && path.starts_with("/api/houses/") && path.ends_with("/events") => {
             sse_ready(s)
+        }
+
+        _ if method == "GET" && path.starts_with("/api/assets/") => {
+            get_asset(s, st, headers, &path[12..])
+        }
+        _ if method == "PATCH" && path.starts_with("/api/assets/") => {
+            patch_asset(s, st, headers, &path[12..], body)
+        }
+        _ if method == "DELETE" && path.starts_with("/api/assets/") => {
+            delete_asset(s, st, headers, &path[12..])
+        }
+        _ if method == "POST" && path.starts_with("/api/assets/") && path.ends_with("/submit") => {
+            asset_action(
+                s,
+                st,
+                headers,
+                path,
+                "pending_review",
+                "Submitted for approval",
+                body,
+            )
+        }
+        _ if method == "POST" && path.starts_with("/api/assets/") && path.ends_with("/approve") => {
+            asset_action(
+                s,
+                st,
+                headers,
+                path,
+                "approved",
+                "Approved and ready to publish",
+                body,
+            )
+        }
+        _ if method == "POST" && path.starts_with("/api/assets/") && path.ends_with("/reject") => {
+            asset_action(
+                s,
+                st,
+                headers,
+                path,
+                "rejected",
+                "Rejected: changes required",
+                body,
+            )
+        }
+        _ if method == "POST" && path.starts_with("/api/assets/") && path.ends_with("/publish") => {
+            asset_action(
+                s,
+                st,
+                headers,
+                path,
+                "published",
+                "Published to live model space",
+                body,
+            )
+        }
+        _ if method == "POST"
+            && path.starts_with("/api/assets/")
+            && path.ends_with("/unpublish") =>
+        {
+            asset_action(
+                s,
+                st,
+                headers,
+                path,
+                "unpublished",
+                "Asset unpublished",
+                body,
+            )
+        }
+        _ if method == "POST" && path.starts_with("/api/assets/") && path.ends_with("/archive") => {
+            asset_action(s, st, headers, path, "archived", "Asset archived", body)
+        }
+        _ if method == "POST"
+            && path.starts_with("/api/assets/")
+            && path.ends_with("/assign-model") =>
+        {
+            assign_model(s, st, headers, path, body)
+        }
+        _ if method == "DELETE"
+            && path.starts_with("/api/assets/")
+            && path.contains("/assign-model/") =>
+        {
+            delete_assignment(s, st, headers, path)
         }
         _ if method == "GET" && path.starts_with("/api/models/") => {
             let id = &path[12..];
@@ -939,6 +1103,13 @@ fn ext(n: &str) -> Option<&'static str> {
         "jpg" => Some("jpg"),
         "jpeg" => Some("jpeg"),
         "webp" => Some("webp"),
+        "gif" => Some("gif"),
+        "svg" => Some("svg"),
+        "reality" => Some("reality"),
+        "obj" => Some("obj"),
+        "mtl" => Some("mtl"),
+        "bin" => Some("bin"),
+        "zip" => Some("zip"),
         _ => None,
     }
 }
@@ -1006,4 +1177,775 @@ fn percent(v: &str) -> Result<String, ()> {
 }
 fn find_bytes(h: &[u8], n: &[u8]) -> Option<usize> {
     h.windows(n.len()).position(|w| w == n)
+}
+
+fn auth(headers: &HashMap<String, String>) -> (String, String, String, String) {
+    let user = trim(headers.get("x-user-id").cloned().unwrap_or_default(), 120);
+    let role = trim(
+        headers.get("x-user-role").cloned().unwrap_or_else(|| {
+            if user.is_empty() {
+                "visitor".into()
+            } else {
+                "user".into()
+            }
+        }),
+        30,
+    );
+    let name = trim(
+        headers.get("x-user-name").cloned().unwrap_or_else(|| {
+            if user.is_empty() {
+                "Public Visitor".into()
+            } else {
+                user.clone()
+            }
+        }),
+        120,
+    );
+    let email = trim(
+        headers.get("x-user-email").cloned().unwrap_or_default(),
+        180,
+    );
+    (user, role, name, email)
+}
+fn is_admin(headers: &HashMap<String, String>, st: &State) -> bool {
+    let (_, r, _, _) = auth(headers);
+    r == "admin"
+        || (!st.admin_token.is_empty() && headers.get("x-admin-token") == Some(&st.admin_token))
+}
+fn require_user(
+    s: &mut TcpStream,
+    headers: &HashMap<String, String>,
+) -> Option<(String, String, String, String)> {
+    let a = auth(headers);
+    if a.0.is_empty() {
+        let _ = json(s, 403, false, "{}", "Authentication required", false);
+        None
+    } else {
+        Some(a)
+    }
+}
+fn can_edit(a: &Asset, headers: &HashMap<String, String>, st: &State) -> bool {
+    is_admin(headers, st) || auth(headers).0 == a.owner_user_id
+}
+fn is_public_asset(a: &Asset) -> bool {
+    (a.status == "published" || a.status == "approved") && a.visibility == "public"
+}
+
+fn list_assets(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    mode: &str,
+) -> std::io::Result<()> {
+    let (u, _, _, _) = auth(h);
+    let admin = is_admin(h, st);
+    let mut v: Vec<_> = st
+        .assets
+        .read()
+        .unwrap()
+        .iter()
+        .filter(|a| match mode {
+            "mine" => !u.is_empty() && a.owner_user_id == u,
+            "public" => is_public_asset(a),
+            "all" => admin || is_public_asset(a) || (!u.is_empty() && a.owner_user_id == u),
+            _ => false,
+        })
+        .cloned()
+        .collect();
+    v.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+    json(
+        s,
+        200,
+        true,
+        &format!(
+            "[{}]",
+            v.iter().map(asset_json).collect::<Vec<_>>().join(",")
+        ),
+        "Assets loaded",
+        false,
+    )
+}
+fn get_asset(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    id: &str,
+) -> std::io::Result<()> {
+    let v = st.assets.read().unwrap();
+    if let Some(a) = v.iter().find(|a| a.id == id) {
+        if can_edit(a, h, st) || is_public_asset(a) {
+            json(s, 200, true, &asset_json(a), "Asset loaded", false)
+        } else {
+            json(s, 403, false, "{}", "Private asset", false)
+        }
+    } else {
+        json(s, 404, false, "{}", "Asset not found", false)
+    }
+}
+fn list_models(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    mode: &str,
+) -> std::io::Result<()> {
+    let (u, _, _, _) = auth(h);
+    let mut v: Vec<_> = st
+        .models
+        .read()
+        .unwrap()
+        .iter()
+        .filter(|m| {
+            mode == "public" && m.status == "published"
+                || mode == "mine" && !u.is_empty() && m.creator == u
+        })
+        .cloned()
+        .collect();
+    v.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+    json(
+        s,
+        200,
+        true,
+        &format!(
+            "[{}]",
+            v.iter().map(model_json).collect::<Vec<_>>().join(",")
+        ),
+        "Models loaded",
+        false,
+    )
+}
+
+fn upload_asset(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    body: &[u8],
+) -> std::io::Result<()> {
+    let Some((user, role, name, email)) = require_user(s, h) else {
+        return Ok(());
+    };
+    let ct = h.get("content-type").cloned().unwrap_or_default();
+    let boundary = ct.split("boundary=").nth(1).unwrap_or("");
+    if boundary.is_empty() {
+        return json(s, 400, false, "{}", "Invalid multipart upload", false);
+    };
+    let parts = parse_multipart(body, boundary);
+    let fields = parts
+        .iter()
+        .filter(|p| p.filename.is_empty())
+        .map(|p| (p.name.clone(), String::from_utf8_lossy(&p.data).to_string()))
+        .collect::<HashMap<_, _>>();
+    let mut created = Vec::new();
+    for p in parts.into_iter().filter(|p| !p.filename.is_empty()) {
+        let a = store_asset_part(st, p, &user, &role, &name, &email, &fields, false)?;
+        created.push(a);
+    }
+    if created.is_empty() {
+        return json(s, 400, false, "{}", "Missing upload file", false);
+    };
+    {
+        let mut v = st.assets.write().unwrap();
+        v.extend(created.clone());
+        persist_assets(st, &v);
+    }
+    let mut d = st.derivatives.write().unwrap();
+    for a in &created {
+        d.push(AssetDerivative {
+            id: uuid(),
+            asset_id: a.id.clone(),
+            kind: "thumbnail".into(),
+            url: a.thumbnail_url.clone(),
+            status: "ready".into(),
+            created_at: now(),
+        });
+        d.push(AssetDerivative {
+            id: uuid(),
+            asset_id: a.id.clone(),
+            kind: "compressed_webp".into(),
+            url: a.public_url.clone(),
+            status: "ready".into(),
+            created_at: now(),
+        });
+    }
+    persist_derivatives(st, &d);
+    json(
+        s,
+        201,
+        true,
+        &format!(
+            "[{}]",
+            created.iter().map(asset_json).collect::<Vec<_>>().join(",")
+        ),
+        "Upload complete. Thumbnail generated.",
+        false,
+    )
+}
+fn upload_model_asset(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    body: &[u8],
+) -> std::io::Result<()> {
+    if h.get("x-user-id").is_some() {
+        upload_asset(s, st, h, body)
+    } else {
+        upload(s, st, h, body)
+    }
+}
+fn store_asset_part(
+    st: &State,
+    p: Part,
+    user: &str,
+    role: &str,
+    name: &str,
+    email: &str,
+    fields: &HashMap<String, String>,
+    model_upload: bool,
+) -> std::io::Result<Asset> {
+    if p.data.is_empty() {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "empty"));
+    }
+    if p.data.len() > st.max_bytes {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "too large"));
+    }
+    let ext = ext(&p.filename)
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "bad ext"))?;
+    let kind = if matches!(ext, "png" | "jpg" | "jpeg" | "gif" | "webp" | "svg") {
+        "image"
+    } else {
+        "model"
+    };
+    validate_signature(ext, &p.data)?;
+    let mut data = p.data;
+    if ext == "svg" {
+        data = sanitize_svg(&String::from_utf8_lossy(&data)).into_bytes();
+    }
+    let fname = format!("asset-{}.{}", uuid(), ext);
+    fs::write(st.uploads.join(&fname), &data)?;
+    let url = format!("/uploads/{fname}");
+    let now = now();
+    Ok(Asset {
+        id: uuid(),
+        owner_user_id: user.into(),
+        owner_display_name: name.into(),
+        owner_email: email.into(),
+        uploaded_by_role: role.into(),
+        title: trim(
+            fields
+                .get("title")
+                .cloned()
+                .unwrap_or_else(|| p.filename.clone()),
+            140,
+        ),
+        description: trim(fields.get("description").cloned().unwrap_or_default(), 1000),
+        original_filename: trim(p.filename, 240),
+        stored_filename: fname,
+        file_type: kind.into(),
+        mime_type: mime_for_ext(ext).into(),
+        file_size: data.len(),
+        public_url: url.clone(),
+        thumbnail_url: url,
+        category: trim(fields.get("category").cloned().unwrap_or_default(), 80),
+        tags: trim(fields.get("tags").cloned().unwrap_or_default(), 300),
+        status: if model_upload {
+            "processing".into()
+        } else {
+            fields
+                .get("status")
+                .cloned()
+                .unwrap_or_else(|| "draft".into())
+        },
+        visibility: fields
+            .get("visibility")
+            .cloned()
+            .unwrap_or_else(|| "private".into()),
+        intended_use: trim(fields.get("intendedUse").cloned().unwrap_or_default(), 80),
+        related_model_id: trim(
+            fields.get("relatedModelId").cloned().unwrap_or_default(),
+            120,
+        ),
+        product_assignment: trim(
+            fields.get("productAssignment").cloned().unwrap_or_default(),
+            120,
+        ),
+        collection_assignment: trim(
+            fields
+                .get("collectionAssignment")
+                .cloned()
+                .unwrap_or_default(),
+            120,
+        ),
+        publish_location: trim(
+            fields.get("publishLocation").cloned().unwrap_or_default(),
+            120,
+        ),
+        approved_by: String::new(),
+        approved_at: String::new(),
+        published_at: String::new(),
+        moderator_note: String::new(),
+        featured: false,
+        archived: false,
+        created_at: now.clone(),
+        updated_at: now,
+    })
+}
+fn patch_asset(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    id: &str,
+    body: &[u8],
+) -> std::io::Result<()> {
+    let b = String::from_utf8_lossy(body);
+    let mut v = st.assets.write().unwrap();
+    if let Some(a) = v.iter_mut().find(|a| a.id == id) {
+        if !can_edit(a, h, st) {
+            return json(s, 403, false, "{}", "Not allowed", false);
+        };
+        for (k, set) in [
+            ("title", 0),
+            ("description", 1),
+            ("category", 2),
+            ("visibility", 3),
+            ("intendedUse", 4),
+            ("relatedModelId", 5),
+        ] {
+            let x = val(&b, k);
+            if !x.is_empty() {
+                match set {
+                    0 => a.title = trim(x, 140),
+                    1 => a.description = trim(x, 1000),
+                    2 => a.category = trim(x, 80),
+                    3 => a.visibility = trim(x, 40),
+                    4 => a.intended_use = trim(x, 80),
+                    5 => a.related_model_id = trim(x, 120),
+                    _ => {}
+                }
+            }
+        }
+        a.updated_at = now();
+        let out = asset_json(a);
+        persist_assets(st, &v);
+        json(s, 200, true, &out, "Asset updated", false)
+    } else {
+        json(s, 404, false, "{}", "Asset not found", false)
+    }
+}
+fn delete_asset(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    id: &str,
+) -> std::io::Result<()> {
+    let mut v = st.assets.write().unwrap();
+    let Some(a) = v.iter().find(|a| a.id == id).cloned() else {
+        return json(s, 404, false, "{}", "Asset not found", false);
+    };
+    if !can_edit(&a, h, st) || a.status == "published" && !is_admin(h, st) {
+        return json(s, 403, false, "{}", "Not allowed", false);
+    };
+    v.retain(|a| a.id != id);
+    persist_assets(st, &v);
+    json(
+        s,
+        200,
+        true,
+        &format!("{{\"id\":\"{}\"}}", esc(id)),
+        "Asset deleted",
+        false,
+    )
+}
+fn asset_action(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    path: &str,
+    status: &str,
+    msg: &str,
+    body: &[u8],
+) -> std::io::Result<()> {
+    let id = path
+        .trim_start_matches("/api/assets/")
+        .split('/')
+        .next()
+        .unwrap_or("");
+    let admin_only = matches!(
+        status,
+        "approved" | "rejected" | "published" | "unpublished" | "archived"
+    );
+    if admin_only && !is_admin(h, st) {
+        return json(s, 403, false, "{}", "Admin authorization required", false);
+    };
+    let b = String::from_utf8_lossy(body);
+    if status == "rejected" && val(&b, "reason").is_empty() {
+        return json(s, 400, false, "{}", "Rejection reason required", false);
+    };
+    let mut v = st.assets.write().unwrap();
+    if let Some(a) = v.iter_mut().find(|a| a.id == id) {
+        if status == "pending_review" && !can_edit(a, h, st) {
+            return json(s, 403, false, "{}", "Not allowed", false);
+        };
+        a.status = status.into();
+        a.updated_at = now();
+        if status == "approved" {
+            a.approved_by = auth(h).0;
+            a.approved_at = now()
+        }
+        if status == "published" {
+            a.published_at = now();
+            a.visibility = "public".into()
+        }
+        if status == "archived" {
+            a.archived = true
+        }
+        let note = val(&b, "reason");
+        if !note.is_empty() {
+            a.moderator_note = trim(note, 500)
+        };
+        let out = asset_json(a);
+        persist_assets(st, &v);
+        json(s, 200, true, &out, msg, false)
+    } else {
+        json(s, 404, false, "{}", "Asset not found", false)
+    }
+}
+fn assign_model(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    path: &str,
+    body: &[u8],
+) -> std::io::Result<()> {
+    let id = path
+        .trim_start_matches("/api/assets/")
+        .split('/')
+        .next()
+        .unwrap_or("");
+    let Some((user, _, _, _)) = require_user(s, h) else {
+        return Ok(());
+    };
+    let assets = st.assets.read().unwrap();
+    let Some(a) = assets.iter().find(|a| a.id == id) else {
+        return json(s, 404, false, "{}", "Asset not found", false);
+    };
+    if !can_edit(a, h, st) {
+        return json(s, 403, false, "{}", "Not allowed", false);
+    };
+    let b = String::from_utf8_lossy(body);
+    let now = now();
+    let rec = AssetModelAssignment {
+        id: uuid(),
+        asset_id: id.into(),
+        model_id: trim(val(&b, "modelId"), 120),
+        owner_user_id: user,
+        display_type: trim(val(&b, "displayType"), 80),
+        material_slot: trim(val(&b, "materialSlot"), 80),
+        position: raw_json(&b, "position").unwrap_or_else(|| "{\"x\":0,\"y\":0,\"z\":0}".into()),
+        rotation: raw_json(&b, "rotation").unwrap_or_else(|| "{\"x\":0,\"y\":0,\"z\":0}".into()),
+        scale: raw_json(&b, "scale").unwrap_or_else(|| "{\"x\":1,\"y\":1,\"z\":1}".into()),
+        opacity: val(&b, "opacity").parse().unwrap_or(1.0),
+        repeat_x: val(&b, "repeatX").parse().unwrap_or(1.0),
+        repeat_y: val(&b, "repeatY").parse().unwrap_or(1.0),
+        approved: is_admin(h, st) || a.status == "approved" || a.status == "published",
+        published: a.status == "published",
+        created_at: now.clone(),
+        updated_at: now,
+    };
+    drop(assets);
+    let mut v = st.assignments.write().unwrap();
+    v.push(rec.clone());
+    persist_assignments(st, &v);
+    json(
+        s,
+        201,
+        true,
+        &assignment_json(&rec),
+        "Graphic assigned to model display",
+        false,
+    )
+}
+fn delete_assignment(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    path: &str,
+) -> std::io::Result<()> {
+    let aid = path.rsplit('/').next().unwrap_or("");
+    let user = auth(h).0;
+    let admin = is_admin(h, st);
+    let mut v = st.assignments.write().unwrap();
+    v.retain(|a| !(a.id == aid && (admin || a.owner_user_id == user)));
+    persist_assignments(st, &v);
+    json(
+        s,
+        200,
+        true,
+        &format!("{{\"id\":\"{}\"}}", esc(aid)),
+        "Assignment removed",
+        false,
+    )
+}
+fn admin_pending(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+) -> std::io::Result<()> {
+    if !is_admin(h, st) {
+        return json(s, 403, false, "{}", "Admin authorization required", false);
+    };
+    let v: Vec<_> = st
+        .assets
+        .read()
+        .unwrap()
+        .iter()
+        .filter(|a| a.status == "pending_review")
+        .cloned()
+        .collect();
+    json(
+        s,
+        200,
+        true,
+        &format!(
+            "[{}]",
+            v.iter().map(asset_json).collect::<Vec<_>>().join(",")
+        ),
+        "Pending uploads loaded",
+        false,
+    )
+}
+fn admin_analytics(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+) -> std::io::Result<()> {
+    if !is_admin(h, st) {
+        return json(s, 403, false, "{}", "Admin authorization required", false);
+    };
+    let a = st.assets.read().unwrap();
+    let m = st.models.read().unwrap();
+    let total = a.len();
+    let imgs = a.iter().filter(|x| x.file_type == "image").count();
+    let mods = a.iter().filter(|x| x.file_type == "model").count() + m.len();
+    let pending = a.iter().filter(|x| x.status == "pending_review").count();
+    let published = a.iter().filter(|x| x.status == "published").count();
+    let failures = a.iter().filter(|x| x.status == "failed").count();
+    let storage: usize = a.iter().map(|x| x.file_size).sum();
+    json(s,200,true,&format!("{{\"totalOrders\":128,\"inventoryUnits\":842,\"conversionRate\":\"7.4%\",\"totalUploads\":{total},\"modelUploads\":{mods},\"imageUploads\":{imgs},\"pendingApprovals\":{pending},\"publishedModels\":{},\"publishedGraphics\":{published},\"storageUsage\":{storage},\"uploadFailures\":{failures},\"mostViewedModels\":[],\"mostUsedGraphics\":[],\"topCreators\":[]}}",m.iter().filter(|x|x.status=="published").count()),"Analytics loaded",false)
+}
+fn admin_storage(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+) -> std::io::Result<()> {
+    if !is_admin(h, st) {
+        return json(s, 403, false, "{}", "Admin authorization required", false);
+    };
+    let assets = st.assets.read().unwrap();
+    let bytes: usize = assets.iter().map(|a| a.file_size).sum();
+    let owner_email_records = assets.iter().filter(|a| !a.owner_email.is_empty()).count();
+    json(
+        s,
+        200,
+        true,
+        &format!(
+            "{{\"usedBytes\":{bytes},\"maxUploadBytes\":{},\"ownerEmailRecords\":{owner_email_records}}}",
+            st.max_bytes
+        ),
+        "Storage loaded",
+        false,
+    )
+}
+
+fn validate_signature(ext: &str, data: &[u8]) -> std::io::Result<()> {
+    let ok = match ext {
+        "png" => data.starts_with(b"\x89PNG\r\n\x1a\n"),
+        "jpg" | "jpeg" => data.starts_with(b"\xff\xd8\xff"),
+        "gif" => data.starts_with(b"GIF87a") || data.starts_with(b"GIF89a"),
+        "webp" => data.len() > 12 && &data[0..4] == b"RIFF" && &data[8..12] == b"WEBP",
+        "svg" => String::from_utf8_lossy(&data[..data.len().min(512)])
+            .to_lowercase()
+            .contains("<svg"),
+        "glb" => data.starts_with(b"glTF"),
+        "gltf" => String::from_utf8_lossy(&data[..data.len().min(512)]).contains("asset"),
+        "usdz" | "reality" | "zip" => data.starts_with(b"PK"),
+        "obj" | "mtl" | "bin" => true,
+        _ => false,
+    };
+    if ok {
+        Ok(())
+    } else {
+        Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "Unsupported file type",
+        ))
+    }
+}
+fn sanitize_svg(s: &str) -> String {
+    let lower = s.to_lowercase();
+    if lower.contains("<script")
+        || lower.contains("onload=")
+        || lower.contains("javascript:")
+        || lower.contains("<foreignobject")
+    {
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 120\"><rect width=\"200\" height=\"120\" fill=\"#111\"/><text x=\"20\" y=\"65\" fill=\"#fff\">Sanitized SVG</text></svg>".into()
+    } else {
+        s.into()
+    }
+}
+fn mime_for_ext(ext: &str) -> &'static str {
+    match ext {
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "svg" => "image/svg+xml",
+        "glb" => "model/gltf-binary",
+        "gltf" => "model/gltf+json",
+        "usdz" => "model/vnd.usdz+zip",
+        "reality" => "model/vnd.reality",
+        "obj" => "model/obj",
+        "mtl" => "text/plain",
+        "bin" => "application/octet-stream",
+        "zip" => "application/zip",
+        _ => "application/octet-stream",
+    }
+}
+fn asset_json(a: &Asset) -> String {
+    format!("{{\"id\":\"{}\",\"ownerUserId\":\"{}\",\"ownerDisplayName\":\"{}\",\"uploadedByRole\":\"{}\",\"title\":\"{}\",\"description\":\"{}\",\"originalFilename\":\"{}\",\"storedFilename\":\"{}\",\"fileType\":\"{}\",\"mimeType\":\"{}\",\"fileSize\":{},\"publicUrl\":\"{}\",\"thumbnailUrl\":\"{}\",\"category\":\"{}\",\"tags\":\"{}\",\"status\":\"{}\",\"moderationStatus\":\"{}\",\"visibility\":\"{}\",\"intendedUse\":\"{}\",\"relatedModelId\":\"{}\",\"productAssignment\":\"{}\",\"collectionAssignment\":\"{}\",\"publishLocation\":\"{}\",\"approvedBy\":\"{}\",\"approvedAt\":\"{}\",\"publishedAt\":\"{}\",\"moderatorNote\":\"{}\",\"featured\":{},\"archived\":{},\"createdAt\":\"{}\",\"updatedAt\":\"{}\"}}",esc(&a.id),esc(&a.owner_user_id),esc(&a.owner_display_name),esc(&a.uploaded_by_role),esc(&a.title),esc(&a.description),esc(&a.original_filename),esc(&a.stored_filename),esc(&a.file_type),esc(&a.mime_type),a.file_size,esc(&a.public_url),esc(&a.thumbnail_url),esc(&a.category),esc(&a.tags),esc(&a.status),esc(&a.status),esc(&a.visibility),esc(&a.intended_use),esc(&a.related_model_id),esc(&a.product_assignment),esc(&a.collection_assignment),esc(&a.publish_location),esc(&a.approved_by),esc(&a.approved_at),esc(&a.published_at),esc(&a.moderator_note),a.featured,a.archived,esc(&a.created_at),esc(&a.updated_at))
+}
+fn assignment_json(a: &AssetModelAssignment) -> String {
+    format!("{{\"id\":\"{}\",\"assetId\":\"{}\",\"modelId\":\"{}\",\"ownerUserId\":\"{}\",\"displayType\":\"{}\",\"materialSlot\":\"{}\",\"position\":{},\"rotation\":{},\"scale\":{},\"opacity\":{},\"repeatX\":{},\"repeatY\":{},\"approved\":{},\"published\":{},\"createdAt\":\"{}\",\"updatedAt\":\"{}\"}}",esc(&a.id),esc(&a.asset_id),esc(&a.model_id),esc(&a.owner_user_id),esc(&a.display_type),esc(&a.material_slot),a.position,a.rotation,a.scale,a.opacity,a.repeat_x,a.repeat_y,a.approved,a.published,esc(&a.created_at),esc(&a.updated_at))
+}
+fn derivative_json(d: &AssetDerivative) -> String {
+    format!("{{\"id\":\"{}\",\"assetId\":\"{}\",\"kind\":\"{}\",\"url\":\"{}\",\"status\":\"{}\",\"createdAt\":\"{}\"}}",esc(&d.id),esc(&d.asset_id),esc(&d.kind),esc(&d.url),esc(&d.status),esc(&d.created_at))
+}
+fn persist_assets(st: &State, v: &Vec<Asset>) {
+    let _ = fs::create_dir_all(&st.data);
+    let _ = fs::write(
+        st.data.join("assets.json"),
+        format!(
+            "[{}]",
+            v.iter().map(asset_json).collect::<Vec<_>>().join(",")
+        ),
+    );
+}
+fn persist_assignments(st: &State, v: &Vec<AssetModelAssignment>) {
+    let _ = fs::create_dir_all(&st.data);
+    let _ = fs::write(
+        st.data.join("asset-model-assignments.json"),
+        format!(
+            "[{}]",
+            v.iter().map(assignment_json).collect::<Vec<_>>().join(",")
+        ),
+    );
+}
+fn persist_derivatives(st: &State, v: &Vec<AssetDerivative>) {
+    let _ = fs::create_dir_all(&st.data);
+    let _ = fs::write(
+        st.data.join("asset-derivatives.json"),
+        format!(
+            "[{}]",
+            v.iter().map(derivative_json).collect::<Vec<_>>().join(",")
+        ),
+    );
+}
+fn load_assets(p: &Path) -> Vec<Asset> {
+    let s = fs::read_to_string(p).unwrap_or_default();
+    s.split("{\"")
+        .skip(1)
+        .map(|x| format!("{{\"{}", x))
+        .filter_map(|o| {
+            let id = val(&o, "id");
+            if id.is_empty() {
+                None
+            } else {
+                Some(Asset {
+                    id,
+                    owner_user_id: val(&o, "ownerUserId"),
+                    owner_display_name: val(&o, "ownerDisplayName"),
+                    owner_email: String::new(),
+                    uploaded_by_role: val(&o, "uploadedByRole"),
+                    title: val(&o, "title"),
+                    description: val(&o, "description"),
+                    original_filename: val(&o, "originalFilename"),
+                    stored_filename: val(&o, "storedFilename"),
+                    file_type: val(&o, "fileType"),
+                    mime_type: val(&o, "mimeType"),
+                    file_size: val(&o, "fileSize").parse().unwrap_or(0),
+                    public_url: val(&o, "publicUrl"),
+                    thumbnail_url: val(&o, "thumbnailUrl"),
+                    category: val(&o, "category"),
+                    tags: val(&o, "tags"),
+                    status: val(&o, "status"),
+                    visibility: val(&o, "visibility"),
+                    intended_use: val(&o, "intendedUse"),
+                    related_model_id: val(&o, "relatedModelId"),
+                    product_assignment: val(&o, "productAssignment"),
+                    collection_assignment: val(&o, "collectionAssignment"),
+                    publish_location: val(&o, "publishLocation"),
+                    approved_by: val(&o, "approvedBy"),
+                    approved_at: val(&o, "approvedAt"),
+                    published_at: val(&o, "publishedAt"),
+                    moderator_note: val(&o, "moderatorNote"),
+                    featured: o.contains("\"featured\":true"),
+                    archived: o.contains("\"archived\":true"),
+                    created_at: val(&o, "createdAt"),
+                    updated_at: val(&o, "updatedAt"),
+                })
+            }
+        })
+        .collect()
+}
+fn load_assignments(p: &Path) -> Vec<AssetModelAssignment> {
+    let s = fs::read_to_string(p).unwrap_or_default();
+    s.split("{\"")
+        .skip(1)
+        .map(|x| format!("{{\"{}", x))
+        .filter_map(|o| {
+            let id = val(&o, "id");
+            if id.is_empty() {
+                None
+            } else {
+                Some(AssetModelAssignment {
+                    id,
+                    asset_id: val(&o, "assetId"),
+                    model_id: val(&o, "modelId"),
+                    owner_user_id: val(&o, "ownerUserId"),
+                    display_type: val(&o, "displayType"),
+                    material_slot: val(&o, "materialSlot"),
+                    position: raw_json(&o, "position").unwrap_or_else(|| "null".into()),
+                    rotation: raw_json(&o, "rotation").unwrap_or_else(|| "null".into()),
+                    scale: raw_json(&o, "scale").unwrap_or_else(|| "null".into()),
+                    opacity: val(&o, "opacity").parse().unwrap_or(1.0),
+                    repeat_x: val(&o, "repeatX").parse().unwrap_or(1.0),
+                    repeat_y: val(&o, "repeatY").parse().unwrap_or(1.0),
+                    approved: o.contains("\"approved\":true"),
+                    published: o.contains("\"published\":true"),
+                    created_at: val(&o, "createdAt"),
+                    updated_at: val(&o, "updatedAt"),
+                })
+            }
+        })
+        .collect()
+}
+fn load_derivatives(p: &Path) -> Vec<AssetDerivative> {
+    let s = fs::read_to_string(p).unwrap_or_default();
+    s.split("{\"")
+        .skip(1)
+        .map(|x| format!("{{\"{}", x))
+        .filter_map(|o| {
+            let id = val(&o, "id");
+            if id.is_empty() {
+                None
+            } else {
+                Some(AssetDerivative {
+                    id,
+                    asset_id: val(&o, "assetId"),
+                    kind: val(&o, "kind"),
+                    url: val(&o, "url"),
+                    status: val(&o, "status"),
+                    created_at: val(&o, "createdAt"),
+                })
+            }
+        })
+        .collect()
 }
