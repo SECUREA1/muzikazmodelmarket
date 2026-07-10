@@ -76,9 +76,12 @@
                 <h3>Chaos Ape custom stickers drop</h3>
                 <p>Start with the corrected Avatar Sticker Sheet configuration, upload your own art, position layers in real time, save a draft, and send a checkout-ready custom order.</p>
             </div>
-            <div class="studio-tabs" aria-label="Customizer sections">
-                <button type="button" data-studio-jump="product">Product</button><button type="button" data-studio-jump="character">Character</button><button type="button" data-studio-jump="text">Text</button><button type="button" data-studio-jump="logo">Logo</button><button type="button" data-studio-jump="upload">Custom Upload</button><button type="button" data-studio-jump="layout">Layout</button><button type="button" data-studio-jump="order">Order Summary</button>
-            </div>
+            <details class="button-menu studio-tabs" open>
+                <summary>Customize sections</summary>
+                <div class="button-group" aria-label="Customizer sections">
+                    <button type="button" data-studio-jump="product">Product</button><button type="button" data-studio-jump="character">Character</button><button type="button" data-studio-jump="text">Text</button><button type="button" data-studio-jump="logo">Logo</button><button type="button" data-studio-jump="upload">Custom Upload</button><button type="button" data-studio-jump="layout">Layout</button><button type="button" data-studio-jump="order">Order Summary</button>
+                </div>
+            </details>
             <div class="designer-layout studio-layout">
                 <article class="designer-preview studio-preview" aria-live="polite">
                     <div class="mockup sticker-sheet-mockup" id="designer-mockup" data-product-template="avatar-stickers">
@@ -96,7 +99,7 @@
                         <p class="kicker" id="preview-meta">Avatar Sticker Sheet · M · Wordmark · Chaos / 3D Model Packs</p>
                         <h3 id="preview-title">Chaos Ape custom stickers drop</h3>
                         <ul class="preview-values" id="preview-values"><li>Chaos Ape</li><li>MUZIKAZ</li><li>88</li><li>LIVE THE BEAT</li></ul>
-                        <div class="preview-actions"><button type="button" id="save-design">Save design</button><button type="button" id="load-design">Load saved</button><button type="button" id="duplicate-design">Duplicate design</button></div>
+                        <div class="preview-actions button-group"><button type="button" id="save-design">Save design</button><button type="button" id="load-design">Load saved</button><button type="button" id="duplicate-design">Duplicate design</button></div>
                         <p class="status-message studio-status" id="designer-status" role="status">Upload PNG, JPG, JPEG, or SVG artwork to place it on the merch preview.</p>
                     </div>
                 </article>
@@ -105,7 +108,7 @@
                     <fieldset id="character"><legend>Character</legend><label>Character <select name="character" id="design-character"></select></label></fieldset>
                     <fieldset id="text"><legend>Text</legend><label>Name <input name="name" maxlength="16" value="MUZIKAZ" /></label><label>Number <input name="number" maxlength="2" value="88" /></label><label>Sleeve Text <input name="sleeve" maxlength="22" value="LIVE THE BEAT" /></label></fieldset>
                     <fieldset id="logo"><legend>Logo</legend><label>Logo Style <select name="logo"><option selected>Wordmark</option><option>Lightning Crest</option><option>Badge Patch</option><option>Custom Upload Logo</option></select></label></fieldset>
-                    <fieldset id="upload"><legend>Custom Upload</legend><label class="design-upload-drop">Upload custom design <input type="file" id="design-upload" accept="image/png,image/jpeg,image/jpg,image/svg+xml" /></label><div class="upload-tools"><button type="button" data-layer-action="center">Center align</button><button type="button" data-layer-action="front">Move front</button><button type="button" data-layer-action="back">Move back</button><button type="button" data-layer-action="duplicate">Duplicate</button><button type="button" data-layer-action="flip-x">Flip H</button><button type="button" data-layer-action="flip-y">Flip V</button><button type="button" data-layer-action="delete">Delete</button></div><label>Resize <input type="range" id="upload-scale" min="40" max="220" value="100" /></label><label>Rotate <input type="range" id="upload-rotate" min="-180" max="180" value="0" /></label></fieldset>
+                    <fieldset id="upload"><legend>Custom Upload</legend><label class="design-upload-drop">Upload custom design <input type="file" id="design-upload" accept="image/png,image/jpeg,image/jpg,image/svg+xml" /></label><details class="button-menu layer-menu" open><summary>Layer options</summary><div class="upload-tools button-group"><button type="button" data-layer-action="center">Center align</button><button type="button" data-layer-action="front">Move front</button><button type="button" data-layer-action="back">Move back</button><button type="button" data-layer-action="duplicate">Duplicate</button><button type="button" data-layer-action="flip-x">Flip H</button><button type="button" data-layer-action="flip-y">Flip V</button><button type="button" data-layer-action="delete">Delete</button></div></details><label>Resize <input type="range" id="upload-scale" min="40" max="220" value="100" /></label><label>Rotate <input type="range" id="upload-rotate" min="-180" max="180" value="0" /></label></fieldset>
                     <fieldset id="layout"><legend>Layers</legend><ol class="layer-stack" id="layer-stack"><li>Base product template</li><li>Live print shape / safe area</li><li>Product color</li><li>Character art</li><li>Logo / wordmark</li><li>Name</li><li>Number</li><li>Sleeve text</li><li>Uploaded custom art</li><li>Effects or outlines</li></ol></fieldset>
                     <fieldset id="order"><legend>Order Summary</legend><label>Quantity <input name="quantity" type="number" min="1" max="99" value="1" /></label><label>Design notes <textarea name="notes" rows="3" placeholder="Add print notes, correction requests, or placement instructions"></textarea></label><div class="order-summary" id="designer-order-summary"></div><button type="button" data-add-custom>Add to cart / order</button><button type="button" id="edit-design">Make a Correction / Edit Design</button></fieldset>
                 </form>
@@ -178,10 +181,10 @@
                 </div>
                 <div>
                     <p class="kicker">Category</p>
-                    <div class="market-categories" id="market-categories" role="group" aria-label="Marketplace categories"></div>
+                    <details class="button-menu market-filter-menu" open><summary>Category options</summary><div class="market-categories button-group" id="market-categories" role="group" aria-label="Marketplace categories"></div></details>
                 </div>
             </div>
-            <div class="market-tabs" id="market-tabs" role="group" aria-label="Marketplace listing types"></div>
+            <details class="button-menu market-tabs" open><summary>Listing type options</summary><div class="button-group" id="market-tabs" role="group" aria-label="Marketplace listing types"></div></details>
             <p class="market-status" id="market-status" role="status">Loading marketplace listings.</p>
             <div class="market-grid" id="market-grid"></div>
         </section>
