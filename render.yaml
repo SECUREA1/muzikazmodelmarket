@@ -1,17 +1,21 @@
 services:
   - type: web
     name: muzikaz-model-market
-    runtime: node
-    buildCommand: npm ci --omit=dev && npm run build && npm run check
-    startCommand: npm start
+    runtime: rust
+    buildCommand: cargo build --release
+    startCommand: ./target/release/muzikazmodelmarket
     envVars:
-      - key: NODE_VERSION
-        value: 22
+      - key: PORT
+        value: 10000
+      - key: PUBLIC_BASE_URL
+        value: https://muzikazmodelmarket.onrender.com
       - key: MUZIKAZ_DATA_DIR
         value: /var/data
-      - key: MUZIKAZ_UPLOAD_DIR
-        value: /var/data/uploads/avatars
+      - key: UPLOAD_STORAGE_PATH
+        value: /var/data/uploads/models
+      - key: MAX_MODEL_UPLOAD_MB
+        value: 50
     disk:
-      name: muzikaz-shared-house-data
+      name: muzikaz-shared-model-data
       mountPath: /var/data
       sizeGB: 1
