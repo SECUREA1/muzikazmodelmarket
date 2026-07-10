@@ -39,7 +39,7 @@ PORT=4173 ./target/release/muzikazmodelmarket
 
 ## Server-backed live model publishing
 
-The Rust service serves the static MUZIKAZ site, `/uploads/*` model assets, and JSON API routes for the public live model space. Metadata is persisted in `MUZIKAZ_DATA_DIR/published-models.json` so it survives process restarts when Render persistent disk is mounted. The storage layer is isolated in `src/main.rs` and can be swapped for PostgreSQL/S3 later; `migrations/001_published_models.sql` documents the production PostgreSQL table and indexes for a future `DATABASE_URL` repository.
+The Rust service serves the static MUZIKAZ site, `/uploads/*` model and avatar image assets, and JSON API routes for the public live model space plus the shared 3D House Explorer. Model metadata is persisted in `MUZIKAZ_DATA_DIR/published-models.json`; house avatar placements are persisted in `MUZIKAZ_DATA_DIR/house-avatars.json` so both survive process restarts when Render persistent disk is mounted. The storage layer is isolated in `src/main.rs` and can be swapped for PostgreSQL/S3 later; `migrations/001_published_models.sql` documents the production PostgreSQL table and indexes for a future `DATABASE_URL` repository.
 
 ### API routes
 
@@ -52,6 +52,11 @@ All JSON responses use `{ "success": boolean, "data": ..., "message": string }`.
 - `POST /api/models` — publish metadata for previously uploaded files.
 - `PATCH /api/models/:id` — update existing metadata.
 - `DELETE /api/models/:id` — admin-only deletion with `x-admin-token`; requires `ADMIN_PUBLISH_TOKEN`.
+- `POST /api/uploads/avatar` — multipart upload for shared house avatar images. Field: `avatar` (`.png`/`.jpg`/`.jpeg`/`.webp`, max 3 MB).
+- `GET /api/houses/:houseId/avatars` — load public shared avatar placements for a house.
+- `POST /api/houses/:houseId/avatars` — publish an uploaded or bundled image avatar into the 3D House Explorer.
+- `DELETE /api/houses/:houseId/avatars/:id` — remove a shared avatar owned by the current `X-MUZIKAZ-Session`.
+- `POST /api/houses/:houseId/presence` and `GET /api/houses/:houseId/events` — keep the house available with presence and event-stream hooks for live clients.
 
 ### Required Render environment variables
 
@@ -65,7 +70,7 @@ All JSON responses use `{ "success": boolean, "data": ..., "message": string }`.
 
 ### Render storage setup
 
-Attach a Render persistent disk at `/var/data`. Uploaded `.glb`, `.gltf`, `.usdz`, and thumbnail files are written below `/var/data/uploads/models` and served publicly from `/uploads/*`. Without a persistent disk (or future object storage), uploads on Render's ephemeral filesystem will not survive instance replacement.
+Attach a Render persistent disk at `/var/data`. Uploaded `.glb`, `.gltf`, `.usdz`, thumbnail files, and shared avatar images are written below `/var/data/uploads/models` and served publicly from `/uploads/*`. Without a persistent disk (or future object storage), uploads on Render's ephemeral filesystem will not survive instance replacement.
 
 ### Database migration instructions
 
