@@ -36,3 +36,37 @@ Build and run the Rust server locally:
 cargo build --release
 PORT=4173 ./target/release/muzikazmodelmarket
 ```
+
+## Server-backed live model publishing
+
+The Rust service serves the static MUZIKAZ site, `/uploads/*` model assets, and JSON API routes for the public live model space. Metadata is persisted in `MUZIKAZ_DATA_DIR/published-models.json` so it survives process restarts when Render persistent disk is mounted. The storage layer is isolated in `src/main.rs` and can be swapped for PostgreSQL/S3 later; `migrations/001_published_models.sql` documents the production PostgreSQL table and indexes for a future `DATABASE_URL` repository.
+
+### API routes
+
+All JSON responses use `{ "success": boolean, "data": ..., "message": string }`.
+
+- `GET /api/health` — service, storage, and model-count health.
+- `GET /api/models` — published public models, newest first.
+- `GET /api/models/:id` — one published model.
+- `POST /api/models/upload` — multipart upload. Fields: `model` (`.glb`/`.gltf`, required), `iosModel` (`.usdz`, optional), `thumbnail` (`.png`/`.jpg`/`.jpeg`/`.webp`, optional).
+- `POST /api/models` — publish metadata for previously uploaded files.
+- `PATCH /api/models/:id` — update existing metadata.
+- `DELETE /api/models/:id` — admin-only deletion with `x-admin-token`; requires `ADMIN_PUBLISH_TOKEN`.
+
+### Required Render environment variables
+
+- `PUBLIC_BASE_URL=https://muzikazmodelmarket.onrender.com`
+- `MUZIKAZ_DATA_DIR=/var/data`
+- `UPLOAD_STORAGE_PATH=/var/data/uploads/models`
+- `MAX_MODEL_UPLOAD_MB=50`
+- `ADMIN_PUBLISH_TOKEN` for protected deletion only.
+- `DATABASE_URL` is reserved for the PostgreSQL repository described by `migrations/001_published_models.sql`.
+- `ALLOWED_ORIGINS` is reserved for a future cross-origin deployment; current browser calls are same-origin.
+
+### Render storage setup
+
+Attach a Render persistent disk at `/var/data`. Uploaded `.glb`, `.gltf`, `.usdz`, and thumbnail files are written below `/var/data/uploads/models` and served publicly from `/uploads/*`. Without a persistent disk (or future object storage), uploads on Render's ephemeral filesystem will not survive instance replacement.
+
+### Database migration instructions
+
+For a PostgreSQL-backed deployment, create a Render PostgreSQL database, set `DATABASE_URL`, and run the SQL in `migrations/001_published_models.sql` before enabling a PostgreSQL repository implementation. The current committed implementation uses durable JSON metadata on the Render disk.
