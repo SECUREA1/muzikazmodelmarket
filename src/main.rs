@@ -29,6 +29,25 @@ struct Model {
     rotation: String,
     environment: String,
 }
+#[derive(Clone, Debug)]
+struct Avatar {
+    id: String,
+    house_id: String,
+    owner_id: String,
+    username: String,
+    avatar_name: String,
+    avatar_type: String,
+    avatar_url: String,
+    thumbnail_url: String,
+    message: String,
+    position: String,
+    rotation: String,
+    scale: String,
+    room_id: String,
+    visibility: String,
+    created_at: String,
+    updated_at: String,
+}
 #[derive(Clone)]
 struct State {
     root: PathBuf,
@@ -38,6 +57,7 @@ struct State {
     max_bytes: usize,
     admin_token: String,
     models: Arc<RwLock<Vec<Model>>>,
+    avatars: Arc<RwLock<Vec<Avatar>>>,
 }
 fn main() -> std::io::Result<()> {
     let port = env::var("PORT").unwrap_or("4173".into());
@@ -52,6 +72,7 @@ fn main() -> std::io::Result<()> {
         models: Arc::new(RwLock::new(load_models(
             &data.join("published-models.json"),
         ))),
+        avatars: Arc::new(RwLock::new(load_avatars(&data.join("house-avatars.json")))),
         data,
         uploads,
         public_base: env::var("PUBLIC_BASE_URL").unwrap_or_default(),
@@ -175,7 +196,29 @@ fn api(
             )
         }
         ("POST", "/api/models/upload") => upload(s, st, headers, body),
+        ("POST", "/api/uploads/avatar") => upload_avatar(s, st, headers, body),
         ("POST", "/api/models") => create(s, st, body),
+        _ if method == "GET" && path.starts_with("/api/houses/") && path.ends_with("/avatars") => {
+            house_avatars(s, st, method, path, headers, body)
+        }
+        _ if method == "POST" && path.starts_with("/api/houses/") && path.ends_with("/avatars") => {
+            house_avatars(s, st, method, path, headers, body)
+        }
+        _ if method == "DELETE"
+            && path.starts_with("/api/houses/")
+            && path.contains("/avatars/") =>
+        {
+            house_avatars(s, st, method, path, headers, body)
+        }
+        _ if method == "POST"
+            && path.starts_with("/api/houses/")
+            && path.ends_with("/presence") =>
+        {
+            json(s, 200, true, "{}", "Presence updated", false)
+        }
+        _ if method == "GET" && path.starts_with("/api/houses/") && path.ends_with("/events") => {
+            sse_ready(s)
+        }
         _ if method == "GET" && path.starts_with("/api/models/") => {
             let id = &path[12..];
             match st
@@ -226,6 +269,173 @@ fn api(
         }
         _ => json(s, 404, false, "{}", "API route not found", false),
     }
+}
+fn house_avatars(
+    s: &mut TcpStream,
+    st: &State,
+    method: &str,
+    path: &str,
+    headers: &HashMap<String, String>,
+    body: &[u8],
+) -> std::io::Result<()> {
+    let parts: Vec<&str> = path.split('/').collect();
+    let house_id = parts.get(3).copied().unwrap_or("");
+    if method == "GET" {
+        let mut v: Vec<_> = st
+            .avatars
+            .read()
+            .unwrap()
+            .iter()
+            .filter(|a| a.house_id == house_id && a.visibility == "public")
+            .cloned()
+            .collect();
+        v.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+        return json(
+            s,
+            200,
+            true,
+            &format!(
+                "[{}]",
+                v.iter().map(avatar_json).collect::<Vec<_>>().join(",")
+            ),
+            "Shared avatars loaded",
+            false,
+        );
+    }
+    if method == "POST" {
+        let b = String::from_utf8_lossy(body);
+        let now = now();
+        let position =
+            raw_json(&b, "position").unwrap_or_else(|| "{\"x\":0,\"y\":0,\"z\":2.5}".into());
+        let rotation =
+            raw_json(&b, "rotation").unwrap_or_else(|| "{\"x\":0,\"y\":0,\"z\":0}".into());
+        let scale = raw_json(&b, "scale").unwrap_or_else(|| "{\"x\":1,\"y\":1,\"z\":1}".into());
+        let url = val(&b, "avatarUrl");
+        if !(url.starts_with("/uploads/")
+            || url.starts_with("https://")
+            || url.starts_with("data:image/")
+            || (!url.contains(":") && !url.contains("..") && !url.starts_with("/")))
+        {
+            return json(
+                s,
+                400,
+                false,
+                "{}",
+                "Avatar image must be uploaded or bundled",
+                false,
+            );
+        }
+        let session = headers
+            .get("x-muzikaz-session")
+            .cloned()
+            .unwrap_or_else(|| val(&b, "ownerId"));
+        let a = Avatar {
+            id: trim(val(&b, "id"), 120),
+            house_id: trim(house_id.into(), 80),
+            owner_id: trim(session, 120),
+            username: trim(val(&b, "username"), 80),
+            avatar_name: trim(val(&b, "avatarName"), 120),
+            avatar_type: trim(val(&b, "avatarType"), 40),
+            avatar_url: url,
+            thumbnail_url: val(&b, "thumbnailUrl"),
+            message: trim(val(&b, "message"), 140),
+            position,
+            rotation,
+            scale,
+            room_id: trim(val(&b, "roomId"), 80),
+            visibility: "public".into(),
+            created_at: now.clone(),
+            updated_at: now,
+        };
+        let mut v = st.avatars.write().unwrap();
+        v.retain(|existing| existing.id != a.id);
+        v.push(a.clone());
+        persist_avatars(st, &v);
+        return json(
+            s,
+            201,
+            true,
+            &avatar_json(&a),
+            "Avatar is online in the shared house.",
+            false,
+        );
+    }
+    let id = parts.last().copied().unwrap_or("");
+    let session = headers
+        .get("x-muzikaz-session")
+        .cloned()
+        .unwrap_or_default();
+    let mut v = st.avatars.write().unwrap();
+    let before = v.len();
+    v.retain(|a| !(a.id == id && (session.is_empty() || a.owner_id == session)));
+    persist_avatars(st, &v);
+    json(
+        s,
+        200,
+        true,
+        &format!(
+            "{{\"id\":\"{}\",\"removed\":{}}}",
+            esc(id),
+            before != v.len()
+        ),
+        "Avatar removed",
+        false,
+    )
+}
+fn upload_avatar(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    body: &[u8],
+) -> std::io::Result<()> {
+    let ct = h.get("content-type").cloned().unwrap_or_default();
+    let boundary = ct.split("boundary=").nth(1).unwrap_or("");
+    if boundary.is_empty() {
+        return json(s, 400, false, "{}", "Invalid avatar upload", false);
+    }
+    let part = parse_multipart(body, boundary)
+        .into_iter()
+        .find(|p| p.name == "avatar");
+    let Some(p) = part else {
+        return json(s, 400, false, "{}", "Missing avatar image", false);
+    };
+    if p.data.len() > 3_000_000 {
+        return json(s, 413, false, "{}", "Avatar image exceeds 3 MB", false);
+    }
+    let ext = ext(&p.filename).unwrap_or("");
+    if !matches!(ext, "png" | "jpg" | "jpeg" | "webp") {
+        return json(s, 400, false, "{}", "Unsupported avatar image type", false);
+    }
+    let fname = format!("avatar-{}.{}", uuid(), ext);
+    fs::write(st.uploads.join(&fname), p.data)?;
+    let path = format!("/uploads/{fname}");
+    let url = if st.public_base.is_empty() {
+        path
+    } else {
+        format!("{}{}", st.public_base.trim_end_matches('/'), path)
+    };
+    json(
+        s,
+        200,
+        true,
+        &format!(
+            "{{\"avatarUrl\":\"{}\",\"thumbnailUrl\":\"{}\"}}",
+            esc(&url),
+            esc(&url)
+        ),
+        "Avatar image uploaded",
+        false,
+    )
+}
+fn sse_ready(s: &mut TcpStream) -> std::io::Result<()> {
+    let body = "event: house-presence-updated\ndata: {\"count\":1}\n\n";
+    write_resp(
+        s,
+        "200 OK",
+        "text/event-stream; charset=utf-8",
+        body.as_bytes(),
+        false,
+    )
 }
 fn create(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
     let b = String::from_utf8_lossy(body);
@@ -509,6 +719,27 @@ fn write_resp(
 fn model_json(m: &Model) -> String {
     format!("{{\"id\":\"{}\",\"title\":\"{}\",\"creatorName\":\"{}\",\"description\":\"{}\",\"category\":\"{}\",\"modelType\":\"{}\",\"modelUrl\":\"{}\",\"iosModelUrl\":{},\"thumbnailUrl\":{},\"publishedAt\":\"{}\",\"updatedAt\":\"{}\",\"status\":\"{}\",\"featured\":{},\"spawnPosition\":{},\"scale\":{},\"rotation\":{},\"environment\":{} }}",esc(&m.id),esc(&m.title),esc(&m.creator),esc(&m.description),esc(&m.category),esc(&m.model_type),esc(&m.model_url),opt(&m.ios_model_url),opt(&m.thumbnail_url),esc(&m.published_at),esc(&m.updated_at),esc(&m.status),m.featured,m.spawn_position,m.scale,m.rotation,opt(&m.environment))
 }
+fn avatar_json(a: &Avatar) -> String {
+    format!(
+        "{{\"id\":\"{}\",\"houseId\":\"{}\",\"ownerId\":\"{}\",\"username\":\"{}\",\"avatarName\":\"{}\",\"avatarType\":\"{}\",\"avatarUrl\":\"{}\",\"thumbnailUrl\":{},\"message\":\"{}\",\"position\":{},\"rotation\":{},\"scale\":{},\"roomId\":\"{}\",\"visibility\":\"{}\",\"createdAt\":\"{}\",\"updatedAt\":\"{}\"}}",
+        esc(&a.id),
+        esc(&a.house_id),
+        esc(&a.owner_id),
+        esc(&a.username),
+        esc(&a.avatar_name),
+        esc(&a.avatar_type),
+        esc(&a.avatar_url),
+        opt(&a.thumbnail_url),
+        esc(&a.message),
+        a.position,
+        a.rotation,
+        a.scale,
+        esc(&a.room_id),
+        esc(&a.visibility),
+        esc(&a.created_at),
+        esc(&a.updated_at)
+    )
+}
 fn persist(st: &State, v: &Vec<Model>) {
     let _ = fs::create_dir_all(&st.data);
     let _ = fs::write(
@@ -516,6 +747,16 @@ fn persist(st: &State, v: &Vec<Model>) {
         format!(
             "[{}]",
             v.iter().map(model_json).collect::<Vec<_>>().join(",")
+        ),
+    );
+}
+fn persist_avatars(st: &State, v: &Vec<Avatar>) {
+    let _ = fs::create_dir_all(&st.data);
+    let _ = fs::write(
+        st.data.join("house-avatars.json"),
+        format!(
+            "[{}]",
+            v.iter().map(avatar_json).collect::<Vec<_>>().join(",")
         ),
     );
 }
@@ -552,6 +793,41 @@ fn load_models(p: &Path) -> Vec<Model> {
         })
         .collect()
 }
+fn load_avatars(p: &Path) -> Vec<Avatar> {
+    let s = fs::read_to_string(p).unwrap_or_default();
+    s.split("{\"")
+        .skip(1)
+        .map(|x| format!("{{\"{}", x))
+        .filter_map(|o| {
+            let id = val(&o, "id");
+            if id.is_empty() {
+                None
+            } else {
+                Some(Avatar {
+                    id,
+                    house_id: val(&o, "houseId"),
+                    owner_id: val(&o, "ownerId"),
+                    username: val(&o, "username"),
+                    avatar_name: val(&o, "avatarName"),
+                    avatar_type: val(&o, "avatarType"),
+                    avatar_url: val(&o, "avatarUrl"),
+                    thumbnail_url: val(&o, "thumbnailUrl"),
+                    message: val(&o, "message"),
+                    position: raw_json(&o, "position")
+                        .unwrap_or_else(|| "{\"x\":0,\"y\":0,\"z\":2.5}".into()),
+                    rotation: raw_json(&o, "rotation")
+                        .unwrap_or_else(|| "{\"x\":0,\"y\":0,\"z\":0}".into()),
+                    scale: raw_json(&o, "scale")
+                        .unwrap_or_else(|| "{\"x\":1,\"y\":1,\"z\":1}".into()),
+                    room_id: val(&o, "roomId"),
+                    visibility: val(&o, "visibility"),
+                    created_at: val(&o, "createdAt"),
+                    updated_at: val(&o, "updatedAt"),
+                })
+            }
+        })
+        .collect()
+}
 fn val(s: &str, k: &str) -> String {
     let pat = format!("\"{k}\":");
     if let Some(i) = s.find(&pat) {
@@ -583,6 +859,43 @@ fn val(s: &str, k: &str) -> String {
         }
     }
     String::new()
+}
+fn raw_json(s: &str, k: &str) -> Option<String> {
+    let pat = format!("\"{k}\":");
+    let i = s.find(&pat)?;
+    let r = s[i + pat.len()..].trim_start();
+    let open = r.chars().next()?;
+    let close = match open {
+        '{' => '}',
+        '[' => ']',
+        _ => return None,
+    };
+    let mut depth = 0i32;
+    let mut in_string = false;
+    let mut escaped = false;
+    for (idx, ch) in r.char_indices() {
+        if in_string {
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == '"' {
+                in_string = false;
+            }
+            continue;
+        }
+        if ch == '"' {
+            in_string = true;
+        } else if ch == open {
+            depth += 1;
+        } else if ch == close {
+            depth -= 1;
+            if depth == 0 {
+                return Some(r[..=idx].to_string());
+            }
+        }
+    }
+    None
 }
 fn esc(s: &str) -> String {
     s.chars()
