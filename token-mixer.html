@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice3 Token Mixer | MUZIKAZ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="original-platform token-mixer-page">
+  <div class="topbar"><span>Voice3 original game mixer</span><span>Drag NFT tokens into every instrument lane · 2 min max</span></div>
+  <header class="site-header">
+    <a class="logo" href="index.html#home" aria-label="MUZIKAZ home page"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
+    <nav class="nav" id="primary-navigation" aria-label="Primary navigation">
+      <a href="index.html#models">Models</a><a href="model-explorer.html">3D Explorer</a><a class="active" href="token-mixer.html">Token Mixer</a><a href="members.html">Bottle Login</a><a href="checkout.html">Checkout</a>
+    </nav>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">☰</button>
+  </header>
+
+  <main class="token-mixer" id="token-mixer-app">
+    <section class="mixer-hero" aria-labelledby="mixer-title">
+      <div>
+        <p class="kicker">Restored drop-to-play lab</p>
+        <h1 id="mixer-title">Voice3 <em>Token Mixer</em></h1>
+        <p>Build an original two-minute game loop by dragging mascot NFT cards into extended bar lanes. Every line and instrument stays playable: drums, bass, chords, lead, vox, FX, brass, and strings.</p>
+      </div>
+      <div class="mixer-transport" aria-label="Mixer transport">
+        <button type="button" id="mixer-play">Play mix</button>
+        <button type="button" id="mixer-stop" class="ghost">Stop</button>
+        <button type="button" id="mixer-random" class="ghost">Auto fill</button>
+        <button type="button" id="mixer-clear" class="ghost">Clear</button>
+        <label>Tempo <input id="mixer-tempo" type="range" min="70" max="150" value="104" /></label>
+        <label>Length <input id="mixer-length" type="range" min="15" max="120" value="120" /></label>
+        <output id="mixer-readout">120s · 104 BPM · 0 tokens</output>
+      </div>
+    </section>
+
+    <section class="token-bank" aria-labelledby="token-bank-title">
+      <div class="section-title"><span></span><h2 id="token-bank-title">NFT token crate</h2><span></span></div>
+      <div class="token-card-grid" id="token-bank"></div>
+    </section>
+
+    <section class="mixer-board" aria-labelledby="mixer-board-title">
+      <div class="section-title"><span></span><h2 id="mixer-board-title">Extended drag bars</h2><span></span></div>
+      <div class="timeline-ruler" aria-hidden="true"><span>0:00</span><span>0:30</span><span>1:00</span><span>1:30</span><span>2:00 max</span></div>
+      <div id="mixer-lanes" class="mixer-lanes" aria-live="polite"></div>
+    </section>
+  </main>
+  <script src="token-mixer.js"></script>
+</body>
+</html>

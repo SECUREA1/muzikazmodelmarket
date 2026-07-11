@@ -40,6 +40,16 @@ createServer(async (req, res) => {
     if (url.pathname === '/api/houses/ioncore-house/events' && req.method === 'GET') { res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' }); res.write('\n'); clients.add(res); req.on('close', () => clients.delete(res)); return; }
     if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'POST') { const id = session(req); const body = await bodyJson(req).catch(() => ({})); presence.set(id, { sessionId: id, joinedAt: presence.get(id)?.joinedAt || new Date().toISOString(), lastActiveAt: new Date().toISOString(), roomId: cleanText(body.roomId, 'unknown') }); const data = { count: presence.size, users: [...presence.values()] }; broadcast('house-presence-updated', data); return sendJson(res, 200, data); }
     if (url.pathname === '/api/houses/ioncore-house/presence/leave' && req.method === 'POST') { presence.delete(session(req)); broadcast('house-presence-updated', { count: presence.size }); return sendJson(res, 200, { ok: true }); }
-    let path = normalize(decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)).replace(/^[/\\]+/, ''); if (path.includes('..')) return sendJson(res, 400, { error: 'Bad path' }); const distPath = join(root, 'dist', path); const rootPath = join(root, path); let filePath = distPath; try { await stat(filePath); } catch { filePath = rootPath; await stat(filePath); } res.writeHead(200, { 'Content-Type': mimeTypes[extname(filePath).toLowerCase()] || 'application/octet-stream' }); createReadStream(filePath).pipe(res);
+    let path = normalize(decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)).replace(/^[/\\]+/, '');
+    if (path.includes('..')) return sendJson(res, 400, { error: 'Bad path' });
+    const pathsToTry = [join(root, 'dist', path), join(root, path)];
+    if (!extname(path)) pathsToTry.push(join(root, 'dist', path + '.html'), join(root, path + '.html'));
+    let filePath = '';
+    for (const possiblePath of pathsToTry) {
+      try { await stat(possiblePath); filePath = possiblePath; break; } catch {}
+    }
+    if (!filePath) throw new Error('Not found');
+    res.writeHead(200, { 'Content-Type': mimeTypes[extname(filePath).toLowerCase()] || 'application/octet-stream' });
+    createReadStream(filePath).pipe(res);
   } catch (error) { if (!res.headersSent) sendJson(res, url.pathname.startsWith('/api/') ? 400 : 404, { error: error.message || 'Not found' }); }
 }).listen(port, () => console.log(`MUZIKAZ shared house server running on http://localhost:${port}`));
