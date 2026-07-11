@@ -219,6 +219,9 @@ fn handle(mut s: TcpStream, st: State) -> std::io::Result<()> {
         &[]
     };
     println!("{method} {target}");
+    if method == "OPTIONS" {
+        return write_resp(&mut s, "204 No Content", "text/plain; charset=utf-8", b"", false);
+    }
     if target.starts_with("/api/") {
         return api(&mut s, &st, method, target, &headers, body);
     };
@@ -254,6 +257,28 @@ fn api(
         ("GET", "/api/admin/storage") => admin_storage(s, st, headers),
         ("GET", "/api/models/mine") => list_models(s, st, headers, "mine"),
         ("GET", "/api/models/public") => list_models(s, st, headers, "public"),
+        (_, "/api/avatars/published") if method == "GET" => {
+            let mut v: Vec<_> = st
+                .models
+                .read()
+                .unwrap()
+                .iter()
+                .filter(|m| m.status == "published")
+                .cloned()
+                .collect();
+            v.sort_by(|a, b| b.published_at.cmp(&a.published_at));
+            json(
+                s,
+                200,
+                true,
+                &format!(
+                    "[{}]",
+                    v.iter().map(model_json).collect::<Vec<_>>().join(",")
+                ),
+                "Published avatars loaded",
+                false,
+            )
+        }
         ("GET", "/api/models") => {
             let mut v: Vec<_> = st
                 .models
@@ -279,6 +304,7 @@ fn api(
         ("POST", "/api/models/upload") => upload_model_asset(s, st, headers, body),
         ("POST", "/api/uploads/avatar") => upload_avatar(s, st, headers, body),
         ("POST", "/api/models") => create(s, st, body),
+        ("POST", "/api/avatars/published") => create(s, st, body),
         _ if method == "GET" && path.starts_with("/api/houses/") && path.ends_with("/avatars") => {
             house_avatars(s, st, method, path, headers, body)
         }
@@ -603,8 +629,8 @@ fn sse_ready(s: &mut TcpStream) -> std::io::Result<()> {
 }
 fn create(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
     let b = String::from_utf8_lossy(body);
-    let title = val(&b, "title");
-    let creator = val(&b, "creatorName");
+    let title = { let v = val(&b, "title"); if v.is_empty() { val(&b, "name") } else { v } };
+    let creator = { let v = val(&b, "creatorName"); if v.is_empty() { let owner = val(&b, "owner"); if owner.is_empty() { val(&b, "username") } else { owner } } else { v } };
     let url = val(&b, "modelUrl");
     if title.trim().is_empty() {
         return json(s, 400, false, "{}", "Missing required title", false);
@@ -624,12 +650,12 @@ fn create(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
     }
     let now = now();
     let m = Model {
-        id: uuid(),
+        id: { let id = val(&b, "id"); if id.is_empty() { uuid() } else { trim(id, 120) } },
         title: trim(title, 120),
         creator: trim(creator, 80),
         description: trim(val(&b, "description"), 1000),
         category: trim(val(&b, "category"), 80),
-        model_type: trim(val(&b, "modelType"), 20),
+        model_type: { let mt = val(&b, "modelType"); if mt.is_empty() { trim(val(&b, "format"), 20) } else { trim(mt, 20) } },
         model_url: url,
         ios_model_url: val(&b, "iosModelUrl"),
         thumbnail_url: val(&b, "thumbnailUrl"),
@@ -874,7 +900,7 @@ fn write_resp(
     body: &[u8],
     head: bool,
 ) -> std::io::Result<()> {
-    write!(s,"HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {ct}\r\nConnection: close\r\n\r\n",body.len())?;
+    write!(s,"HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {ct}\r\nAccess-Control-Allow-Origin: https://muzikazmodelmarket.onrender.com\r\nAccess-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Authorization, X-MUZIKAZ-Session\r\nCross-Origin-Resource-Policy: cross-origin\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",body.len())?;
     if !head {
         s.write_all(body)?
     }
@@ -1802,7 +1828,7 @@ fn mime_for_ext(ext: &str) -> &'static str {
         "gltf" => "model/gltf+json",
         "usdz" => "model/vnd.usdz+zip",
         "reality" => "model/vnd.reality",
-        "obj" => "model/obj",
+        "obj" => "text/plain",
         "mtl" => "text/plain",
         "bin" => "application/octet-stream",
         "zip" => "application/zip",
