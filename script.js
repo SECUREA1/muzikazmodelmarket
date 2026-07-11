@@ -874,16 +874,14 @@ arPopoutButton?.addEventListener('click', () => {
 
 function initBottleLogin() {
   const form = document.querySelector('#bottle-login-form');
-  const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
-  if (!form || !lockedContent) return;
-  const unlock = (message) => {
-    lockedContent.dataset.locked = 'false';
+  if (!form) return;
+  const setLoginStatus = (message) => {
     if (status) status.textContent = message;
   };
   if (window.localStorage.getItem('muzikazBottleMember') === 'true') {
     currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
-    unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`);
+    setLoginStatus(`Bottle member account is active for ${currentMemberEmail}. Owned assets are connected.`);
     renderOwnedCollection(currentMemberEmail);
   }
   form.addEventListener('submit', (event) => {
@@ -893,8 +891,8 @@ function initBottleLogin() {
     window.localStorage.setItem('muzikazBottleMember', 'true');
     window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
     renderOwnedCollection(currentMemberEmail);
-    unlock(`${currentMemberEmail} is logged in. Owned assets are tied to this account, and shared member collections are viewable.`);
-    scrollToSection('member-locked-content');
+    setLoginStatus(`${currentMemberEmail} is logged in. Owned assets are tied to this account, and shared member collections are viewable.`);
+    scrollToSection('owned-collection');
   });
 }
 
