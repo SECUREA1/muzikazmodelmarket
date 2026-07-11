@@ -228,6 +228,7 @@
                 <form class="upload-zone asset-upload-panel" id="model-upload-form">
                     <strong>Upload 3D Model</strong>
                     <input type="file" name="file" accept=".glb,.gltf,.usdz,.reality" required />
+                    <progress id="model-upload-progress" max="100" value="0"></progress>
                     <input type="file" name="usdz" accept=".usdz" /><input type="file" name="thumbnail" accept="image/*" /><input type="file" name="textures" accept="image/*,.bin,.mtl,.obj" multiple />
                     <input name="title" placeholder="Model title" /><textarea name="description" placeholder="Description"></textarea><input name="category" placeholder="Category" /><input name="creator" placeholder="Creator" /><input name="tags" placeholder="Tags" />
                     <input name="defaultScale" placeholder="Default scale" /><input name="defaultRotation" placeholder="Default rotation" /><input name="defaultPosition" placeholder="Default position" />
