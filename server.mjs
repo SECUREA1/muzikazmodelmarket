@@ -7,15 +7,64 @@ import { randomUUID } from 'node:crypto';
 const root = process.cwd();
 const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
 const uploadDir = process.env.MUZIKAZ_UPLOAD_DIR || join(root, 'uploads', 'avatars');
+const assetUploadDir = process.env.MUZIKAZ_ASSET_UPLOAD_DIR || join(root, 'uploads', 'assets');
 const dataFile = join(dataDir, 'shared-house-avatars.json');
+const assetsFile = join(dataDir, 'asset-library.json');
 const clients = new Set();
 const presence = new Map();
 const port = Number(process.env.PORT || 4173);
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
-const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
+const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip' };
 const allowedUploadTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
-async function ensureStorage() { await mkdir(dataDir, { recursive: true }); await mkdir(uploadDir, { recursive: true }); try { await stat(dataFile); } catch { await writeFile(dataFile, '[]'); } }
+async function ensureStorage() { await mkdir(dataDir, { recursive: true }); await mkdir(uploadDir, { recursive: true }); await mkdir(assetUploadDir, { recursive: true }); try { await stat(dataFile); } catch { await writeFile(dataFile, '[]'); } try { await stat(assetsFile); } catch { await writeFile(assetsFile, '[]'); } }
+
+async function readAssets() { await ensureStorage(); return JSON.parse(await readFile(assetsFile, 'utf8')); }
+async function writeAssets(records) { await ensureStorage(); await writeFile(assetsFile, JSON.stringify(records, null, 2)); }
+function user(req) { return { id: cleanText(req.headers['x-user-id'], 'demo-user'), role: cleanText(req.headers['x-user-role'], 'user'), name: cleanText(req.headers['x-user-name'], 'MUZIKAZ Creator') }; }
+function isPublicAsset(asset) { return asset.visibility === 'public' || asset.status === 'published' || asset.status === 'approved'; }
+function assetType(contentType, filename = '') { return /model|gltf|usdz|reality|octet-stream/.test(contentType) || /\.(glb|gltf|usdz|reality)$/i.test(filename) ? 'model' : 'image'; }
+async function multipartFields(req, limit = 25_000_000) {
+  const type = String(req.headers['content-type'] || '');
+  const match = type.match(/boundary=(.+)$/);
+  if (!match) throw new Error('Missing multipart boundary');
+  const chunks = []; let size = 0;
+  for await (const chunk of req) { size += chunk.length; if (size > limit) throw new Error('Upload too large'); chunks.push(chunk); }
+  const body = Buffer.concat(chunks);
+  const boundary = Buffer.from('--' + match[1]);
+  const parts = [];
+  for (const raw of body.toString('binary').split(boundary.toString('binary')).slice(1, -1)) {
+    const part = Buffer.from(raw.replace(/^\r\n|\r\n$/g, ''), 'binary');
+    const marker = Buffer.from('\r\n\r\n'); const start = part.indexOf(marker);
+    if (start < 0) continue;
+    const header = part.slice(0, start).toString('utf8');
+    const data = part.slice(start + marker.length);
+    const name = (header.match(/name="([^"]+)"/i) || [])[1];
+    const filename = (header.match(/filename="([^"]*)"/i) || [])[1];
+    const contentType = (header.match(/Content-Type:\s*([^\r\n]+)/i) || [])[1] || 'application/octet-stream';
+    if (!name) continue;
+    parts.push({ name, filename, contentType, data });
+  }
+  return parts;
+}
+async function saveAssetUpload(req, forceModel = false) {
+  const actor = user(req); const parts = await multipartFields(req);
+  const fields = {}; const files = parts.filter((p) => p.filename);
+  parts.filter((p) => !p.filename).forEach((p) => { fields[p.name] = p.data.toString('utf8').trim(); });
+  if (!files.length) throw new Error('Choose at least one file to upload');
+  const records = await readAssets(); const now = new Date().toISOString(); const created = [];
+  for (const part of files) {
+    const original = cleanText(part.filename, 'upload.bin');
+    const ext = extname(original) || (part.contentType.includes('png') ? '.png' : part.contentType.includes('jpeg') ? '.jpg' : part.contentType.includes('svg') ? '.svg' : '.bin');
+    const safeName = randomUUID() + '-' + original.replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 90);
+    await writeFile(join(assetUploadDir, safeName), part.data);
+    const fileType = forceModel ? 'model' : assetType(part.contentType, original);
+    const record = { id: randomUUID(), title: cleanText(fields.title, original.replace(/\.[^.]+$/, '')), description: cleanText(fields.description, ''), creator: cleanText(fields.creator, actor.name), ownerId: actor.id, ownerDisplayName: actor.name, originalFilename: original, storedFilename: safeName, publicUrl: '/uploads/assets/' + safeName, thumbnailUrl: fileType === 'image' ? '/uploads/assets/' + safeName : '', fileType, fileSize: part.data.length, mimeType: part.contentType, category: cleanText(fields.category, ''), tags: cleanText(fields.tags, ''), status: cleanText(fields.status, 'draft'), visibility: cleanText(fields.visibility, 'private'), intendedUse: cleanText(fields.intendedUse, forceModel ? '3D model' : '3D model texture'), relatedModelId: cleanText(fields.relatedModelId, ''), productAssignment: cleanText(fields.productAssignment, ''), collectionAssignment: cleanText(fields.collectionAssignment, ''), publishLocation: cleanText(fields.publishLocation, ''), createdAt: now, updatedAt: now, approvedAt: '', publishedAt: '', moderatorNote: '' };
+    records.unshift(record); created.push(record);
+  }
+  await writeAssets(records); return created.length === 1 ? created[0] : created;
+}
+function assetResponse(data) { return { success: true, data }; }
 async function readAvatars() { await ensureStorage(); return JSON.parse(await readFile(dataFile, 'utf8')); }
 async function writeAvatars(records) { await ensureStorage(); await writeFile(dataFile, JSON.stringify(records, null, 2)); }
 function session(req) { return String(req.headers['x-muzikaz-session'] || new URL(req.url, 'http://x').searchParams.get('sessionId') || '').replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 120) || randomUUID(); }
@@ -32,6 +81,17 @@ async function uploadFile(req) { const type = String(req.headers['content-type']
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   try {
+
+    if (url.pathname === '/api/assets/upload' && req.method === 'POST') return sendJson(res, 201, assetResponse(await saveAssetUpload(req, false)));
+    if (url.pathname === '/api/models/upload' && req.method === 'POST') return sendJson(res, 201, assetResponse(await saveAssetUpload(req, true)));
+    if (url.pathname === '/api/assets/mine' && req.method === 'GET') { const actor = user(req); const assets = await readAssets(); return sendJson(res, 200, assetResponse(actor.role === 'admin' ? assets : assets.filter((a) => a.ownerId === actor.id || isPublicAsset(a)))); }
+    if (url.pathname === '/api/assets/public' && req.method === 'GET') { const assets = await readAssets(); return sendJson(res, 200, assetResponse(assets.filter(isPublicAsset))); }
+    if (url.pathname === '/api/admin/analytics' && req.method === 'GET') { const assets = await readAssets(); return sendJson(res, 200, assetResponse({ totalOrders: 128, inventoryUnits: 842, conversionRate: '7.4%', totalUploads: assets.length, pendingApprovals: assets.filter((a) => a.status === 'pending_review').length, storageUsage: assets.reduce((n, a) => n + (a.fileSize || 0), 0) })); }
+    const assetAction = url.pathname.match(/^\/api\/assets\/([^/]+)\/([^/]+)$/);
+    if (assetAction && req.method === 'POST') { const [ , id, action ] = assetAction; const assets = await readAssets(); const asset = assets.find((a) => a.id === id); if (!asset) return sendJson(res, 404, { success: false, message: 'Asset not found' }); const body = await bodyJson(req).catch(() => ({})); const now = new Date().toISOString(); if (action === 'approve') { asset.status = 'approved'; asset.approvedAt = now; } else if (action === 'reject') { asset.status = 'rejected'; asset.moderatorNote = cleanText(body.reason, 'Changes required'); } else if (action === 'publish') { asset.status = 'published'; asset.visibility = 'public'; asset.publishedAt = now; } else if (action === 'unpublish') { asset.visibility = 'private'; } else if (action === 'archive') { asset.status = 'archived'; } else if (action === 'assign-model') { asset.relatedModelId = cleanText(body.modelId, asset.relatedModelId); asset.publishLocation = cleanText(body.displayType, asset.publishLocation); } else { return sendJson(res, 400, { success: false, message: 'Unknown action' }); } asset.updatedAt = now; await writeAssets(assets); return sendJson(res, 200, assetResponse(asset)); }
+    const assetItem = url.pathname.match(/^\/api\/assets\/([^/]+)$/);
+    if (assetItem && req.method === 'PATCH') { const assets = await readAssets(); const asset = assets.find((a) => a.id === assetItem[1]); if (!asset) return sendJson(res, 404, { success: false, message: 'Asset not found' }); Object.assign(asset, await bodyJson(req)); asset.updatedAt = new Date().toISOString(); await writeAssets(assets); return sendJson(res, 200, assetResponse(asset)); }
+    if (assetItem && req.method === 'DELETE') { const assets = await readAssets(); await writeAssets(assets.filter((a) => a.id !== assetItem[1])); return sendJson(res, 200, assetResponse({ id: assetItem[1] })); }
     if (url.pathname === '/api/uploads/avatar' && req.method === 'POST') return sendJson(res, 201, await uploadFile(req));
     if (url.pathname === '/api/houses/ioncore-house/avatars' && req.method === 'GET') return sendJson(res, 200, await readAvatars());
     if (url.pathname === '/api/houses/ioncore-house/avatars' && req.method === 'POST') { const owner = session(req); const record = sanitizeRecord(await bodyJson(req), owner); const records = await readAvatars(); records.push(record); await writeAvatars(records); broadcast('avatar-created', record); return sendJson(res, 201, record); }
