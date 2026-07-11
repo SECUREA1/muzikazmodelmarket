@@ -265,7 +265,16 @@ const assetCatalog = {
     { id: 'new-legends', page: 'new-legends.html', name: 'New Legends', css: 'new-legends', character: 'Unlocked Crew', type: 'Character Models', file: 'new_legends_unlocked_2x_transparent.png', price: '$52.00', copy: 'Expanded platform collection art for fresh mascot launches and hero tiles.', merch: ['Hero Banner', 'Tagline Tee'] },
     { id: 'trait-avatars', page: 'trait-avatars.html', name: 'Trait Avatars', css: 'trait-avatars', character: 'Avatar Lineup', type: 'Character Models', file: 'trait_avatars_row_1_2x.png', price: '$46.00', copy: 'Row-ready mascot avatars built for picker graphics, social posts, and profile drops.', merch: ['Avatar Sticker Sheet', 'Crew Cap'] },
     { id: 'online-events', page: 'online-events.html', name: 'Online Events', css: 'online-events', character: 'Event Crew', type: 'Event Model Packs', file: 'available_online_events_banner_2x_transparent.png', price: '$55.00', copy: 'Event-ready visual set for stream drops, ticket pages, and online campaigns.', merch: ['Event Pass', 'Lanyard'] },
-    { id: 'brand-kit', page: 'brand-kit.html', name: 'Brand Kit', css: 'brand-kit', character: 'Logo System', type: 'Brand Asset Packs', file: 'logo_panel_2x_transparent.png', price: '$36.00', copy: 'Built-in MUZIKAZ logo graphics packaged for badges, cards, and marketplace pages.', merch: ['Logo Patch', 'Bolt Keychain'] },
+  ],
+  websitePackages: [
+    { id: 'brand-kit', page: 'brand-kit.html', name: 'Brand Kit Website Slot', category: 'Website Packages', price: '$20.00', asset: 'logo_panel_2x_transparent.png', copy: 'Moved out of the model package area and unified with the website bundle slots for logo panels, badges, and web-ready brand graphics.' },
+    { id: 'starter-site', page: 'index.html', name: 'Starter Website Bundle', category: 'Website Packages', price: '$20.00', asset: 'hero_banner_full_2x_transparent.png', copy: 'One-page starter layout with hero, product callouts, and connected checkout buttons.' },
+    { id: 'drop-page', page: 'new-legends.html', name: 'Drop Page Bundle', category: 'Website Packages', price: '$20.00', asset: 'new_legends_unlocked_2x_transparent.png', copy: 'Launch page bundle for a mascot drop, limited offer, and subscriber call-to-action.' },
+    { id: 'creator-vault', page: 'members.html', name: 'Creator Vault Bundle', category: 'Website Packages', price: '$20.00', asset: 'accessories_banner_2x_transparent.png', copy: 'Subscriber-style vault bundle with locked creator tools, owned collection copy, and upgrade slots.' },
+    { id: 'event-landing', page: 'online-events.html', name: 'Event Landing Bundle', category: 'Website Packages', price: '$20.00', asset: 'available_online_events_banner_2x_transparent.png', copy: 'Online event landing bundle for tickets, stream promos, and merch-connected campaign pages.' },
+  ],
+  controlPackages: [
+    { id: 'omconsole', name: 'OMConsole Package', category: 'Control Systems', price: '$49.00', copy: 'Integrate OMConsole gesture, facial tone, muscle, and EEG controls into a custom website experience with editable design hooks.' },
   ],
   retail: [
     { id: 'hoodie', name: 'Neon Hoodie', category: 'Hoodies', price: '$64.00', asset: 'muzikaz_high_level_image_pack1/05_merch/hoodie_tile_2x.png', connectsTo: ['Originals', 'Chaos'] },
@@ -301,6 +310,8 @@ const productPrintTemplates = {
 };
 const marketplaceListings = [
   ...assetCatalog.models.map((model) => ({ type: model.type, category: model.name, quality: 'curated', name: `${model.name} 3D Model Pack`, price: model.price, copy: `${model.copy} Source: ${model.file}`, model: model.name })),
+  ...assetCatalog.websitePackages.map((pack) => ({ type: 'Website Packages', category: pack.category, quality: 'curated', name: pack.name, price: pack.price, copy: `${pack.copy} Source: ${pack.asset}`, product: pack.name })),
+  ...assetCatalog.controlPackages.map((pack) => ({ type: 'Subscriber Creator Tools', category: pack.category, quality: 'curated', name: pack.name, price: pack.price, copy: pack.copy, product: pack.name })),
   ...assetCatalog.retail.map((product) => ({ type: 'Retail Pages', category: product.category, quality: 'curated', name: product.name, price: product.price, copy: `${product.category} connected to ${product.connectsTo.join(' + ')} model data.`, product: product.name })),
   { type: 'Custom Orders', category: 'Custom Builds', quality: 'curated', name: 'Team Sleeve Text Run', price: 'Quote request', copy: 'Custom name, number, logo style, sleeve text, product, and character selections flow from the same catalog.' },
   { type: 'Limited Drops', category: 'Drop Bundles', quality: 'review', name: 'Friday Connected Drop', price: 'Locks at sellout', copy: 'Bundles one model pack, one retail item, and one custom designer preset.' },
@@ -479,6 +490,14 @@ function renderMarketplace(type = marketplaceState.type, modelFocus = marketplac
     renderMarketplace(marketplaceState.type);
   }));
 }
+
+document.addEventListener('click', (event) => {
+  const jump = event.target.closest('[data-market-jump]');
+  if (!jump) return;
+  const targetType = jump.dataset.marketJump === 'Website Packages' ? 'Website Packages' : 'Subscriber Creator Tools';
+  marketplaceState.category = 'All';
+  renderMarketplace(targetType);
+});
 
 
 function setDesignerStatus(message) {
