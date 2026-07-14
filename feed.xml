@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>MUZIKAZ Drops Feed</title>
+    <link>https://muzikaz.com/</link>
+    <description>Official MUZIKAZ model, merch, dashboard, wallet, and brand-station updates.</description>
+    <language>en-us</language>
+    <image><url>https://muzikaz.com/logo_symbol_crop_2x_transparent.png</url><title>MUZIKAZ</title><link>https://muzikaz.com/</link></image>
+    <item><title>MUZIKAZ Model Market Profile</title><link>https://muzikaz.com/</link><description>High-quality MUZIKAZ.com profile with photos, descriptions, logos, dashboards, wallets, and datasets.</description><media:thumbnail url="https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png" /></item>
+    <item><title>Official MUZIKAZ Brand Kit</title><link>https://muzikaz.com/brand-kit.html</link><description>Logo system, brand photos, SEO metadata, and reusable profile assets.</description><media:thumbnail url="https://muzikaz.com/logo_panel_2x_transparent.png" /></item>
+  </channel>
+</rss>

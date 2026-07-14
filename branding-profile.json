@@ -1,0 +1,16 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Brand",
+  "name": "MUZIKAZ",
+  "url": "https://muzikaz.com/",
+  "logo": "https://muzikaz.com/logo_symbol_crop_2x_transparent.png",
+  "image": "https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png",
+  "description": "MUZIKAZ is a neon model-market profile for 3D characters, mascot merch, creator dashboards, wallet rewards, feeds, datasets, tabs, and high-quality brand stations.",
+  "slogan": "Loud. Proud. Muzikaz.",
+  "sameAs": ["https://muzikaz.com/"],
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "MUZIKAZ model and merch stations",
+    "itemListElement": ["Originals", "Legends", "Beasts", "Crew", "Chaos", "Trait Avatars", "Online Events"]
+  }
+}

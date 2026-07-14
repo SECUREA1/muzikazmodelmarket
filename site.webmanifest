@@ -1,0 +1,20 @@
+{
+  "name": "MUZIKAZ Model Market",
+  "short_name": "MUZIKAZ",
+  "description": "Neon 3D character model market, merch drops, creator dashboards, wallet rewards, feeds, datasets, and brand-kit assets for muzikaz.com.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#05070a",
+  "theme_color": "#b7ff35",
+  "icons": [
+    { "src": "logo_symbol_crop_2x_transparent.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "brand_name_tagline_panel_2x_transparent.png", "sizes": "1024x512", "type": "image/png" }
+  ],
+  "categories": ["entertainment", "shopping", "music", "graphics"],
+  "shortcuts": [
+    { "name": "Model Explorer", "url": "/model-explorer.html", "description": "Publish and explore live MUZIKAZ 3D models." },
+    { "name": "Brand Kit", "url": "/brand-kit.html", "description": "View official MUZIKAZ logos, descriptions, and profile assets." },
+    { "name": "Wallet Quest Board", "url": "/quest-board.html", "description": "Open wallet rewards and activity feeds." }
+  ]
+}
