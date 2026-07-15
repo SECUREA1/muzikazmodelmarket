@@ -29,7 +29,7 @@ for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-
 }
 
 const membersHtml = await readFile('dist/members.html', 'utf8');
-for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace']) {
+for (const id of ['bottle-login', 'member-creator-tools', 'character-shop', 'admin', 'marketplace']) {
   if (!membersHtml.includes(`id="${id}"`)) {
     throw new Error(`members.html is missing subscriber section #${id}`);
   }
