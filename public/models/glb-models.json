@@ -1,0 +1,22 @@
+{
+  "ownerInstructions": "Deposit GLB or GLTF model files in this public/models folder, then add one catalog entry below so the site, AR-capable viewers, sales pages, and games can discover them. Use relative URLs such as public/models/character.glb. Optional iosModelUrl USDZ files enable iOS Quick Look AR.",
+  "models": [
+    {
+      "id": "sample-glb-placeholder",
+      "name": "Sample GLB Placeholder",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "Copy this starter entry, point it at the first owner-deposited GLB model, then change visibility to public. Keep the modelUrl pointed at a real .glb or .gltf file in public/models for 3D display, AR launch points, marketplace sales cards, and game placement.",
+      "modelUrl": "public/models/sample-model.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "private",
+      "intendedUse": ["site-3d-display", "ar-display", "sales", "games"],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": { "x": 0, "z": 0 },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    }
+  ]
+}
