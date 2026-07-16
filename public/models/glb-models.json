@@ -1,21 +1,498 @@
 {
-  "ownerInstructions": "Deposit GLB or GLTF model files in this public/models folder, then add one catalog entry below so the site, AR-capable viewers, sales pages, and games can discover them. Use relative URLs such as public/models/character.glb. Optional iosModelUrl USDZ files enable iOS Quick Look AR.",
+  "ownerInstructions": "Deposit GLB or GLTF model files in this public/models folder. This catalog is loaded by the homepage, model explorer, marketplace/member AR viewer, and CHAINeS AR collectible browser. Use relative URLs such as public/models/character.glb. Optional iosModelUrl USDZ files enable iOS Quick Look AR.",
   "models": [
     {
-      "id": "sample-glb-placeholder",
-      "name": "Sample GLB Placeholder",
+      "id": "318bb72e-99a3-4258-9684-8db3b35cc753-2",
+      "number": 1,
+      "name": "318bb72e 99a3 4258 9684 8db3b35cc753",
       "owner": "MUZIKAZ",
       "category": "Owner GLB Library",
-      "description": "Copy this starter entry, point it at the first owner-deposited GLB model, then change visibility to public. Keep the modelUrl pointed at a real .glb or .gltf file in public/models for 3D display, AR launch points, marketplace sales cards, and game placement.",
-      "modelUrl": "public/models/sample-model.glb",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/318bb72e-99a3-4258-9684-8db3b35cc753 2.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
-      "visibility": "private",
-      "intendedUse": ["site-3d-display", "ar-display", "sales", "games"],
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
       "scale": 1,
       "rotation": 0,
-      "spawnPosition": { "x": 0, "z": 0 },
+      "spawnPosition": {
+        "x": -280,
+        "z": 0
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "aape",
+      "number": 2,
+      "name": "AAPE",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/AAPE.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "beedeere",
+      "number": 3,
+      "name": "BEEDEERE",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/BEEDEERE.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 280,
+        "z": 0
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "beeduck",
+      "number": 4,
+      "name": "BEEDUCK",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/BEEDUCK.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": -280,
+        "z": 220
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "byte",
+      "number": 5,
+      "name": "BYTE",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/BYTE.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 220
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "dax",
+      "number": 6,
+      "name": "DAX",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/DAX.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 280,
+        "z": 220
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "drone-engine",
+      "number": 7,
+      "name": "DRONE ENGINE",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/DRONE ENGINE.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": -280,
+        "z": 440
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "flaminglow",
+      "number": 8,
+      "name": "FLAMINGLOW",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/FLAMINGLOW.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 440
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "ioncduck",
+      "number": 9,
+      "name": "IONCDUCK",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/IONCDUCK.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 280,
+        "z": 440
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "mousey",
+      "number": 10,
+      "name": "MOUSEY",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/MOUSEY.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": -280,
+        "z": 660
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "muzikaz",
+      "number": 11,
+      "name": "MUZIKAZ",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/MUZIKAZ.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 660
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "muzkat",
+      "number": 12,
+      "name": "MUZKAT",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/MUZKAT.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 280,
+        "z": 660
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "pixella",
+      "number": 13,
+      "name": "Pixella",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/pixella.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": -280,
+        "z": 880
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "rebel-black-sheep",
+      "number": 14,
+      "name": "Rebel Black Sheep",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/rebel black sheep.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 880
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "remix",
+      "number": 15,
+      "name": "Remix",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/remix.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 280,
+        "z": 880
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "ronaldo",
+      "number": 16,
+      "name": "Ronaldo",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/ronaldo.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": -280,
+        "z": 1100
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "sharko",
+      "number": 17,
+      "name": "Sharko",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/sharko.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 1100
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "voltwolf",
+      "number": 18,
+      "name": "VOLTWOLF",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/VOLTWOLF.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 280,
+        "z": 1100
+      },
+      "publishedAt": "2026-07-16T00:00:00.000Z"
+    },
+    {
+      "id": "wolfie",
+      "number": 19,
+      "name": "Wolfie",
+      "owner": "MUZIKAZ",
+      "category": "Owner GLB Library",
+      "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
+      "modelUrl": "public/models/wolfie.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": -280,
+        "z": 1320
+      },
       "publishedAt": "2026-07-16T00:00:00.000Z"
     }
   ]
