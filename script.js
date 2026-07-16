@@ -1127,6 +1127,7 @@ function initPublicModelExplorer() {
 initPublicModelExplorer();
 
 function initHouseExplorer() {
+  if (window.MUZIKAZ_HOUSE_EXPLORER_3D_ACTIVE) return;
   const canvas = document.querySelector('#house-explorer-canvas');
   if (!(canvas instanceof HTMLCanvasElement)) return;
   const ctx = canvas.getContext('2d');

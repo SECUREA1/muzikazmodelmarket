@@ -1,0 +1,20 @@
+{
+  "defaultEnvironment": "default-house",
+  "environments": [
+    {
+      "id": "default-house",
+      "name": "MUZIKAZ Walk-Around House",
+      "description": "Drop public/models/environments/default-house.glb into the repository to activate this walk-around environment.",
+      "model": "/public/models/environments/default-house.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": false,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": { "x": 0, "y": 0, "z": 2 },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    }
+  ]
+}

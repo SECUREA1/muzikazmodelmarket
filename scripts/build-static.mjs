@@ -3,7 +3,7 @@ import { extname } from 'node:path';
 
 const root = new URL('..', import.meta.url);
 const dist = new URL('../dist/', import.meta.url);
-const staticExtensions = new Set(['.html', '.css', '.js', '.json', '.png', '.svg', '.jpg', '.jpeg', '.webp', '.ico', '.txt', '.xml', '.webmanifest']);
+const staticExtensions = new Set(['.html', '.css', '.js', '.json', '.png', '.svg', '.jpg', '.jpeg', '.webp', '.ico', '.txt', '.xml', '.webmanifest', '.glb', '.gltf', '.bin', '.ktx2', '.hdr', '.exr', '.usdz']);
 const ignoredNames = new Set(['dist', 'node_modules', '.git', 'scripts', 'package-lock.json', 'package.json', 'render.yaml']);
 
 await rm(dist, { recursive: true, force: true });

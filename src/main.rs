@@ -1182,6 +1182,7 @@ fn ctype(p: &Path) -> &'static str {
         "glb" => "model/gltf-binary",
         "gltf" => "model/gltf+json",
         "usdz" => "model/vnd.usdz+zip",
+        "bin" | "ktx2" | "hdr" | "exr" => "application/octet-stream",
         _ => "application/octet-stream",
     }
 }
@@ -1830,7 +1831,7 @@ fn mime_for_ext(ext: &str) -> &'static str {
         "reality" => "model/vnd.reality",
         "obj" => "text/plain",
         "mtl" => "text/plain",
-        "bin" => "application/octet-stream",
+        "bin" | "ktx2" | "hdr" | "exr" => "application/octet-stream",
         "zip" => "application/zip",
         _ => "application/octet-stream",
     }
