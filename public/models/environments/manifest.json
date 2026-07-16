@@ -10,7 +10,11 @@
       "enabled": false,
       "scale": 1,
       "rotationY": 0,
-      "spawn": { "x": 0, "y": 0, "z": 2 },
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
       "cameraHeight": 1.65,
       "movementSpeed": 3.5,
       "collisionEnabled": true,
@@ -25,7 +29,11 @@
       "enabled": true,
       "scale": 1,
       "rotationY": 0,
-      "spawn": { "x": 0, "y": 0, "z": 2 },
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
       "cameraHeight": 1.65,
       "movementSpeed": 3.5,
       "collisionEnabled": true,
@@ -40,7 +48,372 @@
       "enabled": true,
       "scale": 1,
       "rotationY": 0,
-      "spawn": { "x": 0, "y": 0, "z": 2 },
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-model-318bb72e-99a3-4258-9684-8db3b35cc753-2",
+      "name": "318Bb72E 99A3 4258 9684 8Db3B35Cc753 2 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/318bb72e-99a3-4258-9684-8db3b35cc753 2.glb.",
+      "model": "/public/models/318bb72e-99a3-4258-9684-8db3b35cc753 2.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-aape",
+      "name": "Aape 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/AAPE.glb.",
+      "model": "/public/models/AAPE.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-beedeere",
+      "name": "Beedeere 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/BEEDEERE.glb.",
+      "model": "/public/models/BEEDEERE.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-beeduck",
+      "name": "Beeduck 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/BEEDUCK.glb.",
+      "model": "/public/models/BEEDUCK.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-byte",
+      "name": "Byte 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/BYTE.glb.",
+      "model": "/public/models/BYTE.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-dax",
+      "name": "Dax 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/DAX.glb.",
+      "model": "/public/models/DAX.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-drone-engine",
+      "name": "Drone Engine 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/DRONE ENGINE.glb.",
+      "model": "/public/models/DRONE ENGINE.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-flaminglow",
+      "name": "Flaminglow 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/FLAMINGLOW.glb.",
+      "model": "/public/models/FLAMINGLOW.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-ioncduck",
+      "name": "Ioncduck 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/IONCDUCK.glb.",
+      "model": "/public/models/IONCDUCK.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-mousey",
+      "name": "Mousey 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/MOUSEY.glb.",
+      "model": "/public/models/MOUSEY.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-muzikaz",
+      "name": "Muzikaz 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/MUZIKAZ.glb.",
+      "model": "/public/models/MUZIKAZ.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-muzkat",
+      "name": "Muzkat 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/MUZKAT.glb.",
+      "model": "/public/models/MUZKAT.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-pixella",
+      "name": "Pixella 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/pixella.glb.",
+      "model": "/public/models/pixella.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-rebel-black-sheep",
+      "name": "Rebel Black Sheep 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/rebel black sheep.glb.",
+      "model": "/public/models/rebel black sheep.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-remix",
+      "name": "Remix 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/remix.glb.",
+      "model": "/public/models/remix.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-ronaldo",
+      "name": "Ronaldo 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/ronaldo.glb.",
+      "model": "/public/models/ronaldo.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-sharko",
+      "name": "Sharko 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/sharko.glb.",
+      "model": "/public/models/sharko.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-voltwolf",
+      "name": "Voltwolf 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/VOLTWOLF.glb.",
+      "model": "/public/models/VOLTWOLF.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "catalog-wolfie",
+      "name": "Wolfie 3D GLB",
+      "description": "Repository-hosted GLB added to the walk-around environment selector from public/models/wolfie.glb.",
+      "model": "/public/models/wolfie.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
       "cameraHeight": 1.65,
       "movementSpeed": 3.5,
       "collisionEnabled": true,
