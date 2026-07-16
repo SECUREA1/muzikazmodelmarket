@@ -45,7 +45,7 @@ function restoreCompactHouseWindow() {
 
     const label = document.createElement('label');
     label.htmlFor = 'environment-selector';
-    label.innerHTML = '<strong>Playable floor</strong>';
+    label.innerHTML = '<strong>Playable Floor</strong>';
     compactMenu.append(label, selector);
     if (progress) compactMenu.append(progress);
     if (loadStatus) compactMenu.append(loadStatus);
@@ -66,7 +66,9 @@ function restoreCompactHouseWindow() {
 }
 
 function keepOnlyPlayableFloors(selector) {
-  const requested = new URLSearchParams(window.location.search).get('house');
+  const params = new URLSearchParams(window.location.search);
+  const rawRequested = (params.get('floor') || params.get('house') || '').toLowerCase();
+  const requested = ['upper', 'muzikaz-upper'].includes(rawRequested) ? 'muzikaz-upper' : (['main', 'main-floor', 'muzimakz-main'].includes(rawRequested) ? 'muzimakz-main' : null);
   [...selector.options].forEach((option) => {
     if (!ALLOWED_ENVIRONMENTS.has(option.value)) option.remove();
   });
@@ -74,7 +76,7 @@ function keepOnlyPlayableFloors(selector) {
   const available = [...selector.options].map((option) => option.value);
   if (!available.length) return;
 
-  const desired = ALLOWED_ENVIRONMENTS.has(requested) && available.includes(requested)
+  const desired = requested && ALLOWED_ENVIRONMENTS.has(requested) && available.includes(requested)
     ? requested
     : (available.includes(DEFAULT_ENVIRONMENT) ? DEFAULT_ENVIRONMENT : available[0]);
 

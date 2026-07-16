@@ -49,6 +49,10 @@ const manifest = JSON.parse(await readFile('dist/public/models/environments/mani
 if (!Array.isArray(manifest.environments) || !manifest.environments.length) {
   throw new Error('environment manifest does not contain any model entries.');
 }
+const playableFloors = manifest.environments.map((env) => env.id);
+if (manifest.defaultEnvironment !== 'muzimakz-main' || playableFloors.join(',') !== 'muzimakz-main,muzikaz-upper') {
+  throw new Error('compact 3D House Explorer must expose only the main and upper playable floors with main as default.');
+}
 for (const env of manifest.environments) {
   if (!env.id || !env.model || !Object.prototype.hasOwnProperty.call(env, 'enabled')) {
     throw new Error('environment manifest entries must include id, model, and enabled.');
@@ -57,6 +61,13 @@ for (const env of manifest.environments) {
 const explorerModule = await readFile('dist/public/js/house-explorer-3d.js', 'utf8');
 for (const token of ['GLTFLoader', 'DRACOLoader', 'PerspectiveCamera', 'WebGLRenderer']) {
   if (!explorerModule.includes(token)) throw new Error(`house-explorer-3d.js is missing ${token}`);
+}
+for (const token of ['environmentIdFromUrl', 'findSpawnMarker', 'findAutomaticSpawn', 'FALLBACK_SPAWNS', 'Octree successfully built']) {
+  if (!explorerModule.includes(token)) throw new Error(`house-explorer-3d.js is missing playable-floor validation token ${token}`);
+}
+const compactModule = await readFile('dist/public/js/house-explorer-compact.js', 'utf8');
+for (const token of ['MutationObserver', 'Playable Floor', 'muzimakz-main', 'muzikaz-upper']) {
+  if (!compactModule.includes(token)) throw new Error(`house-explorer-compact.js is missing compact filtering token ${token}`);
 }
 const css = await readFile('dist/styles.css', 'utf8');
 if (!css.includes("url('reference.png')")) {
