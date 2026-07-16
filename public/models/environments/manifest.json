@@ -1,5 +1,5 @@
 {
-  "defaultEnvironment": "muzikaz-upper",
+  "defaultEnvironment": "muzimakz-main",
   "environments": [
     {
       "id": "default-house",
@@ -41,8 +41,8 @@
     },
     {
       "id": "muzimakz-main",
-      "name": "MUZIMAKZ Main",
-      "description": "A walk-around MUZIMAKZ main environment.",
+      "name": "MUZIKAZ Main Floor",
+      "description": "The default MUZIKAZ main floor environment where players start the 3D Explorer.",
       "model": "/public/models/environments/muzimakzmain.glb",
       "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
       "enabled": true,
