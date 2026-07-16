@@ -808,6 +808,9 @@ const arFileInput = document.querySelector('#ar-file-input');
 const arFileMeta = document.querySelector('#ar-file-meta');
 const arPopoutButton = document.querySelector('#ar-popout-button');
 let customArFileUrl = '';
+let ownerGlbModels = [];
+async function loadOwnerGlbModels(){try{const response=await fetch('public/models/glb-models.json',{cache:'no-store'});if(!response.ok)return[];const catalog=await response.json();const records=Array.isArray(catalog)?catalog:(Array.isArray(catalog.models)?catalog.models:[]);ownerGlbModels=records.filter(model=>model.visibility!=='private'&&model.modelUrl);const known=new Set(marketplaceListings.map(item=>item.modelUrl).filter(Boolean));ownerGlbModels.forEach(model=>{if(!known.has(model.modelUrl)){marketplaceListings.push({type:'Owner GLB Library',category:model.category||'Owner GLB Library',quality:'curated',name:`${model.name} AR Model`,price:'Available in AR',copy:`${model.description||'Owner-deposited GLB model.'} Source: ${model.modelUrl}`,model:model.name,modelUrl:model.modelUrl});known.add(model.modelUrl);}});renderMarketplace();return ownerGlbModels;}catch(error){console.warn('[Members AR] Owner GLB catalog unavailable',error);return[];}}
+function modelForCharacter(character){const key=character.file.replace(/[^a-z0-9]/gi,'').toLowerCase();return ownerGlbModels.find(model=>[model.id,model.name,model.modelUrl].some(value=>String(value||'').replace(/[^a-z0-9]/gi,'').toLowerCase().includes(key)));}
 
 function selectedArCharacter() {
   return siteTwoCharacters[Number(arCharacterSelect?.value)] || siteTwoCharacters[0];
@@ -824,23 +827,29 @@ function updateArViewer(useCustomFile = Boolean(customArFileUrl)) {
     arPreviewImg.hidden = useCustomFile && /\.(glb|gltf|usdz|reality)$/i.test(customArFileUrl);
   }
   if (arModelViewer) {
-    const isModelFile = useCustomFile && /\.(glb|gltf|usdz|reality)$/i.test(customArFileUrl);
+    const catalogModel = modelForCharacter(character);
+    const activeModelUrl = useCustomFile ? customArFileUrl : catalogModel?.modelUrl;
+    const activeIosUrl = !useCustomFile ? catalogModel?.iosModelUrl : '';
+    const isModelFile = /\.(glb|gltf|usdz|reality)$/i.test(activeModelUrl || '');
     arModelViewer.hidden = !isModelFile;
     if (isModelFile) {
-      if (/\.usdz$/i.test(customArFileUrl) || /\.reality$/i.test(customArFileUrl)) {
-        arModelViewer.setAttribute('ios-src', customArFileUrl);
+      arPreviewImg.hidden = true;
+      if (/\.usdz$/i.test(activeModelUrl) || /\.reality$/i.test(activeModelUrl)) {
+        arModelViewer.setAttribute('ios-src', activeModelUrl);
       } else {
-        arModelViewer.src = customArFileUrl;
+        arModelViewer.src = activeModelUrl;
+        if (activeIosUrl) arModelViewer.setAttribute('ios-src', activeIosUrl); else arModelViewer.removeAttribute('ios-src');
       }
       arModelViewer.poster = characterSrc;
     }
   }
   document.querySelectorAll('[data-ar-character]').forEach((button) => button.classList.toggle('active', button.dataset.arCharacter === arCharacterSelect.value));
-  if (arFileMeta && !customArFileUrl) arFileMeta.textContent = `Previewing ${character.name} from the built-in collection artwork.`;
+  if (arFileMeta && !customArFileUrl) { const catalogModel = modelForCharacter(character); arFileMeta.textContent = catalogModel ? `${catalogModel.name} GLB loaded from the owner model catalog for inline 3D and AR.` : `Previewing ${character.name} from the built-in collection artwork.`; }
 }
 
-function seedArViewer() {
+async function seedArViewer() {
   if (!arCharacterSelect || !arCharacterStrip) return;
+  await loadOwnerGlbModels();
   arCharacterSelect.innerHTML = siteTwoCharacters.map((character, index) => `<option value="${index}">${character.name}</option>`).join('');
   arCharacterStrip.innerHTML = siteTwoCharacters.map((character, index) => `
     <button class="ar-character-chip" type="button" data-ar-character="${index}">
