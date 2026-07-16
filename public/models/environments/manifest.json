@@ -1,6 +1,52 @@
 {
-  "defaultEnvironment": "muzimakz-main",
+  "defaultEnvironment": "muzikaz-full-house",
   "environments": [
+    {
+      "id": "muzikaz-full-house",
+      "name": "MUZIKAZ Full House",
+      "description": "Complete MUZIKAZ main and upper floors loaded as one playable house.",
+      "enabled": true,
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "parts": [
+        {
+          "model": "/public/models/environments/muzimakzmain.glb",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1
+        },
+        {
+          "model": "/public/models/environments/muzikazupper.glb",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1
+        }
+      ],
+      "spawn": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "model": "/public/models/environments/muzimakzmain.glb"
+    },
     {
       "id": "default-house",
       "name": "MUZIKAZ Walk-Around House",
