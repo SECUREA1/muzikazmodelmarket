@@ -1,5 +1,5 @@
 {
-  "defaultEnvironment": "default-house",
+  "defaultEnvironment": "muzikaz-upper",
   "environments": [
     {
       "id": "default-house",
@@ -8,6 +8,36 @@
       "model": "/public/models/environments/default-house.glb",
       "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
       "enabled": false,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": { "x": 0, "y": 0, "z": 2 },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "muzikaz-upper",
+      "name": "MUZIKAZ Upper",
+      "description": "A walk-around MUZIKAZ upper-level environment.",
+      "model": "/public/models/environments/muzikazupper.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
+      "scale": 1,
+      "rotationY": 0,
+      "spawn": { "x": 0, "y": 0, "z": 2 },
+      "cameraHeight": 1.65,
+      "movementSpeed": 3.5,
+      "collisionEnabled": true,
+      "allowAvatars": true
+    },
+    {
+      "id": "muzimakz-main",
+      "name": "MUZIMAKZ Main",
+      "description": "A walk-around MUZIMAKZ main environment.",
+      "model": "/public/models/environments/muzimakzmain.glb",
+      "thumbnail": "/public/models/environments/thumbnails/default-house.svg",
+      "enabled": true,
       "scale": 1,
       "rotationY": 0,
       "spawn": { "x": 0, "y": 0, "z": 2 },
