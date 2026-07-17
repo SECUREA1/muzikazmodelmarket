@@ -5,6 +5,34 @@ const COLLISION_RE = /^(COLLIDER|COLLISION|NAVMESH)(_|$)/i;
 const EXCLUDE_RE = /(SKY|PARTICLE|VFX|FOLIAGE|LEAF|LEAVES|GRASS|WATER|GLASS|LIGHT|HELPER|DECOR|AVATAR)/i;
 const SPAWN_PRIORITY = ['SPAWN_PLAYER', 'SPAWN_DEFAULT'];
 export const FLOOR_ENTRY_OFFSET = 0.125;
+const WALKABLE_FLOOR_NORMAL_Y = 0.55;
+
+function isWalkableFloorHit(hit) {
+  if (!hit?.face) return true;
+  const normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
+  return normal.y >= WALKABLE_FLOOR_NORMAL_Y;
+}
+
+function findWalkableFloorHit(meshes, point, bounds, playerHeight = 1.65) {
+  const rayOriginY = Number.isFinite(bounds?.max?.y) ? bounds.max.y + playerHeight + 8 : point.y + playerHeight + 8;
+  const raycaster = new THREE.Raycaster(new THREE.Vector3(point.x, rayOriginY, point.z), new THREE.Vector3(0, -1, 0));
+  return raycaster.intersectObjects(meshes, true).find((item) => item.object.visible !== false && isWalkableFloorHit(item));
+}
+
+export function alignPointAboveFloor(point, meshes, bounds, playerHeight = 1.65, floorGap = FLOOR_ENTRY_OFFSET) {
+  const aligned = point.clone();
+  const hit = findWalkableFloorHit(meshes, aligned, bounds, playerHeight);
+  if (hit) {
+    aligned.x = hit.point.x;
+    aligned.y = hit.point.y + floorGap;
+    aligned.z = hit.point.z;
+  } else if (Number.isFinite(bounds?.min?.y)) {
+    aligned.y = Math.max(aligned.y, bounds.min.y + floorGap);
+  } else {
+    aligned.y = Math.max(aligned.y, floorGap);
+  }
+  return aligned;
+}
 
 export function findSpawnNode(root) {
   const nodes = [];
@@ -52,12 +80,8 @@ export function resolveSafeSpawn(root, visibleMeshes, metadataSpawn = {}, player
     raw.y,
     THREE.MathUtils.clamp(raw.z, box.min.z + margin, box.max.z - margin)
   );
-  const raycastFloor = (point) => {
-    const raycaster = new THREE.Raycaster(new THREE.Vector3(point.x, box.max.y + playerHeight + 8, point.z), new THREE.Vector3(0, -1, 0));
-    return raycaster.intersectObjects(visibleMeshes, true).find((item) => item.object.visible !== false);
-  };
-  const hit = raycastFloor(candidate) || raycastFloor(center);
+  const hit = findWalkableFloorHit(visibleMeshes, candidate, box, playerHeight) || findWalkableFloorHit(visibleMeshes, center, box, playerHeight);
   if (hit) { candidate.x = hit.point.x; candidate.y = hit.point.y + FLOOR_ENTRY_OFFSET; candidate.z = hit.point.z; }
-  else candidate.y = Math.max(candidate.y, Number.isFinite(box.min.y) ? box.min.y + FLOOR_ENTRY_OFFSET : FLOOR_ENTRY_OFFSET);
+  else candidate.copy(alignPointAboveFloor(candidate, visibleMeshes, box, playerHeight));
   return { position: candidate, rotationY: spawnNode ? spawnNode.rotation.y : Number(metadataSpawn.rotationY || 0), bounds: box };
 }
