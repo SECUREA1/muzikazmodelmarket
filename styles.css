@@ -1346,3 +1346,4 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
     .brand-profile-grid,
     .brand-profile-card.feature { grid-template-columns: 1fr; }
 }
+.house-environment-picker{display:grid;gap:8px;color:var(--lime);font-size:12px;font-weight:900;text-transform:uppercase}.house-environment-picker select,.house-environment-picker input{width:100%;border:1px solid rgba(156,255,0,.32);border-radius:12px;background:#050805;color:#fff;padding:11px;font:inherit;text-transform:none}.house-environment-picker input::file-selector-button{margin-right:10px;border:1px solid rgba(156,255,0,.45);border-radius:999px;background:#10170f;color:var(--lime);font-weight:900;padding:8px 10px;cursor:pointer}

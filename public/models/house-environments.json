@@ -1,0 +1,14 @@
+{
+  "ownerInstructions": "Add controlled house-map environment files here the same way GLB files are listed in public/models/glb-models.json. Each record points to a lightweight JSON map so the VR gallery loads quickly without forcing a large 3D environment mesh.",
+  "environments": [
+    {
+      "id": "ioncore-house",
+      "name": "IonCore House Gallery",
+      "environmentUrl": "public/models/ioncore-house.environment.json",
+      "visibility": "public",
+      "format": "controlled-map-json",
+      "description": "Default room-by-room MUZIKAZ house map for the VR gallery.",
+      "publishedAt": "2026-07-17T00:00:00.000Z"
+    }
+  ]
+}

@@ -102,6 +102,14 @@
                         <span>Wheel: zoom</span>
                         <span>Q / E: camera height</span>
                     </div>
+                    <label class="house-environment-picker">Environment file
+                        <select id="house-environment-select" aria-label="Choose house environment file">
+                            <option value="">Loading environment files…</option>
+                        </select>
+                    </label>
+                    <label class="house-environment-picker">Load local map JSON
+                        <input id="house-environment-upload" type="file" accept="application/json,.json">
+                    </label>
                     <div class="house-actions">
                         <button type="button" id="house-reset">Reset view</button>
                         <button type="button" id="hand-toggle" aria-pressed="false">Enable hand control</button>
