@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, stat, unlink } from 'node:fs/promises';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -8,17 +8,61 @@ const root = process.cwd();
 const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
 const uploadDir = process.env.MUZIKAZ_UPLOAD_DIR || join(root, 'uploads', 'avatars');
 const assetUploadDir = process.env.MUZIKAZ_ASSET_UPLOAD_DIR || join(root, 'uploads', 'assets');
+const environmentUploadDir = process.env.MUZIKAZ_ENVIRONMENT_UPLOAD_DIR || join(root, 'uploads', 'environments');
 const dataFile = join(dataDir, 'shared-house-avatars.json');
 const assetsFile = join(dataDir, 'asset-library.json');
 const modelsFile = join(dataDir, 'published-models.json');
+const environmentDataFile = process.env.MUZIKAZ_ENVIRONMENT_DATA_FILE || join(dataDir, 'environments.json');
+const repositoryEnvironmentManifest = join(root, 'public', 'models', 'environments', 'environments.json');
 const clients = new Set();
 const presence = new Map();
 const port = Number(process.env.PORT || 4173);
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
+const maxEnvironmentBytes = Number(process.env.MUZIKAZ_ENVIRONMENT_MAX_BYTES || 150 * 1024 * 1024);
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
 const allowedUploadTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
-async function ensureStorage() { await mkdir(dataDir, { recursive: true }); await mkdir(uploadDir, { recursive: true }); await mkdir(assetUploadDir, { recursive: true }); try { await stat(dataFile); } catch { await writeFile(dataFile, '[]'); } try { await stat(assetsFile); } catch { await writeFile(assetsFile, '[]'); } try { await stat(modelsFile); } catch { await writeFile(modelsFile, '[]'); } }
+async function ensureStorage() { await mkdir(dataDir, { recursive: true }); await mkdir(uploadDir, { recursive: true }); await mkdir(assetUploadDir, { recursive: true }); await mkdir(environmentUploadDir, { recursive: true }); try { await stat(dataFile); } catch { await writeFile(dataFile, '[]'); } try { await stat(assetsFile); } catch { await writeFile(assetsFile, '[]'); } try { await stat(modelsFile); } catch { await writeFile(modelsFile, '[]'); } try { await stat(environmentDataFile); } catch { await writeFile(environmentDataFile, '[]'); } }
+
+
+async function readRepositoryEnvironments() {
+  try {
+    const records = JSON.parse(await readFile(repositoryEnvironmentManifest, 'utf8'));
+    return records.map((record) => ({ ...record, source: 'repository', canDelete: false, canEdit: false }));
+  } catch { return []; }
+}
+async function readUploadedEnvironments() { await ensureStorage(); return JSON.parse(await readFile(environmentDataFile, 'utf8')); }
+async function writeUploadedEnvironments(records) { await ensureStorage(); await writeFile(environmentDataFile, JSON.stringify(records, null, 2)); }
+function publicEnvironment(record) { return record.visibility === 'public' || record.source === 'repository'; }
+function sanitizeFilename(value) { return String(value || 'environment.glb').split(/[\\/]/).pop().replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 90); }
+function validGlbBuffer(buffer) {
+  if (!buffer?.length) throw new Error('Invalid GLB: file is empty.');
+  if (buffer.length < 20) throw new Error('Invalid GLB: file is too small.');
+  if (buffer.slice(0, 4).toString('utf8') !== 'glTF') throw new Error('Invalid GLB: missing glTF binary magic bytes.');
+  const version = buffer.readUInt32LE(4); const length = buffer.readUInt32LE(8);
+  if (version !== 2) throw new Error('Unsupported GLB: only glTF 2.0 binary files are accepted.');
+  if (length !== buffer.length) throw new Error('Malformed GLB: header length does not match uploaded file size.');
+  return true;
+}
+function environmentRecord(input = {}, extra = {}) {
+  const now = new Date().toISOString();
+  return { id: cleanText(input.id, randomUUID()), name: cleanText(input.name || input.title, 'Uploaded Environment'), description: cleanText(input.description, ''), modelUrl: String(extra.modelUrl || input.modelUrl || '').replace(/[<>]/g, ''), thumbnailUrl: String(extra.thumbnailUrl || input.thumbnailUrl || '').replace(/[<>]/g, ''), spawn: { x: clampNumber(input.spawnX ?? input.spawn?.x, -10000, 10000, 0), y: clampNumber(input.spawnY ?? input.spawn?.y, -10000, 10000, 1), z: clampNumber(input.spawnZ ?? input.spawn?.z, -10000, 10000, 2), rotationY: clampNumber(input.spawnRotationY ?? input.spawn?.rotationY, -Math.PI * 4, Math.PI * 4, 0) }, scale: clampNumber(input.scale, 0.001, 100, 1), rotation: { x: clampNumber(input.rotationX ?? input.rotation?.x, -Math.PI * 4, Math.PI * 4, 0), y: clampNumber(input.rotationY ?? input.rotation?.y, -Math.PI * 4, Math.PI * 4, 0), z: clampNumber(input.rotationZ ?? input.rotation?.z, -Math.PI * 4, Math.PI * 4, 0) }, collisionMode: ['auto', 'mesh', 'none'].includes(input.collisionMode) ? input.collisionMode : 'auto', visibility: input.visibility === 'private' ? 'private' : 'public', source: 'uploaded', canDelete: true, canEdit: true, originalFilename: cleanText(extra.originalFilename, ''), storedFilename: cleanText(extra.storedFilename, ''), fileSize: Number(extra.fileSize || input.fileSize || 0), mimeType: cleanText(extra.mimeType || input.mimeType, 'model/gltf-binary'), createdAt: input.createdAt || now, updatedAt: now };
+}
+async function combinedEnvironments() { const [repo, uploaded] = await Promise.all([readRepositoryEnvironments(), readUploadedEnvironments()]); return [...repo, ...uploaded.filter(publicEnvironment)]; }
+async function saveEnvironmentUpload(req) {
+  const parts = await multipartFields(req, maxEnvironmentBytes + 2_000_000); const fields = {}; parts.filter((p) => !p.filename).forEach((p) => { fields[p.name] = p.data.toString('utf8').trim(); });
+  const glb = parts.find((p) => p.name === 'environment' && p.filename); if (!glb) throw new Error('Choose a .glb environment file to upload.');
+  const original = sanitizeFilename(glb.filename); if (!/\.glb$/i.test(original)) throw new Error('Environment upload must use a .glb extension.');
+  if (glb.contentType && !['model/gltf-binary', 'application/octet-stream'].includes(glb.contentType)) throw new Error('Unsupported environment MIME type. Upload a GLB binary file.');
+  if (glb.data.length > maxEnvironmentBytes) throw new Error(`File too large. Maximum environment size is ${Math.round(maxEnvironmentBytes / 1048576)} MB.`);
+  validGlbBuffer(glb.data);
+  await mkdir(environmentUploadDir, { recursive: true });
+  const storedFilename = `${randomUUID()}-${original.replace(/\.glb$/i, '')}.glb`; await writeFile(join(environmentUploadDir, storedFilename), glb.data);
+  let thumbnailUrl = ''; const thumb = parts.find((p) => p.name === 'thumbnail' && p.filename && p.data.length);
+  if (thumb) { if (!['image/png', 'image/jpeg', 'image/webp'].includes(thumb.contentType)) throw new Error('Thumbnail must be PNG, JPEG, or WebP.'); const thumbName = `${randomUUID()}-${sanitizeFilename(thumb.filename)}`; await writeFile(join(environmentUploadDir, thumbName), thumb.data); thumbnailUrl = '/uploads/environments/' + thumbName; }
+  const record = environmentRecord(fields, { modelUrl: '/uploads/environments/' + storedFilename, thumbnailUrl, originalFilename: original, storedFilename, fileSize: glb.data.length, mimeType: glb.contentType || 'model/gltf-binary' });
+  const records = await readUploadedEnvironments(); records.unshift(record); await writeUploadedEnvironments(records); return record;
+}
 
 async function readAssets() { await ensureStorage(); return JSON.parse(await readFile(assetsFile, 'utf8')); }
 async function readModels() { await ensureStorage(); return JSON.parse(await readFile(modelsFile, 'utf8')); }
@@ -89,7 +133,18 @@ createServer(async (req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders()); res.end(); return; }
   try {
 
+
+    if (url.pathname === '/api/environments' && req.method === 'GET') return sendJson(res, 200, assetResponse(await combinedEnvironments()));
+    if (url.pathname === '/api/environments' && req.method === 'POST') { const records = await readUploadedEnvironments(); const record = environmentRecord(await bodyJson(req)); if (!record.modelUrl.startsWith('/uploads/environments/')) throw new Error('Uploaded environment records must point to /uploads/environments/.'); records.unshift(record); await writeUploadedEnvironments(records); return sendJson(res, 201, assetResponse(record)); }
+    if (url.pathname === '/api/environments/upload' && req.method === 'POST') return sendJson(res, 201, assetResponse(await saveEnvironmentUpload(req)));
+    const environmentItem = url.pathname.match(/^\/api\/environments\/([^/]+)$/);
+    if (environmentItem && req.method === 'GET') { const id = decodeURIComponent(environmentItem[1]); const record = (await combinedEnvironments()).find((env) => env.id === id || env.aliases?.includes(id)); return record ? sendJson(res, 200, assetResponse(record)) : sendJson(res, 404, { success: false, message: 'Environment not found' }); }
+    if (environmentItem && req.method === 'PATCH') { const id = decodeURIComponent(environmentItem[1]); const records = await readUploadedEnvironments(); const index = records.findIndex((env) => env.id === id); if (index < 0) return sendJson(res, 404, { success: false, message: 'Uploaded environment not found' }); records[index] = { ...records[index], ...environmentRecord({ ...records[index], ...(await bodyJson(req)) }, records[index]), id: records[index].id, modelUrl: records[index].modelUrl, source: 'uploaded', updatedAt: new Date().toISOString() }; await writeUploadedEnvironments(records); return sendJson(res, 200, assetResponse(records[index])); }
+    if (environmentItem && req.method === 'DELETE') { const id = decodeURIComponent(environmentItem[1]); const records = await readUploadedEnvironments(); const record = records.find((env) => env.id === id); if (!record) return sendJson(res, 404, { success: false, message: 'Uploaded environment not found' }); await writeUploadedEnvironments(records.filter((env) => env.id !== id)); if (record.storedFilename) await unlink(join(environmentUploadDir, record.storedFilename)).catch(() => {}); return sendJson(res, 200, assetResponse({ id })); }
+
     if ((url.pathname === '/api/models' || url.pathname === '/api/avatars/published') && req.method === 'GET') { const models = (await readModels()).filter((m) => m.status === 'published' || m.visibility === 'public').sort((a,b)=>String(b.publishedAt||'').localeCompare(String(a.publishedAt||''))); return sendJson(res, 200, assetResponse(models)); }
+
+
     if ((url.pathname === '/api/models' || url.pathname === '/api/avatars/published') && req.method === 'POST') { const records = await readModels(); const record = modelRecord(await bodyJson(req)); const index = records.findIndex((m) => m.id === record.id); if (index >= 0) records[index] = { ...records[index], ...record }; else records.unshift(record); await writeModels(records); broadcast('avatar:published', record); return sendJson(res, 201, assetResponse(record)); }
     if (url.pathname === '/api/assets/upload' && req.method === 'POST') return sendJson(res, 201, assetResponse(await saveAssetUpload(req, false)));
     if (url.pathname === '/api/models/upload' && req.method === 'POST') return sendJson(res, 201, assetResponse(await saveAssetUpload(req, true)));
@@ -118,7 +173,9 @@ createServer(async (req, res) => {
       try { await stat(possiblePath); filePath = possiblePath; break; } catch {}
     }
     if (!filePath) throw new Error('Not found');
-    res.writeHead(200, corsHeaders({ 'Content-Type': mimeTypes[extname(filePath).toLowerCase()] || 'application/octet-stream' }));
+    const extension = extname(filePath).toLowerCase();
+    const cacheControl = extension === '.glb' || extension === '.usdz' ? 'public, max-age=31536000, immutable' : extension === '.json' ? 'no-cache' : 'public, max-age=3600';
+    res.writeHead(200, corsHeaders({ 'Content-Type': mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }));
     createReadStream(filePath).pipe(res);
   } catch (error) { if (!res.headersSent) sendJson(res, url.pathname.startsWith('/api/') ? 400 : 404, { error: error.message || 'Not found' }); }
 }).listen(port, () => console.log(`MUZIKAZ shared house server running on http://localhost:${port}`));
