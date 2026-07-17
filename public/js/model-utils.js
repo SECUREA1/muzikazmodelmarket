@@ -5,3 +5,5 @@ export function createEl(tag,attrs={},children=[]){const el=document.createEleme
 export function normalizeLiveModelsUrl(){return `${window.location.origin}${window.location.pathname}#live-models`;}
 export function normalizeLiveModelsHash(){if(location.hash&&location.hash.includes('#live-models')&&location.hash!=='#live-models') history.replaceState(null,'',normalizeLiveModelsUrl());}
 export function publicShareUrl(model){return new URL(`model-explorer.html?model=${encodeURIComponent(model.id)}`,window.location.origin).href;}
+
+export function modelsSignature(models=[]){return JSON.stringify(models.map(({id,modelUrl,thumbnailUrl,publishedAt,name})=>[id,modelUrl,thumbnailUrl,publishedAt,name]));}
