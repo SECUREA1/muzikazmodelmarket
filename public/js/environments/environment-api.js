@@ -1,10 +1,20 @@
 const PREFIX = '[MUZIKAZ Environment]';
 
 export async function fetchEnvironmentList() {
-  const response = await fetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
-  if (!response.ok) throw new Error(`Environment registry unavailable (${response.status})`);
-  const payload = await response.json();
-  return Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+  try {
+    const response = await fetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+    if (!response.ok) throw new Error(`Environment registry unavailable (${response.status})`);
+    const payload = await response.json();
+    const records = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+    if (records.length) return records;
+  } catch (error) {
+    logEnvironment('API registry unavailable; loading repository environment manifest.', error.message);
+  }
+
+  const fallback = await fetch('/public/models/environments/environments.json', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+  if (!fallback.ok) throw new Error(`Repository environment manifest unavailable (${fallback.status})`);
+  const records = await fallback.json();
+  return Array.isArray(records) ? records : [];
 }
 
 export async function uploadEnvironment(formData, onProgress = () => {}) {
