@@ -75,9 +75,3 @@ Attach a Render persistent disk at `/var/data`. Uploaded `.glb`, `.gltf`, `.usdz
 ### Database migration instructions
 
 For a PostgreSQL-backed deployment, create a Render PostgreSQL database, set `DATABASE_URL`, and run the SQL in `migrations/001_published_models.sql` before enabling a PostgreSQL repository implementation. The current committed implementation uses durable JSON metadata on the Render disk.
-
-## Walk-Around GLB Environments
-
-The 3D House Explorer now loads repository-hosted GLB environments from `public/models/environments/manifest.json` through `public/js/house-explorer-3d.js`. Enabled manifest entries are shown dynamically in `model-explorer.html`, and the selected environment ID is also the `houseId` used by the existing shared-avatar and presence APIs (`/api/houses/:houseId/*`).
-
-This repository does not include binary GLB model content by default. To add the next house, copy the `.glb` into `public/models/environments/`, add a thumbnail under `public/models/environments/thumbnails/`, then append or enable a manifest entry with its `id`, URLs, scale, rotation, spawn, camera height, movement speed, collision flag, and avatar flag. The static build copies `.glb`, `.gltf`, `.bin`, `.ktx2`, `.hdr`, and related model assets into `dist/` for the Rust server.

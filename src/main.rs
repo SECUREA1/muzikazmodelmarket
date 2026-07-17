@@ -50,8 +50,6 @@ struct Asset {
     status: String,
     visibility: String,
     intended_use: String,
-    asset_type: String,
-    playable_environment: bool,
     related_model_id: String,
     product_assignment: String,
     collection_assignment: String,
@@ -254,8 +252,6 @@ fn api(
         ("GET", "/api/assets/mine") => list_assets(s, st, headers, "mine"),
         ("GET", "/api/assets/public") => list_assets(s, st, headers, "public"),
         ("POST", "/api/assets/upload") => upload_asset(s, st, headers, body),
-        ("GET", "/api/spaces") => spaces(s, st, headers, method, path, body),
-        ("POST", "/api/spaces") => spaces(s, st, headers, method, path, body),
         ("GET", "/api/admin/assets/pending") => admin_pending(s, st, headers),
         ("GET", "/api/admin/analytics") => admin_analytics(s, st, headers),
         ("GET", "/api/admin/storage") => admin_storage(s, st, headers),
@@ -331,7 +327,6 @@ fn api(
             sse_ready(s)
         }
 
-        _ if path.starts_with("/api/spaces/") => spaces(s, st, headers, method, path, body),
         _ if method == "GET" && path.starts_with("/api/assets/") => {
             get_asset(s, st, headers, &path[12..])
         }
@@ -1187,7 +1182,6 @@ fn ctype(p: &Path) -> &'static str {
         "glb" => "model/gltf-binary",
         "gltf" => "model/gltf+json",
         "usdz" => "model/vnd.usdz+zip",
-        "bin" | "ktx2" | "hdr" | "exr" => "application/octet-stream",
         _ => "application/octet-stream",
     }
 }
@@ -1270,7 +1264,6 @@ fn list_assets(
     mode: &str,
 ) -> std::io::Result<()> {
     let (u, _, _, _) = auth(h);
-    if mode == "mine" && u.is_empty() { return json(s, 403, false, "{}", "Authentication required: X-User-Id is missing", false); }
     let admin = is_admin(h, st);
     let mut v: Vec<_> = st
         .assets
@@ -1492,8 +1485,6 @@ fn store_asset_part(
             .cloned()
             .unwrap_or_else(|| "private".into()),
         intended_use: trim(fields.get("intendedUse").cloned().unwrap_or_default(), 80),
-        asset_type: { let v=fields.get("assetType").cloned().unwrap_or_default(); if matches!(v.as_str(),"object"|"avatar"|"environment") { v } else if fields.get("playableEnvironment").map(|x|x=="true").unwrap_or(false) { "environment".into() } else { "object".into() } },
-        playable_environment: fields.get("playableEnvironment").map(|x|x=="true"||x=="on"||x=="1").unwrap_or(false) || fields.get("assetType").map(|x|x=="environment").unwrap_or(false),
         related_model_id: trim(
             fields.get("relatedModelId").cloned().unwrap_or_default(),
             120,
@@ -1543,8 +1534,6 @@ fn patch_asset(
             ("visibility", 3),
             ("intendedUse", 4),
             ("relatedModelId", 5),
-            ("assetType", 6),
-            ("playableEnvironment", 7),
         ] {
             let x = val(&b, k);
             if !x.is_empty() {
@@ -1555,8 +1544,6 @@ fn patch_asset(
                     3 => a.visibility = trim(x, 40),
                     4 => a.intended_use = trim(x, 80),
                     5 => a.related_model_id = trim(x, 120),
-                    6 => if matches!(x.as_str(),"object"|"avatar"|"environment") { a.asset_type=x; },
-                    7 => a.playable_environment = x=="true"||x=="on"||x=="1",
                     _ => {}
                 }
             }
@@ -1843,13 +1830,13 @@ fn mime_for_ext(ext: &str) -> &'static str {
         "reality" => "model/vnd.reality",
         "obj" => "text/plain",
         "mtl" => "text/plain",
-        "bin" | "ktx2" | "hdr" | "exr" => "application/octet-stream",
+        "bin" => "application/octet-stream",
         "zip" => "application/zip",
         _ => "application/octet-stream",
     }
 }
 fn asset_json(a: &Asset) -> String {
-    format!("{{\"id\":\"{}\",\"ownerUserId\":\"{}\",\"ownerDisplayName\":\"{}\",\"uploadedByRole\":\"{}\",\"title\":\"{}\",\"description\":\"{}\",\"originalFilename\":\"{}\",\"storedFilename\":\"{}\",\"fileType\":\"{}\",\"mimeType\":\"{}\",\"fileSize\":{},\"publicUrl\":\"{}\",\"thumbnailUrl\":\"{}\",\"category\":\"{}\",\"tags\":\"{}\",\"status\":\"{}\",\"moderationStatus\":\"{}\",\"visibility\":\"{}\",\"intendedUse\":\"{}\",\"assetType\":\"{}\",\"playableEnvironment\":{},\"relatedModelId\":\"{}\",\"productAssignment\":\"{}\",\"collectionAssignment\":\"{}\",\"publishLocation\":\"{}\",\"approvedBy\":\"{}\",\"approvedAt\":\"{}\",\"publishedAt\":\"{}\",\"moderatorNote\":\"{}\",\"featured\":{},\"archived\":{},\"createdAt\":\"{}\",\"updatedAt\":\"{}\"}}",esc(&a.id),esc(&a.owner_user_id),esc(&a.owner_display_name),esc(&a.uploaded_by_role),esc(&a.title),esc(&a.description),esc(&a.original_filename),esc(&a.stored_filename),esc(&a.file_type),esc(&a.mime_type),a.file_size,esc(&a.public_url),esc(&a.thumbnail_url),esc(&a.category),esc(&a.tags),esc(&a.status),esc(&a.status),esc(&a.visibility),esc(&a.intended_use),esc(&a.asset_type),a.playable_environment,esc(&a.related_model_id),esc(&a.product_assignment),esc(&a.collection_assignment),esc(&a.publish_location),esc(&a.approved_by),esc(&a.approved_at),esc(&a.published_at),esc(&a.moderator_note),a.featured,a.archived,esc(&a.created_at),esc(&a.updated_at))
+    format!("{{\"id\":\"{}\",\"ownerUserId\":\"{}\",\"ownerDisplayName\":\"{}\",\"uploadedByRole\":\"{}\",\"title\":\"{}\",\"description\":\"{}\",\"originalFilename\":\"{}\",\"storedFilename\":\"{}\",\"fileType\":\"{}\",\"mimeType\":\"{}\",\"fileSize\":{},\"publicUrl\":\"{}\",\"thumbnailUrl\":\"{}\",\"category\":\"{}\",\"tags\":\"{}\",\"status\":\"{}\",\"moderationStatus\":\"{}\",\"visibility\":\"{}\",\"intendedUse\":\"{}\",\"relatedModelId\":\"{}\",\"productAssignment\":\"{}\",\"collectionAssignment\":\"{}\",\"publishLocation\":\"{}\",\"approvedBy\":\"{}\",\"approvedAt\":\"{}\",\"publishedAt\":\"{}\",\"moderatorNote\":\"{}\",\"featured\":{},\"archived\":{},\"createdAt\":\"{}\",\"updatedAt\":\"{}\"}}",esc(&a.id),esc(&a.owner_user_id),esc(&a.owner_display_name),esc(&a.uploaded_by_role),esc(&a.title),esc(&a.description),esc(&a.original_filename),esc(&a.stored_filename),esc(&a.file_type),esc(&a.mime_type),a.file_size,esc(&a.public_url),esc(&a.thumbnail_url),esc(&a.category),esc(&a.tags),esc(&a.status),esc(&a.status),esc(&a.visibility),esc(&a.intended_use),esc(&a.related_model_id),esc(&a.product_assignment),esc(&a.collection_assignment),esc(&a.publish_location),esc(&a.approved_by),esc(&a.approved_at),esc(&a.published_at),esc(&a.moderator_note),a.featured,a.archived,esc(&a.created_at),esc(&a.updated_at))
 }
 fn assignment_json(a: &AssetModelAssignment) -> String {
     format!("{{\"id\":\"{}\",\"assetId\":\"{}\",\"modelId\":\"{}\",\"ownerUserId\":\"{}\",\"displayType\":\"{}\",\"materialSlot\":\"{}\",\"position\":{},\"rotation\":{},\"scale\":{},\"opacity\":{},\"repeatX\":{},\"repeatY\":{},\"approved\":{},\"published\":{},\"createdAt\":\"{}\",\"updatedAt\":\"{}\"}}",esc(&a.id),esc(&a.asset_id),esc(&a.model_id),esc(&a.owner_user_id),esc(&a.display_type),esc(&a.material_slot),a.position,a.rotation,a.scale,a.opacity,a.repeat_x,a.repeat_y,a.approved,a.published,esc(&a.created_at),esc(&a.updated_at))
@@ -1917,8 +1904,6 @@ fn load_assets(p: &Path) -> Vec<Asset> {
                     status: val(&o, "status"),
                     visibility: val(&o, "visibility"),
                     intended_use: val(&o, "intendedUse"),
-                    asset_type: { let v=val(&o,"assetType"); if v.is_empty() { "object".into() } else { v } },
-                    playable_environment: o.contains("\"playableEnvironment\":true"),
                     related_model_id: val(&o, "relatedModelId"),
                     product_assignment: val(&o, "productAssignment"),
                     collection_assignment: val(&o, "collectionAssignment"),
@@ -1989,36 +1974,4 @@ fn load_derivatives(p: &Path) -> Vec<AssetDerivative> {
             }
         })
         .collect()
-}
-
-fn spaces(s: &mut TcpStream, st: &State, h: &HashMap<String, String>, method: &str, path: &str, body: &[u8]) -> std::io::Result<()> {
-    let Some((user, _, name, _)) = require_user(s, h) else { return Ok(()); };
-    let dir = st.data.join("spaces").join(&user);
-    let _ = fs::create_dir_all(&dir);
-    if method == "GET" && path == "/api/spaces" {
-        let mut out = Vec::new();
-        if let Ok(rd) = fs::read_dir(&dir) { for e in rd.flatten() { if e.path().extension().and_then(|x|x.to_str()) == Some("json") { if let Ok(t)=fs::read_to_string(e.path()) { out.push(t); } } } }
-        return json(s, 200, true, &format!("[{}]", out.join(",")), "Spaces loaded", false);
-    }
-    if method == "POST" && path == "/api/spaces" {
-        let b = String::from_utf8_lossy(body);
-        let id = { let v=val(&b,"spaceId"); if v.is_empty(){uuid()}else{trim(v,120)} };
-        let status = { let v=val(&b,"status"); if v=="published" {"published"} else {"draft"} };
-        let env = raw_json(&b,"environment").unwrap_or_else(||"{}".into());
-        let objects = raw_json(&b,"objects").unwrap_or_else(||"[]".into());
-        let camera = raw_json(&b,"camera").unwrap_or_else(||"{}".into());
-        let settings = raw_json(&b,"settings").unwrap_or_else(||"{}".into());
-        let now=now();
-        let rec=format!("{{\"schemaVersion\":1,\"spaceId\":\"{}\",\"ownerId\":\"{}\",\"ownerDisplayName\":\"{}\",\"name\":\"{}\",\"description\":\"{}\",\"status\":\"{}\",\"visibility\":\"{}\",\"environment\":{},\"objects\":{},\"camera\":{},\"settings\":{},\"updatedAt\":\"{}\",\"createdAt\":\"{}\",\"publishedAt\":{} }}", esc(&id),esc(&user),esc(&name),esc(&{let v=val(&b,"name"); if v.is_empty(){"My 3D Space".into()}else{v}}),esc(&val(&b,"description")),status, if status=="published"{"public"}else{"private"}, env, objects, camera, settings, esc(&now), esc(&now), if status=="published"{format!("\"{}\"",esc(&now))}else{"null".into()});
-        let _=fs::write(dir.join(format!("{}.json", id)), &rec);
-        return json(s, 200, true, &rec, "Space saved", false);
-    }
-    let rest = path.trim_start_matches("/api/spaces/");
-    let id = rest.split('/').next().unwrap_or("");
-    let file = dir.join(format!("{}.json", id));
-    if method == "GET" { return match fs::read_to_string(file) { Ok(t)=>json(s,200,true,&t,"Space loaded",false), Err(_)=>json(s,404,false,"{}","Space not found",false) }; }
-    if method == "DELETE" { let _=fs::remove_file(file); return json(s,200,true,&format!("{{\"spaceId\":\"{}\"}}",esc(id)),"Space deleted",false); }
-    if method == "POST" && rest.ends_with("/duplicate") { if let Ok(t)=fs::read_to_string(&file){ let nid=uuid(); let nt=t.replacen(&format!("\"spaceId\":\"{}\"",id),&format!("\"spaceId\":\"{}\"",nid),1); let _=fs::write(dir.join(format!("{}.json",nid)),&nt); return json(s,200,true,&nt,"Space duplicated",false);} }
-    if method == "POST" && (rest.ends_with("/publish") || rest.ends_with("/unpublish")) { if let Ok(mut t)=fs::read_to_string(&file){ t=t.replace("\"status\":\"draft\"", if rest.ends_with("/publish") {"\"status\":\"published\""} else {"\"status\":\"draft\""}); t=t.replace("\"status\":\"published\"", if rest.ends_with("/unpublish") {"\"status\":\"draft\""} else {"\"status\":\"published\""}); let _=fs::write(file,&t); return json(s,200,true,&t,"Space updated",false);} }
-    json(s,404,false,"{}","Space route not found",false)
 }
