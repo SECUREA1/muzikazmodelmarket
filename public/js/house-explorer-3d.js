@@ -3,12 +3,25 @@ import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders
 import { DRACOLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/DRACOLoader.js';
 import { Octree } from 'https://unpkg.com/three@0.160.0/examples/jsm/math/Octree.js';
 import { Capsule } from 'https://unpkg.com/three@0.160.0/examples/jsm/math/Capsule.js';
-import { muzikazApi, muzikazAuthHeaders } from './auth-api.js';
 
 const ENVIRONMENT_MODEL_PATH = '/public/models/environments/';
 const MANIFEST_URL = `${ENVIRONMENT_MODEL_PATH}manifest.json`;
 const APPROVED_MODEL_PATHS = ['/uploads/','/public/models/','/models/'];
 const API_BASE = window.MUZIKAZ_SHARED_AVATAR_API || '';
+async function muzikazApi(path, opts = {}) {
+  const response = await fetch(path, {
+    ...opts,
+    headers: {
+      Accept: 'application/json',
+      'X-MUZIKAZ-Session': localStorage.getItem('muzikazHouseSessionId') || '',
+      ...(opts.headers || {}),
+    },
+  });
+  let data = null;
+  try { data = await response.json(); } catch { data = null; }
+  if (!response.ok) throw new Error(data?.message || data?.error || 'Service unavailable');
+  return data?.data ?? data ?? {};
+}
 const DIRECTED_ENVIRONMENT_IDS = new Set(['muzimakz-main', 'muzikaz-upper']);
 const DEFAULT_ENVIRONMENT_ID = 'muzimakz-main';
 const UPPER_ENVIRONMENT_ID = 'muzikaz-upper';
