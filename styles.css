@@ -1750,7 +1750,7 @@ section,
     display:grid;
     grid-template-columns:repeat(4,minmax(0,1fr));
     grid-template-areas:
-      "side-left forward forward side-right"
+      "side-left forward side-right ."
       "zoom-in zoom-out reverse jump";
     gap:clamp(6px,1.8vw,12px);
     width:100%;
