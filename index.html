@@ -51,7 +51,6 @@
             <a href="checkout.html">Checkout</a>
         </nav>
         <div class="icons" aria-label="Store shortcuts">
-            <button class="icon-button" type="button" data-action="search" aria-label="Search collections">⌕</button>
             <button class="icon-button cart" type="button" data-action="cart" aria-label="Cart">🛒<b id="cart-count">0</b></button>
         </div>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">☰</button>
@@ -110,11 +109,14 @@
                     <label class="house-environment-picker">Load local map JSON
                         <input id="house-environment-upload" type="file" accept="application/json,.json">
                     </label>
-                    <div class="house-actions">
-                        <button type="button" id="house-reset">Reset view</button>
-                        <button type="button" id="hand-toggle" aria-pressed="false">Enable hand control</button>
-                        <button type="button" id="add-avatar">Add Avatar</button>
-                    </div>
+                    <details class="button-menu house-action-menu">
+                        <summary>Explorer actions</summary>
+                        <div class="house-actions button-group">
+                            <button type="button" id="house-reset">Reset view</button>
+                            <button type="button" id="hand-toggle" aria-pressed="false">Enable hand control</button>
+                            <button type="button" id="add-avatar">Add Avatar</button>
+                        </div>
+                    </details>
                     <div class="camera-preview-panel">
                         <video id="hand-preview" playsinline muted></video>
                         <span id="hand-status">Camera preview inactive. MediaPipe Hands loads only when enabled.</span>
