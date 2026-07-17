@@ -85,13 +85,13 @@
           </div>
         </aside>
         <div class="mobile-move-pad" aria-label="Mobile movement and zoom controls">
-          <button type="button" data-mobile-move="left" aria-label="Turn left">↺<span>Turn</span></button>
-          <button type="button" data-mobile-move="forward" aria-label="Move forward">▲<span>Forward</span></button>
-          <button type="button" data-mobile-move="right" aria-label="Turn right">↻<span>Turn</span></button>
-          <button type="button" data-mobile-move="back" aria-label="Move backward">▼<span>Reverse</span></button>
-          <button type="button" data-mobile-move="jump" aria-label="Jump">⤴<span>Jump</span></button>
-          <button type="button" data-mobile-zoom="in" aria-label="Zoom in">+<span>Zoom</span></button>
-          <button type="button" data-mobile-zoom="out" aria-label="Zoom out">−<span>Zoom</span></button>
+          <button class="mobile-control mobile-control-turn-left" type="button" data-mobile-hold="turn-left" aria-label="Turn left"><b>↺</b><span>Turn left</span></button>
+          <button class="mobile-control mobile-control-primary" type="button" data-mobile-hold="forward" aria-label="Move forward"><b>▲</b><span>Forward</span></button>
+          <button class="mobile-control mobile-control-turn-right" type="button" data-mobile-hold="turn-right" aria-label="Turn right"><b>↻</b><span>Turn right</span></button>
+          <button class="mobile-control" type="button" data-mobile-zoom="in" aria-label="Zoom in"><b>+</b><span>Zoom in</span></button>
+          <button class="mobile-control" type="button" data-mobile-zoom="out" aria-label="Zoom out"><b>−</b><span>Zoom out</span></button>
+          <button class="mobile-control" type="button" data-mobile-hold="back" aria-label="Reverse"><b>▼</b><span>Reverse</span></button>
+          <button class="mobile-control mobile-control-jump" type="button" data-mobile-action="jump" aria-label="Jump"><b>⤴</b><span>Jump</span></button>
         </div>
       </div>
     </section>
