@@ -1,0 +1,43 @@
+[
+  {
+    "id": "muzikaz-main",
+    "aliases": ["muzimakz-main"],
+    "name": "MUZIKAZ Main Floor",
+    "description": "Complete walkable MUZIKAZ main-floor environment.",
+    "modelUrl": "/public/models/environments/muzimakzmain.glb",
+    "thumbnailUrl": "",
+    "spawn": { "x": 0, "y": 1, "z": 2, "rotationY": 0 },
+    "scale": 1,
+    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository"
+  },
+  {
+    "id": "muzikaz-upper",
+    "name": "MUZIKAZ Upper Floor",
+    "description": "Complete walkable MUZIKAZ upper-floor environment.",
+    "modelUrl": "/public/models/environments/muzikazupper.glb",
+    "thumbnailUrl": "",
+    "spawn": { "x": 0, "y": 1, "z": 2, "rotationY": 0 },
+    "scale": 1,
+    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository"
+  },
+  {
+    "id": "muzikaz-full-house",
+    "name": "MUZIKAZ Full House",
+    "description": "Main and upper-floor MUZIKAZ GLBs intentionally loaded together as one walkthrough world.",
+    "modelUrls": ["/public/models/environments/muzimakzmain.glb", "/public/models/environments/muzikazupper.glb"],
+    "thumbnailUrl": "",
+    "spawn": { "x": 0, "y": 1, "z": 2, "rotationY": 0 },
+    "scale": 1,
+    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository",
+    "combined": true
+  }
+]
