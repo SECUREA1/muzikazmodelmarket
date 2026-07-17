@@ -47,4 +47,21 @@ if (!css.includes("url('reference.png')")) {
   throw new Error('styles.css does not reference the hero artwork.');
 }
 
+const environmentManifest = JSON.parse(await readFile('dist/public/models/environments/manifest.json', 'utf8'));
+for (const environment of environmentManifest.environments ?? []) {
+  if (environment.enabled !== true) continue;
+
+  const modelPaths = Array.isArray(environment.parts) && environment.parts.length
+    ? environment.parts.map((part) => part.model)
+    : [environment.model];
+
+  for (const modelPath of modelPaths) {
+    if (!modelPath?.startsWith('/public/models/environments/') || !/\.(glb|gltf)$/i.test(modelPath)) {
+      throw new Error(`${environment.id} must reference a GLB/GLTF under /public/models/environments/.`);
+    }
+
+    await access(`dist${modelPath}`);
+  }
+}
+
 console.log('Static build output contains all public and member pages with required references.');

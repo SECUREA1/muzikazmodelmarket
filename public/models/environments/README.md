@@ -1,6 +1,6 @@
 # Walk-Around GLB Environments
 
-Place repository-hosted house, room, building, landscape, and environment assets in `public/models/environments/`. Put thumbnails in `public/models/environments/thumbnails/` and register each environment in `manifest.json`. This repository intentionally does not ship binary GLB content; add your own `.glb`/`.gltf` files and set the matching manifest entry to `"enabled": true` to activate it.
+Place repository-hosted house, room, building, landscape, and environment assets in `public/models/environments/`. Put thumbnails in `public/models/environments/thumbnails/` and register each environment in `manifest.json`. This folder is the canonical source for house/environment GLB content used by the 3D House Explorer. Add or replace `.glb`/`.gltf` files here and set the matching manifest entry to `"enabled": true` to activate it.
 
 ## Add an environment
 
