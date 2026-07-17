@@ -1492,3 +1492,59 @@ section,
     letter-spacing:.02em;
   }
 }
+
+/* Keep mobile game controls locked directly below the viewable house canvas. */
+.mobile-move-pad span{
+  display:block;
+  margin-top:2px;
+  font-size:.68em;
+  line-height:1;
+}
+@media(max-width:640px){
+  .house-explorer-shell{
+    gap:0;
+  }
+  .house-stage{
+    order:1;
+    border-radius:22px 22px 0 0;
+    min-height:50svh;
+    height:min(58svh,520px);
+    max-height:calc(100svh - 230px);
+  }
+  .mobile-move-pad{
+    order:2;
+    position:relative;
+    left:auto;
+    bottom:auto;
+    transform:none;
+    z-index:10;
+    width:100%;
+    max-width:none;
+    margin:0;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    grid-template-areas:
+      "turn-left forward forward turn-right"
+      "zoom-out back jump zoom-in";
+    gap:8px;
+    padding:10px;
+    border-top:0;
+    border-radius:0 0 22px 22px;
+    box-sizing:border-box;
+  }
+  .house-hud{
+    order:3;
+    margin-top:12px;
+  }
+  .mobile-move-pad [data-mobile-move="left"]{grid-area:turn-left}
+  .mobile-move-pad [data-mobile-move="forward"]{grid-area:forward}
+  .mobile-move-pad [data-mobile-move="right"]{grid-area:turn-right}
+  .mobile-move-pad [data-mobile-move="back"]{grid-area:back}
+  .mobile-move-pad [data-mobile-move="jump"]{grid-area:jump}
+  .mobile-move-pad [data-mobile-zoom="out"]{grid-area:zoom-out}
+  .mobile-move-pad [data-mobile-zoom="in"]{grid-area:zoom-in}
+  .mobile-move-pad button{
+    min-height:52px;
+    padding:.45rem .35rem;
+    font-size:1rem;
+  }
+}
