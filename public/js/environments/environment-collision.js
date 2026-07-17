@@ -4,6 +4,7 @@ import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/
 const COLLISION_RE = /^(COLLIDER|COLLISION|NAVMESH)(_|$)/i;
 const EXCLUDE_RE = /(SKY|PARTICLE|VFX|FOLIAGE|LEAF|LEAVES|GRASS|WATER|GLASS|LIGHT|HELPER|DECOR|AVATAR)/i;
 const SPAWN_PRIORITY = ['SPAWN_PLAYER', 'SPAWN_DEFAULT'];
+export const FLOOR_ENTRY_OFFSET = 0.125;
 
 export function findSpawnNode(root) {
   const nodes = [];
@@ -56,7 +57,7 @@ export function resolveSafeSpawn(root, visibleMeshes, metadataSpawn = {}, player
     return raycaster.intersectObjects(visibleMeshes, true).find((item) => item.object.visible !== false);
   };
   const hit = raycastFloor(candidate) || raycastFloor(center);
-  if (hit) { candidate.x = hit.point.x; candidate.y = hit.point.y + 0.04; candidate.z = hit.point.z; }
-  else candidate.y = Math.max(candidate.y, Number.isFinite(box.min.y) ? box.min.y + 0.08 : 0.08);
+  if (hit) { candidate.x = hit.point.x; candidate.y = hit.point.y + FLOOR_ENTRY_OFFSET; candidate.z = hit.point.z; }
+  else candidate.y = Math.max(candidate.y, Number.isFinite(box.min.y) ? box.min.y + FLOOR_ENTRY_OFFSET : FLOOR_ENTRY_OFFSET);
   return { position: candidate, rotationY: spawnNode ? spawnNode.rotation.y : Number(metadataSpawn.rotationY || 0), bounds: box };
 }
