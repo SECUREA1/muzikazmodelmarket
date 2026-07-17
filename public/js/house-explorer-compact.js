@@ -64,10 +64,14 @@ function restoreCompactHouseWindow() {
 
   if (originalPanel) originalPanel.hidden = true;
   if (cameraPanel) cameraPanel.hidden = true;
-  document.querySelectorAll('.environment-browser,.model-collection-panel,.scene-hierarchy-panel,.object-tools,.scene-builder-toolbar')
+  document.querySelectorAll('.environment-browser,.scene-hierarchy-panel,.object-tools,.scene-builder-toolbar')
     .forEach((element) => { element.hidden = true; });
+  document.querySelectorAll('.model-collection-panel,.quick-glb-selector')
+    .forEach((element) => { element.hidden = false; });
 
   const walkButton = document.querySelector('#walk-mode');
+  const modelPanel = document.querySelector('.model-collection-panel');
+  if (modelPanel) modelPanel.open = true;
   if (walkButton) walkButton.textContent = 'Enter game mode';
   const resetButton = document.querySelector('#house-reset');
   if (resetButton) resetButton.textContent = 'Reset view';
