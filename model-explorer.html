@@ -3,25 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata." />
-  <meta name="keywords" content="MUZIKAZ, muzikaz.com, 3D model market, character models, mascot merch, creator dashboard, wallet rewards, brand kit, neon collectibles" />
-  <meta name="author" content="MUZIKAZ" />
-  <meta name="robots" content="index, follow, max-image-preview:large" />
-  <link rel="canonical" href="https://muzikaz.com/model-explorer.html" />
-  <link rel="icon" type="image/svg+xml" href="muzikaz_bolt_logo_editable.svg" />
-  <link rel="apple-touch-icon" href="logo_symbol_crop_2x_transparent.png" />
-  <link rel="manifest" href="site.webmanifest" />
-  <link rel="alternate" type="application/rss+xml" title="MUZIKAZ Drops Feed" href="feed.xml" />
-  <meta property="og:site_name" content="MUZIKAZ" />
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="MUZIKAZ 3D Model Explorer | Publish Live Models" />
-  <meta property="og:description" content="Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata." />
-  <meta property="og:url" content="https://muzikaz.com/model-explorer.html" />
-  <meta property="og:image" content="https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="MUZIKAZ 3D Model Explorer | Publish Live Models" />
-  <meta name="twitter:description" content="Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata." />
-  <meta name="twitter:image" content="https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png" />
+    <meta name="description" content="Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata." />
+    <meta name="keywords" content="MUZIKAZ, muzikaz.com, 3D model market, character models, mascot merch, creator dashboard, wallet rewards, brand kit, neon collectibles" />
+    <meta name="author" content="MUZIKAZ" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://muzikaz.com/model-explorer.html" />
+    <link rel="icon" type="image/svg+xml" href="muzikaz_bolt_logo_editable.svg" />
+    <link rel="apple-touch-icon" href="logo_symbol_crop_2x_transparent.png" />
+    <link rel="manifest" href="site.webmanifest" />
+    <link rel="alternate" type="application/rss+xml" title="MUZIKAZ Drops Feed" href="feed.xml" />
+    <meta property="og:site_name" content="MUZIKAZ" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MUZIKAZ 3D Model Explorer | Publish Live Models" />
+    <meta property="og:description" content="Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata." />
+    <meta property="og:url" content="https://muzikaz.com/model-explorer.html" />
+    <meta property="og:image" content="https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MUZIKAZ 3D Model Explorer | Publish Live Models" />
+    <meta name="twitter:description" content="Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata." />
+    <meta name="twitter:image" content="https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png" />
   <title>MUZIKAZ 3D Model Explorer | Publish Live Models</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -29,10 +29,10 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="model-explorer-page">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata.","sameAs":["https://muzikaz.com/"]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata.","sameAs":["https://muzikaz.com/"]}</script>
   <div class="topbar">
     <span>Public 3D model lab</span>
-    <span>Choose the main or upper MUZIKAZ GLB floor and explore it in game mode</span>
+    <span>Upload GLB/USDZ files, walk a cursor model on the floor, zoom, scale, launch AR, then lock it in</span>
   </div>
 
   <header class="site-header">
@@ -60,25 +60,24 @@
       <div class="section-title"><span></span><h2 id="house-explorer-title">3D House Explorer</h2><a href="#house-explorer-canvas">Enter interior</a></div>
       <div class="house-explorer-shell">
         <div class="house-stage">
-          <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive Three.js GLB walk-around environment"></canvas>
+          <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
           <div class="house-reticle" aria-hidden="true">+</div>
-          <div class="house-status" id="house-status" role="status">Loading playable house environments…</div>
+          <div class="house-status" id="house-status" role="status">Ready: drag to look around, then move through the rooms.</div>
         </div>
         <aside class="house-hud" aria-label="3D House Explorer controls">
-          <p class="kicker">MUZIKAZ playable GLB house</p>
-          <h3>Choose a floor and explore it.</h3>
+          <p class="kicker">IonCore interior sim</p>
+          <h3>Walk the neon floor plan.</h3>
           <div class="hud-pill-grid">
             <span>WASD / arrows: move</span>
             <span>Mouse drag: pan + tilt</span>
             <span>Wheel: zoom</span>
-            <span>Game mode: pointer lock</span>
+            <span>Q / E: camera height</span>
             <span id="house-presence-count">Live in the house: 1</span>
           </div>
           <div class="house-actions">
             <button type="button" id="house-reset">Reset view</button>
             <button type="button" id="hand-toggle" aria-pressed="false">Enable hand control</button>
             <button type="button" id="add-avatar">Add Avatar</button>
-            <button type="button" id="change-map-frame" class="map-frame-button" aria-controls="environment-selector">Select Map GLB</button>
           </div>
           <div class="camera-preview-panel">
             <video id="hand-preview" playsinline muted></video>
@@ -93,6 +92,7 @@
         </aside>
       </div>
     </section>
+
 
     <section class="section-block model-publisher" id="publish-model" aria-labelledby="publish-model-title">
       <div class="section-title"><span></span><h2 id="publish-model-title">Publish a Live Model</h2><a href="index.html#live-models">View homepage space</a></div>
@@ -126,8 +126,8 @@
       <p class="status-message" id="explorer-live-models-status" role="status" aria-live="polite">Loading shared model space…</p>
       <div class="published-model-grid explorer-live-grid" id="explorer-live-models-grid" aria-live="polite"></div>
     </section>
-  </main>
 
+  </main>
   <footer id="contact">
     <div>
       <a class="logo" href="index.html#home"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
@@ -140,9 +140,6 @@
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <script type="module" src="public/js/model-gallery.js"></script>
   <script type="module" src="public/js/model-publisher.js"></script>
-  <script>window.MUZIKAZ_HOUSE_EXPLORER_3D_ACTIVE = !!document.querySelector('#house-explorer-canvas');</script>
-  <script type="module" src="public/js/house-explorer-3d.js"></script>
-  <script type="module" src="public/js/house-explorer-compact.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

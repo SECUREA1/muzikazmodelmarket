@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
-  <title id="title">MUZIKAZ environment placeholder</title>
-  <desc id="desc">Neon placeholder thumbnail for a repository-hosted GLB environment.</desc>
-  <rect width="640" height="360" fill="#020403"/>
-  <path d="M120 250 320 105l200 145v72H120z" fill="none" stroke="#9cff00" stroke-width="10" stroke-linejoin="round"/>
-  <path d="M205 322V218h78v104M357 322V196h92v126" fill="none" stroke="#9cff00" stroke-width="8"/>
-  <text x="320" y="66" fill="#9cff00" font-family="Arial Black, Impact, sans-serif" font-size="34" text-anchor="middle">ADD DEFAULT-HOUSE.GLB</text>
-  <text x="320" y="342" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="20" text-anchor="middle">Enable this manifest entry after adding the GLB</text>
-</svg>
