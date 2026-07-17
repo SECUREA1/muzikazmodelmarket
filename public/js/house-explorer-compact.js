@@ -47,6 +47,16 @@ function restoreCompactHouseWindow() {
     label.htmlFor = 'environment-selector';
     label.innerHTML = '<strong>Playable Floor</strong>';
     compactMenu.append(label, selector);
+
+    const directedToggle = document.querySelector('#directed-environment-toggle');
+    const directedButtons = document.querySelector('#directed-environment-buttons');
+    if (directedToggle) {
+      const directedLabel = document.createElement('label');
+      directedLabel.className = 'inline-toggle';
+      directedLabel.append(directedToggle, document.createTextNode(' Directed MUZKAKZ house GLBs'));
+      compactMenu.append(directedLabel);
+    }
+    if (directedButtons) compactMenu.append(directedButtons);
     if (progress) compactMenu.append(progress);
     if (loadStatus) compactMenu.append(loadStatus);
     hud.insertBefore(compactMenu, actions || cameraPanel || null);
