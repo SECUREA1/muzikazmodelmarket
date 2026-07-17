@@ -186,10 +186,6 @@ document.querySelector('#model-linked-data')?.addEventListener('click', (event) 
   if (event.target instanceof HTMLElement && selectedModel) focusMarketplaceForModel(selectedModel);
 });
 
-document.querySelector('[data-action="search"]')?.addEventListener('click', () => {
-  scrollToSection('models');
-  if (modelStatus) modelStatus.textContent = 'Search shortcut opened the model collections.';
-});
 
 document.querySelector('[data-action="cart"]')?.addEventListener('click', () => {
   if (cartItems) {

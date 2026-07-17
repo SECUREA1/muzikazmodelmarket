@@ -1347,3 +1347,84 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
     .brand-profile-card.feature { grid-template-columns: 1fr; }
 }
 .house-environment-picker{display:grid;gap:8px;color:var(--lime);font-size:12px;font-weight:900;text-transform:uppercase}.house-environment-picker select,.house-environment-picker input{width:100%;border:1px solid rgba(156,255,0,.32);border-radius:12px;background:#050805;color:#fff;padding:11px;font:inherit;text-transform:none}.house-environment-picker input::file-selector-button{margin-right:10px;border:1px solid rgba(156,255,0,.45);border-radius:999px;background:#10170f;color:var(--lime);font-weight:900;padding:8px 10px;cursor:pointer}
+
+/* Desktop containment and toggle cleanup */
+html,
+body{
+  max-width:100%;
+  overflow-x:hidden;
+}
+.site-header,
+.topbar,
+main,
+footer,
+section,
+.hero,
+.feature-strip,
+.section-block,
+.house-explorer-shell{
+  min-width:0;
+}
+.site-header{
+  max-width:100%;
+}
+.nav{
+  min-width:0;
+  flex:1 1 auto;
+  justify-content:flex-end;
+  gap:clamp(12px, 1.6vw, 28px);
+}
+.logo,
+.icons,
+.menu-toggle{
+  flex:0 0 auto;
+}
+.nav a{
+  white-space:nowrap;
+}
+.icon-button.cart{
+  min-width:52px;
+}
+.collection-grid{
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+}
+.products{
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 155px), 1fr));
+}
+.feature-strip{
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}
+.newsletter{
+  grid-template-columns:minmax(0, 1fr) minmax(260px, 380px) minmax(180px, 260px);
+}
+.house-explorer-shell{
+  grid-template-columns:minmax(0, 1fr) minmax(300px, 360px);
+}
+.house-stage,
+.house-hud,
+.house-action-menu{
+  min-width:0;
+}
+.house-action-menu{
+  width:100%;
+  margin:0;
+}
+.house-action-menu .house-actions{
+  grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+}
+.mobile-move-pad{
+  display:none;
+}
+@media(max-width:1180px){
+  .site-header{gap:18px}
+  .logo{font-size:38px}
+  .bolt{width:48px;height:48px;font-size:34px}
+  .nav a{font-size:13px}
+}
+@media(max-width:950px){
+  .nav{flex:none;justify-content:flex-start}
+  .newsletter{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .mobile-move-pad{display:grid}
+}
