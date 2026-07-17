@@ -36,13 +36,27 @@ export function buildCollision(root, mode = 'auto') {
   return { octree, visibleMeshes, collisionMeshes, dedicatedCollisionCount: collisionMeshes.filter((m) => COLLISION_RE.test(m.name || '')).length };
 }
 
-export function resolveSafeSpawn(root, visibleMeshes, metadataSpawn, playerHeight = 1.65) {
+export function resolveSafeSpawn(root, visibleMeshes, metadataSpawn = {}, playerHeight = 1.65) {
   const box = new THREE.Box3().setFromObject(root);
+  const center = box.getCenter(new THREE.Vector3());
   const spawnNode = findSpawnNode(root);
-  const candidate = spawnNode ? spawnNode.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(metadataSpawn.x, metadataSpawn.y, metadataSpawn.z);
-  const raycaster = new THREE.Raycaster(new THREE.Vector3(candidate.x, box.max.y + playerHeight + 8, candidate.z), new THREE.Vector3(0, -1, 0));
-  const hit = raycaster.intersectObjects(visibleMeshes, true).find((item) => item.object.visible !== false);
-  if (hit) candidate.y = hit.point.y + 0.04;
+  const raw = spawnNode ? spawnNode.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(
+    Number.isFinite(metadataSpawn.x) ? metadataSpawn.x : center.x,
+    Number.isFinite(metadataSpawn.y) ? metadataSpawn.y : center.y,
+    Number.isFinite(metadataSpawn.z) ? metadataSpawn.z : center.z
+  );
+  const margin = 0.35;
+  const candidate = new THREE.Vector3(
+    THREE.MathUtils.clamp(raw.x, box.min.x + margin, box.max.x - margin),
+    raw.y,
+    THREE.MathUtils.clamp(raw.z, box.min.z + margin, box.max.z - margin)
+  );
+  const raycastFloor = (point) => {
+    const raycaster = new THREE.Raycaster(new THREE.Vector3(point.x, box.max.y + playerHeight + 8, point.z), new THREE.Vector3(0, -1, 0));
+    return raycaster.intersectObjects(visibleMeshes, true).find((item) => item.object.visible !== false);
+  };
+  const hit = raycastFloor(candidate) || raycastFloor(center);
+  if (hit) { candidate.x = hit.point.x; candidate.y = hit.point.y + 0.04; candidate.z = hit.point.z; }
   else candidate.y = Math.max(candidate.y, Number.isFinite(box.min.y) ? box.min.y + 0.08 : 0.08);
   return { position: candidate, rotationY: spawnNode ? spawnNode.rotation.y : Number(metadataSpawn.rotationY || 0), bounds: box };
 }
