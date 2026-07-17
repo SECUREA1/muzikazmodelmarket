@@ -1428,3 +1428,67 @@ section,
 @media(max-width:640px){
   .mobile-move-pad{display:grid}
 }
+
+/* Clean locked controls for the house game on touch screens */
+.mobile-move-pad{
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:.55rem;
+  max-width:100%;
+}
+.mobile-move-pad button{
+  min-height:48px;
+  border:0;
+  border-radius:16px;
+  padding:.55rem .7rem;
+  font-weight:1000;
+  background:linear-gradient(180deg,#9cff00,#6dba00);
+  color:#071007;
+  box-shadow:0 8px 22px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.38);
+}
+.mobile-move-pad [data-mobile-move="jump"]{
+  background:#fff;
+  color:#071007;
+}
+@media(max-width:640px){
+  .house-explorer{
+    padding-bottom:max(12px,env(safe-area-inset-bottom));
+  }
+  .house-stage{
+    min-height:52vh;
+    height:min(62vh,560px);
+    max-height:calc(100svh - 190px);
+  }
+  .mobile-move-pad{
+    position:sticky;
+    left:auto;
+    bottom:max(8px,env(safe-area-inset-bottom));
+    transform:none;
+    z-index:20;
+    width:100%;
+    max-width:560px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(72px,1fr));
+    grid-template-areas:
+      "turn-left forward turn-right"
+      ". back jump";
+    gap:10px;
+    padding:10px;
+    border:1px solid rgba(156,255,0,.42);
+    border-radius:22px;
+    background:linear-gradient(180deg,rgba(6,10,5,.94),rgba(0,0,0,.86));
+    box-shadow:0 18px 42px rgba(0,0,0,.45),0 0 28px rgba(156,255,0,.12);
+    backdrop-filter:blur(14px);
+  }
+  .mobile-move-pad [data-mobile-move="left"]{grid-area:turn-left}
+  .mobile-move-pad [data-mobile-move="forward"]{grid-area:forward}
+  .mobile-move-pad [data-mobile-move="right"]{grid-area:turn-right}
+  .mobile-move-pad [data-mobile-move="back"]{grid-area:back}
+  .mobile-move-pad [data-mobile-move="jump"]{grid-area:jump}
+  .mobile-move-pad button{
+    min-height:58px;
+    border-radius:18px;
+    font-size:1.08rem;
+    letter-spacing:.02em;
+  }
+}
