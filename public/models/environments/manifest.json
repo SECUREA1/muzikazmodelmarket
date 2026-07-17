@@ -18,7 +18,8 @@
       "cameraHeight": 1.65,
       "movementSpeed": 3.5,
       "collisionEnabled": true,
-      "allowAvatars": true
+      "allowAvatars": true,
+      "directed": true
     },
     {
       "id": "muzikaz-upper",
@@ -37,7 +38,8 @@
       "cameraHeight": 1.65,
       "movementSpeed": 3.5,
       "collisionEnabled": true,
-      "allowAvatars": true
+      "allowAvatars": true,
+      "directed": true
     }
   ]
 }
