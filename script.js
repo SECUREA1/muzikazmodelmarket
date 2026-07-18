@@ -897,29 +897,13 @@ arPopoutButton?.addEventListener('click', () => {
 });
 
 function initBottleLogin() {
-  const form = document.querySelector('#bottle-login-form');
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
-  if (!form || !lockedContent) return;
-  const unlock = (message) => {
-    lockedContent.dataset.locked = 'false';
-    if (status) status.textContent = message;
-  };
-  if (window.localStorage.getItem('muzikazBottleMember') === 'true') {
-    currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
-    unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`);
-    renderOwnedCollection(currentMemberEmail);
-  }
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const data = new FormData(form);
-    currentMemberEmail = normalizeMemberEmail(data.get('email'));
-    window.localStorage.setItem('muzikazBottleMember', 'true');
-    window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-    renderOwnedCollection(currentMemberEmail);
-    unlock(`${currentMemberEmail} is logged in. Owned assets are tied to this account, and shared member collections are viewable.`);
-    scrollToSection('member-locked-content');
-  });
+  if (!lockedContent) return;
+  currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
+  lockedContent.dataset.locked = 'false';
+  if (status) status.textContent = 'Creator tools are unlocked. No passcode is required.';
+  renderOwnedCollection(currentMemberEmail);
 }
 
 marketQualityToggle?.addEventListener('change', () => renderMarketplace());
@@ -1219,81 +1203,7 @@ function initHouseExplorer() {
   canvas.addEventListener('pointerup', () => { if (draggedAvatar) { saveSharedAvatarTransform(draggedAvatar); draggedAvatar = null; } dragging = false; lastPointer = null; });
   canvas.addEventListener('dblclick', (event) => { const rect = canvas.getBoundingClientRect(); const x = event.clientX - rect.left, y = event.clientY - rect.top; const hit = [...(canvas._avatarHitboxes || [])].reverse().find((box) => x >= box.x - box.width / 2 && x <= box.x + box.width / 2 && y >= box.y - box.height / 2 && y <= box.y + box.height / 2); if (hit) selectSharedAvatar(hit.id); }); canvas.addEventListener('wheel', (event) => { event.preventDefault(); camera.fov = Math.max(320, Math.min(760, camera.fov - event.deltaY * .25)); }, { passive: false });
   document.addEventListener('keydown', (event) => { if (avatarPlacementState.active && ['+','='].includes(event.key)) { const n = Math.min(2.4, avatarPlacementState.scale.x + .1); avatarPlacementState.scale = { x:n, y:n, z:n }; createAvatarPreview(); } if (avatarPlacementState.active && ['-','_'].includes(event.key)) { const n = Math.max(.35, avatarPlacementState.scale.x - .1); avatarPlacementState.scale = { x:n, y:n, z:n }; createAvatarPreview(); } if (avatarPlacementState.active && event.key === 'Enter') publishPlacedAvatar(); if (avatarPlacementState.active && event.key === 'Escape') cancelAvatarPlacement(); keys.add(event.key.toLowerCase()); }); document.addEventListener('keyup', (event) => keys.delete(event.key.toLowerCase()));
-  const mobileControlState = new Set();
-  const mobileThumbState = { move: { x: 0, y: 0 }, look: { x: 0, y: 0 } };
-  let mobileJumping = false;
-  function jumpCamera() {
-    if (mobileJumping) return;
-    mobileJumping = true;
-    const baseY = camera.y;
-    camera.y = Math.min(2.4, camera.y + .36);
-    window.setTimeout(() => { camera.y = Math.max(.8, baseY); mobileJumping = false; }, 190);
-  }
-  function applyMobileControl(action, amount = 1) {
-    const moveAmount = .055 * amount;
-    if (action === 'forward') move('forward', moveAmount);
-    if (action === 'back') move('back', moveAmount);
-    if (action === 'strafe-left') move('left', moveAmount);
-    if (action === 'strafe-right') move('right', moveAmount);
-    if (action === 'turn-left') camera.yaw -= .035 * amount;
-    if (action === 'turn-right') camera.yaw += .035 * amount;
-    if (action === 'look-up') camera.pitch = Math.max(-.8, camera.pitch - .018 * amount);
-    if (action === 'look-down') camera.pitch = Math.min(.55, camera.pitch + .018 * amount);
-  }
-  function applyMobileThumbs() {
-    const moveStick = mobileThumbState.move;
-    const lookStick = mobileThumbState.look;
-    if (Math.abs(moveStick.y) > .08) applyMobileControl(moveStick.y < 0 ? 'forward' : 'back', Math.abs(moveStick.y) * 1.65);
-    if (Math.abs(moveStick.x) > .08) applyMobileControl(moveStick.x > 0 ? 'strafe-right' : 'strafe-left', Math.abs(moveStick.x) * 1.65);
-    if (Math.abs(lookStick.x) > .08) camera.yaw += lookStick.x * .045;
-    if (Math.abs(lookStick.y) > .08) camera.pitch = Math.max(-.8, Math.min(.55, camera.pitch + lookStick.y * .024));
-  }
-  function tickMobileControls() {
-    mobileControlState.forEach((action) => applyMobileControl(action));
-    applyMobileThumbs();
-    requestAnimationFrame(tickMobileControls);
-  }
-  function triggerMobileZoom(direction) {
-    camera.fov = Math.max(320, Math.min(760, camera.fov + (direction === 'in' ? -55 : 55)));
-  }
-  document.querySelectorAll('[data-mobile-hold]').forEach((button) => {
-    const action = button.dataset.mobileHold;
-    const start = (event) => { event.preventDefault(); mobileControlState.add(action); button.classList.add('is-active'); applyMobileControl(action, 1.6); };
-    const stop = () => { mobileControlState.delete(action); button.classList.remove('is-active'); };
-    button.addEventListener('pointerdown', start);
-    button.addEventListener('pointerup', stop);
-    button.addEventListener('pointercancel', stop);
-    button.addEventListener('pointerleave', stop);
-  });
-
-  document.querySelectorAll('[data-mobile-thumb]').forEach((stick) => {
-    const knob = stick.querySelector('span');
-    const type = stick.dataset.mobileThumb;
-    const reset = () => { mobileThumbState[type] = { x: 0, y: 0 }; if (knob) knob.style.transform = 'translate(-50%,-50%)'; stick.classList.remove('is-active'); };
-    const update = (event) => {
-      const rect = stick.getBoundingClientRect();
-      const radius = rect.width / 2;
-      const dx = Math.max(-radius, Math.min(radius, event.clientX - rect.left - radius));
-      const dy = Math.max(-radius, Math.min(radius, event.clientY - rect.top - radius));
-      const distance = Math.min(radius, Math.hypot(dx, dy));
-      const angle = Math.atan2(dy, dx);
-      const x = Math.cos(angle) * distance;
-      const y = Math.sin(angle) * distance;
-      mobileThumbState[type] = { x: x / radius, y: y / radius };
-      if (knob) knob.style.transform = 'translate(calc(-50% + ' + x * .62 + 'px), calc(-50% + ' + y * .62 + 'px))';
-    };
-    stick.addEventListener('pointerdown', (event) => { event.preventDefault(); stick.setPointerCapture(event.pointerId); stick.classList.add('is-active'); update(event); });
-    stick.addEventListener('pointermove', (event) => { if (stick.classList.contains('is-active')) update(event); });
-    stick.addEventListener('pointerup', reset);
-    stick.addEventListener('pointercancel', reset);
-    stick.addEventListener('pointerleave', reset);
-  });
-  document.querySelectorAll('[data-mobile-action]').forEach((button) => button.addEventListener('click', () => {
-    if (button.dataset.mobileAction === 'jump') jumpCamera();
-    if (button.dataset.mobileAction === 'shoot') setStatus('Shoot action ready. Aim with the right thumb controller.');
-    if (button.dataset.mobileAction === 'reset') { Object.assign(camera, defaultCamera); setStatus('Explorer reset to the default inside-camera view.'); } if (button.dataset.mobileAction === 'avatar') { openAvatarPlacementPanel(); startAvatarPlacement(); } if (button.dataset.mobileAction === 'environment') { environmentSelect?.focus(); environmentSelect?.closest('.house-environment-picker')?.classList.toggle('is-open'); setStatus('Environment selector ready. Choose an environment file from the list.'); }
-  }));
-  document.querySelectorAll('[data-mobile-zoom]').forEach((button) => button.addEventListener('click', () => triggerMobileZoom(button.dataset.mobileZoom))); document.querySelectorAll('[data-mobile-zoom-toggle]').forEach((button) => { let zoomHold = 0; const setDirection = (direction) => { button.dataset.mobileZoomToggle = direction; button.setAttribute('aria-pressed', String(direction === 'in')); button.querySelector('b').textContent = direction === 'in' ? '+' : '−'; button.querySelector('span').textContent = direction === 'in' ? 'Zoom in' : 'Zoom out'; button.setAttribute('aria-label', direction === 'in' ? 'Zoom in' : 'Zoom out'); }; const step = () => triggerMobileZoom(button.dataset.mobileZoomToggle || 'out'); const stop = () => { clearInterval(zoomHold); zoomHold = 0; button.classList.remove('is-active'); }; button.addEventListener('pointerdown', (event) => { event.preventDefault(); step(); button.classList.add('is-active'); zoomHold = window.setInterval(step, 120); }); button.addEventListener('pointerup', stop); button.addEventListener('pointercancel', stop); button.addEventListener('pointerleave', stop); button.addEventListener('dblclick', (event) => { event.preventDefault(); setDirection(button.dataset.mobileZoomToggle === 'in' ? 'out' : 'in'); setStatus(button.getAttribute('aria-label') + ' selected. Hold to continue zooming.'); }); setDirection(button.dataset.mobileZoomToggle || 'out'); }); tickMobileControls(); mapFitRange?.addEventListener('input', () => { mapFit = Math.max(.85, Math.min(1.25, Number(mapFitRange.value) / 100 || 1)); setStatus('Map scale tuned to ' + Math.round(mapFit * 100) + '%.'); }); viewHeightRange?.addEventListener('input', () => { camera.y = Math.max(.8, Math.min(2.1, Number(viewHeightRange.value) / 100 || 1.55)); setStatus('View height tuned.'); }); viewZoomRange?.addEventListener('input', () => { camera.fov = Math.max(320, Math.min(760, Number(viewZoomRange.value) || 520)); setStatus('Zoom tuned.'); }); minimizeButton?.addEventListener('click', () => { const shell = canvas.closest('.house-explorer-shell'); const minimized = !shell?.classList.contains('is-map-minimized'); shell?.classList.toggle('is-map-minimized', minimized); minimizeButton.setAttribute('aria-pressed', String(minimized)); minimizeButton.textContent = minimized ? 'Restore map' : 'Minimize map'; setStatus(minimized ? 'Map minimized and controls remain in place.' : 'Map restored in place.'); }); expandButton?.addEventListener('click', () => { canvas.closest('.house-explorer-shell')?.classList.toggle('is-map-expanded'); setStatus('Map expanded in place. Toggle again to return to the normal layout.'); }); placePersonButton?.addEventListener('click', () => setDropInLocation()); syncTunerControls(); environmentSelect?.addEventListener('change', () => loadEnvironmentFile(environmentSelect.value, environmentSelect.selectedOptions[0]?.textContent || 'selected file').catch(() => setStatus('Selected environment file could not be loaded.'))); environmentUpload?.addEventListener('change', async () => { const file = environmentUpload.files?.[0]; if (!file) return; try { applyEnvironment(JSON.parse(await file.text()), file.name); } catch (error) { setStatus('Local environment JSON could not be read.'); } }); resetButton?.addEventListener('click', () => { Object.assign(camera, defaultCamera); setStatus('Explorer reset to the default inside-camera view.'); }); avatarButton?.addEventListener('click', () => { openAvatarPlacementPanel(); startAvatarPlacement(); });
+   mapFitRange?.addEventListener('input', () => { mapFit = Math.max(.85, Math.min(1.25, Number(mapFitRange.value) / 100 || 1)); setStatus('Map scale tuned to ' + Math.round(mapFit * 100) + '%.'); }); viewHeightRange?.addEventListener('input', () => { camera.y = Math.max(.8, Math.min(2.1, Number(viewHeightRange.value) / 100 || 1.55)); setStatus('View height tuned.'); }); viewZoomRange?.addEventListener('input', () => { camera.fov = Math.max(320, Math.min(760, Number(viewZoomRange.value) || 520)); setStatus('Zoom tuned.'); }); minimizeButton?.addEventListener('click', () => { const shell = canvas.closest('.house-explorer-shell'); const minimized = !shell?.classList.contains('is-map-minimized'); shell?.classList.toggle('is-map-minimized', minimized); minimizeButton.setAttribute('aria-pressed', String(minimized)); minimizeButton.textContent = minimized ? 'Restore map' : 'Minimize map'; setStatus(minimized ? 'Map minimized and controls remain in place.' : 'Map restored in place.'); }); expandButton?.addEventListener('click', () => { canvas.closest('.house-explorer-shell')?.classList.toggle('is-map-expanded'); setStatus('Map expanded in place. Toggle again to return to the normal layout.'); }); placePersonButton?.addEventListener('click', () => setDropInLocation()); syncTunerControls(); environmentSelect?.addEventListener('change', () => loadEnvironmentFile(environmentSelect.value, environmentSelect.selectedOptions[0]?.textContent || 'selected file').catch(() => setStatus('Selected environment file could not be loaded.'))); environmentUpload?.addEventListener('change', async () => { const file = environmentUpload.files?.[0]; if (!file) return; try { applyEnvironment(JSON.parse(await file.text()), file.name); } catch (error) { setStatus('Local environment JSON could not be read.'); } }); resetButton?.addEventListener('click', () => { Object.assign(camera, defaultCamera); setStatus('Explorer reset to the default inside-camera view.'); }); avatarButton?.addEventListener('click', () => { openAvatarPlacementPanel(); startAvatarPlacement(); });
   handButton?.addEventListener('click', async () => { handEnabled = !handEnabled; handButton.setAttribute('aria-pressed', String(handEnabled)); handButton.textContent = handEnabled ? 'Disable hand control' : 'Enable hand control'; if (!handEnabled) { handController?.stop?.(); handStream?.getTracks().forEach((track) => track.stop()); handStream = null; if (handStatus) handStatus.textContent = 'Camera preview inactive. MediaPipe Hands loads only when enabled.'; return; } try { handStream = await navigator.mediaDevices.getUserMedia({ video: true }); if (preview) { preview.srcObject = handStream; await preview.play(); } const mediaPipeReady = await startMediaPipeHands(); if (handStatus) handStatus.textContent = mediaPipeReady ? 'MediaPipe Hands active: move your index finger to steer the camera.' : 'Camera preview enabled; MediaPipe Hands could not be loaded, so manual controls remain active.'; } catch (error) { handEnabled = false; handButton.setAttribute('aria-pressed', 'false'); if (handStatus) handStatus.textContent = 'Camera or MediaPipe unavailable; keyboard, mouse, and mobile controls still work.'; } });
   window.addEventListener('resize', resizeCanvas); resizeCanvas(); render(); tickMovement(); loadEnvironmentCatalog(); window.setTimeout(initializeSharedHouseAvatars, 0);
 }

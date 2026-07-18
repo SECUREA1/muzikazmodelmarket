@@ -1899,3 +1899,21 @@ section,
   .mobile-move-pad.mobile-thumb-controls .mobile-control-shoot{background:linear-gradient(180deg,#9cff00,#66d400)!important;color:#071007!important}
   .mobile-move-pad.mobile-thumb-controls span:not(.mobile-thumb-stick span){position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important}
 }
+
+/* Mobile immersion cleanup: the 3D house now uses direct drag/touch instead of an overlay controller. */
+.mobile-move-pad,
+.mobile-thumb-controls{
+  display:none !important;
+}
+.member-locked-content[data-locked="true"]{
+  max-height:none;
+  overflow:visible;
+}
+.member-locked-content[data-locked="true"]:before{
+  display:none;
+}
+.member-locked-content[data-locked="true"]>*{
+  filter:none;
+  pointer-events:auto;
+  user-select:auto;
+}
