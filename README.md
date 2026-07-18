@@ -41,8 +41,6 @@ PORT=4173 ./target/release/muzikazmodelmarket
 
 The Rust service serves the static MUZIKAZ site, `/uploads/*` model and avatar image assets, and JSON API routes for the public live model space plus the shared 3D House Explorer. Model metadata is persisted in `MUZIKAZ_DATA_DIR/published-models.json`; house avatar placements are persisted in `MUZIKAZ_DATA_DIR/house-avatars.json` so both survive process restarts when Render persistent disk is mounted. The storage layer is isolated in `src/main.rs` and can be swapped for PostgreSQL/S3 later; `migrations/001_published_models.sql` documents the production PostgreSQL table and indexes for a future `DATABASE_URL` repository.
 
-The 3D House Explorer also includes per-map toxic bubble targets. Each loaded house map spawns 5–10 floating bubbles, remembers bubble health in browser `localStorage`, and lets visitors click/tap bubbles to damage them while playing generated bubbling and pop sounds.
-
 ### API routes
 
 All JSON responses use `{ "success": boolean, "data": ..., "message": string }`.
