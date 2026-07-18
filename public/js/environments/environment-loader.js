@@ -1,31 +1,49 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
-import { DRACOLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/DRACOLoader.js/+esm';
-import { KTX2Loader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/KTX2Loader.js/+esm';
-import { MeshoptDecoder } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/meshopt_decoder.module.js/+esm';
 import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Octree.js/+esm';
 import { applyWorldQuality } from './environment-quality.js';
 import { buildCollision, resolveSafeSpawn } from './environment-collision.js';
 
-const WORLD_LOAD_TIMEOUT_MS = 30_000;
+const WORLD_LOAD_TIMEOUT_MS = 120_000;
 
 // Fetch bundled worlds as soon as their manifest is available. This fills the
 // browser cache while the WebGL scene is being created, so opening the game
 // does not wait on each GLB download in sequence.
-export function warmEnvironmentModels(environments = []) {
-  const urls = new Set(environments.flatMap((environment) => (
-    environment.modelUrls?.length ? environment.modelUrls : [environment.modelUrl]
-  )).filter(Boolean));
-  urls.forEach((url) => fetch(url, { cache: 'force-cache' }).catch(() => {}));
+// Loading is deliberately demand-driven. Fetching both 9–12 MB floors on a
+// phone competes with the startup world and used to make the game appear stuck.
+export function warmEnvironmentModels() {}
+
+async function fetchGlb(url, onProgress) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), WORLD_LOAD_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, { signal: controller.signal, cache: 'force-cache' });
+    const contentType = response.headers.get('content-type') || 'unknown';
+    if (!response.ok) throw new Error(`Environment request failed: ${url} (HTTP ${response.status}, ${contentType})`);
+    if (/text\/html/i.test(contentType)) throw new Error(`Environment response is HTML: ${url} (HTTP ${response.status}, ${contentType})`);
+    const total = Number(response.headers.get('content-length')) || 0;
+    const reader = response.body?.getReader(); let loaded = 0; const chunks = [];
+    if (reader) { for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); loaded += value.byteLength; onProgress(loaded, total); } }
+    else { const value = new Uint8Array(await response.arrayBuffer()); chunks.push(value); loaded = value.byteLength; onProgress(loaded, total); }
+    const bytes = new Uint8Array(loaded); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    const prefix = new TextDecoder().decode(bytes.subarray(0, Math.min(bytes.length, 80)));
+    if (!bytes.length) throw new Error(`Environment payload is empty: ${url} (HTTP ${response.status}, ${contentType})`);
+    if (/^version https:\/\/git-lfs/i.test(prefix)) throw new Error(`Environment is a Git LFS pointer, not a GLB: ${url}`);
+    if (prefix.trimStart().startsWith('<')) throw new Error(`Environment payload appears to be HTML: ${url} (HTTP ${response.status}, ${contentType})`);
+    if (String.fromCharCode(...bytes.subarray(0, 4)) !== 'glTF') throw new Error(`Environment is not a binary GLB: ${url} (HTTP ${response.status}, ${contentType})`);
+    return bytes.buffer;
+  } catch (error) {
+    if (error.name === 'AbortError') throw new Error(`Environment timed out after ${WORLD_LOAD_TIMEOUT_MS / 1000}s: ${url}`);
+    throw error;
+  } finally { window.clearTimeout(timer); }
 }
 
 export class EnvironmentLoader {
   constructor({ scene, renderer, onProgress = () => {} }) {
     this.scene = scene; this.renderer = renderer; this.onProgress = onProgress; this.token = 0; this.world = null; this.mixers = []; this.meshes = []; this.octree = new Octree(); this.bounds = new THREE.Box3(); this.activeEnvironment = null; this.baseScale = 1; this.spaceScale = 1;
     this.loader = new GLTFLoader();
-    const draco = new DRACOLoader(); draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/'); this.loader.setDRACOLoader(draco);
-    const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/basis/'); ktx2.detectSupport(renderer); this.loader.setKTX2Loader(ktx2);
-    this.loader.setMeshoptDecoder(MeshoptDecoder);
+    // Decoders are optional. Do not make ordinary, uncompressed bundled GLBs
+    // depend on remote DRACO/KTX2 resources.
   }
   disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture) value.dispose(); material.dispose?.(); }
   unload() { this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
@@ -38,13 +56,10 @@ export class EnvironmentLoader {
         window.clearTimeout(timeout);
         callback(value);
       };
-      const timeout = window.setTimeout(() => finish(reject, new Error(`Timed out loading environment file: ${url}`)), WORLD_LOAD_TIMEOUT_MS);
-      this.loader.load(
-        url,
-        (gltf) => finish(resolve, gltf),
-        (event) => this.onProgress(((index + (event.total ? event.loaded / event.total : 0.35)) / count) * 100),
-        (error) => finish(reject, error)
-      );
+      const timeout = window.setTimeout(() => finish(reject, new Error(`Timed out loading environment file: ${url}`)), WORLD_LOAD_TIMEOUT_MS + 1000);
+      fetchGlb(url, (loaded, total) => this.onProgress(((index + (total ? loaded / total : 0)) / count) * 100))
+        .then((buffer) => this.loader.parse(buffer, '', (gltf) => finish(resolve, gltf), (error) => finish(reject, error)))
+        .catch((error) => finish(reject, error));
     });
   }
 
