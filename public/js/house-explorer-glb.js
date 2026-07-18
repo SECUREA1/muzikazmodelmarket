@@ -2,7 +2,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 import { Capsule } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Capsule.js/+esm';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
 import { EnvironmentRegistry } from './environments/environment-registry.js';
-import { EnvironmentLoader } from './environments/environment-loader.js';
+import { EnvironmentLoader, warmEnvironmentModels } from './environments/environment-loader.js';
 import { configureRenderer } from './environments/environment-quality.js';
 import { logEnvironment } from './environments/environment-api.js';
 import { FLOOR_ENTRY_OFFSET, alignPointAboveFloor } from './environments/environment-collision.js';
@@ -154,7 +154,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function syncEnvironmentSelect(worlds) { if (!environmentSelect) return; const selectedId = activeEnvironment?.id || environmentSelect.value || ''; environmentSelect.replaceChildren(...worlds.map((env) => new Option(env.name || env.id || 'House environment', env.id, false, env.id === selectedId))); environmentSelect.disabled = !worlds.length; }
   function renderPicker() { const worlds = registry.all(); syncEnvironmentSelect(worlds); const envOptions = worlds.map((env) => { const size = env.fileSize ? `${(env.fileSize / 1048576).toFixed(1)} MB` : 'repo GLB'; return `<option value="${env.id}" ${activeEnvironment?.id === env.id ? 'selected' : ''}>${env.name} · ${size}</option>`; }).join(''); const avatarOptions = cachedAvatars.map((avatar) => `<option value="${avatar.id}">${avatar.name} · ${avatar.owner}</option>`).join(''); library.innerHTML = `<div class="house-picker-title"><strong>GLB Select</strong><small>${worlds.length} worlds · ${cachedAvatars.length} avatars</small></div><div class="house-picker-row"><label class="house-picker-label">World<select data-world-select>${envOptions || '<option>No worlds found</option>'}</select></label><button type="button" data-load-world>Open</button></div><div class="house-picker-row"><label class="house-picker-label">Avatar<select data-avatar-select>${avatarOptions || '<option>No active GLB avatars</option>'}</select></label><button type="button" data-add-selected-avatar>Add</button></div>`; library.querySelector('[data-load-world]')?.addEventListener('click', () => { const id = library.querySelector('[data-world-select]')?.value; if (id) loadById(id); }); library.querySelector('[data-world-select]')?.addEventListener('change', (event) => loadById(event.target.value)); library.querySelector('[data-add-selected-avatar]')?.addEventListener('click', () => { const avatar = cachedAvatars.find(a => a.id === library.querySelector('[data-avatar-select]')?.value); if (avatar) { activeAvatar = avatar; addAvatarToScene(avatar).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); } }); }
   function renderLibrary() { renderPicker(); }
-  async function refreshLibrary() { try { await registry.refresh(); renderPicker(); } catch (error) { setStatus(error.message); library.innerHTML = `<div class="house-picker-title"><strong>GLB Select</strong></div><small>${error.message}</small>`; } }
+  async function refreshLibrary() { try { await registry.refresh(); warmEnvironmentModels(registry.all()); renderPicker(); } catch (error) { setStatus(error.message); library.innerHTML = `<div class="house-picker-title"><strong>GLB Select</strong></div><small>${error.message}</small>`; } }
 
   function normalizeAvatarRecord(raw = {}) { const modelUrl = raw.modelUrl || raw.model_url || raw.fileUrl || raw.file_url || raw.assetUrl || raw.asset_url || raw.avatarUrl || raw.publicUrl || ''; const id = raw.id || raw.avatarId || raw.modelId || btoa(unescape(encodeURIComponent(modelUrl || raw.name || Date.now()))).replace(/=+$/,''); return { id, name: raw.name || raw.avatarName || raw.title || 'GLB Avatar', owner: raw.owner || raw.creatorName || raw.creator || raw.username || 'MUZIKAZ', modelUrl: new URL(modelUrl, window.location.origin).href, format: String(raw.format || raw.fileType || raw.type || modelUrl.split('?')[0].split('.').pop() || '').toLowerCase(), visibility: raw.visibility || 'public', status: raw.status || 'active', scale: Number(raw.scale) || 1, rotation: raw.rotation }; }
   function isActiveGlbAvatar(avatar) { return avatar.modelUrl && ['glb','gltf'].includes(avatar.format) && avatar.visibility !== 'private' && !['archived','rejected','disabled','inactive'].includes(String(avatar.status).toLowerCase()); }
@@ -240,17 +240,24 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   refreshAvatarLibrary().catch((error) => { library.insertAdjacentHTML('beforeend', `<small>${error.message || 'Unable to load active avatars.'}</small>`); });
   const params = new URLSearchParams(location.search);
   const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
-  // Load the standalone main floor first so the visible explorer is usable immediately; the full-house option remains available in the map selector.
-  const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.find('muzikaz-full-house')?.id || registry.all()[0]?.id;
+  // Start with the combined world so the game space is populated with every
+  // bundled floor immediately. A query parameter can still request a single
+  // floor, and the picker remains available for switching worlds.
+  const startEnvironment = requestedEnvironment || registry.find('muzikaz-full-house')?.id || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
   let mapOpeningPromise = null;
+  function loadStartEnvironment() {
+    if (envLoader.world) return Promise.resolve(true);
+    if (!startEnvironment) return Promise.resolve(false);
+    if (!mapOpeningPromise) {
+      setStatus('Loading the complete MUZIKAZ game space…');
+      mapOpeningPromise = loadById(startEnvironment).finally(() => { mapOpeningPromise = null; });
+    }
+    return mapOpeningPromise;
+  }
   async function openHouseMap({ requestWalk = false, startRadTox = false } = {}) {
     canvas.focus({ preventScroll: true });
     if (!envLoader.world && startEnvironment) {
-      if (!mapOpeningPromise) {
-        setStatus('Opening and loading the MUZIKAZ house environment…');
-        mapOpeningPromise = loadById(startEnvironment).finally(() => { mapOpeningPromise = null; });
-      }
-      const loaded = await mapOpeningPromise;
+      const loaded = await loadStartEnvironment();
       if (!loaded || !envLoader.world) throw new Error('The MUZIKAZ map could not be loaded. Choose another environment and try again.');
     }
     if (!envLoader.world) throw new Error('No MUZIKAZ map is available yet. Refresh the page or select an environment and try again.');
@@ -305,9 +312,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
   if (startEnvironment) {
-    setStatus('Loading the MUZIKAZ house map…');
-    // Start the visible map immediately, without waiting for a dialog or a game mode.
-    loadById(startEnvironment).catch((error) => setStatus(error.message || 'Unable to load the MUZIKAZ map.'));
+    // Begin loading as soon as the manifest resolves. All entry points share
+    // this promise, preventing a fast click from cancelling the initial GLB
+    // load with a competing request.
+    loadStartEnvironment().catch((error) => setStatus(error.message || 'Unable to load the MUZIKAZ map.'));
   } else {
     setStatus('No house maps are available. Refresh and try again.');
   }
