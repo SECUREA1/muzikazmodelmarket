@@ -43,7 +43,7 @@
         <nav class="nav" id="primary-navigation" aria-label="Primary navigation">
             <a href="#home">Home</a>
             <a href="#models">Models</a>
-            <a href="index.html#live-models">Live Models</a>
+            <a href="#doll-kit-avatars">Avatar Market</a>
             <a href="#doll-kit">Doll Kit</a>
             <a href="#merch">Merch</a>
             <a href="members.html">Bottle Login</a>
@@ -76,14 +76,6 @@
             <article><b>🚚</b><div><strong>Fast Drops</strong><span>New legends and merch collections weekly.</span></div></article>
         </section>
 
-
-
-        <section class="section-block live-models-section" id="live-models" aria-labelledby="live-models-title">
-            <div class="section-title"><span></span><h2 id="live-models-title">Live Published Model Space</h2><a href="model-explorer.html">Publish a model</a></div>
-            <p class="section-subheading">Models published from the MUZIKAZ 3D Explorer appear here live for the whole community.</p>
-            <p class="status-message" id="live-models-status" role="status" aria-live="polite">Loading live published models…</p>
-            <div class="published-model-grid" id="live-models-grid" aria-live="polite"></div>
-        </section>
 
         <section class="section-block house-explorer" id="house-explorer" aria-labelledby="house-explorer-title">
             <div class="section-title"><span></span><h2 id="house-explorer-title">3D House Explorer</h2><a href="#house-explorer-canvas">Enter interior</a></div>
@@ -173,25 +165,34 @@
         </section>
 
         <section class="section-block doll-kit-section" id="doll-kit" aria-labelledby="doll-kit-title">
-            <div class="section-title"><span></span><h2 id="doll-kit-title">Avatar Doll Kit Categories</h2><a href="members.html#character-shop">Build in studio</a></div>
-            <p class="section-subheading">Select character-specific avatars, pets, accessories, furniture, props, vehicles, and 3D environment rooms like a digital doll kit. Every category is tied into the model market and gaming studio so each character can unlock its own compatible asset pack.</p>
+            <div class="section-title"><span></span><h2 id="doll-kit-title">Avatar Doll Kit Gameplay Market</h2><a href="members.html#character-shop">Build in studio</a></div>
+            <p class="section-subheading">Draft a mascot, load its avatar shelf, then snap on pets, gear, rooms, props, vehicles, and playable world packs. Every category plugs into the MUZIKAZ model market and gaming studio so each character unlocks compatible loot instead of random clutter.</p>
             <div class="doll-kit-layout">
                 <article class="doll-kit-hero">
-                    <p class="kicker">Character asset system</p>
-                    <h3>Pick a mascot, then shop the matching world.</h3>
-                    <p>Each MUZIKAZ character can carry a private asset shelf: wearable accessories, companion pets, furniture sets, stage props, room environments, and game-ready studio options.</p>
+                    <p class="kicker">Character loadout system</p>
+                    <h3>Pick the mascot. Build the world. Hit play.</h3>
+                    <p>Each MUZIKAZ character now works like a digital doll kit with a private inventory: avatar bodies, wearable flex, companion pets, furniture, stage props, room environments, vehicle ideas, and studio-ready gameplay hooks.</p>
                     <div class="doll-kit-actions">
-                        <a class="btn" href="#marketplace-preview">Browse market packs</a>
+                        <a class="btn" href="#doll-kit-avatars">Browse avatar market</a>
                         <a class="btn ghost" href="members.html#marketplace">Open full marketplace</a>
                     </div>
                 </article>
                 <div class="doll-kit-grid" aria-label="Doll kit asset categories">
-                    <article><span>👤</span><h3>Avatars</h3><p>Base character bodies, skins, trait variants, poses, and profile-ready avatar slots.</p></article>
-                    <article><span>🐾</span><h3>Pets</h3><p>Character companion drops with matching colors, lore hooks, and game-side follower roles.</p></article>
-                    <article><span>🎒</span><h3>Accessories</h3><p>Hats, goggles, chains, bags, instruments, collectibles, and wearable merch add-ons.</p></article>
-                    <article><span>🛋️</span><h3>Furniture</h3><p>Room items, studio desks, chairs, booths, display cases, and themed set dressing.</p></article>
-                    <article><span>🏠</span><h3>3D Environments</h3><p>Bedrooms, studios, stages, shops, arenas, and house-explorer scenes for each mascot.</p></article>
-                    <article><span>🎮</span><h3>Gaming Studio</h3><p>Loadout-ready props, animation hooks, level themes, and shop bundles for playable worlds.</p></article>
+                    <article class="doll-kit-avatar-market" id="doll-kit-avatars">
+                        <span>👤</span><h3>Avatars</h3>
+                        <p>Live published avatar drops, base bodies, skins, trait variants, poses, and profile-ready slots now live inside the Doll Kit avatar category.</p>
+                        <div class="avatar-market-panel" aria-labelledby="live-models-title">
+                            <div class="avatar-market-heading"><strong id="live-models-title">Live Avatar Market</strong><a href="model-explorer.html">Publish a model</a></div>
+                            <p class="avatar-market-copy">Community models published from the MUZIKAZ 3D Explorer load here as playable avatar picks for the next character pack.</p>
+                            <p class="status-message" id="live-models-status" role="status" aria-live="polite">Loading live published avatars…</p>
+                            <div class="published-model-grid" id="live-models-grid" aria-live="polite"></div>
+                        </div>
+                    </article>
+                    <article><span>🐾</span><h3>Pets</h3><p>Companion drops that match the mascot palette, add lore, and follow the player as sidekick energy.</p></article>
+                    <article><span>🎒</span><h3>Accessories</h3><p>Hats, goggles, chains, bags, instruments, collectibles, power-ups, and wearable merch add-ons.</p></article>
+                    <article><span>🛋️</span><h3>Furniture</h3><p>Room loot for studios, bedrooms, booths, display walls, hangout hubs, and creator set dressing.</p></article>
+                    <article><span>🏠</span><h3>3D Environments</h3><p>Bedrooms, studios, stages, shops, arenas, hideouts, and house-explorer scenes for each mascot world.</p></article>
+                    <article><span>🎮</span><h3>Gaming Studio</h3><p>Playable loadouts with props, emotes, animation hooks, level themes, vehicle drops, and shop bundles.</p></article>
                 </div>
             </div>
         </section>
