@@ -1,32 +1,20 @@
 const PREFIX = '[MUZIKAZ Environment]';
-const ENVIRONMENT_CACHE_KEY = 'muzikaz:environmentRegistry';
-
-function readEnvironmentCache() {
-  try { const cached = JSON.parse(localStorage.getItem(ENVIRONMENT_CACHE_KEY) || 'null'); return Array.isArray(cached?.records) ? cached.records : []; } catch { return []; }
-}
-function saveEnvironmentCache(records) {
-  try { localStorage.setItem(ENVIRONMENT_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), records })); } catch {}
-}
-export function getCachedEnvironmentList() { return readEnvironmentCache(); }
 
 export async function fetchEnvironmentList() {
   try {
-    const timeoutSignal = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(1200) : undefined;
-    const response = await fetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-cache', signal: timeoutSignal });
+    const response = await fetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
     if (!response.ok) throw new Error(`Environment registry unavailable (${response.status})`);
     const payload = await response.json();
     const records = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
-    if (records.length) { saveEnvironmentCache(records); return records; }
+    if (records.length) return records;
   } catch (error) {
     logEnvironment('API registry unavailable; loading repository environment manifest.', error.message);
   }
 
-  const fallback = await fetch('/public/models/environments/environments.json', { headers: { Accept: 'application/json' }, cache: 'force-cache' });
+  const fallback = await fetch('/public/models/environments/environments.json', { headers: { Accept: 'application/json' }, cache: 'no-store' });
   if (!fallback.ok) throw new Error(`Repository environment manifest unavailable (${fallback.status})`);
   const records = await fallback.json();
-  const normalized = Array.isArray(records) ? records : [];
-  saveEnvironmentCache(normalized);
-  return normalized.length ? normalized : readEnvironmentCache();
+  return Array.isArray(records) ? records : [];
 }
 
 export async function uploadEnvironment(formData, onProgress = () => {}) {
