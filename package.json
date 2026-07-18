@@ -9,7 +9,8 @@
     "check": "node scripts/check-static.mjs",
     "static": "python3 -m http.server 4173 --directory dist",
     "optimize:environment": "node scripts/optimize-environment.mjs",
-    "check:environments": "node scripts/check-environments.mjs"
+    "check:environments": "node scripts/check-environments.mjs",
+    "check:server": "node scripts/check-server-static.mjs"
   },
   "engines": {
     "node": ">=20 <25"

@@ -1,20 +1,98 @@
 const PREFIX = '[MUZIKAZ Environment]';
+export const REPOSITORY_ENVIRONMENT_MANIFEST_URL = '/public/models/environments/environments.json';
+export const ENVIRONMENT_LIST_UPDATED_EVENT = 'muzikaz:environment-list-updated';
+const MANIFEST_TIMEOUT_MS = 4_000;
+const API_TIMEOUT_MS = 3_000;
+
+function recordsFrom(payload) {
+  return Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+}
+
+function mergeEnvironments(...lists) {
+  const byId = new Map();
+  lists.flat().forEach((environment) => {
+    if (environment?.id) byId.set(environment.id, environment);
+  });
+  return [...byId.values()];
+}
+
+function announceEnvironmentList(records) {
+  window.dispatchEvent(new CustomEvent(ENVIRONMENT_LIST_UPDATED_EVENT, { detail: records }));
+}
+
+// A missing API route or a stalled deployment must not leave the explorer at
+// "Loading environment files…" forever.  The bundled manifest is sufficient
+// to start the explorer, and the API is only needed to add uploaded worlds.
+async function fetchWithTimeout(url, options = {}, timeoutMs = API_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error.name === 'AbortError') throw new Error(`Request timed out after ${Math.ceil(timeoutMs / 1000)} seconds`);
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
 
 export async function fetchEnvironmentList() {
+  // The bundled manifest is the startup source of truth.  Loading it before
+  // contacting an optional API lets the house populate even when no backend is
+  // running (for example in the static build) and avoids an API timeout
+  // delaying the first rendered map.
+  // Start the optional request in parallel. It gets a short opportunity to
+  // contribute uploaded worlds, but it must never block the bundled startup.
+  const apiRequest = fetchWithTimeout('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' })
+    .then(async (response) => {
+      if (!response.ok) throw new Error(`Environment registry unavailable (${response.status})`);
+      return recordsFrom(await response.json());
+    })
+    .catch((error) => ({ error }));
+  let bundled = [];
   try {
-    const response = await fetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
-    if (!response.ok) throw new Error(`Environment registry unavailable (${response.status})`);
-    const payload = await response.json();
-    const records = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
-    if (records.length) return records;
+    const response = await fetchWithTimeout(REPOSITORY_ENVIRONMENT_MANIFEST_URL, { headers: { Accept: 'application/json' }, cache: 'no-store' }, MANIFEST_TIMEOUT_MS);
+    if (!response.ok) throw new Error(`Repository environment manifest unavailable (${response.status})`);
+    bundled = recordsFrom(await response.json());
   } catch (error) {
-    logEnvironment('API registry unavailable; loading repository environment manifest.', error.message);
+    logEnvironment('Repository environment manifest unavailable; continuing with the environment API.', error.message);
   }
 
-  const fallback = await fetch('/public/models/environments/environments.json', { headers: { Accept: 'application/json' }, cache: 'no-store' });
-  if (!fallback.ok) throw new Error(`Repository environment manifest unavailable (${fallback.status})`);
-  const records = await fallback.json();
-  return Array.isArray(records) ? records : [];
+  try {
+    // Give a healthy local API a brief chance to respond, while allowing the
+    // known-good repository worlds to render immediately when it is stalled.
+    const apiRecords = await Promise.race([
+      apiRequest,
+      new Promise((resolve) => window.setTimeout(() => resolve(null), 500))
+    ]);
+    if (!apiRecords) {
+      if (bundled.length) {
+        // Keep the known-good repository maps interactive immediately. When
+        // the optional registry returns, refresh the picker with uploaded
+        // maps instead of making the user wait for another page load.
+        apiRequest.then((delayedRecords) => {
+          if (!delayedRecords?.error) announceEnvironmentList(mergeEnvironments(delayedRecords, bundled));
+        });
+        return bundled;
+      }
+      const delayedRecords = await apiRequest;
+      if (delayedRecords.error) throw delayedRecords.error;
+      return delayedRecords;
+    }
+    if (apiRecords.error) throw apiRecords.error;
+    // Repository records win on duplicate IDs. An unhealthy or stale API
+    // record must not replace the bundled GLB URL that is ready to load.
+    const records = mergeEnvironments(apiRecords, bundled);
+    if (records.length) return records;
+  } catch (error) {
+    if (bundled.length) {
+      logEnvironment('Environment API unavailable; using bundled maps.', error.message);
+      return bundled;
+    }
+    throw error;
+  }
+
+  throw new Error('No environment maps are available.');
 }
 
 export async function uploadEnvironment(formData, onProgress = () => {}) {
