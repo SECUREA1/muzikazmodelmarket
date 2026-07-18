@@ -1807,3 +1807,11 @@ section,
   .mobile-move-pad span,
   .mobile-control span{font-size:clamp(.58rem,2.8vw,1rem);text-transform:uppercase;letter-spacing:.05em}
 }
+
+/* On mobile, show the game map before GLB/avatar picker panels so players see the map first. */
+@media(max-width:760px), (pointer:coarse){
+  .house-stage{order:1}
+  .mobile-move-pad{order:2}
+  .house-picker-panel{order:3;margin-top:12px}
+  .house-hud{order:4}
+}
