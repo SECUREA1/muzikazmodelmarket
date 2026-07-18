@@ -58,6 +58,23 @@
   </header>
 
   <main id="home">
+    <section class="section-block house-game-launcher" aria-labelledby="house-game-launcher-title">
+      <div>
+        <p class="kicker">Ready-to-play map</p>
+        <h1 id="house-game-launcher-title">Vibe Crib <em>RAD-TOX</em></h1>
+        <p>Open the map, and the game begins immediately. Move with WASD or the on-screen controls, then click the toxic bubbles to clear the room.</p>
+      </div>
+      <div class="house-game-launcher-actions">
+        <button type="button" class="primary" data-house-launch>Play RAD-TOX now</button>
+        <button type="button" class="ghost" data-house-launch="explore">Open map only</button>
+      </div>
+    </section>
+
+    <dialog class="house-game-modal" id="house-game-modal" aria-labelledby="house-explorer-title">
+      <div class="house-game-modal-bar">
+        <div><strong>Vibe Crib map</strong><span>RAD-TOX starts as soon as this map opens.</span></div>
+        <button type="button" class="house-game-close" data-house-close aria-label="Close Vibe Crib map">× <span>Close</span></button>
+      </div>
     <section class="section-block house-explorer" id="house-explorer" aria-labelledby="house-explorer-title">
       <div class="section-title"><span></span><h2 id="house-explorer-title">🏠 Vibe Crib Explorer</h2><a href="#house-explorer-canvas">Enter the crib</a></div>
       <div class="house-explorer-shell">
@@ -104,6 +121,7 @@
         </div>
       </div>
     </section>
+    </dialog>
 
 
     <section class="section-block model-publisher" id="publish-model" aria-labelledby="publish-model-title">

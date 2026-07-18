@@ -10,6 +10,7 @@ import { FLOOR_ENTRY_OFFSET, alignPointAboveFloor } from './environments/environ
 const legacyCanvas = document.querySelector('#house-explorer-canvas');
 const stage = legacyCanvas?.closest('.house-stage');
 const hud = document.querySelector('.house-hud');
+const houseModal = document.querySelector('#house-game-modal');
 
 if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const oldStatus = document.querySelector('#house-status');
@@ -245,6 +246,25 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (startRadTox && radTox.enabled && !radTox.active) activateRadTox({ unlockAudio: false });
     if (requestWalk && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
   }
+  async function launchHouseGame({ startRadTox = true } = {}) {
+    if (houseModal && !houseModal.open) houseModal.showModal();
+    // A dialog has no usable canvas size while closed, so resize only after it opens.
+    requestAnimationFrame(resize);
+    await openHouseMap({ startRadTox });
+    if (startRadTox && radTox.enabled) setStatus('RAD-TOX is live. Click glowing bubbles, move with WASD or the on-screen controls, and press Escape to close the map.');
+  }
+  function closeHouseGame() {
+    if (document.pointerLockElement === canvas) document.exitPointerLock?.();
+    houseModal?.close();
+  }
+  document.querySelectorAll('[data-house-launch]').forEach((button) => button.addEventListener('click', () => {
+    launchHouseGame({ startRadTox: button.dataset.houseLaunch !== 'explore' }).catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
+  }));
+  document.querySelectorAll('[data-house-close]').forEach((button) => button.addEventListener('click', closeHouseGame));
+  document.querySelector('[data-action="house"]')?.addEventListener('click', () => {
+    launchHouseGame().catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
+  });
+  houseModal?.addEventListener('close', () => { if (document.pointerLockElement === canvas) document.exitPointerLock?.(); });
   walkButton.addEventListener('click', () => {
     if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
@@ -260,8 +280,5 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     event.preventDefault();
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
-  if (startEnvironment) {
-    setStatus('Loading the populated MUZIKAZ 3D map…');
-    await openHouseMap({ startRadTox: radTox.enabled });
-  }
+  setStatus('Map ready. Select Play RAD-TOX now to open the game.');
 }
