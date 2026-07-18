@@ -16,7 +16,7 @@ const hud = document.querySelector('.house-hud');
 if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const oldStatus = document.querySelector('#house-status');
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
-  const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); legacyCanvas.replaceWith(canvas);
+  const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
   const resetButton = document.querySelector('#house-reset')?.cloneNode(true); document.querySelector('#house-reset')?.replaceWith(resetButton);
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
   hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Click: pointer-lock look</span><span>Drag/touch: look</span><span>Mobile buttons: side-step, move, reverse, zoom, jump, reset</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>Scale starts at 2.5x</span><span>VR: left stick move, right stick snap-turn</span>';
@@ -103,7 +103,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const landingFrame = new THREE.Group(); landingFrame.name = 'MUZIKAZ_LANDING_FLOOR_FRAME'; scene.add(landingFrame);
   let activeAvatar = null;
   const player = { height: 1.65, radius: .34, speed: 3.2, jumpVelocity: 9.9, yaw: 0, pitch: 0, eyeHeight: 1.65, zoom: 68, velocity: new THREE.Vector3(), onGround: false, spawn: new THREE.Vector3(0, 1, 2) };
-  let currentSpaceScale = 2.5; let scrollZoomEnabled = false;
+  let currentSpaceScale = 2.5; let scrollZoomEnabled = false; const mapSizeScale = 1; const mapHeightScale = 1;
   let playerCollider = new Capsule(new THREE.Vector3(0, player.radius, 2), new THREE.Vector3(0, player.height, 2), player.radius); let dragPointer = null; let avatarDrag = null; let turnReady = true; let activeEnvironment = null;
   const keys = new Set(); const mobile = new Set(); const forward = new THREE.Vector3(); const right = new THREE.Vector3(); const move = new THREE.Vector3(); const teleportRay = new THREE.Raycaster();
 
@@ -169,13 +169,29 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   const controllerFactory = new XRControllerModelFactory(); for (let i=0;i<2;i+=1) { const controller = renderer.xr.getController(i); controller.addEventListener('selectend', () => { teleportRay.set(playerRig.position.clone().add(new THREE.Vector3(0, player.height, 0)), new THREE.Vector3(0, -1, -1).normalize().applyQuaternion(controller.quaternion)); const hit = teleportRay.intersectObjects(envLoader.meshes, true)[0]; if (hit) resetPlayer(hit.point.add(new THREE.Vector3(0, .04, 0)), player.yaw); }); const grip = renderer.xr.getControllerGrip(i); grip.add(controllerFactory.createControllerModel(grip)); playerRig.add(controller, grip); }
   const vrButton = VRButton.createButton(renderer, { requiredFeatures: ['local-floor'], optionalFeatures: ['bounded-floor', 'hand-tracking'] }); vrButton.classList.add('house-vr-button'); stage.append(vrButton); const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); if (isIOS) { vrButton.textContent = 'Apple mobile mode active'; vrButton.setAttribute('aria-hidden', 'true'); vrButton.style.display = 'none'; } renderer.xr.addEventListener('sessionstart', () => { quality = configureRenderer(renderer, 'auto'); setStatus('WebXR session started.'); }); renderer.xr.addEventListener('sessionend', () => { quality = configureRenderer(renderer, 'auto'); setStatus(activeEnvironment ? `Ready: ${activeEnvironment.name}.` : 'WebXR session ended.'); });
-  function resize() { const rect = stage.getBoundingClientRect(); const viewportHeight = window.visualViewport?.height || window.innerHeight || 720; const width = Math.max(320, Math.floor(Math.min(rect.width, document.documentElement.clientWidth || rect.width))); const desktopLimit = Math.max(420, viewportHeight - 180); const mobileLimit = Math.max(360, viewportHeight - 190); const limit = matchMedia('(max-width: 760px)').matches ? mobileLimit : desktopLimit; const tunedWidth = width * mapSizeScale; const baseHeight = Math.max(360, rect.height || width * .56) * mapHeightScale; const height = Math.floor(Math.min(baseHeight, limit)); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.pixelRatio)); renderer.setSize(tunedWidth, height, false); camera.aspect = tunedWidth / height; camera.updateProjectionMatrix(); } new ResizeObserver(resize).observe(stage); addEventListener('orientationchange', resize); window.visualViewport?.addEventListener('resize', resize); resize();
+  function resize() { const rect = stage.getBoundingClientRect(); const viewportHeight = window.visualViewport?.height || window.innerHeight || 720; const width = Math.max(320, Math.floor(Math.min(rect.width || stage.clientWidth || 1280, document.documentElement.clientWidth || rect.width || 1280))); const desktopLimit = Math.max(420, viewportHeight - 180); const mobileLimit = Math.max(360, viewportHeight - 190); const limit = matchMedia('(max-width: 760px)').matches ? mobileLimit : desktopLimit; const tunedWidth = Math.max(320, Math.floor(width * mapSizeScale)); const baseHeight = Math.max(360, rect.height || width * .56) * mapHeightScale; const height = Math.max(320, Math.floor(Math.min(baseHeight, limit))); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.pixelRatio)); renderer.setSize(tunedWidth, height, false); camera.aspect = tunedWidth / height; camera.updateProjectionMatrix(); } new ResizeObserver(resize).observe(stage); addEventListener('orientationchange', resize); window.visualViewport?.addEventListener('resize', resize); resize();
   renderer.setAnimationLoop(() => { const delta = Math.min(.05, clock.getDelta()); updatePlayer(delta); envLoader.mixers.forEach((m) => m.update(delta)); renderer.render(scene, camera); });
   await Promise.all([refreshLibrary(), refreshAvatarLibrary().catch((error) => { library.insertAdjacentHTML('beforeend', `<small>${error.message || 'Unable to load active avatars.'}</small>`); })]);
   const params = new URLSearchParams(location.search);
   const startEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
+  async function openHouseMap({ requestWalk = false } = {}) {
+    canvas.focus({ preventScroll: true });
+    if (!envLoader.world && startEnvironment) {
+      setStatus('Opening and loading the MUZIKAZ main floor…');
+      await loadById(startEnvironment);
+    }
+    if (requestWalk && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
+  }
+  document.querySelector('a[href="#house-explorer-canvas"]')?.addEventListener('click', () => {
+    openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
+  });
+  canvas.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
+  });
   if (startEnvironment) {
     setStatus('Auto-starting MUZIKAZ main floor for desktop and mobile controls…');
-    await loadById(startEnvironment);
+    await openHouseMap();
   }
 }
