@@ -112,7 +112,7 @@ function ownedAssetDetail(assetName) {
   const product = assetCatalog.retail.find((item) => assetName.includes(item.name));
   if (product) return { title: assetName, type: product.category, image: product.asset, copy: `Connected to ${product.connectsTo.join(' + ')} and tied to the owner's account.` };
   const dollKit = assetCatalog.dollKitAssets.find((item) => assetName.includes(item.name));
-  if (dollKit) return { title: assetName, type: dollKit.category, image: dollKit.asset, copy: `Doll kit asset compatible with ${dollKit.connectsTo.join(' + ')} and tied to the owner's account.` };
+  if (dollKit) return { title: assetName, type: dollKit.category, image: dollKit.asset, copy: `Avatar Flex Lab asset compatible with ${dollKit.connectsTo.join(' + ')} and tied to the owner's account.` };
   return { title: assetName, type: 'Uploaded asset', image: 'logo_panel_2x_transparent.png', copy: 'Member-uploaded file saved to this account collection.' };
 }
 
@@ -275,7 +275,7 @@ const assetCatalog = {
     { id: 'omconsole', name: 'OMConsole Package', category: 'Control Systems', price: '$49.00', copy: 'Integrate OMConsole gesture, facial tone, muscle, and EEG controls into a custom website experience with editable design hooks.' },
   ],
   dollKitAssets: [
-    { id: 'avatar-loadout', name: 'Avatar Loadout Shelf', category: 'Avatars', price: '$26.00', asset: 'trait_avatars_row_1_2x.png', connectsTo: ['Trait Avatars', 'New Legends'], copy: 'Base bodies, alternate skins, expressions, profile poses, and trait-ready avatar slots for character-specific doll kit builds.' },
+    { id: 'avatar-loadout', name: 'Avatar Loadout Shelf', category: 'Avatars', price: '$26.00', asset: 'trait_avatars_row_1_2x.png', connectsTo: ['Trait Avatars', 'New Legends'], copy: 'Base bodies, alternate skins, expressions, profile poses, and trait-ready avatar slots for character-specific Avatar Flex Lab builds.' },
     { id: 'pet-companions', name: 'Pet Companion Pack', category: 'Pets', price: '$24.00', asset: 'trait_avatars_row_2_2x.png', connectsTo: ['Crew', 'New Legends'], copy: 'Matching companion pets that follow a selected character through lore pages, market cards, and game-side follower ideas.' },
     { id: 'accessory-crate', name: 'Accessory Crate', category: 'Accessories', price: '$18.00', asset: 'accessories_banner_2x_transparent.png', connectsTo: ['Originals', 'Chaos', 'Trait Avatars'], copy: 'Hats, goggles, chains, bags, instruments, and collectible add-ons assigned per character so the market only shows compatible gear.' },
     { id: 'furniture-room-set', name: 'Furniture Room Set', category: 'Furniture', price: '$34.00', asset: 'section_banners_panel_2x_transparent.png', connectsTo: ['Crew', 'Legends'], copy: 'Studio desks, chairs, display shelves, booth builds, and themed furniture for avatar rooms and creator showcase pages.' },
@@ -318,13 +318,46 @@ const marketplaceListings = [
   ...assetCatalog.models.map((model) => ({ type: model.type, category: model.name, quality: 'curated', name: `${model.name} 3D Model Pack`, price: model.price, copy: `${model.copy} Source: ${model.file}`, model: model.name })),
   ...assetCatalog.websitePackages.map((pack) => ({ type: 'Website Packages', category: pack.category, quality: 'curated', name: pack.name, price: pack.price, copy: `${pack.copy} Source: ${pack.asset}`, product: pack.name })),
   ...assetCatalog.controlPackages.map((pack) => ({ type: 'Subscriber Creator Tools', category: pack.category, quality: 'curated', name: pack.name, price: pack.price, copy: pack.copy, product: pack.name })),
-  ...assetCatalog.dollKitAssets.map((asset) => ({ type: 'Doll Kit Assets', category: asset.category, quality: 'curated', name: asset.name, price: asset.price, copy: `${asset.copy} Compatible with ${asset.connectsTo.join(' + ')}. Source: ${asset.asset}`, product: asset.name })),
+  ...assetCatalog.dollKitAssets.map((asset) => ({ type: 'Avatar Flex Assets', category: asset.category, quality: 'curated', name: asset.name, price: asset.price, copy: `${asset.copy} Compatible with ${asset.connectsTo.join(' + ')}. Source: ${asset.asset}`, product: asset.name })),
   ...assetCatalog.retail.map((product) => ({ type: 'Retail Pages', category: product.category, quality: 'curated', name: product.name, price: product.price, copy: `${product.category} connected to ${product.connectsTo.join(' + ')} model data.`, product: product.name })),
   { type: 'Custom Orders', category: 'Custom Builds', quality: 'curated', name: 'Team Sleeve Text Run', price: 'Quote request', copy: 'Custom name, number, logo style, sleeve text, product, and character selections flow from the same catalog.' },
   { type: 'Limited Drops', category: 'Drop Bundles', quality: 'review', name: 'Friday Connected Drop', price: 'Locks at sellout', copy: 'Bundles one model pack, one retail item, and one custom designer preset.' },
 ];
 
 const marketplaceState = { type: 'All', category: 'All', modelFocus: '', curatedOnly: true };
+
+function initFlexLabCategories() {
+  const buttons = document.querySelectorAll('[data-flex-category]');
+  const cards = document.querySelectorAll('[data-flex-card]');
+  const panel = document.querySelector('#flex-category-panel');
+  if (!buttons.length || !cards.length) return;
+  const summaries = {
+    All: 'Viewing avatars, pets, accessories, furniture, 3D environments, and gaming studio packs together.',
+    Avatars: 'Live published model drops, bodies, skins, poses, and profile-ready avatar slots.',
+    Pets: 'Companion sidekicks that match mascot palettes and add character lore.',
+    Accessories: 'Wearable gear, collectibles, instruments, bags, and power-up style add-ons.',
+    Furniture: 'Creator rooms, studio sets, display walls, booths, and hangout hub pieces.',
+    '3D Environments': 'Bedrooms, stages, shops, arenas, and explorable world scenes for each mascot.',
+    'Gaming Studio': 'Playable props, emotes, animation hooks, vehicle ideas, levels, and shop bundles.'
+  };
+  function selectCategory(category) {
+    buttons.forEach((button) => {
+      const active = button.dataset.flexCategory === category;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-selected', String(active));
+    });
+    cards.forEach((card) => {
+      const visible = category === 'All' || card.dataset.flexCard === category;
+      card.hidden = !visible;
+      card.classList.toggle('is-selected', visible && category !== 'All');
+    });
+    if (panel) {
+      panel.innerHTML = `<strong>${category === 'All' ? 'All categories selected' : `${category} selected`}</strong><span>${summaries[category] || summaries.All}</span>`;
+    }
+  }
+  buttons.forEach((button) => button.addEventListener('click', () => selectCategory(button.dataset.flexCategory || 'All')));
+  selectCategory('All');
+}
 
 
 function renderModelCards() {
@@ -501,7 +534,7 @@ function renderMarketplace(type = marketplaceState.type, modelFocus = marketplac
 document.addEventListener('click', (event) => {
   const jump = event.target.closest('[data-market-jump]');
   if (!jump) return;
-  const targetType = jump.dataset.marketJump === 'Website Packages' ? 'Website Packages' : jump.dataset.marketJump === 'Doll Kit Assets' ? 'Doll Kit Assets' : 'Subscriber Creator Tools';
+  const targetType = jump.dataset.marketJump === 'Website Packages' ? 'Website Packages' : jump.dataset.marketJump === 'Doll Kit Assets' ? 'Avatar Flex Assets' : 'Subscriber Creator Tools';
   marketplaceState.category = 'All';
   renderMarketplace(targetType);
 });
@@ -805,6 +838,7 @@ document.addEventListener('click', (event) => {
 renderModelCards();
 renderMerchOptions();
 syncCartCount();
+initFlexLabCategories();
 seedDesigner();
 
 const arCharacterSelect = document.querySelector('#ar-character-select');

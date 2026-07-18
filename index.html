@@ -165,20 +165,33 @@
         </section>
 
         <section class="section-block doll-kit-section" id="doll-kit" aria-labelledby="doll-kit-title">
-            <div class="section-title"><span></span><h2 id="doll-kit-title">Avatar Doll Kit Gameplay Market</h2><a href="members.html#character-shop">Build in studio</a></div>
-            <p class="section-subheading">Draft a mascot, load its avatar shelf, then snap on pets, gear, rooms, props, vehicles, and playable world packs. Every category plugs into the MUZIKAZ model market and gaming studio so each character unlocks compatible loot instead of random clutter.</p>
+            <div class="section-title"><span></span><h2 id="doll-kit-title">Avatar Flex Lab Gameplay Market</h2><a href="members.html#character-shop">Build in studio</a></div>
+            <p class="section-subheading">Draft a mascot, load its avatar shelf, then snap on pets, gear, rooms, props, vehicles, and playable world packs. Use the unified category picker to view every Flex Lab category from one 3D model page section.</p>
             <div class="doll-kit-layout">
                 <article class="doll-kit-hero">
                     <p class="kicker">Character loadout system</p>
                     <h3>Pick the mascot. Build the world. Hit play.</h3>
-                    <p>Each MUZIKAZ character now works like a digital doll kit with a private inventory: avatar bodies, wearable flex, companion pets, furniture, stage props, room environments, vehicle ideas, and studio-ready gameplay hooks.</p>
+                    <p>Each MUZIKAZ character now works like an Avatar Flex Lab with a private inventory: avatar bodies, wearable flex, companion pets, furniture, stage props, room environments, vehicle ideas, and studio-ready gameplay hooks.</p>
                     <div class="doll-kit-actions">
                         <a class="btn" href="model-explorer.html#live-published-models">Browse avatar market</a>
                         <a class="btn ghost" href="members.html#marketplace">Open full marketplace</a>
                     </div>
                 </article>
-                <div class="doll-kit-grid" aria-label="Doll kit asset categories">
-                    <article class="doll-kit-avatar-market" id="doll-kit-avatars">
+                <div class="doll-kit-category-bar" role="tablist" aria-label="Avatar Flex Lab categories">
+                    <button type="button" class="active" data-flex-category="All">All categories</button>
+                    <button type="button" data-flex-category="Avatars">Avatars</button>
+                    <button type="button" data-flex-category="Pets">Pets</button>
+                    <button type="button" data-flex-category="Accessories">Accessories</button>
+                    <button type="button" data-flex-category="Furniture">Furniture</button>
+                    <button type="button" data-flex-category="3D Environments">3D Environments</button>
+                    <button type="button" data-flex-category="Gaming Studio">Gaming Studio</button>
+                </div>
+                <div class="doll-kit-selected-panel" id="flex-category-panel" aria-live="polite">
+                    <strong>All categories selected</strong>
+                    <span>Viewing avatars, pets, accessories, furniture, 3D environments, and gaming studio packs together.</span>
+                </div>
+                <div class="doll-kit-grid" aria-label="Avatar Flex Lab asset categories">
+                    <article class="doll-kit-avatar-market" id="doll-kit-avatars" data-flex-card="Avatars">
                         <span>👤</span><h3>Avatars</h3>
                         <p>Base character bodies, skins, trait variants, poses, and profile-ready avatar slots. Published 3D drops now stay off the main page and open through designated 3D Explorer links.</p>
                         <div class="avatar-market-panel avatar-link-panel" aria-labelledby="avatar-links-title">
@@ -192,11 +205,11 @@
                             </div>
                         </div>
                     </article>
-                    <article><span>🐾</span><h3>Pets</h3><p>Companion drops that match the mascot palette, add lore, and follow the player as sidekick energy.</p></article>
-                    <article><span>🎒</span><h3>Accessories</h3><p>Hats, goggles, chains, bags, instruments, collectibles, power-ups, and wearable merch add-ons.</p></article>
-                    <article><span>🛋️</span><h3>Furniture</h3><p>Room loot for studios, bedrooms, booths, display walls, hangout hubs, and creator set dressing.</p></article>
-                    <article><span>🏠</span><h3>3D Environments</h3><p>Bedrooms, studios, stages, shops, arenas, hideouts, and house-explorer scenes stay linked to their respective HTML environment pages for each mascot world.</p><a class="card-link" href="#house-explorer">Open environment explorer</a></article>
-                    <article><span>🎮</span><h3>Gaming Studio</h3><p>Playable loadouts with props, emotes, animation hooks, level themes, vehicle drops, and shop bundles.</p></article>
+                    <article data-flex-card="Pets"><span>🐾</span><h3>Pets</h3><p>Companion drops that match the mascot palette, add lore, and follow the player as sidekick energy.</p></article>
+                    <article data-flex-card="Accessories"><span>🎒</span><h3>Accessories</h3><p>Hats, goggles, chains, bags, instruments, collectibles, power-ups, and wearable merch add-ons.</p></article>
+                    <article data-flex-card="Furniture"><span>🛋️</span><h3>Furniture</h3><p>Room loot for studios, bedrooms, booths, display walls, hangout hubs, and creator set dressing.</p></article>
+                    <article data-flex-card="3D Environments"><span>🏠</span><h3>3D Environments</h3><p>Bedrooms, studios, stages, shops, arenas, hideouts, and house-explorer scenes stay linked to their respective HTML environment pages for each mascot world.</p><a class="card-link" href="#house-explorer">Open environment explorer</a></article>
+                    <article data-flex-card="Gaming Studio"><span>🎮</span><h3>Gaming Studio</h3><p>Playable loadouts with props, emotes, animation hooks, level themes, vehicle drops, and shop bundles.</p></article>
                 </div>
             </div>
         </section>
