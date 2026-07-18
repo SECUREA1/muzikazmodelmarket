@@ -129,7 +129,7 @@
         <p id="publish-status" class="status-message publisher-wide" role="status" aria-live="polite">Ready to publish a public shared model.</p>
         <div id="publish-links" class="publish-links publisher-wide"></div>
       </form>
-      <model-viewer id="publish-preview" class="publisher-preview" camera-controls auto-rotate hidden alt="Local model upload preview"></model-viewer>
+      <model-viewer id="publish-preview" class="publisher-preview" camera-controls touch-action="pan-y" auto-rotate ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1" hidden alt="Local model upload preview"><button slot="ar-button" type="button">Place preview in AR</button></model-viewer>
     </section>
 
     <section class="section-block live-models-section explorer-live-space" id="live-published-models" aria-labelledby="explorer-live-models-title">
