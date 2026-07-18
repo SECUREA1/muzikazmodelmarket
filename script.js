@@ -901,10 +901,7 @@ function activateMarketplaceAr(listing){
     customArFileUrl = '';
     updateArViewer(false);
     scrollToSection('ar-viewer');
-    setTimeout(() => {
-      if (arModelViewer && !arModelViewer.hidden && typeof arModelViewer.activateAR === 'function') arModelViewer.activateAR();
-      else arPopoutButton?.click();
-    }, 250);
+    arPopoutButton?.click();
     return;
   }
   if (listing.modelUrl) window.open(listing.modelUrl, '_blank', 'noopener');
@@ -983,11 +980,11 @@ arFileInput?.addEventListener('change', (event) => {
     updateArViewer(true);
   }
 });
+function escapeArPopupText(value) {
+  return String(value ?? '').replace(/[&<>'\"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '\"': '&quot;' }[char]));
+}
+
 arPopoutButton?.addEventListener('click', () => {
-  if (arModelViewer && !arModelViewer.hidden && typeof arModelViewer.activateAR === 'function') {
-    arModelViewer.activateAR();
-    return;
-  }
   const character = selectedArCharacter();
   const popup = window.open('', `muzikaz-ar-${character.file}`, 'popup,width=430,height=740');
   if (!popup) {
@@ -998,10 +995,15 @@ arPopoutButton?.addEventListener('click', () => {
   const modelUrl = customArFileUrl || catalogModel?.modelUrl || '';
   const iosModelUrl = !customArFileUrl ? catalogModel?.iosModelUrl || '' : '';
   const previewUrl = arPreviewImg?.src || characterImage(character);
+  const safeCharacterName = escapeArPopupText(character.name);
+  const safeModelUrl = escapeArPopupText(modelUrl);
+  const safeIosModelUrl = escapeArPopupText(iosModelUrl);
+  const safePreviewUrl = escapeArPopupText(previewUrl);
   const viewerMarkup = modelUrl && /\.(glb|gltf|usdz|reality)$/i.test(modelUrl)
-    ? `<model-viewer src="${modelUrl}" ${iosModelUrl ? `ios-src="${iosModelUrl}"` : ''} poster="${previewUrl}" camera-controls auto-rotate ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1" alt="${character.name} AR model"><button slot="ar-button" type="button">Place ${character.name} in AR</button></model-viewer>`
-    : `<img src="${previewUrl}" alt="${character.name}"><p>No matching GLB/USDZ filing is connected yet; upload a model file on the main page to launch native AR.</p>`;
-  popup.document.write(`<!doctype html><title>${character.name} AR Preview</title><script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"><\/script><style>body{margin:0;background:#020302;color:#9cff00;font-family:system-ui;text-align:center;text-transform:uppercase}main{min-height:100vh;display:grid;place-items:center;padding:18px}model-viewer,img{width:100%;height:72vh;max-height:72vh;object-fit:contain;filter:drop-shadow(0 20px 30px #000)}button{border:1px solid #9cff00;border-radius:999px;background:#9cff00;color:#030403;padding:12px 18px;font-weight:900;text-transform:uppercase}p{text-transform:none;color:#fff}</style><main><div><h1>${character.name}</h1>${viewerMarkup}<p>${catalogModel ? `${catalogModel.name} is connected from the AR model filing: ${catalogModel.modelUrl}.` : 'Select another character or upload a GLB, GLTF, USDZ, or Reality file for native AR on iPhone or Android.'}</p></div></main>`);
+    ? `<model-viewer src="${safeModelUrl}" ${iosModelUrl ? `ios-src="${safeIosModelUrl}"` : ''} poster="${safePreviewUrl}" camera-controls auto-rotate ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1" alt="${safeCharacterName} AR model"><button slot="ar-button" type="button">Place ${safeCharacterName} in AR</button></model-viewer>`
+    : `<img src="${safePreviewUrl}" alt="${safeCharacterName}"><p>No matching GLB/USDZ filing is connected yet; upload a model file on the main page to launch native AR.</p>`;
+  const sourceCopy = catalogModel ? `${escapeArPopupText(catalogModel.name)} is connected from the AR model filing: ${escapeArPopupText(catalogModel.modelUrl)}.` : 'Select another character or upload a GLB, GLTF, USDZ, or Reality file for native AR on iPhone or Android.';
+  popup.document.write(`<!doctype html><title>${safeCharacterName} AR Preview</title><script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"><\/script><style>body{margin:0;background:#020302;color:#9cff00;font-family:system-ui;text-align:center;text-transform:uppercase}main{min-height:100vh;display:grid;place-items:center;padding:18px}model-viewer,img{width:100%;height:72vh;max-height:72vh;object-fit:contain;filter:drop-shadow(0 20px 30px #000)}button{border:1px solid #9cff00;border-radius:999px;background:#9cff00;color:#030403;padding:12px 18px;font-weight:900;text-transform:uppercase}p{text-transform:none;color:#fff}</style><main><div><h1>${safeCharacterName}</h1>${viewerMarkup}<p>${sourceCopy}</p></div></main>`);
   popup.document.close();
 });
 
