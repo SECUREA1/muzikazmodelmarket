@@ -75,23 +75,13 @@
             <span id="house-presence-count">Live in the house: 1</span>
             <span>Click floor: set drop location</span>
           </div>
-          <div class="house-map-tuner" aria-label="Map tuning controls">
-            <label>Map size <input id="house-map-fit" type="range" min="85" max="125" value="100"></label>
-            <label>View height <input id="house-view-height" type="range" min="80" max="210" value="155"></label>
-            <label>Zoom <input id="house-view-zoom" type="range" min="320" max="760" value="520"></label>
-          </div>
           <label class="house-environment-picker">Environment file
             <select id="house-environment-select" aria-label="Choose house environment file">
               <option value="">Loading environment files…</option>
             </select>
           </label>
-          <label class="house-environment-picker">Load local map JSON
-            <input id="house-environment-upload" type="file" accept="application/json,.json">
-          </label>
           <div class="house-actions">
             <button type="button" id="house-reset">Reset view</button>
-            <button type="button" id="house-minimize" aria-pressed="false">Minimize map</button>
-            <button type="button" id="house-expand">Expand map</button>
             <button type="button" id="house-place-person">Set person drop-in</button>
             <button type="button" id="hand-toggle" aria-pressed="false">Enable hand control</button>
             <button type="button" id="add-avatar">Add Avatar</button>
