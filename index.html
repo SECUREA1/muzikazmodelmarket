@@ -11,7 +11,6 @@
     <link rel="icon" type="image/svg+xml" href="muzikaz_bolt_logo_editable.svg" />
     <link rel="apple-touch-icon" href="logo_symbol_crop_2x_transparent.png" />
     <link rel="manifest" href="site.webmanifest" />
-    <link rel="preload" href="/public/models/environments/muzikazmain.glb" as="fetch" type="model/gltf-binary" crossorigin />
     <link rel="alternate" type="application/rss+xml" title="MUZIKAZ Drops Feed" href="feed.xml" />
     <meta property="og:site_name" content="MUZIKAZ" />
     <meta property="og:type" content="website" />
@@ -77,7 +76,7 @@
 
 
         <section class="section-block house-explorer" id="house-explorer" aria-labelledby="house-explorer-title">
-            <div class="section-title"><span></span><h2 id="house-explorer-title">3D House Explorer</h2><button class="house-launch-button" type="button" data-house-launch>Play RAD-TOX</button><a href="#house-explorer-canvas">Enter interior</a></div>
+            <div class="section-title"><span></span><h2 id="house-explorer-title">3D House Explorer</h2><a href="#house-explorer-canvas">Enter interior</a></div>
             <div class="house-explorer-shell">
                 <div class="house-stage">
                     <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
@@ -92,16 +91,7 @@
                         <span>Mouse drag: pan + tilt</span>
                         <span>Wheel: zoom</span>
                         <span>Q / E: camera height</span>
-                        <span>Click RAD-TOX targets: four hits to neutralize</span>
-                    </div>
-                    <div class="house-game-status" aria-label="RAD-TOX game status">
-                        <div class="house-game-hp"><span>HP</span><div class="house-game-hp-track"><div id="house-game-hp-fill"></div></div><strong id="house-game-hp-text">100</strong></div>
-                        <span class="house-game-pill">Score <strong id="house-game-score">0</strong></span>
-                        <span class="house-game-pill">Targets <strong id="house-game-active-count">5</strong></span>
-                        <span class="house-game-pill">Remaining <strong id="house-game-remaining-count">0</strong></span>
-                        <span class="house-game-pill" id="house-game-sound">Sound On</span>
-                        <span class="house-game-pill" id="house-game-difficulty">Normal</span>
-                        <span class="house-game-pill" id="house-game-state">RUNNING</span>
+                        <span>Click toxic bubbles: damage + save HP</span>
                     </div>
                     <label class="house-environment-picker">Environment file
                         <select id="house-environment-select" aria-label="Choose house environment file">
@@ -115,21 +105,8 @@
                             <button type="button" id="house-place-person">Set person drop-in</button>
                             <button type="button" id="hand-toggle" aria-pressed="false">Enable hand control</button>
                             <button type="button" id="add-avatar">Add Avatar</button>
-                            <button type="button" id="toxic-bubble-toggle" aria-pressed="true">Toxic Bubbles: On</button>
-                            <button type="button" id="radtox-run-toggle" aria-pressed="true">RAD-TOX Game: On</button>
-                            <button type="button" id="radtox-sound-toggle" aria-pressed="true">Sound: On</button>
-                            <button type="button" id="radtox-restart">Restart Run</button>
-                            <label class="radtox-control">Difficulty <select id="radtox-difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option><option value="nightmare">Nightmare</option></select></label>
                         </div>
                     </details>
-                    <details class="radtox-settings"><summary>RAD-TOX Settings</summary><div class="radtox-settings-grid">
-                        <label>Bubble speed <input id="radtox-speed" type="range" min="0.5" max="1.5" step="0.05" value="1"></label>
-                        <label>Target lock <input id="radtox-lock-enabled" type="checkbox" checked></label>
-                        <label>Lock strength <input id="radtox-lock-strength" type="range" min="0" max="1" step="0.05" value="0.75"></label>
-                        <label>Pinch threshold <input id="radtox-pinch-threshold" type="range" min="0.03" max="0.2" step="0.01" value="0.09"></label>
-                        <label>Master volume <input id="radtox-master-volume" type="range" min="0" max="1" step="0.05" value="0.7"></label>
-                        <button type="button" id="radtox-reset-map">Reset current map progress</button>
-                    </div></details>
                     <div class="camera-preview-panel">
                         <video id="hand-preview" playsinline muted></video>
                         <span id="hand-status">Camera preview inactive. MediaPipe Hands loads only when enabled.</span>
@@ -184,11 +161,9 @@
             <p class="section-subheading">Pick a mascot and style a complete play-ready kit in one clean hub. Avatars, pets, wearables, rooms, props, vehicles, and world packs now line up as responsive shelves with no awkward gaps.</p>
             <div class="doll-kit-layout">
                 <article class="doll-kit-hero">
-                    <div class="doll-kit-intro">
-                        <p class="kicker">Flex fit system</p>
-                        <h3>Choose a character. Flex the fit. Launch the world.</h3>
-                        <p>Every MUZIKAZ mascot gets a curated inventory stack: base bodies, wearable flex, pet companions, room sets, stage props, vehicle concepts, and gameplay hooks arranged for fast browsing and cleaner checkout flow.</p>
-                    </div>
+                    <p class="kicker">Flex fit system</p>
+                    <h3>Choose a character. Flex the fit. Launch the world.</h3>
+                    <p>Every MUZIKAZ mascot gets a curated inventory stack: base bodies, wearable flex, pet companions, room sets, stage props, vehicle concepts, and gameplay hooks arranged for fast browsing and cleaner checkout flow.</p>
                     <div class="doll-kit-actions">
                         <a class="btn" href="model-explorer.html#live-published-models">Browse 3D drops</a>
                         <a class="btn ghost" href="members.html#marketplace">Open the market</a>
@@ -257,30 +232,11 @@
 
 
         <section class="section-block brand-profile-station" id="brand-profile" aria-labelledby="brand-profile-title">
-            <div class="brand-profile-heading">
-                <div>
-                    <p class="kicker">The official MUZIKAZ identity</p>
-                    <h2 id="brand-profile-title">Recognizable everywhere the crew shows up.</h2>
-                    <p>From a first social preview to a collector’s wallet, our signature visuals keep every MUZIKAZ moment unmistakably loud, proud, and ready to share.</p>
-                </div>
-                <div class="brand-profile-actions">
-                    <a class="btn" href="brand-kit.html">Explore the brand kit <span aria-hidden="true">→</span></a>
-                    <a class="profile-data-link" href="branding-profile.json">View profile data <span aria-hidden="true">↗</span></a>
-                </div>
-            </div>
+            <div class="section-title"><span></span><h2 id="brand-profile-title">MUZIKAZ.com brand profile</h2><a href="branding-profile.json">Open dataset</a></div>
             <div class="brand-profile-grid">
-                <article class="brand-profile-card feature">
-                    <div class="brand-profile-image-wrap"><img src="brand_name_tagline_panel_2x_transparent.png" alt="MUZIKAZ wordmark, lightning logo, and Loud Proud Muzikaz tagline"></div>
-                    <div class="brand-profile-copy"><p class="kicker">The hero identity</p><h3>Loud. Proud. Muzikaz.</h3><p>Our official profile image pairs the MUZIKAZ wordmark, lightning mark, and signature tagline in one high-impact visual—perfect for social previews, collection covers, and community announcements.</p><span class="brand-profile-note">The go-to image for every big introduction.</span></div>
-                </article>
-                <article class="brand-profile-card compact">
-                    <div class="brand-profile-image-wrap symbol"><img src="logo_symbol_crop_2x_transparent.png" alt="MUZIKAZ lightning logo symbol"></div>
-                    <p class="brand-card-label">The lightning mark</p><h3>Small icon. Full-volume energy.</h3><p>Spot the bolt in browser tabs, wallet badges, app icons, and saved shortcuts—an instant signal that you’re in the MUZIKAZ universe.</p>
-                </article>
-                <article class="brand-profile-card compact">
-                    <div class="brand-profile-image-wrap wordmark"><img src="muzikaz_wordmark_crop_2x_transparent.png" alt="MUZIKAZ wordmark logo"></div>
-                    <p class="brand-card-label">The wordmark</p><h3>Made to headline the drop.</h3><p>Our feed-ready wordmark gives releases, stories, and collection pages a clean, confident signature that fans recognize at a glance.</p>
-                </article>
+                <article class="brand-profile-card feature"><img src="brand_name_tagline_panel_2x_transparent.png" alt="MUZIKAZ wordmark, logo, and Loud Proud Muzikaz tagline"><div><p class="kicker">Official profile photo</p><h3>Loud. Proud. Muzikaz.</h3><p>Use this high-quality profile image across social previews, browser tabs, dashboards, feeds, wallet cards, and collection pages so every MUZIKAZ station carries the same visual identity.</p></div></article>
+                <article class="brand-profile-card"><img src="logo_symbol_crop_2x_transparent.png" alt="MUZIKAZ lightning logo symbol"><h3>Tab and wallet logo</h3><p>The lightning mark is published as the favicon, apple-touch icon, manifest icon, wallet badge, and schema logo.</p></article>
+                <article class="brand-profile-card"><img src="muzikaz_wordmark_crop_2x_transparent.png" alt="MUZIKAZ wordmark logo"><h3>Feed-ready wordmark</h3><p>Metadata, RSS, sitemap, and JSON-LD descriptions point crawlers to the MUZIKAZ profile, photos, and model-market pages.</p></article>
             </div>
         </section>
 

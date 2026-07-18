@@ -37,14 +37,6 @@ for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-
     throw new Error(`index.html is missing public section #${id}`);
   }
 }
-if (!mainHtml.includes('data-house-launch')) {
-  throw new Error('index.html is missing the RAD-TOX game launch control.');
-}
-
-const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
-if (!houseExplorer.includes("openHouseMap().then(() =>")) {
-  throw new Error('The house explorer is missing its desktop GLB startup load path.');
-}
 
 const membersHtml = await readFile('dist/members.html', 'utf8');
 for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace']) {

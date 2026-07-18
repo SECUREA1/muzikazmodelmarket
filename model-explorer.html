@@ -27,8 +27,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="preload" href="/public/models/environments/muzikazmain.glb" as="fetch" type="model/gltf-binary" crossorigin />
-  <link rel="preload" href="/public/models/environments/muzikazupper.glb" as="fetch" type="model/gltf-binary" crossorigin />
 </head>
 <body class="model-explorer-page">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata.","sameAs":["https://muzikaz.com/"]}</script>
@@ -66,7 +64,7 @@
         <div class="house-stage">
           <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
           <div class="house-reticle" aria-hidden="true">+</div>
-          <div class="house-status" id="house-status" role="status">Loading the MUZIKAZ house map…</div>
+          <div class="house-status" id="house-status" role="status">Ready: drag to look around, then move through the rooms.</div>
         </div>
         <aside class="house-hud" aria-label="Vibe Crib Explorer controls">
           <p class="kicker">Muzikaz Vibe Crib</p>
@@ -89,10 +87,6 @@
             <button type="button" id="house-place-person">Set person drop-in</button>
             <button type="button" id="hand-toggle" aria-pressed="false">Enable hand control</button>
             <button type="button" id="add-avatar">Add Avatar</button>
-          </div>
-          <div class="radtox-mode-picker" aria-label="RAD-TOX game mode">
-            <label><input type="checkbox" data-radtox-enabled-control checked> Enable RAD-TOX game</label>
-            <span>Turn the game on to activate targets after the house finishes loading.</span>
           </div>
           <div class="camera-preview-panel">
             <video id="hand-preview" playsinline muted></video>
