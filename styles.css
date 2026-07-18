@@ -1844,3 +1844,26 @@ section,
   clip-path:inset(50%)!important;
   border:0!important;
 }
+
+/* Picture-matched house controls with avatar/environment selectors and press-hold zoom toggle. */
+@media(max-width:760px), (pointer:coarse){
+  .mobile-move-pad:not(.mobile-move-pad-glb){
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    grid-template-areas:
+      "forward side-right . avatar environment"
+      ". zoom-toggle reverse jump .";
+    align-items:center;
+    gap:clamp(8px,1.8vw,14px);
+  }
+  .mobile-move-pad [data-mobile-hold="forward"]{grid-area:forward}
+  .mobile-move-pad [data-mobile-hold="strafe-right"]{grid-area:side-right}
+  .mobile-move-pad [data-mobile-action="avatar"]{grid-area:avatar}
+  .mobile-move-pad [data-mobile-action="environment"]{grid-area:environment}
+  .mobile-move-pad [data-mobile-zoom-toggle]{grid-area:zoom-toggle}
+  .mobile-move-pad [data-mobile-hold="back"]{grid-area:reverse}
+  .mobile-move-pad [data-mobile-action="jump"]{grid-area:jump}
+  .mobile-move-pad [data-mobile-action="avatar"],
+  .mobile-move-pad [data-mobile-action="environment"],
+  .mobile-move-pad [data-mobile-action="jump"]{background:linear-gradient(180deg,#fff,#e7e7e7);color:#071007}
+  .mobile-move-pad [data-mobile-zoom-toggle="in"]{background:linear-gradient(180deg,#fff,#e7e7e7);color:#071007}
+}
