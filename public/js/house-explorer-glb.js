@@ -297,5 +297,20 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     event.preventDefault();
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
-  setStatus('Map ready. Select Play RAD-TOX now to open the game.');
+  // Keep the homepage explorer on the reliable startup path used before the
+  // modal launcher was introduced: load the selected GLB as soon as the
+  // desktop canvas is ready. The game itself still starts from an explicit
+  // user action so browsers can enable audio correctly.
+  if (startEnvironment && !mobileQualityMode) {
+    setStatus('Auto-loading the MUZIKAZ house environment…');
+    openHouseMap().then(() => {
+      setStatus('Map ready. Select Play RAD-TOX to begin the game.');
+    }).catch((error) => {
+      setStatus(error.message || 'Unable to load the MUZIKAZ map. Choose an environment and try again.');
+    });
+  } else if (startEnvironment) {
+    setStatus('Mobile-safe mode ready. Tap Play RAD-TOX or Enter interior to load the house.');
+  } else {
+    setStatus('No MUZIKAZ map is available yet. Refresh the page or choose an environment and try again.');
+  }
 }
