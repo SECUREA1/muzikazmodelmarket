@@ -6,6 +6,10 @@ const requiredFiles = [
   'dist/styles.css',
   'dist/script.js',
   'dist/reference.png',
+  'dist/public/js/house-explorer-glb.js',
+  'dist/public/models/environments/environments.json',
+  'dist/public/models/environments/muzikazmain.glb',
+  'dist/public/models/environments/muzikazupper.glb',
 ];
 
 await Promise.all(requiredFiles.map((file) => access(file)));
@@ -35,6 +39,12 @@ const mainHtml = await readFile('dist/index.html', 'utf8');
 for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-preview']) {
   if (!mainHtml.includes(`id="${id}"`)) {
     throw new Error(`index.html is missing public section #${id}`);
+  }
+}
+
+for (const module of ['public/js/model-gallery.js', 'public/js/house-explorer-glb.js']) {
+  if (!mainHtml.includes(`type="module" src="${module}"`)) {
+    throw new Error(`index.html is missing required module ${module}`);
   }
 }
 

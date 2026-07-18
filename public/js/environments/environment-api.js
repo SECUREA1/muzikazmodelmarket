@@ -33,7 +33,11 @@ export async function fetchEnvironmentList() {
     const response = await fetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
     if (!response.ok) throw new Error(`Environment registry unavailable (${response.status})`);
     const apiRecords = recordsFrom(await response.json());
-    const records = mergeEnvironments(bundled, apiRecords);
+    // Keep the checked-in worlds authoritative.  A persisted API record can
+    // outlive a renamed or removed GLB, and allowing it to replace a bundled
+    // world with the same id makes the first map fail even though the known
+    // good repository map is present.  API-only records are still included.
+    const records = mergeEnvironments(apiRecords, bundled);
     if (records.length) return records;
   } catch (error) {
     if (bundled.length) {
