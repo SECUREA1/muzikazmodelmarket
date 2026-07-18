@@ -1,7 +1,7 @@
-import { fetchEnvironmentList, deleteEnvironment } from './environment-api.js';
+import { fetchEnvironmentList, getCachedEnvironmentList, deleteEnvironment } from './environment-api.js';
 
 export class EnvironmentRegistry {
-  constructor() { this.environments = []; }
+  constructor() { this.environments = normalizeEnvironmentList(getCachedEnvironmentList()); }
   async refresh() { this.environments = normalizeEnvironmentList(await fetchEnvironmentList()); return this.environments; }
   all() { return this.environments; }
   find(id) { return this.environments.find((env) => env.id === id || env.aliases?.includes(id)); }
