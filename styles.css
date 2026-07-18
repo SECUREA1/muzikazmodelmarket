@@ -1831,3 +1831,16 @@ section,
 .house-explorer-shell.is-map-expanded .house-stage{height:min(82svh,860px);max-height:none}
 .house-explorer-shell.is-map-expanded .house-hud{max-width:720px;width:100%;justify-self:center}
 @media(max-width:1000px){.house-explorer-shell.is-map-minimized{grid-template-columns:1fr}.house-explorer-shell.is-map-minimized .house-stage{height:220px;min-height:220px}}
+
+/* Keep legacy map tuners from taking screen space; GLB tuners open as fixed pop-ups. */
+.house-map-tuner{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  margin:-1px!important;
+  padding:0!important;
+  overflow:hidden!important;
+  clip:rect(0 0 0 0)!important;
+  clip-path:inset(50%)!important;
+  border:0!important;
+}
