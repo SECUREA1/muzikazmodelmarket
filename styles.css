@@ -615,9 +615,77 @@ margin:0 0 20px}
 .operation-grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:14px}
 .operation-grid article{border:1px solid rgba(156,255,0,.28);border-radius:12px;padding:18px;background:rgba(0,0,0,.62)}
 .operation-grid b{color:var(--lime);font-size:28px}.operation-grid strong{display:block;margin:8px 0}.operation-grid span{text-transform:none;color:var(--muted);font-size:14px;line-height:1.4}
+.doll-kit-section{
+width:96%;
+margin:22px auto;
+border:1px solid rgba(156,255,0,.28);
+border-radius:20px;
+background:
+radial-gradient(circle at 85% 10%, rgba(156,255,0,.16), transparent 28%),
+linear-gradient(135deg, rgba(0,0,0,.94), rgba(18,28,9,.84));
+box-shadow:0 18px 46px rgba(0,0,0,.34), 0 0 32px rgba(156,255,0,.08)}
+.section-subheading{
+max-width:980px;
+margin:0 auto 22px;
+color:var(--muted);
+line-height:1.55;
+text-align:center;
+text-transform:none}
+.doll-kit-layout{
+display:grid;
+grid-template-columns:minmax(280px, .78fr) 1.22fr;
+gap:20px;
+align-items:stretch}
+.doll-kit-hero,.doll-kit-grid article{
+border:1px solid rgba(156,255,0,.25);
+border-radius:16px;
+background:rgba(0,0,0,.58)}
+.doll-kit-hero{
+padding:26px;
+display:flex;
+flex-direction:column;
+justify-content:center;
+min-height:100%}
+.doll-kit-hero h3{
+font-family:Bangers, cursive;
+font-size:clamp(38px, 5vw, 64px);
+line-height:.9;
+margin:8px 0 16px;
+color:var(--lime)}
+.doll-kit-hero p:not(.kicker),.doll-kit-grid p{
+color:var(--muted);
+line-height:1.5;
+text-transform:none}
+.doll-kit-actions{
+display:flex;
+gap:12px;
+flex-wrap:wrap;
+margin-top:12px}
+.doll-kit-grid{
+display:grid;
+grid-template-columns:repeat(3, minmax(0,1fr));
+gap:14px}
+.doll-kit-grid article{
+padding:20px;
+min-height:190px}
+.doll-kit-grid span{
+display:grid;
+place-items:center;
+width:54px;
+height:54px;
+border:1px solid var(--line);
+border-radius:16px;
+background:#050805;
+font-size:28px;
+box-shadow:inset 0 0 24px rgba(156,255,0,.08)}
+.doll-kit-grid h3{
+margin:16px 0 8px;
+color:var(--lime)}
+.doll-kit-callout{
+margin-bottom:18px}
 .card,.products article,.site-choice{transition:transform .2s ease, box-shadow .2s ease}.card:hover,.products article:hover,.site-choice:hover{transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.35), 0 0 24px rgba(156,255,0,.12)}
 @media(max-width:950px){
-.topbar{height:auto;gap:10px;align-items:flex-start;flex-direction:column;padding:10px 16px}.site-choices,.operation-grid{grid-template-columns:1fr}.start-panel{padding:22px}.site-choice{min-height:280px}.page-shell{width:96%}.hero-actions{align-items:stretch;flex-direction:column}.operation-panel{background-image:none}}
+.topbar{height:auto;gap:10px;align-items:flex-start;flex-direction:column;padding:10px 16px}.site-choices,.operation-grid,.doll-kit-layout,.doll-kit-grid{grid-template-columns:1fr}.start-panel{padding:22px}.site-choice{min-height:280px}.page-shell{width:96%}.hero-actions{align-items:stretch;flex-direction:column}.operation-panel{background-image:none}.doll-kit-section{width:calc(100% - 24px)}}
 
 /* Preserve the single-page index look from edd229a while keeping previews playable. */
 .model-detail{
