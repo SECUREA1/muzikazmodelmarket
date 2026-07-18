@@ -233,7 +233,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (!mobileQualityMode || renderer.xr.isPresenting) envLoader.mixers.forEach((m) => m.update(delta));
     renderer.render(scene, camera);
   });
-  await Promise.all([refreshLibrary(), refreshAvatarLibrary().catch((error) => { library.insertAdjacentHTML('beforeend', `<small>${error.message || 'Unable to load active avatars.'}</small>`); })]);
+  // The map must not wait for optional avatar API calls. Populate worlds from
+  // the repository environment manifest first, then enrich the picker with
+  // avatars after the playable GLB has begun loading.
+  await refreshLibrary();
+  refreshAvatarLibrary().catch((error) => { library.insertAdjacentHTML('beforeend', `<small>${error.message || 'Unable to load active avatars.'}</small>`); });
   const params = new URLSearchParams(location.search);
   const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
   // Load the standalone main floor first so the visible explorer is usable immediately; the full-house option remains available in the map selector.
