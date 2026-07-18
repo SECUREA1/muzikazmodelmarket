@@ -8,8 +8,37 @@ const modelDetailTitle = document.querySelector('#model-detail-title');
 const modelDetailCopy = document.querySelector('#model-detail-copy');
 const addModelButton = document.querySelector('[data-add-model]');
 const modelPageLink = document.querySelector('#model-page-link');
+const avatarToggle = document.querySelector('[data-avatar-display-toggle]');
+const avatarGallery = document.querySelector('#avatar-gallery');
+const isMembersPage = document.body.classList.contains('members-page');
 let cartItems = 0;
 const CART_KEY = 'muzikazCheckoutCart';
+const AVATAR_DISPLAY_KEY = 'muzikazShowAvatars';
+
+
+function shouldShowAvatars() {
+  return window.localStorage.getItem(AVATAR_DISPLAY_KEY) !== 'false';
+}
+
+function setAvatarDisplay(showAvatars) {
+  document.body.classList.toggle('avatars-hidden', !showAvatars);
+  if (avatarGallery) avatarGallery.hidden = !showAvatars;
+  if (avatarToggle) {
+    avatarToggle.textContent = showAvatars ? 'Hide avatars' : 'Show avatars';
+    avatarToggle.setAttribute('aria-pressed', String(showAvatars));
+  }
+  if (modelStatus) {
+    modelStatus.textContent = showAvatars
+      ? 'Avatars are visible. Select a model card to preview its collection, then add it to your cart.'
+      : 'Avatars are hidden for a faster, cleaner page. Use Show avatars to display them again.';
+  }
+}
+
+function toggleAvatarDisplay() {
+  const showAvatars = !shouldShowAvatars();
+  window.localStorage.setItem(AVATAR_DISPLAY_KEY, String(showAvatars));
+  setAvatarDisplay(showAvatars);
+}
 
 function parsePrice(value) {
   return Number(String(value || '').replace(/[^0-9.]/g, '')) || 0;
@@ -319,7 +348,7 @@ const marketplaceState = { type: 'All', category: 'All', modelFocus: '', curated
 function renderModelCards() {
   const collectionGrid = document.querySelector('.collection-grid');
   if (!collectionGrid) return;
-  const visibleModels = document.body.classList.contains('members-page') ? assetCatalog.models : assetCatalog.models.filter((model) => !['new-legends', 'trait-avatars', 'online-events'].includes(model.id));
+  const visibleModels = isMembersPage ? assetCatalog.models : assetCatalog.models.filter((model) => !['new-legends', 'trait-avatars', 'online-events'].includes(model.id));
   collectionGrid.innerHTML = visibleModels.map((model) => `
     <article class="card ${model.css}" style="--card-art:url('${model.file}')" data-preview-model="${model.name}" tabindex="0" aria-label="Preview ${model.name} collection">
       <div><h3>${model.name}</h3><p>${model.character}</p><a class="card-link" href="${model.page}">View</a></div>
@@ -330,7 +359,7 @@ function renderMerchOptions() {
   const productGrid = document.querySelector('.products');
   if (!productGrid) return;
   const gatedProductIds = new Set(['hero-banner', 'tagline-tee', 'event-pass']);
-  const visibleProducts = document.body.classList.contains('members-page')
+  const visibleProducts = isMembersPage
     ? assetCatalog.retail
     : assetCatalog.retail.filter((product) => !gatedProductIds.has(product.id));
   productGrid.innerHTML = visibleProducts.map((product, index) => `
@@ -355,7 +384,7 @@ function selectModel(modelName) {
   renderLinkedData(model);
   renderMarketplace('All', selectedModel);
   if (modelDetail) modelDetail.hidden = false;
-  scrollToSection('model-detail');
+  if (modelDetail && !modelDetail.hidden) modelDetail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 document.addEventListener('click', (event) => {
@@ -793,6 +822,8 @@ document.addEventListener('click', (event) => {
 
 renderModelCards();
 renderMerchOptions();
+setAvatarDisplay(shouldShowAvatars());
+avatarToggle?.addEventListener('click', toggleAvatarDisplay);
 syncCartCount();
 seedDesigner();
 
