@@ -116,6 +116,20 @@ function ownedAssetDetail(assetName) {
   return { title: assetName, type: 'Uploaded asset', image: 'logo_panel_2x_transparent.png', copy: 'Member-uploaded file saved to this account collection.' };
 }
 
+function hasBottleLogin() {
+  return window.localStorage.getItem('muzikazBottleMember') === 'true' && Boolean(normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail));
+}
+
+function protectMemberOnlyPages() {
+  const protectedPages = ['model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
+  const pageName = window.location.pathname.split('/').pop() || 'index.html';
+  if (!protectedPages.includes(pageName) || hasBottleLogin()) return;
+  window.sessionStorage.setItem('muzikazLoginRedirect', `${pageName}${window.location.search || ''}${window.location.hash || ''}`);
+  window.location.replace(`members.html?login=required&redirect=${encodeURIComponent(pageName)}`);
+}
+
+protectMemberOnlyPages();
+
 function renderOwnedCollection(preferredOwner = currentMemberEmail) {
   const current = document.querySelector('#owned-current-user');
   const copy = document.querySelector('#owned-current-copy');
@@ -127,26 +141,26 @@ function renderOwnedCollection(preferredOwner = currentMemberEmail) {
   const owner = normalizeMemberEmail(preferredOwner || currentMemberEmail);
   if (!currentMemberEmail) {
     current.textContent = 'Login required';
-    copy.textContent = 'Log in above to tie purchased, uploaded, and claimed assets to your account.';
-    summary.innerHTML = '<article><strong>Locked</strong><span>Member collections unlock after login.</span></article>';
+    copy.textContent = 'Log in above to keep purchased packs, uploaded files, and claimed collectibles inside your private Drop Backpack.';
+    summary.innerHTML = '<article><strong>Locked</strong><span>Drop Backpacks unlock after login.</span></article>';
     grid.innerHTML = '';
     return;
   }
   if (!profiles[currentMemberEmail]) {
-    profiles[currentMemberEmail] = ['Brand Kit 3D Model Pack · Starter owner asset'];
+    profiles[currentMemberEmail] = ['VibeVerse Starter Pack · Backpack starter asset'];
     writeOwnedProfiles(profiles);
   }
   const owners = Object.keys(profiles).sort((a, b) => (a === currentMemberEmail ? -1 : b === currentMemberEmail ? 1 : a.localeCompare(b)));
   select.disabled = false;
   select.innerHTML = owners.map((profile) => `<option value="${profile}" ${profile === owner ? 'selected' : ''}>${profile}${profile === currentMemberEmail ? ' (you)' : ''}</option>`).join('');
   current.textContent = currentMemberEmail;
-  copy.textContent = owner === currentMemberEmail ? 'Your login is connected to every claimed product, model pack, and upload below.' : `Viewing ${owner}'s shared account assets while logged in as ${currentMemberEmail}.`;
+  copy.textContent = owner === currentMemberEmail ? 'Your login now carries every purchased pack, collectible, upload, and claimed Vibe Crib item below.' : `Viewing ${owner}'s shared backpack while logged in as ${currentMemberEmail}.`;
   const assets = profiles[owner] || [];
-  summary.innerHTML = `<article><strong>${assets.length}</strong><span>Total owned assets</span></article><article><strong>${owner === currentMemberEmail ? 'Owner' : 'Viewer'}</strong><span>${owner}</span></article><article><strong>Shared</strong><span>Logged-in members can view account collections.</span></article>`;
+  summary.innerHTML = `<article><strong>${assets.length}</strong><span>Backpack items</span></article><article><strong>${owner === currentMemberEmail ? 'Owner' : 'Viewer'}</strong><span>${owner}</span></article><article><strong>Retained</strong><span>Assets and collectibles stay with the logged-in account.</span></article>`;
   grid.innerHTML = assets.map((asset) => {
     const detail = ownedAssetDetail(asset);
-    return `<article><img src="${detail.image}" alt="${detail.title}"><span class="pill">${detail.type}</span><h3>${detail.title}</h3><p>${detail.copy}</p></article>`;
-  }).join('') || '<article><h3>No assets yet</h3><p>Add marketplace drops, checkout character products, or upload graphics to build this account collection.</p></article>';
+    return `<article><img src="${detail.image}" alt="${detail.title}"><span class="pill">🎒 ${detail.type}</span><h3>${detail.title}</h3><p>${detail.copy}</p></article>`;
+  }).join('') || '<article><h3>Backpack empty</h3><p>Add marketplace drops, checkout character products, claim collectibles, or upload graphics to build this account pack.</p></article>';
 }
 
 
@@ -162,6 +176,9 @@ nav?.addEventListener('click', (event) => {
     closeMenu();
   }
 });
+
+document.querySelector('[data-action="explorer"]')?.addEventListener('click', () => scrollToSection('publish-model'));
+document.querySelector('[data-action="house"]')?.addEventListener('click', () => scrollToSection('house-explorer'));
 
 
 addModelButton?.addEventListener('click', () => {
@@ -997,7 +1014,7 @@ function initBottleLogin() {
     lockedContent.dataset.locked = 'false';
     if (status) status.textContent = message;
   };
-  if (window.localStorage.getItem('muzikazBottleMember') === 'true') {
+  if (hasBottleLogin()) {
     currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
     unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`);
     renderOwnedCollection(currentMemberEmail);
@@ -1009,7 +1026,13 @@ function initBottleLogin() {
     window.localStorage.setItem('muzikazBottleMember', 'true');
     window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
     renderOwnedCollection(currentMemberEmail);
-    unlock(`${currentMemberEmail} is logged in. Owned assets are tied to this account, and shared member collections are viewable.`);
+    unlock(`${currentMemberEmail} is logged in. Your Drop Backpack is retained for owned assets, collectibles, uploads, and Vibe Crib items.`);
+    const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
+    if (redirect) {
+      window.sessionStorage.removeItem('muzikazLoginRedirect');
+      window.location.href = redirect;
+      return;
+    }
     scrollToSection('member-locked-content');
   });
 }
