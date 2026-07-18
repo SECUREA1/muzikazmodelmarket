@@ -10,7 +10,8 @@ function normalizeMapUrl(value) {
 
 export class EnvironmentRegistry {
   constructor() { this.environments = []; }
-  async refresh() { this.environments = normalizeEnvironmentList(await fetchEnvironmentList()); return this.environments; }
+  async refresh() { return this.replace(await fetchEnvironmentList()); }
+  replace(records) { this.environments = normalizeEnvironmentList(records); return this.environments; }
   all() { return this.environments; }
   find(id) { return this.environments.find((env) => env.id === id || env.aliases?.includes(id)); }
   async delete(id) { await deleteEnvironment(id); return this.refresh(); }
