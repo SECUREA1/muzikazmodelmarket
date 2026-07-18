@@ -236,7 +236,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   await Promise.all([refreshLibrary(), refreshAvatarLibrary().catch((error) => { library.insertAdjacentHTML('beforeend', `<small>${error.message || 'Unable to load active avatars.'}</small>`); })]);
   const params = new URLSearchParams(location.search);
   const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
-  const startEnvironment = requestedEnvironment || registry.find('muzikaz-full-house')?.id || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
+  // Load the standalone main floor first so the visible explorer is usable immediately; the full-house option remains available in the map selector.
+  const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.find('muzikaz-full-house')?.id || registry.all()[0]?.id;
   let mapOpeningPromise = null;
   async function openHouseMap({ requestWalk = false, startRadTox = false } = {}) {
     canvas.focus({ preventScroll: true });
@@ -299,10 +300,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     event.preventDefault();
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
-  if (!houseModal && startEnvironment) {
-    setStatus('Loading the MUZIKAZ map…');
+  if (startEnvironment) {
+    setStatus('Loading the MUZIKAZ house map…');
+    // Start the visible map immediately, without waiting for a dialog or a game mode.
     loadById(startEnvironment).catch((error) => setStatus(error.message || 'Unable to load the MUZIKAZ map.'));
   } else {
-    setStatus('Map ready. Select Play RAD-TOX now to open the game.');
+    setStatus('No house maps are available. Refresh and try again.');
   }
 }
