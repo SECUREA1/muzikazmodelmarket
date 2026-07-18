@@ -46,8 +46,12 @@ export class EnvironmentLoader {
     const nextWorld = new THREE.Group(); nextWorld.name = `WORLD_${environment.id}`; this.baseScale = Number(environment.scale) || 1; this.spaceScale = Number(environment.spaceScale) || 1; nextWorld.userData.baseScale = this.baseScale; nextWorld.scale.setScalar(this.baseScale * this.spaceScale); nextWorld.rotation.set(environment.rotation.x || 0, environment.rotation.y || 0, environment.rotation.z || 0);
     const nextMixers = [];
     try {
-      for (let i = 0; i < urls.length; i += 1) {
-        const gltf = await this.loadOne(urls[i], i, urls.length); if (token !== this.token) return null;
+      // Independent GLBs in a composite map load concurrently, making the full
+      // house ready at the speed of its slowest asset instead of their total.
+      const gltfs = await Promise.all(urls.map((url, index) => this.loadOne(url, index, urls.length)));
+      if (token !== this.token) return null;
+      for (let i = 0; i < gltfs.length; i += 1) {
+        const gltf = gltfs[i];
         gltf.scene.name = `GLB_${environment.id}_${i + 1}`; nextWorld.add(gltf.scene);
         if (gltf.animations?.length) { const mixer = new THREE.AnimationMixer(gltf.scene); gltf.animations.forEach((clip) => mixer.clipAction(clip).play()); nextMixers.push(mixer); }
       }
