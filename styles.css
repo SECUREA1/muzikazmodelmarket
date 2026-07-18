@@ -1914,6 +1914,21 @@ section,
   .mobile-control span{font-size:clamp(.58rem,2.8vw,1rem);text-transform:uppercase;letter-spacing:.05em}
 }
 
+/* On mobile, keep the playable house game immediately under the hero before live avatar/model sections. */
+@media(max-width:760px), (pointer:coarse){
+  main#home{
+    display:flex;
+    flex-direction:column;
+  }
+  main#home > *{order:20}
+  main#home > .hero{order:1}
+  main#home > .house-explorer{order:2}
+  main#home > .feature-strip{order:3}
+  main#home > #models{order:4}
+  main#home > #marketplace-preview{order:5}
+  main#home > #doll-kit{order:6}
+}
+
 
 /* Picture-matched house controls with avatar/environment selectors and press-hold zoom toggle. */
 @media(max-width:760px), (pointer:coarse){
