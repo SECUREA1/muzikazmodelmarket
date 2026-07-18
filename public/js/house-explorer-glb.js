@@ -1,7 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 import { Capsule } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Capsule.js/+esm';
-import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/VRButton.js/+esm';
-import { XRControllerModelFactory } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/XRControllerModelFactory.js/+esm';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
 import { EnvironmentRegistry } from './environments/environment-registry.js';
 import { EnvironmentLoader } from './environments/environment-loader.js';
@@ -94,17 +92,21 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const viewControls = document.createElement('div'); viewControls.className = 'house-view-controls'; viewControls.innerHTML = '<strong>View controls <output>Zoom 40%</output></strong><button type="button" data-zoom="in" aria-label="Zoom in">Zoom +</button><button type="button" data-zoom="out" aria-label="Zoom out">Zoom −</button>';
   library.before(scaleControl); scaleControl.after(viewControls);
 
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050807); scene.fog = new THREE.Fog(0x050807, 45, 180);
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false }); renderer.xr.enabled = true; let quality = configureRenderer(renderer, 'auto');
+  const isCoarsePointer = matchMedia('(pointer: coarse)').matches;
+  const mobileQualityMode = isCoarsePointer || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050807); scene.fog = new THREE.Fog(0x050807, 36, mobileQualityMode ? 95 : 180);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !mobileQualityMode, alpha: false, powerPreference: mobileQualityMode ? 'low-power' : 'high-performance' }); renderer.xr.enabled = !mobileQualityMode; let quality = configureRenderer(renderer, 'auto');
   const camera = new THREE.PerspectiveCamera(68, 16 / 9, 0.05, 700); const playerRig = new THREE.Group(); playerRig.name = 'MUZIKAZ_PLAYER_RIG'; playerRig.add(camera); scene.add(playerRig);
-  const hemi = new THREE.HemisphereLight(0xcfe8ff, 0x15170d, 1.1); scene.add(hemi); const sun = new THREE.DirectionalLight(0xffffff, 1.8); sun.position.set(12, 18, 8); sun.castShadow = true; sun.shadow.mapSize.set(quality.shadowSize, quality.shadowSize); sun.shadow.camera.near = .5; sun.shadow.camera.far = 120; sun.shadow.camera.left = -45; sun.shadow.camera.right = 45; sun.shadow.camera.top = 45; sun.shadow.camera.bottom = -45; scene.add(sun);
+  const hemi = new THREE.HemisphereLight(0xcfe8ff, 0x15170d, 1.1); scene.add(hemi); const sun = new THREE.DirectionalLight(0xffffff, mobileQualityMode ? 1.25 : 1.8); sun.position.set(12, 18, 8); sun.castShadow = quality.shadows; sun.shadow.mapSize.set(quality.shadowSize, quality.shadowSize); sun.shadow.camera.near = .5; sun.shadow.camera.far = 120; sun.shadow.camera.left = -45; sun.shadow.camera.right = 45; sun.shadow.camera.top = 45; sun.shadow.camera.bottom = -45; scene.add(sun);
   const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromScene(new THREE.Scene(), 0.04).texture;
   const clock = new THREE.Clock(); const registry = new EnvironmentRegistry(); const envLoader = new EnvironmentLoader({ scene, renderer, onProgress: (p) => { loadingFill.style.width = `${Math.max(4, Math.min(100, p))}%`; } });
   const avatarLoader = new GLTFLoader(); const avatarRaycaster = new THREE.Raycaster(); const avatarPointer = new THREE.Vector2(); const placedAvatars = new THREE.Group(); placedAvatars.name = 'MUZIKAZ_PLACED_AVATARS'; scene.add(placedAvatars);
   const landingFrame = new THREE.Group(); landingFrame.name = 'MUZIKAZ_LANDING_FLOOR_FRAME'; scene.add(landingFrame);
   let activeAvatar = null;
   const player = { height: 1.65, radius: .34, speed: 3.2, jumpVelocity: 9.9, yaw: 0, pitch: 0, eyeHeight: 1.65, zoom: 68, velocity: new THREE.Vector3(), onGround: false, spawn: new THREE.Vector3(0, 1, 2) };
-  let currentSpaceScale = 2.5; let scrollZoomEnabled = false; const mapSizeScale = 1; const mapHeightScale = 1;
+  let currentSpaceScale = 2.5; let scrollZoomEnabled = false; const mapSizeScale = mobileQualityMode ? 0.82 : 1; const mapHeightScale = mobileQualityMode ? 0.88 : 1;
+  let viewActive = true; let lastFrameTime = 0; const targetFrameMs = mobileQualityMode || reducedMotion ? 1000 / 30 : 0;
   let playerCollider = new Capsule(new THREE.Vector3(0, player.radius, 2), new THREE.Vector3(0, player.height, 2), player.radius); let dragPointer = null; let avatarDrag = null; let turnReady = true; let activeEnvironment = null;
   const keys = new Set(); const mobile = new Set(); const forward = new THREE.Vector3(); const right = new THREE.Vector3(); const move = new THREE.Vector3(); const teleportRay = new THREE.Raycaster();
 
@@ -167,10 +169,29 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       if (button.dataset.mobileAction === 'avatar') { library.classList.remove('is-collapsed'); const select = library.querySelector('[data-avatar-select]'); select?.focus(); setStatus('Avatar selector open. Choose an avatar, then press Add.'); }
     });
   });
-  const controllerFactory = new XRControllerModelFactory(); for (let i=0;i<2;i+=1) { const controller = renderer.xr.getController(i); controller.addEventListener('selectend', () => { teleportRay.set(playerRig.position.clone().add(new THREE.Vector3(0, player.height, 0)), new THREE.Vector3(0, -1, -1).normalize().applyQuaternion(controller.quaternion)); const hit = teleportRay.intersectObjects(envLoader.meshes, true)[0]; if (hit) resetPlayer(hit.point.add(new THREE.Vector3(0, .04, 0)), player.yaw); }); const grip = renderer.xr.getControllerGrip(i); grip.add(controllerFactory.createControllerModel(grip)); playerRig.add(controller, grip); }
-  const vrButton = VRButton.createButton(renderer, { requiredFeatures: ['local-floor'], optionalFeatures: ['bounded-floor', 'hand-tracking'] }); vrButton.classList.add('house-vr-button'); stage.append(vrButton); const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); if (isIOS) { vrButton.textContent = 'Apple mobile mode active'; vrButton.setAttribute('aria-hidden', 'true'); vrButton.style.display = 'none'; } renderer.xr.addEventListener('sessionstart', () => { quality = configureRenderer(renderer, 'auto'); setStatus('WebXR session started.'); }); renderer.xr.addEventListener('sessionend', () => { quality = configureRenderer(renderer, 'auto'); setStatus(activeEnvironment ? `Ready: ${activeEnvironment.name}.` : 'WebXR session ended.'); });
-  function resize() { const rect = stage.getBoundingClientRect(); const viewportHeight = window.visualViewport?.height || window.innerHeight || 720; const width = Math.max(320, Math.floor(Math.min(rect.width || stage.clientWidth || 1280, document.documentElement.clientWidth || rect.width || 1280))); const desktopLimit = Math.max(420, viewportHeight - 180); const mobileLimit = Math.max(360, viewportHeight - 190); const limit = matchMedia('(max-width: 760px)').matches ? mobileLimit : desktopLimit; const tunedWidth = Math.max(320, Math.floor(width * mapSizeScale)); const baseHeight = Math.max(360, rect.height || width * .56) * mapHeightScale; const height = Math.max(320, Math.floor(Math.min(baseHeight, limit))); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.pixelRatio)); renderer.setSize(tunedWidth, height, false); camera.aspect = tunedWidth / height; camera.updateProjectionMatrix(); } new ResizeObserver(resize).observe(stage); addEventListener('orientationchange', resize); window.visualViewport?.addEventListener('resize', resize); resize();
-  renderer.setAnimationLoop(() => { const delta = Math.min(.05, clock.getDelta()); updatePlayer(delta); envLoader.mixers.forEach((m) => m.update(delta)); renderer.render(scene, camera); });
+  async function setupVRControls() {
+    if (!renderer.xr.enabled || mobileQualityMode) return;
+    const [{ VRButton }, { XRControllerModelFactory }] = await Promise.all([
+      import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/VRButton.js/+esm'),
+      import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/XRControllerModelFactory.js/+esm')
+    ]);
+    const controllerFactory = new XRControllerModelFactory();
+    for (let i=0;i<2;i+=1) { const controller = renderer.xr.getController(i); controller.addEventListener('selectend', () => { teleportRay.set(playerRig.position.clone().add(new THREE.Vector3(0, player.height, 0)), new THREE.Vector3(0, -1, -1).normalize().applyQuaternion(controller.quaternion)); const hit = teleportRay.intersectObjects(envLoader.meshes, true)[0]; if (hit) resetPlayer(hit.point.add(new THREE.Vector3(0, .04, 0)), player.yaw); }); const grip = renderer.xr.getControllerGrip(i); grip.add(controllerFactory.createControllerModel(grip)); playerRig.add(controller, grip); }
+    const vrButton = VRButton.createButton(renderer, { requiredFeatures: ['local-floor'], optionalFeatures: ['bounded-floor', 'hand-tracking'] }); vrButton.classList.add('house-vr-button'); stage.append(vrButton);
+    renderer.xr.addEventListener('sessionstart', () => { quality = configureRenderer(renderer, 'auto'); setStatus('WebXR session started.'); }); renderer.xr.addEventListener('sessionend', () => { quality = configureRenderer(renderer, 'auto'); setStatus(activeEnvironment ? `Ready: ${activeEnvironment.name}.` : 'WebXR session ended.'); });
+  }
+  setupVRControls().catch((error) => console.warn('[MUZIKAZ VR]', error));
+  const visibilityObserver = new IntersectionObserver(([entry]) => { viewActive = Boolean(entry?.isIntersecting); }, { threshold: 0.05 }); visibilityObserver.observe(stage); document.addEventListener('visibilitychange', () => { viewActive = !document.hidden; });
+  function resize() { const rect = stage.getBoundingClientRect(); const viewportHeight = window.visualViewport?.height || window.innerHeight || 720; const width = Math.max(320, Math.floor(Math.min(rect.width || stage.clientWidth || 1280, document.documentElement.clientWidth || rect.width || 1280))); const desktopLimit = Math.max(420, viewportHeight - 180); const mobileLimit = Math.max(360, viewportHeight - 190); const limit = matchMedia('(max-width: 760px)').matches ? mobileLimit : desktopLimit; const tunedWidth = Math.max(320, Math.floor(width * mapSizeScale)); const baseHeight = Math.max(360, rect.height || width * .56) * mapHeightScale; const height = Math.max(320, Math.floor(Math.min(baseHeight, limit))); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobileQualityMode ? 1 : quality.pixelRatio)); renderer.setSize(tunedWidth, height, false); camera.aspect = tunedWidth / height; camera.updateProjectionMatrix(); } new ResizeObserver(resize).observe(stage); addEventListener('orientationchange', resize); window.visualViewport?.addEventListener('resize', resize); resize();
+  renderer.setAnimationLoop((time = 0) => {
+    if (!viewActive && !renderer.xr.isPresenting) { clock.getDelta(); return; }
+    if (targetFrameMs && !renderer.xr.isPresenting && time - lastFrameTime < targetFrameMs) return;
+    lastFrameTime = time;
+    const delta = Math.min(.05, clock.getDelta());
+    updatePlayer(delta);
+    if (!mobileQualityMode || renderer.xr.isPresenting) envLoader.mixers.forEach((m) => m.update(delta));
+    renderer.render(scene, camera);
+  });
   await Promise.all([refreshLibrary(), refreshAvatarLibrary().catch((error) => { library.insertAdjacentHTML('beforeend', `<small>${error.message || 'Unable to load active avatars.'}</small>`); })]);
   const params = new URLSearchParams(location.search);
   const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
@@ -200,8 +221,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     event.preventDefault();
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
-  if (startEnvironment) {
-    setStatus('Auto-loading the MUZIKAZ main floor from the restored 3D House Explorer startup path for desktop and mobile controls…');
+  if (startEnvironment && !mobileQualityMode) {
+    setStatus('Auto-loading the MUZIKAZ main floor from the restored 3D House Explorer startup path for desktop controls…');
     await openHouseMap();
+  } else if (startEnvironment) {
+    setStatus('Mobile-safe mode ready. Tap Start game or Enter interior to load the house when you are ready.');
   }
 }
