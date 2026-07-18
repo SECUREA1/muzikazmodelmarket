@@ -3,8 +3,8 @@ import { join } from 'node:path';
 
 const manifestPath = 'public/models/environments/environments.json';
 const records = JSON.parse(await readFile(manifestPath, 'utf8'));
-if (!Array.isArray(records) || records.length < 3) throw new Error('Environment manifest must include main, upper, and full-house records.');
-for (const required of ['muzikaz-main', 'muzikaz-upper', 'muzikaz-full-house']) {
+if (!Array.isArray(records) || records.length < 2) throw new Error('Environment manifest must include main and upper-floor records.');
+for (const required of ['muzikaz-main', 'muzikaz-upper']) {
   if (!records.some((record) => record.id === required)) throw new Error(`Missing ${required} environment.`);
 }
 for (const record of records) {

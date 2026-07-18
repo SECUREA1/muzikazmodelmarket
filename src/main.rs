@@ -220,7 +220,13 @@ fn handle(mut s: TcpStream, st: State) -> std::io::Result<()> {
     };
     println!("{method} {target}");
     if method == "OPTIONS" {
-        return write_resp(&mut s, "204 No Content", "text/plain; charset=utf-8", b"", false);
+        return write_resp(
+            &mut s,
+            "204 No Content",
+            "text/plain; charset=utf-8",
+            b"",
+            false,
+        );
     }
     if target.starts_with("/api/") {
         return api(&mut s, &st, method, target, &headers, body);
@@ -629,8 +635,27 @@ fn sse_ready(s: &mut TcpStream) -> std::io::Result<()> {
 }
 fn create(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
     let b = String::from_utf8_lossy(body);
-    let title = { let v = val(&b, "title"); if v.is_empty() { val(&b, "name") } else { v } };
-    let creator = { let v = val(&b, "creatorName"); if v.is_empty() { let owner = val(&b, "owner"); if owner.is_empty() { val(&b, "username") } else { owner } } else { v } };
+    let title = {
+        let v = val(&b, "title");
+        if v.is_empty() {
+            val(&b, "name")
+        } else {
+            v
+        }
+    };
+    let creator = {
+        let v = val(&b, "creatorName");
+        if v.is_empty() {
+            let owner = val(&b, "owner");
+            if owner.is_empty() {
+                val(&b, "username")
+            } else {
+                owner
+            }
+        } else {
+            v
+        }
+    };
     let url = val(&b, "modelUrl");
     if title.trim().is_empty() {
         return json(s, 400, false, "{}", "Missing required title", false);
@@ -650,12 +675,26 @@ fn create(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
     }
     let now = now();
     let m = Model {
-        id: { let id = val(&b, "id"); if id.is_empty() { uuid() } else { trim(id, 120) } },
+        id: {
+            let id = val(&b, "id");
+            if id.is_empty() {
+                uuid()
+            } else {
+                trim(id, 120)
+            }
+        },
         title: trim(title, 120),
         creator: trim(creator, 80),
         description: trim(val(&b, "description"), 1000),
         category: trim(val(&b, "category"), 80),
-        model_type: { let mt = val(&b, "modelType"); if mt.is_empty() { trim(val(&b, "format"), 20) } else { trim(mt, 20) } },
+        model_type: {
+            let mt = val(&b, "modelType");
+            if mt.is_empty() {
+                trim(val(&b, "format"), 20)
+            } else {
+                trim(mt, 20)
+            }
+        },
         model_url: url,
         ios_model_url: val(&b, "iosModelUrl"),
         thumbnail_url: val(&b, "thumbnailUrl"),
@@ -823,15 +862,27 @@ fn static_file(s: &mut TcpStream, st: &State, method: &str, target: &str) -> std
     if method != "GET" && method != "HEAD" {
         return plain(s, 405, "Method not allowed", false);
     }
-    let path = if target.starts_with("/uploads/") {
-        st.uploads.join(target.trim_start_matches("/uploads/"))
+    // Only extensionless browser navigation routes get the SPA document.  In
+    // particular, never turn a missing GLB/module/manifest into a successful
+    // HTML response: loaders otherwise report misleading parse errors.
+    let request_path = target.split(['?', '#']).next().unwrap_or("/");
+    let is_upload = request_path.starts_with("/uploads/");
+    let path = if is_upload {
+        requested(&st.uploads, request_path.trim_start_matches("/uploads/"))
     } else {
-        requested(&st.root, target).unwrap_or_else(|| st.root.join("index.html"))
+        requested(&st.root, request_path)
     };
-    let resolved = if path.is_file() {
-        path
-    } else {
-        st.root.join("index.html")
+    let resolved = match path.filter(|p| p.is_file()) {
+        Some(path) => path,
+        None if !is_upload
+            && !Path::new(request_path)
+                .file_name()
+                .and_then(|n| Path::new(n).extension())
+                .is_some() =>
+        {
+            st.root.join("index.html")
+        }
+        None => return plain(s, 404, NOT_FOUND_BODY, method == "HEAD"),
     };
     match fs::read(&resolved) {
         Ok(body) => write_resp(s, "200 OK", ctype(&resolved), &body, method == "HEAD"),
@@ -900,7 +951,12 @@ fn write_resp(
     body: &[u8],
     head: bool,
 ) -> std::io::Result<()> {
-    write!(s,"HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {ct}\r\nAccess-Control-Allow-Origin: https://muzikazmodelmarket.onrender.com\r\nAccess-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Authorization, X-MUZIKAZ-Session\r\nCross-Origin-Resource-Policy: cross-origin\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",body.len())?;
+    let cache = if ct.starts_with("text/html") || ct.contains("json") {
+        "no-cache"
+    } else {
+        "public, max-age=86400"
+    };
+    write!(s,"HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {ct}\r\nAccess-Control-Allow-Origin: https://muzikazmodelmarket.onrender.com\r\nAccess-Control-Allow-Methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Authorization, X-MUZIKAZ-Session\r\nCross-Origin-Resource-Policy: cross-origin\r\nCache-Control: {cache}\r\nAccept-Ranges: bytes\r\nConnection: close\r\n\r\n",body.len())?;
     if !head {
         s.write_all(body)?
     }
