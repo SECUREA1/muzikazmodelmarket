@@ -1,10 +1,10 @@
 [
   {
     "id": "muzikaz-main",
-    "aliases": ["muzimakz-main"],
+    "aliases": ["muzimakz-main", "muzikazmain"],
     "name": "MUZIKAZ Main Floor",
     "description": "Complete walkable MUZIKAZ main-floor environment.",
-    "modelUrl": "/public/models/environments/muzimakzmain.glb",
+    "modelUrl": "/public/models/environments/muzikazmain.glb",
     "thumbnailUrl": "",
     "spawn": { "x": 0, "y": 1, "z": 2, "rotationY": 0 },
     "scale": 1,
@@ -30,7 +30,7 @@
     "id": "muzikaz-full-house",
     "name": "MUZIKAZ Full House",
     "description": "Main and upper-floor MUZIKAZ GLBs intentionally loaded together as one walkthrough world.",
-    "modelUrls": ["/public/models/environments/muzimakzmain.glb", "/public/models/environments/muzikazupper.glb"],
+    "modelUrls": ["/public/models/environments/muzikazmain.glb", "/public/models/environments/muzikazupper.glb"],
     "thumbnailUrl": "",
     "spawn": { "x": 0, "y": 1, "z": 2, "rotationY": 0 },
     "scale": 1,
