@@ -174,7 +174,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   await Promise.all([refreshLibrary(), refreshAvatarLibrary().catch((error) => { library.insertAdjacentHTML('beforeend', `<small>${error.message || 'Unable to load active avatars.'}</small>`); })]);
   const params = new URLSearchParams(location.search);
   const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
-  const startEnvironment = requestedEnvironment || registry.find('muzikaz-full-house')?.id || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
+  const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
   async function openHouseMap({ requestWalk = false } = {}) {
     canvas.focus({ preventScroll: true });
     if (!envLoader.world && startEnvironment) {
@@ -201,7 +201,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
   if (startEnvironment) {
-    setStatus('Auto-loading the MUZIKAZ full house for desktop and mobile controls…');
+    setStatus('Auto-loading the MUZIKAZ main floor from the restored 3D House Explorer startup path for desktop and mobile controls…');
     await openHouseMap();
   }
 }
