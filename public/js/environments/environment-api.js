@@ -1,5 +1,6 @@
 const PREFIX = '[MUZIKAZ Environment]';
 export const REPOSITORY_ENVIRONMENT_MANIFEST_URL = '/public/models/environments/environments.json';
+export const ENVIRONMENT_LIST_UPDATED_EVENT = 'muzikaz:environment-list-updated';
 const MANIFEST_TIMEOUT_MS = 4_000;
 const API_TIMEOUT_MS = 3_000;
 
@@ -13,6 +14,10 @@ function mergeEnvironments(...lists) {
     if (environment?.id) byId.set(environment.id, environment);
   });
   return [...byId.values()];
+}
+
+function announceEnvironmentList(records) {
+  window.dispatchEvent(new CustomEvent(ENVIRONMENT_LIST_UPDATED_EVENT, { detail: records }));
 }
 
 // A missing API route or a stalled deployment must not leave the explorer at
@@ -61,13 +66,23 @@ export async function fetchEnvironmentList() {
       new Promise((resolve) => window.setTimeout(() => resolve(null), 500))
     ]);
     if (!apiRecords) {
-      if (bundled.length) return bundled;
+      if (bundled.length) {
+        // Keep the known-good repository maps interactive immediately. When
+        // the optional registry returns, refresh the picker with uploaded
+        // maps instead of making the user wait for another page load.
+        apiRequest.then((delayedRecords) => {
+          if (!delayedRecords?.error) announceEnvironmentList(mergeEnvironments(delayedRecords, bundled));
+        });
+        return bundled;
+      }
       const delayedRecords = await apiRequest;
       if (delayedRecords.error) throw delayedRecords.error;
       return delayedRecords;
     }
     if (apiRecords.error) throw apiRecords.error;
-    const records = mergeEnvironments(bundled, apiRecords);
+    // Repository records win on duplicate IDs. An unhealthy or stale API
+    // record must not replace the bundled GLB URL that is ready to load.
+    const records = mergeEnvironments(apiRecords, bundled);
     if (records.length) return records;
   } catch (error) {
     if (bundled.length) {
