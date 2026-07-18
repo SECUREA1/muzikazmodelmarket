@@ -7,6 +7,16 @@ import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/
 import { applyWorldQuality } from './environment-quality.js';
 import { buildCollision, resolveSafeSpawn } from './environment-collision.js';
 
+// Fetch bundled worlds as soon as their manifest is available. This fills the
+// browser cache while the WebGL scene is being created, so opening the game
+// does not wait on each GLB download in sequence.
+export function warmEnvironmentModels(environments = []) {
+  const urls = new Set(environments.flatMap((environment) => (
+    environment.modelUrls?.length ? environment.modelUrls : [environment.modelUrl]
+  )).filter(Boolean));
+  urls.forEach((url) => fetch(url, { cache: 'force-cache' }).catch(() => {}));
+}
+
 export class EnvironmentLoader {
   constructor({ scene, renderer, onProgress = () => {} }) {
     this.scene = scene; this.renderer = renderer; this.onProgress = onProgress; this.token = 0; this.world = null; this.mixers = []; this.meshes = []; this.octree = new Octree(); this.bounds = new THREE.Box3(); this.activeEnvironment = null; this.baseScale = 1; this.spaceScale = 1;
