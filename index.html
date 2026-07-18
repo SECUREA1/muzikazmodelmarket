@@ -41,10 +41,10 @@
             <span>MUZIKAZ</span>
         </a>
         <nav class="nav" id="primary-navigation" aria-label="Primary navigation">
-            <a href="#doll-kit-avatars">Home</a>
+            <a href="#doll-kit">Home</a>
             <a href="#models">Models</a>
-            <a href="#doll-kit-avatars">Avatar Market</a>
-            <a href="#doll-kit">Flex Lab</a>
+            <a href="model-explorer.html#live-published-models">Avatar Market</a>
+            <a href="#doll-kit">Doll Kit</a>
             <a href="#merch">Merch</a>
             <a href="members.html">Bottle Login</a>
             <a href="#crew">Crew</a>
@@ -173,7 +173,7 @@
                     <h3>Pick the mascot. Build the world. Hit play.</h3>
                     <p>Each MUZIKAZ character now works like an Avatar Flex Lab with a private inventory: avatar bodies, wearable flex, companion pets, furniture, stage props, room environments, vehicle ideas, and studio-ready gameplay hooks.</p>
                     <div class="doll-kit-actions">
-                        <a class="btn" href="#doll-kit-avatars">Browse Flex Lab market</a>
+                        <a class="btn" href="model-explorer.html#live-published-models">Browse avatar market</a>
                         <a class="btn ghost" href="members.html#marketplace">Open full marketplace</a>
                     </div>
                 </article>
@@ -193,12 +193,16 @@
                 <div class="doll-kit-grid" aria-label="Avatar Flex Lab asset categories">
                     <article class="doll-kit-avatar-market" id="doll-kit-avatars" data-flex-card="Avatars">
                         <span>👤</span><h3>Avatars</h3>
-                        <p>Base character bodies, skins, trait variants, poses, and profile-ready avatar slots. Live published model drops are nested here so the page opens directly to the Avatars market.</p>
-                        <div class="avatar-market-panel" aria-labelledby="live-models-title">
-                            <div class="avatar-market-heading"><strong id="live-models-title">Live Published Model Space</strong><a href="model-explorer.html">Publish a model</a></div>
-                            <p class="avatar-market-copy">Models published from the MUZIKAZ 3D Explorer appear here live for the whole community, inside Avatars, as playable picks for the next character pack.</p>
-                            <p class="status-message" id="live-models-status" role="status" aria-live="polite">Loading live published avatars…</p>
-                            <div class="published-model-grid" id="live-models-grid" aria-live="polite"></div>
+                        <p>Base character bodies, skins, trait variants, poses, and profile-ready avatar slots. Published 3D drops now stay off the main page and open through designated 3D Explorer links.</p>
+                        <div class="avatar-market-panel avatar-link-panel" aria-labelledby="avatar-links-title">
+                            <div class="avatar-market-heading"><strong id="avatar-links-title">Designated 3D model links</strong><a href="model-explorer.html#live-published-models">View live models</a></div>
+                            <p class="avatar-market-copy">Open the full 3D model house page to browse published avatars, publish a model, or place selected characters inside the loadout house.</p>
+                            <div class="loadout-link-grid" aria-label="3D character loadout links">
+                                <a href="model-explorer.html#live-published-models"><strong>Avatar bodies</strong><span>Published GLB/GLTF picks</span></a>
+                                <a href="model-explorer.html#house-explorer"><strong>House rooms</strong><span>Drop models in the 3D floor plan</span></a>
+                                <a href="model-explorer.html#publish-model"><strong>Publish model</strong><span>Add a new linked character</span></a>
+                                <a href="members.html#marketplace"><strong>Full marketplace</strong><span>Open every category space</span></a>
+                            </div>
                         </div>
                     </article>
                     <article data-flex-card="Pets"><span>🐾</span><h3>Pets</h3><p>Companion drops that match the mascot palette, add lore, and follow the player as sidekick energy.</p></article>

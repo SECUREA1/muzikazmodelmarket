@@ -44,7 +44,7 @@
       <a href="index.html#home">Home</a>
       <a href="index.html#models">Models</a>
       <a class="active" href="model-explorer.html">3D Explorer</a>
-      <a href="index.html#live-models">Live Models</a>
+      <a href="#live-published-models">Live Models</a>
       <a href="members.html">Bottle Login</a>
       <a href="index.html#contact">Contact</a>
     </nav>
@@ -105,7 +105,7 @@
 
 
     <section class="section-block model-publisher" id="publish-model" aria-labelledby="publish-model-title">
-      <div class="section-title"><span></span><h2 id="publish-model-title">Publish a Live Model</h2><a href="index.html#live-models">View homepage space</a></div>
+      <div class="section-title"><span></span><h2 id="publish-model-title">Publish a Live Model</h2><a href="#live-published-models">View linked model space</a></div>
       <form id="model-publish-form" class="publisher-grid">
         <label>Model title<input name="title" maxlength="120" required autocomplete="off"></label>
         <label>Creator/display name<input name="creatorName" maxlength="80" required autocomplete="name"></label>
@@ -132,7 +132,15 @@
 
     <section class="section-block live-models-section explorer-live-space" id="live-published-models" aria-labelledby="explorer-live-models-title">
       <div class="section-title"><span></span><h2 id="explorer-live-models-title">Live Published Models</h2><button type="button" id="refresh-live-models">Refresh Models</button></div>
-      <p class="section-subheading">Shared server-backed models are arranged in a community gallery and remain after refreshes.</p>
+      <p class="section-subheading">Shared server-backed models are arranged here instead of on the main page. Open each category below to route avatars, pets, accessories, furniture, environments, and gameplay props into the right 3D Character Loadout space.</p>
+      <div class="loadout-link-grid explorer-loadout-links" aria-label="3D Character Loadout marketplace categories">
+        <a href="#live-published-models"><strong>Avatars</strong><span>Character bodies and skins</span></a>
+        <a href="members.html#marketplace"><strong>Pets</strong><span>Companions and sidekicks</span></a>
+        <a href="members.html#marketplace"><strong>Accessories</strong><span>Wearables, props, and flex</span></a>
+        <a href="#house-explorer"><strong>Furniture</strong><span>Placeable room loot</span></a>
+        <a href="#house-explorer"><strong>3D Environments</strong><span>Rooms, stages, and house scenes</span></a>
+        <a href="members.html#character-shop"><strong>Gaming Studio</strong><span>Hooks, vehicles, and play kits</span></a>
+      </div>
       <p class="status-message" id="explorer-live-models-status" role="status" aria-live="polite">Loading shared model space…</p>
       <div class="published-model-grid explorer-live-grid" id="explorer-live-models-grid" aria-live="polite"></div>
     </section>
