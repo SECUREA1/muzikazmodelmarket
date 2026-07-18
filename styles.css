@@ -1901,3 +1901,13 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
 html{scroll-behavior:auto}
 .card,.products article,.site-choice{transition:none}
 }
+.house-begin-overlay{
+position:absolute;
+inset:0;
+z-index:6;
+display:grid;
+place-items:center;
+padding:24px;
+background:radial-gradient(circle at 50% 35%, rgba(156,255,0,.2), rgba(0,0,0,.82) 46%, rgba(0,0,0,.94));
+backdrop-filter:blur(6px)}
+.house-begin-overlay[hidden]{display:none}.house-begin-card{width:min(92%,420px);padding:28px;border:1px solid rgba(156,255,0,.55);border-radius:24px;background:linear-gradient(145deg,rgba(5,9,8,.98),rgba(0,0,0,.92));box-shadow:0 24px 80px rgba(0,0,0,.62),0 0 36px rgba(156,255,0,.18);text-align:center}.house-begin-card h3{font-family:Bangers,cursive;color:var(--lime);font-size:46px;line-height:.95;margin:6px 0 12px}.house-begin-card p:not(.kicker){margin:0 0 18px;color:#fff;text-transform:none;line-height:1.45}.house-begin-card button{width:100%;justify-content:center;font-size:20px;background:var(--lime);color:#071007;box-shadow:0 0 28px rgba(156,255,0,.28)}
