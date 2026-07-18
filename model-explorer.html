@@ -27,11 +27,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link rel="preconnect" href="https://unpkg.com" crossorigin />
-    <link rel="modulepreload" href="public/js/house-explorer-glb.js" />
-    <link rel="modulepreload" href="public/js/model-gallery.js" />
-    <link rel="preload" href="public/models/environments/muzimakzmain.glb" as="fetch" type="model/gltf-binary" crossorigin />
 </head>
 <body class="model-explorer-page">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata.","sameAs":["https://muzikaz.com/"]}</script>
@@ -65,15 +60,7 @@
       <div class="section-title"><span></span><h2 id="house-explorer-title">3D House Explorer</h2><a href="#house-explorer-canvas">Enter interior</a></div>
       <div class="house-explorer-shell">
         <div class="house-stage">
-          <canvas id="house-explorer-canvas" width="1280" height="720" tabindex="-1" aria-label="Interactive inside-the-house canvas explorer"></canvas>
-                    <div class="house-begin-overlay" data-house-begin-overlay>
-                        <div class="house-begin-card">
-                            <p class="kicker">Ready player</p>
-                            <h3>Begin the house game</h3>
-                            <p>Press the on-screen Enter button to unlock movement, camera, avatar, and mobile controls.</p>
-                            <button type="button" id="house-begin-button">Enter</button>
-                        </div>
-                    </div>
+          <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
           <div class="house-reticle" aria-hidden="true">+</div>
           <div class="house-status" id="house-status" role="status">Ready: drag to look around, then move through the rooms.</div>
         </div>
@@ -86,26 +73,9 @@
             <span>Wheel: zoom</span>
             <span>Q / E: camera height</span>
             <span id="house-presence-count">Live in the house: 1</span>
-            <span>Click floor: set drop location</span>
           </div>
-          <div class="house-map-tuner" aria-label="Map tuning controls">
-            <label>Map size <input id="house-map-fit" type="range" min="85" max="125" value="100"></label>
-            <label>View height <input id="house-view-height" type="range" min="80" max="210" value="155"></label>
-            <label>Zoom <input id="house-view-zoom" type="range" min="320" max="760" value="520"></label>
-          </div>
-          <label class="house-environment-picker">Environment file
-            <select id="house-environment-select" aria-label="Choose house environment file">
-              <option value="">Loading environment files…</option>
-            </select>
-          </label>
-          <label class="house-environment-picker">Load local map JSON
-            <input id="house-environment-upload" type="file" accept="application/json,.json">
-          </label>
           <div class="house-actions">
             <button type="button" id="house-reset">Reset view</button>
-            <button type="button" id="house-minimize" aria-pressed="false">Minimize map</button>
-            <button type="button" id="house-expand">Expand map</button>
-            <button type="button" id="house-place-person">Set person drop-in</button>
             <button type="button" id="hand-toggle" aria-pressed="false">Enable hand control</button>
             <button type="button" id="add-avatar">Add Avatar</button>
           </div>
@@ -115,11 +85,11 @@
           </div>
         </aside>
         <div class="mobile-move-pad" aria-label="Mobile movement and zoom controls">
+          <button class="mobile-control mobile-control-turn-left" type="button" data-mobile-hold="turn-left" aria-label="Turn left"><b>↺</b><span>Turn left</span></button>
           <button class="mobile-control mobile-control-primary" type="button" data-mobile-hold="forward" aria-label="Move forward"><b>▲</b><span>Forward</span></button>
-          <button class="mobile-control mobile-control-side-right" type="button" data-mobile-hold="strafe-right" aria-label="Side right"><b>▶</b><span>Side right</span></button>
-          <button class="mobile-control mobile-control-avatar" type="button" data-mobile-action="avatar" aria-label="Select avatar"><b>👤</b><span>Avatar</span></button>
-          <button class="mobile-control mobile-control-environment" type="button" data-mobile-action="environment" aria-label="Select environment"><b>▤</b><span>Environment</span></button>
-          <button class="mobile-control mobile-control-zoom-toggle" type="button" data-mobile-zoom-toggle="out" aria-pressed="false" aria-label="Zoom out"><b>−</b><span>Zoom out</span></button>
+          <button class="mobile-control mobile-control-turn-right" type="button" data-mobile-hold="turn-right" aria-label="Turn right"><b>↻</b><span>Turn right</span></button>
+          <button class="mobile-control" type="button" data-mobile-zoom="in" aria-label="Zoom in"><b>+</b><span>Zoom in</span></button>
+          <button class="mobile-control" type="button" data-mobile-zoom="out" aria-label="Zoom out"><b>−</b><span>Zoom out</span></button>
           <button class="mobile-control" type="button" data-mobile-hold="back" aria-label="Reverse"><b>▼</b><span>Reverse</span></button>
           <button class="mobile-control mobile-control-jump" type="button" data-mobile-action="jump" aria-label="Jump"><b>⤴</b><span>Jump</span></button>
         </div>

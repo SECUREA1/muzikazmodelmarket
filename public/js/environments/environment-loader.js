@@ -7,15 +7,6 @@ import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/
 import { applyWorldQuality } from './environment-quality.js';
 import { buildCollision, resolveSafeSpawn } from './environment-collision.js';
 
-const gltfCache = new Map();
-
-export function warmEnvironmentModels(environments = [], limit = 2) {
-  environments.slice(0, limit).flatMap((env) => env.modelUrls?.length ? env.modelUrls : [env.modelUrl]).filter(Boolean).forEach((url) => {
-    if (gltfCache.has(url)) return;
-    fetch(url, { cache: 'force-cache' }).catch(() => {});
-  });
-}
-
 export class EnvironmentLoader {
   constructor({ scene, renderer, onProgress = () => {} }) {
     this.scene = scene; this.renderer = renderer; this.onProgress = onProgress; this.token = 0; this.world = null; this.mixers = []; this.meshes = []; this.octree = new Octree(); this.bounds = new THREE.Box3(); this.activeEnvironment = null; this.baseScale = 1; this.spaceScale = 1;
@@ -26,10 +17,7 @@ export class EnvironmentLoader {
   }
   disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture) value.dispose(); material.dispose?.(); }
   unload() { this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
-  loadOne(url, index, count) {
-    if (!gltfCache.has(url)) gltfCache.set(url, new Promise((resolve, reject) => this.loader.load(url, resolve, (e) => this.onProgress(((index + (e.total ? e.loaded / e.total : 0.35)) / count) * 100), reject)));
-    return gltfCache.get(url);
-  }
+  loadOne(url, index, count) { return new Promise((resolve, reject) => this.loader.load(url, resolve, (e) => this.onProgress(((index + (e.total ? e.loaded / e.total : 0.35)) / count) * 100), reject)); }
 
   setSpaceScale(scale) {
     if (!this.world) return null;
