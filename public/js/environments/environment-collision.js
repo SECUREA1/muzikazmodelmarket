@@ -65,33 +65,6 @@ export function buildCollision(root, mode = 'auto') {
   return { octree, visibleMeshes, collisionMeshes, dedicatedCollisionCount: collisionMeshes.filter((m) => COLLISION_RE.test(m.name || '')).length };
 }
 
-function findLargeCentralFloorSpawn(meshes, box, preferred, playerHeight = 1.65) {
-  const center = box.getCenter(new THREE.Vector3());
-  const spanX = Math.max(1, box.max.x - box.min.x);
-  const spanZ = Math.max(1, box.max.z - box.min.z);
-  const radius = Math.min(spanX, spanZ) * 0.28;
-  const step = Math.max(0.75, Math.min(2.4, radius / 3));
-  const candidates = [preferred.clone(), center.clone()];
-  for (let x = center.x - radius; x <= center.x + radius; x += step) {
-    for (let z = center.z - radius; z <= center.z + radius; z += step) candidates.push(new THREE.Vector3(x, preferred.y, z));
-  }
-  let best = null;
-  for (const point of candidates) {
-    const hit = findWalkableFloorHit(meshes, point, box, playerHeight);
-    if (!hit) continue;
-    const neighborOffsets = [[step,0],[-step,0],[0,step],[0,-step],[step,step],[-step,-step]];
-    const neighborScore = neighborOffsets.reduce((score, [dx, dz]) => {
-      const neighbor = findWalkableFloorHit(meshes, new THREE.Vector3(hit.point.x + dx, hit.point.y, hit.point.z + dz), box, playerHeight);
-      return score + (neighbor && Math.abs(neighbor.point.y - hit.point.y) < 0.35 ? 1 : 0);
-    }, 0);
-    const centerPenalty = hit.point.distanceTo(center) / Math.max(spanX, spanZ);
-    const preferredPenalty = hit.point.distanceTo(preferred) / Math.max(spanX, spanZ);
-    const score = neighborScore * 4 - centerPenalty - preferredPenalty * 0.45;
-    if (!best || score > best.score) best = { hit, score };
-  }
-  return best?.hit || null;
-}
-
 export function resolveSafeSpawn(root, visibleMeshes, metadataSpawn = {}, playerHeight = 1.65) {
   const box = new THREE.Box3().setFromObject(root);
   const center = box.getCenter(new THREE.Vector3());
@@ -107,7 +80,7 @@ export function resolveSafeSpawn(root, visibleMeshes, metadataSpawn = {}, player
     raw.y,
     THREE.MathUtils.clamp(raw.z, box.min.z + margin, box.max.z - margin)
   );
-  const hit = findLargeCentralFloorSpawn(visibleMeshes, box, candidate, playerHeight) || findWalkableFloorHit(visibleMeshes, candidate, box, playerHeight) || findWalkableFloorHit(visibleMeshes, center, box, playerHeight);
+  const hit = findWalkableFloorHit(visibleMeshes, candidate, box, playerHeight) || findWalkableFloorHit(visibleMeshes, center, box, playerHeight);
   if (hit) { candidate.x = hit.point.x; candidate.y = hit.point.y + FLOOR_ENTRY_OFFSET; candidate.z = hit.point.z; }
   else candidate.copy(alignPointAboveFloor(candidate, visibleMeshes, box, playerHeight));
   return { position: candidate, rotationY: spawnNode ? spawnNode.rotation.y : Number(metadataSpawn.rotationY || 0), bounds: box };
