@@ -1899,3 +1899,11 @@ section,
   .mobile-move-pad.mobile-thumb-controls .mobile-control-shoot{background:linear-gradient(180deg,#9cff00,#66d400)!important;color:#071007!important}
   .mobile-move-pad.mobile-thumb-controls span:not(.mobile-thumb-stick span){position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important}
 }
+
+/* GLB environment controller loads only for touch/mobile so desktop keeps the fastest layout. */
+.mobile-move-pad.mobile-move-pad-glb{display:none}
+@media(max-width:760px), (pointer:coarse){
+  .mobile-move-pad.mobile-move-pad-glb.mobile-thumb-controls{display:grid}
+  .mobile-move-pad.mobile-move-pad-glb .mobile-thumb-stick.is-active{border-color:#fff;box-shadow:inset 0 0 28px rgba(156,255,0,.2),0 0 18px rgba(156,255,0,.25)}
+  .mobile-move-pad.mobile-move-pad-glb .mobile-control.is-active{transform:translateY(1px) scale(.98)}
+}
