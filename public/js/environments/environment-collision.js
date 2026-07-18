@@ -3,6 +3,8 @@ import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/
 
 const COLLISION_RE = /^(COLLIDER|COLLISION|NAVMESH)(_|$)/i;
 const EXCLUDE_RE = /(SKY|PARTICLE|VFX|FOLIAGE|LEAF|LEAVES|GRASS|WATER|GLASS|LIGHT|HELPER|DECOR|AVATAR)/i;
+const NON_SPAWN_FLOOR_RE = /(CEILING|ROOF|CANOPY|AWNING|SKY|WALL|WINDOW|DOOR|RAIL|FENCE|LIGHT|LAMP)/i;
+const FLOOR_NAME_RE = /(FLOOR|GROUND|TERRAIN|PLATFORM|NAVMESH|WALK|STAGE|ROAD|PATH)/i;
 const SPAWN_PRIORITY = ['SPAWN_PLAYER', 'SPAWN_DEFAULT'];
 export const FLOOR_ENTRY_OFFSET = 0.125;
 const WALKABLE_FLOOR_NORMAL_Y = 0.55;
@@ -13,10 +15,20 @@ function isWalkableFloorHit(hit) {
   return normal.y >= WALKABLE_FLOOR_NORMAL_Y;
 }
 
+function isSpawnFloorObject(object) {
+  const name = object?.name || '';
+  return !NON_SPAWN_FLOOR_RE.test(name);
+}
+
+function floorHitScore(hit) {
+  const name = hit?.object?.name || '';
+  return (FLOOR_NAME_RE.test(name) ? 2 : 1) * Math.max(0.1, hit.face?.normal?.y || 1);
+}
+
 function findWalkableFloorHit(meshes, point, bounds, playerHeight = 1.65) {
   const rayOriginY = Number.isFinite(bounds?.max?.y) ? bounds.max.y + playerHeight + 8 : point.y + playerHeight + 8;
   const raycaster = new THREE.Raycaster(new THREE.Vector3(point.x, rayOriginY, point.z), new THREE.Vector3(0, -1, 0));
-  return raycaster.intersectObjects(meshes, true).find((item) => item.object.visible !== false && isWalkableFloorHit(item));
+  return raycaster.intersectObjects(meshes, true).find((item) => item.object.visible !== false && isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
 }
 
 export function alignPointAboveFloor(point, meshes, bounds, playerHeight = 1.65, floorGap = FLOOR_ENTRY_OFFSET) {
@@ -49,7 +61,7 @@ function chooseLargestSampledFloor(meshes, bounds, playerHeight = 1.65) {
     for (let zi = 0; zi < samplesPerAxis; zi += 1) {
       const z = THREE.MathUtils.lerp(bounds.min.z, bounds.max.z, (zi + 0.5) / samplesPerAxis);
       raycaster.ray.origin.set(x, rayOriginY, z);
-      const hit = raycaster.intersectObjects(meshes, true).find((item) => item.object.visible !== false && isWalkableFloorHit(item));
+      const hit = raycaster.intersectObjects(meshes, true).find((item) => item.object.visible !== false && isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
       if (hit) samples[xi][zi] = hit.point.clone();
     }
   }
@@ -82,12 +94,14 @@ function chooseLargestSampledFloor(meshes, bounds, playerHeight = 1.65) {
         });
       }
       const spanArea = Math.max(0, group.maxX - group.minX) * Math.max(0, group.maxZ - group.minZ);
-      const score = group.count * (spanArea || 1);
-      if (!best || score > best.score) best = { ...group, score };
+      const centerPoint = group.point.clone().multiplyScalar(1 / group.count);
+      const centerHit = findWalkableFloorHit(meshes, centerPoint, bounds, playerHeight) || { point: centerPoint };
+      const score = group.count * (spanArea || 1) * floorHitScore(centerHit);
+      if (!best || score > best.score) best = { ...group, point: centerPoint, score };
     }
   }
   if (!best) return null;
-  return best.point.multiplyScalar(1 / best.count);
+  return best.point.clone();
 }
 
 export function findLargestWalkableFloorPoint(meshes, bounds, playerHeight = 1.65, floorGap = FLOOR_ENTRY_OFFSET) {
