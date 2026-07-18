@@ -951,7 +951,7 @@ function updateArViewer(useCustomFile = Boolean(customArFileUrl)) {
   const character = selectedArCharacter();
   const characterSrc = characterImage(character);
   document.querySelector('#ar-character-name').textContent = `${character.name} AR viewer`;
-  document.querySelector('#ar-character-copy').textContent = `${character.bio} Open the highlighted pop-out button to launch this character preview on iPhone Quick Look or Android Scene Viewer when a GLB/USDZ AR file is available.`;
+  document.querySelector('#ar-character-copy').textContent = `${character.bio} Open the AR viewer to launch this character in iPhone Quick Look or Android Scene Viewer when a GLB or USDZ file is available.`;
   if (arPreviewImg) {
     arPreviewImg.src = characterSrc;
     arPreviewImg.hidden = useCustomFile && /\.(glb|gltf|usdz|reality)$/i.test(customArFileUrl);
