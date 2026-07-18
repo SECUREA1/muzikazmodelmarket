@@ -107,8 +107,12 @@
         <section class="page-shell" id="collection" aria-label="Model Market page">
             <div class="page-label">Page 01 / Model Market</div>
             <section class="section-block" id="models">
-                <div class="section-title"><span></span><h2>New legends unlocked</h2><a href="#merch">View merch</a></div>
-                <div class="collection-grid">
+                <div class="section-title model-section-title"><span></span><h2>New legends unlocked</h2><a href="#merch">View merch</a></div>
+                <div class="avatar-display-controls" aria-label="Avatar display controls">
+                    <p>Avatar display keeps the model cards available when you want them and hidden when you need a faster, cleaner page.</p>
+                    <button class="avatar-toggle" id="avatar-display-toggle" type="button" aria-controls="avatar-gallery" aria-pressed="true" data-avatar-display-toggle>Hide avatars</button>
+                </div>
+                <div class="collection-grid" id="avatar-gallery">
                     <article class="card monkey"><div><h3>Originals</h3><p>Classic crew starters</p><button type="button" data-model="Originals">Shop now</button></div></article>
                     <article class="card robot"><div><h3>Legends</h3><p>Armored future icons</p><button type="button" data-model="Legends">Shop now</button></div></article>
                     <article class="card beast"><div><h3>Beasts</h3><p>Monster power renders</p><button type="button" data-model="Beasts">Shop now</button></div></article>
