@@ -75,19 +75,3 @@ Attach a Render persistent disk at `/var/data`. Uploaded `.glb`, `.gltf`, `.usdz
 ### Database migration instructions
 
 For a PostgreSQL-backed deployment, create a Render PostgreSQL database, set `DATABASE_URL`, and run the SQL in `migrations/001_published_models.sql` before enabling a PostgreSQL repository implementation. The current committed implementation uses durable JSON metadata on the Render disk.
-
-## PayPal checkout backend (Node preview server)
-
-The Node preview server in `server.mjs` includes PayPal Checkout API routes for the static checkout flow. Configure these environment variables before using live PayPal order creation or capture:
-
-- `PAYPAL_CLIENT_ID` — PayPal REST app client id.
-- `PAYPAL_CLIENT_SECRET` — PayPal REST app secret.
-- `PAYPAL_ENVIRONMENT=sandbox` or `live` (defaults to sandbox).
-- `MUZIKAZ_ORDERS_FILE` — optional JSON persistence path for PayPal order records; defaults to `MUZIKAZ_DATA_DIR/orders.json`.
-
-Available PayPal routes:
-
-- `GET /api/paypal/config` — returns the public client id, currency, environment, and whether credentials are configured.
-- `POST /api/paypal/orders` — accepts `{ email, name, items }`, validates line items, calculates subtotal, shipping, tax, and total, then creates a PayPal v2 checkout order.
-- `POST /api/paypal/orders/:id/capture` — captures an approved PayPal order and updates the local order ledger.
-- `GET /api/paypal/orders` — returns the current user's saved PayPal order records, or all records for `X-User-Role: admin`.

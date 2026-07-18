@@ -13,7 +13,6 @@ const dataFile = join(dataDir, 'shared-house-avatars.json');
 const assetsFile = join(dataDir, 'asset-library.json');
 const modelsFile = join(dataDir, 'published-models.json');
 const environmentDataFile = process.env.MUZIKAZ_ENVIRONMENT_DATA_FILE || join(dataDir, 'environments.json');
-const ordersFile = process.env.MUZIKAZ_ORDERS_FILE || join(dataDir, 'orders.json');
 const repositoryEnvironmentManifest = join(root, 'public', 'models', 'environments', 'environments.json');
 const clients = new Set();
 const presence = new Map();
@@ -23,7 +22,7 @@ const maxEnvironmentBytes = Number(process.env.MUZIKAZ_ENVIRONMENT_MAX_BYTES || 
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
 const allowedUploadTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
-async function ensureStorage() { await mkdir(dataDir, { recursive: true }); await mkdir(uploadDir, { recursive: true }); await mkdir(assetUploadDir, { recursive: true }); await mkdir(environmentUploadDir, { recursive: true }); try { await stat(dataFile); } catch { await writeFile(dataFile, '[]'); } try { await stat(assetsFile); } catch { await writeFile(assetsFile, '[]'); } try { await stat(modelsFile); } catch { await writeFile(modelsFile, '[]'); } try { await stat(environmentDataFile); } catch { await writeFile(environmentDataFile, '[]'); } try { await stat(ordersFile); } catch { await writeFile(ordersFile, '[]'); } }
+async function ensureStorage() { await mkdir(dataDir, { recursive: true }); await mkdir(uploadDir, { recursive: true }); await mkdir(assetUploadDir, { recursive: true }); await mkdir(environmentUploadDir, { recursive: true }); try { await stat(dataFile); } catch { await writeFile(dataFile, '[]'); } try { await stat(assetsFile); } catch { await writeFile(assetsFile, '[]'); } try { await stat(modelsFile); } catch { await writeFile(modelsFile, '[]'); } try { await stat(environmentDataFile); } catch { await writeFile(environmentDataFile, '[]'); } }
 
 
 async function readRepositoryEnvironments() {
@@ -63,54 +62,6 @@ async function saveEnvironmentUpload(req) {
   if (thumb) { if (!['image/png', 'image/jpeg', 'image/webp'].includes(thumb.contentType)) throw new Error('Thumbnail must be PNG, JPEG, or WebP.'); const thumbName = `${randomUUID()}-${sanitizeFilename(thumb.filename)}`; await writeFile(join(environmentUploadDir, thumbName), thumb.data); thumbnailUrl = '/uploads/environments/' + thumbName; }
   const record = environmentRecord(fields, { modelUrl: '/uploads/environments/' + storedFilename, thumbnailUrl, originalFilename: original, storedFilename, fileSize: glb.data.length, mimeType: glb.contentType || 'model/gltf-binary' });
   const records = await readUploadedEnvironments(); records.unshift(record); await writeUploadedEnvironments(records); return record;
-}
-
-
-async function readOrders() { await ensureStorage(); return JSON.parse(await readFile(ordersFile, 'utf8')); }
-async function writeOrders(records) { await ensureStorage(); await writeFile(ordersFile, JSON.stringify(records, null, 2)); }
-function paypalBaseUrl() { return process.env.PAYPAL_ENVIRONMENT === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com'; }
-function paypalConfigured() { return Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET); }
-function moneyValue(value) { return Number(Number(value || 0).toFixed(2)); }
-function orderAmounts(items = []) {
-  const normalizedItems = Array.isArray(items) ? items.map((item) => ({ name: cleanText(item.name, 'MUZIKAZ item'), sku: cleanText(item.sku || item.key, ''), quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)), unit_amount: moneyValue(item.price) })).filter((item) => item.unit_amount > 0) : [];
-  if (!normalizedItems.length) throw new Error('Add at least one paid item before creating a PayPal order.');
-  const subtotal = moneyValue(normalizedItems.reduce((total, item) => total + item.unit_amount * item.quantity, 0));
-  const shipping = moneyValue(subtotal > 0 && subtotal < 75 ? 8.95 : 0);
-  const tax = moneyValue(subtotal * 0.0825);
-  const total = moneyValue(subtotal + shipping + tax);
-  return { items: normalizedItems, subtotal, shipping, tax, total, currency: 'USD' };
-}
-async function paypalAccessToken() {
-  if (!paypalConfigured()) throw new Error('PayPal credentials are not configured. Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET.');
-  const credentials = Buffer.from(`${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`).toString('base64');
-  const response = await fetch(`${paypalBaseUrl()}/v1/oauth2/token`, { method: 'POST', headers: { Authorization: `Basic ${credentials}`, 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=client_credentials' });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error_description || data.message || 'Unable to authenticate with PayPal.');
-  return data.access_token;
-}
-async function createPaypalOrder(input = {}, req) {
-  const amounts = orderAmounts(input.items);
-  const token = await paypalAccessToken();
-  const payload = { intent: 'CAPTURE', purchase_units: [{ reference_id: cleanText(input.referenceId, `muzikaz-${Date.now()}`), description: 'MUZIKAZ marketplace checkout', amount: { currency_code: amounts.currency, value: amounts.total.toFixed(2), breakdown: { item_total: { currency_code: amounts.currency, value: amounts.subtotal.toFixed(2) }, shipping: { currency_code: amounts.currency, value: amounts.shipping.toFixed(2) }, tax_total: { currency_code: amounts.currency, value: amounts.tax.toFixed(2) } } }, items: amounts.items.map((item) => ({ name: item.name, sku: item.sku || undefined, quantity: String(item.quantity), unit_amount: { currency_code: amounts.currency, value: item.unit_amount.toFixed(2) } })) }] };
-  const response = await fetch(`${paypalBaseUrl()}/v2/checkout/orders`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Prefer: 'return=representation' }, body: JSON.stringify(payload) });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Unable to create PayPal order.');
-  const records = await readOrders();
-  const record = { id: data.id, provider: 'paypal', status: data.status, intent: data.intent, payerEmail: cleanText(input.email, ''), customerName: cleanText(input.name, ''), ownerId: user(req).id, amounts, paypal: data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-  records.unshift(record); await writeOrders(records); return record;
-}
-async function capturePaypalOrder(orderId, req) {
-  if (!orderId) throw new Error('PayPal order id is required.');
-  const token = await paypalAccessToken();
-  const response = await fetch(`${paypalBaseUrl()}/v2/checkout/orders/${encodeURIComponent(orderId)}/capture`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Prefer: 'return=representation' } });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Unable to capture PayPal order.');
-  const records = await readOrders();
-  const index = records.findIndex((order) => order.id === orderId);
-  const now = new Date().toISOString();
-  const record = { ...(index >= 0 ? records[index] : { id: orderId, provider: 'paypal', ownerId: user(req).id, createdAt: now }), status: data.status, paypal: data, capturedAt: now, updatedAt: now };
-  if (index >= 0) records[index] = record; else records.unshift(record);
-  await writeOrders(records); return record;
 }
 
 async function readAssets() { await ensureStorage(); return JSON.parse(await readFile(assetsFile, 'utf8')); }
@@ -182,13 +133,6 @@ createServer(async (req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders()); res.end(); return; }
   try {
 
-
-
-    if (url.pathname === '/api/paypal/config' && req.method === 'GET') return sendJson(res, 200, assetResponse({ clientId: process.env.PAYPAL_CLIENT_ID || '', environment: process.env.PAYPAL_ENVIRONMENT === 'live' ? 'live' : 'sandbox', currency: 'USD', configured: paypalConfigured() }));
-    if (url.pathname === '/api/paypal/orders' && req.method === 'GET') { const actor = user(req); const orders = await readOrders(); return sendJson(res, 200, assetResponse(actor.role === 'admin' ? orders : orders.filter((order) => order.ownerId === actor.id))); }
-    if (url.pathname === '/api/paypal/orders' && req.method === 'POST') return sendJson(res, 201, assetResponse(await createPaypalOrder(await bodyJson(req), req)));
-    const paypalCapture = url.pathname.match(/^\/api\/paypal\/orders\/([^/]+)\/capture$/);
-    if (paypalCapture && req.method === 'POST') return sendJson(res, 200, assetResponse(await capturePaypalOrder(decodeURIComponent(paypalCapture[1]), req)));
 
     if (url.pathname === '/api/environments' && req.method === 'GET') return sendJson(res, 200, assetResponse(await combinedEnvironments()));
     if (url.pathname === '/api/environments' && req.method === 'POST') { const records = await readUploadedEnvironments(); const record = environmentRecord(await bodyJson(req)); if (!record.modelUrl.startsWith('/uploads/environments/')) throw new Error('Uploaded environment records must point to /uploads/environments/.'); records.unshift(record); await writeUploadedEnvironments(records); return sendJson(res, 201, assetResponse(record)); }
