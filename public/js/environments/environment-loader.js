@@ -7,6 +7,8 @@ import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/
 import { applyWorldQuality } from './environment-quality.js';
 import { buildCollision, resolveSafeSpawn } from './environment-collision.js';
 
+const WORLD_LOAD_TIMEOUT_MS = 30_000;
+
 // Fetch bundled worlds as soon as their manifest is available. This fills the
 // browser cache while the WebGL scene is being created, so opening the game
 // does not wait on each GLB download in sequence.
@@ -27,7 +29,24 @@ export class EnvironmentLoader {
   }
   disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture) value.dispose(); material.dispose?.(); }
   unload() { this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
-  loadOne(url, index, count) { return new Promise((resolve, reject) => this.loader.load(url, resolve, (e) => this.onProgress(((index + (e.total ? e.loaded / e.total : 0.35)) / count) * 100), reject)); }
+  loadOne(url, index, count) {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const finish = (callback, value) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        callback(value);
+      };
+      const timeout = window.setTimeout(() => finish(reject, new Error(`Timed out loading environment file: ${url}`)), WORLD_LOAD_TIMEOUT_MS);
+      this.loader.load(
+        url,
+        (gltf) => finish(resolve, gltf),
+        (event) => this.onProgress(((index + (event.total ? event.loaded / event.total : 0.35)) / count) * 100),
+        (error) => finish(reject, error)
+      );
+    });
+  }
 
   setSpaceScale(scale) {
     if (!this.world) return null;
