@@ -817,7 +817,19 @@ const arPopoutButton = document.querySelector('#ar-popout-button');
 let customArFileUrl = '';
 let ownerGlbModels = [];
 async function loadOwnerGlbModels(){try{const response=await fetch('public/models/glb-models.json',{cache:'no-store'});if(!response.ok)return[];const catalog=await response.json();const records=Array.isArray(catalog)?catalog:(Array.isArray(catalog.models)?catalog.models:[]);ownerGlbModels=records.filter(model=>model.visibility!=='private'&&model.modelUrl);const known=new Set(marketplaceListings.map(item=>item.modelUrl).filter(Boolean));ownerGlbModels.forEach(model=>{if(!known.has(model.modelUrl)){marketplaceListings.push({type:'Owner GLB Library',category:model.category||'Owner GLB Library',quality:'curated',name:`${model.name} AR Model`,price:'Available in AR',copy:`${model.description||'Owner-deposited GLB model.'} Source: ${model.modelUrl}`,model:model.name,modelUrl:model.modelUrl});known.add(model.modelUrl);}});renderMarketplace();return ownerGlbModels;}catch(error){console.warn('[Members AR] Owner GLB catalog unavailable',error);return[];}}
-function modelForCharacter(character){const key=character.file.replace(/[^a-z0-9]/gi,'').toLowerCase();return ownerGlbModels.find(model=>[model.id,model.name,model.modelUrl].some(value=>String(value||'').replace(/[^a-z0-9]/gi,'').toLowerCase().includes(key)));}
+const arModelAliases = {
+  sparky: ['sparky'], nexus: ['nexus'], inferno: ['inferno'], rumble: ['rumble'], chillz: ['chillz'], bax: ['bax'],
+  'ion-wolf': ['ionwolf', 'voltwolf', 'wolfie'], flick: ['flick'], byte: ['byte'], luna: ['luna'],
+  'muz-cat': ['muzcat', 'muzkat'], grump: ['grump'], sharko: ['sharko'], buzz: ['buzz', 'beedeere'],
+  wild: ['wild'], grok: ['grok'], 'buzz-jr': ['buzzjr', 'beeduck']
+};
+function normalizeArModelKey(value){return String(value||'').replace(/[^a-z0-9]/gi,'').toLowerCase();}
+function modelSearchText(model){return [model.id, model.name, model.modelUrl, model.character, model.category].map(normalizeArModelKey).join(' ');}
+function modelForCharacter(character){
+  const key = normalizeArModelKey(character.file);
+  const aliases = [key, normalizeArModelKey(character.name), ...(arModelAliases[character.file] || [])].filter(Boolean);
+  return ownerGlbModels.find(model => aliases.some(alias => modelSearchText(model).includes(alias)));
+}
 
 function selectedArCharacter() {
   return siteTwoCharacters[Number(arCharacterSelect?.value)] || siteTwoCharacters[0];
@@ -903,7 +915,14 @@ arPopoutButton?.addEventListener('click', () => {
     alert('Allow pop-ups to open the AR viewer window. Upload a GLB or USDZ file for native AR launch on mobile.');
     return;
   }
-  popup.document.write(`<!doctype html><title>${character.name} AR Preview</title><style>body{margin:0;background:#020302;color:#9cff00;font-family:system-ui;text-align:center;text-transform:uppercase}main{min-height:100vh;display:grid;place-items:center;padding:18px}img{max-width:100%;max-height:72vh;object-fit:contain;filter:drop-shadow(0 20px 30px #000)}p{text-transform:none;color:#fff}</style><main><div><h1>${character.name}</h1><img src="${arPreviewImg?.src || characterImage(character)}" alt="${character.name}"><p>Upload a GLB, GLTF, USDZ, or Reality file in the main page to launch native AR on iPhone or Android.</p></div></main>`);
+  const catalogModel = modelForCharacter(character);
+  const modelUrl = customArFileUrl || catalogModel?.modelUrl || '';
+  const iosModelUrl = !customArFileUrl ? catalogModel?.iosModelUrl || '' : '';
+  const previewUrl = arPreviewImg?.src || characterImage(character);
+  const viewerMarkup = modelUrl && /\.(glb|gltf|usdz|reality)$/i.test(modelUrl)
+    ? `<model-viewer src="${modelUrl}" ${iosModelUrl ? `ios-src="${iosModelUrl}"` : ''} poster="${previewUrl}" camera-controls auto-rotate ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1" alt="${character.name} AR model"><button slot="ar-button" type="button">Place ${character.name} in AR</button></model-viewer>`
+    : `<img src="${previewUrl}" alt="${character.name}"><p>No matching GLB/USDZ filing is connected yet; upload a model file on the main page to launch native AR.</p>`;
+  popup.document.write(`<!doctype html><title>${character.name} AR Preview</title><script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"><\/script><style>body{margin:0;background:#020302;color:#9cff00;font-family:system-ui;text-align:center;text-transform:uppercase}main{min-height:100vh;display:grid;place-items:center;padding:18px}model-viewer,img{width:100%;height:72vh;max-height:72vh;object-fit:contain;filter:drop-shadow(0 20px 30px #000)}button{border:1px solid #9cff00;border-radius:999px;background:#9cff00;color:#030403;padding:12px 18px;font-weight:900;text-transform:uppercase}p{text-transform:none;color:#fff}</style><main><div><h1>${character.name}</h1>${viewerMarkup}<p>${catalogModel ? `${catalogModel.name} is connected from the AR model filing: ${catalogModel.modelUrl}.` : 'Select another character or upload a GLB, GLTF, USDZ, or Reality file for native AR on iPhone or Android.'}</p></div></main>`);
   popup.document.close();
 });
 
