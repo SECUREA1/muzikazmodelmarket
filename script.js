@@ -223,23 +223,23 @@ document.addEventListener('keydown', (event) => {
 
 
 const siteTwoCharacters = [
-  {name:'Sparky', role:'The Inventor', file:'sparky', group:'New Legends', bio:'Brilliant, chaotic, and unstoppable for inventor-themed merch drops.'},
-  {name:'Nexus', role:'The Sentinel', file:'nexus', group:'New Legends', bio:'Future-forward sentinel for premium apparel and high-tech product presentation.'},
-  {name:'Inferno', role:'The Unleashed', file:'inferno', group:'New Legends', bio:'Raw heat and chaos for aggressive campaign art and darker merch designs.'},
-  {name:'Rumble', role:'The Brute', file:'rumble', group:'New Legends', bio:'Big strength and big attitude for statement hoodies and event banners.'},
-  {name:'Chillz', role:'The Strategist', file:'chillz', group:'New Legends', bio:'Cool, calm, and three steps ahead for caps, stickers, and confidence gear.'},
-  {name:'Bax', role:'The Rebel', file:'bax', group:'The Crew', bio:'A red-hot rebel mascot for loud streetwear and underground promo drops.'},
-  {name:'Ion Wolf', role:'The Night Runner', file:'ion-wolf', group:'The Crew', bio:'A neon wolf with night-runner style for jackets, hats, and limited drops.'},
-  {name:'Flick', role:'The Spark', file:'flick', group:'The Crew', bio:'Bright and fan-friendly for youth gear, stickers, and family events.'},
-  {name:'Byte', role:'The Signal', file:'byte', group:'The Crew', bio:'Tech duck mascot for audio culture, digital promos, and signal-themed merch.'},
-  {name:'Luna', role:'The Soft Power', file:'luna', group:'The Crew', bio:'A softer mascot for cozy hoodies, plush ideas, and lifestyle products.'},
-  {name:'Muz Cat', role:'The Producer', file:'muz-cat', group:'The Crew', bio:'Studio cat built for creator merch, desk mats, posters, and music drops.'},
-  {name:'Grump', role:'The Enforcer', file:'grump', group:'The Crew', bio:'A serious heavy-hitter for classic tees and no-nonsense campaigns.'},
-  {name:'Sharko', role:'The Finisher', file:'sharko', group:'The Crew', bio:'Sharp mascot for performance gear, bold posters, and aggressive launches.'},
-  {name:'Buzz', role:'The Hype Bee', file:'buzz', group:'The Crew', bio:'Bright bee mascot for stickers, kid-friendly merch, and social campaigns.'},
-  {name:'Wild', role:'The Pilot Pug', file:'wild', group:'The Crew', bio:'Adventure dog for hats, keychains, pins, and travel-themed event mascots.'},
-  {name:'Grok', role:'The Survivor', file:'grok', group:'New Additions', bio:'Rugged mascot for outdoor-style apparel, patches, and tough accessories.'},
-  {name:'Buzz Jr.', role:'The Mini Hype', file:'buzz-jr', group:'New Additions', bio:'Mini hype mascot for stickers, small accessories, and family bundles.'}
+  {name:'Sparky', role:'The Inventor', file:'sparky', group:'New Legends', arModelId:'muzikaz', bio:'Brilliant, chaotic, and unstoppable for inventor-themed merch drops.'},
+  {name:'Nexus', role:'The Sentinel', file:'nexus', group:'New Legends', arModelId:'voltwolf', bio:'Future-forward sentinel for premium apparel and high-tech product presentation.'},
+  {name:'Inferno', role:'The Unleashed', file:'inferno', group:'New Legends', arModelId:'flaminglow', bio:'Raw heat and chaos for aggressive campaign art and darker merch designs.'},
+  {name:'Rumble', role:'The Brute', file:'rumble', group:'New Legends', arModelId:'aape', bio:'Big strength and big attitude for statement hoodies and event banners.'},
+  {name:'Chillz', role:'The Strategist', file:'chillz', group:'New Legends', arModelId:'318bb72e-99a3-4258-9684-8db3b35cc753-2', bio:'Cool, calm, and three steps ahead for caps, stickers, and confidence gear.'},
+  {name:'Bax', role:'The Rebel', file:'bax', group:'The Crew', arModelId:'dax', bio:'A red-hot rebel mascot for loud streetwear and underground promo drops.'},
+  {name:'Ion Wolf', role:'The Night Runner', file:'ion-wolf', group:'The Crew', arModelId:'wolfie', bio:'A neon wolf with night-runner style for jackets, hats, and limited drops.'},
+  {name:'Flick', role:'The Spark', file:'flick', group:'The Crew', arModelId:'ioncduck', bio:'Bright and fan-friendly for youth gear, stickers, and family events.'},
+  {name:'Byte', role:'The Signal', file:'byte', group:'The Crew', arModelId:'byte', bio:'Tech duck mascot for audio culture, digital promos, and signal-themed merch.'},
+  {name:'Luna', role:'The Soft Power', file:'luna', group:'The Crew', arModelId:'mousey', bio:'A softer mascot for cozy hoodies, plush ideas, and lifestyle products.'},
+  {name:'Muz Cat', role:'The Producer', file:'muz-cat', group:'The Crew', arModelId:'muzkat', bio:'Studio cat built for creator merch, desk mats, posters, and music drops.'},
+  {name:'Grump', role:'The Enforcer', file:'grump', group:'The Crew', arModelId:'rebel-black-sheep', bio:'A serious heavy-hitter for classic tees and no-nonsense campaigns.'},
+  {name:'Sharko', role:'The Finisher', file:'sharko', group:'The Crew', arModelId:'sharko', bio:'Sharp mascot for performance gear, bold posters, and aggressive launches.'},
+  {name:'Buzz', role:'The Hype Bee', file:'buzz', group:'The Crew', arModelId:'beedeere', bio:'Bright bee mascot for stickers, kid-friendly merch, and social campaigns.'},
+  {name:'Wild', role:'The Pilot Pug', file:'wild', group:'The Crew', arModelId:'ronaldo', bio:'Adventure dog for hats, keychains, pins, and travel-themed event mascots.'},
+  {name:'Grok', role:'The Survivor', file:'grok', group:'New Additions', arModelId:'drone-engine', bio:'Rugged mascot for outdoor-style apparel, patches, and tough accessories.'},
+  {name:'Buzz Jr.', role:'The Mini Hype', file:'buzz-jr', group:'New Additions', arModelId:'beeduck', bio:'Mini hype mascot for stickers, small accessories, and family bundles.'}
 ];
 
 const siteTwoProducts = [
@@ -518,7 +518,12 @@ function renderMarketplace(type = marketplaceState.type, modelFocus = marketplac
     const qualityMatch = !marketplaceState.curatedOnly || listing.quality === 'curated';
     return typeMatch && categoryMatch && focusMatch && qualityMatch;
   });
-  marketGrid.innerHTML = listings.map((listing) => `<article><span class="pill">${listing.type}</span><span class="pill category-pill">${listing.category}</span><h3>${listing.name}</h3><p>${listing.copy}</p><p class="price">${listing.price}</p><button type="button" data-product="${listing.name}">Add</button></article>`).join('') || '<article><h3>No matches</h3><p>Choose another category, type, or turn off curated quality only.</p></article>';
+  marketGrid.innerHTML = listings.map((listing, index) => {
+    const arIndex = Number.isInteger(listing.arCharacterIndex) ? listing.arCharacterIndex : characterForListing(listing);
+    const canLaunchAr = Boolean(listing.modelUrl) || arIndex >= 0;
+    return `<article><span class="pill">${listing.type}</span><span class="pill category-pill">${listing.category}</span><h3>${listing.name}</h3><p>${listing.copy}</p><p class="price">${listing.price}</p><button type="button" data-product="${listing.name}">Add</button>${canLaunchAr ? `<button type="button" class="ghost" data-market-ar="${index}">View in AR</button>` : ''}</article>`;
+  }).join('') || '<article><h3>No matches</h3><p>Choose another category, type, or turn off curated quality only.</p></article>';
+  marketGrid.querySelectorAll('[data-market-ar]').forEach((button) => button.addEventListener('click', () => activateMarketplaceAr(listings[Number(button.dataset.marketAr)])));
   if (marketStatus) {
     const focusCopy = marketplaceState.modelFocus ? ` for ${marketplaceState.modelFocus}` : '';
     marketStatus.textContent = `${listings.length} listing${listings.length === 1 ? '' : 's'} shown${focusCopy}. Category: ${marketplaceState.category}. Type: ${marketplaceState.type}.`;
@@ -850,7 +855,7 @@ const arFileMeta = document.querySelector('#ar-file-meta');
 const arPopoutButton = document.querySelector('#ar-popout-button');
 let customArFileUrl = '';
 let ownerGlbModels = [];
-async function loadOwnerGlbModels(){try{const response=await fetch('public/models/glb-models.json',{cache:'no-store'});if(!response.ok)return[];const catalog=await response.json();const records=Array.isArray(catalog)?catalog:(Array.isArray(catalog.models)?catalog.models:[]);ownerGlbModels=records.filter(model=>model.visibility!=='private'&&model.modelUrl);const known=new Set(marketplaceListings.map(item=>item.modelUrl).filter(Boolean));ownerGlbModels.forEach(model=>{if(!known.has(model.modelUrl)){marketplaceListings.push({type:'Owner GLB Library',category:model.category||'Owner GLB Library',quality:'curated',name:`${model.name} AR Model`,price:'Available in AR',copy:`${model.description||'Owner-deposited GLB model.'} Source: ${model.modelUrl}`,model:model.name,modelUrl:model.modelUrl});known.add(model.modelUrl);}});renderMarketplace();return ownerGlbModels;}catch(error){console.warn('[Members AR] Owner GLB catalog unavailable',error);return[];}}
+async function loadOwnerGlbModels(){try{const response=await fetch('public/models/glb-models.json',{cache:'no-store'});if(!response.ok)return[];const catalog=await response.json();const records=Array.isArray(catalog)?catalog:(Array.isArray(catalog.models)?catalog.models:[]);ownerGlbModels=records.filter(model=>model.visibility!=='private'&&model.modelUrl);const known=new Set(marketplaceListings.map(item=>item.modelUrl).filter(Boolean));ownerGlbModels.forEach(model=>{if(!known.has(model.modelUrl)){marketplaceListings.push({type:'Owner GLB Library',category:model.category||'Owner GLB Library',quality:'curated',name:`${model.name} AR Model`,price:'Available in AR',copy:`${model.description||'Owner-deposited GLB model.'} Source: ${model.modelUrl}`,model:model.name,modelUrl:model.modelUrl,iosModelUrl:model.iosModelUrl||'',arCharacterIndex:siteTwoCharacters.findIndex((character)=>normalizeArModelKey(character.arModelId)===normalizeArModelKey(model.id))});known.add(model.modelUrl);}});renderMarketplace();return ownerGlbModels;}catch(error){console.warn('[Members AR] Owner GLB catalog unavailable',error);return[];}}
 const arModelAliases = {
   sparky: ['sparky'], nexus: ['nexus'], inferno: ['inferno'], rumble: ['rumble'], chillz: ['chillz'], bax: ['bax'],
   'ion-wolf': ['ionwolf', 'voltwolf', 'wolfie'], flick: ['flick'], byte: ['byte'], luna: ['luna'],
@@ -860,9 +865,32 @@ const arModelAliases = {
 function normalizeArModelKey(value){return String(value||'').replace(/[^a-z0-9]/gi,'').toLowerCase();}
 function modelSearchText(model){return [model.id, model.name, model.modelUrl, model.character, model.category].map(normalizeArModelKey).join(' ');}
 function modelForCharacter(character){
+  const exactId = normalizeArModelKey(character.arModelId);
+  if (exactId) {
+    const exactModel = ownerGlbModels.find(model => normalizeArModelKey(model.id) === exactId);
+    if (exactModel) return exactModel;
+  }
   const key = normalizeArModelKey(character.file);
   const aliases = [key, normalizeArModelKey(character.name), ...(arModelAliases[character.file] || [])].filter(Boolean);
   return ownerGlbModels.find(model => aliases.some(alias => modelSearchText(model).includes(alias)));
+}
+function characterForListing(listing){
+  return siteTwoCharacters.findIndex((character) => listing.model === character.name || listing.model === character.group || listing.copy?.includes(character.group) || listing.copy?.includes(character.name));
+}
+function activateMarketplaceAr(listing){
+  const characterIndex = Number.isInteger(listing.arCharacterIndex) ? listing.arCharacterIndex : characterForListing(listing);
+  if (characterIndex >= 0 && arCharacterSelect) {
+    arCharacterSelect.value = String(characterIndex);
+    customArFileUrl = '';
+    updateArViewer(false);
+    scrollToSection('ar-viewer');
+    setTimeout(() => {
+      if (arModelViewer && !arModelViewer.hidden && typeof arModelViewer.activateAR === 'function') arModelViewer.activateAR();
+      else arPopoutButton?.click();
+    }, 250);
+    return;
+  }
+  if (listing.modelUrl) window.open(listing.modelUrl, '_blank', 'noopener');
 }
 
 function selectedArCharacter() {
