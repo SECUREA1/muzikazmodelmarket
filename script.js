@@ -332,13 +332,13 @@ function initFlexLabCategories() {
   const panel = document.querySelector('#flex-category-panel');
   if (!buttons.length || !cards.length) return;
   const summaries = {
-    All: 'Viewing avatars, pets, accessories, furniture, 3D environments, and gaming studio packs together.',
-    Avatars: 'Live published model drops, bodies, skins, poses, and profile-ready avatar slots.',
-    Pets: 'Companion sidekicks that match mascot palettes and add character lore.',
-    Accessories: 'Wearable gear, collectibles, instruments, bags, and power-up style add-ons.',
-    Furniture: 'Creator rooms, studio sets, display walls, booths, and hangout hub pieces.',
-    '3D Environments': 'Bedrooms, stages, shops, arenas, and explorable world scenes for each mascot.',
-    'Gaming Studio': 'Playable props, emotes, animation hooks, vehicle ideas, levels, and shop bundles.'
+    All: 'Showing every Flex Fit category together in a balanced, gap-free layout.',
+    Avatars: 'Live body drops, skins, traits, poses, and profile-ready avatar slots.',
+    Pets: 'Mascot-matched sidekicks with color stories, lore hooks, and follower energy.',
+    Accessories: 'Wearable flex, collectibles, instruments, bags, and power-up add-ons.',
+    Furniture: 'Studio sets, bedroom kits, booths, display walls, and hangout hubs.',
+    '3D Environments': 'Bedrooms, stages, shops, arenas, hideouts, and explorable mascot worlds.',
+    'Gaming Studio': 'Props, emotes, animation hooks, vehicles, level themes, and shop bundles.'
   };
   function selectCategory(category) {
     buttons.forEach((button) => {
@@ -352,7 +352,7 @@ function initFlexLabCategories() {
       card.classList.toggle('is-selected', visible && category !== 'All');
     });
     if (panel) {
-      panel.innerHTML = `<strong>${category === 'All' ? 'All categories selected' : `${category} selected`}</strong><span>${summaries[category] || summaries.All}</span>`;
+      panel.innerHTML = `<strong>${category === 'All' ? 'Full loadout selected' : `${category} shelf selected`}</strong><span>${summaries[category] || summaries.All}</span>`;
     }
   }
   buttons.forEach((button) => button.addEventListener('click', () => selectCategory(button.dataset.flexCategory || 'All')));
