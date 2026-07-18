@@ -1807,3 +1807,27 @@ section,
   .mobile-move-pad span,
   .mobile-control span{font-size:clamp(.58rem,2.8vw,1rem);text-transform:uppercase;letter-spacing:.05em}
 }
+
+.house-map-tuner{
+  display:grid;
+  gap:10px;
+  padding:12px;
+  border:1px solid rgba(156,255,0,.28);
+  border-radius:16px;
+  background:rgba(156,255,0,.06);
+}
+.house-map-tuner label{
+  display:grid;
+  gap:6px;
+  color:var(--lime);
+  font-size:12px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.house-map-tuner input[type="range"]{width:100%;accent-color:var(--lime)}
+.house-explorer-shell.is-map-minimized{grid-template-columns:minmax(280px,420px) minmax(300px,360px)}
+.house-explorer-shell.is-map-minimized .house-stage{height:260px;min-height:260px;max-height:260px}
+.house-explorer-shell.is-map-expanded{grid-template-columns:1fr}
+.house-explorer-shell.is-map-expanded .house-stage{height:min(82svh,860px);max-height:none}
+.house-explorer-shell.is-map-expanded .house-hud{max-width:720px;width:100%;justify-self:center}
+@media(max-width:1000px){.house-explorer-shell.is-map-minimized{grid-template-columns:1fr}.house-explorer-shell.is-map-minimized .house-stage{height:220px;min-height:220px}}
