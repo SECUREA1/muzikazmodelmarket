@@ -32,6 +32,11 @@ for (const page of htmlPages) {
 }
 
 const mainHtml = await readFile('dist/index.html', 'utf8');
+for (const requiredCompatibilityMarker of ['http-equiv="X-UA-Compatible"', 'browser-compat.js', 'id="muzikaz-app-script"', 'type="text/plain"']) {
+  if (!mainHtml.includes(requiredCompatibilityMarker)) {
+    throw new Error(`index.html is missing browser compatibility marker ${requiredCompatibilityMarker}`);
+  }
+}
 for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-preview']) {
   if (!mainHtml.includes(`id="${id}"`)) {
     throw new Error(`index.html is missing public section #${id}`);
