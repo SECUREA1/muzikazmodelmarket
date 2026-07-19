@@ -4,7 +4,20 @@
   'use strict';
 
   function signedIn() {
-    return window.localStorage && window.localStorage.getItem('muzikazBottleMember') === 'true' && !!String(window.localStorage.getItem('muzikazBottleMemberEmail') || '').replace(/^\s+|\s+$/g, '');
+    try {
+      return window.localStorage && window.localStorage.getItem('muzikazBottleMember') === 'true' && !!String(window.localStorage.getItem('muzikazBottleMemberEmail') || '').replace(/^\s+|\s+$/g, '');
+    } catch (ignore) {
+      return false;
+    }
+  }
+
+  function canStartNativeGame() {
+    var script = document.createElement('script');
+    var canvas = document.createElement('canvas');
+    /* IE ignores module scripts, so no explorer can register the native-start
+     * listener.  Go straight to the ES5 game instead of leaving its launch
+     * overlay waiting for a listener that will never arrive. */
+    return 'noModule' in script && !!(canvas.getContext && canvas.getContext('webgl'));
   }
 
   function requestLogin() {
@@ -63,10 +76,17 @@
   }
 
   function requestNativeStart() {
+    if (!canStartNativeGame()) {
+      startFallback();
+      return;
+    }
     var detail = { startNative: null };
     var event;
-    if (typeof window.CustomEvent === 'function') event = new window.CustomEvent('muzikaz:rad-tox-request', { detail: detail });
-    else { event = document.createEvent('Event'); event.initEvent('muzikaz:rad-tox-request', true, true); event.detail = detail; }
+    try {
+      event = new window.CustomEvent('muzikaz:rad-tox-request', { detail: detail });
+    } catch (ignore) {
+      event = document.createEvent('Event'); event.initEvent('muzikaz:rad-tox-request', true, true); event.detail = detail;
+    }
     document.dispatchEvent(event);
     if (typeof detail.startNative === 'function') detail.startNative();
     else startFallback();
