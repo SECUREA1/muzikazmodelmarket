@@ -106,19 +106,14 @@
                         <span id="hand-status">Camera preview inactive. MediaPipe Hands loads only when enabled.</span>
                     </div>
                 </aside>
+                <div class="mobile-move-pad" aria-label="Game controllers"></div>
                 <div class="house-bottom-controls" aria-label="Game controls">
-                    <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-world-menu"><b aria-hidden="true">▤</b><span>World</span></button>
+                    <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">▤</b><span>World</span></button>
                     <button class="house-bottom-control" id="house-fullscreen" type="button"><b aria-hidden="true">⛶</b><span>Fullscreen</span></button>
-                    <button class="house-bottom-control" id="add-avatar" type="button"><b aria-hidden="true">👤</b><span>Avatar</span></button>
+                    <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">👤</b><span>Avatar</span></button>
                     <button class="house-bottom-control house-bottom-control-begin" id="house-start-game" type="button"><b aria-hidden="true">◉</b><span>Begin</span></button>
                     <small class="house-firefox-label">Firefox ready</small>
-                    <div class="house-world-menu" id="house-world-menu" hidden>
-                        <label class="house-environment-picker">Choose world
-                            <select id="house-environment-select" aria-label="Choose game world">
-                                <option value="">Loading worlds…</option>
-                            </select>
-                        </label>
-                    </div>
+                    <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
                 </div>
             </div>
         </section>

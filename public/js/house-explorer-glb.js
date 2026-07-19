@@ -32,7 +32,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (!mobilePad) return;
     mobilePad.className = 'mobile-move-pad mobile-move-pad-glb';
     mobilePad.setAttribute('aria-label', 'Unified mobile game controller');
-    mobilePad.innerHTML = `<div class="thumbstick-control" data-thumbstick="left" role="group" aria-label="Left thumbstick: move forward, reverse, strafe left, or strafe right. Tap the stick to shoot the target at the reticle."><span class="thumbstick-label">Move / shoot</span><button class="thumbstick-base" type="button" aria-label="Left thumbstick. Drag up to move forward, down to reverse, or sideways to strafe. Tap to shoot."><span class="thumbstick-knob"></span></button><small>Forward / reverse · strafe · tap to shoot</small></div><div class="thumbstick-control" data-thumbstick="right" role="group" aria-label="Right thumbstick: look up, look down, turn left, or turn right. Tap the stick to jump."><span class="thumbstick-label">Look / turn</span><button class="thumbstick-base" type="button" aria-label="Right thumbstick. Drag up or down to look, or sideways to turn. Tap to jump."><span class="thumbstick-knob"></span></button><small>Look up / down · turn · tap to jump</small></div><div class="controller-actions" aria-label="Game actions"><button type="button" data-mobile-action="library" class="controller-library" aria-label="Open the avatar and environment list">${controllerIcon('M4 5h16v14H4zM8 9h8M8 13h5')}<span>World</span></button><button type="button" data-mobile-action="fullscreen" class="controller-fullscreen" aria-label="Enter fullscreen game view">${controllerIcon('M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5')}<span>Fullscreen</span></button><button type="button" data-mobile-action="begin-reset" class="controller-begin" aria-label="Begin or reset the RAD-TOX game">${controllerIcon('M12 3v5M5.8 7l4.3 2.5M18.2 7l-4.3 2.5M5.8 17l4.3-2.5M18.2 17l-4.3-2.5M12 9a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z')}<span>Begin</span></button></div>`;
+    mobilePad.innerHTML = `<div class="thumbstick-control" data-thumbstick="left" role="group" aria-label="Left thumbstick: move forward, reverse, strafe left, or strafe right. Tap the stick to shoot the target at the reticle."><span class="thumbstick-label">Move / shoot</span><button class="thumbstick-base" type="button" aria-label="Left thumbstick. Drag up to move forward, down to reverse, or sideways to strafe. Tap to shoot."><span class="thumbstick-knob"></span></button><small>Forward / reverse · strafe · tap to shoot</small></div><div class="thumbstick-control" data-thumbstick="right" role="group" aria-label="Right thumbstick: look up, look down, turn left, or turn right. Tap the stick to jump."><span class="thumbstick-label">Look / turn</span><button class="thumbstick-base" type="button" aria-label="Right thumbstick. Drag up or down to look, or sideways to turn. Tap to jump."><span class="thumbstick-knob"></span></button><small>Look up / down · turn · tap to jump</small></div>`;
   }
 
   rebuildMobileController();
@@ -74,8 +74,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
   const setStatus = (message) => { if (status) status.textContent = message; };
   const environmentSelect = document.querySelector('#house-environment-select');
-  const library = document.createElement('div'); library.className = 'house-picker-panel is-collapsed'; library.innerHTML = '<div class="house-picker-title"><strong>GLB Select</strong><small>Choose worlds and avatars</small></div><small>Loading GLB options…</small>';
-  stage.before(library);
+  const library = document.createElement('div'); library.className = 'house-picker-panel is-collapsed'; library.id = 'house-picker-panel'; library.innerHTML = '<div class="house-picker-title"><strong>GLB Select</strong><small>Choose worlds and avatars</small></div><small>Loading GLB options…</small>';
+  stage.after(library);
   const loadingMeter = document.createElement('div'); loadingMeter.className = 'house-loading-meter'; loadingMeter.hidden = true; const loadingFill = document.createElement('span'); loadingMeter.append(loadingFill); stage.append(loadingMeter);
   const avatarMenu = document.createElement('div'); avatarMenu.className = 'glb-avatar-menu'; avatarMenu.hidden = true; avatarMenu.setAttribute('role', 'dialog'); avatarMenu.setAttribute('aria-label', 'Avatar transform menu'); stage.append(avatarMenu);
   const walkButton = document.createElement('button'); walkButton.type = 'button'; walkButton.id = 'house-walk-mode'; walkButton.textContent = 'Start game'; walkButton.setAttribute('aria-pressed', 'false'); resetButton?.after(walkButton);
@@ -158,6 +158,22 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function renderPicker() { const worlds = registry.all(); syncEnvironmentSelect(worlds); const envOptions = worlds.map((env) => { const size = env.fileSize ? `${(env.fileSize / 1048576).toFixed(1)} MB` : 'repo GLB'; return `<option value="${env.id}" ${activeEnvironment?.id === env.id ? 'selected' : ''}>${env.name} · ${size}</option>`; }).join(''); const avatarOptions = cachedAvatars.map((avatar) => `<option value="${avatar.id}">${avatar.name} · ${avatar.owner}</option>`).join(''); library.innerHTML = `<div class="house-picker-title"><strong>GLB Select</strong><small>${worlds.length} worlds · ${cachedAvatars.length} avatars</small></div><div class="house-picker-row"><label class="house-picker-label">World<select data-world-select>${envOptions || '<option>No worlds found</option>'}</select></label><button type="button" data-load-world>Open</button></div><div class="house-picker-row"><label class="house-picker-label">Avatar<select data-avatar-select>${avatarOptions || '<option>No active GLB avatars</option>'}</select></label><button type="button" data-add-selected-avatar>Add</button></div>`; library.querySelector('[data-load-world]')?.addEventListener('click', () => { const id = library.querySelector('[data-world-select]')?.value; if (id) loadById(id); }); library.querySelector('[data-world-select]')?.addEventListener('change', (event) => loadById(event.target.value)); library.querySelector('[data-add-selected-avatar]')?.addEventListener('click', () => { const avatar = cachedAvatars.find(a => a.id === library.querySelector('[data-avatar-select]')?.value); if (avatar) { activeAvatar = avatar; addAvatarToScene(avatar).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); } }); }
   function renderLibrary() { renderPicker(); }
   async function refreshLibrary() { try { await registry.refresh(); renderPicker(); } catch (error) { setStatus(error.message); library.innerHTML = `<div class="house-picker-title"><strong>GLB Select</strong></div><small>${error.message}</small>`; } }
+
+  function openPicker(kind) {
+    const isOpen = !library.classList.contains('is-collapsed');
+    const requestedControl = library.querySelector(kind === 'avatar' ? '[data-avatar-select], [data-add-selected-avatar]' : '[data-world-select], [data-load-world]');
+    library.classList.remove('is-collapsed');
+    document.querySelector('#house-world-button')?.setAttribute('aria-expanded', String(kind === 'world'));
+    document.querySelector('#add-avatar')?.setAttribute('aria-expanded', String(kind === 'avatar'));
+    requestedControl?.focus({ preventScroll: true });
+    setStatus(`${kind === 'avatar' ? 'Avatar' : 'World'} list open above the controllers.${isOpen ? '' : ' Choose an option, then keep playing.'}`);
+  }
+
+  const worldButton = document.querySelector('#house-world-button');
+  const avatarButton = document.querySelector('#add-avatar');
+  [worldButton, avatarButton].forEach((button) => button?.setAttribute('aria-controls', 'house-picker-panel'));
+  worldButton?.addEventListener('click', () => openPicker('world'));
+  avatarButton?.addEventListener('click', () => openPicker('avatar'));
 
   function normalizeAvatarRecord(raw = {}) { const modelUrl = raw.modelUrl || raw.model_url || raw.fileUrl || raw.file_url || raw.assetUrl || raw.asset_url || raw.avatarUrl || raw.publicUrl || ''; const id = raw.id || raw.avatarId || raw.modelId || btoa(unescape(encodeURIComponent(modelUrl || raw.name || Date.now()))).replace(/=+$/,''); return { id, name: raw.name || raw.avatarName || raw.title || 'GLB Avatar', owner: raw.owner || raw.creatorName || raw.creator || raw.username || 'MUZIKAZ', modelUrl: new URL(modelUrl, window.location.origin).href, format: String(raw.format || raw.fileType || raw.type || modelUrl.split('?')[0].split('.').pop() || '').toLowerCase(), visibility: raw.visibility || 'public', status: raw.status || 'active', scale: Number(raw.scale) || 1, rotation: raw.rotation }; }
   function isActiveGlbAvatar(avatar) { return avatar.modelUrl && ['glb','gltf'].includes(avatar.format) && avatar.visibility !== 'private' && !['archived','rejected','disabled','inactive'].includes(String(avatar.status).toLowerCase()); }
@@ -266,7 +282,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
   });
   async function startRadToxGame() {
-    if (gameStartButton?.disabled) return;
+    // The ES5 launcher disables Begin before it dispatches its start request.
+    // Guard only against our own in-flight launch, otherwise that request is lost.
+    if (gameStartScreen?.classList.contains('is-loading')) return;
 
     if (gameStartButton) gameStartButton.disabled = true;
     gameStartScreen?.classList.add('is-loading');
@@ -274,6 +292,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (gameLoadStatus) gameLoadStatus.textContent = 'Loading the IonCore interior and deploying toxic bubbles…';
 
     try {
+      // Request pointer lock while this click is still a user gesture. Loading the
+      // GLB may be asynchronous, but the game can still start immediately.
+      if (document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
       await openHouseMap({ requestWalk: true });
       await toxicBubbleSystem.begin();
       gameStartScreen?.classList.add('is-hidden');
