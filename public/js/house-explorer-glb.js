@@ -274,17 +274,18 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
     gameStartButton.disabled = true;
     gameStartScreen?.classList.add('is-loading');
-    gameStartButton.textContent = 'Loading game…';
-    if (gameLoadStatus) gameLoadStatus.textContent = 'Loading the IonCore interior…';
+    gameStartButton.textContent = 'Deploying RAD-TOX…';
+    if (gameLoadStatus) gameLoadStatus.textContent = 'Loading the IonCore interior and deploying toxic bubbles…';
 
     try {
       await openHouseMap({ requestWalk: true });
+      await toxicBubbleSystem.begin();
       gameStartScreen?.classList.add('is-hidden');
-      setStatus('Game active. Explore the interior, then press BEGIN to start RAD-TOX.');
+      setStatus('RAD-TOX is active. Toxic bubbles are deployed—clear the floor!');
     } catch (error) {
       const message = error?.message || 'Unable to load the MUZIKAZ house game.';
       gameStartButton.disabled = false;
-      gameStartButton.innerHTML = '<span aria-hidden="true">▶</span> Start game';
+      gameStartButton.innerHTML = '<span aria-hidden="true">☢</span> Begin RAD-TOX';
       gameStartScreen?.classList.remove('is-loading');
       if (gameLoadStatus) gameLoadStatus.textContent = message;
       setStatus(message);
