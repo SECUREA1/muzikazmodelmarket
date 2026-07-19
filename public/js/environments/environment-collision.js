@@ -1,5 +1,5 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
-import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Octree.js/+esm';
+import * as THREE from 'three';
+import { Octree } from 'three/addons/math/Octree.js';
 
 const COLLISION_RE = /^(COLLIDER|COLLISION|NAVMESH)(_|$)/i;
 const EXCLUDE_RE = /(SKY|PARTICLE|VFX|FOLIAGE|LEAF|LEAVES|GRASS|WATER|GLASS|LIGHT|HELPER|DECOR|AVATAR)/i;
