@@ -3,13 +3,15 @@
   'use strict';
   var PREFIX = '[MUZIKAZ GAME]';
   var state = 'booting'; var queued = false; var watchdog = 0;
+  // Some devices need extra time to load the 3D engine and its environment assets.
+  var ENGINE_STARTUP_TIMEOUT_MS = 90000;
   function log(message, detail) { if (window.console && console.info) console.info(PREFIX, message, detail || ''); }
   function status(message) { var nodes = [document.getElementById('house-status'), document.getElementById('house-game-load-status')]; for (var i=0;i<nodes.length;i+=1) if(nodes[i]) nodes[i].textContent=message; }
   function button() { return document.getElementById('house-start-game'); }
   function setState(next, message) { state = next; document.documentElement.setAttribute('data-radtox-state', next); log('stage '+next); if(message) status(message); }
   function supportsModern() { var s=document.createElement('script'), c=document.createElement('canvas'); return 'noModule' in s && !!(window.Promise && window.fetch && window.URL && window.CustomEvent && c.getContext && (c.getContext('webgl2') || c.getContext('webgl'))); }
   function clearWatchdog(){ if(watchdog){window.clearTimeout(watchdog);watchdog=0;} }
-  function armWatchdog(){ clearWatchdog(); watchdog=window.setTimeout(function(){ if(state==='booting'){ fail('engine-ready','The 3D engine took too long to initialize.'); } },10000); }
+  function armWatchdog(){ clearWatchdog(); watchdog=window.setTimeout(function(){ if(state==='booting'){ fail('engine-ready','The 3D engine took too long to initialize.'); } },ENGINE_STARTUP_TIMEOUT_MS); }
   function addRecovery(){ var host=document.getElementById('house-game-start'); if(!host || host.querySelector('[data-radtox-recovery]')) return; var box=document.createElement('p'); box.setAttribute('data-radtox-recovery',''); box.innerHTML='<button type="button" data-radtox-retry>Retry 3D Game</button> <button type="button" data-radtox-compat>Start Compatibility Mode</button>'; host.appendChild(box); box.onclick=function(e){var t=e.target; if(t.getAttribute('data-radtox-retry')!==null){e.preventDefault(); queued=true; setState('booting','Retrying 3D engine…'); armWatchdog(); document.dispatchEvent(makeEvent('muzikaz:rad-tox-retry'));} if(t.getAttribute('data-radtox-compat')!==null){e.preventDefault(); startCompatibility();}}; }
   function fail(stage, message){ clearWatchdog(); setState('error', stage+': '+message); var b=button(); if(b){b.disabled=false;b.innerHTML='<span aria-hidden="true">☢</span> Begin RAD-TOX';} addRecovery(); }
   function makeEvent(name, detail){ var e; try {e=new window.CustomEvent(name,{detail:detail||{}});} catch(ignore){ e=document.createEvent('Event');e.initEvent(name,true,true);e.detail=detail||{};} return e; }
