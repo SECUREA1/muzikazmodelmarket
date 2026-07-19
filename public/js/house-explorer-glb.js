@@ -21,6 +21,26 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const gameStartButton = document.querySelector('#house-start-game');
   const gameStartScreen = document.querySelector('#house-game-start');
   const gameLoadStatus = document.querySelector('#house-game-load-status');
+  const GAME_LOGIN_KEY = 'muzikazBottleMember';
+  const GAME_LOGIN_EMAIL_KEY = 'muzikazBottleMemberEmail';
+  const GAME_LOGIN_REDIRECT_KEY = 'muzikazLoginRedirect';
+
+  function hasGameLogin() {
+    try {
+      return window.localStorage.getItem(GAME_LOGIN_KEY) === 'true'
+        && Boolean(String(window.localStorage.getItem(GAME_LOGIN_EMAIL_KEY) || '').trim());
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function requestGameLogin() {
+    if (hasGameLogin()) return false;
+    const returnTo = `${location.pathname.split('/').pop() || 'index.html'}?play=rad-tox#house-explorer`;
+    try { window.sessionStorage.setItem(GAME_LOGIN_REDIRECT_KEY, returnTo); } catch (error) { /* Continue with the explicit redirect. */ }
+    location.assign(`members.html?login=required&redirect=${encodeURIComponent(returnTo)}`);
+    return true;
+  }
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
   hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Click: pointer-lock look</span><span>Drag/touch: look</span><span>Mobile buttons: side-step, move, reverse, zoom, jump, reset</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>Scale starts at 2.5x</span><span>VR: left stick move, right stick snap-turn</span>';
 
@@ -207,7 +227,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   canvas.addEventListener('dragover', (e) => { if (!activeAvatar && !e.dataTransfer?.types?.includes('application/x-muzikaz-avatar')) return; e.preventDefault(); stage.classList.add('is-avatar-drop-target'); }); canvas.addEventListener('dragleave', () => stage.classList.remove('is-avatar-drop-target')); canvas.addEventListener('drop', async (e) => { e.preventDefault(); stage.classList.remove('is-avatar-drop-target'); const avatars = window.MuzikazActiveHouseAvatars || []; const avatar = avatars.find(a => a.id === e.dataTransfer.getData('application/x-muzikaz-avatar')) || activeAvatar; if (avatar) addAvatarToScene(avatar, setAvatarPointerFromEvent(e)).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); });
   let toxicTap = null; let toxicConsumedClick = false;
   canvas.addEventListener('click', (event) => { if (!toxicConsumedClick) return; toxicConsumedClick=false; event.preventDefault(); event.stopImmediatePropagation(); }, true);
-  toxicButton.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); toxicBubbleSystem.begin(); });
+  toxicButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (requestGameLogin()) return;
+    toxicBubbleSystem.begin();
+  });
   canvas.addEventListener('pointerdown', (event) => { if (document.pointerLockElement === canvas && event.button === 0) { toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
   canvas.addEventListener('pointerup', (event) => { if (!toxicTap || toxicTap.id !== event.pointerId) return; const moved=Math.hypot(event.clientX-toxicTap.x,event.clientY-toxicTap.y); if (!toxicTap.avatar && moved<=8) toxicConsumedClick=toxicBubbleSystem.handlePointerInteraction(event) || toxicConsumedClick; toxicTap=null; });
   canvas.addEventListener('pointercancel', () => { toxicTap=null; });
@@ -265,12 +290,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (requestWalk && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
   }
   walkButton.addEventListener('click', () => {
+    if (requestGameLogin()) return;
     if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
   });
   gameStartButton?.addEventListener('click', async (event) => {
     event.preventDefault();
-    if (gameStartButton.disabled) return;
+    if (requestGameLogin() || gameStartButton.disabled) return;
 
     gameStartButton.disabled = true;
     gameStartScreen?.classList.add('is-loading');
@@ -292,20 +318,30 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     }
   });
   canvas.addEventListener('click', () => {
+    if (requestGameLogin()) return;
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to start walking.'));
   });
-  document.querySelector('a[href="#house-explorer-canvas"]')?.addEventListener('click', () => {
-    openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
+  document.querySelector('a[href="#house-explorer-canvas"]')?.addEventListener('click', (event) => {
+    if (!requestGameLogin()) {
+      openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
+      return;
+    }
+    event.preventDefault();
   });
   canvas.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter') return;
     event.preventDefault();
+    if (requestGameLogin()) return;
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
   if (startEnvironment && !mobileQualityMode) {
     setStatus('Auto-loading the MUZIKAZ main floor from the restored 3D House Explorer startup path for desktop controls…');
     await openHouseMap();
   } else if (startEnvironment) {
-    setStatus('Mobile-safe mode ready. Tap Start game or Enter interior to load the house when you are ready.');
+    setStatus('Mobile-safe mode ready. Log in, then tap Start game or Enter interior to load the house.');
+  }
+  if (new URLSearchParams(location.search).get('play') === 'rad-tox' && hasGameLogin()) {
+    history.replaceState({}, '', `${location.pathname}${location.hash || '#house-explorer'}`);
+    gameStartButton?.click();
   }
 }
