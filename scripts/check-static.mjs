@@ -5,6 +5,7 @@ const requiredFiles = [
   ...htmlPages.map((page) => `dist/${page}`),
   'dist/styles.css',
   'dist/script.js',
+  'dist/public/js/rad-tox-launcher.js',
   'dist/reference.png',
 ];
 
@@ -32,6 +33,9 @@ for (const page of htmlPages) {
 }
 
 const mainHtml = await readFile('dist/index.html', 'utf8');
+if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
+  throw new Error('index.html must load the RAD-TOX compatibility launcher before module scripts.');
+}
 for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-preview']) {
   if (!mainHtml.includes(`id="${id}"`)) {
     throw new Error(`index.html is missing public section #${id}`);
