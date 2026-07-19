@@ -25,12 +25,14 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
   hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Click: pointer-lock look</span><span>Drag/touch: look</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
 
+  const controllerIcon = (path) => `<svg class="controller-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
+
   function rebuildMobileController() {
     const mobilePad = document.querySelector('.mobile-move-pad');
     if (!mobilePad) return;
     mobilePad.className = 'mobile-move-pad mobile-move-pad-glb';
     mobilePad.setAttribute('aria-label', 'Unified mobile game controller');
-    mobilePad.innerHTML = `<div class="thumbstick-control" data-thumbstick="left" role="group" aria-label="Left thumbstick: strafe left or right. Tap the stick to shoot the target at the reticle."><span class="thumbstick-label">Strafe / shoot</span><button class="thumbstick-base" type="button" aria-label="Left thumbstick. Drag left or right to strafe; tap to shoot."><span class="thumbstick-knob"></span></button><small>Left / right · tap to shoot</small></div><div class="thumbstick-control" data-thumbstick="right" role="group" aria-label="Right thumbstick: rotate left or right. Tap the stick to jump."><span class="thumbstick-label">Turn / jump</span><button class="thumbstick-base" type="button" aria-label="Right thumbstick. Drag left or right to rotate; tap to jump."><span class="thumbstick-knob"></span></button><small>Turn left / right · tap to jump</small><div class="controller-actions" aria-label="Game actions"><button type="button" data-mobile-action="library" class="controller-library" aria-label="Open the avatar and environment list">◉ Avatar / world</button><button type="button" data-mobile-action="fullscreen" class="controller-fullscreen" aria-label="Enter fullscreen game view">⛶ Fullscreen</button><button type="button" data-mobile-action="begin-reset" class="controller-begin" aria-label="Begin or reset the RAD-TOX game">☢ Begin / reset</button></div></div>`;
+    mobilePad.innerHTML = `<div class="thumbstick-control" data-thumbstick="left" role="group" aria-label="Left thumbstick: strafe left or right. Tap the stick to shoot the target at the reticle."><span class="thumbstick-label">Strafe / shoot</span><button class="thumbstick-base" type="button" aria-label="Left thumbstick. Drag left or right to strafe; tap to shoot."><span class="thumbstick-knob"></span></button><small>Left / right · tap to shoot</small></div><div class="thumbstick-control" data-thumbstick="right" role="group" aria-label="Right thumbstick: rotate left or right. Tap the stick to jump."><span class="thumbstick-label">Turn / jump</span><button class="thumbstick-base" type="button" aria-label="Right thumbstick. Drag left or right to rotate; tap to jump."><span class="thumbstick-knob"></span></button><small>Turn left / right · tap to jump</small></div><div class="controller-actions" aria-label="Game actions"><button type="button" data-mobile-action="library" class="controller-library" aria-label="Open the avatar and environment list">${controllerIcon('M4 5h16v14H4zM8 9h8M8 13h5')}<span>World</span></button><button type="button" data-mobile-action="fullscreen" class="controller-fullscreen" aria-label="Enter fullscreen game view">${controllerIcon('M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5')}<span>Fullscreen</span></button><button type="button" data-mobile-action="begin-reset" class="controller-begin" aria-label="Begin or reset the RAD-TOX game">${controllerIcon('M12 3v5M5.8 7l4.3 2.5M18.2 7l-4.3 2.5M5.8 17l4.3-2.5M18.2 17l-4.3-2.5M12 9a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z')}<span>Begin</span></button></div>`;
   }
 
   rebuildMobileController();
@@ -61,7 +63,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     #house-toxic-bubbles{background:linear-gradient(135deg,#d9ff40,#6abd00)!important;color:#081006!important;box-shadow:0 0 18px rgba(156,255,0,.38)}
     .rad-tox-hud{position:absolute;z-index:8;top:12px;left:50%;display:flex;align-items:center;justify-content:center;gap:clamp(8px,1.5vw,18px);width:max-content;max-width:calc(100% - 24px);padding:7px 11px;border:1px solid rgba(186,255,57,.5);border-radius:999px;background:rgba(3,13,5,.78);color:#efffd7;font-size:12px;line-height:1.25;pointer-events:none;box-sizing:border-box;transform:translateX(-50%);box-shadow:0 8px 25px rgba(0,0,0,.36)}.rad-tox-hud strong{color:#baff39;letter-spacing:.05em;white-space:nowrap}.rad-tox-hud span{white-space:nowrap}
     .house-reticle.is-toxic-target{color:#efff72;transform:translate(-50%,-50%) scale(1.45);text-shadow:0 0 10px #fff,0 0 26px #9cff00}.house-stage .house-vr-button{position:absolute!important;right:14px!important;bottom:14px!important;left:auto!important;z-index:8!important}
-    .mobile-move-pad.mobile-move-pad-glb{grid-template-columns:1fr 1fr;grid-template-areas:'left right';max-width:680px;gap:14px;padding:16px}.thumbstick-control{display:grid;justify-items:center;align-content:start;gap:7px;min-width:0;color:#efffd7;text-align:center}.thumbstick-label{color:#caff69;font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.thumbstick-control small{min-height:1.8em;color:rgba(239,255,215,.74);font-size:.64rem;line-height:1.2}.thumbstick-base{position:relative;display:grid;place-items:center;width:clamp(100px,21vw,142px);height:clamp(100px,21vw,142px);margin:0;padding:0;border:2px solid rgba(202,255,105,.7)!important;border-radius:50%!important;background:radial-gradient(circle at 50% 45%,rgba(156,255,0,.18),rgba(3,12,5,.96) 68%)!important;box-shadow:inset 0 0 0 14px rgba(156,255,0,.06),0 0 24px rgba(156,255,0,.18)!important;touch-action:none;cursor:grab}.thumbstick-base:active{cursor:grabbing}.thumbstick-base::before,.thumbstick-base::after{content:'';position:absolute;background:rgba(202,255,105,.3);pointer-events:none}.thumbstick-base::before{width:2px;height:78%}.thumbstick-base::after{width:78%;height:2px}.thumbstick-knob{position:absolute;width:42%;height:42%;border:2px solid #efffd7;border-radius:50%;background:radial-gradient(circle at 35% 30%,#efffd7,#9cff00 45%,#528d00);box-shadow:0 5px 15px rgba(0,0,0,.42),0 0 14px rgba(156,255,0,.6);transform:translate(0,0);pointer-events:none}.controller-actions{width:100%;display:grid;grid-template-columns:1fr;gap:8px;margin-top:3px}.controller-actions button{min-height:42px;border-radius:12px!important;font-size:.68rem!important}.controller-library{background:linear-gradient(180deg,#b8ff48,#70bd00)!important}.controller-fullscreen{background:linear-gradient(180deg,#fff,#dedede)!important}.controller-begin{background:linear-gradient(180deg,#ffef6e,#e59b00)!important}
+    .mobile-move-pad.mobile-move-pad-glb{grid-template-columns:1fr 1fr;grid-template-areas:'left right';max-width:680px;gap:14px;padding:16px}.thumbstick-control{display:grid;justify-items:center;align-content:start;gap:7px;min-width:0;color:#efffd7;text-align:center}.thumbstick-label{color:#caff69;font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.thumbstick-control small{min-height:1.8em;color:rgba(239,255,215,.74);font-size:.64rem;line-height:1.2}.thumbstick-base{position:relative;display:grid;place-items:center;width:clamp(100px,21vw,142px);height:clamp(100px,21vw,142px);margin:0;padding:0;border:2px solid rgba(202,255,105,.7)!important;border-radius:50%!important;background:radial-gradient(circle at 50% 45%,rgba(156,255,0,.18),rgba(3,12,5,.96) 68%)!important;box-shadow:inset 0 0 0 14px rgba(156,255,0,.06),0 0 24px rgba(156,255,0,.18)!important;touch-action:none;cursor:grab}.thumbstick-base:active{cursor:grabbing}.thumbstick-base::before,.thumbstick-base::after{content:'';position:absolute;background:rgba(202,255,105,.3);pointer-events:none}.thumbstick-base::before{width:2px;height:78%}.thumbstick-base::after{width:78%;height:2px}.thumbstick-knob{position:absolute;width:42%;height:42%;border:2px solid #efffd7;border-radius:50%;background:radial-gradient(circle at 35% 30%,#efffd7,#9cff00 45%,#528d00);box-shadow:0 5px 15px rgba(0,0,0,.42),0 0 14px rgba(156,255,0,.6);transform:translate(0,0);pointer-events:none}.controller-actions{grid-column:1/-1;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:3px}.controller-actions button{display:inline-flex!important;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:12px!important;font-size:.68rem!important}.controller-icon{width:18px;height:18px;flex:none}.controller-library{background:linear-gradient(180deg,#b8ff48,#70bd00)!important}.controller-fullscreen{background:linear-gradient(180deg,#fff,#dedede)!important}.controller-begin{background:linear-gradient(180deg,#ffef6e,#e59b00)!important}
     .house-stage:fullscreen,.house-stage:-webkit-full-screen{width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;border-radius:0!important;background:#050807}.house-stage:fullscreen #house-explorer-canvas,.house-stage:-webkit-full-screen #house-explorer-canvas{width:100%!important;height:100%!important;min-height:0!important}
     @media(max-width:760px){.house-explorer-shell{width:100%;display:flex;flex-direction:column;gap:12px}.house-explorer{padding-left:10px!important;padding-right:10px!important;padding-bottom:max(12px,env(safe-area-inset-bottom))!important}.house-stage{min-height:52vh;height:min(58vh,540px);max-height:calc(100svh - 230px)}.house-stage #house-explorer-canvas{min-height:100%;height:100%}.house-hud{padding:12px;gap:10px}.house-hud h3{font-size:32px}.hud-pill-grid,.house-space-scale,.house-view-controls,.environment-upload-panel{display:none}.house-picker-panel{width:100%;padding:.55rem;gap:.45rem;margin:0}.house-picker-row{grid-template-columns:1fr auto}.house-picker-panel select{height:2.25rem;font-size:.82rem}.house-picker-panel button{padding:.55rem .65rem;font-size:.72rem}.house-picker-title small{display:none}.mobile-move-pad.mobile-move-pad-glb{position:relative;bottom:auto;z-index:10;border-top:0;border-radius:0 0 22px 22px}.house-status{font-size:12px;left:10px;right:10px;bottom:10px}.rad-tox-hud{top:10px;gap:6px;max-width:calc(100% - 20px);padding:6px 8px;font-size:10px}.environment-upload-grid{grid-template-columns:1fr}}
     @media(max-width:380px){.mobile-move-pad.mobile-move-pad-glb{gap:6px;padding:8px}.mobile-move-pad.mobile-move-pad-glb button span{font-size:.5rem;letter-spacing:.01em}}
@@ -243,11 +245,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const params = new URLSearchParams(location.search);
   const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
   const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
+  let houseMapPromise = null;
   async function openHouseMap({ requestWalk = false } = {}) {
     canvas.focus({ preventScroll: true });
     if (!envLoader.world && startEnvironment) {
       setStatus('Opening and loading the MUZIKAZ house environment…');
-      await loadById(startEnvironment);
+      houseMapPromise ||= loadById(startEnvironment).finally(() => { houseMapPromise = null; });
+      await houseMapPromise;
     }
     walkButton.textContent = 'Game active';
     walkButton.setAttribute('aria-pressed', 'true');
@@ -257,11 +261,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
   });
-  gameStartButton?.addEventListener('click', async (event) => {
-    event.preventDefault();
-    if (gameStartButton.disabled) return;
+  async function startRadToxGame() {
+    if (gameStartButton?.disabled) return;
 
-    gameStartButton.disabled = true;
+    if (gameStartButton) gameStartButton.disabled = true;
     gameStartScreen?.classList.add('is-loading');
     gameStartButton.textContent = 'Deploying RAD-TOX…';
     if (gameLoadStatus) gameLoadStatus.textContent = 'Loading the IonCore interior and deploying toxic bubbles…';
@@ -274,12 +277,15 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     } catch (error) {
       const message = error?.message || 'Unable to load the MUZIKAZ house game.';
       gameStartButton.disabled = false;
-      gameStartButton.innerHTML = '<span aria-hidden="true">☢</span> Begin RAD-TOX';
+      gameStartButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v5M5.8 7l4.3 2.5M18.2 7l-4.3 2.5M5.8 17l4.3-2.5M18.2 17l-4.3-2.5"/><circle cx="12" cy="14" r="5"/></svg>Start RAD-TOX';
       gameStartScreen?.classList.remove('is-loading');
       if (gameLoadStatus) gameLoadStatus.textContent = message;
       setStatus(message);
     }
-  });
+  }
+  gameStartButton?.addEventListener('click', (event) => { event.preventDefault(); startRadToxGame(); });
+  document.addEventListener('muzikaz:rad-tox-request', () => startRadToxGame());
+  document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
   canvas.addEventListener('click', () => {
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to start walking.'));
   });
@@ -295,6 +301,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     setStatus('Auto-loading the MUZIKAZ main floor from the restored 3D House Explorer startup path for desktop controls…');
     await openHouseMap();
   } else if (startEnvironment) {
-    setStatus('Mobile-safe mode ready. Tap Start game or Enter interior to load the house when you are ready.');
+    setStatus('Mobile game is ready. Tap Start RAD-TOX to deploy immediately.');
+    // Preload after first paint so the launch tap starts gameplay rather than a download.
+    const preload = () => openHouseMap().catch((error) => setStatus(error.message || 'Unable to prepare the MUZIKAZ house game.'));
+    if ('requestIdleCallback' in window) window.requestIdleCallback(preload, { timeout: 1200 }); else window.setTimeout(preload, 250);
   }
 }
