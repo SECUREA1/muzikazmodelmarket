@@ -16,6 +16,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
   const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
   const resetButton = document.querySelector('#house-reset')?.cloneNode(true); document.querySelector('#house-reset')?.replaceWith(resetButton);
+  // This launch control lives in the page markup. script.js intentionally yields to
+  // this GLB explorer, so the GLB implementation must own the overlay's action too.
+  const gameStartButton = document.querySelector('#house-start-game');
+  const gameStartScreen = document.querySelector('#house-game-start');
+  const gameLoadStatus = document.querySelector('#house-game-load-status');
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
   hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Click: pointer-lock look</span><span>Drag/touch: look</span><span>Mobile buttons: side-step, move, reverse, zoom, jump, reset</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>Scale starts at 2.5x</span><span>VR: left stick move, right stick snap-turn</span>';
 
@@ -262,6 +267,28 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   walkButton.addEventListener('click', () => {
     if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
+  });
+  gameStartButton?.addEventListener('click', async (event) => {
+    event.preventDefault();
+    if (gameStartButton.disabled) return;
+
+    gameStartButton.disabled = true;
+    gameStartScreen?.classList.add('is-loading');
+    gameStartButton.textContent = 'Loading game…';
+    if (gameLoadStatus) gameLoadStatus.textContent = 'Loading the IonCore interior…';
+
+    try {
+      await openHouseMap({ requestWalk: true });
+      gameStartScreen?.classList.add('is-hidden');
+      setStatus('Game active. Explore the interior, then press BEGIN to start RAD-TOX.');
+    } catch (error) {
+      const message = error?.message || 'Unable to load the MUZIKAZ house game.';
+      gameStartButton.disabled = false;
+      gameStartButton.innerHTML = '<span aria-hidden="true">▶</span> Start game';
+      gameStartScreen?.classList.remove('is-loading');
+      if (gameLoadStatus) gameLoadStatus.textContent = message;
+      setStatus(message);
+    }
   });
   canvas.addEventListener('click', () => {
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to start walking.'));
