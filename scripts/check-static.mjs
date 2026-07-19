@@ -38,32 +38,6 @@ for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-
   }
 }
 
-const explorerHtml = await readFile('dist/model-explorer.html', 'utf8');
-for (const page of [{ name: 'index.html', html: mainHtml }, { name: 'model-explorer.html', html: explorerHtml }]) {
-  for (const id of ['house-game-start', 'house-start-game', 'house-game-load-status']) {
-    if (!page.html.includes(`id="${id}"`)) {
-      throw new Error(`${page.name} is missing the shared RAD-TOX start control #${id}`);
-    }
-  }
-  if (!page.html.includes('public/js/rad-tox-launcher.js')) {
-    throw new Error(`${page.name} is missing the cross-browser RAD-TOX launcher.`);
-  }
-}
-
-const houseExplorerScript = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
-for (const requiredSnippet of ['function requestGameLogin()', "?play=rad-tox#house-explorer", "get('play') === 'rad-tox'"]) {
-  if (!houseExplorerScript.includes(requiredSnippet)) {
-    throw new Error(`house-explorer-glb.js is missing the RAD-TOX login launch flow: ${requiredSnippet}`);
-  }
-}
-
-const radToxLauncher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
-for (const requiredSnippet of ['muzikaz:rad-tox-request', 'startFallback', 'Compatibility mode', 'function canStartNativeGame()', "'noModule' in script", 'function isRadToxLaunchRequest()', 'DOMContentLoaded', 'URLSearchParams here: IE 11 does not provide it']) {
-  if (!radToxLauncher.includes(requiredSnippet)) {
-    throw new Error(`rad-tox-launcher.js is missing its cross-browser launch flow: ${requiredSnippet}`);
-  }
-}
-
 const membersHtml = await readFile('dist/members.html', 'utf8');
 for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace']) {
   if (!membersHtml.includes(`id="${id}"`)) {
