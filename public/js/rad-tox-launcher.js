@@ -20,6 +20,11 @@
     return 'noModule' in script && !!(canvas.getContext && canvas.getContext('webgl'));
   }
 
+  function isRadToxLaunchRequest() {
+    /* Do not use URLSearchParams here: IE 11 does not provide it. */
+    return /(?:^|[?&])play=rad-tox(?:&|$)/i.test(window.location.search || '');
+  }
+
   function requestLogin() {
     var page = (window.location.pathname.split('/').pop() || 'index.html');
     var returnTo = page + '?play=rad-tox#house-explorer';
@@ -30,8 +35,8 @@
   function setStatus(message) {
     var status = document.getElementById('house-status');
     var loadStatus = document.getElementById('house-game-load-status');
-    if (status) status.innerHTML = message;
-    if (loadStatus) loadStatus.innerHTML = message;
+    if (status) status.textContent = message;
+    if (loadStatus) loadStatus.textContent = message;
   }
 
   function startFallback() {
@@ -92,6 +97,20 @@
     else startFallback();
   }
 
+  function beginRequestedGame() {
+    if (!isRadToxLaunchRequest() || !signedIn()) return;
+
+    /* Module scripts are ignored by IE and some embedded mobile browsers. On
+     * the redirect back from Bottle Login, launch the ES5 game directly rather
+     * than leaving the overlay in its loading state waiting for that module. */
+    if (!canStartNativeGame()) {
+      startFallback();
+      return;
+    }
+
+    requestNativeStart();
+  }
+
   document.addEventListener('click', function (event) {
     var button = event.target;
     while (button && button.id !== 'house-start-game') button = button.parentNode;
@@ -103,4 +122,10 @@
   }, true);
 
   document.addEventListener('muzikaz:rad-tox-native-error', startFallback, false);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', beginRequestedGame, false);
+  } else {
+    beginRequestedGame();
+  }
 }());

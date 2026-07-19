@@ -58,7 +58,7 @@ for (const requiredSnippet of ['function requestGameLogin()', "?play=rad-tox#hou
 }
 
 const radToxLauncher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
-for (const requiredSnippet of ['muzikaz:rad-tox-request', 'startFallback', 'Compatibility mode', 'function canStartNativeGame()', "'noModule' in script"]) {
+for (const requiredSnippet of ['muzikaz:rad-tox-request', 'startFallback', 'Compatibility mode', 'function canStartNativeGame()', "'noModule' in script", 'function isRadToxLaunchRequest()', 'DOMContentLoaded', 'URLSearchParams here: IE 11 does not provide it']) {
   if (!radToxLauncher.includes(requiredSnippet)) {
     throw new Error(`rad-tox-launcher.js is missing its cross-browser launch flow: ${requiredSnippet}`);
   }
