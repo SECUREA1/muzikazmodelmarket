@@ -290,8 +290,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
     openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
   });
-  gameStartButton?.addEventListener('click', async (event) => {
-    event.preventDefault();
+  async function startRadToxGame() {
     if (requestGameLogin() || gameStartButton.disabled) return;
 
     gameStartButton.disabled = true;
@@ -311,7 +310,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       gameStartScreen?.classList.remove('is-loading');
       if (gameLoadStatus) gameLoadStatus.textContent = message;
       setStatus(message);
+      document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error'));
     }
+  }
+  gameStartButton?.addEventListener('click', (event) => { event.preventDefault(); startRadToxGame(); });
+  document.addEventListener('muzikaz:rad-tox-request', (event) => {
+    if (event.detail) event.detail.startNative = startRadToxGame;
   });
   canvas.addEventListener('click', () => {
     if (requestGameLogin()) return;

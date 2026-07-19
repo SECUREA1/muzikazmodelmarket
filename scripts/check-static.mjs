@@ -45,12 +45,22 @@ for (const page of [{ name: 'index.html', html: mainHtml }, { name: 'model-explo
       throw new Error(`${page.name} is missing the shared RAD-TOX start control #${id}`);
     }
   }
+  if (!page.html.includes('public/js/rad-tox-launcher.js')) {
+    throw new Error(`${page.name} is missing the cross-browser RAD-TOX launcher.`);
+  }
 }
 
 const houseExplorerScript = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
 for (const requiredSnippet of ['function requestGameLogin()', "?play=rad-tox#house-explorer", "get('play') === 'rad-tox'"]) {
   if (!houseExplorerScript.includes(requiredSnippet)) {
     throw new Error(`house-explorer-glb.js is missing the RAD-TOX login launch flow: ${requiredSnippet}`);
+  }
+}
+
+const radToxLauncher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
+for (const requiredSnippet of ['muzikaz:rad-tox-request', 'startFallback', 'Compatibility mode']) {
+  if (!radToxLauncher.includes(requiredSnippet)) {
+    throw new Error(`rad-tox-launcher.js is missing its cross-browser launch flow: ${requiredSnippet}`);
   }
 }
 
