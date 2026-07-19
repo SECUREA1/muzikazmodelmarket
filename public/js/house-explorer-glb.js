@@ -23,7 +23,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const gameStartScreen = document.querySelector('#house-game-start');
   const gameLoadStatus = document.querySelector('#house-game-load-status');
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
-  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Click: pointer-lock look</span><span>Drag/touch: look</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
+  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Enter interior: mouse-look</span><span>Drag/touch: look</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
 
   const controllerIcon = (path) => `<svg class="controller-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
 
@@ -267,7 +267,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
   const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
   let houseMapPromise = null;
-  async function openHouseMap({ requestWalk = false } = {}) {
+  async function openHouseMap() {
     canvas.focus({ preventScroll: true });
     if (!envLoader.world && startEnvironment) {
       setStatus('Opening and loading the MUZIKAZ house environment…');
@@ -276,11 +276,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     }
     walkButton.textContent = 'Game active';
     walkButton.setAttribute('aria-pressed', 'true');
-    if (requestWalk && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
   }
   walkButton.addEventListener('click', () => {
     if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
-    openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
+    openHouseMap().catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
   });
   async function startRadToxGame() {
     // The ES5 launcher disables Begin before it dispatches its start request.
@@ -293,10 +292,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (gameLoadStatus) gameLoadStatus.textContent = 'Loading the IonCore interior and deploying toxic bubbles…';
 
     try {
-      // Request pointer lock while this click is still a user gesture. Loading the
-      // GLB may be asynchronous, but the game can still start immediately.
-      if (document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
-      await openHouseMap({ requestWalk: true });
+      await openHouseMap();
       await toxicBubbleSystem.begin();
       gameStartScreen?.classList.add('is-hidden');
       setStatus('RAD-TOX is active. Toxic bubbles are deployed—clear the floor!');
@@ -313,15 +309,20 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.addEventListener('muzikaz:rad-tox-request', () => startRadToxGame());
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
   canvas.addEventListener('click', () => {
-    openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to start walking.'));
+    openHouseMap().catch((error) => setStatus(error.message || 'Unable to start walking.'));
   });
-  document.querySelector('a[href="#house-explorer-canvas"]')?.addEventListener('click', () => {
-    openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
+  document.querySelector('a[href="#house-explorer-canvas"]')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    // Mouse capture is opt-in: only the visible Enter interior control may lock
+    // a desktop pointer. Canvas clicks, Begin, and keyboard activation remain
+    // non-capturing so the page never takes over the user's mouse unexpectedly.
+    if (!mobileQualityMode && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
+    openHouseMap().catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
   });
   canvas.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter') return;
     event.preventDefault();
-    openHouseMap({ requestWalk: true }).catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
+    openHouseMap().catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
   if (startEnvironment && !mobileQualityMode) {
     setStatus('Auto-loading the MUZIKAZ main floor from the restored 3D House Explorer startup path for desktop controls…');
