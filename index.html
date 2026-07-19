@@ -80,8 +80,15 @@
             <div class="house-explorer-shell">
                 <div class="house-stage">
                     <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
+                    <div class="house-game-start" id="house-game-start">
+                        <p class="kicker">IonCore interior</p>
+                        <h3>Enter the house when you are ready.</h3>
+                        <p>The interior stays paused until you choose to enter. Select the button below to begin exploring and load the RAD-TOX mission.</p>
+                        <button class="house-start-button" id="house-enter-interior" type="button"><span aria-hidden="true">▶</span> Enter interior</button>
+                        <small id="house-game-load-status" role="status">Interior access standing by.</small>
+                    </div>
                     <div class="house-reticle" aria-hidden="true">+</div>
-                    <div class="house-status" id="house-status" role="status">Press Begin RAD-TOX to start the toxic bubble sweep.</div>
+                    <div class="house-status" id="house-status" role="status">Select Enter interior to begin exploring.</div>
                 </div>
                 <aside class="house-hud" aria-label="3D House Explorer controls">
                     <p class="kicker">IonCore interior sim</p>
