@@ -1285,6 +1285,9 @@ function initHouseExplorer() {
   const startGameButton = document.querySelector('#house-start-game');
   const gameStartScreen = document.querySelector('#house-game-start');
   const gameLoadStatus = document.querySelector('#house-game-load-status');
+  const worldButton = document.querySelector('#house-world-button');
+  const worldMenu = document.querySelector('#house-world-menu');
+  const fullscreenButton = document.querySelector('#house-fullscreen');
   const resetButton = document.querySelector('#house-reset');
   const placePersonButton = document.querySelector('#house-place-person');
   const avatarButton = document.querySelector('#add-avatar');
@@ -1374,7 +1377,7 @@ function initHouseExplorer() {
     if (gameStarted) return;
     gameStartScreen?.classList.add('is-loading');
     if (gameLoadStatus) gameLoadStatus.textContent = 'Loading toxic bubbles into the IonCore interior…';
-    if (startGameButton) startGameButton.textContent = 'Loading toxins…';
+    if (startGameButton) { const label = startGameButton.querySelector('span'); if (label) label.textContent = 'Loading'; else startGameButton.textContent = 'Loading toxins…'; }
     window.setTimeout(() => {
       spawnToxicBubbles();
       gameStarted = true;
@@ -1382,6 +1385,7 @@ function initHouseExplorer() {
       if (gameLoadStatus) gameLoadStatus.textContent = `${toxicBubbles.length} toxic bubbles loaded. Clear the floor!`;
       setStatus(`${toxicBubbles.length} toxic bubbles loaded. Click them to damage and clear the house.`);
       gameStartScreen?.classList.add('is-hidden');
+      if (startGameButton) { const label = startGameButton.querySelector('span'); if (label) label.textContent = 'Playing'; else startGameButton.textContent = 'Playing'; startGameButton.disabled = true; startGameButton.setAttribute('aria-label', 'RAD-TOX has started'); }
       canvas.focus?.();
     }, 500);
   }
@@ -1436,7 +1440,21 @@ function initHouseExplorer() {
     if (button.dataset.mobileAction === 'jump') jumpCamera();
     if (button.dataset.mobileAction === 'reset') { Object.assign(camera, defaultCamera); setStatus('Explorer reset to the default inside-camera view.'); } if (button.dataset.mobileAction === 'avatar') { openAvatarPlacementPanel(); startAvatarPlacement(); } if (button.dataset.mobileAction === 'environment') { environmentSelect?.focus(); environmentSelect?.closest('.house-environment-picker')?.classList.toggle('is-open'); setStatus('Environment selector ready. Choose an environment file from the list.'); }
   }));
-  document.querySelectorAll('[data-mobile-zoom]').forEach((button) => button.addEventListener('click', () => triggerMobileZoom(button.dataset.mobileZoom))); document.querySelectorAll('[data-mobile-zoom-toggle]').forEach((button) => { let zoomHold = 0; const setDirection = (direction) => { button.dataset.mobileZoomToggle = direction; button.setAttribute('aria-pressed', String(direction === 'in')); button.querySelector('b').textContent = direction === 'in' ? '+' : '−'; button.querySelector('span').textContent = direction === 'in' ? 'Zoom in' : 'Zoom out'; button.setAttribute('aria-label', direction === 'in' ? 'Zoom in' : 'Zoom out'); }; const step = () => triggerMobileZoom(button.dataset.mobileZoomToggle || 'out'); const stop = () => { clearInterval(zoomHold); zoomHold = 0; button.classList.remove('is-active'); }; button.addEventListener('pointerdown', (event) => { event.preventDefault(); step(); button.classList.add('is-active'); zoomHold = window.setInterval(step, 120); }); button.addEventListener('pointerup', stop); button.addEventListener('pointercancel', stop); button.addEventListener('pointerleave', stop); button.addEventListener('dblclick', (event) => { event.preventDefault(); setDirection(button.dataset.mobileZoomToggle === 'in' ? 'out' : 'in'); setStatus(button.getAttribute('aria-label') + ' selected. Hold to continue zooming.'); }); setDirection(button.dataset.mobileZoomToggle || 'out'); }); tickMobileControls();  placePersonButton?.addEventListener('click', () => setDropInLocation()); environmentSelect?.addEventListener('change', () => loadEnvironmentFile(environmentSelect.value, environmentSelect.selectedOptions[0]?.textContent || 'selected file').catch(() => setStatus('Selected environment file could not be loaded.'))); resetButton?.addEventListener('click', () => { Object.assign(camera, defaultCamera); setStatus('Explorer reset to the default inside-camera view.'); }); avatarButton?.addEventListener('click', () => { openAvatarPlacementPanel(); startAvatarPlacement(); });
+  document.querySelectorAll('[data-mobile-zoom]').forEach((button) => button.addEventListener('click', () => triggerMobileZoom(button.dataset.mobileZoom))); document.querySelectorAll('[data-mobile-zoom-toggle]').forEach((button) => { let zoomHold = 0; const setDirection = (direction) => { button.dataset.mobileZoomToggle = direction; button.setAttribute('aria-pressed', String(direction === 'in')); button.querySelector('b').textContent = direction === 'in' ? '+' : '−'; button.querySelector('span').textContent = direction === 'in' ? 'Zoom in' : 'Zoom out'; button.setAttribute('aria-label', direction === 'in' ? 'Zoom in' : 'Zoom out'); }; const step = () => triggerMobileZoom(button.dataset.mobileZoomToggle || 'out'); const stop = () => { clearInterval(zoomHold); zoomHold = 0; button.classList.remove('is-active'); }; button.addEventListener('pointerdown', (event) => { event.preventDefault(); step(); button.classList.add('is-active'); zoomHold = window.setInterval(step, 120); }); button.addEventListener('pointerup', stop); button.addEventListener('pointercancel', stop); button.addEventListener('pointerleave', stop); button.addEventListener('dblclick', (event) => { event.preventDefault(); setDirection(button.dataset.mobileZoomToggle === 'in' ? 'out' : 'in'); setStatus(button.getAttribute('aria-label') + ' selected. Hold to continue zooming.'); }); setDirection(button.dataset.mobileZoomToggle || 'out'); }); tickMobileControls();  placePersonButton?.addEventListener('click', () => setDropInLocation());  resetButton?.addEventListener('click', () => { Object.assign(camera, defaultCamera); setStatus('Explorer reset to the default inside-camera view.'); }); avatarButton?.addEventListener('click', () => { openAvatarPlacementPanel(); startAvatarPlacement(); });
+  function toggleWorldMenu(force) {
+    if (!worldMenu || !worldButton) return;
+    const open = force ?? worldMenu.hidden;
+    worldMenu.hidden = !open;
+    worldButton.setAttribute('aria-expanded', String(open));
+    if (open) { environmentSelect?.focus(); setStatus('World list opened. Choose a world to load it into the game view.'); }
+  }
+  worldButton?.addEventListener('click', () => toggleWorldMenu());
+  environmentSelect?.addEventListener('change', () => { toggleWorldMenu(false); loadEnvironmentFile(environmentSelect.value, environmentSelect.selectedOptions[0]?.textContent || 'selected world').catch(() => setStatus('Selected world could not be loaded.')); });
+  fullscreenButton?.addEventListener('click', async () => {
+    const stage = canvas.closest('.house-stage');
+    try { if (document.fullscreenElement) await document.exitFullscreen?.(); else await stage?.requestFullscreen?.(); }
+    catch { setStatus('Fullscreen is unavailable in this browser. The game remains ready to play.'); }
+  });
   startGameButton?.addEventListener('click', startHouseGame);
   handButton?.addEventListener('click', async () => { handEnabled = !handEnabled; handButton.setAttribute('aria-pressed', String(handEnabled)); handButton.textContent = handEnabled ? 'Disable hand control' : 'Enable hand control'; if (!handEnabled) { handController?.stop?.(); handStream?.getTracks().forEach((track) => track.stop()); handStream = null; if (handStatus) handStatus.textContent = 'Camera preview inactive. MediaPipe Hands loads only when enabled.'; return; } try { handStream = await navigator.mediaDevices.getUserMedia({ video: true }); if (preview) { preview.srcObject = handStream; await preview.play(); } const mediaPipeReady = await startMediaPipeHands(); if (handStatus) handStatus.textContent = mediaPipeReady ? 'MediaPipe Hands active: move your index finger to steer the camera.' : 'Camera preview enabled; MediaPipe Hands could not be loaded, so manual controls remain active.'; } catch (error) { handEnabled = false; handButton.setAttribute('aria-pressed', 'false'); if (handStatus) handStatus.textContent = 'Camera or MediaPipe unavailable; keyboard, mouse, and mobile controls still work.'; } });
   window.addEventListener('resize', resizeCanvas); resizeCanvas(); render(); tickMovement(); loadEnvironmentCatalog(); window.setTimeout(initializeSharedHouseAvatars, 0);
