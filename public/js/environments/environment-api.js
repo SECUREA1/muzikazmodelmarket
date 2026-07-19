@@ -1,8 +1,10 @@
 const PREFIX = '[MUZIKAZ Environment]';
 
+function fetchWithTimeout(url, options = {}, timeout = 10000) { const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), timeout); return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer)); }
+
 export async function fetchEnvironmentList() {
   try {
-    const response = await fetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+    const response = await fetchWithTimeout('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
     if (!response.ok) throw new Error(`Environment registry unavailable (${response.status})`);
     const payload = await response.json();
     const records = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
@@ -11,7 +13,7 @@ export async function fetchEnvironmentList() {
     logEnvironment('API registry unavailable; loading repository environment manifest.', error.message);
   }
 
-  const fallback = await fetch('/public/models/environments/environments.json', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+  const fallback = await fetchWithTimeout('/public/models/environments/environments.json', { headers: { Accept: 'application/json' }, cache: 'no-store' });
   if (!fallback.ok) throw new Error(`Repository environment manifest unavailable (${fallback.status})`);
   const records = await fallback.json();
   return Array.isArray(records) ? records : [];

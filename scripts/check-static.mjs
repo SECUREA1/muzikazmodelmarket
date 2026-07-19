@@ -6,6 +6,11 @@ const requiredFiles = [
   'dist/styles.css',
   'dist/script.js',
   'dist/public/js/rad-tox-launcher.js',
+  'dist/assets/house-explorer.js',
+  'dist/assets/model-viewer.js',
+  'dist/assets/decoders/draco/draco_decoder.wasm',
+  'dist/assets/decoders/basis/basis_transcoder.wasm',
+  'DEPLOYMENT.md',
   'dist/reference.png',
 ];
 
@@ -33,8 +38,8 @@ for (const page of htmlPages) {
 }
 
 const mainHtml = await readFile('dist/index.html', 'utf8');
-if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
-  throw new Error('index.html must load the RAD-TOX compatibility launcher before module scripts.');
+if (!mainHtml.includes('public/js/rad-tox-launcher.js') || !mainHtml.includes('assets/house-explorer.js')) {
+  throw new Error('index.html must load the local RAD-TOX compatibility launcher and game bundle.');
 }
 for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-preview']) {
   if (!mainHtml.includes(`id="${id}"`)) {
@@ -62,3 +67,9 @@ if (!css.includes("url('reference.png')")) {
 }
 
 console.log('Static build output contains all public and member pages with required references.');
+
+for (const page of ['index.html', 'model-explorer.html']) {
+  const html = await readFile(`dist/${page}`, 'utf8');
+  if (/<script[^>]+https:\/\/(?:cdn\.jsdelivr|unpkg|gstatic)\.com/i.test(html)) throw new Error(`${page} contains a runtime CDN game dependency.`);
+}
+console.log('Verified local game bundles, decoder assets, and CDN-free production HTML.');

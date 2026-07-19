@@ -1,93 +1,23 @@
-/*
- * Keep the game entry point usable when a browser cannot run the WebGL module.
- * This file intentionally uses ES5 syntax: module scripts are ignored by older
- * browsers and some in-app webviews, but they can still play the tap-to-clear
- * RAD-TOX fallback instead of being stranded behind the loading overlay.
- */
+/* ES5-only compatibility launcher. It must parse in IE11 and old WebViews. */
 (function () {
   'use strict';
-
-  function setStatus(message) {
-    var status = document.getElementById('house-status');
-    var loadStatus = document.getElementById('house-game-load-status');
-    if (status) status.textContent = message;
-    if (loadStatus) loadStatus.textContent = message;
-  }
-
-  function supportsNativeGame() {
-    var script = document.createElement('script');
-    var canvas = document.createElement('canvas');
-    return 'noModule' in script && !!(canvas.getContext && canvas.getContext('webgl'));
-  }
-
-  function startCompatibilityGame() {
-    var stage = document.querySelector('.house-stage');
-    var screen = document.getElementById('house-game-start');
-    if (!stage || stage.querySelector('.rad-tox-compat-game')) return;
-
-    var game = document.createElement('section');
-    game.className = 'rad-tox-compat-game';
-    game.setAttribute('role', 'region');
-    game.setAttribute('aria-label', 'RAD-TOX compatibility game');
-    game.innerHTML = '<div class="rad-tox-compat-head"><strong>☢ RAD-TOX ACTIVE</strong><span data-rad-tox-score>Clear 0 / 12</span></div><p>Compatibility mode is active. Tap every toxic bubble to clear the floor.</p><div class="rad-tox-compat-field" aria-live="polite"></div>';
-    stage.appendChild(game);
-    if (screen) screen.className += ' is-hidden';
-
-    var score = 0;
-    var scoreLabel = game.querySelector('[data-rad-tox-score]');
-    var field = game.querySelector('.rad-tox-compat-field');
-    function pop(event) {
-      var bubble = event.currentTarget;
-      if (bubble.getAttribute('data-popped')) return;
-      bubble.setAttribute('data-popped', 'true');
-      bubble.disabled = true;
-      bubble.innerHTML = '✓';
-      score += 1;
-      scoreLabel.innerHTML = score >= 12 ? 'Floor cleared!' : 'Clear ' + score + ' / 12';
-      setStatus(score >= 12 ? 'RAD-TOX complete! The compatibility floor is clear.' : 'Toxic bubble cleared. ' + (12 - score) + ' remain.');
-    }
-    for (var i = 0; i < 12; i += 1) {
-      var bubble = document.createElement('button');
-      bubble.type = 'button';
-      bubble.className = 'rad-tox-compat-bubble';
-      bubble.setAttribute('aria-label', 'Clear toxic bubble ' + (i + 1));
-      bubble.style.left = (5 + ((i * 29) % 84)) + '%';
-      bubble.style.top = (10 + ((i * 37) % 70)) + '%';
-      bubble.innerHTML = '☢';
-      bubble.addEventListener('click', pop, false);
-      field.appendChild(bubble);
-    }
-    setStatus('RAD-TOX compatibility mode is active. Clear all toxic bubbles.');
-  }
-
-  function requestNativeGame() {
-    if (!supportsNativeGame()) {
-      startCompatibilityGame();
-      return;
-    }
-    var detail = { startNative: null };
-    var event;
-    try {
-      event = new window.CustomEvent('muzikaz:rad-tox-request', { detail: detail });
-    } catch (ignore) {
-      event = document.createEvent('Event');
-      event.initEvent('muzikaz:rad-tox-request', true, true);
-      event.detail = detail;
-    }
-    document.dispatchEvent(event);
-    if (typeof detail.startNative === 'function') detail.startNative();
-    else startCompatibilityGame();
-  }
-
-  document.addEventListener('click', function (event) {
-    var button = event.target;
-    while (button && button.id !== 'house-start-game') button = button.parentNode;
-    if (!button) return;
-    event.preventDefault();
-    event.stopPropagation();
-    if (event.stopImmediatePropagation) event.stopImmediatePropagation();
-    requestNativeGame();
-  }, true);
-
-  document.addEventListener('muzikaz:rad-tox-native-error', startCompatibilityGame, false);
+  var PREFIX = '[MUZIKAZ GAME]';
+  var state = 'booting'; var queued = false; var watchdog = 0;
+  function log(message, detail) { if (window.console && console.info) console.info(PREFIX, message, detail || ''); }
+  function status(message) { var nodes = [document.getElementById('house-status'), document.getElementById('house-game-load-status')]; for (var i=0;i<nodes.length;i+=1) if(nodes[i]) nodes[i].textContent=message; }
+  function button() { return document.getElementById('house-start-game'); }
+  function setState(next, message) { state = next; document.documentElement.setAttribute('data-radtox-state', next); log('stage '+next); if(message) status(message); }
+  function supportsModern() { var s=document.createElement('script'), c=document.createElement('canvas'); return 'noModule' in s && !!(window.Promise && window.fetch && window.URL && window.CustomEvent && c.getContext && (c.getContext('webgl2') || c.getContext('webgl'))); }
+  function clearWatchdog(){ if(watchdog){window.clearTimeout(watchdog);watchdog=0;} }
+  function armWatchdog(){ clearWatchdog(); watchdog=window.setTimeout(function(){ if(state==='booting'){ fail('engine-ready','The 3D engine took too long to initialize.'); } },10000); }
+  function addRecovery(){ var host=document.getElementById('house-game-start'); if(!host || host.querySelector('[data-radtox-recovery]')) return; var box=document.createElement('p'); box.setAttribute('data-radtox-recovery',''); box.innerHTML='<button type="button" data-radtox-retry>Retry 3D Game</button> <button type="button" data-radtox-compat>Start Compatibility Mode</button>'; host.appendChild(box); box.onclick=function(e){var t=e.target; if(t.getAttribute('data-radtox-retry')!==null){e.preventDefault(); queued=true; setState('booting','Retrying 3D engine…'); armWatchdog(); document.dispatchEvent(makeEvent('muzikaz:rad-tox-retry'));} if(t.getAttribute('data-radtox-compat')!==null){e.preventDefault(); startCompatibility();}}; }
+  function fail(stage, message){ clearWatchdog(); setState('error', stage+': '+message); var b=button(); if(b){b.disabled=false;b.innerHTML='<span aria-hidden="true">☢</span> Begin RAD-TOX';} addRecovery(); }
+  function makeEvent(name, detail){ var e; try {e=new window.CustomEvent(name,{detail:detail||{}});} catch(ignore){ e=document.createEvent('Event');e.initEvent(name,true,true);e.detail=detail||{};} return e; }
+  function startCompatibility(){ clearWatchdog(); setState('compatibility-mode','Compatibility Mode active. Clear every toxic bubble.'); var stage=document.querySelector('.house-stage'), screen=document.getElementById('house-game-start'); if(!stage || stage.querySelector('.rad-tox-compat-game'))return; var game=document.createElement('section'); game.className='rad-tox-compat-game'; game.innerHTML='<div class="rad-tox-compat-head"><strong>☢ RAD-TOX — Compatibility Mode</strong><span data-score>Clear 0 / 12</span></div><p>This is the accessible 2D mission, not the GLB environment.</p><div class="rad-tox-compat-field"></div><button type="button" data-restart>Restart mission</button>'; stage.appendChild(game);if(screen)screen.className+=' is-hidden';var score=0,field=game.querySelector('.rad-tox-compat-field'),label=game.querySelector('[data-score]');function populate(){score=0;field.innerHTML='';label.innerHTML='Clear 0 / 12';for(var i=0;i<12;i+=1){var x=document.createElement('button');x.type='button';x.className='rad-tox-compat-bubble';x.style.left=(5+(i*29)%84)+'%';x.style.top=(10+(i*37)%70)+'%';x.innerHTML='☢';x.onclick=function(){if(this.disabled)return;this.disabled=true;this.innerHTML='✓';score+=1;label.innerHTML=score===12?'Floor cleared!':'Clear '+score+' / 12';status(score===12?'RAD-TOX complete!':'Toxic bubble cleared. '+(12-score)+' remain.');};field.appendChild(x);}} game.querySelector('[data-restart]').onclick=populate;populate();}
+  function request(){ queued=true; var b=button(); if(b){b.disabled=true;b.textContent='Preparing RAD-TOX…';} if(!supportsModern()){startCompatibility();return;} if(state==='engine-ready'){ document.dispatchEvent(makeEvent('muzikaz:rad-tox-request')); } else {setState('booting','3D engine is starting. Your game will begin automatically…'); armWatchdog();} }
+  document.addEventListener('muzikaz:rad-tox-engine-ready',function(){clearWatchdog();setState('engine-ready','3D engine ready.');if(queued)document.dispatchEvent(makeEvent('muzikaz:rad-tox-request'));});
+  document.addEventListener('muzikaz:rad-tox-stage',function(e){var d=e.detail||{};setState(d.stage||'loading-manifest',d.message);});
+  document.addEventListener('muzikaz:rad-tox-native-error',function(e){var d=e.detail||{};fail(d.stage||'3D game',d.message||'The environment could not be started.');});
+  document.addEventListener('click',function(e){var t=e.target;while(t&&t.id!=='house-start-game')t=t.parentNode;if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
+  if(!supportsModern()) window.setTimeout(startCompatibility,0); else {setState('booting','Preparing 3D engine…');armWatchdog();}
 }());
