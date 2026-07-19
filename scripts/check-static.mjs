@@ -6,6 +6,7 @@ const requiredFiles = [
   'dist/styles.css',
   'dist/script.js',
   'dist/reference.png',
+  'dist/public/js/house-explorer-glb.js',
 ];
 
 await Promise.all(requiredFiles.map((file) => access(file)));
@@ -35,6 +36,13 @@ const mainHtml = await readFile('dist/index.html', 'utf8');
 for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-preview']) {
   if (!mainHtml.includes(`id="${id}"`)) {
     throw new Error(`index.html is missing public section #${id}`);
+  }
+}
+
+const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
+for (const marker of ['function hasGameLogin()', 'function requestGameLogin()', "?play=rad-tox#house-explorer", "get('play') === 'rad-tox'"]) {
+  if (!houseExplorer.includes(marker)) {
+    throw new Error(`house explorer is missing game-login flow marker ${marker}`);
   }
 }
 
