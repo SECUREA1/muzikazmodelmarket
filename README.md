@@ -13,13 +13,13 @@ Service type: Web Service
 Runtime: Rust
 Branch: main
 Root Directory: leave blank
-Build Command: npm install --no-package-lock && npm run build && cargo build --release
+Build Command: cargo build --release
 Start Command: ./target/release/muzikazmodelmarket
 ```
 
 Do not use `npm start` or `cargo run --release` as the Render start command. Render should start the compiled release binary directly.
 
-The Rust server serves the generated `dist/` directory. Render builds it before compiling the server so the local game bundles and decoder assets referenced by the HTML are always deployed; this prevents the source-page fallback from requesting nonexistent `assets/*.js` files.
+The Rust server serves files from `dist/` when a static build exists. If `dist/index.html` is not present, it serves the checked-in site files from the repository root, which keeps the Render Rust deployment independent of Node.
 
 ## Local checks
 

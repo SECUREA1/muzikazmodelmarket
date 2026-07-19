@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 
 export const QUALITY_PRESETS = {
   performance: { pixelRatio: 1, shadows: false, exposure: 0.95, shadowSize: 512 },
