@@ -2,7 +2,7 @@ services:
   - type: web
     name: muzikaz-model-market
     runtime: rust
-    buildCommand: cargo build --release
+    buildCommand: npm install --no-package-lock && npm run build && cargo build --release
     startCommand: ./target/release/muzikazmodelmarket
     envVars:
       - key: PORT
