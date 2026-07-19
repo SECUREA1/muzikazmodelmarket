@@ -37,11 +37,6 @@ cargo build --release
 PORT=4173 ./target/release/muzikazmodelmarket
 ```
 
-## Browser support
-
-- **Google Chrome (current and previous release)** and **Mozilla Firefox (current and previous release)** run the complete market, including interactive 3D/AR experiences, creator uploads, the shared house explorer, and live dashboard controls.
-- **Internet Explorer 11** is intentionally served a safe basic-browsing mode. It can read the catalog and follow standard links, while a clear in-page notice explains that its discontinued engine cannot provide modern JavaScript modules, WebGL-based 3D/AR, camera, or live-dashboard functionality. Use Chrome or Firefox for the complete application.
-
 ## Server-backed live model publishing
 
 The Rust service serves the static MUZIKAZ site, `/uploads/*` model and avatar image assets, and JSON API routes for the public live model space plus the shared 3D House Explorer. Model metadata is persisted in `MUZIKAZ_DATA_DIR/published-models.json`; house avatar placements are persisted in `MUZIKAZ_DATA_DIR/house-avatars.json` so both survive process restarts when Render persistent disk is mounted. The storage layer is isolated in `src/main.rs` and can be swapped for PostgreSQL/S3 later; `migrations/001_published_models.sql` documents the production PostgreSQL table and indexes for a future `DATABASE_URL` repository.

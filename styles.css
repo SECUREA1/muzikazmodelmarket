@@ -1410,7 +1410,6 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
 /* Quest board daily rewards usability pass */
 .daily-reward-panel{max-width:1440px;margin:0 auto 24px;display:grid;grid-template-columns:minmax(260px,1fr) minmax(240px,340px);gap:16px;align-items:stretch;border:1px solid rgba(255,218,58,.38);border-radius:24px;background:linear-gradient(135deg,rgba(255,218,58,.12),rgba(8,10,8,.95) 42%,rgba(156,255,0,.1));box-shadow:0 0 34px rgba(255,218,58,.12);padding:20px}.daily-reward-copy h2{font-family:Bangers,cursive;font-size:clamp(38px,6vw,72px);line-height:.9;margin:4px 0 10px;color:#ffda3a}.daily-reward-copy p{max-width:780px;color:var(--muted);text-transform:none;line-height:1.45}.daily-reward-claim{display:grid;gap:9px;align-content:center;justify-items:stretch;border:1px solid rgba(156,255,0,.3);border-radius:20px;background:rgba(0,0,0,.46);padding:16px;text-align:center}.daily-reward-claim span,.daily-reward-claim small,.daily-tier small,.daily-tier span{color:var(--muted);text-transform:none}.daily-reward-claim strong{font-family:Bangers,cursive;font-size:34px;color:var(--lime)}.daily-reward-claim button{min-height:48px;border-radius:999px}.daily-reward-claim button:disabled{cursor:not-allowed;opacity:.64}.daily-tier-grid{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.daily-tier{display:grid;gap:4px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.05);padding:12px}.daily-tier strong{color:#fff}.daily-tier.unlocked{border-color:var(--lime);box-shadow:0 0 18px rgba(156,255,0,.16)}.quest-layout{align-items:start}.quest-admin-panel{position:sticky;top:86px}.quest-card{display:grid;gap:8px}.quest-card button{min-height:40px}.quest-card strong{color:#fff;line-height:1.35}@media(max-width:900px){.daily-reward-panel{grid-template-columns:1fr}.quest-admin-panel{position:static}.daily-tier-grid{grid-template-columns:1fr}}@media(max-width:700px){.daily-reward-panel{margin-inline:0;padding:14px;border-radius:18px}.daily-reward-claim{position:sticky;bottom:10px;z-index:11}.quest-grid{grid-template-columns:1fr}.quest-card button{min-height:46px}}
 .live-model-grid,.published-model-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px;width:100%}.live-model-card{min-width:0;overflow:hidden}.live-model-viewer{width:100%;aspect-ratio:1/1;overflow:hidden;background:rgba(10,10,20,.85);border-radius:18px}.live-model-viewer model-viewer,.live-model-viewer canvas,.live-model-viewer img{display:block;width:100%;height:100%;object-fit:contain}.model-unavailable{display:grid;place-items:center;width:100%;height:100%;color:var(--muted);text-transform:none}
-.browser-compat-notice{position:relative;z-index:1000;margin:0;padding:14px 20px;border-bottom:2px solid #9cff00;background:#171b12;color:#fff;font:700 14px/1.45 Arial,sans-serif;text-align:center;text-transform:none}.browser-compat-notice strong{color:#c6ff54}
 
 .brand-profile-station {
     background: linear-gradient(135deg, rgba(183, 255, 53, .12), rgba(0, 255, 209, .08)), rgba(5, 7, 10, .82);
@@ -1956,90 +1955,6 @@ section,
 
 /* Linked-only 3D model marketplace cleanup */
 .avatar-link-panel{display:grid;gap:12px;overflow:hidden}.loadout-link-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:12px;width:100%;margin-top:12px}.loadout-link-grid a{display:grid;gap:6px;min-width:0;padding:14px;border:1px solid rgba(156,255,0,.34);border-radius:16px;background:linear-gradient(145deg,rgba(156,255,0,.1),rgba(0,0,0,.78));color:#fff;text-decoration:none;text-transform:none;box-shadow:inset 0 0 18px rgba(156,255,0,.05);transition:transform .18s ease,border-color .18s ease}.loadout-link-grid a:hover,.loadout-link-grid a:focus-visible{transform:translateY(-2px);border-color:var(--lime)}.loadout-link-grid strong{font-family:Bangers,cursive;font-size:clamp(24px,3vw,34px);letter-spacing:.03em;color:var(--lime);line-height:1}.loadout-link-grid span{color:var(--muted);font-size:13px;line-height:1.35}.explorer-loadout-links{width:min(1100px,96%);margin:0 auto 18px}.doll-kit-grid article{min-width:0}.doll-kit-actions{align-items:center}.doll-kit-actions .btn{white-space:normal;text-align:center}@media(max-width:640px){.loadout-link-grid{grid-template-columns:1fr}.avatar-market-heading{gap:10px}.avatar-market-heading a{width:100%;text-align:center}.doll-kit-actions{display:grid;grid-template-columns:1fr;width:100%}}
-
-/* Flex Fit uses the full desktop canvas as one connected market, rather than
-   leaving a narrow shelf beside a tall hero panel. */
-.doll-kit-category-bar{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  align-content:start;
-  padding:12px;
-  border:1px solid rgba(156,255,0,.22);
-  border-radius:16px;
-  background:rgba(1,4,1,.68);
-}
-.doll-kit-category-bar button{
-  flex:1 1 118px;
-  min-height:42px;
-  justify-content:center;
-  padding:9px 12px;
-  border:1px solid rgba(156,255,0,.3);
-  border-radius:999px;
-  background:rgba(156,255,0,.05);
-  color:#fff;
-  font-size:12px;
-  line-height:1.15;
-  transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease;
-}
-.doll-kit-category-bar button:hover,.doll-kit-category-bar button:focus-visible,.doll-kit-category-bar button.active{
-  border-color:var(--lime);
-  background:var(--lime);
-  color:#071000;
-  transform:translateY(-1px);
-}
-.doll-kit-selected-panel{
-  display:flex;
-  align-items:baseline;
-  gap:10px 14px;
-  padding:12px 16px;
-  border-left:3px solid var(--lime);
-  border-radius:0 12px 12px 0;
-  background:linear-gradient(90deg,rgba(156,255,0,.13),rgba(156,255,0,.02));
-  color:var(--muted);
-  text-transform:none;
-}
-.doll-kit-selected-panel strong{color:var(--lime);font-size:13px;text-transform:uppercase}
-.doll-kit-selected-panel span{font-size:13px;line-height:1.4}
-.doll-kit-grid article.is-selected{border-color:var(--lime);box-shadow:0 0 0 1px rgba(156,255,0,.22),0 12px 30px rgba(0,0,0,.28)}
-.doll-kit-grid article[hidden]{display:none}
-@media(min-width:951px){
-  .doll-kit-section{
-    width:calc(100% - 48px);
-    max-width:1920px;
-    margin:28px auto;
-    padding:clamp(24px,2.2vw,40px);
-  }
-  .doll-kit-layout{
-    grid-template-columns:minmax(300px,.72fr) minmax(0,1.28fr);
-    grid-template-areas:
-      "hero filters"
-      "hero selection"
-      "hero shelves";
-    gap:16px 20px;
-  }
-  .doll-kit-hero{grid-area:hero;min-height:100%;padding:clamp(26px,2.6vw,44px)}
-  .doll-kit-category-bar{grid-area:filters}
-  .doll-kit-selected-panel{grid-area:selection}
-  .doll-kit-grid{grid-area:shelves;align-content:start}
-}
-@media(min-width:1280px){
-  .doll-kit-layout{grid-template-columns:minmax(340px,.62fr) minmax(0,1.38fr)}
-  .doll-kit-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
-  .doll-kit-grid article{min-height:0;padding:16px}
-  .doll-kit-grid h3{font-size:clamp(23px,1.7vw,30px)}
-  .doll-kit-grid p{font-size:13px}
-  .doll-kit-grid .doll-kit-avatar-market{grid-column:1/-1;padding:20px}
-  .doll-kit-avatar-market .avatar-market-panel{margin-top:14px}
-}
-@media(max-width:950px){
-  .doll-kit-category-bar{margin-bottom:14px}
-  .doll-kit-selected-panel{margin-bottom:14px}
-}
-@media(max-width:640px){
-  .doll-kit-selected-panel{align-items:flex-start;flex-direction:column}
-  .doll-kit-category-bar button{flex-basis:calc(50% - 4px)}
-}
 
 .explorer-icon,.house-icon{border-color:rgba(156,255,0,.48);background:linear-gradient(135deg,rgba(156,255,0,.18),rgba(255,255,255,.04));box-shadow:0 0 18px rgba(156,255,0,.12)}
 .owned-assets-block .section-title h2{display:inline-flex;align-items:center;justify-content:center;gap:.45rem}.owned-assets-grid .pill{display:inline-flex;align-items:center;gap:.35rem;border-color:rgba(156,255,0,.38);background:rgba(156,255,0,.11);color:#fff}.member-locked-content[data-locked="true"]:before{content:"Bottle Login required — your private Drop Backpack, VibeVerse tools, and Vibe Crib collectibles stay locked until you sign in"}

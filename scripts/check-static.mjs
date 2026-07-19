@@ -6,7 +6,6 @@ const requiredFiles = [
   'dist/styles.css',
   'dist/script.js',
   'dist/reference.png',
-  'dist/public/js/house-explorer-glb.js',
 ];
 
 await Promise.all(requiredFiles.map((file) => access(file)));
@@ -33,21 +32,9 @@ for (const page of htmlPages) {
 }
 
 const mainHtml = await readFile('dist/index.html', 'utf8');
-for (const requiredCompatibilityMarker of ['http-equiv="X-UA-Compatible"', 'browser-compat.js', 'id="muzikaz-app-script"', 'type="text/plain"']) {
-  if (!mainHtml.includes(requiredCompatibilityMarker)) {
-    throw new Error(`index.html is missing browser compatibility marker ${requiredCompatibilityMarker}`);
-  }
-}
 for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-preview']) {
   if (!mainHtml.includes(`id="${id}"`)) {
     throw new Error(`index.html is missing public section #${id}`);
-  }
-}
-
-const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
-for (const requiredGameLoginMarker of ['function hasGameLogin()', 'function requestGameLogin()', "?play=rad-tox#house-explorer", "get('play') === 'rad-tox'"]) {
-  if (!houseExplorer.includes(requiredGameLoginMarker)) {
-    throw new Error(`house explorer is missing game-login flow marker ${requiredGameLoginMarker}`);
   }
 }
 
