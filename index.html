@@ -85,8 +85,8 @@
                     <section class="house-game-start" id="house-game-start" aria-labelledby="house-game-start-title">
                         <p class="kicker">RAD-TOX game connection</p>
                         <h3 id="house-game-start-title">Clear the IonCore floor.</h3>
-                        <p id="house-game-load-status" role="status">Preparing the RAD-TOX game connection…</p>
-                        <p class="house-firefox-note">RAD-TOX runs in browsers with WebGL support. The game starts as soon as the interior is ready.</p>
+                        <p id="house-game-load-status" role="status">Tap Start to load the 3D game only when you want to play.</p>
+                        <p class="house-firefox-note">RAD-TOX runs in browsers with WebGL support. Data Saver and entry-level phones open the fast 2D mission automatically.</p>
                         <button class="btn house-start-button" type="button" data-house-start>Start RAD-TOX</button>
                     </section>
                 </div>
@@ -291,7 +291,10 @@
     <script src="public/js/rad-tox-launcher.js"></script>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script type="module" src="public/js/model-gallery.js"></script>
-    <script type="module" src="public/js/house-explorer-glb.js"></script>
+    <!-- The 3D engine is loaded only after a player asks to start RAD-TOX. This keeps
+         the initial mobile page small and responsive instead of downloading the world
+         GLBs and Three.js while the player is browsing the market. -->
+    <script src="public/js/house-explorer-loader.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
