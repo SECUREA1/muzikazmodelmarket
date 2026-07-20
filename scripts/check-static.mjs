@@ -54,6 +54,11 @@ if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-
 }
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
+for (const requiredGameFeature of ["data-rad-pause", "window.setTimeout(() => startRadToxGame(), 250)", "['toxic',toxicTarget]", "['ghost',ghostTarget]", 'this.spawnSnakes()']) {
+  if (!houseExplorer.includes(requiredGameFeature)) {
+    throw new Error(`RAD-TOX is missing its required mixed-level or pause feature: ${requiredGameFeature}`);
+  }
+}
 for (const requiredUpdateCheck of ['checkForHouseUpdates', 'Promise.allSettled([refreshLibrary(), refreshAvatarLibrary()])', 'checkForHouseUpdates({ startup: true })', 'fetchGitHubGlbFiles', 'mergeGitHubAvatarFiles']) {
   if (!houseExplorer.includes(requiredUpdateCheck)) {
     throw new Error(`House Explorer must check for new maps and avatars on startup: missing ${requiredUpdateCheck}`);
