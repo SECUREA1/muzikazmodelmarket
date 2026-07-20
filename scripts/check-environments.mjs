@@ -9,8 +9,8 @@ for (const required of ['muzikaz-main', 'muzikaz-upper', 'muzikaz-full-house']) 
   if (!records.some((record) => record.id === required)) throw new Error(`Missing ${required} environment.`);
 }
 const sheepBase = records.find((record) => record.id === 'sheepbase');
-if (!sheepBase || Number(sheepBase.spaceScale) !== 50) {
-  throw new Error('Sheep Base must use its 50x authored-world scale.');
+if (!sheepBase || Number(sheepBase.spaceScale) !== 35) {
+  throw new Error('Sheep Base must use its 35x authored-world scale (30% smaller than 50x).');
 }
 const environmentDirectory = 'public/models/environments';
 const environmentFiles = (await readdir(environmentDirectory, { withFileTypes: true }))
