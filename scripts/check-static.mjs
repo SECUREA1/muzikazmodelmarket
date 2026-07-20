@@ -33,6 +33,11 @@ for (const page of htmlPages) {
 }
 
 const mainHtml = await readFile('dist/index.html', 'utf8');
+for (const githubSetting of ['name="muzikaz-github-repository" content="SECUREA1/muzikazmodelmarket"', 'name="muzikaz-github-branch" content="main"']) {
+  if (!mainHtml.includes(githubSetting)) {
+    throw new Error(`index.html must configure repository GLB discovery: missing ${githubSetting}`);
+  }
+}
 if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
   throw new Error('index.html must load the ES5 RAD-TOX compatibility launcher.');
 }

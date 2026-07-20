@@ -1,11 +1,28 @@
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const manifestPath = 'public/models/environments/environments.json';
 const records = JSON.parse(await readFile(manifestPath, 'utf8'));
+const avatarCatalog = JSON.parse(await readFile('public/models/glb-models.json', 'utf8'));
 if (!Array.isArray(records) || records.length < 3) throw new Error('Environment manifest must include main, upper, and full-house records.');
 for (const required of ['muzikaz-main', 'muzikaz-upper', 'muzikaz-full-house']) {
   if (!records.some((record) => record.id === required)) throw new Error(`Missing ${required} environment.`);
+}
+const environmentDirectory = 'public/models/environments';
+const environmentFiles = (await readdir(environmentDirectory, { withFileTypes: true }))
+  .filter((entry) => entry.isFile() && /\.(glb|gltf)$/i.test(entry.name))
+  .map((entry) => `${environmentDirectory}/${entry.name}`);
+const listedEnvironmentFiles = new Set(records.flatMap((record) => record.modelUrls || [record.modelUrl]).filter(Boolean).map((url) => url.replace(/^\//, '')));
+for (const file of environmentFiles) {
+  if (!listedEnvironmentFiles.has(file)) throw new Error(`Environment manifest must include every environment model, including ${file}.`);
+}
+const avatarFiles = (await readdir('public/models', { withFileTypes: true }))
+  .filter((entry) => entry.isFile() && /\.(glb|gltf)$/i.test(entry.name))
+  .map((entry) => entry.name);
+const listedAvatarFiles = new Set((Array.isArray(avatarCatalog.models) ? avatarCatalog.models : [])
+  .map((record) => decodeURIComponent(String(record.modelUrl || '').split('/').pop())));
+for (const file of avatarFiles) {
+  if (!listedAvatarFiles.has(file)) throw new Error(`Avatar catalog must include every model in public/models, including ${file}.`);
 }
 for (const record of records) {
   const urls = record.modelUrls || [record.modelUrl];
@@ -20,4 +37,4 @@ for (const record of records) {
   }
   if (!record.spawn || !Number.isFinite(Number(record.spawn.y))) throw new Error(`${record.id} needs spawn metadata.`);
 }
-console.log(`Validated ${records.length} repository environment records and GLB headers.`);
+console.log(`Validated ${records.length} repository environments, ${avatarFiles.length} avatars, and GLB headers.`);
