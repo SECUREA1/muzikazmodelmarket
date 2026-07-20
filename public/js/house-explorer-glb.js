@@ -10,8 +10,9 @@ import { FLOOR_ENTRY_OFFSET, alignPointAboveFloor } from './environments/environ
 const legacyCanvas = document.querySelector('#house-explorer-canvas');
 const stage = legacyCanvas?.closest('.house-stage');
 const hud = document.querySelector('.house-hud');
+const isFirefox = /firefox\//i.test(navigator.userAgent || '') && !/seamonkey/i.test(navigator.userAgent || '');
 
-if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
+if (legacyCanvas instanceof HTMLCanvasElement && stage && hud && isFirefox) {
   const oldStatus = document.querySelector('#house-status');
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
   const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
@@ -23,6 +24,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const gameStartButton = document.querySelector('#house-start-game');
   const gameStartScreen = document.querySelector('#house-game-start');
   const gameLoadStatus = document.querySelector('#house-game-load-status');
+  const publishGameStage = (stageName, message) => document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-stage', { detail: { stage: stageName, message } }));
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
   hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Enter interior: mouse-look</span><span>Drag/touch: look</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
 
@@ -293,12 +295,14 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     gameStartScreen?.classList.add('is-loading');
     gameStartButton.textContent = 'Deploying RAD-TOX…';
     if (gameLoadStatus) gameLoadStatus.textContent = 'Loading the IonCore interior and deploying toxic bubbles…';
+    publishGameStage('loading-game', 'Loading the IonCore interior and deploying toxic bubbles…');
 
     try {
       await openHouseMap();
       await toxicBubbleSystem.begin();
       gameStartScreen?.classList.add('is-hidden');
       setStatus('RAD-TOX is active. Toxic bubbles are deployed—clear the floor!');
+      publishGameStage('game-active', 'RAD-TOX is active. Toxic bubbles are deployed—clear the floor!');
     } catch (error) {
       const message = error?.message || 'Unable to load the MUZIKAZ house game.';
       gameStartButton.disabled = false;
@@ -306,10 +310,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       gameStartScreen?.classList.remove('is-loading');
       if (gameLoadStatus) gameLoadStatus.textContent = message;
       setStatus(message);
+      document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { stage: 'RAD-TOX', message } }));
     }
   }
   gameStartButton?.addEventListener('click', (event) => { event.preventDefault(); startRadToxGame(); });
   document.addEventListener('muzikaz:rad-tox-request', () => startRadToxGame());
+  publishGameStage('engine-ready', 'Firefox game engine ready.');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
   canvas.addEventListener('click', () => {
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start walking.'));
@@ -336,4 +342,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const preload = () => openHouseMap().catch((error) => setStatus(error.message || 'Unable to prepare the MUZIKAZ house game.'));
     if ('requestIdleCallback' in window) window.requestIdleCallback(preload, { timeout: 1200 }); else window.setTimeout(preload, 250);
   }
+} else if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
+  // A web page cannot launch another installed application. Keep the game surface
+  // inactive here and give the launcher a deterministic Firefox-only state instead.
+  stage.classList.add('is-firefox-required');
+  document.querySelector('#house-status').textContent = 'RAD-TOX only works in the Mozilla Firefox browser. Open this page in Firefox to play.';
 }
