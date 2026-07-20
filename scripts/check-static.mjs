@@ -48,6 +48,13 @@ if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-
   throw new Error('RAD-TOX launcher must provide a compatibility fallback and publish live game updates.');
 }
 
+const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
+for (const requiredUpdateCheck of ['checkForHouseUpdates', 'Promise.allSettled([refreshLibrary(), refreshAvatarLibrary()])', 'checkForHouseUpdates({ startup: true })']) {
+  if (!houseExplorer.includes(requiredUpdateCheck)) {
+    throw new Error(`House Explorer must check for new maps and avatars on startup: missing ${requiredUpdateCheck}`);
+  }
+}
+
 for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-preview']) {
   if (!mainHtml.includes(`id="${id}"`)) {
     throw new Error(`index.html is missing public section #${id}`);

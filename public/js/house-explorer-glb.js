@@ -189,7 +189,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function syncEnvironmentSelect(worlds) { if (!environmentSelect) return; const selectedId = activeEnvironment?.id || environmentSelect.value || ''; environmentSelect.replaceChildren(...worlds.map((env) => new Option(env.name || env.id || 'House environment', env.id, false, env.id === selectedId))); environmentSelect.disabled = !worlds.length; }
   function renderPicker() { const worlds = registry.all(); syncEnvironmentSelect(worlds); const envOptions = worlds.map((env) => { const size = env.fileSize ? `${(env.fileSize / 1048576).toFixed(1)} MB` : 'repo GLB'; return `<option value="${env.id}" ${activeEnvironment?.id === env.id ? 'selected' : ''}>${env.name} · ${size}</option>`; }).join(''); const avatarOptions = cachedAvatars.map((avatar) => `<option value="${avatar.id}">${avatar.name} · ${avatar.owner}</option>`).join(''); library.innerHTML = `<div class="house-picker-title"><strong>GLB Select</strong><small>${worlds.length} worlds · ${cachedAvatars.length} avatars</small></div><div class="house-picker-row"><label class="house-picker-label">World<select data-world-select>${envOptions || '<option>No worlds found</option>'}</select></label><button type="button" data-load-world>Open</button></div><div class="house-picker-row"><label class="house-picker-label">Avatar<select data-avatar-select>${avatarOptions || '<option>No active GLB avatars</option>'}</select></label><button type="button" data-add-selected-avatar>Add</button></div>`; library.querySelector('[data-load-world]')?.addEventListener('click', () => { const id = library.querySelector('[data-world-select]')?.value; if (id) loadById(id); }); library.querySelector('[data-world-select]')?.addEventListener('change', (event) => loadById(event.target.value)); library.querySelector('[data-add-selected-avatar]')?.addEventListener('click', () => { const avatar = cachedAvatars.find(a => a.id === library.querySelector('[data-avatar-select]')?.value); if (avatar) { activeAvatar = avatar; addAvatarToScene(avatar).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); } }); }
   function renderLibrary() { renderPicker(); }
-  async function refreshLibrary() { try { await registry.refresh(); renderPicker(); } catch (error) { setStatus(error.message); library.innerHTML = `<div class="house-picker-title"><strong>GLB Select</strong></div><small>${error.message}</small>`; } }
+  async function refreshLibrary() { try { const worlds = await registry.refresh(); renderPicker(); return worlds; } catch (error) { setStatus(error.message); library.innerHTML = `<div class="house-picker-title"><strong>GLB Select</strong></div><small>${error.message}</small>`; throw error; } }
 
   function openPicker(kind) {
     const isOpen = !library.classList.contains('is-collapsed');
@@ -222,6 +222,27 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   async function addAvatarToScene(avatar, position = floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).multiplyScalar(2)))) { setStatus(`Adding ${avatar.name} to the GLB house…`); const floorPoint = floorPointAt(position.clone()); const gltf = await avatarLoader.loadAsync(avatar.modelUrl); const root = gltf.scene; root.name = `Avatar_${avatar.id}`; root.position.copy(floorPoint); root.scale.setScalar(avatar.scale); root.rotation.y = Number(avatar.rotation?.y ?? avatar.rotation ?? 0); root.userData.avatar = avatar; const size = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()); const maxAxis = Math.max(size.x, size.y, size.z) || 1; if (maxAxis > 2.2) root.scale.multiplyScalar(2.2 / maxAxis); liftObjectAboveFloor(root, floorPoint); root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); placedAvatars.add(root); setStatus(`${avatar.name} is in the house. Drag it on screen to reposition it above the floor.`); return root; }
   function renderAvatarLibrary(avatars) { cachedAvatars = avatars; renderPicker(); }
   async function refreshAvatarLibrary() { const avatars = await fetchActiveAvatarModels(); window.MuzikazActiveHouseAvatars = avatars; renderAvatarLibrary(avatars); return avatars; }
+  async function checkForHouseUpdates({ startup = false } = {}) {
+    if (startup) setStatus('Checking for new maps and avatars…');
+    const [worldResult, avatarResult] = await Promise.allSettled([refreshLibrary(), refreshAvatarLibrary()]);
+    const worlds = worldResult.status === 'fulfilled' ? worldResult.value : registry.all();
+    const avatars = avatarResult.status === 'fulfilled' ? avatarResult.value : cachedAvatars;
+
+    // Render again after both network requests settle so the picker always shows
+    // the newest map and avatar lists together, even if one service is offline.
+    renderPicker();
+    if (worldResult.status === 'rejected' && avatarResult.status === 'rejected') {
+      setStatus('Unable to check for map and avatar updates. Try again after reconnecting.');
+    } else if (worldResult.status === 'rejected') {
+      setStatus(`${avatars.length} avatar${avatars.length === 1 ? '' : 's'} refreshed; map updates are temporarily unavailable.`);
+    } else if (avatarResult.status === 'rejected') {
+      setStatus(`${worlds.length} map${worlds.length === 1 ? '' : 's'} refreshed; avatar updates are temporarily unavailable.`);
+    } else if (startup) {
+      setStatus(`Updates checked: ${worlds.length} map${worlds.length === 1 ? '' : 's'} and ${avatars.length} active avatar${avatars.length === 1 ? '' : 's'} ready.`);
+    }
+    return { worlds, avatars, worldError: worldResult.reason, avatarError: avatarResult.reason };
+  }
+  window.MuzikazHouseExplorer = { checkForUpdates: checkForHouseUpdates };
 
   function getInput() { const input = new THREE.Vector2(); if (keys.has('w')||keys.has('arrowup')||mobile.has('forward')) input.y += 1; if (keys.has('s')||keys.has('arrowdown')||mobile.has('back')) input.y -= 1; if (keys.has('a')||keys.has('arrowleft')||mobile.has('left')) input.x -= 1; if (keys.has('d')||keys.has('arrowright')||mobile.has('right')) input.x += 1; input.x += thumbInput.leftX; input.y -= thumbInput.leftY; const session = renderer.xr.getSession(); if (session) for (const source of session.inputSources) { const axes = source.gamepad?.axes || []; const ax = Number(axes[2] ?? axes[0] ?? 0), ay = Number(axes[3] ?? axes[1] ?? 0); if (source.handedness === 'left') { input.x += Math.abs(ax) > .15 ? ax : 0; input.y += Math.abs(ay) > .15 ? -ay : 0; } if (source.handedness === 'right') { if (Math.abs(ax) > .72 && turnReady) { player.yaw -= Math.sign(ax) * Math.PI / 6; turnReady = false; } else if (Math.abs(ax) < .25) turnReady = true; } } return input.lengthSq() > 1 ? input.normalize() : input; }
   // The right look stick is deliberately 25% gentler than its previous turn/look rates.
@@ -293,7 +314,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     toxicBubbleSystem.update(delta, clock.elapsedTime);
     renderer.render(scene, camera);
   });
-  await Promise.all([refreshLibrary(), refreshAvatarLibrary().catch((error) => { library.insertAdjacentHTML('beforeend', `<small>${error.message || 'Unable to load active avatars.'}</small>`); })]);
+  // Always query both live sources when the explorer boots. This intentionally
+  // bypasses cached lists so newly published maps and avatars are available
+  // before the player opens the world or avatar picker.
+  await checkForHouseUpdates({ startup: true });
   const params = new URLSearchParams(location.search);
   const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
   const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
