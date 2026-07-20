@@ -37,6 +37,17 @@ if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
   throw new Error('index.html must load the ES5 RAD-TOX compatibility launcher.');
 }
 
+for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'Firefox required:', 'mozilla.org/firefox/new']) {
+  if (!mainHtml.includes(requiredGameMarkup)) {
+    throw new Error(`index.html is missing Firefox-only game markup: ${requiredGameMarkup}`);
+  }
+}
+
+const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
+if (!launcher.includes('isFirefox') || !launcher.includes('muzikaz:rad-tox-app-update')) {
+  throw new Error('RAD-TOX launcher must enforce Firefox and publish live game updates.');
+}
+
 for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-preview']) {
   if (!mainHtml.includes(`id="${id}"`)) {
     throw new Error(`index.html is missing public section #${id}`);

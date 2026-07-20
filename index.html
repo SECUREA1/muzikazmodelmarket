@@ -82,6 +82,14 @@
                     <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
                     <div class="house-reticle" aria-hidden="true">+</div>
                     <div class="house-status" id="house-status" role="status">Press Begin RAD-TOX to start the toxic bubble sweep.</div>
+                    <section class="house-game-start" id="house-game-start" aria-labelledby="house-game-start-title">
+                        <p class="kicker">RAD-TOX game connection</p>
+                        <h3 id="house-game-start-title">Clear the IonCore floor.</h3>
+                        <p id="house-game-load-status" role="status">Checking the Firefox game connection…</p>
+                        <p class="house-firefox-note"><strong>Firefox required:</strong> the 3D RAD-TOX game only works in the Mozilla Firefox browser.</p>
+                        <button class="btn house-start-button" type="button" data-house-start>Start RAD-TOX in Firefox</button>
+                        <a class="btn ghost house-firefox-download" href="https://www.mozilla.org/firefox/new/" target="_blank" rel="noopener">Get Firefox</a>
+                    </section>
                 </div>
                 <aside class="house-hud" aria-label="3D House Explorer controls">
                     <p class="kicker">IonCore interior sim</p>
@@ -112,7 +120,7 @@
                     <button class="house-bottom-control" id="house-fullscreen" type="button"><b aria-hidden="true">⛶</b><span>Fullscreen</span></button>
                     <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">👤</b><span>Avatar</span></button>
                     <button class="house-bottom-control house-bottom-control-begin" id="house-start-game" type="button"><b aria-hidden="true">◉</b><span>Begin</span></button>
-                    <small class="house-firefox-label">Firefox ready</small>
+                    <small class="house-firefox-label">Firefox only</small>
                     <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
                 </div>
             </div>
