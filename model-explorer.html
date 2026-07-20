@@ -65,6 +65,14 @@
           <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
           <div class="house-reticle" aria-hidden="true">+</div>
           <div class="house-status" id="house-status" role="status">Press Begin RAD-TOX to clear level 1 toxins, then face blue ghosts in the upper-floor level 2.</div>
+          <section class="house-level-loader" id="house-level-loader" hidden aria-live="polite" aria-label="Loading game level">
+            <div class="house-level-loader__graphic" aria-hidden="true"><i></i><i></i><i></i><b>☢</b></div>
+            <p class="kicker">RAD-TOX deployment</p>
+            <h3 data-level-loader-title>Preparing level 1</h3>
+            <p class="house-level-loader__message" data-level-loader-message>Loading your next encounter…</p>
+            <div class="house-level-loader__scale" role="progressbar" aria-label="Level loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span data-level-loader-fill></span></div>
+            <strong data-level-loader-percent>0%</strong>
+          </section>
           <section class="house-game-start" id="house-game-start" aria-labelledby="house-game-start-title">
             <p class="kicker">RAD-TOX game connection</p>
             <h3 id="house-game-start-title">Clear level 1. Survive the upper-floor ghosts in level 2.</h3>
