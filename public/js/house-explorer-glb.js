@@ -88,10 +88,16 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const controlDock = document.createElement('div'); controlDock.className = 'house-control-dock'; controlDock.setAttribute('aria-label', 'House view and game controls'); controlDock.append(scaleControl, bottomControls); library.before(controlDock); controlDock.after(viewControls);
 
   const isCoarsePointer = matchMedia('(pointer: coarse)').matches;
+  const isFirefox = /firefox\//i.test(navigator.userAgent || '') && !/seamonkey/i.test(navigator.userAgent || '');
   const mobileQualityMode = isCoarsePointer || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  // Firefox can become unresponsive while this large GLB is decoding if it also
+  // starts a high-resolution, shadowed render loop. Keep its desktop gameplay
+  // path intact, but use the already-supported performance renderer settings.
+  const firefoxSafeMode = isFirefox && !mobileQualityMode;
+  const performanceMode = mobileQualityMode || firefoxSafeMode;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050807); scene.fog = new THREE.Fog(0x050807, 36, mobileQualityMode ? 95 : 180);
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !mobileQualityMode, alpha: false, powerPreference: mobileQualityMode ? 'low-power' : 'high-performance' }); renderer.xr.enabled = !mobileQualityMode; let quality = configureRenderer(renderer, 'auto');
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050807); scene.fog = new THREE.Fog(0x050807, 36, performanceMode ? 95 : 180);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !performanceMode, alpha: false, powerPreference: performanceMode ? 'low-power' : 'high-performance' }); renderer.xr.enabled = !performanceMode; let quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');
   const camera = new THREE.PerspectiveCamera(68, 16 / 9, 0.05, 700); const playerRig = new THREE.Group(); playerRig.name = 'MUZIKAZ_PLAYER_RIG'; playerRig.add(camera); scene.add(playerRig);
   const hemi = new THREE.HemisphereLight(0xcfe8ff, 0x15170d, 1.1); scene.add(hemi); const sun = new THREE.DirectionalLight(0xffffff, mobileQualityMode ? 1.25 : 1.8); sun.position.set(12, 18, 8); sun.castShadow = quality.shadows; sun.shadow.mapSize.set(quality.shadowSize, quality.shadowSize); sun.shadow.camera.near = .5; sun.shadow.camera.far = 120; sun.shadow.camera.left = -45; sun.shadow.camera.right = 45; sun.shadow.camera.top = 45; sun.shadow.camera.bottom = -45; scene.add(sun);
   const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromScene(new THREE.Scene(), 0.04).texture;
@@ -100,7 +106,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const landingFrame = new THREE.Group(); landingFrame.name = 'MUZIKAZ_LANDING_FLOOR_FRAME'; scene.add(landingFrame);
   let activeAvatar = null;
   const player = { height: 1.65, radius: .34, speed: 3.2, jumpVelocity: 9.9, yaw: 0, pitch: 0, eyeHeight: 1.65, zoom: 68, velocity: new THREE.Vector3(), onGround: false, spawn: new THREE.Vector3(0, 1, 2) };
-  let currentSpaceScale = 2.5; let scrollZoomEnabled = false; const mapSizeScale = mobileQualityMode ? 0.82 : 1; const mapHeightScale = mobileQualityMode ? 0.88 : 1;
+  let currentSpaceScale = 2.5; let scrollZoomEnabled = false; const mapSizeScale = performanceMode ? 0.82 : 1; const mapHeightScale = performanceMode ? 0.88 : 1;
   const RAD_TOX_STATES = Object.freeze({ STANDBY: 'standby', LOADING: 'loading', ACTIVE: 'active', PAUSED: 'paused', CLEARED: 'cleared', ERROR: 'error' });
   const TOXIC_BUBBLE_CONFIG = Object.freeze({ desktopCount: 32, mobileCount: 18, initialCount: 8, roundGoal: 30, minRadius: .28, maxRadius: .58, minHeightAboveFloor: .7, maxHeightAboveFloor: 2.2, maxPlacementAttemptsPerBubble: 28, minimumFloorNormalY: .55, minimumBubbleSpacing: 1.1, spawnDelayMin: 520, spawnDelayMax: 1350, bubbleLifetime: 70000, particleCountDesktop: 22, particleCountMobile: 13, particleLifetime: .7, gasEmissionInterval: 1.15, floorGasClustersDesktop: 24, floorGasClustersMobile: 12, floorGasPuffsDesktop: 5, floorGasPuffsMobile: 3, floorGasHeight: .42, svgTextureSizeDesktop: 256, svgTextureSizeMobile: 128, hoverRayInterval: 80 });
   const TOXIC_BUBBLE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><defs><radialGradient id="g" cx="38%" cy="32%" r="70%"><stop stop-color="#d6ff76" stop-opacity=".95"/><stop offset=".32" stop-color="#8cff18" stop-opacity=".72"/><stop offset=".72" stop-color="#2e9a10" stop-opacity=".32"/><stop offset="1" stop-color="#071407" stop-opacity="0"/></radialGradient></defs><circle cx="128" cy="128" r="104" fill="url(#g)" stroke="#a5f54a" stroke-width="7"/><ellipse cx="91" cy="76" rx="31" ry="19" fill="#caff8b" fill-opacity=".55"/><circle cx="128" cy="128" r="79" fill="none" stroke="#61d62a" stroke-width="5" stroke-dasharray="12 18" opacity=".72"/></svg>';
@@ -145,7 +151,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     clearBubbles(){this.bubbles.forEach(b=>{this.disposeBubble(b);this.group.remove(b);});this.bubbles=[];this.hovered=null;this.updateHud();}clearFloorGas(){this.floorGas.forEach(cluster=>{cluster.children.forEach(puff=>puff.material.dispose());this.floorGasGroup.remove(cluster);});this.floorGas=[];}clearParticles(){this.particleBursts.forEach(b=>{b.children.forEach(s=>s.material.dispose());this.scene.remove(b);});this.particleBursts=[];}clearLasers(){this.lasers.forEach(laser=>{laser.geometry.dispose();laser.material.dispose();this.scene.remove(laser);});this.lasers=[];}resetRun(){clearTimeout(this.spawnTimer);this.totalPopped=0;if(this.validEnvironment()){this.roundStartedAt=Date.now();this.pausedDuration=0;this.setState(RAD_TOX_STATES.ACTIVE,'RAD-TOX round reset.');this.spawnInitial();this.spawnFloorGas();}else this.setState(RAD_TOX_STATES.STANDBY,'Load an environment before starting RAD-TOX.');}dispose(){clearTimeout(this.spawnTimer);this.clearBubbles();this.clearFloorGas();this.clearParticles();this.clearLasers();this.scene.remove(this.floorGasGroup,this.group);Object.values(this.resources).forEach(r=>r?.dispose?.());this.audioContext?.close?.().catch(()=>{});}}
 
 
-  let viewActive = true; let lastFrameTime = 0; const targetFrameMs = mobileQualityMode || reducedMotion ? 1000 / 30 : 0;
+  let viewActive = true; let lastFrameTime = 0; const targetFrameMs = performanceMode || reducedMotion ? 1000 / 30 : 0;
   let playerCollider = new Capsule(new THREE.Vector3(0, player.radius, 2), new THREE.Vector3(0, player.height, 2), player.radius); let dragPointer = null; let avatarDrag = null; let turnReady = true; let activeEnvironment = null;
   const toxicBubbleSystem = new ToxicBubbleSystem({ scene, camera, canvas, loader: envLoader, getEnvironment: () => activeEnvironment, getPlayerPosition: () => playerRig.position.clone() });
   const keys = new Set(); const mobile = new Set(); const thumbInput = { leftX: 0, leftY: 0, rightX: 0, rightY: 0 }; const forward = new THREE.Vector3(); const right = new THREE.Vector3(); const move = new THREE.Vector3(); const teleportRay = new THREE.Raycaster();
@@ -243,7 +249,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     });
   });
   async function setupVRControls() {
-    if (!renderer.xr.enabled || mobileQualityMode) return;
+    if (!renderer.xr.enabled || performanceMode) return;
     const [{ VRButton }, { XRControllerModelFactory }] = await Promise.all([
       import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/VRButton.js/+esm'),
       import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/XRControllerModelFactory.js/+esm')
@@ -255,14 +261,14 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   setupVRControls().catch((error) => console.warn('[MUZIKAZ VR]', error));
   const visibilityObserver = new IntersectionObserver(([entry]) => { viewActive = Boolean(entry?.isIntersecting); }, { threshold: 0.05 }); visibilityObserver.observe(stage); document.addEventListener('visibilitychange', () => { viewActive = !document.hidden; });
-  function resize() { const rect = stage.getBoundingClientRect(); const viewportHeight = window.visualViewport?.height || window.innerHeight || 720; const width = Math.max(320, Math.floor(Math.min(rect.width || stage.clientWidth || 1280, document.documentElement.clientWidth || rect.width || 1280))); const desktopLimit = Math.max(420, viewportHeight - 180); const mobileLimit = Math.max(360, viewportHeight - 190); const limit = matchMedia('(max-width: 760px)').matches ? mobileLimit : desktopLimit; const tunedWidth = Math.max(320, Math.floor(width * mapSizeScale)); const baseHeight = Math.max(360, rect.height || width * .56) * mapHeightScale; const height = Math.max(320, Math.floor(Math.min(baseHeight, limit))); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobileQualityMode ? 1 : quality.pixelRatio)); renderer.setSize(tunedWidth, height, false); camera.aspect = tunedWidth / height; camera.updateProjectionMatrix(); } new ResizeObserver(resize).observe(stage); addEventListener('orientationchange', resize); window.visualViewport?.addEventListener('resize', resize); resize();
+  function resize() { const rect = stage.getBoundingClientRect(); const viewportHeight = window.visualViewport?.height || window.innerHeight || 720; const width = Math.max(320, Math.floor(Math.min(rect.width || stage.clientWidth || 1280, document.documentElement.clientWidth || rect.width || 1280))); const desktopLimit = Math.max(420, viewportHeight - 180); const mobileLimit = Math.max(360, viewportHeight - 190); const limit = matchMedia('(max-width: 760px)').matches ? mobileLimit : desktopLimit; const tunedWidth = Math.max(320, Math.floor(width * mapSizeScale)); const baseHeight = Math.max(360, rect.height || width * .56) * mapHeightScale; const height = Math.max(320, Math.floor(Math.min(baseHeight, limit))); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, performanceMode ? 1 : quality.pixelRatio)); renderer.setSize(tunedWidth, height, false); camera.aspect = tunedWidth / height; camera.updateProjectionMatrix(); } new ResizeObserver(resize).observe(stage); addEventListener('orientationchange', resize); window.visualViewport?.addEventListener('resize', resize); resize();
   renderer.setAnimationLoop((time = 0) => {
     if (!viewActive && !renderer.xr.isPresenting) { clock.getDelta(); return; }
     if (targetFrameMs && !renderer.xr.isPresenting && time - lastFrameTime < targetFrameMs) return;
     lastFrameTime = time;
     const delta = Math.min(.05, clock.getDelta());
     updatePlayer(delta);
-    if (!mobileQualityMode || renderer.xr.isPresenting) envLoader.mixers.forEach((m) => m.update(delta));
+    if (!performanceMode || renderer.xr.isPresenting) envLoader.mixers.forEach((m) => m.update(delta));
     toxicBubbleSystem.update(delta, clock.elapsedTime);
     renderer.render(scene, camera);
   });
