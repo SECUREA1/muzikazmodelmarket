@@ -404,8 +404,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.addEventListener('muzikaz:rad-tox-request', () => startRadToxGame());
   publishGameStage('engine-ready', 'RAD-TOX game engine ready. Starting the first level…');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
-  // Every visit starts its first mixed encounter automatically; the Begin control remains a reset option.
-  window.setTimeout(() => startRadToxGame(), 250);
+  // The launcher deliberately loads this module only after the player chooses
+  // Begin. Never auto-load a large GLB world at page start: decoding it on a
+  // mobile main thread can freeze scrolling and make the browser kill the tab.
   canvas.addEventListener('click', () => {
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start walking.'));
   });

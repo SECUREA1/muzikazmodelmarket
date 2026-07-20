@@ -53,8 +53,15 @@ if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-
   throw new Error('RAD-TOX launcher must provide a compatibility fallback and publish live game updates.');
 }
 
+if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
+  throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
+}
+if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launcher.includes('function startEngine()')) {
+  throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
+}
+
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
-for (const requiredGameFeature of ["window.setTimeout(() => startRadToxGame(), 250)", "['toxic',toxicTarget]", "['ghost',ghostTarget]", 'this.spawnSnakes()', "controller.userData.handedness==='left'", "Weapons','Laser · Paint gun · Baseball bat"]) {
+for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarget]", 'this.spawnSnakes()', "controller.userData.handedness==='left'", "Weapons','Laser · Paint gun · Baseball bat"]) {
   if (!houseExplorer.includes(requiredGameFeature)) {
     throw new Error(`RAD-TOX is missing its required mixed-level or always-on controls feature: ${requiredGameFeature}`);
   }
