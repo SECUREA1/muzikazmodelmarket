@@ -64,7 +64,14 @@
         <div class="house-stage">
           <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
           <div class="house-reticle" aria-hidden="true">+</div>
-          <div class="house-status" id="house-status" role="status">Ready: drag to look around, then move through the rooms.</div>
+          <div class="house-status" id="house-status" role="status">Press Begin RAD-TOX to start the toxic bubble sweep.</div>
+          <section class="house-game-start" id="house-game-start" aria-labelledby="house-game-start-title">
+            <p class="kicker">RAD-TOX game connection</p>
+            <h3 id="house-game-start-title">Clear the IonCore floor.</h3>
+            <p id="house-game-load-status" role="status">Preparing the RAD-TOX game connection…</p>
+            <p class="house-firefox-note">RAD-TOX runs in browsers with WebGL support. The game starts as soon as the interior is ready.</p>
+            <button class="btn house-start-button" type="button" data-house-start>Start RAD-TOX</button>
+          </section>
         </div>
         <aside class="house-hud" aria-label="Vibe Crib Explorer controls">
           <p class="kicker">Muzikaz Vibe Crib</p>
@@ -86,7 +93,6 @@
             <button type="button" id="house-reset">Reset view</button>
             <button type="button" id="house-place-person">Set person drop-in</button>
             <button type="button" id="hand-toggle" aria-pressed="false">Enable hand control</button>
-            <button type="button" id="add-avatar">Add Avatar</button>
           </div>
           <div class="camera-preview-panel">
             <video id="hand-preview" playsinline muted></video>
@@ -101,6 +107,14 @@
           <button class="mobile-control mobile-control-zoom-toggle" type="button" data-mobile-zoom-toggle="out" aria-pressed="false" aria-label="Zoom out"><b>−</b><span>Zoom out</span></button>
           <button class="mobile-control" type="button" data-mobile-hold="back" aria-label="Reverse"><b>▼</b><span>Reverse</span></button>
           <button class="mobile-control mobile-control-jump" type="button" data-mobile-action="jump" aria-label="Jump"><b>⤴</b><span>Jump</span></button>
+        </div>
+        <div class="house-bottom-controls" aria-label="Game controls">
+          <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">▤</b><span>World</span></button>
+          <button class="house-bottom-control" id="house-fullscreen" type="button"><b aria-hidden="true">⛶</b><span>Fullscreen</span></button>
+          <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">👤</b><span>Avatar</span></button>
+          <button class="house-bottom-control house-bottom-control-begin" id="house-start-game" type="button"><b aria-hidden="true">◉</b><span>Begin</span></button>
+          <small class="house-firefox-label">WebGL required</small>
+          <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
         </div>
       </div>
     </section>
@@ -157,6 +171,8 @@
     <div><h4>Support</h4><a href="mailto:crew@muzikaz.example">Contact</a><a href="members.html">Bottle Login</a></div>
   </footer>
 
+  <!-- Loads first so the explorer can offer a playable fallback when WebGL is unavailable. -->
+  <script src="public/js/rad-tox-launcher.js"></script>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <script type="module" src="public/js/model-gallery.js"></script>
   <script type="module" src="public/js/house-explorer-glb.js"></script>
