@@ -688,14 +688,17 @@ color:var(--muted);
 text-transform:none}
 .doll-kit-selected-panel strong{color:var(--lime)}
 .doll-kit-grid{
-display:flex;
-flex-wrap:wrap;
-gap:14px}
+display:grid;
+grid-template-columns:repeat(3,minmax(0,1fr));
+gap:14px;
+align-items:stretch}
 .doll-kit-grid article{
 padding:20px;
-min-height:190px;
 min-width:0;
-flex:1 1 180px}
+min-height:190px;
+height:100%}
+.doll-kit-grid > .doll-kit-avatar-market{
+grid-column:1 / -1}
 .doll-kit-grid span{
 display:grid;
 place-items:center;
@@ -750,8 +753,11 @@ background:linear-gradient(145deg,rgba(8,18,8,.96),rgba(0,0,0,.92))}
 height:220px}
 @media(max-width:950px){.avatar-market-heading{align-items:flex-start;flex-direction:column}}
 .card,.products article,.site-choice{transition:transform .2s ease, box-shadow .2s ease}.card:hover,.products article:hover,.site-choice:hover{transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.35), 0 0 24px rgba(156,255,0,.12)}
+@media(max-width:1080px) and (min-width:951px){
+.doll-kit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 @media(max-width:950px){
-.topbar{height:auto;gap:10px;align-items:flex-start;flex-direction:column;padding:10px 16px}.site-choices,.operation-grid,.doll-kit-layout{grid-template-columns:1fr}.doll-kit-grid{display:flex}.doll-kit-grid article{flex-basis:100%}.start-panel{padding:22px}.site-choice{min-height:280px}.page-shell{width:96%}.hero-actions{align-items:stretch;flex-direction:column}.operation-panel{background-image:none}.doll-kit-section{width:calc(100% - 24px)}}
+.topbar{height:auto;gap:10px;align-items:flex-start;flex-direction:column;padding:10px 16px}.site-choices,.operation-grid,.doll-kit-layout{grid-template-columns:1fr}.doll-kit-grid{grid-template-columns:1fr}.start-panel{padding:22px}.site-choice{min-height:280px}.page-shell{width:96%}.hero-actions{align-items:stretch;flex-direction:column}.operation-panel{background-image:none}.doll-kit-section{width:calc(100% - 24px)}}
 
 /* Preserve the single-page index look from edd229a while keeping previews playable. */
 .model-detail{
