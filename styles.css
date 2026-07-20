@@ -615,7 +615,7 @@ margin:0 0 20px}
 .operation-grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:14px}
 .operation-grid article{border:1px solid rgba(156,255,0,.28);border-radius:12px;padding:18px;background:rgba(0,0,0,.62)}
 .operation-grid b{color:var(--lime);font-size:28px}.operation-grid strong{display:block;margin:8px 0}.operation-grid span{text-transform:none;color:var(--muted);font-size:14px;line-height:1.4}
-.doll-kit-section{
+.character-world-section{
 width:96%;
 margin:22px auto;
 border:1px solid rgba(156,255,0,.28);
@@ -631,37 +631,37 @@ color:var(--muted);
 line-height:1.55;
 text-align:center;
 text-transform:none}
-.doll-kit-layout{
+.character-world-layout{
 display:grid;
 grid-template-columns:minmax(0,1fr);
 gap:20px;
 align-items:stretch}
-.doll-kit-hero,.doll-kit-grid article{
+.character-world-hero,.character-world-grid article{
 border:1px solid rgba(156,255,0,.25);
 border-radius:16px;
 background:rgba(0,0,0,.58)}
-.doll-kit-hero{
+.character-world-hero{
 padding:26px;
 display:flex;
 flex-direction:column;
 justify-content:center;
 min-height:100%}
-.doll-kit-hero h3{
+.character-world-hero h3{
 font-family:Bangers, cursive;
 font-size:clamp(38px, 5vw, 64px);
 line-height:.9;
 margin:8px 0 16px;
 color:var(--lime)}
-.doll-kit-hero p:not(.kicker),.doll-kit-grid p{
+.character-world-hero p:not(.kicker),.character-world-grid p{
 color:var(--muted);
 line-height:1.5;
 text-transform:none}
-.doll-kit-actions{
+.character-world-actions{
 display:flex;
 gap:12px;
 flex-wrap:wrap;
 margin-top:12px}
-.doll-kit-category-bar{
+.character-world-category-bar{
 display:flex;
 flex-wrap:wrap;
 gap:10px;
@@ -669,15 +669,15 @@ padding:14px;
 border:1px solid rgba(156,255,0,.2);
 border-radius:16px;
 background:rgba(0,0,0,.38)}
-.doll-kit-category-bar button{
+.character-world-category-bar button{
 flex:1 1 130px;
 min-height:42px;
 padding:10px 14px;
 border-radius:999px}
-.doll-kit-category-bar button.active{
+.character-world-category-bar button.active{
 background:var(--lime);
 color:#000}
-.doll-kit-selected-panel{
+.character-world-selected-panel{
 display:grid;
 gap:4px;
 padding:14px 18px;
@@ -686,20 +686,20 @@ border-radius:0 12px 12px 0;
 background:rgba(156,255,0,.08);
 color:var(--muted);
 text-transform:none}
-.doll-kit-selected-panel strong{color:var(--lime)}
-.doll-kit-grid{
+.character-world-selected-panel strong{color:var(--lime)}
+.character-world-grid{
 display:grid;
 grid-template-columns:repeat(3,minmax(0,1fr));
 gap:14px;
 align-items:stretch}
-.doll-kit-grid article{
+.character-world-grid article{
 padding:20px;
 min-width:0;
 min-height:190px;
 height:100%}
-.doll-kit-grid > .doll-kit-avatar-market{
+.character-world-grid > .character-world-avatar-market{
 grid-column:1 / -1}
-.doll-kit-grid span{
+.character-world-grid span{
 display:grid;
 place-items:center;
 width:54px;
@@ -709,12 +709,12 @@ border-radius:16px;
 background:#050805;
 font-size:28px;
 box-shadow:inset 0 0 24px rgba(156,255,0,.08)}
-.doll-kit-grid h3{
+.character-world-grid h3{
 margin:16px 0 8px;
 color:var(--lime)}
-.doll-kit-callout{
+.character-world-callout{
 margin-bottom:18px}
-.doll-kit-avatar-market{
+.character-world-avatar-market{
 flex-basis:100%;
 background:
 radial-gradient(circle at 80% 20%, rgba(156,255,0,.18), transparent 34%),
@@ -745,19 +745,19 @@ text-decoration:none}
 .avatar-market-copy{
 max-width:760px;
 margin:0 0 12px}
-.doll-kit-avatar-market .published-model-grid{
+.character-world-avatar-market .published-model-grid{
 grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr))}
-.doll-kit-avatar-market .published-model-card{
+.character-world-avatar-market .published-model-card{
 background:linear-gradient(145deg,rgba(8,18,8,.96),rgba(0,0,0,.92))}
-.doll-kit-avatar-market .live-model-viewer{
+.character-world-avatar-market .live-model-viewer{
 height:220px}
 @media(max-width:950px){.avatar-market-heading{align-items:flex-start;flex-direction:column}}
 .card,.products article,.site-choice{transition:transform .2s ease, box-shadow .2s ease}.card:hover,.products article:hover,.site-choice:hover{transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.35), 0 0 24px rgba(156,255,0,.12)}
 @media(max-width:1080px) and (min-width:951px){
-.doll-kit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.character-world-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:950px){
-.topbar{height:auto;gap:10px;align-items:flex-start;flex-direction:column;padding:10px 16px}.site-choices,.operation-grid,.doll-kit-layout{grid-template-columns:1fr}.doll-kit-grid{grid-template-columns:1fr}.start-panel{padding:22px}.site-choice{min-height:280px}.page-shell{width:96%}.hero-actions{align-items:stretch;flex-direction:column}.operation-panel{background-image:none}.doll-kit-section{width:calc(100% - 24px)}}
+.topbar{height:auto;gap:10px;align-items:flex-start;flex-direction:column;padding:10px 16px}.site-choices,.operation-grid,.character-world-layout{grid-template-columns:1fr}.character-world-grid{grid-template-columns:1fr}.start-panel{padding:22px}.site-choice{min-height:280px}.page-shell{width:96%}.hero-actions{align-items:stretch;flex-direction:column}.operation-panel{background-image:none}.character-world-section{width:calc(100% - 24px)}}
 
 /* Preserve the single-page index look from edd229a while keeping previews playable. */
 .model-detail{
@@ -1960,7 +1960,7 @@ section,
   main#home > .feature-strip{order:3}
   main#home > #models{order:4}
   main#home > #marketplace-preview{order:5}
-  main#home > #doll-kit{order:6}
+  main#home > #character-world-assets{order:6}
 }
 
 
@@ -1988,7 +1988,7 @@ section,
 }
 
 /* Linked-only 3D model marketplace cleanup */
-.avatar-link-panel{display:grid;gap:12px;overflow:hidden}.loadout-link-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:12px;width:100%;margin-top:12px}.loadout-link-grid a{display:grid;gap:6px;min-width:0;padding:14px;border:1px solid rgba(156,255,0,.34);border-radius:16px;background:linear-gradient(145deg,rgba(156,255,0,.1),rgba(0,0,0,.78));color:#fff;text-decoration:none;text-transform:none;box-shadow:inset 0 0 18px rgba(156,255,0,.05);transition:transform .18s ease,border-color .18s ease}.loadout-link-grid a:hover,.loadout-link-grid a:focus-visible{transform:translateY(-2px);border-color:var(--lime)}.loadout-link-grid strong{font-family:Bangers,cursive;font-size:clamp(24px,3vw,34px);letter-spacing:.03em;color:var(--lime);line-height:1}.loadout-link-grid span{color:var(--muted);font-size:13px;line-height:1.35}.explorer-loadout-links{width:min(1100px,96%);margin:0 auto 18px}.doll-kit-grid article{min-width:0}.doll-kit-actions{align-items:center}.doll-kit-actions .btn{white-space:normal;text-align:center}@media(max-width:640px){.loadout-link-grid{grid-template-columns:1fr}.avatar-market-heading{gap:10px}.avatar-market-heading a{width:100%;text-align:center}.doll-kit-actions{display:grid;grid-template-columns:1fr;width:100%}}
+.avatar-link-panel{display:grid;gap:12px;overflow:hidden}.loadout-link-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:12px;width:100%;margin-top:12px}.loadout-link-grid a{display:grid;gap:6px;min-width:0;padding:14px;border:1px solid rgba(156,255,0,.34);border-radius:16px;background:linear-gradient(145deg,rgba(156,255,0,.1),rgba(0,0,0,.78));color:#fff;text-decoration:none;text-transform:none;box-shadow:inset 0 0 18px rgba(156,255,0,.05);transition:transform .18s ease,border-color .18s ease}.loadout-link-grid a:hover,.loadout-link-grid a:focus-visible{transform:translateY(-2px);border-color:var(--lime)}.loadout-link-grid strong{font-family:Bangers,cursive;font-size:clamp(24px,3vw,34px);letter-spacing:.03em;color:var(--lime);line-height:1}.loadout-link-grid span{color:var(--muted);font-size:13px;line-height:1.35}.explorer-loadout-links{width:min(1100px,96%);margin:0 auto 18px}.character-world-grid article{min-width:0}.character-world-actions{align-items:center}.character-world-actions .btn{white-space:normal;text-align:center}@media(max-width:640px){.loadout-link-grid{grid-template-columns:1fr}.avatar-market-heading{gap:10px}.avatar-market-heading a{width:100%;text-align:center}.character-world-actions{display:grid;grid-template-columns:1fr;width:100%}}
 
 .explorer-icon,.house-icon{border-color:rgba(156,255,0,.48);background:linear-gradient(135deg,rgba(156,255,0,.18),rgba(255,255,255,.04));box-shadow:0 0 18px rgba(156,255,0,.12)}
 .owned-assets-block .section-title h2{display:inline-flex;align-items:center;justify-content:center;gap:.45rem}.owned-assets-grid .pill{display:inline-flex;align-items:center;gap:.35rem;border-color:rgba(156,255,0,.38);background:rgba(156,255,0,.11);color:#fff}.member-locked-content[data-locked="true"]:before{content:"Bottle Login required — your private Drop Backpack, VibeVerse tools, and Vibe Crib collectibles stay locked until you sign in"}
