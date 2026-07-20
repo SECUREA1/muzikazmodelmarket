@@ -6,6 +6,7 @@ const requiredFiles = [
   'dist/styles.css',
   'dist/script.js',
   'dist/public/js/rad-tox-launcher.js',
+  'dist/public/js/house-explorer-loader.js',
   'dist/reference.png',
 ];
 
@@ -36,6 +37,9 @@ const mainHtml = await readFile('dist/index.html', 'utf8');
 if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
   throw new Error('index.html must load the ES5 RAD-TOX compatibility launcher.');
 }
+if (!mainHtml.includes('public/js/house-explorer-loader.js') || mainHtml.includes('type="module" src="public/js/house-explorer-glb.js"')) {
+  throw new Error('index.html must lazy-load the RAD-TOX 3D engine.');
+}
 
 for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'WebGL support']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
@@ -46,6 +50,10 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
 if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-tox-app-update')) {
   throw new Error('RAD-TOX launcher must provide a compatibility fallback and publish live game updates.');
+}
+const gameLoader = await readFile('dist/public/js/house-explorer-loader.js', 'utf8');
+if (!gameLoader.includes('muzikaz:rad-tox-load-engine') || !gameLoader.includes('house-explorer-glb.js')) {
+  throw new Error('RAD-TOX must defer the 3D engine until a player requests it.');
 }
 
 for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-preview']) {
