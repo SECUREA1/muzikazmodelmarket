@@ -8,6 +8,10 @@ if (!Array.isArray(records) || records.length < 3) throw new Error('Environment 
 for (const required of ['muzikaz-main', 'muzikaz-upper', 'muzikaz-full-house']) {
   if (!records.some((record) => record.id === required)) throw new Error(`Missing ${required} environment.`);
 }
+const sheepBase = records.find((record) => record.id === 'sheepbase');
+if (!sheepBase || Number(sheepBase.spaceScale) !== 100) {
+  throw new Error('Sheep Base must retain its 100x authored-world scale so the player fits the stairs.');
+}
 const environmentDirectory = 'public/models/environments';
 const environmentFiles = (await readdir(environmentDirectory, { withFileTypes: true }))
   .filter((entry) => entry.isFile() && /\.(glb|gltf)$/i.test(entry.name))
@@ -36,5 +40,6 @@ for (const record of records) {
     if (!details.size) throw new Error(`${path} is empty.`);
   }
   if (!record.spawn || !Number.isFinite(Number(record.spawn.y))) throw new Error(`${record.id} needs spawn metadata.`);
+  if (!Number.isFinite(Number(record.spaceScale)) || Number(record.spaceScale) < 0.1 || Number(record.spaceScale) > 100) throw new Error(`${record.id} needs a spaceScale between 0.1 and 100.`);
 }
 console.log(`Validated ${records.length} repository environments, ${avatarFiles.length} avatars, and GLB headers.`);

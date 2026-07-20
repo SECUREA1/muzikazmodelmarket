@@ -18,6 +18,10 @@ export function normalizeEnvironmentList(records) {
       spawn: { x: 0, y: 1, z: 2, rotationY: 0, ...(record.spawn || {}) },
       rotation: { x: 0, y: 0, z: 0, ...(record.rotation || {}) },
       scale: Number(record.scale) || 1,
+      // Worlds are authored at very different unit sizes. Keep a map's intended
+      // walkable scale with its metadata instead of carrying the previous map's
+      // scale into it (the Sheep Base is authored as a one-unit asset).
+      spaceScale: Math.min(100, Math.max(0.1, Number(record.spaceScale) || 1)),
       collisionMode: record.collisionMode || 'auto',
       visibility: record.visibility || 'public',
       source: record.source || 'repository'
