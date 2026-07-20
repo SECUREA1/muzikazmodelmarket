@@ -63,6 +63,12 @@ if (houseExplorer.includes('data-rad-pause') || houseExplorer.includes('RAD_TOX_
   throw new Error('RAD-TOX must not expose or enter a paused state.');
 }
 
+for (const requiredHudFeature of ['data-rad-row-toggle', 'data-rad-tools-toggle', 'muzikazRadToxHiddenRows']) {
+  if (!houseExplorer.includes(requiredHudFeature)) {
+    throw new Error(`RAD-TOX must provide persistent, per-row HUD controls: missing ${requiredHudFeature}`);
+  }
+}
+
 for (const requiredUpdateCheck of ['checkForHouseUpdates', 'Promise.allSettled([refreshLibrary(), refreshAvatarLibrary()])', 'checkForHouseUpdates({ startup: true })', 'fetchGitHubGlbFiles', 'mergeGitHubAvatarFiles']) {
   if (!houseExplorer.includes(requiredUpdateCheck)) {
     throw new Error(`House Explorer must check for new maps and avatars on startup: missing ${requiredUpdateCheck}`);
