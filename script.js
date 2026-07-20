@@ -343,6 +343,43 @@ const marketplaceListings = [
 
 const marketplaceState = { type: 'All', category: 'All', modelFocus: '', curatedOnly: true };
 
+function initMarketSectionToggle() {
+  const shell = document.querySelector('.market-toggle-shell');
+  const buttons = Array.from(document.querySelectorAll('[data-market-toggle]'));
+  const panels = Array.from(document.querySelectorAll('[data-market-panel]'));
+  if (!shell || !buttons.length || !panels.length) return;
+
+  const panelIds = new Set(panels.map((panel) => panel.id));
+  function selectPanel(id, { focus = false } = {}) {
+    const selectedId = panelIds.has(id) ? id : 'models';
+    buttons.forEach((button) => {
+      const active = button.dataset.marketToggle === selectedId;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-selected', String(active));
+      button.tabIndex = active ? 0 : -1;
+      if (active && focus) button.focus();
+    });
+    panels.forEach((panel) => { panel.hidden = panel.id !== selectedId; });
+  }
+  function selectFromHash() { selectPanel(window.location.hash.slice(1)); }
+
+  shell.classList.add('is-enhanced');
+  buttons.forEach((button, index) => {
+    button.addEventListener('click', () => {
+      selectPanel(button.dataset.marketToggle, { focus: true });
+      history.replaceState(null, '', '#' + button.dataset.marketToggle);
+    });
+    button.addEventListener('keydown', (event) => {
+      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+      buttons[next].click();
+    });
+  });
+  window.addEventListener('hashchange', selectFromHash);
+  selectFromHash();
+}
+
 function initFlexLabCategories() {
   const buttons = document.querySelectorAll('[data-flex-category]');
   const cards = document.querySelectorAll('[data-flex-card]');
@@ -861,6 +898,7 @@ document.addEventListener('click', (event) => {
 renderModelCards();
 renderMerchOptions();
 syncCartCount();
+initMarketSectionToggle();
 initFlexLabCategories();
 seedDesigner();
 
