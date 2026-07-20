@@ -352,10 +352,11 @@ function initFlexLabCategories() {
     All: 'Showing every Flex Fit category together in a balanced, gap-free layout.',
     Avatars: 'Live body drops, skins, traits, poses, and profile-ready avatar slots.',
     Pets: 'Mascot-matched sidekicks with color stories, lore hooks, and follower energy.',
-    Accessories: 'Wearable flex, collectibles, instruments, bags, and power-up add-ons.',
-    Furniture: 'Studio sets, bedroom kits, booths, display walls, and hangout hubs.',
-    '3D Environments': 'Bedrooms, stages, shops, arenas, hideouts, and explorable mascot worlds.',
-    'Gaming Studio': 'Props, emotes, animation hooks, vehicles, level themes, and shop bundles.'
+    Wearables: 'Wearable flex, collectibles, instruments, bags, and power-up add-ons.',
+    Rooms: 'Studio sets, bedroom kits, booths, display walls, and hangout hubs.',
+    Props: 'Stage gear, interaction pieces, collectibles, and gameplay-ready set dressing.',
+    Vehicles: 'Mascot-matched boards, rides, transport concepts, and movement upgrades.',
+    'World Packs': 'Bedrooms, stages, shops, arenas, hideouts, and explorable mascot worlds.'
   };
   function selectCategory(category) {
     buttons.forEach((button) => {
