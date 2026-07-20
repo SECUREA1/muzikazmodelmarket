@@ -128,7 +128,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     tone(freq,duration,type='sine',volume=.06){const c=this.audioContext;if(!c||c.state!=='running')return;const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(volume,c.currentTime+.015);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+duration);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+duration+.02);}
     gasSound(volume=.022){const c=this.audioContext;if(!c||c.state!=='running'||c.currentTime-this.lastGasSoundAt<.09)return;this.lastGasSoundAt=c.currentTime;const buffer=c.createBuffer(1,Math.floor(c.sampleRate*.18),c.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*(1-i/data.length);const source=c.createBufferSource(),filter=c.createBiquadFilter(),gain=c.createGain();filter.type='bandpass';filter.frequency.value=420+Math.random()*340;filter.Q.value=.65;gain.gain.setValueAtTime(.0001,c.currentTime);gain.gain.exponentialRampToValueAtTime(volume,c.currentTime+.025);gain.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.2);source.buffer=buffer;source.connect(filter).connect(gain).connect(c.destination);source.start();}
     begin(){if([RAD_TOX_STATES.ACTIVE,RAD_TOX_STATES.PAUSED,RAD_TOX_STATES.CLEARED].includes(this.state))return this.resetRun();return this.activate();}
-    async activate(){if(this.activationPromise)return this.activationPromise;this.activationPromise=(async()=>{await this.initAudio();this.active=true;this.setState(RAD_TOX_STATES.LOADING,'Waiting for the active GLB and collision meshes…');try{if(!this.loader.world)await openHouseMap();if(!this.validEnvironment())throw new Error('The selected environment has no valid walkable geometry.');await this.ensureResources();this.totalPopped=0;this.roundStartedAt=Date.now();this.pausedDuration=0;this.setState(RAD_TOX_STATES.ACTIVE,'A green, red, and yellow toxin screen is spreading across the floor.');this.spawnInitial();this.spawnFloorGas();this.updateHud();this.tone(620,.12,'triangle');}catch(e){console.error('[RAD-TOX]',e);this.setState(RAD_TOX_STATES.ERROR,e.message||'RAD-TOX could not start.');}finally{this.activationPromise=null;}})();return this.activationPromise;}
+    async activate(){if(this.activationPromise)return this.activationPromise;this.activationPromise=(async()=>{await this.initAudio();this.active=true;this.setState(RAD_TOX_STATES.LOADING,'Waiting for the active GLB and collision meshes…');try{if(!this.loader.world)await openHouseMap();if(!this.validEnvironment())throw new Error('The selected environment has no valid walkable geometry.');await this.ensureResources();this.totalPopped=0;this.roundStartedAt=Date.now();this.pausedDuration=0;this.setState(RAD_TOX_STATES.ACTIVE,'A green, red, and yellow toxin screen is spreading across the floor.');this.spawnInitial();this.spawnFloorGas();this.updateHud();this.tone(620,.12,'triangle');}catch(e){console.error('[RAD-TOX]',e);this.setState(RAD_TOX_STATES.ERROR,e.message||'RAD-TOX could not start.');throw e;}finally{this.activationPromise=null;}})();return this.activationPromise;}
     pause(){if(this.state!==RAD_TOX_STATES.ACTIVE)return;this.pausedAt=Date.now();clearTimeout(this.spawnTimer);this.setState(RAD_TOX_STATES.PAUSED,'RAD-TOX is paused.');} resume(){if(this.state!==RAD_TOX_STATES.PAUSED)return;this.pausedDuration+=Date.now()-this.pausedAt;this.pausedAt=0;this.setState(RAD_TOX_STATES.ACTIVE,'RAD-TOX resumed.');this.scheduleSpawn();} togglePause(){this.state===RAD_TOX_STATES.ACTIVE?this.pause():this.resume();}
     handleEnvironmentWillChange(){this.environmentGeneration++;clearTimeout(this.spawnTimer);this.clearBubbles();this.clearFloorGas();this.clearParticles();if(this.active)this.setState(RAD_TOX_STATES.LOADING,'Changing environment; removing previous RAD-TOX targets…');}
     async handleEnvironmentReady(){if(!this.active)return;await this.ensureResources();this.totalPopped=0;this.roundStartedAt=Date.now();this.pausedDuration=0;this.setState(RAD_TOX_STATES.ACTIVE,'New environment ready; deploying bubbles.');this.spawnInitial();this.spawnFloorGas();}
@@ -297,7 +297,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     publishGameStage('loading-game', 'Loading the IonCore interior and deploying toxic bubbles…');
 
     try {
+      // A desktop launch should always open at the playable view, rather than
+      // leaving the player at an arbitrary scrolled position behind the overlay.
+      stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
       await openHouseMap();
+      resetPlayer();
       await toxicBubbleSystem.begin();
       gameStartScreen?.classList.add('is-hidden');
       setStatus('RAD-TOX is active. Toxic bubbles are deployed—clear the floor!');
@@ -333,8 +337,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
   if (startEnvironment && !mobileQualityMode) {
-    setStatus('Auto-loading the MUZIKAZ main floor from the restored 3D House Explorer startup path for desktop controls…');
-    await openHouseMap();
+    // Do not decode a large GLB while the visitor is browsing the page. On
+    // desktop that competes with first paint and can look like a frozen game.
+    // The Begin button now owns loading and always starts from the player spawn.
+    setStatus('Desktop game ready. Select Begin RAD-TOX to start at the house entrance.');
   } else if (startEnvironment) {
     setStatus('Mobile game is ready. Tap Start RAD-TOX to deploy immediately.');
     // Preload after first paint so the launch tap starts gameplay rather than a download.
