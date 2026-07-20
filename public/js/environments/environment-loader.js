@@ -21,7 +21,7 @@ export class EnvironmentLoader {
 
   setSpaceScale(scale) {
     if (!this.world) return null;
-    const nextScale = THREE.MathUtils.clamp(Number(scale) || 1, 0.1, 10);
+    const nextScale = THREE.MathUtils.clamp(Number(scale) || 1, 0.1, 100);
     this.spaceScale = nextScale;
     this.world.scale.setScalar(this.baseScale * this.spaceScale);
     this.world.updateMatrixWorld(true);
