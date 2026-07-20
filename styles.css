@@ -2042,3 +2042,8 @@ section,
 @keyframes marketPanelIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .market-toggle-panel.character-world-section{margin-top:0}
 @media(max-width:650px){.market-toggle-shell{margin-top:20px;padding:22px 12px 4px}.market-toggle-bar{grid-template-columns:1fr;padding:6px;gap:5px}.market-toggle-button{justify-content:flex-start;padding:12px 14px}.market-toggle-heading h2{font-size:46px}}
+
+/* Level 2 swaps the toxin sweep for a gentler, blue ghost encounter. */
+.house-stage.is-ghost-level .rad-tox-hud{border-color:rgba(93,210,255,.72);background:rgba(2,12,35,.84);color:#e5f9ff;box-shadow:0 0 28px rgba(47,162,255,.25)}
+.house-stage.is-ghost-level .rad-tox-hud strong{color:#71ddff}
+.house-stage.is-ghost-level .house-reticle.is-toxic-target{color:#b5f4ff;text-shadow:0 0 10px #fff,0 0 26px #278cff}
