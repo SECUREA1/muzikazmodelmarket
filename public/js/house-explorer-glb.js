@@ -10,9 +10,8 @@ import { FLOOR_ENTRY_OFFSET, alignPointAboveFloor } from './environments/environ
 const legacyCanvas = document.querySelector('#house-explorer-canvas');
 const stage = legacyCanvas?.closest('.house-stage');
 const hud = document.querySelector('.house-hud');
-const isFirefox = /firefox\//i.test(navigator.userAgent || '') && !/seamonkey/i.test(navigator.userAgent || '');
 
-if (legacyCanvas instanceof HTMLCanvasElement && stage && hud && isFirefox) {
+if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const oldStatus = document.querySelector('#house-status');
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
   const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
@@ -315,7 +314,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud && isFirefox) {
   }
   gameStartButton?.addEventListener('click', (event) => { event.preventDefault(); startRadToxGame(); });
   document.addEventListener('muzikaz:rad-tox-request', () => startRadToxGame());
-  publishGameStage('engine-ready', 'Firefox game engine ready.');
+  publishGameStage('engine-ready', 'RAD-TOX game engine ready.');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
   canvas.addEventListener('click', () => {
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start walking.'));
@@ -342,9 +341,4 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud && isFirefox) {
     const preload = () => openHouseMap().catch((error) => setStatus(error.message || 'Unable to prepare the MUZIKAZ house game.'));
     if ('requestIdleCallback' in window) window.requestIdleCallback(preload, { timeout: 1200 }); else window.setTimeout(preload, 250);
   }
-} else if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
-  // A web page cannot launch another installed application. Keep the game surface
-  // inactive here and give the launcher a deterministic Firefox-only state instead.
-  stage.classList.add('is-firefox-required');
-  document.querySelector('#house-status').textContent = 'RAD-TOX only works in the Mozilla Firefox browser. Open this page in Firefox to play.';
 }
