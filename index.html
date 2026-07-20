@@ -125,7 +125,24 @@
             </div>
         </section>
 
-        <section class="section-block" id="models">
+        <section class="market-toggle-shell" aria-labelledby="market-toggle-title">
+            <div class="market-toggle-heading">
+                <p class="kicker">Explore the market</p>
+                <h2 id="market-toggle-title">Choose your MUZIKAZ station</h2>
+                <p>Swap between the starter market, marketplace engine, and character world without stacking every catalog on one page.</p>
+            </div>
+            <div class="market-toggle-bar" role="tablist" aria-label="Market sections">
+                <button class="market-toggle-button is-active" id="market-toggle-models" type="button" role="tab" aria-selected="true" aria-controls="models" data-market-toggle="models">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4.5 7.8 7.5 4.3 7.5-4.3M12 12v9"/></svg><span>Starter market</span>
+                </button>
+                <button class="market-toggle-button" id="market-toggle-marketplace" type="button" role="tab" aria-selected="false" aria-controls="marketplace-preview" data-market-toggle="marketplace-preview" tabindex="-1">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1 11H5L4 9Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3M8 14h8"/></svg><span>Marketplace engine</span>
+                </button>
+                <button class="market-toggle-button" id="market-toggle-worlds" type="button" role="tab" aria-selected="false" aria-controls="character-world-assets" data-market-toggle="character-world-assets" tabindex="-1">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20v-7l7-9 7 9v7M9 20v-5h6v5M12 4V2"/></svg><span>Avatars &amp; worlds</span>
+                </button>
+            </div>
+        <section class="section-block market-toggle-panel" id="models" data-market-panel="models" role="tabpanel" aria-labelledby="market-toggle-models">
             <div class="section-title"><span></span><h2>Starter model market</h2><a href="members.html">Unlock legendary drops</a></div>
             <div class="collection-grid" aria-label="Starter model collections"></div>
             <p class="status-message" id="model-status" role="status">Select a model card to preview its collection.</p>
@@ -147,7 +164,7 @@
         </section>
 
 
-        <section class="section-block public-marketplace" id="marketplace-preview">
+        <section class="section-block public-marketplace market-toggle-panel" id="marketplace-preview" data-market-panel="marketplace-preview" role="tabpanel" aria-labelledby="market-toggle-marketplace">
             <div class="section-title"><span></span><h2>Marketplace engine</h2><a href="members.html#marketplace">Open the market</a></div>
             <div class="market-engine-grid" aria-label="Connected marketplace collections">
                 <article><img src="muzikaz_high_level_image_pack1/04_collection_tiles/originals_tile_2x.png" alt="Originals collection tile"><span class="pill">Character Models</span><h3>Originals Pack</h3><p>Starter mascot page with hero art, supporting graphics, logo assets, and connected hoodie/keychain merch.</p><a class="card-link" href="originals.html">Open page</a></article>
@@ -157,7 +174,7 @@
             </div>
         </section>
 
-        <section class="section-block character-world-section" id="character-world-assets" aria-labelledby="character-world-assets-title">
+        <section class="section-block character-world-section market-toggle-panel" id="character-world-assets" data-market-panel="character-world-assets" role="tabpanel" aria-labelledby="market-toggle-worlds character-world-assets-title">
             <div class="section-title"><span></span><h2 id="character-world-assets-title">Character & World Assets</h2><a href="members.html#character-shop">Build a loadout</a></div>
             <p class="section-subheading">Build a complete MUZIKAZ experience from one connected catalog. Discover 3D characters, companion assets, wearables, props, vehicles, and fully staged worlds—organized for creators, collectors, and play.</p>
             <div class="character-world-layout">
@@ -207,6 +224,8 @@
                     <article data-flex-card="World Packs"><span>🏠</span><h3>World packs</h3><p>Bedrooms, studios, stages, shops, arenas, hideouts, and explorable mascot worlds.</p><a class="card-link" href="#house-explorer">Open world explorer</a></article>
                 </div>
             </div>
+        </section>
+
         </section>
 
         <section class="section-block" id="merch">
