@@ -38,11 +38,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (message && levelLoaderMessage) levelLoaderMessage.textContent = message;
     if (levelLoaderFill) levelLoaderFill.style.width = `${levelLoaderProgress}%`;
     if (levelLoaderPercent) levelLoaderPercent.textContent = `${levelLoaderProgress}%`;
+    if (gameLoadStatus) gameLoadStatus.textContent = `Loading RAD-TOX: ${levelLoaderProgress}%${message ? ` — ${message}` : ''}`;
     levelLoaderScale?.setAttribute('aria-valuenow', String(levelLoaderProgress));
   }
   function showLevelLoader(level, message) {
     levelLoaderProgress = 0;
-    if (levelLoaderTitle) levelLoaderTitle.textContent = `Preparing level ${level}`;
+    if (levelLoaderTitle) levelLoaderTitle.textContent = `Loading level ${level}`;
     updateLevelLoader(4, message);
     if (levelLoader) levelLoader.hidden = false;
     stage.classList.add('is-level-transitioning');
@@ -157,7 +158,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // PMREM generation is an expensive GPU pass with no gameplay benefit on the
   // performance renderer. Skipping it keeps the first mobile frame responsive.
   const pmrem = performanceMode ? null : new THREE.PMREMGenerator(renderer); if (pmrem) scene.environment = pmrem.fromScene(new THREE.Scene(), 0.04).texture;
-  const clock = new THREE.Clock(); const registry = new EnvironmentRegistry(); const envLoader = new EnvironmentLoader({ scene, renderer, onProgress: (p) => { const progress = Math.max(4, Math.min(100, p)); loadingFill.style.width = `${progress}%`; updateLevelLoader(progress, 'Streaming world geometry and preparing the encounter…'); } });
+  const clock = new THREE.Clock(); const registry = new EnvironmentRegistry(); const envLoader = new EnvironmentLoader({ scene, renderer, onProgress: (p) => { const progress = Math.max(4, Math.min(100, p)); loadingFill.style.width = `${progress}%`; updateLevelLoader(progress, 'Streaming world geometry and loading the encounter…'); } });
   const avatarLoader = new GLTFLoader(); const avatarRaycaster = new THREE.Raycaster(); const avatarPointer = new THREE.Vector2(); const placedAvatars = new THREE.Group(); placedAvatars.name = 'MUZIKAZ_PLACED_AVATARS'; scene.add(placedAvatars);
   const landingFrame = new THREE.Group(); landingFrame.name = 'MUZIKAZ_LANDING_FLOOR_FRAME'; scene.add(landingFrame);
   let activeAvatar = null;
