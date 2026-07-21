@@ -5,6 +5,7 @@ const requiredFiles = [
   ...htmlPages.map((page) => `dist/${page}`),
   'dist/styles.css',
   'dist/script.js',
+  'dist/public/js/game-audio.js',
   'dist/public/js/rad-tox-launcher.js',
   'dist/reference.png',
 ];
@@ -40,6 +41,9 @@ for (const githubSetting of ['name="muzikaz-github-repository" content="SECUREA1
 }
 if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
   throw new Error('index.html must load the ES5 RAD-TOX compatibility launcher.');
+}
+if (!mainHtml.includes('public/js/game-audio.js')) {
+  throw new Error('index.html must load the procedural RAD-TOX soundtrack.');
 }
 
 for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'WebGL support']) {
