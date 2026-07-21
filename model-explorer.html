@@ -25,6 +25,9 @@
   <title>MUZIKAZ VibeVerse Explorer | House & 3D Packs</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- The game engine is requested only after Begin; this connection makes that
+       opt-in launch feel immediate without downloading Three.js on page load. -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -183,7 +186,8 @@
   <script src="public/js/rad-tox-launcher.js"></script>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <script type="module" src="public/js/model-gallery.js"></script>
-  <script type="module" src="public/js/house-explorer-glb.js"></script>
+  <!-- rad-tox-launcher loads the 3D module after a Start/Begin action. Keeping
+       it out of the initial document avoids competing with first paint. -->
   <script type="module" src="public/js/model-publisher.js"></script>
   <script src="script.js"></script>
 </body>

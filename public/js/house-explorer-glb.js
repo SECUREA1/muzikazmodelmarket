@@ -372,10 +372,20 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     toxicBubbleSystem.update(delta, clock.elapsedTime);
     renderer.render(scene, camera);
   });
-  // Always query both live sources when the explorer boots. This intentionally
-  // bypasses cached lists so newly published maps and avatars are available
-  // before the player opens the world or avatar picker.
-  await checkForHouseUpdates({ startup: true });
+  // This is the launch-critical half of checkForHouseUpdates({ startup: true }).
+  // Do not make the player's Start action wait for the avatar feed (which can
+  // include a remote GitHub lookup); refresh that optional picker in the
+  // background instead.
+  setStatus('Finding the fastest available house world…');
+  try {
+    await refreshLibrary();
+  } catch (error) {
+    console.warn('[MUZIKAZ Environment]', 'Map refresh failed', error);
+  }
+  renderPicker();
+  refreshAvatarLibrary().then(renderPicker).catch((error) => {
+    console.warn('[MUZIKAZ Environment]', 'Avatar refresh failed', error);
+  });
   const params = new URLSearchParams(location.search);
   const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
   const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
