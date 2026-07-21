@@ -133,6 +133,7 @@
                     <button class="house-bottom-control" id="house-fullscreen" type="button"><b aria-hidden="true">⛶</b><span>Fullscreen</span></button>
                     <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">👤</b><span>Avatar</span></button>
                     <button class="house-bottom-control house-bottom-control-begin" id="house-start-game" type="button"><b aria-hidden="true">◉</b><span>Begin</span></button>
+                    <button class="house-bottom-control" id="house-audio-toggle" type="button" aria-pressed="true"><b aria-hidden="true">♫</b><span>Sound: on</span></button>
                     <small class="house-firefox-label">WebGL required</small>
                     <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
                 </div>
@@ -295,7 +296,7 @@
             <a class="logo" href="#home"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
             <p>Neon model-market landing page powered by the included MUZIKAZ asset pack.</p>
         </div>
-        <div><h4>Shop</h4><a href="#models">Models</a><a href="#merch">Merch</a><a href="members.html">Bottle Login</a></div>
+        <div><h4>Shop</h4><a href="#models">Models</a><a href="#merch">Merch</a><a href="login.html">Bottle Login</a></div>
         <div><h4>Support</h4><a href="mailto:crew@muzikaz.example">Contact</a><a href="#crew">Drops</a></div>
         <div><h4>Company</h4><a href="#crew">Crew</a><a href="#home">About</a></div>
         <div><h4>Follow</h4><p class="socials">◎ ♫ ✕</p></div>
@@ -303,6 +304,7 @@
 
     <!-- ES5 fallback loads before module-only game code so RAD-TOX remains playable in IE11. -->
     <script src="public/js/rad-tox-launcher.js"></script>
+    <script src="public/js/game-audio.js"></script>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script type="module" src="public/js/model-gallery.js"></script>
     <!-- The GLB game module is injected by the launcher after the player presses
