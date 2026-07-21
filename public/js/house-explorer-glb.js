@@ -4,7 +4,7 @@ import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/
 import { EnvironmentRegistry } from './environments/environment-registry.js';
 import { EnvironmentLoader } from './environments/environment-loader.js';
 import { configureRenderer } from './environments/environment-quality.js';
-import { logEnvironment } from './environments/environment-api.js';
+import { BUNDLED_ENVIRONMENTS, logEnvironment } from './environments/environment-api.js';
 import { FLOOR_ENTRY_OFFSET, alignPointAboveFloor } from './environments/environment-collision.js';
 import { fetchGitHubGlbFiles, mergeGitHubAvatarFiles } from './github-glb-discovery.js';
 import { BeeDuckEnemy, BEEDUCK_LEVEL_ONE } from './beeduck-enemy.js';
@@ -375,23 +375,17 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     toxicBubbleSystem.update(delta, clock.elapsedTime); beeDuck.update(delta, clock.elapsedTime);
     renderer.render(scene, camera);
   });
-  // This is the launch-critical half of checkForHouseUpdates({ startup: true }).
-  // Do not make the player's Start action wait for the avatar feed (which can
-  // include a remote GitHub lookup); refresh that optional picker in the
-  // background instead.
-  setStatus('Finding the fastest available house world…');
-  try {
-    await refreshLibrary();
-  } catch (error) {
-    console.warn('[MUZIKAZ Environment]', 'Map refresh failed', error);
-  }
+  // Seed the full bundled campaign before any network work. This lets the
+  // launcher immediately decode Level 1 while API/GitHub discovery refreshes
+  // the optional world and avatar pickers in the background.
+  registry.seed(BUNDLED_ENVIRONMENTS);
   renderPicker();
-  refreshAvatarLibrary().then(renderPicker).catch((error) => {
-    console.warn('[MUZIKAZ Environment]', 'Avatar refresh failed', error);
-  });
   const params = new URLSearchParams(location.search);
   const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
   const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
+  checkForHouseUpdates({ startup: true }).catch((error) => {
+    console.warn('[MUZIKAZ Environment]', 'Background map and avatar refresh failed', error);
+  });
   let houseMapPromise = null;
   async function openHouseMap() {
     canvas.focus({ preventScroll: true });
@@ -458,14 +452,5 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     event.preventDefault();
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
-  if (startEnvironment && !mobileQualityMode) {
-    // Do not decode a large GLB while the visitor is browsing the page. On
-    // desktop that competes with first paint and can look like a frozen game.
-    // The Begin button now owns loading and always starts from the player spawn.
-    setStatus('Desktop game ready. Select Begin RAD-TOX to start at the house entrance.');
-  } else if (startEnvironment) {
-    setStatus('Mobile game is ready. Tap Start RAD-TOX to deploy immediately.');
-    // Keep decoding on the player's Begin action. Background GLB decoding can
-    // monopolize memory on mobile browsers before the visitor is ready to play.
-  }
+  if (startEnvironment) setStatus('RAD-TOX is loading the complete Level 1 mission now.');
 }

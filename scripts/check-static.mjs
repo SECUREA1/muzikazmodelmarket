@@ -69,6 +69,10 @@ for (const requiredLaunchFeature of ["module.src='public/js/house-explorer-glb.j
     throw new Error(`RAD-TOX must provide an automatic game launch and compatibility mission: missing ${requiredLaunchFeature}`);
   }
 }
+
+for (const instantLoadHint of ['rel="modulepreload" href="public/js/house-explorer-glb.js"', 'rel="preload" href="public/models/environments/muzimakzmain.glb"']) {
+  if (!mainHtml.includes(instantLoadHint)) throw new Error(`index.html is missing RAD-TOX instant-load hint: ${instantLoadHint}`);
+}
 if (!launcher.includes('window.setTimeout(autoStart,0)')) {
   throw new Error('RAD-TOX must auto-load the complete game on page startup.');
 }
@@ -89,7 +93,7 @@ for (const requiredHudFeature of ['data-rad-row-toggle', 'data-rad-tools-toggle'
   }
 }
 
-for (const requiredUpdateCheck of ['checkForHouseUpdates', 'Promise.allSettled([refreshLibrary(), refreshAvatarLibrary()])', 'checkForHouseUpdates({ startup: true })', 'fetchGitHubGlbFiles', 'mergeGitHubAvatarFiles']) {
+for (const requiredUpdateCheck of ['BUNDLED_ENVIRONMENTS', 'registry.seed(BUNDLED_ENVIRONMENTS)', 'checkForHouseUpdates({ startup: true })', 'Promise.allSettled([refreshLibrary(), refreshAvatarLibrary()])', 'fetchGitHubGlbFiles', 'mergeGitHubAvatarFiles']) {
   if (!houseExplorer.includes(requiredUpdateCheck)) {
     throw new Error(`House Explorer must check for new maps and avatars on startup: missing ${requiredUpdateCheck}`);
   }
