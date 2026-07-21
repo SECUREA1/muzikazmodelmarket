@@ -16,7 +16,13 @@
   function setButtons(disabled, label) { var controls=buttons(); for(var i=0;i<controls.length;i+=1){ controls[i].disabled=disabled; if(label) controls[i].textContent=label; } }
   function publish(next, message) { document.dispatchEvent(makeEvent('muzikaz:rad-tox-app-update', { stage: next, message: message || '' })); }
   function setState(next, message) { state = next; document.documentElement.setAttribute('data-radtox-state', next); log('stage '+next); if(message) status(message); publish(next, message); }
-  function supportsModern() { if(modernSupport !== undefined)return modernSupport; var s=document.createElement('script'), c=document.createElement('canvas'), gl; try{gl=c.getContext&&((window.WebGL2RenderingContext&&c.getContext('webgl2'))||c.getContext('webgl')||c.getContext('experimental-webgl'));}catch(ignore){gl=null;} modernSupport='noModule' in s && !!(window.Promise && window.fetch && window.URL && window.CustomEvent && gl); return modernSupport; }
+  function supportsModern() { if(modernSupport !== undefined)return modernSupport; var s=document.createElement('script'), c=document.createElement('canvas'), gl; try{gl=c.getContext&&((window.WebGL2RenderingContext&&c.getContext('webgl2'))||c.getContext('webgl')||c.getContext('experimental-webgl'));}catch(ignore){gl=null;}
+    // The WebGL mission uses Pointer Events for drag, touch, thumbstick, and
+    // target input. Older Safari and embedded WebViews can support modules and
+    // WebGL without Pointer Events, which previously left a rendered game with
+    // no usable controls. Route those browsers to the complete click-based
+    // compatibility mission instead.
+    modernSupport='noModule' in s && !!(window.Promise && window.fetch && window.URL && window.CustomEvent && window.PointerEvent && gl); return modernSupport; }
   function clearWatchdog(){ if(watchdog){window.clearTimeout(watchdog);watchdog=0;} }
   function armWatchdog(){ clearWatchdog(); watchdog=window.setTimeout(function(){ if(state==='booting'){ status('The 3D view is taking longer than expected. Compatibility Mode is starting so you can play now.'); startCompatibility(); } },ENGINE_STARTUP_TIMEOUT_MS); }
   function addRecovery(){ var host=document.getElementById('house-game-start'); if(!host || host.querySelector('[data-radtox-recovery]')) return; var box=document.createElement('p'); box.setAttribute('data-radtox-recovery',''); box.innerHTML='<button type="button" data-radtox-retry>Retry 3D Game</button> <button type="button" data-radtox-compat>Start Compatibility Mode</button>'; host.appendChild(box); box.onclick=function(e){var t=e.target; if(t.getAttribute('data-radtox-retry')!==null){e.preventDefault(); queued=true; setState('booting','Retrying 3D engine…'); armWatchdog(); document.dispatchEvent(makeEvent('muzikaz:rad-tox-retry'));} if(t.getAttribute('data-radtox-compat')!==null){e.preventDefault(); startCompatibility();}}; }
@@ -30,6 +36,10 @@
     // IE11 and older mobile WebViews do not need to wait for a module, WebGL,
     // or a world file. Build their complete ES5 mission during startup so
     // it is playable immediately rather than showing a simulated load screen.
+    // A slow module may finish after the watchdog has selected this game.
+    // Keep this player-selected, fully playable mission authoritative rather
+    // than letting a late 3D-ready event replace its state underneath it.
+    engineRequested=false;
     setState('compatibility-mode','Level 1 active. Clear every toxic bubble.');
     safeScrollIntoView(stage);
     var game=document.createElement('section'); game.className='rad-tox-compat-game';
@@ -59,9 +69,17 @@
     else if(state==='booting'){ armWatchdog(); }
     else {setState('booting','Loading RAD-TOX: 0%'); startEngine(); armWatchdog();}
   }
-  document.addEventListener('muzikaz:rad-tox-engine-ready',function(){clearWatchdog();setState('engine-ready','3D engine ready.');if(queued)document.dispatchEvent(makeEvent('muzikaz:rad-tox-request'));});
+  document.addEventListener('muzikaz:rad-tox-engine-ready',function(){
+    if(state==='compatibility-mode' || document.querySelector('.rad-tox-compat-game')){ log('Ignoring late 3D engine after compatibility mission started.'); return; }
+    clearWatchdog();setState('engine-ready','3D engine ready.');if(queued)document.dispatchEvent(makeEvent('muzikaz:rad-tox-request'));
+  });
   document.addEventListener('muzikaz:rad-tox-stage',function(e){var d=e.detail||{};setState(d.stage||'loading-manifest',d.message);});
   document.addEventListener('muzikaz:rad-tox-native-error',function(e){var d=e.detail||{}; fail(d.stage||'3D game',d.message||'The environment could not be started.'); status('The 3D environment could not start. Compatibility Mode is opening so the mission remains playable.'); startCompatibility();});
+  // Dynamic module import failures are not reported consistently by every
+  // browser through script.onerror. Catch the module's own errors as well so
+  // a browser never remains on a loading screen when the 3D engine cannot run.
+  window.addEventListener('error',function(e){var source=String(e.filename||''); if(state==='booting' && engineRequested && (source.indexOf('house-explorer-glb.js')!==-1 || source.indexOf('cdn.jsdelivr.net/npm/three')!==-1)){ fail('3D engine','The 3D engine could not start in this browser.'); startCompatibility(); }},true);
+  window.addEventListener('unhandledrejection',function(){if(state==='booting' && engineRequested){fail('3D engine','The 3D engine could not start in this browser.');startCompatibility();}});
   function isStartControl(t){while(t&&t.id!=='house-start-game'&&(!t.getAttribute||t.getAttribute('data-house-start')===null))t=t.parentNode;return t;}
   // The Begin control remains available for restarting the request if needed.
   document.addEventListener('pointerdown',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);

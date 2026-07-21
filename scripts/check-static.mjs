@@ -61,7 +61,7 @@ if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must load the House Explorer module through the compatibility launcher.');
 }
-for (const requiredLaunchFeature of ["module.src='public/js/house-explorer-glb.js'", 'function startEngine()', 'function request()', "state = 'booting'", 'ENGINE_STARTUP_TIMEOUT_MS = 12000', 'Mission active now — clear every toxic bubble.', 'Full Compatibility Mission', 'function autoStart()', 'window.setTimeout(autoStart,0)']) {
+for (const requiredLaunchFeature of ["module.src='public/js/house-explorer-glb.js'", 'function startEngine()', 'function request()', "state = 'booting'", 'ENGINE_STARTUP_TIMEOUT_MS = 12000', 'window.PointerEvent', 'Ignoring late 3D engine after compatibility mission started.', "window.addEventListener('unhandledrejection'", 'Mission active now — clear every toxic bubble.', 'Full Compatibility Mission', 'function autoStart()', 'window.setTimeout(autoStart,0)']) {
   if (!launcher.includes(requiredLaunchFeature)) {
     throw new Error(`RAD-TOX must provide an automatic game launch and compatibility mission: missing ${requiredLaunchFeature}`);
   }
