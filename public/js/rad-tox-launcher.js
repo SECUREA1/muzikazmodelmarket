@@ -20,7 +20,32 @@
   function fail(stage, message){ clearWatchdog(); setState('error', stage+': '+message); var controls=buttons(); for(var i=0;i<controls.length;i+=1){controls[i].disabled=false; controls[i].textContent=controls[i].id==='house-start-game'?'Begin':'Start RAD-TOX';} addRecovery(); }
   function makeEvent(name, detail){ var e; try {e=new window.CustomEvent(name,{detail:detail||{}});} catch(ignore){ e=document.createEvent('Event');e.initEvent(name,true,true);e.detail=detail||{};} return e; }
   function safeScrollIntoView(node){try{node.scrollIntoView({ behavior:'smooth', block:'start' });}catch(ignore){node.scrollIntoView(true);}}
-  function startCompatibility(){ clearWatchdog(); setState('compatibility-mode','Compatibility Mode active. Clear every toxic bubble.'); var stage=document.querySelector('.house-stage'), screen=document.getElementById('house-game-start'); if(!stage || stage.querySelector('.rad-tox-compat-game'))return; safeScrollIntoView(stage); var game=document.createElement('section'); game.className='rad-tox-compat-game'; game.innerHTML='<div class="rad-tox-compat-head"><strong>☢ RAD-TOX — Compatibility Mode</strong><span data-score>Clear 0 / 12</span></div><p>Mission active now — clear every toxic bubble.</p><div class="rad-tox-compat-field"></div>'; stage.appendChild(game);if(screen)screen.className+=' is-hidden';var score=0,field=game.querySelector('.rad-tox-compat-field'),label=game.querySelector('[data-score]'),audio;function sound(kind){var A=window.AudioContext||window.webkitAudioContext,now,o,g;if(!A)return;try{audio=audio||new A();if(audio.state==='suspended')audio.resume();now=audio.currentTime;o=audio.createOscillator();g=audio.createGain();o.type=kind==='clear'?'triangle':'square';o.frequency.setValueAtTime(kind==='clear'?660:210+score*18,now);o.frequency.exponentialRampToValueAtTime(kind==='clear'?1320:420+score*22,now+(kind==='clear'?.2:.07));g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(.07,now+.01);g.gain.exponentialRampToValueAtTime(.0001,now+(kind==='clear'?.24:.1));o.connect(g);g.connect(audio.destination);o.start(now);o.stop(now+.28);}catch(ignore){}}function populate(){score=0;field.innerHTML='';label.innerHTML='Clear 0 / 12';for(var i=0;i<12;i+=1){var x=document.createElement('button');x.type='button';x.className='rad-tox-compat-bubble';x.style.left=(5+(i*29)%84)+'%';x.style.top=(10+(i*37)%70)+'%';x.innerHTML='☢';x.onclick=function(){if(this.disabled)return;this.disabled=true;this.setAttribute('data-popped','');this.innerHTML='✓';score+=1;sound(score===12?'clear':'pop');label.innerHTML=score===12?'Floor cleared!':'Clear '+score+' / 12';status(score===12?'RAD-TOX complete!':'Toxic bubble cleared. '+(12-score)+' remain.');};field.appendChild(x);}} populate();}
+  function startCompatibility(){
+    clearWatchdog();
+    var stage=document.querySelector('.house-stage'), screen=document.getElementById('house-game-start');
+    if(!stage || stage.querySelector('.rad-tox-compat-game') || stage.querySelector('.rad-tox-compat-loader'))return;
+    setState('loading-game','Loading the full compatibility mission: level 1…');
+    safeScrollIntoView(stage);
+    var loader=document.createElement('section');
+    loader.className='rad-tox-compat-loader';
+    loader.setAttribute('role','status');
+    loader.innerHTML='<p class="kicker">RAD-TOX loading</p><h3>Loading level 1</h3><p>Preparing the full browser-compatible encounter…</p><div class="rad-tox-compat-loader__bar"><span></span></div><strong>100%</strong>';
+    stage.appendChild(loader);
+    // Keep legacy browsers on the same load-then-play path as the WebGL game.
+    // The compact mission deliberately avoids modules, WebGL, and modern syntax.
+    window.setTimeout(function(){
+      if(loader.parentNode)loader.parentNode.removeChild(loader);
+      setState('compatibility-mode','Level 1 active. Clear every toxic bubble.');
+      var game=document.createElement('section'); game.className='rad-tox-compat-game';
+      game.innerHTML='<div class="rad-tox-compat-head"><strong>☢ RAD-TOX — Full Compatibility Mission</strong><span data-score>Level 1 · Clear 0 / 12</span></div><p data-mission>Mission active now — clear every toxic bubble.</p><div class="rad-tox-compat-field"></div>';
+      stage.appendChild(game);if(screen)screen.className+=' is-hidden';
+      var score=0,level=1,totalLevels=3,field=game.querySelector('.rad-tox-compat-field'),label=game.querySelector('[data-score]'),mission=game.querySelector('[data-mission]'),audio;
+      function sound(kind){var A=window.AudioContext||window.webkitAudioContext,now,o,g,clear=kind==='clear';if(!A)return;try{audio=audio||new A();if(audio.state==='suspended')audio.resume();now=audio.currentTime;o=audio.createOscillator();g=audio.createGain();o.type=clear?'triangle':'square';o.frequency.setValueAtTime(clear?660:210+score*18,now);o.frequency.exponentialRampToValueAtTime(clear?1320:420+score*22,now+(clear ? .2 : .07));g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(.07,now+.01);g.gain.exponentialRampToValueAtTime(.0001,now+(clear ? .24 : .1));o.connect(g);g.connect(audio.destination);o.start(now);o.stop(now+.28);}catch(ignore){}}
+      function populate(){score=0;field.innerHTML='';label.innerHTML='Level '+level+' · Clear 0 / 12';mission.innerHTML='Level '+level+' active — clear every toxic bubble.';for(var i=0;i<12;i+=1){var x=document.createElement('button');x.type='button';x.className='rad-tox-compat-bubble';x.style.left=(5+(i*29+level*7)%84)+'%';x.style.top=(10+(i*37+level*11)%70)+'%';x.innerHTML=level===2?'♆':'☢';x.onclick=function(){if(this.disabled)return;this.disabled=true;this.setAttribute('data-popped','');this.innerHTML='✓';score+=1;sound(score===12?'clear':'pop');label.innerHTML='Level '+level+' · Clear '+score+' / 12';status('Level '+level+': toxic bubble cleared. '+(12-score)+' remain.');if(score===12){if(level<totalLevels){level+=1;mission.innerHTML='Level clear. Loading level '+level+'…';setState('loading-game','Loading compatibility level '+level+'…');window.setTimeout(function(){setState('compatibility-mode','Level '+level+' active. Clear every toxic bubble.');populate();},500);}else{label.innerHTML='Full mission complete!';mission.innerHTML='All three compatibility levels cleared.';status('RAD-TOX full compatibility mission complete!');}}};field.appendChild(x);}}
+      populate();
+    },300);
+  }
+
   function startEngine(){
     if(engineRequested)return;
     engineRequested=true;
