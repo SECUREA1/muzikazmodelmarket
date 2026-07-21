@@ -19,6 +19,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
   const resetButton = document.querySelector('#house-reset')?.cloneNode(true); document.querySelector('#house-reset')?.replaceWith(resetButton);
   const fullscreenButton = document.querySelector('#house-fullscreen')?.cloneNode(true); document.querySelector('#house-fullscreen')?.replaceWith(fullscreenButton);
+  const pointerLockButton = document.querySelector('#house-pointer-lock-toggle');
   const bottomControls = document.querySelector('.house-bottom-controls');
   // This launch control lives in the page markup. script.js intentionally yields to
   // this GLB explorer, so the GLB implementation must own the overlay's action too.
@@ -53,7 +54,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     window.setTimeout(() => { if (levelLoader) levelLoader.hidden = true; stage.classList.remove('is-level-transitioning'); }, reducedMotion ? 0 : 260);
   }
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
-  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Enter interior: mouse-look</span><span>Drag/touch: look</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
+  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Drag/touch anywhere in the view: look</span><span>Enter crib toggle: lock cursor (desktop)</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
 
   const controllerIcon = (path) => `<svg class="controller-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
 
@@ -311,11 +312,16 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
   window.addEventListener('keydown', (e) => { const key = e.key.toLowerCase(); keys.add(key); if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) e.preventDefault(); if (key === ' ') { e.preventDefault(); if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } } if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08); if (key === 'e') player.eyeHeight = Math.min(2.25, player.eyeHeight + .08); if (key === 'r') resetPlayer(); if (key === 'i') { e.preventDefault(); toxicBubbleSystem.toggleInventory(); } }); window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase())); window.addEventListener('blur', () => keys.clear());
   const pointerLockSupported = Boolean(canvas.requestPointerLock);
-  document.addEventListener('pointerlockchange', () => {
+  function syncPointerLockControls() {
     const locked = document.pointerLockElement === canvas;
-    walkButton.textContent = locked ? 'Exit pointer lock' : (envLoader.world ? 'Start game' : 'Start game');
-    walkButton.setAttribute('aria-pressed', String(locked || !pointerLockSupported));
-  });
+    walkButton.textContent = envLoader.world ? 'Game active' : 'Start game';
+    walkButton.setAttribute('aria-pressed', String(Boolean(envLoader.world)));
+    if (!pointerLockButton) return;
+    pointerLockButton.textContent = locked ? 'Exit crib · unlock cursor' : 'Enter crib · lock cursor';
+    pointerLockButton.setAttribute('aria-pressed', String(locked));
+    pointerLockButton.setAttribute('aria-label', locked ? 'Exit the Vibe Crib cursor lock' : 'Enter the Vibe Crib and lock the cursor');
+  }
+  document.addEventListener('pointerlockchange', syncPointerLockControls);
   document.addEventListener('mousemove', (e) => { if (document.pointerLockElement !== canvas) return; player.yaw -= e.movementX * .0025; player.pitch = THREE.MathUtils.clamp(player.pitch - e.movementY * .002, -1.25, 1.15); });
   scaleControl.querySelector('input').addEventListener('input', (e) => applySpaceScale(e.target.value)); scaleControl.querySelectorAll('[data-space-scale]').forEach((button) => button.addEventListener('click', () => applySpaceScale(currentSpaceScale + (button.dataset.spaceScale === 'up' ? .1 : -.1)))); viewControls.querySelectorAll('[data-zoom]').forEach((button) => button.addEventListener('click', () => applyZoom(button.dataset.zoom === 'in' ? -1 : 1))); syncZoomControls();
   environmentSelect?.addEventListener('change', (event) => { if (event.target.value) loadById(event.target.value); });
@@ -323,7 +329,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   let toxicTap = null; let toxicConsumedClick = false;
   canvas.addEventListener('click', (event) => { if (!toxicConsumedClick) return; toxicConsumedClick=false; event.preventDefault(); event.stopImmediatePropagation(); }, true);
   toxicButton.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); toxicBubbleSystem.begin(); });
-  canvas.addEventListener('pointerdown', (event) => { if (document.pointerLockElement === canvas && event.button === 0) { toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
+  canvas.addEventListener('pointerdown', (event) => { openHouseMap().catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.')); if (document.pointerLockElement === canvas && event.button === 0) { toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
   canvas.addEventListener('pointerup', (event) => { if (!toxicTap || toxicTap.id !== event.pointerId) return; const moved=Math.hypot(event.clientX-toxicTap.x,event.clientY-toxicTap.y); if (!toxicTap.avatar && moved<=8) toxicConsumedClick=toxicBubbleSystem.handlePointerInteraction(event) || toxicConsumedClick; toxicTap=null; });
   canvas.addEventListener('pointercancel', () => { toxicTap=null; });
   canvas.addEventListener('pointerdown', (e) => { if (document.pointerLockElement === canvas) return; e.preventDefault(); const avatarHit = findPlacedAvatarFromEvent(e); if (avatarHit) { avatarDrag = { id:e.pointerId, root:avatarHit.root }; dragPointer = null; setStatus(`Dragging ${avatarDisplayName(avatarHit.root)}. Release to place it just above the floor. Double-click to open its menu.`); } else dragPointer = { id:e.pointerId, x:e.clientX, y:e.clientY }; canvas.setPointerCapture?.(e.pointerId); }); canvas.addEventListener('pointermove', (e) => { if (document.pointerLockElement === canvas) return; if (avatarDrag?.id === e.pointerId) { e.preventDefault(); const floorPoint = floorPointFromPointer(e); avatarDrag.root.position.x = floorPoint.x; avatarDrag.root.position.z = floorPoint.z; avatarDrag.root.position.y = floorPoint.y + (avatarDrag.root.userData.floorLiftOffset ?? FLOOR_ENTRY_OFFSET); return; } if (!dragPointer || dragPointer.id !== e.pointerId) return; e.preventDefault(); player.yaw -= (e.clientX - dragPointer.x) * .006; player.pitch = THREE.MathUtils.clamp(player.pitch - (e.clientY - dragPointer.y) * .005, -1.25, 1.15); dragPointer.x = e.clientX; dragPointer.y = e.clientY; }); const release = (e) => { if (avatarDrag?.id === e.pointerId) { liftObjectAboveFloor(avatarDrag.root, floorPointFromPointer(e)); avatarDrag = null; } if (dragPointer?.id === e.pointerId) dragPointer = null; }; canvas.addEventListener('pointerup', release); canvas.addEventListener('pointercancel', release); canvas.addEventListener('dblclick', (e) => { if (document.pointerLockElement === canvas) return; e.preventDefault(); const avatarHit = findPlacedAvatarFromEvent(e); if (avatarHit) { avatarDrag = null; dragPointer = null; openAvatarMenu(avatarHit.root); } }); canvas.addEventListener('wheel', (e) => { if (!scrollZoomEnabled) return; e.preventDefault(); applyZoom(e.deltaY); }, { passive:false }); document.addEventListener('wheel', (e) => { if (document.pointerLockElement !== canvas || !scrollZoomEnabled) return; e.preventDefault(); applyZoom(e.deltaY); }, { passive:false });
@@ -403,7 +409,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     walkButton.setAttribute('aria-pressed', 'true');
   }
   walkButton.addEventListener('click', () => {
-    if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
   });
   async function startRadToxGame() {
@@ -444,15 +449,28 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // The launcher deliberately loads this module only after the player chooses
   // Begin. Never auto-load a large GLB world at page start: decoding it on a
   // mobile main thread can freeze scrolling and make the browser kill the tab.
+  // The view itself is always directly playable. Hovering it prepares the world
+  // for a mouse user, while touch, pen, and mouse presses all start it immediately.
+  // Neither path captures the cursor: touch and normal cursor dragging remain usable
+  // in-page on every browser.
+  canvas.addEventListener('pointerenter', (event) => {
+    canvas.focus({ preventScroll: true });
+    if (event.pointerType === 'mouse') openHouseMap().catch((error) => setStatus(error.message || 'Unable to prepare the MUZIKAZ map.'));
+  });
   canvas.addEventListener('click', () => {
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start walking.'));
   });
-  document.querySelector('a[href="#house-explorer-canvas"]')?.addEventListener('click', (event) => {
-    event.preventDefault();
-    // Mouse capture is opt-in: only the visible Enter interior control may lock
-    // a desktop pointer. Canvas clicks, Begin, and keyboard activation remain
-    // non-capturing so the page never takes over the user's mouse unexpectedly.
-    if (!mobileQualityMode && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
+  pointerLockButton?.addEventListener('click', () => {
+    if (mobileQualityMode || !pointerLockSupported) {
+      setStatus('Cursor lock is a desktop option. Touch and drag controls are already active.');
+      return;
+    }
+    if (document.pointerLockElement === canvas) {
+      document.exitPointerLock?.();
+      return;
+    }
+    // Cursor capture is strictly opt-in through this explicit toggle.
+    canvas.requestPointerLock?.();
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
   });
   canvas.addEventListener('keydown', (event) => {
@@ -460,6 +478,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     event.preventDefault();
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
+  syncPointerLockControls();
   if (startEnvironment && !mobileQualityMode) {
     // Do not decode a large GLB while the visitor is browsing the page. On
     // desktop that competes with first paint and can look like a frozen game.
