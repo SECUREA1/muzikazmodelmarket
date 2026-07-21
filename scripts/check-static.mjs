@@ -46,7 +46,7 @@ if (!mainHtml.includes('public/js/game-audio.js')) {
   throw new Error('index.html must load the procedural RAD-TOX soundtrack.');
 }
 
-for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'WebGL support']) {
+for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'WebGL browsers']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
@@ -58,10 +58,12 @@ if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-
 }
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
-  throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
+  throw new Error('index.html must load the House Explorer module through the compatibility launcher.');
 }
-if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launcher.includes('function startEngine()')) {
-  throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
+for (const requiredAutoLaunchFeature of ["module.src='public/js/house-explorer-glb.js'", 'function startEngine()', 'function autoStart()', 'window.setTimeout(autoStart,0)', 'queued=true']) {
+  if (!launcher.includes(requiredAutoLaunchFeature)) {
+    throw new Error(`RAD-TOX must automatically engage the complete game or compatibility mission: missing ${requiredAutoLaunchFeature}`);
+  }
 }
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');

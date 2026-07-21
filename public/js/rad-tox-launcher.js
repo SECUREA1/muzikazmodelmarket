@@ -45,7 +45,16 @@
   document.addEventListener('pointerdown',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('touchstart',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
-  // Do not download or decode Three.js/GLB assets until the player opts in. This
-  // leaves scrolling and first paint responsive on memory-constrained phones.
-  if(!supportsModern()) window.setTimeout(startCompatibility,0); else setState('idle','Ready to start RAD-TOX.');
+  // Engage RAD-TOX as soon as the page is ready. Modern WebGL browsers load the
+  // complete 3D mission, while IE11 and other legacy browsers immediately receive
+  // the playable ES5 compatibility mission instead of a non-responsive launch UI.
+  function autoStart(){
+    queued=true;
+    setButtons(true,'Loading RAD-TOX: 0%');
+    if(!supportsModern()){ startCompatibility(); return; }
+    setState('booting','Loading RAD-TOX: 0%');
+    startEngine();
+    armWatchdog();
+  }
+  window.setTimeout(autoStart,0);
 }());
