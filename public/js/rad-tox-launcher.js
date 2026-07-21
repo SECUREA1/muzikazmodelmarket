@@ -2,10 +2,10 @@
 (function () {
   'use strict';
   var PREFIX = '[MUZIKAZ GAME]';
-  // Stay idle until a visitor explicitly starts the game. Loading Three.js and
-  // decoding a GLB while a mobile browser is painting the page can exhaust the
-  // tab's memory and make the page appear frozen before there is anything to
-  // interact with.
+  // Start the encounter as soon as this launcher is parsed. The game used to
+  // wait behind a separate start panel, which could remain at 0% if its click
+  // event was lost. The canvas and its real level loader are now the only
+  // launch surface.
   var state = 'idle'; var queued = false; var watchdog = 0; var engineRequested = false; var modernSupport;
   // Do not leave touch devices behind a non-responsive launch screen while a
   // WebGL module, CDN, or world asset is unavailable. The compact mission is
@@ -72,13 +72,13 @@
   document.addEventListener('muzikaz:rad-tox-stage',function(e){var d=e.detail||{};setState(d.stage||'loading-manifest',d.message);});
   document.addEventListener('muzikaz:rad-tox-native-error',function(e){var d=e.detail||{}; fail(d.stage||'3D game',d.message||'The environment could not be started.'); status('The 3D environment could not start. Compatibility Mode is opening so the mission remains playable.'); startCompatibility();});
   function isStartControl(t){while(t&&t.id!=='house-start-game'&&(!t.getAttribute||t.getAttribute('data-house-start')===null))t=t.parentNode;return t;}
-  // Start fetching on press so mobile browsers can establish the module connection
-  // before the following click handler asks the game to begin. This is only a
-  // preload: `request` retains ownership of state and the timeout recovery.
+  // The Begin control remains available for restarting the request if needed.
   document.addEventListener('pointerdown',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('touchstart',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
-  // Do not auto-start. The page remains fully usable on low-memory phones, and
-  // the same Start control always selects WebGL or the compatibility mission.
-  setState('idle','Game ready. Tap Start RAD-TOX when you are ready to play.');
+  setState('idle', 'Opening RAD-TOX…');
+  // Defer one task so all page listeners are ready, then launch without a
+  // click-gated overlay. `request` still provides the watchdog and the
+  // compatibility fallback when WebGL or the module cannot be used.
+  window.setTimeout(request, 0);
 }());

@@ -47,9 +47,9 @@ if (!mainHtml.includes('public/js/game-audio.js')) {
   throw new Error('index.html must load the procedural RAD-TOX soundtrack.');
 }
 
-for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'WebGL browsers']) {
+for (const requiredGameMarkup of ['id="house-explorer-canvas"', 'id="house-start-game"', 'RAD-TOX is loading automatically']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
-    throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
+    throw new Error(`index.html is missing RAD-TOX auto-launch markup: ${requiredGameMarkup}`);
   }
 }
 
@@ -61,13 +61,13 @@ if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must load the House Explorer module through the compatibility launcher.');
 }
-for (const requiredLaunchFeature of ["module.src='public/js/house-explorer-glb.js'", 'function startEngine()', 'function request()', "state = 'idle'", 'ENGINE_STARTUP_TIMEOUT_MS = 12000', 'Mission active now — clear every toxic bubble.', 'Full Compatibility Mission', 'Loading the full compatibility mission: level 1…']) {
+for (const requiredLaunchFeature of ["module.src='public/js/house-explorer-glb.js'", 'function startEngine()', 'function request()', "state = 'idle'", 'ENGINE_STARTUP_TIMEOUT_MS = 12000', 'Mission active now — clear every toxic bubble.', 'Full Compatibility Mission', 'Loading the full compatibility mission: level 1…', 'window.setTimeout(request, 0)']) {
   if (!launcher.includes(requiredLaunchFeature)) {
     throw new Error(`RAD-TOX must provide an on-demand game launch and compatibility mission: missing ${requiredLaunchFeature}`);
   }
 }
-if (launcher.includes('window.setTimeout(autoStart,0)')) {
-  throw new Error('RAD-TOX must not auto-load the 3D engine before a visitor starts the game.');
+if (mainHtml.includes('id="house-game-start"') || mainHtml.includes('data-house-start')) {
+  throw new Error('RAD-TOX must not render a click-gated start screen.');
 }
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
