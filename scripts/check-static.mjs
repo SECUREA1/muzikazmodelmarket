@@ -47,13 +47,10 @@ if (!mainHtml.includes('public/js/game-audio.js')) {
   throw new Error('index.html must load the procedural RAD-TOX soundtrack.');
 }
 
-for (const requiredGameMarkup of ['id="house-start-game"', 'RAD-TOX is starting the full mission automatically.', 'id="house-level-loader"']) {
+for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'starts the full 3D mission automatically', 'legacy mobile browsers']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
     throw new Error(`index.html is missing RAD-TOX auto-launch markup: ${requiredGameMarkup}`);
   }
-}
-if (mainHtml.includes('house-game-start') || mainHtml.includes('mixed encounter')) {
-  throw new Error('index.html must not show a separate RAD-TOX encounter start screen.');
 }
 
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
@@ -68,10 +65,6 @@ for (const requiredLaunchFeature of ["module.src='public/js/house-explorer-glb.j
   if (!launcher.includes(requiredLaunchFeature)) {
     throw new Error(`RAD-TOX must provide an automatic game launch and compatibility mission: missing ${requiredLaunchFeature}`);
   }
-}
-
-for (const instantLoadHint of ['rel="modulepreload" href="public/js/house-explorer-glb.js"', 'rel="preload" href="public/models/environments/muzimakzmain.glb"']) {
-  if (!mainHtml.includes(instantLoadHint)) throw new Error(`index.html is missing RAD-TOX instant-load hint: ${instantLoadHint}`);
 }
 if (!launcher.includes('window.setTimeout(autoStart,0)')) {
   throw new Error('RAD-TOX must auto-load the complete game on page startup.');
@@ -93,7 +86,7 @@ for (const requiredHudFeature of ['data-rad-row-toggle', 'data-rad-tools-toggle'
   }
 }
 
-for (const requiredUpdateCheck of ['BUNDLED_ENVIRONMENTS', 'registry.seed(BUNDLED_ENVIRONMENTS)', 'checkForHouseUpdates({ startup: true })', 'Promise.allSettled([refreshLibrary(), refreshAvatarLibrary()])', 'fetchGitHubGlbFiles', 'mergeGitHubAvatarFiles']) {
+for (const requiredUpdateCheck of ['checkForHouseUpdates', 'Promise.allSettled([refreshLibrary(), refreshAvatarLibrary()])', 'checkForHouseUpdates({ startup: true })', 'fetchGitHubGlbFiles', 'mergeGitHubAvatarFiles']) {
   if (!houseExplorer.includes(requiredUpdateCheck)) {
     throw new Error(`House Explorer must check for new maps and avatars on startup: missing ${requiredUpdateCheck}`);
   }

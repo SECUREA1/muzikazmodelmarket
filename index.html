@@ -28,11 +28,8 @@
     <title>MUZIKAZ Model Market | Neon 3D Characters, Merch & Creator Drops</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Fetch the complete game entry and first playable world during document
-         parsing, so the automatic launcher can start without a network gap. -->
+    <!-- Keep Firefox's connection warm without downloading the deferred 3D game. -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link rel="modulepreload" href="public/js/house-explorer-glb.js" />
-    <link rel="preload" href="public/models/environments/muzimakzmain.glb" as="fetch" type="model/gltf-binary" crossorigin />
     <link rel="dns-prefetch" href="//api.github.com" />
     <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
@@ -98,6 +95,13 @@
                         <p class="house-level-loader__message" data-level-loader-message>Loading your first encounter…</p>
                         <div class="house-level-loader__scale" role="progressbar" aria-label="Level loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span data-level-loader-fill></span></div>
                         <strong data-level-loader-percent>0%</strong>
+                    </section>
+                    <section class="house-game-start" id="house-game-start" aria-labelledby="house-game-start-title">
+                        <p class="kicker">RAD-TOX game connection</p>
+                        <h3 id="house-game-start-title">Start the mixed encounter.</h3>
+                        <p id="house-game-load-status" role="status">Loading RAD-TOX: 0%</p>
+                        <p class="house-firefox-note">RAD-TOX starts the full 3D mission automatically. IE and other legacy mobile browsers open the complete playable compatibility mission immediately. Laser, Paint Gun, and Bat are ready in every level.</p>
+                        <button class="btn house-start-button" type="button" data-house-start>Start RAD-TOX</button>
                     </section>
                 </div>
                 <aside class="house-hud" aria-label="3D House Explorer controls">
