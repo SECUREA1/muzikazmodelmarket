@@ -25,7 +25,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // this GLB explorer, so the GLB implementation must own the overlay's action too.
   const gameStartButton = document.querySelector('#house-start-game');
   const gameStartScreen = document.querySelector('#house-game-start');
-  const gameLoadStatus = document.querySelector('#house-game-load-status');
   const levelLoader = document.querySelector('#house-level-loader');
   const levelLoaderTitle = levelLoader?.querySelector('[data-level-loader-title]');
   const levelLoaderMessage = levelLoader?.querySelector('[data-level-loader-message]');
@@ -416,7 +415,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (gameStartButton) gameStartButton.disabled = true;
     gameStartScreen?.classList.add('is-loading');
     gameStartButton.textContent = 'Deploying RAD-TOX…';
-    if (gameLoadStatus) gameLoadStatus.textContent = 'Loading level 1 toxins and the upper-floor ghost encounter…';
     publishGameStage('loading-game', 'Loading level 1 toxins and the upper-floor ghost encounter…');
 
     try {
@@ -434,7 +432,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       gameStartButton.disabled = false;
       gameStartButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v5M5.8 7l4.3 2.5M18.2 7l-4.3 2.5M5.8 17l4.3-2.5M18.2 17l-4.3-2.5"/><circle cx="12" cy="14" r="5"/></svg>Start RAD-TOX';
       gameStartScreen?.classList.remove('is-loading');
-      if (gameLoadStatus) gameLoadStatus.textContent = message;
       setStatus(message);
       document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { stage: 'RAD-TOX', message } }));
     }
@@ -443,9 +440,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.addEventListener('muzikaz:rad-tox-request', () => startRadToxGame());
   publishGameStage('engine-ready', 'RAD-TOX game engine ready. Starting the first level…');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
-  // The launcher deliberately loads this module only after the player chooses
-  // Begin. Never auto-load a large GLB world at page start: decoding it on a
-  // mobile main thread can freeze scrolling and make the browser kill the tab.
+  // The launcher starts this module immediately so players enter the complete
+  // game directly, without a separate encounter start screen.
   canvas.addEventListener('click', () => {
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start walking.'));
   });
