@@ -28,8 +28,11 @@
     <title>MUZIKAZ Model Market | Neon 3D Characters, Merch & Creator Drops</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Keep Firefox's connection warm without downloading the deferred 3D game. -->
+    <!-- Fetch the complete game entry and first playable world during document
+         parsing, so the automatic launcher can start without a network gap. -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="modulepreload" href="public/js/house-explorer-glb.js" />
+    <link rel="preload" href="public/models/environments/muzimakzmain.glb" as="fetch" type="model/gltf-binary" crossorigin />
     <link rel="dns-prefetch" href="//api.github.com" />
     <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
