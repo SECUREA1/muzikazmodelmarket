@@ -158,6 +158,34 @@
             </div>
         <section class="section-block market-toggle-panel" id="models" data-market-panel="models" role="tabpanel" aria-labelledby="market-toggle-models">
             <div class="section-title"><span></span><h2>Starter model market</h2><a href="members.html">Unlock legendary drops</a></div>
+            <section class="world-plot" id="muzikaz-world-plot" aria-labelledby="world-plot-title">
+                <div class="world-plot__intro">
+                    <p class="kicker">MUZIKAZ World · starter land</p>
+                    <h3 id="world-plot-title">Claim a five-space plot. Connect the whole world.</h3>
+                    <p>Choose one connected digital land plot for your avatar, GLB scenes, drops, and creator station. Each space is a live connection point—not an isolated parcel.</p>
+                    <div class="world-plot__routes" aria-label="Digital land connections">
+                        <a href="model-explorer.html#live-published-models">GLB drop library <span>↗</span></a>
+                        <a href="#character-world-assets">Avatar &amp; world assets <span>↗</span></a>
+                        <a href="#marketplace-preview">Marketplace engine <span>↗</span></a>
+                    </div>
+                </div>
+                <div class="world-plot__map-wrap">
+                    <div class="world-plot__map" role="group" aria-label="Five selectable Muzikaz World land spaces">
+                        <span class="world-plot__pulse world-plot__pulse--one" aria-hidden="true"></span>
+                        <span class="world-plot__pulse world-plot__pulse--two" aria-hidden="true"></span>
+                        <button class="world-space is-selected" type="button" data-world-space="Studio Ridge" aria-pressed="true"><b>01</b><strong>Studio<br>Ridge</strong><i>GLB stage</i></button>
+                        <button class="world-space" type="button" data-world-space="Crew Plaza" aria-pressed="false"><b>02</b><strong>Crew<br>Plaza</strong><i>social hub</i></button>
+                        <button class="world-space" type="button" data-world-space="Neon Docks" aria-pressed="false"><b>03</b><strong>Neon<br>Docks</strong><i>drop port</i></button>
+                        <button class="world-space" type="button" data-world-space="Echo Gardens" aria-pressed="false"><b>04</b><strong>Echo<br>Gardens</strong><i>sound biome</i></button>
+                        <button class="world-space" type="button" data-world-space="Skyline Deck" aria-pressed="false"><b>05</b><strong>Skyline<br>Deck</strong><i>event roof</i></button>
+                    </div>
+                    <p class="world-plot__selection" id="world-plot-selection" aria-live="polite"><strong>Studio Ridge selected.</strong> GLB stage, avatar spawn, and marketplace link are ready.</p>
+                </div>
+                <form class="world-plot__agreement" id="world-plot-agreement">
+                    <label><input type="checkbox" id="world-plot-consent"> I agree to keep this plot connected to MUZIKAZ World and use compatible GLB assets.</label>
+                    <button class="btn" type="submit" disabled>Reserve Studio Ridge</button>
+                </form>
+            </section>
             <div class="collection-grid" aria-label="Starter model collections"></div>
             <p class="status-message" id="model-status" role="status">Select a model card to preview its collection.</p>
             <div class="model-detail" id="model-detail" hidden>
