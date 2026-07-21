@@ -47,10 +47,13 @@ if (!mainHtml.includes('public/js/game-audio.js')) {
   throw new Error('index.html must load the procedural RAD-TOX soundtrack.');
 }
 
-for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'starts the full 3D mission automatically', 'legacy mobile browsers']) {
+for (const requiredGameMarkup of ['id="house-start-game"', 'RAD-TOX is starting the full mission automatically.', 'id="house-level-loader"']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
     throw new Error(`index.html is missing RAD-TOX auto-launch markup: ${requiredGameMarkup}`);
   }
+}
+if (mainHtml.includes('house-game-start') || mainHtml.includes('mixed encounter')) {
+  throw new Error('index.html must not show a separate RAD-TOX encounter start screen.');
 }
 
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
