@@ -2001,6 +2001,16 @@ section,
 @media(max-width:620px){.house-game-start{padding:22px 16px}.house-game-start h3{font-size:48px}.toxin-loadout{display:grid;width:min(100%,320px)}.house-start-button{width:min(100%,320px)}}
 .house-game-start .house-firefox-note{max-width:360px;padding:7px 11px;border:1px solid rgba(255,181,59,.6);border-radius:999px;background:rgba(73,37,0,.42);color:#fff2c5;font-size:11px;line-height:1.3;text-transform:none}
 
+/* A direct touch equivalent of mouse-look, available on each RAD-TOX game screen. */
+.touch-mouse-overlay{display:none}
+@media (pointer:coarse){
+  .house-stage .touch-mouse-overlay{position:absolute;z-index:7;right:max(12px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));display:grid;justify-items:center;gap:4px;width:94px;padding:7px;border:1px solid rgba(202,255,105,.6);border-radius:18px;background:rgba(3,12,5,.8);box-shadow:0 8px 24px rgba(0,0,0,.42),0 0 18px rgba(156,255,0,.2);backdrop-filter:blur(10px);user-select:none}
+  .touch-mouse-overlay__label,.touch-mouse-overlay__hint{font-weight:900;text-align:center;line-height:1.1}.touch-mouse-overlay__label{color:#dfff75;font-size:10px;letter-spacing:.07em;text-transform:uppercase}.touch-mouse-overlay__hint{color:rgba(239,255,215,.78);font-size:9px;text-transform:none}
+  .touch-mouse-overlay__pad{display:grid;place-items:center;width:62px;height:62px;min-height:0;padding:0;border:2px solid rgba(239,255,215,.84);border-radius:50%;background:radial-gradient(circle at 35% 30%,#efffd7,#9cff00 44%,#528d00);color:#071007;box-shadow:inset 0 0 0 8px rgba(255,255,255,.16),0 4px 14px rgba(0,0,0,.35);touch-action:none}.touch-mouse-overlay__pad span{font-size:25px;line-height:1}.touch-mouse-overlay__pad.is-active{transform:scale(.94);filter:brightness(1.16)}
+  .house-stage:fullscreen .touch-mouse-overlay,.house-stage:-webkit-full-screen .touch-mouse-overlay{right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom))}
+}
+@media (max-width:380px){.house-stage .touch-mouse-overlay{width:82px;padding:5px}.touch-mouse-overlay__pad{width:52px;height:52px}.touch-mouse-overlay__hint{font-size:8px}}
+
 /* Single-row game dock: keeps the playable view and its four essential actions together. */
 .house-explorer-shell{display:flex;flex-direction:column;gap:0;width:min(96%,1100px)}
 .house-hud{display:none}

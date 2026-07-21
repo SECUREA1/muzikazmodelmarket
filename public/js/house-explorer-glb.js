@@ -338,6 +338,46 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.querySelectorAll('[data-mobile-zoom-toggle]').forEach((oldButton) => { const button = oldButton.cloneNode(true); oldButton.replaceWith(button); let zoomHold = 0; const setDirection = (direction) => { button.dataset.mobileZoomToggle = direction; button.setAttribute('aria-pressed', String(direction === 'in')); button.querySelector('b').textContent = direction === 'in' ? '+' : '−'; button.querySelector('span').textContent = direction === 'in' ? 'Zoom in' : 'Zoom out'; button.setAttribute('aria-label', direction === 'in' ? 'Zoom in' : 'Zoom out'); }; const step = () => applyZoom(button.dataset.mobileZoomToggle === 'in' ? -1 : 1); const stop = () => { clearInterval(zoomHold); zoomHold = 0; button.classList.remove('is-active'); }; button.addEventListener('pointerdown', (e) => { e.preventDefault(); step(); button.classList.add('is-active'); zoomHold = window.setInterval(step, 120); }); button.addEventListener('pointerup', stop); button.addEventListener('pointercancel', stop); button.addEventListener('pointerleave', stop); button.addEventListener('dblclick', (e) => { e.preventDefault(); setDirection(button.dataset.mobileZoomToggle === 'in' ? 'out' : 'in'); setStatus(`${button.getAttribute('aria-label')} selected. Hold the zoom button to keep zooming.`); }); setDirection(button.dataset.mobileZoomToggle || 'out'); });
   function jump() { if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; setStatus('Jump activated.'); } }
   function shootAtReticle() { const shot = toxicBubbleSystem.handlePointerInteraction({}, { centre: true }); setStatus(shot ? 'Target hit.' : 'No toxic target at the reticle. Move or look, then shoot again.'); }
+  function setupTouchMouseOverlay() {
+    const overlay = stage.querySelector('[data-touch-mouse-overlay]');
+    const pad = overlay?.querySelector('.touch-mouse-overlay__pad');
+    if (!pad) return;
+    let pointerId = null;
+    let startX = 0;
+    let startY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let moved = false;
+    const release = (event) => {
+      if (pointerId !== event.pointerId) return;
+      if (!moved) shootAtReticle();
+      pointerId = null;
+      pad.classList.remove('is-active');
+    };
+    pad.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      pointerId = event.pointerId;
+      startX = lastX = event.clientX;
+      startY = lastY = event.clientY;
+      moved = false;
+      pad.setPointerCapture?.(pointerId);
+      pad.classList.add('is-active');
+    });
+    pad.addEventListener('pointermove', (event) => {
+      if (pointerId !== event.pointerId) return;
+      event.preventDefault();
+      const deltaX = event.clientX - lastX;
+      const deltaY = event.clientY - lastY;
+      moved ||= Math.hypot(event.clientX - startX, event.clientY - startY) > 7;
+      player.yaw -= deltaX * .006;
+      player.pitch = THREE.MathUtils.clamp(player.pitch - deltaY * .005, -1.25, 1.15);
+      lastX = event.clientX;
+      lastY = event.clientY;
+    });
+    pad.addEventListener('pointerup', release);
+    pad.addEventListener('pointercancel', release);
+  }
+  setupTouchMouseOverlay();
   function setFullscreen() { if (document.fullscreenElement) { document.exitFullscreen?.(); return; } const request = stage.requestFullscreen?.(); if (request?.catch) request.catch(() => setStatus('Fullscreen is unavailable in this browser.')); else setStatus('Fullscreen is unavailable in this browser.'); }
   function setupThumbstick(name) { const stick = document.querySelector(`[data-thumbstick="${name}"] .thumbstick-base`); const knob = stick?.querySelector('.thumbstick-knob'); if (!stick || !knob) return; let pointerId = null; let startX = 0; let startY = 0; let moved = false; const write = (event) => { const rect = stick.getBoundingClientRect(); const radius = rect.width * .29; let x = THREE.MathUtils.clamp(event.clientX - (rect.left + rect.width / 2), -radius, radius); let y = THREE.MathUtils.clamp(event.clientY - (rect.top + rect.height / 2), -radius, radius); const length = Math.hypot(x, y); if (length > radius) { x = x / length * radius; y = y / length * radius; } knob.style.transform = `translate(${x}px, ${y}px)`; thumbInput[`${name}X`] = x / radius; thumbInput[`${name}Y`] = y / radius; moved ||= Math.hypot(event.clientX - startX, event.clientY - startY) > 8; };
     const release = (event) => { if (pointerId !== event.pointerId) return; if (!moved) { if (name === 'left') shootAtReticle(); else jump(); } pointerId = null; thumbInput[`${name}X`] = 0; thumbInput[`${name}Y`] = 0; knob.style.transform = 'translate(0, 0)'; stick.classList.remove('is-active'); };
