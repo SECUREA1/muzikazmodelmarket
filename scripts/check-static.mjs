@@ -80,15 +80,15 @@ if (houseExplorer.includes('data-rad-pause') || houseExplorer.includes('RAD_TOX_
   throw new Error('RAD-TOX must not expose or enter a paused state.');
 }
 
-const beeEnemy = await readFile('dist/public/js/enemies/airborne-honey-bee.js', 'utf8');
-for (const requiredBeeBossFeature of ['maxHealth:300', 'onDefeated?.()', 'Honey bee boss defeated.']) {
-  if (!beeEnemy.includes(requiredBeeBossFeature)) {
-    throw new Error(`Level-one bee boss is missing ${requiredBeeBossFeature}`);
+const bossEnemy = await readFile('dist/public/js/enemies/airborne-honey-bee.js', 'utf8');
+for (const requiredBossFeature of ["id:'aape'", "modelPath:'public/models/AAPE.glb'", "id:'beeduck'", "modelPath:'public/models/BEEDUCK.glb'", 'maxHealth:BEE_CONFIG.maxHealth*5', 'addSword()', 'Math.random()*Math.PI*2']) {
+  if (!bossEnemy.includes(requiredBossFeature)) {
+    throw new Error(`End-boss implementation is missing ${requiredBossFeature}`);
   }
 }
-for (const requiredBeeBossFlow of ['this.levelOneBeeDefeated=false', 'completeLevelIfReady()', 'defeat the honey bee boss to complete level 1']) {
-  if (!houseExplorer.includes(requiredBeeBossFlow)) {
-    throw new Error(`Level one must require the bee boss: missing ${requiredBeeBossFlow}`);
+for (const requiredBossFlow of ['bossConfigForLevel()', '2:AAPE_BOSS_CONFIG', '3:BEEDUCK_BOSS_CONFIG', 'spawnEndBoss()', 'endBossDefeated', 'defeat ${bossConfig.label} to complete level ${this.level}']) {
+  if (!houseExplorer.includes(requiredBossFlow)) {
+    throw new Error(`Level 2/3 end-boss flow is missing ${requiredBossFlow}`);
   }
 }
 
