@@ -2,7 +2,11 @@
 (function () {
   'use strict';
   var PREFIX = '[MUZIKAZ GAME]';
-  var state = 'booting'; var queued = false; var watchdog = 0; var engineRequested = false; var modernSupport;
+  // Stay idle until a visitor explicitly starts the game. Loading Three.js and
+  // decoding a GLB while a mobile browser is painting the page can exhaust the
+  // tab's memory and make the page appear frozen before there is anything to
+  // interact with.
+  var state = 'idle'; var queued = false; var watchdog = 0; var engineRequested = false; var modernSupport;
   // Do not leave touch devices behind a non-responsive launch screen while a
   // WebGL module, CDN, or world asset is unavailable. The compact mission is
   // already in this file, so it can be ready within one short loading window.
@@ -56,11 +60,12 @@
     document.body.appendChild(module);
   }
   function request(){
-    if(state==='booting' || state==='loading-game') return;
+    if(state==='loading-game') return;
     queued=true;
     setButtons(true,'Loading RAD-TOX: 0%');
     if(!supportsModern()){startCompatibility();return;}
     if(state==='engine-ready'){ document.dispatchEvent(makeEvent('muzikaz:rad-tox-request')); }
+    else if(state==='booting'){ armWatchdog(); }
     else {setState('booting','Loading RAD-TOX: 0%'); startEngine(); armWatchdog();}
   }
   document.addEventListener('muzikaz:rad-tox-engine-ready',function(){clearWatchdog();setState('engine-ready','3D engine ready.');if(queued)document.dispatchEvent(makeEvent('muzikaz:rad-tox-request'));});
@@ -68,20 +73,12 @@
   document.addEventListener('muzikaz:rad-tox-native-error',function(e){var d=e.detail||{}; fail(d.stage||'3D game',d.message||'The environment could not be started.'); status('The 3D environment could not start. Compatibility Mode is opening so the mission remains playable.'); startCompatibility();});
   function isStartControl(t){while(t&&t.id!=='house-start-game'&&(!t.getAttribute||t.getAttribute('data-house-start')===null))t=t.parentNode;return t;}
   // Start fetching on press so mobile browsers can establish the module connection
-  // before the following click handler asks the game to begin.
+  // before the following click handler asks the game to begin. This is only a
+  // preload: `request` retains ownership of state and the timeout recovery.
   document.addEventListener('pointerdown',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('touchstart',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
-  // Engage RAD-TOX as soon as the page is ready. Modern WebGL browsers load the
-  // complete 3D mission, while IE11 and other legacy browsers immediately receive
-  // the playable ES5 compatibility mission instead of a non-responsive launch UI.
-  function autoStart(){
-    queued=true;
-    setButtons(true,'Loading RAD-TOX: 0%');
-    if(!supportsModern()){ startCompatibility(); return; }
-    setState('booting','Loading RAD-TOX: 0%');
-    startEngine();
-    armWatchdog();
-  }
-  window.setTimeout(autoStart,0);
+  // Do not auto-start. The page remains fully usable on low-memory phones, and
+  // the same Start control always selects WebGL or the compatibility mission.
+  setState('idle','Game ready. Tap Start RAD-TOX when you are ready to play.');
 }());
