@@ -18,11 +18,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const oldStatus = document.querySelector('#house-status');
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
   const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
-  // Treat the complete visible game viewport as the input surface. Status and
-  // other non-control overlays sit above the canvas, so listening only on the
-  // canvas made an otherwise valid mouse or touch interaction appear ignored.
-  const gameInputSurface = stage;
-  const isGameControl = (target) => target instanceof Element && Boolean(target.closest('button, a, input, select, textarea, [role="button"], .house-level-loader, .house-game-start, .rad-tox-tools, .rad-tox-pack, .glb-avatar-menu'));
   const resetButton = document.querySelector('#house-reset')?.cloneNode(true); document.querySelector('#house-reset')?.replaceWith(resetButton);
   const fullscreenButton = document.querySelector('#house-fullscreen')?.cloneNode(true); document.querySelector('#house-fullscreen')?.replaceWith(fullscreenButton);
   const bottomControls = document.querySelector('.house-bottom-controls');
@@ -330,18 +325,58 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   environmentSelect?.addEventListener('change', (event) => { if (event.target.value) loadById(event.target.value); });
   canvas.addEventListener('dragover', (e) => { if (!activeAvatar && !e.dataTransfer?.types?.includes('application/x-muzikaz-avatar')) return; e.preventDefault(); stage.classList.add('is-avatar-drop-target'); }); canvas.addEventListener('dragleave', () => stage.classList.remove('is-avatar-drop-target')); canvas.addEventListener('drop', async (e) => { e.preventDefault(); stage.classList.remove('is-avatar-drop-target'); const avatars = window.MuzikazActiveHouseAvatars || []; const avatar = avatars.find(a => a.id === e.dataTransfer.getData('application/x-muzikaz-avatar')) || activeAvatar; if (avatar) addAvatarToScene(avatar, setAvatarPointerFromEvent(e)).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); });
   let toxicTap = null; let toxicConsumedClick = false;
-  gameInputSurface.addEventListener('click', (event) => { if (!toxicConsumedClick || isGameControl(event.target)) return; toxicConsumedClick=false; event.preventDefault(); event.stopImmediatePropagation(); }, true);
+  canvas.addEventListener('click', (event) => { if (!toxicConsumedClick) return; toxicConsumedClick=false; event.preventDefault(); event.stopImmediatePropagation(); }, true);
   toxicButton.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); toxicBubbleSystem.begin(); });
-  gameInputSurface.addEventListener('pointerdown', (event) => { if (isGameControl(event.target)) return; if (document.pointerLockElement === canvas && event.button === 0) { toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
-  gameInputSurface.addEventListener('pointerup', (event) => { if (!toxicTap || toxicTap.id !== event.pointerId) return; const moved=Math.hypot(event.clientX-toxicTap.x,event.clientY-toxicTap.y); if (!isGameControl(event.target) && !toxicTap.avatar && moved<=8) toxicConsumedClick=toxicBubbleSystem.handlePointerInteraction(event) || toxicConsumedClick; toxicTap=null; });
-  gameInputSurface.addEventListener('pointercancel', () => { toxicTap=null; });
-  gameInputSurface.addEventListener('pointerdown', (e) => { if (isGameControl(e.target) || document.pointerLockElement === canvas) return; e.preventDefault(); const avatarHit = findPlacedAvatarFromEvent(e); if (avatarHit) { avatarDrag = { id:e.pointerId, root:avatarHit.root }; dragPointer = null; setStatus(`Dragging ${avatarDisplayName(avatarHit.root)}. Release to place it just above the floor. Double-click to open its menu.`); } else dragPointer = { id:e.pointerId, x:e.clientX, y:e.clientY }; gameInputSurface.setPointerCapture?.(e.pointerId); }); gameInputSurface.addEventListener('pointermove', (e) => { if (document.pointerLockElement === canvas) return; if (avatarDrag?.id === e.pointerId) { e.preventDefault(); const floorPoint = floorPointFromPointer(e); avatarDrag.root.position.x = floorPoint.x; avatarDrag.root.position.z = floorPoint.z; avatarDrag.root.position.y = floorPoint.y + (avatarDrag.root.userData.floorLiftOffset ?? FLOOR_ENTRY_OFFSET); return; } if (!dragPointer || dragPointer.id !== e.pointerId) return; e.preventDefault(); player.yaw -= (e.clientX - dragPointer.x) * .006; player.pitch = THREE.MathUtils.clamp(player.pitch - (e.clientY - dragPointer.y) * .005, -1.25, 1.15); dragPointer.x = e.clientX; dragPointer.y = e.clientY; }); const release = (e) => { if (avatarDrag?.id === e.pointerId) { liftObjectAboveFloor(avatarDrag.root, floorPointFromPointer(e)); avatarDrag = null; } if (dragPointer?.id === e.pointerId) dragPointer = null; }; gameInputSurface.addEventListener('pointerup', release); gameInputSurface.addEventListener('pointercancel', release); gameInputSurface.addEventListener('dblclick', (e) => { if (isGameControl(e.target) || document.pointerLockElement === canvas) return; e.preventDefault(); const avatarHit = findPlacedAvatarFromEvent(e); if (avatarHit) { avatarDrag = null; dragPointer = null; openAvatarMenu(avatarHit.root); } }); gameInputSurface.addEventListener('wheel', (e) => { if (isGameControl(e.target) || !scrollZoomEnabled) return; e.preventDefault(); applyZoom(e.deltaY); }, { passive:false }); document.addEventListener('wheel', (e) => { if (document.pointerLockElement !== canvas || !scrollZoomEnabled) return; e.preventDefault(); applyZoom(e.deltaY); }, { passive:false });
+  canvas.addEventListener('pointerdown', (event) => { if (document.pointerLockElement === canvas && event.button === 0) { toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
+  canvas.addEventListener('pointerup', (event) => { if (!toxicTap || toxicTap.id !== event.pointerId) return; const moved=Math.hypot(event.clientX-toxicTap.x,event.clientY-toxicTap.y); if (!toxicTap.avatar && moved<=8) toxicConsumedClick=toxicBubbleSystem.handlePointerInteraction(event) || toxicConsumedClick; toxicTap=null; });
+  canvas.addEventListener('pointercancel', () => { toxicTap=null; });
+  canvas.addEventListener('pointerdown', (e) => { if (document.pointerLockElement === canvas) return; e.preventDefault(); const avatarHit = findPlacedAvatarFromEvent(e); if (avatarHit) { avatarDrag = { id:e.pointerId, root:avatarHit.root }; dragPointer = null; setStatus(`Dragging ${avatarDisplayName(avatarHit.root)}. Release to place it just above the floor. Double-click to open its menu.`); } else dragPointer = { id:e.pointerId, x:e.clientX, y:e.clientY }; canvas.setPointerCapture?.(e.pointerId); }); canvas.addEventListener('pointermove', (e) => { if (document.pointerLockElement === canvas) return; if (avatarDrag?.id === e.pointerId) { e.preventDefault(); const floorPoint = floorPointFromPointer(e); avatarDrag.root.position.x = floorPoint.x; avatarDrag.root.position.z = floorPoint.z; avatarDrag.root.position.y = floorPoint.y + (avatarDrag.root.userData.floorLiftOffset ?? FLOOR_ENTRY_OFFSET); return; } if (!dragPointer || dragPointer.id !== e.pointerId) return; e.preventDefault(); player.yaw -= (e.clientX - dragPointer.x) * .006; player.pitch = THREE.MathUtils.clamp(player.pitch - (e.clientY - dragPointer.y) * .005, -1.25, 1.15); dragPointer.x = e.clientX; dragPointer.y = e.clientY; }); const release = (e) => { if (avatarDrag?.id === e.pointerId) { liftObjectAboveFloor(avatarDrag.root, floorPointFromPointer(e)); avatarDrag = null; } if (dragPointer?.id === e.pointerId) dragPointer = null; }; canvas.addEventListener('pointerup', release); canvas.addEventListener('pointercancel', release); canvas.addEventListener('dblclick', (e) => { if (document.pointerLockElement === canvas) return; e.preventDefault(); const avatarHit = findPlacedAvatarFromEvent(e); if (avatarHit) { avatarDrag = null; dragPointer = null; openAvatarMenu(avatarHit.root); } }); canvas.addEventListener('wheel', (e) => { if (!scrollZoomEnabled) return; e.preventDefault(); applyZoom(e.deltaY); }, { passive:false }); document.addEventListener('wheel', (e) => { if (document.pointerLockElement !== canvas || !scrollZoomEnabled) return; e.preventDefault(); applyZoom(e.deltaY); }, { passive:false });
   resetButton?.addEventListener('click', () => resetPlayer());
   document.querySelectorAll('[data-mobile-move]').forEach((oldButton) => { const button = oldButton.cloneNode(true); oldButton.replaceWith(button); const direction = button.dataset.mobileMove; const mobileLabel = { forward: '▲ Forward', back: '▼ Reverse', left: '◀ Side left', right: 'Side right ▶', jump: '⤴ Jump' }[direction]; if (mobileLabel) button.setAttribute('aria-label', mobileLabel); const begin = (e) => { e.preventDefault(); if (direction === 'jump') { if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } button.classList.add('is-active'); return; } mobile.add(direction); button.classList.add('is-active'); }; const end = (e) => { e.preventDefault(); if (direction !== 'jump') mobile.delete(direction); button.classList.remove('is-active'); }; button.addEventListener('pointerdown', begin); button.addEventListener('pointerup', end); button.addEventListener('pointercancel', end); button.addEventListener('pointerleave', end); });
   document.querySelectorAll('[data-mobile-zoom]').forEach((oldButton) => { const button = oldButton.cloneNode(true); oldButton.replaceWith(button); button.addEventListener('click', (e) => { e.preventDefault(); applyZoom(button.dataset.mobileZoom === 'in' ? -1 : 1); }); });
   document.querySelectorAll('[data-mobile-zoom-toggle]').forEach((oldButton) => { const button = oldButton.cloneNode(true); oldButton.replaceWith(button); let zoomHold = 0; const setDirection = (direction) => { button.dataset.mobileZoomToggle = direction; button.setAttribute('aria-pressed', String(direction === 'in')); button.querySelector('b').textContent = direction === 'in' ? '+' : '−'; button.querySelector('span').textContent = direction === 'in' ? 'Zoom in' : 'Zoom out'; button.setAttribute('aria-label', direction === 'in' ? 'Zoom in' : 'Zoom out'); }; const step = () => applyZoom(button.dataset.mobileZoomToggle === 'in' ? -1 : 1); const stop = () => { clearInterval(zoomHold); zoomHold = 0; button.classList.remove('is-active'); }; button.addEventListener('pointerdown', (e) => { e.preventDefault(); step(); button.classList.add('is-active'); zoomHold = window.setInterval(step, 120); }); button.addEventListener('pointerup', stop); button.addEventListener('pointercancel', stop); button.addEventListener('pointerleave', stop); button.addEventListener('dblclick', (e) => { e.preventDefault(); setDirection(button.dataset.mobileZoomToggle === 'in' ? 'out' : 'in'); setStatus(`${button.getAttribute('aria-label')} selected. Hold the zoom button to keep zooming.`); }); setDirection(button.dataset.mobileZoomToggle || 'out'); });
   function jump() { if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; setStatus('Jump activated.'); } }
   function shootAtReticle() { const shot = toxicBubbleSystem.handlePointerInteraction({}, { centre: true }); setStatus(shot ? 'Target hit.' : 'No toxic target at the reticle. Move or look, then shoot again.'); }
+  function setupTouchMouseOverlay() {
+    const overlay = stage.querySelector('[data-touch-mouse-overlay]');
+    const pad = overlay?.querySelector('.touch-mouse-overlay__pad');
+    if (!pad) return;
+    let pointerId = null;
+    let startX = 0;
+    let startY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let moved = false;
+    const release = (event) => {
+      if (pointerId !== event.pointerId) return;
+      if (!moved) shootAtReticle();
+      pointerId = null;
+      pad.classList.remove('is-active');
+    };
+    pad.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      pointerId = event.pointerId;
+      startX = lastX = event.clientX;
+      startY = lastY = event.clientY;
+      moved = false;
+      pad.setPointerCapture?.(pointerId);
+      pad.classList.add('is-active');
+    });
+    pad.addEventListener('pointermove', (event) => {
+      if (pointerId !== event.pointerId) return;
+      event.preventDefault();
+      const deltaX = event.clientX - lastX;
+      const deltaY = event.clientY - lastY;
+      moved ||= Math.hypot(event.clientX - startX, event.clientY - startY) > 7;
+      player.yaw -= deltaX * .006;
+      player.pitch = THREE.MathUtils.clamp(player.pitch - deltaY * .005, -1.25, 1.15);
+      lastX = event.clientX;
+      lastY = event.clientY;
+    });
+    pad.addEventListener('pointerup', release);
+    pad.addEventListener('pointercancel', release);
+  }
+  setupTouchMouseOverlay();
   function setFullscreen() { if (document.fullscreenElement) { document.exitFullscreen?.(); return; } const request = stage.requestFullscreen?.(); if (request?.catch) request.catch(() => setStatus('Fullscreen is unavailable in this browser.')); else setStatus('Fullscreen is unavailable in this browser.'); }
   function setupThumbstick(name) { const stick = document.querySelector(`[data-thumbstick="${name}"] .thumbstick-base`); const knob = stick?.querySelector('.thumbstick-knob'); if (!stick || !knob) return; let pointerId = null; let startX = 0; let startY = 0; let moved = false; const write = (event) => { const rect = stick.getBoundingClientRect(); const radius = rect.width * .29; let x = THREE.MathUtils.clamp(event.clientX - (rect.left + rect.width / 2), -radius, radius); let y = THREE.MathUtils.clamp(event.clientY - (rect.top + rect.height / 2), -radius, radius); const length = Math.hypot(x, y); if (length > radius) { x = x / length * radius; y = y / length * radius; } knob.style.transform = `translate(${x}px, ${y}px)`; thumbInput[`${name}X`] = x / radius; thumbInput[`${name}Y`] = y / radius; moved ||= Math.hypot(event.clientX - startX, event.clientY - startY) > 8; };
     const release = (event) => { if (pointerId !== event.pointerId) return; if (!moved) { if (name === 'left') shootAtReticle(); else jump(); } pointerId = null; thumbInput[`${name}X`] = 0; thumbInput[`${name}Y`] = 0; knob.style.transform = 'translate(0, 0)'; stick.classList.remove('is-active'); };
