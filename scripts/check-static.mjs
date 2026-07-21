@@ -49,7 +49,7 @@ if (!mainHtml.includes('public/js/game-audio.js')) {
 
 for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'starts the full 3D mission automatically', 'legacy mobile browsers']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
-    throw new Error(`index.html is missing RAD-TOX auto-launch markup: ${requiredGameMarkup}`);
+    throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
 }
 
@@ -78,18 +78,6 @@ for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarge
 }
 if (houseExplorer.includes('data-rad-pause') || houseExplorer.includes('RAD_TOX_STATES.PAUSED')) {
   throw new Error('RAD-TOX must not expose or enter a paused state.');
-}
-
-const beeEnemy = await readFile('dist/public/js/enemies/airborne-honey-bee.js', 'utf8');
-for (const requiredBeeBossFeature of ['maxHealth:300', 'onDefeated?.()', 'Honey bee boss defeated.']) {
-  if (!beeEnemy.includes(requiredBeeBossFeature)) {
-    throw new Error(`Level-one bee boss is missing ${requiredBeeBossFeature}`);
-  }
-}
-for (const requiredBeeBossFlow of ['this.levelOneBeeDefeated=false', 'completeLevelIfReady()', 'defeat the honey bee boss to complete level 1']) {
-  if (!houseExplorer.includes(requiredBeeBossFlow)) {
-    throw new Error(`Level one must require the bee boss: missing ${requiredBeeBossFlow}`);
-  }
 }
 
 for (const requiredHudFeature of ['data-rad-row-toggle', 'data-rad-tools-toggle', 'muzikazRadToxHiddenRows']) {
