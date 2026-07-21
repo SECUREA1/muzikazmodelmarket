@@ -47,7 +47,7 @@ if (!mainHtml.includes('public/js/game-audio.js')) {
   throw new Error('index.html must load the procedural RAD-TOX soundtrack.');
 }
 
-for (const requiredGameMarkup of ['id="house-explorer-canvas"', 'id="house-start-game"', 'RAD-TOX is loading automatically']) {
+for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'starts the full 3D mission automatically', 'legacy mobile browsers']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
     throw new Error(`index.html is missing RAD-TOX auto-launch markup: ${requiredGameMarkup}`);
   }
@@ -61,13 +61,13 @@ if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must load the House Explorer module through the compatibility launcher.');
 }
-for (const requiredLaunchFeature of ["module.src='public/js/house-explorer-glb.js'", 'function startEngine()', 'function request()', "state = 'idle'", 'ENGINE_STARTUP_TIMEOUT_MS = 12000', 'Mission active now — clear every toxic bubble.', 'Full Compatibility Mission', 'Loading the full compatibility mission: level 1…', 'window.setTimeout(request, 0)']) {
+for (const requiredLaunchFeature of ["module.src='public/js/house-explorer-glb.js'", 'function startEngine()', 'function request()', "state = 'booting'", 'ENGINE_STARTUP_TIMEOUT_MS = 12000', 'Mission active now — clear every toxic bubble.', 'Full Compatibility Mission', 'function autoStart()', 'window.setTimeout(autoStart,0)']) {
   if (!launcher.includes(requiredLaunchFeature)) {
-    throw new Error(`RAD-TOX must provide an on-demand game launch and compatibility mission: missing ${requiredLaunchFeature}`);
+    throw new Error(`RAD-TOX must provide an automatic game launch and compatibility mission: missing ${requiredLaunchFeature}`);
   }
 }
-if (mainHtml.includes('id="house-game-start"') || mainHtml.includes('data-house-start')) {
-  throw new Error('RAD-TOX must not render a click-gated start screen.');
+if (!launcher.includes('window.setTimeout(autoStart,0)')) {
+  throw new Error('RAD-TOX must auto-load the complete game on page startup.');
 }
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
