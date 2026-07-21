@@ -49,7 +49,7 @@ if (!mainHtml.includes('public/js/game-audio.js')) {
 
 for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'starts the full 3D mission automatically', 'legacy mobile browsers']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
-    throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
+    throw new Error(`index.html is missing RAD-TOX auto-launch markup: ${requiredGameMarkup}`);
   }
 }
 
