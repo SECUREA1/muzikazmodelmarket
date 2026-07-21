@@ -409,6 +409,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     walkButton.setAttribute('aria-pressed', 'true');
   }
   walkButton.addEventListener('click', () => {
+    if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
   });
   async function startRadToxGame() {
@@ -459,6 +460,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   canvas.addEventListener('click', () => {
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start walking.'));
+  });
+  document.querySelector('a[href="#house-explorer-canvas"]')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (!mobileQualityMode && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
+    openHouseMap().catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
   });
   pointerLockButton?.addEventListener('click', () => {
     if (mobileQualityMode || !pointerLockSupported) {
