@@ -2,11 +2,10 @@
 (function () {
   'use strict';
   var PREFIX = '[MUZIKAZ GAME]';
-  // Stay idle until a visitor explicitly starts the game. Loading Three.js and
-  // decoding a GLB while a mobile browser is painting the page can exhaust the
-  // tab's memory and make the page appear frozen before there is anything to
-  // interact with.
-  var state = 'idle'; var queued = false; var watchdog = 0; var engineRequested = false; var modernSupport;
+  // Start the complete mission as soon as the page is ready. The launcher owns
+  // the one startup request so a second Start control interaction cannot begin
+  // a competing engine or compatibility game.
+  var state = 'booting'; var queued = false; var watchdog = 0; var engineRequested = false; var modernSupport;
   // Do not leave touch devices behind a non-responsive launch screen while a
   // WebGL module, CDN, or world asset is unavailable. The compact mission is
   // already in this file, so it can be ready within one short loading window.
@@ -28,26 +27,18 @@
     clearWatchdog();
     var stage=document.querySelector('.house-stage'), screen=document.getElementById('house-game-start');
     if(!stage || stage.querySelector('.rad-tox-compat-game') || stage.querySelector('.rad-tox-compat-loader'))return;
-    setState('loading-game','Loading the full compatibility mission: level 1…');
+    // IE11 and older mobile WebViews do not need to wait for a module, WebGL,
+    // or a world file. Build their complete ES5 mission during startup so
+    // it is playable immediately rather than showing a simulated load screen.
+    setState('compatibility-mode','Level 1 active. Clear every toxic bubble.');
     safeScrollIntoView(stage);
-    var loader=document.createElement('section');
-    loader.className='rad-tox-compat-loader';
-    loader.setAttribute('role','status');
-    loader.innerHTML='<p class="kicker">RAD-TOX loading</p><h3>Loading level 1</h3><p>Preparing the full browser-compatible encounter…</p><div class="rad-tox-compat-loader__bar"><span></span></div><strong>100%</strong>';
-    stage.appendChild(loader);
-    // Keep legacy browsers on the same load-then-play path as the WebGL game.
-    // The compact mission deliberately avoids modules, WebGL, and modern syntax.
-    window.setTimeout(function(){
-      if(loader.parentNode)loader.parentNode.removeChild(loader);
-      setState('compatibility-mode','Level 1 active. Clear every toxic bubble.');
-      var game=document.createElement('section'); game.className='rad-tox-compat-game';
-      game.innerHTML='<div class="rad-tox-compat-head"><strong>☢ RAD-TOX — Full Compatibility Mission</strong><span data-score>Level 1 · Clear 0 / 12</span></div><p data-mission>Mission active now — clear every toxic bubble.</p><div class="rad-tox-compat-field"></div>';
-      stage.appendChild(game);if(screen)screen.className+=' is-hidden';
-      var score=0,level=1,totalLevels=3,field=game.querySelector('.rad-tox-compat-field'),label=game.querySelector('[data-score]'),mission=game.querySelector('[data-mission]'),audio;
-      function sound(kind){var A=window.AudioContext||window.webkitAudioContext,now,o,g,clear=kind==='clear';if(!A)return;try{audio=audio||new A();if(audio.state==='suspended')audio.resume();now=audio.currentTime;o=audio.createOscillator();g=audio.createGain();o.type=clear?'triangle':'square';o.frequency.setValueAtTime(clear?660:210+score*18,now);o.frequency.exponentialRampToValueAtTime(clear?1320:420+score*22,now+(clear ? .2 : .07));g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(.07,now+.01);g.gain.exponentialRampToValueAtTime(.0001,now+(clear ? .24 : .1));o.connect(g);g.connect(audio.destination);o.start(now);o.stop(now+.28);}catch(ignore){}}
-      function populate(){score=0;field.innerHTML='';label.innerHTML='Level '+level+' · Clear 0 / 12';mission.innerHTML='Level '+level+' active — clear every toxic bubble.';for(var i=0;i<12;i+=1){var x=document.createElement('button');x.type='button';x.className='rad-tox-compat-bubble';x.style.left=(5+(i*29+level*7)%84)+'%';x.style.top=(10+(i*37+level*11)%70)+'%';x.innerHTML=level===2?'♆':'☢';x.onclick=function(){if(this.disabled)return;this.disabled=true;this.setAttribute('data-popped','');this.innerHTML='✓';score+=1;sound(score===12?'clear':'pop');label.innerHTML='Level '+level+' · Clear '+score+' / 12';status('Level '+level+': toxic bubble cleared. '+(12-score)+' remain.');if(score===12){if(level<totalLevels){level+=1;mission.innerHTML='Level clear. Loading level '+level+'…';setState('loading-game','Loading compatibility level '+level+'…');window.setTimeout(function(){setState('compatibility-mode','Level '+level+' active. Clear every toxic bubble.');populate();},500);}else{label.innerHTML='Full mission complete!';mission.innerHTML='All three compatibility levels cleared.';status('RAD-TOX full compatibility mission complete!');}}};field.appendChild(x);}}
-      populate();
-    },300);
+    var game=document.createElement('section'); game.className='rad-tox-compat-game';
+    game.innerHTML='<div class="rad-tox-compat-head"><strong>☢ RAD-TOX — Full Compatibility Mission</strong><span data-score>Level 1 · Clear 0 / 12</span></div><p data-mission>Mission active now — clear every toxic bubble.</p><div class="rad-tox-compat-field"></div>';
+    stage.appendChild(game);if(screen)screen.className+=' is-hidden';
+    var score=0,level=1,totalLevels=3,field=game.querySelector('.rad-tox-compat-field'),label=game.querySelector('[data-score]'),mission=game.querySelector('[data-mission]'),audio;
+    function sound(kind){var A=window.AudioContext||window.webkitAudioContext,now,o,g,clear=kind==='clear';if(!A)return;try{audio=audio||new A();if(audio.state==='suspended')audio.resume();now=audio.currentTime;o=audio.createOscillator();g=audio.createGain();o.type=clear?'triangle':'square';o.frequency.setValueAtTime(clear?660:210+score*18,now);o.frequency.exponentialRampToValueAtTime(clear?1320:420+score*22,now+(clear ? .2 : .07));g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(.07,now+.01);g.gain.exponentialRampToValueAtTime(.0001,now+(clear ? .24 : .1));o.connect(g);g.connect(audio.destination);o.start(now);o.stop(now+.28);}catch(ignore){}}
+    function populate(){score=0;field.innerHTML='';label.innerHTML='Level '+level+' · Clear 0 / 12';mission.innerHTML='Level '+level+' active — clear every toxic bubble.';for(var i=0;i<12;i+=1){var x=document.createElement('button');x.type='button';x.className='rad-tox-compat-bubble';x.style.left=(5+(i*29+level*7)%84)+'%';x.style.top=(10+(i*37+level*11)%70)+'%';x.innerHTML=level===2?'♆':'☢';x.onclick=function(){if(this.disabled)return;this.disabled=true;this.setAttribute('data-popped','');this.innerHTML='✓';score+=1;sound(score===12?'clear':'pop');label.innerHTML='Level '+level+' · Clear '+score+' / 12';status('Level '+level+': toxic bubble cleared. '+(12-score)+' remain.');if(score===12){if(level<totalLevels){level+=1;mission.innerHTML='Level clear. Loading level '+level+'…';setState('loading-game','Loading compatibility level '+level+'…');window.setTimeout(function(){setState('compatibility-mode','Level '+level+' active. Clear every toxic bubble.');populate();},500);}else{label.innerHTML='Full mission complete!';mission.innerHTML='All three compatibility levels cleared.';status('RAD-TOX full compatibility mission complete!');}}};field.appendChild(x);}}
+    populate();
   }
 
   function startEngine(){
@@ -78,7 +69,16 @@
   document.addEventListener('pointerdown',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('touchstart',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
-  // Do not auto-start. The page remains fully usable on low-memory phones, and
-  // the same Start control always selects WebGL or the compatibility mission.
-  setState('idle','Game ready. Tap Start RAD-TOX when you are ready to play.');
+  // Start once on page startup. Modern WebGL browsers receive the full 3D
+  // mission; IE11 and other legacy browsers immediately receive the complete
+  // ES5 mission without waiting for unavailable module or WebGL resources.
+  function autoStart(){
+    queued=true;
+    setButtons(true,'Loading RAD-TOX: 0%');
+    if(!supportsModern()){ startCompatibility(); return; }
+    setState('booting','Loading RAD-TOX: 0%');
+    startEngine();
+    armWatchdog();
+  }
+  window.setTimeout(autoStart,0);
 }());
