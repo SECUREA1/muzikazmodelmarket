@@ -80,6 +80,11 @@ for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarge
     throw new Error(`RAD-TOX is missing its required mixed-level or always-on controls feature: ${requiredGameFeature}`);
   }
 }
+for (const requiredLaunchSafety of ["No playable Cribz environment is available.", 'if (!result) throw new Error', 'throw error;', 'RAD-TOX did not enter an active gameplay state.']) {
+  if (!houseExplorer.includes(requiredLaunchSafety)) {
+    throw new Error(`RAD-TOX must surface failed Cribz loads instead of presenting a non-playable game: missing ${requiredLaunchSafety}`);
+  }
+}
 if (houseExplorer.includes('data-rad-pause') || houseExplorer.includes('RAD_TOX_STATES.PAUSED')) {
   throw new Error('RAD-TOX must not expose or enter a paused state.');
 }
