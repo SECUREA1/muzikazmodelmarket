@@ -469,9 +469,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   document.querySelector('a[href="#house-explorer-canvas"]')?.addEventListener('click', (event) => {
     event.preventDefault();
-    if (!mobileQualityMode && document.pointerLockElement !== canvas) {
-      canvas.requestPointerLock?.();
-    }
+    // Entering the view must not capture the mouse. Pointer lock is available
+    // only through the dedicated desktop toggle, leaving normal cursor drag
+    // controls available after following this in-page link.
+    canvas.focus({ preventScroll: true });
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
   });
   pointerLockButton?.addEventListener('click', () => {
