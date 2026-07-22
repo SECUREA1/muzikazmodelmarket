@@ -38,12 +38,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (message && levelLoaderMessage) levelLoaderMessage.textContent = message;
     if (levelLoaderFill) levelLoaderFill.style.width = `${levelLoaderProgress}%`;
     if (levelLoaderPercent) levelLoaderPercent.textContent = `${levelLoaderProgress}%`;
-    if (gameLoadStatus) gameLoadStatus.textContent = `Loading RAD-TOX: ${levelLoaderProgress}%${message ? ` — ${message}` : ''}`;
     levelLoaderScale?.setAttribute('aria-valuenow', String(levelLoaderProgress));
   }
   function showLevelLoader(level, message) {
     levelLoaderProgress = 0;
-    if (levelLoaderTitle) levelLoaderTitle.textContent = `Loading level ${level}`;
+    if (levelLoaderTitle) levelLoaderTitle.textContent = `Preparing level ${level}`;
     updateLevelLoader(4, message);
     if (levelLoader) levelLoader.hidden = false;
     stage.classList.add('is-level-transitioning');
@@ -53,7 +52,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     window.setTimeout(() => { if (levelLoader) levelLoader.hidden = true; stage.classList.remove('is-level-transitioning'); }, reducedMotion ? 0 : 260);
   }
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
-  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Drag/touch anywhere in the view: look</span><span>Cursor always stays available</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
+  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Enter interior: mouse-look</span><span>Drag/touch: look</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
 
   const controllerIcon = (path) => `<svg class="controller-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
 
@@ -70,9 +69,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const style = document.createElement('style');
   style.textContent = `
     .house-explorer-shell{width:min(96%,1400px);max-width:100%;box-sizing:border-box;align-items:start}
-    .house-stage{grid-column:1;grid-row:1;height:clamp(420px,calc(100svh - 240px),720px);max-height:calc(100svh - 240px);overflow:hidden;cursor:default;touch-action:none}.house-stage.is-pointer-dragging{cursor:grabbing}
+    .house-stage{grid-column:1;grid-row:1;height:clamp(420px,calc(100svh - 240px),720px);max-height:calc(100svh - 240px);overflow:hidden}
     .house-hud{grid-column:2;grid-row:1 / span 3}
-    .house-stage #house-explorer-canvas{display:block;width:100%;height:100%;min-height:420px;background:#050807;touch-action:none;cursor:default}
+    .house-stage #house-explorer-canvas{display:block;width:100%;height:100%;min-height:420px;background:#050807;touch-action:none;cursor:grab}
     .house-picker-panel,.environment-upload-panel{display:grid;gap:.55rem;padding:.7rem;border:1px solid rgba(156,255,0,.25);border-radius:.85rem;background:rgba(0,0,0,.34)}
     .house-picker-panel{grid-column:1;grid-row:2;position:relative;z-index:9;width:100%;box-sizing:border-box;margin:.7rem 0 0;box-shadow:0 14px 34px rgba(0,0,0,.42);backdrop-filter:blur(14px)}.house-picker-panel.is-collapsed{display:none}
     .house-picker-row{display:grid;grid-template-columns:1fr auto;gap:.45rem;align-items:end}.house-picker-label{display:grid;gap:.25rem;color:rgba(255,255,255,.74);font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em}.house-picker-panel select{min-width:0;width:100%;height:2.45rem;border:1px solid rgba(156,255,0,.35);border-radius:.65rem;background:rgba(4,8,6,.92);color:#fff;padding:0 .65rem;font:inherit}.house-picker-panel button,.environment-upload-panel button{border:0;border-radius:999px;padding:.62rem .8rem;font-weight:900;background:#9cff00;color:#111;white-space:nowrap}.house-picker-panel small{color:rgba(255,255,255,.72);line-height:1.25}.house-picker-title{display:flex;align-items:center;justify-content:space-between;gap:.5rem;color:#fff}.house-picker-title strong{color:#9cff00}.house-picker-panel .danger{background:#ff5470;color:#fff}.house-stage.is-avatar-drop-target #house-explorer-canvas{outline:2px dashed #9cff00;outline-offset:-8px}
@@ -91,7 +90,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     .mobile-move-pad.mobile-move-pad-glb button b{display:block;font-size:clamp(1.05rem,5vw,1.55rem);line-height:1}.mobile-move-pad.mobile-move-pad-glb button span{display:block;margin-top:.18rem;font-size:clamp(.54rem,2.4vw,.78rem);line-height:.98;text-transform:uppercase;letter-spacing:.04em}
     .mobile-move-pad.mobile-move-pad-glb [data-mobile-area=jump],.mobile-move-pad.mobile-move-pad-glb [data-mobile-area=avatar],.mobile-move-pad.mobile-move-pad-glb [data-mobile-area=environment]{background:linear-gradient(180deg,#fff,#e7e7e7);color:#071007}.mobile-move-pad.mobile-move-pad-glb [data-mobile-zoom-toggle="in"]{background:linear-gradient(180deg,#fff,#e7e7e7);color:#071007}
     .mobile-move-pad.mobile-move-pad-glb button.is-active{transform:translateY(1px);filter:brightness(1.12)}
-    #house-toxic-bubbles{background:linear-gradient(135deg,#d9ff40,#6abd00)!important;color:#081006!important;box-shadow:0 0 18px rgba(156,255,0,.38)}.rad-tox-tools{position:absolute;z-index:9;right:14px;top:56px;display:flex;align-items:center;gap:6px;padding:7px;border:1px solid rgba(202,255,105,.48);border-radius:13px;background:rgba(3,13,5,.86);box-shadow:0 8px 25px rgba(0,0,0,.36);touch-action:manipulation}.rad-tox-tools.is-collapsed{right:14px;top:14px;border-radius:999px;box-shadow:0 10px 26px rgba(0,0,0,.48)}.rad-tox-tools__content{display:flex;align-items:center;gap:6px}.rad-tox-tools.is-collapsed{padding:5px}.rad-tox-tools.is-collapsed .rad-tox-tools__content{display:none}.rad-tox-tools-toggle{display:grid!important;place-items:center;width:28px;min-height:28px!important;padding:0!important}.rad-tox-tools button{min-height:30px;border:1px solid rgba(255,255,255,.24);border-radius:8px;padding:5px 8px;background:#102b12;color:#efffd7;font:800 10px/1 Inter,sans-serif;letter-spacing:.04em;cursor:pointer;touch-action:manipulation}.rad-tox-tools button:disabled{opacity:.42;cursor:not-allowed}.rad-tox-tools button[aria-pressed=true]{background:#caff49;color:#071007;border-color:#efffd7}.rad-tox-tools .rad-tox-colors{display:flex;gap:4px}.rad-tox-tools .rad-tox-color{width:22px;padding:0;border-radius:50%;background:var(--spray-color)}.rad-tox-tools .rad-tox-color[aria-pressed=true]{outline:2px solid #fff;outline-offset:2px}.rad-tox-pack{position:absolute;z-index:10;right:14px;top:104px;width:min(320px,calc(100% - 28px));padding:12px;border:1px solid rgba(202,255,105,.48);border-radius:13px;background:rgba(3,13,5,.94);color:#efffd7;box-shadow:0 12px 30px rgba(0,0,0,.46);touch-action:manipulation}.rad-tox-pack[hidden]{display:none}.rad-tox-pack-header{display:flex;align-items:center;gap:8px;margin:0 0 8px}.rad-tox-pack-close{display:grid!important;place-items:center;width:30px;min-height:30px!important;margin-left:auto;padding:0!important;border-radius:50%!important;font-size:18px!important;line-height:1!important}.rad-tox-pack h2{margin:0;color:#caff49;font-size:13px;letter-spacing:.08em}.rad-tox-pack-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.rad-tox-pack-item{min-width:0;padding:7px;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:rgba(255,255,255,.05);font:700 11px/1.3 Inter,sans-serif}.rad-tox-pack-item strong{display:block;color:#fff;font-size:12px}.rad-tox-pack-empty{margin:0;color:rgba(239,255,215,.72);font:700 11px/1.35 Inter,sans-serif}@media(max-width:760px){.rad-tox-tools{position:fixed;top:auto;right:max(10px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));z-index:30;gap:4px;padding:5px}.rad-tox-tools.is-collapsed{top:auto;right:max(10px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom))}.rad-tox-pack{position:fixed;top:auto;right:max(10px,env(safe-area-inset-right));bottom:58px;z-index:31;width:min(320px,calc(100% - 20px))}.rad-tox-tools button{padding:5px 6px;font-size:9px}.rad-tox-tools .rad-tox-color{width:19px}}
+    #house-toxic-bubbles{background:linear-gradient(135deg,#d9ff40,#6abd00)!important;color:#081006!important;box-shadow:0 0 18px rgba(156,255,0,.38)}.rad-tox-tools{position:absolute;z-index:9;right:14px;top:56px;display:flex;align-items:center;gap:6px;padding:7px;border:1px solid rgba(202,255,105,.48);border-radius:13px;background:rgba(3,13,5,.86);box-shadow:0 8px 25px rgba(0,0,0,.36)}.rad-tox-tools.is-collapsed{right:14px;top:14px;border-radius:999px;box-shadow:0 10px 26px rgba(0,0,0,.48)}.rad-tox-tools__content{display:flex;align-items:center;gap:6px}.rad-tox-tools.is-collapsed{padding:5px}.rad-tox-tools.is-collapsed .rad-tox-tools__content{display:none}.rad-tox-tools-toggle{display:grid!important;place-items:center;width:28px;min-height:28px!important;padding:0!important}.rad-tox-tools button{min-height:30px;border:1px solid rgba(255,255,255,.24);border-radius:8px;padding:5px 8px;background:#102b12;color:#efffd7;font:800 10px/1 Inter,sans-serif;letter-spacing:.04em;cursor:pointer}.rad-tox-tools button:disabled{opacity:.42;cursor:not-allowed}.rad-tox-tools button[aria-pressed=true]{background:#caff49;color:#071007;border-color:#efffd7}.rad-tox-tools .rad-tox-colors{display:flex;gap:4px}.rad-tox-tools .rad-tox-color{width:22px;padding:0;border-radius:50%;background:var(--spray-color)}.rad-tox-tools .rad-tox-color[aria-pressed=true]{outline:2px solid #fff;outline-offset:2px}.rad-tox-pack{position:absolute;z-index:10;right:14px;top:104px;width:min(320px,calc(100% - 28px));padding:12px;border:1px solid rgba(202,255,105,.48);border-radius:13px;background:rgba(3,13,5,.94);color:#efffd7;box-shadow:0 12px 30px rgba(0,0,0,.46)}.rad-tox-pack[hidden]{display:none}.rad-tox-pack-header{display:flex;align-items:center;gap:8px;margin:0 0 8px}.rad-tox-pack-close{display:grid!important;place-items:center;width:30px;min-height:30px!important;margin-left:auto;padding:0!important;border-radius:50%!important;font-size:18px!important;line-height:1!important}.rad-tox-pack h2{margin:0;color:#caff49;font-size:13px;letter-spacing:.08em}.rad-tox-pack-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.rad-tox-pack-item{min-width:0;padding:7px;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:rgba(255,255,255,.05);font:700 11px/1.3 Inter,sans-serif}.rad-tox-pack-item strong{display:block;color:#fff;font-size:12px}.rad-tox-pack-empty{margin:0;color:rgba(239,255,215,.72);font:700 11px/1.35 Inter,sans-serif}@media(max-width:760px){.rad-tox-tools{position:fixed;top:auto;right:max(10px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));z-index:30;gap:4px;padding:5px}.rad-tox-tools.is-collapsed{top:auto;right:max(10px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom))}.rad-tox-pack{position:fixed;top:auto;right:max(10px,env(safe-area-inset-right));bottom:58px;z-index:31;width:min(320px,calc(100% - 20px))}.rad-tox-tools button{padding:5px 6px;font-size:9px}.rad-tox-tools .rad-tox-color{width:19px}}
     .rad-tox-hud{position:absolute;z-index:8;top:12px;left:12px;display:grid;gap:6px;width:min(660px,calc(100% - 24px));color:#efffd7;font-size:12px;line-height:1.25;box-sizing:border-box}.rad-tox-hud-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;min-width:0;padding:8px 9px 8px 12px;border:1px solid rgba(186,255,57,.5);border-radius:12px;background:rgba(3,13,5,.84);box-shadow:0 8px 25px rgba(0,0,0,.36)}.rad-tox-hud-row__content{display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;min-width:0}.rad-tox-hud-row strong{color:#baff39;letter-spacing:.05em;white-space:nowrap}.rad-tox-hud-row span{white-space:nowrap}.rad-tox-row-toggle{display:grid;place-items:center;width:28px;height:28px;min-height:28px;padding:0;border:1px solid rgba(239,255,215,.35);border-radius:8px;background:rgba(255,255,255,.08);color:#efffd7;font-size:14px;cursor:pointer}.rad-tox-row-toggle:hover,.rad-tox-row-toggle:focus-visible{border-color:#caff49;background:rgba(202,255,73,.16);color:#fff;outline:none}.rad-tox-hud-row.is-collapsed{width:max-content;max-width:100%;padding:5px 5px 5px 9px}.rad-tox-hud-row.is-collapsed .rad-tox-hud-row__content{display:none}.rad-tox-hud-row.is-collapsed::before{content:attr(data-rad-row-label) ' hidden';color:rgba(239,255,215,.76);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}.rad-tox-health{display:inline-flex;align-items:center;gap:4px}.rad-tox-health i{display:block;width:48px;height:6px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.2)}.rad-tox-health i::after{content:'';display:block;width:var(--health,100%);height:100%;background:linear-gradient(90deg,#ff4967,#ffe55d,#aaff3f);transition:width .2s}.rad-tox-health b{font-size:10px}
     .house-reticle.is-toxic-target{color:#efff72;transform:translate(-50%,-50%) scale(1.45);text-shadow:0 0 10px #fff,0 0 26px #9cff00}.house-stage .house-vr-button{position:absolute!important;right:14px!important;bottom:14px!important;left:auto!important;z-index:8!important}
     /* Keep mobile gameplay controls to two predictable rows: sticks, then actions. */
@@ -158,7 +157,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // PMREM generation is an expensive GPU pass with no gameplay benefit on the
   // performance renderer. Skipping it keeps the first mobile frame responsive.
   const pmrem = performanceMode ? null : new THREE.PMREMGenerator(renderer); if (pmrem) scene.environment = pmrem.fromScene(new THREE.Scene(), 0.04).texture;
-  const clock = new THREE.Clock(); const registry = new EnvironmentRegistry(); const envLoader = new EnvironmentLoader({ scene, renderer, onProgress: (p) => { const progress = Math.max(4, Math.min(100, p)); loadingFill.style.width = `${progress}%`; updateLevelLoader(progress, 'Streaming world geometry and loading the encounter…'); } });
+  const clock = new THREE.Clock(); const registry = new EnvironmentRegistry(); const envLoader = new EnvironmentLoader({ scene, renderer, onProgress: (p) => { const progress = Math.max(4, Math.min(100, p)); loadingFill.style.width = `${progress}%`; updateLevelLoader(progress, 'Streaming world geometry and preparing the encounter…'); } });
   const avatarLoader = new GLTFLoader(); const avatarRaycaster = new THREE.Raycaster(); const avatarPointer = new THREE.Vector2(); const placedAvatars = new THREE.Group(); placedAvatars.name = 'MUZIKAZ_PLACED_AVATARS'; scene.add(placedAvatars);
   const landingFrame = new THREE.Group(); landingFrame.name = 'MUZIKAZ_LANDING_FLOOR_FRAME'; scene.add(landingFrame);
   let activeAvatar = null;
@@ -309,136 +308,24 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const RIGHT_THUMBSTICK_SENSITIVITY = 0.75;
   function updatePlayer(delta) { player.yaw -= thumbInput.rightX * delta * 2.5 * RIGHT_THUMBSTICK_SENSITIVITY; player.pitch = THREE.MathUtils.clamp(player.pitch - thumbInput.rightY * delta * 1.9 * RIGHT_THUMBSTICK_SENSITIVITY, -1.25, 1.15); const input = getInput(); forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)); right.set(Math.cos(player.yaw),0,-Math.sin(player.yaw)); move.copy(forward).multiplyScalar(input.y).addScaledVector(right,input.x); if (move.lengthSq()) move.normalize().multiplyScalar(player.speed * delta); playerCollider.translate(move); if (!player.onGround) player.velocity.y -= 18 * delta; playerCollider.translate(new THREE.Vector3(0, player.velocity.y * delta, 0)); const collision = envLoader.octree.capsuleIntersect(playerCollider); player.onGround = false; if (collision) { player.onGround = collision.normal.y > 0; if (player.onGround) player.velocity.y = 0; playerCollider.translate(collision.normal.multiplyScalar(collision.depth)); } const base = playerCollider.end.clone(); base.y -= player.height; playerRig.position.copy(base); playerRig.rotation.y = player.yaw; if (!renderer.xr.isPresenting) { camera.position.set(0, player.eyeHeight, 0); camera.rotation.order = 'YXZ'; camera.rotation.set(player.pitch,0,0); } if (playerRig.position.y < (envLoader.bounds.min.y || -30) - 20) resetPlayer(); }
 
-  function gameInputIsActive() {
-    return document.activeElement === canvas;
-  }
-
-  function handleGameKeyDown(event) {
-    if (!gameInputIsActive()) return;
-    const key = event.key.toLowerCase();
-    keys.add(key);
-    if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) event.preventDefault();
-    if (key === ' ') {
-      event.preventDefault();
-      if (player.onGround) {
-        player.velocity.y = player.jumpVelocity;
-        player.onGround = false;
-      }
-    }
-    if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08);
-    if (key === 'e') player.eyeHeight = Math.min(2.25, player.eyeHeight + .08);
-    if (key === 'r') resetPlayer();
-    if (key === 'i') {
-      event.preventDefault();
-      toxicBubbleSystem.toggleInventory();
-    }
-  }
-
-  function handleGameKeyUp(event) {
-    keys.delete(event.key.toLowerCase());
-  }
-
-  window.addEventListener('keydown', handleGameKeyDown);
-  window.addEventListener('keyup', handleGameKeyUp);
-  window.addEventListener('blur', () => keys.clear());
-  function syncWalkControl() {
-    walkButton.textContent = envLoader.world ? 'Game active' : 'Start game';
-    walkButton.setAttribute('aria-pressed', String(Boolean(envLoader.world)));
-  }
+  window.addEventListener('keydown', (e) => { const key = e.key.toLowerCase(); keys.add(key); if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) e.preventDefault(); if (key === ' ') { e.preventDefault(); if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } } if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08); if (key === 'e') player.eyeHeight = Math.min(2.25, player.eyeHeight + .08); if (key === 'r') resetPlayer(); if (key === 'i') { e.preventDefault(); toxicBubbleSystem.toggleInventory(); } }); window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase())); window.addEventListener('blur', () => keys.clear());
+  const pointerLockSupported = Boolean(canvas.requestPointerLock);
+  document.addEventListener('pointerlockchange', () => {
+    const locked = document.pointerLockElement === canvas;
+    walkButton.textContent = locked ? 'Exit pointer lock' : (envLoader.world ? 'Start game' : 'Start game');
+    walkButton.setAttribute('aria-pressed', String(locked || !pointerLockSupported));
+  });
+  document.addEventListener('mousemove', (e) => { if (document.pointerLockElement !== canvas) return; player.yaw -= e.movementX * .0025; player.pitch = THREE.MathUtils.clamp(player.pitch - e.movementY * .002, -1.25, 1.15); });
   scaleControl.querySelector('input').addEventListener('input', (e) => applySpaceScale(e.target.value)); scaleControl.querySelectorAll('[data-space-scale]').forEach((button) => button.addEventListener('click', () => applySpaceScale(currentSpaceScale + (button.dataset.spaceScale === 'up' ? .1 : -.1)))); viewControls.querySelectorAll('[data-zoom]').forEach((button) => button.addEventListener('click', () => applyZoom(button.dataset.zoom === 'in' ? -1 : 1))); syncZoomControls();
   environmentSelect?.addEventListener('change', (event) => { if (event.target.value) loadById(event.target.value); });
   canvas.addEventListener('dragover', (e) => { if (!activeAvatar && !e.dataTransfer?.types?.includes('application/x-muzikaz-avatar')) return; e.preventDefault(); stage.classList.add('is-avatar-drop-target'); }); canvas.addEventListener('dragleave', () => stage.classList.remove('is-avatar-drop-target')); canvas.addEventListener('drop', async (e) => { e.preventDefault(); stage.classList.remove('is-avatar-drop-target'); const avatars = window.MuzikazActiveHouseAvatars || []; const avatar = avatars.find(a => a.id === e.dataTransfer.getData('application/x-muzikaz-avatar')) || activeAvatar; if (avatar) addAvatarToScene(avatar, setAvatarPointerFromEvent(e)).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); });
-  let toxicTap = null;
-  let toxicConsumedClick = false;
-
-  function isPrimaryViewPointer(event) {
-    return event.isPrimary && (event.pointerType !== 'mouse' || event.button === 0);
-  }
-
-  function preventSyntheticClick(event) {
-    if (!toxicConsumedClick) return;
-    toxicConsumedClick = false;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-  }
-
-  function beginViewPointer(event) {
-    if (!isPrimaryViewPointer(event)) return;
-    canvas.focus({ preventScroll: true });
-    event.preventDefault();
-    const avatarHit = findPlacedAvatarFromEvent(event);
-    toxicTap = { id: event.pointerId, x: event.clientX, y: event.clientY, avatar: Boolean(avatarHit) };
-
-    if (avatarHit) {
-      avatarDrag = { id: event.pointerId, root: avatarHit.root };
-      dragPointer = null;
-      setStatus(`Dragging ${avatarDisplayName(avatarHit.root)}. Release to place it just above the floor.`);
-    } else {
-      dragPointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
-    }
-
-    stage.classList.add('is-pointer-dragging');
-    canvas.setPointerCapture?.(event.pointerId);
-  }
-
-  function moveViewPointer(event) {
-    if (avatarDrag?.id === event.pointerId) {
-      const floorPoint = floorPointFromPointer(event);
-      avatarDrag.root.position.x = floorPoint.x;
-      avatarDrag.root.position.z = floorPoint.z;
-      avatarDrag.root.position.y = floorPoint.y + (avatarDrag.root.userData.floorLiftOffset ?? FLOOR_ENTRY_OFFSET);
-      return;
-    }
-    if (!dragPointer || dragPointer.id !== event.pointerId) return;
-
-    player.yaw -= (event.clientX - dragPointer.x) * .006;
-    player.pitch = THREE.MathUtils.clamp(player.pitch - (event.clientY - dragPointer.y) * .005, -1.25, 1.15);
-    dragPointer.x = event.clientX;
-    dragPointer.y = event.clientY;
-  }
-
-  function endViewPointer(event) {
-    if (toxicTap?.id === event.pointerId) {
-      const moved = Math.hypot(event.clientX - toxicTap.x, event.clientY - toxicTap.y);
-      if (!toxicTap.avatar && moved <= 8) toxicConsumedClick = toxicBubbleSystem.handlePointerInteraction(event) || toxicConsumedClick;
-      toxicTap = null;
-    }
-    if (avatarDrag?.id === event.pointerId) {
-      liftObjectAboveFloor(avatarDrag.root, floorPointFromPointer(event));
-      avatarDrag = null;
-    }
-    if (dragPointer?.id === event.pointerId) dragPointer = null;
-    stage.classList.remove('is-pointer-dragging');
-  }
-
-  canvas.addEventListener('click', preventSyntheticClick, true);
-  toxicButton.addEventListener('click', async (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    try {
-      // The dock is a first-class way to start the game. It must work without
-      // asking the visitor to click the rendered interior before using it.
-      await openHouseMap();
-      await toxicBubbleSystem.begin();
-    } catch (error) {
-      setStatus(error.message || 'Unable to begin RAD-TOX from the game controls.');
-    }
-  });
-  canvas.addEventListener('pointerdown', beginViewPointer);
-  canvas.addEventListener('pointermove', moveViewPointer);
-  canvas.addEventListener('pointerup', endViewPointer);
-  canvas.addEventListener('pointercancel', endViewPointer);
-  canvas.addEventListener('dblclick', (event) => {
-    event.preventDefault();
-    const avatarHit = findPlacedAvatarFromEvent(event);
-    if (!avatarHit) return;
-    avatarDrag = null;
-    dragPointer = null;
-    toxicTap = null;
-    stage.classList.remove('is-pointer-dragging');
-    openAvatarMenu(avatarHit.root);
-  });
-  canvas.addEventListener('wheel', (event) => { if (!scrollZoomEnabled) return; event.preventDefault(); applyZoom(event.deltaY); }, { passive:false });
+  let toxicTap = null; let toxicConsumedClick = false;
+  canvas.addEventListener('click', (event) => { if (!toxicConsumedClick) return; toxicConsumedClick=false; event.preventDefault(); event.stopImmediatePropagation(); }, true);
+  toxicButton.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); toxicBubbleSystem.begin(); });
+  canvas.addEventListener('pointerdown', (event) => { if (document.pointerLockElement === canvas && event.button === 0) { toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
+  canvas.addEventListener('pointerup', (event) => { if (!toxicTap || toxicTap.id !== event.pointerId) return; const moved=Math.hypot(event.clientX-toxicTap.x,event.clientY-toxicTap.y); if (!toxicTap.avatar && moved<=8) toxicConsumedClick=toxicBubbleSystem.handlePointerInteraction(event) || toxicConsumedClick; toxicTap=null; });
+  canvas.addEventListener('pointercancel', () => { toxicTap=null; });
+  canvas.addEventListener('pointerdown', (e) => { if (document.pointerLockElement === canvas) return; e.preventDefault(); const avatarHit = findPlacedAvatarFromEvent(e); if (avatarHit) { avatarDrag = { id:e.pointerId, root:avatarHit.root }; dragPointer = null; setStatus(`Dragging ${avatarDisplayName(avatarHit.root)}. Release to place it just above the floor. Double-click to open its menu.`); } else dragPointer = { id:e.pointerId, x:e.clientX, y:e.clientY }; canvas.setPointerCapture?.(e.pointerId); }); canvas.addEventListener('pointermove', (e) => { if (document.pointerLockElement === canvas) return; if (avatarDrag?.id === e.pointerId) { e.preventDefault(); const floorPoint = floorPointFromPointer(e); avatarDrag.root.position.x = floorPoint.x; avatarDrag.root.position.z = floorPoint.z; avatarDrag.root.position.y = floorPoint.y + (avatarDrag.root.userData.floorLiftOffset ?? FLOOR_ENTRY_OFFSET); return; } if (!dragPointer || dragPointer.id !== e.pointerId) return; e.preventDefault(); player.yaw -= (e.clientX - dragPointer.x) * .006; player.pitch = THREE.MathUtils.clamp(player.pitch - (e.clientY - dragPointer.y) * .005, -1.25, 1.15); dragPointer.x = e.clientX; dragPointer.y = e.clientY; }); const release = (e) => { if (avatarDrag?.id === e.pointerId) { liftObjectAboveFloor(avatarDrag.root, floorPointFromPointer(e)); avatarDrag = null; } if (dragPointer?.id === e.pointerId) dragPointer = null; }; canvas.addEventListener('pointerup', release); canvas.addEventListener('pointercancel', release); canvas.addEventListener('dblclick', (e) => { if (document.pointerLockElement === canvas) return; e.preventDefault(); const avatarHit = findPlacedAvatarFromEvent(e); if (avatarHit) { avatarDrag = null; dragPointer = null; openAvatarMenu(avatarHit.root); } }); canvas.addEventListener('wheel', (e) => { if (!scrollZoomEnabled) return; e.preventDefault(); applyZoom(e.deltaY); }, { passive:false }); document.addEventListener('wheel', (e) => { if (document.pointerLockElement !== canvas || !scrollZoomEnabled) return; e.preventDefault(); applyZoom(e.deltaY); }, { passive:false });
   resetButton?.addEventListener('click', () => resetPlayer());
   document.querySelectorAll('[data-mobile-move]').forEach((oldButton) => { const button = oldButton.cloneNode(true); oldButton.replaceWith(button); const direction = button.dataset.mobileMove; const mobileLabel = { forward: '▲ Forward', back: '▼ Reverse', left: '◀ Side left', right: 'Side right ▶', jump: '⤴ Jump' }[direction]; if (mobileLabel) button.setAttribute('aria-label', mobileLabel); const begin = (e) => { e.preventDefault(); if (direction === 'jump') { if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } button.classList.add('is-active'); return; } mobile.add(direction); button.classList.add('is-active'); }; const end = (e) => { e.preventDefault(); if (direction !== 'jump') mobile.delete(direction); button.classList.remove('is-active'); }; button.addEventListener('pointerdown', begin); button.addEventListener('pointerup', end); button.addEventListener('pointercancel', end); button.addEventListener('pointerleave', end); });
   document.querySelectorAll('[data-mobile-zoom]').forEach((oldButton) => { const button = oldButton.cloneNode(true); oldButton.replaceWith(button); button.addEventListener('click', (e) => { e.preventDefault(); applyZoom(button.dataset.mobileZoom === 'in' ? -1 : 1); }); });
@@ -515,12 +402,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     walkButton.setAttribute('aria-pressed', 'true');
   }
   walkButton.addEventListener('click', () => {
+    if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
   });
-  let gameStartPromise = null;
   async function startRadToxGame() {
-    if (gameStartPromise) return gameStartPromise;
-    gameStartPromise = (async () => {
     // The ES5 launcher disables Begin before it dispatches its start request.
     // Guard only against our own in-flight launch, otherwise that request is lost.
     if (gameStartScreen?.classList.contains('is-loading')) return;
@@ -532,8 +417,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     publishGameStage('loading-game', 'Loading level 1 toxins and the upper-floor ghost encounter…');
 
     try {
-      // Start in place so loading the game never moves the page away from the
-      // visitor's current touch or mouse interaction.
+      // A desktop launch should always open at the playable view, rather than
+      // leaving the player at an arbitrary scrolled position behind the overlay.
+      stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
       await openHouseMap();
       resetPlayer();
       await toxicBubbleSystem.begin();
@@ -548,28 +434,24 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       if (gameLoadStatus) gameLoadStatus.textContent = message;
       setStatus(message);
       document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { stage: 'RAD-TOX', message } }));
-    } finally {
-      gameStartPromise = null;
     }
-    })();
-    return gameStartPromise;
   }
   gameStartButton?.addEventListener('click', (event) => { event.preventDefault(); startRadToxGame(); });
   document.addEventListener('muzikaz:rad-tox-request', () => startRadToxGame());
   publishGameStage('engine-ready', 'RAD-TOX game engine ready. Starting the first level…');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
-  // Hovering prepares the world for mouse users; pressing the view prepares it
-  // for touch, pen, and mouse users. Neither path captures or hides the cursor.
-  canvas.addEventListener('pointerenter', (event) => {
-    canvas.focus({ preventScroll: true });
-    if (event.pointerType === 'mouse') openHouseMap().catch((error) => setStatus(error.message || 'Unable to prepare the MUZIKAZ map.'));
-  });
+  // The launcher deliberately loads this module only after the player chooses
+  // Begin. Never auto-load a large GLB world at page start: decoding it on a
+  // mobile main thread can freeze scrolling and make the browser kill the tab.
   canvas.addEventListener('click', () => {
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start walking.'));
   });
   document.querySelector('a[href="#house-explorer-canvas"]')?.addEventListener('click', (event) => {
     event.preventDefault();
-    canvas.focus({ preventScroll: true });
+    // Mouse capture is opt-in: only the visible Enter interior control may lock
+    // a desktop pointer. Canvas clicks, Begin, and keyboard activation remain
+    // non-capturing so the page never takes over the user's mouse unexpectedly.
+    if (!mobileQualityMode && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
   });
   canvas.addEventListener('keydown', (event) => {
@@ -577,9 +459,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     event.preventDefault();
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
-  // Do not steal focus on startup: page controls and touch controls remain
-  // usable until the visitor deliberately interacts with the game view.
-  syncWalkControl();
   if (startEnvironment && !mobileQualityMode) {
     // Do not decode a large GLB while the visitor is browsing the page. On
     // desktop that competes with first paint and can look like a frozen game.

@@ -3,35 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#081006" />
+  <meta http-equiv="refresh" content="0; url=members.html#bottle-login" />
   <title>MUZIKAZ Login</title>
-  <link rel="stylesheet" href="styles.css" />
+  <script>window.location.replace('members.html#bottle-login');</script>
 </head>
-<body class="login-page">
-  <main class="login-shell" aria-labelledby="login-title">
-    <section class="login-orbit" aria-hidden="true"><i></i><i></i><i></i><b>ϟ</b></section>
-    <section class="login-panel">
-      <p class="kicker">Secure bottle connection</p>
-      <h1 id="login-title">Sign in to the beat.</h1>
-      <p class="login-copy">Your MUZIKAZ creator vault is warming up. Sign in to continue to the subscriber tools.</p>
-      <form id="animated-login-form" class="animated-login-form">
-        <label>Email <input name="email" type="email" autocomplete="email" placeholder="crew@muzikaz.example" required /></label>
-        <label>Passcode <input name="passcode" type="password" autocomplete="current-password" placeholder="Bottle pass" required /></label>
-        <button type="submit">Enter the vault <span aria-hidden="true">→</span></button>
-      </form>
-      <p id="login-status" class="login-status" role="status">Loading the neon login sequence…</p>
-      <a href="index.html" class="login-back">← Back to the market</a>
-    </section>
-  </main>
-  <script>
-  (function () {
-    var Audio = window.AudioContext || window.webkitAudioContext, audio;
-    function sound(frequency, duration) { if (!Audio) return; try { audio = audio || new Audio(); if (audio.state === 'suspended') audio.resume(); var oscillator = audio.createOscillator(), gain = audio.createGain(), now = audio.currentTime; oscillator.type = 'triangle'; oscillator.frequency.setValueAtTime(frequency, now); gain.gain.setValueAtTime(.0001, now); gain.gain.exponentialRampToValueAtTime(.055, now + .012); gain.gain.exponentialRampToValueAtTime(.0001, now + duration); oscillator.connect(gain); gain.connect(audio.destination); oscillator.start(now); oscillator.stop(now + duration + .02); } catch (error) {} }
-    var form = document.getElementById('animated-login-form'), status = document.getElementById('login-status');
-    window.setTimeout(function () { status.textContent = 'Connection ready. Enter your Bottle credentials.'; }, 700);
-    form.addEventListener('focusin', function () { sound(480, .07); });
-    form.addEventListener('submit', function (event) { event.preventDefault(); var email = String(new FormData(form).get('email') || '').trim().toLowerCase(); if (!email) return; sound(660, .12); window.localStorage.setItem('muzikazBottleMember', 'true'); window.localStorage.setItem('muzikazBottleMemberEmail', email); status.textContent = 'Access granted. Opening your vault…'; form.classList.add('is-confirmed'); window.setTimeout(function () { window.location.assign('members.html#bottle-login'); }, 420); });
-  }());
-  </script>
+<body>
+  <p>Opening the protected <a href="members.html#bottle-login">MUZIKAZ Bottle Login</a>.</p>
 </body>
 </html>

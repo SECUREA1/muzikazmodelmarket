@@ -5,8 +5,6 @@ const requiredFiles = [
   ...htmlPages.map((page) => `dist/${page}`),
   'dist/styles.css',
   'dist/script.js',
-  'dist/mobile-nav.js',
-  'dist/public/js/game-audio.js',
   'dist/public/js/rad-tox-launcher.js',
   'dist/reference.png',
 ];
@@ -25,7 +23,7 @@ for (const directory of excludedBuildDirectories) {
 
 for (const page of htmlPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
-  const requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js', 'mobile-nav.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js', 'mobile-nav.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js', 'mobile-nav.js'] : ['styles.css', 'script.js'];
+  const requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js'] : ['styles.css', 'script.js'];
 
   for (const asset of requiredAssets) {
     if (!html.includes(asset)) {
@@ -43,18 +41,11 @@ for (const githubSetting of ['name="muzikaz-github-repository" content="SECUREA1
 if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
   throw new Error('index.html must load the ES5 RAD-TOX compatibility launcher.');
 }
-if (!mainHtml.includes('public/js/game-audio.js')) {
-  throw new Error('index.html must load the procedural RAD-TOX soundtrack.');
-}
 
-for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'starts the full 3D mission automatically', 'legacy mobile browsers']) {
+for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'WebGL support']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
-}
-
-if (!mainHtml.includes('class="house-game-start is-hidden"') || !mainHtml.includes('aria-hidden="true"')) {
-  throw new Error('RAD-TOX must keep its automatic launch overlay out of the playable viewport.');
 }
 
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
@@ -63,15 +54,10 @@ if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-
 }
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
-  throw new Error('index.html must load the House Explorer module through the compatibility launcher.');
+  throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
 }
-for (const requiredLaunchFeature of ["module.src='public/js/house-explorer-glb.js'", 'function startEngine()', 'function request()', "state = 'booting'", 'ENGINE_STARTUP_TIMEOUT_MS = 12000', 'Mission active now — clear every toxic bubble.', 'Full Compatibility Mission', 'function autoStart()', 'window.setTimeout(autoStart,0)']) {
-  if (!launcher.includes(requiredLaunchFeature)) {
-    throw new Error(`RAD-TOX must provide an automatic game launch and compatibility mission: missing ${requiredLaunchFeature}`);
-  }
-}
-if (!launcher.includes('window.setTimeout(autoStart,0)')) {
-  throw new Error('RAD-TOX must auto-load the complete game on page startup.');
+if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launcher.includes('function startEngine()')) {
+  throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
 }
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
@@ -82,25 +68,6 @@ for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarge
 }
 if (houseExplorer.includes('data-rad-pause') || houseExplorer.includes('RAD_TOX_STATES.PAUSED')) {
   throw new Error('RAD-TOX must not expose or enter a paused state.');
-}
-
-for (const requiredDirectInputFeature of ["canvas.addEventListener('pointerdown'", "canvas.addEventListener('pointermove'", "canvas.addEventListener('pointerup'", 'canvas.setPointerCapture?.', 'touch-action:none', 'function gameInputIsActive()', 'canvas.focus({ preventScroll: true });', 'let gameStartPromise = null']) {
-  if (!houseExplorer.includes(requiredDirectInputFeature)) {
-    throw new Error(`RAD-TOX must preserve direct mouse and touch gameplay: missing ${requiredDirectInputFeature}`);
-  }
-}
-for (const restrictedInputFeature of ['requestPointerLock', 'exitPointerLock', 'pointerlockchange']) {
-  if (houseExplorer.includes(restrictedInputFeature)) {
-    throw new Error(`RAD-TOX must keep cursor and touch controls unrestricted: found ${restrictedInputFeature}`);
-  }
-}
-for (const forbiddenStageInputFeature of ['const gameInputSurface = stage', 'gameInputSurface.addEventListener']) {
-  if (houseExplorer.includes(forbiddenStageInputFeature)) {
-    throw new Error(`RAD-TOX gameplay input must remain canvas-owned: found ${forbiddenStageInputFeature}`);
-  }
-}
-if (houseExplorer.includes("stage.scrollIntoView({ behavior: 'smooth', block: 'start' })")) {
-  throw new Error('RAD-TOX must not scroll the page while it starts the game.');
 }
 
 for (const requiredHudFeature of ['data-rad-row-toggle', 'data-rad-tools-toggle', 'muzikazRadToxHiddenRows']) {

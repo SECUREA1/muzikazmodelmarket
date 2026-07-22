@@ -87,21 +87,13 @@
                 <div class="house-stage">
                     <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
                     <div class="house-reticle" aria-hidden="true">+</div>
-                    <div class="house-status" id="house-status" role="status">RAD-TOX is starting the full mission automatically.</div>
-                    <section class="house-level-loader" id="house-level-loader" hidden aria-live="polite" aria-label="Loading game level">
-                        <div class="house-level-loader__graphic" aria-hidden="true"><i></i><i></i><i></i><b>☢</b></div>
-                        <p class="kicker">RAD-TOX loading</p>
-                        <h3 data-level-loader-title>Loading level 1</h3>
-                        <p class="house-level-loader__message" data-level-loader-message>Loading your first encounter…</p>
-                        <div class="house-level-loader__scale" role="progressbar" aria-label="Level loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span data-level-loader-fill></span></div>
-                        <strong data-level-loader-percent>0%</strong>
-                    </section>
-                    <section class="house-game-start is-hidden" id="house-game-start" aria-labelledby="house-game-start-title" aria-hidden="true">
+                    <div class="house-status" id="house-status" role="status">RAD-TOX starts automatically. Every level contains toxic bubbles, blue ghosts, and snakes.</div>
+                    <section class="house-game-start" id="house-game-start" aria-labelledby="house-game-start-title">
                         <p class="kicker">RAD-TOX game connection</p>
-                        <h3 id="house-game-start-title">Start the mixed encounter.</h3>
-                        <p id="house-game-load-status" role="status">Loading RAD-TOX: 0%</p>
-                        <p class="house-firefox-note">RAD-TOX starts the full 3D mission automatically. IE and other legacy mobile browsers open the complete playable compatibility mission immediately. Laser, Paint Gun, and Bat are ready in every level.</p>
-                        <button class="btn house-start-button" type="button" data-house-start>Start RAD-TOX</button>
+                        <h3 id="house-game-start-title">Mixed encounters start automatically.</h3>
+                        <p id="house-game-load-status" role="status">Preparing toxic bubbles, blue ghosts, and snakes…</p>
+                        <p class="house-firefox-note">RAD-TOX starts automatically in browsers with WebGL support. Laser, Paint Gun, and Bat are always ready in every level. Use the left controller trigger or tap/click to use the selected tool.</p>
+                        <button class="btn house-start-button" type="button" data-house-start>Restart RAD-TOX</button>
                     </section>
                 </div>
                 <aside class="house-hud" aria-label="3D House Explorer controls">
@@ -158,34 +150,6 @@
             </div>
         <section class="section-block market-toggle-panel" id="models" data-market-panel="models" role="tabpanel" aria-labelledby="market-toggle-models">
             <div class="section-title"><span></span><h2>Starter model market</h2><a href="members.html">Unlock legendary drops</a></div>
-            <section class="world-plot" id="muzikaz-world-plot" aria-labelledby="world-plot-title">
-                <div class="world-plot__intro">
-                    <p class="kicker">MUZIKAZ World · starter land</p>
-                    <h3 id="world-plot-title">Claim a five-space plot. Connect the whole world.</h3>
-                    <p>Choose one connected digital land plot for your avatar, GLB scenes, drops, and creator station. Each space is a live connection point—not an isolated parcel.</p>
-                    <div class="world-plot__routes" aria-label="Digital land connections">
-                        <a href="model-explorer.html#live-published-models">GLB drop library <span>↗</span></a>
-                        <a href="#character-world-assets">Avatar &amp; world assets <span>↗</span></a>
-                        <a href="#marketplace-preview">Marketplace engine <span>↗</span></a>
-                    </div>
-                </div>
-                <div class="world-plot__map-wrap">
-                    <div class="world-plot__map" role="group" aria-label="Five selectable Muzikaz World land spaces">
-                        <span class="world-plot__pulse world-plot__pulse--one" aria-hidden="true"></span>
-                        <span class="world-plot__pulse world-plot__pulse--two" aria-hidden="true"></span>
-                        <button class="world-space is-selected" type="button" data-world-space="Studio Ridge" aria-pressed="true"><b>01</b><strong>Studio<br>Ridge</strong><i>GLB stage</i></button>
-                        <button class="world-space" type="button" data-world-space="Crew Plaza" aria-pressed="false"><b>02</b><strong>Crew<br>Plaza</strong><i>social hub</i></button>
-                        <button class="world-space" type="button" data-world-space="Neon Docks" aria-pressed="false"><b>03</b><strong>Neon<br>Docks</strong><i>drop port</i></button>
-                        <button class="world-space" type="button" data-world-space="Echo Gardens" aria-pressed="false"><b>04</b><strong>Echo<br>Gardens</strong><i>sound biome</i></button>
-                        <button class="world-space" type="button" data-world-space="Skyline Deck" aria-pressed="false"><b>05</b><strong>Skyline<br>Deck</strong><i>event roof</i></button>
-                    </div>
-                    <p class="world-plot__selection" id="world-plot-selection" aria-live="polite"><strong>Studio Ridge selected.</strong> GLB stage, avatar spawn, and marketplace link are ready.</p>
-                </div>
-                <form class="world-plot__agreement" id="world-plot-agreement">
-                    <label><input type="checkbox" id="world-plot-consent"> I agree to keep this plot connected to MUZIKAZ World and use compatible GLB assets.</label>
-                    <button class="btn" type="submit" disabled>Reserve Studio Ridge</button>
-                </form>
-            </section>
             <div class="collection-grid" aria-label="Starter model collections"></div>
             <p class="status-message" id="model-status" role="status">Select a model card to preview its collection.</p>
             <div class="model-detail" id="model-detail" hidden>
@@ -323,7 +287,7 @@
             <a class="logo" href="#home"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
             <p>Neon model-market landing page powered by the included MUZIKAZ asset pack.</p>
         </div>
-        <div><h4>Shop</h4><a href="#models">Models</a><a href="#merch">Merch</a><a href="login.html">Bottle Login</a></div>
+        <div><h4>Shop</h4><a href="#models">Models</a><a href="#merch">Merch</a><a href="members.html">Bottle Login</a></div>
         <div><h4>Support</h4><a href="mailto:crew@muzikaz.example">Contact</a><a href="#crew">Drops</a></div>
         <div><h4>Company</h4><a href="#crew">Crew</a><a href="#home">About</a></div>
         <div><h4>Follow</h4><p class="socials">◎ ♫ ✕</p></div>
@@ -331,11 +295,11 @@
 
     <!-- ES5 fallback loads before module-only game code so RAD-TOX remains playable in IE11. -->
     <script src="public/js/rad-tox-launcher.js"></script>
-    <script src="public/js/game-audio.js"></script>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script type="module" src="public/js/model-gallery.js"></script>
-    <!-- The launcher immediately starts the full WebGL mission when supported,
-         or the built-in compatibility mission when it is not. -->
+    <!-- The GLB game module is injected by the launcher after the player presses
+         Begin RAD-TOX. Keeping Three.js and the 12 MB world off the critical
+         path prevents the landing page from stalling on mobile devices. -->
     <script src="script.js"></script>
 </body>
 </html>
