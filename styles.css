@@ -26,6 +26,12 @@ border-bottom:1px solid #111;
 font-size:14px}
 .topbar span:last-child{
 color:#fff}
+.theme-status{
+color:#dfff55;
+font-size:11px;
+font-weight:900;
+letter-spacing:.08em;
+text-shadow:0 0 12px rgba(156,255,0,.6)}
 .site-header{
 position:sticky;
 top:0;
