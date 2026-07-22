@@ -1,4 +1,4 @@
-/* MUZIKAZ Battle Theme — original Web Audio soundtrack, enabled after a user gesture. */
+/* MUZIKAZ Battle Theme — a continuously generated, ever-changing Web Audio soundtrack. */
 (function () {
   'use strict';
 
@@ -6,31 +6,35 @@
   var context;
   var master;
   var running = false;
+  var starting = false;
   var nextStepAt = 0;
   var step = 0;
   var timer;
-  var button;
-  var status;
   var BPM = 150;
   var stepLength = 60 / BPM / 4;
   var bassline = [55, 55, 65.41, 73.42, 55, 55, 82.41, 73.42];
   var lead = [659.25, 783.99, 880, 1046.5, 880, 783.99, 659.25, 587.33];
+  var pattern = randomPattern();
 
-  function addUi() {
-    var dock = document.createElement('div');
-    dock.className = 'battle-theme-dock';
-    dock.innerHTML = '<button type="button" class="battle-theme-toggle" aria-pressed="false">♫ Start battle music</button><span class="battle-theme-status" role="status">150 BPM battle mode ready</span>';
-    document.body.appendChild(dock);
-    button = dock.querySelector('button');
-    status = dock.querySelector('span');
-    button.addEventListener('click', function () { running ? stop() : start(); });
-  }
+  function chance(probability) { return Math.random() < probability; }
 
-  function updateUi() {
-    if (!button) return;
-    button.setAttribute('aria-pressed', String(running));
-    button.textContent = running ? '♫ Battle music on' : '♫ Start battle music';
-    status.textContent = running ? '150 BPM battle music playing' : '150 BPM battle mode ready';
+  function randomPattern() {
+    var hats = [];
+    var bass = [];
+    var leadNotes = [];
+    for (var i = 0; i < 16; i += 1) {
+      hats[i] = chance(i % 2 ? 0.86 : 0.42);
+      bass[i] = i % 2 === 0 && chance(i % 4 === 0 ? 0.95 : 0.58);
+      leadNotes[i] = i % 2 === 0 && chance(0.36);
+    }
+    return {
+      kicks: [0, 4, 8, 12].filter(function (beat) { return chance(beat === 0 ? 1 : 0.78); }),
+      snares: [4, 12].filter(function () { return chance(0.92); }),
+      hats: hats,
+      bass: bass,
+      leadNotes: leadNotes,
+      fill: chance(0.55)
+    };
   }
 
   function tone(at, frequency, length, type, volume, slideTo) {
@@ -66,15 +70,16 @@
 
   function schedule(at, currentStep) {
     var beat = currentStep % 16;
-    if (beat % 4 === 0) {
+    if (beat === 0 && currentStep > 0) pattern = randomPattern();
+    if (pattern.kicks.indexOf(beat) !== -1) {
       tone(at, 118, 0.13, 'sine', 0.13, 46);
       tone(at, 55, 0.21, 'triangle', 0.065, 38);
     }
-    if (beat === 4 || beat === 12) noise(at, 0.16, 0.1);
-    noise(at, 0.025, beat % 2 ? 0.02 : 0.012);
-    if (beat % 2 === 0) tone(at, bassline[(beat / 2) % bassline.length], 0.16, 'sawtooth', 0.035);
-    if ([2, 6, 10, 14].indexOf(beat) !== -1) tone(at, lead[((beat - 2) / 4) % lead.length], 0.08, 'square', 0.02);
-    if (beat === 15) tone(at, 1318.51, 0.11, 'square', 0.025, 880);
+    if (pattern.snares.indexOf(beat) !== -1) noise(at, 0.16, 0.1);
+    if (pattern.hats[beat]) noise(at, 0.025, beat % 2 ? 0.024 : 0.014);
+    if (pattern.bass[beat]) tone(at, bassline[(beat / 2 | 0) % bassline.length], 0.16, 'sawtooth', 0.035);
+    if (pattern.leadNotes[beat]) tone(at, lead[(beat / 2 | 0) % lead.length], 0.08, 'square', 0.02);
+    if (beat === 15 && pattern.fill) tone(at, 1318.51, 0.11, 'square', 0.025, 880);
   }
 
   function scheduleLoop() {
@@ -88,35 +93,35 @@
   }
 
   function start() {
-    if (running || !AudioEngine) return;
+    if (!AudioEngine || starting) return;
+    if (running) {
+      if (context.state === 'suspended') context.resume();
+      return;
+    }
+    starting = true;
     context = context || new AudioEngine();
     master = master || context.createGain();
     master.gain.value = 0.5;
     master.connect(context.destination);
     context.resume().then(function () {
+      starting = false;
       running = true;
       nextStepAt = context.currentTime + 0.04;
       step = 0;
+      pattern = randomPattern();
       scheduleLoop();
-      updateUi();
     }).catch(function () {
-      if (status) status.textContent = 'Tap battle music to enable sound';
+      starting = false;
+      // Browsers that block autoplay will start it on the first interaction below.
     });
   }
 
-  function stop() {
-    running = false;
-    window.clearTimeout(timer);
-    if (context) context.suspend();
-    updateUi();
-  }
-
-  function gestureStart() { start(); }
-
   if (!AudioEngine) return;
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addUi, { once: true });
-  else addUi();
+  start();
   ['pointerdown', 'keydown', 'touchstart'].forEach(function (eventName) {
-    window.addEventListener(eventName, gestureStart, { once: true, passive: true });
+    window.addEventListener(eventName, start, { once: true, passive: true });
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) start();
   });
 }());
