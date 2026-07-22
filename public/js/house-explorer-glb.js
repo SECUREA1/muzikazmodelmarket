@@ -309,7 +309,38 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const RIGHT_THUMBSTICK_SENSITIVITY = 0.75;
   function updatePlayer(delta) { player.yaw -= thumbInput.rightX * delta * 2.5 * RIGHT_THUMBSTICK_SENSITIVITY; player.pitch = THREE.MathUtils.clamp(player.pitch - thumbInput.rightY * delta * 1.9 * RIGHT_THUMBSTICK_SENSITIVITY, -1.25, 1.15); const input = getInput(); forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)); right.set(Math.cos(player.yaw),0,-Math.sin(player.yaw)); move.copy(forward).multiplyScalar(input.y).addScaledVector(right,input.x); if (move.lengthSq()) move.normalize().multiplyScalar(player.speed * delta); playerCollider.translate(move); if (!player.onGround) player.velocity.y -= 18 * delta; playerCollider.translate(new THREE.Vector3(0, player.velocity.y * delta, 0)); const collision = envLoader.octree.capsuleIntersect(playerCollider); player.onGround = false; if (collision) { player.onGround = collision.normal.y > 0; if (player.onGround) player.velocity.y = 0; playerCollider.translate(collision.normal.multiplyScalar(collision.depth)); } const base = playerCollider.end.clone(); base.y -= player.height; playerRig.position.copy(base); playerRig.rotation.y = player.yaw; if (!renderer.xr.isPresenting) { camera.position.set(0, player.eyeHeight, 0); camera.rotation.order = 'YXZ'; camera.rotation.set(player.pitch,0,0); } if (playerRig.position.y < (envLoader.bounds.min.y || -30) - 20) resetPlayer(); }
 
-  window.addEventListener('keydown', (e) => { const key = e.key.toLowerCase(); keys.add(key); if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) e.preventDefault(); if (key === ' ') { e.preventDefault(); if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } } if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08); if (key === 'e') player.eyeHeight = Math.min(2.25, player.eyeHeight + .08); if (key === 'r') resetPlayer(); if (key === 'i') { e.preventDefault(); toxicBubbleSystem.toggleInventory(); } }); window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase())); window.addEventListener('blur', () => keys.clear());
+  function gameInputIsActive() {
+    return document.activeElement === canvas;
+  }
+
+  function handleGameKeyDown(event) {
+    if (!gameInputIsActive()) return;
+    const key = event.key.toLowerCase();
+    keys.add(key);
+    if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) event.preventDefault();
+    if (key === ' ') {
+      event.preventDefault();
+      if (player.onGround) {
+        player.velocity.y = player.jumpVelocity;
+        player.onGround = false;
+      }
+    }
+    if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08);
+    if (key === 'e') player.eyeHeight = Math.min(2.25, player.eyeHeight + .08);
+    if (key === 'r') resetPlayer();
+    if (key === 'i') {
+      event.preventDefault();
+      toxicBubbleSystem.toggleInventory();
+    }
+  }
+
+  function handleGameKeyUp(event) {
+    keys.delete(event.key.toLowerCase());
+  }
+
+  window.addEventListener('keydown', handleGameKeyDown);
+  window.addEventListener('keyup', handleGameKeyUp);
+  window.addEventListener('blur', () => keys.clear());
   function syncWalkControl() {
     walkButton.textContent = envLoader.world ? 'Game active' : 'Start game';
     walkButton.setAttribute('aria-pressed', String(Boolean(envLoader.world)));
@@ -333,6 +364,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
   function beginViewPointer(event) {
     if (!isPrimaryViewPointer(event)) return;
+    canvas.focus({ preventScroll: true });
+    event.preventDefault();
     const avatarHit = findPlacedAvatarFromEvent(event);
     toxicTap = { id: event.pointerId, x: event.clientX, y: event.clientY, avatar: Boolean(avatarHit) };
 
@@ -533,6 +566,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     event.preventDefault();
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
+  // The page may load with the game below the fold, but keyboard controls
+  // should already belong to the playable canvas once it is reached. Mouse and
+  // touch remain direct canvas interactions and never capture the system cursor.
+  canvas.focus({ preventScroll: true });
   syncWalkControl();
   if (startEnvironment && !mobileQualityMode) {
     // Do not decode a large GLB while the visitor is browsing the page. On
