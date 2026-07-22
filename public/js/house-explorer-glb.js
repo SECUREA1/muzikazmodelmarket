@@ -76,7 +76,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const style = document.createElement('style');
   style.textContent = `
     .house-explorer-shell{width:min(96%,1400px);max-width:100%;box-sizing:border-box;align-items:start}
-    .house-stage{grid-column:1;grid-row:1;height:clamp(420px,calc(100svh - 240px),720px);max-height:calc(100svh - 240px);overflow:hidden;cursor:grab}.house-stage.is-pointer-dragging{cursor:grabbing}
+    .house-stage{grid-column:1;grid-row:1;height:clamp(420px,calc(100svh - 240px),720px);max-height:calc(100svh - 240px);overflow:hidden;cursor:grab;touch-action:none}.house-stage.is-pointer-dragging{cursor:grabbing}
     .house-hud{grid-column:2;grid-row:1 / span 3}
     .house-stage #house-explorer-canvas{display:block;width:100%;height:100%;min-height:420px;background:#050807;touch-action:none;cursor:grab}
     .house-picker-panel,.environment-upload-panel{display:grid;gap:.55rem;padding:.7rem;border:1px solid rgba(156,255,0,.25);border-radius:.85rem;background:rgba(0,0,0,.34)}
@@ -417,7 +417,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
   });
+  let gameStartPromise = null;
   async function startRadToxGame() {
+    if (gameStartPromise) return gameStartPromise;
+    gameStartPromise = (async () => {
     // The ES5 launcher disables Begin before it dispatches its start request.
     // Guard only against our own in-flight launch, otherwise that request is lost.
     if (gameStartScreen?.classList.contains('is-loading')) return;
@@ -429,9 +432,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     publishGameStage('loading-game', 'Loading level 1 toxins and the upper-floor ghost encounter…');
 
     try {
-      // A desktop launch should always open at the playable view, rather than
-      // leaving the player at an arbitrary scrolled position behind the overlay.
-      stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Start in place so loading the game never moves the page away from the
+      // visitor's current touch or mouse interaction.
       await openHouseMap();
       resetPlayer();
       await toxicBubbleSystem.begin();
@@ -446,7 +448,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       if (gameLoadStatus) gameLoadStatus.textContent = message;
       setStatus(message);
       document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { stage: 'RAD-TOX', message } }));
+    } finally {
+      gameStartPromise = null;
     }
+    })();
+    return gameStartPromise;
   }
   gameStartButton?.addEventListener('click', (event) => { event.preventDefault(); startRadToxGame(); });
   document.addEventListener('muzikaz:rad-tox-request', () => startRadToxGame());
