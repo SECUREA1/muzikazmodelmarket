@@ -25,7 +25,8 @@
   <title>MUZIKAZ VibeVerse Explorer | House & 3D Packs</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <!-- Preconnect to the 3D runtime because RAD-TOX begins automatically. -->
+  <!-- The game engine is requested only after Begin; this connection makes that
+       opt-in launch feel immediate without downloading Three.js on page load. -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
@@ -61,16 +62,16 @@
 
   <main id="home">
     <section class="section-block house-explorer" id="house-explorer" aria-labelledby="house-explorer-title">
-      <div class="section-title"><span></span><h2 id="house-explorer-title">🏠 Vibe Crib Explorer</h2><button class="house-pointer-lock-toggle" id="house-pointer-lock-toggle" type="button" aria-pressed="false" aria-controls="house-explorer-canvas">Enter crib · lock cursor</button></div>
+      <div class="section-title"><span></span><h2 id="house-explorer-title">🏠 Vibe Crib Explorer</h2><a href="#house-explorer-canvas">Enter the crib</a></div>
       <div class="house-explorer-shell">
         <div class="house-stage">
           <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
           <div class="house-reticle" aria-hidden="true">+</div>
-          <div class="house-status" id="house-status" role="status">RAD-TOX loads automatically: clear level 1 toxins, then face blue ghosts in the upper-floor level 2.</div>
+          <div class="house-status" id="house-status" role="status">Press Begin RAD-TOX to clear level 1 toxins, then face blue ghosts in the upper-floor level 2.</div>
           <section class="house-level-loader" id="house-level-loader" hidden aria-live="polite" aria-label="Loading game level">
             <div class="house-level-loader__graphic" aria-hidden="true"><i></i><i></i><i></i><b>☢</b></div>
-            <p class="kicker">RAD-TOX loading</p>
-            <h3 data-level-loader-title>Loading level 1</h3>
+            <p class="kicker">RAD-TOX deployment</p>
+            <h3 data-level-loader-title>Preparing level 1</h3>
             <p class="house-level-loader__message" data-level-loader-message>Loading your next encounter…</p>
             <div class="house-level-loader__scale" role="progressbar" aria-label="Level loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span data-level-loader-fill></span></div>
             <strong data-level-loader-percent>0%</strong>
@@ -78,8 +79,8 @@
           <section class="house-game-start" id="house-game-start" aria-labelledby="house-game-start-title">
             <p class="kicker">RAD-TOX game connection</p>
             <h3 id="house-game-start-title">Clear level 1. Survive the upper-floor ghosts in level 2.</h3>
-            <p id="house-game-load-status" role="status">Loading RAD-TOX: 0%</p>
-            <p class="house-firefox-note">RAD-TOX starts automatically. WebGL browsers load the full 3D mission, and other browsers receive a playable compatibility mission.</p>
+            <p id="house-game-load-status" role="status">Preparing level 1 toxins and the level 2 ghost encounter…</p>
+            <p class="house-firefox-note">RAD-TOX runs in browsers with WebGL support. The game starts as soon as the interior is ready.</p>
             <button class="btn house-start-button" type="button" data-house-start>Start RAD-TOX</button>
           </section>
         </div>
@@ -185,7 +186,8 @@
   <script src="public/js/rad-tox-launcher.js"></script>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <script type="module" src="public/js/model-gallery.js"></script>
-  <!-- rad-tox-launcher automatically loads the 3D mission or compatibility mission. -->
+  <!-- rad-tox-launcher loads the 3D module after a Start/Begin action. Keeping
+       it out of the initial document avoids competing with first paint. -->
   <script type="module" src="public/js/model-publisher.js"></script>
   <script src="script.js"></script>
 </body>
