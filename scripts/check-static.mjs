@@ -5,6 +5,7 @@ const requiredFiles = [
   ...htmlPages.map((page) => `dist/${page}`),
   'dist/styles.css',
   'dist/script.js',
+  'dist/battle-theme.js',
   'dist/public/js/rad-tox-launcher.js',
   'dist/reference.png',
 ];
@@ -23,7 +24,7 @@ for (const directory of excludedBuildDirectories) {
 
 for (const page of htmlPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
-  const requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js'] : ['styles.css', 'script.js'];
+  const requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js', 'battle-theme.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js', 'battle-theme.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js', 'battle-theme.js'] : ['styles.css', 'script.js', 'battle-theme.js'];
 
   for (const asset of requiredAssets) {
     if (!html.includes(asset)) {

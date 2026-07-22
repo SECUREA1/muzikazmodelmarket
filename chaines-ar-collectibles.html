@@ -68,5 +68,6 @@ window.addEventListener('popstate', () => { const value = new URLSearchParams(lo
 async function bootCollectibles(){ const ownerCollectibles = await loadOwnerCollectibles(); if(ownerCollectibles.length){ collectibles = ownerCollectibles.map(normalizeCollectible).filter(item => item.modelUrl); activeCollectionIndex = Math.max(collectibles.length - 1, 0); } buildThumbs(); const params = new URLSearchParams(location.search); const urlNumber = params.get('collection'); let stored = null; try { stored = localStorage.getItem('chaines-active-collection'); } catch(_) {} selectCollectibleByNumber(urlNumber || stored || collectibles.length, {skipURL: Boolean(urlNumber)}); }
 bootCollectibles();
 </script>
+  <script src="battle-theme.js"></script>
 </body>
 </html>
