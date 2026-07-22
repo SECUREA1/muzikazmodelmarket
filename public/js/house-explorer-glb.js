@@ -245,6 +245,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // Opening or closing the pack never changes the game state.
   const closeTools = () => { toxicBubbleSystem.closeInventory(); sprayTools.hidden=true; toolsToggle.setAttribute('aria-expanded','false'); document.querySelector('#house-tools')?.setAttribute('aria-expanded','false'); document.querySelector('#house-tools')?.focus(); }; const openTools = () => { syncToolsPortal(); sprayTools.hidden=false; toolsToggle.setAttribute('aria-expanded','true'); document.querySelector('#house-tools')?.setAttribute('aria-expanded','true'); sprayTools.querySelector('[data-rad-tool]')?.focus(); }; sprayTools.addEventListener('click',(event)=>{if(event.target.closest('[data-rad-tools-toggle]')){closeTools();return;}const tool=event.target.closest('[data-rad-tool]')?.dataset.radTool,color=event.target.closest('[data-spray-color]')?.dataset.sprayColor;if(event.target.closest('[data-rad-pack-toggle]'))toxicBubbleSystem.toggleInventory();if(tool)toxicBubbleSystem.setTool(tool);if(color!==undefined)toxicBubbleSystem.setSprayColor(Number(color));}); inventoryPack.addEventListener('click',(event)=>{if(event.target.closest('[data-rad-pack-close]'))toxicBubbleSystem.closeInventory();}); document.addEventListener('keydown',(event)=>{if(event.key!=='Escape')return;if(!inventoryPack.hidden){toxicBubbleSystem.closeInventory();return;}if(!sprayTools.hidden)closeTools();});
   const keys = new Set(); const mobile = new Set(); const thumbInput = { leftX: 0, leftY: 0, rightX: 0, rightY: 0 }; const forward = new THREE.Vector3(); const right = new THREE.Vector3(); const move = new THREE.Vector3(); const teleportRay = new THREE.Raycaster();
+  const XR_TELEPORT_OFFSET = new THREE.Vector3(0, FLOOR_ENTRY_OFFSET + .04, 0);
+  const XR_TOOL_ORDER = Object.freeze(['laser', 'spray', 'bat']);
+  function pulseXRController(controller, strength = .35, duration = 40) { controller.userData.inputSource?.gamepad?.hapticActuators?.[0]?.pulse?.(strength, duration).catch?.(() => {}); }
+  function createXRAimRay() { const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -7)]); const material = new THREE.LineBasicMaterial({ color: 0xcaff49, transparent: true, opacity: .82, depthTest: false }); const ray = new THREE.Line(geometry, material); ray.name = 'MUZIKAZ_XR_AIM_RAY'; ray.renderOrder = 50; return ray; }
+  function movePlayerTo(point) { const aligned = alignSpawnToCurrentFloor(point.clone()); player.velocity.set(0, 0, 0); player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(aligned.x, aligned.y + player.radius, aligned.z), new THREE.Vector3(aligned.x, aligned.y + player.height, aligned.z), player.radius); playerRig.position.copy(aligned); updateLandingFrame(aligned); }
+  function teleportFromController(controller) { if (!envLoader.world || !envLoader.meshes.length) return false; const origin = controller.getWorldPosition(new THREE.Vector3()); const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.getWorldQuaternion(new THREE.Quaternion())).normalize(); teleportRay.set(origin, direction); const hit = teleportRay.intersectObjects(envLoader.meshes.filter(mesh => mesh.visible !== false), true).find(item => { const normal = item.face?.normal.clone().transformDirection(item.object.matrixWorld); return normal?.y > .5; }); if (!hit) { setStatus('Teleport aim needs a walkable floor. Point the right controller at the ground and squeeze.'); pulseXRController(controller, .15, 25); return false; } movePlayerTo(hit.point.add(XR_TELEPORT_OFFSET)); pulseXRController(controller, .55, 55); setStatus('Teleported. Aim with either controller trigger to use the selected RAD-TOX tool.'); return true; }
+  function cycleXRTool(controller) { const next = XR_TOOL_ORDER[(XR_TOOL_ORDER.indexOf(toxicBubbleSystem.tool) + 1) % XR_TOOL_ORDER.length]; toxicBubbleSystem.setTool(next); pulseXRController(controller, .25, 25); setStatus(`${next === 'spray' ? 'Paint gun' : next === 'bat' ? 'Baseball bat' : 'Laser'} selected. Use either controller trigger to aim and use it.`); }
 
   function zoomPercent() { return Math.round(((92 - player.zoom) / 60) * 100); }
   function syncZoomControls() { viewControls.querySelector('output').textContent = `Zoom ${zoomPercent()}%`; }
@@ -362,16 +369,44 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     });
   });
   async function setupVRControls() {
-    if (!renderer.xr.enabled) return;
+    if (!renderer.xr.enabled || !webXrAvailable) return;
     if (!(await navigator.xr.isSessionSupported('immersive-vr'))) return;
     const [{ VRButton }, { XRControllerModelFactory }] = await Promise.all([
       import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/VRButton.js/+esm'),
       import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/XRControllerModelFactory.js/+esm')
     ]);
     const controllerFactory = new XRControllerModelFactory();
-    for (let i=0;i<2;i+=1) { const controller = renderer.xr.getController(i); controller.addEventListener('connected', event => { controller.userData.handedness=event.data.handedness; }); controller.addEventListener('selectend', () => { if (controller.userData.handedness==='left'||(i===0&&!controller.userData.handedness)) { toxicBubbleSystem.handleXRInteraction(controller); return; } teleportRay.set(playerRig.position.clone().add(new THREE.Vector3(0, player.height, 0)), new THREE.Vector3(0, -1, -1).normalize().applyQuaternion(controller.quaternion)); if (toxicBubbleSystem.handleXRInteraction(controller)) return; const hit = teleportRay.intersectObjects(envLoader.meshes, true)[0]; if (hit) resetPlayer(hit.point.add(new THREE.Vector3(0, .04, 0)), player.yaw); }); const grip = renderer.xr.getControllerGrip(i); grip.add(controllerFactory.createControllerModel(grip)); playerRig.add(controller, grip); }
-    const vrButton = VRButton.createButton(renderer, { requiredFeatures: ['local-floor'], optionalFeatures: ['bounded-floor', 'hand-tracking'] }); vrButton.classList.add('house-vr-button'); stage.append(vrButton);
-    renderer.xr.addEventListener('sessionstart', () => { camera.position.set(0, 0, 0); quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto'); setStatus('WebXR session started. Left stick walks, right stick snap-turns, left trigger uses your selected tool, and right trigger teleports.'); }); renderer.xr.addEventListener('sessionend', () => { camera.position.set(0, player.eyeHeight, 0); quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto'); setStatus(activeEnvironment ? `Ready: ${activeEnvironment.name}. WebXR session ended.` : 'WebXR session ended.'); });
+    for (let i = 0; i < 2; i += 1) {
+      const controller = renderer.xr.getController(i);
+      controller.addEventListener('connected', (event) => {
+        controller.userData.handedness = event.data.handedness || (i === 0 ? 'left' : 'right');
+        controller.userData.inputSource = event.data;
+        controller.userData.aimRay ??= createXRAimRay();
+        controller.add(controller.userData.aimRay);
+      });
+      controller.addEventListener('disconnected', () => { controller.userData.inputSource = null; controller.userData.aimRay?.removeFromParent(); });
+      // Both triggers always aim and use the currently selected tool. This prevents
+      // a missed shot from unexpectedly moving the player across the map.
+      controller.addEventListener('selectstart', () => {
+        const hit = toxicBubbleSystem.handleXRInteraction(controller);
+        pulseXRController(controller, hit ? .55 : .18, hit ? 45 : 18);
+        if (!hit && toxicBubbleSystem.state === RAD_TOX_STATES.ACTIVE) setStatus('Shot missed — keep aiming with the controller ray and try again.');
+      });
+      // Grip gestures provide the non-combat actions without sacrificing a trigger:
+      // left grip changes weapon; right grip teleports to the aimed walkable floor.
+      controller.addEventListener('squeezeend', () => {
+        if (controller.userData.handedness === 'left' || (i === 0 && !controller.userData.handedness)) cycleXRTool(controller);
+        else teleportFromController(controller);
+      });
+      const grip = renderer.xr.getControllerGrip(i);
+      grip.add(controllerFactory.createControllerModel(grip));
+      playerRig.add(controller, grip);
+    }
+    const vrButton = VRButton.createButton(renderer, { requiredFeatures: ['local-floor'], optionalFeatures: ['bounded-floor', 'hand-tracking'] });
+    vrButton.classList.add('house-vr-button');
+    stage.append(vrButton);
+    renderer.xr.addEventListener('sessionstart', () => { camera.position.set(0, 0, 0); quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto'); setStatus('WebXR ready. Left stick walks, right stick snap-turns, either trigger aims and uses your tool, left grip changes tool, and right grip teleports.'); });
+    renderer.xr.addEventListener('sessionend', () => { camera.position.set(0, player.eyeHeight, 0); quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto'); setStatus(activeEnvironment ? `Ready: ${activeEnvironment.name}. WebXR session ended.` : 'WebXR session ended.'); });
   }
   setupVRControls().catch((error) => console.warn('[MUZIKAZ VR]', error));
   const visibilityObserver = window.IntersectionObserver ? new IntersectionObserver(([entry]) => { viewActive = Boolean(entry?.isIntersecting); }, { threshold: 0.05 }) : null; visibilityObserver?.observe(stage); document.addEventListener('visibilitychange', () => { viewActive = !document.hidden; });

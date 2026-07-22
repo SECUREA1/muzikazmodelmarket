@@ -61,7 +61,7 @@ if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launc
 }
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
-for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarget]", 'this.spawnSnakes()', "controller.userData.handedness==='left'", "Weapons','Laser · Paint gun · Baseball bat", 'webXrAvailable', "isSessionSupported('immersive-vr')", 'camera.position.set(0, 0, 0)']) {
+for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarget]", 'this.spawnSnakes()', "controller.userData.handedness === 'left'", "Weapons','Laser · Paint gun · Baseball bat", 'webXrAvailable', "isSessionSupported('immersive-vr')", 'createXRAimRay()', 'teleportFromController(controller)', 'camera.position.set(0, 0, 0)']) {
   if (!houseExplorer.includes(requiredGameFeature)) {
     throw new Error(`RAD-TOX is missing its required mixed-level or always-on controls feature: ${requiredGameFeature}`);
   }
