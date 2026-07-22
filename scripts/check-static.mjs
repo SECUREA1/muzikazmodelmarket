@@ -66,6 +66,19 @@ for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarge
     throw new Error(`RAD-TOX is missing its required mixed-level or always-on controls feature: ${requiredGameFeature}`);
   }
 }
+for (const requiredBossFeature of ['AirborneHoneyBee', 'bossConfigForLevel()', 'spawnEndBoss()', 'completeLevelIfReady()', 'All other targets cleared', 'takeDamage(1)']) {
+  if (!houseExplorer.includes(requiredBossFeature)) {
+    throw new Error(`RAD-TOX is missing its required end-boss feature: ${requiredBossFeature}`);
+  }
+}
+
+const bosses = await readFile('dist/public/js/enemies/airborne-honey-bee.js', 'utf8');
+for (const requiredBossConfig of ["maxHealth:20", "id:'bee'", "id:'aape'", "id:'beeduck'"]) {
+  if (!bosses.includes(requiredBossConfig)) {
+    throw new Error(`RAD-TOX boss configuration is missing ${requiredBossConfig}`);
+  }
+}
+
 if (houseExplorer.includes('data-rad-pause') || houseExplorer.includes('RAD_TOX_STATES.PAUSED')) {
   throw new Error('RAD-TOX must not expose or enter a paused state.');
 }
