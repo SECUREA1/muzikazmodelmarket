@@ -24,6 +24,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // This launch control lives in the page markup. script.js intentionally yields to
   // this GLB explorer, so the GLB implementation must own the overlay's action too.
   const gameStartButton = document.querySelector('#house-start-game');
+  const gameStartButtons = [...document.querySelectorAll('[data-house-start]')];
   const gameStartScreen = document.querySelector('#house-game-start');
   const gameLoadStatus = document.querySelector('#house-game-load-status');
   const levelLoader = document.querySelector('#house-level-loader');
@@ -449,7 +450,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     })();
     return gameStartPromise;
   }
-  gameStartButton?.addEventListener('click', (event) => { event.preventDefault(); startRadToxGame(); });
+  // The full-screen launch button is the first control a touch visitor sees.
+  // Keep it connected to the same start flow as the dock button so a tap on the
+  // game window starts the mission instead of being swallowed by the overlay.
+  gameStartButtons.forEach((button) => button.addEventListener('click', (event) => {
+    event.preventDefault();
+    startRadToxGame();
+  }));
   document.addEventListener('muzikaz:rad-tox-request', () => startRadToxGame());
   publishGameStage('engine-ready', 'RAD-TOX game engine ready. Starting the first level…');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
@@ -469,9 +476,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   document.querySelector('a[href="#house-explorer-canvas"]')?.addEventListener('click', (event) => {
     event.preventDefault();
-    if (!mobileQualityMode && document.pointerLockElement !== canvas) {
-      canvas.requestPointerLock?.();
-    }
+    // Entering the in-page game must not capture the browser cursor. Pointer
+    // lock remains an explicit desktop-only option on its dedicated toggle.
+    // This leaves the webpage cursor visible while normal mouse drag and touch
+    // look controls continue to drive the canvas.
+    canvas.focus({ preventScroll: true });
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
   });
   pointerLockButton?.addEventListener('click', () => {
