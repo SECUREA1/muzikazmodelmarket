@@ -37,6 +37,17 @@ cargo build --release
 PORT=4173 ./target/release/muzikazmodelmarket
 ```
 
+## VR headset play
+
+The RAD-TOX House Explorer supports WebXR immersive VR in browsers that expose
+`immersive-vr`, including Meta Quest/Oculus Browser. Serve the site over HTTPS
+(or localhost while developing), select **BEGIN NOW!**, and then use the
+in-game **ENTER VR** button. In a headset, use the left thumbstick to walk, the
+right thumbstick to snap-turn, the left trigger for the selected RAD-TOX tool,
+and the right trigger to teleport. The WebXR control is intentionally omitted
+when a browser or device does not support immersive VR, while the normal 3D and
+compatibility modes remain available.
+
 ## Server-backed live model publishing
 
 The Rust service serves the static MUZIKAZ site, `/uploads/*` model and avatar image assets, and JSON API routes for the public live model space plus the shared 3D House Explorer. Model metadata is persisted in `MUZIKAZ_DATA_DIR/published-models.json`; house avatar placements are persisted in `MUZIKAZ_DATA_DIR/house-avatars.json` so both survive process restarts when Render persistent disk is mounted. The storage layer is isolated in `src/main.rs` and can be swapped for PostgreSQL/S3 later; `migrations/001_published_models.sql` documents the production PostgreSQL table and indexes for a future `DATABASE_URL` repository.
