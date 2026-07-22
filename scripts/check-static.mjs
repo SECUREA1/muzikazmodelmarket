@@ -53,6 +53,10 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
   }
 }
 
+if (!mainHtml.includes('class="house-game-start is-hidden"') || !mainHtml.includes('aria-hidden="true"')) {
+  throw new Error('RAD-TOX must keep its automatic launch overlay out of the playable viewport.');
+}
+
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
 if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-tox-app-update')) {
   throw new Error('RAD-TOX launcher must provide a compatibility fallback and publish live game updates.');
@@ -78,6 +82,15 @@ for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarge
 }
 if (houseExplorer.includes('data-rad-pause') || houseExplorer.includes('RAD_TOX_STATES.PAUSED')) {
   throw new Error('RAD-TOX must not expose or enter a paused state.');
+}
+
+for (const requiredDirectInputFeature of ['const gameInputSurface = stage', 'touch-action:none', 'let gameStartPromise = null']) {
+  if (!houseExplorer.includes(requiredDirectInputFeature)) {
+    throw new Error(`RAD-TOX must preserve direct mouse and touch gameplay: missing ${requiredDirectInputFeature}`);
+  }
+}
+if (houseExplorer.includes("stage.scrollIntoView({ behavior: 'smooth', block: 'start' })")) {
+  throw new Error('RAD-TOX must not scroll the page while it starts the game.');
 }
 
 for (const requiredHudFeature of ['data-rad-row-toggle', 'data-rad-tools-toggle', 'muzikazRadToxHiddenRows']) {
