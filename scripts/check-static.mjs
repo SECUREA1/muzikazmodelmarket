@@ -84,9 +84,14 @@ if (houseExplorer.includes('data-rad-pause') || houseExplorer.includes('RAD_TOX_
   throw new Error('RAD-TOX must not expose or enter a paused state.');
 }
 
-for (const requiredDirectInputFeature of ["canvas.addEventListener('pointerdown'", "canvas.addEventListener('pointermove'", "canvas.addEventListener('pointerup'", 'canvas.setPointerCapture?.', 'canvas.requestPointerLock?.()', 'touch-action:none', 'let gameStartPromise = null']) {
+for (const requiredDirectInputFeature of ["canvas.addEventListener('pointerdown'", "canvas.addEventListener('pointermove'", "canvas.addEventListener('pointerup'", 'canvas.setPointerCapture?.', 'touch-action:none', 'let gameStartPromise = null']) {
   if (!houseExplorer.includes(requiredDirectInputFeature)) {
     throw new Error(`RAD-TOX must preserve direct mouse and touch gameplay: missing ${requiredDirectInputFeature}`);
+  }
+}
+for (const restrictedInputFeature of ['requestPointerLock', 'exitPointerLock', 'pointerlockchange']) {
+  if (houseExplorer.includes(restrictedInputFeature)) {
+    throw new Error(`RAD-TOX must keep cursor and touch controls unrestricted: found ${restrictedInputFeature}`);
   }
 }
 for (const forbiddenStageInputFeature of ['const gameInputSurface = stage', 'gameInputSurface.addEventListener']) {
