@@ -92,6 +92,23 @@ struct AssetDerivative {
     created_at: String,
 }
 #[derive(Clone, Debug)]
+struct Environment {
+    id: String,
+    name: String,
+    description: String,
+    model_url: String,
+    thumbnail_url: String,
+    original_filename: String,
+    file_size: usize,
+    scale: f64,
+    visibility: String,
+    spawn: String,
+    rotation: String,
+    collision_mode: String,
+    created_at: String,
+    updated_at: String,
+}
+#[derive(Clone, Debug)]
 struct Avatar {
     id: String,
     house_id: String,
@@ -119,6 +136,7 @@ struct State {
     max_bytes: usize,
     admin_token: String,
     models: Arc<RwLock<Vec<Model>>>,
+    environments: Arc<RwLock<Vec<Environment>>>,
     avatars: Arc<RwLock<Vec<Avatar>>>,
     assets: Arc<RwLock<Vec<Asset>>>,
     assignments: Arc<RwLock<Vec<AssetModelAssignment>>>,
@@ -136,6 +154,9 @@ fn main() -> std::io::Result<()> {
         root: site_root(),
         models: Arc::new(RwLock::new(load_models(
             &data.join("published-models.json"),
+        ))),
+        environments: Arc::new(RwLock::new(load_environments(
+            &data.join("environments.json"),
         ))),
         avatars: Arc::new(RwLock::new(load_avatars(&data.join("house-avatars.json")))),
         assets: Arc::new(RwLock::new(load_assets(&data.join("assets.json")))),
@@ -220,7 +241,13 @@ fn handle(mut s: TcpStream, st: State) -> std::io::Result<()> {
     };
     println!("{method} {target}");
     if method == "OPTIONS" {
-        return write_resp(&mut s, "204 No Content", "text/plain; charset=utf-8", b"", false);
+        return write_resp(
+            &mut s,
+            "204 No Content",
+            "text/plain; charset=utf-8",
+            b"",
+            false,
+        );
     }
     if target.starts_with("/api/") {
         return api(&mut s, &st, method, target, &headers, body);
@@ -248,6 +275,8 @@ fn api(
             "Service healthy",
             false,
         ),
+        ("GET", "/api/environments") => list_environments(s, st),
+        ("POST", "/api/environments/upload") => upload_environment(s, st, headers, body),
         ("GET", "/api/assets") => list_assets(s, st, headers, "all"),
         ("GET", "/api/assets/mine") => list_assets(s, st, headers, "mine"),
         ("GET", "/api/assets/public") => list_assets(s, st, headers, "public"),
@@ -460,6 +489,144 @@ fn api(
         _ => json(s, 404, false, "{}", "API route not found", false),
     }
 }
+fn list_environments(s: &mut TcpStream, st: &State) -> std::io::Result<()> {
+    let mut worlds: Vec<_> = st
+        .environments
+        .read()
+        .unwrap()
+        .iter()
+        .filter(|e| e.visibility == "public")
+        .cloned()
+        .collect();
+    worlds.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+    json(
+        s,
+        200,
+        true,
+        &format!(
+            "[{}]",
+            worlds
+                .iter()
+                .map(environment_json)
+                .collect::<Vec<_>>()
+                .join(",")
+        ),
+        "Shared environments loaded",
+        false,
+    )
+}
+fn upload_environment(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    body: &[u8],
+) -> std::io::Result<()> {
+    let boundary = h
+        .get("content-type")
+        .and_then(|v| v.split("boundary=").nth(1))
+        .unwrap_or("")
+        .trim_matches('"');
+    if boundary.is_empty() {
+        return json(s, 400, false, "{}", "Invalid environment upload", false);
+    }
+    let parts = parse_multipart(body, boundary);
+    let Some(file) = parts
+        .iter()
+        .find(|p| p.name == "environment" && !p.filename.is_empty())
+    else {
+        return json(s, 400, false, "{}", "Choose a .glb environment file", false);
+    };
+    if file.data.len() > st.max_bytes {
+        return json(
+            s,
+            413,
+            false,
+            "{}",
+            "Environment exceeds configured maximum size",
+            false,
+        );
+    }
+    if ext(&file.filename) != Some("glb") || file.data.len() < 20 || !file.data.starts_with(b"glTF")
+    {
+        return json(
+            s,
+            400,
+            false,
+            "{}",
+            "Environment must be a valid GLB binary",
+            false,
+        );
+    }
+    let declared =
+        u32::from_le_bytes([file.data[8], file.data[9], file.data[10], file.data[11]]) as usize;
+    if declared != file.data.len() {
+        return json(s, 400, false, "{}", "Malformed GLB header length", false);
+    }
+    let stored = format!("environment-{}.glb", uuid());
+    fs::write(st.uploads.join(&stored), &file.data)?;
+    let public = if st.public_base.is_empty() {
+        format!("/uploads/{stored}")
+    } else {
+        format!("{}/uploads/{stored}", st.public_base.trim_end_matches('/'))
+    };
+    let field = |name: &str| {
+        parts
+            .iter()
+            .find(|p| p.name == name)
+            .map(|p| String::from_utf8_lossy(&p.data).trim().to_string())
+            .unwrap_or_default()
+    };
+    let stamp = now();
+    let e = Environment {
+        id: uuid(),
+        name: trim(field("name"), 120),
+        description: trim(field("description"), 500),
+        model_url: public,
+        thumbnail_url: String::new(),
+        original_filename: trim(file.filename.clone(), 120),
+        file_size: file.data.len(),
+        scale: field("scale").parse().unwrap_or(1.0),
+        visibility: "public".into(),
+        spawn: format!(
+            "{{\"x\":{},\"y\":{},\"z\":{},\"rotationY\":{}}}",
+            field("spawnX").parse::<f64>().unwrap_or(0.0),
+            field("spawnY").parse::<f64>().unwrap_or(1.0),
+            field("spawnZ").parse::<f64>().unwrap_or(2.0),
+            field("spawnRotationY").parse::<f64>().unwrap_or(0.0)
+        ),
+        rotation: format!(
+            "{{\"x\":{},\"y\":{},\"z\":{}}}",
+            field("rotationX").parse::<f64>().unwrap_or(0.0),
+            field("rotationY").parse::<f64>().unwrap_or(0.0),
+            field("rotationZ").parse::<f64>().unwrap_or(0.0)
+        ),
+        collision_mode: {
+            let v = field("collisionMode");
+            if v.is_empty() {
+                "auto".into()
+            } else {
+                v
+            }
+        },
+        created_at: stamp.clone(),
+        updated_at: stamp,
+    };
+    if e.name.is_empty() {
+        return json(s, 400, false, "{}", "Environment name is required", false);
+    }
+    let mut worlds = st.environments.write().unwrap();
+    worlds.push(e.clone());
+    persist_environments(st, &worlds);
+    json(
+        s,
+        201,
+        true,
+        &environment_json(&e),
+        "Environment uploaded and shared with all players",
+        false,
+    )
+}
+
 fn house_avatars(
     s: &mut TcpStream,
     st: &State,
@@ -629,8 +796,27 @@ fn sse_ready(s: &mut TcpStream) -> std::io::Result<()> {
 }
 fn create(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
     let b = String::from_utf8_lossy(body);
-    let title = { let v = val(&b, "title"); if v.is_empty() { val(&b, "name") } else { v } };
-    let creator = { let v = val(&b, "creatorName"); if v.is_empty() { let owner = val(&b, "owner"); if owner.is_empty() { val(&b, "username") } else { owner } } else { v } };
+    let title = {
+        let v = val(&b, "title");
+        if v.is_empty() {
+            val(&b, "name")
+        } else {
+            v
+        }
+    };
+    let creator = {
+        let v = val(&b, "creatorName");
+        if v.is_empty() {
+            let owner = val(&b, "owner");
+            if owner.is_empty() {
+                val(&b, "username")
+            } else {
+                owner
+            }
+        } else {
+            v
+        }
+    };
     let url = val(&b, "modelUrl");
     if title.trim().is_empty() {
         return json(s, 400, false, "{}", "Missing required title", false);
@@ -650,12 +836,26 @@ fn create(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
     }
     let now = now();
     let m = Model {
-        id: { let id = val(&b, "id"); if id.is_empty() { uuid() } else { trim(id, 120) } },
+        id: {
+            let id = val(&b, "id");
+            if id.is_empty() {
+                uuid()
+            } else {
+                trim(id, 120)
+            }
+        },
         title: trim(title, 120),
         creator: trim(creator, 80),
         description: trim(val(&b, "description"), 1000),
         category: trim(val(&b, "category"), 80),
-        model_type: { let mt = val(&b, "modelType"); if mt.is_empty() { trim(val(&b, "format"), 20) } else { trim(mt, 20) } },
+        model_type: {
+            let mt = val(&b, "modelType");
+            if mt.is_empty() {
+                trim(val(&b, "format"), 20)
+            } else {
+                trim(mt, 20)
+            }
+        },
         model_url: url,
         ios_model_url: val(&b, "iosModelUrl"),
         thumbnail_url: val(&b, "thumbnailUrl"),
@@ -778,37 +978,55 @@ struct Part {
     data: Vec<u8>,
 }
 fn parse_multipart(body: &[u8], boundary: &str) -> Vec<Part> {
-    let marker = format!("--{}", boundary);
-    let text = String::from_utf8_lossy(body);
+    let marker = format!("--{}", boundary).into_bytes();
     let mut out = Vec::new();
-    for seg in text.split(&marker).skip(1) {
-        if seg.starts_with("--") {
+    let mut cursor = 0;
+    while let Some(start) = find_slice(&body[cursor..], &marker) {
+        let start = cursor + start + marker.len();
+        if body.get(start..start + 2) == Some(b"--") {
             break;
         }
-        let seg = seg.trim_start_matches("\r\n");
-        if let Some(i) = seg.find("\r\n\r\n") {
-            let head = &seg[..i];
-            let mut data = seg.as_bytes()[i + 4..].to_vec();
-            if data.ends_with(b"\r\n") {
-                data.truncate(data.len() - 2)
-            };
-            let disp = head
-                .lines()
-                .find(|l| l.to_lowercase().starts_with("content-disposition"))
-                .unwrap_or("");
-            let name = attr(disp, "name");
-            let filename = attr(disp, "filename");
-            if !name.is_empty() {
-                out.push(Part {
-                    name,
-                    filename,
-                    data,
-                })
-            }
+        let content_start = if body.get(start..start + 2) == Some(b"\r\n") {
+            start + 2
+        } else {
+            start
+        };
+        let Some(header_end) = find_slice(&body[content_start..], b"\r\n\r\n") else {
+            break;
+        };
+        let header_end = content_start + header_end;
+        let header = String::from_utf8_lossy(&body[content_start..header_end]);
+        let disp = header
+            .lines()
+            .find(|l| l.to_ascii_lowercase().starts_with("content-disposition"))
+            .unwrap_or("");
+        let name = attr(disp, "name");
+        let filename = attr(disp, "filename");
+        let data_start = header_end + 4;
+        let Some(next) = find_slice(&body[data_start..], &marker) else {
+            break;
+        };
+        let mut data_end = data_start + next;
+        if data_end >= 2 && &body[data_end - 2..data_end] == b"\r\n" {
+            data_end -= 2;
         }
+        if !name.is_empty() {
+            out.push(Part {
+                name,
+                filename,
+                data: body[data_start..data_end].to_vec(),
+            });
+        }
+        cursor = data_start + next;
     }
     out
 }
+fn find_slice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    haystack
+        .windows(needle.len())
+        .position(|window| window == needle)
+}
+
 fn attr(s: &str, k: &str) -> String {
     s.split(';')
         .find_map(|p| {
@@ -929,6 +1147,51 @@ fn avatar_json(a: &Avatar) -> String {
         esc(&a.created_at),
         esc(&a.updated_at)
     )
+}
+fn environment_json(e: &Environment) -> String {
+    format!("{{\"id\":\"{}\",\"name\":\"{}\",\"description\":\"{}\",\"modelUrl\":\"{}\",\"thumbnailUrl\":{},\"originalFilename\":\"{}\",\"fileSize\":{},\"scale\":{},\"visibility\":\"{}\",\"spawn\":{},\"rotation\":{},\"collisionMode\":\"{}\",\"source\":\"uploaded\",\"createdAt\":\"{}\",\"updatedAt\":\"{}\"}}", esc(&e.id),esc(&e.name),esc(&e.description),esc(&e.model_url),opt(&e.thumbnail_url),esc(&e.original_filename),e.file_size,e.scale,esc(&e.visibility),e.spawn,e.rotation,esc(&e.collision_mode),esc(&e.created_at),esc(&e.updated_at))
+}
+fn persist_environments(st: &State, v: &Vec<Environment>) {
+    let _ = fs::create_dir_all(&st.data);
+    let _ = fs::write(
+        st.data.join("environments.json"),
+        format!(
+            "[{}]",
+            v.iter().map(environment_json).collect::<Vec<_>>().join(",")
+        ),
+    );
+}
+fn load_environments(p: &Path) -> Vec<Environment> {
+    let s = fs::read_to_string(p).unwrap_or_default();
+    s.split("{\"")
+        .skip(1)
+        .map(|x| format!("{{\"{}", x))
+        .filter_map(|o| {
+            let id = val(&o, "id");
+            if id.is_empty() {
+                None
+            } else {
+                Some(Environment {
+                    id,
+                    name: val(&o, "name"),
+                    description: val(&o, "description"),
+                    model_url: val(&o, "modelUrl"),
+                    thumbnail_url: val(&o, "thumbnailUrl"),
+                    original_filename: val(&o, "originalFilename"),
+                    file_size: val(&o, "fileSize").parse().unwrap_or(0),
+                    scale: val(&o, "scale").parse().unwrap_or(1.0),
+                    visibility: val(&o, "visibility"),
+                    spawn: raw_json(&o, "spawn")
+                        .unwrap_or_else(|| "{\"x\":0,\"y\":1,\"z\":2,\"rotationY\":0}".into()),
+                    rotation: raw_json(&o, "rotation")
+                        .unwrap_or_else(|| "{\"x\":0,\"y\":0,\"z\":0}".into()),
+                    collision_mode: val(&o, "collisionMode"),
+                    created_at: val(&o, "createdAt"),
+                    updated_at: val(&o, "updatedAt"),
+                })
+            }
+        })
+        .collect()
 }
 fn persist(st: &State, v: &Vec<Model>) {
     let _ = fs::create_dir_all(&st.data);
