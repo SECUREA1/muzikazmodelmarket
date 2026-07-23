@@ -135,12 +135,22 @@
     <section class="section-block model-publisher" id="publish-model" aria-labelledby="publish-model-title">
       <div class="section-title"><span></span><h2 id="publish-model-title">Publish a Live Model</h2><a href="#live-published-models">View linked model space</a></div>
       <form id="model-publish-form" class="publisher-grid">
+        <fieldset class="publisher-wide asset-type-picker">
+          <legend>Where should this 3D file go?</legend>
+          <p>Choose a destination before selecting a file. Avatar files are added to the Avatar picker; game levels and environments are added to the World map list automatically.</p>
+          <div class="asset-type-options" role="radiogroup" aria-label="3D asset destination">
+            <label><input type="radio" name="assetType" value="avatar" checked> Avatar</label>
+            <label><input type="radio" name="assetType" value="map"> Game level / environment map</label>
+            <label><input type="radio" name="assetType" value="pet"> Pet / companion</label>
+            <label><input type="radio" name="assetType" value="prop"> Prop, furniture, or accessory</label>
+          </div>
+        </fieldset>
         <label>Model title<input name="title" maxlength="120" required autocomplete="off"></label>
         <label>Creator/display name<input name="creatorName" maxlength="80" required autocomplete="name"></label>
         <label>Category<input name="category" maxlength="80" placeholder="Originals, Legends, Crew"></label>
         <label>Environment/background<select name="environment"><option value="neon-room">Neon room</option><option value="dark-grid">Dark grid</option><option value="gallery">Gallery</option></select></label>
         <label class="publisher-wide">Description<textarea name="description" maxlength="1000" placeholder="Tell the community what makes this model special."></textarea></label>
-        <label>GLB/GLTF upload<input name="model" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" required></label>
+        <label id="model-file-label">Avatar GLB/GLTF upload<input name="model" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" required></label>
         <label>Optional USDZ upload<input name="iosModel" type="file" accept=".usdz,model/vnd.usdz+zip"></label>
         <label>Optional thumbnail<input name="thumbnail" type="file" accept="image/png,image/jpeg,image/webp"></label>
         <label>Scale<input name="scale" type="number" min="0.05" max="10" step="0.05" value="1"></label>
