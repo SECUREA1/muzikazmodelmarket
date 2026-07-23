@@ -2059,3 +2059,10 @@ section,
 .house-stage.is-ghost-level .rad-tox-hud{border-color:rgba(93,210,255,.72);background:rgba(2,12,35,.84);color:#e5f9ff;box-shadow:0 0 28px rgba(47,162,255,.25)}
 .house-stage.is-ghost-level .rad-tox-hud strong{color:#71ddff}
 .house-stage.is-ghost-level .house-reticle.is-toxic-target{color:#b5f4ff;text-shadow:0 0 10px #fff,0 0 26px #278cff}
+
+/* Wave handoff: a positive, unmistakable pause while the next RAD-TOX wave is staged. */
+.house-level-loader__reassurance{margin:0;padding:7px 12px;border:1px solid rgba(209,255,118,.48);border-radius:999px;background:rgba(112,184,0,.14);color:#efffd7;font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:none;box-shadow:inset 0 0 18px rgba(156,255,0,.08),0 0 20px rgba(156,255,0,.1)}
+.house-level-loader h3{color:#f1ffbf;text-shadow:0 0 22px rgba(180,255,68,.42)}
+.house-level-loader__graphic b{animation:level-loader-core 1.1s ease-in-out infinite}
+@keyframes level-loader-core{50%{transform:scale(1.13);box-shadow:0 0 36px rgba(202,255,73,1)}}
+@media(prefers-reduced-motion:reduce){.house-level-loader__graphic b{animation:none}}
