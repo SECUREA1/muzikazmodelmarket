@@ -414,6 +414,41 @@ function initFlexLabCategories() {
   selectCategory('All');
 }
 
+function initWorldPlot() {
+  const plot = document.querySelector('#muzikaz-world-plot');
+  const spaces = Array.from(document.querySelectorAll('[data-world-space]'));
+  const consent = document.querySelector('#world-plot-consent');
+  const agreement = document.querySelector('#world-plot-agreement');
+  const reserveButton = agreement?.querySelector('button[type="submit"]');
+  const selection = document.querySelector('#world-plot-selection');
+  if (!plot || !spaces.length || !consent || !agreement || !reserveButton || !selection) return;
+
+  let selectedSpace = window.localStorage.getItem('muzikazWorldStarterSpace') || spaces[0].dataset.worldSpace;
+  const selectSpace = (name) => {
+    selectedSpace = name;
+    window.localStorage.setItem('muzikazWorldStarterSpace', name);
+    spaces.forEach((space) => {
+      const active = space.dataset.worldSpace === name;
+      space.classList.toggle('is-selected', active);
+      space.setAttribute('aria-pressed', String(active));
+    });
+    selection.innerHTML = `<strong>${name} selected.</strong> GLB stage, avatar spawn, and marketplace link are ready.`;
+    reserveButton.textContent = `Reserve ${name}`;
+  };
+
+  spaces.forEach((space) => space.addEventListener('click', () => selectSpace(space.dataset.worldSpace)));
+  consent.addEventListener('change', () => { reserveButton.disabled = !consent.checked; });
+  agreement.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!consent.checked) return;
+    addCartLine(`MUZIKAZ World · ${selectedSpace}`, 25, 'Five-space connected digital land plot');
+    claimOwnedAsset(`MUZIKAZ World · ${selectedSpace}`, 'Connected land reservation');
+    updateCart(reserveButton, 'Plot reserved');
+    selection.innerHTML = `<strong>${selectedSpace} reserved.</strong> Your five-space plot is now linked to the GLB library, avatar shelf, and marketplace.`;
+  });
+  selectSpace(selectedSpace);
+}
+
 
 function renderModelCards() {
   const collectionGrid = document.querySelector('.collection-grid');
@@ -900,6 +935,7 @@ renderMerchOptions();
 syncCartCount();
 initMarketSectionToggle();
 initFlexLabCategories();
+initWorldPlot();
 seedDesigner();
 
 
