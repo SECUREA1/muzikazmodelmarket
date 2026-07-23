@@ -16,6 +16,7 @@ struct Model {
     creator: String,
     description: String,
     category: String,
+    placement_type: String,
     model_type: String,
     model_url: String,
     ios_model_url: String,
@@ -848,6 +849,7 @@ fn create(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
         creator: trim(creator, 80),
         description: trim(val(&b, "description"), 1000),
         category: trim(val(&b, "category"), 80),
+        placement_type: trim(val(&b, "placementType"), 30),
         model_type: {
             let mt = val(&b, "modelType");
             if mt.is_empty() {
@@ -1125,7 +1127,7 @@ fn write_resp(
     s.flush()
 }
 fn model_json(m: &Model) -> String {
-    format!("{{\"id\":\"{}\",\"title\":\"{}\",\"creatorName\":\"{}\",\"description\":\"{}\",\"category\":\"{}\",\"modelType\":\"{}\",\"modelUrl\":\"{}\",\"iosModelUrl\":{},\"thumbnailUrl\":{},\"publishedAt\":\"{}\",\"updatedAt\":\"{}\",\"status\":\"{}\",\"featured\":{},\"spawnPosition\":{},\"scale\":{},\"rotation\":{},\"environment\":{} }}",esc(&m.id),esc(&m.title),esc(&m.creator),esc(&m.description),esc(&m.category),esc(&m.model_type),esc(&m.model_url),opt(&m.ios_model_url),opt(&m.thumbnail_url),esc(&m.published_at),esc(&m.updated_at),esc(&m.status),m.featured,m.spawn_position,m.scale,m.rotation,opt(&m.environment))
+    format!("{{\"id\":\"{}\",\"title\":\"{}\",\"creatorName\":\"{}\",\"description\":\"{}\",\"category\":\"{}\",\"placementType\":\"{}\",\"modelType\":\"{}\",\"modelUrl\":\"{}\",\"iosModelUrl\":{},\"thumbnailUrl\":{},\"publishedAt\":\"{}\",\"updatedAt\":\"{}\",\"status\":\"{}\",\"featured\":{},\"spawnPosition\":{},\"scale\":{},\"rotation\":{},\"environment\":{} }}",esc(&m.id),esc(&m.title),esc(&m.creator),esc(&m.description),esc(&m.category),esc(&m.placement_type),esc(&m.model_type),esc(&m.model_url),opt(&m.ios_model_url),opt(&m.thumbnail_url),esc(&m.published_at),esc(&m.updated_at),esc(&m.status),m.featured,m.spawn_position,m.scale,m.rotation,opt(&m.environment))
 }
 fn avatar_json(a: &Avatar) -> String {
     format!(
@@ -1229,6 +1231,7 @@ fn load_models(p: &Path) -> Vec<Model> {
                     creator: val(&o, "creatorName"),
                     description: val(&o, "description"),
                     category: val(&o, "category"),
+                    placement_type: val(&o, "placementType"),
                     model_type: val(&o, "modelType"),
                     model_url: val(&o, "modelUrl"),
                     ios_model_url: val(&o, "iosModelUrl"),
