@@ -55,10 +55,15 @@ if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-
 }
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
-  throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
+  throw new Error('index.html must let the ES5 launcher select the modern or compatibility game.');
 }
 if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launcher.includes('function startEngine()')) {
-  throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
+  throw new Error('RAD-TOX launcher must load the House Explorer module for supported browsers.');
+}
+for (const requiredLauncherFeature of ['function autoStart()', 'DOMContentLoaded', 'msRequestFullscreen', 'MSFullscreenChange']) {
+  if (!launcher.includes(requiredLauncherFeature)) {
+    throw new Error(`RAD-TOX launcher is missing immediate loading or legacy fullscreen support: ${requiredLauncherFeature}`);
+  }
 }
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
