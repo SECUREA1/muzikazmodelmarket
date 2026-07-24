@@ -22,6 +22,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const resetButton = document.querySelector('#house-reset')?.cloneNode(true); document.querySelector('#house-reset')?.replaceWith(resetButton);
   const fullscreenButton = document.querySelector('#house-fullscreen')?.cloneNode(true); document.querySelector('#house-fullscreen')?.replaceWith(fullscreenButton);
   const bottomControls = document.querySelector('.house-bottom-controls');
+  const desktopControlsButton = document.querySelector('.house-main-controls-button');
   // This launch control lives in the page markup. script.js intentionally yields to
   // this GLB explorer, so the GLB implementation must own the overlay's action too.
   const gameStartButton = document.querySelector('[data-house-start]');
@@ -341,6 +342,26 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const locked = document.pointerLockElement === canvas;
     walkButton.textContent = locked ? 'Exit pointer lock' : (envLoader.world ? 'Start game' : 'Start game');
     walkButton.setAttribute('aria-pressed', String(locked || !pointerLockSupported));
+    desktopControlsButton?.classList.toggle('is-active', locked);
+    desktopControlsButton?.setAttribute('aria-pressed', String(locked));
+    desktopControlsButton?.setAttribute('aria-label', locked ? 'Release desktop game controls' : 'Take over desktop game controls');
+    desktopControlsButton?.setAttribute('title', locked ? 'Press Escape to release controls' : 'Take over desktop game controls');
+  });
+  desktopControlsButton?.addEventListener('click', () => {
+    // The overlay is the one clear launch point before the game is running.
+    // Once it is gone, this joystick button deliberately owns mouse-look and
+    // keyboard movement on desktop until Escape releases pointer lock.
+    if (!gameStartScreen?.classList.contains('is-hidden')) {
+      gameStartButton?.click();
+      return;
+    }
+    if (document.pointerLockElement === canvas) {
+      document.exitPointerLock?.();
+      return;
+    }
+    canvas.focus({ preventScroll: true });
+    canvas.requestPointerLock?.();
+    openHouseMap().catch((error) => setStatus(error.message || 'Unable to take over desktop controls.'));
   });
   document.addEventListener('mousemove', (e) => { if (document.pointerLockElement !== canvas) return; player.yaw -= e.movementX * .0025; player.pitch = THREE.MathUtils.clamp(player.pitch - e.movementY * .002, -1.25, 1.15); });
   scaleControl.querySelector('input').addEventListener('input', (e) => applySpaceScale(e.target.value)); scaleControl.querySelectorAll('[data-space-scale]').forEach((button) => button.addEventListener('click', () => applySpaceScale(currentSpaceScale + (button.dataset.spaceScale === 'up' ? .1 : -.1)))); viewControls.querySelectorAll('[data-zoom]').forEach((button) => button.addEventListener('click', () => applyZoom(button.dataset.zoom === 'in' ? -1 : 1))); syncZoomControls();
