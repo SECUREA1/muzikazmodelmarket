@@ -87,7 +87,12 @@
             <div class="house-explorer-shell">
                 <div class="house-stage">
                     <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
-                    <a class="house-main-controls-button" href="#house-explorer-canvas">Main controls</a>
+                    <button class="house-main-controls-button" type="button" aria-label="Focus game controls" title="Focus game controls">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+                            <path d="M12 11.5a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z"></path>
+                            <path d="M12 7V3.5M7.5 20.5h9M12 11.5v5.25M6.5 20.5c0-3.1 2.46-5.25 5.5-5.25s5.5 2.15 5.5 5.25"></path>
+                        </svg>
+                    </button>
                     <div class="house-reticle" aria-hidden="true">+</div>
                     <div class="house-status" id="house-status" role="status">IonCore: Clear the Floor is standing by. Sweep toxic bubbles, blue ghosts, and snakes from the neon house.</div>
                     <section class="house-game-start" id="house-game-start" aria-labelledby="house-game-start-title">
