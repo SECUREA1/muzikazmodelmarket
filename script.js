@@ -11,6 +11,19 @@ const modelPageLink = document.querySelector('#model-page-link');
 let cartItems = 0;
 const CART_KEY = 'muzikazCheckoutCart';
 
+function addIonCoreQuickPlay() {
+  if (document.querySelector('.ioncore-quick-play')) return;
+  const onHome = Boolean(document.querySelector('#house-explorer'));
+  const quickPlay = document.createElement('a');
+  quickPlay.className = 'ioncore-quick-play';
+  quickPlay.href = onHome ? '#house-explorer' : 'index.html#house-explorer';
+  quickPlay.setAttribute('aria-label', onHome ? 'Jump to IonCore: Clear the Floor' : 'Open IonCore: Clear the Floor on the main page');
+  quickPlay.innerHTML = '<span aria-hidden="true">◉</span><b>Play IonCore</b><small>Clear the floor</small>';
+  document.body.append(quickPlay);
+}
+
+addIonCoreQuickPlay();
+
 function parsePrice(value) {
   return Number(String(value || '').replace(/[^0-9.]/g, '')) || 0;
 }
