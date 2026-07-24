@@ -469,7 +469,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
     if (gameStartButton) gameStartButton.disabled = true;
     gameStartScreen?.classList.add('is-loading');
-    gameStartButton.textContent = 'Deploying RAD-TOX…';
+    gameStartButton.textContent = 'Deploying IonCore…';
     if (gameLoadStatus) gameLoadStatus.textContent = 'Loading level 1 toxins and the upper-floor ghost encounter…';
     publishGameStage('loading-game', 'Loading level 1 toxins and the upper-floor ghost encounter…');
 
@@ -481,12 +481,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       resetPlayer();
       await toxicBubbleSystem.begin();
       gameStartScreen?.classList.add('is-hidden');
-      setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
-      publishGameStage('game-active', 'RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
+      setStatus('IonCore: Clear the Floor is active with toxic bubbles, blue ghosts, and snakes.');
+      publishGameStage('game-active', 'IonCore: Clear the Floor is active with toxic bubbles, blue ghosts, and snakes.');
     } catch (error) {
       const message = error?.message || 'Unable to load the MUZIKAZ house game.';
       gameStartButton.disabled = false;
-      gameStartButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v5M5.8 7l4.3 2.5M18.2 7l-4.3 2.5M5.8 17l4.3-2.5M18.2 17l-4.3-2.5"/><circle cx="12" cy="14" r="5"/></svg>BEGIN NOW!';
+      gameStartButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v5M5.8 7l4.3 2.5M18.2 7l-4.3 2.5M5.8 17l4.3-2.5M18.2 17l-4.3-2.5"/><circle cx="12" cy="14" r="5"/></svg>START FLOOR SWEEP';
       gameStartScreen?.classList.remove('is-loading');
       if (gameLoadStatus) gameLoadStatus.textContent = message;
       setStatus(message);
@@ -495,7 +495,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   gameStartButton?.addEventListener('click', (event) => { event.preventDefault(); startRadToxGame(); });
   document.addEventListener('muzikaz:rad-tox-request', () => startRadToxGame());
-  publishGameStage('engine-ready', 'RAD-TOX game engine ready. Starting the first level…');
+  publishGameStage('engine-ready', 'IonCore: Clear the Floor engine ready. Starting the first level…');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
   // The launcher deliberately loads this module only after the player chooses
   // Begin. Never auto-load a large GLB world at page start: decoding it on a
@@ -520,9 +520,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     // Do not decode a large GLB while the visitor is browsing the page. On
     // desktop that competes with first paint and can look like a frozen game.
     // The Begin button now owns loading and always starts from the player spawn.
-    setStatus('Desktop game ready. Select Begin RAD-TOX to start at the house entrance.');
+    setStatus('Desktop game ready. Select Start Floor Sweep to enter IonCore at the house entrance.');
   } else if (startEnvironment) {
-    setStatus('Mobile game is ready. Tap Start RAD-TOX to deploy immediately.');
+    setStatus('Mobile game is ready. Tap Start Floor Sweep to deploy immediately.');
     // Keep decoding on the player's Begin action. Background GLB decoding can
     // monopolize memory on mobile browsers before the visitor is ready to play.
   }
