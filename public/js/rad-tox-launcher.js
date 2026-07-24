@@ -39,12 +39,12 @@
   document.addEventListener('muzikaz:rad-tox-engine-ready',function(){clearWatchdog();setState('engine-ready','3D engine ready.');if(queued)document.dispatchEvent(makeEvent('muzikaz:rad-tox-request'));});
   document.addEventListener('muzikaz:rad-tox-stage',function(e){var d=e.detail||{};setState(d.stage||'loading-manifest',d.message);});
   document.addEventListener('muzikaz:rad-tox-native-error',function(e){var d=e.detail||{}; fail(d.stage||'3D game',d.message||'The environment could not be started.'); status('The 3D environment could not start. Compatibility Mode is opening so the mission remains playable.'); startCompatibility();});
-  function isStartControl(t){while(t&&t.id!=='house-start-game'&&(!t.getAttribute||(t.getAttribute('data-house-start')===null&&t.getAttribute('data-house-launch')===null)))t=t.parentNode;return t;}
+  function isStartControl(t){while(t&&t.id!=='house-start-game'&&(!t.getAttribute||t.getAttribute('data-house-start')===null))t=t.parentNode;return t;}
   // Start fetching on press so mobile browsers can establish the module connection
   // before the following click handler asks the game to begin.
   document.addEventListener('pointerdown',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('touchstart',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
-  document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;if(t.getAttribute&&t.getAttribute('data-house-launch')!==null&&state==='game-active')return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
+  document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
   // Do not download or decode Three.js/GLB assets until the player opts in. This
   // leaves scrolling and first paint responsive on memory-constrained phones.
   if(!supportsModern()) window.setTimeout(startCompatibility,0); else setState('idle','Ready to start IonCore: Clear the Floor.');

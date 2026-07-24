@@ -11,19 +11,6 @@ const modelPageLink = document.querySelector('#model-page-link');
 let cartItems = 0;
 const CART_KEY = 'muzikazCheckoutCart';
 
-function addIonCoreQuickPlay() {
-  if (document.querySelector('.ioncore-quick-play')) return;
-  const onHome = Boolean(document.querySelector('#house-explorer'));
-  const quickPlay = document.createElement('a');
-  quickPlay.className = 'ioncore-quick-play';
-  quickPlay.href = onHome ? '#house-explorer' : 'index.html#house-explorer';
-  quickPlay.setAttribute('aria-label', onHome ? 'Jump to IonCore: Clear the Floor' : 'Open IonCore: Clear the Floor on the main page');
-  quickPlay.innerHTML = '<span aria-hidden="true">◉</span><b>Play IonCore</b><small>Clear the floor</small>';
-  document.body.append(quickPlay);
-}
-
-addIonCoreQuickPlay();
-
 function parsePrice(value) {
   return Number(String(value || '').replace(/[^0-9.]/g, '')) || 0;
 }
@@ -1458,7 +1445,6 @@ function initHouseExplorer() {
   const placePersonButton = document.querySelector('#house-place-person');
   const avatarButton = document.querySelector('#add-avatar');
   const handButton = document.querySelector('#hand-toggle');
-  const mainControlsButton = document.querySelector('.house-main-controls-button');
   const preview = document.querySelector('#hand-preview');
   const handStatus = document.querySelector('#hand-status');
   const environmentSelect = document.querySelector('#house-environment-select');
@@ -1616,10 +1602,6 @@ function initHouseExplorer() {
     if (open) { environmentSelect?.focus(); setStatus('World list opened. Choose a world to load it into the game view.'); }
   }
   worldButton?.addEventListener('click', () => toggleWorldMenu());
-  mainControlsButton?.addEventListener('click', () => {
-    canvas.focus?.();
-    setStatus('Game controls focused. Use WASD or arrow keys to move, then drag to look around.');
-  });
   environmentSelect?.addEventListener('change', () => { toggleWorldMenu(false); loadEnvironmentFile(environmentSelect.value, environmentSelect.selectedOptions[0]?.textContent || 'selected world').catch(() => setStatus('Selected world could not be loaded.')); });
   fullscreenButton?.addEventListener('click', async () => {
     const stage = canvas.closest('.house-stage');
