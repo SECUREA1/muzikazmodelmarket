@@ -1445,6 +1445,7 @@ function initHouseExplorer() {
   const placePersonButton = document.querySelector('#house-place-person');
   const avatarButton = document.querySelector('#add-avatar');
   const handButton = document.querySelector('#hand-toggle');
+  const mainControlsButton = document.querySelector('.house-main-controls-button');
   const preview = document.querySelector('#hand-preview');
   const handStatus = document.querySelector('#hand-status');
   const environmentSelect = document.querySelector('#house-environment-select');
@@ -1602,6 +1603,10 @@ function initHouseExplorer() {
     if (open) { environmentSelect?.focus(); setStatus('World list opened. Choose a world to load it into the game view.'); }
   }
   worldButton?.addEventListener('click', () => toggleWorldMenu());
+  mainControlsButton?.addEventListener('click', () => {
+    canvas.focus?.();
+    setStatus('Game controls focused. Use WASD or arrow keys to move, then drag to look around.');
+  });
   environmentSelect?.addEventListener('change', () => { toggleWorldMenu(false); loadEnvironmentFile(environmentSelect.value, environmentSelect.selectedOptions[0]?.textContent || 'selected world').catch(() => setStatus('Selected world could not be loaded.')); });
   fullscreenButton?.addEventListener('click', async () => {
     const stage = canvas.closest('.house-stage');
