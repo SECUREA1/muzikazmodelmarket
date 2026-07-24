@@ -1621,8 +1621,31 @@ function initAdminLogin() {
   const dashboard = document.querySelector('[data-asset-dashboard]');
   const status = document.querySelector('#admin-login-status');
   if (!form || !card || !dashboard) return;
-  const reveal = () => { card.hidden = true; dashboard.hidden = false; document.dispatchEvent(new Event('muzikaz:admin-authenticated')); };
-  if (sessionStorage.getItem('muzikazAdminToken')) reveal();
+  const tokenKey = 'muzikazAdminToken';
+  const conceal = (message = 'Administrator authentication is required.') => {
+    sessionStorage.removeItem(tokenKey);
+    dashboard.hidden = true;
+    card.hidden = false;
+    status.textContent = message;
+  };
+  const reveal = () => {
+    card.hidden = true;
+    dashboard.hidden = false;
+    document.dispatchEvent(new Event('muzikaz:admin-authenticated'));
+  };
+  const validateStoredSession = async () => {
+    const token = sessionStorage.getItem(tokenKey);
+    if (!token) return conceal();
+    status.textContent = 'Checking administrator session…';
+    try {
+      const response = await fetch('/api/admin/analytics', { headers: { 'x-admin-token': token, Accept: 'application/json' } });
+      if (!response.ok) throw new Error('Your administrator session has expired.');
+      reveal();
+    } catch (error) {
+      conceal(error.message || 'Administrator authentication is required.');
+    }
+  };
+  validateStoredSession();
   form.addEventListener('submit', async (event) => {
     event.preventDefault(); status.textContent = 'Authenticating administrator…';
     const credentials = Object.fromEntries(new FormData(form));
@@ -1630,14 +1653,16 @@ function initAdminLogin() {
       const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(credentials) });
       const result = await response.json();
       if (!response.ok || !result.success || !result.data?.token) throw new Error(result.message || 'Authentication failed');
-      sessionStorage.setItem('muzikazAdminToken', result.data.token); form.reset(); reveal();
+      sessionStorage.setItem(tokenKey, result.data.token); form.reset(); reveal();
     } catch (error) { status.textContent = error.message || 'Authentication failed.'; }
   });
+  document.querySelector('#admin-logout')?.addEventListener('click', () => conceal('Signed out. Administrator authentication is required.'));
 }
 initAdminLogin();
 
 function initAssetDashboard(){
-  const dashboard=document.querySelector('[data-asset-dashboard]'); if(!dashboard || dashboard.hidden) return;
+  const dashboard=document.querySelector('[data-asset-dashboard]'); if(!dashboard || dashboard.hidden || dashboard.dataset.initialized==='true') return;
+  dashboard.dataset.initialized='true';
   const userId=localStorage.getItem('muzikazUserId')||'demo-user'; localStorage.setItem('muzikazUserId',userId);
   const auth={'x-user-id':userId,'x-user-name':'jodel','x-admin-token':sessionStorage.getItem('muzikazAdminToken')||'','Accept':'application/json'};
   const tabs=['My Uploads','Public Assets','Pending Approval','Approved','Rejected','Drafts','3D Models','Images','Thumbnails','Store Tiles','Product Previews','Archived'];
