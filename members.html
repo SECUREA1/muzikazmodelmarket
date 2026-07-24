@@ -233,7 +233,16 @@
 
         <section class="section-block admin-block" id="admin">
             <div class="section-title"><span></span><h2>Admin command center</h2><a href="#crew">Join drops</a></div>
-            <div class="admin-layout asset-command-center" data-asset-dashboard>
+            <section class="admin-login-card" id="admin-login" aria-labelledby="admin-login-title">
+                <p class="kicker">Restricted access</p><h3 id="admin-login-title">Administrator sign in</h3>
+                <p>Sign in to access upload moderation, analytics, publishing, and the shared asset library.</p>
+                <form id="admin-login-form" class="admin-login-form">
+                    <label>Username <input name="username" autocomplete="username" required /></label>
+                    <label>Password <input name="password" type="password" autocomplete="current-password" required /></label>
+                    <button type="submit">Open command center</button>
+                </form><p id="admin-login-status" class="status-message" role="status">Administrator authentication is required.</p>
+            </section>
+            <div class="admin-layout asset-command-center" data-asset-dashboard hidden>
                 <form class="upload-zone asset-upload-panel" id="graphic-upload-form">
                     <strong>Upload Graphics</strong>
                     <input type="file" id="asset-upload" name="file" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" multiple />
