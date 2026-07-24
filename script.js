@@ -1615,11 +1615,31 @@ function initHouseExplorer() {
 
 initHouseExplorer();
 
-(function(){
-  const dashboard=document.querySelector('[data-asset-dashboard]'); if(!dashboard) return;
+function initAdminLogin() {
+  const form = document.querySelector('#admin-login-form');
+  const card = document.querySelector('#admin-login');
+  const dashboard = document.querySelector('[data-asset-dashboard]');
+  const status = document.querySelector('#admin-login-status');
+  if (!form || !card || !dashboard) return;
+  const reveal = () => { card.hidden = true; dashboard.hidden = false; document.dispatchEvent(new Event('muzikaz:admin-authenticated')); };
+  if (sessionStorage.getItem('muzikazAdminToken')) reveal();
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault(); status.textContent = 'Authenticating administrator…';
+    const credentials = Object.fromEntries(new FormData(form));
+    try {
+      const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(credentials) });
+      const result = await response.json();
+      if (!response.ok || !result.success || !result.data?.token) throw new Error(result.message || 'Authentication failed');
+      sessionStorage.setItem('muzikazAdminToken', result.data.token); form.reset(); reveal();
+    } catch (error) { status.textContent = error.message || 'Authentication failed.'; }
+  });
+}
+initAdminLogin();
+
+function initAssetDashboard(){
+  const dashboard=document.querySelector('[data-asset-dashboard]'); if(!dashboard || dashboard.hidden) return;
   const userId=localStorage.getItem('muzikazUserId')||'demo-user'; localStorage.setItem('muzikazUserId',userId);
-  const role=localStorage.getItem('muzikazRole')||'user';
-  const auth={'x-user-id':userId,'x-user-role':role,'x-user-name':localStorage.getItem('muzikazName')||'MUZIKAZ Creator','Accept':'application/json'};
+  const auth={'x-user-id':userId,'x-user-name':'jodel','x-admin-token':sessionStorage.getItem('muzikazAdminToken')||'','Accept':'application/json'};
   const tabs=['My Uploads','Public Assets','Pending Approval','Approved','Rejected','Drafts','3D Models','Images','Thumbnails','Store Tiles','Product Previews','Archived'];
   const localKey='muzikaz.assetLibraryFallback';
   let current='My Uploads', lastGraphic=null, cachedAssets=[];
@@ -1648,7 +1668,7 @@ initHouseExplorer();
   async function loadAssets(){try{status.textContent='Loading assets…'; const list=[...(await api(current==='Public Assets'?'/api/assets/public':'/api/assets/mine')),...localAssets()]; cachedAssets=list; const view=filtered(list); grid.replaceChildren(...(view.length?view.map(card):[emptyCard(current)])); status.textContent=`${view.length} assets loaded for ${current}.`; updateAssetMetrics(list); renderAssignmentOptions(); }catch(e){const list=localAssets(); cachedAssets=list; const view=filtered(list); grid.replaceChildren(...(view.length?view.map(card):[emptyCard(current)])); status.textContent=list.length?`${view.length} browser draft assets loaded for ${current}. Start the server to sync.`:e.message; updateAssetMetrics(list); renderAssignmentOptions();}}
   function updateAssetMetrics(list){document.getElementById('metric-thumbnails').textContent=list.filter(a=>a.thumbnailUrl).length;document.getElementById('metric-store-tiles').textContent=list.filter(a=>a.intendedUse==='Marketplace tile').length;document.getElementById('metric-product-previews').textContent=list.filter(a=>a.intendedUse==='Product preview').length;}
   function emptyCard(label){const el=document.createElement('article');el.className='asset-card empty-asset-card';el.innerHTML=`<h4>No ${label.toLowerCase()} yet</h4><p>Upload graphics or 3D models, then use the tabs and approval buttons to manage display.</p>`;return el;}
-  function card(a){const el=document.createElement('article');el.className='asset-card'; const preview=a.fileType==='model'?`<model-viewer src="${a.publicUrl}" camera-controls touch-action="pan-y" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1"><button slot="ar-button" type="button">Place in AR</button></model-viewer>`:`<img src="${a.thumbnailUrl||a.publicUrl}" alt="${a.title}">`; el.innerHTML=`${preview}<h4>${a.title}</h4><p>${a.originalFilename}</p><p>Owner: ${a.ownerDisplayName}</p><p>${a.fileType} · ${a.fileSize} bytes · ${a.category||'uncategorized'}</p><p>Status: ${a.status} · ${a.visibility}</p><p>Related model: ${a.relatedModelId||'none'}</p><p>Uploaded: ${a.createdAt} Approved: ${a.approvedAt||'—'}</p><p>Published: ${a.publishLocation||a.publishedAt||'—'}</p><div class="button-row"></div><p>${a.moderatorNote||''}</p>`; const row=el.querySelector('.button-row'); [['Edit',()=>edit(a)],['Preview',()=>window.open(a.publicUrl,'_blank')],['Assign',()=>assign(a)],['Download',()=>window.open(a.publicUrl,'_blank')],['Archive',()=>action(a,'archive')],['Delete',()=>del(a)]].forEach(([t,fn])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;row.append(b);}); if(role==='admin')[['Approve','approve'],['Reject','reject'],['Feature','approve'],['Publish','publish'],['Unpublish','unpublish']].forEach(([t,act])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>action(a,act);row.append(b);}); return el;}
+  function card(a){const el=document.createElement('article');el.className='asset-card'; const preview=a.fileType==='model'?`<model-viewer src="${a.publicUrl}" camera-controls touch-action="pan-y" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1"><button slot="ar-button" type="button">Place in AR</button></model-viewer>`:`<img src="${a.thumbnailUrl||a.publicUrl}" alt="${a.title}">`; el.innerHTML=`${preview}<h4>${a.title}</h4><p>${a.originalFilename}</p><p>Owner: ${a.ownerDisplayName}</p><p>${a.fileType} · ${a.fileSize} bytes · ${a.category||'uncategorized'}</p><p>Status: ${a.status} · ${a.visibility}</p><p>Related model: ${a.relatedModelId||'none'}</p><p>Uploaded: ${a.createdAt} Approved: ${a.approvedAt||'—'}</p><p>Published: ${a.publishLocation||a.publishedAt||'—'}</p><div class="button-row"></div><p>${a.moderatorNote||''}</p>`; const row=el.querySelector('.button-row'); [['Edit',()=>edit(a)],['Preview',()=>window.open(a.publicUrl,'_blank')],['Assign',()=>assign(a)],['Download',()=>window.open(a.publicUrl,'_blank')],['Archive',()=>action(a,'archive')],['Delete',()=>del(a)]].forEach(([t,fn])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;row.append(b);}); if(sessionStorage.getItem('muzikazAdminToken'))[['Approve','approve'],['Reject','reject'],['Feature','approve'],['Publish','publish'],['Unpublish','unpublish']].forEach(([t,act])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>action(a,act);row.append(b);}); return el;}
   async function action(a,act){const reason=act==='reject'?prompt('Reason required')||'Changes required':''; await api(`/api/assets/${a.id}/${act}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason})}); status.textContent= act==='publish'?'Published to live model space':'Asset updated'; loadAssets();}
   async function del(a){await api(`/api/assets/${a.id}`,{method:'DELETE'});loadAssets();}
   async function edit(a){const title=prompt('Title',a.title); if(title) await api(`/api/assets/${a.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({title})}); loadAssets();}
@@ -1658,4 +1678,5 @@ initHouseExplorer();
   document.getElementById('asset-assignment-panel')?.addEventListener('submit',(e)=>{e.preventDefault(); const asset=cachedAssets.find(a=>a.id===document.getElementById('assignment-asset')?.value); if(asset) assign(asset,document.getElementById('assignment-model')?.value,document.getElementById('assignment-slot')?.value);});
   async function metrics(){try{const m=await api('/api/admin/analytics'); document.getElementById('metric-orders').textContent=m.totalOrders||128;document.getElementById('metric-inventory').textContent=m.inventoryUnits||842;document.getElementById('metric-conversion').textContent=m.conversionRate||'7.4%';document.getElementById('metric-uploads').textContent=m.totalUploads||0;document.getElementById('metric-pending').textContent=m.pendingApprovals||0;document.getElementById('metric-storage').textContent=m.storageUsage||0;}catch{}}
   loadAssets(); metrics();
-})();
+}
+document.addEventListener('muzikaz:admin-authenticated', initAssetDashboard);
