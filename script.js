@@ -315,8 +315,8 @@ const assetCatalog = {
   ],
 };
 
-const designerCharacters = assetCatalog.models.map((model) => ({ id: model.id, name: model.character, traits: [model.name, model.type] }));
-const designerProducts = assetCatalog.retail.map((product) => ({ id: product.id, name: product.name, category: product.category, price: Number(product.price.replace(/[^0-9.]/g, '')) }));
+const designerCharacters = assetCatalog.models.map((model) => ({ id: model.id, name: model.character, traits: [model.name, model.type], art: model.file }));
+const designerProducts = assetCatalog.retail.map((product) => ({ id: product.id, name: product.name, category: product.category, price: Number(product.price.replace(/[^0-9.]/g, '')), asset: product.asset }));
 const productPrintTemplates = {
   'avatar-stickers': { shape: 'sheet', label: 'Sticker sheet cutlines · drag art onto any sticker' },
   hoodie: { shape: 'front', label: 'Hoodie front print zone · chest-safe placement' },
@@ -567,8 +567,23 @@ function updatePreview() {
   mockup?.setAttribute('data-print-shape', selectedShape);
   document.querySelector('#print-template-label').textContent = productPrintTemplates[product.id]?.label || `${product.name} print zone`;
   document.querySelector('#sticker-stage')?.setAttribute('data-print-shape', selectedShape);
+  const productArt = document.querySelector('#product-template-art');
+  if (productArt) {
+    productArt.src = product.asset;
+    productArt.alt = `${product.name} product template`;
+  }
+  const characterArt = document.querySelector('#character-art-layer');
+  if (characterArt) {
+    characterArt.src = character.art;
+    characterArt.alt = `${character.name} artwork`;
+  }
   document.querySelector('#preview-character').textContent = character.name;
-  document.querySelector('#preview-name').textContent = data.get('name') || 'MUZIKAZ';
+  const logo = document.querySelector('#preview-name');
+  const logoStyle = data.get('logo') || 'Wordmark';
+  if (logo) {
+    logo.dataset.logoStyle = logoStyle;
+    logo.textContent = logoStyle === 'Lightning Crest' ? 'ϟ' : logoStyle === 'Badge Patch' ? 'MZ' : (data.get('name') || 'MUZIKAZ');
+  }
   document.querySelector('#preview-number').textContent = data.get('number') || '88';
   document.querySelector('#preview-sleeve').textContent = data.get('sleeve') || 'LIVE THE BEAT';
   const isSticker = product.id === 'avatar-stickers';
@@ -730,7 +745,22 @@ function handleLayerAction(action) {
 
 function exportDesignerOrder() {
   const { data, product, character } = designerData();
+  const layers = [...document.querySelectorAll('.uploaded-design-layer')].map((layer) => ({
+    id: layer.dataset.layerId,
+    name: uploadState.layers.find((item) => item.id === layer.dataset.layerId)?.name || layer.alt.replace(' custom uploaded design', ''),
+    src: layer.src,
+    left: layer.style.left || '50%',
+    top: layer.style.top || '50%',
+    zIndex: layer.style.zIndex || '10',
+    scale: layer.dataset.scale || '1',
+    rotate: layer.dataset.rotate || '0',
+    flipX: layer.dataset.flipX || 'false',
+    flipY: layer.dataset.flipY || 'false'
+  }));
   return {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    fields: Object.fromEntries(data.entries()),
     product: product.name,
     character: character.name,
     color: data.get('color'),
@@ -743,9 +773,48 @@ function exportDesignerOrder() {
     printShape: data.get('printShape'),
     quantity: Number(data.get('quantity') || 1),
     notes: data.get('notes') || '',
-    uploads: uploadState.layers.map(({ id, name }) => ({ id, name })),
-    preview: 'Live product-specific print template with draggable layers'
+    uploads: layers,
+    preview: 'Live product-specific print template with draggable layers and a print-safe area guide'
   };
+}
+
+function restoreDesignerOrder(saved) {
+  if (!saved || !designerControls) return false;
+  const fields = saved.fields || {};
+  Object.entries(fields).forEach(([name, value]) => {
+    const field = designerControls.elements.namedItem(name);
+    if (field && typeof value === 'string') field.value = value;
+  });
+  document.querySelector('#upload-layer-zone').replaceChildren();
+  uploadState.layers = [];
+  uploadState.activeId = null;
+  (saved.uploads || []).forEach((savedLayer) => {
+    if (!savedLayer.src) return;
+    makeUploadLayer(savedLayer.src, savedLayer.name || 'Saved custom art');
+    const layer = activeUploadLayer();
+    if (!layer) return;
+    layer.style.left = savedLayer.left || '50%';
+    layer.style.top = savedLayer.top || '50%';
+    layer.style.zIndex = savedLayer.zIndex || '10';
+    layer.dataset.scale = savedLayer.scale || '1';
+    layer.dataset.rotate = savedLayer.rotate || '0';
+    layer.dataset.flipX = savedLayer.flipX || 'false';
+    layer.dataset.flipY = savedLayer.flipY || 'false';
+    applyLayerTransform(layer);
+  });
+  updatePreview();
+  return true;
+}
+
+function downloadDesignerSpec() {
+  const order = exportDesignerOrder();
+  const blob = new Blob([JSON.stringify(order, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `muzikaz-${order.product.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-print-spec.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  setDesignerStatus('Print specification downloaded. Attach it to a fulfillment workflow or keep it with this custom order.');
 }
 
 designerControls?.addEventListener('input', updatePreview);
@@ -820,12 +889,20 @@ function enableStickerStageDragging() {
 enableStickerStageDragging();
 document.querySelector('#save-design')?.addEventListener('click', () => {
   uploadState.saved = exportDesignerOrder();
-  localStorage.setItem('muzikazSavedDesign', JSON.stringify(uploadState.saved));
-  setDesignerStatus('Design saved as a draft and ready to reload or edit before checkout.');
+  try {
+    localStorage.setItem('muzikazSavedDesign', JSON.stringify(uploadState.saved));
+    setDesignerStatus('Draft saved with product settings, text, notes, artwork layers, and placement controls.');
+  } catch {
+    setDesignerStatus('Draft could not be saved because the uploaded artwork exceeds local browser storage. Download the print spec instead.');
+  }
 });
 document.querySelector('#load-design')?.addEventListener('click', () => {
-  uploadState.saved = JSON.parse(localStorage.getItem('muzikazSavedDesign') || 'null');
-  setDesignerStatus(uploadState.saved ? `Loaded saved ${uploadState.saved.product} design summary.` : 'No saved design draft found yet.');
+  try {
+    uploadState.saved = JSON.parse(localStorage.getItem('muzikazSavedDesign') || 'null');
+    setDesignerStatus(restoreDesignerOrder(uploadState.saved) ? `Loaded saved ${uploadState.saved.product} draft with its placement settings.` : 'No saved design draft found yet.');
+  } catch {
+    setDesignerStatus('Saved draft could not be read. Start a fresh design and save it again.');
+  }
 });
 document.querySelector('#duplicate-design')?.addEventListener('click', () => {
   const layer = activeUploadLayer();
@@ -836,6 +913,7 @@ document.querySelector('#edit-design')?.addEventListener('click', () => {
   document.querySelector('#product')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   setDesignerStatus('Correction mode open: choose a product, print shape, text, uploads, and drag layers directly on the selected item template before finalizing.');
 });
+document.querySelector('#download-design-spec')?.addEventListener('click', downloadDesignerSpec);
 document.querySelector('[data-add-custom]')?.addEventListener('click', (event) => {
   const order = exportDesignerOrder();
   const title = `${order.character} ${order.product} custom order`;
