@@ -54,7 +54,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     window.setTimeout(() => { if (levelLoader) levelLoader.hidden = true; stage.classList.remove('is-level-transitioning'); }, reducedMotion ? 0 : 260);
   }
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
-  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Enter interior: mouse-look</span><span>Drag/touch: look</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
+  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Main controls: mouse-look</span><span>Drag/touch: look</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
 
   const controllerIcon = (path) => `<svg class="controller-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
 
@@ -505,7 +505,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   document.querySelector('a[href="#house-explorer-canvas"]')?.addEventListener('click', (event) => {
     event.preventDefault();
-    // Mouse capture is opt-in: only the visible Enter interior control may lock
+    // Mouse capture is opt-in: only the visible Main controls button may lock
     // a desktop pointer. Canvas clicks, Begin, and keyboard activation remain
     // non-capturing so the page never takes over the user's mouse unexpectedly.
     if (!mobileQualityMode && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
