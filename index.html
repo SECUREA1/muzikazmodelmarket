@@ -331,9 +331,8 @@
     <script src="public/js/rad-tox-launcher.js"></script>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script type="module" src="public/js/model-gallery.js"></script>
-    <!-- The GLB game module is injected by the launcher after the player presses
-         Begin RAD-TOX. Keeping Three.js and the 12 MB world off the critical
-         path prevents the landing page from stalling on mobile devices. -->
+    <!-- The ES5 launcher immediately starts the 3D loading screen on modern
+         browsers and opens Compatibility Mode on IE/older WebViews. -->
     <script src="script.js"></script>
   <script src="battle-theme.js"></script>
 </body>
