@@ -327,21 +327,10 @@
     <script src="public/js/rad-tox-launcher.js"></script>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script type="module" src="public/js/model-gallery.js"></script>
-    <!-- The launcher starts the best available game immediately: the full GLB
-         world in modern browsers and the playable 2D mission in IE11. -->
-    <!-- The main storefront uses modern JavaScript. IE receives the lightweight
-         playable launcher above without downloading or parsing either bundle. -->
-    <script>
-      (function () {
-        if (document.documentMode) return;
-        var files = ['script.js', 'battle-theme.js'];
-        for (var i = 0; i < files.length; i += 1) {
-          var runtime = document.createElement('script');
-          runtime.src = files[i];
-          runtime.async = false;
-          document.body.appendChild(runtime);
-        }
-      }());
-    </script>
+    <!-- The GLB game module is injected by the launcher after the player presses
+         Begin RAD-TOX. Keeping Three.js and the 12 MB world off the critical
+         path prevents the landing page from stalling on mobile devices. -->
+    <script src="script.js"></script>
+  <script src="battle-theme.js"></script>
 </body>
 </html>
