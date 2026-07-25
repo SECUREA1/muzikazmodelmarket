@@ -48,6 +48,12 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
 }
+if (!mainHtml.includes('id="house-game-start"') || !mainHtml.includes('hidden aria-hidden="true"')) {
+  throw new Error('The RAD-TOX cover must be hidden in initial markup so it can never block the game.');
+}
+if (!mainHtml.includes('rel="modulepreload" href="public/js/house-explorer-glb.js"')) {
+  throw new Error('Firefox must begin the House Explorer module connection while parsing the page.');
+}
 
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
 if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-tox-app-update')) {
@@ -55,6 +61,11 @@ if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-
 }
 if (!launcher.includes('document.documentMode') || !launcher.includes('ENGINE_STARTUP_TIMEOUT_MS = 12000')) {
   throw new Error('RAD-TOX launcher must detect Internet Explorer and fail over quickly.');
+}
+for (const automaticLaunchFeature of ["var queued = true", 'function uncoverGame()', "setState('idle','Opening the RAD-TOX world automatically…'); request();"]) {
+  if (!launcher.includes(automaticLaunchFeature)) {
+    throw new Error(`RAD-TOX must uncover and start the best game automatically: missing ${automaticLaunchFeature}`);
+  }
 }
 if (!mainHtml.includes('if (document.documentMode) return;')) {
   throw new Error('index.html must skip modern storefront bundles in Internet Explorer.');
