@@ -48,6 +48,12 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
 }
+if (!mainHtml.includes('id="house-game-start"') || !mainHtml.includes('hidden aria-hidden="true"')) {
+  throw new Error('The RAD-TOX cover must be hidden in initial markup so it can never block the game.');
+}
+if (!mainHtml.includes('rel="modulepreload" href="public/js/house-explorer-glb.js"')) {
+  throw new Error('Firefox must begin the House Explorer module connection while parsing the page.');
+}
 
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
 if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-tox-app-update')) {
