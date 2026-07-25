@@ -22,5 +22,4 @@ export async function fetchPublishedModels({signal}={}){
 }
 export async function fetchPublishedModel(id){return parseResponse(await fetch(apiUrl(`/api/models/${encodeURIComponent(id)}`),{headers:{Accept:'application/json'},cache:'no-store'}));}
 export async function uploadModelFiles(formData){return parseResponse(await fetch(apiUrl('/api/models/upload'),{method:'POST',body:formData}));}
-export async function uploadEnvironment(formData){return parseResponse(await fetch(apiUrl('/api/environments/upload'),{method:'POST',body:formData}));}
 export async function publishModel(metadata){return parseResponse(await fetch(apiUrl('/api/models'),{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(metadata)}));}
