@@ -43,12 +43,6 @@ if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
   throw new Error('index.html must load the ES5 RAD-TOX compatibility launcher.');
 }
 
-for (const desktopCommand of ['Flex Fit', 'Theme', 'Live Feed', 'Market Mode', 'Cloud Rewards']) {
-  if (!mainHtml.includes(desktopCommand)) {
-    throw new Error(`index.html must keep ${desktopCommand} in the desktop command header.`);
-  }
-}
-
 for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'WebGL support']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
@@ -61,15 +55,10 @@ if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-
 }
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
-  throw new Error('index.html must let the ES5 launcher select the modern or compatibility game.');
+  throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
 }
 if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launcher.includes('function startEngine()')) {
-  throw new Error('RAD-TOX launcher must load the House Explorer module for supported browsers.');
-}
-for (const requiredLauncherFeature of ['function autoStart()', 'DOMContentLoaded', 'msRequestFullscreen', 'MSFullscreenChange']) {
-  if (!launcher.includes(requiredLauncherFeature)) {
-    throw new Error(`RAD-TOX launcher is missing immediate loading or legacy fullscreen support: ${requiredLauncherFeature}`);
-  }
+  throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
 }
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
@@ -140,15 +129,3 @@ if (!css.includes("url('reference.png')")) {
 }
 
 console.log('Static build output contains all public and member pages with required references.');
-
-for (const requiredAdminMarkup of ['id="admin-login-form"', 'name="username"', 'name="password"', 'data-asset-dashboard hidden']) {
-  if (!membersHtml.includes(requiredAdminMarkup)) {
-    throw new Error(`members.html is missing protected-admin markup: ${requiredAdminMarkup}`);
-  }
-}
-const appScript = await readFile('dist/script.js', 'utf8');
-for (const requiredAdminFlow of ["/api/admin/login", "muzikazAdminToken", "x-admin-token", "muzikaz:admin-authenticated"]) {
-  if (!appScript.includes(requiredAdminFlow)) {
-    throw new Error(`script.js is missing protected-admin flow: ${requiredAdminFlow}`);
-  }
-}

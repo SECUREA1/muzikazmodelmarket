@@ -315,8 +315,8 @@ const assetCatalog = {
   ],
 };
 
-const designerCharacters = assetCatalog.models.map((model) => ({ id: model.id, name: model.character, traits: [model.name, model.type], art: model.file }));
-const designerProducts = assetCatalog.retail.map((product) => ({ id: product.id, name: product.name, category: product.category, price: Number(product.price.replace(/[^0-9.]/g, '')), asset: product.asset }));
+const designerCharacters = assetCatalog.models.map((model) => ({ id: model.id, name: model.character, traits: [model.name, model.type] }));
+const designerProducts = assetCatalog.retail.map((product) => ({ id: product.id, name: product.name, category: product.category, price: Number(product.price.replace(/[^0-9.]/g, '')) }));
 const productPrintTemplates = {
   'avatar-stickers': { shape: 'sheet', label: 'Sticker sheet cutlines · drag art onto any sticker' },
   hoodie: { shape: 'front', label: 'Hoodie front print zone · chest-safe placement' },
@@ -567,23 +567,8 @@ function updatePreview() {
   mockup?.setAttribute('data-print-shape', selectedShape);
   document.querySelector('#print-template-label').textContent = productPrintTemplates[product.id]?.label || `${product.name} print zone`;
   document.querySelector('#sticker-stage')?.setAttribute('data-print-shape', selectedShape);
-  const productArt = document.querySelector('#product-template-art');
-  if (productArt) {
-    productArt.src = product.asset;
-    productArt.alt = `${product.name} product template`;
-  }
-  const characterArt = document.querySelector('#character-art-layer');
-  if (characterArt) {
-    characterArt.src = character.art;
-    characterArt.alt = `${character.name} artwork`;
-  }
   document.querySelector('#preview-character').textContent = character.name;
-  const logo = document.querySelector('#preview-name');
-  const logoStyle = data.get('logo') || 'Wordmark';
-  if (logo) {
-    logo.dataset.logoStyle = logoStyle;
-    logo.textContent = logoStyle === 'Lightning Crest' ? 'ϟ' : logoStyle === 'Badge Patch' ? 'MZ' : (data.get('name') || 'MUZIKAZ');
-  }
+  document.querySelector('#preview-name').textContent = data.get('name') || 'MUZIKAZ';
   document.querySelector('#preview-number').textContent = data.get('number') || '88';
   document.querySelector('#preview-sleeve').textContent = data.get('sleeve') || 'LIVE THE BEAT';
   const isSticker = product.id === 'avatar-stickers';
@@ -745,22 +730,7 @@ function handleLayerAction(action) {
 
 function exportDesignerOrder() {
   const { data, product, character } = designerData();
-  const layers = [...document.querySelectorAll('.uploaded-design-layer')].map((layer) => ({
-    id: layer.dataset.layerId,
-    name: uploadState.layers.find((item) => item.id === layer.dataset.layerId)?.name || layer.alt.replace(' custom uploaded design', ''),
-    src: layer.src,
-    left: layer.style.left || '50%',
-    top: layer.style.top || '50%',
-    zIndex: layer.style.zIndex || '10',
-    scale: layer.dataset.scale || '1',
-    rotate: layer.dataset.rotate || '0',
-    flipX: layer.dataset.flipX || 'false',
-    flipY: layer.dataset.flipY || 'false'
-  }));
   return {
-    version: 1,
-    savedAt: new Date().toISOString(),
-    fields: Object.fromEntries(data.entries()),
     product: product.name,
     character: character.name,
     color: data.get('color'),
@@ -773,48 +743,9 @@ function exportDesignerOrder() {
     printShape: data.get('printShape'),
     quantity: Number(data.get('quantity') || 1),
     notes: data.get('notes') || '',
-    uploads: layers,
-    preview: 'Live product-specific print template with draggable layers and a print-safe area guide'
+    uploads: uploadState.layers.map(({ id, name }) => ({ id, name })),
+    preview: 'Live product-specific print template with draggable layers'
   };
-}
-
-function restoreDesignerOrder(saved) {
-  if (!saved || !designerControls) return false;
-  const fields = saved.fields || {};
-  Object.entries(fields).forEach(([name, value]) => {
-    const field = designerControls.elements.namedItem(name);
-    if (field && typeof value === 'string') field.value = value;
-  });
-  document.querySelector('#upload-layer-zone').replaceChildren();
-  uploadState.layers = [];
-  uploadState.activeId = null;
-  (saved.uploads || []).forEach((savedLayer) => {
-    if (!savedLayer.src) return;
-    makeUploadLayer(savedLayer.src, savedLayer.name || 'Saved custom art');
-    const layer = activeUploadLayer();
-    if (!layer) return;
-    layer.style.left = savedLayer.left || '50%';
-    layer.style.top = savedLayer.top || '50%';
-    layer.style.zIndex = savedLayer.zIndex || '10';
-    layer.dataset.scale = savedLayer.scale || '1';
-    layer.dataset.rotate = savedLayer.rotate || '0';
-    layer.dataset.flipX = savedLayer.flipX || 'false';
-    layer.dataset.flipY = savedLayer.flipY || 'false';
-    applyLayerTransform(layer);
-  });
-  updatePreview();
-  return true;
-}
-
-function downloadDesignerSpec() {
-  const order = exportDesignerOrder();
-  const blob = new Blob([JSON.stringify(order, null, 2)], { type: 'application/json' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `muzikaz-${order.product.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-print-spec.json`;
-  link.click();
-  URL.revokeObjectURL(link.href);
-  setDesignerStatus('Print specification downloaded. Attach it to a fulfillment workflow or keep it with this custom order.');
 }
 
 designerControls?.addEventListener('input', updatePreview);
@@ -889,20 +820,12 @@ function enableStickerStageDragging() {
 enableStickerStageDragging();
 document.querySelector('#save-design')?.addEventListener('click', () => {
   uploadState.saved = exportDesignerOrder();
-  try {
-    localStorage.setItem('muzikazSavedDesign', JSON.stringify(uploadState.saved));
-    setDesignerStatus('Draft saved with product settings, text, notes, artwork layers, and placement controls.');
-  } catch {
-    setDesignerStatus('Draft could not be saved because the uploaded artwork exceeds local browser storage. Download the print spec instead.');
-  }
+  localStorage.setItem('muzikazSavedDesign', JSON.stringify(uploadState.saved));
+  setDesignerStatus('Design saved as a draft and ready to reload or edit before checkout.');
 });
 document.querySelector('#load-design')?.addEventListener('click', () => {
-  try {
-    uploadState.saved = JSON.parse(localStorage.getItem('muzikazSavedDesign') || 'null');
-    setDesignerStatus(restoreDesignerOrder(uploadState.saved) ? `Loaded saved ${uploadState.saved.product} draft with its placement settings.` : 'No saved design draft found yet.');
-  } catch {
-    setDesignerStatus('Saved draft could not be read. Start a fresh design and save it again.');
-  }
+  uploadState.saved = JSON.parse(localStorage.getItem('muzikazSavedDesign') || 'null');
+  setDesignerStatus(uploadState.saved ? `Loaded saved ${uploadState.saved.product} design summary.` : 'No saved design draft found yet.');
 });
 document.querySelector('#duplicate-design')?.addEventListener('click', () => {
   const layer = activeUploadLayer();
@@ -913,7 +836,6 @@ document.querySelector('#edit-design')?.addEventListener('click', () => {
   document.querySelector('#product')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   setDesignerStatus('Correction mode open: choose a product, print shape, text, uploads, and drag layers directly on the selected item template before finalizing.');
 });
-document.querySelector('#download-design-spec')?.addEventListener('click', downloadDesignerSpec);
 document.querySelector('[data-add-custom]')?.addEventListener('click', (event) => {
   const order = exportDesignerOrder();
   const title = `${order.character} ${order.product} custom order`;
@@ -1615,56 +1537,11 @@ function initHouseExplorer() {
 
 initHouseExplorer();
 
-function initAdminLogin() {
-  const form = document.querySelector('#admin-login-form');
-  const card = document.querySelector('#admin-login');
-  const dashboard = document.querySelector('[data-asset-dashboard]');
-  const status = document.querySelector('#admin-login-status');
-  if (!form || !card || !dashboard) return;
-  const tokenKey = 'muzikazAdminToken';
-  const conceal = (message = 'Administrator authentication is required.') => {
-    sessionStorage.removeItem(tokenKey);
-    dashboard.hidden = true;
-    card.hidden = false;
-    status.textContent = message;
-  };
-  const reveal = () => {
-    card.hidden = true;
-    dashboard.hidden = false;
-    document.dispatchEvent(new Event('muzikaz:admin-authenticated'));
-  };
-  const validateStoredSession = async () => {
-    const token = sessionStorage.getItem(tokenKey);
-    if (!token) return conceal();
-    status.textContent = 'Checking administrator session…';
-    try {
-      const response = await fetch('/api/admin/analytics', { headers: { 'x-admin-token': token, Accept: 'application/json' } });
-      if (!response.ok) throw new Error('Your administrator session has expired.');
-      reveal();
-    } catch (error) {
-      conceal(error.message || 'Administrator authentication is required.');
-    }
-  };
-  validateStoredSession();
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault(); status.textContent = 'Authenticating administrator…';
-    const credentials = Object.fromEntries(new FormData(form));
-    try {
-      const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(credentials) });
-      const result = await response.json();
-      if (!response.ok || !result.success || !result.data?.token) throw new Error(result.message || 'Authentication failed');
-      sessionStorage.setItem(tokenKey, result.data.token); form.reset(); reveal();
-    } catch (error) { status.textContent = error.message || 'Authentication failed.'; }
-  });
-  document.querySelector('#admin-logout')?.addEventListener('click', () => conceal('Signed out. Administrator authentication is required.'));
-}
-initAdminLogin();
-
-function initAssetDashboard(){
-  const dashboard=document.querySelector('[data-asset-dashboard]'); if(!dashboard || dashboard.hidden || dashboard.dataset.initialized==='true') return;
-  dashboard.dataset.initialized='true';
+(function(){
+  const dashboard=document.querySelector('[data-asset-dashboard]'); if(!dashboard) return;
   const userId=localStorage.getItem('muzikazUserId')||'demo-user'; localStorage.setItem('muzikazUserId',userId);
-  const auth={'x-user-id':userId,'x-user-name':'jodel','x-admin-token':sessionStorage.getItem('muzikazAdminToken')||'','Accept':'application/json'};
+  const role=localStorage.getItem('muzikazRole')||'user';
+  const auth={'x-user-id':userId,'x-user-role':role,'x-user-name':localStorage.getItem('muzikazName')||'MUZIKAZ Creator','Accept':'application/json'};
   const tabs=['My Uploads','Public Assets','Pending Approval','Approved','Rejected','Drafts','3D Models','Images','Thumbnails','Store Tiles','Product Previews','Archived'];
   const localKey='muzikaz.assetLibraryFallback';
   let current='My Uploads', lastGraphic=null, cachedAssets=[];
@@ -1693,7 +1570,7 @@ function initAssetDashboard(){
   async function loadAssets(){try{status.textContent='Loading assets…'; const list=[...(await api(current==='Public Assets'?'/api/assets/public':'/api/assets/mine')),...localAssets()]; cachedAssets=list; const view=filtered(list); grid.replaceChildren(...(view.length?view.map(card):[emptyCard(current)])); status.textContent=`${view.length} assets loaded for ${current}.`; updateAssetMetrics(list); renderAssignmentOptions(); }catch(e){const list=localAssets(); cachedAssets=list; const view=filtered(list); grid.replaceChildren(...(view.length?view.map(card):[emptyCard(current)])); status.textContent=list.length?`${view.length} browser draft assets loaded for ${current}. Start the server to sync.`:e.message; updateAssetMetrics(list); renderAssignmentOptions();}}
   function updateAssetMetrics(list){document.getElementById('metric-thumbnails').textContent=list.filter(a=>a.thumbnailUrl).length;document.getElementById('metric-store-tiles').textContent=list.filter(a=>a.intendedUse==='Marketplace tile').length;document.getElementById('metric-product-previews').textContent=list.filter(a=>a.intendedUse==='Product preview').length;}
   function emptyCard(label){const el=document.createElement('article');el.className='asset-card empty-asset-card';el.innerHTML=`<h4>No ${label.toLowerCase()} yet</h4><p>Upload graphics or 3D models, then use the tabs and approval buttons to manage display.</p>`;return el;}
-  function card(a){const el=document.createElement('article');el.className='asset-card'; const preview=a.fileType==='model'?`<model-viewer src="${a.publicUrl}" camera-controls touch-action="pan-y" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1"><button slot="ar-button" type="button">Place in AR</button></model-viewer>`:`<img src="${a.thumbnailUrl||a.publicUrl}" alt="${a.title}">`; el.innerHTML=`${preview}<h4>${a.title}</h4><p>${a.originalFilename}</p><p>Owner: ${a.ownerDisplayName}</p><p>${a.fileType} · ${a.fileSize} bytes · ${a.category||'uncategorized'}</p><p>Status: ${a.status} · ${a.visibility}</p><p>Related model: ${a.relatedModelId||'none'}</p><p>Uploaded: ${a.createdAt} Approved: ${a.approvedAt||'—'}</p><p>Published: ${a.publishLocation||a.publishedAt||'—'}</p><div class="button-row"></div><p>${a.moderatorNote||''}</p>`; const row=el.querySelector('.button-row'); [['Edit',()=>edit(a)],['Preview',()=>window.open(a.publicUrl,'_blank')],['Assign',()=>assign(a)],['Download',()=>window.open(a.publicUrl,'_blank')],['Archive',()=>action(a,'archive')],['Delete',()=>del(a)]].forEach(([t,fn])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;row.append(b);}); if(sessionStorage.getItem('muzikazAdminToken'))[['Approve','approve'],['Reject','reject'],['Feature','approve'],['Publish','publish'],['Unpublish','unpublish']].forEach(([t,act])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>action(a,act);row.append(b);}); return el;}
+  function card(a){const el=document.createElement('article');el.className='asset-card'; const preview=a.fileType==='model'?`<model-viewer src="${a.publicUrl}" camera-controls touch-action="pan-y" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1"><button slot="ar-button" type="button">Place in AR</button></model-viewer>`:`<img src="${a.thumbnailUrl||a.publicUrl}" alt="${a.title}">`; el.innerHTML=`${preview}<h4>${a.title}</h4><p>${a.originalFilename}</p><p>Owner: ${a.ownerDisplayName}</p><p>${a.fileType} · ${a.fileSize} bytes · ${a.category||'uncategorized'}</p><p>Status: ${a.status} · ${a.visibility}</p><p>Related model: ${a.relatedModelId||'none'}</p><p>Uploaded: ${a.createdAt} Approved: ${a.approvedAt||'—'}</p><p>Published: ${a.publishLocation||a.publishedAt||'—'}</p><div class="button-row"></div><p>${a.moderatorNote||''}</p>`; const row=el.querySelector('.button-row'); [['Edit',()=>edit(a)],['Preview',()=>window.open(a.publicUrl,'_blank')],['Assign',()=>assign(a)],['Download',()=>window.open(a.publicUrl,'_blank')],['Archive',()=>action(a,'archive')],['Delete',()=>del(a)]].forEach(([t,fn])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;row.append(b);}); if(role==='admin')[['Approve','approve'],['Reject','reject'],['Feature','approve'],['Publish','publish'],['Unpublish','unpublish']].forEach(([t,act])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>action(a,act);row.append(b);}); return el;}
   async function action(a,act){const reason=act==='reject'?prompt('Reason required')||'Changes required':''; await api(`/api/assets/${a.id}/${act}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason})}); status.textContent= act==='publish'?'Published to live model space':'Asset updated'; loadAssets();}
   async function del(a){await api(`/api/assets/${a.id}`,{method:'DELETE'});loadAssets();}
   async function edit(a){const title=prompt('Title',a.title); if(title) await api(`/api/assets/${a.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({title})}); loadAssets();}
@@ -1703,5 +1580,4 @@ function initAssetDashboard(){
   document.getElementById('asset-assignment-panel')?.addEventListener('submit',(e)=>{e.preventDefault(); const asset=cachedAssets.find(a=>a.id===document.getElementById('assignment-asset')?.value); if(asset) assign(asset,document.getElementById('assignment-model')?.value,document.getElementById('assignment-slot')?.value);});
   async function metrics(){try{const m=await api('/api/admin/analytics'); document.getElementById('metric-orders').textContent=m.totalOrders||128;document.getElementById('metric-inventory').textContent=m.inventoryUnits||842;document.getElementById('metric-conversion').textContent=m.conversionRate||'7.4%';document.getElementById('metric-uploads').textContent=m.totalUploads||0;document.getElementById('metric-pending').textContent=m.pendingApprovals||0;document.getElementById('metric-storage').textContent=m.storageUsage||0;}catch{}}
   loadAssets(); metrics();
-}
-document.addEventListener('muzikaz:admin-authenticated', initAssetDashboard);
+})();
