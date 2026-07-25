@@ -26,6 +26,31 @@ border-bottom:1px solid #111;
 font-size:14px}
 .topbar span:last-child{
 color:#fff}
+.desktop-command-bar{
+gap:12px;
+justify-content:center;
+padding-inline:clamp(12px, 2.5vw, 36px);
+background:linear-gradient(90deg, rgba(0,0,0,.96), rgba(17,29,3,.92), rgba(0,0,0,.96))}
+.desktop-command{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+gap:6px;
+min-width:0;
+padding:5px clamp(8px, 1.2vw, 16px);
+border:1px solid rgba(156,255,0,.24);
+border-radius:999px;
+background:rgba(156,255,0,.06);
+color:#fff;
+font-size:11px;
+font-weight:800;
+line-height:1;
+text-decoration:none;
+white-space:nowrap}
+.desktop-command b{color:var(--lime);letter-spacing:.07em}
+.desktop-command:hover,.desktop-command:focus-visible{border-color:var(--lime);background:rgba(156,255,0,.14);outline:0}
+.desktop-command--reward{border-color:rgba(255,218,77,.45)}
+.desktop-command--reward b{color:#ffda4d}
 .theme-status{
 color:#dfff55;
 font-size:11px;
@@ -2114,7 +2139,8 @@ html.rad-tox-fullscreen,html.rad-tox-fullscreen body{width:100%;height:100%;over
     padding:8px 14px;
     text-align:center;
   }
-  .topbar span:not(.theme-status){display:none}
+  .desktop-command-bar .desktop-command:not(.theme-status){display:none}
+  .desktop-command-bar .theme-status{padding-inline:14px}
   .site-header{
     gap:12px;
     padding:10px 14px;
