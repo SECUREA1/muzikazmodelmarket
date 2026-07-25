@@ -43,6 +43,12 @@ if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
   throw new Error('index.html must load the ES5 RAD-TOX compatibility launcher.');
 }
 
+for (const desktopCommand of ['Flex Fit', 'Theme', 'Live Feed', 'Market Mode', 'Cloud Rewards']) {
+  if (!mainHtml.includes(desktopCommand)) {
+    throw new Error(`index.html must keep ${desktopCommand} in the desktop command header.`);
+  }
+}
+
 for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'WebGL support']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
