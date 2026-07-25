@@ -3,16 +3,15 @@
   'use strict';
   var PREFIX = '[MUZIKAZ GAME]';
   var state = 'booting'; var queued = false; var watchdog = 0; var engineRequested = false; var modernSupport;
-  var isInternetExplorer = !!document.documentMode;
-  // Do not strand the player behind a long loader when the CDN or WebGL stalls.
-  var ENGINE_STARTUP_TIMEOUT_MS = 12000;
+  // Some devices need extra time to load the 3D engine and its environment assets.
+  var ENGINE_STARTUP_TIMEOUT_MS = 90000;
   function log(message, detail) { if (window.console && console.info) console.info(PREFIX, message, detail || ''); }
   function status(message) { var nodes = [document.getElementById('house-status'), document.getElementById('house-game-load-status')]; for (var i=0;i<nodes.length;i+=1) if(nodes[i]) nodes[i].textContent=message; }
   function buttons() { return document.querySelectorAll('#house-start-game, [data-house-start]'); }
   function setButtons(disabled, label) { var controls=buttons(); for(var i=0;i<controls.length;i+=1){ controls[i].disabled=disabled; if(label) controls[i].textContent=label; } }
   function publish(next, message) { document.dispatchEvent(makeEvent('muzikaz:rad-tox-app-update', { stage: next, message: message || '' })); }
   function setState(next, message) { state = next; document.documentElement.setAttribute('data-radtox-state', next); log('stage '+next); if(message) status(message); publish(next, message); }
-  function supportsModern() { if(modernSupport !== undefined)return modernSupport; var s=document.createElement('script'), c=document.createElement('canvas'), gl; try{gl=c.getContext&&((window.WebGL2RenderingContext&&c.getContext('webgl2'))||c.getContext('webgl')||c.getContext('experimental-webgl'));}catch(ignore){gl=null;} modernSupport=!isInternetExplorer && 'noModule' in s && !!(window.Promise && window.fetch && window.URL && window.CustomEvent && gl); return modernSupport; }
+  function supportsModern() { if(modernSupport !== undefined)return modernSupport; var s=document.createElement('script'), c=document.createElement('canvas'), gl; try{gl=c.getContext&&((window.WebGL2RenderingContext&&c.getContext('webgl2'))||c.getContext('webgl')||c.getContext('experimental-webgl'));}catch(ignore){gl=null;} modernSupport='noModule' in s && !!(window.Promise && window.fetch && window.URL && window.CustomEvent && gl); return modernSupport; }
   function clearWatchdog(){ if(watchdog){window.clearTimeout(watchdog);watchdog=0;} }
   function armWatchdog(){ clearWatchdog(); watchdog=window.setTimeout(function(){ if(state==='booting'){ status('The 3D view is taking longer than expected. Compatibility Mode is starting so you can play now.'); startCompatibility(); } },ENGINE_STARTUP_TIMEOUT_MS); }
   function addRecovery(){ var host=document.getElementById('house-game-start'); if(!host || host.querySelector('[data-radtox-recovery]')) return; var box=document.createElement('p'); box.setAttribute('data-radtox-recovery',''); box.innerHTML='<button type="button" data-radtox-retry>Retry 3D Game</button> <button type="button" data-radtox-compat>Start Compatibility Mode</button>'; host.appendChild(box); box.onclick=function(e){var t=e.target; if(t.getAttribute('data-radtox-retry')!==null){e.preventDefault(); queued=true; setState('booting','Retrying 3D engine…'); armWatchdog(); document.dispatchEvent(makeEvent('muzikaz:rad-tox-retry'));} if(t.getAttribute('data-radtox-compat')!==null){e.preventDefault(); startCompatibility();}}; }
@@ -48,6 +47,5 @@
   document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
   // Do not download or decode Three.js/GLB assets until the player opts in. This
   // leaves scrolling and first paint responsive on memory-constrained phones.
-  if(isInternetExplorer) document.documentElement.className += ' is-internet-explorer';
-  if(!supportsModern()) startCompatibility(); else setState('idle','Ready to start RAD-TOX.');
+  if(!supportsModern()) window.setTimeout(startCompatibility,0); else setState('idle','Ready to start RAD-TOX.');
 }());
