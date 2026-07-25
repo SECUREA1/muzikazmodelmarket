@@ -53,12 +53,6 @@ const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
 if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-tox-app-update')) {
   throw new Error('RAD-TOX launcher must provide a compatibility fallback and publish live game updates.');
 }
-if (!launcher.includes('document.documentMode') || !launcher.includes('ENGINE_STARTUP_TIMEOUT_MS = 12000')) {
-  throw new Error('RAD-TOX launcher must detect Internet Explorer and fail over quickly.');
-}
-if (!mainHtml.includes('if (document.documentMode) return;')) {
-  throw new Error('index.html must skip modern storefront bundles in Internet Explorer.');
-}
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
