@@ -941,17 +941,18 @@ function money(amount) {
   return `$${amount.toFixed(2)}`;
 }
 
-function seedCharacterCheckout() {
+async function seedCharacterCheckout() {
   const characterSelect = document.querySelector('#checkout-character-select');
   const productSelect = document.querySelector('#checkout-product-select');
   const catalog = document.querySelector('#character-catalog');
   const productCatalog = document.querySelector('#checkout-product-catalog');
   if (!characterSelect || !productSelect || !catalog || !productCatalog) return;
+  await loadOwnerGlbModels();
   characterSelect.innerHTML = siteTwoCharacters.map((character, index) => `<option value="${index}">${character.name}</option>`).join('');
   productSelect.innerHTML = siteTwoProducts.map((product, index) => `<option value="${index}">${product.name}</option>`).join('');
   catalog.innerHTML = siteTwoCharacters.map((character, index) => `
     <button class="character-tile" type="button" data-checkout-character="${index}">
-      <img src="${characterImage(character)}" alt="${character.name}">
+      ${characterModelMarkup(character, `${character.name} selectable 3D model`, 'character-tile-model')}
       <span>${character.group}</span><strong>${character.name}</strong><small>${character.role}</small>
     </button>`).join('');
   productCatalog.innerHTML = siteTwoProducts.map((product, index) => `
@@ -969,8 +970,15 @@ function updateCharacterCheckout() {
   const product = siteTwoProducts[Number(productSelect.value)] || siteTwoProducts[0];
   document.querySelector('#checkout-character-name').textContent = `${character.name} · ${product.name}`;
   document.querySelector('#checkout-character-copy').textContent = `${character.bio} Choose a ${product.name.toLowerCase()}, colorway, format, and quantity, then add the exact character-product combo to checkout.`;
-  const image = document.querySelector('#checkout-character-img');
-  if (image) image.src = characterImage(character);
+  const viewer = document.querySelector('#checkout-character-model');
+  const characterModel = modelForCharacter(character);
+  if (viewer && characterModel?.modelUrl) {
+    viewer.src = characterModel.modelUrl;
+    viewer.poster = characterImage(character);
+    viewer.setAttribute('alt', `${character.name} interactive 3D model`);
+    if (characterModel.iosModelUrl) viewer.setAttribute('ios-src', characterModel.iosModelUrl); else viewer.removeAttribute('ios-src');
+    enhanceModelViewerForAr(viewer, `${character.name} 3D model`);
+  }
   const sizeSelect = document.querySelector('#checkout-size-select');
   const colorSelect = document.querySelector('#checkout-color-select');
   if (sizeSelect) sizeSelect.innerHTML = product.sizes.map((size) => `<option>${size}</option>`).join('');
@@ -1063,7 +1071,31 @@ const arFileMeta = document.querySelector('#ar-file-meta');
 const arPopoutButton = document.querySelector('#ar-popout-button');
 let customArFileUrl = '';
 let ownerGlbModels = [];
-async function loadOwnerGlbModels(){try{const response=await fetch('public/models/glb-models.json',{cache:'no-store'});if(!response.ok)return[];const catalog=await response.json();const records=Array.isArray(catalog)?catalog:(Array.isArray(catalog.models)?catalog.models:[]);ownerGlbModels=records.filter(model=>model.visibility!=='private'&&model.modelUrl);const known=new Set(marketplaceListings.map(item=>item.modelUrl).filter(Boolean));ownerGlbModels.forEach(model=>{if(!known.has(model.modelUrl)){marketplaceListings.push({type:'Owner GLB Library',category:model.category||'Owner GLB Library',quality:'curated',name:`${model.name} AR Model`,price:'Available in AR',copy:`${model.description||'Owner-deposited GLB model.'} Source: ${model.modelUrl}`,model:model.name,modelUrl:model.modelUrl,iosModelUrl:model.iosModelUrl||'',arCharacterIndex:siteTwoCharacters.findIndex((character)=>normalizeArModelKey(character.arModelId)===normalizeArModelKey(model.id))});known.add(model.modelUrl);}});renderMarketplace();return ownerGlbModels;}catch(error){console.warn('[Members AR] Owner GLB catalog unavailable',error);return[];}}
+let ownerGlbModelsPromise;
+async function loadOwnerGlbModels() {
+  if (ownerGlbModelsPromise) return ownerGlbModelsPromise;
+  ownerGlbModelsPromise = (async () => {
+    try {
+      const response = await fetch('public/models/glb-models.json', { cache: 'no-store' });
+      if (!response.ok) return [];
+      const catalog = await response.json();
+      const records = Array.isArray(catalog) ? catalog : (Array.isArray(catalog.models) ? catalog.models : []);
+      ownerGlbModels = records.filter((model) => model.visibility !== 'private' && model.modelUrl);
+      const known = new Set(marketplaceListings.map((item) => item.modelUrl).filter(Boolean));
+      ownerGlbModels.forEach((model) => {
+        if (known.has(model.modelUrl)) return;
+        marketplaceListings.push({ type: 'Owner GLB Library', category: model.category || 'Owner GLB Library', quality: 'curated', name: `${model.name} AR Model`, price: 'Available in AR', copy: `${model.description || 'Owner-deposited GLB model.'} Source: ${model.modelUrl}`, model: model.name, modelUrl: model.modelUrl, iosModelUrl: model.iosModelUrl || '', arCharacterIndex: siteTwoCharacters.findIndex((character) => normalizeArModelKey(character.arModelId) === normalizeArModelKey(model.id)) });
+        known.add(model.modelUrl);
+      });
+      renderMarketplace();
+      return ownerGlbModels;
+    } catch (error) {
+      console.warn('[Members AR] Owner GLB catalog unavailable', error);
+      return [];
+    }
+  })();
+  return ownerGlbModelsPromise;
+}
 const arModelAliases = {
   sparky: ['sparky'], nexus: ['nexus'], inferno: ['inferno'], rumble: ['rumble'], chillz: ['chillz'], bax: ['bax'],
   'ion-wolf': ['ionwolf', 'voltwolf', 'wolfie'], flick: ['flick'], byte: ['byte'], luna: ['luna'],
@@ -1081,6 +1113,11 @@ function modelForCharacter(character){
   const key = normalizeArModelKey(character.file);
   const aliases = [key, normalizeArModelKey(character.name), ...(arModelAliases[character.file] || [])].filter(Boolean);
   return ownerGlbModels.find(model => aliases.some(alias => modelSearchText(model).includes(alias)));
+}
+function characterModelMarkup(character, label, className = '') {
+  const model = modelForCharacter(character);
+  if (!model?.modelUrl) return `<img src="${characterImage(character)}" alt="${label}">`;
+  return `<model-viewer class="${className}" src="${model.modelUrl}" poster="${characterImage(character)}" ${model.iosModelUrl ? `ios-src="${model.iosModelUrl}"` : ''} camera-controls touch-action="pan-y" auto-rotate ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1" loading="lazy" reveal="auto" alt="${label}"></model-viewer>`;
 }
 function characterForListing(listing){
   return siteTwoCharacters.findIndex((character) => listing.model === character.name || listing.model === character.group || listing.copy?.includes(character.group) || listing.copy?.includes(character.name));
@@ -1141,7 +1178,7 @@ async function seedArViewer() {
   arCharacterSelect.innerHTML = siteTwoCharacters.map((character, index) => `<option value="${index}">${character.name}</option>`).join('');
   arCharacterStrip.innerHTML = siteTwoCharacters.map((character, index) => `
     <button class="ar-character-chip" type="button" data-ar-character="${index}">
-      <img src="${characterImage(character)}" alt="${character.name}"><span>${character.name}</span>
+      ${characterModelMarkup(character, `${character.name} 3D picker model`, 'ar-character-chip-model')}<span>${character.name}</span>
     </button>`).join('');
   updateArViewer(false);
 }
