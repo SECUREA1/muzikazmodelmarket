@@ -2253,6 +2253,30 @@ section,
 @supports(padding-bottom:env(safe-area-inset-bottom)){
   .house-explorer-shell>.house-bottom-controls,.house-explorer-shell>.mobile-move-pad{padding-bottom:env(safe-area-inset-bottom)}
 }
+
+/* Environment/house query URLs are shareable game invitations. Present only
+   the game canvas and one clear opt-in action rather than the editor chrome. */
+.shared-game-link body.model-explorer-page{margin:0;overflow:hidden;background:#020403}
+.shared-game-link .model-explorer-page>.topbar,
+.shared-game-link .model-explorer-page>.site-header,
+.shared-game-link .model-explorer-page>footer,
+.shared-game-link .model-explorer-page main#home>.section-block:not(.house-explorer),
+.shared-game-link .house-explorer>.section-title,
+.shared-game-link .house-bottom-controls,
+.shared-game-link .mobile-move-pad,
+.shared-game-link .house-hud,
+.shared-game-link .crib-social,
+.shared-game-link .house-status,
+.shared-game-link #house-game-load-status,
+.shared-game-link .house-firefox-note{display:none!important}
+.shared-game-link .model-explorer-page main#home,
+.shared-game-link .house-explorer{width:100%;height:100vh;height:100svh;min-height:0;margin:0;padding:0}
+.shared-game-link .house-explorer-shell{width:100%;height:100%;max-width:none;max-height:none;min-height:0;border:0;border-radius:0}
+.shared-game-link .house-explorer-shell>.house-stage{border-radius:0}
+.shared-game-link .house-game-start{background:radial-gradient(circle at 50% 46%,rgba(98,255,0,.17),#020403 62%)}
+.shared-game-link .house-game-start .game-overlay__content{gap:20px}
+.shared-game-link .house-game-start h3{font-size:clamp(48px,10vw,88px)}
+.shared-game-link .house-start-button{width:min(320px,82vw);min-height:60px;font-size:20px}
 /* Server-authenticated administrator access */
 .admin-login-card{width:min(620px,96%);margin:0 auto;padding:28px;border:1px solid var(--lime);border-radius:20px;background:linear-gradient(145deg,rgba(7,10,7,.96),rgba(0,0,0,.9));box-shadow:0 0 32px rgba(156,255,0,.14)}
 .asset-command-center[hidden]{display:none!important}

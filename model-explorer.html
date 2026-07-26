@@ -31,6 +31,16 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <script>
+    // Shared house links are game invitations, not editor pages. Mark them
+    // before first paint so the surrounding marketplace controls never flash.
+    (function () {
+      var query = new URLSearchParams(window.location.search);
+      if (query.has('environment') || query.has('house')) {
+        document.documentElement.classList.add('shared-game-link');
+      }
+    }());
+  </script>
   <script src="public/js/api-connection.js"></script>
   <script src="public/js/avatar-selection.js" defer></script>
 </head>
@@ -83,11 +93,11 @@
           </section>
           <section class="house-game-start game-overlay" id="house-game-start" aria-labelledby="house-game-start-title">
             <div class="game-overlay__content">
-            <p class="kicker">RAD-TOX game connection</p>
-            <h3 id="house-game-start-title">Clear level 1. Survive the upper-floor ghosts in level 2.</h3>
+            <p class="kicker">MUZIKAZ game</p>
+            <h3 id="house-game-start-title">Ready to play?</h3>
             <p id="house-game-load-status" role="status">Preparing level 1 toxins and the level 2 ghost encounter…</p>
             <p class="house-firefox-note">RAD-TOX runs in browsers with WebGL support. The game starts as soon as the interior is ready.</p>
-            <button class="btn house-start-button" type="button" data-house-start>Start RAD-TOX</button>
+            <button class="btn house-start-button" type="button" data-house-start>Begin</button>
             </div>
           </section>
         </div>

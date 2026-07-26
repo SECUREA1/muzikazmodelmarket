@@ -504,7 +504,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
     if (gameStartButton) gameStartButton.disabled = true;
     gameStartScreen?.classList.add('is-loading');
-    gameStartButton.textContent = 'Deploying RAD-TOX…';
+    gameStartButton.textContent = 'Loading…';
     if (gameLoadStatus) gameLoadStatus.textContent = 'Loading level 1 toxins and the upper-floor ghost encounter…';
     publishGameStage('loading-game', 'Loading level 1 toxins and the upper-floor ghost encounter…');
 
@@ -522,7 +522,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     } catch (error) {
       const message = error?.message || 'Unable to load the MUZIKAZ house game.';
       gameStartButton.disabled = false;
-      gameStartButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v5M5.8 7l4.3 2.5M18.2 7l-4.3 2.5M5.8 17l4.3-2.5M18.2 17l-4.3-2.5"/><circle cx="12" cy="14" r="5"/></svg>BEGIN NOW!';
+      gameStartButton.textContent = 'Begin';
       gameStartScreen?.classList.remove('is-loading');
       if (gameLoadStatus) gameLoadStatus.textContent = message;
       setStatus(message);
