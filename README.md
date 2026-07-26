@@ -15,6 +15,7 @@ Branch: main
 Root Directory: leave blank
 Build Command: cargo build --release
 Start Command: ./target/release/muzikazmodelmarket
+Health Check Path: /api/health
 ```
 
 Do not use `npm start` or `cargo run --release` as the Render start command. Render should start the compiled release binary directly.
@@ -72,19 +73,21 @@ All JSON responses use `{ "success": boolean, "data": ..., "message": string }`.
 - `POST /api/houses/:houseId/presence`, `POST /api/houses/:houseId/presence/leave`, and `GET /api/houses/:houseId/events` — maintain the live player roster and event-stream connection.
 - `GET /api/houses/:houseId/chat` and `POST /api/houses/:houseId/chat` — load and send subscriber chat messages after joining the house presence roster.
 
-### Required Render environment variables
+### Render environment variables
 
 - `PUBLIC_BASE_URL=https://muzikazmodelmarket.onrender.com`
-- `MUZIKAZ_DATA_DIR=/var/data`
-- `UPLOAD_STORAGE_PATH=/var/data/uploads/models`
+- `MUZIKAZ_DATA_DIR=data` on the free instance, or `/var/data` after attaching a persistent disk.
+- `UPLOAD_STORAGE_PATH=data/uploads/models` on the free instance, or `/var/data/uploads/models` with the disk.
 - `MAX_MODEL_UPLOAD_MB=50`
 - `ADMIN_PUBLISH_TOKEN` for protected deletion only.
 - `DATABASE_URL` is reserved for the PostgreSQL repository described by `migrations/001_published_models.sql`.
 - `ALLOWED_ORIGINS` is reserved for a future cross-origin deployment; current browser calls are same-origin.
 
+The service does not require `DATABASE_URL` or `ALLOWED_ORIGINS` to start. `PORT` is supplied by Render automatically. Set the service health-check path to `/api/health`; `/health` and `/healthz` are also supported for external monitors. A successful health response reports whether the public base URL, durable-storage setting, and admin authorization are configured without exposing their values.
+
 ### Render storage setup
 
-Attach a Render persistent disk at `/var/data`. Uploaded `.glb`, `.gltf`, `.usdz`, thumbnail files, and shared avatar images are written below `/var/data/uploads/models` and served publicly from `/uploads/*`. Without a persistent disk (or future object storage), uploads on Render's ephemeral filesystem will not survive instance replacement.
+Free Render web services cannot attach a persistent disk. With the committed free-service defaults, uploaded `.glb`, `.gltf`, `.usdz`, thumbnail files, and shared avatar images are written below `data/uploads/models` and served publicly from `/uploads/*`, but they will not survive an instance replacement or redeploy. To make uploads durable, upgrade the instance, attach a disk at `/var/data`, and change the two storage variables to the `/var/data` values above (or implement object storage). Do not set `/var/data` on the free instance without a mounted disk.
 
 ### Database migration instructions
 

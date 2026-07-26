@@ -202,6 +202,24 @@ fn main() -> std::io::Result<()> {
     };
     let listener = TcpListener::bind(format!("0.0.0.0:{port}"))?;
     println!("Serving {} on http://0.0.0.0:{port}", state.root.display());
+    println!(
+        "Runtime configuration: storage={}, public_base_url={}, admin_auth={}",
+        if env::var_os("MUZIKAZ_DATA_DIR").is_some() {
+            "configured"
+        } else {
+            "ephemeral-default"
+        },
+        if state.public_base.is_empty() {
+            "same-origin"
+        } else {
+            "configured"
+        },
+        if state.admin_token.is_empty() {
+            "disabled"
+        } else {
+            "configured"
+        }
+    );
     for stream in listener.incoming() {
         let st = state.clone();
         thread::spawn(move || {
@@ -272,6 +290,9 @@ fn handle(mut s: TcpStream, st: State) -> std::io::Result<()> {
             false,
         );
     }
+    if (method == "GET" || method == "HEAD") && (target == "/health" || target == "/healthz") {
+        return health(&mut s, &st, method == "HEAD");
+    }
     if target.starts_with("/api/") {
         return api(&mut s, &st, method, target, &headers, body);
     };
@@ -287,17 +308,7 @@ fn api(
 ) -> std::io::Result<()> {
     let path = target.split('?').next().unwrap_or(target);
     match (method, path) {
-        ("GET", "/api/health") => json(
-            s,
-            200,
-            true,
-            &format!(
-                "{{\"service\":\"ok\",\"storage\":\"ok\",\"modelCount\":{}}}",
-                st.models.read().unwrap().len()
-            ),
-            "Service healthy",
-            false,
-        ),
+        ("GET", "/api/health") | ("HEAD", "/api/health") => health(s, st, method == "HEAD"),
         ("POST", "/api/admin/login") => admin_login(s, st, body),
         ("GET", "/api/environments") => list_environments(s, st),
         ("POST", "/api/environments/upload") => upload_environment(s, st, headers, body),
@@ -520,6 +531,22 @@ fn api(
         }
         _ => json(s, 404, false, "{}", "API route not found", false),
     }
+}
+fn health(s: &mut TcpStream, st: &State, head: bool) -> std::io::Result<()> {
+    json(
+        s,
+        200,
+        true,
+        &format!(
+            "{{\"service\":\"ok\",\"storage\":\"ok\",\"persistentStorageConfigured\":{},\"publicBaseConfigured\":{},\"adminAuthConfigured\":{},\"modelCount\":{}}}",
+            st.data.starts_with("/var/data"),
+            !st.public_base.is_empty(),
+            !st.admin_token.is_empty(),
+            st.models.read().unwrap().len()
+        ),
+        "Service healthy",
+        head,
+    )
 }
 fn list_environments(s: &mut TcpStream, st: &State) -> std::io::Result<()> {
     let mut worlds: Vec<_> = st
