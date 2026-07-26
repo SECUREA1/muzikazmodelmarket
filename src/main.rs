@@ -134,6 +134,9 @@ struct HouseUser {
     username: String,
     color: String,
     room_id: String,
+    position: String,
+    avatar_url: String,
+    message: String,
     last_active: u64,
 }
 #[derive(Clone, Debug)]
@@ -871,16 +874,19 @@ fn prune_house_users(users: &mut Vec<HouseUser>) {
 }
 fn presence_json(users: &[HouseUser]) -> String {
     format!(
-        "{{\"count\":{},\"capacity\":15,\"users\":[{}]}}",
+        "{{\"count\":{},\"capacity\":15,\"coordinateSystem\":\"right-handed-y-up\",\"users\":[{}]}}",
         users.len(),
         users
             .iter()
             .map(|user| format!(
-                "{{\"sessionId\":\"{}\",\"username\":\"{}\",\"color\":\"{}\",\"roomId\":\"{}\"}}",
+                "{{\"sessionId\":\"{}\",\"username\":\"{}\",\"color\":\"{}\",\"roomId\":\"{}\",\"position\":{},\"avatarUrl\":\"{}\",\"message\":\"{}\"}}",
                 esc(&user.session_id),
                 esc(&user.username),
                 esc(&user.color),
-                esc(&user.room_id)
+                esc(&user.room_id),
+                user.position,
+                esc(&user.avatar_url),
+                esc(&user.message)
             ))
             .collect::<Vec<_>>()
             .join(",")
@@ -915,6 +921,18 @@ fn house_presence(
         let room = val(&input, "roomId");
         if !room.is_empty() {
             user.room_id = trim(room, 40);
+        }
+        let position = raw_json(&input, "position").unwrap_or_default();
+        if !position.is_empty() {
+            user.position = position;
+        }
+        let avatar_url = val(&input, "avatarUrl");
+        if !avatar_url.is_empty() {
+            user.avatar_url = trim(avatar_url, 500);
+        }
+        let message = val(&input, "message");
+        if !message.is_empty() {
+            user.message = trim(message, 140);
         }
     } else {
         if users.len() >= 15 {
@@ -956,6 +974,26 @@ fn house_presence(
                 },
                 40,
             ),
+            position: {
+                let value = raw_json(&input, "position").unwrap_or_default();
+                if value.is_empty() {
+                    "{\"x\":0,\"y\":0,\"z\":2.5}".into()
+                } else {
+                    value
+                }
+            },
+            avatar_url: {
+                let value = val(&input, "avatarUrl");
+                trim(
+                    if value.is_empty() {
+                        "logo_symbol_crop_2x_transparent.png".into()
+                    } else {
+                        value
+                    },
+                    500,
+                )
+            },
+            message: trim(val(&input, "message"), 140),
             last_active: unix_seconds(),
         });
     }
@@ -1024,7 +1062,7 @@ fn house_chat(
     let session_id = request_session(headers);
     let mut users = st.house_users.write().unwrap();
     prune_house_users(&mut users);
-    let Some(user) = users.iter().find(|user| user.session_id == session_id) else {
+    let Some(user) = users.iter_mut().find(|user| user.session_id == session_id) else {
         return json(
             s,
             401,
@@ -1038,6 +1076,8 @@ fn house_chat(
     if message.trim().is_empty() {
         return json(s, 400, false, "{}", "Message cannot be empty", false);
     }
+    user.message = message.clone();
+    user.last_active = unix_seconds();
     let record = ChatMessage {
         id: format!("chat-{}", uuid()),
         session_id,
