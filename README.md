@@ -48,8 +48,8 @@ right thumbstick to snap-turn. Aim with either controller and press either
 trigger to use the selected RAD-TOX tool (Laser, Paint Gun, or Bat). Squeeze
 the left grip to switch tools; squeeze the right grip while aiming at a
 walkable floor to teleport. The WebXR control is intentionally omitted
-when a browser or device does not support immersive VR, while the normal 3D and
-compatibility modes remain available.
+when a browser or device does not support immersive VR, while the normal 3D
+game remains available.
 
 ## Server-backed live model publishing
 
