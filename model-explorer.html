@@ -136,6 +136,22 @@
           <button class="mobile-control" type="button" data-mobile-hold="back" aria-label="Reverse"><b>▼</b><span>Reverse</span></button>
           <button class="mobile-control mobile-control-jump" type="button" data-mobile-action="jump" aria-label="Jump"><b>⤴</b><span>Jump</span></button>
         </div>
+        <aside class="crib-social" id="crib-social" aria-label="Vibe Crib players and chat">
+          <button class="crib-chat-toggle" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel"><span>💬 Chat</span><b id="crib-online-count">0 / 15</b></button>
+          <section class="crib-chat-panel" id="crib-chat-panel" hidden>
+            <header><div><strong>Vibe Crib live</strong><small>Names and messages appear above every avatar</small></div><button type="button" data-close-chat aria-label="Close chat">×</button></header>
+            <div class="crib-player-list" id="crib-player-list" aria-label="Players online"></div>
+            <ol class="crib-chat-messages" id="crib-chat-messages" aria-live="polite"></ol>
+            <form id="crib-chat-form"><label class="sr-only" for="crib-chat-input">Chat message</label><input id="crib-chat-input" maxlength="140" autocomplete="off" placeholder="Message the crib…" required><button type="submit">Send</button></form>
+            <p id="crib-chat-status" role="status"></p>
+          </section>
+        </aside>
+        <section class="crib-chat-dock" aria-label="Quick game chat">
+          <div class="crib-chat-dock__label"><strong>💬 Live chat</strong><small id="crib-dock-online-count">0 / 15 online</small></div>
+          <ol class="crib-chat-messages crib-chat-dock__messages" id="crib-dock-messages" aria-live="polite"></ol>
+          <form id="crib-dock-form"><label class="sr-only" for="crib-dock-input">Quick chat message</label><input id="crib-dock-input" maxlength="140" autocomplete="off" placeholder="Chat above your avatar…" required><button type="submit">Send</button></form>
+          <p id="crib-dock-status" role="status"></p>
+        </section>
         <div class="house-bottom-controls" aria-label="Game controls">
           <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">▤</b><span>World</span></button>
           <button class="house-bottom-control" id="house-fullscreen" type="button"><b aria-hidden="true">⛶</b><span>Fullscreen</span></button>
@@ -144,16 +160,6 @@
           <small class="house-firefox-label">WebGL required</small>
           <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
         </div>
-        <aside class="crib-social" id="crib-social" aria-label="Vibe Crib players and chat">
-          <button class="crib-chat-toggle" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel"><span>💬 Chat</span><b id="crib-online-count">0 / 15</b></button>
-          <section class="crib-chat-panel" id="crib-chat-panel" hidden>
-            <header><div><strong>Vibe Crib live</strong><small>Signed-in subscribers · 15 max</small></div><button type="button" data-close-chat aria-label="Close chat">×</button></header>
-            <div class="crib-player-list" id="crib-player-list" aria-label="Players online"></div>
-            <ol class="crib-chat-messages" id="crib-chat-messages" aria-live="polite"></ol>
-            <form id="crib-chat-form"><label class="sr-only" for="crib-chat-input">Chat message</label><input id="crib-chat-input" maxlength="140" autocomplete="off" placeholder="Message the crib…" required><button type="submit">Send</button></form>
-            <p id="crib-chat-status" role="status"></p>
-          </section>
-        </aside>
       </div>
     </section>
 
