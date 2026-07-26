@@ -108,7 +108,7 @@
             <div class="designer-callout">
                 <p class="kicker">Featured open marketplace drop</p>
                 <h3>Chaos Ape custom stickers drop</h3>
-                <p>Start with the corrected Avatar Sticker Sheet configuration, upload your own art, position layers in real time, save a draft, and send a checkout-ready custom order.</p>
+                <p>Build a production-ready sticker sheet: upload art, drag it inside the cutline-safe zone, save a reusable draft, and attach a complete design specification to your custom order.</p>
             </div>
             <details class="button-menu studio-tabs" open>
                 <summary>Customize sections</summary>
@@ -121,7 +121,10 @@
                     <div class="mockup sticker-sheet-mockup" id="designer-mockup" data-product-template="avatar-stickers">
                         <div class="print-template-label" id="print-template-label">Sticker sheet print area</div>
                         <div class="sticker-sheet-stage" id="sticker-stage">
+                            <div class="safe-area-guide" aria-hidden="true"><span>PRINT-SAFE AREA</span></div>
+                            <img class="product-template-art" id="product-template-art" src="trait_avatars_row_2_2x.png" alt="Avatar Sticker Sheet product template" />
                             <span class="sticker-cutline main-character" id="preview-character">Chaos Ape</span>
+                            <img class="character-art-layer" id="character-art-layer" src="character_traits_overview_panel_2x.png" alt="Chaos Ape artwork" />
                             <strong class="sticker-cutline logo-sticker" id="preview-name">MUZIKAZ</strong>
                             <b class="sticker-cutline number-sticker" id="preview-number">88</b>
                             <small class="sticker-cutline sleeve-sticker" id="preview-sleeve">LIVE THE BEAT</small>
@@ -133,7 +136,7 @@
                         <p class="kicker" id="preview-meta">Avatar Sticker Sheet · M · Wordmark · Chaos / 3D Model Packs</p>
                         <h3 id="preview-title">Chaos Ape custom stickers drop</h3>
                         <ul class="preview-values" id="preview-values"><li>Chaos Ape</li><li>MUZIKAZ</li><li>88</li><li>LIVE THE BEAT</li></ul>
-                        <div class="preview-actions button-group"><button type="button" id="save-design">Save design</button><button type="button" id="load-design">Load saved</button><button type="button" id="duplicate-design">Duplicate design</button></div>
+                        <div class="preview-actions button-group"><button type="button" id="save-design">Save draft</button><button type="button" id="load-design">Load draft</button><button type="button" id="duplicate-design">Duplicate layer</button><button type="button" class="ghost" id="download-design-spec">Download print spec</button></div>
                         <p class="status-message studio-status" id="designer-status" role="status">Upload PNG, JPG, JPEG, or SVG artwork to place it on the merch preview.</p>
                     </div>
                 </article>
@@ -142,7 +145,7 @@
                     <fieldset id="character"><legend>Character</legend><label>Character <select name="character" id="design-character"></select></label></fieldset>
                     <fieldset id="text"><legend>Text</legend><label>Name <input name="name" maxlength="16" value="MUZIKAZ" /></label><label>Number <input name="number" maxlength="2" value="88" /></label><label>Sleeve Text <input name="sleeve" maxlength="22" value="LIVE THE BEAT" /></label></fieldset>
                     <fieldset id="logo"><legend>Logo</legend><label>Logo Style <select name="logo"><option selected>Wordmark</option><option>Lightning Crest</option><option>Badge Patch</option><option>Custom Upload Logo</option></select></label></fieldset>
-                    <fieldset id="upload"><legend>Custom Upload</legend><label class="design-upload-drop">Upload custom design <input type="file" id="design-upload" accept="image/png,image/jpeg,image/jpg,image/svg+xml" /></label><details class="button-menu layer-menu" open><summary>Layer options</summary><div class="upload-tools button-group"><button type="button" data-layer-action="center">Center align</button><button type="button" data-layer-action="front">Move front</button><button type="button" data-layer-action="back">Move back</button><button type="button" data-layer-action="duplicate">Duplicate</button><button type="button" data-layer-action="flip-x">Flip H</button><button type="button" data-layer-action="flip-y">Flip V</button><button type="button" data-layer-action="delete">Delete</button></div></details><label>Resize <input type="range" id="upload-scale" min="40" max="220" value="100" /></label><label>Rotate <input type="range" id="upload-rotate" min="-180" max="180" value="0" /></label></fieldset>
+                    <fieldset id="upload"><legend>Custom Upload</legend><label class="design-upload-drop">Upload custom design <input type="file" id="design-upload" accept="image/png,image/jpeg,image/jpg,image/svg+xml" /></label><p class="upload-guidance">PNG, JPG, JPEG, or SVG · 5 MB max · transparent PNG recommended. Keep important artwork inside the dotted safe area.</p><details class="button-menu layer-menu" open><summary>Layer options</summary><div class="upload-tools button-group"><button type="button" data-layer-action="center">Center align</button><button type="button" data-layer-action="front">Move front</button><button type="button" data-layer-action="back">Move back</button><button type="button" data-layer-action="duplicate">Duplicate</button><button type="button" data-layer-action="flip-x">Flip H</button><button type="button" data-layer-action="flip-y">Flip V</button><button type="button" data-layer-action="delete">Delete</button></div></details><label>Resize <input type="range" id="upload-scale" min="40" max="220" value="100" /></label><label>Rotate <input type="range" id="upload-rotate" min="-180" max="180" value="0" /></label></fieldset>
                     <fieldset id="layout"><legend>Layers</legend><ol class="layer-stack" id="layer-stack"><li>Base product template</li><li>Live print shape / safe area</li><li>Product color</li><li>Character art</li><li>Logo / wordmark</li><li>Name</li><li>Number</li><li>Sleeve text</li><li>Uploaded custom art</li><li>Effects or outlines</li></ol></fieldset>
                     <fieldset id="order"><legend>Order Summary</legend><label>Quantity <input name="quantity" type="number" min="1" max="99" value="1" /></label><label>Design notes <textarea name="notes" rows="3" placeholder="Add print notes, correction requests, or placement instructions"></textarea></label><div class="order-summary" id="designer-order-summary"></div><button type="button" data-add-custom>Add to cart / order</button><button type="button" id="edit-design">Make a Correction / Edit Design</button></fieldset>
                 </form>
@@ -229,8 +232,21 @@
         </section>
 
         <section class="section-block admin-block" id="admin">
-            <div class="section-title"><span></span><h2>Admin command center</h2><a href="#crew">Join drops</a></div>
-            <div class="admin-layout asset-command-center" data-asset-dashboard>
+            <div class="section-title"><span></span><h2>Admin command center</h2></div>
+            <section class="admin-login-card" id="admin-login" aria-labelledby="admin-login-title">
+                <p class="kicker">Restricted access</p><h3 id="admin-login-title">Administrator sign in</h3>
+                <p>Sign in to access upload moderation, analytics, publishing, and the shared asset library.</p>
+                <form id="admin-login-form" class="admin-login-form">
+                    <label>Username <input name="username" autocomplete="username" required /></label>
+                    <label>Password <input name="password" type="password" autocomplete="current-password" required /></label>
+                    <button type="submit">Open command center</button>
+                </form><p id="admin-login-status" class="status-message" role="status">Administrator authentication is required.</p>
+            </section>
+            <div class="admin-layout asset-command-center" data-asset-dashboard hidden aria-label="Administrator command center">
+                <div class="admin-command-bar">
+                    <p>Authenticated administrator workspace</p>
+                    <button type="button" id="admin-logout">Sign out</button>
+                </div>
                 <form class="upload-zone asset-upload-panel" id="graphic-upload-form">
                     <strong>Upload Graphics</strong>
                     <input type="file" id="asset-upload" name="file" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" multiple />

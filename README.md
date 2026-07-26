@@ -41,8 +41,8 @@ PORT=4173 ./target/release/muzikazmodelmarket
 
 The RAD-TOX House Explorer supports WebXR immersive VR in browsers that expose
 `immersive-vr`, including Meta Quest/Oculus Browser. Serve the site over HTTPS
-(or localhost while developing); the world and game open automatically, after
-which you can use the in-game **ENTER VR** button. In a headset, use the left thumbstick to walk and strafe, and the
+(or localhost while developing), select **BEGIN NOW!**, and then use the
+in-game **ENTER VR** button. In a headset, use the left thumbstick to walk and strafe, and the
 right thumbstick to snap-turn. Aim with either controller and press either
 trigger to use the selected RAD-TOX tool (Laser, Paint Gun, or Bat). Squeeze
 the left grip to switch tools; squeeze the right grip while aiming at a

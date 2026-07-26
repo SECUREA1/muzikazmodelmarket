@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     env, fs,
     io::{Read, Write},
     net::{TcpListener, TcpStream},
@@ -136,6 +136,7 @@ struct State {
     public_base: String,
     max_bytes: usize,
     admin_token: String,
+    admin_sessions: Arc<RwLock<HashSet<String>>>,
     models: Arc<RwLock<Vec<Model>>>,
     environments: Arc<RwLock<Vec<Environment>>>,
     avatars: Arc<RwLock<Vec<Avatar>>>,
@@ -177,6 +178,7 @@ fn main() -> std::io::Result<()> {
             * 1024
             * 1024,
         admin_token: env::var("ADMIN_PUBLISH_TOKEN").unwrap_or_default(),
+        admin_sessions: Arc::new(RwLock::new(HashSet::new())),
     };
     let listener = TcpListener::bind(format!("0.0.0.0:{port}"))?;
     println!("Serving {} on http://0.0.0.0:{port}", state.root.display());
@@ -276,6 +278,7 @@ fn api(
             "Service healthy",
             false,
         ),
+        ("POST", "/api/admin/login") => admin_login(s, st, body),
         ("GET", "/api/environments") => list_environments(s, st),
         ("POST", "/api/environments/upload") => upload_environment(s, st, headers, body),
         ("GET", "/api/assets") => list_assets(s, st, headers, "all"),
@@ -333,8 +336,13 @@ fn api(
         }
         ("POST", "/api/models/upload") => upload_model_asset(s, st, headers, body),
         ("POST", "/api/uploads/avatar") => upload_avatar(s, st, headers, body),
-        ("POST", "/api/models") => create(s, st, body),
-        ("POST", "/api/avatars/published") => create(s, st, body),
+        ("POST", "/api/models") | ("POST", "/api/avatars/published") => {
+            if !is_admin(headers, st) {
+                json(s, 403, false, "{}", "Admin authorization required", false)
+            } else {
+                create(s, st, body)
+            }
+        }
         _ if method == "GET" && path.starts_with("/api/houses/") && path.ends_with("/avatars") => {
             house_avatars(s, st, method, path, headers, body)
         }
@@ -522,6 +530,9 @@ fn upload_environment(
     h: &HashMap<String, String>,
     body: &[u8],
 ) -> std::io::Result<()> {
+    if !is_admin(h, st) {
+        return json(s, 403, false, "{}", "Admin authorization required", false);
+    }
     let boundary = h
         .get("content-type")
         .and_then(|v| v.split("boundary=").nth(1))
@@ -1500,9 +1511,35 @@ fn auth(headers: &HashMap<String, String>) -> (String, String, String, String) {
     (user, role, name, email)
 }
 fn is_admin(headers: &HashMap<String, String>, st: &State) -> bool {
-    let (_, r, _, _) = auth(headers);
-    r == "admin"
-        || (!st.admin_token.is_empty() && headers.get("x-admin-token") == Some(&st.admin_token))
+    let token = headers.get("x-admin-token");
+    token.is_some_and(|value| {
+        (!st.admin_token.is_empty() && value == &st.admin_token)
+            || st.admin_sessions.read().unwrap().contains(value)
+    })
+}
+fn admin_login(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
+    let payload = String::from_utf8_lossy(body);
+    // Credentials are checked only on the server; clients receive a random session token.
+    if val(&payload, "username") != "jodel" || val(&payload, "password") != "boots" {
+        return json(
+            s,
+            401,
+            false,
+            "{}",
+            "Invalid administrator credentials",
+            false,
+        );
+    }
+    let token = uuid();
+    st.admin_sessions.write().unwrap().insert(token.clone());
+    json(
+        s,
+        200,
+        true,
+        &format!("{{\"token\":\"{}\"}}", esc(&token)),
+        "Administrator authenticated",
+        false,
+    )
 }
 fn require_user(
     s: &mut TcpStream,
@@ -1612,6 +1649,9 @@ fn upload_asset(
     h: &HashMap<String, String>,
     body: &[u8],
 ) -> std::io::Result<()> {
+    if !is_admin(h, st) {
+        return json(s, 403, false, "{}", "Admin authorization required", false);
+    }
     let Some((user, role, name, email)) = require_user(s, h) else {
         return Ok(());
     };
