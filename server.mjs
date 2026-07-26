@@ -16,12 +16,22 @@ const environmentDataFile = process.env.MUZIKAZ_ENVIRONMENT_DATA_FILE || join(da
 const repositoryEnvironmentManifest = join(root, 'public', 'models', 'environments', 'environments.json');
 const clients = new Set();
 const presence = new Map();
+const chatMessages = [];
 const adminSessions = new Set();
 const port = Number(process.env.PORT || 4173);
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
 const maxEnvironmentBytes = Number(process.env.MUZIKAZ_ENVIRONMENT_MAX_BYTES || 150 * 1024 * 1024);
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
 const allowedUploadTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
+const maxHouseUsers = 15;
+const presenceTtlMs = 30_000;
+
+function activePresence() {
+  const cutoff = Date.now() - presenceTtlMs;
+  for (const [id, person] of presence) if (Date.parse(person.lastActiveAt) < cutoff) presence.delete(id);
+  return [...presence.values()];
+}
+function presencePayload() { const users = activePresence(); return { count: users.length, capacity: maxHouseUsers, users }; }
 
 async function ensureStorage() { await mkdir(dataDir, { recursive: true }); await mkdir(uploadDir, { recursive: true }); await mkdir(assetUploadDir, { recursive: true }); await mkdir(environmentUploadDir, { recursive: true }); try { await stat(dataFile); } catch { await writeFile(dataFile, '[]'); } try { await stat(assetsFile); } catch { await writeFile(assetsFile, '[]'); } try { await stat(modelsFile); } catch { await writeFile(modelsFile, '[]'); } try { await stat(environmentDataFile); } catch { await writeFile(environmentDataFile, '[]'); } }
 
@@ -168,9 +178,11 @@ createServer(async (req, res) => {
     if (url.pathname === '/api/houses/ioncore-house/avatars' && req.method === 'POST') { const owner = session(req); const record = sanitizeRecord(await bodyJson(req), owner); const records = await readAvatars(); records.push(record); await writeAvatars(records); broadcast('avatar-created', record); return sendJson(res, 201, record); }
     const avatarDelete = url.pathname.match(/^\/api\/houses\/ioncore-house\/avatars\/([^/]+)$/);
     if (avatarDelete && req.method === 'DELETE') { const owner = session(req); const id = decodeURIComponent(avatarDelete[1]); const records = await readAvatars(); const record = records.find((item) => item.id === id); if (!record) return sendJson(res, 404, { error: 'Not found' }); if (record.ownerId !== owner && process.env.MUZIKAZ_ALLOW_MOD_DELETE !== 'true') return sendJson(res, 403, { error: 'Forbidden' }); await writeAvatars(records.filter((item) => item.id !== id)); broadcast('avatar-deleted', { id }); return sendJson(res, 200, { id }); }
-    if (url.pathname === '/api/houses/ioncore-house/events' && req.method === 'GET') { res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' }); res.write('\n'); clients.add(res); req.on('close', () => clients.delete(res)); return; }
-    if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'POST') { const id = session(req); const body = await bodyJson(req).catch(() => ({})); presence.set(id, { sessionId: id, joinedAt: presence.get(id)?.joinedAt || new Date().toISOString(), lastActiveAt: new Date().toISOString(), roomId: cleanText(body.roomId, 'unknown') }); const data = { count: presence.size, users: [...presence.values()] }; broadcast('house-presence-updated', data); return sendJson(res, 200, data); }
-    if (url.pathname === '/api/houses/ioncore-house/presence/leave' && req.method === 'POST') { presence.delete(session(req)); broadcast('house-presence-updated', { count: presence.size }); return sendJson(res, 200, { ok: true }); }
+    if (url.pathname === '/api/houses/ioncore-house/events' && req.method === 'GET') { res.writeHead(200, corsHeaders({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })); res.write(`event: house-presence-updated\ndata: ${JSON.stringify(presencePayload())}\n\n`); clients.add(res); req.on('close', () => clients.delete(res)); return; }
+    if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'POST') { const id = session(req); const body = await bodyJson(req).catch(() => ({})); activePresence(); if (!presence.has(id) && presence.size >= maxHouseUsers) return sendJson(res, 409, { error: 'This Vibe Crib server is full.', ...presencePayload() }); const now = new Date().toISOString(); presence.set(id, { sessionId: id, username: cleanText(body.username, 'Subscriber'), joinedAt: presence.get(id)?.joinedAt || now, lastActiveAt: now, roomId: cleanText(body.roomId, 'crib'), color: cleanText(body.color, '#9cff00') }); const data = presencePayload(); broadcast('house-presence-updated', data); return sendJson(res, 200, data); }
+    if (url.pathname === '/api/houses/ioncore-house/presence/leave' && req.method === 'POST') { presence.delete(session(req)); const data = presencePayload(); broadcast('house-presence-updated', data); return sendJson(res, 200, { ok: true, ...data }); }
+    if (url.pathname === '/api/houses/ioncore-house/chat' && req.method === 'GET') return sendJson(res, 200, { messages: chatMessages.slice(-50) });
+    if (url.pathname === '/api/houses/ioncore-house/chat' && req.method === 'POST') { const id = session(req); const person = presence.get(id); if (!person) return sendJson(res, 401, { error: 'Join the Vibe Crib before chatting.' }); const body = await bodyJson(req); const message = cleanText(body.message, '').trim(); if (!message) return sendJson(res, 400, { error: 'Message cannot be empty.' }); const record = { id: randomUUID(), sessionId: id, username: person.username, message, createdAt: new Date().toISOString() }; chatMessages.push(record); if (chatMessages.length > 100) chatMessages.splice(0, chatMessages.length - 100); broadcast('house-chat-message', record); return sendJson(res, 201, record); }
     let path = normalize(decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)).replace(/^[/\\]+/, '');
     if (path.includes('..')) return sendJson(res, 400, { error: 'Bad path' });
     const pathsToTry = [join(root, 'dist', path), join(root, path)];
