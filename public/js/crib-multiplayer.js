@@ -18,7 +18,7 @@
   const status = document.querySelector('#crib-chat-status');
   let joined = false;
 
-  const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId };
+  const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username };
   const payload = (response) => response?.data ?? response;
   async function jsonResponse(response) {
     const result = await response.json().catch(() => ({}));
@@ -41,7 +41,9 @@
     while (messages.children.length > 50) messages.firstElementChild.remove(); messages.scrollTop = messages.scrollHeight;
   }
   async function heartbeat() {
-    const response = await fetch(`${api}/api/houses/ioncore-house/presence`, { method: 'POST', headers, body: JSON.stringify({ username, roomId: window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, position: window.MUZIKAZ_HOUSE_TRACKING?.position, avatarUrl: window.MUZIKAZ_HOUSE_TRACKING?.avatarUrl, message: window.MUZIKAZ_HOUSE_TRACKING?.message }) });
+    const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null');
+    if (!avatar) throw new Error('Choose your designated avatar before joining the Crib.');
+    const response = await fetch(`${api}/api/houses/ioncore-house/presence`, { method: 'POST', headers, body: JSON.stringify({ username, roomId: window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, position: window.MUZIKAZ_HOUSE_TRACKING?.position, rotation: window.MUZIKAZ_HOUSE_TRACKING?.rotation, movementState: window.MUZIKAZ_HOUSE_TRACKING?.movementState || 'idle', animationState: window.MUZIKAZ_HOUSE_TRACKING?.animationState || avatar.animation || 'auto', message: window.MUZIKAZ_HOUSE_TRACKING?.message }) });
     const data = await jsonResponse(response); joined = true; renderPresence(data); status.textContent = '';
   }
   toggle.addEventListener('click', () => { panel.hidden = !panel.hidden; toggle.setAttribute('aria-expanded', String(!panel.hidden)); if (!panel.hidden) input.focus(); });
@@ -55,7 +57,8 @@
     events.addEventListener('house-presence-updated', (event) => renderPresence(JSON.parse(event.data)));
     events.addEventListener('house-chat-message', (event) => addMessage(JSON.parse(event.data)));
   }
-  heartbeat().catch((error) => { status.textContent = error.message; toggle.disabled = true; });
+  const beginPresence = () => heartbeat().catch((error) => { status.textContent = error.message; toggle.disabled = true; });
+  if (window.MUZIKAZ_DESIGNATED_AVATAR || localStorage.getItem('muzikazDesignatedAvatar')) beginPresence(); else window.addEventListener('muzikaz-avatar-ready', beginPresence, { once: true });
   const timer = setInterval(() => { heartbeat().catch((error) => { status.textContent = error.message; }); loadChat().catch(() => {}); }, 5_000);
   window.addEventListener('pagehide', () => { clearInterval(timer); events?.close(); if (joined) navigator.sendBeacon?.(`${api}/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`); });
 })();
