@@ -1096,6 +1096,45 @@ async function loadOwnerGlbModels() {
   })();
   return ownerGlbModelsPromise;
 }
+function resolvedModelUrl(value) {
+  try { return new URL(value, document.baseURI).href; } catch { return value; }
+}
+function renderSubscriberGlbLibrary() {
+  const grid = document.querySelector('#subscriber-glb-grid');
+  if (!grid) return;
+  if (!ownerGlbModels.length) {
+    grid.innerHTML = '<p class="model-library-status">No published GLB models are available right now.</p>';
+    return;
+  }
+  grid.replaceChildren(...ownerGlbModels.map((model) => {
+    const card = document.createElement('article');
+    card.className = 'subscriber-glb-card';
+    const viewer = document.createElement('model-viewer');
+    viewer.src = resolvedModelUrl(model.modelUrl);
+    viewer.setAttribute('alt', `${model.name} interactive 3D model`);
+    viewer.setAttribute('camera-controls', '');
+    viewer.setAttribute('auto-rotate', '');
+    viewer.setAttribute('touch-action', 'pan-y');
+    viewer.setAttribute('shadow-intensity', '1');
+    viewer.setAttribute('loading', 'lazy');
+    viewer.setAttribute('reveal', 'auto');
+    if (model.thumbnailUrl) viewer.setAttribute('poster', resolvedModelUrl(model.thumbnailUrl));
+    if (model.iosModelUrl) viewer.setAttribute('ios-src', resolvedModelUrl(model.iosModelUrl));
+    enhanceModelViewerForAr(viewer, model.name);
+    viewer.addEventListener('error', () => {
+      const message = document.createElement('p');
+      message.className = 'model-library-error';
+      message.textContent = `${model.name} could not be loaded. Please try again.`;
+      viewer.replaceWith(message);
+    }, { once: true });
+    const heading = document.createElement('h3');
+    heading.textContent = model.name;
+    const copy = document.createElement('p');
+    copy.textContent = model.description || 'Published MUZIKAZ owner model.';
+    card.append(viewer, heading, copy);
+    return card;
+  }));
+}
 const arModelAliases = {
   sparky: ['sparky'], nexus: ['nexus'], inferno: ['inferno'], rumble: ['rumble'], chillz: ['chillz'], bax: ['bax'],
   'ion-wolf': ['ionwolf', 'voltwolf', 'wolfie'], flick: ['flick'], byte: ['byte'], luna: ['luna'],
@@ -1273,6 +1312,7 @@ marketQualityToggle?.addEventListener('change', () => renderMarketplace());
 renderMarketplace();
 seedCharacterCheckout();
 seedArViewer();
+loadOwnerGlbModels().then(renderSubscriberGlbLibrary);
 document.querySelector('#owned-profile-select')?.addEventListener('change', (event) => renderOwnedCollection(event.currentTarget.value));
 renderOwnedCollection();
 initBottleLogin();

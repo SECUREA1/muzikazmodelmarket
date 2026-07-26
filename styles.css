@@ -2283,6 +2283,15 @@ section,
 :where(p, h1, h2, h3, h4, a, span, strong, small, label, output){
   overflow-wrap:anywhere;
 }
+
+/* Subscriber catalog: give every published GLB a stable, visible viewport. */
+.subscriber-glb-grid{width:96%;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:18px}
+.subscriber-glb-card{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:18px;padding:14px;background:linear-gradient(145deg,rgba(7,10,7,.96),rgba(0,0,0,.86));box-shadow:0 0 28px rgba(156,255,0,.08)}
+.subscriber-glb-card model-viewer{display:block;width:100%;height:280px;border-radius:12px;background:radial-gradient(circle at 50% 18%,rgba(156,255,0,.15),#030403)}
+.subscriber-glb-card h3{margin:14px 0 6px;font-family:Bangers,cursive;font-size:30px;color:var(--lime)}
+.subscriber-glb-card p,.model-library-status,.model-library-error{color:var(--muted);line-height:1.45;text-transform:none}
+.model-library-status,.model-library-error{grid-column:1/-1;text-align:center}
+.model-library-error{display:grid;place-items:center;min-height:280px;margin:0;border:1px dashed rgba(156,255,0,.35);border-radius:12px}
 :where(.page-shell, .operation-panel, .newsletter, .feature-strip, .safety-layout, .house-explorer-shell, .mixer-workspace, .daily-reward-panel, .quest-strip){
   max-width:calc(100% - clamp(20px, 4vw, 56px));
 }
