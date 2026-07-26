@@ -48,10 +48,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     updateLevelLoader(4, message);
     if (levelLoader) levelLoader.hidden = false;
     stage.classList.add('is-level-transitioning');
+    scheduleGameResize();
   }
   function hideLevelLoader() {
     updateLevelLoader(100, 'Encounter ready. Deploying now…');
     window.setTimeout(() => { if (levelLoader) levelLoader.hidden = true; stage.classList.remove('is-level-transitioning'); }, reducedMotion ? 0 : 260);
+    scheduleGameResize();
   }
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
   hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Main controls: mouse-look</span><span>Drag/touch: look</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
@@ -419,7 +421,27 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   setupVRControls().catch((error) => console.warn('[MUZIKAZ VR]', error));
   const visibilityObserver = window.IntersectionObserver ? new IntersectionObserver(([entry]) => { viewActive = Boolean(entry?.isIntersecting); }, { threshold: 0.05 }) : null; visibilityObserver?.observe(stage); document.addEventListener('visibilitychange', () => { viewActive = !document.hidden; });
-  function resize() { const rect = stage.getBoundingClientRect(); const viewportHeight = window.visualViewport?.height || window.innerHeight || 720; const width = Math.max(320, Math.floor(Math.min(rect.width || stage.clientWidth || 1280, document.documentElement.clientWidth || rect.width || 1280))); const desktopLimit = Math.max(420, viewportHeight - 180); const mobileLimit = Math.max(360, viewportHeight - 190); const limit = matchMedia('(max-width: 760px)').matches ? mobileLimit : desktopLimit; const tunedWidth = Math.max(320, Math.floor(width * mapSizeScale)); const baseHeight = Math.max(360, rect.height || width * .56) * mapHeightScale; const height = Math.max(320, Math.floor(Math.min(baseHeight, limit))); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, performanceMode ? 1 : quality.pixelRatio)); renderer.setSize(tunedWidth, height, false); camera.aspect = tunedWidth / height; camera.updateProjectionMatrix(); } if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); else addEventListener('resize', resize); addEventListener('orientationchange', resize); window.visualViewport?.addEventListener('resize', resize); resize();
+  function resize() {
+    const width = Math.max(1, Math.floor(stage.clientWidth || stage.offsetWidth || document.documentElement.clientWidth || window.innerWidth || 320));
+    const height = Math.max(1, Math.floor(stage.clientHeight || stage.offsetHeight || document.documentElement.clientHeight || window.innerHeight || 480));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, performanceMode ? 1 : quality.pixelRatio));
+    renderer.setSize(width, height, false);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+  }
+  let resizeTimer = 0;
+  function scheduleGameResize() {
+    window.clearTimeout(resizeTimer);
+    resize();
+    resizeTimer = window.setTimeout(resize, 120);
+    window.setTimeout(resize, 360);
+  }
+  if (window.ResizeObserver) new ResizeObserver(scheduleGameResize).observe(stage);
+  window.addEventListener('resize', scheduleGameResize);
+  window.addEventListener('orientationchange', scheduleGameResize);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleGameResize);
+  document.addEventListener('muzikaz:rad-tox-stage', scheduleGameResize);
+  scheduleGameResize();
   renderer.setAnimationLoop((time = 0) => {
     if (!viewActive && !renderer.xr.isPresenting) { clock.getDelta(); return; }
     if (targetFrameMs && !renderer.xr.isPresenting && time - lastFrameTime < targetFrameMs) return;
@@ -481,6 +503,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       resetPlayer();
       await toxicBubbleSystem.begin();
       gameStartScreen?.classList.add('is-hidden');
+      scheduleGameResize();
       setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
       publishGameStage('game-active', 'RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
     } catch (error) {
