@@ -2059,3 +2059,40 @@ section,
 .house-stage.is-ghost-level .rad-tox-hud{border-color:rgba(93,210,255,.72);background:rgba(2,12,35,.84);color:#e5f9ff;box-shadow:0 0 28px rgba(47,162,255,.25)}
 .house-stage.is-ghost-level .rad-tox-hud strong{color:#71ddff}
 .house-stage.is-ghost-level .house-reticle.is-toxic-target{color:#b5f4ff;text-shadow:0 0 10px #fff,0 0 26px #278cff}
+/* One-box game viewport. Flexbox and 100vh fallbacks deliberately come first so
+   the panel still fits in IE11 and older mobile WebViews that do not understand
+   clamp(), svh units, CSS grid, or aspect-ratio. */
+.model-explorer-page .house-explorer-shell{
+  display:-ms-flexbox;display:flex;-ms-flex-direction:column;flex-direction:column;
+  width:96%;width:min(96%,1100px);height:calc(100vh - 170px);min-height:430px;max-height:760px;
+  overflow:hidden;border:1px solid rgba(156,255,0,.42);border-radius:22px;background:#020403;
+  box-shadow:0 18px 42px rgba(0,0,0,.45),0 0 28px rgba(156,255,0,.12)
+}
+.model-explorer-page .house-stage{-ms-flex:1 1 auto;flex:1 1 auto;width:100%;height:auto;min-height:0;overflow:hidden;border:0;border-radius:0;box-shadow:none}
+.model-explorer-page .house-stage canvas{width:100%;height:100%}
+.model-explorer-page .house-bottom-controls{-ms-flex:0 0 auto;flex:0 0 auto;border:0;border-top:1px solid rgba(156,255,0,.42);border-radius:0;box-shadow:none}
+.model-explorer-page .house-game-start,.model-explorer-page .house-level-loader,.model-explorer-page .rad-tox-compat-game{top:0;right:0;bottom:0;left:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.model-explorer-page .house-game-start{display:-ms-flexbox;display:flex;-ms-flex-direction:column;flex-direction:column;-ms-flex-pack:center;justify-content:center;-ms-flex-align:center;align-items:center}
+.model-explorer-page .house-game-start>*{-ms-flex:0 0 auto}
+.model-explorer-page .rad-tox-compat-game{box-sizing:border-box}
+.model-explorer-page .rad-tox-compat-field{height:calc(100% - 105px);min-height:180px;max-height:420px}
+@media(max-width:760px){
+  .model-explorer-page .house-explorer{padding:10px 8px}
+  .model-explorer-page .house-explorer-shell{width:100%;height:calc(100vh - 118px);min-height:390px;max-height:none;border-radius:16px}
+  .model-explorer-page .house-bottom-controls{display:-ms-flexbox;display:flex;-ms-flex-wrap:nowrap;flex-wrap:nowrap;padding:7px}
+  .model-explorer-page .house-bottom-control{-ms-flex:1 1 25%;flex:1 1 25%;min-height:54px}
+  .model-explorer-page .house-game-start{padding:16px 12px;gap:9px}
+  .model-explorer-page .house-game-start h3{font-size:clamp(30px,10vw,46px)}
+  .model-explorer-page .house-game-start p:not(.kicker){font-size:12px;line-height:1.35}
+  .model-explorer-page .house-game-start::before{width:76vw;max-width:390px}
+  .model-explorer-page .rad-tox-compat-game{padding:14px 10px}
+  .model-explorer-page .rad-tox-compat-head{font-size:12px}
+  .model-explorer-page .rad-tox-compat-game>p{margin:7px auto;font-size:12px}
+}
+@media(max-height:620px){
+  .model-explorer-page .house-explorer-shell{height:calc(100vh - 76px);min-height:320px}
+  .model-explorer-page .house-game-start{justify-content:flex-start}
+  .model-explorer-page .house-game-start h3{font-size:32px}
+  .model-explorer-page .house-game-start .house-firefox-note{display:none}
+  .model-explorer-page .house-bottom-control{min-height:48px}
+}
