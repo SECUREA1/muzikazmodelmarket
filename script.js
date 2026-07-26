@@ -456,6 +456,7 @@ function renderModelCards() {
   const visibleModels = document.body.classList.contains('members-page') ? assetCatalog.models : assetCatalog.models.filter((model) => !['new-legends', 'trait-avatars', 'online-events'].includes(model.id));
   collectionGrid.innerHTML = visibleModels.map((model) => `
     <article class="card ${model.css}" style="--card-art:url('${model.file}')" data-preview-model="${model.name}" tabindex="0" aria-label="Preview ${model.name} collection">
+      <div class="card-model-stage" data-connected-model="${model.id}" role="img" aria-label="${model.character}"></div>
       <div><h3>${model.name}</h3><p>${model.character}</p><a class="card-link" href="${model.page}">View</a></div>
     </article>`).join('');
 }
@@ -485,6 +486,8 @@ function selectModel(modelName) {
   if (modelDetailArt) {
     modelDetailArt.className = `model-detail-art ${model.css}`;
     modelDetailArt.style.setProperty('--model-art', `url('${model.file}')`);
+    modelDetailArt.dataset.connectedModel = model.id;
+    modelDetailArt.removeAttribute('data-connected-model-ready');
   }
   renderLinkedData(model);
   renderMarketplace('All', selectedModel);
