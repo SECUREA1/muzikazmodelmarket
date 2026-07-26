@@ -76,6 +76,9 @@ if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.j
 if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launcher.includes('function startEngine()')) {
   throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
 }
+if (!launcher.includes("document.addEventListener('pointerdown',function(e){if(isStartControl(e.target))request();}") || !launcher.includes("document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;")) {
+  throw new Error('Every RAD-TOX Begin control must launch on pointer press as well as keyboard-generated click.');
+}
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
 if (!launcher.includes("state==='game-active'") || !launcher.includes("setButtons(false,'MAIN CONTROL')") || !houseExplorer.includes("'muzikaz:rad-tox-main-control'")) {
