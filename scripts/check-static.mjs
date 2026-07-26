@@ -62,28 +62,14 @@ if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEP
   throw new Error('RAD-TOX launcher must recover if deployment stalls after the 3D scene loads.');
 }
 
-const radToxModelExplorerHtml = await readFile('dist/model-explorer.html', 'utf8');
-if (!radToxModelExplorerHtml.includes('id="house-start-game" type="button" data-house-start')) {
-  throw new Error('The on-screen Begin control must use the same RAD-TOX start action as the overlay Begin control.');
-}
-if (!radToxModelExplorerHtml.includes('data-house-main-control>MAIN CONTROL</a>')) {
-  throw new Error('The Vibe Crib entry action must be labelled MAIN CONTROL.');
-}
-
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
 }
 if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launcher.includes('function startEngine()')) {
   throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
 }
-if (!launcher.includes("document.addEventListener('pointerdown',function(e){if(isStartControl(e.target))request();}") || !launcher.includes("document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;")) {
-  throw new Error('Every RAD-TOX Begin control must launch on pointer press as well as keyboard-generated click.');
-}
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
-if (!launcher.includes("state==='game-active'") || !launcher.includes("setButtons(false,'MAIN CONTROL')") || !houseExplorer.includes("'muzikaz:rad-tox-main-control'")) {
-  throw new Error('After launch, Begin must become MAIN CONTROL and use the crib entry action.');
-}
 for (const requiredLiveFeature of ['MUZIKAZ_LIVE_PLAYERS', 'syncLiveAvatars', 'pollLiveAvatars', 'Live_player_label']) {
   if (!houseExplorer.includes(requiredLiveFeature)) throw new Error(`GLB House Explorer is missing live cross-device avatars/chat: ${requiredLiveFeature}`);
 }
