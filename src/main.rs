@@ -129,6 +129,16 @@ struct Avatar {
     updated_at: String,
 }
 #[derive(Clone, Debug)]
+struct AvatarProfile {
+    user_id: String,
+    asset_id: String,
+    model_url: String,
+    display_name: String,
+    access_type: String,
+    selected_at: String,
+    scale: f64,
+}
+#[derive(Clone, Debug)]
 struct HouseUser {
     session_id: String,
     username: String,
@@ -159,6 +169,7 @@ struct State {
     models: Arc<RwLock<Vec<Model>>>,
     environments: Arc<RwLock<Vec<Environment>>>,
     avatars: Arc<RwLock<Vec<Avatar>>>,
+    avatar_profiles: Arc<RwLock<Vec<AvatarProfile>>>,
     assets: Arc<RwLock<Vec<Asset>>>,
     assignments: Arc<RwLock<Vec<AssetModelAssignment>>>,
     derivatives: Arc<RwLock<Vec<AssetDerivative>>>,
@@ -182,6 +193,9 @@ fn main() -> std::io::Result<()> {
             &data.join("environments.json"),
         ))),
         avatars: Arc::new(RwLock::new(load_avatars(&data.join("house-avatars.json")))),
+        avatar_profiles: Arc::new(RwLock::new(load_avatar_profiles(
+            &data.join("avatar-profiles.json"),
+        ))),
         assets: Arc::new(RwLock::new(load_assets(&data.join("assets.json")))),
         assignments: Arc::new(RwLock::new(load_assignments(
             &data.join("asset-model-assignments.json"),
@@ -314,6 +328,9 @@ fn api(
         ("GET", "/api/health") | ("HEAD", "/api/health") => health(s, st, method == "HEAD"),
         ("POST", "/api/admin/login") => admin_login(s, st, body),
         ("GET", "/api/environments") => list_environments(s, st),
+        ("GET", "/api/avatar-options") => avatar_options(s, st, headers),
+        ("GET", "/api/profile/avatar") => get_avatar_profile(s, st, headers),
+        ("PUT", "/api/profile/avatar") => put_avatar_profile(s, st, headers, body),
         ("POST", "/api/environments/upload") => upload_environment(s, st, headers, body),
         ("GET", "/api/assets") => list_assets(s, st, headers, "all"),
         ("GET", "/api/assets/mine") => list_assets(s, st, headers, "mine"),
@@ -549,6 +566,194 @@ fn health(s: &mut TcpStream, st: &State, head: bool) -> std::io::Result<()> {
         ),
         "Service healthy",
         head,
+    )
+}
+fn avatar_catalog(st: &State) -> Vec<(String, String, String, String, String, f64)> {
+    let manifest = fs::read_to_string(st.root.join("public/models/avatars.json"))
+        .unwrap_or_else(|_| "[]".into());
+    let mut catalog: Vec<_> = manifest
+        .split('{')
+        .skip(1)
+        .map(|part| format!("{{{part}"))
+        .filter_map(|item| {
+            let id = val(&item, "id");
+            let url = val(&item, "modelUrl");
+            if id.is_empty() || url.is_empty() {
+                None
+            } else {
+                Some((
+                    id,
+                    val(&item, "name"),
+                    val(&item, "creator"),
+                    url,
+                    "Public".into(),
+                    val(&item, "scale").parse().unwrap_or(1.0),
+                ))
+            }
+        })
+        .collect();
+    for model in st.models.read().unwrap().iter().filter(|model| {
+        model.status == "published"
+            && model
+                .model_url
+                .to_ascii_lowercase()
+                .split(['?', '#'])
+                .next()
+                .unwrap_or("")
+                .ends_with(".glb")
+    }) {
+        if !catalog.iter().any(|item| item.0 == model.id) {
+            catalog.push((
+                model.id.clone(),
+                model.title.clone(),
+                model.creator.clone(),
+                model.model_url.clone(),
+                "Shared".into(),
+                model.scale,
+            ));
+        }
+    }
+    catalog
+}
+fn avatar_option_json(option: &(String, String, String, String, String, f64)) -> String {
+    format!(
+        "{{\"id\":\"{}\",\"name\":\"{}\",\"creator\":\"{}\",\"modelUrl\":\"{}\",\"source\":\"{}\",\"accessType\":\"{}\",\"scale\":{}}}",
+        esc(&option.0), esc(&option.1), esc(&option.2), esc(&option.3), esc(&option.4), option.4.to_ascii_lowercase(), option.5
+    )
+}
+fn avatar_options(
+    s: &mut TcpStream,
+    st: &State,
+    _headers: &HashMap<String, String>,
+) -> std::io::Result<()> {
+    let catalog = avatar_catalog(st);
+    json(
+        s,
+        200,
+        true,
+        &format!(
+            "[{}]",
+            catalog
+                .iter()
+                .map(avatar_option_json)
+                .collect::<Vec<_>>()
+                .join(",")
+        ),
+        "Avatar options loaded",
+        false,
+    )
+}
+fn profile_json(profile: &AvatarProfile) -> String {
+    format!(
+        "{{\"userId\":\"{}\",\"assetId\":\"{}\",\"modelUrl\":\"{}\",\"displayName\":\"{}\",\"accessType\":\"{}\",\"selectedAt\":\"{}\",\"scale\":{},\"rotation\":{{\"x\":0,\"y\":0,\"z\":0}},\"animation\":\"auto\"}}",
+        esc(&profile.user_id), esc(&profile.asset_id), esc(&profile.model_url), esc(&profile.display_name), esc(&profile.access_type), esc(&profile.selected_at), profile.scale
+    )
+}
+fn avatar_user(headers: &HashMap<String, String>) -> String {
+    trim(
+        headers
+            .get("x-user-id")
+            .cloned()
+            .unwrap_or_default()
+            .to_ascii_lowercase(),
+        120,
+    )
+}
+fn get_avatar_profile(
+    s: &mut TcpStream,
+    st: &State,
+    headers: &HashMap<String, String>,
+) -> std::io::Result<()> {
+    let user_id = avatar_user(headers);
+    if user_id.is_empty() {
+        return json(
+            s,
+            401,
+            false,
+            "{}",
+            "Bottle member identity is required",
+            false,
+        );
+    }
+    let catalog = avatar_catalog(st);
+    let profiles = st.avatar_profiles.read().unwrap();
+    let profile = profiles.iter().find(|profile| {
+        profile.user_id == user_id && catalog.iter().any(|option| option.0 == profile.asset_id)
+    });
+    match profile {
+        Some(profile) => json(
+            s,
+            200,
+            true,
+            &format!("{{\"valid\":true,\"profile\":{}}}", profile_json(profile)),
+            "Designated avatar loaded",
+            false,
+        ),
+        None => json(
+            s,
+            200,
+            true,
+            "{\"valid\":false,\"reason\":\"not-selected\",\"profile\":null}",
+            "Choose a designated avatar",
+            false,
+        ),
+    }
+}
+fn put_avatar_profile(
+    s: &mut TcpStream,
+    st: &State,
+    headers: &HashMap<String, String>,
+    body: &[u8],
+) -> std::io::Result<()> {
+    let user_id = avatar_user(headers);
+    if user_id.is_empty() {
+        return json(
+            s,
+            401,
+            false,
+            "{}",
+            "Bottle member identity is required",
+            false,
+        );
+    }
+    let input = String::from_utf8_lossy(body);
+    let asset_id = trim(val(&input, "assetId"), 160);
+    let option = avatar_catalog(st)
+        .into_iter()
+        .find(|option| option.0 == asset_id);
+    let Some(option) = option else {
+        return json(
+            s,
+            403,
+            false,
+            "{}",
+            "Avatar is unavailable or is not approved for this account",
+            false,
+        );
+    };
+    let profile = AvatarProfile {
+        user_id: user_id.clone(),
+        asset_id: option.0,
+        model_url: option.3,
+        display_name: option.1,
+        access_type: option.4.to_ascii_lowercase(),
+        selected_at: now(),
+        scale: option.5.clamp(0.1, 4.0),
+    };
+    let mut profiles = st.avatar_profiles.write().unwrap();
+    if let Some(existing) = profiles.iter_mut().find(|item| item.user_id == user_id) {
+        *existing = profile.clone();
+    } else {
+        profiles.push(profile.clone());
+    }
+    persist_avatar_profiles(st, &profiles);
+    json(
+        s,
+        200,
+        true,
+        &format!("{{\"valid\":true,\"profile\":{}}}", profile_json(&profile)),
+        "Designated avatar saved",
+        false,
     )
 }
 fn list_environments(s: &mut TcpStream, st: &State) -> std::io::Result<()> {
@@ -1439,7 +1644,7 @@ fn write_resp(
     body: &[u8],
     head: bool,
 ) -> std::io::Result<()> {
-    write!(s,"HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {ct}\r\nAccess-Control-Allow-Origin: https://muzikazmodelmarket.onrender.com\r\nAccess-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Authorization, X-MUZIKAZ-Session\r\nCross-Origin-Resource-Policy: cross-origin\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",body.len())?;
+    write!(s,"HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {ct}\r\nAccess-Control-Allow-Origin: https://muzikazmodelmarket.onrender.com\r\nAccess-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Authorization, X-MUZIKAZ-Session, X-User-Id, X-User-Name, X-User-Email, X-User-Role, X-Admin-Token\r\nCross-Origin-Resource-Policy: cross-origin\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",body.len())?;
     if !head {
         s.write_all(body)?
     }
@@ -1533,6 +1738,44 @@ fn persist_avatars(st: &State, v: &Vec<Avatar>) {
             v.iter().map(avatar_json).collect::<Vec<_>>().join(",")
         ),
     );
+}
+fn persist_avatar_profiles(st: &State, profiles: &[AvatarProfile]) {
+    let _ = fs::create_dir_all(&st.data);
+    let _ = fs::write(
+        st.data.join("avatar-profiles.json"),
+        format!(
+            "[{}]",
+            profiles
+                .iter()
+                .map(profile_json)
+                .collect::<Vec<_>>()
+                .join(",")
+        ),
+    );
+}
+fn load_avatar_profiles(path: &Path) -> Vec<AvatarProfile> {
+    let source = fs::read_to_string(path).unwrap_or_default();
+    source
+        .split('{')
+        .skip(1)
+        .map(|part| format!("{{{part}"))
+        .filter_map(|item| {
+            let user_id = val(&item, "userId");
+            let asset_id = val(&item, "assetId");
+            if user_id.is_empty() || asset_id.is_empty() {
+                return None;
+            }
+            Some(AvatarProfile {
+                user_id,
+                asset_id,
+                model_url: val(&item, "modelUrl"),
+                display_name: val(&item, "displayName"),
+                access_type: val(&item, "accessType"),
+                selected_at: val(&item, "selectedAt"),
+                scale: val(&item, "scale").parse().unwrap_or(1.0),
+            })
+        })
+        .collect()
 }
 fn load_models(p: &Path) -> Vec<Model> {
     let s = fs::read_to_string(p).unwrap_or_default();
