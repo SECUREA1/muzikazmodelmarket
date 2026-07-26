@@ -159,3 +159,14 @@ for (const requiredAdminFlow of ["/api/admin/login", "muzikazAdminToken", "x-adm
     throw new Error(`script.js is missing protected-admin flow: ${requiredAdminFlow}`);
   }
 }
+
+const apiConnection = await readFile('dist/public/js/api-connection.js', 'utf8');
+for (const requiredCompatibilityFeature of ['MUZIKAZ_API_BASE', 'MUZIKAZ_SHARED_AVATAR_API', "request.mode = 'cors'", 'Promise.race', "data-api-connected"]) {
+  if (!apiConnection.includes(requiredCompatibilityFeature)) {
+    throw new Error(`Cross-browser API connection is missing ${requiredCompatibilityFeature}`);
+  }
+}
+const modelExplorerHtml = await readFile('dist/model-explorer.html', 'utf8');
+if (!mainHtml.includes('public/js/api-connection.js') || !modelExplorerHtml.includes('public/js/api-connection.js') || !membersHtml.includes('public/js/api-connection.js')) {
+  throw new Error('Every game and avatar entry point must initialize its cross-browser API connection.');
+}

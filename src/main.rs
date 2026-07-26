@@ -1644,7 +1644,7 @@ fn write_resp(
     body: &[u8],
     head: bool,
 ) -> std::io::Result<()> {
-    write!(s,"HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {ct}\r\nAccess-Control-Allow-Origin: https://muzikazmodelmarket.onrender.com\r\nAccess-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Authorization, X-MUZIKAZ-Session, X-User-Id, X-User-Name, X-User-Email, X-User-Role, X-Admin-Token\r\nCross-Origin-Resource-Policy: cross-origin\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",body.len())?;
+    write!(s,"HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {ct}\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Accept, Authorization, X-MUZIKAZ-Session, X-User-Id, X-User-Name, X-User-Email, X-User-Role, X-Admin-Token\r\nAccess-Control-Max-Age: 86400\r\nCross-Origin-Resource-Policy: cross-origin\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",body.len())?;
     if !head {
         s.write_all(body)?
     }
