@@ -41,12 +41,12 @@
     while (messages.children.length > 50) messages.firstElementChild.remove(); messages.scrollTop = messages.scrollHeight;
   }
   async function heartbeat() {
-    const response = await fetch(`${api}/api/houses/ioncore-house/presence`, { method: 'POST', headers, body: JSON.stringify({ username, roomId: 'rad-tox', color }) });
+    const response = await fetch(`${api}/api/houses/ioncore-house/presence`, { method: 'POST', headers, body: JSON.stringify({ username, roomId: window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, position: window.MUZIKAZ_HOUSE_TRACKING?.position, avatarUrl: window.MUZIKAZ_HOUSE_TRACKING?.avatarUrl, message: window.MUZIKAZ_HOUSE_TRACKING?.message }) });
     const data = await jsonResponse(response); joined = true; renderPresence(data); status.textContent = '';
   }
   toggle.addEventListener('click', () => { panel.hidden = !panel.hidden; toggle.setAttribute('aria-expanded', String(!panel.hidden)); if (!panel.hidden) input.focus(); });
   panel.querySelector('[data-close-chat]').addEventListener('click', () => { panel.hidden = true; toggle.setAttribute('aria-expanded', 'false'); toggle.focus(); });
-  form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; input.disabled = true; try { const response = await fetch(`${api}/api/houses/ioncore-house/chat`, { method: 'POST', headers, body: JSON.stringify({ message }) }); const data = await jsonResponse(response); input.value = ''; addMessage(data); status.textContent = ''; } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; input.focus(); } });
+  form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; input.disabled = true; try { const response = await fetch(`${api}/api/houses/ioncore-house/chat`, { method: 'POST', headers, body: JSON.stringify({ message }) }); const data = await jsonResponse(response); input.value = ''; window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), message }; window.dispatchEvent(new CustomEvent('muzikaz-house-chat', { detail: data })); addMessage(data); status.textContent = ''; } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; input.focus(); } });
   async function loadChat() { const response = await fetch(`${api}/api/houses/ioncore-house/chat`, { headers, cache: 'no-store' }); const data = await jsonResponse(response); (data.messages || []).forEach(addMessage); }
   loadChat().catch(() => {});
   let events;
