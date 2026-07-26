@@ -40,7 +40,7 @@ for (const githubSetting of ['name="muzikaz-github-repository" content="SECUREA1
   }
 }
 if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
-  throw new Error('index.html must load the ES5 RAD-TOX compatibility launcher.');
+  throw new Error('index.html must load the RAD-TOX 3D launcher.');
 }
 
 for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'WebGL support']) {
@@ -50,8 +50,13 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
 }
 
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
-if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-tox-app-update')) {
-  throw new Error('RAD-TOX launcher must provide a compatibility fallback and publish live game updates.');
+if (!launcher.includes('muzikaz:rad-tox-app-update')) {
+  throw new Error('RAD-TOX launcher must publish live 3D game updates.');
+}
+for (const removed2dFeature of ['startCompatibility', 'rad-tox-compat-game', 'data-radtox-compat']) {
+  if (launcher.includes(removed2dFeature)) {
+    throw new Error(`RAD-TOX launcher must not populate the removed 2D game: ${removed2dFeature}`);
+  }
 }
 if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS')) {
   throw new Error('RAD-TOX launcher must recover if deployment stalls after the 3D scene loads.');
