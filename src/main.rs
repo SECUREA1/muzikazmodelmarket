@@ -128,6 +128,22 @@ struct Avatar {
     created_at: String,
     updated_at: String,
 }
+#[derive(Clone, Debug)]
+struct HouseUser {
+    session_id: String,
+    username: String,
+    color: String,
+    room_id: String,
+    last_active: u64,
+}
+#[derive(Clone, Debug)]
+struct ChatMessage {
+    id: String,
+    session_id: String,
+    username: String,
+    message: String,
+    created_at: String,
+}
 #[derive(Clone)]
 struct State {
     root: PathBuf,
@@ -143,6 +159,8 @@ struct State {
     assets: Arc<RwLock<Vec<Asset>>>,
     assignments: Arc<RwLock<Vec<AssetModelAssignment>>>,
     derivatives: Arc<RwLock<Vec<AssetDerivative>>>,
+    house_users: Arc<RwLock<Vec<HouseUser>>>,
+    chat_messages: Arc<RwLock<Vec<ChatMessage>>>,
 }
 fn main() -> std::io::Result<()> {
     let port = env::var("PORT").unwrap_or("4173".into());
@@ -179,6 +197,8 @@ fn main() -> std::io::Result<()> {
             * 1024,
         admin_token: env::var("ADMIN_PUBLISH_TOKEN").unwrap_or_default(),
         admin_sessions: Arc::new(RwLock::new(HashSet::new())),
+        house_users: Arc::new(RwLock::new(Vec::new())),
+        chat_messages: Arc::new(RwLock::new(Vec::new())),
     };
     let listener = TcpListener::bind(format!("0.0.0.0:{port}"))?;
     println!("Serving {} on http://0.0.0.0:{port}", state.root.display());
@@ -355,11 +375,14 @@ fn api(
         {
             house_avatars(s, st, method, path, headers, body)
         }
-        _ if method == "POST"
-            && path.starts_with("/api/houses/")
-            && path.ends_with("/presence") =>
-        {
-            json(s, 200, true, "{}", "Presence updated", false)
+        _ if path.starts_with("/api/houses/") && path.ends_with("/presence") => {
+            house_presence(s, st, method, headers, body)
+        }
+        _ if path.starts_with("/api/houses/") && path.ends_with("/presence/leave") => {
+            house_leave(s, st, method, target, headers)
+        }
+        _ if path.starts_with("/api/houses/") && path.ends_with("/chat") => {
+            house_chat(s, st, method, headers, body)
         }
         _ if method == "GET" && path.starts_with("/api/houses/") && path.ends_with("/events") => {
             sse_ready(s)
@@ -797,7 +820,7 @@ fn upload_avatar(
     )
 }
 fn sse_ready(s: &mut TcpStream) -> std::io::Result<()> {
-    let body = "event: house-presence-updated\ndata: {\"count\":1}\n\n";
+    let body = "retry: 3000\nevent: crib-ready\ndata: {\"connected\":true}\n\n";
     write_resp(
         s,
         "200 OK",
@@ -805,6 +828,210 @@ fn sse_ready(s: &mut TcpStream) -> std::io::Result<()> {
         body.as_bytes(),
         false,
     )
+}
+fn request_session(headers: &HashMap<String, String>) -> String {
+    headers
+        .get("x-muzikaz-session")
+        .map(|value| trim(value.clone(), 120))
+        .unwrap_or_default()
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'))
+        .collect()
+}
+fn prune_house_users(users: &mut Vec<HouseUser>) {
+    let cutoff = unix_seconds().saturating_sub(35);
+    users.retain(|user| user.last_active >= cutoff);
+}
+fn presence_json(users: &[HouseUser]) -> String {
+    format!(
+        "{{\"count\":{},\"capacity\":15,\"users\":[{}]}}",
+        users.len(),
+        users
+            .iter()
+            .map(|user| format!(
+                "{{\"sessionId\":\"{}\",\"username\":\"{}\",\"color\":\"{}\",\"roomId\":\"{}\"}}",
+                esc(&user.session_id),
+                esc(&user.username),
+                esc(&user.color),
+                esc(&user.room_id)
+            ))
+            .collect::<Vec<_>>()
+            .join(",")
+    )
+}
+fn house_presence(
+    s: &mut TcpStream,
+    st: &State,
+    method: &str,
+    headers: &HashMap<String, String>,
+    body: &[u8],
+) -> std::io::Result<()> {
+    if method != "POST" {
+        return json(s, 405, false, "{}", "Method not allowed", false);
+    }
+    let session_id = request_session(headers);
+    if session_id.is_empty() {
+        return json(
+            s,
+            400,
+            false,
+            "{}",
+            "A valid house session is required",
+            false,
+        );
+    }
+    let input = String::from_utf8_lossy(body);
+    let mut users = st.house_users.write().unwrap();
+    prune_house_users(&mut users);
+    if let Some(user) = users.iter_mut().find(|user| user.session_id == session_id) {
+        user.last_active = unix_seconds();
+        let room = val(&input, "roomId");
+        if !room.is_empty() {
+            user.room_id = trim(room, 40);
+        }
+    } else {
+        if users.len() >= 15 {
+            return json(
+                s,
+                409,
+                false,
+                &presence_json(&users),
+                "This Vibe Crib server is full",
+                false,
+            );
+        }
+        let username = val(&input, "username");
+        let color = val(&input, "color");
+        let room_id = val(&input, "roomId");
+        users.push(HouseUser {
+            session_id,
+            username: trim(
+                if username.is_empty() {
+                    "Subscriber".into()
+                } else {
+                    username
+                },
+                28,
+            ),
+            color: trim(
+                if color.is_empty() {
+                    "#9cff00".into()
+                } else {
+                    color
+                },
+                40,
+            ),
+            room_id: trim(
+                if room_id.is_empty() {
+                    "crib".into()
+                } else {
+                    room_id
+                },
+                40,
+            ),
+            last_active: unix_seconds(),
+        });
+    }
+    json(
+        s,
+        200,
+        true,
+        &presence_json(&users),
+        "Presence updated",
+        false,
+    )
+}
+fn house_leave(
+    s: &mut TcpStream,
+    st: &State,
+    method: &str,
+    target: &str,
+    headers: &HashMap<String, String>,
+) -> std::io::Result<()> {
+    if method != "POST" {
+        return json(s, 405, false, "{}", "Method not allowed", false);
+    }
+    let query_session = target
+        .split("sessionId=")
+        .nth(1)
+        .unwrap_or("")
+        .split('&')
+        .next()
+        .unwrap_or("");
+    let session_id = if request_session(headers).is_empty() {
+        query_session.to_string()
+    } else {
+        request_session(headers)
+    };
+    let mut users = st.house_users.write().unwrap();
+    users.retain(|user| user.session_id != session_id);
+    json(s, 200, true, &presence_json(&users), "Left house", false)
+}
+fn chat_json(message: &ChatMessage) -> String {
+    format!("{{\"id\":\"{}\",\"sessionId\":\"{}\",\"username\":\"{}\",\"message\":\"{}\",\"createdAt\":\"{}\"}}", esc(&message.id), esc(&message.session_id), esc(&message.username), esc(&message.message), esc(&message.created_at))
+}
+fn house_chat(
+    s: &mut TcpStream,
+    st: &State,
+    method: &str,
+    headers: &HashMap<String, String>,
+    body: &[u8],
+) -> std::io::Result<()> {
+    if method == "GET" {
+        let messages = st.chat_messages.read().unwrap();
+        return json(
+            s,
+            200,
+            true,
+            &format!(
+                "{{\"messages\":[{}]}}",
+                messages.iter().map(chat_json).collect::<Vec<_>>().join(",")
+            ),
+            "Chat loaded",
+            false,
+        );
+    }
+    if method != "POST" {
+        return json(s, 405, false, "{}", "Method not allowed", false);
+    }
+    let session_id = request_session(headers);
+    let mut users = st.house_users.write().unwrap();
+    prune_house_users(&mut users);
+    let Some(user) = users.iter().find(|user| user.session_id == session_id) else {
+        return json(
+            s,
+            401,
+            false,
+            "{}",
+            "Join the Vibe Crib before chatting",
+            false,
+        );
+    };
+    let message = trim(val(&String::from_utf8_lossy(body), "message"), 140);
+    if message.trim().is_empty() {
+        return json(s, 400, false, "{}", "Message cannot be empty", false);
+    }
+    let record = ChatMessage {
+        id: format!("chat-{}", uuid()),
+        session_id,
+        username: user.username.clone(),
+        message,
+        created_at: now(),
+    };
+    drop(users);
+    let mut messages = st.chat_messages.write().unwrap();
+    messages.push(record.clone());
+    if messages.len() > 100 {
+        let drain = messages.len() - 100;
+        messages.drain(..drain);
+    }
+    json(s, 201, true, &chat_json(&record), "Message sent", false)
+}
+fn unix_seconds() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
 }
 fn create(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
     let b = String::from_utf8_lossy(body);

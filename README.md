@@ -69,7 +69,8 @@ All JSON responses use `{ "success": boolean, "data": ..., "message": string }`.
 - `GET /api/houses/:houseId/avatars` — load public shared avatar placements for a house.
 - `POST /api/houses/:houseId/avatars` — publish an uploaded or bundled image avatar into the 3D House Explorer.
 - `DELETE /api/houses/:houseId/avatars/:id` — remove a shared avatar owned by the current `X-MUZIKAZ-Session`.
-- `POST /api/houses/:houseId/presence` and `GET /api/houses/:houseId/events` — keep the house available with presence and event-stream hooks for live clients.
+- `POST /api/houses/:houseId/presence`, `POST /api/houses/:houseId/presence/leave`, and `GET /api/houses/:houseId/events` — maintain the live player roster and event-stream connection.
+- `GET /api/houses/:houseId/chat` and `POST /api/houses/:houseId/chat` — load and send subscriber chat messages after joining the house presence roster.
 
 ### Required Render environment variables
 
