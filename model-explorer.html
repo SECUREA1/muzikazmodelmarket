@@ -225,12 +225,13 @@
     <div><h4>Support</h4><a href="mailto:crew@muzikaz.example">Contact</a><a href="members.html">Bottle Login</a></div>
   </footer>
 
-  <!-- Loads first so the 3D explorer can report support and launch status. -->
+  <!-- Loads first so shared game links can launch directly while the full
+       marketplace still waits for an intentional Begin action. -->
   <script src="public/js/rad-tox-launcher.js"></script>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <script type="module" src="public/js/model-gallery.js"></script>
-  <!-- rad-tox-launcher loads the 3D module after a Start/Begin action. Keeping
-       it out of the initial document avoids competing with first paint. -->
+  <!-- rad-tox-launcher loads the 3D module after Begin, or immediately when the
+       URL is a shared environment/house invitation. -->
   <script type="module" src="public/js/model-publisher.js"></script>
   <script src="script.js"></script>
   <script src="public/js/crib-multiplayer.js"></script>
