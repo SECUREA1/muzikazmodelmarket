@@ -206,9 +206,9 @@
         <section class="section-block public-marketplace market-toggle-panel" id="marketplace-preview" data-market-panel="marketplace-preview" role="tabpanel" aria-labelledby="market-toggle-marketplace">
             <div class="section-title"><span></span><h2>Marketplace engine</h2><a href="members.html#marketplace">Open the market</a></div>
             <div class="market-engine-grid" aria-label="Connected marketplace collections">
-                <article><img src="muzikaz_high_level_image_pack1/04_collection_tiles/originals_tile_2x.png" alt="Originals collection tile"><span class="pill">Character Models</span><h3>Originals Pack</h3><p>Starter mascot page with hero art, supporting graphics, logo assets, and connected hoodie/keychain merch.</p><a class="card-link" href="originals.html">Open page</a></article>
-                <article><img src="futuristic_armored_wolf_humanoid.png" alt="Legends cyber wolf tile"><span class="pill">3D Model Packs</span><h3>Legends Pack</h3><p>Armored future icon with model preview, retail pairings, drop content, and full collection HTML.</p><a class="card-link" href="legends.html">Open page</a></article>
-                <article><img src="fierce_demon_hybrid_in_action.png" alt="Beasts collection tile"><span class="pill">3D Model Packs</span><h3>Beasts Pack</h3><p>Monster-power render assets refined into a complete merch-connected marketplace destination.</p><a class="card-link" href="beasts.html">Open page</a></article>
+                <article><img data-connected-model="originals" src="muzikaz_high_level_image_pack1/04_collection_tiles/originals_tile_2x.png" alt="Originals collection tile"><span class="pill">Character Models</span><h3>Originals Pack</h3><p>Starter mascot page with hero art, supporting graphics, logo assets, and connected hoodie/keychain merch.</p><a class="card-link" href="originals.html">Open page</a></article>
+                <article><img data-connected-model="legends" src="futuristic_armored_wolf_humanoid.png" alt="Legends cyber wolf tile"><span class="pill">3D Model Packs</span><h3>Legends Pack</h3><p>Armored future icon with model preview, retail pairings, drop content, and full collection HTML.</p><a class="card-link" href="legends.html">Open page</a></article>
+                <article><img data-connected-model="beasts" src="fierce_demon_hybrid_in_action.png" alt="Beasts collection tile"><span class="pill">3D Model Packs</span><h3>Beasts Pack</h3><p>Monster-power render assets refined into a complete merch-connected marketplace destination.</p><a class="card-link" href="beasts.html">Open page</a></article>
                 <article><img src="logo_panel_2x_transparent.png" alt="Brand Kit website package tile"><span class="pill">Website Packages · $20</span><h3>Brand Kit Slot</h3><p>Brand Kit assets moved into unified website package slots alongside four $20 bundles for starter, drop, vault, and event pages.</p><a class="card-link" href="members.html#marketplace">View bundles</a></article>
             </div>
         </section>
@@ -330,6 +330,7 @@
     <script src="public/js/rad-tox-launcher.js"></script>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script type="module" src="public/js/model-gallery.js"></script>
+    <script type="module" src="public/js/connected-models.js"></script>
     <!-- The GLB game module is injected by the launcher after the player presses
          Begin RAD-TOX. Keeping Three.js and the 12 MB world off the critical
          path prevents the landing page from stalling on mobile devices. -->
