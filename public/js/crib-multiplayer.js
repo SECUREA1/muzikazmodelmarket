@@ -19,6 +19,12 @@
   let joined = false;
 
   const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId };
+  const payload = (response) => response?.data ?? response;
+  async function jsonResponse(response) {
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.success === false) throw new Error(result.error || result.message || 'The crib server did not respond.');
+    return payload(result);
+  }
   const text = (value) => document.createTextNode(String(value || ''));
   function renderPresence(data = {}) {
     count.textContent = `${data.count || 0} / ${data.capacity || 15}`;
@@ -28,7 +34,7 @@
     if (legacyCount) legacyCount.textContent = `Live in the house: ${data.count || 0} / ${data.capacity || 15}`;
   }
   function addMessage(item) {
-    if (!item?.id || messages.querySelector(`[data-message-id="${CSS.escape(item.id)}"]`)) return;
+    if (!item?.id || [...messages.children].some((message) => message.dataset.messageId === String(item.id))) return;
     const li = document.createElement('li'); li.dataset.messageId = item.id;
     const name = document.createElement('strong'); name.append(text(item.sessionId === sessionId ? 'You' : item.username));
     const body = document.createElement('span'); body.append(text(item.message)); li.append(name, body); messages.append(li);
@@ -36,17 +42,20 @@
   }
   async function heartbeat() {
     const response = await fetch(`${api}/api/houses/ioncore-house/presence`, { method: 'POST', headers, body: JSON.stringify({ username, roomId: 'rad-tox', color }) });
-    const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Unable to join.'); joined = true; renderPresence(data);
+    const data = await jsonResponse(response); joined = true; renderPresence(data); status.textContent = '';
   }
   toggle.addEventListener('click', () => { panel.hidden = !panel.hidden; toggle.setAttribute('aria-expanded', String(!panel.hidden)); if (!panel.hidden) input.focus(); });
   panel.querySelector('[data-close-chat]').addEventListener('click', () => { panel.hidden = true; toggle.setAttribute('aria-expanded', 'false'); toggle.focus(); });
-  form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; input.disabled = true; try { const response = await fetch(`${api}/api/houses/ioncore-house/chat`, { method: 'POST', headers, body: JSON.stringify({ message }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error); input.value = ''; addMessage(data); status.textContent = ''; } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; input.focus(); } });
-  fetch(`${api}/api/houses/ioncore-house/chat`, { headers }).then((response) => response.json()).then((data) => (data.messages || []).forEach(addMessage)).catch(() => {});
-  const events = new EventSource(`${api}/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`);
-  events.addEventListener('house-presence-updated', (event) => renderPresence(JSON.parse(event.data)));
-  events.addEventListener('house-chat-message', (event) => addMessage(JSON.parse(event.data)));
-  events.onerror = () => { status.textContent = 'Reconnecting to the crib…'; };
+  form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; input.disabled = true; try { const response = await fetch(`${api}/api/houses/ioncore-house/chat`, { method: 'POST', headers, body: JSON.stringify({ message }) }); const data = await jsonResponse(response); input.value = ''; addMessage(data); status.textContent = ''; } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; input.focus(); } });
+  async function loadChat() { const response = await fetch(`${api}/api/houses/ioncore-house/chat`, { headers, cache: 'no-store' }); const data = await jsonResponse(response); (data.messages || []).forEach(addMessage); }
+  loadChat().catch(() => {});
+  let events;
+  if ('EventSource' in window) {
+    events = new EventSource(`${api}/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`);
+    events.addEventListener('house-presence-updated', (event) => renderPresence(JSON.parse(event.data)));
+    events.addEventListener('house-chat-message', (event) => addMessage(JSON.parse(event.data)));
+  }
   heartbeat().catch((error) => { status.textContent = error.message; toggle.disabled = true; });
-  const timer = setInterval(() => heartbeat().catch((error) => { status.textContent = error.message; }), 10_000);
-  window.addEventListener('beforeunload', () => { clearInterval(timer); if (joined) navigator.sendBeacon?.(`${api}/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`); });
+  const timer = setInterval(() => { heartbeat().catch((error) => { status.textContent = error.message; }); loadChat().catch(() => {}); }, 5_000);
+  window.addEventListener('pagehide', () => { clearInterval(timer); events?.close(); if (joined) navigator.sendBeacon?.(`${api}/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`); });
 })();
