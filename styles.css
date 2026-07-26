@@ -2087,26 +2087,24 @@ section,
   position:relative;
   z-index:5;
   flex:0 0 auto;
-  display:grid;
-  grid-template-columns:130px minmax(0,1fr);
-  align-items:stretch;
+  display:flex;
+  align-items:center;
+  width:100%;
   min-width:0;
   border-top:1px solid rgba(156,255,0,.45);
   background:#030806;
 }
-.crib-chat-dock__label{display:flex;flex-direction:column;justify-content:center;padding:8px 12px;border-right:1px solid rgba(156,255,0,.22);color:#fff}
+.crib-chat-dock__label{display:flex;flex:0 0 auto;align-items:center;gap:6px;min-width:0;padding:5px 8px;border-right:1px solid rgba(156,255,0,.22);color:#fff;white-space:nowrap}
 .crib-chat-dock__label strong{color:var(--lime);font-size:12px}.crib-chat-dock__label small{color:#aab5ad;font-size:10px;text-transform:none}
-.house-explorer-shell .crib-chat-dock__messages{height:58px;min-height:0;padding:5px 10px}
-.house-explorer-shell .crib-chat-dock__messages li{margin:3px 0}
-#crib-dock-form{grid-column:1/-1;display:flex;align-items:stretch;gap:7px;min-width:0;padding:7px 8px 8px;border-top:1px solid rgba(156,255,0,.18)}
-#crib-dock-form input{min-width:0;min-height:44px;flex:1 1 auto;width:100%;padding:10px 12px;font-size:14px;line-height:1.35}
-#crib-dock-form button{flex:0 0 auto;min-width:0;padding:7px 11px;font-size:10px;line-height:1}
+.house-explorer-shell .crib-chat-dock__messages{display:flex;flex:1 1 auto;align-items:center;gap:10px;width:auto;height:1em;min-width:0;min-height:0;padding:0 8px;overflow:hidden;border-right:1px solid rgba(156,255,0,.18);white-space:nowrap}
+.house-explorer-shell .crib-chat-dock__messages li{display:flex;flex:none;gap:5px;margin:0;line-height:1}
+#crib-dock-form{display:flex;flex:1 1 38%;align-items:center;gap:5px;min-width:180px;padding:4px 6px}
+#crib-dock-form input{min-width:0;height:1.75em;flex:1 1 auto;padding:3px 7px;line-height:1}#crib-dock-form button{flex:0 0 auto;padding:5px 9px;line-height:1}
 #crib-dock-status{position:absolute;right:8px;bottom:1px;min-height:12px;margin:0;color:#ffd45c;font-size:10px;text-transform:none}
 @media(max-width:700px){
-  .house-explorer-shell>.crib-chat-dock{grid-template-columns:78px minmax(0,1fr)}
-  .crib-chat-dock__label{padding:6px}.crib-chat-dock__label strong{font-size:10px}
-  .house-explorer-shell .crib-chat-dock__messages{grid-column:2;height:42px;border-right:0;border-bottom:1px solid rgba(156,255,0,.18)}
-  #crib-dock-form{padding:6px}#crib-dock-form input{font-size:16px}
+  .crib-chat-dock__label{padding:5px}.crib-chat-dock__label strong{font-size:10px}.crib-chat-dock__label small{display:none}
+  .house-explorer-shell .crib-chat-dock__messages{flex-basis:20%;padding-inline:5px}
+  #crib-dock-form{flex-basis:55%;min-width:0;padding:4px}#crib-dock-form input{font-size:16px}
 }
 
 /* RAD-TOX is one bounded viewport: stage, overlays, HUD and touch docks never
