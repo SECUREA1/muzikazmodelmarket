@@ -926,7 +926,14 @@ fn house_presence(
         if !position.is_empty() {
             user.position = position;
         }
-        let avatar_url = val(&input, "avatarUrl");
+        let avatar_url = {
+            let value = val(&input, "avatarUrl");
+            if value.is_empty() {
+                val(&input, "modelUrl")
+            } else {
+                value
+            }
+        };
         if !avatar_url.is_empty() {
             user.avatar_url = trim(avatar_url, 500);
         }
@@ -983,7 +990,14 @@ fn house_presence(
                 }
             },
             avatar_url: {
-                let value = val(&input, "avatarUrl");
+                let value = {
+                    let avatar = val(&input, "avatarUrl");
+                    if avatar.is_empty() {
+                        val(&input, "modelUrl")
+                    } else {
+                        avatar
+                    }
+                };
                 trim(
                     if value.is_empty() {
                         "logo_symbol_crop_2x_transparent.png".into()

@@ -70,6 +70,13 @@ if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launc
 }
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
+for (const requiredLiveFeature of ['MUZIKAZ_LIVE_PLAYERS', 'syncLiveAvatars', 'pollLiveAvatars', 'Live_player_label']) {
+  if (!houseExplorer.includes(requiredLiveFeature)) throw new Error(`GLB House Explorer is missing live cross-device avatars/chat: ${requiredLiveFeature}`);
+}
+const cribMultiplayer = await readFile('dist/public/js/crib-multiplayer.js', 'utf8');
+if (!cribMultiplayer.includes('avatarUrl: avatar.modelUrl') || !cribMultiplayer.includes('modelUrl: avatar.modelUrl')) {
+  throw new Error('Crib presence must publish each designated GLB avatar URL.');
+}
 if (houseExplorer.includes('await this.initAudio()')) {
   throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');
 }
