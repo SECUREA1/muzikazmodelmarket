@@ -62,6 +62,11 @@ if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEP
   throw new Error('RAD-TOX launcher must recover if deployment stalls after the 3D scene loads.');
 }
 
+const radToxModelExplorerHtml = await readFile('dist/model-explorer.html', 'utf8');
+if (!radToxModelExplorerHtml.includes('id="house-start-game" type="button" data-house-start')) {
+  throw new Error('The on-screen Begin control must use the same RAD-TOX start action as the overlay Begin control.');
+}
+
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
 }
