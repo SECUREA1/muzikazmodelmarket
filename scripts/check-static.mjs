@@ -53,6 +53,9 @@ const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
 if (!launcher.includes('startCompatibility') || !launcher.includes('muzikaz:rad-tox-app-update')) {
   throw new Error('RAD-TOX launcher must provide a compatibility fallback and publish live game updates.');
 }
+if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS')) {
+  throw new Error('RAD-TOX launcher must recover if deployment stalls after the 3D scene loads.');
+}
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
@@ -62,6 +65,9 @@ if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launc
 }
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
+if (houseExplorer.includes('await this.initAudio()')) {
+  throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');
+}
 for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarget]", 'this.spawnSnakes()', "controller.userData.handedness === 'left'", "Weapons','Laser · Paint gun · Baseball bat", 'webXrAvailable', "isSessionSupported('immersive-vr')", 'createXRAimRay()', 'teleportFromController(controller)', 'camera.position.set(0, 0, 0)']) {
   if (!houseExplorer.includes(requiredGameFeature)) {
     throw new Error(`RAD-TOX is missing its required mixed-level or always-on controls feature: ${requiredGameFeature}`);
