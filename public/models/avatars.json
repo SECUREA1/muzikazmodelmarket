@@ -1,0 +1,8 @@
+[
+  { "id": "public-dax", "name": "DAX", "creator": "MUZIKAZ", "modelUrl": "/public/models/DAX.glb", "scale": 1 },
+  { "id": "public-ioncduck", "name": "IONC DUCK", "creator": "MUZIKAZ", "modelUrl": "/public/models/IONCDUCK.glb", "scale": 1 },
+  { "id": "public-wolfie", "name": "Wolfie", "creator": "MUZIKAZ", "modelUrl": "/public/models/wolfie.glb", "scale": 1 },
+  { "id": "public-muzkat", "name": "MUZKAT", "creator": "MUZIKAZ", "modelUrl": "/public/models/MUZKAT.glb", "scale": 1 },
+  { "id": "public-pixella", "name": "Pixella", "creator": "MUZIKAZ", "modelUrl": "/public/models/pixella.glb", "scale": 1 },
+  { "id": "public-voltwolf", "name": "VOLT WOLF", "creator": "MUZIKAZ", "modelUrl": "/public/models/VOLTWOLF.glb", "scale": 1 }
+]
