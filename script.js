@@ -1178,6 +1178,24 @@ function selectedArCharacter() {
   return siteTwoCharacters[Number(arCharacterSelect?.value)] || siteTwoCharacters[0];
 }
 
+function isArModelFile(source, format = '') {
+  const normalizedFormat = String(format).replace(/^\./, '').toLowerCase();
+  if (['glb', 'gltf', 'usdz', 'reality'].includes(normalizedFormat)) return true;
+  try {
+    return /\.(glb|gltf|usdz|reality)$/i.test(new URL(source, document.baseURI).pathname);
+  } catch {
+    return /\.(glb|gltf|usdz|reality)(?:[?#]|$)/i.test(String(source));
+  }
+}
+
+function showArArtworkFallback(characterSrc) {
+  if (arModelViewer) arModelViewer.hidden = true;
+  if (arPreviewImg) {
+    arPreviewImg.src = characterSrc;
+    arPreviewImg.hidden = false;
+  }
+}
+
 function updateArViewer(useCustomFile = Boolean(customArFileUrl)) {
   if (!arCharacterSelect) return;
   const character = selectedArCharacter();
@@ -1192,7 +1210,7 @@ function updateArViewer(useCustomFile = Boolean(customArFileUrl)) {
     const catalogModel = modelForCharacter(character);
     const activeModelUrl = useCustomFile ? customArFileUrl : catalogModel?.modelUrl;
     const activeIosUrl = !useCustomFile ? catalogModel?.iosModelUrl : '';
-    const isModelFile = /\.(glb|gltf|usdz|reality)$/i.test(activeModelUrl || '');
+    const isModelFile = isArModelFile(activeModelUrl || '', useCustomFile ? '' : catalogModel?.format);
     arModelViewer.hidden = !isModelFile;
     if (isModelFile) {
       arPreviewImg.hidden = true;
@@ -1204,7 +1222,10 @@ function updateArViewer(useCustomFile = Boolean(customArFileUrl)) {
         if (activeIosUrl) arModelViewer.setAttribute('ios-src', activeIosUrl); else arModelViewer.removeAttribute('ios-src');
       }
       arModelViewer.poster = characterSrc;
+      arModelViewer.setAttribute('alt', `${character.name} selected 3D character`);
       enhanceModelViewerForAr(arModelViewer, `${character.name} AR model`);
+    } else {
+      showArArtworkFallback(characterSrc);
     }
   }
   document.querySelectorAll('[data-ar-character]').forEach((button) => button.classList.toggle('active', button.dataset.arCharacter === arCharacterSelect.value));
@@ -1219,6 +1240,7 @@ async function seedArViewer() {
     <button class="ar-character-chip" type="button" data-ar-character="${index}">
       ${characterModelMarkup(character, `${character.name} 3D picker model`, 'ar-character-chip-model')}<span>${character.name}</span>
     </button>`).join('');
+  arModelViewer?.addEventListener('error', () => showArArtworkFallback(characterImage(selectedArCharacter())));
   updateArViewer(false);
 }
 
