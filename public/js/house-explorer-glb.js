@@ -539,14 +539,16 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   canvas.addEventListener('click', () => {
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start walking.'));
   });
-  document.querySelector('a[href="#house-explorer-canvas"]')?.addEventListener('click', (event) => {
-    event.preventDefault();
+  function activateMainControl(event) {
+    event?.preventDefault();
     // Mouse capture is opt-in: only the visible Main controls button may lock
     // a desktop pointer. Canvas clicks, Begin, and keyboard activation remain
     // non-capturing so the page never takes over the user's mouse unexpectedly.
     if (!mobileQualityMode && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
-  });
+  }
+  document.querySelector('[data-house-main-control]')?.addEventListener('click', activateMainControl);
+  document.addEventListener('muzikaz:rad-tox-main-control', activateMainControl);
   canvas.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter') return;
     event.preventDefault();
