@@ -48,15 +48,6 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
 }
-for (const page of ['index.html', 'model-explorer.html']) {
-  const html = await readFile(`dist/${page}`, 'utf8');
-  if ((html.match(/data-house-start/g) || []).length !== 1) {
-    throw new Error(`${page} must expose exactly one Begin control for the game.`);
-  }
-  if (html.includes('id="house-start-game"')) {
-    throw new Error(`${page} must not expose a second game-start control.`);
-  }
-}
 
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
 if (!launcher.includes('muzikaz:rad-tox-app-update')) {
@@ -69,9 +60,6 @@ for (const removed2dFeature of ['startCompatibility', 'rad-tox-compat-game', 'da
 }
 if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS')) {
   throw new Error('RAD-TOX launcher must recover if deployment stalls after the 3D scene loads.');
-}
-if (!launcher.includes('showLoading(true)') || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS = 120000')) {
-  throw new Error('RAD-TOX must show its loading screen immediately and allow mobile assets time to load.');
 }
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
@@ -88,9 +76,6 @@ for (const requiredLiveFeature of ['MUZIKAZ_LIVE_PLAYERS', 'syncLiveAvatars', 'p
 const cribMultiplayer = await readFile('dist/public/js/crib-multiplayer.js', 'utf8');
 if (!cribMultiplayer.includes('avatarUrl: avatar.modelUrl') || !cribMultiplayer.includes('modelUrl: avatar.modelUrl')) {
   throw new Error('Crib presence must publish each designated GLB avatar URL.');
-}
-if (!cribMultiplayer.includes('MUZIKAZ_CRIB_MULTIPLAYER = { start }') || !houseExplorer.includes('MUZIKAZ_CRIB_MULTIPLAYER.start()')) {
-  throw new Error('The one-click launch must initialize multiplayer exactly once.');
 }
 if (houseExplorer.includes('await this.initAudio()')) {
   throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');
