@@ -135,14 +135,15 @@
           <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
         </div>
         <aside class="crib-social" id="crib-social" aria-label="Vibe Crib players and chat">
-          <button class="crib-chat-toggle" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel"><span>💬 Chat</span><b id="crib-online-count">0 / 15</b></button>
+          <ol class="crib-chat-feed" id="crib-chat-messages" aria-label="Multiplayer chat messages" aria-live="polite" aria-relevant="additions"></ol>
+          <button class="crib-chat-toggle" id="crib-chat-toggle" type="button" aria-label="Open connected users and chat history" aria-expanded="false" aria-controls="crib-chat-panel"><span>👤 Players</span><b id="crib-online-count">0 / 15</b></button>
           <section class="crib-chat-panel" id="crib-chat-panel" hidden>
             <header><div><strong>Vibe Crib live</strong><small>Signed-in subscribers · 15 max</small></div><button type="button" data-close-chat aria-label="Close chat">×</button></header>
             <div class="crib-player-list" id="crib-player-list" aria-label="Players online"></div>
-            <ol class="crib-chat-messages" id="crib-chat-messages" aria-live="polite"></ol>
-            <form id="crib-chat-form"><label class="sr-only" for="crib-chat-input">Chat message</label><input id="crib-chat-input" maxlength="140" autocomplete="off" placeholder="Message the crib…" required><button type="submit">Send</button></form>
+            <ol class="crib-chat-history" id="crib-chat-history" aria-label="Persistent chat history"></ol>
             <p id="crib-chat-status" role="status"></p>
           </section>
+          <form id="crib-chat-form" class="crib-chat-bar"><label class="sr-only" for="crib-chat-input">Chat message</label><input id="crib-chat-input" maxlength="140" autocomplete="off" enterkeyhint="send" aria-label="Chat message" placeholder="Message the crib…" required><button type="submit" aria-label="Send chat message">Send</button></form>
         </aside>
       </div>
     </section>
