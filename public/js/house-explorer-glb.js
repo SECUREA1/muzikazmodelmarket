@@ -25,6 +25,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // This launch control lives in the page markup. script.js intentionally yields to
   // this GLB explorer, so the GLB implementation must own the overlay's action too.
   const gameStartButton = document.querySelector('[data-house-start]');
+  const dockStartButton = document.querySelector('.house-bottom-controls [data-house-start]');
   const gameStartScreen = document.querySelector('#house-game-start');
   const gameLoadStatus = document.querySelector('#house-game-load-status');
   const levelLoader = document.querySelector('#house-level-loader');
@@ -255,6 +256,16 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const toxicBubbleSystem = new ToxicBubbleSystem({ scene, camera, canvas, loader: envLoader, getEnvironment: () => activeEnvironment, getPlayerPosition: () => playerRig.position.clone(), advanceEnvironment: () => loadNextEnvironment() });
   // Opening or closing the pack never changes the game state.
   const closeTools = () => { toxicBubbleSystem.closeInventory(); sprayTools.hidden=true; toolsToggle.setAttribute('aria-expanded','false'); document.querySelector('#house-tools')?.setAttribute('aria-expanded','false'); document.querySelector('#house-tools')?.focus(); }; const openTools = () => { syncToolsPortal(); sprayTools.hidden=false; toolsToggle.setAttribute('aria-expanded','true'); document.querySelector('#house-tools')?.setAttribute('aria-expanded','true'); sprayTools.querySelector('[data-rad-tool]')?.focus(); }; sprayTools.addEventListener('click',(event)=>{if(event.target.closest('[data-rad-tools-toggle]')){closeTools();return;}const tool=event.target.closest('[data-rad-tool]')?.dataset.radTool,color=event.target.closest('[data-spray-color]')?.dataset.sprayColor;if(event.target.closest('[data-rad-pack-toggle]'))toxicBubbleSystem.toggleInventory();if(tool)toxicBubbleSystem.setTool(tool);if(color!==undefined)toxicBubbleSystem.setSprayColor(Number(color));}); inventoryPack.addEventListener('click',(event)=>{if(event.target.closest('[data-rad-pack-close]'))toxicBubbleSystem.closeInventory();}); document.addEventListener('keydown',(event)=>{if(event.key!=='Escape')return;if(!inventoryPack.hidden){toxicBubbleSystem.closeInventory();return;}if(!sprayTools.hidden)closeTools();});
+  function activateDockTools() {
+    if (!dockStartButton) return;
+    dockStartButton.removeAttribute('data-house-start');
+    dockStartButton.removeAttribute('disabled');
+    dockStartButton.id = 'house-tools';
+    dockStartButton.setAttribute('aria-expanded', 'false');
+    dockStartButton.setAttribute('aria-controls', 'rad-tox-tools');
+    dockStartButton.innerHTML = '<b aria-hidden="true">🛠</b><span>Tools</span>';
+    dockStartButton.addEventListener('click', (event) => { event.preventDefault(); openTools(); setStatus('RAD-TOX tools open. Choose Laser, Paint Gun, Bat, Pack, or a paint color.'); });
+  }
   const keys = new Set(); const mobile = new Set(); const thumbInput = { leftX: 0, leftY: 0, rightX: 0, rightY: 0 }; const forward = new THREE.Vector3(); const right = new THREE.Vector3(); const move = new THREE.Vector3(); const teleportRay = new THREE.Raycaster();
   const XR_TELEPORT_OFFSET = new THREE.Vector3(0, FLOOR_ENTRY_OFFSET + .04, 0);
   const XR_TOOL_ORDER = Object.freeze(['laser', 'spray', 'bat']);
@@ -387,8 +398,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   canvas.addEventListener('dragover', (e) => { if (!activeAvatar && !e.dataTransfer?.types?.includes('application/x-muzikaz-avatar')) return; e.preventDefault(); stage.classList.add('is-avatar-drop-target'); }); canvas.addEventListener('dragleave', () => stage.classList.remove('is-avatar-drop-target')); canvas.addEventListener('drop', async (e) => { e.preventDefault(); stage.classList.remove('is-avatar-drop-target'); const avatars = window.MuzikazActiveHouseAvatars || []; const avatar = avatars.find(a => a.id === e.dataTransfer.getData('application/x-muzikaz-avatar')) || activeAvatar; if (avatar) addAvatarToScene(avatar, setAvatarPointerFromEvent(e)).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); });
   let toxicTap = null; let toxicConsumedClick = false;
   canvas.addEventListener('click', (event) => { if (!toxicConsumedClick) return; toxicConsumedClick=false; event.preventDefault(); event.stopImmediatePropagation(); }, true);
-  const toolsButton = document.querySelector('#house-tools');
-  toolsButton?.addEventListener('click', (event) => { event.preventDefault(); openTools(); setStatus('RAD-TOX tools open. Choose Laser, Paint Gun, Bat, Pack, or a paint color.'); });
   canvas.addEventListener('pointerdown', (event) => { if (document.pointerLockElement === canvas && event.button === 0) { toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
   canvas.addEventListener('pointerup', (event) => { if (!toxicTap || toxicTap.id !== event.pointerId) return; const moved=Math.hypot(event.clientX-toxicTap.x,event.clientY-toxicTap.y); if (!toxicTap.avatar && moved<=8) toxicConsumedClick=toxicBubbleSystem.handlePointerInteraction(event) || toxicConsumedClick; toxicTap=null; });
   canvas.addEventListener('pointercancel', () => { toxicTap=null; });
@@ -531,13 +540,15 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       // A desktop launch should always open at the playable view, rather than
       // leaving the player at an arbitrary scrolled position behind the overlay.
       stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      if (window.MUZIKAZ_CRIB_MULTIPLAYER?.start) {
-        setStatus('Validating your member, avatar, and multiplayer session…');
-        await window.MUZIKAZ_CRIB_MULTIPLAYER.start();
-      }
+      // Presence and chat are optional enhancements. Start them without making
+      // the world or RAD-TOX wait for a slow or unavailable multiplayer API.
+      window.MUZIKAZ_CRIB_MULTIPLAYER?.start?.().catch((error) => {
+        console.warn('[MUZIKAZ Multiplayer]', 'Background connection failed', error);
+      });
       await openHouseMap();
       resetPlayer();
       await toxicBubbleSystem.begin();
+      activateDockTools();
       gameStartScreen?.classList.add('is-hidden');
       scheduleGameResize();
       setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');

@@ -50,8 +50,8 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
 }
 for (const page of ['index.html', 'model-explorer.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
-  if ((html.match(/data-house-start/g) || []).length !== 1) {
-    throw new Error(`${page} must expose exactly one Begin control for the game.`);
+  if ((html.match(/data-house-start/g) || []).length !== 2) {
+    throw new Error(`${page} must expose matching overlay and fourth-dock Begin controls for the game.`);
   }
   if (html.includes('id="house-start-game"')) {
     throw new Error(`${page} must not expose a second game-start control.`);
@@ -89,8 +89,8 @@ const cribMultiplayer = await readFile('dist/public/js/crib-multiplayer.js', 'ut
 if (!cribMultiplayer.includes('avatarUrl: avatar.modelUrl') || !cribMultiplayer.includes('modelUrl: avatar.modelUrl')) {
   throw new Error('Crib presence must publish each designated GLB avatar URL.');
 }
-if (!cribMultiplayer.includes('MUZIKAZ_CRIB_MULTIPLAYER = { start }') || !houseExplorer.includes('MUZIKAZ_CRIB_MULTIPLAYER.start()')) {
-  throw new Error('The one-click launch must initialize multiplayer exactly once.');
+if (!cribMultiplayer.includes('MUZIKAZ_CRIB_MULTIPLAYER = { start }') || !houseExplorer.includes('MUZIKAZ_CRIB_MULTIPLAYER?.start?.().catch')) {
+  throw new Error('The one-click launch must initialize multiplayer in the background without blocking gameplay.');
 }
 if (houseExplorer.includes('await this.initAudio()')) {
   throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');
