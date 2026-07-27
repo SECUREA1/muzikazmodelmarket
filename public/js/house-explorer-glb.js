@@ -170,6 +170,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const avatarLoader = new GLTFLoader(); const avatarRaycaster = new THREE.Raycaster(); const avatarPointer = new THREE.Vector2(); const placedAvatars = new THREE.Group(); placedAvatars.name = 'MUZIKAZ_PLACED_AVATARS'; scene.add(placedAvatars);
   const liveAvatars = new THREE.Group(); liveAvatars.name = 'MUZIKAZ_LIVE_PLAYERS'; scene.add(liveAvatars);
   const liveAvatarRoots = new Map(); const pendingLiveAvatars = new Set();
+  const OBJECT_FLOOR_GAP = 0.01;
+  const LIVE_LABEL_GAP = 0.06;
+  const LIVE_LABEL_WORLD_SIZE = Object.freeze({ width: 2.7, height: .675 });
   const landingFrame = new THREE.Group(); landingFrame.name = 'MUZIKAZ_LANDING_FLOOR_FRAME'; scene.add(landingFrame);
   let activeAvatar = null;
   const player = { height: 1.65, radius: .34, speed: 3.2, jumpVelocity: 9.9, yaw: 0, pitch: 0, eyeHeight: 1.65, zoom: 68, velocity: new THREE.Vector3(), onGround: false, spawn: new THREE.Vector3(0, 1, 2) };
