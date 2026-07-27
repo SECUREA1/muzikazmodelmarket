@@ -50,8 +50,11 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
 }
 for (const page of ['index.html', 'model-explorer.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
-  if ((html.match(/data-house-start/g) || []).length !== 1) {
-    throw new Error(`${page} must expose exactly one Begin control in the launch overlay.`);
+  if ((html.match(/data-house-start/g) || []).length !== 2) {
+    throw new Error(`${page} must expose one Begin control in the launch overlay and one in the game dock.`);
+  }
+  if (!/<div class="house-bottom-controls"[\s\S]*?data-house-start[\s\S]*?<\/div>/.test(html)) {
+    throw new Error(`${page} must expose the dock Begin control for desktop and mobile players.`);
   }
   if (html.includes('id="house-start-game"')) {
     throw new Error(`${page} must not expose a second game-start control.`);
