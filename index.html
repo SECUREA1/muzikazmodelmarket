@@ -91,14 +91,24 @@
                     <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
                     <a class="house-main-controls-button" href="#house-explorer-canvas">Main controls</a>
                     <div class="house-reticle" aria-hidden="true">+</div>
-                    <div class="house-status" id="house-status" role="status">RAD-TOX starts automatically. Every level contains toxic bubbles, blue ghosts, and snakes.</div>
+                    <div class="house-status" id="house-status" role="status">Click Begin once to load RAD-TOX and start at the level 1 entrance.</div>
+                    <section class="house-level-loader game-overlay" id="house-level-loader" hidden aria-live="polite" aria-label="Loading game level">
+                        <div class="game-overlay__content">
+                        <div class="house-level-loader__graphic" aria-hidden="true"><i></i><i></i><i></i><b>☢</b></div>
+                        <p class="kicker">RAD-TOX deployment</p>
+                        <h3 data-level-loader-title>Preparing level 1</h3>
+                        <p class="house-level-loader__message" data-level-loader-message>Loading your game…</p>
+                        <div class="house-level-loader__scale" role="progressbar" aria-label="Level loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span data-level-loader-fill></span></div>
+                        <strong data-level-loader-percent>0%</strong>
+                        </div>
+                    </section>
                     <section class="house-game-start game-overlay" id="house-game-start" aria-labelledby="house-game-start-title">
                         <div class="game-overlay__content">
-                        <p class="kicker">RAD-TOX game connection</p>
-                        <h3 id="house-game-start-title">Mixed encounters start automatically.</h3>
-                        <p id="house-game-load-status" role="status">Preparing toxic bubbles, blue ghosts, and snakes…</p>
-                        <p class="house-firefox-note">RAD-TOX starts automatically in browsers with WebGL support. Laser, Paint Gun, and Bat are always ready in every level. Use the left controller trigger or tap/click to use the selected tool.</p>
-                        <button class="btn house-start-button" type="button" data-house-start>BEGIN NOW!</button>
+                        <p class="kicker">One-click game start</p>
+                        <h3 id="house-game-start-title">Click Begin. The game loads and starts.</h3>
+                        <p id="house-game-load-status" role="status">No login or second start is required.</p>
+                        <p class="house-firefox-note">RAD-TOX runs in browsers with WebGL support. Laser, Paint Gun, and Bat are ready in every level. Use the left controller trigger or tap/click to use the selected tool.</p>
+                        <button class="btn house-start-button" type="button" data-house-start>Begin</button>
                         </div>
                     </section>
                 </div>
