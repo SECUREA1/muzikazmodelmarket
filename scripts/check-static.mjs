@@ -53,8 +53,8 @@ for (const page of ['index.html', 'model-explorer.html']) {
   if ((html.match(/data-house-start/g) || []).length !== 1) {
     throw new Error(`${page} must expose only the orange dock Begin control.`);
   }
-  if (!/<div class="house-bottom-controls"[\s\S]*?data-house-start[\s\S]*?<\/div>/.test(html)) {
-    throw new Error(`${page} must expose the dock Begin control for desktop and mobile players.`);
+  if (!/<section class="house-game-start[\s\S]*?data-house-start[\s\S]*?<\/section>/.test(html)) {
+    throw new Error(`${page} must keep its only Begin control in the launch overlay.`);
   }
   if (html.includes('id="house-start-game"') || html.includes('id="house-game-start"')) {
     throw new Error(`${page} must not expose an on-screen game-start overlay.`);
@@ -69,12 +69,9 @@ for (const removedMobileControl of ['data-mobile-hold="strafe-right"', 'data-mob
 }
 
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
-if (!launcher.includes('muzikaz:rad-tox-app-update')) {
-  throw new Error('RAD-TOX launcher must publish live 3D game updates.');
-}
-for (const memberGateRequirement of ["muzikazBottleMember')!=='true'", 'muzikazBottleMemberEmail', 'muzikazLoginRedirect', 'members.html?login=required']) {
-  if (!launcher.includes(memberGateRequirement)) {
-    throw new Error(`RAD-TOX launcher must require the original Bottle login before Crib access: missing ${memberGateRequirement}`);
+for (const removedLaunchOption of ['muzikazBottleMember', 'muzikazLoginRedirect', 'members.html?login=required', 'Press Begin to try again.', 'data-radtox-retry']) {
+  if (launcher.includes(removedLaunchOption)) {
+    throw new Error(`RAD-TOX launcher must not gate, retry, or offer another launch option: ${removedLaunchOption}`);
   }
 }
 
@@ -92,15 +89,9 @@ for (const removed2dFeature of ['startCompatibility', 'rad-tox-compat-game', 'da
     throw new Error(`RAD-TOX launcher must not populate the removed 2D game: ${removed2dFeature}`);
   }
 }
-if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS')) {
-  throw new Error('RAD-TOX launcher must recover if deployment stalls after the 3D scene loads.');
-}
-if (!launcher.includes('showLoading(true)') || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS = 120000')) {
-  throw new Error('RAD-TOX must show its loading screen immediately and allow mobile assets time to load.');
-}
-for (const requiredLaunchRecovery of ['startProgress()', "updateProgress(100,d.message)", "setButtons(false,'Begin')", 'Press Begin to try again.']) {
-  if (!launcher.includes(requiredLaunchRecovery)) {
-    throw new Error(`RAD-TOX launcher must expose progress and recover from a failed browser load: ${requiredLaunchRecovery}`);
+for (const requiredLaunchStep of ['function begin()', "updateProgress(100", "loader.hidden = true", "muzikaz:rad-tox-request"]) {
+  if (!launcher.includes(requiredLaunchStep)) {
+    throw new Error(`RAD-TOX launcher must follow Begin, load to 100%, then run: ${requiredLaunchStep}`);
   }
 }
 if (launcher.includes('data-radtox-retry') || launcher.includes('Retry 3D Game')) {
@@ -110,8 +101,8 @@ if (launcher.includes('data-radtox-retry') || launcher.includes('Retry 3D Game')
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
 }
-if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launcher.includes('function startEngine()')) {
-  throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
+if (!/module\.src\s*=\s*['"]public\/js\/house-explorer-glb\.js['"]/.test(launcher)) {
+  throw new Error('RAD-TOX launcher must load the House Explorer module only after Begin.');
 }
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
