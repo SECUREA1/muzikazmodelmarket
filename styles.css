@@ -2396,3 +2396,33 @@ section,
   .house-explorer-shell .crib-chat-panel{inset:auto;width:100%;max-height:min(38vh,300px)}
   .house-explorer-shell .crib-chat-bar{flex-basis:220px;padding:0}
 }
+
+/* Compact mobile game dock: chat, two-thumb movement, then essential actions. */
+@media(max-width:760px),(pointer:coarse){
+  html:has(.model-explorer-page),body:has(.model-explorer-page){height:100%;overflow:hidden;overscroll-behavior:none}
+  .model-explorer-page{height:100dvh;overflow:hidden}
+  .model-explorer-page .site-header,.model-explorer-page .topbar,.model-explorer-page main>section:not(.house-explorer),.model-explorer-page footer{display:none!important}
+  .model-explorer-page .house-explorer{height:100dvh;padding:0!important}
+  .model-explorer-page .house-explorer-shell{width:100%;max-width:none;height:100dvh!important;max-height:100dvh!important;min-height:0;margin:0;border:0;border-radius:0;gap:0!important}
+  .model-explorer-page .house-explorer-shell>.house-stage{order:1;flex:1 1 0;min-height:0!important;height:auto!important;max-height:none!important}
+  .model-explorer-page .house-hud,.model-explorer-page .house-picker-panel,.model-explorer-page .house-view-controls,.model-explorer-page .house-control-dock>.house-space-scale,.model-explorer-page .crib-chat-feed{display:none!important}
+  .model-explorer-page .house-explorer-shell>.crib-social{order:2;display:block;flex:0 0 auto;padding:5px max(7px,env(safe-area-inset-right)) 5px max(7px,env(safe-area-inset-left));border-top:1px solid rgba(156,255,0,.28)}
+  .model-explorer-page .crib-chat-bar{display:flex;position:static;width:100%;gap:6px;padding:0;background:none}
+  .model-explorer-page .crib-chat-bar input{height:34px;min-height:34px;padding:5px 10px;border-radius:8px;font-size:16px}
+  .model-explorer-page .crib-chat-bar button{flex:0 0 auto;min-width:58px;min-height:34px;padding:5px 10px;border-radius:8px;font-size:11px}
+  .model-explorer-page .house-explorer-shell>.mobile-move-pad{order:3;flex:0 0 auto;width:100%;max-width:none!important;grid-template-rows:1fr!important;grid-template-areas:'left right'!important;gap:clamp(24px,18vw,150px)!important;padding:5px clamp(18px,8vw,80px)!important;border-top:1px solid rgba(156,255,0,.2);border-radius:0!important;background:#030704}
+  .model-explorer-page .thumbstick-control{display:flex;align-items:center;justify-content:center;gap:8px}
+  .model-explorer-page .thumbstick-label,.model-explorer-page .thumbstick-control small,.model-explorer-page .mobile-zoom-controls{display:none!important}
+  .model-explorer-page .thumbstick-base{width:clamp(58px,15vw,76px)!important;height:clamp(58px,15vw,76px)!important;min-height:0!important;box-shadow:inset 0 0 0 8px rgba(156,255,0,.06),0 0 14px rgba(156,255,0,.14)!important}
+  .model-explorer-page .house-control-dock{display:contents!important}
+  .model-explorer-page .house-explorer-shell .house-bottom-controls{order:4;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;width:100%;padding:5px max(7px,env(safe-area-inset-right)) max(5px,env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left));border-top:1px solid rgba(156,255,0,.28);border-radius:0;background:#020403}
+  .model-explorer-page .house-bottom-control,.model-explorer-page .crib-chat-toggle{position:static;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:36px;padding:3px 2px;border-radius:8px;transform:none;font-size:9px}
+  .model-explorer-page .house-bottom-control b{font-size:13px}.model-explorer-page .house-bottom-control span{font-size:9px;white-space:nowrap}.model-explorer-page .house-bottom-control strong{color:inherit}
+  .model-explorer-page .house-firefox-label,.model-explorer-page .house-world-menu{display:none!important}
+  .model-explorer-page .crib-chat-panel{position:fixed;z-index:100;inset:auto max(7px,env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left));width:auto;max-height:60dvh}
+}
+@media(max-height:440px) and (orientation:landscape){
+  .model-explorer-page .thumbstick-base{width:48px!important;height:48px!important}
+  .model-explorer-page .house-explorer-shell>.mobile-move-pad{padding-block:3px!important}
+  .model-explorer-page .house-explorer-shell>.crib-social,.model-explorer-page .house-explorer-shell .house-bottom-controls{padding-top:3px;padding-bottom:3px}
+}
