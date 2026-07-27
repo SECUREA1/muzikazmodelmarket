@@ -10,13 +10,14 @@
   function status(message) { var nodes = [document.getElementById('house-status'), document.getElementById('house-game-load-status')]; for (var i=0;i<nodes.length;i+=1) if(nodes[i]) nodes[i].textContent=message; }
   function buttons() { return document.querySelectorAll('#house-start-game, [data-house-start]'); }
   function setButtons(disabled, label) { var controls=buttons(); for(var i=0;i<controls.length;i+=1){ controls[i].disabled=disabled; if(label) controls[i].textContent=label; } }
+  function showLoadingScreen(){ var host=document.getElementById('house-game-start'), button=host&&host.querySelector('[data-house-start]'), title=document.getElementById('house-game-start-title'); if(host)host.className+=' is-loading'; if(title)title.textContent='Loading RAD-TOX…'; if(button){button.disabled=true;button.hidden=true;} }
   function publish(next, message) { document.dispatchEvent(makeEvent('muzikaz:rad-tox-app-update', { stage: next, message: message || '' })); }
   function setState(next, message) { state = next; document.documentElement.setAttribute('data-radtox-state', next); log('stage '+next); if(message) status(message); publish(next, message); }
   function supportsModern() { if(modernSupport !== undefined)return modernSupport; var s=document.createElement('script'), c=document.createElement('canvas'), gl; try{gl=c.getContext&&((window.WebGL2RenderingContext&&c.getContext('webgl2'))||c.getContext('webgl')||c.getContext('experimental-webgl'));}catch(ignore){gl=null;} modernSupport='noModule' in s && !!(window.Promise && window.fetch && window.URL && window.CustomEvent && gl); return modernSupport; }
   function clearWatchdog(){ if(watchdog){window.clearTimeout(watchdog);watchdog=0;} }
   function armWatchdog(delay){ clearWatchdog(); watchdog=window.setTimeout(function(){ if(state==='booting' || state==='loading-game') fail('3D engine','The game is taking longer than expected. Retry the 3D game.'); },delay || ENGINE_STARTUP_TIMEOUT_MS); }
   function addRecovery(){ var host=document.getElementById('house-game-start'); if(!host || host.querySelector('[data-radtox-recovery]')) return; var box=document.createElement('p'); box.setAttribute('data-radtox-recovery',''); box.innerHTML='<button type="button" data-radtox-retry>Retry 3D Game</button>'; host.appendChild(box); box.onclick=function(e){var t=e.target; if(t.getAttribute('data-radtox-retry')!==null){e.preventDefault(); queued=true; setState('booting','Retrying 3D engine…'); if(engineRequested)document.dispatchEvent(makeEvent('muzikaz:rad-tox-request'));else startEngine(); armWatchdog();}}; }
-  function fail(stage, message){ clearWatchdog(); setState('error', stage+': '+message); var controls=buttons(); for(var i=0;i<controls.length;i+=1){controls[i].disabled=false; controls[i].textContent='Begin';} addRecovery(); }
+  function fail(stage, message){ clearWatchdog(); setState('error', stage+': '+message); var controls=buttons(); for(var i=0;i<controls.length;i+=1){controls[i].disabled=false; controls[i].hidden=false; controls[i].textContent='Begin';} addRecovery(); }
   function makeEvent(name, detail){ var e; try {e=new window.CustomEvent(name,{detail:detail||{}});} catch(ignore){ e=document.createEvent('Event');e.initEvent(name,true,true);e.detail=detail||{};} return e; }
   function startEngine(){
     if(engineRequested)return;
@@ -27,9 +28,17 @@
     module.onerror=function(){ engineRequested=false; fail('3D engine','The game files could not be loaded.'); };
     document.body.appendChild(module);
   }
+  function warmEngine(){
+    if(engineRequested || !supportsModern())return;
+    /* Modulepreload is ignored safely by older engines and saves modern Chromium,
+       Firefox, and Safari from discovering the module graph serially after click. */
+    var files=['public/js/house-explorer-glb.js','public/js/environments/environment-registry.js','public/js/environments/environment-loader.js'];
+    for(var i=0;i<files.length;i+=1){var link=document.createElement('link');link.rel='modulepreload';link.href=files[i];document.head.appendChild(link);}
+  }
   function request(){
     if(state==='booting' || state==='loading-game') return;
     queued=true;
+    showLoadingScreen();
     setButtons(true,'Loading…');
     if(!supportsModern()){fail('3D engine','This browser does not support the WebGL features required by RAD-TOX.');return;}
     if(state==='engine-ready'){ document.dispatchEvent(makeEvent('muzikaz:rad-tox-request')); }
@@ -41,6 +50,8 @@
   function isStartControl(t){while(t&&t.id!=='house-start-game'&&(!t.getAttribute||t.getAttribute('data-house-start')===null))t=t.parentNode;return t;}
   // Start fetching on press so mobile browsers can establish the module connection
   // before the following click handler asks the game to begin.
+  document.addEventListener('pointerover',function(e){if(isStartControl(e.target))warmEngine();},true);
+  document.addEventListener('focusin',function(e){if(isStartControl(e.target))warmEngine();},true);
   document.addEventListener('pointerdown',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('touchstart',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
