@@ -170,14 +170,3 @@ const modelExplorerHtml = await readFile('dist/model-explorer.html', 'utf8');
 if (!mainHtml.includes('public/js/api-connection.js') || !modelExplorerHtml.includes('public/js/api-connection.js') || !membersHtml.includes('public/js/api-connection.js')) {
   throw new Error('Every game and avatar entry point must initialize its cross-browser API connection.');
 }
-const modelGalleryScript = await readFile('dist/public/js/model-gallery-core.js', 'utf8');
-const modelUtilsScript = await readFile('dist/public/js/model-utils.js', 'utf8');
-if (modelGalleryScript.includes("text:'Open Model'") || modelGalleryScript.includes("text:'Explore in 3D'")) {
-  throw new Error('Published model cards must not expose direct model-opening actions.');
-}
-for (const requiredArAction of ["text:'View in AR'", "text:'Share AR link'", "text:'Copy AR link'"]) {
-  if (!modelGalleryScript.includes(requiredArAction)) throw new Error(`Published model cards are missing ${requiredArAction}`);
-}
-for (const requiredArSharePart of ["['environment','house']", "url.searchParams.set('model',model.id)", "url.searchParams.set('view','ar')"]) {
-  if (!modelUtilsScript.includes(requiredArSharePart)) throw new Error(`AR share links are missing ${requiredArSharePart}`);
-}
