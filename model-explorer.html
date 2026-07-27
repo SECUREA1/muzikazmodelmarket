@@ -80,7 +80,7 @@
         <div class="house-stage">
           <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
           <div class="house-reticle" aria-hidden="true">+</div>
-          <div class="house-status" id="house-status" role="status">Click Begin once to load RAD-TOX and start at the level 1 entrance.</div>
+          <div class="house-status" id="house-status" role="status">Press Begin RAD-TOX to clear level 1 toxins, then face blue ghosts in the upper-floor level 2.</div>
           <section class="house-level-loader game-overlay" id="house-level-loader" hidden aria-live="polite" aria-label="Loading game level">
             <div class="game-overlay__content">
             <div class="house-level-loader__graphic" aria-hidden="true"><i></i><i></i><i></i><b>☢</b></div>
@@ -89,6 +89,15 @@
             <p class="house-level-loader__message" data-level-loader-message>Loading your next encounter…</p>
             <div class="house-level-loader__scale" role="progressbar" aria-label="Level loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span data-level-loader-fill></span></div>
             <strong data-level-loader-percent>0%</strong>
+            </div>
+          </section>
+          <section class="house-game-start game-overlay" id="house-game-start" aria-labelledby="house-game-start-title">
+            <div class="game-overlay__content">
+            <p class="kicker">MUZIKAZ game</p>
+            <h3 id="house-game-start-title">Ready to play?</h3>
+            <p id="house-game-load-status" role="status">Preparing level 1 toxins and the level 2 ghost encounter…</p>
+            <p class="house-firefox-note">RAD-TOX runs in browsers with WebGL support. The game starts as soon as the interior is ready.</p>
+            <button class="btn house-start-button" type="button" data-house-start>Begin</button>
             </div>
           </section>
         </div>
@@ -118,10 +127,15 @@
             <span id="hand-status">Camera preview inactive. MediaPipe Hands loads only when enabled.</span>
           </div>
         </aside>
-        <!-- The game module adds its compact touch controller after Begin. Keeping
-             this mount empty prevents the old six-button loadout from appearing
-             over the one-click loading screen on mobile. -->
-        <div class="mobile-move-pad" aria-label="Mobile game controller"></div>
+        <div class="mobile-move-pad" aria-label="Mobile movement and zoom controls">
+          <button class="mobile-control mobile-control-primary" type="button" data-mobile-hold="forward" aria-label="Move forward"><b>▲</b><span>Forward</span></button>
+          <button class="mobile-control mobile-control-side-right" type="button" data-mobile-hold="strafe-right" aria-label="Side right"><b>▶</b><span>Side right</span></button>
+          <button class="mobile-control mobile-control-avatar" type="button" data-mobile-action="avatar" aria-label="Select avatar"><b>👤</b><span>Avatar</span></button>
+          <button class="mobile-control mobile-control-environment" type="button" data-mobile-action="environment" aria-label="Select environment"><b>▤</b><span>Environment</span></button>
+          <button class="mobile-control mobile-control-zoom-toggle" type="button" data-mobile-zoom-toggle="out" aria-pressed="false" aria-label="Zoom out"><b>−</b><span>Zoom out</span></button>
+          <button class="mobile-control" type="button" data-mobile-hold="back" aria-label="Reverse"><b>▼</b><span>Reverse</span></button>
+          <button class="mobile-control mobile-control-jump" type="button" data-mobile-action="jump" aria-label="Jump"><b>⤴</b><span>Jump</span></button>
+        </div>
         <aside class="crib-social" id="crib-social" aria-label="Vibe Crib players and chat">
           <button class="crib-chat-toggle" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel"><span>💬 Chat</span><b id="crib-online-count">0 / 15</b></button>
           <section class="crib-chat-panel" id="crib-chat-panel" hidden>
@@ -140,8 +154,9 @@
         </section>
         <div class="house-bottom-controls" aria-label="Game controls">
           <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">▤</b><span>World</span></button>
-          <button class="house-bottom-control" id="crib-chat-dock-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel"><b aria-hidden="true">💬</b><span>Chat</span></button>
+          <button class="house-bottom-control" id="house-fullscreen" type="button"><b aria-hidden="true">⛶</b><span>Fullscreen</span></button>
           <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">👤</b><span>Avatar</span></button>
+          <button class="house-bottom-control house-bottom-control-begin" id="house-start-game" type="button"><b aria-hidden="true">◉</b><span>Begin</span></button>
           <small class="house-firefox-label">WebGL required</small>
           <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
         </div>
