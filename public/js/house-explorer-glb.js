@@ -22,12 +22,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const resetButton = document.querySelector('#house-reset')?.cloneNode(true); document.querySelector('#house-reset')?.replaceWith(resetButton);
   const fullscreenButton = document.querySelector('#house-fullscreen')?.cloneNode(true); document.querySelector('#house-fullscreen')?.replaceWith(fullscreenButton);
   const bottomControls = document.querySelector('.house-bottom-controls');
-  // This launch control lives in the page markup. script.js intentionally yields to
-  // this GLB explorer, so the GLB implementation must own the overlay's action too.
-  const gameStartButton = document.querySelector('[data-house-start]');
-  const dockStartButton = document.querySelector('.house-bottom-controls [data-house-start]');
-  const gameStartScreen = document.querySelector('#house-game-start');
-  const gameLoadStatus = document.querySelector('#house-game-load-status');
+  // The orange dock button is the only launch control. Once pressed, loading flows
+  // directly into the fully playable game without presenting another start screen.
+  const gameStartButton = document.querySelector('.house-bottom-controls [data-house-start]');
   const levelLoader = document.querySelector('#house-level-loader');
   const levelLoaderTitle = levelLoader?.querySelector('[data-level-loader-title]');
   const levelLoaderMessage = levelLoader?.querySelector('[data-level-loader-message]');
@@ -36,6 +33,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const levelLoaderScale = levelLoader?.querySelector('.house-level-loader__scale');
   const publishGameStage = (stageName, message) => document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-stage', { detail: { stage: stageName, message } }));
   let levelLoaderProgress = 0;
+  let gameLaunching = false;
   function updateLevelLoader(progress, message) {
     levelLoaderProgress = Math.max(levelLoaderProgress, Math.min(100, Math.round(progress)));
     if (message && levelLoaderMessage) levelLoaderMessage.textContent = message;
@@ -528,12 +526,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   async function startRadToxGame() {
     // The ES5 launcher disables Begin before it dispatches its start request.
     // Guard only against our own in-flight launch, otherwise that request is lost.
-    if (gameStartScreen?.classList.contains('is-loading')) return;
+    if (gameLaunching) return;
+    gameLaunching = true;
 
-    if (gameStartButton) gameStartButton.disabled = true;
-    gameStartScreen?.classList.add('is-loading');
-    gameStartButton.textContent = 'Loading…';
-    if (gameLoadStatus) gameLoadStatus.textContent = 'Loading level 1 toxins and the upper-floor ghost encounter…';
+    if (gameStartButton) {
+      gameStartButton.disabled = true;
+      gameStartButton.innerHTML = '<b aria-hidden="true">▶</b><span>Loading…</span>';
+    }
     publishGameStage('loading-game', 'Loading level 1 toxins and the upper-floor ghost encounter…');
 
     try {
@@ -549,16 +548,16 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       resetPlayer();
       await toxicBubbleSystem.begin();
       activateDockTools();
-      gameStartScreen?.classList.add('is-hidden');
       scheduleGameResize();
       setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
       publishGameStage('game-active', 'RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
     } catch (error) {
+      gameLaunching = false;
       const message = error?.message || 'Unable to load the MUZIKAZ house game.';
-      gameStartButton.disabled = false;
-      gameStartButton.textContent = 'Begin';
-      gameStartScreen?.classList.remove('is-loading');
-      if (gameLoadStatus) gameLoadStatus.textContent = message;
+      if (gameStartButton) {
+        gameStartButton.disabled = false;
+        gameStartButton.innerHTML = '<b aria-hidden="true">▶</b><span>Begin</span>';
+      }
       setStatus(message);
       document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { stage: 'RAD-TOX', message } }));
     }
