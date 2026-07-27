@@ -20,7 +20,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
   const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
   const resetButton = document.querySelector('#house-reset')?.cloneNode(true); document.querySelector('#house-reset')?.replaceWith(resetButton);
-  const fullscreenButton = document.querySelector('#house-fullscreen')?.cloneNode(true); document.querySelector('#house-fullscreen')?.replaceWith(fullscreenButton);
   const bottomControls = document.querySelector('.house-bottom-controls');
   // This launch control lives in the page markup. script.js intentionally yields to
   // this GLB explorer, so the GLB implementation must own the overlay's action too.
@@ -363,20 +362,17 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.querySelectorAll('[data-mobile-zoom-toggle]').forEach((oldButton) => { const button = oldButton.cloneNode(true); oldButton.replaceWith(button); let zoomHold = 0; const setDirection = (direction) => { button.dataset.mobileZoomToggle = direction; button.setAttribute('aria-pressed', String(direction === 'in')); button.querySelector('b').textContent = direction === 'in' ? '+' : '−'; button.querySelector('span').textContent = direction === 'in' ? 'Zoom in' : 'Zoom out'; button.setAttribute('aria-label', direction === 'in' ? 'Zoom in' : 'Zoom out'); }; const step = () => applyZoom(button.dataset.mobileZoomToggle === 'in' ? -1 : 1); const stop = () => { clearInterval(zoomHold); zoomHold = 0; button.classList.remove('is-active'); }; button.addEventListener('pointerdown', (e) => { e.preventDefault(); step(); button.classList.add('is-active'); zoomHold = window.setInterval(step, 120); }); button.addEventListener('pointerup', stop); button.addEventListener('pointercancel', stop); button.addEventListener('pointerleave', stop); button.addEventListener('dblclick', (e) => { e.preventDefault(); setDirection(button.dataset.mobileZoomToggle === 'in' ? 'out' : 'in'); setStatus(`${button.getAttribute('aria-label')} selected. Hold the zoom button to keep zooming.`); }); setDirection(button.dataset.mobileZoomToggle || 'out'); });
   function jump() { if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; setStatus('Jump activated.'); } }
   function shootAtReticle() { const shot = toxicBubbleSystem.handlePointerInteraction({}, { centre: true }); setStatus(shot ? 'Target hit.' : 'No toxic target at the reticle. Move or look, then shoot again.'); }
-  function setFullscreen() { if (document.fullscreenElement) { document.exitFullscreen?.(); return; } const request = stage.requestFullscreen?.(); if (request?.catch) request.catch(() => setStatus('Fullscreen is unavailable in this browser.')); else setStatus('Fullscreen is unavailable in this browser.'); }
   function setupThumbstick(name) { const stick = document.querySelector(`[data-thumbstick="${name}"] .thumbstick-base`); const knob = stick?.querySelector('.thumbstick-knob'); if (!stick || !knob) return; let pointerId = null; let startX = 0; let startY = 0; let moved = false; const write = (event) => { const rect = stick.getBoundingClientRect(); const radius = rect.width * .29; let x = THREE.MathUtils.clamp(event.clientX - (rect.left + rect.width / 2), -radius, radius); let y = THREE.MathUtils.clamp(event.clientY - (rect.top + rect.height / 2), -radius, radius); const length = Math.hypot(x, y); if (length > radius) { x = x / length * radius; y = y / length * radius; } knob.style.transform = `translate(${x}px, ${y}px)`; thumbInput[`${name}X`] = x / radius; thumbInput[`${name}Y`] = y / radius; moved ||= Math.hypot(event.clientX - startX, event.clientY - startY) > 8; };
     const release = (event) => { if (pointerId !== event.pointerId) return; if (!moved) { if (name === 'left') shootAtReticle(); else jump(); } pointerId = null; thumbInput[`${name}X`] = 0; thumbInput[`${name}Y`] = 0; knob.style.transform = 'translate(0, 0)'; stick.classList.remove('is-active'); };
     stick.addEventListener('pointerdown', (event) => { event.preventDefault(); pointerId = event.pointerId; startX = event.clientX; startY = event.clientY; moved = false; stick.setPointerCapture?.(pointerId); stick.classList.add('is-active'); write(event); }); stick.addEventListener('pointermove', (event) => { if (pointerId === event.pointerId) { event.preventDefault(); write(event); } }); stick.addEventListener('pointerup', release); stick.addEventListener('pointercancel', release);
   }
   setupThumbstick('left'); setupThumbstick('right');
-  fullscreenButton?.addEventListener('click', setFullscreen);
   document.querySelectorAll('[data-mobile-action]').forEach((oldButton) => {
     const button = oldButton.cloneNode(true);
     oldButton.replaceWith(button);
     button.addEventListener('click', (e) => {
       e.preventDefault();
       if (button.dataset.mobileAction === 'library') { library.classList.toggle('is-collapsed'); const firstControl = library.querySelector('select, button'); firstControl?.focus(); setStatus(library.classList.contains('is-collapsed') ? 'Avatar and environment list hidden.' : 'Avatar and environment list open.'); }
-      if (button.dataset.mobileAction === 'fullscreen') setFullscreen();
       if (button.dataset.mobileAction === 'begin-reset') { resetPlayer(); toxicBubbleSystem.begin(); setStatus('RAD-TOX begin or reset requested.'); }
     });
   });
