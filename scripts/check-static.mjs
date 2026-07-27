@@ -61,8 +61,8 @@ for (const removed2dFeature of ['startCompatibility', 'rad-tox-compat-game', 'da
 if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS')) {
   throw new Error('RAD-TOX launcher must recover if deployment stalls after the 3D scene loads.');
 }
-if (!launcher.includes("addEventListener('touchend',activate,true)") || !launcher.includes('now-lastActivation<700')) {
-  throw new Error('RAD-TOX launcher is missing the iOS touch activation fallback.');
+if (!launcher.includes('window.MUZIKAZ_RAD_TOX_LAUNCHER') || !launcher.includes('getState:function(){return state;}')) {
+  throw new Error('RAD-TOX launcher must expose its single shared launch API.');
 }
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
@@ -79,6 +79,10 @@ for (const requiredLiveFeature of ['MUZIKAZ_LIVE_PLAYERS', 'syncLiveAvatars', 'p
 const cribMultiplayer = await readFile('dist/public/js/crib-multiplayer.js', 'utf8');
 if (!cribMultiplayer.includes('avatarUrl: avatar.modelUrl') || !cribMultiplayer.includes('modelUrl: avatar.modelUrl')) {
   throw new Error('Crib presence must publish each designated GLB avatar URL.');
+}
+const cribGame = await readFile('dist/public/js/crib-game.js', 'utf8');
+if (!cribGame.includes('launcher.request()') || cribGame.includes('trigger.click()')) {
+  throw new Error('Shared multiplayer must start through the launcher API instead of an iOS-unsafe synthetic click.');
 }
 if (houseExplorer.includes('await this.initAudio()')) {
   throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');
