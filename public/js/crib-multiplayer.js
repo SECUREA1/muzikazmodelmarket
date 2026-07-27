@@ -63,8 +63,7 @@
     window.dispatchEvent(new CustomEvent('muzikaz-house-chat', { detail: item }));
   }
   async function heartbeat() {
-    const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null');
-    if (!avatar) throw new Error('Choose your designated avatar before joining the Crib.');
+    const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null') || { modelUrl: '/public/models/DAX.glb', displayName: 'DAX', animation: 'auto' };
     const response = await apiFetch('/api/houses/ioncore-house/presence', { method: 'POST', headers, body: JSON.stringify({ username, roomId: window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, avatarUrl: avatar.modelUrl, modelUrl: avatar.modelUrl, avatarName: avatar.displayName || avatar.name || 'Player avatar', position: window.MUZIKAZ_HOUSE_TRACKING?.position, rotation: window.MUZIKAZ_HOUSE_TRACKING?.rotation, movementState: window.MUZIKAZ_HOUSE_TRACKING?.movementState || 'idle', animationState: window.MUZIKAZ_HOUSE_TRACKING?.animationState || avatar.animation || 'auto', message: window.MUZIKAZ_HOUSE_TRACKING?.message }) });
     const data = await jsonResponse(response); joined = true; renderPresence(data); setStatus();
   }
@@ -79,7 +78,6 @@
   }
   async function beginPresence() {
     if (joined) return;
-    if (!window.MUZIKAZ_DESIGNATED_AVATAR && !localStorage.getItem('muzikazDesignatedAvatar')) await window.MUZIKAZ_AVATAR_GATE?.ensure?.();
     await heartbeat();
     openEvents();
     loadChat().catch(() => {});
