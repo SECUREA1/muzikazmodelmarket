@@ -2475,3 +2475,43 @@ section,
   .house-explorer-shell .house-bottom-control{min-height:52px;padding:5px 2px;border-radius:10px}
   .house-explorer-shell .house-firefox-label{display:none}
 }
+
+/* Focused mobile game screen. The desktop explorer remains a full publishing
+   workspace; phones get only the playable viewport, live chat and controls. */
+@media(max-width:760px){
+  .model-explorer-page{background:#071500}
+  .model-explorer-page>.topbar,
+  .model-explorer-page>.site-header,
+  .model-explorer-page>footer,
+  .model-explorer-page .house-explorer>.section-title,
+  .model-explorer-page main#home>.model-publisher,
+  .model-explorer-page main#home>.live-models-section{display:none!important}
+  .model-explorer-page main#home{display:block}
+  .model-explorer-page .house-explorer{padding:0!important}
+  .model-explorer-page .house-explorer-shell{width:100%!important;max-width:none!important;margin:0;gap:0!important;border-radius:0!important}
+  .model-explorer-page .house-explorer-shell>.house-stage{order:1;height:52dvh;min-height:330px;max-height:560px;border-radius:0}
+  .model-explorer-page .house-stage #house-explorer-canvas{min-height:100%;height:100%}
+
+  /* The chat replaces the old content block beneath the game and stays wide
+     enough for messages instead of collapsing into a one-line input. */
+  .model-explorer-page .house-explorer-shell>.crib-social{order:2;display:grid;grid-template-columns:1fr auto;grid-template-rows:minmax(76px,1fr) auto;gap:8px;min-height:150px;padding:10px 12px;border:1px solid rgba(156,255,0,.42);background:#020503}
+  .model-explorer-page .house-explorer-shell .crib-chat-feed{display:block;grid-column:1/-1;grid-row:1;width:100%;max-height:140px;margin:0;padding:4px 6px;overflow-y:auto}
+  .model-explorer-page .house-explorer-shell .crib-chat-toggle{grid-column:2;grid-row:2;width:auto;min-width:88px}
+  .model-explorer-page .house-explorer-shell .crib-chat-toggle span{font-size:0}
+  .model-explorer-page .house-explorer-shell .crib-chat-toggle span::after{content:"Players";font-size:11px}
+  .model-explorer-page .house-explorer-shell .crib-chat-bar{grid-column:1;grid-row:2;width:100%}
+  .model-explorer-page .house-explorer-shell .crib-chat-bar input{width:100%}
+
+  .model-explorer-page .house-explorer-shell>.mobile-move-pad{order:3!important;border-radius:0!important}
+  .model-explorer-page .house-explorer-shell>.house-bottom-controls{order:4!important;border-radius:0;padding-bottom:calc(7px + env(safe-area-inset-bottom))}
+  .model-explorer-page .mobile-move-pad.mobile-move-pad-glb{grid-template-areas:'left right' 'zoom zoom'!important;padding:10px 12px!important;gap:8px!important}
+  .model-explorer-page .mobile-zoom-controls{grid-area:zoom;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .model-explorer-page .mobile-zoom-controls button{min-height:42px!important;border-radius:12px!important;font-size:1rem!important}
+  .model-explorer-page .mobile-zoom-controls button span{display:inline;margin-left:5px;font-size:.65rem}
+}
+
+@media(max-width:390px){
+  .model-explorer-page .house-explorer-shell>.house-stage{height:49dvh;min-height:300px}
+  .model-explorer-page .house-explorer-shell>.crib-social{min-height:132px;grid-template-rows:minmax(58px,1fr) auto;padding:7px 8px}
+  .model-explorer-page .house-explorer-shell .crib-chat-feed{max-height:100px}
+}
