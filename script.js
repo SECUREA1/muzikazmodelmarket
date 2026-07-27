@@ -1302,21 +1302,10 @@ function initBottleLogin() {
   const form = document.querySelector('#bottle-login-form');
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
-  const sessionBar = document.querySelector('#member-session-bar');
-  const sessionEmail = document.querySelector('#member-session-email');
-  const accessLink = document.querySelector('.member-access-link');
-  const logout = document.querySelector('#bottle-logout');
   if (!form || !lockedContent) return;
   const unlock = async (message) => {
     if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
     lockedContent.dataset.locked = 'false';
-    document.body.classList.add('member-authenticated');
-    if (sessionBar) sessionBar.hidden = false;
-    if (sessionEmail) sessionEmail.textContent = currentMemberEmail;
-    if (accessLink) {
-      accessLink.href = '#member-creator-tools';
-      accessLink.textContent = 'Dashboard';
-    }
     if (status) status.textContent = message;
   };
   if (hasBottleLogin()) {
@@ -1338,12 +1327,7 @@ function initBottleLogin() {
       window.location.href = redirect;
       return;
     }
-    scrollToSection('member-creator-tools');
-  });
-  logout?.addEventListener('click', () => {
-    window.localStorage.removeItem('muzikazBottleMember');
-    window.localStorage.removeItem('muzikazBottleMemberEmail');
-    window.location.reload();
+    scrollToSection('member-locked-content');
   });
 }
 
