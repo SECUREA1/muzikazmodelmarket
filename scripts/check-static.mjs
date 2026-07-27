@@ -61,6 +61,9 @@ for (const removed2dFeature of ['startCompatibility', 'rad-tox-compat-game', 'da
 if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS')) {
   throw new Error('RAD-TOX launcher must recover if deployment stalls after the 3D scene loads.');
 }
+if (!launcher.includes("link.rel='modulepreload'") || !launcher.includes('showLoadingScreen()')) {
+  throw new Error('RAD-TOX must warm its module graph and change Begin directly into the loading screen.');
+}
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
@@ -76,6 +79,13 @@ for (const requiredLiveFeature of ['MUZIKAZ_LIVE_PLAYERS', 'syncLiveAvatars', 'p
 const cribMultiplayer = await readFile('dist/public/js/crib-multiplayer.js', 'utf8');
 if (!cribMultiplayer.includes('avatarUrl: avatar.modelUrl') || !cribMultiplayer.includes('modelUrl: avatar.modelUrl')) {
   throw new Error('Crib presence must publish each designated GLB avatar URL.');
+}
+if (!cribMultiplayer.includes("stage !== 'game-active'") || !cribMultiplayer.includes('if (!gameActive) return')) {
+  throw new Error('Crib multiplayer must join with the active game instead of competing with initial world loading.');
+}
+const memberGameHtml = await readFile('dist/model-explorer.html', 'utf8');
+if ((memberGameHtml.match(/data-house-start/g) || []).length !== 1 || memberGameHtml.includes('id="house-start-game"')) {
+  throw new Error('The member game must expose exactly one Begin action.');
 }
 if (houseExplorer.includes('await this.initAudio()')) {
   throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');

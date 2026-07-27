@@ -20,6 +20,7 @@
   const statuses = [...document.querySelectorAll('#crib-chat-status, #crib-dock-status')];
   const setStatus = (message = '') => statuses.forEach((node) => { node.textContent = message; });
   let joined = false;
+  let gameActive = document.documentElement.getAttribute('data-radtox-state') === 'game-active';
 
   const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username };
   const payload = (response) => response?.data ?? response;
@@ -65,8 +66,13 @@
     events.addEventListener('house-presence-updated', (event) => renderPresence(JSON.parse(event.data)));
     events.addEventListener('house-chat-message', (event) => addMessage(JSON.parse(event.data)));
   }
-  const beginPresence = () => heartbeat().catch((error) => { setStatus(error.message); toggle.disabled = true; });
+  const beginPresence = () => { if (!gameActive) return; heartbeat().catch((error) => { setStatus(error.message); toggle.disabled = true; }); };
+  document.addEventListener('muzikaz:rad-tox-app-update', (event) => {
+    if (event.detail?.stage !== 'game-active' || gameActive) return;
+    gameActive = true;
+    beginPresence();
+  });
   if (window.MUZIKAZ_DESIGNATED_AVATAR || localStorage.getItem('muzikazDesignatedAvatar')) beginPresence(); else window.addEventListener('muzikaz-avatar-ready', beginPresence, { once: true });
-  const timer = setInterval(() => { heartbeat().catch((error) => { setStatus(error.message); }); loadChat().catch(() => {}); }, 5_000);
+  const timer = setInterval(() => { if (!gameActive) return; heartbeat().catch((error) => { setStatus(error.message); }); loadChat().catch(() => {}); }, 5_000);
   window.addEventListener('pagehide', () => { clearInterval(timer); events?.close(); if (joined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
 })();
