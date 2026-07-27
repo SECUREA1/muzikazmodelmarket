@@ -73,6 +73,11 @@ const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'ut
 for (const requiredLiveFeature of ['MUZIKAZ_LIVE_PLAYERS', 'syncLiveAvatars', 'pollLiveAvatars', 'Live_player_label']) {
   if (!houseExplorer.includes(requiredLiveFeature)) throw new Error(`GLB House Explorer is missing live cross-device avatars/chat: ${requiredLiveFeature}`);
 }
+for (const requiredAvatarPlacementFeature of ['updateFullBodyCollider', 'full-body collider keeps the entire frame above the floor', 'turnAvatarTowardActivity', 'nearestPlayerPosition', 'movementTarget', 'frustumCulled = false']) {
+  if (!houseExplorer.includes(requiredAvatarPlacementFeature)) {
+    throw new Error(`GLB House Explorer is missing full-body avatar placement or facing behavior: ${requiredAvatarPlacementFeature}`);
+  }
+}
 const cribMultiplayer = await readFile('dist/public/js/crib-multiplayer.js', 'utf8');
 if (!cribMultiplayer.includes('avatarUrl: avatar.modelUrl') || !cribMultiplayer.includes('modelUrl: avatar.modelUrl')) {
   throw new Error('Crib presence must publish each designated GLB avatar URL.');
