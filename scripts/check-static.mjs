@@ -48,6 +48,15 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
 }
+for (const page of ['index.html', 'model-explorer.html']) {
+  const html = await readFile(`dist/${page}`, 'utf8');
+  if ((html.match(/data-house-start/g) || []).length !== 1) {
+    throw new Error(`${page} must expose exactly one Begin control for the game.`);
+  }
+  if (html.includes('id="house-start-game"')) {
+    throw new Error(`${page} must not expose a second game-start control.`);
+  }
+}
 
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
 if (!launcher.includes('muzikaz:rad-tox-app-update')) {
