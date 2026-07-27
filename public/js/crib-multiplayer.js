@@ -1,21 +1,6 @@
 (() => {
   const root = document.querySelector('#crib-social');
-  if (!root) return;
-  const toggles = [...document.querySelectorAll('#crib-chat-toggle, #crib-chat-dock-toggle')];
-  const toggle = document.querySelector('#crib-chat-toggle') || toggles[0];
-  const panel = document.querySelector('#crib-chat-panel');
-  function setChatOpen(open, focusToggle) {
-    panel.hidden = !open;
-    toggles.forEach((control) => control.setAttribute('aria-expanded', String(open)));
-    if (open) panel.querySelector('input')?.focus();
-    else focusToggle?.focus();
-  }
-  toggles.forEach((control) => control.addEventListener('click', () => setChatOpen(panel.hidden, control)));
-  panel.querySelector('[data-close-chat]').addEventListener('click', () => setChatOpen(false, toggle));
-  if (localStorage.getItem('muzikazBottleMember') !== 'true') {
-    panel.querySelector('#crib-chat-status').textContent = 'Bottle members can join live chat. Sign in to connect.';
-    return;
-  }
+  if (!root || localStorage.getItem('muzikazBottleMember') !== 'true') return;
   const apiClient = window.MUZIKAZ_API;
   if (!apiClient) throw new Error('The unified MUZIKAZ API client must load before multiplayer.');
   const apiUrl = apiClient.url;
@@ -26,6 +11,8 @@
   const email = localStorage.getItem('muzikazBottleMemberEmail') || 'Subscriber';
   const username = email.split('@')[0].slice(0, 28) || 'Subscriber';
   const color = `hsl(${[...sessionId].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 360} 85% 65%)`;
+  const toggle = document.querySelector('#crib-chat-toggle');
+  const panel = document.querySelector('#crib-chat-panel');
   const count = document.querySelector('#crib-online-count');
   const players = document.querySelector('#crib-player-list');
   const messageLists = [...document.querySelectorAll('#crib-chat-messages, #crib-dock-messages')];
@@ -33,7 +20,6 @@
   const statuses = [...document.querySelectorAll('#crib-chat-status, #crib-dock-status')];
   const setStatus = (message = '') => statuses.forEach((node) => { node.textContent = message; });
   let joined = false;
-  let startPromise = null;
 
   const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username };
   const payload = (response) => response?.data ?? response;
@@ -63,38 +49,24 @@
     window.dispatchEvent(new CustomEvent('muzikaz-house-chat', { detail: item }));
   }
   async function heartbeat() {
-    const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null') || { modelUrl: '/public/models/DAX.glb', displayName: 'DAX', animation: 'auto' };
+    const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null');
+    if (!avatar) throw new Error('Choose your designated avatar before joining the Crib.');
     const response = await apiFetch('/api/houses/ioncore-house/presence', { method: 'POST', headers, body: JSON.stringify({ username, roomId: window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, avatarUrl: avatar.modelUrl, modelUrl: avatar.modelUrl, avatarName: avatar.displayName || avatar.name || 'Player avatar', position: window.MUZIKAZ_HOUSE_TRACKING?.position, rotation: window.MUZIKAZ_HOUSE_TRACKING?.rotation, movementState: window.MUZIKAZ_HOUSE_TRACKING?.movementState || 'idle', animationState: window.MUZIKAZ_HOUSE_TRACKING?.animationState || avatar.animation || 'auto', message: window.MUZIKAZ_HOUSE_TRACKING?.message }) });
     const data = await jsonResponse(response); joined = true; renderPresence(data); setStatus();
   }
+  toggle.addEventListener('click', () => { panel.hidden = !panel.hidden; toggle.setAttribute('aria-expanded', String(!panel.hidden)); if (!panel.hidden) panel.querySelector('input')?.focus(); });
+  panel.querySelector('[data-close-chat]').addEventListener('click', () => { panel.hidden = true; toggle.setAttribute('aria-expanded', 'false'); toggle.focus(); });
   forms.forEach((form) => form.addEventListener('submit', async (event) => { event.preventDefault(); const input = form.querySelector('input'); const message = input.value.trim(); if (!message) return; input.disabled = true; try { const response = await apiFetch('/api/houses/ioncore-house/chat', { method: 'POST', headers, body: JSON.stringify({ message }) }); const data = await jsonResponse(response); document.querySelectorAll('#crib-chat-input, #crib-dock-input').forEach((field) => { field.value = ''; }); window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), message }; addMessage(data); setStatus(); } catch (error) { setStatus(error.message || 'Message could not be sent.'); } finally { input.disabled = false; input.focus(); } }));
   async function loadChat() { const response = await apiFetch('/api/houses/ioncore-house/chat', { headers, cache: 'no-store' }); const data = await jsonResponse(response); (data.messages || []).forEach(addMessage); }
+  loadChat().catch(() => {});
   let events;
-  function openEvents() {
-    if (events || !('EventSource' in window)) return;
+  if ('EventSource' in window) {
     events = new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`));
     events.addEventListener('house-presence-updated', (event) => renderPresence(JSON.parse(event.data)));
     events.addEventListener('house-chat-message', (event) => addMessage(JSON.parse(event.data)));
   }
-  async function beginPresence() {
-    if (joined) return;
-    await heartbeat();
-    openEvents();
-    loadChat().catch(() => {});
-  }
-  function start() {
-    if (!startPromise) {
-      startPromise = beginPresence().catch((error) => {
-        startPromise = null;
-        setStatus(error.message || 'Multiplayer will reconnect in the background.');
-        return null;
-      });
-    }
-    // Multiplayer must never hold the Begin flow. The world and RAD-TOX start
-    // immediately while presence and chat connect in parallel.
-    return Promise.resolve();
-  }
-  window.MUZIKAZ_CRIB_MULTIPLAYER = { start };
-  const timer = setInterval(() => { if (joined) { heartbeat().catch((error) => { setStatus(error.message); }); loadChat().catch(() => {}); } }, 5_000);
+  const beginPresence = () => heartbeat().catch((error) => { setStatus(error.message); toggle.disabled = true; });
+  if (window.MUZIKAZ_DESIGNATED_AVATAR || localStorage.getItem('muzikazDesignatedAvatar')) beginPresence(); else window.addEventListener('muzikaz-avatar-ready', beginPresence, { once: true });
+  const timer = setInterval(() => { heartbeat().catch((error) => { setStatus(error.message); }); loadChat().catch(() => {}); }, 5_000);
   window.addEventListener('pagehide', () => { clearInterval(timer); events?.close(); if (joined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
 })();

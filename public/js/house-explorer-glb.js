@@ -22,9 +22,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const resetButton = document.querySelector('#house-reset')?.cloneNode(true); document.querySelector('#house-reset')?.replaceWith(resetButton);
   const fullscreenButton = document.querySelector('#house-fullscreen')?.cloneNode(true); document.querySelector('#house-fullscreen')?.replaceWith(fullscreenButton);
   const bottomControls = document.querySelector('.house-bottom-controls');
-  // The orange dock button is the only launch control. Once pressed, loading flows
-  // directly into the fully playable game without presenting another start screen.
-  const gameStartButton = document.querySelector('.house-bottom-controls [data-house-start]');
+  // This launch control lives in the page markup. script.js intentionally yields to
+  // this GLB explorer, so the GLB implementation must own the overlay's action too.
+  const gameStartButton = document.querySelector('[data-house-start]');
+  const gameStartScreen = document.querySelector('#house-game-start');
+  const gameLoadStatus = document.querySelector('#house-game-load-status');
   const levelLoader = document.querySelector('#house-level-loader');
   const levelLoaderTitle = levelLoader?.querySelector('[data-level-loader-title]');
   const levelLoaderMessage = levelLoader?.querySelector('[data-level-loader-message]');
@@ -33,7 +35,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const levelLoaderScale = levelLoader?.querySelector('.house-level-loader__scale');
   const publishGameStage = (stageName, message) => document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-stage', { detail: { stage: stageName, message } }));
   let levelLoaderProgress = 0;
-  let gameLaunching = false;
   function updateLevelLoader(progress, message) {
     levelLoaderProgress = Math.max(levelLoaderProgress, Math.min(100, Math.round(progress)));
     if (message && levelLoaderMessage) levelLoaderMessage.textContent = message;
@@ -136,6 +137,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   stage.after(library);
   const loadingMeter = document.createElement('div'); loadingMeter.className = 'house-loading-meter'; loadingMeter.hidden = true; const loadingFill = document.createElement('span'); loadingMeter.append(loadingFill); stage.append(loadingMeter);
   const avatarMenu = document.createElement('div'); avatarMenu.className = 'glb-avatar-menu'; avatarMenu.hidden = true; avatarMenu.setAttribute('role', 'dialog'); avatarMenu.setAttribute('aria-label', 'Avatar transform menu'); stage.append(avatarMenu);
+  const walkButton = document.createElement('button'); walkButton.type = 'button'; walkButton.id = 'house-walk-mode'; walkButton.textContent = 'Start game'; walkButton.setAttribute('aria-pressed', 'false'); resetButton?.after(walkButton);
   const toxicHud = document.createElement('section'); toxicHud.className = 'rad-tox-hud'; toxicHud.setAttribute('aria-label', 'RAD-TOX game status'); toxicHud.innerHTML = '<button class="rad-tox-hud-row" type="button" data-rad-row="mission" data-rad-row-label="Mission" data-rad-row-toggle aria-label="Show mission details" aria-expanded="false"><span class="rad-tox-hud-row__content"><strong>☢ RAD-TOX <span data-rad-tox-state>STANDBY</span></strong><span data-rad-tox-environment>Environment: waiting</span></span><span class="rad-tox-row-toggle" aria-hidden="true">▾</span></button><button class="rad-tox-hud-row" type="button" data-rad-row="targets" data-rad-row-label="Targets & levels" data-rad-row-toggle aria-label="Show targets and levels details" aria-expanded="false"><span class="rad-tox-hud-row__content"><span data-rad-tox-count>Level 1 · Toxics: 0 · Score: 0 · 00:00</span></span><span class="rad-tox-row-toggle" aria-hidden="true">▾</span></button><button class="rad-tox-hud-row" type="button" data-rad-row="supplies" data-rad-row-label="Supplies" data-rad-row-toggle aria-label="Show supplies details" aria-expanded="false"><span class="rad-tox-hud-row__content"><span class="rad-tox-health">HP <i data-rad-tox-health-fill></i><b data-rad-tox-health>100</b></span><span data-rad-tox-ammo>Ammo: ∞</span><span data-rad-tox-spray>Spray: 24</span><span data-rad-tox-backpack>Pack: 0</span><span data-rad-tox-wallet>🐑 Wallet: 0</span></span><span class="rad-tox-row-toggle" aria-hidden="true">▾</span></button>'; stage.append(toxicHud);
   const rowStorageKey = 'muzikazRadToxHiddenRows'; const hiddenRows = new Set(JSON.parse(localStorage.getItem(rowStorageKey) || '[]')); const compactHud = () => matchMedia('(max-width:760px)').matches; const setHudRowVisibility = (row, hidden) => { row.classList.toggle('is-collapsed',hidden); const label=row.dataset.radRowLabel.toLowerCase(); row.setAttribute('aria-expanded',String(!hidden)); row.setAttribute('aria-label',`${hidden ? 'Show' : 'Hide'} ${label} details`); row.querySelector('.rad-tox-row-toggle').textContent=hidden?'▸':'▾'; }; const openHudList = (row) => { toxicHud.querySelectorAll('[data-rad-row]').forEach(item => { const open=item === row; if(open) setHudRowVisibility(item,false); item.classList.toggle('is-mobile-open',open); item.setAttribute('aria-expanded',String(open)); item.setAttribute('aria-label',`${open ? 'Hide' : 'Show'} ${item.dataset.radRowLabel.toLowerCase()} details`); }); }; toxicHud.querySelectorAll('[data-rad-row]').forEach(row=>setHudRowVisibility(row,hiddenRows.has(row.dataset.radRow))); toxicHud.addEventListener('click',event=>{const row=event.target.closest('[data-rad-row-toggle]'); if(!row)return; if(compactHud()){openHudList(row);return;} const hidden=!row.classList.contains('is-collapsed'); setHudRowVisibility(row,hidden); hidden ? hiddenRows.add(row.dataset.radRow) : hiddenRows.delete(row.dataset.radRow); localStorage.setItem(rowStorageKey,JSON.stringify([...hiddenRows]));});
   const sprayTools = document.createElement('section'); sprayTools.className = 'rad-tox-tools'; sprayTools.id = 'rad-tox-tools'; sprayTools.hidden = true; sprayTools.setAttribute('role', 'dialog'); sprayTools.setAttribute('aria-modal', 'false'); sprayTools.setAttribute('aria-label', 'RAD-TOX tools'); sprayTools.innerHTML = `<button class="rad-tox-tools-toggle" type="button" data-rad-tools-toggle aria-label="Close tools" aria-expanded="true">×</button><div class="rad-tox-tools__content"><button type="button" data-rad-tool="laser" aria-pressed="true">Laser</button><button type="button" data-rad-tool="spray" aria-pressed="false">Paint Gun</button><button type="button" data-rad-tool="bat" aria-pressed="false" title="Baseball bat ready — swing at close targets">Bat</button><button type="button" data-rad-pack-toggle aria-expanded="false" aria-controls="rad-tox-pack">Pack</button><span class="rad-tox-colors" aria-label="Spray paint color">${SPRAY_COLORS.map((color,index)=>`<button type="button" class="rad-tox-color" data-spray-color="${index}" style="--spray-color:#${color.hex.toString(16).padStart(6,'0')}" aria-label="${color.name}" aria-pressed="${index===0}"></button>`).join('')}</span></div>`; const toolsToggle=sprayTools.querySelector('[data-rad-tools-toggle]'); document.body.append(sprayTools);
@@ -254,16 +256,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const toxicBubbleSystem = new ToxicBubbleSystem({ scene, camera, canvas, loader: envLoader, getEnvironment: () => activeEnvironment, getPlayerPosition: () => playerRig.position.clone(), advanceEnvironment: () => loadNextEnvironment() });
   // Opening or closing the pack never changes the game state.
   const closeTools = () => { toxicBubbleSystem.closeInventory(); sprayTools.hidden=true; toolsToggle.setAttribute('aria-expanded','false'); document.querySelector('#house-tools')?.setAttribute('aria-expanded','false'); document.querySelector('#house-tools')?.focus(); }; const openTools = () => { syncToolsPortal(); sprayTools.hidden=false; toolsToggle.setAttribute('aria-expanded','true'); document.querySelector('#house-tools')?.setAttribute('aria-expanded','true'); sprayTools.querySelector('[data-rad-tool]')?.focus(); }; sprayTools.addEventListener('click',(event)=>{if(event.target.closest('[data-rad-tools-toggle]')){closeTools();return;}const tool=event.target.closest('[data-rad-tool]')?.dataset.radTool,color=event.target.closest('[data-spray-color]')?.dataset.sprayColor;if(event.target.closest('[data-rad-pack-toggle]'))toxicBubbleSystem.toggleInventory();if(tool)toxicBubbleSystem.setTool(tool);if(color!==undefined)toxicBubbleSystem.setSprayColor(Number(color));}); inventoryPack.addEventListener('click',(event)=>{if(event.target.closest('[data-rad-pack-close]'))toxicBubbleSystem.closeInventory();}); document.addEventListener('keydown',(event)=>{if(event.key!=='Escape')return;if(!inventoryPack.hidden){toxicBubbleSystem.closeInventory();return;}if(!sprayTools.hidden)closeTools();});
-  function activateDockTools() {
-    if (!dockStartButton) return;
-    dockStartButton.removeAttribute('data-house-start');
-    dockStartButton.removeAttribute('disabled');
-    dockStartButton.id = 'house-tools';
-    dockStartButton.setAttribute('aria-expanded', 'false');
-    dockStartButton.setAttribute('aria-controls', 'rad-tox-tools');
-    dockStartButton.innerHTML = '<b aria-hidden="true">🛠</b><span>Tools</span>';
-    dockStartButton.addEventListener('click', (event) => { event.preventDefault(); openTools(); setStatus('RAD-TOX tools open. Choose Laser, Paint Gun, Bat, Pack, or a paint color.'); });
-  }
   const keys = new Set(); const mobile = new Set(); const thumbInput = { leftX: 0, leftY: 0, rightX: 0, rightY: 0 }; const forward = new THREE.Vector3(); const right = new THREE.Vector3(); const move = new THREE.Vector3(); const teleportRay = new THREE.Raycaster();
   const XR_TELEPORT_OFFSET = new THREE.Vector3(0, FLOOR_ENTRY_OFFSET + .04, 0);
   const XR_TOOL_ORDER = Object.freeze(['laser', 'spray', 'bat']);
@@ -281,7 +273,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function updateLandingFrame(spawn) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); landingFrame.clear(); const ring = new THREE.Mesh(new THREE.RingGeometry(.52, .72, 48), new THREE.MeshBasicMaterial({ color: 0x9cff00, side: THREE.DoubleSide, transparent: true, opacity: .88 })); ring.rotation.x = -Math.PI / 2; ring.position.set(alignedSpawn.x, alignedSpawn.y + .018, alignedSpawn.z); const grid = new THREE.GridHelper(1.55, 4, 0x9cff00, 0x477400); grid.position.set(alignedSpawn.x, alignedSpawn.y + .022, alignedSpawn.z); grid.material.transparent = true; grid.material.opacity = .62; landingFrame.add(ring, grid); }
   function resetPlayer(spawn = player.spawn, rotationY = player.yaw) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); player.spawn.copy(alignedSpawn); player.velocity.set(0,0,0); player.yaw = rotationY || 0; player.pitch = 0; player.eyeHeight = player.height; player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.radius, alignedSpawn.z), new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.height, alignedSpawn.z), player.radius); playerRig.position.copy(alignedSpawn); playerRig.rotation.set(0, player.yaw, 0); camera.position.set(0, renderer.xr.isPresenting ? 0 : player.eyeHeight, 0); camera.rotation.set(0,0,0); updateLandingFrame(alignedSpawn); }
   async function loadNextEnvironment() { const worlds = registry.all(); if (!worlds.length) return; const scriptedWorld = registry.find(LEVEL_WORLD_IDS[toxicBubbleSystem.level]); const currentIndex = Math.max(0, worlds.findIndex((world) => world.id === activeEnvironment?.id)); const next = scriptedWorld || worlds[(currentIndex + 1) % worlds.length]; setStatus(`Environment clear — traveling to ${next.name}.`); await loadById(next.id); }
-  async function loadById(id, { fallback = true } = {}) { const env = registry.find(id) || registry.all()[0]; if (!env) return; const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); activeEnvironment = env; loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete GLB world…`); try { const result = await envLoader.load(env); if (!result) return; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; resetPlayer(result.spawn.position, result.spawn.rotationY || 0); setStatus(`Ready: ${env.name}. Starting RAD-TOX now…`); const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); await loadById(fallbackEnv.id, { fallback: false }); return; } if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); } }
+  async function loadById(id, { fallback = true } = {}) { const env = registry.find(id) || registry.all()[0]; if (!env) return; const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); activeEnvironment = env; loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete GLB world…`); try { const result = await envLoader.load(env); if (!result) return; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; resetPlayer(result.spawn.position, result.spawn.rotationY || 0); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. Press Start game or click the canvas to walk.`); const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); await loadById(fallbackEnv.id, { fallback: false }); return; } if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); } }
   let cachedAvatars = [];
   function syncEnvironmentSelect(worlds) { if (!environmentSelect) return; const selectedId = activeEnvironment?.id || environmentSelect.value || ''; environmentSelect.replaceChildren(...worlds.map((env) => new Option(env.name || env.id || 'House environment', env.id, false, env.id === selectedId))); environmentSelect.disabled = !worlds.length; }
   function renderPicker() { const worlds = registry.all(); syncEnvironmentSelect(worlds); const envOptions = worlds.map((env) => { const size = env.fileSize ? `${(env.fileSize / 1048576).toFixed(1)} MB` : 'repo GLB'; return `<option value="${env.id}" ${activeEnvironment?.id === env.id ? 'selected' : ''}>${env.name} · ${size}</option>`; }).join(''); const avatarOptions = cachedAvatars.map((avatar) => `<option value="${avatar.id}">${avatar.name} · ${avatar.owner}</option>`).join(''); library.innerHTML = `<div class="house-picker-title"><strong>GLB Select</strong><small>${worlds.length} worlds · ${cachedAvatars.length} avatars</small></div><div class="house-picker-row"><label class="house-picker-label">World<select data-world-select>${envOptions || '<option>No worlds found</option>'}</select></label><button type="button" data-load-world>Open</button></div><div class="house-picker-row"><label class="house-picker-label">Avatar<select data-avatar-select>${avatarOptions || '<option>No active GLB avatars</option>'}</select></label><button type="button" data-add-selected-avatar>Add</button></div>`; library.querySelector('[data-load-world]')?.addEventListener('click', () => { const id = library.querySelector('[data-world-select]')?.value; if (id) loadById(id); }); library.querySelector('[data-world-select]')?.addEventListener('change', (event) => loadById(event.target.value)); library.querySelector('[data-add-selected-avatar]')?.addEventListener('click', () => { const avatar = cachedAvatars.find(a => a.id === library.querySelector('[data-avatar-select]')?.value); if (avatar) { activeAvatar = avatar; addAvatarToScene(avatar).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); } }); }
@@ -390,12 +382,20 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function updatePlayer(delta) { player.yaw -= thumbInput.rightX * delta * 2.5 * RIGHT_THUMBSTICK_SENSITIVITY; player.pitch = THREE.MathUtils.clamp(player.pitch - thumbInput.rightY * delta * 1.9 * RIGHT_THUMBSTICK_SENSITIVITY, -1.25, 1.15); const input = getInput(); forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)); right.set(Math.cos(player.yaw),0,-Math.sin(player.yaw)); move.copy(forward).multiplyScalar(input.y).addScaledVector(right,input.x); if (move.lengthSq()) move.normalize().multiplyScalar(player.speed * delta); playerCollider.translate(move); if (!player.onGround) player.velocity.y -= 18 * delta; playerCollider.translate(new THREE.Vector3(0, player.velocity.y * delta, 0)); const collision = envLoader.octree.capsuleIntersect(playerCollider); player.onGround = false; if (collision) { player.onGround = collision.normal.y > 0; if (player.onGround) player.velocity.y = 0; playerCollider.translate(collision.normal.multiplyScalar(collision.depth)); } const base = playerCollider.end.clone(); base.y -= player.height; playerRig.position.copy(base); playerRig.rotation.y = player.yaw; if (!renderer.xr.isPresenting) { camera.position.set(0, player.eyeHeight, 0); camera.rotation.order = 'YXZ'; camera.rotation.set(player.pitch,0,0); } if (playerRig.position.y < (envLoader.bounds.min.y || -30) - 20) resetPlayer(); }
 
   window.addEventListener('keydown', (e) => { const key = e.key.toLowerCase(); keys.add(key); if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) e.preventDefault(); if (key === ' ') { e.preventDefault(); if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } } if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08); if (key === 'e') player.eyeHeight = Math.min(2.25, player.eyeHeight + .08); if (key === 'r') resetPlayer(); if (key === 'i') { e.preventDefault(); toxicBubbleSystem.toggleInventory(); } }); window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase())); window.addEventListener('blur', () => keys.clear());
+  const pointerLockSupported = Boolean(canvas.requestPointerLock);
+  document.addEventListener('pointerlockchange', () => {
+    const locked = document.pointerLockElement === canvas;
+    walkButton.textContent = locked ? 'Exit pointer lock' : (envLoader.world ? 'Start game' : 'Start game');
+    walkButton.setAttribute('aria-pressed', String(locked || !pointerLockSupported));
+  });
   document.addEventListener('mousemove', (e) => { if (document.pointerLockElement !== canvas) return; player.yaw -= e.movementX * .0025; player.pitch = THREE.MathUtils.clamp(player.pitch - e.movementY * .002, -1.25, 1.15); });
   scaleControl.querySelector('input').addEventListener('input', (e) => applySpaceScale(e.target.value)); scaleControl.querySelectorAll('[data-space-scale]').forEach((button) => button.addEventListener('click', () => applySpaceScale(currentSpaceScale + (button.dataset.spaceScale === 'up' ? .1 : -.1)))); viewControls.querySelectorAll('[data-zoom]').forEach((button) => button.addEventListener('click', () => applyZoom(button.dataset.zoom === 'in' ? -1 : 1))); syncZoomControls();
   environmentSelect?.addEventListener('change', (event) => { if (event.target.value) loadById(event.target.value); });
   canvas.addEventListener('dragover', (e) => { if (!activeAvatar && !e.dataTransfer?.types?.includes('application/x-muzikaz-avatar')) return; e.preventDefault(); stage.classList.add('is-avatar-drop-target'); }); canvas.addEventListener('dragleave', () => stage.classList.remove('is-avatar-drop-target')); canvas.addEventListener('drop', async (e) => { e.preventDefault(); stage.classList.remove('is-avatar-drop-target'); const avatars = window.MuzikazActiveHouseAvatars || []; const avatar = avatars.find(a => a.id === e.dataTransfer.getData('application/x-muzikaz-avatar')) || activeAvatar; if (avatar) addAvatarToScene(avatar, setAvatarPointerFromEvent(e)).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); });
   let toxicTap = null; let toxicConsumedClick = false;
   canvas.addEventListener('click', (event) => { if (!toxicConsumedClick) return; toxicConsumedClick=false; event.preventDefault(); event.stopImmediatePropagation(); }, true);
+  const toolsButton = document.querySelector('#house-tools');
+  toolsButton?.addEventListener('click', (event) => { event.preventDefault(); openTools(); setStatus('RAD-TOX tools open. Choose Laser, Paint Gun, Bat, Pack, or a paint color.'); });
   canvas.addEventListener('pointerdown', (event) => { if (document.pointerLockElement === canvas && event.button === 0) { toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
   canvas.addEventListener('pointerup', (event) => { if (!toxicTap || toxicTap.id !== event.pointerId) return; const moved=Math.hypot(event.clientX-toxicTap.x,event.clientY-toxicTap.y); if (!toxicTap.avatar && moved<=8) toxicConsumedClick=toxicBubbleSystem.handlePointerInteraction(event) || toxicConsumedClick; toxicTap=null; });
   canvas.addEventListener('pointercancel', () => { toxicTap=null; });
@@ -522,42 +522,41 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       houseMapPromise ||= loadById(startEnvironment).finally(() => { houseMapPromise = null; });
       await houseMapPromise;
     }
+    walkButton.textContent = 'Game active';
+    walkButton.setAttribute('aria-pressed', 'true');
   }
+  walkButton.addEventListener('click', () => {
+    if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
+    openHouseMap().catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
+  });
   async function startRadToxGame() {
     // The ES5 launcher disables Begin before it dispatches its start request.
     // Guard only against our own in-flight launch, otherwise that request is lost.
-    if (gameLaunching) return;
-    gameLaunching = true;
+    if (gameStartScreen?.classList.contains('is-loading')) return;
 
-    if (gameStartButton) {
-      gameStartButton.disabled = true;
-      gameStartButton.innerHTML = '<b aria-hidden="true">▶</b><span>Loading…</span>';
-    }
+    if (gameStartButton) gameStartButton.disabled = true;
+    gameStartScreen?.classList.add('is-loading');
+    gameStartButton.textContent = 'Loading…';
+    if (gameLoadStatus) gameLoadStatus.textContent = 'Loading level 1 toxins and the upper-floor ghost encounter…';
     publishGameStage('loading-game', 'Loading level 1 toxins and the upper-floor ghost encounter…');
 
     try {
       // A desktop launch should always open at the playable view, rather than
       // leaving the player at an arbitrary scrolled position behind the overlay.
       stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Presence and chat are optional enhancements. Start them without making
-      // the world or RAD-TOX wait for a slow or unavailable multiplayer API.
-      window.MUZIKAZ_CRIB_MULTIPLAYER?.start?.().catch((error) => {
-        console.warn('[MUZIKAZ Multiplayer]', 'Background connection failed', error);
-      });
       await openHouseMap();
       resetPlayer();
       await toxicBubbleSystem.begin();
-      activateDockTools();
+      gameStartScreen?.classList.add('is-hidden');
       scheduleGameResize();
       setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
       publishGameStage('game-active', 'RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
     } catch (error) {
-      gameLaunching = false;
       const message = error?.message || 'Unable to load the MUZIKAZ house game.';
-      if (gameStartButton) {
-        gameStartButton.disabled = false;
-        gameStartButton.innerHTML = '<b aria-hidden="true">▶</b><span>Begin</span>';
-      }
+      gameStartButton.disabled = false;
+      gameStartButton.textContent = 'Begin';
+      gameStartScreen?.classList.remove('is-loading');
+      if (gameLoadStatus) gameLoadStatus.textContent = message;
       setStatus(message);
       document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { stage: 'RAD-TOX', message } }));
     }

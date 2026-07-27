@@ -1302,14 +1302,10 @@ function initBottleLogin() {
   const form = document.querySelector('#bottle-login-form');
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
-  const activeAction = document.querySelector('#member-active-action');
-  const loginTitle = document.querySelector('#bottle-login-title');
   if (!form || !lockedContent) return;
-  const unlock = (message) => {
+  const unlock = async (message) => {
+    if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
     lockedContent.dataset.locked = 'false';
-    form.hidden = true;
-    if (activeAction) activeAction.hidden = false;
-    if (loginTitle) loginTitle.textContent = 'Your member access is active.';
     if (status) status.textContent = message;
   };
   if (hasBottleLogin()) {
@@ -1317,14 +1313,14 @@ function initBottleLogin() {
     unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`);
     renderOwnedCollection(currentMemberEmail);
   }
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(form);
     currentMemberEmail = normalizeMemberEmail(data.get('email'));
     window.localStorage.setItem('muzikazBottleMember', 'true');
     window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
     renderOwnedCollection(currentMemberEmail);
-    unlock(`${currentMemberEmail} is logged in. Continue directly to the Vibe Crib or use your unlocked member tools below.`);
+    await unlock(`${currentMemberEmail} is logged in. Your designated avatar and Drop Backpack are retained across visits.`);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
