@@ -532,7 +532,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
     if (gameStartButton) gameStartButton.disabled = true;
     gameStartScreen?.classList.add('is-loading');
-    gameStartButton.textContent = 'Loading…';
+    const gameStartLabel = gameStartButton?.querySelector('span');
+    if (gameStartLabel) gameStartLabel.textContent = 'Loading…';
+    else if (gameStartButton) gameStartButton.textContent = 'Loading…';
     if (gameLoadStatus) gameLoadStatus.textContent = 'Loading level 1 toxins and the upper-floor ghost encounter…';
     publishGameStage('loading-game', 'Loading level 1 toxins and the upper-floor ghost encounter…');
 
@@ -555,8 +557,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       publishGameStage('game-active', 'RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
     } catch (error) {
       const message = error?.message || 'Unable to load the MUZIKAZ house game.';
-      gameStartButton.disabled = false;
-      gameStartButton.textContent = 'Begin';
+      if (gameStartButton) gameStartButton.disabled = false;
+      if (gameStartLabel) gameStartLabel.textContent = 'Begin';
+      else if (gameStartButton) gameStartButton.textContent = 'Begin';
       gameStartScreen?.classList.remove('is-loading');
       if (gameLoadStatus) gameLoadStatus.textContent = message;
       setStatus(message);

@@ -91,7 +91,7 @@
                     <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
                     <a class="house-main-controls-button" href="#house-explorer-canvas">Main controls</a>
                     <div class="house-reticle" aria-hidden="true">+</div>
-                    <div class="house-status" id="house-status" role="status">Click Begin once to load RAD-TOX and start at the level 1 entrance.</div>
+                    <div class="house-status" id="house-status" role="status">Use the fourth control below to load RAD-TOX and start at the level 1 entrance.</div>
                     <section class="house-level-loader game-overlay" id="house-level-loader" hidden aria-live="polite" aria-label="Loading game level">
                         <div class="game-overlay__content">
                         <div class="house-level-loader__graphic" aria-hidden="true"><i></i><i></i><i></i><b>☢</b></div>
@@ -100,15 +100,6 @@
                         <p class="house-level-loader__message" data-level-loader-message>Loading your game…</p>
                         <div class="house-level-loader__scale" role="progressbar" aria-label="Level loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span data-level-loader-fill></span></div>
                         <strong data-level-loader-percent>0%</strong>
-                        </div>
-                    </section>
-                    <section class="house-game-start game-overlay" id="house-game-start" aria-labelledby="house-game-start-title">
-                        <div class="game-overlay__content">
-                        <p class="kicker">One-click game start</p>
-                        <h3 id="house-game-start-title">Click Begin. The game loads and starts.</h3>
-                        <p id="house-game-load-status" role="status">No login or second start is required.</p>
-                        <p class="house-firefox-note">RAD-TOX runs in browsers with WebGL support. Laser, Paint Gun, and Bat are ready in every level. Use the left controller trigger or tap/click to use the selected tool.</p>
-                        <button class="btn house-start-button" type="button" data-house-start>Begin</button>
                         </div>
                     </section>
                 </div>
@@ -140,6 +131,7 @@
                     <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">▤</b><span>World</span></button>
                     <button class="house-bottom-control" id="house-fullscreen" type="button"><b aria-hidden="true">⛶</b><span>Fullscreen</span></button>
                     <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">👤</b><span>Avatar</span></button>
+                    <button class="house-bottom-control house-bottom-control-begin" type="button" data-house-start aria-label="Begin RAD-TOX game"><b aria-hidden="true">☢</b><span>Begin</span></button>
                     <small class="house-firefox-label">WebGL required</small>
                     <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
                 </div>

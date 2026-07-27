@@ -9,7 +9,7 @@
   function log(message, detail) { if (window.console && console.info) console.info(PREFIX, message, detail || ''); }
   function status(message) { var nodes = [document.getElementById('house-status'), document.getElementById('house-game-load-status')]; for (var i=0;i<nodes.length;i+=1) if(nodes[i]) nodes[i].textContent=message; }
   function buttons() { return document.querySelectorAll('[data-house-start]'); }
-  function setButtons(disabled, label) { var controls=buttons(); for(var i=0;i<controls.length;i+=1){ controls[i].disabled=disabled; if(label) controls[i].textContent=label; } }
+  function setButtons(disabled, label) { var controls=buttons(); for(var i=0;i<controls.length;i+=1){ controls[i].disabled=disabled; if(label){var text=controls[i].querySelector('span');if(text)text.textContent=label;else controls[i].textContent=label;} } }
   function showLoading(show){var start=document.getElementById('house-game-start'),loader=document.getElementById('house-level-loader');if(start)start.classList.toggle('is-hidden',show);if(loader)loader.hidden=!show;}
   function publish(next, message) { document.dispatchEvent(makeEvent('muzikaz:rad-tox-app-update', { stage: next, message: message || '' })); }
   function setState(next, message) { state = next; document.documentElement.setAttribute('data-radtox-state', next); log('stage '+next); if(message) status(message); publish(next, message); }
