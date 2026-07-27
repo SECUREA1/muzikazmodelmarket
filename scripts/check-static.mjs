@@ -82,6 +82,9 @@ const cribMultiplayer = await readFile('dist/public/js/crib-multiplayer.js', 'ut
 if (!cribMultiplayer.includes('avatarUrl: avatar.modelUrl') || !cribMultiplayer.includes('modelUrl: avatar.modelUrl')) {
   throw new Error('Crib presence must publish each designated GLB avatar URL.');
 }
+if (!cribMultiplayer.includes("panel.hidden = false") || cribMultiplayer.includes('panel.hidden = !panel.hidden')) {
+  throw new Error('The game Chat control must only open the panel; its close button owns closing.');
+}
 if (houseExplorer.includes('await this.initAudio()')) {
   throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');
 }
