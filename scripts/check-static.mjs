@@ -50,11 +50,18 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
 }
 for (const page of ['index.html', 'model-explorer.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
-  if ((html.match(/data-house-start/g) || []).length !== 2) {
-    throw new Error(`${page} must expose matching overlay and fourth-dock Begin controls for the game.`);
+  if ((html.match(/data-house-start/g) || []).length !== 1) {
+    throw new Error(`${page} must expose exactly one Begin control in the launch overlay.`);
   }
   if (html.includes('id="house-start-game"')) {
     throw new Error(`${page} must not expose a second game-start control.`);
+  }
+}
+
+const launchScreenHtml = await readFile('dist/model-explorer.html', 'utf8');
+for (const removedMobileControl of ['data-mobile-hold="strafe-right"', 'data-mobile-action="avatar"', 'data-mobile-action="environment"', 'data-mobile-zoom-toggle', 'data-mobile-hold="back"', 'data-mobile-action="jump"']) {
+  if (launchScreenHtml.includes(removedMobileControl)) {
+    throw new Error(`model-explorer.html must not render the legacy pre-game mobile control: ${removedMobileControl}`);
   }
 }
 
@@ -72,6 +79,9 @@ if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEP
 }
 if (!launcher.includes('showLoading(true)') || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS = 120000')) {
   throw new Error('RAD-TOX must show its loading screen immediately and allow mobile assets time to load.');
+}
+if (launcher.includes('data-radtox-retry') || launcher.includes('Retry 3D Game')) {
+  throw new Error('RAD-TOX must not replace the standard loading flow with a retry screen.');
 }
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
