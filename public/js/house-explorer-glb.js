@@ -594,4 +594,24 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     // Keep decoding on the player's Begin action. Background GLB decoding can
     // monopolize memory on mobile browsers before the visitor is ready to play.
   }
+  window.MUZIKAZ_HOUSE_ENGINE = {
+    destroy() {
+      renderer.setAnimationLoop(null);
+      window.clearInterval(livePollTimer);
+      visibilityObserver?.disconnect();
+      liveAvatarRoots.forEach(disposeLiveRoot);
+      liveAvatarRoots.clear();
+      envLoader.clear?.();
+      scene.traverse((object) => {
+        object.geometry?.dispose?.();
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        materials.filter(Boolean).forEach((material) => { Object.values(material).forEach((value) => value?.isTexture && value.dispose()); material.dispose?.(); });
+      });
+      renderer.dispose();
+      renderer.forceContextLoss?.();
+      renderer.domElement?.remove();
+      window.MUZIKAZ_HOUSE_ENGINE = null;
+    }
+  };
+
 }

@@ -63,7 +63,11 @@
                     <button type="submit">Continue</button>
                 </form>
                 <p class="status-message" id="bottle-login-status" role="status">Preview access: enter any email address and passcode to open the subscriber tools.</p>
+                <button class="btn" id="members-game-begin" type="button" hidden>Begin</button>
             </div>
+        </section>
+        <section id="members-game-shell" class="members-game-shell" hidden aria-label="Member Vibe Crib game">
+            <div id="members-game-container" class="crib-game-host"></div>
         </section>
         <section class="section-block member-benefits" aria-labelledby="member-benefits-title">
             <div class="section-title"><span></span><h2 id="member-benefits-title">What subscribers get</h2><span></span></div>
@@ -305,6 +309,7 @@
     <script src="public/js/api-connection.js"></script>
     <script src="public/js/avatar-selection.js"></script>
     <script src="script.js"></script>
+    <script type="module" src="public/js/members-crib-launch.js"></script>
   <script src="battle-theme.js"></script>
 </body>
 </html>
