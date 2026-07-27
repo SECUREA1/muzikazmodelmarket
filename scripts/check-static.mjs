@@ -43,7 +43,7 @@ if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
   throw new Error('index.html must load the RAD-TOX 3D launcher.');
 }
 
-for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'loads the game to 100%']) {
+for (const requiredGameMarkup of ['id="house-level-loader"', 'data-house-start', 'WebGL required']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
@@ -51,13 +51,13 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
 for (const page of ['index.html', 'model-explorer.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
   if ((html.match(/data-house-start/g) || []).length !== 1) {
-    throw new Error(`${page} must expose exactly one Begin control in the launch overlay.`);
+    throw new Error(`${page} must expose only the orange dock Begin control.`);
   }
   if (!/<section class="house-game-start[\s\S]*?data-house-start[\s\S]*?<\/section>/.test(html)) {
     throw new Error(`${page} must keep its only Begin control in the launch overlay.`);
   }
-  if (html.includes('id="house-start-game"')) {
-    throw new Error(`${page} must not expose a second game-start control.`);
+  if (html.includes('id="house-start-game"') || html.includes('id="house-game-start"')) {
+    throw new Error(`${page} must not expose an on-screen game-start overlay.`);
   }
 }
 
