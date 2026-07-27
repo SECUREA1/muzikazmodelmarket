@@ -2081,33 +2081,6 @@ section,
 
 .crib-social{position:absolute;z-index:35;right:14px;bottom:96px}.crib-chat-toggle{display:flex;gap:12px;align-items:center;padding:10px 14px;border:1px solid #dfff70;border-radius:999px;background:rgba(3,10,5,.94);color:#fff;box-shadow:0 0 22px rgba(156,255,0,.25)}.crib-chat-toggle b{color:var(--lime)}.crib-chat-panel{position:absolute;right:0;bottom:52px;width:min(360px,calc(100vw - 28px));overflow:hidden;border:1px solid rgba(156,255,0,.55);border-radius:18px;background:rgba(2,8,5,.97);box-shadow:0 18px 60px #000}.crib-chat-panel header{display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid rgba(156,255,0,.25)}.crib-chat-panel header div{display:grid}.crib-chat-panel header small{color:#aab5ad;text-transform:none}.crib-chat-panel header button{padding:4px 10px}.crib-player-list{display:flex;gap:6px;overflow-x:auto;padding:10px}.crib-player-list span{flex:none;padding:5px 9px;border:1px solid var(--player-color);border-radius:999px;color:#fff;font-size:11px}.crib-player-list span:before{content:'•';margin-right:5px;color:var(--player-color)}.crib-chat-messages{height:190px;margin:0;padding:8px 14px;overflow-y:auto;list-style:none}.crib-chat-messages li{display:grid;grid-template-columns:auto 1fr;gap:8px;margin:7px 0;color:#fff;font-size:13px;text-transform:none}.crib-chat-messages strong{color:var(--lime)}#crib-chat-form{display:flex;gap:7px;padding:10px;border-top:1px solid rgba(156,255,0,.22)}#crib-chat-form input{min-width:0;flex:1}#crib-chat-form button{padding:9px 12px}#crib-chat-status{min-height:16px;margin:0;padding:0 12px 8px;color:#ffd45c;font-size:11px;text-transform:none}@media(max-width:620px){.crib-social{right:max(8px,env(safe-area-inset-right));bottom:max(72px,calc(60px + env(safe-area-inset-bottom)))}.crib-chat-panel{position:fixed;inset:auto max(7px,env(safe-area-inset-right)) max(76px,calc(64px + env(safe-area-inset-bottom))) max(7px,env(safe-area-inset-left));width:auto;max-height:min(70svh,560px);display:flex;flex-direction:column}.crib-chat-panel[hidden]{display:none}.crib-chat-messages{min-height:96px;height:auto;flex:1}#crib-chat-form input{font-size:16px}}
 
-/* The quick-chat dock stays in game flow while the complete chat remains a
-   floating popover. Both surfaces share the same live messages and composer. */
-.house-explorer-shell>.crib-chat-dock{
-  position:relative;
-  z-index:5;
-  flex:0 0 auto;
-  display:grid;
-  grid-template-columns:130px minmax(0,1fr) minmax(250px,38%);
-  align-items:stretch;
-  min-width:0;
-  border-top:1px solid rgba(156,255,0,.45);
-  background:#030806;
-}
-.crib-chat-dock__label{display:flex;flex-direction:column;justify-content:center;padding:8px 12px;border-right:1px solid rgba(156,255,0,.22);color:#fff}
-.crib-chat-dock__label strong{color:var(--lime);font-size:12px}.crib-chat-dock__label small{color:#aab5ad;font-size:10px;text-transform:none}
-.house-explorer-shell .crib-chat-dock__messages{height:58px;min-height:0;padding:5px 10px;border-right:1px solid rgba(156,255,0,.18)}
-.house-explorer-shell .crib-chat-dock__messages li{margin:3px 0}
-#crib-dock-form{display:flex;align-items:center;gap:7px;padding:8px}
-#crib-dock-form input{min-width:0;flex:1}#crib-dock-form button{padding:9px 12px}
-#crib-dock-status{position:absolute;right:8px;bottom:1px;min-height:12px;margin:0;color:#ffd45c;font-size:10px;text-transform:none}
-@media(max-width:700px){
-  .house-explorer-shell>.crib-chat-dock{grid-template-columns:78px minmax(0,1fr)}
-  .crib-chat-dock__label{padding:6px}.crib-chat-dock__label strong{font-size:10px}
-  .house-explorer-shell .crib-chat-dock__messages{grid-column:2;height:42px;border-right:0;border-bottom:1px solid rgba(156,255,0,.18)}
-  #crib-dock-form{grid-column:1/-1;padding:5px}#crib-dock-form input{font-size:16px}
-}
-
 /* RAD-TOX is one bounded viewport: stage, overlays, HUD and touch docks never
    escape this box. Old flexbox declarations intentionally precede modern ones. */
 .house-explorer-shell{
@@ -2280,29 +2253,6 @@ section,
 @supports(padding-bottom:env(safe-area-inset-bottom)){
   .house-explorer-shell>.house-bottom-controls,.house-explorer-shell>.mobile-move-pad{padding-bottom:env(safe-area-inset-bottom)}
 }
-
-/* Environment/house query URLs are shareable game invitations. Present only
-   the game canvas and one clear opt-in action rather than the editor chrome. */
-.shared-game-link body.model-explorer-page{margin:0;overflow:hidden;background:#020403}
-.shared-game-link .model-explorer-page>.topbar,
-.shared-game-link .model-explorer-page>.site-header,
-.shared-game-link .model-explorer-page>footer,
-.shared-game-link .model-explorer-page main#home>.section-block:not(.house-explorer),
-.shared-game-link .house-explorer>.section-title,
-.shared-game-link .house-bottom-controls,
-.shared-game-link .mobile-move-pad,
-.shared-game-link .house-hud,
-.shared-game-link .house-status,
-.shared-game-link #house-game-load-status,
-.shared-game-link .house-firefox-note{display:none!important}
-.shared-game-link .model-explorer-page main#home,
-.shared-game-link .house-explorer{width:100%;height:100vh;height:100svh;min-height:0;margin:0;padding:0}
-.shared-game-link .house-explorer-shell{width:100%;height:100%;max-width:none;max-height:none;min-height:0;border:0;border-radius:0}
-.shared-game-link .house-explorer-shell>.house-stage{border-radius:0}
-.shared-game-link .house-game-start{background:radial-gradient(circle at 50% 46%,rgba(98,255,0,.17),#020403 62%)}
-.shared-game-link .house-game-start .game-overlay__content{gap:20px}
-.shared-game-link .house-game-start h3{font-size:clamp(48px,10vw,88px)}
-.shared-game-link .house-start-button{width:min(320px,82vw);min-height:60px;font-size:20px}
 /* Server-authenticated administrator access */
 .admin-login-card{width:min(620px,96%);margin:0 auto;padding:28px;border:1px solid var(--lime);border-radius:20px;background:linear-gradient(145deg,rgba(7,10,7,.96),rgba(0,0,0,.9));box-shadow:0 0 32px rgba(156,255,0,.14)}
 .asset-command-center[hidden]{display:none!important}
@@ -2397,13 +2347,3 @@ section,
 }
 /* Mandatory Bottle Vault avatar gate. */
 .avatar-selection-required{overflow:hidden}.avatar-selection-gate{position:fixed;inset:0;z-index:10000;overflow:auto;padding:clamp(12px,3vw,40px);background:radial-gradient(circle at 50% 0,rgba(156,255,0,.2),transparent 38%),rgba(0,0,0,.97);color:#fff}.avatar-selection-gate[hidden]{display:none}.avatar-selection-panel{width:min(1180px,100%);min-height:calc(100vh - 80px);margin:auto;display:flex;flex-direction:column;gap:18px}.avatar-selection-panel header{text-align:center;max-width:780px;margin:auto}.avatar-selection-panel h2{margin:0;color:var(--lime,#9cff00);font:clamp(42px,7vw,82px)/.95 Bangers,cursive}.avatar-selection-panel header p{line-height:1.5}.avatar-selection-status{padding:12px;text-align:center;border:1px solid rgba(156,255,0,.35);border-radius:12px;background:#080d05}.avatar-selection-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.avatar-option{overflow:hidden;border:2px solid #26321b;border-radius:18px;background:#090b08;transition:.2s}.avatar-option.is-selected{border-color:var(--lime,#9cff00);box-shadow:0 0 30px rgba(156,255,0,.3);transform:translateY(-3px)}.avatar-option model-viewer,.avatar-model-error{display:grid;width:100%;height:280px;place-items:center;background:radial-gradient(circle,#233318,#030503);color:#ff8b9c;text-align:center;padding:18px}.avatar-model-poster,.avatar-model-loading{padding:10px;border-radius:999px;background:rgba(0,0,0,.8);color:var(--lime,#9cff00)}.avatar-option-copy{padding:16px}.avatar-option-copy>span{color:var(--lime,#9cff00);font-size:.72rem;font-weight:900;text-transform:uppercase}.avatar-option-copy h3{margin:7px 0 2px;font:30px Bangers,cursive}.avatar-option-copy p{min-height:1.5em;margin:0 0 12px;color:#aeb6aa}.avatar-option-copy button,.avatar-selection-panel footer button{width:100%;padding:12px;border:0;border-radius:999px;background:var(--lime,#9cff00);font-weight:900}.avatar-selection-panel footer{position:sticky;bottom:0;display:grid;grid-template-columns:1fr minmax(190px,320px);gap:18px;align-items:center;padding:16px;border:1px solid #405526;border-radius:16px;background:rgba(4,7,3,.96)}.avatar-selection-panel button:disabled{cursor:not-allowed;filter:grayscale(1);opacity:.45}@media(max-width:600px){.avatar-selection-gate{padding:10px}.avatar-selection-panel{min-height:100vh}.avatar-selection-grid{grid-template-columns:1fr 1fr;gap:9px}.avatar-option model-viewer,.avatar-model-error{height:190px}.avatar-option-copy{padding:10px}.avatar-selection-panel footer{grid-template-columns:1fr}.avatar-selection-panel footer strong{text-align:center}}
-
-/* Shared, in-page Crib runtime. Members never navigate away for game launch. */
-.crib-game-host:empty { display: none; }
-.members-game-shell:not([hidden]) { min-height: 100vh; background: #030604; padding: 1rem 0; }
-.members-game-shell .house-explorer { min-height: 100vh; }
-.members-game-shell .house-explorer-shell { margin-inline: auto; }
-.members-page.crib-game-active > .topbar,
-.members-page.crib-game-active > .site-header,
-.members-page.crib-game-active > footer,
-.members-page.crib-game-active main > :not(.members-game-shell) { display: none; }

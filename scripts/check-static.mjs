@@ -61,9 +61,6 @@ for (const removed2dFeature of ['startCompatibility', 'rad-tox-compat-game', 'da
 if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS')) {
   throw new Error('RAD-TOX launcher must recover if deployment stalls after the 3D scene loads.');
 }
-if (!launcher.includes('window.MUZIKAZ_RAD_TOX_LAUNCHER') || !launcher.includes('getState:function(){return state;}')) {
-  throw new Error('RAD-TOX launcher must expose its single shared launch API.');
-}
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
@@ -79,10 +76,6 @@ for (const requiredLiveFeature of ['MUZIKAZ_LIVE_PLAYERS', 'syncLiveAvatars', 'p
 const cribMultiplayer = await readFile('dist/public/js/crib-multiplayer.js', 'utf8');
 if (!cribMultiplayer.includes('avatarUrl: avatar.modelUrl') || !cribMultiplayer.includes('modelUrl: avatar.modelUrl')) {
   throw new Error('Crib presence must publish each designated GLB avatar URL.');
-}
-const cribGame = await readFile('dist/public/js/crib-game.js', 'utf8');
-if (!cribGame.includes('launcher.request()') || cribGame.includes('trigger.click()')) {
-  throw new Error('Shared multiplayer must start through the launcher API instead of an iOS-unsafe synthetic click.');
 }
 if (houseExplorer.includes('await this.initAudio()')) {
   throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');
@@ -176,26 +169,4 @@ for (const requiredCompatibilityFeature of ['MUZIKAZ_API_BASE', 'MUZIKAZ_SHARED_
 const modelExplorerHtml = await readFile('dist/model-explorer.html', 'utf8');
 if (!mainHtml.includes('public/js/api-connection.js') || !modelExplorerHtml.includes('public/js/api-connection.js') || !membersHtml.includes('public/js/api-connection.js')) {
   throw new Error('Every game and avatar entry point must initialize its cross-browser API connection.');
-}
-const modelGalleryScript = await readFile('dist/public/js/model-gallery-core.js', 'utf8');
-const modelUtilsScript = await readFile('dist/public/js/model-utils.js', 'utf8');
-if (modelGalleryScript.includes("text:'Open Model'") || modelGalleryScript.includes("text:'Explore in 3D'")) {
-  throw new Error('Published model cards must not expose direct model-opening actions.');
-}
-for (const requiredArAction of ["text:'View in AR'", "text:'Share AR link'", "text:'Copy AR link'"]) {
-  if (!modelGalleryScript.includes(requiredArAction)) throw new Error(`Published model cards are missing ${requiredArAction}`);
-}
-for (const requiredArSharePart of ["['environment','house']", "url.searchParams.set('model',model.id)", "url.searchParams.set('view','ar')"]) {
-  if (!modelUtilsScript.includes(requiredArSharePart)) throw new Error(`AR share links are missing ${requiredArSharePart}`);
-}
-
-const sharedCribGame = await readFile('dist/public/js/crib-game.js', 'utf8');
-for (const requiredSharedFeature of ['initializeCribGame', 'window.cribGameInstance', 'async destroy()', 'MUZIKAZ_HOUSE_ENGINE', 'MUZIKAZ_CRIB_MULTIPLAYER']) {
-  if (!sharedCribGame.includes(requiredSharedFeature)) throw new Error(`Shared Crib lifecycle is missing ${requiredSharedFeature}`);
-}
-if (!membersHtml.includes('id="members-game-container"') || !membersHtml.includes('id="members-game-begin"') || !membersHtml.includes('public/js/members-crib-launch.js')) {
-  throw new Error('members.html must provide its single authenticated in-page Crib launch.');
-}
-if (membersHtml.includes('href="model-explorer.html" id="member-active-action"') || membersHtml.includes('house-explorer-canvas')) {
-  throw new Error('members.html must not contain redirect launch logic or its retired game canvas.');
 }

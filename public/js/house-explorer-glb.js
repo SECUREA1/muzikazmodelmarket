@@ -302,52 +302,20 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function setAvatarPointerFromEvent(event) { const rect = canvas.getBoundingClientRect(); avatarPointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1; avatarPointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1; avatarRaycaster.setFromCamera(avatarPointer, camera); return avatarRaycaster.intersectObjects(envLoader.meshes, true)[0]?.point || playerRig.position.clone().add(forward.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).multiplyScalar(2)); }
   function floorPointAt(point) { const bounds = envLoader.bounds; const rayOriginY = Number.isFinite(bounds.max.y) ? bounds.max.y + player.height + 8 : point.y + player.height + 8; avatarRaycaster.set(new THREE.Vector3(point.x, rayOriginY, point.z), new THREE.Vector3(0, -1, 0)); return avatarRaycaster.intersectObjects(envLoader.meshes, true).find((item) => item.object.visible !== false)?.point || point; }
   function floorPointFromPointer(event) { return setAvatarPointerFromEvent(event).clone(); }
-  function avatarVisualBounds(root) {
-    root.updateMatrixWorld(true);
-    const collider = root.getObjectByName('Avatar_collider');
-    const label = root.getObjectByName('Live_player_label');
-    const colliderVisible = collider?.visible;
-    const labelVisible = label?.visible;
-    if (collider) collider.visible = false;
-    if (label) label.visible = false;
-    const bounds = new THREE.Box3().setFromObject(root);
-    if (collider) collider.visible = colliderVisible;
-    if (label) label.visible = labelVisible;
-    return bounds;
-  }
-  function addAvatarCollider(root) {
-    root.getObjectByName('Avatar_collider')?.removeFromParent();
-    const bounds = avatarVisualBounds(root);
-    const worldSize = bounds.getSize(new THREE.Vector3());
-    const worldCenter = bounds.getCenter(new THREE.Vector3());
-    const localCenter = root.worldToLocal(worldCenter.clone());
-    const localSize = worldSize.divide(root.getWorldScale(new THREE.Vector3())).max(new THREE.Vector3(.01, .01, .01));
-    const collider = new THREE.Mesh(
-      new THREE.BoxGeometry(localSize.x, localSize.y, localSize.z),
-      new THREE.MeshBasicMaterial({ transparent:true, opacity:0, depthWrite:false })
-    );
-    collider.name = 'Avatar_collider';
-    collider.position.copy(localCenter);
-    collider.userData.avatarCollider = true;
-    collider.userData.bounds = { width:worldSize.x, height:worldSize.y, depth:worldSize.z };
-    root.add(collider);
-    root.userData.avatarCollider = collider;
-    return bounds;
-  }
-  function liftObjectAboveFloor(root, floorPoint = root.position) { const box = avatarVisualBounds(root); const floorY = floorPoint.y + FLOOR_ENTRY_OFFSET; root.position.y += floorY - box.min.y; root.userData.floorLiftOffset = root.position.y - floorPoint.y; }
+  function liftObjectAboveFloor(root, floorPoint = root.position) { root.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(root); const floorY = floorPoint.y + FLOOR_ENTRY_OFFSET; root.position.y += floorY - box.min.y; root.userData.floorLiftOffset = root.position.y - floorPoint.y; }
   function closeAvatarMenu() { avatarMenu.hidden = true; avatarMenu.replaceChildren(); }
   function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char])); }
   function avatarDisplayName(root) { const id = root?.userData?.avatar?.id || root?.name?.replace(/^Avatar_/, '') || 'avatar'; return root?.userData?.avatar?.name || id; }
-  function openAvatarMenu(root) { if (!root) return; avatarMenu.innerHTML = `<strong>${escapeHtml(avatarDisplayName(root))}</strong><small>Double-clicked avatar menu. Use these controls to size, rotate, raise, lower, or remove this GLB avatar.</small><div class="glb-avatar-menu-grid"><button type="button" data-avatar-action="scale" data-amount="0.1">Bigger</button><button type="button" data-avatar-action="scale" data-amount="-0.1">Smaller</button><button type="button" data-avatar-action="rotate" data-amount="-0.2">Rotate Left</button><button type="button" data-avatar-action="rotate" data-amount="0.2">Rotate Right</button><button type="button" data-avatar-action="height" data-amount="0.12">Raise</button><button type="button" data-avatar-action="height" data-amount="-0.12">Lower</button></div><button type="button" class="secondary" data-avatar-action="remove">Remove avatar</button><button type="button" class="secondary" data-avatar-action="close">Close menu</button>`; avatarMenu.hidden = false; avatarMenu.onclick = (event) => { const button = event.target.closest('button[data-avatar-action]'); if (!button) return; const amount = Number(button.dataset.amount) || 0; if (button.dataset.avatarAction === 'scale') { const floorPoint = root.position.clone(); floorPoint.y -= root.userData.floorLiftOffset ?? FLOOR_ENTRY_OFFSET; root.scale.multiplyScalar(THREE.MathUtils.clamp(1 + amount, .1, 3)); liftObjectAboveFloor(root, floorPoint); addAvatarCollider(root); } if (button.dataset.avatarAction === 'rotate') root.rotation.y += amount; if (button.dataset.avatarAction === 'height') { root.position.y += amount; root.userData.floorLiftOffset = (root.userData.floorLiftOffset || FLOOR_ENTRY_OFFSET) + amount; } if (button.dataset.avatarAction === 'remove') { placedAvatars.remove(root); closeAvatarMenu(); } if (button.dataset.avatarAction === 'close') closeAvatarMenu(); }; setStatus(`${avatarDisplayName(root)} menu open. Adjust it or close the menu to keep walking.`); }
+  function openAvatarMenu(root) { if (!root) return; avatarMenu.innerHTML = `<strong>${escapeHtml(avatarDisplayName(root))}</strong><small>Double-clicked avatar menu. Use these controls to size, rotate, raise, lower, or remove this GLB avatar.</small><div class="glb-avatar-menu-grid"><button type="button" data-avatar-action="scale" data-amount="0.1">Bigger</button><button type="button" data-avatar-action="scale" data-amount="-0.1">Smaller</button><button type="button" data-avatar-action="rotate" data-amount="-0.2">Rotate Left</button><button type="button" data-avatar-action="rotate" data-amount="0.2">Rotate Right</button><button type="button" data-avatar-action="height" data-amount="0.12">Raise</button><button type="button" data-avatar-action="height" data-amount="-0.12">Lower</button></div><button type="button" class="secondary" data-avatar-action="remove">Remove avatar</button><button type="button" class="secondary" data-avatar-action="close">Close menu</button>`; avatarMenu.hidden = false; avatarMenu.onclick = (event) => { const button = event.target.closest('button[data-avatar-action]'); if (!button) return; const amount = Number(button.dataset.amount) || 0; if (button.dataset.avatarAction === 'scale') root.scale.multiplyScalar(THREE.MathUtils.clamp(1 + amount, .1, 3)); if (button.dataset.avatarAction === 'rotate') root.rotation.y += amount; if (button.dataset.avatarAction === 'height') { root.position.y += amount; root.userData.floorLiftOffset = (root.userData.floorLiftOffset || FLOOR_ENTRY_OFFSET) + amount; } if (button.dataset.avatarAction === 'remove') { placedAvatars.remove(root); closeAvatarMenu(); } if (button.dataset.avatarAction === 'close') closeAvatarMenu(); }; setStatus(`${avatarDisplayName(root)} menu open. Adjust it or close the menu to keep walking.`); }
   function findPlacedAvatarFromEvent(event) { setAvatarPointerFromEvent(event); const hit = avatarRaycaster.intersectObjects(placedAvatars.children, true)[0]; if (!hit) return null; let root = hit.object; while (root?.parent && root.parent !== placedAvatars) root = root.parent; return root?.parent === placedAvatars ? { root, point: hit.point } : null; }
-  async function addAvatarToScene(avatar, position = floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).multiplyScalar(2)))) { setStatus(`Adding ${avatar.name} to the GLB house…`); const floorPoint = floorPointAt(position.clone()); const gltf = await avatarLoader.loadAsync(avatar.modelUrl); const root = gltf.scene; root.name = `Avatar_${avatar.id}`; root.position.copy(floorPoint); root.scale.setScalar(avatar.scale); root.rotation.y = Number(avatar.rotation?.y ?? avatar.rotation ?? 0); root.userData.avatar = avatar; const size = avatarVisualBounds(root).getSize(new THREE.Vector3()); const maxAxis = Math.max(size.x, size.y, size.z) || 1; if (maxAxis > 2.2) root.scale.multiplyScalar(2.2 / maxAxis); liftObjectAboveFloor(root, floorPoint); root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); addAvatarCollider(root); placedAvatars.add(root); setStatus(`${avatar.name} is in the house. Drag it on screen to reposition it above the floor.`); return root; }
-  function liveLabel(root, user) { const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 128; const context = canvas.getContext('2d'); context.fillStyle = 'rgba(2,8,5,.88)'; context.fillRect(0, 0, canvas.width, canvas.height); context.strokeStyle = user.color || '#9cff00'; context.lineWidth = 7; context.strokeRect(4, 4, canvas.width - 8, canvas.height - 8); context.textAlign = 'center'; context.fillStyle = '#fff'; context.font = '700 34px system-ui'; context.fillText(String(user.username || 'Player').slice(0, 28), 256, 47); context.fillStyle = '#caff69'; context.font = '25px system-ui'; context.fillText(String(user.message || 'Live in the Crib').slice(0, 54), 256, 91); const material = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthTest: false }); const sprite = new THREE.Sprite(material); const bounds = avatarVisualBounds(root); const scale = root.getWorldScale(new THREE.Vector3()); const headY = root.worldToLocal(new THREE.Vector3(root.getWorldPosition(new THREE.Vector3()).x, bounds.max.y, root.getWorldPosition(new THREE.Vector3()).z)).y; sprite.name = 'Live_player_label'; sprite.position.set(0, headY + .34 / scale.y, 0); sprite.scale.set(2.4 / scale.x, .58 / scale.y, 1); sprite.renderOrder = 20; return sprite; }
+  async function addAvatarToScene(avatar, position = floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).multiplyScalar(2)))) { setStatus(`Adding ${avatar.name} to the GLB house…`); const floorPoint = floorPointAt(position.clone()); const gltf = await avatarLoader.loadAsync(avatar.modelUrl); const root = gltf.scene; root.name = `Avatar_${avatar.id}`; root.position.copy(floorPoint); root.scale.setScalar(avatar.scale); root.rotation.y = Number(avatar.rotation?.y ?? avatar.rotation ?? 0); root.userData.avatar = avatar; const size = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()); const maxAxis = Math.max(size.x, size.y, size.z) || 1; if (maxAxis > 2.2) root.scale.multiplyScalar(2.2 / maxAxis); liftObjectAboveFloor(root, floorPoint); root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); placedAvatars.add(root); setStatus(`${avatar.name} is in the house. Drag it on screen to reposition it above the floor.`); return root; }
+  function liveLabel(user) { const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 128; const context = canvas.getContext('2d'); context.fillStyle = 'rgba(2,8,5,.88)'; context.fillRect(0, 0, canvas.width, canvas.height); context.strokeStyle = user.color || '#9cff00'; context.lineWidth = 7; context.strokeRect(4, 4, canvas.width - 8, canvas.height - 8); context.textAlign = 'center'; context.fillStyle = '#fff'; context.font = '700 34px system-ui'; context.fillText(String(user.username || 'Player').slice(0, 28), 256, 47); context.fillStyle = '#caff69'; context.font = '25px system-ui'; context.fillText(String(user.message || 'Live in the Crib').slice(0, 54), 256, 91); const material = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthTest: false }); const sprite = new THREE.Sprite(material); sprite.name = 'Live_player_label'; sprite.position.set(0, 2.55, 0); sprite.scale.set(3.2, .8, 1); sprite.renderOrder = 20; return sprite; }
   function disposeLiveRoot(root) { root.traverse((object) => { if (object.material?.map && object.name === 'Live_player_label') object.material.map.dispose(); if (object.name === 'Live_player_label') object.material?.dispose(); }); liveAvatars.remove(root); }
-  async function createLiveAvatar(user) { const modelUrl = user.modelUrl || user.avatarUrl; if (!modelUrl || pendingLiveAvatars.has(user.sessionId) || !/\.(glb|gltf)(?:[?#]|$)/i.test(modelUrl)) return; pendingLiveAvatars.add(user.sessionId); let gltf; try { gltf = await avatarLoader.loadAsync(new URL(modelUrl, window.location.origin).href); } finally { pendingLiveAvatars.delete(user.sessionId); } if (liveAvatarRoots.has(user.sessionId)) return; const root = gltf.scene; root.name = `LiveAvatar_${user.sessionId}`; root.userData.liveSessionId = user.sessionId; root.userData.modelUrl = modelUrl; root.userData.targetPosition = new THREE.Vector3(); const size = avatarVisualBounds(root).getSize(new THREE.Vector3()); root.scale.setScalar(2.05 / (Math.max(size.x, size.y, size.z) || 1)); const bounds = addAvatarCollider(root); root.userData.floorOffset = root.position.y - bounds.min.y + FLOOR_ENTRY_OFFSET; root.add(liveLabel(root, user)); liveAvatars.add(root); liveAvatarRoots.set(user.sessionId, root); updateLiveAvatar(user); }
-  function updateLiveAvatar(user) { const root = liveAvatarRoots.get(user.sessionId); if (!root) { createLiveAvatar(user).catch((error) => console.info('[MUZIKAZ Live]', `Unable to load ${user.username || 'player'} avatar`, error.message)); return; } const position = user.position || {}; root.userData.targetPosition.set(Number(position.x) || 0, (Number(position.y) || 0) + root.userData.floorOffset, Number(position.z) || 2.5); root.rotation.y = Number(user.rotation?.y) || 0; const oldLabel = root.getObjectByName('Live_player_label'); if (oldLabel?.userData.message !== user.message) { if (oldLabel) { oldLabel.material.map.dispose(); oldLabel.material.dispose(); root.remove(oldLabel); } const label = liveLabel(root, user); label.userData.message = user.message; root.add(label); } }
+  async function createLiveAvatar(user) { const modelUrl = user.modelUrl || user.avatarUrl; if (!modelUrl || pendingLiveAvatars.has(user.sessionId) || !/\.(glb|gltf)(?:[?#]|$)/i.test(modelUrl)) return; pendingLiveAvatars.add(user.sessionId); let gltf; try { gltf = await avatarLoader.loadAsync(new URL(modelUrl, window.location.origin).href); } finally { pendingLiveAvatars.delete(user.sessionId); } if (liveAvatarRoots.has(user.sessionId)) return; const root = gltf.scene; root.name = `LiveAvatar_${user.sessionId}`; root.userData.liveSessionId = user.sessionId; root.userData.modelUrl = modelUrl; root.userData.targetPosition = new THREE.Vector3(); const size = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()); root.scale.setScalar(2.05 / (Math.max(size.x, size.y, size.z) || 1)); root.add(liveLabel(user)); liveAvatars.add(root); liveAvatarRoots.set(user.sessionId, root); updateLiveAvatar(user); }
+  function updateLiveAvatar(user) { const root = liveAvatarRoots.get(user.sessionId); if (!root) { createLiveAvatar(user).catch((error) => console.info('[MUZIKAZ Live]', `Unable to load ${user.username || 'player'} avatar`, error.message)); return; } const position = user.position || {}; root.userData.targetPosition.set(Number(position.x) || 0, Number(position.y) || 0, Number(position.z) || 2.5); root.rotation.y = Number(user.rotation?.y) || 0; const oldLabel = root.getObjectByName('Live_player_label'); if (oldLabel?.userData.message !== user.message) { if (oldLabel) { oldLabel.material.map.dispose(); oldLabel.material.dispose(); root.remove(oldLabel); } const label = liveLabel(user); label.userData.message = user.message; root.add(label); } }
   function syncLiveAvatars(data = {}) { const users = Array.isArray(data.users) ? data.users : []; const active = new Set(users.map((user) => user.sessionId)); liveAvatarRoots.forEach((root, id) => { if (!active.has(id)) { disposeLiveRoot(root); liveAvatarRoots.delete(id); } }); users.forEach(updateLiveAvatar); const count = document.querySelector('#crib-online-count'); if (count) count.textContent = `${users.length} / ${data.capacity || 15}`; }
   async function pollLiveAvatars() { const designated = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null'); const memberEmail = localStorage.getItem('muzikazBottleMemberEmail') || ''; const sessionId = localStorage.getItem('muzikazHouseSessionId'); if (!designated || !memberEmail || !sessionId) return; const tracking = window.MUZIKAZ_HOUSE_TRACKING || {}; const position = { x: playerRig.position.x, y: playerRig.position.y, z: playerRig.position.z }; window.MUZIKAZ_HOUSE_TRACKING = { ...tracking, position, rotation: { y: player.yaw }, roomId: activeEnvironment?.id || 'rad-tox' }; const response = await fetch('/api/houses/ioncore-house/presence', { method:'POST', cache:'no-store', headers:{ 'Content-Type':'application/json', 'X-MUZIKAZ-Session':sessionId, 'X-User-Id':memberEmail.toLowerCase(), 'X-User-Name':memberEmail.split('@')[0] }, body:JSON.stringify({ ...window.MUZIKAZ_HOUSE_TRACKING, username:memberEmail.split('@')[0], avatarUrl:designated.modelUrl, modelUrl:designated.modelUrl, avatarName:designated.displayName || 'Player avatar', animationState:designated.animation || 'auto' }) }); if (!response.ok) return; const result = await response.json(); syncLiveAvatars(result?.data ?? result); }
-  window.addEventListener('muzikaz-house-chat', (event) => { const root = liveAvatarRoots.get(event.detail?.sessionId); if (root) { const position = root.userData.targetPosition.clone(); position.y -= root.userData.floorOffset; updateLiveAvatar({ sessionId:event.detail.sessionId, username:event.detail.username, message:event.detail.message, position }); } });
+  window.addEventListener('muzikaz-house-chat', (event) => { const root = liveAvatarRoots.get(event.detail?.sessionId); if (root) updateLiveAvatar({ sessionId:event.detail.sessionId, username:event.detail.username, message:event.detail.message, position:root.userData.targetPosition }); });
   window.addEventListener('muzikaz-avatar-ready', () => pollLiveAvatars().catch(() => {}));
   const livePollTimer = window.setInterval(() => pollLiveAvatars().catch(() => {}), 3000);
   window.addEventListener('pagehide', () => { window.clearInterval(livePollTimer); liveAvatarRoots.forEach(disposeLiveRoot); liveAvatarRoots.clear(); });
@@ -516,9 +484,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
   let houseMapPromise = null;
   async function openHouseMap() {
-    // Older iOS WebKit accepts focus(), but throws when focus options are used.
-    // That exception used to abort the launch before the world even requested.
-    try { canvas.focus({ preventScroll: true }); } catch { canvas.focus(); }
+    canvas.focus({ preventScroll: true });
     if (!envLoader.world && startEnvironment) {
       setStatus('Opening and loading the MUZIKAZ house environment…');
       houseMapPromise ||= loadById(startEnvironment).finally(() => { houseMapPromise = null; });
@@ -538,16 +504,14 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
     if (gameStartButton) gameStartButton.disabled = true;
     gameStartScreen?.classList.add('is-loading');
-    gameStartButton.textContent = 'Loading…';
+    gameStartButton.textContent = 'Deploying RAD-TOX…';
     if (gameLoadStatus) gameLoadStatus.textContent = 'Loading level 1 toxins and the upper-floor ghost encounter…';
     publishGameStage('loading-game', 'Loading level 1 toxins and the upper-floor ghost encounter…');
 
     try {
       // A desktop launch should always open at the playable view, rather than
       // leaving the player at an arbitrary scrolled position behind the overlay.
-      // Instant positioning avoids an iOS Safari race between smooth scrolling,
-      // viewport chrome resizing, WebGL canvas sizing, and the first GLB frame.
-      stage.scrollIntoView({ behavior: mobileQualityMode ? 'auto' : 'smooth', block: 'start' });
+      stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
       await openHouseMap();
       resetPlayer();
       await toxicBubbleSystem.begin();
@@ -558,7 +522,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     } catch (error) {
       const message = error?.message || 'Unable to load the MUZIKAZ house game.';
       gameStartButton.disabled = false;
-      gameStartButton.textContent = 'Begin';
+      gameStartButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v5M5.8 7l4.3 2.5M18.2 7l-4.3 2.5M5.8 17l4.3-2.5M18.2 17l-4.3-2.5"/><circle cx="12" cy="14" r="5"/></svg>BEGIN NOW!';
       gameStartScreen?.classList.remove('is-loading');
       if (gameLoadStatus) gameLoadStatus.textContent = message;
       setStatus(message);
@@ -598,24 +562,4 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     // Keep decoding on the player's Begin action. Background GLB decoding can
     // monopolize memory on mobile browsers before the visitor is ready to play.
   }
-  window.MUZIKAZ_HOUSE_ENGINE = {
-    destroy() {
-      renderer.setAnimationLoop(null);
-      window.clearInterval(livePollTimer);
-      visibilityObserver?.disconnect();
-      liveAvatarRoots.forEach(disposeLiveRoot);
-      liveAvatarRoots.clear();
-      envLoader.clear?.();
-      scene.traverse((object) => {
-        object.geometry?.dispose?.();
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        materials.filter(Boolean).forEach((material) => { Object.values(material).forEach((value) => value?.isTexture && value.dispose()); material.dispose?.(); });
-      });
-      renderer.dispose();
-      renderer.forceContextLoss?.();
-      renderer.domElement?.remove();
-      window.MUZIKAZ_HOUSE_ENGINE = null;
-    }
-  };
-
 }
