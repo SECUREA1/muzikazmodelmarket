@@ -1,6 +1,21 @@
 (() => {
   const root = document.querySelector('#crib-social');
-  if (!root || localStorage.getItem('muzikazBottleMember') !== 'true') return;
+  if (!root) return;
+  const toggles = [...document.querySelectorAll('#crib-chat-toggle, #crib-chat-dock-toggle')];
+  const toggle = document.querySelector('#crib-chat-toggle') || toggles[0];
+  const panel = document.querySelector('#crib-chat-panel');
+  function setChatOpen(open, focusToggle) {
+    panel.hidden = !open;
+    toggles.forEach((control) => control.setAttribute('aria-expanded', String(open)));
+    if (open) panel.querySelector('input')?.focus();
+    else focusToggle?.focus();
+  }
+  toggles.forEach((control) => control.addEventListener('click', () => setChatOpen(panel.hidden, control)));
+  panel.querySelector('[data-close-chat]').addEventListener('click', () => setChatOpen(false, toggle));
+  if (localStorage.getItem('muzikazBottleMember') !== 'true') {
+    panel.querySelector('#crib-chat-status').textContent = 'Bottle members can join live chat. Sign in to connect.';
+    return;
+  }
   const apiClient = window.MUZIKAZ_API;
   if (!apiClient) throw new Error('The unified MUZIKAZ API client must load before multiplayer.');
   const apiUrl = apiClient.url;
@@ -11,8 +26,6 @@
   const email = localStorage.getItem('muzikazBottleMemberEmail') || 'Subscriber';
   const username = email.split('@')[0].slice(0, 28) || 'Subscriber';
   const color = `hsl(${[...sessionId].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 360} 85% 65%)`;
-  const toggle = document.querySelector('#crib-chat-toggle');
-  const panel = document.querySelector('#crib-chat-panel');
   const count = document.querySelector('#crib-online-count');
   const players = document.querySelector('#crib-player-list');
   const messageLists = [...document.querySelectorAll('#crib-chat-messages, #crib-dock-messages')];
@@ -55,8 +68,6 @@
     const response = await apiFetch('/api/houses/ioncore-house/presence', { method: 'POST', headers, body: JSON.stringify({ username, roomId: window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, avatarUrl: avatar.modelUrl, modelUrl: avatar.modelUrl, avatarName: avatar.displayName || avatar.name || 'Player avatar', position: window.MUZIKAZ_HOUSE_TRACKING?.position, rotation: window.MUZIKAZ_HOUSE_TRACKING?.rotation, movementState: window.MUZIKAZ_HOUSE_TRACKING?.movementState || 'idle', animationState: window.MUZIKAZ_HOUSE_TRACKING?.animationState || avatar.animation || 'auto', message: window.MUZIKAZ_HOUSE_TRACKING?.message }) });
     const data = await jsonResponse(response); joined = true; renderPresence(data); setStatus();
   }
-  toggle.addEventListener('click', () => { panel.hidden = !panel.hidden; toggle.setAttribute('aria-expanded', String(!panel.hidden)); if (!panel.hidden) panel.querySelector('input')?.focus(); });
-  panel.querySelector('[data-close-chat]').addEventListener('click', () => { panel.hidden = true; toggle.setAttribute('aria-expanded', 'false'); toggle.focus(); });
   forms.forEach((form) => form.addEventListener('submit', async (event) => { event.preventDefault(); const input = form.querySelector('input'); const message = input.value.trim(); if (!message) return; input.disabled = true; try { const response = await apiFetch('/api/houses/ioncore-house/chat', { method: 'POST', headers, body: JSON.stringify({ message }) }); const data = await jsonResponse(response); document.querySelectorAll('#crib-chat-input, #crib-dock-input').forEach((field) => { field.value = ''; }); window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), message }; addMessage(data); setStatus(); } catch (error) { setStatus(error.message || 'Message could not be sent.'); } finally { input.disabled = false; input.focus(); } }));
   async function loadChat() { const response = await apiFetch('/api/houses/ioncore-house/chat', { headers, cache: 'no-store' }); const data = await jsonResponse(response); (data.messages || []).forEach(addMessage); }
   let events;

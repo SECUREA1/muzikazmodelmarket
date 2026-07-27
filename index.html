@@ -137,12 +137,23 @@
                 </aside>
                 <div class="mobile-move-pad" aria-label="Game controllers"></div>
                 <div class="house-bottom-controls" aria-label="Game controls">
+                    <button class="house-bottom-control house-bottom-control-begin" type="button" data-house-start><b aria-hidden="true">▶</b><span>Begin</span></button>
                     <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">▤</b><span>World</span></button>
-                    <button class="house-bottom-control" id="house-fullscreen" type="button"><b aria-hidden="true">⛶</b><span>Fullscreen</span></button>
+                    <button class="house-bottom-control" id="crib-chat-dock-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel"><b aria-hidden="true">💬</b><span>Chat</span></button>
                     <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">👤</b><span>Avatar</span></button>
                     <small class="house-firefox-label">WebGL required</small>
                     <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
                 </div>
+                <aside class="crib-social" id="crib-social" aria-label="Vibe Crib players and chat">
+                    <section class="crib-chat-panel" id="crib-chat-panel" hidden>
+                        <header><div><strong>Vibe Crib live</strong><small>Chat with players in the game</small></div><button type="button" data-close-chat aria-label="Close chat">×</button></header>
+                        <div class="crib-player-list" id="crib-player-list" aria-label="Players online"></div>
+                        <ol class="crib-chat-messages" id="crib-chat-messages" aria-live="polite"></ol>
+                        <form id="crib-chat-form"><label class="sr-only" for="crib-chat-input">Chat message</label><input id="crib-chat-input" maxlength="140" autocomplete="off" placeholder="Message the crib…" required><button type="submit">Send</button></form>
+                        <p id="crib-chat-status" role="status"></p>
+                    </section>
+                    <span class="sr-only" id="crib-online-count">0 / 15</span>
+                </aside>
             </div>
         </section>
 
@@ -345,6 +356,7 @@
          Begin RAD-TOX. Keeping Three.js and the 12 MB world off the critical
          path prevents the landing page from stalling on mobile devices. -->
     <script src="script.js"></script>
+    <script src="public/js/crib-multiplayer.js"></script>
   <script src="battle-theme.js"></script>
 </body>
 </html>
