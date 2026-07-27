@@ -32,6 +32,11 @@
   }
   function request(){
     if(state==='booting' || state==='loading-game') return;
+    if(window.localStorage.getItem('muzikazBottleMember')!=='true' || !window.localStorage.getItem('muzikazBottleMemberEmail')){
+      window.sessionStorage.setItem('muzikazLoginRedirect','index.html#house-explorer');
+      window.location.href='members.html?login=required&redirect=index.html%23house-explorer';
+      return;
+    }
     queued=true;
     setButtons(true,'Loading…');
     showLoading(true);
