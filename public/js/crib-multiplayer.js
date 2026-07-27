@@ -74,8 +74,16 @@
     loadChat().catch(() => {});
   }
   function start() {
-    if (!startPromise) startPromise = beginPresence().catch((error) => { startPromise = null; setStatus(error.message); toggle.disabled = true; throw error; });
-    return startPromise;
+    if (!startPromise) {
+      startPromise = beginPresence().catch((error) => {
+        startPromise = null;
+        setStatus(error.message || 'Multiplayer will reconnect in the background.');
+        return null;
+      });
+    }
+    // Multiplayer must never hold the Begin flow. The world and RAD-TOX start
+    // immediately while presence and chat connect in parallel.
+    return Promise.resolve();
   }
   window.MUZIKAZ_CRIB_MULTIPLAYER = { start };
   const timer = setInterval(() => { if (joined) { heartbeat().catch((error) => { setStatus(error.message); }); loadChat().catch(() => {}); } }, 5_000);
