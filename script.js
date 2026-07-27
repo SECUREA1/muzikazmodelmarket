@@ -1303,10 +1303,10 @@ function initBottleLogin() {
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   if (!form || !lockedContent) return;
-  const unlock = async (message) => {
-    if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
+  const unlock = (message) => {
     lockedContent.dataset.locked = 'false';
     if (status) status.textContent = message;
+    window.MUZIKAZ_AVATAR_GATE?.render();
   };
   if (hasBottleLogin()) {
     currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
@@ -1320,7 +1320,7 @@ function initBottleLogin() {
     window.localStorage.setItem('muzikazBottleMember', 'true');
     window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
     renderOwnedCollection(currentMemberEmail);
-    await unlock(`${currentMemberEmail} is logged in. Your designated avatar and Drop Backpack are retained across visits.`);
+    unlock(`${currentMemberEmail} is logged in. Choose an avatar below whenever you are ready; your Drop Backpack is retained across visits.`);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
