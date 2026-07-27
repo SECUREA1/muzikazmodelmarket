@@ -516,7 +516,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
   let houseMapPromise = null;
   async function openHouseMap() {
-    canvas.focus({ preventScroll: true });
+    // Older iOS WebKit accepts focus(), but throws when focus options are used.
+    // That exception used to abort the launch before the world even requested.
+    try { canvas.focus({ preventScroll: true }); } catch { canvas.focus(); }
     if (!envLoader.world && startEnvironment) {
       setStatus('Opening and loading the MUZIKAZ house environment…');
       houseMapPromise ||= loadById(startEnvironment).finally(() => { houseMapPromise = null; });
@@ -543,7 +545,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     try {
       // A desktop launch should always open at the playable view, rather than
       // leaving the player at an arbitrary scrolled position behind the overlay.
-      stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Instant positioning avoids an iOS Safari race between smooth scrolling,
+      // viewport chrome resizing, WebGL canvas sizing, and the first GLB frame.
+      stage.scrollIntoView({ behavior: mobileQualityMode ? 'auto' : 'smooth', block: 'start' });
       await openHouseMap();
       resetPlayer();
       await toxicBubbleSystem.begin();

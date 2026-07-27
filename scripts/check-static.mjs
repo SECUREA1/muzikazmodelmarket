@@ -61,6 +61,9 @@ for (const removed2dFeature of ['startCompatibility', 'rad-tox-compat-game', 'da
 if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS')) {
   throw new Error('RAD-TOX launcher must recover if deployment stalls after the 3D scene loads.');
 }
+if (!launcher.includes("addEventListener('touchend',activate,true)") || !launcher.includes('now-lastActivation<700')) {
+  throw new Error('RAD-TOX launcher is missing the iOS touch activation fallback.');
+}
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
