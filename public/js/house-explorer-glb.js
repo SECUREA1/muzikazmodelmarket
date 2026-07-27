@@ -27,32 +27,21 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const gameStartButton = document.querySelector('[data-house-start]');
   const gameStartScreen = document.querySelector('#house-game-start');
   const gameLoadStatus = document.querySelector('#house-game-load-status');
-  const levelLoader = document.querySelector('#house-level-loader');
-  const levelLoaderTitle = levelLoader?.querySelector('[data-level-loader-title]');
-  const levelLoaderMessage = levelLoader?.querySelector('[data-level-loader-message]');
-  const levelLoaderFill = levelLoader?.querySelector('[data-level-loader-fill]');
-  const levelLoaderPercent = levelLoader?.querySelector('[data-level-loader-percent]');
-  const levelLoaderScale = levelLoader?.querySelector('.house-level-loader__scale');
   const publishGameStage = (stageName, message) => document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-stage', { detail: { stage: stageName, message } }));
   let levelLoaderProgress = 0;
   function updateLevelLoader(progress, message) {
     levelLoaderProgress = Math.max(levelLoaderProgress, Math.min(100, Math.round(progress)));
-    if (message && levelLoaderMessage) levelLoaderMessage.textContent = message;
-    if (levelLoaderFill) levelLoaderFill.style.width = `${levelLoaderProgress}%`;
-    if (levelLoaderPercent) levelLoaderPercent.textContent = `${levelLoaderProgress}%`;
-    levelLoaderScale?.setAttribute('aria-valuenow', String(levelLoaderProgress));
+    if (message && gameLoadStatus && !gameStartScreen?.classList.contains('is-hidden')) gameLoadStatus.textContent = `${message} ${levelLoaderProgress}%`;
   }
   function showLevelLoader(level, message) {
     levelLoaderProgress = 0;
-    if (levelLoaderTitle) levelLoaderTitle.textContent = `Preparing level ${level}`;
     updateLevelLoader(4, message);
-    if (levelLoader) levelLoader.hidden = false;
     stage.classList.add('is-level-transitioning');
     scheduleGameResize();
   }
   function hideLevelLoader() {
     updateLevelLoader(100, 'Encounter ready. Deploying now…');
-    window.setTimeout(() => { if (levelLoader) levelLoader.hidden = true; stage.classList.remove('is-level-transitioning'); }, reducedMotion ? 0 : 260);
+    stage.classList.remove('is-level-transitioning');
     scheduleGameResize();
   }
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
@@ -273,7 +262,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function updateLandingFrame(spawn) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); landingFrame.clear(); const ring = new THREE.Mesh(new THREE.RingGeometry(.52, .72, 48), new THREE.MeshBasicMaterial({ color: 0x9cff00, side: THREE.DoubleSide, transparent: true, opacity: .88 })); ring.rotation.x = -Math.PI / 2; ring.position.set(alignedSpawn.x, alignedSpawn.y + .018, alignedSpawn.z); const grid = new THREE.GridHelper(1.55, 4, 0x9cff00, 0x477400); grid.position.set(alignedSpawn.x, alignedSpawn.y + .022, alignedSpawn.z); grid.material.transparent = true; grid.material.opacity = .62; landingFrame.add(ring, grid); }
   function resetPlayer(spawn = player.spawn, rotationY = player.yaw) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); player.spawn.copy(alignedSpawn); player.velocity.set(0,0,0); player.yaw = rotationY || 0; player.pitch = 0; player.eyeHeight = player.height; player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.radius, alignedSpawn.z), new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.height, alignedSpawn.z), player.radius); playerRig.position.copy(alignedSpawn); playerRig.rotation.set(0, player.yaw, 0); camera.position.set(0, renderer.xr.isPresenting ? 0 : player.eyeHeight, 0); camera.rotation.set(0,0,0); updateLandingFrame(alignedSpawn); }
   async function loadNextEnvironment() { const worlds = registry.all(); if (!worlds.length) return; const scriptedWorld = registry.find(LEVEL_WORLD_IDS[toxicBubbleSystem.level]); const currentIndex = Math.max(0, worlds.findIndex((world) => world.id === activeEnvironment?.id)); const next = scriptedWorld || worlds[(currentIndex + 1) % worlds.length]; setStatus(`Environment clear — traveling to ${next.name}.`); await loadById(next.id); }
-  async function loadById(id, { fallback = true } = {}) { const env = registry.find(id) || registry.all()[0]; if (!env) return; const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); activeEnvironment = env; loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete GLB world…`); try { const result = await envLoader.load(env); if (!result) return; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; resetPlayer(result.spawn.position, result.spawn.rotationY || 0); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. Press Start game or click the canvas to walk.`); const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); await loadById(fallbackEnv.id, { fallback: false }); return; } if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); } }
+  async function loadById(id, { fallback = true } = {}) { const env = registry.find(id) || registry.all()[0]; if (!env) return; const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); activeEnvironment = env; loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete GLB world…`); try { const result = await envLoader.load(env); if (!result) return; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; resetPlayer(result.spawn.position, result.spawn.rotationY || 0); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. Press Start game or click the canvas to walk.`); const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); await loadById(fallbackEnv.id, { fallback: false }); return; } if (gameLoadStatus) gameLoadStatus.textContent = error.message || 'Unable to load this level.'; hideLevelLoader(); setStatus(error.message || `Unable to load ${env.name}.`); } }
   let cachedAvatars = [];
   function syncEnvironmentSelect(worlds) { if (!environmentSelect) return; const selectedId = activeEnvironment?.id || environmentSelect.value || ''; environmentSelect.replaceChildren(...worlds.map((env) => new Option(env.name || env.id || 'House environment', env.id, false, env.id === selectedId))); environmentSelect.disabled = !worlds.length; }
   function renderPicker() { const worlds = registry.all(); syncEnvironmentSelect(worlds); const envOptions = worlds.map((env) => { const size = env.fileSize ? `${(env.fileSize / 1048576).toFixed(1)} MB` : 'repo GLB'; return `<option value="${env.id}" ${activeEnvironment?.id === env.id ? 'selected' : ''}>${env.name} · ${size}</option>`; }).join(''); const avatarOptions = cachedAvatars.map((avatar) => `<option value="${avatar.id}">${avatar.name} · ${avatar.owner}</option>`).join(''); library.innerHTML = `<div class="house-picker-title"><strong>GLB Select</strong><small>${worlds.length} worlds · ${cachedAvatars.length} avatars</small></div><div class="house-picker-row"><label class="house-picker-label">World<select data-world-select>${envOptions || '<option>No worlds found</option>'}</select></label><button type="button" data-load-world>Open</button></div><div class="house-picker-row"><label class="house-picker-label">Avatar<select data-avatar-select>${avatarOptions || '<option>No active GLB avatars</option>'}</select></label><button type="button" data-add-selected-avatar>Add</button></div>`; library.querySelector('[data-load-world]')?.addEventListener('click', () => { const id = library.querySelector('[data-world-select]')?.value; if (id) loadById(id); }); library.querySelector('[data-world-select]')?.addEventListener('change', (event) => loadById(event.target.value)); library.querySelector('[data-add-selected-avatar]')?.addEventListener('click', () => { const avatar = cachedAvatars.find(a => a.id === library.querySelector('[data-avatar-select]')?.value); if (avatar) { activeAvatar = avatar; addAvatarToScene(avatar).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); } }); }
@@ -497,39 +486,42 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
   });
-  async function startRadToxGame() {
-    // The ES5 launcher disables Begin before it dispatches its start request.
-    // Guard only against our own in-flight launch, otherwise that request is lost.
-    if (gameStartScreen?.classList.contains('is-loading')) return;
+  let gameStartPromise = null;
+  function startRadToxGame() {
+    // Every start source joins one promise. This prevents chat, canvas, touch,
+    // and duplicate click handlers from creating competing mobile load paths.
+    if (gameStartPromise) return gameStartPromise;
 
-    if (gameStartButton) gameStartButton.disabled = true;
-    gameStartScreen?.classList.add('is-loading');
-    gameStartButton.textContent = 'Loading…';
-    if (gameLoadStatus) gameLoadStatus.textContent = 'Loading level 1 toxins and the upper-floor ghost encounter…';
-    publishGameStage('loading-game', 'Loading level 1 toxins and the upper-floor ghost encounter…');
+    gameStartPromise = (async () => {
+      if (gameStartButton) { gameStartButton.disabled = true; gameStartButton.textContent = 'Loading…'; }
+      gameStartScreen?.classList.add('is-loading');
+      if (gameLoadStatus) gameLoadStatus.textContent = 'Loading Level 1 assets…';
+      publishGameStage('loading-game', 'Loading Level 1 assets…');
 
-    try {
-      // A desktop launch should always open at the playable view, rather than
-      // leaving the player at an arbitrary scrolled position behind the overlay.
-      stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      await openHouseMap();
-      resetPlayer();
-      await toxicBubbleSystem.begin();
-      gameStartScreen?.classList.add('is-hidden');
-      scheduleGameResize();
-      setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
-      publishGameStage('game-active', 'RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
-    } catch (error) {
-      const message = error?.message || 'Unable to load the MUZIKAZ house game.';
-      gameStartButton.disabled = false;
-      gameStartButton.textContent = 'Begin';
-      gameStartScreen?.classList.remove('is-loading');
-      if (gameLoadStatus) gameLoadStatus.textContent = message;
-      setStatus(message);
-      document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { stage: 'RAD-TOX', message } }));
-    }
+      try {
+        stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        await openHouseMap();
+        resetPlayer();
+        await toxicBubbleSystem.begin();
+        gameStartScreen?.classList.add('is-hidden');
+        scheduleGameResize();
+        canvas.focus({ preventScroll: true });
+        setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
+        publishGameStage('game-active', 'RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
+      } catch (error) {
+        const message = error?.message || 'Unable to load the MUZIKAZ house game.';
+        if (gameStartButton) { gameStartButton.disabled = false; gameStartButton.textContent = 'Begin'; }
+        gameStartScreen?.classList.remove('is-loading');
+        if (gameLoadStatus) gameLoadStatus.textContent = message;
+        setStatus(message);
+        gameStartPromise = null;
+        document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { stage: 'RAD-TOX', message } }));
+      }
+    })();
+    return gameStartPromise;
   }
-  gameStartButton?.addEventListener('click', (event) => { event.preventDefault(); startRadToxGame(); });
+  // rad-tox-launcher is the sole owner of the Begin click. The module responds
+  // only to its request event, avoiding a second mobile click/navigation path.
   document.addEventListener('muzikaz:rad-tox-request', () => startRadToxGame());
   publishGameStage('engine-ready', 'RAD-TOX game engine ready. Starting the first level…');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));

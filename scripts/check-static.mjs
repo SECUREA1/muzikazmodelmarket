@@ -172,6 +172,12 @@ for (const requiredCompatibilityFeature of ['MUZIKAZ_API_BASE', 'MUZIKAZ_SHARED_
   }
 }
 const modelExplorerHtml = await readFile('dist/model-explorer.html', 'utf8');
+if (modelExplorerHtml.includes('house-level-loader')) {
+  throw new Error('The member game must load Level 1 inside its existing start overlay, not a second loading screen.');
+}
+if (!houseExplorer.includes('let gameStartPromise = null') || !houseExplorer.includes("publishGameStage('game-active'")) {
+  throw new Error('The member game must deduplicate Begin requests and transition automatically into active gameplay.');
+}
 if (!mainHtml.includes('public/js/api-connection.js') || !modelExplorerHtml.includes('public/js/api-connection.js') || !membersHtml.includes('public/js/api-connection.js')) {
   throw new Error('Every game and avatar entry point must initialize its cross-browser API connection.');
 }
