@@ -146,7 +146,6 @@ struct HouseUser {
     room_id: String,
     position: String,
     avatar_url: String,
-    avatar_name: String,
     message: String,
     last_active: u64,
 }
@@ -1085,16 +1084,13 @@ fn presence_json(users: &[HouseUser]) -> String {
         users
             .iter()
             .map(|user| format!(
-                "{{\"sessionId\":\"{}\",\"username\":\"{}\",\"color\":\"{}\",\"roomId\":\"{}\",\"position\":{},\"avatarUrl\":\"{}\",\"avatarId\":\"{}\",\"avatarName\":\"{}\",\"displayName\":\"{}\",\"status\":\"online\",\"message\":\"{}\"}}",
+                "{{\"sessionId\":\"{}\",\"username\":\"{}\",\"color\":\"{}\",\"roomId\":\"{}\",\"position\":{},\"avatarUrl\":\"{}\",\"message\":\"{}\"}}",
                 esc(&user.session_id),
                 esc(&user.username),
                 esc(&user.color),
                 esc(&user.room_id),
                 user.position,
                 esc(&user.avatar_url),
-                esc(&user.avatar_name),
-                esc(&user.avatar_name),
-                esc(&user.username),
                 esc(&user.message)
             ))
             .collect::<Vec<_>>()
@@ -1145,10 +1141,6 @@ fn house_presence(
         };
         if !avatar_url.is_empty() {
             user.avatar_url = trim(avatar_url, 500);
-        }
-        let avatar_name = val(&input, "avatarName");
-        if !avatar_name.is_empty() {
-            user.avatar_name = trim(avatar_name, 120);
         }
         let message = val(&input, "message");
         if !message.is_empty() {
@@ -1220,17 +1212,6 @@ fn house_presence(
                     500,
                 )
             },
-            avatar_name: {
-                let value = val(&input, "avatarName");
-                trim(
-                    if value.is_empty() {
-                        "Player avatar".into()
-                    } else {
-                        value
-                    },
-                    120,
-                )
-            },
             message: trim(val(&input, "message"), 140),
             last_active: unix_seconds(),
         });
@@ -1271,7 +1252,7 @@ fn house_leave(
     json(s, 200, true, &presence_json(&users), "Left house", false)
 }
 fn chat_json(message: &ChatMessage) -> String {
-    format!("{{\"id\":\"{}\",\"roomId\":\"ioncore-house\",\"senderId\":\"{}\",\"sessionId\":\"{}\",\"username\":\"{}\",\"displayName\":\"{}\",\"message\":\"{}\",\"timestamp\":\"{}\",\"createdAt\":\"{}\",\"messageType\":\"room\",\"recipientId\":null}}", esc(&message.id), esc(&message.session_id), esc(&message.session_id), esc(&message.username), esc(&message.username), esc(&message.message), esc(&message.created_at), esc(&message.created_at))
+    format!("{{\"id\":\"{}\",\"sessionId\":\"{}\",\"username\":\"{}\",\"message\":\"{}\",\"createdAt\":\"{}\"}}", esc(&message.id), esc(&message.session_id), esc(&message.username), esc(&message.message), esc(&message.created_at))
 }
 fn house_chat(
     s: &mut TcpStream,
