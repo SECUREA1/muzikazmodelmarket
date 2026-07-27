@@ -10,9 +10,9 @@
   const savedProfile = JSON.parse(localStorage.getItem('muzikazMemberProfile') || 'null');
   const username = String(localStorage.getItem('muzikazUsername') || savedProfile?.username || email.split('@')[0] || 'Player').trim().slice(0, 28) || 'Player';
   const color = `hsl(${[...sessionId].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 360} 85% 65%)`;
-  const toggle = root.querySelector('#crib-chat-toggle');
+  const toggle = document.querySelector('#crib-chat-toggle');
   const panel = root.querySelector('#crib-chat-panel');
-  const count = root.querySelector('#crib-online-count');
+  const count = document.querySelector('#crib-online-count');
   const players = root.querySelector('#crib-player-list');
   const feed = root.querySelector('#crib-chat-messages');
   const history = root.querySelector('#crib-chat-history');
@@ -26,7 +26,7 @@
   async function jsonResponse(response) { const result = await response.json().catch(() => ({})); if (!response.ok || result.success === false) throw new Error(result.error || result.message || 'The crib server did not respond.'); return payload(result); }
   const text = (value) => document.createTextNode(String(value || ''));
   function renderPresence(data = {}) {
-    count.textContent = `${data.count || 0} / ${data.capacity || 15}`;
+    count.textContent = String(data.count || 0);
     const users = Array.isArray(data.users) ? data.users : [];
     players.replaceChildren(...users.map((user) => { const chip = document.createElement('button'); chip.type = 'button'; chip.style.setProperty('--player-color', user.color || '#9cff00'); chip.dataset.recipientId = user.userId || ''; chip.setAttribute('aria-label', `${user.username}, online`); const dot = document.createElement('i'); const avatar = document.createElement('span'); avatar.textContent = '👤'; avatar.setAttribute('aria-hidden', 'true'); chip.append(avatar, text(user.sessionId === sessionId ? `${user.username} (you) · online` : `${user.username} · online`), dot); return chip; }));
     const legacyCount = document.querySelector('#house-presence-count'); if (legacyCount) legacyCount.textContent = `Live in the house: ${data.count || 0} / ${data.capacity || 15}`;
