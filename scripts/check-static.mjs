@@ -80,6 +80,11 @@ if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEP
 if (!launcher.includes('showLoading(true)') || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS = 120000')) {
   throw new Error('RAD-TOX must show its loading screen immediately and allow mobile assets time to load.');
 }
+for (const requiredLaunchRecovery of ['startProgress()', "updateProgress(100,d.message)", "setButtons(false,'Begin')", 'Press Begin to try again.']) {
+  if (!launcher.includes(requiredLaunchRecovery)) {
+    throw new Error(`RAD-TOX launcher must expose progress and recover from a failed browser load: ${requiredLaunchRecovery}`);
+  }
+}
 if (launcher.includes('data-radtox-retry') || launcher.includes('Retry 3D Game')) {
   throw new Error('RAD-TOX must not replace the standard loading flow with a retry screen.');
 }
