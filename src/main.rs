@@ -145,7 +145,6 @@ struct HouseUser {
     color: String,
     room_id: String,
     position: String,
-    rotation: String,
     avatar_url: String,
     message: String,
     last_active: u64,
@@ -1085,14 +1084,12 @@ fn presence_json(users: &[HouseUser]) -> String {
         users
             .iter()
             .map(|user| format!(
-                "{{\"sessionId\":\"{}\",\"username\":\"{}\",\"color\":\"{}\",\"roomId\":\"{}\",\"position\":{},\"rotation\":{},\"avatarUrl\":\"{}\",\"modelUrl\":\"{}\",\"message\":\"{}\"}}",
+                "{{\"sessionId\":\"{}\",\"username\":\"{}\",\"color\":\"{}\",\"roomId\":\"{}\",\"position\":{},\"avatarUrl\":\"{}\",\"message\":\"{}\"}}",
                 esc(&user.session_id),
                 esc(&user.username),
                 esc(&user.color),
                 esc(&user.room_id),
                 user.position,
-                user.rotation,
-                esc(&user.avatar_url),
                 esc(&user.avatar_url),
                 esc(&user.message)
             ))
@@ -1133,10 +1130,6 @@ fn house_presence(
         let position = raw_json(&input, "position").unwrap_or_default();
         if !position.is_empty() {
             user.position = position;
-        }
-        let rotation = raw_json(&input, "rotation").unwrap_or_default();
-        if !rotation.is_empty() {
-            user.rotation = rotation;
         }
         let avatar_url = {
             let value = val(&input, "avatarUrl");
@@ -1197,14 +1190,6 @@ fn house_presence(
                 let value = raw_json(&input, "position").unwrap_or_default();
                 if value.is_empty() {
                     "{\"x\":0,\"y\":0,\"z\":2.5}".into()
-                } else {
-                    value
-                }
-            },
-            rotation: {
-                let value = raw_json(&input, "rotation").unwrap_or_default();
-                if value.is_empty() {
-                    "{\"y\":0}".into()
                 } else {
                     value
                 }

@@ -81,6 +81,16 @@
           <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
           <div class="house-reticle" aria-hidden="true">+</div>
           <div class="house-status" id="house-status" role="status">Press Begin RAD-TOX to clear level 1 toxins, then face blue ghosts in the upper-floor level 2.</div>
+          <section class="house-level-loader game-overlay" id="house-level-loader" hidden aria-live="polite" aria-label="Loading game level">
+            <div class="game-overlay__content">
+            <div class="house-level-loader__graphic" aria-hidden="true"><i></i><i></i><i></i><b>☢</b></div>
+            <p class="kicker">RAD-TOX deployment</p>
+            <h3 data-level-loader-title>Preparing level 1</h3>
+            <p class="house-level-loader__message" data-level-loader-message>Loading your next encounter…</p>
+            <div class="house-level-loader__scale" role="progressbar" aria-label="Level loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span data-level-loader-fill></span></div>
+            <strong data-level-loader-percent>0%</strong>
+            </div>
+          </section>
           <section class="house-game-start game-overlay" id="house-game-start" aria-labelledby="house-game-start-title">
             <div class="game-overlay__content">
             <p class="kicker">MUZIKAZ game</p>
@@ -127,6 +137,7 @@
           <button class="mobile-control mobile-control-jump" type="button" data-mobile-action="jump" aria-label="Jump"><b>⤴</b><span>Jump</span></button>
         </div>
         <aside class="crib-social" id="crib-social" aria-label="Vibe Crib players and chat">
+          <button class="crib-chat-toggle" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel"><span>💬 Chat</span><b id="crib-online-count">0 / 15</b></button>
           <section class="crib-chat-panel" id="crib-chat-panel" hidden>
             <header><div><strong>Vibe Crib live</strong><small>Names and messages appear above every avatar</small></div><button type="button" data-close-chat aria-label="Close chat">×</button></header>
             <div class="crib-player-list" id="crib-player-list" aria-label="Players online"></div>
@@ -143,7 +154,7 @@
         </section>
         <div class="house-bottom-controls" aria-label="Game controls">
           <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">▤</b><span>World</span></button>
-          <button class="house-bottom-control house-bottom-control-chat crib-chat-toggle" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel"><span>💬 Chat</span><b id="crib-online-count">0 / 15</b></button>
+          <button class="house-bottom-control" id="house-fullscreen" type="button"><b aria-hidden="true">⛶</b><span>Fullscreen</span></button>
           <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">👤</b><span>Avatar</span></button>
           <button class="house-bottom-control house-bottom-control-begin" id="house-start-game" type="button"><b aria-hidden="true">◉</b><span>Begin</span></button>
           <small class="house-firefox-label">WebGL required</small>
