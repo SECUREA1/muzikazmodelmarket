@@ -2399,3 +2399,79 @@ section,
   .house-explorer-shell .crib-chat-bar{flex-basis:100%;padding:0}
   .house-explorer-shell .crib-chat-bar button{min-width:64px;padding-inline:12px}
 }
+
+/* Mobile play dock: preserve the original three-row controller layout.
+   Gameplay comes first, chat stays to one line, and the four utility actions
+   remain together at the bottom.  The desktop chat/history presentation above
+   is intentionally unchanged. */
+@media(max-width:760px),(pointer:coarse){
+  .house-explorer-shell{
+    gap:0!important;
+    height:auto;
+    max-height:none;
+    overflow:visible;
+  }
+  .house-explorer-shell>.house-stage{order:1}
+  .house-explorer-shell>.mobile-move-pad{
+    order:2;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-template-rows:auto!important;
+    grid-template-areas:"left right"!important;
+    gap:8px!important;
+    padding:10px!important;
+    border-top:1px solid rgba(156,255,0,.32)!important;
+    border-radius:0!important;
+    background:linear-gradient(180deg,rgba(3,9,4,.98),#000);
+  }
+  .house-explorer-shell .thumbstick-control{gap:3px}
+  .house-explorer-shell .thumbstick-base{
+    width:clamp(82px,24vw,112px);
+    height:clamp(82px,24vw,112px);
+  }
+  .house-explorer-shell .thumbstick-control small{display:none}
+  .house-explorer-shell>.crib-social{
+    order:3;
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr);
+    grid-template-rows:auto;
+    flex-wrap:nowrap;
+    gap:7px;
+    padding:7px max(8px,env(safe-area-inset-right)) 7px max(8px,env(safe-area-inset-left));
+  }
+  .house-explorer-shell .crib-chat-feed{display:none}
+  .house-explorer-shell .crib-chat-toggle{
+    grid-column:1;
+    grid-row:1;
+    width:auto;
+    min-height:44px;
+    padding:8px 11px;
+    white-space:nowrap;
+  }
+  .house-explorer-shell .crib-chat-toggle span{font-size:0}
+  .house-explorer-shell .crib-chat-toggle span::after{content:"👤";font-size:16px}
+  .house-explorer-shell .crib-chat-bar{
+    grid-column:2;
+    grid-row:1;
+    width:100%;
+    min-width:0;
+    padding:0;
+  }
+  .house-explorer-shell .crib-chat-bar input{width:0;min-height:44px}
+  .house-explorer-shell .crib-chat-bar button{min-width:58px;min-height:44px;padding:8px 10px}
+  .house-explorer-shell .crib-chat-panel{
+    position:absolute;
+    inset:auto 7px calc(100% + 7px) 7px;
+    z-index:20;
+    width:auto;
+    max-height:min(56dvh,420px);
+  }
+  .house-explorer-shell>.house-bottom-controls{
+    order:4;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:5px;
+    padding:7px 7px calc(7px + env(safe-area-inset-bottom));
+    border-radius:0 0 14px 14px;
+  }
+  .house-explorer-shell .house-bottom-control{min-height:52px;padding:5px 2px;border-radius:10px}
+  .house-explorer-shell .house-firefox-label{display:none}
+}
