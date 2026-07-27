@@ -531,6 +531,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       // A desktop launch should always open at the playable view, rather than
       // leaving the player at an arbitrary scrolled position behind the overlay.
       stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (window.MUZIKAZ_CRIB_MULTIPLAYER?.start) {
+        setStatus('Validating your member, avatar, and multiplayer session…');
+        await window.MUZIKAZ_CRIB_MULTIPLAYER.start();
+      }
       await openHouseMap();
       resetPlayer();
       await toxicBubbleSystem.begin();
