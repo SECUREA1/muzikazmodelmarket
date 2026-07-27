@@ -1,6 +1,11 @@
 /* Lightweight 3D launcher. It stays ES5-compatible so unsupported browsers can show a useful error. */
 (function () {
   'use strict';
+  // The launcher is part of the landing page and can also be requested by the
+  // shared multiplayer view.  Do not install a second set of capture handlers:
+  // on iOS Safari they can race and leave the visible Begin button attached to
+  // the launcher instance that did not request the engine.
+  if (window.MUZIKAZ_RAD_TOX_LAUNCHER) return;
   var PREFIX = '[MUZIKAZ GAME]';
   var state = 'booting'; var queued = false; var watchdog = 0; var engineRequested = false; var modernSupport;
   // Some devices need extra time to load the 3D engine and its environment assets.
@@ -35,6 +40,7 @@
     if(state==='engine-ready'){ document.dispatchEvent(makeEvent('muzikaz:rad-tox-request')); }
     else {setState('booting','Loading the 3D engine. Your game will begin automatically…'); startEngine(); armWatchdog();}
   }
+  window.MUZIKAZ_RAD_TOX_LAUNCHER={request:request,startEngine:startEngine,getState:function(){return state;}};
   document.addEventListener('muzikaz:rad-tox-engine-ready',function(){clearWatchdog();setState('engine-ready','3D engine ready.');if(queued)document.dispatchEvent(makeEvent('muzikaz:rad-tox-request'));});
   document.addEventListener('muzikaz:rad-tox-stage',function(e){var d=e.detail||{},next=d.stage||'loading-manifest';setState(next,d.message);if(next==='loading-game')armWatchdog(GAME_DEPLOY_TIMEOUT_MS);else if(next==='game-active')clearWatchdog();});
   document.addEventListener('muzikaz:rad-tox-native-error',function(e){var d=e.detail||{}; fail(d.stage||'3D game',d.message||'The 3D environment could not be started.');});

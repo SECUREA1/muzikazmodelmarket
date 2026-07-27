@@ -93,6 +93,7 @@ const gameMarkup = `    <section class="section-block house-explorer" id="house-
     </section>`;
 
 function loadClassicScript(src, marker) {
+  if (marker === 'launcher' && window.MUZIKAZ_RAD_TOX_LAUNCHER) return Promise.resolve(null);
   const existing = document.querySelector(`script[data-crib-script="${marker}"]`);
   if (existing) return Promise.resolve(existing);
   return new Promise((resolve, reject) => {
@@ -145,11 +146,12 @@ export async function initializeCribGame(options = {}) {
     await loadClassicScript('./public/js/rad-tox-launcher.js', 'launcher');
     if (options.multiplayer !== false) await loadClassicScript(MULTIPLAYER_URL, 'multiplayer');
     if (options.autoStart) {
-      const trigger = document.createElement('button');
-      trigger.type = 'button'; trigger.hidden = true; trigger.dataset.houseStart = '';
-      container.append(trigger);
-      trigger.click();
-      trigger.remove();
+      // Calling the launcher directly is reliable in iOS Safari. A synthetic
+      // click on a hidden, immediately removed button can be discarded there,
+      // which used to strand multiplayer on the "Ready to play?" overlay.
+      const launcher = window.MUZIKAZ_RAD_TOX_LAUNCHER;
+      if (!launcher?.request) throw new Error('The 3D game launcher did not initialize.');
+      launcher.request();
     }
     return instance;
   } catch (error) {
