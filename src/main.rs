@@ -1164,7 +1164,7 @@ fn house_presence(
             session_id,
             username: trim(
                 if username.is_empty() {
-                    "Subscriber".into()
+                    "Player".into()
                 } else {
                     username
                 },

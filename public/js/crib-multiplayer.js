@@ -6,8 +6,9 @@
   const apiFetch = (path, options) => window.MUZIKAZ_API ? window.MUZIKAZ_API.fetch(path, options) : fetch(apiUrl(path), options);
   let sessionId = localStorage.getItem('muzikazHouseSessionId');
   if (!sessionId) { sessionId = crypto.randomUUID?.() || `subscriber-${Date.now()}`; localStorage.setItem('muzikazHouseSessionId', sessionId); }
-  const email = localStorage.getItem('muzikazBottleMemberEmail') || 'Subscriber';
-  const username = email.split('@')[0].slice(0, 28) || 'Subscriber';
+  const email = localStorage.getItem('muzikazBottleMemberEmail') || '';
+  const savedProfile = JSON.parse(localStorage.getItem('muzikazMemberProfile') || 'null');
+  const username = String(localStorage.getItem('muzikazUsername') || savedProfile?.username || email.split('@')[0] || 'Player').trim().slice(0, 28) || 'Player';
   const color = `hsl(${[...sessionId].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 360} 85% 65%)`;
   const toggle = root.querySelector('#crib-chat-toggle');
   const panel = root.querySelector('#crib-chat-panel');
@@ -47,7 +48,7 @@
   feed.addEventListener('scroll', () => { userScrolled = feed.scrollHeight - feed.scrollTop - feed.clientHeight > 24; }, { passive: true });
   async function heartbeat() {
     const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null'); if (!avatar) throw new Error('Choose your designated avatar before joining the Crib.');
-    const response = await apiFetch('/api/houses/ioncore-house/presence', { method: 'POST', headers, body: JSON.stringify({ roomId: window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, avatarUrl: avatar.modelUrl, modelUrl: avatar.modelUrl, position: window.MUZIKAZ_HOUSE_TRACKING?.position, rotation: window.MUZIKAZ_HOUSE_TRACKING?.rotation, message: window.MUZIKAZ_HOUSE_TRACKING?.message }) });
+    const response = await apiFetch('/api/houses/ioncore-house/presence', { method: 'POST', headers, body: JSON.stringify({ username, roomId: window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, avatarUrl: avatar.modelUrl, modelUrl: avatar.modelUrl, position: window.MUZIKAZ_HOUSE_TRACKING?.position, rotation: window.MUZIKAZ_HOUSE_TRACKING?.rotation, message: window.MUZIKAZ_HOUSE_TRACKING?.message }) });
     const data = await jsonResponse(response); joined = true; renderPresence(data); status.textContent = '';
   }
   const typing = (active) => { root.classList.toggle('is-typing', active); window.dispatchEvent(new CustomEvent('muzikaz-chat-focus', { detail: { active } })); if (active && document.pointerLockElement) document.exitPointerLock?.(); };
