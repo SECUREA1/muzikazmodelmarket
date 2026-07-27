@@ -16,7 +16,7 @@
   function clearWatchdog(){ if(watchdog){window.clearTimeout(watchdog);watchdog=0;} }
   function armWatchdog(delay){ clearWatchdog(); watchdog=window.setTimeout(function(){ if(state==='booting' || state==='loading-game') fail('3D engine','The game is taking longer than expected. Retry the 3D game.'); },delay || ENGINE_STARTUP_TIMEOUT_MS); }
   function addRecovery(){ var host=document.getElementById('house-game-start'); if(!host || host.querySelector('[data-radtox-recovery]')) return; var box=document.createElement('p'); box.setAttribute('data-radtox-recovery',''); box.innerHTML='<button type="button" data-radtox-retry>Retry 3D Game</button>'; host.appendChild(box); box.onclick=function(e){var t=e.target; if(t.getAttribute('data-radtox-retry')!==null){e.preventDefault(); queued=true; setState('booting','Retrying 3D engine…'); if(engineRequested)document.dispatchEvent(makeEvent('muzikaz:rad-tox-request'));else startEngine(); armWatchdog();}}; }
-  function fail(stage, message){ clearWatchdog(); setState('error', stage+': '+message); var controls=buttons(); for(var i=0;i<controls.length;i+=1){controls[i].disabled=false; controls[i].textContent='BEGIN NOW!';} addRecovery(); }
+  function fail(stage, message){ clearWatchdog(); setState('error', stage+': '+message); var controls=buttons(); for(var i=0;i<controls.length;i+=1){controls[i].disabled=false; controls[i].textContent='Begin';} addRecovery(); }
   function makeEvent(name, detail){ var e; try {e=new window.CustomEvent(name,{detail:detail||{}});} catch(ignore){ e=document.createEvent('Event');e.initEvent(name,true,true);e.detail=detail||{};} return e; }
   function startEngine(){
     if(engineRequested)return;
@@ -30,7 +30,7 @@
   function request(){
     if(state==='booting' || state==='loading-game') return;
     queued=true;
-    setButtons(true,'Preparing RAD-TOX…');
+    setButtons(true,'Loading…');
     if(!supportsModern()){fail('3D engine','This browser does not support the WebGL features required by RAD-TOX.');return;}
     if(state==='engine-ready'){ document.dispatchEvent(makeEvent('muzikaz:rad-tox-request')); }
     else {setState('booting','Loading the 3D engine. Your game will begin automatically…'); startEngine(); armWatchdog();}
@@ -46,5 +46,5 @@
   document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
   // Do not download or decode Three.js/GLB assets until the player opts in. This
   // leaves scrolling and first paint responsive on memory-constrained phones.
-  if(!supportsModern()) window.setTimeout(function(){fail('3D engine','This browser does not support the WebGL features required by RAD-TOX.');},0); else setState('idle','Ready to start RAD-TOX.');
+  if(!supportsModern()) window.setTimeout(function(){fail('3D engine','This browser does not support the WebGL features required by RAD-TOX.');},0); else setState('idle','Ready to begin.');
 }());
