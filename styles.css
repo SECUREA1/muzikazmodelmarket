@@ -2475,3 +2475,142 @@ section,
   .house-explorer-shell .house-bottom-control{min-height:52px;padding:5px 2px;border-radius:10px}
   .house-explorer-shell .house-firefox-label{display:none}
 }
+
+/* Mobile Vibe Crib is a single, game-only window. The desktop marketing and
+   publishing structures stay available on larger screens, while phones move
+   the tall live chat into the former Instant Files position, followed by the
+   four utility buttons and the two touch sticks. */
+@media(max-width:760px){
+  .model-explorer-page>.topbar,
+  .model-explorer-page>.site-header,
+  .model-explorer-page .house-explorer>.section-title,
+  .model-explorer-page main>.section-block:not(.house-explorer),
+  .model-explorer-page main~*{
+    display:none!important;
+  }
+  .model-explorer-page,
+  .model-explorer-page main{
+    margin:0;
+    padding:0;
+    min-height:100%;
+    background:#071500;
+  }
+  .model-explorer-page .house-explorer{
+    width:100%;
+    margin:0;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)!important;
+  }
+  .model-explorer-page .house-explorer-shell{
+    width:100%;
+    margin:0;
+    border-width:1px 0;
+    border-radius:0;
+    background:#020403;
+  }
+  .model-explorer-page .house-explorer-shell>.house-hud,
+  .model-explorer-page .house-control-dock,
+  .model-explorer-page .house-picker-panel,
+  .model-explorer-page .environment-upload-panel{
+    display:none!important;
+  }
+  .model-explorer-page .house-explorer-shell>.house-stage{
+    order:1;
+    flex:none;
+    min-height:0;
+    height:clamp(390px,62svh,680px)!important;
+    max-height:none!important;
+    border-bottom:1px solid rgba(156,255,0,.42);
+  }
+  .model-explorer-page .rad-tox-hud{
+    top:12px;
+    left:12px;
+    right:12px;
+    width:auto;
+  }
+  .model-explorer-page .house-explorer-shell>.crib-social{
+    order:2;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-rows:auto minmax(150px,24svh) auto;
+    gap:8px;
+    min-height:230px;
+    padding:12px;
+    border-top:0;
+    background:linear-gradient(180deg,#020604,#000);
+  }
+  .model-explorer-page .crib-chat-toggle{
+    grid-column:1/-1;
+    grid-row:1;
+    width:100%;
+    min-height:40px;
+    padding:7px 12px;
+    justify-content:space-between;
+  }
+  .model-explorer-page .crib-chat-toggle span{font-size:13px}
+  .model-explorer-page .crib-chat-toggle span::after{content:none}
+  .model-explorer-page .crib-chat-feed{
+    display:block;
+    grid-column:1/-1;
+    grid-row:2;
+    width:100%;
+    height:100%;
+    max-height:none;
+    margin:0;
+    padding:10px 12px;
+    overflow-y:auto;
+    border:1px solid rgba(156,255,0,.3);
+    border-radius:14px;
+    background:rgba(4,10,6,.8);
+    box-sizing:border-box;
+  }
+  .model-explorer-page .crib-chat-feed:empty::before{
+    content:"Live crib chat";
+    color:rgba(239,255,215,.5);
+    font:700 12px/1.4 Inter,sans-serif;
+  }
+  .model-explorer-page .crib-chat-bar{
+    grid-column:1/-1;
+    grid-row:3;
+    display:flex;
+    width:100%;
+    min-width:0;
+  }
+  .model-explorer-page .crib-chat-bar input{
+    width:0;
+    min-width:0;
+  }
+  .model-explorer-page .crib-chat-panel{
+    position:fixed;
+    inset:max(10px,env(safe-area-inset-top)) 10px auto;
+    z-index:100;
+    width:auto;
+    max-height:70svh;
+  }
+  .model-explorer-page .house-explorer-shell>.house-bottom-controls{
+    order:3;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:7px;
+    padding:10px;
+    border-top:1px solid rgba(156,255,0,.32);
+    border-radius:0;
+    background:#020403;
+  }
+  .model-explorer-page .house-bottom-control{
+    min-height:72px;
+    padding:7px 3px;
+    border-radius:14px;
+  }
+  .model-explorer-page .house-explorer-shell>.mobile-move-pad{
+    order:4;
+    padding:14px 10px calc(14px + env(safe-area-inset-bottom))!important;
+    border-top:1px solid rgba(156,255,0,.32)!important;
+    border-radius:0!important;
+  }
+  .model-explorer-page .house-explorer-shell .thumbstick-base{
+    width:clamp(112px,34vw,156px);
+    height:clamp(112px,34vw,156px);
+  }
+  .model-explorer-page .house-explorer-shell .thumbstick-control small{
+    display:block;
+  }
+}
