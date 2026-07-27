@@ -7,14 +7,16 @@
   // the launcher instance that did not request the engine.
   if (window.MUZIKAZ_RAD_TOX_LAUNCHER) return;
   var PREFIX = '[MUZIKAZ GAME]';
-  var state = 'booting'; var queued = false; var watchdog = 0; var engineRequested = false; var modernSupport;
+  var state = 'booting'; var queued = false; var watchdog = 0; var engineRequested = false; var modernSupport; var lastActivation = 0;
   // Some devices need extra time to load the 3D engine and its environment assets.
   var ENGINE_STARTUP_TIMEOUT_MS = 90000;
-  var GAME_DEPLOY_TIMEOUT_MS = 20000;
+  // A large GLB can take considerably longer than 20 seconds to download and
+  // decode on an iPhone. Do not turn a healthy in-flight launch into an error.
+  var GAME_DEPLOY_TIMEOUT_MS = 90000;
   function log(message, detail) { if (window.console && console.info) console.info(PREFIX, message, detail || ''); }
   function status(message) { var nodes = [document.getElementById('house-status'), document.getElementById('house-game-load-status')]; for (var i=0;i<nodes.length;i+=1) if(nodes[i]) nodes[i].textContent=message; }
   function buttons() { return document.querySelectorAll('#house-start-game, [data-house-start]'); }
-  function setButtons(disabled, label) { var controls=buttons(); for(var i=0;i<controls.length;i+=1){ controls[i].disabled=disabled; if(label) controls[i].textContent=label; } }
+  function setButtons(disabled, label) { var controls=buttons(); for(var i=0;i<controls.length;i+=1){ controls[i].disabled=disabled; if(label){var span=controls[i].querySelector&&controls[i].querySelector('span');if(span)span.textContent=label;else controls[i].textContent=label;} } }
   function publish(next, message) { document.dispatchEvent(makeEvent('muzikaz:rad-tox-app-update', { stage: next, message: message || '' })); }
   function setState(next, message) { state = next; document.documentElement.setAttribute('data-radtox-state', next); log('stage '+next); if(message) status(message); publish(next, message); }
   function supportsModern() { if(modernSupport !== undefined)return modernSupport; var s=document.createElement('script'), c=document.createElement('canvas'), gl; try{gl=c.getContext&&((window.WebGL2RenderingContext&&c.getContext('webgl2'))||c.getContext('webgl')||c.getContext('experimental-webgl'));}catch(ignore){gl=null;} modernSupport='noModule' in s && !!(window.Promise && window.fetch && window.URL && window.CustomEvent && gl); return modernSupport; }
@@ -49,7 +51,8 @@
   // before the following click handler asks the game to begin.
   document.addEventListener('pointerdown',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('touchstart',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
-  document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
+  document.addEventListener('touchend',activate,true);
+  document.addEventListener('click',activate,true);
   // Do not download or decode Three.js/GLB assets until the player opts in. This
   // leaves scrolling and first paint responsive on memory-constrained phones.
   if(!supportsModern()) window.setTimeout(function(){fail('3D engine','This browser does not support the WebGL features required by RAD-TOX.');},0); else setState('idle','Ready to begin.');
