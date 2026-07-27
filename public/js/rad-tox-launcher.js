@@ -5,7 +5,7 @@
   var state = 'booting'; var queued = false; var watchdog = 0; var engineRequested = false; var modernSupport;
   // Some devices need extra time to load the 3D engine and its environment assets.
   var ENGINE_STARTUP_TIMEOUT_MS = 90000;
-  var GAME_DEPLOY_TIMEOUT_MS = 20000;
+  var GAME_DEPLOY_TIMEOUT_MS = ENGINE_STARTUP_TIMEOUT_MS;
   function log(message, detail) { if (window.console && console.info) console.info(PREFIX, message, detail || ''); }
   function status(message) { var nodes = [document.getElementById('house-status'), document.getElementById('house-game-load-status')]; for (var i=0;i<nodes.length;i+=1) if(nodes[i]) nodes[i].textContent=message; }
   function buttons() { return document.querySelectorAll('#house-start-game, [data-house-start]'); }
