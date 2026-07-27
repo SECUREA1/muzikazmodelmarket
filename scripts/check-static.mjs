@@ -181,3 +181,14 @@ for (const requiredArAction of ["text:'View in AR'", "text:'Share AR link'", "te
 for (const requiredArSharePart of ["['environment','house']", "url.searchParams.set('model',model.id)", "url.searchParams.set('view','ar')"]) {
   if (!modelUtilsScript.includes(requiredArSharePart)) throw new Error(`AR share links are missing ${requiredArSharePart}`);
 }
+
+const sharedCribGame = await readFile('dist/public/js/crib-game.js', 'utf8');
+for (const requiredSharedFeature of ['initializeCribGame', 'window.cribGameInstance', 'async destroy()', 'MUZIKAZ_HOUSE_ENGINE', 'MUZIKAZ_CRIB_MULTIPLAYER']) {
+  if (!sharedCribGame.includes(requiredSharedFeature)) throw new Error(`Shared Crib lifecycle is missing ${requiredSharedFeature}`);
+}
+if (!membersHtml.includes('id="members-game-container"') || !membersHtml.includes('id="members-game-begin"') || !membersHtml.includes('public/js/members-crib-launch.js')) {
+  throw new Error('members.html must provide its single authenticated in-page Crib launch.');
+}
+if (membersHtml.includes('href="model-explorer.html" id="member-active-action"') || membersHtml.includes('house-explorer-canvas')) {
+  throw new Error('members.html must not contain redirect launch logic or its retired game canvas.');
+}

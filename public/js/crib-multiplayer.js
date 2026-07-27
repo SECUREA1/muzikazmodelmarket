@@ -8,7 +8,8 @@
   const sessionKey = 'muzikazHouseSessionId';
   let sessionId = localStorage.getItem(sessionKey);
   if (!sessionId) { sessionId = crypto.randomUUID?.() || `subscriber-${Date.now()}`; localStorage.setItem(sessionKey, sessionId); }
-  const email = localStorage.getItem('muzikazBottleMemberEmail') || 'Subscriber';
+  const member = window.MUZIKAZ_CRIB_MEMBER || {};
+  const email = member.email || member.id || localStorage.getItem('muzikazBottleMemberEmail') || 'Subscriber';
   const username = email.split('@')[0].slice(0, 28) || 'Subscriber';
   const color = `hsl(${[...sessionId].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 360} 85% 65%)`;
   const toggle = document.querySelector('#crib-chat-toggle');
@@ -22,6 +23,7 @@
   let joined = false;
 
   const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username };
+  if (member.sessionToken) headers.Authorization = `Bearer ${member.sessionToken}`;
   const payload = (response) => response?.data ?? response;
   async function jsonResponse(response) {
     const result = await response.json().catch(() => ({}));
@@ -51,7 +53,7 @@
   async function heartbeat() {
     const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null');
     if (!avatar) throw new Error('Choose your designated avatar before joining the Crib.');
-    const response = await apiFetch('/api/houses/ioncore-house/presence', { method: 'POST', headers, body: JSON.stringify({ username, roomId: window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, avatarUrl: avatar.modelUrl, modelUrl: avatar.modelUrl, avatarName: avatar.displayName || avatar.name || 'Player avatar', position: window.MUZIKAZ_HOUSE_TRACKING?.position, rotation: window.MUZIKAZ_HOUSE_TRACKING?.rotation, movementState: window.MUZIKAZ_HOUSE_TRACKING?.movementState || 'idle', animationState: window.MUZIKAZ_HOUSE_TRACKING?.animationState || avatar.animation || 'auto', message: window.MUZIKAZ_HOUSE_TRACKING?.message }) });
+    const response = await apiFetch('/api/houses/ioncore-house/presence', { method: 'POST', headers, body: JSON.stringify({ username, roomId: window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, avatarUrl: avatar.modelUrl, modelUrl: avatar.modelUrl, avatarName: avatar.displayName || avatar.name || 'Player avatar', position: window.MUZIKAZ_HOUSE_TRACKING?.position, rotation: window.MUZIKAZ_HOUSE_TRACKING?.rotation, movementState: window.MUZIKAZ_HOUSE_TRACKING?.movementState || 'idle', animationState: window.MUZIKAZ_HOUSE_TRACKING?.animationState || avatar.animation || 'auto', message: window.MUZIKAZ_HOUSE_TRACKING?.message, memberId: member.id || email.toLowerCase(), profile: member.profile || {}, ownedAssets: member.ownedAssets || [] }) });
     const data = await jsonResponse(response); joined = true; renderPresence(data); setStatus();
   }
   toggle.addEventListener('click', () => { panel.hidden = !panel.hidden; toggle.setAttribute('aria-expanded', String(!panel.hidden)); if (!panel.hidden) panel.querySelector('input')?.focus(); });
@@ -68,5 +70,7 @@
   const beginPresence = () => heartbeat().catch((error) => { setStatus(error.message); toggle.disabled = true; });
   if (window.MUZIKAZ_DESIGNATED_AVATAR || localStorage.getItem('muzikazDesignatedAvatar')) beginPresence(); else window.addEventListener('muzikaz-avatar-ready', beginPresence, { once: true });
   const timer = setInterval(() => { heartbeat().catch((error) => { setStatus(error.message); }); loadChat().catch(() => {}); }, 5_000);
-  window.addEventListener('pagehide', () => { clearInterval(timer); events?.close(); if (joined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
+  const destroy = () => { clearInterval(timer); events?.close(); events = null; if (joined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); joined = false; };
+  window.MUZIKAZ_CRIB_MULTIPLAYER = { destroy };
+  window.addEventListener('pagehide', destroy, { once: true });
 })();
