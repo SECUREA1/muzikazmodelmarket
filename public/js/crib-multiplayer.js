@@ -20,7 +20,6 @@
   const statuses = [...document.querySelectorAll('#crib-chat-status, #crib-dock-status')];
   const setStatus = (message = '') => statuses.forEach((node) => { node.textContent = message; });
   let joined = false;
-  let startPromise = null;
 
   const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username };
   const payload = (response) => response?.data ?? response;
@@ -59,25 +58,15 @@
   panel.querySelector('[data-close-chat]').addEventListener('click', () => { panel.hidden = true; toggle.setAttribute('aria-expanded', 'false'); toggle.focus(); });
   forms.forEach((form) => form.addEventListener('submit', async (event) => { event.preventDefault(); const input = form.querySelector('input'); const message = input.value.trim(); if (!message) return; input.disabled = true; try { const response = await apiFetch('/api/houses/ioncore-house/chat', { method: 'POST', headers, body: JSON.stringify({ message }) }); const data = await jsonResponse(response); document.querySelectorAll('#crib-chat-input, #crib-dock-input').forEach((field) => { field.value = ''; }); window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), message }; addMessage(data); setStatus(); } catch (error) { setStatus(error.message || 'Message could not be sent.'); } finally { input.disabled = false; input.focus(); } }));
   async function loadChat() { const response = await apiFetch('/api/houses/ioncore-house/chat', { headers, cache: 'no-store' }); const data = await jsonResponse(response); (data.messages || []).forEach(addMessage); }
+  loadChat().catch(() => {});
   let events;
-  function openEvents() {
-    if (events || !('EventSource' in window)) return;
+  if ('EventSource' in window) {
     events = new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`));
     events.addEventListener('house-presence-updated', (event) => renderPresence(JSON.parse(event.data)));
     events.addEventListener('house-chat-message', (event) => addMessage(JSON.parse(event.data)));
   }
-  async function beginPresence() {
-    if (joined) return;
-    if (!window.MUZIKAZ_DESIGNATED_AVATAR && !localStorage.getItem('muzikazDesignatedAvatar')) await window.MUZIKAZ_AVATAR_GATE?.ensure?.();
-    await heartbeat();
-    openEvents();
-    loadChat().catch(() => {});
-  }
-  function start() {
-    if (!startPromise) startPromise = beginPresence().catch((error) => { startPromise = null; setStatus(error.message); toggle.disabled = true; throw error; });
-    return startPromise;
-  }
-  window.MUZIKAZ_CRIB_MULTIPLAYER = { start };
-  const timer = setInterval(() => { if (joined) { heartbeat().catch((error) => { setStatus(error.message); }); loadChat().catch(() => {}); } }, 5_000);
+  const beginPresence = () => heartbeat().catch((error) => { setStatus(error.message); toggle.disabled = true; });
+  if (window.MUZIKAZ_DESIGNATED_AVATAR || localStorage.getItem('muzikazDesignatedAvatar')) beginPresence(); else window.addEventListener('muzikaz-avatar-ready', beginPresence, { once: true });
+  const timer = setInterval(() => { heartbeat().catch((error) => { setStatus(error.message); }); loadChat().catch(() => {}); }, 5_000);
   window.addEventListener('pagehide', () => { clearInterval(timer); events?.close(); if (joined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
 })();
