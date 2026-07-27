@@ -72,6 +72,21 @@ const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
 if (!launcher.includes('muzikaz:rad-tox-app-update')) {
   throw new Error('RAD-TOX launcher must publish live 3D game updates.');
 }
+for (const memberGateRequirement of ["muzikazBottleMember')!=='true'", 'muzikazBottleMemberEmail', 'muzikazLoginRedirect', 'members.html?login=required']) {
+  if (!launcher.includes(memberGateRequirement)) {
+    throw new Error(`RAD-TOX launcher must require the original Bottle login before Crib access: missing ${memberGateRequirement}`);
+  }
+}
+
+const membersScript = await readFile('dist/script.js', 'utf8');
+if (!membersScript.includes("form.hidden = true") || !membersScript.includes("member-active-action")) {
+  throw new Error('Authenticated members must see direct member access instead of a second login form.');
+}
+
+const avatarGate = await readFile('dist/public/js/avatar-selection.js', 'utf8');
+if (/if\s*\(localStorage\.getItem\(MEMBER_KEY\)\s*===\s*['"]true['"]\)\s*show\(false\)/.test(avatarGate)) {
+  throw new Error('Bottle login must not automatically open a second avatar/setup request.');
+}
 for (const removed2dFeature of ['startCompatibility', 'rad-tox-compat-game', 'data-radtox-compat']) {
   if (launcher.includes(removed2dFeature)) {
     throw new Error(`RAD-TOX launcher must not populate the removed 2D game: ${removed2dFeature}`);
