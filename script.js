@@ -130,6 +130,40 @@ function protectMemberOnlyPages() {
 
 protectMemberOnlyPages();
 
+function initModelMarketGate() {
+  const cover = document.querySelector('#model-market-cover');
+  const form = document.querySelector('#model-market-login-form');
+  const status = document.querySelector('#model-market-login-status');
+  if (!cover || !form) return;
+
+  const uncover = () => {
+    document.body.classList.remove('model-market-gated');
+    cover.setAttribute('hidden', '');
+  };
+
+  if (hasBottleLogin()) {
+    uncover();
+    return;
+  }
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const email = normalizeMemberEmail(data.get('email'));
+    const passcode = String(data.get('passcode') || '').trim();
+    if (!email || !passcode) {
+      if (status) status.textContent = 'Enter both your member email and passcode.';
+      return;
+    }
+    currentMemberEmail = email;
+    window.localStorage.setItem('muzikazBottleMember', 'true');
+    window.localStorage.setItem('muzikazBottleMemberEmail', email);
+    uncover();
+  });
+}
+
+initModelMarketGate();
+
 function renderOwnedCollection(preferredOwner = currentMemberEmail) {
   const current = document.querySelector('#owned-current-user');
   const copy = document.querySelector('#owned-current-copy');
