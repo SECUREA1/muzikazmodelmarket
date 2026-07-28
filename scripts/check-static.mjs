@@ -170,3 +170,17 @@ const modelExplorerHtml = await readFile('dist/model-explorer.html', 'utf8');
 if (!mainHtml.includes('public/js/api-connection.js') || !modelExplorerHtml.includes('public/js/api-connection.js') || !membersHtml.includes('public/js/api-connection.js')) {
   throw new Error('Every game and avatar entry point must initialize its cross-browser API connection.');
 }
+
+const avatarSelection = await readFile('dist/public/js/avatar-selection.js', 'utf8');
+for (const requiredPreviewFeature of ['document.baseURI', 'loading="eager"', 'reveal="auto"', "viewer.addEventListener('load'"]) {
+  if (!avatarSelection.includes(requiredPreviewFeature)) {
+    throw new Error(`Bottle Vault must automatically display deploy-safe GLB previews: missing ${requiredPreviewFeature}`);
+  }
+}
+const avatarCatalog = JSON.parse(await readFile('dist/public/models/avatars.json', 'utf8'));
+for (const avatar of avatarCatalog) {
+  if (!avatar.modelUrl || avatar.modelUrl.startsWith('/')) {
+    throw new Error(`Bottle Vault avatar ${avatar.id} must use a deployment-relative GLB URL.`);
+  }
+  await access(`dist/${avatar.modelUrl}`);
+}
