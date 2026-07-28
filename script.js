@@ -107,6 +107,13 @@ function claimOwnedAsset(assetName, source = 'Marketplace claim') {
 }
 
 function ownedAssetDetail(assetName) {
+  if (/\b(?:digital\s+land|world\s+plot|land\s+(?:asset|reservation|deed|claim))\b/i.test(assetName)) {
+    const owner = normalizeMemberEmail(currentMemberEmail);
+    let claim = null;
+    try { claim = JSON.parse(window.localStorage.getItem('muzikazLandClaims') || '{}')[owner] || null; } catch (error) { /* Render the deed without optional map metadata. */ }
+    const location = claim ? ` Staked at ${claim.place} (X ${claim.x}, Y ${claim.y}).` : ' Open the World Map to stake this deed.';
+    return { title: assetName, type: 'Digital land', image: 'public/assets/muzikaz-world-map.svg', copy: `A MUZIKAZ World deed tied to this member profile.${location}`, href: 'index.html#world-map' };
+  }
   const model = assetCatalog.models.find((item) => assetName.includes(item.name));
   if (model) return { title: assetName, type: model.type, image: model.file, copy: model.copy };
   const product = assetCatalog.retail.find((item) => assetName.includes(item.name));
@@ -174,11 +181,19 @@ function initWorldAtlas() {
   const readout = document.querySelector('#world-position-readout');
   const status = document.querySelector('#world-map-status');
   const enter = document.querySelector('#world-enter-button');
-  if (!atlas || !viewport || !marker || !form || !name || !detail || !readout || !status || !enter) return;
+  const claimButton = document.querySelector('#world-claim-button');
+  const ownership = document.querySelector('#world-map-ownership');
+  if (!atlas || !viewport || !marker || !form || !name || !detail || !readout || !status || !enter || !claimButton || !ownership) return;
 
   const places = [...atlas.querySelectorAll('[data-map-place]')];
   const clamp = (value) => Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
   let position = { x: 36, y: 49, place: 'Crew Plaza', detail: 'Social hub · crews gathering now' };
+  const owner = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail'));
+  const isLandAsset = (asset) => /\b(?:digital\s+land|world\s+plot|land\s+(?:asset|reservation|deed|claim))\b/i.test(asset);
+  const ownedLand = owner ? (readOwnedProfiles()[owner] || []).find(isLandAsset) : '';
+  let claims = {};
+  try { claims = JSON.parse(window.localStorage.getItem('muzikazLandClaims') || '{}') || {}; } catch (error) { claims = {}; }
+  const savedClaim = owner ? claims[owner] : null;
   try {
     const saved = JSON.parse(window.localStorage.getItem('muzikazWorldPosition') || 'null');
     if (saved && Number.isFinite(Number(saved.x)) && Number.isFinite(Number(saved.y))) position = { ...position, ...saved };
@@ -199,6 +214,35 @@ function initWorldAtlas() {
     window.localStorage.setItem('muzikazWorldPosition', JSON.stringify(position));
   }
 
+  function renderClaim() {
+    atlas.querySelector('[data-member-land-claim]')?.remove();
+    const claim = owner ? claims[owner] : null;
+    if (claim) {
+      const pin = document.createElement('button');
+      pin.type = 'button';
+      pin.dataset.memberLandClaim = owner;
+      pin.className = 'world-atlas__claim-pin';
+      pin.style.setProperty('--x', `${claim.x}%`);
+      pin.style.setProperty('--y', `${claim.y}%`);
+      pin.innerHTML = `<i>⚑</i><span>${owner}'s land</span>`;
+      pin.setAttribute('aria-label', `${owner}'s claimed land at ${claim.place}, X ${claim.x}, Y ${claim.y}`);
+      pin.addEventListener('click', (event) => { event.stopPropagation(); render({ ...claim, detail: `Owned land tied to ${owner}'s Backpack and member profile.` }); });
+      viewport.append(pin);
+      ownership.innerHTML = `<strong>Claim active:</strong> ${claim.place} · X ${claim.x}, Y ${claim.y} · tied to <a href="members.html#owned-collection">${owner}'s profile</a>.`;
+      claimButton.textContent = 'Move my land claim ⚑';
+    } else if (ownedLand) {
+      ownership.innerHTML = `<strong>Deed ready:</strong> ${ownedLand}. Pick an open map point, then stake it to your profile.`;
+      claimButton.textContent = 'Stake land claim ⚑';
+    } else if (!owner) {
+      ownership.innerHTML = 'Sign in through <a href="members.html">Bottle Login</a>, then claim or purchase digital land for your Backpack.';
+      claimButton.textContent = 'Login to stake a claim';
+    } else {
+      ownership.innerHTML = `No land deed found in ${owner}'s Backpack. <a href="model-market.html#muzikaz-world-plot">Claim or purchase digital land</a> first.`;
+      claimButton.textContent = 'Land deed required';
+    }
+    claimButton.disabled = !ownedLand;
+  }
+
   places.forEach((place) => place.addEventListener('click', (event) => {
     event.stopPropagation();
     render({ x: place.dataset.mapX, y: place.dataset.mapY, place: place.dataset.mapPlace, detail: place.dataset.mapDetail });
@@ -212,6 +256,15 @@ function initWorldAtlas() {
     const values = new FormData(form);
     render({ x: values.get('x'), y: values.get('y'), place: 'My Build Point', detail: 'Your exact custom coordinates are saved on this device.' });
   });
+  claimButton.addEventListener('click', () => {
+    if (!owner || !ownedLand) return;
+    claims[owner] = { owner, asset: ownedLand, x: position.x, y: position.y, place: position.place, claimedAt: new Date().toISOString() };
+    window.localStorage.setItem('muzikazLandClaims', JSON.stringify(claims));
+    window.localStorage.setItem('muzikazWorldPosition', JSON.stringify(position));
+    status.textContent = `Land claimed! ${position.place} at X ${position.x}, Y ${position.y} is now tied to your deed, Backpack, map, and profile.`;
+    window.dispatchEvent(new CustomEvent('muzikaz-land-claimed', { detail: claims[owner] }));
+    renderClaim();
+  });
   enter.addEventListener('click', () => {
     atlas.classList.remove('is-entering');
     void atlas.offsetWidth;
@@ -220,6 +273,8 @@ function initWorldAtlas() {
     window.setTimeout(() => atlas.classList.remove('is-entering'), 900);
   });
   render(position, false);
+  if (savedClaim) render({ ...savedClaim, detail: `Owned land tied to ${owner}'s Backpack and member profile.` }, false);
+  renderClaim();
 }
 
 initWorldAtlas();
@@ -253,7 +308,7 @@ function renderOwnedCollection(preferredOwner = currentMemberEmail) {
   summary.innerHTML = `<article><strong>${assets.length}</strong><span>Backpack items</span></article><article><strong>${owner === currentMemberEmail ? 'Owner' : 'Viewer'}</strong><span>${owner}</span></article><article><strong>Retained</strong><span>Assets and collectibles stay with the logged-in account.</span></article>`;
   grid.innerHTML = assets.map((asset) => {
     const detail = ownedAssetDetail(asset);
-    return `<article><img src="${detail.image}" alt="${detail.title}"><span class="pill">🎒 ${detail.type}</span><h3>${detail.title}</h3><p>${detail.copy}</p></article>`;
+    return `<article><img src="${detail.image}" alt="${detail.title}"><span class="pill">🎒 ${detail.type}</span><h3>${detail.title}</h3><p>${detail.copy}</p>${detail.href ? `<a class="card-link" href="${detail.href}">View map claim</a>` : ''}</article>`;
   }).join('') || '<article><h3>Backpack empty</h3><p>Add marketplace drops, checkout character products, claim collectibles, or upload graphics to build this account pack.</p></article>';
 }
 
