@@ -14,6 +14,8 @@
   const players = $('#crib-player-list'), messages = $('#crib-chat-messages'), form = $('#crib-chat-form');
   const input = $('#crib-chat-input'), status = $('#crib-chat-status'), reactions = $('#crib-reactions');
   const emojiToggle = $('#crib-emoji-toggle'), micToggle = $('#crib-mic-toggle'), speakerToggle = $('#crib-speaker-toggle'), voiceStatus = $('#crib-voice-status');
+  const audioSettingsToggle = $('#crib-audio-settings-toggle'), audioSettings = $('#crib-audio-settings');
+  const micDevice = $('#crib-mic-device'), speakerDevice = $('#crib-speaker-device'), speakerVolume = $('#crib-speaker-volume'), volumeValue = $('#crib-volume-value');
   const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username };
   const peers = new Map(), remoteAudio = new Map();
   let joined = false, localStream = null, speakerOn = true, currentUsers = [];
@@ -50,7 +52,7 @@
     const peer = new RTCPeerConnection({ iceServers:[{ urls:'stun:stun.l.google.com:19302' }, { urls:'stun:stun1.l.google.com:19302' }] });
     localStream?.getTracks().forEach((track) => peer.addTrack(track, localStream));
     peer.onicecandidate = (event) => { if (event.candidate) signal(remoteId, 'candidate', event.candidate).catch(() => {}); };
-    peer.ontrack = (event) => { let audio = remoteAudio.get(remoteId); if (!audio) { audio = document.createElement('audio'); audio.autoplay = true; audio.playsInline = true; audio.hidden = true; root.append(audio); remoteAudio.set(remoteId, audio); } audio.srcObject = event.streams[0]; audio.muted = !speakerOn; audio.play().catch(() => { voiceStatus.textContent = 'Tap Speaker on to hear voice'; }); };
+    peer.ontrack = (event) => { let audio = remoteAudio.get(remoteId); if (!audio) { audio = document.createElement('audio'); audio.autoplay = true; audio.playsInline = true; audio.hidden = true; audio.volume = Number(speakerVolume.value); if (typeof audio.setSinkId === 'function' && speakerDevice.value) audio.setSinkId(speakerDevice.value).catch(() => {}); root.append(audio); remoteAudio.set(remoteId, audio); } audio.srcObject = event.streams[0]; audio.muted = !speakerOn; audio.play().catch(() => { voiceStatus.textContent = 'Tap Speaker on to hear voice'; }); };
     peer.onconnectionstatechange = () => { if (peer.connectionState === 'connected') voiceStatus.textContent = `Voice live · ${peers.size} connection${peers.size === 1 ? '' : 's'}`; if (['failed','closed'].includes(peer.connectionState)) { peer.close(); peers.delete(remoteId); } };
     peers.set(remoteId, peer); return peer;
   }
@@ -67,8 +69,9 @@
   }
   async function enableMicrophone() {
     if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) throw new Error('Voice chat is not supported by this browser.');
-    localStream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true }, video:false });
+    localStream = await navigator.mediaDevices.getUserMedia({ audio:{ deviceId:micDevice.value ? { exact:micDevice.value } : undefined, echoCancellation:$('#crib-echo-cancellation').checked, noiseSuppression:$('#crib-noise-suppression').checked, autoGainControl:$('#crib-auto-gain').checked }, video:false });
     micToggle.classList.add('is-on'); micToggle.setAttribute('aria-pressed', 'true'); micToggle.querySelector('b').textContent = 'Mic on'; voiceStatus.textContent = 'Microphone live · connecting…'; connectToRoom();
+    await refreshAudioDevices();
   }
   function disableMicrophone() { localStream?.getTracks().forEach((track) => track.stop()); localStream = null; for (const [id, peer] of peers) { signal(id, 'hangup').catch(() => {}); peer.close(); } peers.clear(); micToggle.classList.remove('is-on'); micToggle.setAttribute('aria-pressed', 'false'); micToggle.querySelector('b').textContent = 'Mic off'; voiceStatus.textContent = 'Voice disconnected'; }
 
@@ -79,6 +82,18 @@
   reactions.querySelectorAll('button').forEach((button) => button.addEventListener('click', async () => { try { await postMessage(button.textContent.trim()); reactions.classList.remove('open'); emojiToggle.setAttribute('aria-expanded', 'false'); } catch (error) { status.textContent = error.message; } }));
   micToggle.addEventListener('click', async () => { try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); voiceStatus.textContent = error.name === 'NotAllowedError' ? 'Microphone permission denied' : error.message; } });
   speakerToggle.addEventListener('click', () => { speakerOn = !speakerOn; remoteAudio.forEach((audio) => { audio.muted = !speakerOn; if (speakerOn) audio.play().catch(() => {}); }); speakerToggle.classList.toggle('is-on', speakerOn); speakerToggle.setAttribute('aria-pressed', String(speakerOn)); speakerToggle.querySelector('b').textContent = speakerOn ? 'Speaker on' : 'Speaker off'; });
+  async function refreshAudioDevices() {
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const fill = (select, kind, fallback) => { const selected = select.value; select.replaceChildren(new Option(fallback, ''), ...devices.filter((device) => device.kind === kind).map((device, index) => new Option(device.label || `${fallback} ${index + 1}`, device.deviceId))); select.value = [...select.options].some((option) => option.value === selected) ? selected : ''; };
+    fill(micDevice, 'audioinput', 'Default microphone'); fill(speakerDevice, 'audiooutput', 'Default speaker');
+    $('#crib-device-note').textContent = devices.some((device) => device.label) ? 'Changes apply to this voice-chat session.' : 'Device names appear after microphone permission is granted.';
+  }
+  audioSettingsToggle.addEventListener('click', () => { audioSettings.hidden = !audioSettings.hidden; audioSettingsToggle.setAttribute('aria-expanded', String(!audioSettings.hidden)); if (!audioSettings.hidden) refreshAudioDevices().catch(() => {}); });
+  speakerVolume.addEventListener('input', () => { const volume = Number(speakerVolume.value); volumeValue.value = `${Math.round(volume * 100)}%`; remoteAudio.forEach((audio) => { audio.volume = volume; }); });
+  speakerDevice.addEventListener('change', () => { remoteAudio.forEach((audio) => { if (typeof audio.setSinkId === 'function') audio.setSinkId(speakerDevice.value).catch(() => { voiceStatus.textContent = 'Speaker selection is not supported here'; }); }); });
+  micDevice.addEventListener('change', async () => { if (!localStream) return; disableMicrophone(); try { await enableMicrophone(); } catch (error) { voiceStatus.textContent = error.message; } });
+  ['crib-echo-cancellation','crib-noise-suppression','crib-auto-gain'].forEach((id) => $(`#${id}`).addEventListener('change', async () => { if (!localStream) return; const track = localStream.getAudioTracks()[0]; await track?.applyConstraints({ echoCancellation:$('#crib-echo-cancellation').checked, noiseSuppression:$('#crib-noise-suppression').checked, autoGainControl:$('#crib-auto-gain').checked }).catch(() => { voiceStatus.textContent = 'Some audio processing is unavailable'; }); }));
   async function loadChat() { const data = await jsonResponse(await apiFetch('/api/houses/ioncore-house/chat', { headers, cache:'no-store' })); (data.messages || []).forEach(addMessage); }
   loadChat().catch(() => {});
   let events;
