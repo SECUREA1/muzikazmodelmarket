@@ -152,6 +152,8 @@ function renderOwnedCollection(preferredOwner = currentMemberEmail) {
   }
   const owners = Object.keys(profiles).sort((a, b) => (a === currentMemberEmail ? -1 : b === currentMemberEmail ? 1 : a.localeCompare(b)));
   select.disabled = false;
+  const avatarButton = document.querySelector('#change-game-avatar');
+  if (avatarButton) avatarButton.disabled = false;
   select.innerHTML = owners.map((profile) => `<option value="${profile}" ${profile === owner ? 'selected' : ''}>${profile}${profile === currentMemberEmail ? ' (you)' : ''}</option>`).join('');
   current.textContent = currentMemberEmail;
   copy.textContent = owner === currentMemberEmail ? 'Your login now carries every purchased pack, collectible, upload, and claimed Vibe Crib item below.' : `Viewing ${owner}'s shared backpack while logged in as ${currentMemberEmail}.`;
@@ -1337,6 +1339,7 @@ seedCharacterCheckout();
 seedArViewer();
 loadOwnerGlbModels().then(renderSubscriberGlbLibrary);
 document.querySelector('#owned-profile-select')?.addEventListener('change', (event) => renderOwnedCollection(event.currentTarget.value));
+document.querySelector('#change-game-avatar')?.addEventListener('click', () => window.MUZIKAZ_AVATAR_GATE?.change());
 renderOwnedCollection();
 initBottleLogin();
 
