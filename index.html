@@ -52,6 +52,7 @@
         <nav class="nav" id="primary-navigation" aria-label="Primary navigation">
             <a href="#home">Home</a>
             <a href="#models">Models</a>
+            <a href="#world-map">World Map</a>
             <a href="#marketplace-preview">Market</a>
             <a href="#character-world-assets">Characters & Worlds</a>
             <a href="#merch">Merch</a>
@@ -81,6 +82,45 @@
             <article><b>🎧</b><div><strong>Beat Culture</strong><span>Neon streetwear energy for every drop.</span></div></article>
             <article><b>🛡️</b><div><strong>Creator Safe</strong><span>Clear packs for mockups, banners, and pages.</span></div></article>
             <article><b>🚚</b><div><strong>Fast Drops</strong><span>New legends and merch collections weekly.</span></div></article>
+        </section>
+
+        <section class="world-atlas" id="world-map" aria-labelledby="world-map-title">
+            <header class="world-atlas__header">
+                <div><p class="kicker">Live world atlas · 8 places online</p><h2 id="world-map-title">Where will you land?</h2></div>
+                <p>Explore every active district in the MUZIKAZ world, then set your own spawn point. Select a beacon or tap anywhere on the map.</p>
+            </header>
+            <div class="world-atlas__layout">
+                <div class="world-atlas__viewport" id="world-map-viewport">
+                    <img src="public/assets/muzikaz-world-map.svg" alt="Illustrated map of the MUZIKAZ world with islands, routes, mountains, forests, and districts" draggable="false">
+                    <div class="world-atlas__markers" aria-label="Active world places">
+                        <button type="button" style="--x:23%;--y:28%" data-map-place="Volt City" data-map-x="23" data-map-y="28" data-map-detail="The electric capital · live stages and creator towers"><i></i><span>Volt City</span></button>
+                        <button type="button" style="--x:49%;--y:22%" data-map-place="Skyline Deck" data-map-x="49" data-map-y="22" data-map-detail="Rooftop events · tonight at 20:00"><i></i><span>Skyline Deck</span></button>
+                        <button type="button" style="--x:74%;--y:31%" data-map-place="Echo Gardens" data-map-x="74" data-map-y="31" data-map-detail="Living sound biome · open for builders"><i></i><span>Echo Gardens</span></button>
+                        <button type="button" style="--x:36%;--y:49%" data-map-place="Crew Plaza" data-map-x="36" data-map-y="49" data-map-detail="Social hub · crews gathering now"><i></i><span>Crew Plaza</span></button>
+                        <button type="button" style="--x:63%;--y:53%" data-map-place="Studio Ridge" data-map-x="63" data-map-y="53" data-map-detail="GLB build zone · 12 plots available"><i></i><span>Studio Ridge</span></button>
+                        <button type="button" style="--x:18%;--y:70%" data-map-place="Neon Docks" data-map-x="18" data-map-y="70" data-map-detail="Drop port · new assets arriving"><i></i><span>Neon Docks</span></button>
+                        <button type="button" style="--x:50%;--y:76%" data-map-place="Bassline Badlands" data-map-x="50" data-map-y="76" data-map-detail="Adventure zone · high energy terrain"><i></i><span>Bassline Badlands</span></button>
+                        <button type="button" style="--x:82%;--y:72%" data-map-place="Pixel Peaks" data-map-x="82" data-map-y="72" data-map-detail="Mountain builds · panoramic plots"><i></i><span>Pixel Peaks</span></button>
+                    </div>
+                    <div class="world-atlas__you" id="world-map-you" style="--x:36%;--y:49%"><span>YOU</span></div>
+                    <div class="world-atlas__compass" aria-hidden="true"><b>N</b><span>✦</span></div>
+                    <p class="world-atlas__hint">Tap map to move your spawn</p>
+                </div>
+                <aside class="world-atlas__panel">
+                    <div class="world-atlas__live"><span></span> WORLD ONLINE</div>
+                    <p class="kicker">Current destination</p>
+                    <h3 id="world-place-name">Crew Plaza</h3>
+                    <p id="world-place-detail">Social hub · crews gathering now</p>
+                    <dl><div><dt>Position</dt><dd id="world-position-readout">X 36 · Y 49</dd></div><div><dt>Status</dt><dd>Ready to enter</dd></div></dl>
+                    <form id="world-position-form">
+                        <label>X coordinate<input name="x" type="number" min="0" max="100" value="36" required></label>
+                        <label>Y coordinate<input name="y" type="number" min="0" max="100" value="49" required></label>
+                        <button class="btn" type="submit">Set my position</button>
+                    </form>
+                    <button class="world-atlas__enter" id="world-enter-button" type="button">Enter Crew Plaza <span>→</span></button>
+                    <p class="world-atlas__status" id="world-map-status" role="status">Choose a glowing place or create your own position.</p>
+                </aside>
+            </div>
         </section>
 
 

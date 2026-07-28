@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">The MUZIKAZ World</title><desc id="desc">A neon illustrated world map of connected islands, cities, forests, mountains, roads, and waterways.</desc>
+  <defs>
+    <radialGradient id="sea" cx="48%" cy="42%"><stop stop-color="#123752"/><stop offset=".58" stop-color="#071d30"/><stop offset="1" stop-color="#020a14"/></radialGradient>
+    <linearGradient id="land" x2="0" y2="1"><stop stop-color="#9ada54"/><stop offset=".48" stop-color="#337f44"/><stop offset="1" stop-color="#163b32"/></linearGradient>
+    <linearGradient id="sand"><stop stop-color="#ffe06a"/><stop offset="1" stop-color="#d8923a"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <pattern id="waves" width="54" height="36" patternUnits="userSpaceOnUse"><path d="M2 18q12-10 24 0t24 0" fill="none" stroke="#4bc8e8" stroke-opacity=".1" stroke-width="2"/></pattern>
+  </defs>
+  <rect width="1200" height="700" rx="28" fill="url(#sea)"/><rect width="1200" height="700" rx="28" fill="url(#waves)"/>
+  <g fill="none" stroke="#37d7ff" stroke-opacity=".22" stroke-dasharray="9 14"><path d="M45 122Q315 225 590 92T1155 145"/><path d="M30 605Q290 450 570 596t600-45"/></g>
+  <g stroke="#d5ff73" stroke-opacity=".2" stroke-width="18"><path d="M94 234Q185 95 354 116q94 12 149 94 78-94 211-72 88 14 126 91 129-37 244 77 45 44 13 105-41 76-158 64-55 111-186 85-95 91-218 26-107 58-208-23-112 15-191-71-91-98-42-258Z" fill="none" filter="url(#glow)"/></g>
+  <path d="M94 234Q185 95 354 116q94 12 149 94 78-94 211-72 88 14 126 91 129-37 244 77 45 44 13 105-41 76-158 64-55 111-186 85-95 91-218 26-107 58-208-23-112 15-191-71-91-98-42-258Z" fill="url(#sand)"/>
+  <path d="M111 244Q199 121 351 139q99 12 148 99 87-93 209-75 90 13 119 94 142-37 244 66 29 29 8 70-38 61-158 54-42 104-176 86-91 89-208 23-103 51-201-20-108 10-178-68-78-87-47-224Z" fill="url(#land)"/>
+  <g fill="none" stroke="#e5f9a4" stroke-opacity=".5" stroke-width="5" stroke-linecap="round" stroke-dasharray="5 10"><path d="M221 198Q391 308 430 355T603 373Q755 401 909 256"/><path d="M432 355Q310 450 218 493"/><path d="M603 373Q628 478 602 533"/><path d="M603 373Q817 449 964 489"/></g>
+  <g fill="#123e4d"><path d="M300 136q38 85 91 112-65-4-123 33 23-80 32-145Z"/><path d="M770 170q-24 81-76 111 66-10 124 26-17-81-48-137Z"/></g>
+  <g fill="#dceeff" stroke="#8bb7d9" stroke-width="5"><path d="m879 250 56-109 55 108-29-19-21 25-23-28Z"/><path d="m949 318 72-130 68 129-38-28-29 31-32-31Z"/><path d="m730 518 47-91 53 92-28-19-25 22-21-23Z"/></g>
+  <g fill="#52c85b"><circle cx="770" cy="244" r="16"/><circle cx="800" cy="232" r="19"/><circle cx="825" cy="249" r="14"/><circle cx="242" cy="450" r="18"/><circle cx="269" cy="434" r="15"/><circle cx="290" cy="458" r="19"/></g>
+  <g fill="#14334c" stroke="#52d7ff" stroke-width="3"><path d="M240 230h22v-68h28v68h24v-96h31v96h25v-51h29v86H240Z"/><path d="M505 193h25v-55h27v55h24v-75h30v75h27v-43h27v79H505Z"/></g>
+  <g fill="#ff48c8" filter="url(#glow)"><circle cx="277" cy="235" r="5"/><circle cx="334" cy="205" r="5"/><circle cx="575" cy="184" r="5"/></g>
+  <g fill="#082334" stroke="#63e4ff" stroke-width="3"><path d="M172 484h132l-16 47H189Z"/><path d="M185 469h105v17H185Z"/><path d="M203 449h10v20h-10ZM265 442h10v27h-10Z"/></g>
+  <text x="62" y="72" fill="#e8ffba" font-family="system-ui,sans-serif" font-size="20" font-weight="900" letter-spacing="8">MUZIKAZ WORLD / SECTOR 01</text>
+  <text x="1134" y="655" text-anchor="end" fill="#58dfff" opacity=".55" font-family="system-ui,sans-serif" font-size="14" letter-spacing="4">ALL DISTRICTS CONNECTED</text>
+</svg>
