@@ -137,9 +137,15 @@
         <aside class="crib-social" id="crib-social" aria-label="Vibe Crib players and chat">
           <section class="crib-chat-panel" id="crib-chat-panel" hidden>
             <header><div><strong>Vibe Crib live</strong><small>Signed-in subscribers · 15 max</small></div><button type="button" data-close-chat aria-label="Close chat">×</button></header>
+            <div class="crib-voice-controls" aria-label="Voice chat controls">
+              <button type="button" id="crib-mic-toggle" class="crib-media-toggle" aria-pressed="false"><span aria-hidden="true">🎙️</span><b>Mic off</b></button>
+              <button type="button" id="crib-speaker-toggle" class="crib-media-toggle is-on" aria-pressed="true"><span aria-hidden="true">🔊</span><b>Speaker on</b></button>
+              <span id="crib-voice-status">Voice disconnected</span>
+            </div>
             <div class="crib-player-list" id="crib-player-list" aria-label="Players online"></div>
             <ol class="crib-chat-messages" id="crib-chat-messages" aria-live="polite"></ol>
-            <form id="crib-chat-form"><label class="sr-only" for="crib-chat-input">Chat message</label><input id="crib-chat-input" maxlength="140" autocomplete="off" placeholder="Message the crib…" required><button type="submit">Send</button></form>
+            <div class="crib-reactions" id="crib-reactions" aria-label="Quick emoji reactions"><span>React</span><button type="button" aria-label="React with fire">🔥</button><button type="button" aria-label="React with applause">👏</button><button type="button" aria-label="React with laugh">😂</button><button type="button" aria-label="React with heart">💚</button><button type="button" aria-label="React with music">🎵</button><button type="button" aria-label="React with lightning">⚡</button></div>
+            <form id="crib-chat-form"><label class="sr-only" for="crib-chat-input">Chat message</label><input id="crib-chat-input" maxlength="140" autocomplete="off" placeholder="Message the crib…" required><button type="button" id="crib-emoji-toggle" aria-expanded="false" aria-controls="crib-reactions" aria-label="Show emoji reactions">😊</button><button type="submit">Send</button></form>
             <p id="crib-chat-status" role="status"></p>
           </section>
         </aside>
