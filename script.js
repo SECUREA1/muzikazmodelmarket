@@ -164,6 +164,66 @@ function initModelMarketGate() {
 
 initModelMarketGate();
 
+function initWorldAtlas() {
+  const atlas = document.querySelector('#world-map');
+  const viewport = document.querySelector('#world-map-viewport');
+  const marker = document.querySelector('#world-map-you');
+  const form = document.querySelector('#world-position-form');
+  const name = document.querySelector('#world-place-name');
+  const detail = document.querySelector('#world-place-detail');
+  const readout = document.querySelector('#world-position-readout');
+  const status = document.querySelector('#world-map-status');
+  const enter = document.querySelector('#world-enter-button');
+  if (!atlas || !viewport || !marker || !form || !name || !detail || !readout || !status || !enter) return;
+
+  const places = [...atlas.querySelectorAll('[data-map-place]')];
+  const clamp = (value) => Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+  let position = { x: 36, y: 49, place: 'Crew Plaza', detail: 'Social hub · crews gathering now' };
+  try {
+    const saved = JSON.parse(window.localStorage.getItem('muzikazWorldPosition') || 'null');
+    if (saved && Number.isFinite(Number(saved.x)) && Number.isFinite(Number(saved.y))) position = { ...position, ...saved };
+  } catch (error) { /* A fresh map position is safe when browser storage is unavailable. */ }
+
+  function render(next, announce = true) {
+    position = { ...position, ...next, x: clamp(next.x), y: clamp(next.y) };
+    marker.style.setProperty('--x', `${position.x}%`);
+    marker.style.setProperty('--y', `${position.y}%`);
+    form.elements.x.value = position.x;
+    form.elements.y.value = position.y;
+    name.textContent = position.place;
+    detail.textContent = position.detail;
+    readout.textContent = `X ${position.x} · Y ${position.y}`;
+    enter.firstChild.textContent = `Enter ${position.place} `;
+    places.forEach((place) => place.classList.toggle('is-active', place.dataset.mapPlace === position.place));
+    if (announce) status.textContent = `${position.place} selected. Your spawn is set to X ${position.x}, Y ${position.y}.`;
+    window.localStorage.setItem('muzikazWorldPosition', JSON.stringify(position));
+  }
+
+  places.forEach((place) => place.addEventListener('click', (event) => {
+    event.stopPropagation();
+    render({ x: place.dataset.mapX, y: place.dataset.mapY, place: place.dataset.mapPlace, detail: place.dataset.mapDetail });
+  }));
+  viewport.addEventListener('click', (event) => {
+    const bounds = viewport.getBoundingClientRect();
+    render({ x: ((event.clientX - bounds.left) / bounds.width) * 100, y: ((event.clientY - bounds.top) / bounds.height) * 100, place: 'My Build Point', detail: 'A custom spawn point ready for your avatar and next world build.' });
+  });
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const values = new FormData(form);
+    render({ x: values.get('x'), y: values.get('y'), place: 'My Build Point', detail: 'Your exact custom coordinates are saved on this device.' });
+  });
+  enter.addEventListener('click', () => {
+    atlas.classList.remove('is-entering');
+    void atlas.offsetWidth;
+    atlas.classList.add('is-entering');
+    status.textContent = `Welcome to ${position.place}! Spawn confirmed at X ${position.x}, Y ${position.y}. Start exploring or build from here.`;
+    window.setTimeout(() => atlas.classList.remove('is-entering'), 900);
+  });
+  render(position, false);
+}
+
+initWorldAtlas();
+
 function renderOwnedCollection(preferredOwner = currentMemberEmail) {
   const current = document.querySelector('#owned-current-user');
   const copy = document.querySelector('#owned-current-copy');
