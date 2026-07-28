@@ -73,9 +73,16 @@ const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'ut
 for (const requiredLiveFeature of ['MUZIKAZ_LIVE_PLAYERS', 'syncLiveAvatars', 'pollLiveAvatars', 'Live_player_label']) {
   if (!houseExplorer.includes(requiredLiveFeature)) throw new Error(`GLB House Explorer is missing live cross-device avatars/chat: ${requiredLiveFeature}`);
 }
+for (const requiredAvatarIdentityFeature of ['liveAvatarIdentity', 'root.userData.avatarIdentity !== identity', 'hasAvatarIdentity', 'MUZIKAZ_SHARED_AVATAR_API']) {
+  if (!houseExplorer.includes(requiredAvatarIdentityFeature)) throw new Error(`Live players must use and refresh their designated avatar: ${requiredAvatarIdentityFeature}`);
+}
 const cribMultiplayer = await readFile('dist/public/js/crib-multiplayer.js', 'utf8');
 if (!cribMultiplayer.includes('avatarUrl: avatar.modelUrl') || !cribMultiplayer.includes('modelUrl: avatar.modelUrl')) {
   throw new Error('Crib presence must publish each designated GLB avatar URL.');
+}
+const server = await readFile('server.mjs', 'utf8');
+if (!server.includes('avatarAssetId: asset.id, modelUrl: asset.modelUrl')) {
+  throw new Error('The live presence server must publish its validated profile avatar instead of a client fallback.');
 }
 if (houseExplorer.includes('await this.initAudio()')) {
   throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');
