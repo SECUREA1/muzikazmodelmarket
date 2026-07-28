@@ -11,6 +11,23 @@ const modelPageLink = document.querySelector('#model-page-link');
 let cartItems = 0;
 const CART_KEY = 'muzikazCheckoutCart';
 
+// One catalog drives both the world map and the marketplace. Coordinates belong
+// to the asset, so a purchased world always resolves to the same map location.
+const WORLD_ASSETS = [
+  { id: 'volt-city', name: 'Volt City', kind: 'Land world', x: 23, y: 28, price: '$35.00', logo: 'logo_symbol_crop_2x.png', detail: 'The electric capital · live stages and creator towers' },
+  { id: 'skyline-deck', name: 'Skyline Deck', kind: 'Land world', x: 49, y: 22, price: '$25.00', logo: 'available_online_events_banner_2x_transparent.png', detail: 'Rooftop events · tonight at 20:00' },
+  { id: 'echo-gardens', name: 'Echo Gardens', kind: 'Land world', x: 74, y: 31, price: '$25.00', logo: 'dark_smoke_green_fx_2x.png', detail: 'Living sound biome · open for builders' },
+  { id: 'crew-plaza', name: 'Crew Plaza', kind: 'Land world', x: 36, y: 49, price: '$25.00', logo: 'join_the_crew_banner_2x_transparent.png', detail: 'Social hub · crews gathering now' },
+  { id: 'studio-ridge', name: 'Studio Ridge', kind: '3D Environment', x: 63, y: 53, price: '$48.00', logo: 'smoke_energy_background_large_2x_transparent.png', detail: 'MUZIKAZ Main Floor · complete walkable GLB stage', environmentId: 'muzikaz-main' },
+  { id: 'neon-docks', name: 'Neon Docks', kind: 'Land world', x: 18, y: 70, price: '$25.00', logo: 'brand_name_tagline_panel_2x.png', detail: 'Drop port · new assets arriving' },
+  { id: 'bassline-badlands', name: 'Bassline Badlands', kind: '3D Environment', x: 50, y: 76, price: '$52.00', logo: 'hero_banner_full_transparent.png', detail: 'MUZIKAZ Upper Floor · high-energy adventure environment', environmentId: 'muzikaz-upper' },
+  { id: 'pixel-peaks', name: 'Pixel Peaks', kind: '3D Environment', x: 82, y: 72, price: '$58.00', logo: 'logo_panel_2x_transparent.png', detail: 'Sheep Base · panoramic walkable mountain build', environmentId: 'sheepbase' }
+];
+
+function findWorldAsset(value) {
+  return WORLD_ASSETS.find((asset) => String(value || '').includes(asset.name));
+}
+
 function parsePrice(value) {
   return Number(String(value || '').replace(/[^0-9.]/g, '')) || 0;
 }
@@ -107,6 +124,8 @@ function claimOwnedAsset(assetName, source = 'Marketplace claim') {
 }
 
 function ownedAssetDetail(assetName) {
+  const worldAsset = findWorldAsset(assetName);
+  if (worldAsset) return { title: assetName, type: worldAsset.kind, image: worldAsset.logo, copy: `${worldAsset.detail}. Located at X ${worldAsset.x}, Y ${worldAsset.y}.`, href: `index.html?world=${worldAsset.id}#world-map` };
   if (/\b(?:digital\s+land|world\s+plot|land\s+(?:asset|reservation|deed|claim))\b/i.test(assetName)) {
     const owner = normalizeMemberEmail(currentMemberEmail);
     let claim = null;
@@ -185,15 +204,26 @@ function initWorldAtlas() {
   const ownership = document.querySelector('#world-map-ownership');
   if (!atlas || !viewport || !marker || !form || !name || !detail || !readout || !status || !enter || !claimButton || !ownership) return;
 
+  const markers = atlas.querySelector('.world-atlas__markers');
+  const assetLogo = document.querySelector('#world-asset-logo');
+  const assetType = document.querySelector('#world-asset-type');
+  const assetAction = document.querySelector('#world-asset-action');
+  const owner = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail'));
+  const ownedAssets = ownerWorldNames();
+  if (markers) markers.innerHTML = WORLD_ASSETS.map((asset) => `<button type="button" style="--x:${asset.x}%;--y:${asset.y}%" data-map-place="${asset.name}" data-map-x="${asset.x}" data-map-y="${asset.y}" data-map-detail="${asset.detail}" data-world-id="${asset.id}" class="${ownedAssets.has(asset.name) ? 'is-owned' : ''}"><i></i><span>${asset.name}<small>X ${asset.x} · Y ${asset.y}</small></span><em>${ownedAssets.has(asset.name) ? 'OWNED' : `${asset.price} · FOR SALE`}</em></button>`).join('');
   const places = [...atlas.querySelectorAll('[data-map-place]')];
   const clamp = (value) => Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
   let position = { x: 36, y: 49, place: 'Crew Plaza', detail: 'Social hub · crews gathering now' };
-  const owner = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail'));
   const isLandAsset = (asset) => /\b(?:digital\s+land|world\s+plot|land\s+(?:asset|reservation|deed|claim))\b/i.test(asset);
   const ownedLand = owner ? (readOwnedProfiles()[owner] || []).find(isLandAsset) : '';
   let claims = {};
   try { claims = JSON.parse(window.localStorage.getItem('muzikazLandClaims') || '{}') || {}; } catch (error) { claims = {}; }
   const savedClaim = owner ? claims[owner] : null;
+
+  function ownerWorldNames() {
+    const entries = owner ? (readOwnedProfiles()[owner] || []) : [];
+    return new Set(WORLD_ASSETS.filter((asset) => entries.some((entry) => entry.includes(asset.name))).map((asset) => asset.name));
+  }
   try {
     const saved = JSON.parse(window.localStorage.getItem('muzikazWorldPosition') || 'null');
     if (saved && Number.isFinite(Number(saved.x)) && Number.isFinite(Number(saved.y))) position = { ...position, ...saved };
@@ -208,6 +238,20 @@ function initWorldAtlas() {
     name.textContent = position.place;
     detail.textContent = position.detail;
     readout.textContent = `X ${position.x} · Y ${position.y}`;
+    const asset = WORLD_ASSETS.find((item) => item.name === position.place);
+    if (asset && assetLogo && assetType && assetAction) {
+      assetLogo.src = asset.logo;
+      assetLogo.alt = `${asset.name} logo`;
+      assetType.textContent = `${asset.kind} · ${ownerWorldNames().has(asset.name) ? 'Owned' : `${asset.price} · For sale`}`;
+      assetAction.href = ownerWorldNames().has(asset.name) && asset.environmentId ? `index.html?environment=${asset.environmentId}#house-explorer` : `model-market.html?world=${asset.id}#marketplace-preview`;
+      assetAction.textContent = ownerWorldNames().has(asset.name) && asset.environmentId ? 'Enter owned environment' : ownerWorldNames().has(asset.name) ? 'View owned asset' : 'View in market';
+    } else if (assetLogo) {
+      assetLogo.removeAttribute('src');
+      assetLogo.alt = '';
+      assetType.textContent = 'Custom map position';
+      assetAction.href = 'model-market.html#marketplace-preview';
+      assetAction.textContent = 'Browse world market';
+    }
     enter.firstChild.textContent = `Enter ${position.place} `;
     places.forEach((place) => place.classList.toggle('is-active', place.dataset.mapPlace === position.place));
     if (announce) status.textContent = `${position.place} selected. Your spawn is set to X ${position.x}, Y ${position.y}.`;
@@ -272,6 +316,9 @@ function initWorldAtlas() {
     status.textContent = `Welcome to ${position.place}! Spawn confirmed at X ${position.x}, Y ${position.y}. Start exploring or build from here.`;
     window.setTimeout(() => atlas.classList.remove('is-entering'), 900);
   });
+  const requestedWorld = new URLSearchParams(window.location.search).get('world');
+  const requestedAsset = WORLD_ASSETS.find((asset) => asset.id === requestedWorld);
+  if (requestedAsset) position = { x: requestedAsset.x, y: requestedAsset.y, place: requestedAsset.name, detail: requestedAsset.detail };
   render(position, false);
   if (savedClaim) render({ ...savedClaim, detail: `Owned land tied to ${owner}'s Backpack and member profile.` }, false);
   renderClaim();
@@ -481,6 +528,7 @@ const productPrintTemplates = {
   'wordmark-print': { shape: 'poster', label: 'Wall art safe area' }
 };
 const marketplaceListings = [
+  ...WORLD_ASSETS.map((asset) => ({ type: 'Land Worlds & Environments', category: asset.kind, quality: 'curated', name: asset.name, price: asset.price, copy: `${asset.detail}. Map location: X ${asset.x}, Y ${asset.y}.`, product: asset.name, worldId: asset.id })),
   ...assetCatalog.models.map((model) => ({ type: model.type, category: model.name, quality: 'curated', name: `${model.name} 3D Model Pack`, price: model.price, copy: `${model.copy} Source: ${model.file}`, model: model.name })),
   ...assetCatalog.websitePackages.map((pack) => ({ type: 'Website Packages', category: pack.category, quality: 'curated', name: pack.name, price: pack.price, copy: `${pack.copy} Source: ${pack.asset}`, product: pack.name })),
   ...assetCatalog.controlPackages.map((pack) => ({ type: 'Subscriber Creator Tools', category: pack.category, quality: 'curated', name: pack.name, price: pack.price, copy: pack.copy, product: pack.name })),
@@ -778,7 +826,7 @@ function renderMarketplace(type = marketplaceState.type, modelFocus = marketplac
   marketGrid.innerHTML = listings.map((listing, index) => {
     const arIndex = Number.isInteger(listing.arCharacterIndex) ? listing.arCharacterIndex : characterForListing(listing);
     const canLaunchAr = Boolean(listing.modelUrl) || arIndex >= 0;
-    return `<article><span class="pill">${listing.type}</span><span class="pill category-pill">${listing.category}</span><h3>${listing.name}</h3><p>${listing.copy}</p><p class="price">${listing.price}</p><button type="button" data-product="${listing.name}">Add</button>${canLaunchAr ? `<button type="button" class="ghost" data-market-ar="${index}">View in AR</button>` : ''}</article>`;
+    return `<article><span class="pill">${listing.type}</span><span class="pill category-pill">${listing.category}</span><h3>${listing.name}</h3><p>${listing.copy}</p><p class="price">${listing.price}</p><button type="button" data-product="${listing.name}">Add</button>${listing.worldId ? `<a class="btn ghost" href="index.html?world=${listing.worldId}#world-map">View on map</a>` : ''}${canLaunchAr ? `<button type="button" class="ghost" data-market-ar="${index}">View in AR</button>` : ''}</article>`;
   }).join('') || '<article><h3>No matches</h3><p>Choose another category, type, or turn off curated quality only.</p></article>';
   marketGrid.querySelectorAll('[data-market-ar]').forEach((button) => button.addEventListener('click', () => activateMarketplaceAr(listings[Number(button.dataset.marketAr)])));
   if (marketStatus) {
@@ -1540,6 +1588,8 @@ paymentForm?.addEventListener('submit', (event) => {
   const total = document.querySelector('#summary-total').textContent;
   const receipt = { orderId, total, email: data.get('email'), items, paidAt: new Date().toISOString(), method: data.get('method') };
   window.localStorage.setItem('muzikazLastReceipt', JSON.stringify(receipt));
+  currentMemberEmail = normalizeMemberEmail(data.get('email'));
+  window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
   items.forEach((item) => claimOwnedAsset(item.name, `Paid order ${orderId}`));
   writeCart([]);
   renderCheckoutPage();
