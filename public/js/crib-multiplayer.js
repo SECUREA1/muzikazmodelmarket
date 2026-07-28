@@ -13,22 +13,39 @@
   const toggle = $('#crib-chat-toggle'), panel = $('#crib-chat-panel'), count = $('#crib-online-count');
   const players = $('#crib-player-list'), messages = $('#crib-chat-messages'), form = $('#crib-chat-form');
   const input = $('#crib-chat-input'), status = $('#crib-chat-status'), reactions = $('#crib-reactions');
-  const emojiToggle = $('#crib-emoji-toggle'), micToggle = $('#crib-mic-toggle'), speakerToggle = $('#crib-speaker-toggle'), voiceStatus = $('#crib-voice-status');
+  const emojiToggle = $('#crib-emoji-toggle'), micToggle = $('#crib-mic-toggle'), speakerToggle = $('#crib-speaker-toggle'), speakerTest = $('#crib-speaker-test'), voiceStatus = $('#crib-voice-status');
   const audioSettingsToggle = $('#crib-audio-settings-toggle'), audioSettings = $('#crib-audio-settings');
   const micDevice = $('#crib-mic-device'), speakerDevice = $('#crib-speaker-device'), speakerVolume = $('#crib-speaker-volume'), volumeValue = $('#crib-volume-value');
   const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username };
-  const peers = new Map(), remoteAudio = new Map();
+  const peers = new Map(), remoteAudio = new Map(), pendingCandidates = new Map(), reconnectTimers = new Map();
   let joined = false, localStream = null, speakerOn = true, currentUsers = [];
   const payload = (response) => response?.data ?? response;
   async function jsonResponse(response) { const result = await response.json().catch(() => ({})); if (!response.ok || result.success === false) throw new Error(result.error || result.message || 'The crib server did not respond.'); return payload(result); }
   const text = (value) => document.createTextNode(String(value || ''));
+  const rtcConfig = {
+    iceServers: Array.isArray(window.MUZIKAZ_ICE_SERVERS) && window.MUZIKAZ_ICE_SERVERS.length
+      ? window.MUZIKAZ_ICE_SERVERS
+      : [{ urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302'] }],
+    bundlePolicy:'max-bundle', iceCandidatePoolSize:4
+  };
+
+  function removePeer(remoteId) {
+    clearTimeout(reconnectTimers.get(remoteId)); reconnectTimers.delete(remoteId);
+    peers.get(remoteId)?.close(); peers.delete(remoteId); pendingCandidates.delete(remoteId);
+    remoteAudio.get(remoteId)?.remove(); remoteAudio.delete(remoteId);
+  }
+  async function playRemoteAudio(audio) {
+    audio.muted = !speakerOn; audio.volume = Number(speakerVolume.value);
+    if (!speakerOn) return;
+    try { await audio.play(); } catch { voiceStatus.textContent = 'Tap Speaker on to allow audio playback'; }
+  }
 
   function renderPresence(data = {}) {
     count.textContent = `${data.count || 0} / ${data.capacity || 15}`;
     currentUsers = Array.isArray(data.users) ? data.users : [];
     players.replaceChildren(...currentUsers.map((user) => { const chip = document.createElement('span'); chip.style.setProperty('--player-color', user.color || '#9cff00'); chip.dataset.sessionId = user.sessionId; chip.append(text(user.sessionId === sessionId ? `${user.username} (you)` : user.username)); return chip; }));
     const legacyCount = $('#house-presence-count'); if (legacyCount) legacyCount.textContent = `Live in the house: ${data.count || 0} / ${data.capacity || 15}`;
-    for (const [id, peer] of peers) if (!currentUsers.some((user) => user.sessionId === id)) { peer.close(); peers.delete(id); remoteAudio.get(id)?.remove(); remoteAudio.delete(id); }
+    for (const id of peers.keys()) if (!currentUsers.some((user) => user.sessionId === id)) removePeer(id);
     if (localStream) connectToRoom();
   }
   function addMessage(item) {
@@ -49,31 +66,40 @@
   async function signal(to, kind, signalPayload = null) { const response = await apiFetch('/api/houses/ioncore-house/voice/signal', { method:'POST', headers, body:JSON.stringify({ to, kind, payload:signalPayload }) }); await jsonResponse(response); }
   function createPeer(remoteId) {
     if (peers.has(remoteId)) return peers.get(remoteId);
-    const peer = new RTCPeerConnection({ iceServers:[{ urls:'stun:stun.l.google.com:19302' }, { urls:'stun:stun1.l.google.com:19302' }] });
+    const peer = new RTCPeerConnection(rtcConfig);
     localStream?.getTracks().forEach((track) => peer.addTrack(track, localStream));
     peer.onicecandidate = (event) => { if (event.candidate) signal(remoteId, 'candidate', event.candidate).catch(() => {}); };
-    peer.ontrack = (event) => { let audio = remoteAudio.get(remoteId); if (!audio) { audio = document.createElement('audio'); audio.autoplay = true; audio.playsInline = true; audio.hidden = true; audio.volume = Number(speakerVolume.value); if (typeof audio.setSinkId === 'function' && speakerDevice.value) audio.setSinkId(speakerDevice.value).catch(() => {}); root.append(audio); remoteAudio.set(remoteId, audio); } audio.srcObject = event.streams[0]; audio.muted = !speakerOn; audio.play().catch(() => { voiceStatus.textContent = 'Tap Speaker on to hear voice'; }); };
-    peer.onconnectionstatechange = () => { if (peer.connectionState === 'connected') voiceStatus.textContent = `Voice live · ${peers.size} connection${peers.size === 1 ? '' : 's'}`; if (['failed','closed'].includes(peer.connectionState)) { peer.close(); peers.delete(remoteId); } };
+    peer.ontrack = (event) => { let audio = remoteAudio.get(remoteId); if (!audio) { audio = document.createElement('audio'); audio.autoplay = true; audio.playsInline = true; audio.hidden = true; if (typeof audio.setSinkId === 'function' && speakerDevice.value) audio.setSinkId(speakerDevice.value).catch(() => {}); root.append(audio); remoteAudio.set(remoteId, audio); } audio.srcObject = event.streams[0] || new MediaStream([event.track]); playRemoteAudio(audio); };
+    peer.onconnectionstatechange = () => {
+      clearTimeout(reconnectTimers.get(remoteId));
+      if (peer.connectionState === 'connected') voiceStatus.textContent = `Voice live · ${peers.size} connection${peers.size === 1 ? '' : 's'}`;
+      if (peer.connectionState === 'disconnected') reconnectTimers.set(remoteId, setTimeout(() => { if (peer.connectionState === 'disconnected' && sessionId < remoteId) makeOffer(remoteId, true).catch(() => removePeer(remoteId)); }, 2500));
+      if (peer.connectionState === 'failed') { if (sessionId < remoteId) makeOffer(remoteId, true).catch(() => removePeer(remoteId)); else voiceStatus.textContent = 'Voice reconnecting…'; }
+      if (peer.connectionState === 'closed') removePeer(remoteId);
+    };
     peers.set(remoteId, peer); return peer;
   }
-  async function makeOffer(remoteId) { const peer = createPeer(remoteId); const offer = await peer.createOffer(); await peer.setLocalDescription(offer); await signal(remoteId, 'offer', peer.localDescription); }
+  async function makeOffer(remoteId, iceRestart = false) { const peer = createPeer(remoteId); const offer = await peer.createOffer({ iceRestart }); await peer.setLocalDescription(offer); await signal(remoteId, 'offer', peer.localDescription); }
   function connectToRoom() { if (!localStream) return; currentUsers.filter((user) => user.sessionId !== sessionId && sessionId < user.sessionId && !peers.has(user.sessionId)).forEach((user) => makeOffer(user.sessionId).catch(() => {})); }
   async function handleVoiceSignal(data) {
     if (!data?.from || data.to !== sessionId) return;
-    if (data.kind === 'hangup') { peers.get(data.from)?.close(); peers.delete(data.from); return; }
+    if (data.kind === 'hangup') { removePeer(data.from); return; }
     if (!localStream) return;
     const peer = createPeer(data.from);
-    if (data.kind === 'offer') { await peer.setRemoteDescription(data.payload); const answer = await peer.createAnswer(); await peer.setLocalDescription(answer); await signal(data.from, 'answer', peer.localDescription); }
-    else if (data.kind === 'answer') await peer.setRemoteDescription(data.payload);
-    else if (data.kind === 'candidate') await peer.addIceCandidate(data.payload).catch(() => {});
+    if (data.kind === 'offer') { await peer.setRemoteDescription(data.payload); await flushCandidates(data.from, peer); const answer = await peer.createAnswer(); await peer.setLocalDescription(answer); await signal(data.from, 'answer', peer.localDescription); }
+    else if (data.kind === 'answer') { await peer.setRemoteDescription(data.payload); await flushCandidates(data.from, peer); }
+    else if (data.kind === 'candidate') { if (peer.remoteDescription) await peer.addIceCandidate(data.payload); else pendingCandidates.set(data.from, [...(pendingCandidates.get(data.from) || []), data.payload]); }
   }
+  async function flushCandidates(remoteId, peer) { const candidates = pendingCandidates.get(remoteId) || []; pendingCandidates.delete(remoteId); for (const candidate of candidates) await peer.addIceCandidate(candidate).catch(() => {}); }
   async function enableMicrophone() {
     if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) throw new Error('Voice chat is not supported by this browser.');
-    localStream = await navigator.mediaDevices.getUserMedia({ audio:{ deviceId:micDevice.value ? { exact:micDevice.value } : undefined, echoCancellation:$('#crib-echo-cancellation').checked, noiseSuppression:$('#crib-noise-suppression').checked, autoGainControl:$('#crib-auto-gain').checked }, video:false });
+    if (!window.isSecureContext) throw new Error('Microphone access requires HTTPS.');
+    const audio = { deviceId:micDevice.value ? { ideal:micDevice.value } : undefined, echoCancellation:$('#crib-echo-cancellation').checked, noiseSuppression:$('#crib-noise-suppression').checked, autoGainControl:$('#crib-auto-gain').checked };
+    try { localStream = await navigator.mediaDevices.getUserMedia({ audio, video:false }); } catch (error) { if (error.name !== 'OverconstrainedError') throw error; localStream = await navigator.mediaDevices.getUserMedia({ audio:true, video:false }); }
     micToggle.classList.add('is-on'); micToggle.setAttribute('aria-pressed', 'true'); micToggle.querySelector('b').textContent = 'Mic on'; voiceStatus.textContent = 'Microphone live · connecting…'; connectToRoom();
     await refreshAudioDevices();
   }
-  function disableMicrophone() { localStream?.getTracks().forEach((track) => track.stop()); localStream = null; for (const [id, peer] of peers) { signal(id, 'hangup').catch(() => {}); peer.close(); } peers.clear(); micToggle.classList.remove('is-on'); micToggle.setAttribute('aria-pressed', 'false'); micToggle.querySelector('b').textContent = 'Mic off'; voiceStatus.textContent = 'Voice disconnected'; }
+  function disableMicrophone() { localStream?.getTracks().forEach((track) => track.stop()); localStream = null; for (const id of [...peers.keys()]) { signal(id, 'hangup').catch(() => {}); removePeer(id); } micToggle.classList.remove('is-on'); micToggle.setAttribute('aria-pressed', 'false'); micToggle.querySelector('b').textContent = 'Mic off'; voiceStatus.textContent = 'Voice disconnected'; }
 
   toggle.addEventListener('click', () => { panel.hidden = !panel.hidden; toggle.setAttribute('aria-expanded', String(!panel.hidden)); if (!panel.hidden) input.focus(); });
   panel.querySelector('[data-close-chat]').addEventListener('click', () => { panel.hidden = true; toggle.setAttribute('aria-expanded', 'false'); toggle.focus(); });
@@ -82,6 +108,7 @@
   reactions.querySelectorAll('button').forEach((button) => button.addEventListener('click', async () => { try { await postMessage(button.textContent.trim()); reactions.classList.remove('open'); emojiToggle.setAttribute('aria-expanded', 'false'); } catch (error) { status.textContent = error.message; } }));
   micToggle.addEventListener('click', async () => { try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); voiceStatus.textContent = error.name === 'NotAllowedError' ? 'Microphone permission denied' : error.message; } });
   speakerToggle.addEventListener('click', () => { speakerOn = !speakerOn; remoteAudio.forEach((audio) => { audio.muted = !speakerOn; if (speakerOn) audio.play().catch(() => {}); }); speakerToggle.classList.toggle('is-on', speakerOn); speakerToggle.setAttribute('aria-pressed', String(speakerOn)); speakerToggle.querySelector('b').textContent = speakerOn ? 'Speaker on' : 'Speaker off'; });
+  speakerTest.addEventListener('click', async () => { try { const AudioContext = window.AudioContext || window.webkitAudioContext; if (!AudioContext) throw new Error('Speaker test is not supported by this browser.'); const context = new AudioContext(); await context.resume(); const oscillator = context.createOscillator(), gain = context.createGain(); oscillator.frequency.value = 660; gain.gain.setValueAtTime(.12, context.currentTime); gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .35); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .36); oscillator.onended = () => context.close(); speakerOn = true; speakerToggle.classList.add('is-on'); speakerToggle.setAttribute('aria-pressed', 'true'); speakerToggle.querySelector('b').textContent = 'Speaker on'; remoteAudio.forEach(playRemoteAudio); voiceStatus.textContent = 'Speaker connected · test tone played'; } catch (error) { voiceStatus.textContent = error.message; } });
   async function refreshAudioDevices() {
     if (!navigator.mediaDevices?.enumerateDevices) return;
     const devices = await navigator.mediaDevices.enumerateDevices();
@@ -93,6 +120,8 @@
   speakerVolume.addEventListener('input', () => { const volume = Number(speakerVolume.value); volumeValue.value = `${Math.round(volume * 100)}%`; remoteAudio.forEach((audio) => { audio.volume = volume; }); });
   speakerDevice.addEventListener('change', () => { remoteAudio.forEach((audio) => { if (typeof audio.setSinkId === 'function') audio.setSinkId(speakerDevice.value).catch(() => { voiceStatus.textContent = 'Speaker selection is not supported here'; }); }); });
   micDevice.addEventListener('change', async () => { if (!localStream) return; disableMicrophone(); try { await enableMicrophone(); } catch (error) { voiceStatus.textContent = error.message; } });
+  navigator.mediaDevices?.addEventListener?.('devicechange', () => refreshAudioDevices().catch(() => {}));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && speakerOn) remoteAudio.forEach(playRemoteAudio); });
   ['crib-echo-cancellation','crib-noise-suppression','crib-auto-gain'].forEach((id) => $(`#${id}`).addEventListener('change', async () => { if (!localStream) return; const track = localStream.getAudioTracks()[0]; await track?.applyConstraints({ echoCancellation:$('#crib-echo-cancellation').checked, noiseSuppression:$('#crib-noise-suppression').checked, autoGainControl:$('#crib-auto-gain').checked }).catch(() => { voiceStatus.textContent = 'Some audio processing is unavailable'; }); }));
   async function loadChat() { const data = await jsonResponse(await apiFetch('/api/houses/ioncore-house/chat', { headers, cache:'no-store' })); (data.messages || []).forEach(addMessage); }
   loadChat().catch(() => {});

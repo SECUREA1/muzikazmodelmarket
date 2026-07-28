@@ -140,6 +140,7 @@
             <div class="crib-voice-controls" aria-label="Voice chat controls">
               <button type="button" id="crib-mic-toggle" class="crib-media-toggle" aria-pressed="false"><span aria-hidden="true">🎙️</span><b>Mic off</b></button>
               <button type="button" id="crib-speaker-toggle" class="crib-media-toggle is-on" aria-pressed="true"><span aria-hidden="true">🔊</span><b>Speaker on</b></button>
+              <button type="button" id="crib-speaker-test" class="crib-media-toggle"><span aria-hidden="true">♪</span><b>Test speaker</b></button>
               <button type="button" id="crib-audio-settings-toggle" class="crib-audio-settings-toggle" aria-expanded="false" aria-controls="crib-audio-settings"><span aria-hidden="true">⚙</span><b>Audio settings</b></button>
               <span id="crib-voice-status">Voice disconnected</span>
             </div>
@@ -152,7 +153,7 @@
                 <label><input id="crib-noise-suppression" type="checkbox" checked> Noise suppression</label>
                 <label><input id="crib-auto-gain" type="checkbox" checked> Auto gain</label>
               </div>
-              <p id="crib-device-note">Device names appear after microphone permission is granted.</p>
+              <p id="crib-device-note">Device names appear after microphone permission is granted. Voice requires a secure HTTPS connection.</p>
             </div>
             <div class="crib-player-list" id="crib-player-list" aria-label="Players online"></div>
             <ol class="crib-chat-messages" id="crib-chat-messages" aria-live="polite"></ol>

@@ -80,6 +80,9 @@ const cribMultiplayer = await readFile('dist/public/js/crib-multiplayer.js', 'ut
 if (!cribMultiplayer.includes('avatarUrl: avatar.modelUrl') || !cribMultiplayer.includes('modelUrl: avatar.modelUrl')) {
   throw new Error('Crib presence must publish each designated GLB avatar URL.');
 }
+for (const requiredVoiceFeature of ['pendingCandidates', 'flushCandidates', 'devicechange', 'window.isSecureContext', 'iceRestart']) {
+  if (!cribMultiplayer.includes(requiredVoiceFeature)) throw new Error(`Crib voice chat is missing cross-browser audio resilience: ${requiredVoiceFeature}`);
+}
 const server = await readFile('server.mjs', 'utf8');
 if (!server.includes('avatarAssetId: asset.id, modelUrl: asset.modelUrl')) {
   throw new Error('The live presence server must publish its validated profile avatar instead of a client fallback.');
