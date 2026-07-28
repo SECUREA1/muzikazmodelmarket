@@ -48,8 +48,16 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
 }
+for (const requiredToolsMarkup of ['id="house-tools"', 'data-house-tools', 'aria-controls="rad-tox-tools"', 'aria-haspopup="dialog"']) {
+  if (!mainHtml.includes(requiredToolsMarkup)) {
+    throw new Error(`index.html is missing the persistent RAD-TOX tools control: ${requiredToolsMarkup}`);
+  }
+}
 
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
+if (!launcher.includes('muzikaz:rad-tox-tools-request')) {
+  throw new Error('RAD-TOX launcher must preserve an early Tools click until the 3D game is active.');
+}
 if (!launcher.includes('muzikaz:rad-tox-app-update')) {
   throw new Error('RAD-TOX launcher must publish live 3D game updates.');
 }
