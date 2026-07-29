@@ -208,9 +208,21 @@ function initWorldAtlas() {
   const assetLogo = document.querySelector('#world-asset-logo');
   const assetType = document.querySelector('#world-asset-type');
   const assetAction = document.querySelector('#world-asset-action');
+  const routes = atlas.querySelector('.world-atlas__routes');
+  const districtButtons = [...atlas.querySelectorAll('[data-atlas-district]')];
+  const modeButtons = [...atlas.querySelectorAll('[data-atlas-mode]')];
   const owner = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail'));
   const ownedAssets = ownerWorldNames();
   if (markers) markers.innerHTML = WORLD_ASSETS.map((asset) => `<button type="button" style="--x:${asset.x}%;--y:${asset.y}%" data-map-place="${asset.name}" data-map-x="${asset.x}" data-map-y="${asset.y}" data-map-detail="${asset.detail}" data-world-id="${asset.id}" class="${ownedAssets.has(asset.name) ? 'is-owned' : ''}"><i></i><span>${asset.name}<small>X ${asset.x} · Y ${asset.y}</small></span><em>${ownedAssets.has(asset.name) ? 'OWNED' : `${asset.price} · FOR SALE`}</em></button>`).join('');
+  if (routes) {
+    routes.setAttribute('viewBox', '0 0 100 100');
+    routes.innerHTML = WORLD_ASSETS.slice(1).map((asset, index) => {
+      const previous = WORLD_ASSETS[index];
+      const bendX = (previous.x + asset.x) / 2 + (index % 2 ? 5 : -5);
+      const bendY = (previous.y + asset.y) / 2;
+      return `<path d="M ${previous.x} ${previous.y} Q ${bendX} ${bendY} ${asset.x} ${asset.y}" pathLength="1"/>`;
+    }).join('');
+  }
   const places = [...atlas.querySelectorAll('[data-map-place]')];
   const clamp = (value) => Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
   let position = { x: 36, y: 49, place: 'Crew Plaza', detail: 'Social hub · crews gathering now' };
@@ -254,6 +266,7 @@ function initWorldAtlas() {
     }
     enter.firstChild.textContent = `Enter ${position.place} `;
     places.forEach((place) => place.classList.toggle('is-active', place.dataset.mapPlace === position.place));
+    districtButtons.forEach((button) => button.classList.toggle('is-active', button.dataset.atlasDistrict === position.place));
     if (announce) status.textContent = `${position.place} selected. Your spawn is set to X ${position.x}, Y ${position.y}.`;
     window.localStorage.setItem('muzikazWorldPosition', JSON.stringify(position));
   }
@@ -291,6 +304,31 @@ function initWorldAtlas() {
     event.stopPropagation();
     render({ x: place.dataset.mapX, y: place.dataset.mapY, place: place.dataset.mapPlace, detail: place.dataset.mapDetail });
   }));
+  districtButtons.forEach((button) => button.addEventListener('click', () => {
+    const asset = WORLD_ASSETS.find((item) => item.name === button.dataset.atlasDistrict);
+    if (!asset) return;
+    render({ x: asset.x, y: asset.y, place: asset.name, detail: asset.detail });
+    viewport.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }));
+  modeButtons.forEach((button) => button.addEventListener('click', () => {
+    atlas.dataset.mode = button.dataset.atlasMode;
+    modeButtons.forEach((item) => {
+      const active = item === button;
+      item.classList.toggle('is-active', active);
+      item.setAttribute('aria-pressed', String(active));
+    });
+    status.textContent = `${button.textContent} atmosphere engaged. World beacons and routes are still interactive.`;
+  }));
+  viewport.addEventListener('pointermove', (event) => {
+    if (event.pointerType === 'touch') return;
+    const bounds = viewport.getBoundingClientRect();
+    viewport.style.setProperty('--tilt-x', `${((event.clientY - bounds.top) / bounds.height - .5) * -3}deg`);
+    viewport.style.setProperty('--tilt-y', `${((event.clientX - bounds.left) / bounds.width - .5) * 3}deg`);
+  });
+  viewport.addEventListener('pointerleave', () => {
+    viewport.style.setProperty('--tilt-x', '0deg');
+    viewport.style.setProperty('--tilt-y', '0deg');
+  });
   viewport.addEventListener('click', (event) => {
     const bounds = viewport.getBoundingClientRect();
     render({ x: ((event.clientX - bounds.left) / bounds.width) * 100, y: ((event.clientY - bounds.top) / bounds.height) * 100, place: 'My Build Point', detail: 'A custom spawn point ready for your avatar and next world build.' });
