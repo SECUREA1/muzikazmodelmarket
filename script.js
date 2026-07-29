@@ -667,7 +667,8 @@ function initWorldPlot() {
       space.classList.toggle('is-selected', active);
       space.setAttribute('aria-pressed', String(active));
     });
-    selection.innerHTML = `<strong>${name} selected.</strong> GLB stage, avatar spawn, and marketplace link are ready.`;
+    const selectedIndex = spaces.findIndex((space) => space.dataset.worldSpace === name) + 1;
+    selection.innerHTML = `<span class="world-plot__selection-number">${String(selectedIndex).padStart(2, '0')}</span><span><strong>${name} selected.</strong> GLB stage, avatar spawn, and marketplace link are ready.</span><small>Plot status <b>Available</b></small>`;
     reserveButton.textContent = `Reserve ${name}`;
   };
 
@@ -679,7 +680,8 @@ function initWorldPlot() {
     addCartLine(`MUZIKAZ World · ${selectedSpace}`, 25, 'Five-space connected digital land plot');
     claimOwnedAsset(`MUZIKAZ World · ${selectedSpace}`, 'Connected land reservation');
     updateCart(reserveButton, 'Plot reserved');
-    selection.innerHTML = `<strong>${selectedSpace} reserved.</strong> Your five-space plot is now linked to the GLB library, avatar shelf, and marketplace.`;
+    const selectedIndex = spaces.findIndex((space) => space.dataset.worldSpace === selectedSpace) + 1;
+    selection.innerHTML = `<span class="world-plot__selection-number">${String(selectedIndex).padStart(2, '0')}</span><span><strong>${selectedSpace} reserved.</strong> Your plot is linked to the GLB library, avatar shelf, and marketplace.</span><small>Plot status <b>Reserved</b></small>`;
   });
   selectSpace(selectedSpace);
 }
