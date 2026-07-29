@@ -92,9 +92,16 @@
             <div class="world-atlas__layout">
                 <div class="world-atlas__viewport" id="world-map-viewport">
                     <img src="public/assets/muzikaz-world-map.svg" alt="Illustrated map of the MUZIKAZ world with islands, routes, mountains, forests, and districts" draggable="false">
+                    <svg class="world-atlas__routes" aria-hidden="true"></svg>
+                    <div class="world-atlas__scan" aria-hidden="true"></div>
                     <div class="world-atlas__markers" aria-label="World assets with coordinates, ownership, and sale status"></div>
                     <div class="world-atlas__you" id="world-map-you" style="--x:36%;--y:49%"><span>YOU</span></div>
                     <div class="world-atlas__compass" aria-hidden="true"><b>N</b><span>✦</span></div>
+                    <div class="world-atlas__modes" role="group" aria-label="Map atmosphere">
+                        <button class="is-active" type="button" data-atlas-mode="day" aria-pressed="true">Day</button>
+                        <button type="button" data-atlas-mode="night" aria-pressed="false">Night</button>
+                        <button type="button" data-atlas-mode="signal" aria-pressed="false">Pulse</button>
+                    </div>
                     <p class="world-atlas__hint">Tap map to move your spawn</p>
                 </div>
                 <aside class="world-atlas__panel">
@@ -115,6 +122,13 @@
                     <p class="world-atlas__status" id="world-map-status" role="status">Choose a glowing place or create your own position.</p>
                 </aside>
             </div>
+            <nav class="world-atlas__districts" aria-label="Featured MUZIKAZ districts">
+                <button type="button" data-atlas-district="Studio Ridge"><b>01</b><span><strong>Studio Ridge</strong><small>GLB stage</small></span><i>Live</i></button>
+                <button type="button" data-atlas-district="Crew Plaza"><b>02</b><span><strong>Crew Plaza</strong><small>Social hub</small></span><i>248</i></button>
+                <button type="button" data-atlas-district="Neon Docks"><b>03</b><span><strong>Neon Docks</strong><small>Drop port</small></span><i>12 drops</i></button>
+                <button type="button" data-atlas-district="Echo Gardens"><b>04</b><span><strong>Echo Gardens</strong><small>Sound biome</small></span><i>Chill</i></button>
+                <button type="button" data-atlas-district="Skyline Deck"><b>05</b><span><strong>Skyline Deck</strong><small>Event roof</small></span><i>20:00</i></button>
+            </nav>
         </section>
 
 
