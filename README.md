@@ -92,3 +92,7 @@ Free Render web services cannot attach a persistent disk. With the committed fre
 ### Database migration instructions
 
 For a PostgreSQL-backed deployment, create a Render PostgreSQL database, set `DATABASE_URL`, and run the SQL in `migrations/001_published_models.sql` before enabling a PostgreSQL repository implementation. The current committed implementation uses durable JSON metadata on the Render disk.
+
+### Cardano member token
+
+Member access uses a CIP-30 Cardano wallet and an exact native-asset balance instead of email credentials. Before production deployment, replace `POLICY_ID` in `public/js/cardano-token-gate.js` with the 56-character mainnet minting policy ID for the `MUZIKAZ` asset. The placeholder policy intentionally grants no production access. The gate requires Cardano mainnet and a balance of at least one matching token.

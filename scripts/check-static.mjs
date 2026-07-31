@@ -175,9 +175,12 @@ for (const requiredAdminMarkup of ['id="admin-login-form"', 'name="username"', '
   }
 }
 const appScript = await readFile('dist/script.js', 'utf8');
-if (!appScript.includes('initModelMarketGate') || !appScript.includes("localStorage.setItem('muzikazBottleMember', 'true')")) {
-  throw new Error('The Model Market cover must share the members-area Bottle login state.');
+if (!appScript.includes('initModelMarketGate') || !appScript.includes('MUZIKAZ_CARDANO_GATE.connect')) {
+  throw new Error('The Model Market cover must use the shared Cardano token gate.');
 }
+if (membersHtml.includes('type="email" name="email"') || modelMarketHtml.includes('type="email" name="email"')) throw new Error('Member gates must not accept email login.');
+const cardanoGate = await readFile('dist/public/js/cardano-token-gate.js', 'utf8');
+for (const feature of ['getBalance()', 'getNetworkId()', 'ASSET_UNIT', 'quantity < 1']) if (!cardanoGate.includes(feature)) throw new Error(`Cardano access gate is missing ${feature}`);
 for (const requiredAdminFlow of ["/api/admin/login", "muzikazAdminToken", "x-admin-token", "muzikaz:admin-authenticated"]) {
   if (!appScript.includes(requiredAdminFlow)) {
     throw new Error(`script.js is missing protected-admin flow: ${requiredAdminFlow}`);
