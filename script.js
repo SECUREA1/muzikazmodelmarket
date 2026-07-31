@@ -10,6 +10,10 @@ const addModelButton = document.querySelector('[data-add-model]');
 const modelPageLink = document.querySelector('#model-page-link');
 let cartItems = 0;
 const CART_KEY = 'muzikazCheckoutCart';
+const BACKPACK_MARKET_KEY = 'muzikazBackpackMarket';
+const BACKPACK_BALANCE_KEY = 'muzikazBackpackBalances';
+const BACKPACK_TRANSACTIONS_KEY = 'muzikazBackpackTransactions';
+const BACKPACK_STARTING_TOKENS = 500;
 
 // One catalog drives both the world map and the marketplace. Coordinates belong
 // to the asset, so a purchased world always resolves to the same map location.
@@ -107,6 +111,37 @@ function readOwnedProfiles() {
 
 function writeOwnedProfiles(profiles) {
   window.localStorage.setItem('muzikazOwnedProfiles', JSON.stringify(profiles));
+}
+
+function readBackpackData(key, fallback) {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(key) || 'null');
+    return saved && typeof saved === 'object' ? saved : fallback;
+  } catch (error) { return fallback; }
+}
+
+function backpackBalance(owner) {
+  const balances = readBackpackData(BACKPACK_BALANCE_KEY, {});
+  if (!Number.isFinite(Number(balances[owner]))) {
+    balances[owner] = BACKPACK_STARTING_TOKENS;
+    window.localStorage.setItem(BACKPACK_BALANCE_KEY, JSON.stringify(balances));
+  }
+  return Number(balances[owner]);
+}
+
+function backpackListing(owner, asset) {
+  return readBackpackData(BACKPACK_MARKET_KEY, {})[owner]?.[asset] || { tokenValue: 25, listed: false };
+}
+
+function setBackpackListing(owner, asset, value, listed) {
+  const market = readBackpackData(BACKPACK_MARKET_KEY, {});
+  market[owner] ||= {};
+  market[owner][asset] = { tokenValue: value, listed };
+  window.localStorage.setItem(BACKPACK_MARKET_KEY, JSON.stringify(market));
+}
+
+function escapeMarkup(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
 }
 
 function claimOwnedAsset(assetName, source = 'Marketplace claim') {
@@ -370,6 +405,8 @@ function renderOwnedCollection(preferredOwner = currentMemberEmail) {
   const select = document.querySelector('#owned-profile-select');
   const summary = document.querySelector('#owned-assets-summary');
   const grid = document.querySelector('#owned-assets-grid');
+  const balance = document.querySelector('#backpack-token-balance');
+  const transactionList = document.querySelector('#backpack-transaction-list');
   if (!current || !copy || !select || !summary || !grid) return;
   const profiles = readOwnedProfiles();
   const owner = normalizeMemberEmail(preferredOwner || currentMemberEmail);
@@ -378,6 +415,7 @@ function renderOwnedCollection(preferredOwner = currentMemberEmail) {
     copy.textContent = 'Log in above to keep purchased packs, uploaded files, and claimed collectibles inside your private Drop Backpack.';
     summary.innerHTML = '<article><strong>Locked</strong><span>Drop Backpacks unlock after login.</span></article>';
     grid.innerHTML = '';
+    if (balance) balance.textContent = '— MZK';
     return;
   }
   if (!profiles[currentMemberEmail]) {
@@ -386,16 +424,90 @@ function renderOwnedCollection(preferredOwner = currentMemberEmail) {
   }
   const owners = Object.keys(profiles).sort((a, b) => (a === currentMemberEmail ? -1 : b === currentMemberEmail ? 1 : a.localeCompare(b)));
   select.disabled = false;
-  select.innerHTML = owners.map((profile) => `<option value="${profile}" ${profile === owner ? 'selected' : ''}>${profile}${profile === currentMemberEmail ? ' (you)' : ''}</option>`).join('');
+  select.innerHTML = owners.map((profile) => `<option value="${escapeMarkup(profile)}" ${profile === owner ? 'selected' : ''}>${escapeMarkup(profile)}${profile === currentMemberEmail ? ' (you)' : ''}</option>`).join('');
   current.textContent = currentMemberEmail;
-  copy.textContent = owner === currentMemberEmail ? 'Your login now carries every purchased pack, collectible, upload, and claimed Vibe Crib item below.' : `Viewing ${owner}'s shared backpack while logged in as ${currentMemberEmail}.`;
+  copy.textContent = owner === currentMemberEmail ? 'Set token values, list assets, and manage trades from your profile Backpack.' : `Viewing ${owner}'s shared Backpack while logged in as ${currentMemberEmail}.`;
   const assets = profiles[owner] || [];
-  summary.innerHTML = `<article><strong>${assets.length}</strong><span>Backpack items</span></article><article><strong>${owner === currentMemberEmail ? 'Owner' : 'Viewer'}</strong><span>${owner}</span></article><article><strong>Retained</strong><span>Assets and collectibles stay with the logged-in account.</span></article>`;
-  grid.innerHTML = assets.map((asset) => {
+  const availableTokens = backpackBalance(currentMemberEmail);
+  if (balance) balance.textContent = `${availableTokens.toLocaleString()} MZK`;
+  const listedCount = assets.filter((asset) => backpackListing(owner, asset).listed).length;
+  summary.innerHTML = `<article><strong>${assets.length}</strong><span>Backpack items</span></article><article><strong>${listedCount}</strong><span>Listed for profile trade</span></article><article><strong>${owner === currentMemberEmail ? availableTokens.toLocaleString() + ' MZK' : 'Market view'}</strong><span>${escapeMarkup(owner)}</span></article>`;
+  grid.innerHTML = assets.map((asset, assetIndex) => {
     const detail = ownedAssetDetail(asset);
-    return `<article><img src="${detail.image}" alt="${detail.title}"><span class="pill">🎒 ${detail.type}</span><h3>${detail.title}</h3><p>${detail.copy}</p>${detail.href ? `<a class="card-link" href="${detail.href}">View map claim</a>` : ''}</article>`;
+    const listing = backpackListing(owner, asset);
+    const controls = owner === currentMemberEmail
+      ? `<form class="backpack-price-form" data-backpack-price="${assetIndex}"><label>Token value <span><input name="tokenValue" type="number" min="1" max="1000000" step="1" value="${listing.tokenValue}" aria-label="Token value for ${escapeMarkup(detail.title)}"><b>MZK</b></span></label><button type="submit">${listing.listed ? 'Update price' : 'List for trade'}</button>${listing.listed ? `<button type="button" class="ghost" data-backpack-unlist="${assetIndex}">Unlist</button>` : ''}</form>`
+      : listing.listed ? `<div class="backpack-buy"><strong>${listing.tokenValue.toLocaleString()} MZK</strong><button type="button" data-backpack-buy="${assetIndex}">Trade now</button></div>` : '<p class="backpack-not-listed">Not currently listed for trade</p>';
+    return `<article><img src="${escapeMarkup(detail.image)}" alt="${escapeMarkup(detail.title)}"><span class="pill">🎒 ${escapeMarkup(detail.type)}</span><h3>${escapeMarkup(detail.title)}</h3><p>${escapeMarkup(detail.copy)}</p>${detail.href ? `<a class="card-link" href="${escapeMarkup(detail.href)}">View map claim</a>` : ''}${controls}</article>`;
   }).join('') || '<article><h3>Backpack empty</h3><p>Add marketplace drops, checkout character products, claim collectibles, or upload graphics to build this account pack.</p></article>';
+  if (transactionList) {
+    const transactions = readBackpackData(BACKPACK_TRANSACTIONS_KEY, []);
+    transactionList.innerHTML = transactions.slice(-8).reverse().map((trade) => `<li><strong>${escapeMarkup(trade.asset)}</strong><span>${escapeMarkup(trade.seller)} → ${escapeMarkup(trade.buyer)}</span><b>${Number(trade.tokenValue).toLocaleString()} MZK</b><time datetime="${escapeMarkup(trade.createdAt)}">${new Date(trade.createdAt).toLocaleString()}</time></li>`).join('') || '<li>No trades yet.</li>';
+  }
 }
+
+document.querySelector('#owned-assets-grid')?.addEventListener('submit', (event) => {
+  const form = event.target.closest('[data-backpack-price]');
+  if (!form) return;
+  event.preventDefault();
+  const assets = readOwnedProfiles()[currentMemberEmail] || [];
+  const asset = assets[Number(form.dataset.backpackPrice)];
+  const value = Math.floor(Number(new FormData(form).get('tokenValue')));
+  const status = document.querySelector('#backpack-trade-status');
+  if (!asset || !Number.isFinite(value) || value < 1 || value > 1000000) {
+    if (status) status.textContent = 'Enter a whole token value from 1 to 1,000,000 MZK.';
+    return;
+  }
+  setBackpackListing(currentMemberEmail, asset, value, true);
+  if (status) status.textContent = `${asset} is listed for ${value.toLocaleString()} MZK.`;
+  renderOwnedCollection(currentMemberEmail);
+});
+
+document.querySelector('#owned-assets-grid')?.addEventListener('click', (event) => {
+  const unlist = event.target.closest('[data-backpack-unlist]');
+  const buy = event.target.closest('[data-backpack-buy]');
+  const selectedOwner = normalizeMemberEmail(document.querySelector('#owned-profile-select')?.value);
+  const profiles = readOwnedProfiles();
+  const status = document.querySelector('#backpack-trade-status');
+  if (unlist) {
+    const asset = (profiles[currentMemberEmail] || [])[Number(unlist.dataset.backpackUnlist)];
+    if (!asset) return;
+    setBackpackListing(currentMemberEmail, asset, backpackListing(currentMemberEmail, asset).tokenValue, false);
+    if (status) status.textContent = `${asset} was removed from the profile market.`;
+    renderOwnedCollection(currentMemberEmail);
+    return;
+  }
+  if (!buy || !selectedOwner || selectedOwner === currentMemberEmail) return;
+  const sellerAssets = profiles[selectedOwner] || [];
+  const assetIndex = Number(buy.dataset.backpackBuy);
+  const asset = sellerAssets[assetIndex];
+  const listing = backpackListing(selectedOwner, asset);
+  const price = Number(listing.tokenValue);
+  const buyerTokens = backpackBalance(currentMemberEmail);
+  backpackBalance(selectedOwner);
+  const balances = readBackpackData(BACKPACK_BALANCE_KEY, {});
+  if (!asset || !listing.listed || !Number.isFinite(price)) {
+    if (status) status.textContent = 'That listing is no longer available.';
+    return renderOwnedCollection(selectedOwner);
+  }
+  if (buyerTokens < price) {
+    if (status) status.textContent = `You need ${(price - buyerTokens).toLocaleString()} more MZK to complete this trade.`;
+    return;
+  }
+  sellerAssets.splice(assetIndex, 1);
+  profiles[currentMemberEmail] ||= [];
+  profiles[currentMemberEmail].push(asset);
+  writeOwnedProfiles(profiles);
+  balances[currentMemberEmail] = buyerTokens - price;
+  balances[selectedOwner] = Number(balances[selectedOwner]) + price;
+  window.localStorage.setItem(BACKPACK_BALANCE_KEY, JSON.stringify(balances));
+  setBackpackListing(selectedOwner, asset, price, false);
+  const transactions = readBackpackData(BACKPACK_TRANSACTIONS_KEY, []);
+  transactions.push({ asset, seller: selectedOwner, buyer: currentMemberEmail, tokenValue: price, createdAt: new Date().toISOString() });
+  window.localStorage.setItem(BACKPACK_TRANSACTIONS_KEY, JSON.stringify(transactions.slice(-100)));
+  if (status) status.textContent = `Trade complete: ${asset} moved to your Backpack for ${price.toLocaleString()} MZK.`;
+  renderOwnedCollection(currentMemberEmail);
+});
 
 
 menuButton?.addEventListener('click', () => {

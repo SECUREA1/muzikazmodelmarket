@@ -82,10 +82,16 @@
                     <h3 id="owned-current-user">Login required</h3>
                     <p id="owned-current-copy">Log in above to tie purchased, uploaded, and claimed assets to your account.</p>
                     <label>Open backpack <select id="owned-profile-select" disabled><option>Login to view members</option></select></label>
+                    <div class="backpack-wallet" aria-live="polite"><span>Trade wallet</span><strong id="backpack-token-balance">— MZK</strong><small>Profile tokens are used for Backpack-to-Backpack trades.</small></div>
                 </aside>
                 <div class="owned-assets-board">
                     <div class="owned-assets-summary" id="owned-assets-summary"></div>
                     <div class="owned-assets-grid" id="owned-assets-grid"></div>
+                    <section class="backpack-transactions" aria-labelledby="backpack-transactions-title">
+                        <div><p class="kicker">Profile transactions</p><h3 id="backpack-transactions-title">Backpack trade activity</h3></div>
+                        <p id="backpack-trade-status" class="status-message" role="status">Owners can set a token value and list an item. Open another user's Backpack to trade.</p>
+                        <ol id="backpack-transaction-list"><li>No trades yet.</li></ol>
+                    </section>
                 </div>
             </div>
         </section>
