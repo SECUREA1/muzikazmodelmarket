@@ -283,6 +283,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   async function loadById(id, { fallback = true } = {}) { const env = registry.find(id) || registry.all()[0]; if (!env) return; window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), roomId:env.id }; localStorage.setItem('muzikazMultiplayerWorld', env.id); const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); activeEnvironment = env; loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete GLB world…`); try { const result = await envLoader.load(env); if (!result) return; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; resetPlayer(result.spawn.position, result.spawn.rotationY || 0); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. Press Start game or click the canvas to walk.`); const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); await loadById(fallbackEnv.id, { fallback: false }); return; } if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); } }
   let cachedAvatars = [];
   let backpackAssets = [];
+  const consumedBackpackItems = new Set((()=>{try{return JSON.parse(localStorage.getItem('muzikazConsumedBackpackItems')||'[]');}catch{return [];}})());
   let backpackCategory = 'avatars';
   let backpackSelectionOpen = false;
   const mobileBackpackQuery = window.matchMedia('(max-width: 760px)');
@@ -317,13 +318,43 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const profileId=(localStorage.getItem('muzikazBottleMemberEmail')||'').trim().toLowerCase();
     let claims={}; try{claims=JSON.parse(localStorage.getItem('muzikazLandClaims')||'{}')||{};}catch{}
     const claim=claims[profileId];
-    if(!profileId||!claim||!Number.isFinite(Number(claim.x))||!Number.isFinite(Number(claim.y))) return null;
+    if(!profileId||!claim||!Number.isFinite(Number(claim.x))||!Number.isFinite(Number(claim.y))){setStatus('Drop blocked: claim a mapped home space before saving this item as a permanent land object.');return null;}
     return {id:(crypto.randomUUID?.()||`land-object-${Date.now()}`),profileId,backpackId:`profile:${profileId}:drop-backpack`,spaceId:`profile:${profileId}:home`,assetId:asset.id,mapPixel:{x:Number(claim.x),y:Number(claim.y)},landName:claim.place,permanent:true,placedAt:new Date().toISOString()};
   }
   function rememberPermanentLandObject(correlation) { let records=[]; try{records=JSON.parse(localStorage.getItem('muzikazPermanentLandObjects')||'[]')||[];}catch{} records.push(correlation); localStorage.setItem('muzikazPermanentLandObjects',JSON.stringify(records)); }
   function closeBackpack() { library.classList.add('is-collapsed'); avatarButton?.setAttribute('aria-expanded','false'); canvas.focus({ preventScroll:true }); }
+  function makeCarrot() {
+    const root = new THREE.Group(); root.name = 'Bee_Duck_Carrot';
+    const orange = new THREE.MeshStandardMaterial({ color:0xff762e, emissive:0x8a2100, emissiveIntensity:.24, roughness:.7 });
+    const green = new THREE.MeshStandardMaterial({ color:0x75db37, emissive:0x173d08, emissiveIntensity:.3 });
+    const body = new THREE.Mesh(new THREE.ConeGeometry(.18,.72,18),orange); body.rotation.z=Math.PI; body.position.y=.38;
+    for(let i=-1;i<=1;i++){const leaf=new THREE.Mesh(new THREE.CapsuleGeometry(.035,.28,4,7),green);leaf.position.set(i*.075,.84,0);leaf.rotation.z=i*.42;root.add(leaf);}
+    root.add(body); root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}}); return root;
+  }
+  function speechSprite(message) {
+    const label=document.createElement('canvas'); label.width=512; label.height=192; const context=label.getContext('2d');
+    context.fillStyle='rgba(255,255,255,.96)';context.strokeStyle='#9cff00';context.lineWidth=12;context.beginPath();context.roundRect(18,18,476,130,34);context.fill();context.stroke();context.fillStyle='#081006';context.font='900 62px system-ui';context.textAlign='center';context.fillText(message,256,106);
+    const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(label),transparent:true,depthTest:false}));sprite.name='Bee_Duck_Thanks';sprite.scale.set(2.7,1,1);sprite.position.y=2.2;sprite.renderOrder=60;return sprite;
+  }
+  function playBeeDuckQuacks() {
+    const AudioContext=window.AudioContext||window.webkitAudioContext;if(!AudioContext)return;const audio=new AudioContext();
+    [0,.2,.43].forEach((delay,index)=>{const oscillator=audio.createOscillator(),gain=audio.createGain();oscillator.type='square';oscillator.frequency.setValueAtTime(210-index*18,audio.currentTime+delay);oscillator.frequency.exponentialRampToValueAtTime(115,audio.currentTime+delay+.13);gain.gain.setValueAtTime(.0001,audio.currentTime+delay);gain.gain.exponentialRampToValueAtTime(.12,audio.currentTime+delay+.015);gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+delay+.16);oscillator.connect(gain).connect(audio.destination);oscillator.start(audio.currentTime+delay);oscillator.stop(audio.currentTime+delay+.17);});
+    window.setTimeout(()=>audio.close(),1000);
+  }
+  function feedCarrotToBeeDuck(asset) {
+    const duck=placedAvatars.children.find(root=>root.userData.avatar?.id==='beeduck-companion');
+    if(!duck){setStatus('Bee Duck must be active before you can use the carrot. Open Pets and use Bee Duck Companion first.');backpackCategory='pets';renderPicker();return false;}
+    closeBackpack();const floor=floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)).multiplyScalar(2)));const carrot=makeCarrot();carrot.position.copy(floor);placedAvatars.add(carrot);
+    duck.userData.petTravel.target.copy(carrot.position);duck.userData.petTravel.wait=0;duck.userData.carrotQuest={carrot,assetId:asset.id};setStatus('Carrot placed! Bee Duck is coming to collect it.');return true;
+  }
+  function finishBeeDuckCarrot(root) {
+    const quest=root.userData.carrotQuest;if(!quest)return;placedAvatars.remove(quest.carrot);quest.carrot.traverse(object=>{object.geometry?.dispose();object.material?.dispose();});delete root.userData.carrotQuest;
+    consumedBackpackItems.add(quest.assetId);localStorage.setItem('muzikazConsumedBackpackItems',JSON.stringify([...consumedBackpackItems]));
+    playBeeDuckQuacks();const thanks=speechSprite('Thanks!');root.add(thanks);const materials=[];root.traverse(object=>{if(object.isMesh){for(const material of (Array.isArray(object.material)?object.material:[object.material]))materials.push({material,color:material.color?.clone(),emissive:material.emissive?.clone(),emissiveIntensity:material.emissiveIntensity});}});root.userData.starPower={remaining:7,baseSpeed:root.userData.petTravel.speed,thanks,materials};root.userData.petTravel.speed=7;root.userData.petTravel.wait=0;root.userData.petTravel.target.copy(choosePetDestination(root));setStatus('Quack quack! Bee Duck says “Thanks!” and has rainbow star speed!');renderPicker();
+  }
   async function deployBackpackAsset(asset) {
     if (asset.type === 'lands') { closeBackpack(); await loadById(asset.environmentId || asset.id); return; }
+    if (asset.id === 'bee-duck-carrot') { feedCarrotToBeeDuck(asset); return; }
     const model = normalizeAvatarRecord(asset);
     if (!model.modelUrl) { setStatus(`${model.name} cannot be used because its 3D model is unavailable.`); return; }
     if (asset.type === 'avatars') designateAvatar(asset);
@@ -338,13 +369,15 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       setStatus(`${model.name} ${action}.`);
     } catch (error) { setStatus(error.message || `Unable to deploy ${model.name} from your Drop Backpack.`); }
   }
+  // Keep one public action for every backpack item, including consumable snacks.
+  const popBackpackAsset = (asset) => deployBackpackAsset(asset);
   function backpackRecords() { const worlds = registry.all().map(env => ({ id:env.id, environmentId:env.id, name:env.name, type:'lands', owner:'MUZIKAZ', modelUrl:env.modelUrl || env.modelUrls?.[0] || '', thumbnailUrl:env.thumbnailUrl || '', description:env.description || 'Public walkable land' })); const avatars = cachedAvatars.map(avatar => ({ ...avatar, type:'avatars', description:avatar.description || 'Public avatar' })); const merged = [...backpackAssets, ...avatars, ...worlds]; const seen = new Set(); return merged.filter(item => { const key=`${item.type}:${item.id}`; if(seen.has(key)) return false; seen.add(key); return true; }); }
   function renderPicker() {
     const worlds = registry.all(); syncEnvironmentSelect(worlds);
     const records = backpackRecords(); const categories = BACKPACK_CATEGORIES.map(([id,label],index) => { const count=records.filter(item=>item.type===id).length, angle=(index+.5)*360/BACKPACK_CATEGORIES.length-90, active=id===backpackCategory; return `<button type="button" class="backpack-category backpack-category--${id} ${active?'is-active':''}" style="--label-angle:${angle}deg;clip-path:${backpackPieSlice(index)}" data-backpack-category="${id}" aria-label="${label}, ${count} items" aria-pressed="${active}" aria-expanded="${active&&backpackSelectionOpen}" aria-controls="backpack-selection" title="${label}: ${count}"><span class="backpack-category-label"><b class="backpack-category-graphic" aria-hidden="true">${backpackIcon(id)}</b><em>${label}</em><small>${count}</small></span></button>`; }).join('');
     const selected = records.filter(item => item.type === backpackCategory);
     const designated = (() => { try { return JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null')?.id; } catch { return ''; } })();
-    const cards = selected.map((asset,index) => { const useLabel=asset.type==='lands'?'Enter land':asset.type==='avatars'?(asset.id===designated?'Use avatar again':'Use avatar'):asset.type==='pets'?'Use pet':'Use item'; return `<article class="backpack-orbit-card ${asset.id===designated?'is-equipped':''}" style="--orbit-index:${index}" data-backpack-id="${escapeHtml(asset.id)}"><div class="backpack-asset-preview">${backpackAssetVisual(asset)}</div><strong>${escapeHtml(asset.name)}</strong><small>${escapeHtml(asset.owner||'Public MUZIKAZ')}</small><div class="backpack-card-actions"><button type="button" data-use-asset="${escapeHtml(asset.id)}">${useLabel}</button></div></article>`; }).join('');
+    const cards = selected.map((asset,index) => { const consumed=asset.consumable&&consumedBackpackItems.has(asset.id);const useLabel=consumed?'Consumed':asset.id==='bee-duck-carrot'?'Feed Bee Duck':asset.type==='lands'?'Enter land':asset.type==='avatars'?(asset.id===designated?'Use avatar again':'Use avatar'):asset.type==='pets'?'Use pet':'Use item'; return `<article class="backpack-orbit-card ${asset.id===designated?'is-equipped':''} ${consumed?'is-consumed':''}" style="--orbit-index:${index}" data-backpack-id="${escapeHtml(asset.id)}"><div class="backpack-asset-preview">${backpackAssetVisual(asset)}</div><strong>${escapeHtml(asset.name)}</strong><small>${consumed?'Used up':asset.consumable?'1 snack · consumed on use':escapeHtml(asset.owner||'Public MUZIKAZ')}</small><div class="backpack-card-actions"><button type="button" data-use-asset="${escapeHtml(asset.id)}" ${consumed?'disabled':''}>${useLabel}</button></div></article>`; }).join('');
     const activeCategory=BACKPACK_CATEGORIES.find(row=>row[0]===backpackCategory) || BACKPACK_CATEGORIES[0];
     const marketLabel = backpackCategory === 'lands' ? 'Buy land' : `Shop ${activeCategory[1]}`;
     const marketAction = `<a class="backpack-market-action" href="model-market.html?market=${encodeURIComponent(backpackCategory)}#marketplace-preview"><span aria-hidden="true">＋</span> ${marketLabel}</a>`;
@@ -352,7 +385,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     library.innerHTML = `<div class="backpack-header"><div><p>In-game inventory</p><strong>Drop Backpack</strong><small>Choose a category, then select an item</small></div><button type="button" data-close-backpack aria-label="Close backpack">×</button></div><div class="backpack-picker"><nav class="backpack-categories" aria-label="Backpack categories"><div class="backpack-pie-center" aria-hidden="true">${backpackIcon(activeCategory[0])}<strong>${activeCategory[1]}</strong></div>${categories}</nav><section class="backpack-selection" id="backpack-selection" aria-label="${activeCategory[1]} in backpack"><div class="backpack-selection-heading"><p class="backpack-selection-title">${backpackIcon(activeCategory[0])}<strong>${activeCategory[1]}</strong><small>${selected.length} available</small></p>${marketAction}</div><div class="backpack-circle" style="--item-count:${Math.max(selected.length,1)}">${cards||'<p class="backpack-empty">No public items in this category yet. Add its file to public/models/backpack.</p>'}</div></section></div><footer><span>${records.length} public assets · ${selected.length} shown</span><small>Use arrow keys on the wheel to move between slices.</small></footer>`;
     library.querySelector('[data-close-backpack]')?.addEventListener('click',()=>{ library.classList.add('is-collapsed'); document.querySelector('#add-avatar')?.setAttribute('aria-expanded','false'); });
     library.querySelectorAll('[data-backpack-category]').forEach((button,index)=>{ button.addEventListener('click',()=>{ const next=button.dataset.backpackCategory; backpackSelectionOpen=mobileBackpackQuery.matches ? next!==backpackCategory || !backpackSelectionOpen : true; backpackCategory=next; renderPicker(); if(mobileBackpackQuery.matches&&backpackSelectionOpen) library.querySelector('.backpack-selection')?.scrollIntoView({block:'nearest',behavior:'smooth'}); }); button.addEventListener('keydown',event=>{ if(!['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(event.key))return; event.preventDefault(); const step=['ArrowLeft','ArrowUp'].includes(event.key)?-1:1, next=(index+step+BACKPACK_CATEGORIES.length)%BACKPACK_CATEGORIES.length; backpackCategory=BACKPACK_CATEGORIES[next][0]; backpackSelectionOpen=true; renderPicker(); library.querySelectorAll('[data-backpack-category]')[next]?.focus(); }); });
-    library.querySelectorAll('[data-use-asset]').forEach(button=>button.addEventListener('click',async()=>{ const asset=records.find(item=>item.id===button.dataset.useAsset&&item.type===backpackCategory); if(!asset)return; button.disabled=true; await deployBackpackAsset(asset); if(button.isConnected)button.disabled=false; }));
+    library.querySelectorAll('[data-use-asset]').forEach(button=>button.addEventListener('click',async()=>{ const asset=records.find(item=>item.id===button.dataset.useAsset&&item.type===backpackCategory); if(!asset)return; button.disabled=true; await popBackpackAsset(asset); if(button.isConnected)button.disabled=false; }));
   }
   function renderLibrary() { renderPicker(); }
   async function refreshLibrary() { try { const [worlds, pack] = await Promise.all([registry.refresh(), fetch('public/models/backpack-assets.json',{cache:'no-store'}).then(r=>r.ok?r.json():[]).catch(()=>[])]); backpackAssets=Array.isArray(pack)?pack:(pack.assets||[]); renderPicker(); return worlds; } catch (error) { setStatus(error.message); library.innerHTML = `<div class="house-picker-title"><strong>Drop Backpack</strong></div><small>${escapeHtml(error.message)}</small>`; throw error; } }
@@ -446,9 +479,19 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   function updateTravelingPet(root, delta, elapsed) {
     const travel = root.userData.petTravel; if (!travel) return;
+    const carrotQuest=root.userData.carrotQuest;
+    if(carrotQuest&&root.position.distanceToSquared(carrotQuest.carrot.position)<.42){finishBeeDuckCarrot(root);return;}
+    const star=root.userData.starPower;
+    if(star){
+      star.remaining-=delta;
+      const colors=[0xff3d9a,0xfff45c,0x5cffff,0x9cff00,0xb76cff];const color=colors[Math.floor(elapsed*12)%colors.length];
+      root.traverse(object=>{if(object.isMesh&&object.material){const materials=Array.isArray(object.material)?object.material:[object.material];materials.forEach(material=>{if(material.color)material.color.setHex(color);if('emissive' in material){material.emissive.setHex(color);material.emissiveIntensity=.75;}});}});
+      if(travel.target.distanceToSquared(root.position)<1.4){travel.target.copy(floorPointAt(choosePetDestination(root)));travel.wait=0;}
+      if(star.remaining<=0){travel.speed=star.baseSpeed;root.remove(star.thanks);star.thanks.material.map.dispose();star.thanks.material.dispose();star.materials.forEach(({material,color,emissive,emissiveIntensity})=>{if(color)material.color.copy(color);if(emissive)material.emissive.copy(emissive);if(Number.isFinite(emissiveIntensity))material.emissiveIntensity=emissiveIntensity;});delete root.userData.starPower;setStatus('Bee Duck’s carrot star power faded. What a speedy snack!');}
+    }
     travel.wait -= delta;
     const direction = travel.target.clone().sub(root.position); direction.y = 0;
-    if (direction.lengthSq() < .3 || travel.wait < -10) { travel.target.copy(floorPointAt(choosePetDestination(root))); travel.wait = 1.2 + Math.random() * 2.5; return; }
+    if (direction.lengthSq() < .3 || travel.wait < -10) { travel.target.copy(floorPointAt(choosePetDestination(root))); travel.wait = star?0:1.2 + Math.random() * 2.5; return; }
     if (travel.wait > 0) { root.position.y = travel.floorY + Math.sin(elapsed * 4 + travel.phase) * .025; return; }
     direction.normalize(); root.position.addScaledVector(direction, travel.speed * delta);
     const floor = floorPointAt(root.position); travel.floorY = floor.y + root.userData.floorLiftOffset; root.position.y = travel.floorY + Math.sin(elapsed * 8 + travel.phase) * .045;

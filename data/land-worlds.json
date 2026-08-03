@@ -61,7 +61,7 @@
     { "id": "muzikaz-public", "display_name": "MUZIKAZ", "backpack_id": "muzikaz-public-pack", "home_space_id": "space-studio-ridge" }
   ],
   "backpacks": [
-    { "id": "muzikaz-public-pack", "profile_id": "muzikaz-public", "asset_ids": ["backpack-aape", "backpack-dax", "muzikaz-main", "drone-engine", "beeduck-companion", "ion-core-prop", "volt-wolf-wearable"] }
+    { "id": "muzikaz-public-pack", "profile_id": "muzikaz-public", "asset_ids": ["backpack-aape", "backpack-dax", "muzikaz-main", "drone-engine", "beeduck-companion", "ion-core-prop", "bee-duck-carrot", "volt-wolf-wearable"] }
   ],
   "spaces": [
     { "id": "space-studio-ridge", "location_id": "studio-ridge", "profile_id": "muzikaz-public", "backpack_id": "muzikaz-public-pack", "pixel_x": 63, "pixel_y": 53, "pin_order": 0, "is_home_base": true, "pinned": true },

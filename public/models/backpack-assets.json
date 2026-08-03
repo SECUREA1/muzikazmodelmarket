@@ -9,6 +9,7 @@
     {"id":"drone-engine","name":"Drone Engine","owner":"MUZIKAZ","type":"vehicles","modelUrl":"/public/models/DRONE ENGINE.glb","format":"glb","visibility":"public","scale":1},
     {"id":"beeduck-companion","name":"BEE Duck Companion","owner":"MUZIKAZ","type":"pets","modelUrl":"/public/models/BEEDUCK.glb","format":"glb","visibility":"public","scale":0.7},
     {"id":"ion-core-prop","name":"IonCore Display Figure","owner":"MUZIKAZ","type":"props","modelUrl":"/public/models/IONCDUCK.glb","format":"glb","visibility":"public","scale":0.65},
+    {"id":"bee-duck-carrot","name":"Bee Duck Carrot","owner":"MUZIKAZ","type":"props","thumbnailUrl":"/public/images/carrot-item.svg","format":"svg","visibility":"public","consumable":true,"quantity":1,"description":"A crunchy speed snack. Use it and Bee Duck will collect it."},
     {"id":"volt-wolf-wearable","name":"Volt Wolf Armor","owner":"MUZIKAZ","type":"wearables","modelUrl":"/public/models/VOLTWOLF.glb","format":"glb","visibility":"public","scale":0.8}
   ]
 }

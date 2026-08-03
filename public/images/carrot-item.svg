@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title description">
+  <title id="title">Bee Duck carrot</title>
+  <desc id="description">A bright orange carrot with three leafy green stems and a golden glow.</desc>
+  <defs>
+    <radialGradient id="glow"><stop stop-color="#fff5a8" stop-opacity=".9"/><stop offset="1" stop-color="#9cff00" stop-opacity="0"/></radialGradient>
+    <linearGradient id="carrot" x1="0" x2="1" y2="1"><stop stop-color="#ffbd38"/><stop offset=".45" stop-color="#ff762e"/><stop offset="1" stop-color="#d83b10"/></linearGradient>
+  </defs>
+  <circle cx="128" cy="128" r="118" fill="url(#glow)"/>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <path d="M126 75C92 72 70 91 78 120c8 29 38 71 55 89 8 8 14 5 16-6 6-31 13-80 5-103-5-15-14-23-28-25Z" fill="url(#carrot)" stroke="#fff1b8" stroke-width="7"/>
+    <path d="m91 126 27 8m-14 25 22 7m11-62 19 5" fill="none" stroke="#a82d0c" stroke-width="6" opacity=".7"/>
+    <path d="M125 77c-24-17-26-41-13-48 14-7 25 18 23 43m3 4c9-29 27-41 38-30 12 12-4 30-32 39m-21-8c-26-2-41-17-34-30 8-14 29-3 43 24" fill="#75db37" stroke="#e4ff83" stroke-width="7"/>
+  </g>
+</svg>
