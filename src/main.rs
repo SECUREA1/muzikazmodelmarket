@@ -788,6 +788,9 @@ fn upload_environment(
     h: &HashMap<String, String>,
     body: &[u8],
 ) -> std::io::Result<()> {
+    if !require_backpack_land(s, h)? {
+        return Ok(());
+    }
     if !is_admin(h, st) {
         return json(s, 403, false, "{}", "Admin authorization required", false);
     }
@@ -1015,6 +1018,9 @@ fn upload_avatar(
     h: &HashMap<String, String>,
     body: &[u8],
 ) -> std::io::Result<()> {
+    if !require_backpack_land(s, h)? {
+        return Ok(());
+    }
     let ct = h.get("content-type").cloned().unwrap_or_default();
     let boundary = ct.split("boundary=").nth(1).unwrap_or("");
     if boundary.is_empty() {
@@ -1644,7 +1650,7 @@ fn write_resp(
     body: &[u8],
     head: bool,
 ) -> std::io::Result<()> {
-    write!(s,"HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {ct}\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Accept, Authorization, X-MUZIKAZ-Session, X-User-Id, X-User-Name, X-User-Email, X-User-Role, X-Admin-Token\r\nAccess-Control-Max-Age: 86400\r\nCross-Origin-Resource-Policy: cross-origin\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",body.len())?;
+    write!(s,"HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {ct}\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Accept, Authorization, X-MUZIKAZ-Session, X-User-Id, X-User-Name, X-User-Email, X-User-Role, X-Admin-Token, X-MUZIKAZ-Land-Asset\r\nAccess-Control-Max-Age: 86400\r\nCross-Origin-Resource-Policy: cross-origin\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",body.len())?;
     if !head {
         s.write_all(body)?
     }
@@ -2068,6 +2074,37 @@ fn is_admin(headers: &HashMap<String, String>, st: &State) -> bool {
             || st.admin_sessions.read().unwrap().contains(value)
     })
 }
+fn has_backpack_land(headers: &HashMap<String, String>) -> bool {
+    let asset = headers
+        .get("x-muzikaz-land-asset")
+        .map(|value| value.to_ascii_lowercase())
+        .unwrap_or_default();
+    [
+        "muzikaz world", "digital land", "world plot", "land asset", "land world",
+        "land reservation", "land deed", "land claim", "volt city", "skyline deck",
+        "echo gardens", "crew plaza", "studio ridge", "neon docks", "bassline badlands",
+        "pixel peaks",
+    ]
+    .iter()
+    .any(|marker| asset.contains(marker))
+}
+fn require_backpack_land(
+    s: &mut TcpStream,
+    headers: &HashMap<String, String>,
+) -> std::io::Result<bool> {
+    if has_backpack_land(headers) {
+        return Ok(true);
+    }
+    json(
+        s,
+        403,
+        false,
+        "{\"code\":\"LAND_OWNERSHIP_REQUIRED\"}",
+        "Land ownership required: add a MUZIKAZ World land deed to your Drop Backpack before uploading avatars, assets, or games.",
+        false,
+    )?;
+    Ok(false)
+}
 fn admin_login(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
     let payload = String::from_utf8_lossy(body);
     // Credentials are checked only on the server; clients receive a random session token.
@@ -2200,6 +2237,9 @@ fn upload_asset(
     h: &HashMap<String, String>,
     body: &[u8],
 ) -> std::io::Result<()> {
+    if !require_backpack_land(s, h)? {
+        return Ok(());
+    }
     if !is_admin(h, st) {
         return json(s, 403, false, "{}", "Admin authorization required", false);
     }

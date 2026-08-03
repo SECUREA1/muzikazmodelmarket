@@ -29,9 +29,12 @@ export async function fetchEnvironmentList() {
 }
 
 export async function uploadEnvironment(formData, onProgress = () => {}) {
+  const landHeaders = window.MUZIKAZLandAccess?.uploadHeaders();
+  if (!landHeaders) throw new Error('Backpack access is still loading. Wait a moment and try again.');
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/environments/upload');
+    Object.entries(landHeaders).forEach(([name, value]) => xhr.setRequestHeader(name, value));
     xhr.responseType = 'json';
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
