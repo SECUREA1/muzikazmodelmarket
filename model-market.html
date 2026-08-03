@@ -176,8 +176,9 @@
             <section class="world-plot" id="muzikaz-world-plot" aria-labelledby="world-plot-title">
                 <div class="world-plot__intro">
                     <p class="kicker">MUZIKAZ World · starter land</p>
-                    <h3 id="world-plot-title">Claim a five-space plot. Connect the whole world.</h3>
-                    <p>Choose one connected digital land plot for your avatar, GLB scenes, drops, and creator station. Each space is a live connection point—not an isolated parcel.</p>
+                    <h3 id="world-plot-title">Claim a plot inside a public community.</h3>
+                    <p>Choose one of five public-area plots for your avatar, GLB scenes, drops, and creator station. The plot/deed stays inside that public area and includes one free community spot—it is not a separate parcel of land.</p>
+                    <div class="world-plot__inventory" aria-label="Public plot inventory"><span><strong id="world-plots-exist">5</strong> public plots exist</span><span><strong id="world-plots-owned">0</strong> owned by you</span></div>
                     <div class="world-plot__routes" aria-label="Digital land connections">
                         <a href="model-explorer.html#live-published-models">GLB drop library <span>↗</span></a>
                         <a href="#character-world-assets">Avatar &amp; world assets <span>↗</span></a>
@@ -189,7 +190,7 @@
                         <div><span class="world-plot__eyebrow">Live district map</span><strong>Starter World / Sector 01</strong></div>
                         <div class="world-plot__legend" aria-label="Map legend"><span><i class="is-available"></i>Available</span><span><i class="is-active"></i>Selected</span></div>
                     </div>
-                    <div class="world-plot__map" role="group" aria-label="Five selectable Muzikaz World land spaces">
+                    <div class="world-plot__map" role="group" aria-label="Five selectable MUZIKAZ public-area plots">
                         <span class="world-plot__pulse world-plot__pulse--one" aria-hidden="true"></span>
                         <span class="world-plot__pulse world-plot__pulse--two" aria-hidden="true"></span>
                         <button class="world-space is-selected" type="button" data-world-space="Studio Ridge" aria-pressed="true"><svg class="world-space__model" viewBox="0 0 160 120" aria-hidden="true"><path class="land-shadow" d="m12 76 66-38 70 39-67 39Z"/><path class="land-side" d="m12 76 69 39v5L12 81Z"/><path class="land-edge" d="m81 115 67-38v6l-67 37Z"/><path class="land-top" d="m12 76 66-38 70 39-67 38Z"/><path class="road" d="m31 81 15-9 70 39-16 9Z"/><path class="building-side" d="m58 48 28 16v31L58 79Z"/><path class="building-dark" d="m86 64 27-15v31L86 95Z"/><path class="building-top" d="m58 48 27-15 28 16-27 15Z"/><path class="glass" d="m64 59 16 9v14l-16-9Zm28 9 15-8v14l-15 8Z"/><path class="neon-line" d="m57 47 29 17 28-16M86 64v32"/><circle class="plot-light" cx="41" cy="72" r="3"/></svg><span class="world-space__copy"><b>01</b><strong>Studio Ridge</strong><i>GLB stage</i></span></button>
@@ -201,7 +202,7 @@
                     <div class="world-plot__selection" id="world-plot-selection" aria-live="polite"><span class="world-plot__selection-number">01</span><span><strong>Studio Ridge selected.</strong> GLB stage, avatar spawn, and marketplace link are ready.</span><small>Plot status <b>Available</b></small></div>
                 </div>
                 <form class="world-plot__agreement" id="world-plot-agreement">
-                    <label><input type="checkbox" id="world-plot-consent"> I agree to keep this plot connected to MUZIKAZ World and use compatible GLB assets.</label>
+                    <label><input type="checkbox" id="world-plot-consent"> I understand this is a plot/deed within the selected public area, including one free community spot, and will keep it connected to MUZIKAZ World.</label>
                     <button class="btn" type="submit" disabled>Reserve Studio Ridge</button>
                 </form>
             </section>

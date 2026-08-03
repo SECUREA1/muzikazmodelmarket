@@ -34,9 +34,13 @@ npm run check
 ## Land location data
 
 The calculated world-atlas inventory is committed as
-`data/land-worlds.json`. It records eight fixed system pins, five public starter
+`data/land-worlds.json`. It records eight fixed system pins, five public-area
 plots, seven route connections, and an empty list for owner-created wild-land
-claims. Wild land has no fixed global limit; each eligible owner can pin one
+claims. Each public-area plot record documents its owner (or an explicit
+unclaimed `null` owner), and the calculated totals report both how many plots
+exist and how many are owned. A claim is a plot/deed **within** that public area
+and includes one free community spot; it is not a separate parcel of deeded
+land. Wild land has no fixed global limit; each eligible owner can pin one
 claim. Generate the equivalent, intentionally untracked
 `data/land-worlds.sqlite` database and validate it with:
 

@@ -796,8 +796,16 @@ function initWorldPlot() {
   const agreement = document.querySelector('#world-plot-agreement');
   const reserveButton = agreement?.querySelector('button[type="submit"]');
   const selection = document.querySelector('#world-plot-selection');
+  const ownedCount = document.querySelector('#world-plots-owned');
   if (!plot || !spaces.length || !consent || !agreement || !reserveButton || !selection) return;
 
+  const owner = normalizeMemberEmail(currentMemberEmail || window.localStorage.getItem('muzikazBottleMemberEmail'));
+  const ownedPlotNames = () => {
+    if (!owner) return [];
+    const assets = readOwnedProfiles()[owner] || [];
+    return spaces.map((space) => space.dataset.worldSpace).filter((name) => assets.some((asset) => asset.startsWith(`MUZIKAZ World · ${name}`)));
+  };
+  const updateOwnedCount = () => { if (ownedCount) ownedCount.textContent = String(ownedPlotNames().length); };
   let selectedSpace = window.localStorage.getItem('muzikazWorldStarterSpace') || spaces[0].dataset.worldSpace;
   const selectSpace = (name) => {
     selectedSpace = name;
@@ -808,21 +816,28 @@ function initWorldPlot() {
       space.setAttribute('aria-pressed', String(active));
     });
     const selectedIndex = spaces.findIndex((space) => space.dataset.worldSpace === name) + 1;
-    selection.innerHTML = `<span class="world-plot__selection-number">${String(selectedIndex).padStart(2, '0')}</span><span><strong>${name} selected.</strong> GLB stage, avatar spawn, and marketplace link are ready.</span><small>Plot status <b>Available</b></small>`;
-    reserveButton.textContent = `Reserve ${name}`;
+    const isOwned = ownedPlotNames().includes(name);
+    selection.innerHTML = `<span class="world-plot__selection-number">${String(selectedIndex).padStart(2, '0')}</span><span><strong>${name} selected.</strong> This public-area plot includes one free spot in its community.</span><small>Plot status <b>${isOwned ? 'Owned by you' : 'Available'}</b></small>`;
+    reserveButton.textContent = isOwned ? `${name} owned` : `Claim ${name}`;
+    reserveButton.disabled = isOwned || !consent.checked;
   };
 
   spaces.forEach((space) => space.addEventListener('click', () => selectSpace(space.dataset.worldSpace)));
-  consent.addEventListener('change', () => { reserveButton.disabled = !consent.checked; });
+  consent.addEventListener('change', () => { reserveButton.disabled = ownedPlotNames().includes(selectedSpace) || !consent.checked; });
   agreement.addEventListener('submit', (event) => {
     event.preventDefault();
     if (!consent.checked) return;
-    addCartLine(`MUZIKAZ World · ${selectedSpace}`, 25, 'Five-space connected digital land plot');
-    claimOwnedAsset(`MUZIKAZ World · ${selectedSpace}`, 'Connected land reservation');
-    updateCart(reserveButton, 'Plot reserved');
+    if (ownedPlotNames().includes(selectedSpace)) return;
+    addCartLine(`MUZIKAZ World · ${selectedSpace}`, 25, 'Public-area plot/deed · one free community spot included');
+    claimOwnedAsset(`MUZIKAZ World · ${selectedSpace}`, 'Public-area plot claim');
+    updateOwnedCount();
+    updateCart(reserveButton, 'Plot claimed');
     const selectedIndex = spaces.findIndex((space) => space.dataset.worldSpace === selectedSpace) + 1;
-    selection.innerHTML = `<span class="world-plot__selection-number">${String(selectedIndex).padStart(2, '0')}</span><span><strong>${selectedSpace} reserved.</strong> Your plot is linked to the GLB library, avatar shelf, and marketplace.</span><small>Plot status <b>Reserved</b></small>`;
+    selection.innerHTML = `<span class="world-plot__selection-number">${String(selectedIndex).padStart(2, '0')}</span><span><strong>${selectedSpace} claimed.</strong> Your deed is within this public area and its free community spot is included.</span><small>Plot status <b>Owned by you</b></small>`;
+    reserveButton.disabled = true;
+    reserveButton.textContent = `${selectedSpace} owned`;
   });
+  updateOwnedCount();
   selectSpace(selectedSpace);
 }
 
