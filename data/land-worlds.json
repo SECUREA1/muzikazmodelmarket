@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "coordinate_system": {
+    "name": "MUZIKAZ world atlas percentage grid",
+    "x_min": 0,
+    "x_max": 100,
+    "y_min": 0,
+    "y_max": 100
+  },
+  "pinning_rules": {
+    "registered_system_locations": 8,
+    "starter_world_plots": 5,
+    "public_areas": 5,
+    "wild_land_capacity": "dynamic",
+    "wild_land_limit_per_owner": 1,
+    "explanation": "The catalog supplies 8 fixed system pins. A signed-in land-deed owner may add one custom wild-land claim, so the global wild-land total grows with the number of eligible owners and has no fixed maximum."
+  },
+  "calculated_totals": {
+    "fixed_pinnable_locations": 8,
+    "fixed_route_connections": 7,
+    "connection_endpoints": 14,
+    "land_worlds": 5,
+    "three_d_environments": 3,
+    "public_areas": 5,
+    "non_public_system_locations": 3,
+    "wild_land_claims_seeded": 0
+  },
+  "locations": [
+    { "id": "volt-city", "name": "Volt City", "kind": "land_world", "x": 23, "y": 28, "price_usd": 35, "public_area": false, "starter_plot": false, "environment_id": null, "detail": "The electric capital; live stages and creator towers" },
+    { "id": "skyline-deck", "name": "Skyline Deck", "kind": "land_world", "x": 49, "y": 22, "price_usd": 25, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Rooftop events; event roof" },
+    { "id": "echo-gardens", "name": "Echo Gardens", "kind": "land_world", "x": 74, "y": 31, "price_usd": 25, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Living sound biome; open for builders" },
+    { "id": "crew-plaza", "name": "Crew Plaza", "kind": "land_world", "x": 36, "y": 49, "price_usd": 25, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Social hub; crews gathering now" },
+    { "id": "studio-ridge", "name": "Studio Ridge", "kind": "three_d_environment", "x": 63, "y": 53, "price_usd": 48, "public_area": true, "starter_plot": true, "environment_id": "muzikaz-main", "detail": "MUZIKAZ Main Floor; complete walkable GLB stage" },
+    { "id": "neon-docks", "name": "Neon Docks", "kind": "land_world", "x": 18, "y": 70, "price_usd": 25, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Drop port; new assets arriving" },
+    { "id": "bassline-badlands", "name": "Bassline Badlands", "kind": "three_d_environment", "x": 50, "y": 76, "price_usd": 52, "public_area": false, "starter_plot": false, "environment_id": "muzikaz-upper", "detail": "MUZIKAZ Upper Floor; high-energy adventure environment" },
+    { "id": "pixel-peaks", "name": "Pixel Peaks", "kind": "three_d_environment", "x": 82, "y": 72, "price_usd": 58, "public_area": false, "starter_plot": false, "environment_id": "sheepbase", "detail": "Sheep Base; panoramic walkable mountain build" }
+  ],
+  "connections": [
+    { "from": "volt-city", "to": "skyline-deck" },
+    { "from": "skyline-deck", "to": "echo-gardens" },
+    { "from": "echo-gardens", "to": "crew-plaza" },
+    { "from": "crew-plaza", "to": "studio-ridge" },
+    { "from": "studio-ridge", "to": "neon-docks" },
+    { "from": "neon-docks", "to": "bassline-badlands" },
+    { "from": "bassline-badlands", "to": "pixel-peaks" }
+  ],
+  "public_area_connection_breakdown": [
+    { "location_id": "skyline-deck", "connected_locations": ["volt-city", "echo-gardens"], "connection_count": 2 },
+    { "location_id": "echo-gardens", "connected_locations": ["skyline-deck", "crew-plaza"], "connection_count": 2 },
+    { "location_id": "crew-plaza", "connected_locations": ["echo-gardens", "studio-ridge"], "connection_count": 2 },
+    { "location_id": "studio-ridge", "connected_locations": ["crew-plaza", "neon-docks"], "connection_count": 2 },
+    { "location_id": "neon-docks", "connected_locations": ["studio-ridge", "bassline-badlands"], "connection_count": 2 }
+  ],
+  "wild_land_claims": []
+}
