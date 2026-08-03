@@ -77,7 +77,18 @@ if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launc
   throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
 }
 
+const backpackCatalog = JSON.parse(await readFile('dist/public/models/backpack-assets.json', 'utf8'));
+const backpackTypes = new Set((backpackCatalog.assets || []).map((asset) => asset.type));
+for (const type of ['avatars', 'lands', 'props', 'wearables', 'pets', 'vehicles']) {
+  if (!backpackTypes.has(type)) throw new Error(`Drop Backpack catalog is missing public ${type}.`);
+  await access(`dist/public/models/backpack/${type}.json`);
+}
+if (!mainHtml.includes('<span>Backpack</span>')) throw new Error('The game must expose a Backpack button instead of the old Avatar button.');
+
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
+for (const requiredBackpackFeature of ['backpackAssets', 'BACKPACK_CATEGORIES', 'designateAvatar', 'popBackpackAsset', 'data-backpack-category']) {
+  if (!houseExplorer.includes(requiredBackpackFeature)) throw new Error(`GLB House Explorer is missing Drop Backpack behavior: ${requiredBackpackFeature}`);
+}
 for (const requiredLiveFeature of ['MUZIKAZ_LIVE_PLAYERS', 'syncLiveAvatars', 'pollLiveAvatars', 'Live_player_label']) {
   if (!houseExplorer.includes(requiredLiveFeature)) throw new Error(`GLB House Explorer is missing live cross-device avatars/chat: ${requiredLiveFeature}`);
 }
