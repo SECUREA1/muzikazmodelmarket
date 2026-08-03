@@ -83,6 +83,9 @@ for (const type of ['avatars', 'lands', 'props', 'wearables', 'pets', 'vehicles'
 if (!mainHtml.includes('<span>Backpack</span>')) throw new Error('The game must expose a Backpack button instead of the old Avatar button.');
 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
+if (houseExplorer.includes('backpack-asset-model') || /backpackAssetVisual[\s\S]{0,800}<model-viewer/.test(houseExplorer)) {
+  throw new Error('Drop Backpack previews must not create model-viewer WebGL renderers inside the running game.');
+}
 for (const requiredBackpackFeature of ['backpackAssets', 'BACKPACK_CATEGORIES', 'designateAvatar', 'popBackpackAsset', 'data-backpack-category']) {
   if (!houseExplorer.includes(requiredBackpackFeature)) throw new Error(`GLB House Explorer is missing Drop Backpack behavior: ${requiredBackpackFeature}`);
 }

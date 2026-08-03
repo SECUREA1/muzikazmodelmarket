@@ -301,14 +301,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   ]);
   function backpackIcon(type) { return `<span class="backpack-svg-icon">${BACKPACK_ICONS[type] || BACKPACK_ICONS.props}</span>`; }
   function backpackAssetVisual(asset) {
-    const modelUrl = asset.modelUrl || asset.model_url || '';
     const imageUrl = asset.thumbnailUrl || asset.thumbnail_url || asset.iconUrl || asset.icon_url || asset.imageUrl || asset.image_url || '';
-    if (/\.(?:glb|gltf)(?:$|[?#])/i.test(modelUrl)) {
-      return `<model-viewer class="backpack-asset-model" src="${escapeHtml(modelUrl)}" alt="3D preview of ${escapeHtml(asset.name)}" camera-orbit="35deg 70deg auto" interaction-prompt="none" loading="lazy" reveal="auto" shadow-intensity="1" disable-zoom></model-viewer>`;
-    }
     if (/\.(?:svg|png|jpe?g|webp|gif)(?:$|[?#])/i.test(imageUrl)) {
       return `<img class="backpack-asset-image" src="${escapeHtml(imageUrl)}" alt="Preview of ${escapeHtml(asset.name)}" loading="lazy">`;
     }
+    // Do not create another WebGL renderer inside the running game. In particular,
+    // decoding a GLB preview when opening Props can exhaust mobile GPU memory.
     return `<span class="backpack-orbit-icon" aria-hidden="true">${backpackIcon(asset.type)}</span>`;
   }
   function backpackPieSlice(index,total=BACKPACK_CATEGORIES.length) { const points=['50% 50%']; const start=-90+(index*360/total), end=-90+((index+1)*360/total); for(let angle=start;angle<=end;angle+=5){const radians=angle*Math.PI/180;points.push(`${50+50*Math.cos(radians)}% ${50+50*Math.sin(radians)}%`);} const radians=end*Math.PI/180;points.push(`${50+50*Math.cos(radians)}% ${50+50*Math.sin(radians)}%`); return `polygon(${points.join(',')})`; }
