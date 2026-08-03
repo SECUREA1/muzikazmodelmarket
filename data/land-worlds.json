@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "coordinate_system": {
     "name": "MUZIKAZ world atlas percentage grid",
     "x_min": 0,
@@ -13,7 +13,9 @@
     "public_areas": 5,
     "wild_land_capacity": "dynamic",
     "wild_land_limit_per_owner": 1,
-    "explanation": "The catalog supplies 8 fixed system pins. A signed-in land-deed owner may add one custom wild-land claim, so the global wild-land total grows with the number of eligible owners and has no fixed maximum."
+    "explanation": "The catalog supplies 8 fixed system pins. A signed-in land-deed owner may add one custom wild-land claim, so the global wild-land total grows with the number of eligible owners and has no fixed maximum.",
+    "home_base_first": true,
+    "permanent_object_rule": "A game drop is valid only when profile_id, backpack_id, space_id, map pixel, and backpack asset ownership correlate."
   },
   "calculated_totals": {
     "fixed_pinnable_locations": 8,
@@ -44,6 +46,23 @@
     { "from": "neon-docks", "to": "bassline-badlands" },
     { "from": "bassline-badlands", "to": "pixel-peaks" }
   ],
+  "profiles": [
+    { "id": "muzikaz-public", "display_name": "MUZIKAZ", "backpack_id": "muzikaz-public-pack", "home_space_id": "space-studio-ridge" }
+  ],
+  "backpacks": [
+    { "id": "muzikaz-public-pack", "profile_id": "muzikaz-public", "asset_ids": ["backpack-aape", "backpack-dax", "muzikaz-main", "drone-engine", "beeduck-companion", "ion-core-prop", "volt-wolf-wearable"] }
+  ],
+  "spaces": [
+    { "id": "space-studio-ridge", "location_id": "studio-ridge", "profile_id": "muzikaz-public", "backpack_id": "muzikaz-public-pack", "pixel_x": 63, "pixel_y": 53, "pin_order": 0, "is_home_base": true, "pinned": true },
+    { "id": "space-volt-city", "location_id": "volt-city", "profile_id": "muzikaz-public", "backpack_id": "muzikaz-public-pack", "pixel_x": 23, "pixel_y": 28, "pin_order": 1, "is_home_base": false, "pinned": true },
+    { "id": "space-skyline-deck", "location_id": "skyline-deck", "profile_id": "muzikaz-public", "backpack_id": "muzikaz-public-pack", "pixel_x": 49, "pixel_y": 22, "pin_order": 2, "is_home_base": false, "pinned": true },
+    { "id": "space-echo-gardens", "location_id": "echo-gardens", "profile_id": "muzikaz-public", "backpack_id": "muzikaz-public-pack", "pixel_x": 74, "pixel_y": 31, "pin_order": 3, "is_home_base": false, "pinned": true },
+    { "id": "space-crew-plaza", "location_id": "crew-plaza", "profile_id": "muzikaz-public", "backpack_id": "muzikaz-public-pack", "pixel_x": 36, "pixel_y": 49, "pin_order": 4, "is_home_base": false, "pinned": true },
+    { "id": "space-neon-docks", "location_id": "neon-docks", "profile_id": "muzikaz-public", "backpack_id": "muzikaz-public-pack", "pixel_x": 18, "pixel_y": 70, "pin_order": 5, "is_home_base": false, "pinned": true },
+    { "id": "space-bassline-badlands", "location_id": "bassline-badlands", "profile_id": "muzikaz-public", "backpack_id": "muzikaz-public-pack", "pixel_x": 50, "pixel_y": 76, "pin_order": 6, "is_home_base": false, "pinned": true },
+    { "id": "space-pixel-peaks", "location_id": "pixel-peaks", "profile_id": "muzikaz-public", "backpack_id": "muzikaz-public-pack", "pixel_x": 82, "pixel_y": 72, "pin_order": 7, "is_home_base": false, "pinned": true }
+  ],
+  "permanent_objects": [],
   "public_area_connection_breakdown": [
     { "location_id": "skyline-deck", "connected_locations": ["volt-city", "echo-gardens"], "connection_count": 2 },
     { "location_id": "echo-gardens", "connected_locations": ["skyline-deck", "crew-plaza"], "connection_count": 2 },
