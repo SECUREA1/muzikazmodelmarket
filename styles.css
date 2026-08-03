@@ -2498,3 +2498,6 @@ section,
   .backpack-circle{min-height:164px;padding:12px calc(50% - 72px);border-radius:16px}.backpack-orbit-card{flex-basis:138px;min-height:138px;padding:10px}.backpack-orbit-card:nth-child(even){transform:none}
   .backpack-panel footer{display:none}
 }
+
+/* Single startup indicator: the Begin surface becomes the loader in place. */
+.game-loading-indicator{display:none;width:38px;height:38px;border:4px solid rgba(202,255,105,.25);border-top-color:#caff69;border-radius:50%}.house-game-start.is-loading .game-loading-indicator{display:block;animation:game-loading-spin .8s linear infinite}.house-game-start.is-loading h3,.house-game-start.is-loading .house-start-button{display:none}.house-game-start.has-error .game-loading-indicator{display:none}@keyframes game-loading-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.house-game-start.is-loading .game-loading-indicator{animation-duration:1.8s}}
