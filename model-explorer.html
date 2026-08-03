@@ -87,7 +87,7 @@
             <h3 id="house-game-start-title">Clear level 1. Survive the upper-floor ghosts in level 2.</h3>
             <p id="house-game-load-status" role="status">Preparing level 1 toxins and the level 2 ghost encounter…</p>
             <p class="house-firefox-note">RAD-TOX runs in browsers with WebGL support. The game starts as soon as the interior is ready.</p>
-            <button class="btn house-start-button" type="button" data-house-start>Start RAD-TOX</button>
+            <button class="btn house-start-button" type="button" data-house-start aria-describedby="house-game-load-status">BEGIN NOW!</button>
             </div>
           </section>
         </div>
@@ -130,7 +130,7 @@
           <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">▤</b><span>World</span></button>
           <button class="house-bottom-control" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel"><b aria-hidden="true">💬</b><span>Chat</span><b id="crib-online-count">0 / 15</b></button>
           <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">🎒</b><span>Backpack</span></button>
-          <button class="house-bottom-control house-bottom-control-begin" id="house-start-game" type="button"><b aria-hidden="true">◉</b><span>Begin</span></button>
+          <button class="house-bottom-control house-bottom-control-begin" id="house-tools" type="button" data-house-tools aria-haspopup="dialog" aria-expanded="false" aria-controls="rad-tox-tools"><b aria-hidden="true">🛠</b><span>Tools</span></button>
           <small class="house-firefox-label">WebGL required</small>
           <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
         </div>
