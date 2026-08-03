@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "description": "Public in-game Drop Backpack catalog. Every supported asset type has a repository-owned manifest under public/models/backpack.",
+  "assets": [
+    {"id":"backpack-aape","name":"AAPE","owner":"MUZIKAZ","type":"avatars","modelUrl":"/public/models/AAPE.glb","format":"glb","visibility":"public","scale":1},
+    {"id":"backpack-dax","name":"DAX","owner":"MUZIKAZ","type":"avatars","modelUrl":"/public/models/DAX.glb","format":"glb","visibility":"public","scale":1},
+    {"id":"muzikaz-main","name":"MUZIKAZ Main Floor","owner":"MUZIKAZ","type":"lands","environmentId":"muzikaz-main","visibility":"public"},
+    {"id":"drone-engine","name":"Drone Engine","owner":"MUZIKAZ","type":"vehicles","modelUrl":"/public/models/DRONE ENGINE.glb","format":"glb","visibility":"public","scale":1},
+    {"id":"beeduck-companion","name":"BEE Duck Companion","owner":"MUZIKAZ","type":"pets","modelUrl":"/public/models/BEEDUCK.glb","format":"glb","visibility":"public","scale":0.7},
+    {"id":"ion-core-prop","name":"IonCore Display Figure","owner":"MUZIKAZ","type":"props","modelUrl":"/public/models/IONCDUCK.glb","format":"glb","visibility":"public","scale":0.65},
+    {"id":"volt-wolf-wearable","name":"Volt Wolf Armor","owner":"MUZIKAZ","type":"wearables","modelUrl":"/public/models/VOLTWOLF.glb","format":"glb","visibility":"public","scale":0.8}
+  ]
+}
