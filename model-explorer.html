@@ -69,11 +69,6 @@
         <div class="house-stage">
           <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
           <div class="house-reticle" aria-hidden="true">+</div>
-          <aside class="game-profile-wallet" aria-label="Player profile and MZK token balance">
-            <span class="game-profile-wallet__avatar" aria-hidden="true">👤</span>
-            <span class="game-profile-wallet__identity"><small>Player profile</small><b id="game-profile-name">Guest Player</b></span>
-            <span class="game-profile-wallet__balance"><small>MZK tokens</small><strong id="game-profile-mzk">0 MZK</strong></span>
-          </aside>
           <div class="house-status" id="house-status" role="status">Ready to begin.</div>
           <section class="house-game-start game-overlay" id="house-game-start" data-house-start-surface aria-labelledby="house-game-start-title">
             <div class="game-overlay__content">
@@ -112,6 +107,11 @@
         </aside>
         <div class="mobile-move-pad" aria-label="Game controllers"></div>
         <div class="house-bottom-controls" aria-label="Game controls">
+          <aside class="game-profile-wallet" aria-label="Player profile and MZK token balance">
+            <span class="game-profile-wallet__avatar" aria-hidden="true">👤</span>
+            <span class="game-profile-wallet__identity"><small>Player profile</small><b id="game-profile-name">Guest Player</b></span>
+            <span class="game-profile-wallet__balance"><small>MZK tokens</small><strong id="game-profile-mzk">0 MZK</strong></span>
+          </aside>
           <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">🌐</b><span>Multiplayer Worlds</span></button>
           <button class="house-bottom-control" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel"><b aria-hidden="true">💬</b><span>Chat</span><b id="crib-online-count">0 / 15</b></button>
           <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">🎒</b><span>Backpack</span></button>
