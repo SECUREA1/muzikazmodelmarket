@@ -31,6 +31,20 @@ npm run build
 npm run check
 ```
 
+## Land location data
+
+The calculated world-atlas inventory is committed as
+`data/land-worlds.json`. It records eight fixed system pins, five public starter
+plots, seven route connections, and an empty list for owner-created wild-land
+claims. Wild land has no fixed global limit; each eligible owner can pin one
+claim. Generate the equivalent, intentionally untracked
+`data/land-worlds.sqlite` database and validate it with:
+
+```bash
+npm run build:land-data
+npm run check:land-data
+```
+
 Build and run the Rust server locally:
 
 ```bash

@@ -2,3 +2,6 @@ node_modules/
 dist/
 .DS_Store
 /target/
+
+# Generated from data/land-worlds.json by npm run build:land-data.
+/data/land-worlds.sqlite
