@@ -248,16 +248,9 @@
                         <a class="btn ghost" href="members.html#marketplace">Open the market</a>
                     </div>
                 </article>
-                <div class="character-world-category-bar" role="tablist" aria-label="Character and World Asset categories">
-                    <button type="button" class="active" data-flex-category="All">All categories</button>
-                    <button type="button" data-flex-category="Avatars">Avatars</button>
-                    <button type="button" data-flex-category="Pets">Pets</button>
-                    <button type="button" data-flex-category="Wearables">Wearables</button>
-                    <button type="button" data-flex-category="Rooms">Rooms</button>
-                    <button type="button" data-flex-category="Props">Props</button>
-                    <button type="button" data-flex-category="Vehicles">Vehicles</button>
-                    <button type="button" data-flex-category="World Packs">World packs</button>
-                </div>
+                <label class="selection-dropdown character-world-category-bar">Choose an asset category
+                    <select id="flex-category-select" aria-label="Character and World Asset category"></select>
+                </label>
                 <div class="character-world-selected-panel" id="flex-category-panel" aria-live="polite">
                     <strong>Full asset universe selected</strong>
                     <span>Showing every character and world asset category in one connected MUZIKAZ collection.</span>

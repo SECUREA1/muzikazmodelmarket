@@ -728,10 +728,10 @@ function initMarketSectionToggle() {
 }
 
 function initFlexLabCategories() {
-  const buttons = document.querySelectorAll('[data-flex-category]');
+  const select = document.querySelector('#flex-category-select');
   const cards = document.querySelectorAll('[data-flex-card]');
   const panel = document.querySelector('#flex-category-panel');
-  if (!buttons.length || !cards.length) return;
+  if (!select || !cards.length) return;
   const summaries = {
     All: 'Showing every character and world asset category in one connected MUZIKAZ collection.',
     Avatars: '3D character drops, skins, traits, poses, and profile-ready avatar variants.',
@@ -742,22 +742,22 @@ function initFlexLabCategories() {
     Vehicles: 'Mascot-matched boards, rides, transport concepts, and movement upgrades.',
     'World Packs': 'Bedrooms, stages, shops, arenas, hideouts, and explorable mascot worlds.'
   };
+  const cardList = Array.from(cards);
+  const categories = ['All', ...new Set(cardList.map((card) => card.dataset.flexCard))];
+  select.replaceChildren(...categories.map((category) => {
+    const count = category === 'All' ? cardList.length : cardList.filter((card) => card.dataset.flexCard === category).length;
+    return new Option(`${category === 'All' ? 'All categories' : category} (${count})`, category);
+  }));
   function selectCategory(category) {
-    buttons.forEach((button) => {
-      const active = button.dataset.flexCategory === category;
-      button.classList.toggle('active', active);
-      button.setAttribute('aria-selected', String(active));
-    });
+    select.value = category;
     cards.forEach((card) => {
       const visible = category === 'All' || card.dataset.flexCard === category;
       card.hidden = !visible;
       card.classList.toggle('is-selected', visible && category !== 'All');
     });
-    if (panel) {
-      panel.innerHTML = `<strong>${category === 'All' ? 'Full loadout selected' : `${category} shelf selected`}</strong><span>${summaries[category] || summaries.All}</span>`;
-    }
+    if (panel) panel.innerHTML = `<strong>${category === 'All' ? 'Full loadout selected' : `${category} shelf selected`}</strong><span>${summaries[category] || summaries.All}</span>`;
   }
-  buttons.forEach((button) => button.addEventListener('click', () => selectCategory(button.dataset.flexCategory || 'All')));
+  select.addEventListener('change', () => selectCategory(select.value || 'All'));
   selectCategory('All');
 }
 
@@ -964,10 +964,15 @@ function renderMarketplace(type = marketplaceState.type, modelFocus = marketplac
   marketplaceState.curatedOnly = marketQualityToggle ? marketQualityToggle.checked : marketplaceState.curatedOnly;
   const types = ['All', ...new Set(marketplaceListings.map((listing) => listing.type))];
   const categories = ['All', ...new Set(marketplaceListings.map((listing) => listing.category))];
-  marketTabs.innerHTML = types.map((tab) => `<button type="button" class="${tab === marketplaceState.type ? 'active' : ''}" aria-pressed="${tab === marketplaceState.type}" data-market-filter="${tab}">${tab}</button>`).join('');
-  if (marketCategories) {
-    marketCategories.innerHTML = categories.map((category) => `<button type="button" class="${category === marketplaceState.category ? 'active' : ''}" aria-pressed="${category === marketplaceState.category}" data-market-category="${category}">${category}</button>`).join('');
-  }
+  const countListings = (nextType, nextCategory) => marketplaceListings.filter((listing) => {
+    const typeMatch = nextType === 'All' || listing.type === nextType;
+    const categoryMatch = nextCategory === 'All' || listing.category === nextCategory;
+    const focusMatch = !marketplaceState.modelFocus || listing.model === marketplaceState.modelFocus || listing.copy.includes(marketplaceState.modelFocus);
+    const qualityMatch = !marketplaceState.curatedOnly || listing.quality === 'curated';
+    return typeMatch && categoryMatch && focusMatch && qualityMatch;
+  }).length;
+  marketTabs.replaceChildren(...types.map((tab) => new Option(`${tab} (${countListings(tab, marketplaceState.category)})`, tab, false, tab === marketplaceState.type)));
+  if (marketCategories) marketCategories.replaceChildren(...categories.map((category) => new Option(`${category} (${countListings(marketplaceState.type, category)})`, category, false, category === marketplaceState.category)));
   const listings = marketplaceListings.filter((listing) => {
     const typeMatch = marketplaceState.type === 'All' || listing.type === marketplaceState.type;
     const categoryMatch = marketplaceState.category === 'All' || listing.category === marketplaceState.category;
@@ -985,12 +990,12 @@ function renderMarketplace(type = marketplaceState.type, modelFocus = marketplac
     const focusCopy = marketplaceState.modelFocus ? ` for ${marketplaceState.modelFocus}` : '';
     marketStatus.textContent = `${listings.length} listing${listings.length === 1 ? '' : 's'} shown${focusCopy}. Category: ${marketplaceState.category}. Type: ${marketplaceState.type}.`;
   }
-  marketTabs.querySelectorAll('[data-market-filter]').forEach((button) => button.addEventListener('click', () => renderMarketplace(button.dataset.marketFilter, marketplaceState.modelFocus)));
-  marketCategories?.querySelectorAll('[data-market-category]').forEach((button) => button.addEventListener('click', () => {
-    marketplaceState.category = button.dataset.marketCategory || 'All';
+  marketTabs.onchange = () => renderMarketplace(marketTabs.value, marketplaceState.modelFocus);
+  if (marketCategories) marketCategories.onchange = () => {
+    marketplaceState.category = marketCategories.value || 'All';
     marketplaceState.modelFocus = '';
     renderMarketplace(marketplaceState.type);
-  }));
+  };
 }
 
 document.addEventListener('click', (event) => {
@@ -2162,7 +2167,7 @@ function initAssetDashboard(){
   const localKey='muzikaz.assetLibraryFallback';
   let current='My Uploads', lastGraphic=null, cachedAssets=[];
   const status=document.getElementById('asset-status'), grid=document.getElementById('asset-card-grid'), tabBox=document.getElementById('asset-tabs');
-  function renderTabs(){tabBox.replaceChildren(...tabs.map(t=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.className=t===current?'active':'';b.setAttribute('aria-pressed',String(t===current));b.onclick=()=>{current=t;renderTabs();loadAssets();};return b;}));}
+  function renderTabs(list=cachedAssets){tabBox.replaceChildren(...tabs.map(t=>new Option(`${t} (${filtered(list,t).length})`,t,false,t===current)));tabBox.onchange=()=>{current=tabBox.value;loadAssets();};}
   renderTabs();
   function localAssets(){try{return JSON.parse(localStorage.getItem(localKey)||'[]');}catch{return [];}}
   function saveLocalAssets(list){localStorage.setItem(localKey,JSON.stringify(list));}
@@ -2182,8 +2187,8 @@ function initAssetDashboard(){
   document.getElementById('retry-graphic-upload')?.addEventListener('click',()=>document.getElementById('graphic-upload-form')?.requestSubmit());
   document.getElementById('regenerate-derivatives')?.addEventListener('click',()=>{status.textContent='Derivative counts refreshed.';loadAssets();});
   document.querySelectorAll('[data-tab-jump]').forEach((button)=>button.addEventListener('click',()=>{current=button.dataset.tabJump||'My Uploads';renderTabs();loadAssets();document.getElementById(button.dataset.focusForm||'asset-status')?.scrollIntoView({behavior:'smooth',block:'center'});}));
-  function filtered(list){return list.filter(a=> current==='My Uploads'||current==='Public Assets'&&a.visibility==='public'||current==='Pending Approval'&&a.status==='pending_review'||current==='Approved'&&['approved','published'].includes(a.status)||current==='Rejected'&&a.status==='rejected'||current==='Drafts'&&a.status==='draft'||current==='3D Models'&&a.fileType==='model'||current==='Images'&&a.fileType==='image'||current==='Thumbnails'&&a.intendedUse==='Model thumbnail'||current==='Store Tiles'&&a.intendedUse==='Marketplace tile'||current==='Product Previews'&&a.intendedUse==='Product preview'||current==='Archived'&&a.status==='archived');}
-  async function loadAssets(){try{status.textContent='Loading assets…'; const list=[...(await api(current==='Public Assets'?'/api/assets/public':'/api/assets/mine')),...localAssets()]; cachedAssets=list; const view=filtered(list); grid.replaceChildren(...(view.length?view.map(card):[emptyCard(current)])); status.textContent=`${view.length} assets loaded for ${current}.`; updateAssetMetrics(list); renderAssignmentOptions(); }catch(e){const list=localAssets(); cachedAssets=list; const view=filtered(list); grid.replaceChildren(...(view.length?view.map(card):[emptyCard(current)])); status.textContent=list.length?`${view.length} browser draft assets loaded for ${current}. Start the server to sync.`:e.message; updateAssetMetrics(list); renderAssignmentOptions();}}
+  function filtered(list,label=current){return list.filter(a=> label==='My Uploads'||label==='Public Assets'&&a.visibility==='public'||label==='Pending Approval'&&a.status==='pending_review'||label==='Approved'&&['approved','published'].includes(a.status)||label==='Rejected'&&a.status==='rejected'||label==='Drafts'&&a.status==='draft'||label==='3D Models'&&a.fileType==='model'||label==='Images'&&a.fileType==='image'||label==='Thumbnails'&&a.intendedUse==='Model thumbnail'||label==='Store Tiles'&&a.intendedUse==='Marketplace tile'||label==='Product Previews'&&a.intendedUse==='Product preview'||label==='Archived'&&a.status==='archived');}
+  async function loadAssets(){try{status.textContent='Loading assets…'; const list=[...(await api(current==='Public Assets'?'/api/assets/public':'/api/assets/mine')),...localAssets()]; cachedAssets=list; const view=filtered(list); renderTabs(list); grid.replaceChildren(...(view.length?view.map(card):[emptyCard(current)])); status.textContent=`${view.length} assets loaded for ${current}.`; updateAssetMetrics(list); renderAssignmentOptions(); }catch(e){const list=localAssets(); cachedAssets=list; const view=filtered(list); renderTabs(list); grid.replaceChildren(...(view.length?view.map(card):[emptyCard(current)])); status.textContent=list.length?`${view.length} browser draft assets loaded for ${current}. Start the server to sync.`:e.message; updateAssetMetrics(list); renderAssignmentOptions();}}
   function updateAssetMetrics(list){document.getElementById('metric-thumbnails').textContent=list.filter(a=>a.thumbnailUrl).length;document.getElementById('metric-store-tiles').textContent=list.filter(a=>a.intendedUse==='Marketplace tile').length;document.getElementById('metric-product-previews').textContent=list.filter(a=>a.intendedUse==='Product preview').length;}
   function emptyCard(label){const el=document.createElement('article');el.className='asset-card empty-asset-card';el.innerHTML=`<h4>No ${label.toLowerCase()} yet</h4><p>Upload graphics or 3D models, then use the tabs and approval buttons to manage display.</p>`;return el;}
   function card(a){const el=document.createElement('article');el.className='asset-card'; const preview=a.fileType==='model'?`<model-viewer src="${a.publicUrl}" camera-controls touch-action="pan-y" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1"><button slot="ar-button" type="button">Place in AR</button></model-viewer>`:`<img src="${a.thumbnailUrl||a.publicUrl}" alt="${a.title}">`; el.innerHTML=`${preview}<h4>${a.title}</h4><p>${a.originalFilename}</p><p>Owner: ${a.ownerDisplayName}</p><p>${a.fileType} · ${a.fileSize} bytes · ${a.category||'uncategorized'}</p><p>Status: ${a.status} · ${a.visibility}</p><p>Related model: ${a.relatedModelId||'none'}</p><p>Uploaded: ${a.createdAt} Approved: ${a.approvedAt||'—'}</p><p>Published: ${a.publishLocation||a.publishedAt||'—'}</p><div class="button-row"></div><p>${a.moderatorNote||''}</p>`; const row=el.querySelector('.button-row'); [['Edit',()=>edit(a)],['Preview',()=>window.open(a.publicUrl,'_blank')],['Assign',()=>assign(a)],['Download',()=>window.open(a.publicUrl,'_blank')],['Archive',()=>action(a,'archive')],['Delete',()=>del(a)]].forEach(([t,fn])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;row.append(b);}); if(sessionStorage.getItem('muzikazAdminToken'))[['Approve','approve'],['Reject','reject'],['Feature','approve'],['Publish','publish'],['Unpublish','unpublish']].forEach(([t,act])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>action(a,act);row.append(b);}); return el;}
