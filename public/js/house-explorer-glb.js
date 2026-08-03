@@ -289,12 +289,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   let backpackSelectionOpen = false;
   const mobileBackpackQuery = window.matchMedia('(max-width: 760px)');
   const BACKPACK_ICONS = Object.freeze({
-    avatars:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4 21c.5-5 3.1-7.5 8-7.5s7.5 2.5 8 7.5"/></svg>',
-    lands:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z"/><path d="M9 3v15M15 6v15"/></svg>',
-    props:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 7 8-4 8 4-8 4Z"/><path d="M4 7v10l8 4 8-4V7M12 11v10"/></svg>',
-    wearables:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14c1-6 4-10 8-10s7 4 8 10Z"/><path d="M2 14h20M12 4v10"/></svg>',
-    pets:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="8" r="2.2"/><circle cx="10" cy="5" r="2.2"/><circle cx="14" cy="5" r="2.2"/><circle cx="18" cy="8" r="2.2"/><path d="M7 17c0-3 2.2-6 5-6s5 3 5 6c0 2.2-1.7 3.5-3.7 2.3a2.6 2.6 0 0 0-2.6 0C8.7 20.5 7 19.2 7 17Z"/></svg>',
-    vehicles:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 15 2-6h10l2 6M3 15h18v4H3Z"/><circle cx="7" cy="19" r="2"/><circle cx="17" cy="19" r="2"/></svg>'
+    avatars:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4 21c.5-5 3.1-7.5 8-7.5s7.5 2.5 8 7.5"/><path class="backpack-icon-accent" d="m17.5 3 .7 1.5 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7Z"/></svg>',
+    lands:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20 9 9l3 5 2-3 7 9Z"/><path class="backpack-icon-accent" d="M14 11V4h6l-2 2 2 2h-6"/><circle cx="7" cy="6" r="2"/></svg>',
+    props:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 7 8-4 8 4-8 4Z"/><path d="M4 7v10l8 4 8-4V7M12 11v10"/><path class="backpack-icon-accent" d="m8.5 5 7 4"/></svg>',
+    wearables:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 4-5 3 2 5 3-1v10h8V11l3 1 2-5-5-3c-.6 1.5-1.9 2.2-4 2.2S8.6 5.5 8 4Z"/><path class="backpack-icon-accent" d="M9.5 4.5c.5 1 1.3 1.5 2.5 1.5s2-.5 2.5-1.5"/></svg>',
+    pets:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="8" r="2.2"/><circle cx="10" cy="5" r="2.2"/><circle cx="14" cy="5" r="2.2"/><circle cx="18" cy="8" r="2.2"/><path class="backpack-icon-accent" d="M7 17c0-3 2.2-6 5-6s5 3 5 6c0 2.2-1.7 3.5-3.7 2.3a2.6 2.6 0 0 0-2.6 0C8.7 20.5 7 19.2 7 17Z"/></svg>',
+    vehicles:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 15 2-6h10l2 6M3 15h18v4H3Z"/><circle cx="7" cy="19" r="2"/><circle cx="17" cy="19" r="2"/><path class="backpack-icon-accent" d="M7.5 12h9M5 16h2m10 0h2"/></svg>'
   });
   const BACKPACK_CATEGORIES = Object.freeze([
     ['avatars','Avatars'],['lands','Land'],['props','Props'],
