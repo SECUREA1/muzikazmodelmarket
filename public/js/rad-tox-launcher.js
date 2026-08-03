@@ -9,7 +9,21 @@
   function log(message, detail) { if (window.console && console.info) console.info(PREFIX, message, detail || ''); }
   function status(message) { var nodes = [document.getElementById('house-status'), document.getElementById('house-game-load-status')]; for (var i=0;i<nodes.length;i+=1) if(nodes[i]) nodes[i].textContent=message; }
   function buttons() { return document.querySelectorAll('#house-start-game, [data-house-start]'); }
-  function setButtons(disabled, label) { var controls=buttons(); for(var i=0;i<controls.length;i+=1){ controls[i].disabled=disabled; if(label) controls[i].textContent=label; } }
+  function setControlLabel(control, label) { var text=control.querySelector&&control.querySelector('span'); if(text)text.textContent=label;else control.textContent=label; }
+  function setButtons(disabled, label) { var controls=buttons(); for(var i=0;i<controls.length;i+=1){ controls[i].disabled=disabled; if(label)setControlLabel(controls[i],label); } }
+  function activateToolsControl(){
+    var control=document.getElementById('house-start-game')||document.querySelector('[data-house-tools]');
+    if(!control)return;
+    control.disabled=false;
+    control.id='house-tools';
+    control.removeAttribute('data-house-start');
+    control.setAttribute('data-house-tools','');
+    control.setAttribute('aria-haspopup','dialog');
+    control.setAttribute('aria-expanded','false');
+    control.setAttribute('aria-controls','rad-tox-tools');
+    var icon=control.querySelector('b');if(icon)icon.textContent='🛠';
+    setControlLabel(control,'Tools');
+  }
   function publish(next, message) { document.dispatchEvent(makeEvent('muzikaz:rad-tox-app-update', { stage: next, message: message || '' })); }
   function setState(next, message) { state = next; document.documentElement.setAttribute('data-radtox-state', next); log('stage '+next); if(message) status(message); publish(next, message); }
   function supportsModern() { if(modernSupport !== undefined)return modernSupport; var s=document.createElement('script'), c=document.createElement('canvas'), gl; try{gl=c.getContext&&((window.WebGL2RenderingContext&&c.getContext('webgl2'))||c.getContext('webgl')||c.getContext('experimental-webgl'));}catch(ignore){gl=null;} modernSupport='noModule' in s && !!(window.Promise && window.fetch && window.URL && window.CustomEvent && gl); return modernSupport; }
@@ -36,7 +50,7 @@
     else {setState('booting','Loading the 3D engine. Your game will begin automatically…'); startEngine(); armWatchdog();}
   }
   document.addEventListener('muzikaz:rad-tox-engine-ready',function(){clearWatchdog();setState('engine-ready','3D engine ready.');if(queued)document.dispatchEvent(makeEvent('muzikaz:rad-tox-request'));});
-  document.addEventListener('muzikaz:rad-tox-stage',function(e){var d=e.detail||{},next=d.stage||'loading-manifest';setState(next,d.message);if(next==='loading-game')armWatchdog(GAME_DEPLOY_TIMEOUT_MS);else if(next==='game-active'){clearWatchdog();if(toolsQueued){toolsQueued=false;document.dispatchEvent(makeEvent('muzikaz:rad-tox-tools-request'));}}});
+  document.addEventListener('muzikaz:rad-tox-stage',function(e){var d=e.detail||{},next=d.stage||'loading-manifest';setState(next,d.message);if(next==='loading-game')armWatchdog(GAME_DEPLOY_TIMEOUT_MS);else if(next==='game-active'){clearWatchdog();activateToolsControl();if(toolsQueued){toolsQueued=false;document.dispatchEvent(makeEvent('muzikaz:rad-tox-tools-request'));}}});
   document.addEventListener('muzikaz:rad-tox-native-error',function(e){var d=e.detail||{}; fail(d.stage||'3D game',d.message||'The 3D environment could not be started.');});
   function isStartControl(t){while(t&&t.id!=='house-start-game'&&(!t.getAttribute||t.getAttribute('data-house-start')===null))t=t.parentNode;return t;}
   function isToolsControl(t){while(t&&(!t.getAttribute||t.getAttribute('data-house-tools')===null))t=t.parentNode;return t;}
@@ -45,7 +59,7 @@
   document.addEventListener('pointerdown',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('touchstart',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
-  document.addEventListener('click',function(e){var t=isToolsControl(e.target);if(!t||state==='game-active')return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();toolsQueued=true;request();},true);
+  document.addEventListener('click',function(e){var t=isToolsControl(e.target);if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();if(state==='game-active')document.dispatchEvent(makeEvent('muzikaz:rad-tox-tools-request'));else{toolsQueued=true;request();}},true);
   // Do not download or decode Three.js/GLB assets until the player opts in. This
   // leaves scrolling and first paint responsive on memory-constrained phones.
   if(!supportsModern()) window.setTimeout(function(){fail('3D engine','This browser does not support the WebGL features required by RAD-TOX.');},0); else setState('idle','Ready to start RAD-TOX.');
