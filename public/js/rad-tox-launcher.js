@@ -8,7 +8,7 @@
   var GAME_DEPLOY_TIMEOUT_MS = 20000;
   function log(message, detail) { if (window.console && console.info) console.info(PREFIX, message, detail || ''); }
   function status(message) { var nodes = [document.getElementById('house-status'), document.getElementById('house-game-load-status')]; for (var i=0;i<nodes.length;i+=1) if(nodes[i]) nodes[i].textContent=message; }
-  function buttons() { return document.querySelectorAll('#house-start-game, [data-house-start]'); }
+  function buttons() { return document.querySelectorAll('[data-house-start]'); }
   function setButtons(disabled, label) { var controls=buttons(); for(var i=0;i<controls.length;i+=1){ controls[i].disabled=disabled; if(label) controls[i].textContent=label; } }
   function publish(next, message) { document.dispatchEvent(makeEvent('muzikaz:rad-tox-app-update', { stage: next, message: message || '' })); }
   function setState(next, message) { state = next; document.documentElement.setAttribute('data-radtox-state', next); log('stage '+next); if(message) status(message); publish(next, message); }
@@ -38,7 +38,7 @@
   document.addEventListener('muzikaz:rad-tox-engine-ready',function(){clearWatchdog();setState('engine-ready','3D engine ready.');if(queued)document.dispatchEvent(makeEvent('muzikaz:rad-tox-request'));});
   document.addEventListener('muzikaz:rad-tox-stage',function(e){var d=e.detail||{},next=d.stage||'loading-manifest';setState(next,d.message);if(next==='loading-game')armWatchdog(GAME_DEPLOY_TIMEOUT_MS);else if(next==='game-active'){clearWatchdog();if(toolsQueued){toolsQueued=false;document.dispatchEvent(makeEvent('muzikaz:rad-tox-tools-request'));}}});
   document.addEventListener('muzikaz:rad-tox-native-error',function(e){var d=e.detail||{}; fail(d.stage||'3D game',d.message||'The 3D environment could not be started.');});
-  function isStartControl(t){while(t&&t.id!=='house-start-game'&&(!t.getAttribute||t.getAttribute('data-house-start')===null))t=t.parentNode;return t;}
+  function isStartControl(t){while(t&&(!t.getAttribute||t.getAttribute('data-house-start')===null))t=t.parentNode;return t;}
   function isToolsControl(t){while(t&&(!t.getAttribute||t.getAttribute('data-house-tools')===null))t=t.parentNode;return t;}
   // Start fetching on press so mobile browsers can establish the module connection
   // before the following click handler asks the game to begin.
@@ -46,6 +46,9 @@
   document.addEventListener('touchstart',function(e){if(isStartControl(e.target)&&supportsModern())startEngine();},true);
   document.addEventListener('click',function(e){var t=isStartControl(e.target);if(!t)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();request();},true);
   document.addEventListener('click',function(e){var t=isToolsControl(e.target);if(!t||state==='game-active')return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();toolsQueued=true;request();},true);
+  // Keyboard activation normally creates a click, while this explicit shortcut
+  // also supports embedded/game-shell browsers that suppress synthetic clicks.
+  document.addEventListener('keydown',function(e){var key=e.key||e.keyCode;if(key!=='Enter'&&key!==' '&&key!==13&&key!==32)return;var start=isStartControl(e.target),tools=isToolsControl(e.target);if(!start&&!tools)return;e.preventDefault();if(start)request();else if(state==='game-active')document.dispatchEvent(makeEvent('muzikaz:rad-tox-tools-request'));else{toolsQueued=true;request();}},true);
   // Do not download or decode Three.js/GLB assets until the player opts in. This
   // leaves scrolling and first paint responsive on memory-constrained phones.
   if(!supportsModern()) window.setTimeout(function(){fail('3D engine','This browser does not support the WebGL features required by RAD-TOX.');},0); else setState('idle','Ready to start RAD-TOX.');

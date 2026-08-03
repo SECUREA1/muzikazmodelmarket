@@ -213,3 +213,8 @@ const modelExplorerHtml = await readFile('dist/model-explorer.html', 'utf8');
 if (!mainHtml.includes('public/js/api-connection.js') || !modelExplorerHtml.includes('public/js/api-connection.js') || !membersHtml.includes('public/js/api-connection.js')) {
   throw new Error('Every game and avatar entry point must initialize its cross-browser API connection.');
 }
+for (const page of [['index.html', mainHtml], ['model-market.html', modelMarketHtml], ['model-explorer.html', modelExplorerHtml]]) {
+  for (const gameControl of ['data-house-start', 'data-house-tools', 'aria-controls="rad-tox-tools"']) {
+    if (!page[1].includes(gameControl)) throw new Error(`${page[0]} is missing the shared ${gameControl} game control.`);
+  }
+}
