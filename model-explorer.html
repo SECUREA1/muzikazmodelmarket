@@ -38,7 +38,7 @@
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata.","sameAs":["https://muzikaz.com/"]}</script>
   <div class="topbar">
     <span>Member VibeVerse portal</span>
-    <span>Explore house worlds, publish 3D drops, and keep every owned asset in your backpack</span>
+    <span>Explore house worlds, publish 3D drops, and keep every owned asset in your backpack</span><strong id="vibverse-mzk-balance">MZK wallet loading…</strong>
   </div>
 
   <header class="site-header">
@@ -221,6 +221,8 @@
   <!-- rad-tox-launcher loads the 3D module after a Start/Begin action. Keeping
        it out of the initial document avoids competing with first paint. -->
   <script type="module" src="public/js/model-publisher.js"></script>
+  <script src="mzk-wallet.js"></script>
+  <script>window.MZKWallet.mount('#vibverse-mzk-balance');</script>
   <script src="script.js"></script>
   <script src="public/js/crib-multiplayer.js"></script>
   <script src="battle-theme.js"></script>

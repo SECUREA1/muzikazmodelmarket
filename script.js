@@ -11,7 +11,6 @@ const modelPageLink = document.querySelector('#model-page-link');
 let cartItems = 0;
 const CART_KEY = 'muzikazCheckoutCart';
 const BACKPACK_MARKET_KEY = 'muzikazBackpackMarket';
-const BACKPACK_BALANCE_KEY = 'muzikazBackpackBalances';
 const BACKPACK_TRANSACTIONS_KEY = 'muzikazBackpackTransactions';
 const BACKPACK_STARTING_TOKENS = 500;
 
@@ -121,12 +120,7 @@ function readBackpackData(key, fallback) {
 }
 
 function backpackBalance(owner) {
-  const balances = readBackpackData(BACKPACK_BALANCE_KEY, {});
-  if (!Number.isFinite(Number(balances[owner]))) {
-    balances[owner] = BACKPACK_STARTING_TOKENS;
-    window.localStorage.setItem(BACKPACK_BALANCE_KEY, JSON.stringify(balances));
-  }
-  return Number(balances[owner]);
+  return window.MZKWallet ? window.MZKWallet.ensureWallet(owner) : 0;
 }
 
 function backpackListing(owner, asset) {
@@ -485,7 +479,6 @@ document.querySelector('#owned-assets-grid')?.addEventListener('click', (event) 
   const price = Number(listing.tokenValue);
   const buyerTokens = backpackBalance(currentMemberEmail);
   backpackBalance(selectedOwner);
-  const balances = readBackpackData(BACKPACK_BALANCE_KEY, {});
   if (!asset || !listing.listed || !Number.isFinite(price)) {
     if (status) status.textContent = 'That listing is no longer available.';
     return renderOwnedCollection(selectedOwner);
@@ -494,13 +487,16 @@ document.querySelector('#owned-assets-grid')?.addEventListener('click', (event) 
     if (status) status.textContent = `You need ${(price - buyerTokens).toLocaleString()} more MZK to complete this trade.`;
     return;
   }
+  const transferId = `backpack:${selectedOwner}:${currentMemberEmail}:${asset}:${Date.now()}`;
+  const payment = window.MZKWallet?.transfer(currentMemberEmail, selectedOwner, price, `Backpack trade: ${asset}`, transferId, { asset });
+  if (!payment?.ok) {
+    if (status) status.textContent = 'The MZK payment could not be completed.';
+    return renderOwnedCollection(selectedOwner);
+  }
   sellerAssets.splice(assetIndex, 1);
   profiles[currentMemberEmail] ||= [];
   profiles[currentMemberEmail].push(asset);
   writeOwnedProfiles(profiles);
-  balances[currentMemberEmail] = buyerTokens - price;
-  balances[selectedOwner] = Number(balances[selectedOwner]) + price;
-  window.localStorage.setItem(BACKPACK_BALANCE_KEY, JSON.stringify(balances));
   setBackpackListing(selectedOwner, asset, price, false);
   const transactions = readBackpackData(BACKPACK_TRANSACTIONS_KEY, []);
   transactions.push({ asset, seller: selectedOwner, buyer: currentMemberEmail, tokenValue: price, createdAt: new Date().toISOString() });
