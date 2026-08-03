@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "coordinate_system": {
     "name": "MUZIKAZ world atlas percentage grid",
     "x_min": 0,
@@ -13,6 +13,7 @@
     "public_areas": 5,
     "wild_land_capacity": "dynamic",
     "wild_land_limit_per_owner": 1,
+    "public_plot_rule": "Each public area is one claimable community plot/deed. Claiming it includes one free spot inside that community; it does not create a separate land deed outside the public area.",
     "explanation": "The catalog supplies 8 fixed system pins. A signed-in land-deed owner may add one custom wild-land claim, so the global wild-land total grows with the number of eligible owners and has no fixed maximum.",
     "home_base_first": true,
     "permanent_object_rule": "A game drop is valid only when profile_id, backpack_id, space_id, map pixel, and backpack asset ownership correlate."
@@ -24,6 +25,9 @@
     "land_worlds": 5,
     "three_d_environments": 3,
     "public_areas": 5,
+    "public_plots_exist": 5,
+    "public_plots_owned": 0,
+    "free_community_spots_included_per_claim": 1,
     "non_public_system_locations": 3,
     "wild_land_claims_seeded": 0
   },
@@ -36,6 +40,13 @@
     { "id": "neon-docks", "name": "Neon Docks", "kind": "land_world", "x": 18, "y": 70, "price_usd": 25, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Drop port; new assets arriving" },
     { "id": "bassline-badlands", "name": "Bassline Badlands", "kind": "three_d_environment", "x": 50, "y": 76, "price_usd": 52, "public_area": false, "starter_plot": false, "environment_id": "muzikaz-upper", "detail": "MUZIKAZ Upper Floor; high-energy adventure environment" },
     { "id": "pixel-peaks", "name": "Pixel Peaks", "kind": "three_d_environment", "x": 82, "y": 72, "price_usd": 58, "public_area": false, "starter_plot": false, "environment_id": "sheepbase", "detail": "Sheep Base; panoramic walkable mountain build" }
+  ],
+  "public_area_plots": [
+    { "id": "plot-skyline-deck", "location_id": "skyline-deck", "owner_profile_id": null, "owner_display_name": null, "claimed": false, "free_community_spots": 1 },
+    { "id": "plot-echo-gardens", "location_id": "echo-gardens", "owner_profile_id": null, "owner_display_name": null, "claimed": false, "free_community_spots": 1 },
+    { "id": "plot-crew-plaza", "location_id": "crew-plaza", "owner_profile_id": null, "owner_display_name": null, "claimed": false, "free_community_spots": 1 },
+    { "id": "plot-studio-ridge", "location_id": "studio-ridge", "owner_profile_id": null, "owner_display_name": null, "claimed": false, "free_community_spots": 1 },
+    { "id": "plot-neon-docks", "location_id": "neon-docks", "owner_profile_id": null, "owner_display_name": null, "claimed": false, "free_community_spots": 1 }
   ],
   "connections": [
     { "from": "volt-city", "to": "skyline-deck" },

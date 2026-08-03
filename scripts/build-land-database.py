@@ -25,6 +25,17 @@ def load_catalog():
     space_ids = {item["id"] for item in catalog["spaces"]}
     if len(space_ids) != len(catalog["locations"]):
         raise ValueError("Every fixed map location must have exactly one correlated space")
+    public_location_ids = {item["id"] for item in catalog["locations"] if item["public_area"]}
+    plot_location_ids = {item["location_id"] for item in catalog["public_area_plots"]}
+    if plot_location_ids != public_location_ids:
+        raise ValueError("Every public area must have exactly one public-area plot")
+    for plot in catalog["public_area_plots"]:
+        if plot["claimed"] != bool(plot["owner_profile_id"]):
+            raise ValueError(f"Plot claimed state and owner must agree: {plot['id']}")
+        if plot["owner_profile_id"] and plot["owner_profile_id"] not in profile_ids:
+            raise ValueError(f"Plot has an unknown owner: {plot['id']}")
+        if plot["free_community_spots"] != 1:
+            raise ValueError(f"Public-area claims must include one free community spot: {plot['id']}")
     for space in catalog["spaces"]:
         location = next((item for item in catalog["locations"] if item["id"] == space["location_id"]), None)
         if not location or (space["pixel_x"], space["pixel_y"]) != (location["x"], location["y"]):
@@ -70,6 +81,16 @@ def build_database(catalog):
             y INTEGER NOT NULL CHECK (y BETWEEN 0 AND 100),
             connected_public_area_id TEXT REFERENCES locations(id),
             claimed_at TEXT NOT NULL
+        );
+        CREATE TABLE public_area_plots (
+            id TEXT PRIMARY KEY,
+            location_id TEXT NOT NULL UNIQUE REFERENCES locations(id),
+            owner_profile_id TEXT REFERENCES profiles(id),
+            owner_display_name TEXT,
+            claimed INTEGER NOT NULL CHECK (claimed IN (0, 1)),
+            free_community_spots INTEGER NOT NULL DEFAULT 1 CHECK (free_community_spots = 1),
+            CHECK ((claimed = 1 AND owner_profile_id IS NOT NULL AND owner_display_name IS NOT NULL) OR
+                   (claimed = 0 AND owner_profile_id IS NULL AND owner_display_name IS NULL))
         );
         CREATE TABLE profiles (
             id TEXT PRIMARY KEY, display_name TEXT NOT NULL,
@@ -119,11 +140,12 @@ def build_database(catalog):
     connection.executemany(
         "INSERT INTO location_connections VALUES (:from, :to)", catalog["connections"]
     )
+    connection.executemany("INSERT INTO profiles VALUES (:id, :display_name, :backpack_id, :home_space_id)", catalog["profiles"])
+    connection.executemany("INSERT INTO public_area_plots VALUES (:id, :location_id, :owner_profile_id, :owner_display_name, :claimed, :free_community_spots)", catalog["public_area_plots"])
     connection.executemany(
         "INSERT INTO wild_land_claims(owner_id, deed_asset, name, x, y, connected_public_area_id, claimed_at) VALUES (:owner_id, :deed_asset, :name, :x, :y, :connected_public_area_id, :claimed_at)",
         catalog["wild_land_claims"],
     )
-    connection.executemany("INSERT INTO profiles VALUES (:id, :display_name, :backpack_id, :home_space_id)", catalog["profiles"])
     connection.executemany("INSERT INTO backpacks VALUES (:id, :profile_id, :asset_ids)", ({**item, "asset_ids": json.dumps(item["asset_ids"])} for item in catalog["backpacks"]))
     connection.executemany("INSERT INTO land_spaces VALUES (:id, :location_id, :profile_id, :backpack_id, :pixel_x, :pixel_y, :pin_order, :is_home_base, :pinned)", catalog["spaces"])
     connection.executemany("INSERT INTO permanent_objects VALUES (:id, :profile_id, :backpack_id, :space_id, :asset_id, :local_x, :local_y, :local_z, :placed_at)", catalog["permanent_objects"])
@@ -141,6 +163,8 @@ def validate_database(catalog):
         "starter": connection.execute("SELECT COUNT(*) FROM locations WHERE starter_plot = 1").fetchone()[0],
         "claims": connection.execute("SELECT COUNT(*) FROM wild_land_claims").fetchone()[0],
         "spaces": connection.execute("SELECT COUNT(*) FROM land_spaces").fetchone()[0],
+        "public_plots": connection.execute("SELECT COUNT(*) FROM public_area_plots").fetchone()[0],
+        "owned_public_plots": connection.execute("SELECT COUNT(*) FROM public_area_plots WHERE claimed = 1").fetchone()[0],
     }
     connection.close()
     expected = {
@@ -150,6 +174,8 @@ def validate_database(catalog):
         "starter": catalog["pinning_rules"]["starter_world_plots"],
         "claims": catalog["calculated_totals"]["wild_land_claims_seeded"],
         "spaces": catalog["calculated_totals"]["fixed_pinnable_locations"],
+        "public_plots": catalog["calculated_totals"]["public_plots_exist"],
+        "owned_public_plots": catalog["calculated_totals"]["public_plots_owned"],
     }
     if actual != expected:
         raise ValueError(f"Database totals {actual} do not match JSON totals {expected}")
