@@ -235,10 +235,10 @@
                 </div>
                 <div>
                     <p class="kicker">Category</p>
-                    <details class="button-menu market-filter-menu" open><summary>Category options</summary><div class="market-categories button-group" id="market-categories" role="group" aria-label="Marketplace categories"></div></details>
+                    <label class="selection-dropdown">Choose a category <select id="market-categories" aria-label="Marketplace category"></select></label>
                 </div>
             </div>
-            <details class="button-menu market-tabs" open><summary>Listing type options</summary><div class="button-group" id="market-tabs" role="group" aria-label="Marketplace listing types"></div></details>
+            <label class="selection-dropdown market-tabs">Choose a listing type <select id="market-tabs" aria-label="Marketplace listing type"></select></label>
             <p class="market-status" id="market-status" role="status">Loading marketplace listings.</p>
             <div class="market-grid" id="market-grid"></div>
         </section>
@@ -294,7 +294,7 @@
                 </form>
                 <div class="admin-list"><h3>Generated assets</h3><ul id="asset-list"><li><b id="metric-thumbnails">0</b> Thumbnails ready</li><li><b id="metric-store-tiles">0</b> Store tiles ready</li><li><b id="metric-product-previews">0</b> Product previews ready</li></ul><button type="button" id="regenerate-derivatives">Regenerate derivatives</button></div>
                 <div class="analytics"><h3>Analytics</h3><p><b id="metric-orders">128</b> Orders</p><p><b id="metric-inventory">842</b> Inventory units</p><p><b id="metric-conversion">7.4%</b> Conversion</p><p><b id="metric-uploads">0</b> Uploads</p><p><b id="metric-pending">0</b> Pending approvals</p><p><b id="metric-storage">0</b> Storage bytes</p></div>
-                <div class="asset-library"><h3>Shared Asset Library</h3><div class="asset-tabs" id="asset-tabs"></div><p id="asset-status" aria-live="polite">Loading assets…</p><div class="asset-card-grid" id="asset-card-grid"></div></div>
+                <div class="asset-library"><h3>Shared Asset Library</h3><label class="selection-dropdown asset-tabs">Choose an asset view <select id="asset-tabs" aria-label="Asset library view"></select></label><p id="asset-status" aria-live="polite">Loading assets…</p><div class="asset-card-grid" id="asset-card-grid"></div></div>
                 <div class="user-dashboard"><h3>User upload dashboard</h3><p>My models · My graphics · Drafts · Pending review · Approved · Published · Rejected · Storage used</p><div class="button-row"><button type="button" data-tab-jump="Images" data-focus-form="graphic-upload-form">Upload new graphic</button><button type="button" data-tab-jump="3D Models" data-focus-form="model-upload-form">Upload new 3D model</button><button type="button" data-tab-jump="My Uploads" data-open-assignment>Assign graphic to model</button></div><form class="asset-assignment-panel" id="asset-assignment-panel" hidden><strong>Assign graphic to model floor/display</strong><label>Graphic asset <select id="assignment-asset"></select></label><label>Model ID <input id="assignment-model" placeholder="Model ID or product space" /></label><label>Display slot <select id="assignment-slot"><option>floor graphic</option><option>thumbnail</option><option>poster texture</option><option>wall display</option><option>product mockup image</option><option>model information card</option><option>environment billboard</option><option>store tile</option><option>avatar badge</option><option>loading image</option><option>promotional overlay</option></select></label><button type="submit">Save assignment</button></form></div>
             </div>
         </section>
