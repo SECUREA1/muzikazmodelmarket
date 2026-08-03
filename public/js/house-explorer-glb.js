@@ -696,10 +696,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     walkButton.textContent = 'Game active';
     walkButton.setAttribute('aria-pressed', 'true');
   }
-  walkButton.addEventListener('click', () => {
-    if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
-    openHouseMap().catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
-  });
   let gameInitializationPromise = null;
   function startRadToxGame() {
     if (gameInitializationPromise) return gameInitializationPromise;
@@ -731,6 +727,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     })();
     return gameInitializationPromise;
   }
+  walkButton.addEventListener('click', () => {
+    if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
+    startRadToxGame();
+  });
   document.addEventListener('muzikaz:rad-tox-request', startRadToxGame, { once: true });
   publishGameStage('engine-ready', 'RAD-TOX game engine ready. Starting the first level…');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
