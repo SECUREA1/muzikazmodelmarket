@@ -89,6 +89,9 @@ const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'ut
 for (const requiredBackpackFeature of ['backpackAssets', 'BACKPACK_CATEGORIES', 'designateAvatar', 'popBackpackAsset', 'data-backpack-category']) {
   if (!houseExplorer.includes(requiredBackpackFeature)) throw new Error(`GLB House Explorer is missing Drop Backpack behavior: ${requiredBackpackFeature}`);
 }
+for (const requiredPetFeature of ['BACKPACK_ICONS', 'choosePetDestination', 'updateTravelingPet', 'petTravel', 'liveAvatarRoots.values()']) {
+  if (!houseExplorer.includes(requiredPetFeature)) throw new Error(`Drop Backpack pets are missing icons or autonomous visits: ${requiredPetFeature}`);
+}
 for (const requiredLiveFeature of ['MUZIKAZ_LIVE_PLAYERS', 'syncLiveAvatars', 'pollLiveAvatars', 'Live_player_label']) {
   if (!houseExplorer.includes(requiredLiveFeature)) throw new Error(`GLB House Explorer is missing live cross-device avatars/chat: ${requiredLiveFeature}`);
 }
