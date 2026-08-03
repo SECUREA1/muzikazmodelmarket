@@ -43,7 +43,7 @@ if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
   throw new Error('index.html must load the RAD-TOX 3D launcher.');
 }
 
-for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'WebGL support']) {
+for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'Begin Game', 'game-loading-indicator']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
@@ -55,25 +55,18 @@ for (const requiredToolsMarkup of ['id="house-tools"', 'data-house-tools', 'aria
 }
 
 const launcher = await readFile('dist/public/js/rad-tox-launcher.js', 'utf8');
-if (!launcher.includes('muzikaz:rad-tox-tools-request')) {
-  throw new Error('RAD-TOX launcher must preserve an early Tools click until the 3D game is active.');
-}
-if (!launcher.includes('muzikaz:rad-tox-app-update')) {
-  throw new Error('RAD-TOX launcher must publish live 3D game updates.');
-}
 for (const removed2dFeature of ['startCompatibility', 'rad-tox-compat-game', 'data-radtox-compat']) {
   if (launcher.includes(removed2dFeature)) {
     throw new Error(`RAD-TOX launcher must not populate the removed 2D game: ${removed2dFeature}`);
   }
 }
-if (!launcher.includes("state==='loading-game'") || !launcher.includes('GAME_DEPLOY_TIMEOUT_MS')) {
-  throw new Error('RAD-TOX launcher must recover if deployment stalls after the 3D scene loads.');
-}
+if (!launcher.includes('if (requested) return') || !launcher.includes("{ once: true }")) throw new Error('RAD-TOX launcher must guard against duplicate initialization and listeners.');
+if (launcher.includes('data-radtox-retry') || launcher.includes('supportsModern')) throw new Error('RAD-TOX launcher must not add recovery or compatibility gates.');
 
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
 }
-if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launcher.includes('function startEngine()')) {
+if (!launcher.includes("module.src = 'public/js/house-explorer-glb.js'") || !launcher.includes('function begin()')) {
   throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
 }
 

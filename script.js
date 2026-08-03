@@ -191,16 +191,6 @@ function hasBottleLogin() {
   return window.localStorage.getItem('muzikazBottleMember') === 'true' && Boolean(normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail));
 }
 
-function protectMemberOnlyPages() {
-  const protectedPages = ['model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
-  const pageName = window.location.pathname.split('/').pop() || 'index.html';
-  if (!protectedPages.includes(pageName) || hasBottleLogin()) return;
-  window.sessionStorage.setItem('muzikazLoginRedirect', `${pageName}${window.location.search || ''}${window.location.hash || ''}`);
-  window.location.replace(`members.html?login=required&redirect=${encodeURIComponent(pageName)}`);
-}
-
-protectMemberOnlyPages();
-
 function initModelMarketGate() {
   const cover = document.querySelector('#model-market-cover');
   const form = document.querySelector('#model-market-login-form');

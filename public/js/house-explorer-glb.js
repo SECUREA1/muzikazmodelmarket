@@ -700,40 +700,38 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to start the MUZIKAZ house game.'));
   });
-  async function startRadToxGame() {
-    // The ES5 launcher disables Begin before it dispatches its start request.
-    // Guard only against our own in-flight launch, otherwise that request is lost.
-    if (gameStartScreen?.classList.contains('is-loading')) return;
-
+  let gameInitializationPromise = null;
+  function startRadToxGame() {
+    if (gameInitializationPromise) return gameInitializationPromise;
     if (gameStartButton) gameStartButton.disabled = true;
     gameStartScreen?.classList.add('is-loading');
-    gameStartButton.textContent = 'Deploying RAD-TOX…';
-    if (gameLoadStatus) gameLoadStatus.textContent = 'Loading level 1 toxins and the upper-floor ghost encounter…';
-    publishGameStage('loading-game', 'Loading level 1 toxins and the upper-floor ghost encounter…');
+    if (gameLoadStatus) gameLoadStatus.textContent = 'Loading game…';
+    publishGameStage('loading-game', 'Loading game…');
 
-    try {
-      // A desktop launch should always open at the playable view, rather than
-      // leaving the player at an arbitrary scrolled position behind the overlay.
-      stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      await openHouseMap();
-      resetPlayer();
-      await toxicBubbleSystem.begin();
-      gameStartScreen?.classList.add('is-hidden');
-      scheduleGameResize();
-      setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
-      publishGameStage('game-active', 'RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
-    } catch (error) {
-      const message = error?.message || 'Unable to load the MUZIKAZ house game.';
-      gameStartButton.disabled = false;
-      gameStartButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v5M5.8 7l4.3 2.5M18.2 7l-4.3 2.5M5.8 17l4.3-2.5M18.2 17l-4.3-2.5"/><circle cx="12" cy="14" r="5"/></svg>BEGIN NOW!';
-      gameStartScreen?.classList.remove('is-loading');
-      if (gameLoadStatus) gameLoadStatus.textContent = message;
-      setStatus(message);
-      document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { stage: 'RAD-TOX', message } }));
-    }
+    gameInitializationPromise = (async () => {
+      try {
+        stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // The map, player spawn, controls, and core game systems share this one
+        // initialization promise so no listener can start a second deployment.
+        await openHouseMap();
+        resetPlayer();
+        await toxicBubbleSystem.begin();
+        gameStartScreen?.classList.add('is-hidden');
+        scheduleGameResize();
+        setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
+        publishGameStage('game-active', 'Game ready.');
+        document.dispatchEvent(new CustomEvent('muzikaz:gameplay-ready'));
+      } catch (error) {
+        const message = error?.message || 'Unable to load the MUZIKAZ house game.';
+        gameStartScreen?.classList.remove('is-loading');
+        if (gameLoadStatus) gameLoadStatus.textContent = message;
+        setStatus(message);
+        document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { stage: 'RAD-TOX', message } }));
+      }
+    })();
+    return gameInitializationPromise;
   }
-  gameStartButton?.addEventListener('click', (event) => { event.preventDefault(); startRadToxGame(); });
-  document.addEventListener('muzikaz:rad-tox-request', () => startRadToxGame());
+  document.addEventListener('muzikaz:rad-tox-request', startRadToxGame, { once: true });
   publishGameStage('engine-ready', 'RAD-TOX game engine ready. Starting the first level…');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
   // The launcher deliberately loads this module only after the player chooses

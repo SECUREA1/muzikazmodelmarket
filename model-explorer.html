@@ -32,7 +32,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <script src="public/js/api-connection.js"></script>
-  <script src="public/js/avatar-selection.js" defer></script>
 </head>
 <body class="model-explorer-page">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata.","sameAs":["https://muzikaz.com/"]}</script>
@@ -75,24 +74,13 @@
             <span class="game-profile-wallet__identity"><small>Player profile</small><b id="game-profile-name">Guest Player</b></span>
             <span class="game-profile-wallet__balance"><small>MZK tokens</small><strong id="game-profile-mzk">0 MZK</strong></span>
           </aside>
-          <div class="house-status" id="house-status" role="status">Press Begin RAD-TOX to clear level 1 toxins, then face blue ghosts in the upper-floor level 2.</div>
-          <section class="house-level-loader game-overlay" id="house-level-loader" hidden aria-live="polite" aria-label="Loading game level">
-            <div class="game-overlay__content">
-            <div class="house-level-loader__graphic" aria-hidden="true"><i></i><i></i><i></i><b>☢</b></div>
-            <p class="kicker">RAD-TOX deployment</p>
-            <h3 data-level-loader-title>Preparing level 1</h3>
-            <p class="house-level-loader__message" data-level-loader-message>Loading your next encounter…</p>
-            <div class="house-level-loader__scale" role="progressbar" aria-label="Level loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span data-level-loader-fill></span></div>
-            <strong data-level-loader-percent>0%</strong>
-            </div>
-          </section>
+          <div class="house-status" id="house-status" role="status">Ready to begin.</div>
           <section class="house-game-start game-overlay" id="house-game-start" data-house-start-surface aria-labelledby="house-game-start-title">
             <div class="game-overlay__content">
-            <p class="kicker">RAD-TOX game connection</p>
-            <h3 id="house-game-start-title">Clear level 1. Survive the upper-floor ghosts in level 2.</h3>
-            <p id="house-game-load-status" role="status">Preparing level 1 toxins and the level 2 ghost encounter…</p>
-            <p class="house-firefox-note">RAD-TOX runs in browsers with WebGL support. The game starts as soon as the interior is ready.</p>
-            <button class="btn house-start-button" type="button" data-house-start aria-describedby="house-game-load-status">BEGIN NOW!</button>
+            <h3 id="house-game-start-title">Ready to play?</h3>
+            <p id="house-game-load-status" role="status">Select Begin Game to enter the world.</p>
+            <span class="game-loading-indicator" aria-hidden="true"></span>
+            <button class="btn house-start-button" type="button" data-house-start aria-describedby="house-game-load-status">Begin Game</button>
             </div>
           </section>
         </div>
