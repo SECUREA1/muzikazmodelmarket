@@ -656,6 +656,7 @@ const assetCatalog = {
     { id: 'furniture-room-set', name: 'Furniture Room Set', category: 'Furniture', price: '$34.00', asset: 'section_banners_panel_2x_transparent.png', connectsTo: ['Crew', 'Legends'], copy: 'Studio desks, chairs, display shelves, booth builds, and themed furniture for avatar rooms and creator showcase pages.' },
     { id: 'environment-stage-kit', name: '3D Environment Stage Kit', category: '3D Environments', price: '$48.00', asset: 'smoke_energy_background_large_2x_transparent.png', connectsTo: ['Legends', 'Beasts', 'Online Events'], copy: 'Bedrooms, music studios, stages, stores, arenas, and house-explorer rooms that turn character assets into full 3D environments.' },
     { id: 'gaming-studio-props', name: 'Gaming Studio Prop Bundle', category: 'Gaming Studio', price: '$42.00', asset: 'available_online_events_banner_2x_transparent.png', connectsTo: ['Chaos', 'Online Events'], copy: 'Game-ready prop ideas, level themes, loadout shelves, and studio hooks for playable character worlds.' },
+    { id: 'vehicle-garage', name: 'World Vehicle Garage', category: 'Vehicles', price: '$38.00', asset: 'hero_banner_full_2x_transparent.png', connectsTo: ['Crew', 'Chaos', 'Online Events'], copy: 'Ride-ready boards, bikes, carts, and world transport concepts for characters moving between MUZIKAZ districts.' },
   ],
   retail: [
     { id: 'hoodie', name: 'Neon Hoodie', category: 'Hoodies', price: '$64.00', asset: 'muzikaz_high_level_image_pack1/05_merch/hoodie_tile_2x.png', connectsTo: ['Originals', 'Chaos'] },
@@ -690,17 +691,20 @@ const productPrintTemplates = {
   'wordmark-print': { shape: 'poster', label: 'Wall art safe area' }
 };
 const marketplaceListings = [
-  ...WORLD_ASSETS.map((asset) => ({ type: 'Land Worlds & Environments', category: asset.kind, quality: 'curated', name: asset.name, price: asset.price, copy: `${asset.detail}. Map location: X ${asset.x}, Y ${asset.y}.`, product: asset.name, worldId: asset.id })),
-  ...assetCatalog.models.map((model) => ({ type: model.type, category: model.name, quality: 'curated', name: `${model.name} 3D Model Pack`, price: model.price, copy: `${model.copy} Source: ${model.file}`, model: model.name })),
+  ...WORLD_ASSETS.map((asset) => ({ type: 'Land Worlds & Environments', category: asset.kind, quality: 'curated', name: asset.name, price: asset.price, copy: `${asset.detail}. Map location: X ${asset.x}, Y ${asset.y}.`, product: asset.name, worldId: asset.id, marketTopics: ['lands'] })),
+  ...assetCatalog.models.map((model) => ({ type: model.type, category: model.name, quality: 'curated', name: `${model.name} 3D Model Pack`, price: model.price, copy: `${model.copy} Source: ${model.file}`, model: model.name, marketTopics: ['avatars'] })),
   ...assetCatalog.websitePackages.map((pack) => ({ type: 'Website Packages', category: pack.category, quality: 'curated', name: pack.name, price: pack.price, copy: `${pack.copy} Source: ${pack.asset}`, product: pack.name })),
   ...assetCatalog.controlPackages.map((pack) => ({ type: 'Subscriber Creator Tools', category: pack.category, quality: 'curated', name: pack.name, price: pack.price, copy: pack.copy, product: pack.name })),
-  ...assetCatalog.characterWorldAssets.map((asset) => ({ type: 'Character & World Assets', category: asset.category, quality: 'curated', name: asset.name, price: asset.price, copy: `${asset.copy} Compatible with ${asset.connectsTo.join(' + ')}. Source: ${asset.asset}`, product: asset.name })),
-  ...assetCatalog.retail.map((product) => ({ type: 'Retail Pages', category: product.category, quality: 'curated', name: product.name, price: product.price, copy: `${product.category} connected to ${product.connectsTo.join(' + ')} model data.`, product: product.name })),
+  ...assetCatalog.characterWorldAssets.map((asset) => ({ type: 'Character & World Assets', category: asset.category, quality: 'curated', name: asset.name, price: asset.price, copy: `${asset.copy} Compatible with ${asset.connectsTo.join(' + ')}. Source: ${asset.asset}`, product: asset.name, marketTopics: asset.category === 'Avatars' ? ['avatars'] : asset.category === 'Pets' ? ['pets'] : asset.category === 'Accessories' ? ['props', 'wearables'] : asset.category === '3D Environments' ? ['lands'] : asset.category === 'Vehicles' ? ['vehicles'] : ['props'] })),
+  ...assetCatalog.retail.map((product) => ({ type: 'Retail Pages', category: product.category, quality: 'curated', name: product.name, price: product.price, copy: `${product.category} connected to ${product.connectsTo.join(' + ')} model data.`, product: product.name, marketTopics: ['Hoodies', 'Headwear', 'Tees'].includes(product.category) ? ['wearables'] : ['props'] })),
   { type: 'Custom Orders', category: 'Custom Builds', quality: 'curated', name: 'Team Sleeve Text Run', price: 'Quote request', copy: 'Custom name, number, logo style, sleeve text, product, and character selections flow from the same catalog.' },
   { type: 'Limited Drops', category: 'Drop Bundles', quality: 'review', name: 'Friday Connected Drop', price: 'Locks at sellout', copy: 'Bundles one model pack, one retail item, and one custom designer preset.' },
 ];
 
-const marketplaceState = { type: 'All', category: 'All', modelFocus: '', curatedOnly: true };
+const requestedMarket = new URLSearchParams(window.location.search).get('market');
+const requestedMarketTopic = ({ land: 'lands', lands: 'lands', avatars: 'avatars', props: 'props', wearables: 'wearables', pets: 'pets', vehicles: 'vehicles' })[requestedMarket] || '';
+const marketplaceState = { type: 'All', category: 'All', topic: requestedMarketTopic, modelFocus: '', curatedOnly: true };
+const matchesMarketplaceTopic = (listing) => !marketplaceState.topic || listing.marketTopics?.includes(marketplaceState.topic);
 
 function initMarketSectionToggle() {
   const shell = document.querySelector('.market-toggle-shell');
@@ -974,14 +978,14 @@ function renderMarketplace(type = marketplaceState.type, modelFocus = marketplac
   marketplaceState.type = type || 'All';
   marketplaceState.modelFocus = modelFocus || '';
   marketplaceState.curatedOnly = marketQualityToggle ? marketQualityToggle.checked : marketplaceState.curatedOnly;
-  const types = ['All', ...new Set(marketplaceListings.map((listing) => listing.type))];
-  const categories = ['All', ...new Set(marketplaceListings.map((listing) => listing.category))];
+  const types = ['All', ...new Set(marketplaceListings.filter(matchesMarketplaceTopic).map((listing) => listing.type))];
+  const categories = ['All', ...new Set(marketplaceListings.filter(matchesMarketplaceTopic).map((listing) => listing.category))];
   const countListings = (nextType, nextCategory) => marketplaceListings.filter((listing) => {
     const typeMatch = nextType === 'All' || listing.type === nextType;
     const categoryMatch = nextCategory === 'All' || listing.category === nextCategory;
     const focusMatch = !marketplaceState.modelFocus || listing.model === marketplaceState.modelFocus || listing.copy.includes(marketplaceState.modelFocus);
     const qualityMatch = !marketplaceState.curatedOnly || listing.quality === 'curated';
-    return typeMatch && categoryMatch && focusMatch && qualityMatch;
+    return typeMatch && categoryMatch && focusMatch && qualityMatch && matchesMarketplaceTopic(listing);
   }).length;
   marketTabs.replaceChildren(...types.map((tab) => new Option(`${tab} (${countListings(tab, marketplaceState.category)})`, tab, false, tab === marketplaceState.type)));
   if (marketCategories) marketCategories.replaceChildren(...categories.map((category) => new Option(`${category} (${countListings(marketplaceState.type, category)})`, category, false, category === marketplaceState.category)));
@@ -990,7 +994,7 @@ function renderMarketplace(type = marketplaceState.type, modelFocus = marketplac
     const categoryMatch = marketplaceState.category === 'All' || listing.category === marketplaceState.category;
     const focusMatch = !marketplaceState.modelFocus || listing.model === marketplaceState.modelFocus || listing.copy.includes(marketplaceState.modelFocus);
     const qualityMatch = !marketplaceState.curatedOnly || listing.quality === 'curated';
-    return typeMatch && categoryMatch && focusMatch && qualityMatch;
+    return typeMatch && categoryMatch && focusMatch && qualityMatch && matchesMarketplaceTopic(listing);
   });
   marketGrid.innerHTML = listings.map((listing, index) => {
     const arIndex = Number.isInteger(listing.arCharacterIndex) ? listing.arCharacterIndex : characterForListing(listing);
@@ -1000,7 +1004,8 @@ function renderMarketplace(type = marketplaceState.type, modelFocus = marketplac
   marketGrid.querySelectorAll('[data-market-ar]').forEach((button) => button.addEventListener('click', () => activateMarketplaceAr(listings[Number(button.dataset.marketAr)])));
   if (marketStatus) {
     const focusCopy = marketplaceState.modelFocus ? ` for ${marketplaceState.modelFocus}` : '';
-    marketStatus.textContent = `${listings.length} listing${listings.length === 1 ? '' : 's'} shown${focusCopy}. Category: ${marketplaceState.category}. Type: ${marketplaceState.type}.`;
+    const topicCopy = marketplaceState.topic ? ` Backpack topic: ${marketplaceState.topic}.` : '';
+    marketStatus.textContent = `${listings.length} listing${listings.length === 1 ? '' : 's'} shown${focusCopy}. Category: ${marketplaceState.category}. Type: ${marketplaceState.type}.${topicCopy}`;
   }
   marketTabs.onchange = () => renderMarketplace(marketTabs.value, marketplaceState.modelFocus);
   if (marketCategories) marketCategories.onchange = () => {
