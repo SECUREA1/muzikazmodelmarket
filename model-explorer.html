@@ -155,8 +155,17 @@
 
     <section class="section-block model-publisher" id="publish-model" aria-labelledby="publish-model-title">
       <div class="section-title"><span></span><h2 id="publish-model-title">Publish a Live Model</h2><a href="#live-published-models">View linked model space</a></div>
-      <p class="status-message land-upload-notice"><strong>Land-owner upload gate:</strong> your signed-in profile must hold a MUZIKAZ World land deed in its Drop Backpack before you can add an avatar, asset, or game.</p>
-      <form id="model-publish-form" class="publisher-grid">
+      <p class="status-message land-upload-notice" id="land-upload-notice"><strong>Land-owner upload gate:</strong> your signed-in profile must hold a MUZIKAZ World land deed in its Drop Backpack before you can add an avatar, asset, or game.</p>
+      <aside class="land-upload-gate" id="land-upload-gate" aria-labelledby="land-upload-gate-title">
+        <span class="land-upload-gate__lock" aria-hidden="true">🔒</span>
+        <div>
+          <p class="kicker">Land deed required</p>
+          <h3 id="land-upload-gate-title">Own land to unlock 3D uploads.</h3>
+          <p>Buy a MUZIKAZ World land deed and keep it in your signed-in Drop Backpack. Your avatar, asset, and game destinations unlock automatically after purchase.</p>
+        </div>
+        <a class="btn land-upload-gate__buy" href="model-market.html#muzikaz-world-plot">Buy land now <span aria-hidden="true">→</span></a>
+      </aside>
+      <form id="model-publish-form" class="publisher-grid is-land-locked" aria-describedby="land-upload-notice" aria-disabled="true">
         <fieldset class="publisher-wide asset-type-picker">
           <legend>Where should this 3D file go?</legend>
           <p>Choose a destination before selecting a file. Avatar files are added to the Avatar picker; game levels and environments are added to the World map list automatically.</p>
@@ -184,7 +193,7 @@
           <button type="reset" class="ghost">Cancel/reset</button>
         </div>
         <progress id="publish-progress" value="0" max="100" class="publisher-wide" aria-label="Upload and publish progress"></progress>
-        <p id="publish-status" class="status-message publisher-wide" role="status" aria-live="polite">Ready to publish a public shared model.</p>
+        <p id="publish-status" class="status-message publisher-wide" role="status" aria-live="polite">Land deed required. Buy land from the Land Market to unlock publishing.</p>
         <div id="publish-links" class="publish-links publisher-wide"></div>
       </form>
       <model-viewer id="publish-preview" class="publisher-preview" camera-controls touch-action="pan-y" auto-rotate ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1" hidden alt="Local model upload preview"><button slot="ar-button" type="button">Place preview in AR</button></model-viewer>
