@@ -1,0 +1,17 @@
+(function () {
+  const ACCESS_KEY = 'muzikazCardanoAccess';
+  // Replace this mainnet policy ID with the production MUZIKAZ minting policy before launch.
+  const POLICY_ID = '00000000000000000000000000000000000000000000000000000000';
+  const ASSET_NAME = 'MUZIKAZ';
+  const ASSET_NAME_HEX = [...new TextEncoder().encode(ASSET_NAME)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  const ASSET_UNIT = `${POLICY_ID}${ASSET_NAME_HEX}`.toLowerCase();
+  function readLength(bytes, state, additional) { if (additional < 24) return additional; const width = 2 ** (additional - 24); if (![1, 2, 4, 8].includes(width)) throw new Error('Unsupported Cardano value encoding.'); let value = 0; for (let i = 0; i < width; i += 1) value = value * 256 + bytes[state.offset++]; return value; }
+  function decodeCbor(hex) { const bytes = Uint8Array.from((hex.match(/.{2}/g) || []), (pair) => Number.parseInt(pair, 16)); const state = { offset: 0 }; function item() { const head = bytes[state.offset++], major = head >> 5, length = readLength(bytes, state, head & 31); if (major === 0) return length; if (major === 2 || major === 3) { const value = bytes.slice(state.offset, state.offset + length); state.offset += length; return major === 2 ? [...value].map((byte) => byte.toString(16).padStart(2, '0')).join('') : new TextDecoder().decode(value); } if (major === 4) return Array.from({ length }, item); if (major === 5) { const map = new Map(); for (let i = 0; i < length; i += 1) map.set(item(), item()); return map; } throw new Error('Unsupported Cardano value encoding.'); } return item(); }
+  function tokenQuantity(balance) { if (!(balance instanceof Map)) return 0; const assets = balance.get(1); if (!(assets instanceof Map)) return 0; const policyAssets = assets.get(POLICY_ID); return policyAssets instanceof Map ? Number(policyAssets.get(ASSET_NAME_HEX) || 0) : 0; }
+  function availableWallets() { return Object.entries(window.cardano || {}).filter(([, wallet]) => wallet && typeof wallet.enable === 'function').map(([id, wallet]) => ({ id, name: wallet.name || id })); }
+  function session() { try { return JSON.parse(localStorage.getItem(ACCESS_KEY) || 'null'); } catch { return null; } }
+  function clear() { localStorage.removeItem(ACCESS_KEY); localStorage.removeItem('muzikazBottleMember'); localStorage.removeItem('muzikazBottleMemberEmail'); }
+  async function connect(walletId) { const provider = window.cardano?.[walletId]; if (!provider?.enable) throw new Error('Choose an installed Cardano wallet.'); const wallet = await provider.enable(); const networkId = await wallet.getNetworkId(); if (networkId !== 1) throw new Error('Switch your wallet to Cardano mainnet and try again.'); const quantity = tokenQuantity(decodeCbor(await wallet.getBalance())); if (quantity < 1) throw new Error(`This wallet does not hold the required ${ASSET_NAME} token.`); const rewards = await wallet.getRewardAddresses(); const walletAddress = rewards[0] || await wallet.getChangeAddress(); const record = { walletId, walletAddress, assetUnit: ASSET_UNIT, quantity, networkId, verifiedAt: Date.now() }; localStorage.setItem(ACCESS_KEY, JSON.stringify(record)); localStorage.setItem('muzikazBottleMember', 'true'); return record; }
+  async function restore() { const saved = session(); if (!saved?.walletId || saved.assetUnit !== ASSET_UNIT) { clear(); return null; } try { return await connect(saved.walletId); } catch { clear(); return null; } }
+  window.MUZIKAZ_CARDANO_GATE = { ASSET_NAME, ASSET_UNIT, availableWallets, connect, restore, session, clear };
+}());

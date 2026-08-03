@@ -178,8 +178,17 @@ function ownedAssetDetail(assetName) {
 }
 
 function hasBottleLogin() {
-  return window.localStorage.getItem('muzikazBottleMember') === 'true' && Boolean(normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail));
+  if (window.MUZIKAZ_CARDANO_GATE) return Boolean(window.MUZIKAZ_CARDANO_GATE.session());
+  try { return Boolean(JSON.parse(window.localStorage.getItem('muzikazCardanoAccess') || 'null')?.assetUnit); } catch { return false; }
 }
+
+function populateCardanoWallets(select) {
+  if (!select) return;
+  const wallets = window.MUZIKAZ_CARDANO_GATE?.availableWallets() || [];
+  select.innerHTML = wallets.length ? '<option value="">Choose wallet</option>' + wallets.map(({ id, name }) => `<option value="${id}">${name}</option>`).join('') : '<option value="">No CIP-30 wallet detected</option>';
+}
+
+function cardanoMemberId(access) { return `cardano:${String(access.walletAddress || '').slice(0, 24)}`; }
 
 function protectMemberOnlyPages() {
   const protectedPages = ['model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
@@ -202,24 +211,15 @@ function initModelMarketGate() {
     cover.setAttribute('hidden', '');
   };
 
-  if (hasBottleLogin()) {
-    uncover();
-    return;
-  }
+  const walletSelect = form.elements.wallet;
+  populateCardanoWallets(walletSelect);
+  window.MUZIKAZ_CARDANO_GATE?.restore().then((access) => { if (access) uncover(); });
 
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const data = new FormData(form);
-    const email = normalizeMemberEmail(data.get('email'));
-    const passcode = String(data.get('passcode') || '').trim();
-    if (!email || !passcode) {
-      if (status) status.textContent = 'Enter both your member email and passcode.';
-      return;
-    }
-    currentMemberEmail = email;
-    window.localStorage.setItem('muzikazBottleMember', 'true');
-    window.localStorage.setItem('muzikazBottleMemberEmail', email);
-    uncover();
+    if (status) status.textContent = 'Requesting wallet access and checking your Cardano tokens…';
+    try { const access = await window.MUZIKAZ_CARDANO_GATE.connect(walletSelect.value); currentMemberEmail = cardanoMemberId(access); uncover(); }
+    catch (error) { if (status) status.textContent = error.message; }
   });
 }
 
@@ -1657,19 +1657,17 @@ function initBottleLogin() {
     lockedContent.dataset.locked = 'false';
     if (status) status.textContent = message;
   };
-  if (hasBottleLogin()) {
-    currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
-    unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`);
-    renderOwnedCollection(currentMemberEmail);
-  }
+  const walletSelect = form.elements.wallet;
+  populateCardanoWallets(walletSelect);
+  window.MUZIKAZ_CARDANO_GATE?.restore().then((access) => { if (!access) return; currentMemberEmail = cardanoMemberId(access); unlock(`Token verified. Access is active for wallet ${currentMemberEmail}.`); renderOwnedCollection(currentMemberEmail); });
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const data = new FormData(form);
-    currentMemberEmail = normalizeMemberEmail(data.get('email'));
-    window.localStorage.setItem('muzikazBottleMember', 'true');
-    window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+    status.textContent = 'Requesting wallet access and checking your Cardano tokens…';
+    let access;
+    try { access = await window.MUZIKAZ_CARDANO_GATE.connect(walletSelect.value); } catch (error) { status.textContent = error.message; return; }
+    currentMemberEmail = cardanoMemberId(access);
     renderOwnedCollection(currentMemberEmail);
-    await unlock(`${currentMemberEmail} is logged in. Your designated avatar and Drop Backpack are retained across visits.`);
+    await unlock(`Token verified. ${access.quantity} ${window.MUZIKAZ_CARDANO_GATE.ASSET_NAME} token(s) found.`);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
