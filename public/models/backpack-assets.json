@@ -1,6 +1,7 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "description": "Public in-game Drop Backpack catalog. Every supported asset type has a repository-owned manifest under public/models/backpack.",
+  "correlation": {"profileId":"muzikaz-public","backpackId":"muzikaz-public-pack","homeSpaceId":"space-studio-ridge","landCatalog":"/public/models/land-spaces.json","dropPolicy":"profile-backpack-space-pixel-required"},
   "assets": [
     {"id":"backpack-aape","name":"AAPE","owner":"MUZIKAZ","type":"avatars","modelUrl":"/public/models/AAPE.glb","format":"glb","visibility":"public","scale":1},
     {"id":"backpack-dax","name":"DAX","owner":"MUZIKAZ","type":"avatars","modelUrl":"/public/models/DAX.glb","format":"glb","visibility":"public","scale":1},

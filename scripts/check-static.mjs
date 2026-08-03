@@ -78,6 +78,10 @@ if (!launcher.includes("module.src='public/js/house-explorer-glb.js'") || !launc
 }
 
 const backpackCatalog = JSON.parse(await readFile('dist/public/models/backpack-assets.json', 'utf8'));
+const landSpaces = JSON.parse(await readFile('dist/public/models/land-spaces.json', 'utf8'));
+if (backpackCatalog.correlation?.dropPolicy !== 'profile-backpack-space-pixel-required') throw new Error('Drop Backpack must declare the profile/space/pixel correlation policy.');
+if (landSpaces.spaces?.length !== 8 || landSpaces.spaces.some((space) => !space.profileId || !space.backpackId || !Number.isFinite(space.pixel?.x) || !Number.isFinite(space.pixel?.y))) throw new Error('Every fixed map pin must expose a correlated profile, backpack, space, and pixel.');
+if (!landSpaces.spaces.some((space) => space.homeBase && space.pinOrder === 0)) throw new Error('Pinned spaces must list the profile home base first.');
 const backpackTypes = new Set((backpackCatalog.assets || []).map((asset) => asset.type));
 for (const type of ['avatars', 'lands', 'props', 'wearables', 'pets', 'vehicles']) {
   if (!backpackTypes.has(type)) throw new Error(`Drop Backpack catalog is missing public ${type}.`);
@@ -88,6 +92,9 @@ if (!mainHtml.includes('<span>Backpack</span>')) throw new Error('The game must 
 const houseExplorer = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
 for (const requiredBackpackFeature of ['backpackAssets', 'BACKPACK_CATEGORIES', 'designateAvatar', 'popBackpackAsset', 'data-backpack-category']) {
   if (!houseExplorer.includes(requiredBackpackFeature)) throw new Error(`GLB House Explorer is missing Drop Backpack behavior: ${requiredBackpackFeature}`);
+}
+for (const requiredCorrelationFeature of ['correlatedLandDrop', 'muzikazPermanentLandObjects', 'mapPixel', 'Drop blocked:']) {
+  if (!houseExplorer.includes(requiredCorrelationFeature)) throw new Error(`Permanent game drops are missing correlation enforcement: ${requiredCorrelationFeature}`);
 }
 for (const requiredPetFeature of ['BACKPACK_ICONS', 'choosePetDestination', 'updateTravelingPet', 'petTravel', 'liveAvatarRoots.values()']) {
   if (!houseExplorer.includes(requiredPetFeature)) throw new Error(`Drop Backpack pets are missing icons or autonomous visits: ${requiredPetFeature}`);

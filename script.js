@@ -317,19 +317,24 @@ function initWorldAtlas() {
   }
 
   function renderClaim() {
-    atlas.querySelector('[data-member-land-claim]')?.remove();
+    atlas.querySelectorAll('[data-member-land-claim]').forEach((pin) => pin.remove());
+    const spaceList = document.querySelector('#world-map-space-list');
+    const pinnedClaims = Object.values(claims).filter((claim) => claim && Number.isFinite(Number(claim.x)) && Number.isFinite(Number(claim.y))).sort((a, b) => Number(b.owner === owner) - Number(a.owner === owner) || String(a.owner).localeCompare(String(b.owner)));
+    pinnedClaims.forEach((pinnedClaim, index) => {
+      const pinOwner = normalizeMemberEmail(pinnedClaim.owner) || 'member';
+      const pin = document.createElement('button');
+      pin.type = 'button'; pin.dataset.memberLandClaim = pinOwner; pin.className = 'world-atlas__claim-pin';
+      pin.classList.toggle('is-home-base', pinOwner === owner); pin.style.setProperty('--x', `${clamp(pinnedClaim.x)}%`); pin.style.setProperty('--y', `${clamp(pinnedClaim.y)}%`);
+      pin.innerHTML = `<i>⚑</i><span>${pinOwner === owner ? 'MY HOME' : escapeMarkup(pinOwner)}</span>`;
+      pin.setAttribute('aria-label', `${pinOwner}'s pinned land at ${pinnedClaim.place}, X ${clamp(pinnedClaim.x)}, Y ${clamp(pinnedClaim.y)}`);
+      pin.addEventListener('click', (event) => { event.stopPropagation(); render({ ...pinnedClaim, detail: `Pinned land tied to ${pinOwner}'s profile and Drop Backpack.` }); });
+      viewport.append(pin);
+      pinnedClaim.pinOrder = index;
+    });
+    if (spaceList) spaceList.innerHTML = pinnedClaims.map((claim, index) => `<li><button type="button" data-pinned-owner="${escapeMarkup(claim.owner)}"><b>${index === 0 && claim.owner === owner ? 'HOME' : String(index + 1).padStart(2, '0')}</b><span>${escapeMarkup(claim.place)} <small>X ${clamp(claim.x)} · Y ${clamp(claim.y)} · ${escapeMarkup(claim.owner)}</small></span></button></li>`).join('') || '<li>No member land is pinned yet.</li>';
+    spaceList?.querySelectorAll('[data-pinned-owner]').forEach((button) => button.addEventListener('click', () => { const claim = claims[button.dataset.pinnedOwner]; if (claim) render(claim); }));
     const claim = owner ? claims[owner] : null;
     if (claim) {
-      const pin = document.createElement('button');
-      pin.type = 'button';
-      pin.dataset.memberLandClaim = owner;
-      pin.className = 'world-atlas__claim-pin';
-      pin.style.setProperty('--x', `${claim.x}%`);
-      pin.style.setProperty('--y', `${claim.y}%`);
-      pin.innerHTML = `<i>⚑</i><span>${owner}'s land</span>`;
-      pin.setAttribute('aria-label', `${owner}'s claimed land at ${claim.place}, X ${claim.x}, Y ${claim.y}`);
-      pin.addEventListener('click', (event) => { event.stopPropagation(); render({ ...claim, detail: `Owned land tied to ${owner}'s Backpack and member profile.` }); });
-      viewport.append(pin);
       ownership.innerHTML = `<strong>Claim active:</strong> ${claim.place} · X ${claim.x}, Y ${claim.y} · tied to <a href="members.html#owned-collection">${owner}'s profile</a>.`;
       claimButton.textContent = 'Move my land claim ⚑';
     } else if (ownedLand) {

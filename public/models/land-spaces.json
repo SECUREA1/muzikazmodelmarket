@@ -1,0 +1,10 @@
+{"schemaVersion":2,"coordinateSystem":"MUZIKAZ world atlas percentage grid","dropPolicy":"profile-backpack-space-pixel-required","spaces":[
+  {"id":"space-studio-ridge","locationId":"studio-ridge","name":"Studio Ridge","pixel":{"x":63,"y":53},"profileId":"muzikaz-public","backpackId":"muzikaz-public-pack","pinOrder":0,"homeBase":true,"pinned":true},
+  {"id":"space-volt-city","locationId":"volt-city","name":"Volt City","pixel":{"x":23,"y":28},"profileId":"muzikaz-public","backpackId":"muzikaz-public-pack","pinOrder":1,"homeBase":false,"pinned":true},
+  {"id":"space-skyline-deck","locationId":"skyline-deck","name":"Skyline Deck","pixel":{"x":49,"y":22},"profileId":"muzikaz-public","backpackId":"muzikaz-public-pack","pinOrder":2,"homeBase":false,"pinned":true},
+  {"id":"space-echo-gardens","locationId":"echo-gardens","name":"Echo Gardens","pixel":{"x":74,"y":31},"profileId":"muzikaz-public","backpackId":"muzikaz-public-pack","pinOrder":3,"homeBase":false,"pinned":true},
+  {"id":"space-crew-plaza","locationId":"crew-plaza","name":"Crew Plaza","pixel":{"x":36,"y":49},"profileId":"muzikaz-public","backpackId":"muzikaz-public-pack","pinOrder":4,"homeBase":false,"pinned":true},
+  {"id":"space-neon-docks","locationId":"neon-docks","name":"Neon Docks","pixel":{"x":18,"y":70},"profileId":"muzikaz-public","backpackId":"muzikaz-public-pack","pinOrder":5,"homeBase":false,"pinned":true},
+  {"id":"space-bassline-badlands","locationId":"bassline-badlands","name":"Bassline Badlands","pixel":{"x":50,"y":76},"profileId":"muzikaz-public","backpackId":"muzikaz-public-pack","pinOrder":6,"homeBase":false,"pinned":true},
+  {"id":"space-pixel-peaks","locationId":"pixel-peaks","name":"Pixel Peaks","pixel":{"x":82,"y":72},"profileId":"muzikaz-public","backpackId":"muzikaz-public-pack","pinOrder":7,"homeBase":false,"pinned":true}
+]}
