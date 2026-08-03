@@ -551,6 +551,14 @@ addModelButton?.addEventListener('click', () => {
   if (modelStatus) modelStatus.textContent = `${selectedModel} model added to your cart.`;
 });
 
+document.addEventListener('muzikaz:add-model-to-cart', (event) => {
+  const model = event.detail || {};
+  if (!model.name) return;
+  addCartLine(`${model.name} 3D Model`, model.price, `${model.category || '3D Model'} · Adds to Backpack after purchase`);
+  const status = document.querySelector('#explorer-live-models-status') || modelStatus;
+  if (status) status.textContent = `${model.name} added to your cart. Complete checkout to add it to your Backpack.`;
+});
+
 document.querySelector('[data-show-all]')?.addEventListener('click', (event) => {
   event.preventDefault();
   if (modelDetail) modelDetail.hidden = true;
