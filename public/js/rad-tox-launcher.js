@@ -38,7 +38,10 @@
   document.addEventListener('muzikaz:rad-tox-engine-ready',function(){clearWatchdog();setState('engine-ready','3D engine ready.');if(queued)document.dispatchEvent(makeEvent('muzikaz:rad-tox-request'));});
   document.addEventListener('muzikaz:rad-tox-stage',function(e){var d=e.detail||{},next=d.stage||'loading-manifest';setState(next,d.message);if(next==='loading-game')armWatchdog(GAME_DEPLOY_TIMEOUT_MS);else if(next==='game-active'){clearWatchdog();if(toolsQueued){toolsQueued=false;document.dispatchEvent(makeEvent('muzikaz:rad-tox-tools-request'));}}});
   document.addEventListener('muzikaz:rad-tox-native-error',function(e){var d=e.detail||{}; fail(d.stage||'3D game',d.message||'The 3D environment could not be started.');});
-  function isStartControl(t){while(t&&(!t.getAttribute||t.getAttribute('data-house-start')===null))t=t.parentNode;return t;}
+  // Treat the full startup overlay as the Begin control. This gives mobile
+  // players the same reliable launch target as the fixed Tools button instead
+  // of requiring a precise tap on the smaller button inside the overlay.
+  function isStartControl(t){while(t&&(!t.getAttribute||(t.getAttribute('data-house-start')===null&&t.getAttribute('data-house-start-surface')===null)))t=t.parentNode;return t;}
   function isToolsControl(t){while(t&&(!t.getAttribute||t.getAttribute('data-house-tools')===null))t=t.parentNode;return t;}
   // Start fetching on press so mobile browsers can establish the module connection
   // before the following click handler asks the game to begin.
