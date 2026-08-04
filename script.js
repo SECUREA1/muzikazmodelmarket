@@ -188,7 +188,8 @@ function ownedAssetDetail(assetName) {
 }
 
 function hasBottleLogin() {
-  return window.localStorage.getItem('muzikazBottleMember') === 'true' && Boolean(normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail));
+  const email = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail);
+  return window.localStorage.getItem('muzikazBottleMember') === 'true' && Boolean(email) && window.sessionStorage.getItem(`bottleFaceValidated:${email}`) === 'true';
 }
 
 
@@ -197,10 +198,11 @@ function createFaceLoginGate(prefix, options = {}) {
   const video = document.querySelector(`#${prefix}-face-video`);
   const canvas = document.querySelector(`#${prefix}-face-canvas`);
   const startButton = document.querySelector(`#${prefix}-face-start`);
+  const snapshot = document.querySelector(`#${prefix}-face-snapshot`);
   const result = document.querySelector(`#${prefix}-face-result`);
   if (!panel || !video || !canvas) return { ensure: async () => true, reset: () => {} };
   const context = canvas.getContext('2d', { willReadFrequently: true });
-  let passed = window.sessionStorage.getItem(`${prefix}FaceValidated`) === 'true';
+  let passed = false;
   let running = false;
   let stream;
   const { autoStart = false } = options;
@@ -210,32 +212,50 @@ function createFaceLoginGate(prefix, options = {}) {
     stream = null;
     running = false;
   };
-  const markPassed = () => {
+  const signatureKey = () => `${prefix}FaceSignature:${normalizeMemberEmail(currentMemberEmail || window.localStorage.getItem('muzikazBottleMemberEmail') || '')}`;
+  const sessionKey = () => `${prefix}FaceValidated:${normalizeMemberEmail(currentMemberEmail || window.localStorage.getItem('muzikazBottleMemberEmail') || '')}`;
+  const markPassed = (snapshotUrl = '') => {
     passed = true;
     window.sessionStorage.setItem(`${prefix}FaceValidated`, 'true');
+    window.sessionStorage.setItem(sessionKey(), 'true');
     panel.dataset.faceValidated = 'true';
-    setResult('Secure check complete.');
+    if (snapshot && snapshotUrl) { snapshot.src = snapshotUrl; snapshot.hidden = false; video.hidden = true; }
+    setResult('Approved — face snapshot validated.');
     stop();
+  };
+  const analyzeFrame = () => {
+    const frame = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let total = 0, totalSq = 0, skinLike = 0, count = 0;
+    for (let i = 0; i < frame.length; i += 16) {
+      const r = frame[i], g = frame[i + 1], b = frame[i + 2];
+      const brightness = (r + g + b) / 3;
+      total += brightness; totalSq += brightness * brightness; count += 1;
+      if (r > 70 && g > 40 && b > 25 && r > b && Math.abs(r - g) > 10) skinLike += 1;
+    }
+    const average = total / count;
+    return { average: Math.round(average), contrast: Math.round(Math.sqrt(Math.max(0, totalSq / count - average * average))), skinRatio: Number((skinLike / count).toFixed(3)) };
+  };
+  const signaturesMatch = (next) => {
+    const stored = JSON.parse(window.localStorage.getItem(signatureKey()) || 'null');
+    if (!stored) { window.localStorage.setItem(signatureKey(), JSON.stringify(next)); return true; }
+    return Math.abs(stored.average - next.average) <= 38 && Math.abs(stored.contrast - next.contrast) <= 30 && Math.abs(stored.skinRatio - next.skinRatio) <= .18;
   };
   async function detectFace() {
     if (!context || !video.videoWidth || !video.videoHeight) return false;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (snapshot) { snapshot.src = canvas.toDataURL('image/jpeg', .86); snapshot.hidden = false; }
     if ('FaceDetector' in window) {
       try {
         const detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
         const faces = await detector.detect(canvas);
-        return faces.length > 0;
+        return faces.length > 0 && signaturesMatch(analyzeFrame());
       } catch (_) {}
     }
-    const frame = context.getImageData(0, 0, canvas.width, canvas.height).data;
-    let skinLike = 0;
-    for (let i = 0; i < frame.length; i += 16) {
-      const r = frame[i], g = frame[i + 1], b = frame[i + 2];
-      if (r > 70 && g > 40 && b > 25 && r > b && Math.abs(r - g) > 10) skinLike += 1;
-    }
-    return skinLike > 420;
+    const signature = analyzeFrame();
+    return signature.skinRatio > .08 && signature.contrast >= 18 && signaturesMatch(signature);
   }
   async function scan() {
+    passed = window.sessionStorage.getItem(sessionKey()) === 'true';
     if (passed || running) return passed;
     if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access is not available in this browser.');
     running = true;
@@ -246,7 +266,7 @@ function createFaceLoginGate(prefix, options = {}) {
     await video.play().catch(() => {});
     for (let attempt = 1; attempt <= 36; attempt += 1) {
       setResult('Secure check running.');
-      if (await detectFace()) { markPassed(); return true; }
+      if (await detectFace()) { markPassed(snapshot?.src || canvas.toDataURL('image/jpeg', .86)); return true; }
       await new Promise((resolve) => setTimeout(resolve, 140));
     }
     stop();
@@ -259,7 +279,7 @@ function createFaceLoginGate(prefix, options = {}) {
     setResult(`${error.message} Submit login again to retry.`);
   });
   startButton?.addEventListener('click', beginScan);
-  if (passed) markPassed();
+  if (window.sessionStorage.getItem(sessionKey()) === 'true') markPassed(snapshot?.src || '');
   else if (autoStart) window.setTimeout(beginScan, 350);
   return {
     ensure: scan,
@@ -1796,6 +1816,11 @@ function initBottleLogin() {
     event.preventDefault();
     const data = new FormData(form);
     currentMemberEmail = normalizeMemberEmail(data.get('email'));
+    const passcode = String(data.get('passcode') || '').trim().toUpperCase();
+    if (!currentMemberEmail || passcode !== 'MUZIKAZ') {
+      if (status) status.textContent = 'Login denied. Use a valid email and the MUZIKAZ access code before face approval.';
+      return;
+    }
     try {
       await unlock(`${currentMemberEmail} is logged in with facial auto recognition. Your designated avatar and Drop Backpack are retained across visits.`);
       window.localStorage.setItem('muzikazBottleMember', 'true');
