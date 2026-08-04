@@ -1168,6 +1168,12 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
 .face-login-viewfinder video,.face-login-viewfinder canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.face-login-viewfinder canvas{opacity:.2;mix-blend-mode:screen}.face-login-ring{position:absolute;inset:14%;border:3px solid var(--lime);border-radius:50%;box-shadow:0 0 22px rgba(156,255,0,.55),inset 0 0 18px rgba(156,255,0,.2)}
 .face-login-panel[data-scanning="true"] .face-login-ring{animation:faceScanPulse 1s linear infinite}.face-login-panel[data-face-validated="true"]{border-color:var(--lime);box-shadow:0 0 26px rgba(156,255,0,.18)}
 .face-login-copy h2{margin:0 0 8px;font-family:Bangers,cursive;color:var(--lime);font-size:clamp(30px,4vw,44px)}.face-login-copy p{margin:0 0 12px}.face-login-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.face-login-actions button{border:0;border-radius:999px;background:var(--lime);color:#030403;padding:12px 16px;font-weight:900;text-transform:uppercase}.face-login-actions span{color:#fff;text-transform:none;font-weight:800}
+.face-login-panel--discreet{grid-template-columns:minmax(160px,.42fr) 1fr;padding:12px;margin:12px 0;background:linear-gradient(135deg,rgba(156,255,0,.055),rgba(0,0,0,.58))}
+.face-login-panel--discreet .face-login-viewfinder{min-height:128px;opacity:.58;filter:saturate(.7) brightness(.72)}
+.face-login-panel--discreet .face-login-copy{display:grid;gap:6px}
+.face-login-panel--discreet .face-login-copy h2{margin:0;color:#dfff75;font-size:clamp(24px,3vw,32px)}
+.face-login-panel--discreet .face-login-actions{min-height:24px}
+.face-login-panel--discreet .face-login-actions span{color:rgba(255,255,255,.68);font-size:12px}
 @keyframes faceScanPulse{0%{transform:scale(.94);opacity:.65}50%{transform:scale(1.04);opacity:1}100%{transform:scale(.94);opacity:.65}}
 @media(max-width:720px){.face-login-panel{grid-template-columns:1fr}.face-login-viewfinder{min-height:240px}}
 

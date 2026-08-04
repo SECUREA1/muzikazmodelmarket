@@ -214,7 +214,7 @@ function createFaceLoginGate(prefix, options = {}) {
     passed = true;
     window.sessionStorage.setItem(`${prefix}FaceValidated`, 'true');
     panel.dataset.faceValidated = 'true';
-    setResult('Face scan validated. You can continue securely.');
+    setResult('Secure check complete.');
     stop();
   };
   async function detectFace() {
@@ -240,23 +240,23 @@ function createFaceLoginGate(prefix, options = {}) {
     if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access is not available in this browser.');
     running = true;
     panel.dataset.scanning = 'true';
-    setResult('Opening camera. Center your face in the neon ring.');
+    setResult('Secure check running.');
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
     video.srcObject = stream;
     await video.play().catch(() => {});
     for (let attempt = 1; attempt <= 36; attempt += 1) {
-      setResult(`Scanning face ${Math.ceil((attempt / 36) * 100)}%`);
+      setResult('Secure check running.');
       if (await detectFace()) { markPassed(); return true; }
       await new Promise((resolve) => setTimeout(resolve, 140));
     }
     stop();
     panel.dataset.scanning = 'false';
-    throw new Error('Face was not validated. Improve lighting, center your face, and scan again.');
+    throw new Error('Secure face check could not complete. Improve lighting and try again.');
   }
   const beginScan = () => scan().catch((error) => {
     panel.dataset.scanning = 'false';
     stop();
-    setResult(`${error.message} Tap start to retry.`);
+    setResult(`${error.message} Submit login again to retry.`);
   });
   startButton?.addEventListener('click', beginScan);
   if (passed) markPassed();
@@ -1780,7 +1780,7 @@ function initBottleLogin() {
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   if (!form || !lockedContent) return;
-  const faceGate = createFaceLoginGate('bottle', { autoStart: true });
+  const faceGate = createFaceLoginGate('bottle');
   const unlock = async (message) => {
     await faceGate.ensure();
     if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
