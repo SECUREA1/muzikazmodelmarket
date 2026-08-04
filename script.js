@@ -96,6 +96,40 @@ function normalizeMemberEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
+
+const MEMBER_PASSCODE_KEY = 'muzikazMemberPasscodes';
+
+function readMemberPasscodes() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(MEMBER_PASSCODE_KEY) || '{}');
+    return saved && typeof saved === 'object' ? saved : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function passcodeFingerprint(email, passcode) {
+  return btoa(unescape(encodeURIComponent(`${normalizeMemberEmail(email)}::${String(passcode || '').trim()}`)));
+}
+
+function validateMemberPasscode(email, passcode) {
+  const normalizedEmail = normalizeMemberEmail(email);
+  const normalizedPasscode = String(passcode || '').trim();
+  if (!normalizedEmail || normalizedPasscode.length < 4) {
+    return { ok: false, message: 'Enter a valid email and your personal passcode with at least 4 characters.' };
+  }
+  const passcodes = readMemberPasscodes();
+  const fingerprint = passcodeFingerprint(normalizedEmail, normalizedPasscode);
+  if (!passcodes[normalizedEmail]) {
+    passcodes[normalizedEmail] = fingerprint;
+    window.localStorage.setItem(MEMBER_PASSCODE_KEY, JSON.stringify(passcodes));
+    return { ok: true, enrolled: true };
+  }
+  return passcodes[normalizedEmail] === fingerprint
+    ? { ok: true, enrolled: false }
+    : { ok: false, message: 'Login denied. Use the personal passcode saved for this member email.' };
+}
+
 function readOwnedProfiles() {
   const saved = window.localStorage.getItem('muzikazOwnedProfiles');
   if (saved) {
@@ -205,7 +239,7 @@ function createFaceLoginGate(prefix, options = {}) {
   let passed = false;
   let running = false;
   let stream;
-  const { autoStart = false } = options;
+  const { autoStart = true } = options;
   const setResult = (message) => { if (result) result.textContent = message; };
   const stop = () => {
     stream?.getTracks?.().forEach((track) => track.stop());
@@ -297,7 +331,7 @@ function initModelMarketGate() {
   const status = document.querySelector('#model-market-login-status');
   if (!cover || !form) return;
 
-  const faceGate = createFaceLoginGate('model-market');
+  const faceGate = createFaceLoginGate('model-market', { autoStart: true });
   const uncover = async () => {
     await faceGate.ensure();
     document.body.classList.remove('model-market-gated');
@@ -314,8 +348,9 @@ function initModelMarketGate() {
     const data = new FormData(form);
     const email = normalizeMemberEmail(data.get('email'));
     const passcode = String(data.get('passcode') || '').trim();
-    if (!email || !passcode) {
-      if (status) status.textContent = 'Enter both your member email and passcode.';
+    const passcodeCheck = validateMemberPasscode(email, passcode);
+    if (!passcodeCheck.ok) {
+      if (status) status.textContent = passcodeCheck.message;
       return;
     }
     currentMemberEmail = email;
@@ -323,7 +358,7 @@ function initModelMarketGate() {
       await uncover();
       window.localStorage.setItem('muzikazBottleMember', 'true');
       window.localStorage.setItem('muzikazBottleMemberEmail', email);
-      if (status) status.textContent = `${email} validated with facial auto recognition. Market unlocked.`;
+      if (status) status.textContent = passcodeCheck.enrolled ? `${email} personal passcode saved. Market unlocked.` : `${email} validated. Market unlocked.`;
     } catch (error) {
       window.localStorage.removeItem('muzikazBottleMember');
       window.localStorage.removeItem('muzikazBottleMemberEmail');
@@ -1800,7 +1835,7 @@ function initBottleLogin() {
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   if (!form || !lockedContent) return;
-  const faceGate = createFaceLoginGate('bottle');
+  const faceGate = createFaceLoginGate('bottle', { autoStart: true });
   const unlock = async (message) => {
     await faceGate.ensure();
     if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
@@ -1816,13 +1851,14 @@ function initBottleLogin() {
     event.preventDefault();
     const data = new FormData(form);
     currentMemberEmail = normalizeMemberEmail(data.get('email'));
-    const passcode = String(data.get('passcode') || '').trim().toUpperCase();
-    if (!currentMemberEmail || passcode !== 'MUZIKAZ') {
-      if (status) status.textContent = 'Login denied. Use a valid email and the MUZIKAZ access code before face approval.';
+    const passcode = String(data.get('passcode') || '').trim();
+    const passcodeCheck = validateMemberPasscode(currentMemberEmail, passcode);
+    if (!passcodeCheck.ok) {
+      if (status) status.textContent = passcodeCheck.message;
       return;
     }
     try {
-      await unlock(`${currentMemberEmail} is logged in with facial auto recognition. Your designated avatar and Drop Backpack are retained across visits.`);
+      await unlock(passcodeCheck.enrolled ? `${currentMemberEmail} is logged in. Your personal passcode is saved on this device, and your Drop Backpack is retained across visits.` : `${currentMemberEmail} is logged in. Your designated avatar and Drop Backpack are retained across visits.`);
       window.localStorage.setItem('muzikazBottleMember', 'true');
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
       renderOwnedCollection(currentMemberEmail);

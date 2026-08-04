@@ -2519,4 +2519,5 @@ section,
 .face-login-viewfinder img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2}
 .face-login-panel[data-face-validated="true"] .face-login-ring{border-style:solid;box-shadow:0 0 30px rgba(156,255,0,.75),inset 0 0 22px rgba(156,255,0,.28)}
 .face-login-panel[data-face-validated="true"] .face-login-actions span{display:inline-flex;border:1px solid var(--lime);border-radius:999px;background:var(--lime);color:#020302;padding:10px 14px;text-transform:uppercase;letter-spacing:.08em}
-.member-locked-content[data-locked="true"]:before{content:"Bottle Login + approved face snapshot required — member tools stay locked until both validations pass"}
+.member-locked-content[data-locked="true"]:before{content:"Bottle Login validation required — member tools stay locked until email and passcode are approved"}
+.face-login-panel--hidden{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;opacity:0;pointer-events:none}
