@@ -60,9 +60,24 @@
                 <form id="bottle-login-form" class="bottle-login-form">
                     <label>Email <input type="email" name="email" placeholder="crew@muzikaz.example" required /></label>
                     <label>Passcode <input type="password" name="passcode" placeholder="Bottle pass" required /></label>
-                    <button type="submit">Continue</button>
+                    <button type="submit">Scan face & continue</button>
                 </form>
-                <p class="status-message" id="bottle-login-status" role="status">Preview access: enter any email address and passcode to open the subscriber tools.</p>
+                <section class="face-login-panel" id="bottle-face-login" aria-labelledby="bottle-face-login-title">
+                    <div class="face-login-viewfinder">
+                        <video id="bottle-face-video" playsinline muted aria-label="Face scan camera preview"></video>
+                        <canvas id="bottle-face-canvas" width="320" height="240" aria-hidden="true"></canvas>
+                        <span class="face-login-ring" aria-hidden="true"></span>
+                    </div>
+                    <div class="face-login-copy">
+                        <h2 id="bottle-face-login-title">Facial auto recognition required</h2>
+                        <p>Desktop and mobile logins must validate a live face scan before member tools unlock. Keep your face centered until the scan completes.</p>
+                        <div class="face-login-actions">
+                            <button type="button" id="bottle-face-start">Start face scan</button>
+                            <span id="bottle-face-result">Waiting for secure camera permission.</span>
+                        </div>
+                    </div>
+                </section>
+                <p class="status-message" id="bottle-login-status" role="status">Preview access: enter any email address and passcode, then complete the required face scan to open the subscriber tools.</p>
             </div>
         </section>
         <section class="section-block member-benefits" aria-labelledby="member-benefits-title">

@@ -191,23 +191,91 @@ function hasBottleLogin() {
   return window.localStorage.getItem('muzikazBottleMember') === 'true' && Boolean(normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail));
 }
 
+
+function createFaceLoginGate(prefix) {
+  const panel = document.querySelector(`#${prefix}-face-login`);
+  const video = document.querySelector(`#${prefix}-face-video`);
+  const canvas = document.querySelector(`#${prefix}-face-canvas`);
+  const startButton = document.querySelector(`#${prefix}-face-start`);
+  const result = document.querySelector(`#${prefix}-face-result`);
+  if (!panel || !video || !canvas) return { ensure: async () => true, reset: () => {} };
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  let passed = window.sessionStorage.getItem(`${prefix}FaceValidated`) === 'true';
+  let running = false;
+  let stream;
+  const setResult = (message) => { if (result) result.textContent = message; };
+  const stop = () => {
+    stream?.getTracks?.().forEach((track) => track.stop());
+    stream = null;
+    running = false;
+  };
+  const markPassed = () => {
+    passed = true;
+    window.sessionStorage.setItem(`${prefix}FaceValidated`, 'true');
+    panel.dataset.faceValidated = 'true';
+    setResult('Face scan validated. You can continue securely.');
+    stop();
+  };
+  async function detectFace() {
+    if (!context || !video.videoWidth || !video.videoHeight) return false;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if ('FaceDetector' in window) {
+      try {
+        const detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
+        const faces = await detector.detect(canvas);
+        return faces.length > 0;
+      } catch (_) {}
+    }
+    const frame = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let skinLike = 0;
+    for (let i = 0; i < frame.length; i += 16) {
+      const r = frame[i], g = frame[i + 1], b = frame[i + 2];
+      if (r > 70 && g > 40 && b > 25 && r > b && Math.abs(r - g) > 10) skinLike += 1;
+    }
+    return skinLike > 420;
+  }
+  async function scan() {
+    if (passed || running) return passed;
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access is not available in this browser.');
+    running = true;
+    panel.dataset.scanning = 'true';
+    setResult('Opening camera. Center your face in the neon ring.');
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+    video.srcObject = stream;
+    await video.play();
+    for (let attempt = 1; attempt <= 36; attempt += 1) {
+      setResult(`Scanning face ${Math.ceil((attempt / 36) * 100)}%`);
+      if (await detectFace()) { markPassed(); return true; }
+      await new Promise((resolve) => setTimeout(resolve, 140));
+    }
+    stop();
+    panel.dataset.scanning = 'false';
+    throw new Error('Face was not validated. Improve lighting, center your face, and scan again.');
+  }
+  startButton?.addEventListener('click', () => scan().catch((error) => setResult(error.message)));
+  if (passed) markPassed();
+  return { ensure: scan, reset: () => { passed = false; window.sessionStorage.removeItem(`${prefix}FaceValidated`); } };
+}
+
 function initModelMarketGate() {
   const cover = document.querySelector('#model-market-cover');
   const form = document.querySelector('#model-market-login-form');
   const status = document.querySelector('#model-market-login-status');
   if (!cover || !form) return;
 
-  const uncover = () => {
+  const faceGate = createFaceLoginGate('model-market');
+  const uncover = async () => {
+    await faceGate.ensure();
     document.body.classList.remove('model-market-gated');
     cover.setAttribute('hidden', '');
   };
 
   if (hasBottleLogin()) {
-    uncover();
+    uncover().catch(() => { if (status) status.textContent = 'Face scan required to uncover the market.'; });
     return;
   }
 
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(form);
     const email = normalizeMemberEmail(data.get('email'));
@@ -217,9 +285,16 @@ function initModelMarketGate() {
       return;
     }
     currentMemberEmail = email;
-    window.localStorage.setItem('muzikazBottleMember', 'true');
-    window.localStorage.setItem('muzikazBottleMemberEmail', email);
-    uncover();
+    try {
+      await uncover();
+      window.localStorage.setItem('muzikazBottleMember', 'true');
+      window.localStorage.setItem('muzikazBottleMemberEmail', email);
+      if (status) status.textContent = `${email} validated with facial auto recognition. Market unlocked.`;
+    } catch (error) {
+      window.localStorage.removeItem('muzikazBottleMember');
+      window.localStorage.removeItem('muzikazBottleMemberEmail');
+      if (status) status.textContent = error.message;
+    }
   });
 }
 
@@ -1691,24 +1766,33 @@ function initBottleLogin() {
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   if (!form || !lockedContent) return;
+  const faceGate = createFaceLoginGate('bottle');
   const unlock = async (message) => {
+    await faceGate.ensure();
     if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
     lockedContent.dataset.locked = 'false';
     if (status) status.textContent = message;
   };
   if (hasBottleLogin()) {
     currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
-    unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`);
+    unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`).catch((error) => { if (status) status.textContent = error.message; });
     renderOwnedCollection(currentMemberEmail);
   }
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(form);
     currentMemberEmail = normalizeMemberEmail(data.get('email'));
-    window.localStorage.setItem('muzikazBottleMember', 'true');
-    window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-    renderOwnedCollection(currentMemberEmail);
-    await unlock(`${currentMemberEmail} is logged in. Your designated avatar and Drop Backpack are retained across visits.`);
+    try {
+      await unlock(`${currentMemberEmail} is logged in with facial auto recognition. Your designated avatar and Drop Backpack are retained across visits.`);
+      window.localStorage.setItem('muzikazBottleMember', 'true');
+      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      renderOwnedCollection(currentMemberEmail);
+    } catch (error) {
+      window.localStorage.removeItem('muzikazBottleMember');
+      window.localStorage.removeItem('muzikazBottleMemberEmail');
+      if (status) status.textContent = error.message;
+      return;
+    }
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
