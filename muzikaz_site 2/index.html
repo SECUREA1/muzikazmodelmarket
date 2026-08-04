@@ -8,6 +8,45 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <section class="auth-gate" id="authGate" aria-label="Secure face scan login">
+    <div class="auth-card">
+      <div class="auth-copy">
+        <p class="eyebrow">Secure member access</p>
+        <h1>Login + Face Scan</h1>
+        <p>Enter a valid MUZIKAZ access login, capture your snapshot, and wait for facial validation approval before the storefront unlocks.</p>
+        <ol class="auth-steps">
+          <li id="loginStep">Login pending</li>
+          <li id="scanStep">Snapshot pending</li>
+          <li id="approvalStep">Approval pending</li>
+        </ol>
+      </div>
+      <form class="auth-form" id="authForm">
+        <label>Email / Username
+          <input id="loginName" name="loginName" autocomplete="username" placeholder="member@muzikaz.com" required />
+        </label>
+        <label>Access Code
+          <input id="loginCode" name="loginCode" type="password" autocomplete="current-password" placeholder="Enter MUZIKAZ code" required />
+        </label>
+        <button class="btn primary" type="submit">Validate Login</button>
+        <p class="auth-status" id="authStatus" role="status">Use demo code <b>MUZIKAZ</b> to validate the login in this static build.</p>
+      </form>
+      <div class="face-panel" id="facePanel" aria-live="polite">
+        <div class="scan-frame">
+          <video id="faceVideo" playsinline muted></video>
+          <canvas id="faceCanvas" width="360" height="270" hidden></canvas>
+          <img id="snapshotPreview" alt="Captured face scan snapshot" hidden />
+          <span class="scan-reticle"></span>
+        </div>
+        <div class="face-actions">
+          <button class="btn ghost" id="startCamera" type="button" disabled>Open Camera</button>
+          <button class="btn primary" id="captureFace" type="button" disabled>Capture Snapshot</button>
+        </div>
+        <p class="approval-badge" id="approvalBadge">Awaiting face scan</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="site-shell locked" id="siteShell" aria-hidden="true">
   <header class="site-header">
     <a class="brand" href="#home" aria-label="Muzikaz home">
       <span class="bolt">ϟ</span><span>MUZIKAZ</span>
@@ -229,5 +268,6 @@
   </footer>
 
   <script src="app.js"></script>
+  </div>
 </body>
 </html>

@@ -2514,3 +2514,9 @@ section,
 
 /* Single startup indicator: the Begin surface becomes the loader in place. */
 .game-loading-indicator{display:none;width:38px;height:38px;border:4px solid rgba(202,255,105,.25);border-top-color:#caff69;border-radius:50%}.house-game-start.is-loading .game-loading-indicator{display:block;animation:game-loading-spin .8s linear infinite}.house-game-start.is-loading h3,.house-game-start.is-loading .house-start-button{display:none}.house-game-start.has-error .game-loading-indicator{display:none}@keyframes game-loading-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.house-game-start.is-loading .game-loading-indicator{animation-duration:1.8s}}
+
+/* Visible Bottle Login face approval snapshot */
+.face-login-viewfinder img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2}
+.face-login-panel[data-face-validated="true"] .face-login-ring{border-style:solid;box-shadow:0 0 30px rgba(156,255,0,.75),inset 0 0 22px rgba(156,255,0,.28)}
+.face-login-panel[data-face-validated="true"] .face-login-actions span{display:inline-flex;border:1px solid var(--lime);border-radius:999px;background:var(--lime);color:#020302;padding:10px 14px;text-transform:uppercase;letter-spacing:.08em}
+.member-locked-content[data-locked="true"]:before{content:"Bottle Login + approved face snapshot required — member tools stay locked until both validations pass"}
