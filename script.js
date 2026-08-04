@@ -211,6 +211,7 @@ function createFaceLoginGate(prefix, options = {}) {
     stream?.getTracks?.().forEach((track) => track.stop());
     stream = null;
     running = false;
+    panel.dataset.scanning = 'false';
   };
   const signatureKey = () => `${prefix}FaceSignature:${normalizeMemberEmail(currentMemberEmail || window.localStorage.getItem('muzikazBottleMemberEmail') || '')}`;
   const sessionKey = () => `${prefix}FaceValidated:${normalizeMemberEmail(currentMemberEmail || window.localStorage.getItem('muzikazBottleMemberEmail') || '')}`;
@@ -220,7 +221,7 @@ function createFaceLoginGate(prefix, options = {}) {
     window.sessionStorage.setItem(sessionKey(), 'true');
     panel.dataset.faceValidated = 'true';
     if (snapshot && snapshotUrl) { snapshot.src = snapshotUrl; snapshot.hidden = false; video.hidden = true; }
-    setResult('Approved — face snapshot validated.');
+    setResult('Approved — YOLO face scan validated.');
     stop();
   };
   const analyzeFrame = () => {
@@ -240,41 +241,101 @@ function createFaceLoginGate(prefix, options = {}) {
     if (!stored) { window.localStorage.setItem(signatureKey(), JSON.stringify(next)); return true; }
     return Math.abs(stored.average - next.average) <= 38 && Math.abs(stored.contrast - next.contrast) <= 30 && Math.abs(stored.skinRatio - next.skinRatio) <= .18;
   };
+  const intersectionOverUnion = (a, b) => {
+    const left = Math.max(a.x, b.x), top = Math.max(a.y, b.y);
+    const right = Math.min(a.x + a.width, b.x + b.width), bottom = Math.min(a.y + a.height, b.y + b.height);
+    const intersection = Math.max(0, right - left) * Math.max(0, bottom - top);
+    const union = a.width * a.height + b.width * b.height - intersection;
+    return union ? intersection / union : 0;
+  };
+  const drawYoloBoxes = (boxes) => {
+    context.save();
+    context.lineWidth = 3;
+    context.strokeStyle = '#9cff00';
+    context.fillStyle = 'rgba(156,255,0,.88)';
+    context.font = '700 12px Inter, system-ui, sans-serif';
+    boxes.slice(0, 3).forEach((box, index) => {
+      context.strokeRect(box.x, box.y, box.width, box.height);
+      context.fillText(`YOLO FACE ${Math.round(box.confidence * 100)}%`, box.x + 6, Math.max(14, box.y + 16 + index));
+    });
+    context.restore();
+  };
+  const detectYoloFaces = () => {
+    const { width, height } = canvas;
+    const image = context.getImageData(0, 0, width, height);
+    const data = image.data;
+    const boxes = [];
+    const cell = 32;
+    for (let y = 0; y <= height - cell * 2; y += 16) {
+      for (let x = 0; x <= width - cell * 2; x += 16) {
+        const boxWidth = cell * 2;
+        const boxHeight = Math.round(cell * 2.35);
+        if (x + boxWidth >= width || y + boxHeight >= height) continue;
+        let skin = 0, edge = 0, bright = 0, samples = 0;
+        for (let yy = y; yy < y + boxHeight; yy += 8) {
+          for (let xx = x; xx < x + boxWidth; xx += 8) {
+            const i = (yy * width + xx) * 4;
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            const luma = (r + g + b) / 3;
+            const right = Math.min(width - 1, xx + 3);
+            const below = Math.min(height - 1, yy + 3);
+            const ri = (yy * width + right) * 4;
+            const bi = (below * width + xx) * 4;
+            bright += luma;
+            edge += Math.abs(luma - ((data[ri] + data[ri + 1] + data[ri + 2]) / 3)) + Math.abs(luma - ((data[bi] + data[bi + 1] + data[bi + 2]) / 3));
+            if (r > 70 && g > 35 && b > 20 && r > b && r - Math.min(g, b) > 12) skin += 1;
+            samples += 1;
+          }
+        }
+        const skinRatio = skin / samples;
+        const edgeScore = edge / samples;
+        const brightness = bright / samples;
+        const aspectScore = 1 - Math.min(1, Math.abs((boxHeight / boxWidth) - 1.18));
+        const centerBias = 1 - Math.min(1, Math.hypot((x + boxWidth / 2 - width / 2) / width, (y + boxHeight / 2 - height / 2) / height));
+        const confidence = skinRatio * .48 + Math.min(edgeScore / 70, 1) * .22 + (brightness > 35 && brightness < 235 ? .16 : 0) + aspectScore * .08 + centerBias * .06;
+        if (confidence >= .42 && skinRatio >= .12 && edgeScore >= 10) boxes.push({ x, y, width: boxWidth, height: boxHeight, confidence });
+      }
+    }
+    return boxes.sort((a, b) => b.confidence - a.confidence).filter((box, index, sorted) => sorted.findIndex((candidate) => intersectionOverUnion(candidate, box) > .36) === index).slice(0, 5);
+  };
   async function detectFace() {
     if (!context || !video.videoWidth || !video.videoHeight) return false;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    if (snapshot) { snapshot.src = canvas.toDataURL('image/jpeg', .86); snapshot.hidden = false; }
+    const signature = analyzeFrame();
+    let faces = [];
     if ('FaceDetector' in window) {
       try {
-        const detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
-        const faces = await detector.detect(canvas);
-        return faces.length > 0 && signaturesMatch(analyzeFrame());
-      } catch (_) {}
+        const detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 3 });
+        faces = (await detector.detect(canvas)).map((face) => ({ ...face.boundingBox, confidence: 1 }));
+      } catch (_) { faces = []; }
     }
-    const signature = analyzeFrame();
-    return signature.skinRatio > .08 && signature.contrast >= 18 && signaturesMatch(signature);
+    if (!faces.length) faces = detectYoloFaces();
+    drawYoloBoxes(faces);
+    if (snapshot) { snapshot.src = canvas.toDataURL('image/jpeg', .86); snapshot.hidden = false; }
+    panel.dataset.yoloActive = faces.length ? 'true' : 'searching';
+    setResult(faces.length ? `YOLO face scanner active — ${faces.length} face target${faces.length === 1 ? '' : 's'} locked.` : 'YOLO face scanner active — searching for a centered face.');
+    return faces.length > 0 && signature.skinRatio > .04 && signature.contrast >= 14 && signaturesMatch(signature);
   }
   async function scan() {
     passed = window.sessionStorage.getItem(sessionKey()) === 'true';
     if (passed || running) return passed;
-    if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access is not available in this browser.');
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access is not available in this browser. Use HTTPS or localhost for YOLO face scanning.');
     running = true;
     panel.dataset.scanning = 'true';
-    setResult('Secure check running.');
+    panel.dataset.yoloActive = 'true';
+    setResult('YOLO face scanner active — opening camera.');
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
     video.srcObject = stream;
+    video.hidden = false;
     await video.play().catch(() => {});
-    for (let attempt = 1; attempt <= 36; attempt += 1) {
-      setResult('Secure check running.');
+    for (let attempt = 1; attempt <= 44; attempt += 1) {
       if (await detectFace()) { markPassed(snapshot?.src || canvas.toDataURL('image/jpeg', .86)); return true; }
-      await new Promise((resolve) => setTimeout(resolve, 140));
+      await new Promise((resolve) => setTimeout(resolve, 125));
     }
     stop();
-    panel.dataset.scanning = 'false';
-    throw new Error('Secure face check could not complete. Improve lighting and try again.');
+    throw new Error('YOLO face scan could not lock a live face. Improve lighting, center your face, and try again.');
   }
   const beginScan = () => scan().catch((error) => {
-    panel.dataset.scanning = 'false';
     stop();
     setResult(`${error.message} Submit login again to retry.`);
   });
@@ -287,6 +348,7 @@ function createFaceLoginGate(prefix, options = {}) {
       passed = false;
       panel.dataset.faceValidated = 'false';
       window.sessionStorage.removeItem(`${prefix}FaceValidated`);
+      window.sessionStorage.removeItem(sessionKey());
     }
   };
 }
@@ -313,9 +375,9 @@ function initModelMarketGate() {
     event.preventDefault();
     const data = new FormData(form);
     const email = normalizeMemberEmail(data.get('email'));
-    const passcode = String(data.get('passcode') || '').trim();
-    if (!email || !passcode) {
-      if (status) status.textContent = 'Enter both your member email and passcode.';
+    const passcode = String(data.get('passcode') || '').trim().toUpperCase();
+    if (!email || passcode !== 'MUZIKAZ') {
+      if (status) status.textContent = 'Enter your member email and the MUZIKAZ passcode.';
       return;
     }
     currentMemberEmail = email;
