@@ -192,7 +192,7 @@ function hasBottleLogin() {
 }
 
 
-function createFaceLoginGate(prefix) {
+function createFaceLoginGate(prefix, options = {}) {
   const panel = document.querySelector(`#${prefix}-face-login`);
   const video = document.querySelector(`#${prefix}-face-video`);
   const canvas = document.querySelector(`#${prefix}-face-canvas`);
@@ -203,6 +203,7 @@ function createFaceLoginGate(prefix) {
   let passed = window.sessionStorage.getItem(`${prefix}FaceValidated`) === 'true';
   let running = false;
   let stream;
+  const { autoStart = false } = options;
   const setResult = (message) => { if (result) result.textContent = message; };
   const stop = () => {
     stream?.getTracks?.().forEach((track) => track.stop());
@@ -242,7 +243,7 @@ function createFaceLoginGate(prefix) {
     setResult('Opening camera. Center your face in the neon ring.');
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
     video.srcObject = stream;
-    await video.play();
+    await video.play().catch(() => {});
     for (let attempt = 1; attempt <= 36; attempt += 1) {
       setResult(`Scanning face ${Math.ceil((attempt / 36) * 100)}%`);
       if (await detectFace()) { markPassed(); return true; }
@@ -252,9 +253,22 @@ function createFaceLoginGate(prefix) {
     panel.dataset.scanning = 'false';
     throw new Error('Face was not validated. Improve lighting, center your face, and scan again.');
   }
-  startButton?.addEventListener('click', () => scan().catch((error) => setResult(error.message)));
+  const beginScan = () => scan().catch((error) => {
+    panel.dataset.scanning = 'false';
+    stop();
+    setResult(`${error.message} Tap start to retry.`);
+  });
+  startButton?.addEventListener('click', beginScan);
   if (passed) markPassed();
-  return { ensure: scan, reset: () => { passed = false; window.sessionStorage.removeItem(`${prefix}FaceValidated`); } };
+  else if (autoStart) window.setTimeout(beginScan, 350);
+  return {
+    ensure: scan,
+    reset: () => {
+      passed = false;
+      panel.dataset.faceValidated = 'false';
+      window.sessionStorage.removeItem(`${prefix}FaceValidated`);
+    }
+  };
 }
 
 function initModelMarketGate() {
@@ -1766,7 +1780,7 @@ function initBottleLogin() {
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   if (!form || !lockedContent) return;
-  const faceGate = createFaceLoginGate('bottle');
+  const faceGate = createFaceLoginGate('bottle', { autoStart: true });
   const unlock = async (message) => {
     await faceGate.ensure();
     if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
