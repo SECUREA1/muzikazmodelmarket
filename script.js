@@ -14,6 +14,47 @@ const BACKPACK_MARKET_KEY = 'muzikazBackpackMarket';
 const BACKPACK_TRANSACTIONS_KEY = 'muzikazBackpackTransactions';
 const BACKPACK_STARTING_TOKENS = 500;
 
+const MOBILE_MENU_ENTRY_BLOCKLIST = new Set([
+  'omconsole',
+  'chaines ar collectibles',
+  'flex fit',
+  'theme',
+  'live feed',
+  'market mode',
+]);
+const MOBILE_MENU_SCOPE_LABELS = new Set(['additional', 'cloud links']);
+const mobileMenuQuery = window.matchMedia?.('(max-width: 950px)');
+
+function normalizeMobileMenuLabel(value) {
+  return String(value || '').replace(/[^a-z0-9]+/gi, ' ').trim().toLowerCase();
+}
+
+function isBlockedMobileMenuEntry(element) {
+  const label = normalizeMobileMenuLabel(element?.textContent);
+  return MOBILE_MENU_ENTRY_BLOCKLIST.has(label);
+}
+
+function isMobileOnlyMenuScope(container) {
+  if (!container) return false;
+  if (container === nav) return true;
+  const label = normalizeMobileMenuLabel(container.querySelector?.('summary, [aria-label], h2, h3, h4')?.textContent || container.getAttribute?.('aria-label'));
+  return MOBILE_MENU_SCOPE_LABELS.has(label);
+}
+
+function tagMobileOnlyMenuEntries() {
+  document.querySelectorAll('.nav, details, [aria-label="Additional"], [aria-label="Cloud Links"]').forEach((container) => {
+    if (!isMobileOnlyMenuScope(container)) return;
+    container.querySelectorAll('a, button').forEach((item) => {
+      if (isBlockedMobileMenuEntry(item)) item.dataset.mobileMenuRemoved = 'true';
+    });
+  });
+}
+
+function scrubOpenMobileMenuEntries() {
+  if (mobileMenuQuery && !mobileMenuQuery.matches) return;
+  tagMobileOnlyMenuEntries();
+}
+
 // One catalog drives both the world map and the marketplace. Coordinates belong
 // to the asset, so a purchased world always resolves to the same map location.
 const WORLD_ASSETS = [
@@ -518,9 +559,12 @@ document.querySelector('#owned-assets-grid')?.addEventListener('click', (event) 
 
 
 menuButton?.addEventListener('click', () => {
+  scrubOpenMobileMenuEntries();
   const isOpen = nav.classList.toggle('is-open');
   menuButton.setAttribute('aria-expanded', String(isOpen));
 });
+
+tagMobileOnlyMenuEntries();
 
 nav?.addEventListener('click', (event) => {
   if (event.target instanceof HTMLAnchorElement) {
