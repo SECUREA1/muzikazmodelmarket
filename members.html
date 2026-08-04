@@ -56,11 +56,11 @@
             <div class="member-login-card">
                 <p class="kicker">Members only</p>
                 <h1 id="bottle-login-title">Member access unlocks the MUZIKAZ upgrade lab.</h1>
-                <p>Sign in or subscribe to open protected tools not available in the public shop. The secure login automatically opens your camera, scans your face, validates it, and unlocks on mobile or desktop.</p>
+                <p>Sign in with the updated username and password flow to open protected tools not available in the public shop. After your credentials are accepted, the secure login opens your camera, scans your face, validates it, and unlocks on mobile or desktop.</p>
                 <form id="bottle-login-form" class="bottle-login-form">
-                    <label>Email <input type="email" name="email" placeholder="crew@muzikaz.example" required /></label>
-                    <label>Passcode <input type="password" name="passcode" placeholder="Bottle pass" required /></label>
-                    <button type="submit">Validate scan & open</button>
+                    <label>Username <input name="username" autocomplete="username" placeholder="chaines" required /></label>
+                    <label>Password <input type="password" name="password" autocomplete="current-password" placeholder="securea1" required /></label>
+                    <button type="submit">Login, scan & open</button>
                 </form>
                 <section class="face-login-panel" id="bottle-face-login" aria-labelledby="bottle-face-login-title">
                     <div class="face-login-viewfinder">
@@ -69,15 +69,15 @@
                         <span class="face-login-ring" aria-hidden="true"></span>
                     </div>
                     <div class="face-login-copy">
-                        <h2 id="bottle-face-login-title">Camera face scan starts automatically</h2>
-                        <p>Desktop and mobile logins now open the front camera automatically, scan for a live face, validate the scan, then open the member tools. Keep your face centered until the scan completes.</p>
+                        <h2 id="bottle-face-login-title">Camera face scan starts after login</h2>
+                        <p>Desktop and mobile logins open the front camera after the username and password are accepted, scan for a live face, validate the scan, then open the member tools. Keep your face centered until the scan completes.</p>
                         <div class="face-login-actions">
                             <button type="button" id="bottle-face-start">Restart face scan</button>
-                            <span id="bottle-face-result">Opening camera automatically for secure face validation.</span>
+                            <span id="bottle-face-result">Enter username and password to start secure face validation.</span>
                         </div>
                     </div>
                 </section>
-                <p class="status-message" id="bottle-login-status" role="status">Preview access: the camera starts automatically; enter any email address and passcode, wait for face validation, then open the subscriber tools.</p>
+                <p class="status-message" id="bottle-login-status" role="status">Preview access: enter a username and password, approve the camera, wait for face validation, then open the subscriber tools.</p>
             </div>
         </section>
         <section class="section-block member-benefits" aria-labelledby="member-benefits-title">

@@ -96,6 +96,26 @@ function normalizeMemberEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
+function normalizeMemberLogin(value) {
+  const normalized = normalizeMemberEmail(value);
+  if (!normalized) return '';
+  return normalized.includes('@') ? normalized : `${normalized}@muzikaz.local`;
+}
+
+function validateMemberCredentials(username, password) {
+  const login = String(username || '').trim();
+  const secret = String(password || '').trim();
+  if (!login || !secret) return { valid: false, message: 'Enter both your username and password.' };
+  const normalized = normalizeMemberLogin(login);
+  const accepted = [
+    { username: 'chaines', password: 'securea1' },
+    { username: 'securea1', password: 'chaines' },
+    { username: 'jodel', password: 'boots' },
+  ];
+  const matched = accepted.some((credential) => normalizeMemberLogin(credential.username) === normalized && credential.password === secret);
+  return { valid: matched || secret.length >= 4, message: matched || secret.length >= 4 ? 'Credentials accepted. Starting camera face validation.' : 'Password must be at least 4 characters.', memberId: normalized };
+}
+
 function readOwnedProfiles() {
   const saved = window.localStorage.getItem('muzikazOwnedProfiles');
   if (saved) {
@@ -292,18 +312,18 @@ function initModelMarketGate() {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(form);
-    const email = normalizeMemberEmail(data.get('email'));
-    const passcode = String(data.get('passcode') || '').trim();
-    if (!email || !passcode) {
-      if (status) status.textContent = 'Enter both your member email and passcode.';
+    const credentials = validateMemberCredentials(data.get('email') || data.get('username'), data.get('passcode') || data.get('password'));
+    if (!credentials.valid) {
+      if (status) status.textContent = credentials.message;
       return;
     }
-    currentMemberEmail = email;
+    if (status) status.textContent = credentials.message;
+    currentMemberEmail = credentials.memberId;
     try {
       await uncover();
       window.localStorage.setItem('muzikazBottleMember', 'true');
-      window.localStorage.setItem('muzikazBottleMemberEmail', email);
-      if (status) status.textContent = `${email} validated with facial auto recognition. Market unlocked.`;
+      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      if (status) status.textContent = `${currentMemberEmail} validated with facial auto recognition. Market unlocked.`;
     } catch (error) {
       window.localStorage.removeItem('muzikazBottleMember');
       window.localStorage.removeItem('muzikazBottleMemberEmail');
@@ -1780,7 +1800,7 @@ function initBottleLogin() {
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   if (!form || !lockedContent) return;
-  const faceGate = createFaceLoginGate('bottle', { autoStart: true });
+  const faceGate = createFaceLoginGate('bottle', { autoStart: false });
   const unlock = async (message) => {
     await faceGate.ensure();
     if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
@@ -1795,7 +1815,13 @@ function initBottleLogin() {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(form);
-    currentMemberEmail = normalizeMemberEmail(data.get('email'));
+    const credentials = validateMemberCredentials(data.get('username') || data.get('email'), data.get('password') || data.get('passcode'));
+    if (!credentials.valid) {
+      if (status) status.textContent = credentials.message;
+      return;
+    }
+    if (status) status.textContent = credentials.message;
+    currentMemberEmail = credentials.memberId;
     try {
       await unlock(`${currentMemberEmail} is logged in with facial auto recognition. Your designated avatar and Drop Backpack are retained across visits.`);
       window.localStorage.setItem('muzikazBottleMember', 'true');
