@@ -74,6 +74,42 @@ const ownedProfilesSeed = {
 let currentMemberEmail = window.localStorage.getItem('muzikazBottleMemberEmail') || '';
 
 
+
+const TOGGLE_NAVIGATION_REMOVALS = [
+  'OMConsole',
+  'CHAINeS AR Collectibles',
+  'Flex Fit',
+  'Theme',
+  'Live Feed',
+  'Market Mode',
+  'Copy'
+];
+const TOGGLE_NAVIGATION_SELECTOR = [
+  '.nav',
+  '.button-menu',
+  '.layer-menu',
+  '.market-filter-menu',
+  '.house-action-menu',
+  '.house-world-menu',
+  '.share-menu',
+  '.secondary-ops'
+].join(',');
+
+function containsRemovedToggleEntry(text = '') {
+  const normalized = String(text).replace(/\s+/g, ' ').trim().toLowerCase();
+  return TOGGLE_NAVIGATION_REMOVALS.some((entry) => normalized.includes(entry.toLowerCase()));
+}
+
+function removeDuplicateToggleNavigationEntries(root = document) {
+  root.querySelectorAll(TOGGLE_NAVIGATION_SELECTOR).forEach((panel) => {
+    panel.querySelectorAll('a, button, option, li').forEach((item) => {
+      if (containsRemovedToggleEntry(item.textContent || item.getAttribute('aria-label') || item.value || '')) {
+        item.remove();
+      }
+    });
+  });
+}
+
 function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -83,6 +119,8 @@ function closeMenu() {
   nav?.classList.remove('is-open');
   menuButton?.setAttribute('aria-expanded', 'false');
 }
+
+removeDuplicateToggleNavigationEntries();
 
 function updateCart(button, label = 'Added') {
   syncCartCount();
@@ -518,6 +556,7 @@ document.querySelector('#owned-assets-grid')?.addEventListener('click', (event) 
 
 
 menuButton?.addEventListener('click', () => {
+  removeDuplicateToggleNavigationEntries();
   const isOpen = nav.classList.toggle('is-open');
   menuButton.setAttribute('aria-expanded', String(isOpen));
 });
@@ -648,9 +687,7 @@ const assetCatalog = {
     { id: 'creator-vault', page: 'members.html', name: 'Creator Vault Bundle', category: 'Website Packages', price: '$20.00', asset: 'accessories_banner_2x_transparent.png', copy: 'Subscriber-style vault bundle with locked creator tools, owned collection copy, and upgrade slots.' },
     { id: 'event-landing', page: 'online-events.html', name: 'Event Landing Bundle', category: 'Website Packages', price: '$20.00', asset: 'available_online_events_banner_2x_transparent.png', copy: 'Online event landing bundle for tickets, stream promos, and merch-connected campaign pages.' },
   ],
-  controlPackages: [
-    { id: 'omconsole', name: 'OMConsole Package', category: 'Control Systems', price: '$49.00', copy: 'Integrate OMConsole gesture, facial tone, muscle, and EEG controls into a custom website experience with editable design hooks.' },
-  ],
+  controlPackages: [],
   characterWorldAssets: [
     { id: 'avatar-loadout', name: 'Avatar Loadout Shelf', category: 'Avatars', price: '$26.00', asset: 'trait_avatars_row_1_2x.png', connectsTo: ['Trait Avatars', 'New Legends'], copy: 'Base bodies, alternate skins, expressions, profile poses, and trait-ready avatar slots for character-specific MUZIKAZ loadouts.' },
     { id: 'pet-companions', name: 'Pet Companion Pack', category: 'Pets', price: '$24.00', asset: 'trait_avatars_row_2_2x.png', connectsTo: ['Crew', 'New Legends'], copy: 'Matching companion pets that follow a selected character through lore pages, market cards, and game-side follower ideas.' },
