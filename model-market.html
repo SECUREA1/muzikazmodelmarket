@@ -48,9 +48,24 @@
                 <form id="model-market-login-form" class="bottle-login-form">
                     <label>Email <input type="email" name="email" autocomplete="email" placeholder="crew@muzikaz.example" required /></label>
                     <label>Passcode <input type="password" name="passcode" autocomplete="current-password" placeholder="Bottle pass" required /></label>
-                    <button type="submit">Uncover market</button>
+                    <button type="submit">Scan face & uncover</button>
                 </form>
-                <p class="status-message" id="model-market-login-status" role="status">Enter your Bottle member email and passcode to continue.</p>
+                <section class="face-login-panel" id="model-market-face-login" aria-labelledby="model-market-face-login-title">
+                    <div class="face-login-viewfinder">
+                        <video id="model-market-face-video" playsinline muted aria-label="Face scan camera preview"></video>
+                        <canvas id="model-market-face-canvas" width="320" height="240" aria-hidden="true"></canvas>
+                        <span class="face-login-ring" aria-hidden="true"></span>
+                    </div>
+                    <div class="face-login-copy">
+                        <h2 id="model-market-face-login-title">Facial auto recognition required</h2>
+                        <p>Validate a centered live face scan on mobile or desktop before the covered market opens on this device.</p>
+                        <div class="face-login-actions">
+                            <button type="button" id="model-market-face-start">Start face scan</button>
+                            <span id="model-market-face-result">Waiting for secure camera permission.</span>
+                        </div>
+                    </div>
+                </section>
+                <p class="status-message" id="model-market-login-status" role="status">Enter your Bottle member email and passcode, then complete the face scan to continue.</p>
                 <a class="btn ghost" href="members.html#bottle-login">Open members area</a>
             </div>
         </div>
