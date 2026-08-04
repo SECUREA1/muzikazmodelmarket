@@ -72,6 +72,8 @@ const ownedProfilesSeed = {
   'collector@muzikaz.example': ['Legends 3D Model Pack', 'Crew Cap', 'Hero Banner'],
 };
 let currentMemberEmail = window.localStorage.getItem('muzikazBottleMemberEmail') || '';
+let currentMemberName = window.localStorage.getItem('muzikazBottleMemberName') || '';
+const MEMBER_ACCOUNTS_KEY = 'muzikazMemberAccounts';
 
 
 function scrollToSection(id) {
@@ -94,6 +96,49 @@ function updateCart(button, label = 'Added') {
 
 function normalizeMemberEmail(email) {
   return String(email || '').trim().toLowerCase();
+}
+
+function normalizeMemberUsername(username) {
+  const raw = String(username || '').trim().replace(/^@+/, '').toLowerCase();
+  const clean = raw.replace(/[^a-z0-9_.-]/g, '').slice(0, 24);
+  return clean ? `@${clean}` : '';
+}
+
+function readMemberAccounts() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(MEMBER_ACCOUNTS_KEY) || '{}');
+    return saved && typeof saved === 'object' ? saved : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function writeMemberAccounts(accounts) {
+  window.localStorage.setItem(MEMBER_ACCOUNTS_KEY, JSON.stringify(accounts));
+}
+
+function memberDisplayName(identifier = currentMemberEmail) {
+  const accounts = readMemberAccounts();
+  const key = normalizeMemberEmail(identifier);
+  return accounts[key]?.username || (key === normalizeMemberEmail(currentMemberEmail) ? currentMemberName : '') || key;
+}
+
+function resolveMemberLogin(formData) {
+  const email = normalizeMemberEmail(formData.get('email'));
+  const username = normalizeMemberUsername(formData.get('username'));
+  const password = String(formData.get('passcode') || '').trim();
+  const faceMode = String(formData.get('faceMode') || 'tiny');
+  const identifier = email || (username ? `${username.slice(1)}@username.muzikaz.local` : '');
+  if (!identifier || !password) return { ok: false, message: 'Enter an email or unique @username plus a password.' };
+  const accounts = readMemberAccounts();
+  const duplicate = username && Object.entries(accounts).find(([key, account]) => account.username === username && key !== identifier);
+  if (duplicate) return { ok: false, message: `${username} is already tied to another member label. Choose a different @username.` };
+  const existing = accounts[identifier];
+  const starterPass = password.toUpperCase() === 'MUZIKAZ';
+  if (existing && existing.password !== password && !starterPass) return { ok: false, message: 'Password does not match the saved member memory for this username or email.' };
+  accounts[identifier] = { email, username: username || existing?.username || (email ? `@${email.split('@')[0].replace(/[^a-z0-9_.-]/gi, '').toLowerCase().slice(0, 24)}` : ''), password: starterPass && existing?.password ? existing.password : password, faceMode, updatedAt: new Date().toISOString() };
+  writeMemberAccounts(accounts);
+  return { ok: true, identifier, displayName: accounts[identifier].username || identifier, faceMode };
 }
 
 function readOwnedProfiles() {
@@ -205,7 +250,7 @@ function createFaceLoginGate(prefix, options = {}) {
   let passed = false;
   let running = false;
   let stream;
-  const { autoStart = false } = options;
+  const { autoStart = false, mode = 'tiny' } = options;
   const setResult = (message) => { if (result) result.textContent = message; };
   const stop = () => {
     stream?.getTracks?.().forEach((track) => track.stop());
@@ -221,7 +266,7 @@ function createFaceLoginGate(prefix, options = {}) {
     window.sessionStorage.setItem(sessionKey(), 'true');
     panel.dataset.faceValidated = 'true';
     if (snapshot && snapshotUrl) { snapshot.src = snapshotUrl; snapshot.hidden = false; video.hidden = true; }
-    setResult('Approved — YOLO face scan validated.');
+    setResult(`Approved — ${mode === 'browser' ? 'browser FaceDetector' : mode === 'camera' ? 'camera snapshot' : 'tiny YOLO'} face scan validated.`);
     stop();
   };
   const analyzeFrame = () => {
@@ -313,7 +358,7 @@ function createFaceLoginGate(prefix, options = {}) {
     drawYoloBoxes(faces);
     if (snapshot) { snapshot.src = canvas.toDataURL('image/jpeg', .86); snapshot.hidden = false; }
     panel.dataset.yoloActive = faces.length ? 'true' : 'searching';
-    setResult(faces.length ? `YOLO face scanner active — ${faces.length} face target${faces.length === 1 ? '' : 's'} locked.` : 'YOLO face scanner active — searching for a centered face.');
+    setResult(faces.length ? `${mode === 'browser' ? 'Browser FaceDetector' : mode === 'camera' ? 'Camera snapshot' : 'Tiny YOLO'} scanner active — ${faces.length} face target${faces.length === 1 ? '' : 's'} locked.` : `${mode === 'browser' ? 'Browser FaceDetector' : mode === 'camera' ? 'Camera snapshot' : 'Tiny YOLO'} scanner active — searching for a centered face.`);
     return faces.length > 0 && signature.skinRatio > .04 && signature.contrast >= 14 && signaturesMatch(signature);
   }
   async function scan() {
@@ -323,7 +368,7 @@ function createFaceLoginGate(prefix, options = {}) {
     running = true;
     panel.dataset.scanning = 'true';
     panel.dataset.yoloActive = 'true';
-    setResult('YOLO face scanner active — opening camera.');
+    setResult(`${mode === 'browser' ? 'Browser FaceDetector' : mode === 'camera' ? 'Camera snapshot' : 'Tiny YOLO'} scanner active — opening camera.`);
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
     video.srcObject = stream;
     video.hidden = false;
@@ -359,8 +404,9 @@ function initModelMarketGate() {
   const status = document.querySelector('#model-market-login-status');
   if (!cover || !form) return;
 
-  const faceGate = createFaceLoginGate('model-market');
-  const uncover = async () => {
+  let faceGate = createFaceLoginGate('model-market');
+  const uncover = async (faceMode = 'tiny') => {
+    faceGate = createFaceLoginGate('model-market', { mode: faceMode });
     await faceGate.ensure();
     document.body.classList.remove('model-market-gated');
     cover.setAttribute('hidden', '');
@@ -374,21 +420,23 @@ function initModelMarketGate() {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(form);
-    const email = normalizeMemberEmail(data.get('email'));
-    const passcode = String(data.get('passcode') || '').trim().toUpperCase();
-    if (!email || passcode !== 'MUZIKAZ') {
-      if (status) status.textContent = 'Enter your member email and the MUZIKAZ passcode.';
+    const login = resolveMemberLogin(data);
+    if (!login.ok) {
+      if (status) status.textContent = login.message;
       return;
     }
-    currentMemberEmail = email;
+    currentMemberEmail = login.identifier;
+    currentMemberName = login.displayName;
     try {
-      await uncover();
+      await uncover(login.faceMode);
       window.localStorage.setItem('muzikazBottleMember', 'true');
-      window.localStorage.setItem('muzikazBottleMemberEmail', email);
-      if (status) status.textContent = `${email} validated with facial auto recognition. Market unlocked.`;
+      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      window.localStorage.setItem('muzikazBottleMemberName', currentMemberName);
+      if (status) status.textContent = `${currentMemberName} validated with ${login.faceMode} facial recognition. Market unlocked.`;
     } catch (error) {
       window.localStorage.removeItem('muzikazBottleMember');
       window.localStorage.removeItem('muzikazBottleMemberEmail');
+      window.localStorage.removeItem('muzikazBottleMemberName');
       if (status) status.textContent = error.message;
     }
   });
@@ -600,14 +648,14 @@ function renderOwnedCollection(preferredOwner = currentMemberEmail) {
   }
   const owners = Object.keys(profiles).sort((a, b) => (a === currentMemberEmail ? -1 : b === currentMemberEmail ? 1 : a.localeCompare(b)));
   select.disabled = false;
-  select.innerHTML = owners.map((profile) => `<option value="${escapeMarkup(profile)}" ${profile === owner ? 'selected' : ''}>${escapeMarkup(profile)}${profile === currentMemberEmail ? ' (you)' : ''}</option>`).join('');
-  current.textContent = currentMemberEmail;
-  copy.textContent = owner === currentMemberEmail ? 'Set token values, list assets, and manage trades from your profile Backpack.' : `Viewing ${owner}'s shared Backpack while logged in as ${currentMemberEmail}.`;
+  select.innerHTML = owners.map((profile) => `<option value="${escapeMarkup(profile)}" ${profile === owner ? 'selected' : ''}>${escapeMarkup(memberDisplayName(profile) || profile)}${profile === currentMemberEmail ? ' (you)' : ''}</option>`).join('');
+  current.textContent = memberDisplayName(currentMemberEmail) || currentMemberEmail;
+  copy.textContent = owner === currentMemberEmail ? `Set token values, list assets, and manage trades from ${memberDisplayName(currentMemberEmail)}.` : `Viewing ${memberDisplayName(owner) || owner}'s shared Backpack while logged in as ${memberDisplayName(currentMemberEmail) || currentMemberEmail}.`;
   const assets = profiles[owner] || [];
   const availableTokens = backpackBalance(currentMemberEmail);
   if (balance) balance.textContent = `${availableTokens.toLocaleString()} MZK`;
   const listedCount = assets.filter((asset) => backpackListing(owner, asset).listed).length;
-  summary.innerHTML = `<article><strong>${assets.length}</strong><span>Backpack items</span></article><article><strong>${listedCount}</strong><span>Listed for profile trade</span></article><article><strong>${owner === currentMemberEmail ? availableTokens.toLocaleString() + ' MZK' : 'Market view'}</strong><span>${escapeMarkup(owner)}</span></article>`;
+  summary.innerHTML = `<article><strong>${assets.length}</strong><span>Backpack items</span></article><article><strong>${listedCount}</strong><span>Listed for profile trade</span></article><article><strong>${owner === currentMemberEmail ? availableTokens.toLocaleString() + ' MZK' : 'Market view'}</strong><span>${escapeMarkup(memberDisplayName(owner) || owner)}</span></article>`;
   grid.innerHTML = assets.map((asset, assetIndex) => {
     const detail = ownedAssetDetail(asset);
     const listing = backpackListing(owner, asset);
@@ -1862,8 +1910,9 @@ function initBottleLogin() {
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   if (!form || !lockedContent) return;
-  const faceGate = createFaceLoginGate('bottle');
-  const unlock = async (message) => {
+  let faceGate = createFaceLoginGate('bottle');
+  const unlock = async (message, faceMode = 'tiny') => {
+    faceGate = createFaceLoginGate('bottle', { mode: faceMode });
     await faceGate.ensure();
     if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
     lockedContent.dataset.locked = 'false';
@@ -1871,26 +1920,30 @@ function initBottleLogin() {
   };
   if (hasBottleLogin()) {
     currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
-    unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`).catch((error) => { if (status) status.textContent = error.message; });
+    currentMemberName = window.localStorage.getItem('muzikazBottleMemberName') || memberDisplayName(currentMemberEmail);
+    unlock(`Bottle member access is active for ${currentMemberName || currentMemberEmail}. Subscriber tools are unlocked.`, readMemberAccounts()[currentMemberEmail]?.faceMode).catch((error) => { if (status) status.textContent = error.message; });
     renderOwnedCollection(currentMemberEmail);
   }
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(form);
-    currentMemberEmail = normalizeMemberEmail(data.get('email'));
-    const passcode = String(data.get('passcode') || '').trim().toUpperCase();
-    if (!currentMemberEmail || passcode !== 'MUZIKAZ') {
-      if (status) status.textContent = 'Login denied. Use a valid email and the MUZIKAZ access code before face approval.';
+    const login = resolveMemberLogin(data);
+    if (!login.ok) {
+      if (status) status.textContent = login.message;
       return;
     }
+    currentMemberEmail = login.identifier;
+    currentMemberName = login.displayName;
     try {
-      await unlock(`${currentMemberEmail} is logged in with facial auto recognition. Your designated avatar and Drop Backpack are retained across visits.`);
+      await unlock(`${currentMemberName} is logged in with ${login.faceMode} facial recognition. Your username, email, password prompt memory, designated avatar, and Drop Backpack are retained across visits.`, login.faceMode);
       window.localStorage.setItem('muzikazBottleMember', 'true');
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      window.localStorage.setItem('muzikazBottleMemberName', currentMemberName);
       renderOwnedCollection(currentMemberEmail);
     } catch (error) {
       window.localStorage.removeItem('muzikazBottleMember');
       window.localStorage.removeItem('muzikazBottleMemberEmail');
+      window.localStorage.removeItem('muzikazBottleMemberName');
       if (status) status.textContent = error.message;
       return;
     }

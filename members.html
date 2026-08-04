@@ -58,8 +58,10 @@
                 <h1 id="bottle-login-title">Member access unlocks the MUZIKAZ upgrade lab.</h1>
                 <p>Sign in or subscribe to open protected tools not available in the public shop. The page stays locked until the login is valid, your face scan snapshot is captured, and the validation result is approved.</p>
                 <form id="bottle-login-form" class="bottle-login-form">
-                    <label>Email <input type="email" name="email" placeholder="crew@muzikaz.example" required /></label>
-                    <label>Passcode <input type="password" name="passcode" placeholder="Bottle pass" required /></label>
+                    <label>Name or @username <input type="text" name="username" autocomplete="username" placeholder="@crewname" /></label>
+                    <label>Email <input type="email" name="email" autocomplete="email" placeholder="crew@muzikaz.example" /></label>
+                    <label>Custom password <input type="password" name="passcode" autocomplete="current-password" placeholder="Bottle pass or saved password" required /></label>
+                    <label>Face validation <select name="faceMode"><option value="tiny" selected>Tiny YOLO face check</option><option value="browser">Browser FaceDetector</option><option value="camera">Camera snapshot match</option></select></label>
                     <button type="submit">Open member tools</button>
                 </form>
                 <section class="face-login-panel face-login-panel--discreet" id="bottle-face-login" aria-labelledby="bottle-face-login-title">
@@ -78,7 +80,7 @@
                         </div>
                     </div>
                 </section>
-                <p class="status-message" id="bottle-login-status" role="status">Preview access: enter any email address with passcode MUZIKAZ; the page unlocks only after the displayed face snapshot is approved.</p>
+                <p class="status-message" id="bottle-login-status" role="status">Preview access: enter either a unique @username with password or an email with password. New profiles remember the password locally; MUZIKAZ still works as the starter passcode.</p>
             </div>
         </section>
         <section class="section-block member-benefits" aria-labelledby="member-benefits-title">
