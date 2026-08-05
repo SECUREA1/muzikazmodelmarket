@@ -44,31 +44,30 @@
             <div class="member-login-card">
                 <p class="kicker">Members only</p>
                 <h1 id="model-market-login-title">Sign in to uncover the Model Market.</h1>
-                <p>The complete market stays covered until Bottle member access is active. Sign in to run a quiet camera check and uncover the page on this device.</p>
+                <p>Choose Log In or Sign Up. After the password is accepted, the front camera scans automatically and the market opens only when the enrolled face matches.</p>
                 <form id="model-market-login-form" class="bottle-login-form">
                     <label>Name or @username <input type="text" name="username" autocomplete="username" placeholder="@crewname" /></label>
                     <label>Email <input type="email" name="email" autocomplete="email" placeholder="crew@muzikaz.example" /></label>
                     <label>Custom password <input type="password" name="passcode" autocomplete="current-password" placeholder="Bottle pass or saved password" required /></label>
-                    <label>Face validation <select name="faceMode"><option value="tiny" selected>Tiny YOLO face check</option><option value="browser">Browser FaceDetector</option><option value="camera">Camera snapshot match</option></select></label>
-                    <button type="submit">Uncover market</button>
+                    <div class="login-choice" role="group" aria-label="Choose login or signup"><button type="submit" name="accountAction" value="login">Log in</button><button type="submit" name="accountAction" value="signup" class="ghost">Sign up</button></div>
                 </form>
                 <section class="face-login-panel face-login-panel--discreet" id="model-market-face-login" aria-labelledby="model-market-face-login-title">
                     <div class="face-login-viewfinder">
                         <video id="model-market-face-video" playsinline muted aria-label="Face scan camera preview"></video>
                         <canvas id="model-market-face-canvas" width="320" height="240" aria-hidden="true"></canvas>
-                        <img id="model-market-face-snapshot" alt="Approved YOLO face scan snapshot" hidden />
+                        <img id="model-market-face-snapshot" alt="Approved face scan snapshot" hidden />
                         <span class="face-login-ring" aria-hidden="true"></span>
                     </div>
                     <div class="face-login-copy">
-                        <h2 id="model-market-face-login-title">Discreet secure face check</h2>
-                        <p class="visually-hidden">After login, the front camera opens automatically to validate a centered live face before the covered market opens on this device.</p>
+                        <h2 id="model-market-face-login-title">Automatic face match</h2>
+                        <p class="visually-hidden">After login or signup, the front camera captures and compares the face scan automatically before the market opens.</p>
                         <div class="face-login-actions">
                             <button type="button" id="model-market-face-start" class="visually-hidden">Restart face scan</button>
-                            <span id="model-market-face-result">Secure check is ready.</span>
+                            <span id="model-market-face-result">Enter credentials, then the secure scan starts automatically.</span>
                         </div>
                     </div>
                 </section>
-                <p class="status-message" id="model-market-login-status" role="status">Enter your unique @username or email with a saved password; choose the tiny YOLO or browser face validation prompt to unlock.</p>
+                <p class="status-message" id="model-market-login-status" role="status">Log in with a saved profile or sign up with a new username/email. Access requires both the password and face match.</p>
                 <a class="btn ghost" href="members.html#bottle-login">Open members area</a>
             </div>
         </div>

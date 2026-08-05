@@ -56,13 +56,12 @@
             <div class="member-login-card">
                 <p class="kicker">Members only</p>
                 <h1 id="bottle-login-title">Member access unlocks the MUZIKAZ upgrade lab.</h1>
-                <p>Sign in or subscribe to open protected tools not available in the public shop. The page stays locked until the login is valid, your face scan snapshot is captured, and the validation result is approved.</p>
+                <p>Choose Log In or Sign Up. After the password is accepted, the front camera scans automatically and member tools open only when the enrolled face matches.</p>
                 <form id="bottle-login-form" class="bottle-login-form">
                     <label>Name or @username <input type="text" name="username" autocomplete="username" placeholder="@crewname" /></label>
                     <label>Email <input type="email" name="email" autocomplete="email" placeholder="crew@muzikaz.example" /></label>
                     <label>Custom password <input type="password" name="passcode" autocomplete="current-password" placeholder="Bottle pass or saved password" required /></label>
-                    <label>Face validation <select name="faceMode"><option value="tiny" selected>Tiny YOLO face check</option><option value="browser">Browser FaceDetector</option><option value="camera">Camera snapshot match</option></select></label>
-                    <button type="submit">Open member tools</button>
+                    <div class="login-choice" role="group" aria-label="Choose login or signup"><button type="submit" name="accountAction" value="login">Log in</button><button type="submit" name="accountAction" value="signup" class="ghost">Sign up</button></div>
                 </form>
                 <section class="face-login-panel face-login-panel--discreet" id="bottle-face-login" aria-labelledby="bottle-face-login-title">
                     <div class="face-login-viewfinder">
@@ -72,15 +71,15 @@
                         <span class="face-login-ring" aria-hidden="true"></span>
                     </div>
                     <div class="face-login-copy">
-                        <h2 id="bottle-face-login-title">Secure face snapshot approval</h2>
-                        <p class="visually-hidden">After login, the front camera captures a face snapshot, shows it on screen, validates it against the enrolled scan for this login, then opens the member tools.</p>
+                        <h2 id="bottle-face-login-title">Automatic face match</h2>
+                        <p class="visually-hidden">After login or signup, the front camera captures and compares the face scan automatically before member tools open.</p>
                         <div class="face-login-actions">
                             <button type="button" id="bottle-face-start" class="visually-hidden">Restart face scan</button>
-                            <span id="bottle-face-result">Secure check is ready.</span>
+                            <span id="bottle-face-result">Enter credentials, then the secure scan starts automatically.</span>
                         </div>
                     </div>
                 </section>
-                <p class="status-message" id="bottle-login-status" role="status">Preview access: enter either a unique @username with password or an email with password. New profiles remember the password locally; MUZIKAZ still works as the starter passcode.</p>
+                <p class="status-message" id="bottle-login-status" role="status">Log in with a saved profile or sign up with a new username/email. Access requires both the password and face match.</p>
             </div>
         </section>
         <section class="section-block member-benefits" aria-labelledby="member-benefits-title">
