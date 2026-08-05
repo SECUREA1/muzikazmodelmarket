@@ -17,3 +17,15 @@ services:
         value: data/uploads/models
       - key: MAX_MODEL_UPLOAD_MB
         value: 50
+
+  - type: web
+    name: xreal-spatial-model-catalogue
+    runtime: static
+    rootDir: apps/render-web-catalogue
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    pullRequestPreviewsEnabled: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
