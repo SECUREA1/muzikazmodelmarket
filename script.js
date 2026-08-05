@@ -72,8 +72,6 @@ const ownedProfilesSeed = {
   'collector@muzikaz.example': ['Legends 3D Model Pack', 'Crew Cap', 'Hero Banner'],
 };
 let currentMemberEmail = window.localStorage.getItem('muzikazBottleMemberEmail') || '';
-let currentMemberName = window.localStorage.getItem('muzikazBottleMemberName') || '';
-const MEMBER_ACCOUNTS_KEY = 'muzikazMemberAccounts';
 
 
 function scrollToSection(id) {
@@ -96,50 +94,6 @@ function updateCart(button, label = 'Added') {
 
 function normalizeMemberEmail(email) {
   return String(email || '').trim().toLowerCase();
-}
-
-function normalizeMemberUsername(username) {
-  const raw = String(username || '').trim().replace(/^@+/, '').toLowerCase();
-  const clean = raw.replace(/[^a-z0-9_.-]/g, '').slice(0, 24);
-  return clean ? `@${clean}` : '';
-}
-
-function readMemberAccounts() {
-  try {
-    const saved = JSON.parse(window.localStorage.getItem(MEMBER_ACCOUNTS_KEY) || '{}');
-    return saved && typeof saved === 'object' ? saved : {};
-  } catch (error) {
-    return {};
-  }
-}
-
-function writeMemberAccounts(accounts) {
-  window.localStorage.setItem(MEMBER_ACCOUNTS_KEY, JSON.stringify(accounts));
-}
-
-function memberDisplayName(identifier = currentMemberEmail) {
-  const accounts = readMemberAccounts();
-  const key = normalizeMemberEmail(identifier);
-  return accounts[key]?.username || (key === normalizeMemberEmail(currentMemberEmail) ? currentMemberName : '') || key;
-}
-
-function resolveMemberLogin(formData) {
-  const email = normalizeMemberEmail(formData.get('email'));
-  const username = normalizeMemberUsername(formData.get('username'));
-  const password = String(formData.get('passcode') || '').trim();
-  const accountAction = String(formData.get('accountAction') || 'login');
-  const identifier = email || (username ? `${username.slice(1)}@username.muzikaz.local` : '');
-  if (!identifier || !password) return { ok: false, message: 'Enter an email or unique @username plus a password.' };
-  const accounts = readMemberAccounts();
-  const duplicate = username && Object.entries(accounts).find(([key, account]) => account.username === username && key !== identifier);
-  if (duplicate) return { ok: false, message: `${username} is already tied to another member label. Choose a different @username.` };
-  const existing = accounts[identifier];
-  if (accountAction === 'signup' && existing) return { ok: false, message: 'That profile already exists. Use Log in or choose a new username/email.' };
-  if (accountAction !== 'signup' && !existing) return { ok: false, message: 'No saved profile found. Choose Sign up to enroll your password and face scan.' };
-  if (existing && existing.password !== password) return { ok: false, message: 'Password does not match the saved member profile.' };
-  accounts[identifier] = { email, username: username || existing?.username || (email ? `@${email.split('@')[0].replace(/[^a-z0-9_.-]/gi, '').toLowerCase().slice(0, 24)}` : ''), password, updatedAt: new Date().toISOString() };
-  writeMemberAccounts(accounts);
-  return { ok: true, identifier, displayName: accounts[identifier].username || identifier, isSignup: accountAction === 'signup' };
 }
 
 function readOwnedProfiles() {
@@ -234,206 +188,7 @@ function ownedAssetDetail(assetName) {
 }
 
 function hasBottleLogin() {
-  const email = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail);
-  return window.localStorage.getItem('muzikazBottleMember') === 'true' && Boolean(email) && window.sessionStorage.getItem(`bottleFaceValidated:${email}`) === 'true';
-}
-
-
-
-function playFaceScanSound(stage = 'scan') {
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContext) return;
-  const context = playFaceScanSound.context || (playFaceScanSound.context = new AudioContext());
-  if (context.state === 'suspended') context.resume().catch(() => {});
-  const now = context.currentTime;
-  const patterns = {
-    enroll: [[220, .08], [330, .08], [440, .12]],
-    validate: [[520, .06], [390, .06], [520, .1]],
-    approve: [[220, .045], [180, .045], [260, .05], [520, .08], [660, .08], [880, .16], [1320, .18]],
-    deny: [[180, .12], [120, .18]],
-    scan: [[300, .05], [360, .05]]
-  };
-  let offset = 0;
-  (patterns[stage] || patterns.scan).forEach(([frequency, duration]) => {
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.type = stage === 'deny' ? 'sawtooth' : stage === 'approve' ? 'triangle' : 'sine';
-    oscillator.frequency.setValueAtTime(frequency, now + offset);
-    gain.gain.setValueAtTime(0.0001, now + offset);
-    gain.gain.exponentialRampToValueAtTime(stage === 'approve' ? 0.12 : 0.08, now + offset + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + duration);
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start(now + offset);
-    oscillator.stop(now + offset + duration + 0.02);
-    offset += duration + 0.035;
-  });
-}
-
-function createFaceLoginGate(prefix, options = {}) {
-  const panel = document.querySelector(`#${prefix}-face-login`);
-  const video = document.querySelector(`#${prefix}-face-video`);
-  const canvas = document.querySelector(`#${prefix}-face-canvas`);
-  const startButton = document.querySelector(`#${prefix}-face-start`);
-  const snapshot = document.querySelector(`#${prefix}-face-snapshot`);
-  const result = document.querySelector(`#${prefix}-face-result`);
-  if (!panel || !video || !canvas) return { ensure: async () => true, reset: () => {} };
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  let passed = false;
-  let running = false;
-  let stream;
-  const { autoStart = false, mode = 'auto', enrollment = false } = options;
-  const setResult = (message) => { if (result) result.textContent = message; };
-  const stop = () => {
-    stream?.getTracks?.().forEach((track) => track.stop());
-    stream = null;
-    running = false;
-    panel.dataset.scanning = 'false';
-  };
-  const signatureKey = () => `${prefix}FaceSignature:${normalizeMemberEmail(currentMemberEmail || window.localStorage.getItem('muzikazBottleMemberEmail') || '')}`;
-  const sessionKey = () => `${prefix}FaceValidated:${normalizeMemberEmail(currentMemberEmail || window.localStorage.getItem('muzikazBottleMemberEmail') || '')}`;
-  const markPassed = (snapshotUrl = '') => {
-    passed = true;
-    window.sessionStorage.setItem(`${prefix}FaceValidated`, 'true');
-    window.sessionStorage.setItem(sessionKey(), 'true');
-    panel.dataset.faceValidated = 'true';
-    if (snapshot && snapshotUrl) { snapshot.src = snapshotUrl; snapshot.hidden = false; video.hidden = true; }
-    playFaceScanSound('approve');
-    setResult(enrollment ? 'Validation approved — face enrolled. Chain-and-chime access effect complete; member tools are opening.' : 'Validation approved — password and face match. Chain-and-chime access effect complete; member tools are opening.');
-    stop();
-  };
-  const analyzeFrame = () => {
-    const frame = context.getImageData(0, 0, canvas.width, canvas.height).data;
-    let total = 0, totalSq = 0, skinLike = 0, count = 0;
-    for (let i = 0; i < frame.length; i += 16) {
-      const r = frame[i], g = frame[i + 1], b = frame[i + 2];
-      const brightness = (r + g + b) / 3;
-      total += brightness; totalSq += brightness * brightness; count += 1;
-      if (r > 70 && g > 40 && b > 25 && r > b && Math.abs(r - g) > 10) skinLike += 1;
-    }
-    const average = total / count;
-    return { average: Math.round(average), contrast: Math.round(Math.sqrt(Math.max(0, totalSq / count - average * average))), skinRatio: Number((skinLike / count).toFixed(3)) };
-  };
-  const signaturesMatch = (next) => {
-    const stored = JSON.parse(window.localStorage.getItem(signatureKey()) || 'null');
-    if (!stored) {
-      if (!enrollment) return false;
-      window.localStorage.setItem(signatureKey(), JSON.stringify(next));
-      return true;
-    }
-    return Math.abs(stored.average - next.average) <= 38 && Math.abs(stored.contrast - next.contrast) <= 30 && Math.abs(stored.skinRatio - next.skinRatio) <= .18;
-  };
-  const intersectionOverUnion = (a, b) => {
-    const left = Math.max(a.x, b.x), top = Math.max(a.y, b.y);
-    const right = Math.min(a.x + a.width, b.x + b.width), bottom = Math.min(a.y + a.height, b.y + b.height);
-    const intersection = Math.max(0, right - left) * Math.max(0, bottom - top);
-    const union = a.width * a.height + b.width * b.height - intersection;
-    return union ? intersection / union : 0;
-  };
-  const drawYoloBoxes = (boxes) => {
-    context.save();
-    context.lineWidth = 3;
-    context.strokeStyle = '#9cff00';
-    context.fillStyle = 'rgba(156,255,0,.88)';
-    context.font = '700 12px Inter, system-ui, sans-serif';
-    boxes.slice(0, 3).forEach((box, index) => {
-      context.strokeRect(box.x, box.y, box.width, box.height);
-      context.fillText(`FACE ${Math.round(box.confidence * 100)}%`, box.x + 6, Math.max(14, box.y + 16 + index));
-    });
-    context.restore();
-  };
-  const detectYoloFaces = () => {
-    const { width, height } = canvas;
-    const image = context.getImageData(0, 0, width, height);
-    const data = image.data;
-    const boxes = [];
-    const cell = 32;
-    for (let y = 0; y <= height - cell * 2; y += 16) {
-      for (let x = 0; x <= width - cell * 2; x += 16) {
-        const boxWidth = cell * 2;
-        const boxHeight = Math.round(cell * 2.35);
-        if (x + boxWidth >= width || y + boxHeight >= height) continue;
-        let skin = 0, edge = 0, bright = 0, samples = 0;
-        for (let yy = y; yy < y + boxHeight; yy += 8) {
-          for (let xx = x; xx < x + boxWidth; xx += 8) {
-            const i = (yy * width + xx) * 4;
-            const r = data[i], g = data[i + 1], b = data[i + 2];
-            const luma = (r + g + b) / 3;
-            const right = Math.min(width - 1, xx + 3);
-            const below = Math.min(height - 1, yy + 3);
-            const ri = (yy * width + right) * 4;
-            const bi = (below * width + xx) * 4;
-            bright += luma;
-            edge += Math.abs(luma - ((data[ri] + data[ri + 1] + data[ri + 2]) / 3)) + Math.abs(luma - ((data[bi] + data[bi + 1] + data[bi + 2]) / 3));
-            if (r > 70 && g > 35 && b > 20 && r > b && r - Math.min(g, b) > 12) skin += 1;
-            samples += 1;
-          }
-        }
-        const skinRatio = skin / samples;
-        const edgeScore = edge / samples;
-        const brightness = bright / samples;
-        const aspectScore = 1 - Math.min(1, Math.abs((boxHeight / boxWidth) - 1.18));
-        const centerBias = 1 - Math.min(1, Math.hypot((x + boxWidth / 2 - width / 2) / width, (y + boxHeight / 2 - height / 2) / height));
-        const confidence = skinRatio * .48 + Math.min(edgeScore / 70, 1) * .22 + (brightness > 35 && brightness < 235 ? .16 : 0) + aspectScore * .08 + centerBias * .06;
-        if (confidence >= .42 && skinRatio >= .12 && edgeScore >= 10) boxes.push({ x, y, width: boxWidth, height: boxHeight, confidence });
-      }
-    }
-    return boxes.sort((a, b) => b.confidence - a.confidence).filter((box, index, sorted) => sorted.findIndex((candidate) => intersectionOverUnion(candidate, box) > .36) === index).slice(0, 5);
-  };
-  async function detectFace() {
-    if (!context || !video.videoWidth || !video.videoHeight) return false;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const signature = analyzeFrame();
-    let faces = [];
-    if ('FaceDetector' in window) {
-      try {
-        const detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 3 });
-        faces = (await detector.detect(canvas)).map((face) => ({ ...face.boundingBox, confidence: 1 }));
-      } catch (_) { faces = []; }
-    }
-    if (!faces.length) faces = detectYoloFaces();
-    drawYoloBoxes(faces);
-    if (snapshot) { snapshot.src = canvas.toDataURL('image/jpeg', .86); snapshot.hidden = false; }
-    panel.dataset.yoloActive = faces.length ? 'true' : 'searching';
-    setResult(faces.length ? `Face scanner active — ${faces.length} face target${faces.length === 1 ? '' : 's'} locked.` : 'Face scanner active — searching for a centered face.');
-    return faces.length > 0 && signature.skinRatio > .04 && signature.contrast >= 14 && signaturesMatch(signature);
-  }
-  async function scan() {
-    passed = window.sessionStorage.getItem(sessionKey()) === 'true';
-    if (passed || running) return passed;
-    if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access is not available in this browser. Use HTTPS or localhost for secure face scanning.');
-    running = true;
-    panel.dataset.scanning = 'true';
-    panel.dataset.yoloActive = 'true';
-    playFaceScanSound(enrollment ? 'enroll' : 'validate');
-    setResult(enrollment ? 'Credentials accepted — scanning now to enroll your face.' : 'Credentials accepted — scanning now to validate your face.');
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
-    video.srcObject = stream;
-    video.hidden = false;
-    await video.play().catch(() => {});
-    for (let attempt = 1; attempt <= 44; attempt += 1) {
-      if (await detectFace()) { markPassed(snapshot?.src || canvas.toDataURL('image/jpeg', .86)); return true; }
-      await new Promise((resolve) => setTimeout(resolve, 125));
-    }
-    stop();
-    playFaceScanSound('deny');
-    throw new Error('Face scan could not validate this profile. Improve lighting, center your face, and try again.');
-  }
-  const beginScan = () => scan().catch((error) => {
-    stop();
-    setResult(`${error.message} Submit login again to retry.`);
-  });
-  startButton?.addEventListener('click', beginScan);
-  if (window.sessionStorage.getItem(sessionKey()) === 'true') markPassed(snapshot?.src || '');
-  else if (autoStart) window.setTimeout(beginScan, 350);
-  return {
-    ensure: scan,
-    reset: () => {
-      passed = false;
-      panel.dataset.faceValidated = 'false';
-      window.sessionStorage.removeItem(`${prefix}FaceValidated`);
-      window.sessionStorage.removeItem(sessionKey());
-    }
-  };
+  return window.localStorage.getItem('muzikazBottleMember') === 'true' && Boolean(normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail));
 }
 
 function initModelMarketGate() {
@@ -442,41 +197,29 @@ function initModelMarketGate() {
   const status = document.querySelector('#model-market-login-status');
   if (!cover || !form) return;
 
-  let faceGate = createFaceLoginGate('model-market');
-  const uncover = async (accountMode = 'login') => {
-    faceGate = createFaceLoginGate('model-market', { enrollment: accountMode === 'signup' });
-    await faceGate.ensure();
+  const uncover = () => {
     document.body.classList.remove('model-market-gated');
     cover.setAttribute('hidden', '');
   };
 
   if (hasBottleLogin()) {
-    uncover().catch(() => { if (status) status.textContent = 'Face scan required to uncover the market.'; });
+    uncover();
     return;
   }
 
-  form.addEventListener('submit', async (event) => {
+  form.addEventListener('submit', (event) => {
     event.preventDefault();
     const data = new FormData(form);
-    const login = resolveMemberLogin(data);
-    if (!login.ok) {
-      if (status) status.textContent = login.message;
+    const email = normalizeMemberEmail(data.get('email'));
+    const passcode = String(data.get('passcode') || '').trim();
+    if (!email || !passcode) {
+      if (status) status.textContent = 'Enter both your member email and passcode.';
       return;
     }
-    currentMemberEmail = login.identifier;
-    currentMemberName = login.displayName;
-    try {
-      await uncover(login.isSignup ? 'signup' : 'login');
-      window.localStorage.setItem('muzikazBottleMember', 'true');
-      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-      window.localStorage.setItem('muzikazBottleMemberName', currentMemberName);
-      if (status) status.textContent = `${currentMemberName} unlocked the market with password and face match.`;
-    } catch (error) {
-      window.localStorage.removeItem('muzikazBottleMember');
-      window.localStorage.removeItem('muzikazBottleMemberEmail');
-      window.localStorage.removeItem('muzikazBottleMemberName');
-      if (status) status.textContent = error.message;
-    }
+    currentMemberEmail = email;
+    window.localStorage.setItem('muzikazBottleMember', 'true');
+    window.localStorage.setItem('muzikazBottleMemberEmail', email);
+    uncover();
   });
 }
 
@@ -686,14 +429,14 @@ function renderOwnedCollection(preferredOwner = currentMemberEmail) {
   }
   const owners = Object.keys(profiles).sort((a, b) => (a === currentMemberEmail ? -1 : b === currentMemberEmail ? 1 : a.localeCompare(b)));
   select.disabled = false;
-  select.innerHTML = owners.map((profile) => `<option value="${escapeMarkup(profile)}" ${profile === owner ? 'selected' : ''}>${escapeMarkup(memberDisplayName(profile) || profile)}${profile === currentMemberEmail ? ' (you)' : ''}</option>`).join('');
-  current.textContent = memberDisplayName(currentMemberEmail) || currentMemberEmail;
-  copy.textContent = owner === currentMemberEmail ? `Set token values, list assets, and manage trades from ${memberDisplayName(currentMemberEmail)}.` : `Viewing ${memberDisplayName(owner) || owner}'s shared Backpack while logged in as ${memberDisplayName(currentMemberEmail) || currentMemberEmail}.`;
+  select.innerHTML = owners.map((profile) => `<option value="${escapeMarkup(profile)}" ${profile === owner ? 'selected' : ''}>${escapeMarkup(profile)}${profile === currentMemberEmail ? ' (you)' : ''}</option>`).join('');
+  current.textContent = currentMemberEmail;
+  copy.textContent = owner === currentMemberEmail ? 'Set token values, list assets, and manage trades from your profile Backpack.' : `Viewing ${owner}'s shared Backpack while logged in as ${currentMemberEmail}.`;
   const assets = profiles[owner] || [];
   const availableTokens = backpackBalance(currentMemberEmail);
   if (balance) balance.textContent = `${availableTokens.toLocaleString()} MZK`;
   const listedCount = assets.filter((asset) => backpackListing(owner, asset).listed).length;
-  summary.innerHTML = `<article><strong>${assets.length}</strong><span>Backpack items</span></article><article><strong>${listedCount}</strong><span>Listed for profile trade</span></article><article><strong>${owner === currentMemberEmail ? availableTokens.toLocaleString() + ' MZK' : 'Market view'}</strong><span>${escapeMarkup(memberDisplayName(owner) || owner)}</span></article>`;
+  summary.innerHTML = `<article><strong>${assets.length}</strong><span>Backpack items</span></article><article><strong>${listedCount}</strong><span>Listed for profile trade</span></article><article><strong>${owner === currentMemberEmail ? availableTokens.toLocaleString() + ' MZK' : 'Market view'}</strong><span>${escapeMarkup(owner)}</span></article>`;
   grid.innerHTML = assets.map((asset, assetIndex) => {
     const detail = ownedAssetDetail(asset);
     const listing = backpackListing(owner, asset);
@@ -1948,43 +1691,24 @@ function initBottleLogin() {
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   if (!form || !lockedContent) return;
-  let faceGate = createFaceLoginGate('bottle');
-  const unlock = async (message, accountMode = 'login') => {
-    faceGate = createFaceLoginGate('bottle', { enrollment: accountMode === 'signup' });
-    await faceGate.ensure();
+  const unlock = async (message) => {
     if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
     lockedContent.dataset.locked = 'false';
     if (status) status.textContent = message;
   };
   if (hasBottleLogin()) {
     currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
-    currentMemberName = window.localStorage.getItem('muzikazBottleMemberName') || memberDisplayName(currentMemberEmail);
-    unlock(`Bottle member access is active for ${currentMemberName || currentMemberEmail}. Subscriber tools are unlocked.`, 'login').catch((error) => { if (status) status.textContent = error.message; });
+    unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`);
     renderOwnedCollection(currentMemberEmail);
   }
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(form);
-    const login = resolveMemberLogin(data);
-    if (!login.ok) {
-      if (status) status.textContent = login.message;
-      return;
-    }
-    currentMemberEmail = login.identifier;
-    currentMemberName = login.displayName;
-    try {
-      await unlock(`${currentMemberName} validation approved with password, automatic face scan, and chain-and-chime access effects. Your username, email, designated avatar, and Drop Backpack are retained across visits.`, login.isSignup ? 'signup' : 'login');
-      window.localStorage.setItem('muzikazBottleMember', 'true');
-      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-      window.localStorage.setItem('muzikazBottleMemberName', currentMemberName);
-      renderOwnedCollection(currentMemberEmail);
-    } catch (error) {
-      window.localStorage.removeItem('muzikazBottleMember');
-      window.localStorage.removeItem('muzikazBottleMemberEmail');
-      window.localStorage.removeItem('muzikazBottleMemberName');
-      if (status) status.textContent = error.message;
-      return;
-    }
+    currentMemberEmail = normalizeMemberEmail(data.get('email'));
+    window.localStorage.setItem('muzikazBottleMember', 'true');
+    window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+    renderOwnedCollection(currentMemberEmail);
+    await unlock(`${currentMemberEmail} is logged in. Your designated avatar and Drop Backpack are retained across visits.`);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
