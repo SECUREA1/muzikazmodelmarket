@@ -1,0 +1,15 @@
+{
+  "profileId": "xreal-air2-ultra-galaxy-s22",
+  "phone": "Samsung Galaxy S22",
+  "processorRequirement": "Snapdragon",
+  "glasses": "XREAL Air 2 Ultra",
+  "androidVersion": "PIN_AFTER_DEVICE_VALIDATION",
+  "oneUiVersion": "PIN_AFTER_DEVICE_VALIDATION",
+  "xrealSdkVersion": "PIN_AFTER_DEVICE_VALIDATION",
+  "controlGlassesVersion": "PIN_AFTER_DEVICE_VALIDATION",
+  "glassesFirmwareVersion": "PIN_AFTER_DEVICE_VALIDATION",
+  "unityVersion": "PIN_AFTER_DEVICE_VALIDATION",
+  "arFoundationVersion": "PIN_AFTER_DEVICE_VALIDATION",
+  "allowExperimentalMode": true,
+  "silentStackSwitchAllowed": false
+}
