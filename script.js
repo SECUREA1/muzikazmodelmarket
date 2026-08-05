@@ -127,18 +127,19 @@ function resolveMemberLogin(formData) {
   const email = normalizeMemberEmail(formData.get('email'));
   const username = normalizeMemberUsername(formData.get('username'));
   const password = String(formData.get('passcode') || '').trim();
-  const faceMode = String(formData.get('faceMode') || 'tiny');
+  const accountAction = String(formData.get('accountAction') || 'login');
   const identifier = email || (username ? `${username.slice(1)}@username.muzikaz.local` : '');
   if (!identifier || !password) return { ok: false, message: 'Enter an email or unique @username plus a password.' };
   const accounts = readMemberAccounts();
   const duplicate = username && Object.entries(accounts).find(([key, account]) => account.username === username && key !== identifier);
   if (duplicate) return { ok: false, message: `${username} is already tied to another member label. Choose a different @username.` };
   const existing = accounts[identifier];
-  const starterPass = password.toUpperCase() === 'MUZIKAZ';
-  if (existing && existing.password !== password && !starterPass) return { ok: false, message: 'Password does not match the saved member memory for this username or email.' };
-  accounts[identifier] = { email, username: username || existing?.username || (email ? `@${email.split('@')[0].replace(/[^a-z0-9_.-]/gi, '').toLowerCase().slice(0, 24)}` : ''), password: starterPass && existing?.password ? existing.password : password, faceMode, updatedAt: new Date().toISOString() };
+  if (accountAction === 'signup' && existing) return { ok: false, message: 'That profile already exists. Use Log in or choose a new username/email.' };
+  if (accountAction !== 'signup' && !existing) return { ok: false, message: 'No saved profile found. Choose Sign up to enroll your password and face scan.' };
+  if (existing && existing.password !== password) return { ok: false, message: 'Password does not match the saved member profile.' };
+  accounts[identifier] = { email, username: username || existing?.username || (email ? `@${email.split('@')[0].replace(/[^a-z0-9_.-]/gi, '').toLowerCase().slice(0, 24)}` : ''), password, updatedAt: new Date().toISOString() };
   writeMemberAccounts(accounts);
-  return { ok: true, identifier, displayName: accounts[identifier].username || identifier, faceMode };
+  return { ok: true, identifier, displayName: accounts[identifier].username || identifier, isSignup: accountAction === 'signup' };
 }
 
 function readOwnedProfiles() {
@@ -238,6 +239,36 @@ function hasBottleLogin() {
 }
 
 
+
+function playFaceScanSound(stage = 'scan') {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+  const context = playFaceScanSound.context || (playFaceScanSound.context = new AudioContext());
+  if (context.state === 'suspended') context.resume().catch(() => {});
+  const now = context.currentTime;
+  const patterns = {
+    enroll: [[220, .08], [330, .08], [440, .12]],
+    validate: [[520, .06], [390, .06], [520, .1]],
+    approve: [[660, .08], [880, .16]],
+    deny: [[180, .12], [120, .18]],
+    scan: [[300, .05], [360, .05]]
+  };
+  let offset = 0;
+  (patterns[stage] || patterns.scan).forEach(([frequency, duration]) => {
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = stage === 'deny' ? 'sawtooth' : 'sine';
+    oscillator.frequency.setValueAtTime(frequency, now + offset);
+    gain.gain.setValueAtTime(0.0001, now + offset);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + offset + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + duration);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start(now + offset);
+    oscillator.stop(now + offset + duration + 0.02);
+    offset += duration + 0.035;
+  });
+}
+
 function createFaceLoginGate(prefix, options = {}) {
   const panel = document.querySelector(`#${prefix}-face-login`);
   const video = document.querySelector(`#${prefix}-face-video`);
@@ -250,7 +281,7 @@ function createFaceLoginGate(prefix, options = {}) {
   let passed = false;
   let running = false;
   let stream;
-  const { autoStart = false, mode = 'tiny' } = options;
+  const { autoStart = false, mode = 'auto', enrollment = false } = options;
   const setResult = (message) => { if (result) result.textContent = message; };
   const stop = () => {
     stream?.getTracks?.().forEach((track) => track.stop());
@@ -266,7 +297,8 @@ function createFaceLoginGate(prefix, options = {}) {
     window.sessionStorage.setItem(sessionKey(), 'true');
     panel.dataset.faceValidated = 'true';
     if (snapshot && snapshotUrl) { snapshot.src = snapshotUrl; snapshot.hidden = false; video.hidden = true; }
-    setResult(`Approved — ${mode === 'browser' ? 'browser FaceDetector' : mode === 'camera' ? 'camera snapshot' : 'tiny YOLO'} face scan validated.`);
+    playFaceScanSound('approve');
+    setResult(enrollment ? 'Approved — face scan enrolled and member tools are opening.' : 'Approved — password and face match. Member tools are opening.');
     stop();
   };
   const analyzeFrame = () => {
@@ -283,7 +315,11 @@ function createFaceLoginGate(prefix, options = {}) {
   };
   const signaturesMatch = (next) => {
     const stored = JSON.parse(window.localStorage.getItem(signatureKey()) || 'null');
-    if (!stored) { window.localStorage.setItem(signatureKey(), JSON.stringify(next)); return true; }
+    if (!stored) {
+      if (!enrollment) return false;
+      window.localStorage.setItem(signatureKey(), JSON.stringify(next));
+      return true;
+    }
     return Math.abs(stored.average - next.average) <= 38 && Math.abs(stored.contrast - next.contrast) <= 30 && Math.abs(stored.skinRatio - next.skinRatio) <= .18;
   };
   const intersectionOverUnion = (a, b) => {
@@ -301,7 +337,7 @@ function createFaceLoginGate(prefix, options = {}) {
     context.font = '700 12px Inter, system-ui, sans-serif';
     boxes.slice(0, 3).forEach((box, index) => {
       context.strokeRect(box.x, box.y, box.width, box.height);
-      context.fillText(`YOLO FACE ${Math.round(box.confidence * 100)}%`, box.x + 6, Math.max(14, box.y + 16 + index));
+      context.fillText(`FACE ${Math.round(box.confidence * 100)}%`, box.x + 6, Math.max(14, box.y + 16 + index));
     });
     context.restore();
   };
@@ -358,17 +394,18 @@ function createFaceLoginGate(prefix, options = {}) {
     drawYoloBoxes(faces);
     if (snapshot) { snapshot.src = canvas.toDataURL('image/jpeg', .86); snapshot.hidden = false; }
     panel.dataset.yoloActive = faces.length ? 'true' : 'searching';
-    setResult(faces.length ? `${mode === 'browser' ? 'Browser FaceDetector' : mode === 'camera' ? 'Camera snapshot' : 'Tiny YOLO'} scanner active — ${faces.length} face target${faces.length === 1 ? '' : 's'} locked.` : `${mode === 'browser' ? 'Browser FaceDetector' : mode === 'camera' ? 'Camera snapshot' : 'Tiny YOLO'} scanner active — searching for a centered face.`);
+    setResult(faces.length ? `Face scanner active — ${faces.length} face target${faces.length === 1 ? '' : 's'} locked.` : 'Face scanner active — searching for a centered face.');
     return faces.length > 0 && signature.skinRatio > .04 && signature.contrast >= 14 && signaturesMatch(signature);
   }
   async function scan() {
     passed = window.sessionStorage.getItem(sessionKey()) === 'true';
     if (passed || running) return passed;
-    if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access is not available in this browser. Use HTTPS or localhost for YOLO face scanning.');
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access is not available in this browser. Use HTTPS or localhost for secure face scanning.');
     running = true;
     panel.dataset.scanning = 'true';
     panel.dataset.yoloActive = 'true';
-    setResult(`${mode === 'browser' ? 'Browser FaceDetector' : mode === 'camera' ? 'Camera snapshot' : 'Tiny YOLO'} scanner active — opening camera.`);
+    playFaceScanSound(enrollment ? 'enroll' : 'validate');
+    setResult(enrollment ? 'Face scanner active — saving your enrolled face scan.' : 'Face scanner active — validating against your enrolled face scan.');
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
     video.srcObject = stream;
     video.hidden = false;
@@ -378,7 +415,8 @@ function createFaceLoginGate(prefix, options = {}) {
       await new Promise((resolve) => setTimeout(resolve, 125));
     }
     stop();
-    throw new Error('YOLO face scan could not lock a live face. Improve lighting, center your face, and try again.');
+    playFaceScanSound('deny');
+    throw new Error('Face scan could not validate this profile. Improve lighting, center your face, and try again.');
   }
   const beginScan = () => scan().catch((error) => {
     stop();
@@ -405,8 +443,8 @@ function initModelMarketGate() {
   if (!cover || !form) return;
 
   let faceGate = createFaceLoginGate('model-market');
-  const uncover = async (faceMode = 'tiny') => {
-    faceGate = createFaceLoginGate('model-market', { mode: faceMode });
+  const uncover = async (accountMode = 'login') => {
+    faceGate = createFaceLoginGate('model-market', { enrollment: accountMode === 'signup' });
     await faceGate.ensure();
     document.body.classList.remove('model-market-gated');
     cover.setAttribute('hidden', '');
@@ -428,11 +466,11 @@ function initModelMarketGate() {
     currentMemberEmail = login.identifier;
     currentMemberName = login.displayName;
     try {
-      await uncover(login.faceMode);
+      await uncover(login.isSignup ? 'signup' : 'login');
       window.localStorage.setItem('muzikazBottleMember', 'true');
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
       window.localStorage.setItem('muzikazBottleMemberName', currentMemberName);
-      if (status) status.textContent = `${currentMemberName} validated with ${login.faceMode} facial recognition. Market unlocked.`;
+      if (status) status.textContent = `${currentMemberName} unlocked the market with password and face match.`;
     } catch (error) {
       window.localStorage.removeItem('muzikazBottleMember');
       window.localStorage.removeItem('muzikazBottleMemberEmail');
@@ -1911,8 +1949,8 @@ function initBottleLogin() {
   const status = document.querySelector('#bottle-login-status');
   if (!form || !lockedContent) return;
   let faceGate = createFaceLoginGate('bottle');
-  const unlock = async (message, faceMode = 'tiny') => {
-    faceGate = createFaceLoginGate('bottle', { mode: faceMode });
+  const unlock = async (message, accountMode = 'login') => {
+    faceGate = createFaceLoginGate('bottle', { enrollment: accountMode === 'signup' });
     await faceGate.ensure();
     if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
     lockedContent.dataset.locked = 'false';
@@ -1921,7 +1959,7 @@ function initBottleLogin() {
   if (hasBottleLogin()) {
     currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
     currentMemberName = window.localStorage.getItem('muzikazBottleMemberName') || memberDisplayName(currentMemberEmail);
-    unlock(`Bottle member access is active for ${currentMemberName || currentMemberEmail}. Subscriber tools are unlocked.`, readMemberAccounts()[currentMemberEmail]?.faceMode).catch((error) => { if (status) status.textContent = error.message; });
+    unlock(`Bottle member access is active for ${currentMemberName || currentMemberEmail}. Subscriber tools are unlocked.`, 'login').catch((error) => { if (status) status.textContent = error.message; });
     renderOwnedCollection(currentMemberEmail);
   }
   form.addEventListener('submit', async (event) => {
@@ -1935,7 +1973,7 @@ function initBottleLogin() {
     currentMemberEmail = login.identifier;
     currentMemberName = login.displayName;
     try {
-      await unlock(`${currentMemberName} is logged in with ${login.faceMode} facial recognition. Your username, email, password prompt memory, designated avatar, and Drop Backpack are retained across visits.`, login.faceMode);
+      await unlock(`${currentMemberName} is logged in with password and face match. Your username, email, designated avatar, and Drop Backpack are retained across visits.`, login.isSignup ? 'signup' : 'login');
       window.localStorage.setItem('muzikazBottleMember', 'true');
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
       window.localStorage.setItem('muzikazBottleMemberName', currentMemberName);
