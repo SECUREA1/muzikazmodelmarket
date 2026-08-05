@@ -56,11 +56,11 @@
             <div class="member-login-card">
                 <p class="kicker">Members only</p>
                 <h1 id="bottle-login-title">Member access unlocks the MUZIKAZ upgrade lab.</h1>
-                <p>Choose Log In or Sign Up. After the password is accepted, the front camera scans automatically and member tools open only when the enrolled face matches.</p>
+                <p>Log in with a saved profile or sign up once. After credentials are accepted, the front camera scans your face automatically, plays chain-and-chime approval effects, and opens member tools only after validation passes.</p>
                 <form id="bottle-login-form" class="bottle-login-form">
                     <label>Name or @username <input type="text" name="username" autocomplete="username" placeholder="@crewname" /></label>
                     <label>Email <input type="email" name="email" autocomplete="email" placeholder="crew@muzikaz.example" /></label>
-                    <label>Custom password <input type="password" name="passcode" autocomplete="current-password" placeholder="Bottle pass or saved password" required /></label>
+                    <label>Password <input type="password" name="passcode" autocomplete="current-password" placeholder="Enter your password" required /></label>
                     <div class="login-choice" role="group" aria-label="Choose login or signup"><button type="submit" name="accountAction" value="login">Log in</button><button type="submit" name="accountAction" value="signup" class="ghost">Sign up</button></div>
                 </form>
                 <section class="face-login-panel face-login-panel--discreet" id="bottle-face-login" aria-labelledby="bottle-face-login-title">
@@ -71,15 +71,15 @@
                         <span class="face-login-ring" aria-hidden="true"></span>
                     </div>
                     <div class="face-login-copy">
-                        <h2 id="bottle-face-login-title">Automatic face match</h2>
-                        <p class="visually-hidden">After login or signup, the front camera captures and compares the face scan automatically before member tools open.</p>
+                        <h2 id="bottle-face-login-title">Automatic validation scan</h2>
+                        <p class="visually-hidden">After you log in or sign up, the front camera captures and validates your face automatically before member tools open.</p>
                         <div class="face-login-actions">
                             <button type="button" id="bottle-face-start" class="visually-hidden">Restart face scan</button>
-                            <span id="bottle-face-result">Enter credentials, then the secure scan starts automatically.</span>
+                            <span id="bottle-face-result">Log in or sign up, then the secure face scan starts automatically.</span>
                         </div>
                     </div>
                 </section>
-                <p class="status-message" id="bottle-login-status" role="status">Log in with a saved profile or sign up with a new username/email. Access requires both the password and face match.</p>
+                <p class="status-message" id="bottle-login-status" role="status">Log in or sign up to begin. After credentials pass, automatic face validation approves access with chain-and-chime sound effects.</p>
             </div>
         </section>
         <section class="section-block member-benefits" aria-labelledby="member-benefits-title">

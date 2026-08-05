@@ -249,7 +249,7 @@ function playFaceScanSound(stage = 'scan') {
   const patterns = {
     enroll: [[220, .08], [330, .08], [440, .12]],
     validate: [[520, .06], [390, .06], [520, .1]],
-    approve: [[660, .08], [880, .16]],
+    approve: [[220, .045], [180, .045], [260, .05], [520, .08], [660, .08], [880, .16], [1320, .18]],
     deny: [[180, .12], [120, .18]],
     scan: [[300, .05], [360, .05]]
   };
@@ -257,10 +257,10 @@ function playFaceScanSound(stage = 'scan') {
   (patterns[stage] || patterns.scan).forEach(([frequency, duration]) => {
     const oscillator = context.createOscillator();
     const gain = context.createGain();
-    oscillator.type = stage === 'deny' ? 'sawtooth' : 'sine';
+    oscillator.type = stage === 'deny' ? 'sawtooth' : stage === 'approve' ? 'triangle' : 'sine';
     oscillator.frequency.setValueAtTime(frequency, now + offset);
     gain.gain.setValueAtTime(0.0001, now + offset);
-    gain.gain.exponentialRampToValueAtTime(0.08, now + offset + 0.01);
+    gain.gain.exponentialRampToValueAtTime(stage === 'approve' ? 0.12 : 0.08, now + offset + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + duration);
     oscillator.connect(gain).connect(context.destination);
     oscillator.start(now + offset);
@@ -298,7 +298,7 @@ function createFaceLoginGate(prefix, options = {}) {
     panel.dataset.faceValidated = 'true';
     if (snapshot && snapshotUrl) { snapshot.src = snapshotUrl; snapshot.hidden = false; video.hidden = true; }
     playFaceScanSound('approve');
-    setResult(enrollment ? 'Approved — face scan enrolled and member tools are opening.' : 'Approved — password and face match. Member tools are opening.');
+    setResult(enrollment ? 'Validation approved — face enrolled. Chain-and-chime access effect complete; member tools are opening.' : 'Validation approved — password and face match. Chain-and-chime access effect complete; member tools are opening.');
     stop();
   };
   const analyzeFrame = () => {
@@ -405,7 +405,7 @@ function createFaceLoginGate(prefix, options = {}) {
     panel.dataset.scanning = 'true';
     panel.dataset.yoloActive = 'true';
     playFaceScanSound(enrollment ? 'enroll' : 'validate');
-    setResult(enrollment ? 'Face scanner active — saving your enrolled face scan.' : 'Face scanner active — validating against your enrolled face scan.');
+    setResult(enrollment ? 'Credentials accepted — scanning now to enroll your face.' : 'Credentials accepted — scanning now to validate your face.');
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
     video.srcObject = stream;
     video.hidden = false;
@@ -1973,7 +1973,7 @@ function initBottleLogin() {
     currentMemberEmail = login.identifier;
     currentMemberName = login.displayName;
     try {
-      await unlock(`${currentMemberName} is logged in with password and face match. Your username, email, designated avatar, and Drop Backpack are retained across visits.`, login.isSignup ? 'signup' : 'login');
+      await unlock(`${currentMemberName} validation approved with password, automatic face scan, and chain-and-chime access effects. Your username, email, designated avatar, and Drop Backpack are retained across visits.`, login.isSignup ? 'signup' : 'login');
       window.localStorage.setItem('muzikazBottleMember', 'true');
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
       window.localStorage.setItem('muzikazBottleMemberName', currentMemberName);
