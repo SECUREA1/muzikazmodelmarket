@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "minimumApplicationVersion": "0.1.0",
+  "renderOrigin": "https://xreal-spatial-model-catalogue.onrender.com",
+  "game": {
+    "id": "rad-tox-spatial",
+    "name": "RAD-TOX Spatial",
+    "browserGameUrl": "https://muzikazmodelmarket.onrender.com/model-explorer.html",
+    "enemies": ["toxic-bubble", "blue-ghost", "ground-snake"],
+    "nativeMode": "XREAL Air 2 Ultra + Galaxy S22",
+    "description": "The existing Three.js game remains playable in the browser. The Android Unity client consumes this catalogue for native XREAL spatial placement and interaction."
+  },
+  "models": []
+}
