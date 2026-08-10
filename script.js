@@ -96,6 +96,20 @@ function normalizeMemberEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
+const BOTTLE_CONTRACT_NETWORKS = {
+  ethereum: { label: 'Ethereum', placeholder: '0x followed by 40 hexadecimal characters' },
+  cardano: { label: 'Cardano', placeholder: 'addr1… mainnet address' },
+  solana: { label: 'Solana', placeholder: 'Base58 address (32–44 characters)' },
+};
+
+function isValidBottleContract(network, address) {
+  const value = String(address || '').trim();
+  if (network === 'ethereum') return /^0x[0-9a-fA-F]{40}$/.test(value);
+  if (network === 'cardano') return /^addr1[023456789ac-hj-np-z]{48,108}$/.test(value);
+  if (network === 'solana') return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value);
+  return false;
+}
+
 function readOwnedProfiles() {
   const saved = window.localStorage.getItem('muzikazOwnedProfiles');
   if (saved) {
@@ -188,7 +202,11 @@ function ownedAssetDetail(assetName) {
 }
 
 function hasBottleLogin() {
-  return window.localStorage.getItem('muzikazBottleMember') === 'true' && Boolean(normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail));
+  const network = window.localStorage.getItem('muzikazBottleContractNetwork');
+  const address = window.localStorage.getItem('muzikazBottleContractAddress');
+  return window.localStorage.getItem('muzikazBottleMember') === 'true'
+    && Boolean(normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail))
+    && isValidBottleContract(network, address);
 }
 
 function initModelMarketGate() {
@@ -1726,7 +1744,14 @@ function initBottleLogin() {
   const form = document.querySelector('#bottle-login-form');
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
+  const networkInput = form?.elements.contractNetwork;
+  const addressInput = form?.elements.contractAddress;
   if (!form || !lockedContent) return;
+  const updateContractPrompt = () => {
+    const config = BOTTLE_CONTRACT_NETWORKS[networkInput.value];
+    addressInput.placeholder = config?.placeholder || 'Mainnet contract address';
+    addressInput.setCustomValidity('');
+  };
   const unlock = async (message) => {
     if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
     lockedContent.dataset.locked = 'false';
@@ -1734,17 +1759,35 @@ function initBottleLogin() {
   };
   if (hasBottleLogin()) {
     currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
-    unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`);
+    const savedNetwork = window.localStorage.getItem('muzikazBottleContractNetwork');
+    const savedAddress = window.localStorage.getItem('muzikazBottleContractAddress');
+    networkInput.value = savedNetwork;
+    addressInput.value = savedAddress;
+    unlock(`Bottle member access is active for ${currentMemberEmail} with a validated ${BOTTLE_CONTRACT_NETWORKS[savedNetwork].label} address format.`);
     renderOwnedCollection(currentMemberEmail);
   }
+  updateContractPrompt();
+  networkInput.addEventListener('change', updateContractPrompt);
+  addressInput.addEventListener('input', () => addressInput.setCustomValidity(''));
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(form);
+    const contractNetwork = String(data.get('contractNetwork') || '');
+    const contractAddress = String(data.get('contractAddress') || '').trim();
+    if (!isValidBottleContract(contractNetwork, contractAddress)) {
+      const label = BOTTLE_CONTRACT_NETWORKS[contractNetwork]?.label || 'selected network';
+      addressInput.setCustomValidity(`Enter a valid ${label} mainnet address.`);
+      addressInput.reportValidity();
+      status.textContent = `That address does not match the ${label} mainnet format. Check the network and try again.`;
+      return;
+    }
     currentMemberEmail = normalizeMemberEmail(data.get('email'));
     window.localStorage.setItem('muzikazBottleMember', 'true');
     window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+    window.localStorage.setItem('muzikazBottleContractNetwork', contractNetwork);
+    window.localStorage.setItem('muzikazBottleContractAddress', contractAddress);
     renderOwnedCollection(currentMemberEmail);
-    await unlock(`${currentMemberEmail} is logged in. Your designated avatar and Drop Backpack are retained across visits.`);
+    await unlock(`${currentMemberEmail} is logged in with a validated ${BOTTLE_CONTRACT_NETWORKS[contractNetwork].label} address format. Your designated avatar and Drop Backpack are retained across visits.`);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
