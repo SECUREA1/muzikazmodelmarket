@@ -5,7 +5,7 @@
   const status = document.getElementById('ar-glove-status');
   let previouslyFocused = null;
 
-  function setGloveLayer(open) {
+  function setGloveLayer(open, message = '') {
     if (!layer || !toggle || !frame) return;
     if (open) {
       previouslyFocused = document.activeElement;
@@ -13,7 +13,7 @@
       layer.hidden = false;
       document.body.classList.add('ar-glove-open');
       toggle.setAttribute('aria-pressed', 'true');
-      status.textContent = 'Glove layer active. Allow camera access when prompted.';
+      status.textContent = message || 'Glove layer active. Show your hand and allow camera access when prompted.';
       layer.querySelector('[data-close-ar-glove]')?.focus();
       return;
     }
@@ -23,6 +23,19 @@
     status.textContent = 'Glove layer ready.';
     previouslyFocused?.focus?.();
   }
+
+  function openGloveFallback(detail = {}) {
+    const modelName = String(detail.modelName || '').trim();
+    const message = modelName
+      ? `${modelName} could not open in native AR. Show your hand to use the MediaPipe glove and fire slime instead.`
+      : 'Show your hand to use the MediaPipe glove and fire slime.';
+    setGloveLayer(true, message);
+  }
+
+  // Use one fallback for slotted model-viewer controls and live-model buttons,
+  // including cards rendered after the page first loads.
+  window.MuzikazAR = Object.assign(window.MuzikazAR || {}, { openGlove: openGloveFallback });
+  document.addEventListener('muzikaz:open-ar-glove', (event) => openGloveFallback(event.detail));
 
   toggle?.addEventListener('click', () => setGloveLayer(layer.hidden));
   layer?.querySelector('[data-close-ar-glove]')?.addEventListener('click', () => setGloveLayer(false));
@@ -39,9 +52,15 @@
   }
   function prepareArViewers(root = document) {
     root.querySelectorAll?.('model-viewer').forEach((viewer) => {
+      if (viewer.dataset.arExperienceReady === 'true') return;
+      viewer.dataset.arExperienceReady = 'true';
       viewer.setAttribute('ar', '');
       viewer.setAttribute('ar-modes', viewer.getAttribute('ar-modes') || 'webxr scene-viewer quick-look');
       viewer.querySelectorAll('[slot="ar-button"]').forEach(prepareArButton);
+      viewer.addEventListener('ar-status', (event) => {
+        if (event.detail?.status !== 'failed') return;
+        openGloveFallback({ modelName: viewer.getAttribute('alt') || 'This model' });
+      });
     });
   }
   prepareArViewers();
