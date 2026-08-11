@@ -52,6 +52,7 @@
         <nav class="nav" id="primary-navigation" aria-label="Primary navigation">
             <a href="#home">Home</a>
             <a href="#models">Models</a>
+            <a href="#games">Games</a>
             <a href="#world-map">World Map</a>
             <a href="#marketplace-preview">Market</a>
             <a href="#character-world-assets">Characters & Worlds</a>
@@ -176,6 +177,11 @@
                         <div><strong>Computer Vision Glove</strong><small>Track both hands, pinch to aim, and fire RAD-TOX slime.</small></div>
                         <button type="button" id="ar-glove-toggle" class="ar-glove-toggle" aria-pressed="false" aria-controls="ar-glove-layer">Show your hand in AR</button>
                     </div>
+                    <div class="ar-glove-callout spatial-game-callout" id="games" aria-label="IONCORE RAD-TOX multi-platform AR game">
+                        <span aria-hidden="true">☣</span>
+                        <div><strong>RAD-TOX Spatial AR</strong><small>Play the full mobile AR game with hand tracking, pinch-to-fire gestures, WebXR, ARCore, and Apple Quick Look fallbacks.</small></div>
+                        <button type="button" id="spatial-game-toggle" aria-pressed="false" aria-controls="spatial-game-layer">Play AR game</button>
+                    </div>
                 </aside>
                 <div class="mobile-move-pad" aria-label="Game controllers"></div>
                 <div class="house-bottom-controls" aria-label="Game controls">
@@ -186,6 +192,18 @@
                     <small class="house-firefox-label">WebGL required</small>
                     <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
                 </div>
+            </div>
+        </section>
+
+        <section class="ar-glove-layer spatial-game-layer" id="spatial-game-layer" aria-labelledby="spatial-game-title" hidden>
+            <div class="ar-glove-layer__dialog" role="dialog" aria-modal="true">
+                <header>
+                    <div><p class="kicker">IONCORE · mobile spatial gaming</p><h2 id="spatial-game-title">RAD-TOX Multi-Platform AR</h2></div>
+                    <button type="button" data-close-spatial-game aria-label="Close RAD-TOX game">×</button>
+                </header>
+                <p class="ar-glove-layer__help">On mobile, allow camera access and use the rear camera for world AR. Pinch thumb and index finger to aim and fire; use the on-screen controls when hand tracking is unavailable.</p>
+                <iframe id="spatial-game-frame" title="IONCORE RAD-TOX multi-platform spatial AR game" allow="camera; microphone; fullscreen; xr-spatial-tracking; accelerometer; gyroscope" loading="lazy"></iframe>
+                <footer><a href="ioncore_radtox_multiplatform_ar.html" target="_blank" rel="noopener">Open full screen for the best mobile AR experience</a><span id="spatial-game-status" role="status" aria-live="polite">Spatial AR game ready.</span></footer>
             </div>
         </section>
 
