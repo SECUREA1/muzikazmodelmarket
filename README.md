@@ -56,18 +56,20 @@ cargo build --release
 PORT=4173 ./target/release/muzikazmodelmarket
 ```
 
-## VR headset play
+## AR and VR headset play
 
-The RAD-TOX House Explorer supports WebXR immersive VR in browsers that expose
-`immersive-vr`, including Meta Quest/Oculus Browser. Serve the site over HTTPS
-(or localhost while developing), select **BEGIN NOW!**, and then use the
-in-game **ENTER VR** button. In a headset, use the left thumbstick to walk and strafe, and the
+The RAD-TOX House Explorer supports the complete 3D game in WebXR immersive AR
+and VR in browsers that expose `immersive-ar` or `immersive-vr`. Serve the site
+over HTTPS (or localhost while developing), select **BEGIN NOW!**, and then use
+the in-game **ENTER AR** or **ENTER VR** button. AR keeps the same house,
+toxic bubbles, ghosts, snakes, weapons, particles, scoring, levels, and bosses
+composited over the device camera. In a headset, use the left thumbstick to walk and strafe, and the
 right thumbstick to snap-turn. Aim with either controller and press either
 trigger to use the selected RAD-TOX tool (Laser, Paint Gun, Bat, Taser, or the illuminated Toxins Thrower). The Toxins Thrower launches close-range green goo and spends 5 MZK per burst. Squeeze
 the left grip to switch tools; squeeze the right grip while aiming at a
 walkable floor to teleport. The WebXR control is intentionally omitted
-when a browser or device does not support immersive VR, while the normal 3D
-game remains available.
+when a browser or device does not support that immersive mode, while the normal
+3D game remains available.
 
 ## Server-backed live model publishing
 
