@@ -4,6 +4,31 @@
   const frame = document.getElementById('ar-glove-frame');
   const status = document.getElementById('ar-glove-status');
   let previouslyFocused = null;
+  const spatialLayer = document.getElementById('spatial-game-layer');
+  const spatialToggle = document.getElementById('spatial-game-toggle');
+  const spatialFrame = document.getElementById('spatial-game-frame');
+  const spatialStatus = document.getElementById('spatial-game-status');
+  let spatialPreviouslyFocused = null;
+
+  function setSpatialGame(open) {
+    if (!spatialLayer || !spatialToggle || !spatialFrame) return;
+    if (open) {
+      spatialPreviouslyFocused = document.activeElement;
+      if (!spatialFrame.src) spatialFrame.src = 'ioncore_radtox_multiplatform_ar.html';
+      spatialLayer.hidden = false;
+      document.body.classList.add('spatial-game-open');
+      spatialToggle.setAttribute('aria-pressed', 'true');
+      spatialStatus.textContent = 'Game loaded. Allow camera access, then choose Enter Full AR Game or start the camera fallback.';
+      spatialLayer.querySelector('[data-close-spatial-game]')?.focus();
+      return;
+    }
+    spatialLayer.hidden = true;
+    document.body.classList.remove('spatial-game-open');
+    spatialToggle.setAttribute('aria-pressed', 'false');
+    spatialStatus.textContent = 'Spatial AR game ready.';
+    spatialPreviouslyFocused?.focus?.();
+  }
+
 
   function setGloveLayer(open, message = '') {
     if (!layer || !toggle || !frame) return;
@@ -37,10 +62,18 @@
   window.MuzikazAR = Object.assign(window.MuzikazAR || {}, { openGlove: openGloveFallback });
   document.addEventListener('muzikaz:open-ar-glove', (event) => openGloveFallback(event.detail));
 
+  spatialToggle?.addEventListener('click', () => setSpatialGame(spatialLayer.hidden));
+  spatialLayer?.querySelector('[data-close-spatial-game]')?.addEventListener('click', () => setSpatialGame(false));
+  spatialLayer?.addEventListener('click', (event) => { if (event.target === spatialLayer) setSpatialGame(false); });
+
   toggle?.addEventListener('click', () => setGloveLayer(layer.hidden));
   layer?.querySelector('[data-close-ar-glove]')?.addEventListener('click', () => setGloveLayer(false));
   layer?.addEventListener('click', (event) => { if (event.target === layer) setGloveLayer(false); });
-  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && layer && !layer.hidden) setGloveLayer(false); });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    if (spatialLayer && !spatialLayer.hidden) setSpatialGame(false);
+    else if (layer && !layer.hidden) setGloveLayer(false);
+  });
 
   // Slotted controls belong to model-viewer. Calling activateAR again here can
   // cancel a native Scene Viewer or Quick Look launch, so only normalize them.
