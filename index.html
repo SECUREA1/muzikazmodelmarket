@@ -171,6 +171,11 @@
                         <video id="hand-preview" playsinline muted></video>
                         <span id="hand-status">Camera preview inactive. MediaPipe Hands loads only when enabled.</span>
                     </div>
+                    <div class="ar-glove-callout" aria-label="MediaPipe computer vision controls">
+                        <span aria-hidden="true">🦾</span>
+                        <div><strong>Computer Vision Glove</strong><small>Track both hands, pinch to aim, and fire RAD-TOX slime.</small></div>
+                        <button type="button" id="ar-glove-toggle" class="ar-glove-toggle" aria-pressed="false" aria-controls="ar-glove-layer">Launch full AR</button>
+                    </div>
                 </aside>
                 <div class="mobile-move-pad" aria-label="Game controllers"></div>
                 <div class="house-bottom-controls" aria-label="Game controls">
@@ -181,6 +186,18 @@
                     <small class="house-firefox-label">WebGL required</small>
                     <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
                 </div>
+            </div>
+        </section>
+
+        <section class="ar-glove-layer" id="ar-glove-layer" aria-labelledby="ar-glove-layer-title" hidden>
+            <div class="ar-glove-layer__dialog" role="dialog" aria-modal="true">
+                <header>
+                    <div><p class="kicker">IonCore computer vision</p><h2 id="ar-glove-layer-title">MediaPipe AR Glove + Slime</h2></div>
+                    <button type="button" data-close-ar-glove aria-label="Close AR glove experience">×</button>
+                </header>
+                <p class="ar-glove-layer__help">Allow camera access, hold either hand in view, and pinch your thumb and index finger to launch slime at the RAD-TOX enemies. The full visual tuners, glove tracking, enemy modes, health, ammo, and scoring remain available here.</p>
+                <iframe id="ar-glove-frame" title="IonCore RAD-TOX MediaPipe computer vision glove and slime game" allow="camera; microphone; fullscreen; xr-spatial-tracking" loading="lazy"></iframe>
+                <footer><a href="ioncore_radtox_mediapipe_ar_glove.html" target="_blank" rel="noopener">Open the full-screen glove game</a><span id="ar-glove-status" role="status" aria-live="polite">Glove and slime controls ready.</span></footer>
             </div>
         </section>
 
@@ -385,6 +402,7 @@
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script type="module" src="public/js/model-gallery.js"></script>
     <script type="module" src="public/js/connected-models.js"></script>
+    <script src="public/js/ar-experience.js"></script>
     <!-- The GLB game module is injected by the launcher after the player presses
          Begin RAD-TOX. Keeping Three.js and the 12 MB world off the critical
          path prevents the landing page from stalling on mobile devices. -->

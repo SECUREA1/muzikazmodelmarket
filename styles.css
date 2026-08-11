@@ -2196,6 +2196,7 @@ section,
   box-sizing:border-box;
 }
 .ar-glove-toggle[aria-pressed="true"]{background:var(--lime);color:#000;box-shadow:0 0 22px rgba(156,255,0,.45)}
+.ar-glove-callout{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px;border:1px solid rgba(156,255,0,.38);border-radius:14px;background:linear-gradient(135deg,rgba(156,255,0,.12),rgba(0,0,0,.62));box-shadow:inset 0 1px rgba(255,255,255,.06)}.ar-glove-callout>span{display:grid;place-items:center;width:42px;height:42px;border:1px solid rgba(156,255,0,.5);border-radius:50%;background:#050805;font-size:23px}.ar-glove-callout div{display:grid;gap:3px;min-width:0}.ar-glove-callout strong{color:#fff;font-size:13px}.ar-glove-callout small{color:var(--muted);font-size:11px;line-height:1.35;text-transform:none}.ar-glove-callout button{padding:9px 11px;white-space:nowrap}@media(max-width:700px){.ar-glove-callout{grid-template-columns:auto 1fr}.ar-glove-callout button{grid-column:1/-1;width:100%}}
 .ar-glove-layer{position:fixed;inset:0;z-index:10000;padding:clamp(10px,3vw,34px);background:rgba(0,0,0,.88);backdrop-filter:blur(10px)}
 .ar-glove-layer[hidden]{display:none}.ar-glove-open{overflow:hidden}
 .ar-glove-layer__dialog{width:min(1280px,100%);height:100%;margin:auto;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;border:1px solid var(--lime);border-radius:22px;overflow:hidden;background:#030403;box-shadow:0 0 60px rgba(156,255,0,.24)}
