@@ -34,6 +34,14 @@ for (const page of htmlPages) {
 }
 
 const mainHtml = await readFile('dist/index.html', 'utf8');
+const explorerHtml = await readFile('dist/model-explorer.html', 'utf8');
+for (const requiredArGloveMarkup of ['id="ar-glove-toggle"', 'id="ar-glove-layer"', 'id="ar-glove-frame"', 'public/js/ar-experience.js']) {
+  if (!explorerHtml.includes(requiredArGloveMarkup)) throw new Error(`model-explorer.html is missing the AR glove integration: ${requiredArGloveMarkup}`);
+}
+const arExperience = await readFile('dist/public/js/ar-experience.js', 'utf8');
+for (const requiredArBehavior of ['ioncore_radtox_mediapipe_ar_glove.html', 'xr-spatial-tracking', 'webxr scene-viewer quick-look', 'slot="ar-button"']) {
+  if (!explorerHtml.includes(requiredArBehavior) && !arExperience.includes(requiredArBehavior)) throw new Error(`AR experience is missing required behavior: ${requiredArBehavior}`);
+}
 for (const githubSetting of ['name="muzikaz-github-repository" content="SECUREA1/muzikazmodelmarket"', 'name="muzikaz-github-branch" content="main"']) {
   if (!mainHtml.includes(githubSetting)) {
     throw new Error(`index.html must configure repository GLB discovery: missing ${githubSetting}`);
