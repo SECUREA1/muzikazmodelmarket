@@ -5,26 +5,26 @@
   const status = document.getElementById('ar-glove-status');
   let previouslyFocused = null;
   const spatialLayer = document.getElementById('spatial-game-layer');
-  const spatialToggle = document.getElementById('spatial-game-toggle');
+  const spatialToggles = Array.from(document.querySelectorAll('[data-spatial-game-launch]'));
   const spatialFrame = document.getElementById('spatial-game-frame');
   const spatialStatus = document.getElementById('spatial-game-status');
   let spatialPreviouslyFocused = null;
 
   function setSpatialGame(open) {
-    if (!spatialLayer || !spatialToggle || !spatialFrame) return;
+    if (!spatialLayer || !spatialToggles.length || !spatialFrame) return;
     if (open) {
       spatialPreviouslyFocused = document.activeElement;
       if (!spatialFrame.src) spatialFrame.src = 'ioncore_radtox_multiplatform_ar.html';
       spatialLayer.hidden = false;
       document.body.classList.add('spatial-game-open');
-      spatialToggle.setAttribute('aria-pressed', 'true');
+      spatialToggles.forEach((toggle) => toggle.setAttribute('aria-pressed', 'true'));
       spatialStatus.textContent = 'Game loaded. Allow camera access, then choose Enter Full AR Game or start the camera fallback.';
       spatialLayer.querySelector('[data-close-spatial-game]')?.focus();
       return;
     }
     spatialLayer.hidden = true;
     document.body.classList.remove('spatial-game-open');
-    spatialToggle.setAttribute('aria-pressed', 'false');
+    spatialToggles.forEach((toggle) => toggle.setAttribute('aria-pressed', 'false'));
     spatialStatus.textContent = 'Spatial AR game ready.';
     spatialPreviouslyFocused?.focus?.();
   }
@@ -62,7 +62,7 @@
   window.MuzikazAR = Object.assign(window.MuzikazAR || {}, { openGlove: openGloveFallback });
   document.addEventListener('muzikaz:open-ar-glove', (event) => openGloveFallback(event.detail));
 
-  spatialToggle?.addEventListener('click', () => setSpatialGame(spatialLayer.hidden));
+  spatialToggles.forEach((toggle) => toggle.addEventListener('click', () => setSpatialGame(true)));
   spatialLayer?.querySelector('[data-close-spatial-game]')?.addEventListener('click', () => setSpatialGame(false));
   spatialLayer?.addEventListener('click', (event) => { if (event.target === spatialLayer) setSpatialGame(false); });
 

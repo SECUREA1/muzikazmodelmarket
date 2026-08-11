@@ -73,8 +73,14 @@
                 <img class="hero-logo" src="brand_name_tagline_panel_2x_transparent.png" alt="MUZIKAZ brand and tagline" />
                 <h1 id="hero-title">Launch the <em>model</em> market</h1>
                 <p>Shop wild character models, animated-ready concepts, and electric MUZIKAZ merch built for creators who live the beat.</p>
-                <a class="btn" href="#models">Shop collection <span aria-hidden="true">→</span></a>
-                <a class="btn ghost" href="members.html">Member access</a>
+                <div class="hero-actions">
+                    <button class="btn hero-ar-launch" type="button" data-spatial-game-launch aria-haspopup="dialog" aria-controls="spatial-game-layer">
+                        <span class="hero-ar-launch__icon" aria-hidden="true">☣</span>
+                        <span><strong>Play RAD-TOX in AR</strong><small>Launch from this page</small></span>
+                    </button>
+                    <a class="btn ghost" href="#models">Shop collection <span aria-hidden="true">→</span></a>
+                    <a class="btn ghost" href="members.html">Member access</a>
+                </div>
             </div>
         </section>
 
@@ -180,7 +186,7 @@
                     <div class="ar-glove-callout spatial-game-callout" id="games" aria-label="IONCORE RAD-TOX multi-platform AR game">
                         <span aria-hidden="true">☣</span>
                         <div><strong>RAD-TOX Spatial AR</strong><small>Play the full mobile AR game with hand tracking, pinch-to-fire gestures, WebXR, ARCore, and Apple Quick Look fallbacks.</small></div>
-                        <button type="button" id="spatial-game-toggle" aria-pressed="false" aria-controls="spatial-game-layer">Play AR game</button>
+                        <button type="button" id="spatial-game-toggle" data-spatial-game-launch aria-haspopup="dialog" aria-pressed="false" aria-controls="spatial-game-layer">Play AR game</button>
                     </div>
                 </aside>
                 <div class="mobile-move-pad" aria-label="Game controllers"></div>
