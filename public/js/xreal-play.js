@@ -2,11 +2,13 @@
   'use strict';
 
   var XREAL_DOWNLOAD_URL = 'https://www.xreal.com/app/';
-  var XREAL_GAME_URL = 'ioncore_radtox_multiplatform_ar.html?xreal=1&autostart=1';
+  // The complete game lives in the House Explorer.  The old standalone spatial
+  // prototype could remain on "SURFACE: waiting" and did not share the live
+  // player population, so never route a Play action to that prototype.
   var dialog = document.createElement('dialog');
   dialog.className = 'xreal-play-dialog';
   dialog.setAttribute('aria-labelledby', 'xreal-play-title');
-  dialog.innerHTML = '<div class="xreal-play-dialog__card"><div class="xreal-play-dialog__head"><div><small>XREAL AIR 2 ULTRA / NATIVE AR</small><h2 id="xreal-play-title">Move RAD-TOX to your glasses</h2></div><button class="xreal-play-dialog__close" type="button" aria-label="Close XREAL launcher">×</button></div><p>This launcher hands the game to the installed XREAL Android client instead of opening it in this browser. The native session requests the glasses cameras and both hands for immersive gesture play.</p><ul class="xreal-capabilities" aria-label="XREAL launch requirements"><li data-xreal-device>Checking device…</li><li class="ok">✓ Native immersive AR</li><li class="ok">✓ Glasses camera tracking requested</li><li class="ok">✓ Left + right hand joints required</li></ul><div class="xreal-play-actions"><a class="primary" data-xreal-activate href="xrealmodel://scene/rad-tox">Open on XREAL glasses</a><a data-xreal-download href="https://www.xreal.com/app/">Download XREAL app</a></div><p class="xreal-play-status" data-xreal-status role="status" aria-live="polite">Connect your glasses to an Android spatial-computing device, then open the game.</p></div>';
+  dialog.innerHTML = '<div class="xreal-play-dialog__card"><div class="xreal-play-dialog__head"><div><small>XREAL AIR 2 ULTRA / WEBXR</small><h2 id="xreal-play-title">Play RAD-TOX on your glasses</h2></div><button class="xreal-play-dialog__close" type="button" aria-label="Close XREAL launcher">×</button></div><p>Open the complete browser game, press ENTER AR, and allow the immersive session. Supported runtimes can use both tracked hands; thumb-and-index pinch fires.</p><ul class="xreal-capabilities" aria-label="XREAL launch requirements"><li data-xreal-device>Checking device…</li><li class="ok">✓ Immersive WebXR AR</li><li class="ok">✓ Phone and glasses rendering</li><li class="ok">✓ Hand pinch and controller input</li></ul><div class="xreal-play-actions"><a class="primary" data-xreal-activate href="index.html?xreal=1&amp;autostart=1#house-explorer">Play RAD-TOX in browser</a><a data-xreal-download href="https://www.xreal.com/app/">Download XREAL app</a></div><p class="xreal-play-status" data-xreal-status role="status" aria-live="polite">Connect your glasses to an Android spatial-computing device, then open the game.</p></div>';
   document.body.appendChild(dialog);
 
   var status = dialog.querySelector('[data-xreal-status]');
@@ -14,46 +16,30 @@
   var downloadLink = dialog.querySelector('[data-xreal-download]');
   var deviceItem = dialog.querySelector('[data-xreal-device]');
 
-  function nativeSceneUrl(room, multiplayer) {
-    var query = [
-      'mode=immersive-ar',
-      'handTracking=required',
-      'hands=left,right',
-      'camera=glasses',
-      'gestureProfile=rad-tox'
-    ];
-    if (multiplayer) query.push('multiplayer=1');
-    return 'xrealmodel://scene/' + encodeURIComponent(room) + '?' + query.join('&');
-  }
-
-  function androidIntentUrl(room, multiplayer) {
-    var scenePath = encodeURIComponent(room) + '?mode=immersive-ar&handTracking=required&hands=left%2Cright&camera=glasses&gestureProfile=rad-tox';
-    if (multiplayer) scenePath += '&multiplayer=1';
-    return 'intent://scene/' + scenePath + '#Intent;scheme=xrealmodel;action=android.intent.action.VIEW;S.browser_fallback_url=' + encodeURIComponent(XREAL_DOWNLOAD_URL) + ';end';
+  function browserGameUrl(multiplayer) {
+    return 'index.html?xreal=1&autostart=1' + (multiplayer ? '&multiplayer=1' : '') + '#house-explorer';
   }
 
   function openLauncher(button) {
-    var room = button.getAttribute('data-xreal-room') || 'rad-tox';
     var multiplayer = button.getAttribute('data-xreal-multiplayer') === 'true';
     var android = /Android/i.test(navigator.userAgent);
     var nebula = /XREAL|Nebula/i.test(navigator.userAgent);
 
-    // Nebula is already the spatial runtime. Keep the selecting tap as the
-    // navigation gesture and enter the WebXR game page immediately rather than
-    // routing it through an unregistered custom protocol or another dialog.
+    // Nebula and Android browsers can run the standards-based WebXR build. Keep
+    // the selecting tap as navigation and avoid an unregistered custom scheme.
     if (nebula || android) {
-      window.location.assign(XREAL_GAME_URL + (multiplayer ? '&multiplayer=1' : ''));
+      window.location.assign(browserGameUrl(multiplayer));
       return;
     }
 
-    activateLink.href = android ? androidIntentUrl(room, multiplayer) : nativeSceneUrl(room, multiplayer);
-    activateLink.textContent = multiplayer ? 'Open multiplayer on XREAL' : 'Open RAD-TOX on XREAL';
+    activateLink.href = browserGameUrl(multiplayer);
+    activateLink.textContent = multiplayer ? 'Play multiplayer in browser' : 'Play RAD-TOX in browser';
     downloadLink.href = XREAL_DOWNLOAD_URL;
     deviceItem.textContent = android ? '✓ Android spatial device detected' : '• Open this page on your XREAL Android device';
     deviceItem.classList.toggle('ok', android);
     status.textContent = android
       ? 'Ready. XREAL will ask for camera and hand-tracking permission inside the headset session.'
-      : 'The game will not open in this browser. Continue on the Android device connected to your XREAL glasses.';
+      : 'Open the browser game now, or continue on the Android device connected to your XREAL glasses.';
     if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', '');
   }
 

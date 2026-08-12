@@ -22,4 +22,9 @@
   document.addEventListener('muzikaz:rad-tox-engine-ready', function () { document.dispatchEvent(event('muzikaz:rad-tox-request')); }, { once: true });
   document.addEventListener('muzikaz:rad-tox-stage', function (stage) { if (stage.detail && stage.detail.message && status) status.textContent = stage.detail.message; });
   document.addEventListener('muzikaz:rad-tox-native-error', function (failure) { showError((failure.detail && failure.detail.message) || 'The playable world could not be initialized.'); }, { once: true });
+  // A glasses/browser handoff must deploy the same game as the visible Begin
+  // button. It intentionally does not request an immersive session here:
+  // browsers require the subsequent ENTER AR press to be a fresh user gesture.
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('autostart') === '1') begin();
 }());
