@@ -16,6 +16,5 @@
     { "name": "Model Explorer", "url": "/model-explorer.html", "description": "Publish and explore live MUZIKAZ 3D models." },
     { "name": "Brand Kit", "url": "/brand-kit.html", "description": "View official MUZIKAZ logos, descriptions, and profile assets." },
     { "name": "Wallet Quest Board", "url": "/quest-board.html", "description": "Open wallet rewards and activity feeds." }
-    ,{ "name": "XREAL RAD-TOX", "url": "/ioncore_radtox_multiplatform_ar.html?xreal=1", "description": "Launch the complete browser AR game with gesture controls." }
   ]
 }

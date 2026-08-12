@@ -56,7 +56,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     scheduleGameResize();
   }
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
-  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Main controls: mouse-look</span><span>Drag/touch: look</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>AR / VR: aim + trigger to fire</span>';
+  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Main controls: mouse-look</span><span>Drag/touch: look</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
 
   const controllerIcon = (path) => `<svg class="controller-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
 
@@ -96,7 +96,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     .mobile-move-pad.mobile-move-pad-glb button.is-active{transform:translateY(1px);filter:brightness(1.12)}
     #house-toxic-bubbles{background:linear-gradient(135deg,#d9ff40,#6abd00)!important;color:#081006!important;box-shadow:0 0 18px rgba(156,255,0,.38)}.rad-tox-tools{position:fixed;z-index:1000;top:50%;left:50%;display:flex;flex-direction:column;align-items:stretch;gap:10px;width:min(620px,calc(100vw - 28px));max-height:calc(100dvh - 28px);box-sizing:border-box;padding:14px;border:1px solid rgba(202,255,105,.58);border-radius:16px;background:rgba(3,13,5,.97);box-shadow:0 18px 56px rgba(0,0,0,.68);transform:translate(-50%,-50%)}.rad-tox-tools[hidden]{display:none}.rad-tox-tools__content{display:grid;grid-template-columns:repeat(6,minmax(72px,1fr));align-items:stretch;gap:8px;max-width:100%}.rad-tox-tools-toggle{display:grid!important;place-items:center;align-self:flex-end;width:auto;min-width:30px;min-height:30px!important;padding:0 9px!important}.rad-tox-tools button{min-height:30px;border:1px solid rgba(255,255,255,.24);border-radius:8px;padding:5px 8px;background:#102b12;color:#efffd7;font:800 10px/1 Inter,sans-serif;letter-spacing:.04em;cursor:pointer}.rad-tox-tools button:disabled{opacity:.42;cursor:not-allowed}.rad-tox-tools button[aria-pressed=true]{background:#caff49;color:#071007;border-color:#efffd7}.rad-tool-choice{display:flex!important;min-height:94px!important;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:9px 5px!important;text-align:center}.rad-tool-icon{width:42px;height:42px;overflow:visible;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.rad-tool-choice span{line-height:1.15}.rad-tool-choice small{display:block;font-size:8px;opacity:.75}.rad-tox-colors{grid-column:1/-1;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:7px 9px;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:rgba(255,255,255,.04)}.rad-tox-colors::before{content:'Paint colors';margin-right:4px;color:#caff49;font:800 9px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase}.rad-tox-tools .rad-tox-color{width:24px;min-height:24px;padding:0;border-radius:50%;background:var(--spray-color)}.rad-tox-tools .rad-tox-color[aria-pressed=true]{outline:2px solid #fff;outline-offset:2px}.rad-tox-pack{position:fixed;z-index:1001;top:50%;left:50%;width:min(360px,calc(100vw - 28px));max-height:calc(100dvh - 28px);box-sizing:border-box;overflow:auto;padding:12px;border:1px solid rgba(202,255,105,.48);border-radius:13px;background:rgba(3,13,5,.98);color:#efffd7;box-shadow:0 18px 56px rgba(0,0,0,.68);transform:translate(-50%,-50%)}.rad-tox-pack[hidden]{display:none}.rad-tox-pack-header{display:flex;align-items:center;gap:8px;margin:0 0 8px}.rad-tox-pack-close{display:grid!important;place-items:center;width:30px;min-height:30px!important;margin-left:auto;padding:0!important;border-radius:50%!important;font-size:18px!important;line-height:1!important}.rad-tox-pack h2{margin:0;color:#caff49;font-size:13px;letter-spacing:.08em}.rad-tox-pack-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.rad-tox-pack-item{min-width:0;padding:7px;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:rgba(255,255,255,.05);font:700 11px/1.3 Inter,sans-serif}.rad-tox-pack-item strong{display:block;color:#fff;font-size:12px}.rad-tox-pack-empty{margin:0;color:rgba(239,255,215,.72);font:700 11px/1.35 Inter,sans-serif}@media(max-width:760px){.rad-tox-tools{width:min(420px,calc(100vw - 20px));padding:12px}.rad-tox-tools__content{grid-template-columns:repeat(3,minmax(0,1fr))}.rad-tool-choice{min-height:80px!important}.rad-tool-icon{width:34px;height:34px}.rad-tox-pack{width:min(360px,calc(100vw - 20px))}.rad-tox-tools .rad-tox-color{width:22px}}
     .rad-tox-hud{position:absolute;z-index:8;top:12px;left:12px;right:12px;display:flex;align-items:flex-start;gap:6px;width:auto;color:#efffd7;font-size:12px;line-height:1.25;box-sizing:border-box}.rad-tox-hud-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;min-width:0;flex:1 1 0;margin:0;padding:8px 9px 8px 12px;border:1px solid rgba(186,255,57,.5);border-radius:12px;background:rgba(3,13,5,.84);color:inherit;font:inherit;text-align:left;cursor:pointer;box-shadow:0 8px 25px rgba(0,0,0,.36)}.rad-tox-hud-row__content{display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;min-width:0}.rad-tox-hud-row strong{color:#baff39;letter-spacing:.05em;white-space:nowrap}.rad-tox-hud-row span{white-space:nowrap}.rad-tox-row-toggle{display:grid;place-items:center;width:28px;height:28px;min-height:28px;padding:0;border:1px solid rgba(239,255,215,.35);border-radius:8px;background:rgba(255,255,255,.08);color:#efffd7;font-size:14px;cursor:pointer}.rad-tox-row-toggle:hover,.rad-tox-row-toggle:focus-visible{border-color:#caff49;background:rgba(202,255,73,.16);color:#fff;outline:none}.rad-tox-hud-row.is-collapsed{flex:0 0 auto;width:max-content;max-width:100%;padding:5px 5px 5px 9px}.rad-tox-hud-row.is-collapsed .rad-tox-hud-row__content{display:none}.rad-tox-hud-row.is-collapsed::before{content:attr(data-rad-row-label);color:rgba(239,255,215,.76);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}.rad-tox-health{display:inline-flex;align-items:center;gap:4px}.rad-tox-health i{display:block;width:48px;height:6px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.2)}.rad-tox-health i::after{content:'';display:block;width:var(--health,100%);height:100%;background:linear-gradient(90deg,#ff4967,#ffe55d,#aaff3f);transition:width .2s}.rad-tox-health b{font-size:10px}
-    .house-reticle.is-toxic-target{color:#efff72;transform:translate(-50%,-50%) scale(1.45);text-shadow:0 0 10px #fff,0 0 26px #9cff00}.house-stage .house-vr-button,.house-stage .house-ar-button{position:absolute!important;bottom:14px!important;left:auto!important;z-index:8!important}.house-stage .house-vr-button{right:14px!important}.house-stage .house-ar-button{right:122px!important}
+    .house-reticle.is-toxic-target{color:#efff72;transform:translate(-50%,-50%) scale(1.45);text-shadow:0 0 10px #fff,0 0 26px #9cff00}.house-stage .house-vr-button{position:absolute!important;right:14px!important;bottom:14px!important;left:auto!important;z-index:8!important}
     /* Keep mobile gameplay controls to two predictable rows: sticks, then actions. */
     .mobile-move-pad.mobile-move-pad-glb{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto;grid-template-areas:'left right' 'actions actions';max-width:680px;gap:14px;padding:16px;align-items:start}.thumbstick-control{display:grid;justify-items:center;align-content:start;gap:7px;min-width:0;color:#efffd7;text-align:center}.thumbstick-control[data-thumbstick=left]{grid-area:left}.thumbstick-control[data-thumbstick=right]{grid-area:right}.thumbstick-label{color:#caff69;font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.thumbstick-control small{min-height:1.8em;color:rgba(239,255,215,.74);font-size:.64rem;line-height:1.2}.thumbstick-base{position:relative;display:grid;place-items:center;width:clamp(100px,21vw,142px);height:clamp(100px,21vw,142px);margin:0;padding:0;border:2px solid rgba(202,255,105,.7)!important;border-radius:50%!important;background:radial-gradient(circle at 50% 45%,rgba(156,255,0,.18),rgba(3,12,5,.96) 68%)!important;box-shadow:inset 0 0 0 14px rgba(156,255,0,.06),0 0 24px rgba(156,255,0,.18)!important;touch-action:none;cursor:grab}.thumbstick-base:active{cursor:grabbing}.thumbstick-base::before,.thumbstick-base::after{content:'';position:absolute;background:rgba(202,255,105,.3);pointer-events:none}.thumbstick-base::before{width:2px;height:78%}.thumbstick-base::after{width:78%;height:2px}.thumbstick-knob{position:absolute;width:42%;height:42%;border:2px solid #efffd7;border-radius:50%;background:radial-gradient(circle at 35% 30%,#efffd7,#9cff00 45%,#528d00);box-shadow:0 5px 15px rgba(0,0,0,.42),0 0 14px rgba(156,255,0,.6);transform:translate(0,0);pointer-events:none}.controller-actions{grid-area:actions;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:3px;min-width:0}.controller-actions button{display:inline-flex!important;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:46px;border-radius:12px!important;font-size:.68rem!important;white-space:nowrap}.controller-icon{width:18px;height:18px;flex:none}.controller-library{background:linear-gradient(180deg,#b8ff48,#70bd00)!important}.controller-fullscreen{background:linear-gradient(180deg,#fff,#dedede)!important}.controller-begin{background:linear-gradient(180deg,#ffef6e,#e59b00)!important}
     .house-stage:fullscreen,.house-stage:-webkit-full-screen{width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;border-radius:0!important;background:#050807}.house-stage:fullscreen #house-explorer-canvas,.house-stage:-webkit-full-screen #house-explorer-canvas{width:100%!important;height:100%!important;min-height:0!important}
@@ -170,9 +170,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const webXrAvailable = Boolean(navigator.xr?.isSessionSupported);
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050807); scene.fog = new THREE.Fog(0x050807, 36, performanceMode ? 95 : 180);
-  // Alpha is required for immersive AR: the camera feed must remain visible
-  // behind the same 3D house, enemies, weapons, particles, and boss encounters.
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !performanceMode, alpha: true, powerPreference: performanceMode ? 'low-power' : 'high-performance' }); renderer.xr.enabled = webXrAvailable; let quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !performanceMode, alpha: false, powerPreference: performanceMode ? 'low-power' : 'high-performance' }); renderer.xr.enabled = webXrAvailable; let quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');
   const camera = new THREE.PerspectiveCamera(68, 16 / 9, 0.05, 700); const playerRig = new THREE.Group(); playerRig.name = 'MUZIKAZ_PLAYER_RIG'; playerRig.add(camera); scene.add(playerRig);
   const hemi = new THREE.HemisphereLight(0xe6f7ff, 0x26321b, 1.75); scene.add(hemi); const fill = new THREE.DirectionalLight(0xbfe7ff, mobileQualityMode ? .55 : .8); fill.position.set(-10, 9, -12); scene.add(fill); const sun = new THREE.DirectionalLight(0xfff4dc, mobileQualityMode ? 1.75 : 2.45); sun.position.set(12, 18, 8); sun.castShadow = quality.shadows; sun.shadow.mapSize.set(quality.shadowSize, quality.shadowSize); sun.shadow.camera.near = .5; sun.shadow.camera.far = 120; sun.shadow.camera.left = -45; sun.shadow.camera.right = 45; sun.shadow.camera.top = 45; sun.shadow.camera.bottom = -45; scene.add(sun);
   // PMREM generation is an expensive GPU pass with no gameplay benefit on the
@@ -604,23 +602,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     stick.addEventListener('pointerdown', (event) => { event.preventDefault(); pointerId = event.pointerId; startX = event.clientX; startY = event.clientY; moved = false; stick.setPointerCapture?.(pointerId); stick.classList.add('is-active'); write(event); }); stick.addEventListener('pointermove', (event) => { if (pointerId === event.pointerId) { event.preventDefault(); write(event); } }); stick.addEventListener('pointerup', release); stick.addEventListener('pointercancel', release);
   }
   setupThumbstick('left'); setupThumbstick('right');
-  const xrHands = [];
-  function updateXRHandGestures() {
-    if (!renderer.xr.isPresenting) return;
-    xrHands.forEach((hand) => {
-      const thumb = hand.joints?.['thumb-tip'];
-      const index = hand.joints?.['index-finger-tip'];
-      if (!thumb?.visible || !index?.visible) { hand.userData.wasPinching = false; return; }
-      const distance = thumb.getWorldPosition(new THREE.Vector3()).distanceTo(index.getWorldPosition(new THREE.Vector3()));
-      const pinching = distance < .025;
-      if (pinching && !hand.userData.wasPinching && performance.now() - (hand.userData.lastShot || 0) > 220) {
-        hand.userData.lastShot = performance.now();
-        const hit = toxicBubbleSystem.handleXRInteraction(index);
-        setStatus(hit ? 'XREAL hand pinch hit the target.' : 'Pinch shot missed — point your index finger at a target.');
-      }
-      hand.userData.wasPinching = pinching;
-    });
-  }
   fullscreenButton?.addEventListener('click', setFullscreen);
   document.querySelectorAll('[data-mobile-action]').forEach((oldButton) => {
     const button = oldButton.cloneNode(true);
@@ -632,16 +613,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       if (button.dataset.mobileAction === 'begin-reset') { resetPlayer(); toxicBubbleSystem.begin(); setStatus('RAD-TOX begin or reset requested.'); }
     });
   });
-  async function setupXRControls() {
+  async function setupVRControls() {
     if (!renderer.xr.enabled || !webXrAvailable) return;
-    const [vrSupported, arSupported] = await Promise.all([
-      navigator.xr.isSessionSupported('immersive-vr'),
-      navigator.xr.isSessionSupported('immersive-ar')
-    ]);
-    if (!vrSupported && !arSupported) return;
-    const [{ VRButton }, { ARButton }, { XRControllerModelFactory }] = await Promise.all([
+    if (!(await navigator.xr.isSessionSupported('immersive-vr'))) return;
+    const [{ VRButton }, { XRControllerModelFactory }] = await Promise.all([
       import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/VRButton.js/+esm'),
-      import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/ARButton.js/+esm'),
       import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/XRControllerModelFactory.js/+esm')
     ]);
     const controllerFactory = new XRControllerModelFactory();
@@ -670,52 +646,14 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       const grip = renderer.xr.getControllerGrip(i);
       grip.add(controllerFactory.createControllerModel(grip));
       playerRig.add(controller, grip);
-      // XREAL hand-tracking runtimes expose WebXR joints through getHand(). A
-      // thumb/index pinch fires directly, so glasses users do not need a phone
-      // tap or a physical controller to play.
-      const hand = renderer.xr.getHand(i);
-      hand.userData.handedness = i === 0 ? 'left' : 'right';
-      const handRay = createXRAimRay();
-      handRay.scale.z = .45;
-      hand.add(handRay);
-      playerRig.add(hand);
-      xrHands.push(hand);
     }
-    if (vrSupported) {
-      const vrButton = VRButton.createButton(renderer, { requiredFeatures: ['local-floor'], optionalFeatures: ['bounded-floor', 'hand-tracking'] });
-      vrButton.classList.add('house-vr-button');
-      stage.append(vrButton);
-    }
-    if (arSupported) {
-      // Requiring local-floor prevents several phone and glasses runtimes from
-      // opening AR at all. The game has its own walkable GLB collision world, so
-      // floor and bounded-floor spaces are enhancements rather than blockers.
-      const arButton = ARButton.createButton(renderer, { optionalFeatures: ['local-floor', 'bounded-floor', 'dom-overlay', 'hand-tracking'], domOverlay: { root: document.body } });
-      arButton.classList.add('house-ar-button');
-      arButton.textContent = 'ENTER AR';
-      arButton.setAttribute('aria-label', 'Play the complete RAD-TOX game in augmented reality');
-      stage.append(arButton);
-    }
-    let immersiveAr = false;
-    const normalBackground = scene.background;
-    const normalFog = scene.fog;
-    renderer.xr.addEventListener('sessionstart', () => {
-      const session = renderer.xr.getSession();
-      immersiveAr = session?.environmentBlendMode !== 'opaque';
-      camera.position.set(0, 0, 0);
-      if (immersiveAr) { scene.background = null; scene.fog = null; }
-      quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');
-      setStatus(immersiveAr ? 'RAD-TOX AR active. Pinch thumb and index to fire, or aim and use a controller trigger.' : 'WebXR ready. Left stick walks, right stick snap-turns, either trigger aims and uses your tool, left grip changes tool, and right grip teleports.');
-    });
-    renderer.xr.addEventListener('sessionend', () => {
-      if (immersiveAr) { scene.background = normalBackground; scene.fog = normalFog; }
-      immersiveAr = false;
-      camera.position.set(0, player.eyeHeight, 0);
-      quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');
-      setStatus(activeEnvironment ? `Ready: ${activeEnvironment.name}. WebXR session ended.` : 'WebXR session ended.');
-    });
+    const vrButton = VRButton.createButton(renderer, { requiredFeatures: ['local-floor'], optionalFeatures: ['bounded-floor', 'hand-tracking'] });
+    vrButton.classList.add('house-vr-button');
+    stage.append(vrButton);
+    renderer.xr.addEventListener('sessionstart', () => { camera.position.set(0, 0, 0); quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto'); setStatus('WebXR ready. Left stick walks, right stick snap-turns, either trigger aims and uses your tool, left grip changes tool, and right grip teleports.'); });
+    renderer.xr.addEventListener('sessionend', () => { camera.position.set(0, player.eyeHeight, 0); quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto'); setStatus(activeEnvironment ? `Ready: ${activeEnvironment.name}. WebXR session ended.` : 'WebXR session ended.'); });
   }
-  setupXRControls().catch((error) => console.warn('[MUZIKAZ XR]', error));
+  setupVRControls().catch((error) => console.warn('[MUZIKAZ VR]', error));
   const visibilityObserver = window.IntersectionObserver ? new IntersectionObserver(([entry]) => { viewActive = Boolean(entry?.isIntersecting); }, { threshold: 0.05 }) : null; visibilityObserver?.observe(stage); document.addEventListener('visibilitychange', () => { viewActive = !document.hidden; });
   function resize() {
     const width = Math.max(1, Math.floor(stage.clientWidth || stage.offsetWidth || document.documentElement.clientWidth || window.innerWidth || 320));
@@ -748,7 +686,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     liveAvatarRoots.forEach((root) => { updateLiveAvatarFacing(root, delta); root.position.lerp(root.userData.targetPosition, Math.min(1, delta * 8)); });
     if (!performanceMode || renderer.xr.isPresenting) envLoader.mixers.forEach((m) => m.update(delta));
     toxicBubbleSystem.update(delta, clock.elapsedTime);
-    updateXRHandGestures();
     renderer.render(scene, camera);
   });
   // This is the launch-critical half of checkForHouseUpdates({ startup: true }).
