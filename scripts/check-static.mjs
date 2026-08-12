@@ -125,11 +125,11 @@ for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarge
     throw new Error(`RAD-TOX is missing its required mixed-level or always-on controls feature: ${requiredGameFeature}`);
   }
 }
-for (const requiredXrealFeature of ['renderer.xr.getHand(i)', "hand.joints?.['thumb-tip']", "hand.joints?.['index-finger-tip']", 'updateXRHandGestures()', "optionalFeatures: ['dom-overlay', 'hand-tracking']"]) {
+for (const requiredXrealFeature of ['renderer.xr.getHand(i)', "hand.joints?.['thumb-tip']", "hand.joints?.['index-finger-tip']", 'updateXRHandGestures()', "optionalFeatures: ['local-floor', 'bounded-floor', 'dom-overlay', 'hand-tracking']"]) {
   if (!houseExplorer.includes(requiredXrealFeature)) throw new Error(`XREAL browser hand controls are missing: ${requiredXrealFeature}`);
 }
 const xrealPlay = await readFile('dist/public/js/xreal-play.js', 'utf8');
-for (const requiredLauncherFeature of ['intent://scene/', 'xrealmodel://scene/', 'mode=immersive-ar', 'handTracking=required', 'hands=left,right', 'camera=glasses', 'gestureProfile=rad-tox', 'https://www.xreal.com/app/', 'XREAL|Nebula', 'xreal=1&autostart=1']) {
+for (const requiredLauncherFeature of ['browserGameUrl', 'https://www.xreal.com/app/', 'XREAL|Nebula', 'index.html?xreal=1&autostart=1', '#house-explorer']) {
   if (!xrealPlay.includes(requiredLauncherFeature)) throw new Error(`XREAL Play launcher is missing: ${requiredLauncherFeature}`);
 }
 const spatialGame = await readFile('dist/ioncore_radtox_multiplatform_ar.html', 'utf8');

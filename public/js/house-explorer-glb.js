@@ -687,7 +687,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       stage.append(vrButton);
     }
     if (arSupported) {
-      const arButton = ARButton.createButton(renderer, { requiredFeatures: ['local-floor'], optionalFeatures: ['dom-overlay', 'hand-tracking'], domOverlay: { root: document.body } });
+      // Requiring local-floor prevents several phone and glasses runtimes from
+      // opening AR at all. The game has its own walkable GLB collision world, so
+      // floor and bounded-floor spaces are enhancements rather than blockers.
+      const arButton = ARButton.createButton(renderer, { optionalFeatures: ['local-floor', 'bounded-floor', 'dom-overlay', 'hand-tracking'], domOverlay: { root: document.body } });
       arButton.classList.add('house-ar-button');
       arButton.textContent = 'ENTER AR';
       arButton.setAttribute('aria-label', 'Play the complete RAD-TOX game in augmented reality');
@@ -702,7 +705,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       camera.position.set(0, 0, 0);
       if (immersiveAr) { scene.background = null; scene.fog = null; }
       quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');
-      setStatus(immersiveAr ? 'RAD-TOX AR active. Move through the 3D scene and tap or use a controller trigger to fire.' : 'WebXR ready. Left stick walks, right stick snap-turns, either trigger aims and uses your tool, left grip changes tool, and right grip teleports.');
+      setStatus(immersiveAr ? 'RAD-TOX AR active. Pinch thumb and index to fire, or aim and use a controller trigger.' : 'WebXR ready. Left stick walks, right stick snap-turns, either trigger aims and uses your tool, left grip changes tool, and right grip teleports.');
     });
     renderer.xr.addEventListener('sessionend', () => {
       if (immersiveAr) { scene.background = normalBackground; scene.fog = normalFog; }
