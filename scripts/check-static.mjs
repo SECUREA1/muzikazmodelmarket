@@ -133,7 +133,7 @@ for (const requiredLauncherFeature of ['intent://scene/', 'xrealmodel://scene/',
   if (!xrealPlay.includes(requiredLauncherFeature)) throw new Error(`XREAL Play launcher is missing: ${requiredLauncherFeature}`);
 }
 const spatialGame = await readFile('dist/ioncore_radtox_multiplatform_ar.html', 'utf8');
-for (const requiredNebulaFeature of ['optionalFeatures:["hit-test"', '"hand-tracking"', 'xrealAutostart', 'enterFullAR().catch', 'requestHitTestSource', 'startMobileFallback']) {
+for (const requiredNebulaFeature of ['optionalFeatures:["hit-test"', '"hand-tracking"', 'xrealAutostart', 'enterFullAR().catch', 'requestHitTestSource', 'startMobileFallback', 'renderer.xr.getHand(i)', 'updateXRHandGestures(time)', 'spawnARWave();']) {
   if (!spatialGame.includes(requiredNebulaFeature)) throw new Error(`Spatial game is missing Nebula takeover support: ${requiredNebulaFeature}`);
 }
 for (const forbiddenBrowserLauncher of ["isSessionSupported('immersive-ar')", 'beforeinstallprompt', 'model-explorer.html?xreal=1']) {

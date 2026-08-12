@@ -5066,6 +5066,9 @@
       hitTestRequested:false,
       reticle:null,
       controller:null,
+      hands:[],
+      handPinched:[false,false],
+      lastHandShot:[0,0],
       world:new THREE.Group(),
       targets:[],
       projectiles:[],
@@ -5293,13 +5296,22 @@
       spatialAR.splats.push(splat);
     }
 
-    function fireARSlime(){
+    function fireARSlime(hand=null){
       if(!spatialAR.active || !spatialAR.scene) return false;
       const cam = spatialAR.renderer.xr.getCamera(spatialAR.camera);
       const origin = new THREE.Vector3();
       const dir = new THREE.Vector3(0,0,-1);
-      cam.getWorldPosition(origin);
-      cam.getWorldDirection(dir);
+      const tip = hand?.joints?.["index-finger-tip"];
+      const wrist = hand?.joints?.wrist;
+      if(tip && wrist){
+        tip.getWorldPosition(origin);
+        const wristPosition = new THREE.Vector3();
+        wrist.getWorldPosition(wristPosition);
+        dir.copy(origin).sub(wristPosition).normalize();
+      }else{
+        cam.getWorldPosition(origin);
+        cam.getWorldDirection(dir);
+      }
 
       const slime = new THREE.Mesh(
         new THREE.SphereGeometry(0.045,14,10),
@@ -5319,6 +5331,32 @@
       shotTxt.textContent = String(game.shots);
       try{ audio.zap(); }catch{}
       return true;
+    }
+
+    // Three.js maps WebXR's native XRHand joints onto these groups. Reading the
+    // joints keeps passthrough owned by Nebula/ARCore (no second camera request)
+    // and makes the same thumb-index pinch work in the glasses as in MediaPipe.
+    function updateXRHandGestures(time){
+      for(let i=0;i<spatialAR.hands.length;i++){
+        const hand = spatialAR.hands[i];
+        const thumb = hand?.joints?.["thumb-tip"];
+        const index = hand?.joints?.["index-finger-tip"];
+        if(!thumb || !index || !hand.visible){
+          spatialAR.handPinched[i] = false;
+          continue;
+        }
+        const thumbPosition = new THREE.Vector3();
+        const indexPosition = new THREE.Vector3();
+        thumb.getWorldPosition(thumbPosition);
+        index.getWorldPosition(indexPosition);
+        const pinched = thumbPosition.distanceTo(indexPosition) < 0.035;
+        if(pinched && !spatialAR.handPinched[i] && time-spatialAR.lastHandShot[i] > 220){
+          fireARSlime(hand);
+          spatialAR.lastHandShot[i] = time;
+          setARChip(arGameChip, `AR GAME: ${spatialAR.targets.length} TARGETS · HAND ${i+1}`, "ok");
+        }
+        spatialAR.handPinched[i] = pinched;
+      }
     }
 
     function scoreARHit(target, at){
@@ -5466,6 +5504,16 @@
         spatialAR.controller = spatialAR.renderer.xr.getController(0);
         spatialAR.controller.addEventListener("select", handleXRSelect);
         spatialAR.scene.add(spatialAR.controller);
+        for(let i=0;i<2;i++){
+          const hand = spatialAR.renderer.xr.getHand(i);
+          hand.addEventListener("connected", event=>{
+            hand.userData.handedness = event.data?.handedness || (i ? "right" : "left");
+            setARChip(arRuntimeChip, `AR: ${hand.userData.handedness.toUpperCase()} HAND TRACKED`, "ok");
+          });
+          hand.addEventListener("disconnected", ()=> spatialAR.handPinched[i] = false);
+          spatialAR.hands.push(hand);
+          spatialAR.scene.add(hand);
+        }
       }
 
       const sessionInit = {
@@ -5521,7 +5569,9 @@
       overlayMsg.classList.add("hidden");
       setARChip(arRuntimeChip, "AR: FULL WEBXR GAME", "ok");
       setARChip(arPlacementChip, "SURFACE: scan floor/table", "warn");
-      setARChip(arGameChip, "AR GAME: place model", "ok");
+      // Populate the field immediately. Hit-test is optional in Nebula, so an
+      // empty scene must never leave glasses users wondering whether AR loaded.
+      spawnARWave();
 
       spatialAR.renderer.setAnimationLoop((time, frame)=>{
         const dt = Math.min(0.05, spatialAR.clock.getDelta());
@@ -5543,6 +5593,7 @@
           }
         }
 
+        updateXRHandGestures(time);
         updateARGame(dt,elapsed);
         spatialAR.renderer.render(spatialAR.scene,spatialAR.camera);
       });
