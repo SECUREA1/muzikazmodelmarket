@@ -99,7 +99,6 @@
             <button type="button" id="house-reset">Reset view</button>
             <button type="button" id="house-place-person">Set person drop-in</button>
             <button type="button" id="hand-toggle" aria-pressed="false">Enable hand control</button>
-            <button type="button" id="ar-glove-toggle" class="ar-glove-toggle" aria-pressed="false" aria-controls="ar-glove-layer">Show your hand in AR</button>
           </div>
           <div class="camera-preview-panel">
             <video id="hand-preview" playsinline muted></video>
@@ -138,15 +137,6 @@
       </div>
     </section>
 
-
-    <section class="ar-glove-layer" id="ar-glove-layer" aria-labelledby="ar-glove-layer-title" hidden>
-      <div class="ar-glove-layer__dialog" role="dialog" aria-modal="true">
-        <header><div><p class="kicker">IonCore interaction layer</p><h2 id="ar-glove-layer-title">MediaPipe AR Glove</h2></div><button type="button" data-close-ar-glove aria-label="Close AR glove layer">×</button></header>
-        <p class="ar-glove-layer__help">Use camera-tracked hand gestures alongside the model explorer. Camera access starts only inside the glove experience.</p>
-        <iframe id="ar-glove-frame" title="IonCore RAD-TOX MediaPipe AR glove controls" allow="camera; microphone; fullscreen; xr-spatial-tracking" loading="lazy"></iframe>
-        <footer><a href="ioncore_radtox_mediapipe_ar_glove.html" target="_blank" rel="noopener">Open glove controls full screen</a><span id="ar-glove-status" role="status" aria-live="polite">Glove layer ready.</span></footer>
-      </div>
-    </section>
 
     <section class="section-block model-publisher" id="publish-model" aria-labelledby="publish-model-title">
       <div class="section-title"><span></span><h2 id="publish-model-title">Publish a Live Model</h2><a href="#live-published-models">View linked model space</a></div>
@@ -196,7 +186,7 @@
 
     <section class="section-block live-models-section explorer-live-space" id="live-published-models" aria-labelledby="explorer-live-models-title">
       <div class="section-title"><span></span><h2 id="explorer-live-models-title">Live Published Models</h2><button type="button" id="refresh-live-models">Refresh Models</button></div>
-      <p class="section-subheading">Shared server-backed models are arranged here instead of on the main page. Preview any live GLB or GLTF, then use <strong>Pop out in AR</strong> on a supported Android or Apple device to place it in your space.</p>
+      <p class="section-subheading">Shared server-backed models are arranged here instead of on the main page. Open each category below to route avatars, pets, accessories, furniture, environments, and gameplay props into the right 3D Character Loadout space.</p>
       <div class="loadout-link-grid explorer-loadout-links" aria-label="3D Character Loadout marketplace categories">
         <a href="#live-published-models"><strong>Avatars</strong><span>Character bodies and skins</span></a>
         <a href="members.html#marketplace"><strong>Pets</strong><span>Companions and sidekicks</span></a>
@@ -238,7 +228,6 @@
   </script>
   <script src="script.js"></script>
   <script src="public/js/crib-multiplayer.js"></script>
-  <script src="public/js/ar-experience.js"></script>
   <script src="battle-theme.js"></script>
 </body>
 </html>

@@ -56,19 +56,13 @@
             <div class="member-login-card">
                 <p class="kicker">Members only</p>
                 <h1 id="bottle-login-title">Member access unlocks the MUZIKAZ upgrade lab.</h1>
-                <p>Sign in or subscribe, then choose an Ethereum, Cardano, or Solana mainnet contract address to open protected tools not available in the public shop.</p>
+                <p>Sign in or subscribe to open protected tools not available in the public shop: custom sticker and graphics uploads, the pop-out avatar AR viewer, live merch designer, 3D character checkout, marketplace drops, and new legendary models.</p>
                 <form id="bottle-login-form" class="bottle-login-form">
                     <label>Email <input type="email" name="email" placeholder="crew@muzikaz.example" required /></label>
                     <label>Passcode <input type="password" name="passcode" placeholder="Bottle pass" required /></label>
-                    <label>Contract network <select name="contractNetwork" id="bottle-contract-network" required><option value="ethereum">Ethereum (ETH)</option><option value="cardano">Cardano (ADA)</option><option value="solana">Solana (SOL)</option></select></label>
-                    <label class="contract-address-field">Mainnet contract address <input type="text" name="contractAddress" id="bottle-contract-address" placeholder="0x…" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="bottle-contract-help" required /></label>
                     <button type="submit">Continue</button>
                 </form>
-                <p class="contract-help" id="bottle-contract-help">Select a chain and enter its mainnet contract address. This preview checks address format locally; on-chain ownership verification will be required before production access.</p>
-                <p class="status-message" id="bottle-login-status" role="status">Preview access requires an email, passcode, and valid ETH, ADA, or SOL address format.</p>
-                <button class="btn xreal-play-button xreal-member-play" type="button" data-xreal-play data-xreal-multiplayer="true" data-xreal-room="rad-tox" aria-haspopup="dialog">
-                    <span aria-hidden="true">👓</span><span><strong>Start RAD-TOX on XREAL</strong><small>Multiplayer targets and hand controls load automatically</small></span>
-                </button>
+                <p class="status-message" id="bottle-login-status" role="status">Preview access: enter any email address and passcode to open the subscriber tools.</p>
             </div>
         </section>
         <section class="section-block member-benefits" aria-labelledby="member-benefits-title">
@@ -123,13 +117,17 @@
 
         <section class="section-block designer-block live-merch-studio" id="designer">
             <div class="section-title"><span></span><h2>Live merch designer</h2><a href="#marketplace">Open marketplace</a></div>
-            <header class="designer-intro">
-                <div><p class="kicker">Custom merch studio</p><h3>Create, preview, and submit</h3><p>Choose a product, personalize the artwork, then review your production-ready order.</p></div>
-                <span class="studio-badge">Live preview</span>
-            </header>
-            <nav class="studio-tabs" aria-label="Customize sections">
-                <button type="button" class="active" data-studio-jump="product" aria-pressed="true"><span>1</span> Product</button><button type="button" data-studio-jump="character" aria-pressed="false"><span>2</span> Character</button><button type="button" data-studio-jump="text" aria-pressed="false"><span>3</span> Text</button><button type="button" data-studio-jump="logo" aria-pressed="false"><span>4</span> Logo</button><button type="button" data-studio-jump="upload" aria-pressed="false"><span>5</span> Upload</button><button type="button" data-studio-jump="layout" aria-pressed="false"><span>6</span> Layers</button><button type="button" data-studio-jump="order" aria-pressed="false"><span>7</span> Review</button>
-            </nav>
+            <div class="designer-callout">
+                <p class="kicker">Featured open marketplace drop</p>
+                <h3>Chaos Ape custom stickers drop</h3>
+                <p>Build a production-ready sticker sheet: upload art, drag it inside the cutline-safe zone, save a reusable draft, and attach a complete design specification to your custom order.</p>
+            </div>
+            <details class="button-menu studio-tabs" open>
+                <summary>Customize sections</summary>
+                <div class="button-group" aria-label="Customizer sections">
+                    <button type="button" data-studio-jump="product">Product</button><button type="button" data-studio-jump="character">Character</button><button type="button" data-studio-jump="text">Text</button><button type="button" data-studio-jump="logo">Logo</button><button type="button" data-studio-jump="upload">Custom Upload</button><button type="button" data-studio-jump="layout">Layout</button><button type="button" data-studio-jump="order">Order Summary</button>
+                </div>
+            </details>
             <div class="designer-layout studio-layout">
                 <article class="designer-preview studio-preview" aria-live="polite">
                     <div class="mockup sticker-sheet-mockup" id="designer-mockup" data-product-template="avatar-stickers">
@@ -150,8 +148,7 @@
                         <p class="kicker" id="preview-meta">Avatar Sticker Sheet · M · Wordmark · Chaos / 3D Model Packs</p>
                         <h3 id="preview-title">Chaos Ape custom stickers drop</h3>
                         <ul class="preview-values" id="preview-values"><li>Chaos Ape</li><li>MUZIKAZ</li><li>88</li><li>LIVE THE BEAT</li></ul>
-                        <div class="preview-toggles" aria-label="Preview settings"><label class="switch"><input type="checkbox" id="toggle-safe-area" checked /><span></span> Safe area</label><label class="switch"><input type="checkbox" id="toggle-artwork" checked /><span></span> Product art</label></div>
-                        <div class="preview-actions button-group"><button type="button" id="save-design">Save draft</button><button type="button" id="load-design">Load draft</button><button type="button" class="ghost" id="download-design-spec">Print spec</button></div>
+                        <div class="preview-actions button-group"><button type="button" id="save-design">Save draft</button><button type="button" id="load-design">Load draft</button><button type="button" id="duplicate-design">Duplicate layer</button><button type="button" class="ghost" id="download-design-spec">Download print spec</button></div>
                         <p class="status-message studio-status" id="designer-status" role="status">Upload PNG, JPG, JPEG, or SVG artwork to place it on the merch preview.</p>
                     </div>
                 </article>
@@ -162,23 +159,10 @@
                     <fieldset id="logo"><legend>Logo</legend><label>Logo Style <select name="logo"><option selected>Wordmark</option><option>Lightning Crest</option><option>Badge Patch</option><option>Custom Upload Logo</option></select></label></fieldset>
                     <fieldset id="upload"><legend>Custom Upload</legend><label class="design-upload-drop">Upload custom design <input type="file" id="design-upload" accept="image/png,image/jpeg,image/jpg,image/svg+xml" /></label><p class="upload-guidance">PNG, JPG, JPEG, or SVG · 5 MB max · transparent PNG recommended. Keep important artwork inside the dotted safe area.</p><details class="button-menu layer-menu" open><summary>Layer options</summary><div class="upload-tools button-group"><button type="button" data-layer-action="center">Center align</button><button type="button" data-layer-action="front">Move front</button><button type="button" data-layer-action="back">Move back</button><button type="button" data-layer-action="duplicate">Duplicate</button><button type="button" data-layer-action="flip-x">Flip H</button><button type="button" data-layer-action="flip-y">Flip V</button><button type="button" data-layer-action="delete">Delete</button></div></details><label>Resize <input type="range" id="upload-scale" min="40" max="220" value="100" /></label><label>Rotate <input type="range" id="upload-rotate" min="-180" max="180" value="0" /></label></fieldset>
                     <fieldset id="layout"><legend>Layers</legend><ol class="layer-stack" id="layer-stack"><li>Base product template</li><li>Live print shape / safe area</li><li>Product color</li><li>Character art</li><li>Logo / wordmark</li><li>Name</li><li>Number</li><li>Sleeve text</li><li>Uploaded custom art</li><li>Effects or outlines</li></ol></fieldset>
-                    <fieldset id="order"><legend>Order Summary</legend><label>Quantity <input name="quantity" type="number" min="1" max="99" value="1" /></label><label>Design notes <textarea name="notes" rows="3" placeholder="Add print notes, correction requests, or placement instructions"></textarea></label><div class="order-summary" id="designer-order-summary"></div><label class="approval-toggle"><input type="checkbox" id="design-approval" /> I confirm the artwork and order details are ready for production.</label><button type="button" class="submit-design" data-review-custom>Review &amp; submit order</button></fieldset>
+                    <fieldset id="order"><legend>Order Summary</legend><label>Quantity <input name="quantity" type="number" min="1" max="99" value="1" /></label><label>Design notes <textarea name="notes" rows="3" placeholder="Add print notes, correction requests, or placement instructions"></textarea></label><div class="order-summary" id="designer-order-summary"></div><button type="button" data-add-custom>Add to cart / order</button><button type="button" id="edit-design">Make a Correction / Edit Design</button></fieldset>
                 </form>
             </div>
         </section>
-
-        <dialog class="design-dialog" id="design-review-dialog" aria-labelledby="design-review-title">
-            <form method="dialog" class="design-dialog-card">
-                <button class="dialog-close" value="cancel" aria-label="Close review">×</button>
-                <p class="kicker">Final review</p><h2 id="design-review-title">Submit custom merch</h2>
-                <div id="design-review-content" class="design-review-content"></div>
-                <p class="dialog-note">Your design specification and uploaded artwork references will be attached to the cart item.</p>
-                <div class="dialog-actions"><button value="cancel" class="ghost">Keep editing</button><button type="button" id="confirm-design-submit">Submit to cart</button></div>
-            </form>
-        </dialog>
-        <dialog class="design-dialog success-dialog" id="design-success-dialog" aria-labelledby="design-success-title">
-            <form method="dialog" class="design-dialog-card"><span class="success-mark">✓</span><p class="kicker">Order added</p><h2 id="design-success-title">Design submitted</h2><p>Your custom merch is ready in the cart. Continue to checkout or return to the designer.</p><div class="dialog-actions"><button value="close" class="ghost">Back to designer</button><a class="btn" href="checkout.html">Go to checkout</a></div></form>
-        </dialog>
 
         <section class="section-block character-shop-block" id="character-shop">
             <div class="section-title"><span></span><h2>3D model character checkout</h2><a href="#marketplace">View marketplace</a></div>
@@ -327,7 +311,6 @@
     <script type="module" src="public/js/connected-models.js"></script>
     <script src="public/js/api-connection.js"></script>
     <script src="public/js/avatar-selection.js"></script>
-    <script src="public/js/xreal-play.js"></script>
     <script src="mzk-wallet.js"></script>
   <script src="script.js"></script>
   <script src="battle-theme.js"></script>

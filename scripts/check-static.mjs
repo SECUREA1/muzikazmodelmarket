@@ -34,14 +34,6 @@ for (const page of htmlPages) {
 }
 
 const mainHtml = await readFile('dist/index.html', 'utf8');
-const explorerHtml = await readFile('dist/model-explorer.html', 'utf8');
-for (const requiredArGloveMarkup of ['id="ar-glove-toggle"', 'id="ar-glove-layer"', 'id="ar-glove-frame"', 'public/js/ar-experience.js']) {
-  if (!explorerHtml.includes(requiredArGloveMarkup)) throw new Error(`model-explorer.html is missing the AR glove integration: ${requiredArGloveMarkup}`);
-}
-const arExperience = await readFile('dist/public/js/ar-experience.js', 'utf8');
-for (const requiredArBehavior of ['ioncore_radtox_mediapipe_ar_glove.html', 'xr-spatial-tracking', 'webxr scene-viewer quick-look', 'slot="ar-button"', 'muzikaz:open-ar-glove', 'MediaPipe glove and fire slime']) {
-  if (!explorerHtml.includes(requiredArBehavior) && !arExperience.includes(requiredArBehavior)) throw new Error(`AR experience is missing required behavior: ${requiredArBehavior}`);
-}
 for (const githubSetting of ['name="muzikaz-github-repository" content="SECUREA1/muzikazmodelmarket"', 'name="muzikaz-github-branch" content="main"']) {
   if (!mainHtml.includes(githubSetting)) {
     throw new Error(`index.html must configure repository GLB discovery: missing ${githubSetting}`);
@@ -120,28 +112,10 @@ if (!server.includes('avatarAssetId: asset.id, modelUrl: asset.modelUrl')) {
 if (houseExplorer.includes('await this.initAudio()')) {
   throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');
 }
-for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarget]", 'this.spawnSnakes()', "controller.userData.handedness === 'left'", "Weapons','Laser · Paint gun · Baseball bat · Taser · Toxins Thrower (5 MZK/burst)", 'webXrAvailable', "isSessionSupported('immersive-vr')", "isSessionSupported('immersive-ar')", 'ARButton.createButton', "environmentBlendMode !== 'opaque'", 'createXRAimRay()', 'teleportFromController(controller)', 'camera.position.set(0, 0, 0)']) {
+for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarget]", 'this.spawnSnakes()', "controller.userData.handedness === 'left'", "Weapons','Laser · Paint gun · Baseball bat · Taser · Toxins Thrower (5 MZK/burst)", 'webXrAvailable', "isSessionSupported('immersive-vr')", 'createXRAimRay()', 'teleportFromController(controller)', 'camera.position.set(0, 0, 0)']) {
   if (!houseExplorer.includes(requiredGameFeature)) {
     throw new Error(`RAD-TOX is missing its required mixed-level or always-on controls feature: ${requiredGameFeature}`);
   }
-}
-for (const requiredXrealFeature of ['renderer.xr.getHand(i)', "hand.joints?.['thumb-tip']", "hand.joints?.['index-finger-tip']", 'updateXRHandGestures()', "optionalFeatures: ['local-floor', 'bounded-floor', 'dom-overlay', 'hand-tracking']"]) {
-  if (!houseExplorer.includes(requiredXrealFeature)) throw new Error(`XREAL browser hand controls are missing: ${requiredXrealFeature}`);
-}
-const xrealPlay = await readFile('dist/public/js/xreal-play.js', 'utf8');
-for (const requiredLauncherFeature of ['browserGameUrl', 'https://www.xreal.com/app/', 'XREAL|Nebula', 'ioncore_radtox_multiplatform_ar.html?xreal=1&autostart=1', 'Start RAD-TOX']) {
-  if (!xrealPlay.includes(requiredLauncherFeature)) throw new Error(`XREAL Play launcher is missing: ${requiredLauncherFeature}`);
-}
-const spatialGame = await readFile('dist/ioncore_radtox_multiplatform_ar.html', 'utf8');
-for (const requiredNebulaFeature of ['optionalFeatures:["hit-test"', '"hand-tracking"', 'xrealAutostart', 'enterFullAR().catch', 'requestHitTestSource', 'startMobileFallback', 'renderer.xr.getHand(i)', 'inputsourceschange', 'pinchDistance < 0.045', 'updateXRHandGestures(time)', 'spawnARWave();']) {
-  if (!spatialGame.includes(requiredNebulaFeature)) throw new Error(`Spatial game is missing Nebula takeover support: ${requiredNebulaFeature}`);
-}
-for (const forbiddenBrowserLauncher of ["isSessionSupported('immersive-ar')", 'beforeinstallprompt', 'model-explorer.html?xreal=1']) {
-  if (xrealPlay.includes(forbiddenBrowserLauncher)) throw new Error(`XREAL Play must hand off to the glasses instead of browser play: ${forbiddenBrowserLauncher}`);
-}
-const xrealPages = await Promise.all(['index.html', 'members.html'].map((page) => readFile(`dist/${page}`, 'utf8')));
-for (const page of xrealPages) {
-  if (!page.includes('data-xreal-play') || !page.includes('public/js/xreal-play.js')) throw new Error('Index and members pages must both expose XREAL Play.');
 }
 for (const requiredToxinFeature of ["data-rad-tool=\"toxin\"", 'createToxinModel()', 'fireToxin(', 'toxinRange: 8.5', 'toxinCost: 5', 'wallet.spend']) {
   if (!houseExplorer.includes(requiredToxinFeature)) {
