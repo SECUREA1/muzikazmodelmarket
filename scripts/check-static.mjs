@@ -129,11 +129,11 @@ for (const requiredXrealFeature of ['renderer.xr.getHand(i)', "hand.joints?.['th
   if (!houseExplorer.includes(requiredXrealFeature)) throw new Error(`XREAL browser hand controls are missing: ${requiredXrealFeature}`);
 }
 const xrealPlay = await readFile('dist/public/js/xreal-play.js', 'utf8');
-for (const requiredLauncherFeature of ['browserGameUrl', 'https://www.xreal.com/app/', 'XREAL|Nebula', 'index.html?xreal=1&autostart=1', '#house-explorer']) {
+for (const requiredLauncherFeature of ['browserGameUrl', 'https://www.xreal.com/app/', 'XREAL|Nebula', 'ioncore_radtox_multiplatform_ar.html?xreal=1&autostart=1', 'Start RAD-TOX']) {
   if (!xrealPlay.includes(requiredLauncherFeature)) throw new Error(`XREAL Play launcher is missing: ${requiredLauncherFeature}`);
 }
 const spatialGame = await readFile('dist/ioncore_radtox_multiplatform_ar.html', 'utf8');
-for (const requiredNebulaFeature of ['optionalFeatures:["hit-test"', '"hand-tracking"', 'xrealAutostart', 'enterFullAR().catch', 'requestHitTestSource', 'startMobileFallback', 'renderer.xr.getHand(i)', 'updateXRHandGestures(time)', 'spawnARWave();']) {
+for (const requiredNebulaFeature of ['optionalFeatures:["hit-test"', '"hand-tracking"', 'xrealAutostart', 'enterFullAR().catch', 'requestHitTestSource', 'startMobileFallback', 'renderer.xr.getHand(i)', 'inputsourceschange', 'pinchDistance < 0.045', 'updateXRHandGestures(time)', 'spawnARWave();']) {
   if (!spatialGame.includes(requiredNebulaFeature)) throw new Error(`Spatial game is missing Nebula takeover support: ${requiredNebulaFeature}`);
 }
 for (const forbiddenBrowserLauncher of ["isSessionSupported('immersive-ar')", 'beforeinstallprompt', 'model-explorer.html?xreal=1']) {

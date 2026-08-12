@@ -1053,7 +1053,7 @@
 
           <div class="btnRow">
             <button id="btnDetectAR" type="button">Detect AR</button>
-            <button id="btnEnterWebXR" type="button">Enter Full AR Game</button>
+            <button id="btnEnterWebXR" type="button">Start RAD-TOX</button>
             <button id="btnLaunchModelAR" type="button">Launch Model AR</button>
             <button id="btnExitWebXR" type="button" disabled>Exit AR</button>
           </div>
@@ -1110,7 +1110,7 @@
           </model-viewer>
 
           <div class="mini">
-            <b>Full AR Game</b> keeps the game in-browser with WebXR hit-testing and 3D targets.
+            <b>Start RAD-TOX</b> opens the complete browser game and automatically loads targets and XR controls.
             <b>Launch Model AR</b> routes a single model through WebXR / Google Scene Viewer / Apple Quick Look.
             If immersive AR is unavailable, the existing rear-camera MediaPipe game remains the fallback.
           </div>
@@ -5067,8 +5067,10 @@
       reticle:null,
       controller:null,
       hands:[],
-      handPinched:[false,false],
-      lastHandShot:[0,0],
+      handInput:[
+        {connected:false,pinching:false,lastShot:0,inputSource:null},
+        {connected:false,pinching:false,lastShot:0,inputSource:null}
+      ],
       world:new THREE.Group(),
       targets:[],
       projectiles:[],
@@ -5302,12 +5304,12 @@
       const origin = new THREE.Vector3();
       const dir = new THREE.Vector3(0,0,-1);
       const tip = hand?.joints?.["index-finger-tip"];
-      const wrist = hand?.joints?.wrist;
-      if(tip && wrist){
+      const indexBase = hand?.joints?.["index-finger-phalanx-distal"] || hand?.joints?.["index-finger-phalanx-intermediate"];
+      if(tip && indexBase){
         tip.getWorldPosition(origin);
-        const wristPosition = new THREE.Vector3();
-        wrist.getWorldPosition(wristPosition);
-        dir.copy(origin).sub(wristPosition).normalize();
+        const basePosition = new THREE.Vector3();
+        indexBase.getWorldPosition(basePosition);
+        dir.copy(origin).sub(basePosition).normalize();
       }else{
         cam.getWorldPosition(origin);
         cam.getWorldDirection(dir);
@@ -5341,21 +5343,25 @@
         const hand = spatialAR.hands[i];
         const thumb = hand?.joints?.["thumb-tip"];
         const index = hand?.joints?.["index-finger-tip"];
-        if(!thumb || !index || !hand.visible){
-          spatialAR.handPinched[i] = false;
+        const input = spatialAR.handInput[i];
+        if(!input.connected || !thumb || !index || !hand.visible){
+          input.pinching = false;
           continue;
         }
         const thumbPosition = new THREE.Vector3();
         const indexPosition = new THREE.Vector3();
         thumb.getWorldPosition(thumbPosition);
         index.getWorldPosition(indexPosition);
-        const pinched = thumbPosition.distanceTo(indexPosition) < 0.035;
-        if(pinched && !spatialAR.handPinched[i] && time-spatialAR.lastHandShot[i] > 220){
+        const pinchDistance = thumbPosition.distanceTo(indexPosition);
+        // Separate press/release thresholds prevent noisy joints from producing
+        // repeated edge events while the player holds one pinch.
+        const pinched = input.pinching ? pinchDistance < 0.045 : pinchDistance < 0.032;
+        if(pinched && !input.pinching && time-input.lastShot > 250){
           fireARSlime(hand);
-          spatialAR.lastHandShot[i] = time;
+          input.lastShot = time;
           setARChip(arGameChip, `AR GAME: ${spatialAR.targets.length} TARGETS · HAND ${i+1}`, "ok");
         }
-        spatialAR.handPinched[i] = pinched;
+        input.pinching = pinched;
       }
     }
 
@@ -5507,10 +5513,14 @@
         for(let i=0;i<2;i++){
           const hand = spatialAR.renderer.xr.getHand(i);
           hand.addEventListener("connected", event=>{
+            spatialAR.handInput[i].connected = true;
+            spatialAR.handInput[i].inputSource = event.data || null;
             hand.userData.handedness = event.data?.handedness || (i ? "right" : "left");
             setARChip(arRuntimeChip, `AR: ${hand.userData.handedness.toUpperCase()} HAND TRACKED`, "ok");
           });
-          hand.addEventListener("disconnected", ()=> spatialAR.handPinched[i] = false);
+          hand.addEventListener("disconnected", ()=>{
+            Object.assign(spatialAR.handInput[i], {connected:false,pinching:false,inputSource:null});
+          });
           spatialAR.hands.push(hand);
           spatialAR.scene.add(hand);
         }
@@ -5530,11 +5540,23 @@
       spatialAR.hitTestRequested = false;
       spatialAR.clock.start();
 
+      const syncInputSources = ()=>{
+        const sources = Array.from(session.inputSources || []).filter(source=>source.hand);
+        spatialAR.handInput.forEach((input,i)=>{
+          input.inputSource = sources[i] || null;
+          input.connected = Boolean(sources[i]);
+          if(!input.connected) input.pinching = false;
+        });
+      };
+      session.addEventListener("inputsourceschange", syncInputSources);
+      syncInputSources();
+
       session.addEventListener("end", ()=>{
         spatialAR.active = false;
         spatialAR.session = null;
         spatialAR.hitTestSource = null;
         spatialAR.hitTestRequested = false;
+        spatialAR.handInput.forEach(input=>Object.assign(input,{connected:false,pinching:false,inputSource:null}));
         if(spatialAR.reticle) spatialAR.reticle.visible = false;
         if(spatialAR.renderer) spatialAR.renderer.setAnimationLoop(null);
         arWebGLCanvas.style.display = "none";
