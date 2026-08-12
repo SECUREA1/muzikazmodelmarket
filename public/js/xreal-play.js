@@ -2,6 +2,7 @@
   'use strict';
 
   var XREAL_DOWNLOAD_URL = 'https://www.xreal.com/app/';
+  var XREAL_GAME_URL = 'ioncore_radtox_multiplatform_ar.html?xreal=1&autostart=1';
   var dialog = document.createElement('dialog');
   dialog.className = 'xreal-play-dialog';
   dialog.setAttribute('aria-labelledby', 'xreal-play-title');
@@ -35,6 +36,15 @@
     var room = button.getAttribute('data-xreal-room') || 'rad-tox';
     var multiplayer = button.getAttribute('data-xreal-multiplayer') === 'true';
     var android = /Android/i.test(navigator.userAgent);
+    var nebula = /XREAL|Nebula/i.test(navigator.userAgent);
+
+    // Nebula is already the spatial runtime. Keep the selecting tap as the
+    // navigation gesture and enter the WebXR game page immediately rather than
+    // routing it through an unregistered custom protocol or another dialog.
+    if (nebula || android) {
+      window.location.assign(XREAL_GAME_URL + (multiplayer ? '&multiplayer=1' : ''));
+      return;
+    }
 
     activateLink.href = android ? androidIntentUrl(room, multiplayer) : nativeSceneUrl(room, multiplayer);
     activateLink.textContent = multiplayer ? 'Open multiplayer on XREAL' : 'Open RAD-TOX on XREAL';
