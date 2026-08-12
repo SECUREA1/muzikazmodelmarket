@@ -129,10 +129,14 @@ for (const requiredXrealFeature of ['renderer.xr.getHand(i)', "hand.joints?.['th
   if (!houseExplorer.includes(requiredXrealFeature)) throw new Error(`XREAL browser hand controls are missing: ${requiredXrealFeature}`);
 }
 const xrealPlay = await readFile('dist/public/js/xreal-play.js', 'utf8');
-for (const requiredLauncherFeature of ['intent://scene/', 'xrealmodel://scene/', 'mode=immersive-ar', 'handTracking=required', 'hands=left,right', 'camera=glasses', 'gestureProfile=rad-tox', 'https://www.xreal.com/app/']) {
+for (const requiredLauncherFeature of ['intent://scene/', 'xrealmodel://scene/', 'mode=immersive-ar', 'handTracking=required', 'hands=left,right', 'camera=glasses', 'gestureProfile=rad-tox', 'https://www.xreal.com/app/', 'XREAL|Nebula', 'xreal=1&autostart=1']) {
   if (!xrealPlay.includes(requiredLauncherFeature)) throw new Error(`XREAL Play launcher is missing: ${requiredLauncherFeature}`);
 }
-for (const forbiddenBrowserLauncher of ["isSessionSupported('immersive-ar')", 'beforeinstallprompt', 'model-explorer.html?xreal=1', 'ioncore_radtox_multiplatform_ar.html?xreal=1']) {
+const spatialGame = await readFile('dist/ioncore_radtox_multiplatform_ar.html', 'utf8');
+for (const requiredNebulaFeature of ['optionalFeatures:["hit-test"', '"hand-tracking"', 'xrealAutostart', 'enterFullAR().catch', 'requestHitTestSource', 'startMobileFallback']) {
+  if (!spatialGame.includes(requiredNebulaFeature)) throw new Error(`Spatial game is missing Nebula takeover support: ${requiredNebulaFeature}`);
+}
+for (const forbiddenBrowserLauncher of ["isSessionSupported('immersive-ar')", 'beforeinstallprompt', 'model-explorer.html?xreal=1']) {
   if (xrealPlay.includes(forbiddenBrowserLauncher)) throw new Error(`XREAL Play must hand off to the glasses instead of browser play: ${forbiddenBrowserLauncher}`);
 }
 const xrealPages = await Promise.all(['index.html', 'members.html'].map((page) => readFile(`dist/${page}`, 'utf8')));

@@ -5469,8 +5469,10 @@
       }
 
       const sessionInit = {
-        requiredFeatures:["hit-test"],
-        optionalFeatures:["local-floor","dom-overlay","anchors","light-estimation"],
+        // XREAL Nebula runtimes do not all expose hit-test. Requiring it caused
+        // the entire immersive session to be rejected even though head and hand
+        // tracking were available.
+        optionalFeatures:["hit-test","local-floor","dom-overlay","anchors","light-estimation","hand-tracking"],
         domOverlay:{root:document.body}
       };
       const session = await navigator.xr.requestSession("immersive-ar", sessionInit);
@@ -5504,8 +5506,14 @@
         spatialAR.referenceSpace = await session.requestReferenceSpace("local");
       }
       spatialAR.viewerSpace = await session.requestReferenceSpace("viewer");
-      spatialAR.hitTestSource = await session.requestHitTestSource({space:spatialAR.viewerSpace});
-      spatialAR.hitTestRequested = true;
+      if(session.requestHitTestSource){
+        try{
+          spatialAR.hitTestSource = await session.requestHitTestSource({space:spatialAR.viewerSpace});
+          spatialAR.hitTestRequested = true;
+        }catch(err){
+          console.info("XR hit-test unavailable; using gaze-forward placement.", err);
+        }
+      }
 
       arWebGLCanvas.style.display = "block";
       btnExitWebXR.disabled = false;
@@ -5612,9 +5620,43 @@
       arScaleVal.textContent = Number(arModelScale.value).toFixed(2);
       arWaveVal.textContent = String(Math.round(Number(arWaveSize.value)));
       syncModelViewer();
-      await detectARCapabilities();
+      const arSupport = await detectARCapabilities();
+
+      // A Nebula launcher selection navigates here with xreal=1. Attempt the
+      // immersive takeover immediately; if this WebXR implementation requires
+      // activation, preserve the first select/tap as a one-shot retry.
+      const launchParams = new URLSearchParams(location.search);
+      const xrealAutostart = launchParams.get("xreal") === "1" || launchParams.get("autostart") === "1";
+      if(xrealAutostart && arSupport.immersive && arSupport.secure){
+        const takeOver = ()=>{
+          document.removeEventListener("pointerdown", takeOver, true);
+          document.removeEventListener("keydown", takeOver, true);
+          enterFullAR().catch(err=>{
+            console.warn("Automatic XREAL takeover is waiting for selection.", err);
+            setARChip(arRuntimeChip, "AR: SELECT TO ENTER", "warn");
+            arCapabilityText.innerHTML = "<b>XREAL ready.</b> Select anywhere once to let Nebula enter immersive AR.";
+            document.addEventListener("pointerdown", takeOver, {capture:true,once:true});
+            document.addEventListener("keydown", takeOver, {capture:true,once:true});
+          });
+        };
+        takeOver();
+      }
       await createHandLandmarker();
       updateAuthUI();
+
+      // Phones whose browser cannot expose immersive-ar still receive the full
+      // rear-camera game instead of landing on an idle configuration screen.
+      if(xrealAutostart && !arSupport.immersive){
+        const startMobileFallback = ()=>{
+          document.removeEventListener("pointerdown", startMobileFallback, true);
+          startStream().catch(err=>{
+            console.warn("Automatic mobile camera start is waiting for selection.", err);
+            statusPill.textContent = "TAP TO START CAMERA";
+            document.addEventListener("pointerdown", startMobileFallback, {capture:true,once:true});
+          });
+        };
+        startMobileFallback();
+      }
 
       if(!CanvasRenderingContext2D.prototype.roundRect){
         CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
