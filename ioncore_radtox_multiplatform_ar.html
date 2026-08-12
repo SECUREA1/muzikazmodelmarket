@@ -5076,7 +5076,11 @@
       selectionHasPlaced:false,
       clock:new THREE.Clock(),
       lastReticleMatrix:new THREE.Matrix4(),
-      raycaster:new THREE.Raycaster()
+      raycaster:new THREE.Raycaster(),
+      hands:new Map(),
+      pinchDistance:0.025,
+      pinchReleaseDistance:0.038,
+      pinchCooldownMs:220
     };
 
     const gltfLoader = new GLTFLoader();
@@ -5293,13 +5297,16 @@
       spatialAR.splats.push(splat);
     }
 
-    function fireARSlime(){
+    function fireARSlime(aim=null){
       if(!spatialAR.active || !spatialAR.scene) return false;
       const cam = spatialAR.renderer.xr.getCamera(spatialAR.camera);
-      const origin = new THREE.Vector3();
-      const dir = new THREE.Vector3(0,0,-1);
-      cam.getWorldPosition(origin);
-      cam.getWorldDirection(dir);
+      const origin = aim?.origin?.clone?.() || new THREE.Vector3();
+      const dir = aim?.direction?.clone?.() || new THREE.Vector3(0,0,-1);
+      if(!aim){
+        cam.getWorldPosition(origin);
+        cam.getWorldDirection(dir);
+      }
+      dir.normalize();
 
       const slime = new THREE.Mesh(
         new THREE.SphereGeometry(0.045,14,10),
@@ -5402,6 +5409,52 @@
       return true;
     }
 
+    function resetXRHands(){
+      spatialAR.hands.clear();
+    }
+
+    function syncXRInputSources(session){
+      const connected = new Set();
+      for(const source of session.inputSources){
+        if(!source.hand) continue;
+        const side = source.handedness || `hand-${connected.size + 1}`;
+        connected.add(side);
+        const prior = spatialAR.hands.get(side);
+        spatialAR.hands.set(side, prior?.source === source ? prior : {source,side,pinching:false,lastShot:0});
+      }
+      for(const side of spatialAR.hands.keys()) if(!connected.has(side)) spatialAR.hands.delete(side);
+      if(spatialAR.active){
+        const count = spatialAR.hands.size;
+        setARChip(arRuntimeChip, count ? `AR: ${count} WEBXR HAND${count === 1 ? "" : "S"} TRACKED` : "AR: FULL WEBXR GAME", "ok");
+      }
+    }
+
+    function updateXRHandGestures(frame, time){
+      if(!frame || !spatialAR.referenceSpace || !spatialAR.session) return;
+      syncXRInputSources(spatialAR.session);
+      for(const state of spatialAR.hands.values()){
+        const thumbSpace = state.source.hand.get("thumb-tip");
+        const indexSpace = state.source.hand.get("index-finger-tip");
+        const knuckleSpace = state.source.hand.get("index-finger-metacarpal") || state.source.hand.get("wrist");
+        const thumbPose = thumbSpace && frame.getJointPose(thumbSpace, spatialAR.referenceSpace);
+        const indexPose = indexSpace && frame.getJointPose(indexSpace, spatialAR.referenceSpace);
+        const knucklePose = knuckleSpace && frame.getJointPose(knuckleSpace, spatialAR.referenceSpace);
+        if(!thumbPose || !indexPose){ state.pinching = false; continue; }
+        const thumb = new THREE.Vector3().fromArray(thumbPose.transform.position.toArray?.() || [thumbPose.transform.position.x,thumbPose.transform.position.y,thumbPose.transform.position.z]);
+        const index = new THREE.Vector3().fromArray(indexPose.transform.position.toArray?.() || [indexPose.transform.position.x,indexPose.transform.position.y,indexPose.transform.position.z]);
+        const distance = thumb.distanceTo(index);
+        const pinching = state.pinching ? distance < spatialAR.pinchReleaseDistance : distance < spatialAR.pinchDistance;
+        if(pinching && !state.pinching && time - state.lastShot >= spatialAR.pinchCooldownMs){
+          const direction = knucklePose
+            ? index.clone().sub(new THREE.Vector3(knucklePose.transform.position.x,knucklePose.transform.position.y,knucklePose.transform.position.z)).normalize()
+            : new THREE.Vector3(0,0,-1).applyQuaternion(new THREE.Quaternion().fromArray(indexPose.transform.orientation.toArray?.() || [indexPose.transform.orientation.x,indexPose.transform.orientation.y,indexPose.transform.orientation.z,indexPose.transform.orientation.w]));
+          state.lastShot = time;
+          fireARSlime({origin:index,direction});
+        }
+        state.pinching = pinching;
+      }
+    }
+
     function handleXRSelect(){
       const mode = xrSelectMode.value;
       if(mode === "place"){
@@ -5482,7 +5535,12 @@
       spatialAR.hitTestRequested = false;
       spatialAR.clock.start();
 
+      const syncHands = ()=>syncXRInputSources(session);
+      session.addEventListener("inputsourceschange", syncHands);
+      syncHands();
       session.addEventListener("end", ()=>{
+        session.removeEventListener("inputsourceschange", syncHands);
+        resetXRHands();
         spatialAR.active = false;
         spatialAR.session = null;
         spatialAR.hitTestSource = null;
@@ -5521,7 +5579,10 @@
       overlayMsg.classList.add("hidden");
       setARChip(arRuntimeChip, "AR: FULL WEBXR GAME", "ok");
       setARChip(arPlacementChip, "SURFACE: scan floor/table", "warn");
-      setARChip(arGameChip, "AR GAME: place model", "ok");
+      // Populate immediately: XREAL Nebula variants may never expose hit-test,
+      // and play should not be blocked on a separate placement gesture.
+      if(!spatialAR.targets.length) spawnARWave();
+      setARChip(arGameChip, `AR GAME: ${spatialAR.targets.length} TARGETS`, "ok");
 
       spatialAR.renderer.setAnimationLoop((time, frame)=>{
         const dt = Math.min(0.05, spatialAR.clock.getDelta());
@@ -5543,6 +5604,7 @@
           }
         }
 
+        updateXRHandGestures(frame,time);
         updateARGame(dt,elapsed);
         spatialAR.renderer.render(spatialAR.scene,spatialAR.camera);
       });

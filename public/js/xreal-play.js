@@ -8,7 +8,7 @@
   var dialog = document.createElement('dialog');
   dialog.className = 'xreal-play-dialog';
   dialog.setAttribute('aria-labelledby', 'xreal-play-title');
-  dialog.innerHTML = '<div class="xreal-play-dialog__card"><div class="xreal-play-dialog__head"><div><small>XREAL AIR 2 ULTRA / WEBXR</small><h2 id="xreal-play-title">Play RAD-TOX on your glasses</h2></div><button class="xreal-play-dialog__close" type="button" aria-label="Close XREAL launcher">×</button></div><p>Open the complete browser game, press ENTER AR, and allow the immersive session. Supported runtimes can use both tracked hands; thumb-and-index pinch fires.</p><ul class="xreal-capabilities" aria-label="XREAL launch requirements"><li data-xreal-device>Checking device…</li><li class="ok">✓ Immersive WebXR AR</li><li class="ok">✓ Phone and glasses rendering</li><li class="ok">✓ Hand pinch and controller input</li></ul><div class="xreal-play-actions"><a class="primary" data-xreal-activate href="index.html?xreal=1&amp;autostart=1#house-explorer">Play RAD-TOX in browser</a><a data-xreal-download href="https://www.xreal.com/app/">Download XREAL app</a></div><p class="xreal-play-status" data-xreal-status role="status" aria-live="polite">Connect your glasses to an Android spatial-computing device, then open the game.</p></div>';
+  dialog.innerHTML = '<div class="xreal-play-dialog__card"><div class="xreal-play-dialog__head"><div><small>XREAL AIR 2 ULTRA / WEBXR</small><h2 id="xreal-play-title">Play RAD-TOX on your glasses</h2></div><button class="xreal-play-dialog__close" type="button" aria-label="Close XREAL launcher">×</button></div><p>Start the complete browser game, then select ENTER AR and allow camera and hand-tracking access. The world auto-populates with targets; thumb-and-index pinch fires.</p><ul class="xreal-capabilities" aria-label="XREAL launch requirements"><li data-xreal-device>Checking device…</li><li class="ok">✓ Immersive WebXR AR</li><li class="ok">✓ Phone and glasses rendering</li><li class="ok">✓ Hand pinch and controller input</li></ul><div class="xreal-play-actions"><a class="primary" data-xreal-activate href="index.html?xreal=1&amp;autostart=1#house-explorer">Start RAD-TOX in Nebula</a><a data-xreal-download href="https://www.xreal.com/app/">Download XREAL app</a></div><p class="xreal-play-status" data-xreal-status role="status" aria-live="polite">Connect your glasses to an Android spatial-computing device, then open the game.</p></div>';
   document.body.appendChild(dialog);
 
   var status = dialog.querySelector('[data-xreal-status]');
@@ -33,7 +33,7 @@
     }
 
     activateLink.href = browserGameUrl(multiplayer);
-    activateLink.textContent = multiplayer ? 'Play multiplayer in browser' : 'Play RAD-TOX in browser';
+    activateLink.textContent = multiplayer ? 'Play multiplayer in browser' : 'Start RAD-TOX in Nebula';
     downloadLink.href = XREAL_DOWNLOAD_URL;
     deviceItem.textContent = android ? '✓ Android spatial device detected' : '• Open this page on your XREAL Android device';
     deviceItem.classList.toggle('ok', android);

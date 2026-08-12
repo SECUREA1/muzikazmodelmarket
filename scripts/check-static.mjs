@@ -51,7 +51,7 @@ if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
   throw new Error('index.html must load the RAD-TOX 3D launcher.');
 }
 
-for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'Begin Game', 'game-loading-indicator']) {
+for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'Start RAD-TOX', 'game-loading-indicator']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
@@ -133,7 +133,7 @@ for (const requiredLauncherFeature of ['browserGameUrl', 'https://www.xreal.com/
   if (!xrealPlay.includes(requiredLauncherFeature)) throw new Error(`XREAL Play launcher is missing: ${requiredLauncherFeature}`);
 }
 const spatialGame = await readFile('dist/ioncore_radtox_multiplatform_ar.html', 'utf8');
-for (const requiredNebulaFeature of ['optionalFeatures:["hit-test"', '"hand-tracking"', 'xrealAutostart', 'enterFullAR().catch', 'requestHitTestSource', 'startMobileFallback']) {
+for (const requiredNebulaFeature of ['optionalFeatures:["hit-test"', '"hand-tracking"', 'xrealAutostart', 'enterFullAR().catch', 'requestHitTestSource', 'startMobileFallback', 'inputsourceschange', 'source.hand.get("thumb-tip")', 'source.hand.get("index-finger-tip")', 'updateXRHandGestures(frame,time)', 'if(!spatialAR.targets.length) spawnARWave()', 'fireARSlime({origin:index,direction})']) {
   if (!spatialGame.includes(requiredNebulaFeature)) throw new Error(`Spatial game is missing Nebula takeover support: ${requiredNebulaFeature}`);
 }
 for (const forbiddenBrowserLauncher of ["isSessionSupported('immersive-ar')", 'beforeinstallprompt', 'model-explorer.html?xreal=1']) {
