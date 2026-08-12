@@ -604,6 +604,23 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     stick.addEventListener('pointerdown', (event) => { event.preventDefault(); pointerId = event.pointerId; startX = event.clientX; startY = event.clientY; moved = false; stick.setPointerCapture?.(pointerId); stick.classList.add('is-active'); write(event); }); stick.addEventListener('pointermove', (event) => { if (pointerId === event.pointerId) { event.preventDefault(); write(event); } }); stick.addEventListener('pointerup', release); stick.addEventListener('pointercancel', release);
   }
   setupThumbstick('left'); setupThumbstick('right');
+  const xrHands = [];
+  function updateXRHandGestures() {
+    if (!renderer.xr.isPresenting) return;
+    xrHands.forEach((hand) => {
+      const thumb = hand.joints?.['thumb-tip'];
+      const index = hand.joints?.['index-finger-tip'];
+      if (!thumb?.visible || !index?.visible) { hand.userData.wasPinching = false; return; }
+      const distance = thumb.getWorldPosition(new THREE.Vector3()).distanceTo(index.getWorldPosition(new THREE.Vector3()));
+      const pinching = distance < .025;
+      if (pinching && !hand.userData.wasPinching && performance.now() - (hand.userData.lastShot || 0) > 220) {
+        hand.userData.lastShot = performance.now();
+        const hit = toxicBubbleSystem.handleXRInteraction(index);
+        setStatus(hit ? 'XREAL hand pinch hit the target.' : 'Pinch shot missed — point your index finger at a target.');
+      }
+      hand.userData.wasPinching = pinching;
+    });
+  }
   fullscreenButton?.addEventListener('click', setFullscreen);
   document.querySelectorAll('[data-mobile-action]').forEach((oldButton) => {
     const button = oldButton.cloneNode(true);
@@ -653,6 +670,16 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       const grip = renderer.xr.getControllerGrip(i);
       grip.add(controllerFactory.createControllerModel(grip));
       playerRig.add(controller, grip);
+      // XREAL hand-tracking runtimes expose WebXR joints through getHand(). A
+      // thumb/index pinch fires directly, so glasses users do not need a phone
+      // tap or a physical controller to play.
+      const hand = renderer.xr.getHand(i);
+      hand.userData.handedness = i === 0 ? 'left' : 'right';
+      const handRay = createXRAimRay();
+      handRay.scale.z = .45;
+      hand.add(handRay);
+      playerRig.add(hand);
+      xrHands.push(hand);
     }
     if (vrSupported) {
       const vrButton = VRButton.createButton(renderer, { requiredFeatures: ['local-floor'], optionalFeatures: ['bounded-floor', 'hand-tracking'] });
@@ -718,6 +745,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     liveAvatarRoots.forEach((root) => { updateLiveAvatarFacing(root, delta); root.position.lerp(root.userData.targetPosition, Math.min(1, delta * 8)); });
     if (!performanceMode || renderer.xr.isPresenting) envLoader.mixers.forEach((m) => m.update(delta));
     toxicBubbleSystem.update(delta, clock.elapsedTime);
+    updateXRHandGestures();
     renderer.render(scene, camera);
   });
   // This is the launch-critical half of checkForHouseUpdates({ startup: true }).

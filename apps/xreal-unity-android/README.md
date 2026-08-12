@@ -28,3 +28,8 @@ The code under `Assets/MuzikazSpatial` compiles without vendor SDK symbols and e
 - `xrealmodel://scene/{sceneId}`
 
 A deep link selects and downloads an asset, but placement always requires user confirmation.
+
+The website's **XREAL Play** control first offers the standards-based WebXR game
+(`immersive-ar` with optional `hand-tracking`) and also exposes the scene deep
+link above for an installed native client. The web path remains playable when a
+native client is absent; installation uses the browser's PWA install prompt.

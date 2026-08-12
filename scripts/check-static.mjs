@@ -125,6 +125,17 @@ for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarge
     throw new Error(`RAD-TOX is missing its required mixed-level or always-on controls feature: ${requiredGameFeature}`);
   }
 }
+for (const requiredXrealFeature of ['renderer.xr.getHand(i)', "hand.joints?.['thumb-tip']", "hand.joints?.['index-finger-tip']", 'updateXRHandGestures()', "optionalFeatures: ['dom-overlay', 'hand-tracking']"]) {
+  if (!houseExplorer.includes(requiredXrealFeature)) throw new Error(`XREAL browser hand controls are missing: ${requiredXrealFeature}`);
+}
+const xrealPlay = await readFile('dist/public/js/xreal-play.js', 'utf8');
+for (const requiredLauncherFeature of ["isSessionSupported('immersive-ar')", 'beforeinstallprompt', 'xrealmodel://scene/', 'model-explorer.html?xreal=1']) {
+  if (!xrealPlay.includes(requiredLauncherFeature)) throw new Error(`XREAL Play launcher is missing: ${requiredLauncherFeature}`);
+}
+const xrealPages = await Promise.all(['index.html', 'members.html'].map((page) => readFile(`dist/${page}`, 'utf8')));
+for (const page of xrealPages) {
+  if (!page.includes('data-xreal-play') || !page.includes('public/js/xreal-play.js')) throw new Error('Index and members pages must both expose XREAL Play.');
+}
 for (const requiredToxinFeature of ["data-rad-tool=\"toxin\"", 'createToxinModel()', 'fireToxin(', 'toxinRange: 8.5', 'toxinCost: 5', 'wallet.spend']) {
   if (!houseExplorer.includes(requiredToxinFeature)) {
     throw new Error(`RAD-TOX is missing its illuminated MZK toxins thrower feature: ${requiredToxinFeature}`);
