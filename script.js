@@ -76,11 +76,11 @@ initHeaderWalletConnect();
 // to the asset, so a purchased world always resolves to the same map location.
 const WORLD_ASSETS = [
   { id: 'volt-city', name: 'Volt City', kind: 'Land world', x: 23, y: 28, price: '$35.00', logo: 'logo_symbol_crop_2x.png', detail: 'The electric capital · live stages and creator towers' },
-  { id: 'skyline-deck', name: 'Skyline Deck', kind: 'Land world', x: 49, y: 22, price: '$25.00', logo: 'available_online_events_banner_2x_transparent.png', detail: 'Rooftop events · tonight at 20:00' },
-  { id: 'echo-gardens', name: 'Echo Gardens', kind: 'Land world', x: 74, y: 31, price: '$25.00', logo: 'dark_smoke_green_fx_2x.png', detail: 'Living sound biome · open for builders' },
-  { id: 'crew-plaza', name: 'Crew Plaza', kind: 'Land world', x: 36, y: 49, price: '$25.00', logo: 'join_the_crew_banner_2x_transparent.png', detail: 'Social hub · crews gathering now' },
+  { id: 'skyline-deck', name: 'Skyline Deck', kind: 'Land world', x: 49, y: 22, price: '$30.00', logo: 'available_online_events_banner_2x_transparent.png', detail: 'Rooftop events · tonight at 20:00' },
+  { id: 'echo-gardens', name: 'Echo Gardens', kind: 'Land world', x: 74, y: 31, price: '$36.00', logo: 'dark_smoke_green_fx_2x.png', detail: 'Living sound biome · open for builders' },
+  { id: 'crew-plaza', name: 'Crew Plaza', kind: 'Land world', x: 36, y: 49, price: '$42.00', logo: 'join_the_crew_banner_2x_transparent.png', detail: 'Social hub · crews gathering now' },
   { id: 'studio-ridge', name: 'Studio Ridge', kind: '3D Environment', x: 63, y: 53, price: '$48.00', logo: 'smoke_energy_background_large_2x_transparent.png', detail: 'MUZIKAZ Main Floor · complete walkable GLB stage', environmentId: 'muzikaz-main' },
-  { id: 'neon-docks', name: 'Neon Docks', kind: 'Land world', x: 18, y: 70, price: '$25.00', logo: 'brand_name_tagline_panel_2x.png', detail: 'Drop port · new assets arriving' },
+  { id: 'neon-docks', name: 'Neon Docks', kind: 'Land world', x: 18, y: 70, price: '$54.00', logo: 'brand_name_tagline_panel_2x.png', detail: 'Drop port · new assets arriving' },
   { id: 'bassline-badlands', name: 'Bassline Badlands', kind: '3D Environment', x: 50, y: 76, price: '$52.00', logo: 'hero_banner_full_transparent.png', detail: 'MUZIKAZ Upper Floor · high-energy adventure environment', environmentId: 'muzikaz-upper' },
   { id: 'pixel-peaks', name: 'Pixel Peaks', kind: '3D Environment', x: 82, y: 72, price: '$58.00', logo: 'logo_panel_2x_transparent.png', detail: 'Sheep Base · panoramic walkable mountain build', environmentId: 'sheepbase' }
 ];
@@ -1024,7 +1024,7 @@ function initFlexLabCategories() {
 }
 
 function initWorldPlot() {
-  const STARTER_PLOT_MZK = 1000;
+  const STARTER_PLOT_MZK = 3000;
   const plot = document.querySelector('#muzikaz-world-plot');
   const spaces = Array.from(document.querySelectorAll('[data-world-space]'));
   const consent = document.querySelector('#world-plot-consent');
