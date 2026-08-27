@@ -213,6 +213,9 @@ for (const id of ['payment-form', 'checkout-items', 'confirmation-panel']) {
     throw new Error(`checkout.html is missing checkout section #${id}`);
   }
 }
+for (const requiredEthereumCheckout of ['muzikaz-market-payment-address', 'muzikaz-market-item-price-wei', 'ethereum-wallet-connect', 'ethereum-wallet-pay', 'ethereum-wallet-total']) {
+  if (!checkoutHtml.includes(requiredEthereumCheckout)) throw new Error(`checkout.html is missing permanent Ethereum cart checkout marker ${requiredEthereumCheckout}`);
+}
 
 const css = await readFile('dist/styles.css', 'utf8');
 if (!css.includes("url('reference.png')")) {
@@ -234,6 +237,9 @@ for (const requiredBottleAccessFlow of ['eth_requestAccounts', 'eth_call', 'eth_
   if (!appScript.includes(requiredBottleAccessFlow)) {
     throw new Error(`script.js is missing Bottle mint/validation access flow: ${requiredBottleAccessFlow}`);
   }
+}
+for (const requiredMarketPaymentFlow of ['MARKET_PAYMENT_ADDRESS', 'MARKET_ITEM_PRICE_WEI', 'marketPaymentConfig', 'waitForMarketTransaction', 'completeEthereumOrder', 'wallet_revokePermissions']) {
+  if (!appScript.includes(requiredMarketPaymentFlow)) throw new Error(`script.js is missing Ethereum marketplace checkout behavior ${requiredMarketPaymentFlow}`);
 }
 for (const requiredMintReward of ['0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238', '0x5af3107a4000', 'Unrevealed MUZIKAZ Land', 'Unrevealed MUZIKAZ Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);

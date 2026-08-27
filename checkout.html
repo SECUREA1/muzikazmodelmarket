@@ -6,6 +6,9 @@
     <meta name="description" content="Secure checkout for MUZIKAZ model packs, merch, collectible drops, wallet payments, and owned asset summaries." />
     <meta name="keywords" content="MUZIKAZ, muzikaz.com, 3D model market, character models, mascot merch, creator dashboard, wallet rewards, brand kit, neon collectibles" />
     <meta name="author" content="MUZIKAZ" />
+    <meta name="muzikaz-market-payment-address" content="0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238" />
+    <meta name="muzikaz-market-chain-id" content="0x1" />
+    <meta name="muzikaz-market-item-price-wei" content="0x5af3107a4000" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href="https://muzikaz.com/checkout.html" />
     <link rel="icon" type="image/svg+xml" href="muzikaz_bolt_logo_editable.svg" />
@@ -31,8 +34,8 @@
 <body class="original-platform checkout-page">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Secure checkout for MUZIKAZ model packs, merch, collectible drops, wallet payments, and owned asset summaries.","sameAs":["https://muzikaz.com/"]}</script>
     <div class="topbar">
-        <span>Secure demo checkout</span>
-        <span>Cards · PayPal · wallet payment flow</span>
+        <span>Secure live Ethereum checkout</span>
+        <span>Every cart asset · permanent wallet purchase flow</span>
     </div>
     <header class="site-header">
         <a class="logo" href="index.html#home" aria-label="MUZIKAZ home"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
@@ -52,11 +55,11 @@
             <div>
                 <p class="kicker">Final step</p>
                 <h1 id="checkout-title">Process your MUZIKAZ payment.</h1>
-                <p>Review your model packs, merch, shipping details, and payment method. This static checkout validates the order and shows a confirmation screen so the page is ready to connect to Stripe, PayPal, Shopify, or WooCommerce.</p>
+                <p>Every marketplace asset in your cart can be purchased on Ethereum. Connect your wallet, review the exact ETH total, and send payment directly to the designated MUZIKAZ wallet.</p>
             </div>
             <div class="checkout-trust-grid" aria-label="Checkout protections">
                 <article><strong>SSL ready</strong><span>Hosted payment gateway handoff fields are grouped for real processors.</span></article>
-                <article><strong>Instant receipt</strong><span>Confirmation number and purchased assets are saved locally for demo review.</span></article>
+                <article><strong>On-chain receipt</strong><span>Assets are added to your Backpack only after the Ethereum transaction confirms.</span></article>
                 <article><strong>Member sync</strong><span>Logged-in bottle users can tie completed products to owned assets.</span></article>
             </div>
         </section>
@@ -76,6 +79,7 @@
                     <div class="grand-total"><span>Total</span><strong id="summary-total">$0.00</strong></div>
                 </div>
                 <p class="checkout-note">Demo card: use any 16 digit number, future expiry, any name, and any 3 digit CVC.</p>
+                <p class="checkout-note">Ethereum price: <strong>0.0001 ETH per cart item</strong>. Your wallet shows the final network fee separately.</p>
             </aside>
 
             <form class="payment-form" id="payment-form">
@@ -98,6 +102,18 @@
                         <label><input type="radio" name="method" value="PayPal" /> PayPal</label>
                         <label><input type="radio" name="method" value="Wallet" /> Wallet</label>
                     </div>
+                    <section class="ethereum-checkout" id="ethereum-checkout" aria-labelledby="ethereum-checkout-title">
+                        <div>
+                            <strong id="ethereum-checkout-title">Pay live with Ethereum</strong>
+                            <span id="ethereum-price-copy">0.0001 ETH per item · Ethereum Mainnet</span>
+                        </div>
+                        <p id="ethereum-wallet-address">No Ethereum wallet connected.</p>
+                        <div class="ethereum-actions">
+                            <button type="button" class="ghost" id="ethereum-wallet-connect">Connect Ethereum wallet</button>
+                            <button type="button" id="ethereum-wallet-pay" disabled>Buy cart · <span id="ethereum-wallet-total">0 ETH</span></button>
+                        </div>
+                        <small>Payment is sent directly to <code id="ethereum-payment-recipient">0xb2FC…7238</code>. Confirm the recipient and ETH value in your wallet before approving.</small>
+                    </section>
                     <div class="form-grid payment-card-fields">
                         <label>Card number <input name="card" inputmode="numeric" autocomplete="cc-number" required pattern="[0-9 ]{15,23}" placeholder="4242 4242 4242 4242" /></label>
                         <label>Name on card <input name="cardName" autocomplete="cc-name" required placeholder="Muzikaz Collector" /></label>
