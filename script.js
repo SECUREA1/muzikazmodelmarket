@@ -17,7 +17,7 @@ const BOTTLE_ACCESS_KEY = 'muzikazBottleAccess';
 const BOTTLE_BALANCE_OF_SELECTOR = '0x70a08231';
 const BOTTLE_MINT_SELECTOR = '0x1249c58b';
 const BOTTLE_MINT_PAYMENT_ADDRESS = '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238';
-const BOTTLE_MINT_PAYMENT_WEI = '0x5af3107a4000'; // 0.0001 ETH
+const BACKPACK_LOADOUT_USD = 5;
 const BOTTLE_MINT_REWARDS_KEY = 'muzikazBottleMintRewards';
 const BOTTLE_MINT_BACKPACK_ASSETS = ['Unrevealed MUZIKAZ Land', 'Unrevealed MUZIKAZ Bottle'];
 const MARKET_PAYMENT_ADDRESS = '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238';
@@ -1849,16 +1849,12 @@ function initBottleLogin() {
   const updateLoadoutQuote = async () => {
     const currency = loadoutCurrency?.value || 'ETH';
     if (!loadoutPrice) return;
-    if (currency === 'ETH') {
-      loadoutPrice.textContent = '0.0001 ETH · Land + Bottle';
-      return;
-    }
     loadoutPrice.textContent = `Loading live ${currency} quote…`;
     try {
-      const quote = await window.MuzikazWalletPayments.quoteEthValue(0.0001, currency);
-      loadoutPrice.textContent = `${quote.amount} ${currency} · Land + Bottle`;
+      const quote = await window.MuzikazWalletPayments.quote(BACKPACK_LOADOUT_USD, currency);
+      loadoutPrice.textContent = `$${BACKPACK_LOADOUT_USD} USD ≈ ${quote.amount} ${currency} · Land + Bottle`;
     } catch (error) {
-      loadoutPrice.textContent = `${currency} live quote required · Land + Bottle`;
+      loadoutPrice.textContent = `$${BACKPACK_LOADOUT_USD} USD · ${currency} live quote required · Land + Bottle`;
     }
   };
   const showAddress = (address) => {
@@ -1954,35 +1950,24 @@ function initBottleLogin() {
     setBusy(true);
     try {
       const currency = loadoutCurrency?.value || 'ETH';
-      if (currency !== 'ETH') {
-        if (!window.MuzikazWalletPayments?.quoteEthValue) throw new Error('Crypto wallet payments are not available. Reload the page and try again.');
-        const quote = await window.MuzikazWalletPayments.quoteEthValue(0.0001, currency);
-        if (status) status.textContent = `Confirm ${quote.amount} ${currency} in ${currency === 'SOL' ? 'Phantom' : 'Lace'}. The live quote equals 0.0001 ETH and includes one in-game land and one Bottle.`;
-        const payment = await window.MuzikazWalletPayments.pay(quote.usd, currency);
-        const paymentHash = payment.transactionHash;
-        const owner = payment.address;
-        if (!paymentHash || !owner) throw new Error(`${currency} payment confirmation did not include a wallet address and transaction hash.`);
-        currentMemberEmail = normalizeMemberEmail(owner);
-        window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-        grantBottleMintBackpackAssets(owner, paymentHash);
-        if (status) status.textContent = `Backpack Loadout confirmed with ${currency} (${String(paymentHash).slice(0, 10)}…) — one unrevealed land and one unrevealed Bottle were added to ${owner}'s Backpack.`;
-        renderOwnedCollection(currentMemberEmail);
-        return;
+      if (!window.MuzikazWalletPayments?.quote) throw new Error('Crypto wallet payments are not available. Reload the page and try again.');
+      const quote = await window.MuzikazWalletPayments.quote(BACKPACK_LOADOUT_USD, currency);
+      const walletName = currency === 'SOL' ? 'Phantom' : currency === 'ADA' ? 'Lace' : 'your Ethereum wallet';
+      if (status) status.textContent = `Confirm ${quote.amount} ${currency} (equivalent to $${BACKPACK_LOADOUT_USD} USD) in ${walletName}. The Loadout includes one in-game land and one Bottle.`;
+      const payment = await window.MuzikazWalletPayments.pay(BACKPACK_LOADOUT_USD, currency);
+      const paymentHash = payment.transactionHash;
+      const owner = payment.address;
+      if (!paymentHash || !owner) throw new Error(`${currency} payment confirmation did not include a wallet address and transaction hash.`);
+      if (currency === 'ETH') {
+        showAddress(owner);
+        if (status) status.textContent = `Backpack Loadout purchase submitted (${String(paymentHash).slice(0, 10)}…). Waiting for confirmation…`;
+        await waitForTransactionReceipt(requireEthereumWallet(), paymentHash, 'Backpack Loadout purchase');
       }
-      const wallet = requireEthereumWallet();
-      const config = bottleContractConfig();
-      await ensureBottleChain(wallet, config.chainId);
-      const accounts = await wallet.request({ method: 'eth_requestAccounts' });
-      const from = accounts?.[0];
-      if (!from) throw new Error('Connect an Ethereum account before buying a Backpack Loadout.');
-      showAddress(from);
-      if (status) status.textContent = 'Confirm the 0.0001 ETH Backpack Loadout purchase. It includes one in-game land and one Bottle.';
-      const paymentHash = await wallet.request({ method: 'eth_sendTransaction', params: [{ from, to: BOTTLE_MINT_PAYMENT_ADDRESS, value: BOTTLE_MINT_PAYMENT_WEI }] });
-      if (status) status.textContent = `Backpack Loadout purchase submitted (${paymentHash.slice(0, 10)}…). Waiting for confirmation…`;
-      await waitForTransactionReceipt(wallet, paymentHash, 'Backpack Loadout purchase');
-      grantBottleMintBackpackAssets(from, paymentHash);
-      if (status) status.textContent = 'Backpack Loadout confirmed — one unrevealed land and one unrevealed Bottle were added to your in-game Backpack.';
-      renderOwnedCollection(normalizeMemberEmail(from));
+      currentMemberEmail = normalizeMemberEmail(owner);
+      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      grantBottleMintBackpackAssets(owner, paymentHash);
+      if (status) status.textContent = `$${BACKPACK_LOADOUT_USD} Backpack Loadout confirmed with ${currency} (${String(paymentHash).slice(0, 10)}…) — one unrevealed land and one unrevealed Bottle were added to ${owner}'s Backpack. Mint the Magic Bottle below to collect your Backpack assets into your wallet.`;
+      renderOwnedCollection(currentMemberEmail);
     } catch (error) {
       if (status) status.textContent = error.message || 'The Backpack Loadout could not be purchased.';
     } finally {
@@ -2000,15 +1985,15 @@ function initBottleLogin() {
       const from = accounts?.[0];
       if (!from) throw new Error('Connect an Ethereum account before minting.');
       showAddress(from);
-      if (status) status.textContent = 'Confirm the Bottle mint transaction in your wallet…';
+      if (status) status.textContent = 'Confirm the Magic Bottle mint transaction in your wallet…';
       const transaction = { from, to: config.contract, data: config.mintData };
       if (config.mintValue) transaction.value = config.mintValue;
       const transactionHash = await wallet.request({ method: 'eth_sendTransaction', params: [transaction] });
-      if (status) status.textContent = `Bottle mint submitted (${transactionHash.slice(0, 10)}…). Waiting for confirmation…`;
-      await waitForTransactionReceipt(wallet, transactionHash, 'Bottle mint');
+      if (status) status.textContent = `Magic Bottle mint submitted (${transactionHash.slice(0, 10)}…). Waiting for confirmation…`;
+      await waitForTransactionReceipt(wallet, transactionHash, 'Magic Bottle mint');
       await verifyAndUnlock(from);
     } catch (error) {
-      if (status) status.textContent = error.message || 'The Bottle could not be minted.';
+      if (status) status.textContent = error.message || 'The Magic Bottle could not be minted.';
     } finally {
       setBusy(false);
     }
