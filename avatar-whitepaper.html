@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="MUZIKAZ World avatar identity, ownership, equipment, permissions, progression, and creator interoperability whitepaper.">
+  <meta name="description" content="The MUZIKAZ World Avatar Standard: a precise, implementation-ready contract for identity, custody, equipment, permissions, progression, and creator assets.">
+  <meta name="theme-color" content="#050705">
   <title>Avatar Identity Whitepaper | MUZIKAZ World</title>
   <link rel="icon" type="image/svg+xml" href="muzikaz_bolt_logo_editable.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,8 +14,8 @@
   <link rel="stylesheet" href="avatar-whitepaper.css">
 </head>
 <body class="whitepaper-page">
-  <header class="whitepaper-nav">
-    <a class="whitepaper-brand" href="model-market.html#character-world-assets"><span>ϟ</span> MUZIKAZ WORLD</a>
+  <header class="whitepaper-nav" id="top">
+    <a class="whitepaper-brand" href="model-market.html#character-world-assets" aria-label="MUZIKAZ World Model Market"><img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ World"></a>
     <nav aria-label="Whitepaper sections"><a href="#identity-model">Model</a><a href="#ownership">Ownership</a><a href="#gameplay-state">State</a><a href="#creator-standard">Creators</a></nav>
     <a class="whitepaper-nav-cta" href="public/models/avatar-schema.json">JSON schema ↗</a>
   </header>
@@ -22,40 +23,43 @@
   <main>
     <section class="whitepaper-hero">
       <div>
-        <p class="whitepaper-kicker">Technical whitepaper · v1.0</p>
-        <h1>Identity you can<br><em>play.</em></h1>
-        <p class="whitepaper-lede">The avatar is the identity and playable-character layer of MUZIKAZ World—not merely an image, token, or GLB. This standard connects character IP, canonical assets, ownership, equipment, permissions, and living gameplay state.</p>
+        <p class="whitepaper-kicker"><span>Technical specification</span> Version 1.0.0 · August 2026</p>
+        <h1>Identity<br>you can <em>play.</em></h1>
+        <p class="whitepaper-lede">An avatar is the playable identity layer of MUZIKAZ World—not merely an image, token, or 3D file. This specification connects a stable identity to versioned media, verified control, compatible equipment, permissions, and live game state.</p>
+        <div class="spec-status"><b>Public reference</b><span>Schema: JSON Schema 2020-12</span><span>Contract: avatar@1.0.0</span></div>
         <div class="whitepaper-actions"><a href="#identity-model">Explore the architecture</a><a href="model-market.html#character-world-assets">Open Model Market</a></div>
       </div>
       <aside class="identity-stack" aria-label="Avatar architecture summary">
         <span>01 <b>Character IP</b><small>Shared identity, lore, rig</small></span>
         <span>02 <b>Avatar asset</b><small>Playable edition and traits</small></span>
-        <span>03 <b>Ownership</b><small>Who controls the instance</small></span>
+        <span>03 <b>Control</b><small>Who may use the instance</small></span>
         <span>04 <b>Backpack + equip</b><small>Loadout and compatibility</small></span>
         <span>05 <b>World state</b><small>Play, permissions, progress</small></span>
       </aside>
     </section>
 
+    <aside class="scope-banner"><b>What this document defines</b><p>The portable avatar record and the rules used to resolve it. Commerce, blockchain custody, authentication, and game-state storage are integrations—not requirements of the core schema.</p><a href="#reference-contract">Read the contract ↓</a></aside>
+
     <section class="whitepaper-principles" aria-label="Core principles">
-      <article><b>Canonical</b><p>One source of truth lets models and animation sets evolve without rewriting ownership records.</p></article>
+      <article><b>Canonical</b><p>Stable identifiers point to explicit, versioned records; media changes never silently rewrite an owned edition.</p></article>
       <article><b>Interoperable</b><p>Named slots, rigs, animations, and permissions make every approved character predictable to the engine.</p></article>
       <article><b>Player-first</b><p>Rarity creates identity and variety—not automatic competitive dominance.</p></article>
-      <article><b>Fast by design</b><p>Permanent provenance stays separate from high-frequency gameplay state.</p></article>
+      <article><b>Verifiable</b><p>Content hashes, approval status, and server-side authorization protect the path from catalog to session.</p></article>
     </section>
 
     <section class="whitepaper-section" id="identity-model">
       <header><p>01 · Data model</p><h2>Character and instance are different layers.</h2></header>
       <div class="whitepaper-columns">
-        <article class="layer-card"><span>Shared definition</span><h3>Character</h3><p><strong>Black Sheep</strong> defines IP, lore, base GLB/GLTF, USDZ, skeleton profile, animation profile, compatible fit families, default classes, and balanced base traits.</p></article>
-        <article class="layer-card layer-card--accent"><span>Player-controlled asset</span><h3>Avatar instance</h3><p><strong>Black Sheep #0013</strong> defines edition, skin, rarity, immutable trait modifiers, current controller, customization, XP, achievements, and unlocks.</p></article>
+        <article class="layer-card"><span>Shared definition · one-to-many</span><h3>Character</h3><p><strong>Black Sheep</strong> defines the creative identity: lore, licensed media, rig and animation profiles, compatible fit families, default classes, and balanced base traits.</p></article>
+        <article class="layer-card layer-card--accent"><span>Portable record · unique ID</span><h3>Avatar instance</h3><p><strong>Black Sheep #0013</strong> binds an edition to its assets, traits, controller reference, compatibility, permissions, and schema version. XP, health, location, and cooldowns remain in game state.</p></article>
       </div>
       <div class="field-matrix" aria-label="Canonical avatar fields">
-        <span><b>Identity</b> avatarId · characterId · edition</span><span><b>Media</b> modelUrl · iosModelUrl · thumbnail</span>
-        <span><b>Provenance</b> ownerId · tokenId · collection</span><span><b>Play</b> classes · traits · abilities</span>
-        <span><b>Fit</b> rigProfile · wearableSlots · toolSlots</span><span><b>Access</b> worlds · land roles · restrictions</span>
-        <span><b>Motion</b> animationProfile · named actions</span><span><b>Metadata</b> lore · creator · status · version</span>
+        <span><b>Identity</b> id · characterId · name · edition</span><span><b>Media</b> modelUrl · iosModelUrl · thumbnail</span>
+        <span><b>Control</b> ownerId · optional tokenId · collection</span><span><b>Play</b> classes · traits · abilities</span>
+        <span><b>Fit</b> rigProfile · equipmentSlots</span><span><b>Access</b> allowedWorlds · landRoles</span>
+        <span><b>Motion</b> animationProfile · named actions</span><span><b>Metadata</b> metadata · approvalStatus · schemaVersion</span>
       </div>
-      <p class="design-note"><b>Design rule:</b> thousands of editions can reference one versioned character model. A model update changes the canonical character definition; ownership continues to reference the stable avatar ID.</p>
+      <p class="design-note"><b>Versioning rule:</b> an avatar ID is stable, but resolved media must be pinned by a version or content hash for deterministic playback. Breaking contract changes require a new major schema; compatible additions require a newly published schema version and migration guidance.</p>
     </section>
 
     <section class="whitepaper-section" id="ownership">
@@ -63,57 +67,65 @@
       <ol class="flow-line"><li><b>Acquire</b><span>Buy, claim, mint, or receive</span></li><li><b>Backpack</b><span>Store a reference to Avatar ID</span></li><li><b>Designate</b><span>Select one active avatar</span></li><li><b>Equip</b><span>Validate slots and fit profile</span></li><li><b>Spawn</b><span>Verify, load, attach, apply</span></li></ol>
       <div class="whitepaper-columns ownership-copy">
         <article><h3>Backpack references, never duplicates</h3><p>An inventory entry records the asset ID, acquisition state, and listing lock. The canonical service resolves current media, traits, and compatibility. Transfers change the controller without moving large model data.</p></article>
-        <article><h3>Active avatar is a session choice</h3><p>Before spawn, the world verifies control, world access, and moderation status; resolves the versioned GLB and animations; validates equipped items; calculates effective stats; then issues a short-lived session snapshot.</p></article>
+        <article><h3>Active avatar is a session choice</h3><p>Before spawn, a trusted service authenticates the player; authorizes control and world access; checks approval status; resolves pinned media; validates the loadout; calculates effective stats; and signs a short-lived, non-transferable session snapshot.</p></article>
       </div>
       <div class="slot-rack"><b>Standard slots</b><span>Head</span><span>Face</span><span>Neck</span><span>Torso</span><span>Hands</span><span>Feet</span><span>Back</span><span>Tool 1</span><span>Tool 2</span></div>
       <p class="design-note"><b>Compatibility rule:</b> each item declares a fit profile such as <code>humanoid-small</code> or <code>black-sheep-rig@1</code>, allowed slots, attachment bone, offsets, and conflict groups.</p>
+      <div class="accuracy-callout"><b>Control is not assumed to mean blockchain ownership.</b><p><code>ownerId</code> identifies the authoritative account in this schema. A token ID is optional provenance metadata. When an on-chain collection is used, the server must verify chain, contract, token, and current controller before granting a session.</p></div>
     </section>
 
     <section class="whitepaper-section" id="gameplay-state">
       <header><p>03 · Gameplay and progression</p><h2>Permanent truth and live state move at different speeds.</h2></header>
       <div class="state-split">
-        <article><span>Permanent ownership layer</span><h3>Provenance</h3><ul><li>Controller / owner</li><li>Token and collection identifiers</li><li>Edition and immutable traits</li><li>Creator attribution and content hash</li></ul></article>
+        <article><span>Durable identity layer</span><h3>Provenance</h3><ul><li>Stable avatar and character IDs</li><li>Controller reference and optional token metadata</li><li>Edition and immutable traits</li><li>Creator attribution and content hash</li></ul></article>
         <article><span>Game database</span><h3>Living state</h3><ul><li>XP, level, health, and quest progress</li><li>Equipped items and unlocked actions</li><li>Achievements, cosmetics, and location</li><li>Cooldowns and world session state</li></ul></article>
       </div>
       <div class="class-grid"><article><b>Creators</b><span>music · art · events</span></article><article><b>Builders</b><span>construction · placement</span></article><article><b>Explorers</b><span>travel · discovery</span></article><article><b>Fighters</b><span>arena · RAD-TOX</span></article><article><b>Companions</b><span>follow · support</span></article><article><b>Merchants</b><span>stores · trading</span></article></div>
       <h3 class="subsection-title">Balanced progression</h3>
       <p>Traits create roles and play styles, not pay-to-win certainty. Progression unlocks expression and access: new dances, creator quests, badges, visual effects, and optional accessory slots. Competitive modes normalize power budgets while preserving character identity.</p>
       <div class="permission-table" role="table" aria-label="Land permission roles"><div role="row"><b role="columnheader">Visitor</b><span>walk · chat · public games</span></div><div role="row"><b role="columnheader">Friend</b><span>visitor actions · approved interactions</span></div><div role="row"><b role="columnheader">Builder</b><span>place approved assets in assigned zones</span></div><div role="row"><b role="columnheader">Owner</b><span>edit · remove · configure · delegate</span></div></div>
+      <p class="table-caption">Roles are capabilities scoped to a land or world. They are evaluated server-side and do not follow an avatar into every destination.</p>
     </section>
 
     <section class="whitepaper-section" id="creator-standard">
       <header><p>04 · Interoperability</p><h2>A strict creator standard makes an open world possible.</h2></header>
       <div class="standard-grid">
-        <article><b>Asset validation</b><p>glTF 2.0 / GLB, optional USDZ, file-size and polygon budgets, PBR textures, safe URLs, collision bounds, origin, scale, and spawn clearance.</p></article>
+        <article><b>Asset validation</b><p>glTF 2.0 / GLB, optional USDZ, declared byte and geometry budgets, PBR textures, HTTPS or same-origin URLs, collision bounds, units in meters, origin, scale, and spawn clearance.</p></article>
         <article><b>Rig validation</b><p>Versioned rig profile, attachment bones, skin weights, humanoid or custom classification, neutral pose, root motion policy, and retargeting map.</p></article>
-        <article><b>Animation contract</b><p>Required semantic actions: <code>idle</code>, <code>walk</code>, <code>run</code>, <code>jump</code>, <code>turn</code>, <code>interact</code>, <code>dance</code>, <code>emote</code>, <code>use_tool</code>, <code>damage</code>, and <code>defeat</code>.</p></article>
-        <article><b>Trust and rights</b><p>Creator identity, IP declaration, unsafe-content scan, moderation state, provenance hash, version history, and a revocation path for compromised files.</p></article>
+        <article><b>Animation contract</b><p>Supported semantic action names include: <code>idle</code>, <code>walk</code>, <code>run</code>, <code>jump</code>, <code>turn</code>, <code>interact</code>, <code>dance</code>, <code>emote</code>, <code>use_tool</code>, <code>damage</code>, and <code>defeat</code>.</p></article>
+        <article><b>Trust and rights</b><p>Creator identity, rights declaration, malware and unsafe-content scans, moderation state, SHA-256 content digest, version history, and a revocation path for compromised files.</p></article>
       </div>
       <div class="approval-pipeline"><span>Submitted</span><i>→</i><span>Automated checks</span><i>→</i><span>Human review</span><i>→</i><span>Market Approved</span><i>→</i><span>Published</span></div>
     </section>
 
-    <section class="whitepaper-section implementation-section">
+    <section class="whitepaper-section implementation-section" id="reference-contract">
       <header><p>05 · Reference contract</p><h2>One standardized object for market and world.</h2></header>
       <pre aria-label="Avatar JSON example"><code>{
   "id": "avatar_black_sheep_0013",
   "characterId": "black_sheep",
+  "name": "Black Sheep #0013",
   "edition": 13,
   "ownerId": "user_123",
-  "assets": { "modelUrl": "/public/models/rebel black sheep.glb" },
+  "assets": {
+    "modelUrl": "/public/models/rebel%20black%20sheep.glb",
+    "contentHash": "sha256:&lt;64-lowercase-hex-characters&gt;"
+  },
   "rarity": "rare",
   "classes": ["creator", "explorer"],
   "traits": { "music": 85, "creativity": 90, "speed": 65 },
   "rigProfile": "black-sheep-rig@1",
   "equipmentSlots": ["head", "neck", "torso", "tool1"],
   "animationProfile": "muzikaz-biped@1",
+  "animations": ["idle", "walk", "run", "jump", "interact"],
   "worldPermissions": { "allowedWorlds": ["vibeverse", "studio"] },
   "tradable": true,
   "schemaVersion": "1.0.0"
 }</code></pre>
-      <div class="whitepaper-actions"><a href="public/models/avatar-schema.json">Download machine-readable schema</a><a href="model-market.html#character-world-avatars">Browse avatars</a></div>
+      <p class="schema-note"><b>Normative source:</b> The downloadable JSON Schema is authoritative for field names, required properties, value ranges, and enumerations. Narrative examples in this document are explanatory.</p>
+      <div class="whitepaper-actions"><a href="public/models/avatar-schema.json" download>Download JSON Schema</a><a href="model-market.html#character-world-avatars">Browse avatars</a></div>
     </section>
   </main>
-  <footer class="whitepaper-footer"><a class="whitepaper-brand" href="model-market.html"><span>ϟ</span> MUZIKAZ</a><p>Avatar Identity &amp; Playable Character Standard · v1.0</p><a href="#top">Back to top ↑</a></footer>
+  <footer class="whitepaper-footer"><a class="whitepaper-brand" href="model-market.html"><img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ World"></a><p>Avatar Identity &amp; Playable Character Standard · 1.0.0</p><a href="#top">Back to top ↑</a></footer>
   <script src="script.js"></script>
   <script src="battle-theme.js"></script>
 </body>
