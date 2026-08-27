@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 164" role="img" aria-labelledby="title desc">
+  <title id="title">MUZIKAZ WORLD</title><desc id="desc">Electric lime MUZIKAZ WORLD wordmark with a lightning portal emblem.</desc>
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#efffcf"/><stop offset=".42" stop-color="#9cff00"/><stop offset="1" stop-color="#5ddb00"/></linearGradient><filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <g transform="translate(8 9)" filter="url(#glow)"><path fill="#050805" stroke="url(#g)" stroke-width="5" d="M74 2 139 39v74l-65 37-65-37V39z"/><circle cx="74" cy="76" r="48" fill="none" stroke="#9cff00" stroke-width="2" stroke-dasharray="7 8"/><path fill="url(#g)" d="m88 18-50 69h32l-13 48 54-73H79z"/></g>
+  <g font-family="Arial Black,Inter,sans-serif" font-weight="900" font-style="italic"><text x="166" y="87" fill="#fff" font-size="67" letter-spacing="-5">MUZIKAZ</text><text x="169" y="139" fill="url(#g)" font-size="49" letter-spacing="15">WORLD</text></g>
+</svg>
