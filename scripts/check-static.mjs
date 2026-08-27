@@ -179,6 +179,7 @@ for (const requiredGateMarkup of ['id="model-market-cover"', 'id="model-market-l
   }
 }
 const membersHtml = await readFile('dist/members.html', 'utf8');
+const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
 for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace']) {
   if (!membersHtml.includes(`id="${id}"`)) {
     throw new Error(`members.html is missing subscriber section #${id}`);
@@ -192,6 +193,13 @@ for (const requiredLoginGate of ['id="member-locked-content" data-locked="true" 
 if (!membersHtml.includes('name="muzikaz-bottle-contract" content="0x0F1254772810EA4D06E5c61E3E4b54d740367Aa8"')) {
   throw new Error('members.html must use the approved MUZIKAZ Bottle access contract.');
 }
+for (const walletIdentityFeature of ['id="wallet-username"', 'id="wallet-json-download"', 'id="wallet-json-import"']) {
+  if (!membersHtml.includes(walletIdentityFeature)) throw new Error(`members.html is missing wallet identity control: ${walletIdentityFeature}`);
+}
+for (const walletBindingFeature of ['connectIdentity', 'setUsername', 'exportWallet', 'importWallet']) {
+  if (!mzkWallet.includes(walletBindingFeature)) throw new Error(`mzk-wallet.js is missing wallet binding feature: ${walletBindingFeature}`);
+}
+
 if (!membersHtml.includes('name="muzikaz-bottle-approved-contract" content="0xEf74118D5fB730E9B2729c7303DC29980b4771f0"')) {
   throw new Error('members.html must include the additional approved Bottle access-token contract.');
 }
