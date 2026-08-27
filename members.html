@@ -30,11 +30,11 @@
 </head>
 <body class="original-platform members-page">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Subscriber dashboard for MUZIKAZ creator uploads, tabs, wallets, merch designer tools, avatar photos, and marketplace drops.","sameAs":["https://muzikaz.com/"]}</script>
-    <div class="topbar">
+    <div class="topbar" data-member-area>
         <span>Bottle subscribers get the private drop lab</span>
         <span>Custom stickers · AR avatar viewer · live merch designer</span>
     </div>
-    <header class="site-header">
+    <header class="site-header" data-member-area>
         <a class="logo" href="index.html#start" aria-label="MUZIKAZ home"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
         <nav class="nav" id="primary-navigation" aria-label="Bottle member navigation">
             <a href="index.html#home">Home</a>
@@ -52,19 +52,19 @@
     </header>
     <main>
         <section class="member-hero" id="bottle-login" aria-labelledby="bottle-login-title">
-            <div class="member-bottle" role="img" aria-label="Beat Bottle unlock graphic"></div>
             <div class="member-login-card">
-                <p class="kicker">Members only</p>
-                <h1 id="bottle-login-title">Member access unlocks the MUZIKAZ upgrade lab.</h1>
-                <p>Sign in or subscribe to open protected tools not available in the public shop: custom sticker and graphics uploads, the pop-out avatar AR viewer, live merch designer, 3D character checkout, marketplace drops, and new legendary models.</p>
+                <p class="kicker">Bottle members only</p>
+                <h1 id="bottle-login-title">Member login</h1>
+                <p>Enter the email used to mint your MUZIKAZ Bottle, or validate a physical Bottle with its access code.</p>
                 <form id="bottle-login-form" class="bottle-login-form">
                     <label>Email <input type="email" name="email" placeholder="crew@muzikaz.example" required /></label>
-                    <label>Passcode <input type="password" name="passcode" placeholder="Bottle pass" required /></label>
-                    <button type="submit">Continue</button>
+                    <label>Bottle access code <input type="password" name="passcode" placeholder="MZK-BOTTLE-XXXXXX" autocomplete="one-time-code" /></label>
+                    <button type="submit">Enter members area</button>
                 </form>
-                <p class="status-message" id="bottle-login-status" role="status">Preview access: enter any email address and passcode to open the subscriber tools.</p>
+                <p class="status-message" id="bottle-login-status" role="status">Access opens only after a Bottle has been minted or its code has been validated.</p>
             </div>
         </section>
+        <div class="member-locked-content" id="member-locked-content" data-locked="true" hidden>
         <section class="section-block member-benefits" aria-labelledby="member-benefits-title">
             <div class="section-title"><span></span><h2 id="member-benefits-title">What subscribers get</h2><span></span></div>
             <div class="benefit-grid">
@@ -95,7 +95,6 @@
                 </div>
             </div>
         </section>
-        <div class="member-locked-content" id="member-locked-content" data-locked="true">
         <section class="section-block member-tool-launchpad" id="member-creator-tools" aria-labelledby="member-tools-title">
             <div class="section-title"><span></span><h2 id="member-tools-title">Subscriber creator tools</h2><span>Unlocked after bottle login</span></div>
             <div class="benefit-grid">
@@ -302,7 +301,7 @@
 
         </div>
     </main>
-    <footer id="contact">
+    <footer id="contact" data-member-area>
         <div><a class="logo" href="index.html#start"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a><p>Bottle subscriber vault for custom MUZIKAZ product upgrades and legendary drops.</p></div>
         <div><h4>Vault</h4><a href="#designer">Designer</a><a href="#admin">Uploads</a></div>
         <div><h4>Support</h4><a href="mailto:crew@muzikaz.example">Contact</a><a href="index.html#crew">Crew</a></div>
@@ -310,7 +309,6 @@
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script type="module" src="public/js/connected-models.js"></script>
     <script src="public/js/api-connection.js"></script>
-    <script src="public/js/avatar-selection.js"></script>
     <script src="mzk-wallet.js"></script>
   <script src="script.js"></script>
   <script src="battle-theme.js"></script>

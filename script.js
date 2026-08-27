@@ -13,6 +13,7 @@ const CART_KEY = 'muzikazCheckoutCart';
 const BACKPACK_MARKET_KEY = 'muzikazBackpackMarket';
 const BACKPACK_TRANSACTIONS_KEY = 'muzikazBackpackTransactions';
 const BACKPACK_STARTING_TOKENS = 500;
+const BOTTLE_ACCESS_KEY = 'muzikazBottleAccess';
 
 // One catalog drives both the world map and the marketplace. Coordinates belong
 // to the asset, so a purchased world always resolves to the same map location.
@@ -94,6 +95,36 @@ function updateCart(button, label = 'Added') {
 
 function normalizeMemberEmail(email) {
   return String(email || '').trim().toLowerCase();
+}
+
+function readBottleAccess() {
+  try {
+    const access = JSON.parse(window.localStorage.getItem(BOTTLE_ACCESS_KEY) || '{}');
+    return access && typeof access === 'object' ? access : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function grantBottleAccess(email, source, reference = '') {
+  const memberEmail = normalizeMemberEmail(email);
+  if (!memberEmail) return false;
+  const access = readBottleAccess();
+  access[memberEmail] = { source, reference, grantedAt: new Date().toISOString() };
+  window.localStorage.setItem(BOTTLE_ACCESS_KEY, JSON.stringify(access));
+  return true;
+}
+
+function hasBottleEntitlement(email) {
+  return Boolean(readBottleAccess()[normalizeMemberEmail(email)]);
+}
+
+function isBottleProduct(name) {
+  return /\bbottle\b/i.test(String(name || ''));
+}
+
+function validateBottleCode(code) {
+  return /^MZK-BOTTLE-[A-Z0-9]{6,12}$/i.test(String(code || '').trim());
 }
 
 function readOwnedProfiles() {
@@ -188,7 +219,8 @@ function ownedAssetDetail(assetName) {
 }
 
 function hasBottleLogin() {
-  return window.localStorage.getItem('muzikazBottleMember') === 'true' && Boolean(normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail));
+  const email = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail);
+  return window.localStorage.getItem('muzikazBottleMember') === 'true' && hasBottleEntitlement(email);
 }
 
 function initModelMarketGate() {
@@ -1691,9 +1723,10 @@ function initBottleLogin() {
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   if (!form || !lockedContent) return;
-  const unlock = async (message) => {
-    if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
+  const unlock = (message) => {
+    lockedContent.hidden = false;
     lockedContent.dataset.locked = 'false';
+    document.body.classList.add('is-member-authenticated');
     if (status) status.textContent = message;
   };
   if (hasBottleLogin()) {
@@ -1705,10 +1738,16 @@ function initBottleLogin() {
     event.preventDefault();
     const data = new FormData(form);
     currentMemberEmail = normalizeMemberEmail(data.get('email'));
+    const passcode = String(data.get('passcode') || '').trim();
+    if (!hasBottleEntitlement(currentMemberEmail) && !validateBottleCode(passcode)) {
+      if (status) status.textContent = 'Access denied. Mint a MUZIKAZ Bottle with this email or enter a valid Bottle code.';
+      return;
+    }
+    if (!hasBottleEntitlement(currentMemberEmail)) grantBottleAccess(currentMemberEmail, 'validated-bottle', passcode.slice(-6).toUpperCase());
     window.localStorage.setItem('muzikazBottleMember', 'true');
     window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
     renderOwnedCollection(currentMemberEmail);
-    await unlock(`${currentMemberEmail} is logged in. Your designated avatar and Drop Backpack are retained across visits.`);
+    unlock(`${currentMemberEmail} is logged in. Bottle access is verified.`);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
@@ -1781,6 +1820,10 @@ paymentForm?.addEventListener('submit', (event) => {
   window.localStorage.setItem('muzikazLastReceipt', JSON.stringify(receipt));
   currentMemberEmail = normalizeMemberEmail(data.get('email'));
   window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+  if (items.some((item) => isBottleProduct(item.name))) {
+    grantBottleAccess(currentMemberEmail, 'minted-bottle', orderId);
+    window.localStorage.setItem('muzikazBottleMember', 'true');
+  }
   items.forEach((item) => claimOwnedAsset(item.name, `Paid order ${orderId}`));
   writeCart([]);
   renderCheckoutPage();
