@@ -4,11 +4,11 @@
   let cachedRates;
   async function rates() {
     if (cachedRates && Date.now() - cachedRates.savedAt < 60000) return cachedRates;
-    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=cardano,solana&vs_currencies=usd', { cache: 'no-store' });
-    if (!response.ok) throw new Error('Live ADA/SOL exchange rates are unavailable. No payment was requested.');
+    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=cardano,ethereum,solana&vs_currencies=usd', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Live ETH/ADA/SOL exchange rates are unavailable. No payment was requested.');
     const data = await response.json();
-    if (!(data.cardano?.usd > 0) || !(data.solana?.usd > 0)) throw new Error('The exchange-rate response was invalid. No payment was requested.');
-    return (cachedRates = { ADA: data.cardano.usd, SOL: data.solana.usd, savedAt: Date.now() });
+    if (!(data.cardano?.usd > 0) || !(data.ethereum?.usd > 0) || !(data.solana?.usd > 0)) throw new Error('The exchange-rate response was invalid. No payment was requested.');
+    return (cachedRates = { ADA: data.cardano.usd, ETH: data.ethereum.usd, SOL: data.solana.usd, savedAt: Date.now() });
   }
   async function quote(usd, currency) {
     const code = String(currency).toUpperCase();
@@ -47,5 +47,9 @@
     const q = await quote(usd, currency);
     return { ...q, ...(currency === 'ADA' ? await payCardano(q) : await paySolana(q)) };
   }
-  window.MuzikazWalletPayments = { RECIPIENTS, quote, pay };
+  async function quoteEthValue(eth, currency) {
+    const liveRates = await rates();
+    return quote(Number(eth) * liveRates.ETH, currency);
+  }
+  window.MuzikazWalletPayments = { RECIPIENTS, quote, quoteEthValue, pay };
 }());
