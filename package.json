@@ -7,6 +7,7 @@
     "build": "node scripts/build-static.mjs",
     "start": "node server.mjs",
     "check": "node scripts/check-static.mjs",
+    "test": "node --test test/*.test.mjs",
     "build:land-data": "python3 scripts/build-land-database.py",
     "check:land-data": "python3 scripts/build-land-database.py --check",
     "static": "python3 -m http.server 4173 --directory dist",

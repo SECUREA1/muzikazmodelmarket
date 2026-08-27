@@ -99,6 +99,8 @@ The Rust service serves the static MUZIKAZ site, `/uploads/*` model and avatar i
 All JSON responses use `{ "success": boolean, "data": ..., "message": string }`.
 
 - `GET /api/health` — service, storage, and model-count health.
+- `GET /api/wallet/state` — load the requesting wallet's durable items, token balances, and application memory using `X-Wallet-Address`.
+- `PUT /api/wallet/state` — atomically replace that wallet's `items`, `tokens`, and `memory` in `MUZIKAZ_DATA_DIR/users.json`.
 - `GET /api/models` — published public models, newest first.
 - `GET /api/models/:id` — one published model.
 - `POST /api/models/upload` — multipart upload. Fields: `model` (`.glb`/`.gltf`, required), `iosModel` (`.usdz`, optional), `thumbnail` (`.png`/`.jpg`/`.jpeg`/`.webp`, optional).
@@ -127,6 +129,8 @@ The service does not require `DATABASE_URL` or `ALLOWED_ORIGINS` to start. `PORT
 ### Render storage setup
 
 Free Render web services cannot attach a persistent disk. With the committed free-service defaults, uploaded `.glb`, `.gltf`, `.usdz`, thumbnail files, and shared avatar images are written below `data/uploads/models` and served publicly from `/uploads/*`, but they will not survive an instance replacement or redeploy. To make uploads durable, upgrade the instance, attach a disk at `/var/data`, and change the two storage variables to the `/var/data` values above (or implement object storage). Do not set `/var/data` on the free instance without a mounted disk.
+
+Wallet records use the same storage rule: configure `MUZIKAZ_DATA_DIR=/var/data` on a mounted persistent disk to retain `users.json` across deploys and instance replacements. Writes are serialized in-process and use an atomic temporary-file rename so concurrent requests cannot leave a partially written database.
 
 ### Database migration instructions
 

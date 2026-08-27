@@ -3,6 +3,7 @@ import { readFile, writeFile, mkdir, stat, unlink } from 'node:fs/promises';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { UserJsonDatabase, cleanWallet } from './user-json-database.mjs';
 
 const root = process.cwd();
 const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
@@ -13,6 +14,8 @@ const dataFile = join(dataDir, 'shared-house-avatars.json');
 const assetsFile = join(dataDir, 'asset-library.json');
 const modelsFile = join(dataDir, 'published-models.json');
 const avatarProfilesFile = join(dataDir, 'avatar-profiles.json');
+const userDatabaseFile = process.env.MUZIKAZ_USER_DATABASE_FILE || join(dataDir, 'users.json');
+const userDatabase = new UserJsonDatabase(userDatabaseFile);
 const publicAvatarManifest = join(root, 'public', 'models', 'avatars.json');
 const environmentDataFile = process.env.MUZIKAZ_ENVIRONMENT_DATA_FILE || join(dataDir, 'environments.json');
 const repositoryEnvironmentManifest = join(root, 'public', 'models', 'environments', 'environments.json');
@@ -82,6 +85,7 @@ async function readModels() { await ensureStorage(); return JSON.parse(await rea
 async function writeModels(records) { await ensureStorage(); await writeFile(modelsFile, JSON.stringify(records, null, 2)); }
 async function writeAssets(records) { await ensureStorage(); await writeFile(assetsFile, JSON.stringify(records, null, 2)); }
 function user(req) { return { id: cleanText(req.headers['x-user-id'], 'demo-user'), role: 'user', name: cleanText(req.headers['x-user-name'], 'MUZIKAZ Creator') }; }
+function requestWallet(req) { return cleanWallet(req.headers['x-wallet-address'] || req.headers['x-user-id']); }
 function isAdmin(req) { const token = String(req.headers['x-admin-token'] || ''); return (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || adminSessions.has(token); }
 function requireAdmin(req, res) { if (isAdmin(req)) return true; sendJson(res, 403, { success: false, message: 'Admin authorization required' }); return false; }
 function landAssetFromBackpack(req) { return cleanText(req.headers['x-muzikaz-land-asset'], '').trim(); }
@@ -184,6 +188,9 @@ createServer(async (req, res) => {
       if (credentials.username !== 'jodel' || credentials.password !== 'boots') return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
       const token = randomUUID(); adminSessions.add(token); return sendJson(res, 200, assetResponse({ token }));
     }
+
+    if (url.pathname === '/api/wallet/state' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.get(requestWallet(req))));
+    if (url.pathname === '/api/wallet/state' && req.method === 'PUT') return sendJson(res, 200, assetResponse(await userDatabase.put(requestWallet(req), await bodyJson(req))));
 
     if (url.pathname === '/api/environments' && req.method === 'GET') return sendJson(res, 200, assetResponse(await combinedEnvironments()));
     if (url.pathname === '/api/environments' && req.method === 'POST') { if (!requireAdmin(req, res)) return; const records = await readUploadedEnvironments(); const record = environmentRecord(await bodyJson(req)); if (!record.modelUrl.startsWith('/uploads/environments/')) throw new Error('Uploaded environment records must point to /uploads/environments/.'); records.unshift(record); await writeUploadedEnvironments(records); return sendJson(res, 201, assetResponse(record)); }
