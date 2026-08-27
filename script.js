@@ -16,6 +16,10 @@ const BACKPACK_STARTING_TOKENS = 500;
 const BOTTLE_ACCESS_KEY = 'muzikazBottleAccess';
 const BOTTLE_BALANCE_OF_SELECTOR = '0x70a08231';
 const BOTTLE_MINT_SELECTOR = '0x1249c58b';
+const BOTTLE_MINT_PAYMENT_ADDRESS = '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238';
+const BOTTLE_MINT_PAYMENT_WEI = '0x5af3107a4000'; // 0.0001 ETH
+const BOTTLE_MINT_REWARDS_KEY = 'muzikazBottleMintRewards';
+const BOTTLE_MINT_BACKPACK_ASSETS = ['Unrevealed MUZIKAZ Land', 'Unrevealed MUZIKAZ Bottle'];
 
 // One catalog drives both the world map and the marketplace. Coordinates belong
 // to the asset, so a purchased world always resolves to the same map location.
@@ -198,11 +202,27 @@ function writeOwnedProfiles(profiles) {
   window.localStorage.setItem('muzikazOwnedProfiles', JSON.stringify(profiles));
 }
 
+function grantBottleMintBackpackAssets(owner, mintTransactionHash) {
+  const normalizedOwner = normalizeMemberEmail(owner);
+  if (!normalizedOwner || !mintTransactionHash) return false;
+  const rewards = readBackpackData(BOTTLE_MINT_REWARDS_KEY, {});
+  const rewardId = String(mintTransactionHash).toLowerCase();
+  if (rewards[rewardId]) return false;
+  const profiles = readOwnedProfiles();
+  profiles[normalizedOwner] ||= [];
+  BOTTLE_MINT_BACKPACK_ASSETS.forEach((asset) => profiles[normalizedOwner].push(`${asset} · Bottle mint reward`));
+  rewards[rewardId] = { owner: normalizedOwner, assets: BOTTLE_MINT_BACKPACK_ASSETS, grantedAt: new Date().toISOString() };
+  writeOwnedProfiles(profiles);
+  window.localStorage.setItem(BOTTLE_MINT_REWARDS_KEY, JSON.stringify(rewards));
+  renderOwnedCollection(normalizedOwner);
+  return true;
+}
+
 function backpackLandAsset(owner = currentMemberEmail) {
   const normalizedOwner = normalizeMemberEmail(owner || window.localStorage.getItem('muzikazBottleMemberEmail'));
   if (!normalizedOwner) return '';
   const assets = readOwnedProfiles()[normalizedOwner] || [];
-  return assets.find((asset) => Boolean(findWorldAsset(asset)) || /\b(?:muzikaz\s+world|digital\s+land|world\s+plot|land\s+(?:asset|world|reservation|deed|claim))\b/i.test(asset)) || '';
+  return assets.find((asset) => Boolean(findWorldAsset(asset)) || /\b(?:unrevealed\s+.*land|muzikaz\s+world|digital\s+land|world\s+plot|land\s+(?:asset|world|reservation|deed|claim))\b/i.test(asset)) || '';
 }
 
 window.MUZIKAZLandAccess = {
@@ -257,7 +277,7 @@ function claimOwnedAsset(assetName, source = 'Marketplace claim') {
 function ownedAssetDetail(assetName) {
   const worldAsset = findWorldAsset(assetName);
   if (worldAsset) return { title: assetName, type: worldAsset.kind, image: worldAsset.logo, copy: `${worldAsset.detail}. Located at X ${worldAsset.x}, Y ${worldAsset.y}.`, href: `index.html?world=${worldAsset.id}#world-map` };
-  if (/\b(?:digital\s+land|world\s+plot|land\s+(?:asset|reservation|deed|claim))\b/i.test(assetName)) {
+  if (/\b(?:unrevealed\s+.*land|digital\s+land|world\s+plot|land\s+(?:asset|reservation|deed|claim))\b/i.test(assetName)) {
     const owner = normalizeMemberEmail(currentMemberEmail);
     let claim = null;
     try { claim = JSON.parse(window.localStorage.getItem('muzikazLandClaims') || '{}')[owner] || null; } catch (error) { /* Render the deed without optional map metadata. */ }
@@ -340,7 +360,7 @@ function initWorldAtlas() {
   const places = [...atlas.querySelectorAll('[data-map-place]')];
   const clamp = (value) => Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
   let position = { x: 36, y: 49, place: 'Crew Plaza', detail: 'Social hub · crews gathering now' };
-  const isLandAsset = (asset) => Boolean(findWorldAsset(asset)) || /\b(?:muzikaz\s+world|digital\s+land|world\s+plot|land\s+(?:asset|world|reservation|deed|claim))\b/i.test(asset);
+  const isLandAsset = (asset) => Boolean(findWorldAsset(asset)) || /\b(?:unrevealed\s+.*land|muzikaz\s+world|digital\s+land|world\s+plot|land\s+(?:asset|world|reservation|deed|claim))\b/i.test(asset);
   const ownedLand = owner ? (readOwnedProfiles()[owner] || []).find(isLandAsset) : '';
   let claims = {};
   try { claims = JSON.parse(window.localStorage.getItem('muzikazLandClaims') || '{}') || {}; } catch (error) { claims = {}; }
@@ -1815,6 +1835,16 @@ function initBottleLogin() {
     }
     scrollToSection('member-locked-content');
   };
+  const waitForTransactionReceipt = async (wallet, transactionHash, label) => {
+    let receipt = null;
+    for (let attempt = 0; attempt < 60 && !receipt; attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 2000));
+      receipt = await wallet.request({ method: 'eth_getTransactionReceipt', params: [transactionHash] });
+    }
+    if (!receipt) throw new Error(`${label} confirmation is still pending. Reconnect after it confirms.`);
+    if (receipt.status && BigInt(receipt.status) !== 1n) throw new Error(`The ${label.toLowerCase()} transaction failed.`);
+    return receipt;
+  };
   usernameSave?.addEventListener('click', () => {
     try { const profile = window.MZKWallet.setUsername(usernameInput?.value); if (status) status.textContent = `Username ${profile.username} is now connected to this wallet.`; } catch (error) { if (status) status.textContent = error.message; }
   });
@@ -1853,19 +1883,21 @@ function initBottleLogin() {
       const from = accounts?.[0];
       if (!from) throw new Error('Connect an Ethereum account before minting.');
       showAddress(from);
+      if (status) status.textContent = 'Confirm the 0.0001 ETH Bottle activation payment in your wallet…';
+      const paymentHash = await wallet.request({
+        method: 'eth_sendTransaction',
+        params: [{ from, to: BOTTLE_MINT_PAYMENT_ADDRESS, value: BOTTLE_MINT_PAYMENT_WEI }]
+      });
+      if (status) status.textContent = `Activation payment submitted (${paymentHash.slice(0, 10)}…). Waiting for confirmation…`;
+      await waitForTransactionReceipt(wallet, paymentHash, 'Activation payment');
       if (status) status.textContent = 'Confirm the Bottle mint transaction in your wallet…';
       const transaction = { from, to: config.contract, data: config.mintData };
       if (config.mintValue) transaction.value = config.mintValue;
       const transactionHash = await wallet.request({ method: 'eth_sendTransaction', params: [transaction] });
       if (status) status.textContent = `Bottle mint submitted (${transactionHash.slice(0, 10)}…). Waiting for confirmation…`;
-      let receipt = null;
-      for (let attempt = 0; attempt < 60 && !receipt; attempt += 1) {
-        await new Promise((resolve) => window.setTimeout(resolve, 2000));
-        receipt = await wallet.request({ method: 'eth_getTransactionReceipt', params: [transactionHash] });
-      }
-      if (!receipt) throw new Error('Mint confirmation is still pending. Reconnect after it confirms.');
-      if (receipt.status && BigInt(receipt.status) !== 1n) throw new Error('The Bottle mint transaction failed.');
+      await waitForTransactionReceipt(wallet, transactionHash, 'Bottle mint');
       await verifyAndUnlock(from);
+      grantBottleMintBackpackAssets(from, transactionHash);
     } catch (error) {
       if (status) status.textContent = error.message || 'The Bottle could not be minted.';
     } finally {

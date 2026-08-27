@@ -235,6 +235,9 @@ for (const requiredBottleAccessFlow of ['eth_requestAccounts', 'eth_call', 'eth_
     throw new Error(`script.js is missing Bottle mint/validation access flow: ${requiredBottleAccessFlow}`);
   }
 }
+for (const requiredMintReward of ['0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238', '0x5af3107a4000', 'Unrevealed MUZIKAZ Land', 'Unrevealed MUZIKAZ Bottle', 'grantBottleMintBackpackAssets']) {
+  if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
+}
 if (!appScript.includes('config.approvedContracts') || !appScript.includes('MUZIKAZ_BOTTLE_APPROVED_CONTRACTS')) {
   throw new Error('script.js must validate ownership across all approved Bottle contracts.');
 }
