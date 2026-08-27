@@ -173,6 +173,9 @@ for (const requiredWhitepaperSection of ['id="identity-model"', 'id="ownership"'
   if (!avatarWhitepaper.includes(requiredWhitepaperSection)) throw new Error(`avatar-whitepaper.html is missing architecture content: ${requiredWhitepaperSection}`);
 }
 if (!modelMarketHtml.includes('href="avatar-whitepaper.html"')) throw new Error('Model Market must link to the avatar whitepaper.');
+for (const requiredStarterLandCopy of ['MUZIKAZ WORLD · starter land', 'Claim one of five spaces. Connect to the whole world.', 'Claim starter land</span><strong>1,000 <small>MZK</small>']) {
+  if (!modelMarketHtml.includes(requiredStarterLandCopy)) throw new Error(`Model Market is missing connected starter-land branding: ${requiredStarterLandCopy}`);
+}
 for (const requiredGateMarkup of ['id="model-market-cover"', 'id="model-market-login-form"', 'model-market-gated']) {
   if (!modelMarketHtml.includes(requiredGateMarkup)) {
     throw new Error(`model-market.html is missing its Bottle member cover: ${requiredGateMarkup}`);
