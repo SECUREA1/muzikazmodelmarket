@@ -72,18 +72,32 @@
     </header>
 
     <main id="home">
-        <section class="hero" aria-labelledby="hero-title">
-            <div class="hero-poster"><img src="public/assets/muzikaz-world-poster.svg" alt="Enter MUZIKAZ WORLD — your avatar, your sound, your universe" /></div>
+        <section class="hero" aria-labelledby="hero-title" data-hero-mode="explore">
+            <div class="hero-poster">
+                <div class="hero-poster__glow" aria-hidden="true"></div>
+                <img src="public/assets/muzikaz-world-poster.svg" alt="Enter MUZIKAZ WORLD — your avatar, your sound, your universe" />
+                <img class="hero-character hero-character--one" src="futuristic_armored_wolf_humanoid.png" alt="" aria-hidden="true" />
+                <img class="hero-character hero-character--two" src="fierce_demon_hybrid_in_action.png" alt="" aria-hidden="true" />
+                <div class="hero-signal" aria-hidden="true"><i></i><span>World signal</span><b>98%</b></div>
+            </div>
             <div class="hero-copy">
+                <div class="hero-live"><i aria-hidden="true"></i> Live universe <span>Season 01</span></div>
                 <img class="hero-logo" src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ WORLD" />
                 <p class="world-kicker">One connected creative universe</p>
-                <h1 id="hero-title">Enter your <em>world</em></h1>
-                <p>Explore living 3D districts, become your avatar, collect electric drops, and build alongside the MUZIKAZ crew.</p>
+                <h1 id="hero-title">Your sound.<br><em>Your universe.</em></h1>
+                <p id="hero-description">Drop into living 3D districts, meet the crew, and discover a world that moves at your frequency.</p>
                 <div class="world-statline" aria-label="World features"><span>08 lands</span><span>Live avatars</span><span>Creator drops</span></div>
-                <a class="btn" href="#world-map">Explore the world <span aria-hidden="true">→</span></a>
-                <a class="btn ghost" href="avatar-whitepaper.html">Read whitepaper</a>
-                <a class="btn ghost" href="members.html">Member access</a>
+                <div class="hero-actions">
+                    <a class="btn hero-primary-action" href="#world-map">Enter the world <span aria-hidden="true">↗</span></a>
+                    <a class="btn ghost" href="members.html">Join the crew</a>
+                </div>
+                <div class="hero-mode-switcher" role="tablist" aria-label="Choose your path">
+                    <button class="is-active" type="button" role="tab" aria-selected="true" data-hero-path="explore"><b>01</b><span>Explore<small>Find your district</small></span></button>
+                    <button type="button" role="tab" aria-selected="false" data-hero-path="create"><b>02</b><span>Create<small>Build your identity</small></span></button>
+                    <button type="button" role="tab" aria-selected="false" data-hero-path="collect"><b>03</b><span>Collect<small>Own the drop</small></span></button>
+                </div>
             </div>
+            <div class="hero-scroll-cue" aria-hidden="true"><span>Scroll to explore</span><i></i></div>
         </section>
 
         <section class="feature-strip" aria-label="Store benefits">
