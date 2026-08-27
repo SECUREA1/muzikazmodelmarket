@@ -387,24 +387,80 @@ function initModelMarketGate() {
   const cover = document.querySelector('#model-market-cover');
   const form = document.querySelector('#model-market-login-form');
   const status = document.querySelector('#model-market-login-status');
+  const connectButton = document.querySelector('#model-market-wallet-connect');
+  const disconnectButton = document.querySelector('#model-market-wallet-disconnect');
+  const addressLabel = document.querySelector('#model-market-wallet-address');
   if (!cover || !form) return;
 
-  const uncover = () => {
+  const setBusy = (busy) => {
+    if (connectButton) connectButton.disabled = busy;
+    if (disconnectButton) disconnectButton.disabled = busy;
+    form.setAttribute('aria-busy', String(busy));
+  };
+  const showAddress = (address = '') => {
+    if (addressLabel) {
+      addressLabel.hidden = !address;
+      addressLabel.textContent = address ? `Connected wallet: ${address}` : '';
+    }
+    if (disconnectButton) disconnectButton.hidden = !address;
+    if (connectButton) connectButton.textContent = address ? 'Choose another wallet' : 'Connect Ethereum wallet';
+  };
+  const uncover = (address = currentMemberEmail) => {
     document.body.classList.remove('model-market-gated');
     cover.setAttribute('hidden', '');
+    document.dispatchEvent(new CustomEvent('muzikaz:member-authenticated', { detail: { address } }));
+  };
+  const clearSession = (message = 'Wallet disconnected from this browser session.') => {
+    window.sessionStorage.removeItem('muzikazBottleMember');
+    window.localStorage.removeItem('muzikazBottleMemberEmail');
+    currentMemberEmail = '';
+    showAddress();
+    if (status) status.textContent = message;
+  };
+  const verify = async ({ chooseAccount = false, address = '' } = {}) => {
+    setBusy(true);
+    try {
+      const wallet = requireEthereumWallet();
+      const account = address || await requestEthereumAccount(wallet, { chooseAccount });
+      showAddress(account);
+      if (status) status.textContent = 'Checking Bottle ownership on Ethereum…';
+      const ownership = await validateBottleOwnership(account);
+      currentMemberEmail = normalizeMemberEmail(account);
+      grantBottleAccess(currentMemberEmail, 'ethereum-contract', ownership.contract);
+      window.sessionStorage.setItem('muzikazBottleMember', 'true');
+      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      if (window.MZKWallet?.connectIdentity) window.MZKWallet.connectIdentity({ address: account, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
+      if (status) status.textContent = `Verified ${ownership.balance.toString()} Bottle token${ownership.balance === 1n ? '' : 's'}. Opening the market…`;
+      uncover(account);
+    } catch (error) {
+      window.sessionStorage.removeItem('muzikazBottleMember');
+      if (status) status.textContent = error?.code === 4001 ? 'Wallet connection was cancelled. Nothing was changed.' : (error.message || 'Bottle ownership could not be verified.');
+    } finally {
+      setBusy(false);
+    }
   };
 
-  if (hasBottleLogin()) {
-    uncover();
-    return;
-  }
-
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (status) status.textContent = 'Ethereum Bottle validation is required. Opening secure wallet login…';
-    window.sessionStorage.setItem('muzikazLoginRedirect', window.location.href);
-    window.location.href = 'members.html#bottle-login';
+    await verify({ chooseAccount: Boolean(currentMemberEmail) });
   });
+  disconnectButton?.addEventListener('click', () => clearSession());
+  window.ethereum?.on?.('accountsChanged', (accounts) => {
+    const address = String(accounts?.[0] || '');
+    if (!address) return clearSession('Wallet disconnected. Connect a Bottle-owning wallet to continue.');
+    clearSession('Wallet account changed. Rechecking Bottle ownership…');
+    verify({ address });
+  });
+
+  // A prior session is only reopened after the wallet still exposes the same
+  // account and its on-chain Bottle balance is checked again.
+  if (hasBottleLogin() && window.ethereum?.request) {
+    window.ethereum.request({ method: 'eth_accounts' }).then((accounts) => {
+      const address = String(accounts?.[0] || '');
+      if (normalizeMemberEmail(address) === normalizeMemberEmail(currentMemberEmail)) verify({ address });
+      else clearSession('Reconnect your Bottle wallet to open the market.');
+    }).catch(() => clearSession('Reconnect your Bottle wallet to open the market.'));
+  }
 }
 
 initModelMarketGate();
@@ -985,7 +1041,11 @@ function initWorldPlot() {
     return spaces.map((space) => space.dataset.worldSpace).filter((name) => assets.some((asset) => asset.startsWith(`MUZIKAZ World · ${name}`)));
   };
   const updateOwnedCount = () => { if (ownedCount) ownedCount.textContent = String(ownedPlotNames().length); };
-  let selectedSpace = window.localStorage.getItem('muzikazWorldStarterSpace') || spaces[0].dataset.worldSpace;
+  const requestedWorldId = new URLSearchParams(window.location.search).get('world');
+  const requestedWorld = WORLD_ASSETS.find((asset) => asset.id === requestedWorldId)?.name;
+  let selectedSpace = spaces.some((space) => space.dataset.worldSpace === requestedWorld)
+    ? requestedWorld
+    : window.localStorage.getItem('muzikazWorldStarterSpace') || spaces[0].dataset.worldSpace;
   const selectSpace = (name) => {
     selectedSpace = name;
     window.localStorage.setItem('muzikazWorldStarterSpace', name);

@@ -10,6 +10,9 @@
     <meta name="description" content="Claim connected starter land for 1,000 MZK in MUZIKAZ WORLD, then bring your avatar, GLB scenes, creator drops, and marketplace station together." />
     <meta name="keywords" content="MUZIKAZ, muzikaz.com, 3D model market, character models, mascot merch, creator dashboard, wallet rewards, brand kit, neon collectibles" />
     <meta name="author" content="MUZIKAZ" />
+    <meta name="muzikaz-bottle-contract" content="0x0F1254772810EA4D06E5c61E3E4b54d740367Aa8" />
+    <meta name="muzikaz-bottle-approved-contract" content="0xEf74118D5fB730E9B2729c7303DC29980b4771f0" />
+    <meta name="muzikaz-bottle-chain-id" content="0x1" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href="https://muzikaz.com/model-market.html" />
     <link rel="icon" type="image/svg+xml" href="muzikaz_bolt_logo_editable.svg" />
@@ -42,16 +45,19 @@
         <div class="model-market-cover-card">
             <div class="member-bottle" role="img" aria-label="MUZIKAZ Beat Bottle member access"></div>
             <div class="member-login-card">
-                <p class="kicker">Members only</p>
-                <h1 id="model-market-login-title">Sign in to enter MUZIKAZ WORLD.</h1>
-                <p>The complete market stays covered until Bottle member access is active. Sign in here, or use the members area, to uncover the page on this device.</p>
+                <p class="kicker">Verified member access</p>
+                <h1 id="model-market-login-title">Connect your Bottle wallet.</h1>
+                <p>Use the same Ethereum wallet login as the members area. We verify Bottle ownership on-chain—no email, password, or passcode is requested.</p>
                 <form id="model-market-login-form" class="bottle-login-form">
-                    <label>Email <input type="email" name="email" autocomplete="email" placeholder="crew@muzikaz.example" required /></label>
-                    <label>Passcode <input type="password" name="passcode" autocomplete="current-password" placeholder="Bottle pass" required /></label>
-                    <button type="submit">Uncover market</button>
+                    <button type="submit" id="model-market-wallet-connect">Connect Ethereum wallet</button>
+                    <button type="button" class="ghost" id="model-market-wallet-disconnect" hidden>Disconnect</button>
                 </form>
-                <p class="status-message" id="model-market-login-status" role="status">Enter your Bottle member email and passcode to continue.</p>
-                <a class="btn ghost" href="members.html#bottle-login">Open members area</a>
+                <p class="wallet-address" id="model-market-wallet-address" hidden></p>
+                <p class="status-message" id="model-market-login-status" role="status" aria-live="polite">Connect a wallet that owns an approved MUZIKAZ Bottle token.</p>
+                <div class="model-market-login-help">
+                    <span>Ethereum mainnet</span><span>Read-only ownership check</span><span>No signature fee</span>
+                </div>
+                <a class="btn ghost" href="members.html#bottle-login">Open full member hub</a>
             </div>
         </div>
     </section>
