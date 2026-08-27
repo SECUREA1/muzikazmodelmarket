@@ -34,8 +34,8 @@
 <body class="original-platform checkout-page">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Secure checkout for MUZIKAZ model packs, merch, collectible drops, wallet payments, and owned asset summaries.","sameAs":["https://muzikaz.com/"]}</script>
     <div class="topbar">
-        <span>Secure live multi-chain checkout</span>
-        <span>Every cart asset · permanent wallet purchase flow</span>
+        <span>Every item purchasable with MZK</span>
+        <span>100 MZK = $1 · buy from ETH, SOL, or ADA</span>
     </div>
     <header class="site-header">
         <a class="logo" href="index.html#home" aria-label="MUZIKAZ home"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
@@ -80,6 +80,7 @@
                 </div>
                 <p class="checkout-note">Demo card: use any 16 digit number, future expiry, any name, and any 3 digit CVC.</p>
                 <p class="checkout-note">Ethereum price: <strong>0.0001 ETH per cart item</strong>. Your wallet shows the final network fee separately.</p>
+                <p class="checkout-note">MZK price: <strong id="summary-mzk-total">0 MZK</strong>. Need tokens? <a href="buy-mzk.html">Swap ETH, SOL, or ADA for MZK</a>.</p>
             </aside>
 
             <form class="payment-form" id="payment-form">
@@ -98,10 +99,12 @@
                 <fieldset>
                     <legend>Payment method</legend>
                     <div class="payment-methods" role="radiogroup" aria-label="Payment method">
+                        <label><input type="radio" name="method" value="MZK" /> MZK</label>
                         <label><input type="radio" name="method" value="Card" checked /> Card</label>
                         <label><input type="radio" name="method" value="PayPal" /> PayPal</label>
                         <label><input type="radio" name="method" value="Wallet" /> Wallet</label>
                     </div>
+                    <section class="crypto-checkout"><div><strong>Pay for anything with MZK</strong><span id="checkout-mzk-balance">Wallet loading…</span></div><button type="button" id="checkout-mzk-pay">Pay cart with MZK</button><small>Fixed rate: 100 MZK per $1 of cart value.</small></section>
                     <section class="ethereum-checkout" id="ethereum-checkout" aria-labelledby="ethereum-checkout-title">
                         <div>
                             <strong id="ethereum-checkout-title">Pay live with Ethereum</strong>
@@ -153,7 +156,7 @@
         <div><h4>Shop</h4><a href="index.html#models">Models</a><a href="index.html#merch">Merch</a></div>
         <div><h4>Support</h4><a href="mailto:crew@muzikaz.example">Contact</a><a href="members.html">Bottle Login</a></div>
     </footer>
-    <script src="wallet-payments.js"></script>
+    <script src="mzk-wallet.js"></script><script src="wallet-payments.js"></script>
     <script src="script.js"></script>
   <script src="battle-theme.js"></script>
 </body>

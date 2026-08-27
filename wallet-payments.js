@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const RECIPIENTS = Object.freeze({ ADA: 'addr1q8sww2l7nuxl5qj2fuurle8y9ecz27cjzmwshx9s9esggdv4du3zqssvpcfmr6a737jf7jjp0n4ma7q84pffsjag67kqlj59xj', SOL: 'CB7HbgeM6TdYibnDpHeLCq6Qoxdaue7XtC6NGgqDQauH' });
+  const RECIPIENTS = Object.freeze({ ETH: '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238', ADA: 'addr1q8sww2l7nuxl5qj2fuurle8y9ecz27cjzmwshx9s9esggdv4du3zqssvpcfmr6a737jf7jjp0n4ma7q84pffsjag67kqlj59xj', SOL: 'CB7HbgeM6TdYibnDpHeLCq6Qoxdaue7XtC6NGgqDQauH' });
   let cachedRates;
   async function rates() {
     if (cachedRates && Date.now() - cachedRates.savedAt < 60000) return cachedRates;
@@ -13,9 +13,9 @@
   async function quote(usd, currency) {
     const code = String(currency).toUpperCase();
     const value = Number(usd);
-    if (!(value > 0) || !['ADA', 'SOL'].includes(code)) throw new Error('Choose a valid order value and currency.');
+    if (!(value > 0) || !['ADA', 'ETH', 'SOL'].includes(code)) throw new Error('Choose a valid order value and currency.');
     const liveRates = await rates();
-    const decimals = code === 'ADA' ? 6 : 9;
+    const decimals = code === 'ADA' ? 6 : code === 'SOL' ? 9 : 18;
     const amount = Math.ceil((value / liveRates[code]) * (10 ** decimals)) / (10 ** decimals);
     return { currency: code, usd: value, usdRate: liveRates[code], amount, recipient: RECIPIENTS[code], quotedAt: new Date().toISOString() };
   }
@@ -43,9 +43,10 @@
     const signedTx = await wallet.signTx(unsignedTx, true);
     return { address: addresses[0] || 'Lace wallet', transactionHash: await wallet.submitTx(signedTx) };
   }
+  async function payEthereum(q) { if (!window.ethereum?.request) throw new Error('Install or open an Ethereum wallet, then try again.'); const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' }); const wei = BigInt(Math.ceil(q.amount * 1e9)) * 1000000000n; const transactionHash = await window.ethereum.request({ method: 'eth_sendTransaction', params: [{ from: address, to: q.recipient, value: `0x${wei.toString(16)}` }] }); return { address, transactionHash }; }
   async function pay(usd, currency) {
     const q = await quote(usd, currency);
-    return { ...q, ...(currency === 'ADA' ? await payCardano(q) : await paySolana(q)) };
+    return { ...q, ...(q.currency === 'ADA' ? await payCardano(q) : q.currency === 'ETH' ? await payEthereum(q) : await paySolana(q)) };
   }
   async function quoteEthValue(eth, currency) {
     const liveRates = await rates();

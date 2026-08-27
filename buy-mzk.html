@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Swap ETH, SOL, or ADA for MZK tokens at the fixed MUZIKAZ rate.">
+  <title>Buy MZK | MUZIKAZ</title><link rel="stylesheet" href="styles.css">
+</head>
+<body class="original-platform mzk-swap-page">
+  <div class="topbar"><span>Fixed utility rate</span><span>2,000 MZK = $20 USD</span><span>Minimum purchase $5</span></div>
+  <header class="site-header"><a class="logo" href="index.html"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a><nav class="nav"><a href="index.html">Market</a><a href="checkout.html">Checkout</a><a class="active" href="buy-mzk.html">Buy MZK</a></nav></header>
+  <main id="swap" class="mzk-swap-shell">
+    <section class="mzk-swap-copy"><p class="kicker">MUZIKAZ utility token</p><h1>Swap crypto for <em>MZK.</em></h1><p>Use ETH, SOL, or ADA to buy any MZK amount. The fixed store rate is <strong>100 MZK per $1</strong>, so $20 buys 2,000 MZK. The minimum $5 purchase supplies the 500 MZK needed for your one-time Builder Loadout; returning players enter free.</p><div class="mzk-rate-cards"><article><strong>100 MZK</strong><span>per $1 USD</span></article><article><strong>500 MZK</strong><span>one-time loadout</span></article><article><strong id="mzk-balance">0 MZK</strong><span>wallet balance</span></article></div><section class="mzk-package"><p class="kicker">Included in your first loadout</p><h2>Everything needed to start building.</h2><ul><li>1 random MUZIKAZ avatar</li><li>1 random public land starter plot</li><li>1 free community spot</li><li>Starter room shell</li><li>Builder tool kit</li></ul><small>The package is saved permanently to this MZK wallet after the first 500 MZK entry. Random items are assigned once and do not reroll.</small></section></section>
+    <form class="mzk-swap-card" id="mzk-swap-form"><p class="kicker">Choose any amount</p><label>Purchase in USD<input id="mzk-usd" type="number" min="5" step="0.01" value="5" required></label><div class="mzk-quick" role="group" aria-label="Quick amounts"><button type="button" data-usd="5">$5</button><button type="button" data-usd="20">$20</button><button type="button" data-usd="50">$50</button></div><output id="mzk-output">You receive 500 MZK</output><fieldset><legend>Swap from</legend><label><input type="radio" name="currency" value="ETH" checked> ETH</label><label><input type="radio" name="currency" value="SOL"> SOL</label><label><input type="radio" name="currency" value="ADA"> ADA</label></fieldset><p id="mzk-quote">Load a live crypto quote to continue.</p><button class="btn" type="submit" id="mzk-buy">Swap for 500 MZK</button><p id="mzk-status" role="status">Your wallet will show the exact asset amount, recipient, and network fee before approval.</p></form>
+  </main>
+  <script src="mzk-wallet.js"></script><script src="wallet-payments.js"></script><script src="mzk-swap.js"></script>
+</body></html>
