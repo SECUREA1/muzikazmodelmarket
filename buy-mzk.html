@@ -1,16 +1,52 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Swap ETH, SOL, or ADA for MZK tokens at the fixed MUZIKAZ rate.">
-  <title>Buy MZK | MUZIKAZ</title><link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Enter the MUZIKAZ WORLD land presale from $40–$100, or fund your wallet for owner-priced marketplace land up to $1,000.">
+  <title>Land Presale & MZK Exchange | MUZIKAZ WORLD</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body class="original-platform mzk-swap-page">
-  <div class="topbar"><span>MUZIKAZ WORLD · Utility station</span><span>Starter land · 1,000 MZK</span><span>100 MZK = $1 USD</span></div>
-  <header class="site-header"><a class="logo" href="index.html"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a><nav class="nav"><a href="index.html">Market</a><a href="checkout.html">Checkout</a><a class="active" href="buy-mzk.html">Buy MZK</a></nav></header>
+  <div class="topbar mzk-market-ticker"><span><i></i> LAND PRESALE · LIVE</span><span>Presale deeds · $40–$100</span><span>Market guide · $40–$1,000</span></div>
+  <header class="site-header">
+    <a class="logo" href="index.html" aria-label="MUZIKAZ home"><span class="bolt">ϟ</span><span>MUZIKAZ</span><small>WORLD</small></a>
+    <nav class="nav" aria-label="Primary navigation"><a href="index.html">Market</a><a href="model-market.html#muzikaz-world-plot">Land</a><a href="checkout.html">Checkout</a><a class="active" href="buy-mzk.html">Exchange</a></nav>
+  </header>
   <main id="swap" class="mzk-swap-shell">
-    <section class="mzk-swap-copy"><p class="kicker">MUZIKAZ WORLD utility token</p><h1>Power your <em>world.</em></h1><p>Use ETH, SOL, or ADA to buy any MZK amount. The fixed store rate is <strong>100 MZK per $1</strong>, so $10 supplies the <strong>1,000 MZK</strong> needed for your permanent starter land and Builder Loadout. Returning players enter free.</p><div class="mzk-rate-cards"><article><strong>100 MZK</strong><span>per $1 USD</span></article><article class="is-featured"><strong>1,000 MZK</strong><span>starter land + loadout</span></article><article><strong id="mzk-balance">0 MZK</strong><span>wallet balance</span></article></div><section class="mzk-package"><p class="kicker">Included with starter land</p><h2>One deed. A complete beginning.</h2><ul><li>1 random MUZIKAZ avatar</li><li>1 random public land starter plot</li><li>1 free community spot</li><li>Starter room shell</li><li>Builder tool kit</li></ul><small>The package is saved permanently to this MZK wallet after the one-time 1,000 MZK claim. Random items are assigned once and do not reroll.</small></section></section>
-    <form class="mzk-swap-card" id="mzk-swap-form"><p class="kicker">Fund your world</p><label>Purchase in USD<input id="mzk-usd" type="number" min="5" step="0.01" value="10" required></label><div class="mzk-quick" role="group" aria-label="Quick amounts"><button type="button" data-usd="10">Starter · $10</button><button type="button" data-usd="20">$20</button><button type="button" data-usd="50">$50</button></div><output id="mzk-output">You receive 1,000 MZK</output><fieldset><legend>Swap from</legend><label><input type="radio" name="currency" value="ETH" checked> ETH</label><label><input type="radio" name="currency" value="SOL"> SOL</label><label><input type="radio" name="currency" value="ADA"> ADA</label></fieldset><p id="mzk-quote">Load a live crypto quote to continue.</p><button class="btn" type="submit" id="mzk-buy">Swap for 1,000 MZK</button><p id="mzk-status" role="status">Your wallet will show the exact asset amount, recipient, and network fee before approval.</p></form>
+    <section class="mzk-swap-copy">
+      <div class="mzk-edition"><span>FOUNDING LAND RELEASE</span><b>SECTOR 01 / 2026</b></div>
+      <p class="kicker">MUZIKAZ WORLD · land exchange</p>
+      <h1>Own the signal.<br><em>Build the world.</em></h1>
+      <p class="mzk-lead">Secure a permanent connected deed during the <strong>$40–$100 presale</strong>. After launch, owners control their listings across the open marketplace, with current land values designed to span <strong>$40–$1,000</strong>.</p>
+      <div class="mzk-rate-cards" aria-label="Land market details">
+        <article><span>Presale entry</span><strong>$40</strong><small>4,000 MZK · one-time deed</small></article>
+        <article class="is-featured"><span>Founding range</span><strong>$40–$100</strong><small>Limited Sector 01 release</small></article>
+        <article><span>Market range</span><strong>$40–$1K</strong><small>Owner-priced land listings</small></article>
+      </div>
+      <section class="mzk-package" aria-labelledby="deed-heading">
+        <div><p class="kicker">Your founding deed</p><h2 id="deed-heading">More than a plot. Your permanent creative address.</h2></div>
+        <ul><li><b>01</b><span>Random public land plot</span></li><li><b>02</b><span>Exclusive MUZIKAZ avatar</span></li><li><b>03</b><span>Free community spot</span></li><li><b>04</b><span>Starter room shell</span></li><li><b>05</b><span>Builder tool kit</span></li><li><b>06</b><span>Creator market station</span></li></ul>
+        <small>Presale plots are assigned once and stored permanently to your MZK wallet. Marketplace asking prices are set by individual owners and may change.</small>
+      </section>
+    </section>
+
+    <aside class="mzk-terminal" aria-label="MZK purchase terminal">
+      <div class="mzk-terminal__head"><span><i></i> SECURE EXCHANGE</span><strong id="mzk-balance">0 MZK</strong></div>
+      <form class="mzk-swap-card" id="mzk-swap-form">
+        <div class="mzk-form-heading"><div><p class="kicker">Fund your world</p><h2>Choose your allocation</h2></div><span>100 MZK<br><small>= $1 USD</small></span></div>
+        <label class="mzk-amount-label"><span>Purchase amount <small>USD</small></span><span class="mzk-currency-input"><b>$</b><input id="mzk-usd" type="number" min="40" step="0.01" value="40" inputmode="decimal" required></span></label>
+        <div class="mzk-quick" role="group" aria-label="Presale allocations"><button class="is-active" type="button" data-usd="40"><b>$40</b><span>Entry</span></button><button type="button" data-usd="75"><b>$75</b><span>Creator</span></button><button type="button" data-usd="100"><b>$100</b><span>Founder</span></button></div>
+        <div class="mzk-conversion"><span>You receive</span><output id="mzk-output">4,000 MZK</output><small>Fixed MUZIKAZ store rate</small></div>
+        <fieldset><legend>Pay from your wallet</legend><label><input type="radio" name="currency" value="ETH" checked><span>Ξ</span> ETH</label><label><input type="radio" name="currency" value="SOL"><span>◎</span> SOL</label><label><input type="radio" name="currency" value="ADA"><span>₳</span> ADA</label></fieldset>
+        <p id="mzk-quote">Loading live wallet quote…</p>
+        <button class="btn mzk-buy-button" type="submit" id="mzk-buy"><span>Acquire 4,000 MZK</span><b>→</b></button>
+        <p id="mzk-status" role="status">Your wallet displays the exact asset amount, destination, and network fee before approval.</p>
+        <div class="mzk-trust"><span>◈ Wallet approved</span><span>◆ On-chain receipt</span><span>◉ Permanent deed</span></div>
+      </form>
+      <p class="mzk-market-note"><b>OPEN MARKET</b> Need a custom allocation? Enter any amount above $40 to fund owner-priced marketplace purchases.</p>
+    </aside>
   </main>
   <script src="mzk-wallet.js"></script><script src="wallet-payments.js"></script><script src="mzk-swap.js"></script>
-</body></html>
+</body>
+</html>
