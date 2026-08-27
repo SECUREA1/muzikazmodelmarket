@@ -45,6 +45,9 @@ if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
 if (!mainHtml.includes('href="avatar-whitepaper.html"')) {
   throw new Error('The main page must link directly to the avatar whitepaper.');
 }
+for (const walletBrandMarker of ['id="wallet-connect"', 'muzikaz_bolt_logo_editable.svg', 'public/assets/muzikaz-world-logo.svg']) {
+  if (!mainHtml.includes(walletBrandMarker)) throw new Error(`The app header is missing wallet or official-logo branding: ${walletBrandMarker}`);
+}
 
 for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'Begin Game', 'game-loading-indicator']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
@@ -206,6 +209,9 @@ for (const walletIdentityFeature of ['id="wallet-username"', 'id="wallet-json-do
 }
 for (const walletBindingFeature of ['connectIdentity', 'setUsername', 'exportWallet', 'importWallet']) {
   if (!mzkWallet.includes(walletBindingFeature)) throw new Error(`mzk-wallet.js is missing wallet binding feature: ${walletBindingFeature}`);
+}
+for (const walletConnectFeature of ['connectBrowserWallet', 'disconnectBrowserWallet', 'eth_requestAccounts', 'mzk:wallet-connection-changed']) {
+  if (!mzkWallet.includes(walletConnectFeature)) throw new Error(`The app wallet control is missing ${walletConnectFeature}.`);
 }
 
 if (!membersHtml.includes('name="muzikaz-bottle-approved-contract" content="0xEf74118D5fB730E9B2729c7303DC29980b4771f0"')) {

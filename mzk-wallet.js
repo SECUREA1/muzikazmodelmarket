@@ -2,6 +2,7 @@
   const LEDGER_KEY = 'muzikazMzkLedgerV1';
   const PROFILE_KEY = 'muzikazMzkWalletProfilesV1';
   const ACTIVE_KEY = 'muzikazMzkActiveWalletV1';
+  const CONNECTED_KEY = 'muzikazConnectedEthereumWalletV1';
   const MIGRATION_KEY = 'muzikazMzkWalletMigrationV1';
   const STARTING_MZK = 0;
   const MZK_PER_USD = 100;
@@ -13,6 +14,7 @@
   const normalize = (value) => String(value || '').trim().toLowerCase();
   const uid = (prefix = 'mzk') => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const validAddress = (value) => /^0x[a-f0-9]{40}$/.test(normalize(value));
+  const connectedAddress = () => { const address = normalize(localStorage.getItem(CONNECTED_KEY)); return validAddress(address) ? address : ''; };
   const parse = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch (_) { return fallback; } };
   const profiles = () => { const value = parse(PROFILE_KEY, {}); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; };
   const activeProfile = () => profiles()[normalize(localStorage.getItem(ACTIVE_KEY))] || null;
@@ -38,6 +40,22 @@
     localStorage.setItem(PROFILE_KEY, JSON.stringify(all)); localStorage.setItem(ACTIVE_KEY, key); localStorage.setItem('voice3.wallet', address); ensureWallet(address);
     window.dispatchEvent(new CustomEvent('mzk:identity-changed', { detail: all[key] })); return all[key];
   }
+  async function connectBrowserWallet() {
+    const provider = window.ethereum;
+    if (!provider?.request) throw new Error('Install or open an Ethereum wallet such as MetaMask to connect.');
+    const accounts = await provider.request({ method: 'eth_requestAccounts' });
+    const address = normalize(accounts?.[0]);
+    if (!validAddress(address)) throw new Error('Your wallet did not return a valid Ethereum account.');
+    localStorage.setItem(CONNECTED_KEY, address);
+    localStorage.setItem('voice3.wallet', address);
+    ensureWallet(address);
+    window.dispatchEvent(new CustomEvent('mzk:wallet-connection-changed', { detail: { address } }));
+    return address;
+  }
+  function disconnectBrowserWallet() {
+    localStorage.removeItem(CONNECTED_KEY);
+    window.dispatchEvent(new CustomEvent('mzk:wallet-connection-changed', { detail: { address: '' } }));
+  }
   function setUsername(value) { const profile = activeProfile(); if (!profile) throw new Error('Connect a verified Bottle wallet first.'); const username = String(value || '').trim(); if (!/^[a-zA-Z0-9][a-zA-Z0-9_.-]{2,23}$/.test(username)) throw new Error('Use 3–24 letters, numbers, dots, dashes, or underscores.'); const all = profiles(); all[profile.key] = { ...profile, username, updatedAt: new Date().toISOString() }; localStorage.setItem(PROFILE_KEY, JSON.stringify(all)); window.dispatchEvent(new CustomEvent('mzk:identity-changed', { detail: all[profile.key] })); return all[profile.key]; }
   function exportWallet() { const profile = activeProfile(); if (!profile) throw new Error('Connect a verified Bottle wallet first.'); return { format: 'muzikaz-wallet-v1', exportedAt: new Date().toISOString(), profile, ledger: history(profile.address) }; }
   function importWallet(data) { if (data?.format !== 'muzikaz-wallet-v1' || !data.profile) throw new Error('This is not a MUZIKAZ wallet JSON file.'); const verified = activeProfile(); if (!verified || verified.address !== normalize(data.profile.address) || verified.chainId !== normalize(data.profile.chainId) || verified.contract !== normalize(data.profile.contract)) throw new Error('Connect and verify the matching wallet and Bottle contract before restoring this JSON.'); let incoming = connectIdentity(data.profile); if (data.profile.username) incoming = setUsername(data.profile.username); const ledger = read(); for (const entry of Array.isArray(data.ledger) ? data.ledger : []) if (entry.walletId === incoming.address && !ledger.some((item) => item.id === entry.id)) ledger.push(entry); write(ledger); return incoming; }
@@ -46,5 +64,5 @@
   function mount(target, options = {}) { const root = typeof target === 'string' ? document.querySelector(target) : target; if (!root) return; const draw = () => { ensureWallet(); const amount = `${balance().toLocaleString()} MZK`; root.textContent = options.compact ? amount : `🪙 ${amount} · one wallet for rewards, Token Mixer, Backpack & VibeVerse`; }; draw(); window.addEventListener('mzk:balance-changed', draw); window.addEventListener('storage', draw); }
   ensureWallet();
   document.addEventListener('click', (event) => { const start = event.target.closest?.('[data-house-start]'); if (!start || start.dataset.mzkEntryPaid === 'true') return; ensureWallet(); const owned = starterLoadout(); if (!owned && balance() < GAME_ENTRY_MZK) { event.preventDefault(); event.stopImmediatePropagation(); const returnTo = `${location.pathname.split('/').pop() || 'index.html'}${location.hash}`; location.href = `buy-mzk.html?return=${encodeURIComponent(returnTo)}#swap`; return; } const claimed = claimStarterLoadout(); if (!claimed.ok) { event.preventDefault(); event.stopImmediatePropagation(); return; } start.dataset.mzkEntryPaid = 'true'; start.dataset.mzkLoadoutId = claimed.loadout.id; }, true);
-  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, ensureWallet, mount, profile: activeProfile, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
+  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
 })();

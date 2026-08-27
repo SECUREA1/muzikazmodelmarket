@@ -1588,6 +1588,11 @@ section,
 .icon-button.cart{
   min-width:52px;
 }
+.wallet-connect{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:8px 13px;border:1px solid rgba(156,255,0,.58);border-radius:999px;background:rgba(4,9,4,.9);color:#fff;font:900 12px Inter,sans-serif;letter-spacing:.04em;text-transform:none;white-space:nowrap;box-shadow:0 0 20px rgba(156,255,0,.1)}
+.wallet-connect img{width:24px;height:24px;object-fit:contain;filter:drop-shadow(0 0 5px rgba(156,255,0,.6))}
+.wallet-connect:hover,.wallet-connect:focus-visible,.wallet-connect.is-connected{border-color:var(--lime);background:rgba(156,255,0,.13);color:var(--lime)}
+.wallet-connect:disabled{cursor:wait;opacity:.72}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .collection-grid{
   grid-template-columns:repeat(auto-fit, minmax(min(100%, 210px), 1fr));
 }
@@ -1627,7 +1632,9 @@ section,
 @media(max-width:950px){
   .nav{flex:none;justify-content:flex-start}
   .newsletter{grid-template-columns:1fr}
+  .wallet-connect{margin-left:auto}
 }
+@media(max-width:520px){.wallet-connect{padding:7px}.wallet-connect span{display:none}.wallet-connect img{width:27px;height:27px}}
 @media(max-width:640px){
   .mobile-move-pad{display:grid}
 }
