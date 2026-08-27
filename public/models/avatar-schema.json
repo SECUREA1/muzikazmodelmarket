@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://muzikaz.com/schemas/avatar-1.0.0.json",
+  "title": "MUZIKAZ Playable Avatar",
+  "description": "Canonical contract for a playable avatar instance. Mutable gameplay state is intentionally excluded.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "characterId", "name", "ownerId", "assets", "rarity", "classes", "traits", "rigProfile", "equipmentSlots", "animationProfile", "worldPermissions", "schemaVersion"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^avatar_[a-z0-9_]+$" },
+    "characterId": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "edition": { "type": "integer", "minimum": 1 },
+    "ownerId": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modelUrl"],
+      "properties": {
+        "modelUrl": { "type": "string", "pattern": "^(https://|/).+\\.(glb|gltf)([?#].*)?$" },
+        "iosModelUrl": { "type": "string", "pattern": "^(https://|/).+\\.usdz([?#].*)?$" },
+        "thumbnailUrl": { "type": "string", "pattern": "^(https://|/).+" },
+        "contentHash": { "type": "string", "maxLength": 160 }
+      }
+    },
+    "rarity": { "enum": ["common", "rare", "epic", "legendary"] },
+    "classes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["creator", "builder", "explorer", "fighter", "companion", "merchant", "player"] } },
+    "traits": { "type": "object", "additionalProperties": { "type": "number", "minimum": 0, "maximum": 100 } },
+    "abilities": { "type": "array", "uniqueItems": true, "items": { "type": "string", "maxLength": 64 } },
+    "rigProfile": { "type": "string", "pattern": "^[a-z0-9-]+@[0-9]+$" },
+    "equipmentSlots": { "type": "array", "uniqueItems": true, "items": { "enum": ["head", "face", "neck", "torso", "hands", "feet", "back", "tool1", "tool2"] } },
+    "animationProfile": { "type": "string", "pattern": "^[a-z0-9-]+@[0-9]+$" },
+    "animations": { "type": "array", "uniqueItems": true, "items": { "enum": ["idle", "walk", "run", "jump", "turn", "interact", "dance", "emote", "use_tool", "damage", "defeat", "fly", "hover", "rap", "taunt"] } },
+    "worldPermissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowedWorlds"],
+      "properties": {
+        "allowedWorlds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 80 } },
+        "landRoles": { "type": "array", "uniqueItems": true, "items": { "enum": ["visitor", "friend", "builder", "owner"] } }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lore": { "type": "string", "maxLength": 2000 },
+        "creator": { "type": "string", "maxLength": 120 },
+        "collection": { "type": "string", "maxLength": 120 },
+        "tokenId": { "type": "string", "maxLength": 160 }
+      }
+    },
+    "tradable": { "type": "boolean", "default": true },
+    "approvalStatus": { "enum": ["draft", "submitted", "approved", "published", "suspended"], "default": "draft" },
+    "schemaVersion": { "const": "1.0.0" }
+  }
+}
