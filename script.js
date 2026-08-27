@@ -167,7 +167,17 @@ async function validateBottleOwnership(address) {
     }
     let balance;
     try { balance = BigInt(result || '0x0'); } catch (error) { continue; }
-    if (balance >= 1n) return { balance, contract, config };
+    if (balance >= 1n) {
+      const tokenIds = [];
+      for (let index = 0n; index < balance; index += 1n) {
+        const indexWord = index.toString(16).padStart(64, '0');
+        try {
+          const tokenResult = await wallet.request({ method: 'eth_call', params: [{ to: contract, data: '0x2f745c59' + ownerWord + indexWord }, 'latest'] });
+          tokenIds.push(BigInt(tokenResult || '0x0').toString());
+        } catch (error) { break; /* ERC-721 Enumerable is optional; ownership is still valid. */ }
+      }
+      return { balance, contract, tokenIds, config };
+    }
   }
   throw new Error('This wallet does not own a token from an approved MUZIKAZ Bottle contract. Mint one to enter.');
 }
@@ -1762,6 +1772,12 @@ function initBottleLogin() {
   const addressLabel = document.querySelector('#bottle-wallet-address');
   const connectButton = document.querySelector('#bottle-wallet-connect');
   const mintButton = document.querySelector('#bottle-wallet-mint');
+  const identityPanel = document.querySelector('#wallet-identity');
+  const usernameInput = document.querySelector('#wallet-username');
+  const usernameSave = document.querySelector('#wallet-username-save');
+  const jsonDownload = document.querySelector('#wallet-json-download');
+  const jsonImport = document.querySelector('#wallet-json-import');
+  const tokenIdentity = document.querySelector('#wallet-token-identity');
   if (!form || !lockedContent) return;
   const setBusy = (busy) => {
     if (connectButton) connectButton.disabled = busy;
@@ -1780,11 +1796,15 @@ function initBottleLogin() {
   };
   const verifyAndUnlock = async (address) => {
     const ownership = await validateBottleOwnership(address);
+    const profile = window.MZKWallet?.connectIdentity({ address, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
     currentMemberEmail = normalizeMemberEmail(address);
     grantBottleAccess(currentMemberEmail, 'ethereum-contract', ownership.config.contract);
     window.sessionStorage.setItem('muzikazBottleMember', 'true');
     window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
     showAddress(address);
+    if (identityPanel) identityPanel.hidden = false;
+    if (usernameInput) usernameInput.value = profile?.username || '';
+    if (tokenIdentity) tokenIdentity.textContent = `Verified identity: ${ownership.config.chainId} · ${ownership.contract} · Bottle token ${ownership.tokenIds.length ? ownership.tokenIds.join(', ') : 'ownership confirmed (contract does not expose token IDs)'}`;
     renderOwnedCollection(currentMemberEmail);
     unlock(`Bottle ownership verified on-chain. ${ownership.balance.toString()} Bottle token${ownership.balance === 1n ? '' : 's'} found.`);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
@@ -1795,6 +1815,13 @@ function initBottleLogin() {
     }
     scrollToSection('member-locked-content');
   };
+  usernameSave?.addEventListener('click', () => {
+    try { const profile = window.MZKWallet.setUsername(usernameInput?.value); if (status) status.textContent = `Username ${profile.username} is now connected to this wallet.`; } catch (error) { if (status) status.textContent = error.message; }
+  });
+  jsonDownload?.addEventListener('click', () => { try { window.MZKWallet.downloadWallet(); if (status) status.textContent = 'Wallet identity and MZK history downloaded. Keep this JSON private and restore it on another device after connecting the same wallet.'; } catch (error) { if (status) status.textContent = error.message; } });
+  jsonImport?.addEventListener('change', async (event) => {
+    try { const file = event.currentTarget.files?.[0]; if (!file) return; const profile = window.MZKWallet.importWallet(JSON.parse(await file.text())); if (usernameInput) usernameInput.value = profile.username || ''; if (status) status.textContent = 'Wallet JSON restored. Connect the matching Ethereum wallet to re-verify Bottle ownership.'; } catch (error) { if (status) status.textContent = error.message || 'Wallet JSON could not be restored.'; }
+  });
   const connect = async () => {
     setBusy(true);
     if (status) status.textContent = 'Connecting wallet and checking the Bottle contract…';
