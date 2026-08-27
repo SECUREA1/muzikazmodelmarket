@@ -543,12 +543,12 @@ function renderOwnedCollection(preferredOwner = currentMemberEmail) {
     const listing = backpackListing(owner, asset);
     const controls = owner === currentMemberEmail
       ? `<form class="backpack-price-form" data-backpack-price="${assetIndex}"><label>Token value <span><input name="tokenValue" type="number" min="1" max="1000000" step="1" value="${listing.tokenValue}" aria-label="Token value for ${escapeMarkup(detail.title)}"><b>MZK</b></span></label><button type="submit">${listing.listed ? 'Update price' : 'List for trade'}</button>${listing.listed ? `<button type="button" class="ghost" data-backpack-unlist="${assetIndex}">Unlist</button>` : ''}</form>`
-      : listing.listed ? `<div class="backpack-buy"><strong>${listing.tokenValue.toLocaleString()} MZK</strong><button type="button" data-backpack-buy="${assetIndex}">Trade now</button></div>` : '<p class="backpack-not-listed">Not currently listed for trade</p>';
+      : listing.listed ? `<div class="backpack-buy"><strong>${listing.tokenValue.toLocaleString()} MZK / $${listing.tokenValue.toLocaleString()} crypto value</strong><button type="button" data-backpack-buy="${assetIndex}">Trade with MZK</button><button type="button" class="ghost" data-backpack-crypto="SOL" data-backpack-buy="${assetIndex}">Phantom · SOL</button><button type="button" class="ghost" data-backpack-crypto="ADA" data-backpack-buy="${assetIndex}">Lace · ADA</button></div>` : '<p class="backpack-not-listed">Not currently listed for trade</p>';
     return `<article><img src="${escapeMarkup(detail.image)}" alt="${escapeMarkup(detail.title)}"><span class="pill">🎒 ${escapeMarkup(detail.type)}</span><h3>${escapeMarkup(detail.title)}</h3><p>${escapeMarkup(detail.copy)}</p>${detail.href ? `<a class="card-link" href="${escapeMarkup(detail.href)}">View map claim</a>` : ''}${controls}</article>`;
   }).join('') || '<article><h3>Backpack empty</h3><p>Add marketplace drops, checkout character products, claim collectibles, or upload graphics to build this account pack.</p></article>';
   if (transactionList) {
     const transactions = readBackpackData(BACKPACK_TRANSACTIONS_KEY, []);
-    transactionList.innerHTML = transactions.slice(-8).reverse().map((trade) => `<li><strong>${escapeMarkup(trade.asset)}</strong><span>${escapeMarkup(trade.seller)} → ${escapeMarkup(trade.buyer)}</span><b>${Number(trade.tokenValue).toLocaleString()} MZK</b><time datetime="${escapeMarkup(trade.createdAt)}">${new Date(trade.createdAt).toLocaleString()}</time></li>`).join('') || '<li>No trades yet.</li>';
+    transactionList.innerHTML = transactions.slice(-8).reverse().map((trade) => `<li><strong>${escapeMarkup(trade.asset)}</strong><span>${escapeMarkup(trade.seller)} → ${escapeMarkup(trade.buyer)}</span><b>${trade.cryptoPayment ? `${Number(trade.cryptoPayment.amount).toLocaleString()} ${escapeMarkup(trade.cryptoPayment.currency)}` : `${Number(trade.tokenValue).toLocaleString()} MZK`}</b><time datetime="${escapeMarkup(trade.createdAt)}">${new Date(trade.createdAt).toLocaleString()}</time></li>`).join('') || '<li>No trades yet.</li>';
   }
 }
 
@@ -569,7 +569,7 @@ document.querySelector('#owned-assets-grid')?.addEventListener('submit', (event)
   renderOwnedCollection(currentMemberEmail);
 });
 
-document.querySelector('#owned-assets-grid')?.addEventListener('click', (event) => {
+document.querySelector('#owned-assets-grid')?.addEventListener('click', async (event) => {
   const unlist = event.target.closest('[data-backpack-unlist]');
   const buy = event.target.closest('[data-backpack-buy]');
   const selectedOwner = normalizeMemberEmail(document.querySelector('#owned-profile-select')?.value);
@@ -589,21 +589,25 @@ document.querySelector('#owned-assets-grid')?.addEventListener('click', (event) 
   const asset = sellerAssets[assetIndex];
   const listing = backpackListing(selectedOwner, asset);
   const price = Number(listing.tokenValue);
+  const cryptoCurrency = buy.dataset.backpackCrypto;
   const buyerTokens = backpackBalance(currentMemberEmail);
   backpackBalance(selectedOwner);
   if (!asset || !listing.listed || !Number.isFinite(price)) {
     if (status) status.textContent = 'That listing is no longer available.';
     return renderOwnedCollection(selectedOwner);
   }
-  if (buyerTokens < price) {
+  if (!cryptoCurrency && buyerTokens < price) {
     if (status) status.textContent = `You need ${(price - buyerTokens).toLocaleString()} more MZK to complete this trade.`;
     return;
   }
   const transferId = `backpack:${selectedOwner}:${currentMemberEmail}:${asset}:${Date.now()}`;
-  const payment = window.MZKWallet?.transfer(currentMemberEmail, selectedOwner, price, `Backpack trade: ${asset}`, transferId, { asset });
-  if (!payment?.ok) {
-    if (status) status.textContent = 'The MZK payment could not be completed.';
-    return renderOwnedCollection(selectedOwner);
+  let cryptoPayment;
+  if (cryptoCurrency) {
+    try { if (status) status.textContent = `Loading the live ${cryptoCurrency} quote for $${price.toFixed(2)}…`; cryptoPayment = await window.MuzikazWalletPayments.pay(price, cryptoCurrency); }
+    catch (error) { if (status) status.textContent = error.message || `${cryptoCurrency} payment was not completed. The Backpack item has not moved.`; return renderOwnedCollection(selectedOwner); }
+  } else {
+    const payment = window.MZKWallet?.transfer(currentMemberEmail, selectedOwner, price, `Backpack trade: ${asset}`, transferId, { asset });
+    if (!payment?.ok) { if (status) status.textContent = 'The MZK payment could not be completed.'; return renderOwnedCollection(selectedOwner); }
   }
   sellerAssets.splice(assetIndex, 1);
   profiles[currentMemberEmail] ||= [];
@@ -611,9 +615,9 @@ document.querySelector('#owned-assets-grid')?.addEventListener('click', (event) 
   writeOwnedProfiles(profiles);
   setBackpackListing(selectedOwner, asset, price, false);
   const transactions = readBackpackData(BACKPACK_TRANSACTIONS_KEY, []);
-  transactions.push({ asset, seller: selectedOwner, buyer: currentMemberEmail, tokenValue: price, createdAt: new Date().toISOString() });
+  transactions.push({ asset, seller: selectedOwner, buyer: currentMemberEmail, tokenValue: price, cryptoPayment, createdAt: new Date().toISOString() });
   window.localStorage.setItem(BACKPACK_TRANSACTIONS_KEY, JSON.stringify(transactions.slice(-100)));
-  if (status) status.textContent = `Trade complete: ${asset} moved to your Backpack for ${price.toLocaleString()} MZK.`;
+  if (status) status.textContent = cryptoPayment ? `Trade complete: ${asset} moved to your Backpack after ${cryptoPayment.amount} ${cryptoPayment.currency}. Transaction ${cryptoPayment.transactionHash}.` : `Trade complete: ${asset} moved to your Backpack for ${price.toLocaleString()} MZK.`;
   renderOwnedCollection(currentMemberEmail);
 });
 
@@ -2008,6 +2012,57 @@ function completeEthereumOrder({ items, from, transactionHash, totalWei }) {
   document.querySelector('#confirmation-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+function checkoutUsdTotal() {
+  const items = readCart();
+  const subtotal = items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  return subtotal + (subtotal > 0 && subtotal < 75 ? 8.95 : 0) + (subtotal * 0.0825);
+}
+
+function completeCryptoOrder(items, payment) {
+  const orderId = `MZ-${payment.currency}-${payment.transactionHash.slice(0, 8).toUpperCase()}`;
+  const receipt = { orderId, total: `$${payment.usd.toFixed(2)}`, from: payment.address, to: payment.recipient, transactionHash: payment.transactionHash, items, paidAt: new Date().toISOString(), method: payment.currency };
+  window.localStorage.setItem('muzikazLastReceipt', JSON.stringify(receipt));
+  currentMemberEmail = normalizeMemberEmail(payment.address);
+  window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+  items.forEach((item) => { for (let quantity = 0; quantity < (Number(item.quantity) || 1); quantity += 1) claimOwnedAsset(item.name, `${payment.currency} order ${orderId}`); });
+  writeCart([]);
+  renderCheckoutPage();
+  document.querySelector('#confirmation-copy').textContent = `Receipt ${orderId} is submitted on-chain for ${payment.amount} ${payment.currency} ($${payment.usd.toFixed(2)} quoted value). Transaction: ${payment.transactionHash}`;
+  document.querySelector('#confirmation-panel').hidden = false;
+  document.querySelector('#confirmation-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function initMultiChainCheckout() {
+  const buttons = [...document.querySelectorAll('[data-crypto-pay]')];
+  const refreshButton = document.querySelector('#refresh-crypto-quotes');
+  const status = document.querySelector('#payment-status');
+  if (!buttons.length || !window.MuzikazWalletPayments) return;
+  const refresh = async () => {
+    const total = checkoutUsdTotal();
+    buttons.forEach((button) => { button.disabled = !total; });
+    if (!total) return;
+    try {
+      const [sol, ada] = await Promise.all([window.MuzikazWalletPayments.quote(total, 'SOL'), window.MuzikazWalletPayments.quote(total, 'ADA')]);
+      document.querySelector('#sol-quote').textContent = `${sol.amount} SOL ≈ $${total.toFixed(2)}`;
+      document.querySelector('#ada-quote').textContent = `${ada.amount} ADA ≈ $${total.toFixed(2)}`;
+    } catch (error) { status.textContent = error.message; }
+  };
+  refreshButton?.addEventListener('click', refresh);
+  buttons.forEach((button) => button.addEventListener('click', async () => {
+    const items = readCart();
+    if (!items.length) return;
+    buttons.forEach((item) => { item.disabled = true; });
+    try {
+      status.textContent = `Connect ${button.dataset.cryptoPay === 'SOL' ? 'Phantom' : 'Lace'} and approve the exact recipient and value…`;
+      const payment = await window.MuzikazWalletPayments.pay(checkoutUsdTotal(), button.dataset.cryptoPay);
+      completeCryptoOrder(items, payment);
+      status.textContent = `${payment.currency} payment submitted successfully. Your receipt and Backpack assets are ready.`;
+    } catch (error) { status.textContent = error.message || 'Wallet payment was not completed. Your cart is unchanged.'; }
+    finally { refresh(); }
+  }));
+  refresh();
+}
+
 function initEthereumCheckout() {
   const connectButton = document.querySelector('#ethereum-wallet-connect');
   const payButton = document.querySelector('#ethereum-wallet-pay');
@@ -2126,6 +2181,7 @@ paymentForm?.addEventListener('submit', (event) => {
 
 renderCheckoutPage();
 initEthereumCheckout();
+initMultiChainCheckout();
 
 function initPublicModelExplorer() {
   const viewer = document.querySelector('#public-model-viewer');

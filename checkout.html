@@ -34,7 +34,7 @@
 <body class="original-platform checkout-page">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Secure checkout for MUZIKAZ model packs, merch, collectible drops, wallet payments, and owned asset summaries.","sameAs":["https://muzikaz.com/"]}</script>
     <div class="topbar">
-        <span>Secure live Ethereum checkout</span>
+        <span>Secure live multi-chain checkout</span>
         <span>Every cart asset · permanent wallet purchase flow</span>
     </div>
     <header class="site-header">
@@ -55,7 +55,7 @@
             <div>
                 <p class="kicker">Final step</p>
                 <h1 id="checkout-title">Process your MUZIKAZ payment.</h1>
-                <p>Every marketplace asset in your cart can be purchased on Ethereum. Connect your wallet, review the exact ETH total, and send payment directly to the designated MUZIKAZ wallet.</p>
+                <p>Pay the same USD cart value with Ethereum, SOL through Phantom, or ADA through Lace. Review the live quote and destination in your wallet before approving.</p>
             </div>
             <div class="checkout-trust-grid" aria-label="Checkout protections">
                 <article><strong>SSL ready</strong><span>Hosted payment gateway handoff fields are grouped for real processors.</span></article>
@@ -114,6 +114,15 @@
                         </div>
                         <small>Payment is sent directly to <code id="ethereum-payment-recipient">0xb2FC…7238</code>. Confirm the recipient and ETH value in your wallet before approving.</small>
                     </section>
+                    <section class="crypto-checkout" id="multi-chain-checkout" aria-labelledby="multi-chain-title">
+                        <div><strong id="multi-chain-title">Pay with Phantom or Lace</strong><span>Live USD-equivalent quote</span></div>
+                        <div class="crypto-payment-grid">
+                            <article><b>◎ SOL · Phantom</b><span id="sol-quote">Load a live quote to continue.</span><button type="button" class="ghost" data-crypto-pay="SOL">Pay with Phantom</button><small>Recipient <code>CB7H…QauH</code></small></article>
+                            <article><b>₳ ADA · Lace</b><span id="ada-quote">Load a live quote to continue.</span><button type="button" class="ghost" data-crypto-pay="ADA">Pay with Lace</button><small>Recipient <code>addr1q…l59xj</code></small></article>
+                        </div>
+                        <button type="button" class="link-button" id="refresh-crypto-quotes">Refresh live ADA/SOL quotes</button>
+                        <small>Quotes use the current USD market rate and round up to the smallest supported display unit. Network fees are shown separately by your wallet.</small>
+                    </section>
                     <div class="form-grid payment-card-fields">
                         <label>Card number <input name="card" inputmode="numeric" autocomplete="cc-number" required pattern="[0-9 ]{15,23}" placeholder="4242 4242 4242 4242" /></label>
                         <label>Name on card <input name="cardName" autocomplete="cc-name" required placeholder="Muzikaz Collector" /></label>
@@ -144,6 +153,7 @@
         <div><h4>Shop</h4><a href="index.html#models">Models</a><a href="index.html#merch">Merch</a></div>
         <div><h4>Support</h4><a href="mailto:crew@muzikaz.example">Contact</a><a href="members.html">Bottle Login</a></div>
     </footer>
+    <script src="wallet-payments.js"></script>
     <script src="script.js"></script>
   <script src="battle-theme.js"></script>
 </body>
