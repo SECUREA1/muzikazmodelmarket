@@ -20,6 +20,8 @@ const BOTTLE_MINT_PAYMENT_ADDRESS = '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238'
 const BOTTLE_MINT_PAYMENT_WEI = '0x5af3107a4000'; // 0.0001 ETH
 const BOTTLE_MINT_REWARDS_KEY = 'muzikazBottleMintRewards';
 const BOTTLE_MINT_BACKPACK_ASSETS = ['Unrevealed MUZIKAZ Land', 'Unrevealed MUZIKAZ Bottle'];
+const MARKET_PAYMENT_ADDRESS = '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238';
+const MARKET_ITEM_PRICE_WEI = 100000000000000n; // 0.0001 ETH for every cart unit.
 
 // One catalog drives both the world map and the marketplace. Coordinates belong
 // to the asset, so a purchased world always resolves to the same map location.
@@ -990,7 +992,6 @@ document.addEventListener('click', (event) => {
     const product = assetCatalog.retail.find((item) => item.name === productName) || marketplaceListings.find((item) => item.name === productName);
     addCartLine(productName, parsePrice(product?.price), product?.category || product?.type || 'Store item');
     updateCart(productButton);
-    claimOwnedAsset(productName, 'Added from storefront');
   }
 });
 
@@ -1490,8 +1491,7 @@ document.querySelector('#checkout-add')?.addEventListener('click', (event) => {
   const qty = Math.max(1, Number(document.querySelector('#checkout-qty')?.value) || 1);
   for (let index = 0; index < qty; index += 1) addCartLine(`${character.name} ${product.name}`, product.price, `${document.querySelector('#checkout-size-select')?.value || ''} · ${document.querySelector('#checkout-color-select')?.value || ''}`);
   updateCart(event.currentTarget, 'Checkout added');
-  claimOwnedAsset(`${character.name} ${product.name}`, 'Character checkout');
-  alert(`${character.name} ${product.name} is in your cart and saved to ${currentMemberEmail || 'the active'} owned collection. Connect this demo checkout to Shopify, Stripe, WooCommerce, or your preferred product checkout.`);
+  alert(`${character.name} ${product.name} is in your cart. Complete checkout to add the purchased asset to your Backpack.`);
 });
 document.addEventListener('click', (event) => {
   const characterButton = event.target.closest('[data-checkout-character]');
@@ -1964,6 +1964,106 @@ function formatCheckoutMoney(amount) {
   return `$${Number(amount || 0).toFixed(2)}`;
 }
 
+function marketPaymentConfig() {
+  const address = String(document.querySelector('meta[name="muzikaz-market-payment-address"]')?.content || MARKET_PAYMENT_ADDRESS).trim();
+  const chainId = String(document.querySelector('meta[name="muzikaz-market-chain-id"]')?.content || '0x1').trim().toLowerCase();
+  const configuredWei = String(document.querySelector('meta[name="muzikaz-market-item-price-wei"]')?.content || `0x${MARKET_ITEM_PRICE_WEI.toString(16)}`).trim();
+  if (!/^0x[a-fA-F0-9]{40}$/.test(address)) throw new Error('The marketplace payment wallet is not configured correctly.');
+  if (!/^0x[a-fA-F0-9]+$/.test(configuredWei) || BigInt(configuredWei) <= 0n) throw new Error('The marketplace ETH item price is not configured correctly.');
+  return { address, chainId, itemPriceWei: BigInt(configuredWei) };
+}
+
+function formatEth(wei) {
+  const whole = wei / 1000000000000000000n;
+  const fraction = (wei % 1000000000000000000n).toString().padStart(18, '0').replace(/0+$/, '');
+  return `${whole.toString()}${fraction ? `.${fraction}` : ''} ETH`;
+}
+
+async function waitForMarketTransaction(wallet, transactionHash) {
+  for (let attempt = 0; attempt < 90; attempt += 1) {
+    const receipt = await wallet.request({ method: 'eth_getTransactionReceipt', params: [transactionHash] });
+    if (receipt) {
+      if (receipt.status && BigInt(receipt.status) !== 1n) throw new Error('The marketplace payment transaction failed. Your cart was not changed.');
+      return receipt;
+    }
+    await new Promise((resolve) => window.setTimeout(resolve, 2000));
+  }
+  throw new Error('Payment is still pending. Keep your cart and return after the transaction confirms.');
+}
+
+function completeEthereumOrder({ items, from, transactionHash, totalWei }) {
+  const orderId = `MZ-ETH-${transactionHash.slice(2, 10).toUpperCase()}`;
+  const owner = normalizeMemberEmail(from);
+  const receipt = { orderId, total: formatEth(totalWei), from, to: marketPaymentConfig().address, transactionHash, items, paidAt: new Date().toISOString(), method: 'Ethereum' };
+  window.localStorage.setItem('muzikazLastReceipt', JSON.stringify(receipt));
+  currentMemberEmail = owner;
+  window.localStorage.setItem('muzikazBottleMemberEmail', owner);
+  items.forEach((item) => {
+    for (let quantity = 0; quantity < (Number(item.quantity) || 1); quantity += 1) claimOwnedAsset(item.name, `Ethereum order ${orderId}`);
+  });
+  writeCart([]);
+  renderCheckoutPage();
+  document.querySelector('#confirmation-copy').textContent = `Receipt ${orderId} is confirmed on-chain for ${formatEth(totalWei)}. ${items.length} cart line${items.length === 1 ? '' : 's'} now belong to ${from}. Transaction: ${transactionHash}`;
+  document.querySelector('#confirmation-panel').hidden = false;
+  document.querySelector('#confirmation-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function initEthereumCheckout() {
+  const connectButton = document.querySelector('#ethereum-wallet-connect');
+  const payButton = document.querySelector('#ethereum-wallet-pay');
+  const addressLabel = document.querySelector('#ethereum-wallet-address');
+  const totalLabel = document.querySelector('#ethereum-wallet-total');
+  const recipientLabel = document.querySelector('#ethereum-payment-recipient');
+  const status = document.querySelector('#payment-status');
+  if (!connectButton || !payButton) return;
+  let connectedAddress = '';
+  const config = marketPaymentConfig();
+  recipientLabel.textContent = config.address;
+  const refresh = () => {
+    const quantity = readCart().reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+    totalLabel.textContent = formatEth(config.itemPriceWei * BigInt(quantity));
+    payButton.disabled = !connectedAddress || !quantity;
+  };
+  const connect = async ({ switchWallet = false } = {}) => {
+    const wallet = requireEthereumWallet();
+    if (switchWallet) {
+      try { await wallet.request({ method: 'wallet_revokePermissions', params: [{ eth_accounts: {} }] }); } catch (error) { /* Not all EIP-1193 wallets support revocation. */ }
+    }
+    await ensureBottleChain(wallet, config.chainId);
+    const accounts = await wallet.request({ method: 'eth_requestAccounts' });
+    const address = String(accounts?.[0] || '');
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) throw new Error('No valid Ethereum account was returned by the wallet.');
+    connectedAddress = address;
+    addressLabel.textContent = `Connected wallet: ${address}`;
+    connectButton.textContent = 'Disconnect / switch wallet';
+    refresh();
+    return wallet;
+  };
+  connectButton.addEventListener('click', async () => {
+    connectButton.disabled = true;
+    try { await connect({ switchWallet: Boolean(connectedAddress) }); status.textContent = 'Wallet connected. Review the cart ETH total, recipient, and network before buying.'; } catch (error) { connectedAddress = ''; addressLabel.textContent = 'No Ethereum wallet connected.'; status.textContent = error.message || 'Ethereum wallet connection failed.'; refresh(); } finally { connectButton.disabled = false; }
+  });
+  payButton.addEventListener('click', async () => {
+    const items = readCart();
+    if (!items.length) return;
+    payButton.disabled = true;
+    connectButton.disabled = true;
+    try {
+      const wallet = await connect();
+      const quantity = items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+      const totalWei = config.itemPriceWei * BigInt(quantity);
+      status.textContent = `Confirm ${formatEth(totalWei)} to ${config.address} in your wallet…`;
+      const transactionHash = await wallet.request({ method: 'eth_sendTransaction', params: [{ from: connectedAddress, to: config.address, value: `0x${totalWei.toString(16)}` }] });
+      status.textContent = `Payment submitted (${transactionHash.slice(0, 10)}…). Waiting for on-chain confirmation before granting assets.`;
+      await waitForMarketTransaction(wallet, transactionHash);
+      completeEthereumOrder({ items, from: connectedAddress, transactionHash, totalWei });
+      status.textContent = `Ethereum payment confirmed. Receipt ${transactionHash.slice(0, 10)}… saved and every purchased asset was added to your Backpack.`;
+    } catch (error) { status.textContent = error.message || 'Ethereum payment was not completed. Your cart is unchanged.'; } finally { connectButton.disabled = false; refresh(); }
+  });
+  window.ethereum?.on?.('accountsChanged', (accounts) => { connectedAddress = String(accounts?.[0] || ''); addressLabel.textContent = connectedAddress ? `Connected wallet: ${connectedAddress}` : 'No Ethereum wallet connected.'; connectButton.textContent = connectedAddress ? 'Disconnect / switch wallet' : 'Connect Ethereum wallet'; refresh(); });
+  refresh();
+}
+
 function renderCheckoutPage() {
   if (!checkoutItems) return;
   const items = readCart();
@@ -1986,6 +2086,10 @@ function renderCheckoutPage() {
   document.querySelector('#summary-total').textContent = formatCheckoutMoney(total);
   document.querySelector('#pay-button-total').textContent = formatCheckoutMoney(total);
   document.querySelector('#pay-button').disabled = !items.length;
+  const ethereumTotal = document.querySelector('#ethereum-wallet-total');
+  if (ethereumTotal) ethereumTotal.textContent = formatEth(MARKET_ITEM_PRICE_WEI * BigInt(items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)));
+  const ethereumPay = document.querySelector('#ethereum-wallet-pay');
+  if (ethereumPay && !items.length) ethereumPay.disabled = true;
 }
 
 document.querySelector('#checkout-clear-cart')?.addEventListener('click', () => {
@@ -2021,6 +2125,7 @@ paymentForm?.addEventListener('submit', (event) => {
 });
 
 renderCheckoutPage();
+initEthereumCheckout();
 
 function initPublicModelExplorer() {
   const viewer = document.querySelector('#public-model-viewer');
