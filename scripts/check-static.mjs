@@ -180,6 +180,11 @@ for (const requiredGateMarkup of ['id="model-market-cover"', 'id="model-market-l
 }
 const membersHtml = await readFile('dist/members.html', 'utf8');
 const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
+if (!mzkWallet.includes('const GAME_ENTRY_MZK = 1000')) throw new Error('Starter land and Builder Loadout must cost exactly 1,000 MZK.');
+for (const page of ['index.html', 'model-market.html', 'model-explorer.html', 'buy-mzk.html']) {
+  const html = await readFile(`dist/${page}`, 'utf8');
+  if (!html.includes('1,000 MZK')) throw new Error(`${page} must display the 1,000 MZK starter-land price.`);
+}
 for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace']) {
   if (!membersHtml.includes(`id="${id}"`)) {
     throw new Error(`members.html is missing subscriber section #${id}`);

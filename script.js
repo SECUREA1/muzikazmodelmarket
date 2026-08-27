@@ -919,6 +919,7 @@ function initFlexLabCategories() {
 }
 
 function initWorldPlot() {
+  const STARTER_PLOT_MZK = 1000;
   const plot = document.querySelector('#muzikaz-world-plot');
   const spaces = Array.from(document.querySelectorAll('[data-world-space]'));
   const consent = document.querySelector('#world-plot-consent');
@@ -947,7 +948,7 @@ function initWorldPlot() {
     const selectedIndex = spaces.findIndex((space) => space.dataset.worldSpace === name) + 1;
     const isOwned = ownedPlotNames().includes(name);
     selection.innerHTML = `<span class="world-plot__selection-number">${String(selectedIndex).padStart(2, '0')}</span><span><strong>${name} selected.</strong> This public-area plot includes one free spot in its community.</span><small>Plot status <b>${isOwned ? 'Owned by you' : 'Available'}</b></small>`;
-    reserveButton.textContent = isOwned ? `${name} owned` : `Claim ${name}`;
+    reserveButton.textContent = isOwned ? `${name} owned` : `Claim ${name} · ${STARTER_PLOT_MZK.toLocaleString()} MZK`;
     reserveButton.disabled = isOwned || !consent.checked;
   };
 
@@ -957,7 +958,11 @@ function initWorldPlot() {
     event.preventDefault();
     if (!consent.checked) return;
     if (ownedPlotNames().includes(selectedSpace)) return;
-    addCartLine(`MUZIKAZ World · ${selectedSpace}`, 25, 'Public-area plot/deed · one free community spot included');
+    const purchase = window.MZKWallet?.spend(STARTER_PLOT_MZK, `Starter land deed · ${selectedSpace}`, `starter-land:${owner}:${selectedSpace}`, { asset: selectedSpace, type: 'starter-land' });
+    if (!purchase?.ok) {
+      window.location.href = `buy-mzk.html?return=${encodeURIComponent('model-market.html#muzikaz-world-plot')}#swap`;
+      return;
+    }
     claimOwnedAsset(`MUZIKAZ World · ${selectedSpace}`, 'Public-area plot claim');
     updateOwnedCount();
     updateCart(reserveButton, 'Plot claimed');
