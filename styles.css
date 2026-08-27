@@ -1319,8 +1319,8 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
 .totals-table span{color:#fff;font-weight:900}
 .totals-table strong{color:var(--lime)}
 .grand-total{font-size:24px}
-.payment-form{padding:24px;display:grid;gap:20px}
-.payment-form fieldset{border:1px solid rgba(156,255,0,.25);border-radius:16px;padding:18px;margin:0}
+.payment-form{min-width:0;padding:24px;display:grid;gap:20px}
+.payment-form fieldset{min-width:0;border:0;border-top:1px solid rgba(156,255,0,.25);padding:20px 0 0;margin:0}
 .payment-form legend{padding:0 8px;color:var(--lime);font-weight:900;letter-spacing:.5px}
 .form-grid{display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:14px}
 .form-grid label,.terms-check{display:grid;gap:7px;color:var(--lime);font-size:13px;font-weight:900}
@@ -1333,8 +1333,7 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
   color:#fff;
   text-transform:none;
 }
-.payment-methods{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-.payment-methods label,.terms-check{
+.terms-check{
   border:1px solid rgba(156,255,0,.28);
   border-radius:12px;
   padding:12px;
@@ -1343,9 +1342,23 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
   display:flex;
   align-items:center;
 }
-.ethereum-checkout{display:grid;gap:12px;margin:0 0 16px;padding:16px;border:1px solid rgba(156,255,0,.42);border-radius:14px;background:linear-gradient(135deg,rgba(156,255,0,.1),rgba(0,0,0,.5))}
-.ethereum-checkout>div:first-child{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.ethereum-checkout strong{color:var(--lime)}.ethereum-checkout span,.ethereum-checkout p,.ethereum-checkout small{text-transform:none}.ethereum-checkout p{margin:0;color:#fff;overflow-wrap:anywhere}.ethereum-checkout small{color:var(--muted);line-height:1.5}.ethereum-checkout code{color:var(--lime);overflow-wrap:anywhere}.ethereum-actions{display:flex;gap:10px;flex-wrap:wrap}.ethereum-actions button{justify-content:center}.ethereum-actions button:disabled{opacity:.45;cursor:not-allowed}
-.crypto-checkout{display:grid;gap:12px;margin:0 0 16px;padding:16px;border:1px solid rgba(36,216,255,.42);border-radius:14px;background:linear-gradient(135deg,rgba(36,216,255,.09),rgba(0,0,0,.55))}.crypto-checkout>div:first-child{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.crypto-checkout strong,.crypto-checkout b,.crypto-checkout code{color:var(--lime)}.crypto-checkout span,.crypto-checkout small{text-transform:none}.crypto-checkout>small{color:var(--muted);line-height:1.5}.crypto-payment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.crypto-payment-grid article{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.42)}.crypto-payment-grid button{width:100%}.backpack-buy{flex-wrap:wrap}.backpack-buy [data-backpack-crypto]{padding:9px 12px;font-size:11px}@media(max-width:700px){.crypto-payment-grid{grid-template-columns:1fr}}
+.payment-intro{margin:0 0 16px;color:var(--muted);line-height:1.5;text-transform:none}
+.payment-stack{display:grid;border:1px solid rgba(156,255,0,.3);border-radius:14px;overflow:hidden;background:rgba(0,0,0,.34)}
+.payment-rail{display:grid;grid-template-columns:minmax(130px,.55fr) minmax(200px,1.45fr) minmax(150px,auto);gap:18px;align-items:center;min-width:0;padding:16px 18px;border-bottom:1px solid rgba(156,255,0,.2)}
+.payment-rail:last-child{border-bottom:0}
+.payment-rail-heading{display:grid;gap:3px;min-width:0}
+.payment-rail-heading strong{color:var(--lime);font-size:18px}
+.payment-rail-heading span,.payment-rail p,.payment-rail small{margin:0;color:var(--muted);line-height:1.4;text-transform:none;overflow-wrap:anywhere}
+.payment-rail-details{display:grid;gap:3px;min-width:0}.payment-rail-details p{color:#fff}
+.payment-rail code{color:var(--lime);overflow-wrap:anywhere}
+.payment-rail>button,.ethereum-actions button{width:100%;min-width:0;justify-content:center;white-space:normal}
+.ethereum-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0}
+.ethereum-actions button:disabled{opacity:.45;cursor:not-allowed}
+.payment-rail-card{grid-template-columns:minmax(130px,.55fr) minmax(0,2fr)}
+.payment-card-fields{grid-template-columns:minmax(180px,1.3fr) minmax(160px,1fr) minmax(90px,.55fr) minmax(80px,.45fr);width:100%}
+.payment-card-fields label{min-width:0}.payment-card-fields input{min-width:0}
+.quote-refresh{display:block;margin:12px 0 0 auto}
+.backpack-buy{flex-wrap:wrap}.backpack-buy [data-backpack-crypto]{padding:9px 12px;font-size:11px}
 .pay-button{justify-content:center;font-size:18px;background:var(--lime);color:#000;border-color:#fff}
 .pay-button:disabled{opacity:.45;cursor:not-allowed;background:#27321c;color:#aaa;border-color:#44522f}
 .confirmation-panel{padding:28px;text-align:center}
@@ -1355,6 +1368,15 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
   .checkout-hero,.payment-checkout{grid-template-columns:1fr}
   .order-summary-card{position:static}
   .form-grid{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .checkout-hero,.payment-checkout,.confirmation-panel{width:calc(100% - 24px)}
+  .checkout-hero,.payment-form,.order-summary-card{padding:18px}
+  .checkout-hero h1{font-size:clamp(46px,15vw,68px);overflow-wrap:anywhere}
+  .payment-rail,.payment-rail-card{grid-template-columns:1fr;gap:10px;padding:15px}
+  .payment-card-fields{grid-template-columns:1fr}
+  .ethereum-actions{grid-template-columns:1fr}
+  .payment-rail>button{width:100%}
 }
 
 /* Public GLB/USDZ 3D explorer with floor cursor controls */

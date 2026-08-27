@@ -98,40 +98,39 @@
 
                 <fieldset>
                     <legend>Payment method</legend>
-                    <div class="payment-methods" role="radiogroup" aria-label="Payment method">
-                        <label><input type="radio" name="method" value="MZK" /> MZK</label>
-                        <label><input type="radio" name="method" value="Card" checked /> Card</label>
-                        <label><input type="radio" name="method" value="PayPal" /> PayPal</label>
-                        <label><input type="radio" name="method" value="Wallet" /> Wallet</label>
+                    <p class="payment-intro">Choose one payment route. Every option uses the same cart total and keeps its details on one clean row.</p>
+                    <div class="payment-stack">
+                        <section class="payment-rail payment-rail-card" aria-labelledby="card-payment-title">
+                            <div class="payment-rail-heading"><strong id="card-payment-title">Card</strong><span>Secure demo checkout</span></div>
+                            <div class="form-grid payment-card-fields">
+                                <label>Card number <input name="card" inputmode="numeric" autocomplete="cc-number" required pattern="[0-9 ]{15,23}" placeholder="4242 4242 4242 4242" /></label>
+                                <label>Name on card <input name="cardName" autocomplete="cc-name" required placeholder="Muzikaz Collector" /></label>
+                                <label>Expiry <input name="expiry" autocomplete="cc-exp" required pattern="(0[1-9]|1[0-2])\/[0-9]{2}" placeholder="12/30" /></label>
+                                <label>CVC <input name="cvc" inputmode="numeric" autocomplete="cc-csc" required pattern="[0-9]{3,4}" placeholder="123" /></label>
+                            </div>
+                        </section>
+                        <section class="payment-rail" aria-labelledby="mzk-payment-title">
+                            <div class="payment-rail-heading"><strong id="mzk-payment-title">MZK</strong><span>100 MZK per $1</span></div>
+                            <p id="checkout-mzk-balance">Wallet loading…</p>
+                            <button type="button" id="checkout-mzk-pay">Pay with MZK</button>
+                        </section>
+                        <section class="payment-rail" id="ethereum-checkout" aria-labelledby="ethereum-checkout-title">
+                            <div class="payment-rail-heading"><strong id="ethereum-checkout-title">Ethereum</strong><span id="ethereum-price-copy">0.0001 ETH per item</span></div>
+                            <div class="payment-rail-details"><p id="ethereum-wallet-address">No Ethereum wallet connected.</p><small>Recipient <code id="ethereum-payment-recipient">0xb2FC…7238</code> · Mainnet fees shown in wallet</small></div>
+                            <div class="ethereum-actions"><button type="button" class="ghost" id="ethereum-wallet-connect">Connect wallet</button><button type="button" id="ethereum-wallet-pay" disabled>Pay <span id="ethereum-wallet-total">0 ETH</span></button></div>
+                        </section>
+                        <section class="payment-rail" id="multi-chain-checkout" aria-labelledby="multi-chain-title">
+                            <div class="payment-rail-heading"><strong id="multi-chain-title">SOL</strong><span>Phantom</span></div>
+                            <div class="payment-rail-details"><p id="sol-quote">Load a live quote to continue.</p><small>Recipient <code>CB7H…QauH</code></small></div>
+                            <button type="button" class="ghost" data-crypto-pay="SOL">Pay with Phantom</button>
+                        </section>
+                        <section class="payment-rail">
+                            <div class="payment-rail-heading"><strong>ADA</strong><span>Lace</span></div>
+                            <div class="payment-rail-details"><p id="ada-quote">Load a live quote to continue.</p><small>Recipient <code>addr1q…l59xj</code></small></div>
+                            <button type="button" class="ghost" data-crypto-pay="ADA">Pay with Lace</button>
+                        </section>
                     </div>
-                    <section class="crypto-checkout"><div><strong>Pay for anything with MZK</strong><span id="checkout-mzk-balance">Wallet loading…</span></div><button type="button" id="checkout-mzk-pay">Pay cart with MZK</button><small>Fixed rate: 100 MZK per $1 of cart value.</small></section>
-                    <section class="ethereum-checkout" id="ethereum-checkout" aria-labelledby="ethereum-checkout-title">
-                        <div>
-                            <strong id="ethereum-checkout-title">Pay live with Ethereum</strong>
-                            <span id="ethereum-price-copy">0.0001 ETH per item · Ethereum Mainnet</span>
-                        </div>
-                        <p id="ethereum-wallet-address">No Ethereum wallet connected.</p>
-                        <div class="ethereum-actions">
-                            <button type="button" class="ghost" id="ethereum-wallet-connect">Connect Ethereum wallet</button>
-                            <button type="button" id="ethereum-wallet-pay" disabled>Buy cart · <span id="ethereum-wallet-total">0 ETH</span></button>
-                        </div>
-                        <small>Payment is sent directly to <code id="ethereum-payment-recipient">0xb2FC…7238</code>. Confirm the recipient and ETH value in your wallet before approving.</small>
-                    </section>
-                    <section class="crypto-checkout" id="multi-chain-checkout" aria-labelledby="multi-chain-title">
-                        <div><strong id="multi-chain-title">Pay with Phantom or Lace</strong><span>Live USD-equivalent quote</span></div>
-                        <div class="crypto-payment-grid">
-                            <article><b>◎ SOL · Phantom</b><span id="sol-quote">Load a live quote to continue.</span><button type="button" class="ghost" data-crypto-pay="SOL">Pay with Phantom</button><small>Recipient <code>CB7H…QauH</code></small></article>
-                            <article><b>₳ ADA · Lace</b><span id="ada-quote">Load a live quote to continue.</span><button type="button" class="ghost" data-crypto-pay="ADA">Pay with Lace</button><small>Recipient <code>addr1q…l59xj</code></small></article>
-                        </div>
-                        <button type="button" class="link-button" id="refresh-crypto-quotes">Refresh live ADA/SOL quotes</button>
-                        <small>Quotes use the current USD market rate and round up to the smallest supported display unit. Network fees are shown separately by your wallet.</small>
-                    </section>
-                    <div class="form-grid payment-card-fields">
-                        <label>Card number <input name="card" inputmode="numeric" autocomplete="cc-number" required pattern="[0-9 ]{15,23}" placeholder="4242 4242 4242 4242" /></label>
-                        <label>Name on card <input name="cardName" autocomplete="cc-name" required placeholder="Muzikaz Collector" /></label>
-                        <label>Expiry <input name="expiry" autocomplete="cc-exp" required pattern="(0[1-9]|1[0-2])\/[0-9]{2}" placeholder="12/30" /></label>
-                        <label>CVC <input name="cvc" inputmode="numeric" autocomplete="cc-csc" required pattern="[0-9]{3,4}" placeholder="123" /></label>
-                    </div>
+                    <button type="button" class="link-button quote-refresh" id="refresh-crypto-quotes">Refresh live ADA/SOL quotes</button>
                 </fieldset>
 
                 <label class="terms-check"><input type="checkbox" required /> I agree to process this demo payment and receive MUZIKAZ order updates.</label>
