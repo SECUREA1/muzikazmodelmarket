@@ -7,6 +7,8 @@
     <meta name="keywords" content="MUZIKAZ, muzikaz.com, 3D model market, character models, mascot merch, creator dashboard, wallet rewards, brand kit, neon collectibles" />
     <meta name="author" content="MUZIKAZ" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="muzikaz-bottle-contract" content="" />
+    <meta name="muzikaz-bottle-chain-id" content="0x1" />
     <link rel="canonical" href="https://muzikaz.com/members.html" />
     <link rel="icon" type="image/svg+xml" href="muzikaz_bolt_logo_editable.svg" />
     <link rel="apple-touch-icon" href="logo_symbol_crop_2x_transparent.png" />
@@ -55,13 +57,13 @@
             <div class="member-login-card">
                 <p class="kicker">Bottle members only</p>
                 <h1 id="bottle-login-title">Member login</h1>
-                <p>Enter the email used to mint your MUZIKAZ Bottle, or validate a physical Bottle with its access code.</p>
+                <p>Connect an Ethereum wallet to prove that it owns a MUZIKAZ Bottle contract token. If the wallet does not own one yet, mint a Bottle and validation will open the members area after the transaction confirms.</p>
                 <form id="bottle-login-form" class="bottle-login-form">
-                    <label>Email <input type="email" name="email" placeholder="crew@muzikaz.example" required /></label>
-                    <label>Bottle access code <input type="password" name="passcode" placeholder="MZK-BOTTLE-XXXXXX" autocomplete="one-time-code" /></label>
-                    <button type="submit">Enter members area</button>
+                    <button type="submit" id="bottle-wallet-connect">Connect Ethereum wallet</button>
+                    <button type="button" class="ghost" id="bottle-wallet-mint">Mint Bottle</button>
                 </form>
-                <p class="status-message" id="bottle-login-status" role="status">Access opens only after a Bottle has been minted or its code has been validated.</p>
+                <p class="wallet-address" id="bottle-wallet-address" hidden></p>
+                <p class="status-message" id="bottle-login-status" role="status">Wallet connection and on-chain Bottle ownership are required.</p>
             </div>
         </section>
         <div class="member-locked-content" id="member-locked-content" data-locked="true" hidden>

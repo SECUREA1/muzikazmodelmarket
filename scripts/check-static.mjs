@@ -176,7 +176,7 @@ for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace
     throw new Error(`members.html is missing subscriber section #${id}`);
   }
 }
-for (const requiredLoginGate of ['id="member-locked-content" data-locked="true" hidden', 'MZK-BOTTLE-XXXXXX']) {
+for (const requiredLoginGate of ['id="member-locked-content" data-locked="true" hidden', 'id="bottle-wallet-connect"', 'id="bottle-wallet-mint"', 'name="muzikaz-bottle-contract"']) {
   if (!membersHtml.includes(requiredLoginGate)) {
     throw new Error(`members.html is missing its Bottle-only login gate: ${requiredLoginGate}`);
   }
@@ -205,10 +205,10 @@ for (const requiredAdminMarkup of ['id="admin-login-form"', 'name="username"', '
   }
 }
 const appScript = await readFile('dist/script.js', 'utf8');
-if (!appScript.includes('initModelMarketGate') || !appScript.includes("localStorage.setItem('muzikazBottleMember', 'true')")) {
-  throw new Error('The Model Market cover must share the members-area Bottle login state.');
+if (!appScript.includes('initModelMarketGate') || !appScript.includes("sessionStorage.setItem('muzikazBottleMember', 'true')")) {
+  throw new Error('The Model Market cover must share the verified members-area Bottle login session.');
 }
-for (const requiredBottleAccessFlow of ['grantBottleAccess', 'hasBottleEntitlement', 'validateBottleCode', "'minted-bottle'"]) {
+for (const requiredBottleAccessFlow of ['eth_requestAccounts', 'eth_call', 'eth_sendTransaction', 'eth_getTransactionReceipt', 'validateBottleOwnership', 'BOTTLE_BALANCE_OF_SELECTOR']) {
   if (!appScript.includes(requiredBottleAccessFlow)) {
     throw new Error(`script.js is missing Bottle mint/validation access flow: ${requiredBottleAccessFlow}`);
   }
