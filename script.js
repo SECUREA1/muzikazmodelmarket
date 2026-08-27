@@ -210,7 +210,7 @@ function grantBottleMintBackpackAssets(owner, mintTransactionHash) {
   if (rewards[rewardId]) return false;
   const profiles = readOwnedProfiles();
   profiles[normalizedOwner] ||= [];
-  BOTTLE_MINT_BACKPACK_ASSETS.forEach((asset) => profiles[normalizedOwner].push(`${asset} · Bottle mint reward`));
+  BOTTLE_MINT_BACKPACK_ASSETS.forEach((asset) => profiles[normalizedOwner].push(`${asset} · Backpack Loadout`));
   rewards[rewardId] = { owner: normalizedOwner, assets: BOTTLE_MINT_BACKPACK_ASSETS, grantedAt: new Date().toISOString() };
   writeOwnedProfiles(profiles);
   window.localStorage.setItem(BOTTLE_MINT_REWARDS_KEY, JSON.stringify(rewards));
@@ -1791,6 +1791,7 @@ function initBottleLogin() {
   const status = document.querySelector('#bottle-login-status');
   const addressLabel = document.querySelector('#bottle-wallet-address');
   const connectButton = document.querySelector('#bottle-wallet-connect');
+  const loadoutButton = document.querySelector('#bottle-backpack-loadout');
   const mintButton = document.querySelector('#bottle-wallet-mint');
   const identityPanel = document.querySelector('#wallet-identity');
   const usernameInput = document.querySelector('#wallet-username');
@@ -1801,12 +1802,26 @@ function initBottleLogin() {
   if (!form || !lockedContent) return;
   const setBusy = (busy) => {
     if (connectButton) connectButton.disabled = busy;
+    if (loadoutButton) loadoutButton.disabled = busy;
     if (mintButton) mintButton.disabled = busy;
   };
   const showAddress = (address) => {
     if (!addressLabel) return;
     addressLabel.hidden = !address;
     addressLabel.textContent = address ? `Connected wallet: ${address}` : '';
+    if (connectButton) {
+      connectButton.textContent = address ? 'Disconnect / switch wallet' : 'Connect Ethereum wallet';
+      connectButton.dataset.connected = address ? 'true' : 'false';
+    }
+  };
+  const clearConnectedSession = () => {
+    window.sessionStorage.removeItem('muzikazBottleMember');
+    window.localStorage.removeItem('muzikazBottleMemberEmail');
+    showAddress('');
+    if (identityPanel) identityPanel.hidden = true;
+    lockedContent.hidden = true;
+    lockedContent.dataset.locked = 'true';
+    document.body.classList.remove('is-member-authenticated');
   };
   const unlock = (message) => {
     lockedContent.hidden = false;
@@ -1857,6 +1872,16 @@ function initBottleLogin() {
     if (status) status.textContent = 'Connecting wallet and checking the Bottle contract…';
     try {
       const wallet = requireEthereumWallet();
+      if (connectButton?.dataset.connected === 'true') {
+        if (status) status.textContent = 'Disconnecting this site so MetaMask can offer a different account…';
+        clearConnectedSession();
+        try {
+          await wallet.request({ method: 'wallet_revokePermissions', params: [{ eth_accounts: {} }] });
+        } catch {
+          // Unsupported wallets can still show their account chooser through the permission request below.
+        }
+        await wallet.request({ method: 'wallet_requestPermissions', params: [{ eth_accounts: {} }] });
+      }
       const accounts = await wallet.request({ method: 'eth_requestAccounts' });
       const address = accounts?.[0];
       if (!/^0x[a-fA-F0-9]{40}$/.test(String(address || ''))) throw new Error('No valid Ethereum account was returned by the wallet.');
@@ -1873,6 +1898,29 @@ function initBottleLogin() {
     event.preventDefault();
     await connect();
   });
+  loadoutButton?.addEventListener('click', async () => {
+    setBusy(true);
+    try {
+      const wallet = requireEthereumWallet();
+      const config = bottleContractConfig();
+      await ensureBottleChain(wallet, config.chainId);
+      const accounts = await wallet.request({ method: 'eth_requestAccounts' });
+      const from = accounts?.[0];
+      if (!from) throw new Error('Connect an Ethereum account before buying a Backpack Loadout.');
+      showAddress(from);
+      if (status) status.textContent = 'Confirm the 0.0001 ETH Backpack Loadout purchase. It includes one in-game land and one Bottle.';
+      const paymentHash = await wallet.request({ method: 'eth_sendTransaction', params: [{ from, to: BOTTLE_MINT_PAYMENT_ADDRESS, value: BOTTLE_MINT_PAYMENT_WEI }] });
+      if (status) status.textContent = `Backpack Loadout purchase submitted (${paymentHash.slice(0, 10)}…). Waiting for confirmation…`;
+      await waitForTransactionReceipt(wallet, paymentHash, 'Backpack Loadout purchase');
+      grantBottleMintBackpackAssets(from, paymentHash);
+      if (status) status.textContent = 'Backpack Loadout confirmed — one unrevealed land and one unrevealed Bottle were added to your in-game Backpack.';
+      renderOwnedCollection(normalizeMemberEmail(from));
+    } catch (error) {
+      if (status) status.textContent = error.message || 'The Backpack Loadout could not be purchased.';
+    } finally {
+      setBusy(false);
+    }
+  });
   mintButton?.addEventListener('click', async () => {
     setBusy(true);
     try {
@@ -1883,13 +1931,6 @@ function initBottleLogin() {
       const from = accounts?.[0];
       if (!from) throw new Error('Connect an Ethereum account before minting.');
       showAddress(from);
-      if (status) status.textContent = 'Confirm the 0.0001 ETH Bottle activation payment in your wallet…';
-      const paymentHash = await wallet.request({
-        method: 'eth_sendTransaction',
-        params: [{ from, to: BOTTLE_MINT_PAYMENT_ADDRESS, value: BOTTLE_MINT_PAYMENT_WEI }]
-      });
-      if (status) status.textContent = `Activation payment submitted (${paymentHash.slice(0, 10)}…). Waiting for confirmation…`;
-      await waitForTransactionReceipt(wallet, paymentHash, 'Activation payment');
       if (status) status.textContent = 'Confirm the Bottle mint transaction in your wallet…';
       const transaction = { from, to: config.contract, data: config.mintData };
       if (config.mintValue) transaction.value = config.mintValue;
@@ -1897,7 +1938,6 @@ function initBottleLogin() {
       if (status) status.textContent = `Bottle mint submitted (${transactionHash.slice(0, 10)}…). Waiting for confirmation…`;
       await waitForTransactionReceipt(wallet, transactionHash, 'Bottle mint');
       await verifyAndUnlock(from);
-      grantBottleMintBackpackAssets(from, transactionHash);
     } catch (error) {
       if (status) status.textContent = error.message || 'The Bottle could not be minted.';
     } finally {
