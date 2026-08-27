@@ -23,6 +23,55 @@ const BOTTLE_MINT_BACKPACK_ASSETS = ['Unrevealed MUZIKAZ Land', 'Unrevealed MUZI
 const MARKET_PAYMENT_ADDRESS = '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238';
 const MARKET_ITEM_PRICE_WEI = 100000000000000n; // 0.0001 ETH for every cart unit.
 
+function initHeaderWalletConnect() {
+  const button = document.querySelector('#wallet-connect');
+  const label = button?.querySelector('span');
+  const status = document.querySelector('#wallet-connect-status');
+  if (!button || !label || !window.MZKWallet) return;
+  let pending = false;
+  const shortAddress = (address) => `${address.slice(0, 6)}…${address.slice(-4)}`;
+  const render = (message = '') => {
+    const address = window.MZKWallet.connectedAddress();
+    button.classList.toggle('is-connected', Boolean(address));
+    button.setAttribute('aria-pressed', String(Boolean(address)));
+    label.textContent = address ? shortAddress(address) : 'Connect wallet';
+    status.textContent = message || (address ? `Ethereum wallet ${shortAddress(address)} connected.` : 'Wallet not connected.');
+  };
+  button.addEventListener('click', async () => {
+    if (pending) return;
+    if (window.MZKWallet.connectedAddress()) {
+      window.MZKWallet.disconnectBrowserWallet();
+      render('Wallet disconnected from this app.');
+      return;
+    }
+    pending = true;
+    button.disabled = true;
+    label.textContent = 'Connecting…';
+    try {
+      await window.MZKWallet.connectBrowserWallet();
+      render();
+    } catch (error) {
+      render(error?.message || 'Wallet connection was not completed.');
+    } finally {
+      pending = false;
+      button.disabled = false;
+    }
+  });
+  window.addEventListener('mzk:wallet-connection-changed', () => render());
+  window.ethereum?.on?.('accountsChanged', (accounts) => {
+    const address = String(accounts?.[0] || '').toLowerCase();
+    if (/^0x[a-f0-9]{40}$/.test(address)) {
+      localStorage.setItem('muzikazConnectedEthereumWalletV1', address);
+      window.dispatchEvent(new CustomEvent('mzk:wallet-connection-changed', { detail: { address } }));
+    } else {
+      window.MZKWallet.disconnectBrowserWallet();
+    }
+  });
+  render();
+}
+
+initHeaderWalletConnect();
+
 // One catalog drives both the world map and the marketplace. Coordinates belong
 // to the asset, so a purchased world always resolves to the same map location.
 const WORLD_ASSETS = [

@@ -61,6 +61,11 @@
             <a href="buy-mzk.html">Buy MZK</a>
         </nav>
         <div class="icons" aria-label="Store shortcuts">
+            <button class="wallet-connect" id="wallet-connect" type="button" aria-describedby="wallet-connect-status">
+                <img src="muzikaz_bolt_logo_editable.svg" alt="" aria-hidden="true" />
+                <span>Connect wallet</span>
+            </button>
+            <span class="sr-only" id="wallet-connect-status" role="status" aria-live="polite">Wallet not connected.</span>
             <button class="icon-button cart" type="button" data-action="cart" aria-label="Cart">🛒<b id="cart-count">0</b></button>
         </div>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">☰</button>
@@ -373,7 +378,7 @@
 
     <footer id="contact">
         <div>
-            <a class="logo" href="#home"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a>
+            <a class="logo world-logo" href="#home" aria-label="MUZIKAZ WORLD home"><img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ WORLD" /></a>
             <p>Neon model-market landing page powered by the included MUZIKAZ asset pack.</p>
         </div>
         <div><h4>Shop</h4><a href="#models">Models</a><a href="#merch">Merch</a><a href="members.html">Bottle Login</a></div>
