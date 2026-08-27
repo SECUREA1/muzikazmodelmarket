@@ -148,6 +148,28 @@ function requireEthereumWallet() {
   return window.ethereum;
 }
 
+async function requestEthereumAccount(wallet, { chooseAccount = false } = {}) {
+  if (chooseAccount) {
+    try {
+      await wallet.request({ method: 'wallet_revokePermissions', params: [{ eth_accounts: {} }] });
+    } catch {
+      // Revoking permissions is optional in EIP-1193, so continue to the account chooser.
+    }
+    try {
+      await wallet.request({ method: 'wallet_requestPermissions', params: [{ eth_accounts: {} }] });
+    } catch (error) {
+      // A rejected chooser must leave the site disconnected rather than silently
+      // reconnecting the wallet account that was selected before.
+      if (error?.code === 4001) throw error;
+      // Wallets without wallet_requestPermissions can still use eth_requestAccounts.
+    }
+  }
+  const accounts = await wallet.request({ method: 'eth_requestAccounts' });
+  const address = String(accounts?.[0] || '');
+  if (!/^0x[a-fA-F0-9]{40}$/.test(address)) throw new Error('No valid Ethereum account was returned by the wallet.');
+  return address;
+}
+
 async function ensureBottleChain(wallet, chainId) {
   if (!chainId) return;
   const activeChain = String(await wallet.request({ method: 'eth_chainId' })).toLowerCase();
@@ -1806,6 +1828,7 @@ function initBottleLogin() {
   const jsonImport = document.querySelector('#wallet-json-import');
   const tokenIdentity = document.querySelector('#wallet-token-identity');
   if (!form || !lockedContent) return;
+  let walletRequestActive = false;
   const setBusy = (busy) => {
     if (connectButton) connectButton.disabled = busy;
     if (loadoutButton) loadoutButton.disabled = busy;
@@ -1831,7 +1854,7 @@ function initBottleLogin() {
     addressLabel.hidden = !address;
     addressLabel.textContent = address ? `Connected wallet: ${address}` : '';
     if (connectButton) {
-      connectButton.textContent = address ? 'Disconnect / switch wallet' : 'Connect Ethereum wallet';
+      connectButton.textContent = address ? 'Disconnect & choose wallet' : 'Connect Ethereum wallet';
       connectButton.dataset.connected = address ? 'true' : 'false';
     }
   };
@@ -1889,29 +1912,24 @@ function initBottleLogin() {
     try { const file = event.currentTarget.files?.[0]; if (!file) return; const profile = window.MZKWallet.importWallet(JSON.parse(await file.text())); if (usernameInput) usernameInput.value = profile.username || ''; if (status) status.textContent = 'Wallet JSON restored. Connect the matching Ethereum wallet to re-verify Bottle ownership.'; } catch (error) { if (status) status.textContent = error.message || 'Wallet JSON could not be restored.'; }
   });
   const connect = async () => {
+    walletRequestActive = true;
     setBusy(true);
     if (status) status.textContent = 'Connecting wallet and checking the Bottle contract…';
     try {
       const wallet = requireEthereumWallet();
-      if (connectButton?.dataset.connected === 'true') {
+      const chooseAccount = connectButton?.dataset.connected === 'true';
+      if (chooseAccount) {
         if (status) status.textContent = 'Disconnecting this site so MetaMask can offer a different account…';
         clearConnectedSession();
-        try {
-          await wallet.request({ method: 'wallet_revokePermissions', params: [{ eth_accounts: {} }] });
-        } catch {
-          // Unsupported wallets can still show their account chooser through the permission request below.
-        }
-        await wallet.request({ method: 'wallet_requestPermissions', params: [{ eth_accounts: {} }] });
       }
-      const accounts = await wallet.request({ method: 'eth_requestAccounts' });
-      const address = accounts?.[0];
-      if (!/^0x[a-fA-F0-9]{40}$/.test(String(address || ''))) throw new Error('No valid Ethereum account was returned by the wallet.');
+      const address = await requestEthereumAccount(wallet, { chooseAccount });
       showAddress(address);
       await verifyAndUnlock(address);
     } catch (error) {
       window.sessionStorage.removeItem('muzikazBottleMember');
       if (status) status.textContent = error.message || 'Bottle ownership could not be verified.';
     } finally {
+      walletRequestActive = false;
       setBusy(false);
     }
   };
@@ -1983,7 +2001,9 @@ function initBottleLogin() {
       setBusy(false);
     }
   });
-  window.ethereum?.on?.('accountsChanged', () => window.location.reload());
+  window.ethereum?.on?.('accountsChanged', () => {
+    if (!walletRequestActive) window.location.reload();
+  });
   window.ethereum?.on?.('chainChanged', () => window.location.reload());
 }
 
@@ -2117,15 +2137,16 @@ function initEthereumCheckout() {
   const connect = async ({ switchWallet = false } = {}) => {
     const wallet = requireEthereumWallet();
     if (switchWallet) {
-      try { await wallet.request({ method: 'wallet_revokePermissions', params: [{ eth_accounts: {} }] }); } catch (error) { /* Not all EIP-1193 wallets support revocation. */ }
+      connectedAddress = '';
+      addressLabel.textContent = 'No Ethereum wallet connected.';
+      connectButton.textContent = 'Connect Ethereum wallet';
+      refresh();
     }
     await ensureBottleChain(wallet, config.chainId);
-    const accounts = await wallet.request({ method: 'eth_requestAccounts' });
-    const address = String(accounts?.[0] || '');
-    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) throw new Error('No valid Ethereum account was returned by the wallet.');
+    const address = await requestEthereumAccount(wallet, { chooseAccount: switchWallet });
     connectedAddress = address;
     addressLabel.textContent = `Connected wallet: ${address}`;
-    connectButton.textContent = 'Disconnect / switch wallet';
+    connectButton.textContent = 'Disconnect & choose wallet';
     refresh();
     return wallet;
   };
@@ -2150,7 +2171,7 @@ function initEthereumCheckout() {
       status.textContent = `Ethereum payment confirmed. Receipt ${transactionHash.slice(0, 10)}… saved and every purchased asset was added to your Backpack.`;
     } catch (error) { status.textContent = error.message || 'Ethereum payment was not completed. Your cart is unchanged.'; } finally { connectButton.disabled = false; refresh(); }
   });
-  window.ethereum?.on?.('accountsChanged', (accounts) => { connectedAddress = String(accounts?.[0] || ''); addressLabel.textContent = connectedAddress ? `Connected wallet: ${connectedAddress}` : 'No Ethereum wallet connected.'; connectButton.textContent = connectedAddress ? 'Disconnect / switch wallet' : 'Connect Ethereum wallet'; refresh(); });
+  window.ethereum?.on?.('accountsChanged', (accounts) => { connectedAddress = String(accounts?.[0] || ''); addressLabel.textContent = connectedAddress ? `Connected wallet: ${connectedAddress}` : 'No Ethereum wallet connected.'; connectButton.textContent = connectedAddress ? 'Disconnect & choose wallet' : 'Connect Ethereum wallet'; refresh(); });
   refresh();
 }
 
