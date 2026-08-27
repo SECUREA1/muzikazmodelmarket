@@ -1,6 +1,6 @@
 import { access, readFile } from 'node:fs/promises';
 
-const htmlPages = ['index.html', 'model-market.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html', 'checkout.html', 'model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
+const htmlPages = ['index.html', 'model-market.html', 'avatar-whitepaper.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html', 'checkout.html', 'model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
 const requiredFiles = [
   ...htmlPages.map((page) => `dist/${page}`),
   'dist/styles.css',
@@ -165,6 +165,11 @@ for (const id of ['model-detail', 'marketplace-preview', 'merch', 'bottle-login-
 }
 
 const modelMarketHtml = await readFile('dist/model-market.html', 'utf8');
+const avatarWhitepaper = await readFile('dist/avatar-whitepaper.html', 'utf8');
+for (const requiredWhitepaperSection of ['id="identity-model"', 'id="ownership"', 'id="gameplay-state"', 'id="creator-standard"', 'public/models/avatar-schema.json']) {
+  if (!avatarWhitepaper.includes(requiredWhitepaperSection)) throw new Error(`avatar-whitepaper.html is missing architecture content: ${requiredWhitepaperSection}`);
+}
+if (!modelMarketHtml.includes('href="avatar-whitepaper.html"')) throw new Error('Model Market must link to the avatar whitepaper.');
 for (const requiredGateMarkup of ['id="model-market-cover"', 'id="model-market-login-form"', 'model-market-gated']) {
   if (!modelMarketHtml.includes(requiredGateMarkup)) {
     throw new Error(`model-market.html is missing its Bottle member cover: ${requiredGateMarkup}`);
