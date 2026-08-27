@@ -241,8 +241,11 @@ for (const requiredBottleAccessFlow of ['eth_requestAccounts', 'eth_call', 'eth_
 for (const requiredMarketPaymentFlow of ['MARKET_PAYMENT_ADDRESS', 'MARKET_ITEM_PRICE_WEI', 'marketPaymentConfig', 'waitForMarketTransaction', 'completeEthereumOrder', 'wallet_revokePermissions']) {
   if (!appScript.includes(requiredMarketPaymentFlow)) throw new Error(`script.js is missing Ethereum marketplace checkout behavior ${requiredMarketPaymentFlow}`);
 }
-for (const requiredMintReward of ['0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238', '0x5af3107a4000', 'Unrevealed MUZIKAZ Land', 'Unrevealed MUZIKAZ Bottle', 'grantBottleMintBackpackAssets']) {
+for (const requiredMintReward of ['0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238', 'BACKPACK_LOADOUT_USD = 5', 'Unrevealed MUZIKAZ Land', 'Unrevealed MUZIKAZ Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
+}
+for (const requiredLoadoutCopy of ['$5 USD · Live ETH quote', 'Mint the Magic Bottle', 'collect your Backpack assets into your wallet']) {
+  if (!membersHtml.includes(requiredLoadoutCopy)) throw new Error(`members.html is missing $5 Loadout or Magic Bottle guidance: ${requiredLoadoutCopy}`);
 }
 if (!appScript.includes('config.approvedContracts') || !appScript.includes('MUZIKAZ_BOTTLE_APPROVED_CONTRACTS')) {
   throw new Error('script.js must validate ownership across all approved Bottle contracts.');
