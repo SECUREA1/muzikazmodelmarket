@@ -42,6 +42,9 @@ for (const githubSetting of ['name="muzikaz-github-repository" content="SECUREA1
 if (!mainHtml.includes('public/js/rad-tox-launcher.js')) {
   throw new Error('index.html must load the RAD-TOX 3D launcher.');
 }
+if (!mainHtml.includes('href="avatar-whitepaper.html"')) {
+  throw new Error('The main page must link directly to the avatar whitepaper.');
+}
 
 for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'Begin Game', 'game-loading-indicator']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
@@ -185,6 +188,9 @@ for (const requiredLoginGate of ['id="member-locked-content" data-locked="true" 
   if (!membersHtml.includes(requiredLoginGate)) {
     throw new Error(`members.html is missing its Bottle-only login gate: ${requiredLoginGate}`);
   }
+}
+if (!membersHtml.includes('name="muzikaz-bottle-contract" content="0x0F1254772810EA4D06E5c61E3E4b54d740367Aa8"')) {
+  throw new Error('members.html must use the approved MUZIKAZ Bottle access contract.');
 }
 if (membersHtml.includes('public/js/avatar-selection.js')) {
   throw new Error('members.html must not require avatar selection before Bottle login.');
