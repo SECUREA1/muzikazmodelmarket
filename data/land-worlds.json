@@ -32,14 +32,14 @@
     "wild_land_claims_seeded": 0
   },
   "locations": [
-    { "id": "volt-city", "name": "Volt City", "kind": "land_world", "x": 23, "y": 28, "price_usd": 35, "public_area": false, "starter_plot": false, "environment_id": null, "detail": "The electric capital; live stages and creator towers" },
-    { "id": "skyline-deck", "name": "Skyline Deck", "kind": "land_world", "x": 49, "y": 22, "price_usd": 25, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Rooftop events; event roof" },
-    { "id": "echo-gardens", "name": "Echo Gardens", "kind": "land_world", "x": 74, "y": 31, "price_usd": 25, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Living sound biome; open for builders" },
-    { "id": "crew-plaza", "name": "Crew Plaza", "kind": "land_world", "x": 36, "y": 49, "price_usd": 25, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Social hub; crews gathering now" },
-    { "id": "studio-ridge", "name": "Studio Ridge", "kind": "three_d_environment", "x": 63, "y": 53, "price_usd": 48, "public_area": true, "starter_plot": true, "environment_id": "muzikaz-main", "detail": "MUZIKAZ Main Floor; complete walkable GLB stage" },
-    { "id": "neon-docks", "name": "Neon Docks", "kind": "land_world", "x": 18, "y": 70, "price_usd": 25, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Drop port; new assets arriving" },
-    { "id": "bassline-badlands", "name": "Bassline Badlands", "kind": "three_d_environment", "x": 50, "y": 76, "price_usd": 52, "public_area": false, "starter_plot": false, "environment_id": "muzikaz-upper", "detail": "MUZIKAZ Upper Floor; high-energy adventure environment" },
-    { "id": "pixel-peaks", "name": "Pixel Peaks", "kind": "three_d_environment", "x": 82, "y": 72, "price_usd": 58, "public_area": false, "starter_plot": false, "environment_id": "sheepbase", "detail": "Sheep Base; panoramic walkable mountain build" }
+    { "id": "volt-city", "name": "Volt City", "kind": "land_world", "x": 23, "y": 28, "price_usd": 1000, "public_area": false, "starter_plot": false, "environment_id": null, "detail": "The electric capital; live stages and creator towers" },
+    { "id": "skyline-deck", "name": "Skyline Deck", "kind": "land_world", "x": 49, "y": 22, "price_usd": 100, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Rooftop events; event roof" },
+    { "id": "echo-gardens", "name": "Echo Gardens", "kind": "land_world", "x": 74, "y": 31, "price_usd": 80, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Living sound biome; open for builders" },
+    { "id": "crew-plaza", "name": "Crew Plaza", "kind": "land_world", "x": 36, "y": 49, "price_usd": 60, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Social hub; crews gathering now" },
+    { "id": "studio-ridge", "name": "Studio Ridge", "kind": "three_d_environment", "x": 63, "y": 53, "price_usd": 40, "public_area": true, "starter_plot": true, "environment_id": "muzikaz-main", "detail": "MUZIKAZ Main Floor; complete walkable GLB stage" },
+    { "id": "neon-docks", "name": "Neon Docks", "kind": "land_world", "x": 18, "y": 70, "price_usd": 70, "public_area": true, "starter_plot": true, "environment_id": null, "detail": "Drop port; new assets arriving" },
+    { "id": "bassline-badlands", "name": "Bassline Badlands", "kind": "three_d_environment", "x": 50, "y": 76, "price_usd": 500, "public_area": false, "starter_plot": false, "environment_id": "muzikaz-upper", "detail": "MUZIKAZ Upper Floor; high-energy adventure environment" },
+    { "id": "pixel-peaks", "name": "Pixel Peaks", "kind": "three_d_environment", "x": 82, "y": 72, "price_usd": 750, "public_area": false, "starter_plot": false, "environment_id": "sheepbase", "detail": "Sheep Base; panoramic walkable mountain build" }
   ],
   "public_area_plots": [
     { "id": "plot-skyline-deck", "location_id": "skyline-deck", "owner_profile_id": null, "owner_display_name": null, "claimed": false, "free_community_spots": 1 },

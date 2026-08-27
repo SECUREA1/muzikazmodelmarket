@@ -7,7 +7,7 @@
   const STARTING_MZK = 0;
   const MZK_PER_USD = 100;
   const MINIMUM_PURCHASE_USD = 5;
-  const GAME_ENTRY_MZK = 1000;
+  const GAME_ENTRY_MZK = 4000;
   const LOADOUT_KEY = 'muzikazStarterLoadoutsV1';
   const STARTER_AVATARS = ['Sparky', 'Nexus', 'Fiona', 'Dax', 'Buzz', 'Luna', 'Muz Cat', 'Ion Wolf'];
   const STARTER_LANDS = ['Skyline Deck', 'Echo Gardens', 'Crew Plaza', 'Studio Ridge', 'Neon Docks'];
