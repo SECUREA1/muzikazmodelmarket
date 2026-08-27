@@ -31,6 +31,22 @@ npm run build
 npm run check
 ```
 
+## Ethereum Bottle member gate
+
+`members.html` stays locked until an injected EIP-1193 wallet proves ownership
+against the configured MUZIKAZ Bottle ERC-721/ERC-1155 contract. Set the
+`muzikaz-bottle-contract` and `muzikaz-bottle-chain-id` meta values in
+`members.html` for deployment, or inject `window.MUZIKAZ_BOTTLE_CONTRACT_ADDRESS`
+and `window.MUZIKAZ_BOTTLE_CHAIN_ID` before `script.js` loads. The chain ID must
+use hexadecimal EIP-1193 form (for example, `0x1` for Ethereum mainnet).
+
+The default mint transaction calls `mint()` (`0x1249c58b`). Contracts with a
+different public mint signature must inject the complete encoded calldata as
+`window.MUZIKAZ_BOTTLE_MINT_DATA`. For a payable mint, also inject the price in
+hexadecimal wei as `window.MUZIKAZ_BOTTLE_MINT_VALUE`. Access is granted only
+after the receipt confirms and a fresh `balanceOf(address)` call returns at
+least one Bottle token.
+
 ## Land location data
 
 The calculated world-atlas inventory is committed as

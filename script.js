@@ -13,6 +13,9 @@ const CART_KEY = 'muzikazCheckoutCart';
 const BACKPACK_MARKET_KEY = 'muzikazBackpackMarket';
 const BACKPACK_TRANSACTIONS_KEY = 'muzikazBackpackTransactions';
 const BACKPACK_STARTING_TOKENS = 500;
+const BOTTLE_ACCESS_KEY = 'muzikazBottleAccess';
+const BOTTLE_BALANCE_OF_SELECTOR = '0x70a08231';
+const BOTTLE_MINT_SELECTOR = '0x1249c58b';
 
 // One catalog drives both the world map and the marketplace. Coordinates belong
 // to the asset, so a purchased world always resolves to the same map location.
@@ -94,6 +97,66 @@ function updateCart(button, label = 'Added') {
 
 function normalizeMemberEmail(email) {
   return String(email || '').trim().toLowerCase();
+}
+
+function readBottleAccess() {
+  try {
+    const access = JSON.parse(window.localStorage.getItem(BOTTLE_ACCESS_KEY) || '{}');
+    return access && typeof access === 'object' ? access : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function grantBottleAccess(email, source, reference = '') {
+  const memberEmail = normalizeMemberEmail(email);
+  if (!memberEmail) return false;
+  const access = readBottleAccess();
+  access[memberEmail] = { source, reference, grantedAt: new Date().toISOString() };
+  window.localStorage.setItem(BOTTLE_ACCESS_KEY, JSON.stringify(access));
+  return true;
+}
+
+function hasBottleEntitlement(email) {
+  return Boolean(readBottleAccess()[normalizeMemberEmail(email)]);
+}
+
+function bottleContractConfig() {
+  const contract = String(window.MUZIKAZ_BOTTLE_CONTRACT_ADDRESS || document.querySelector('meta[name="muzikaz-bottle-contract"]')?.content || '').trim();
+  const chainId = String(window.MUZIKAZ_BOTTLE_CHAIN_ID || document.querySelector('meta[name="muzikaz-bottle-chain-id"]')?.content || '').trim().toLowerCase();
+  const mintData = String(window.MUZIKAZ_BOTTLE_MINT_DATA || BOTTLE_MINT_SELECTOR).trim();
+  const mintValue = String(window.MUZIKAZ_BOTTLE_MINT_VALUE || '').trim();
+  if (!/^0x[a-fA-F0-9]{40}$/.test(contract)) throw new Error('The MUZIKAZ Bottle contract address is not configured.');
+  if (mintValue && !/^0x[a-fA-F0-9]+$/.test(mintValue)) throw new Error('The Bottle mint value must be hexadecimal wei.');
+  return { contract, chainId, mintData, mintValue };
+}
+
+function requireEthereumWallet() {
+  if (!window.ethereum?.request) throw new Error('Install or open an EIP-1193 Ethereum wallet such as MetaMask to continue.');
+  return window.ethereum;
+}
+
+async function ensureBottleChain(wallet, chainId) {
+  if (!chainId) return;
+  const activeChain = String(await wallet.request({ method: 'eth_chainId' })).toLowerCase();
+  if (activeChain === chainId) return;
+  try {
+    await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId }] });
+  } catch (error) {
+    throw new Error(`Switch your wallet to the required Ethereum network (${chainId}).`);
+  }
+}
+
+async function validateBottleOwnership(address) {
+  const wallet = requireEthereumWallet();
+  const config = bottleContractConfig();
+  await ensureBottleChain(wallet, config.chainId);
+  const ownerWord = String(address).toLowerCase().replace(/^0x/, '').padStart(64, '0');
+  const result = await wallet.request({ method: 'eth_call', params: [{ to: config.contract, data: BOTTLE_BALANCE_OF_SELECTOR + ownerWord }, 'latest'] });
+  let balance;
+  try { balance = BigInt(result || '0x0'); } catch (error) { throw new Error('The Bottle contract returned an invalid ownership balance.'); }
+  if (balance < 1n) throw new Error('This wallet does not own a MUZIKAZ Bottle. Mint one to enter.');
+  return { balance, config };
 }
 
 function readOwnedProfiles() {
@@ -188,7 +251,8 @@ function ownedAssetDetail(assetName) {
 }
 
 function hasBottleLogin() {
-  return window.localStorage.getItem('muzikazBottleMember') === 'true' && Boolean(normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail));
+  const email = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail);
+  return window.sessionStorage.getItem('muzikazBottleMember') === 'true' && hasBottleEntitlement(email);
 }
 
 function initModelMarketGate() {
@@ -209,17 +273,9 @@ function initModelMarketGate() {
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    const data = new FormData(form);
-    const email = normalizeMemberEmail(data.get('email'));
-    const passcode = String(data.get('passcode') || '').trim();
-    if (!email || !passcode) {
-      if (status) status.textContent = 'Enter both your member email and passcode.';
-      return;
-    }
-    currentMemberEmail = email;
-    window.localStorage.setItem('muzikazBottleMember', 'true');
-    window.localStorage.setItem('muzikazBottleMemberEmail', email);
-    uncover();
+    if (status) status.textContent = 'Ethereum Bottle validation is required. Opening secure wallet login…';
+    window.sessionStorage.setItem('muzikazLoginRedirect', window.location.href);
+    window.location.href = 'members.html#bottle-login';
   });
 }
 
@@ -1690,25 +1746,34 @@ function initBottleLogin() {
   const form = document.querySelector('#bottle-login-form');
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
+  const addressLabel = document.querySelector('#bottle-wallet-address');
+  const connectButton = document.querySelector('#bottle-wallet-connect');
+  const mintButton = document.querySelector('#bottle-wallet-mint');
   if (!form || !lockedContent) return;
-  const unlock = async (message) => {
-    if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
+  const setBusy = (busy) => {
+    if (connectButton) connectButton.disabled = busy;
+    if (mintButton) mintButton.disabled = busy;
+  };
+  const showAddress = (address) => {
+    if (!addressLabel) return;
+    addressLabel.hidden = !address;
+    addressLabel.textContent = address ? `Connected wallet: ${address}` : '';
+  };
+  const unlock = (message) => {
+    lockedContent.hidden = false;
     lockedContent.dataset.locked = 'false';
+    document.body.classList.add('is-member-authenticated');
     if (status) status.textContent = message;
   };
-  if (hasBottleLogin()) {
-    currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
-    unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`);
-    renderOwnedCollection(currentMemberEmail);
-  }
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const data = new FormData(form);
-    currentMemberEmail = normalizeMemberEmail(data.get('email'));
-    window.localStorage.setItem('muzikazBottleMember', 'true');
+  const verifyAndUnlock = async (address) => {
+    const ownership = await validateBottleOwnership(address);
+    currentMemberEmail = normalizeMemberEmail(address);
+    grantBottleAccess(currentMemberEmail, 'ethereum-contract', ownership.config.contract);
+    window.sessionStorage.setItem('muzikazBottleMember', 'true');
     window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+    showAddress(address);
     renderOwnedCollection(currentMemberEmail);
-    await unlock(`${currentMemberEmail} is logged in. Your designated avatar and Drop Backpack are retained across visits.`);
+    unlock(`Bottle ownership verified on-chain. ${ownership.balance.toString()} Bottle token${ownership.balance === 1n ? '' : 's'} found.`);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
@@ -1716,7 +1781,59 @@ function initBottleLogin() {
       return;
     }
     scrollToSection('member-locked-content');
+  };
+  const connect = async () => {
+    setBusy(true);
+    if (status) status.textContent = 'Connecting wallet and checking the Bottle contract…';
+    try {
+      const wallet = requireEthereumWallet();
+      const accounts = await wallet.request({ method: 'eth_requestAccounts' });
+      const address = accounts?.[0];
+      if (!/^0x[a-fA-F0-9]{40}$/.test(String(address || ''))) throw new Error('No valid Ethereum account was returned by the wallet.');
+      showAddress(address);
+      await verifyAndUnlock(address);
+    } catch (error) {
+      window.sessionStorage.removeItem('muzikazBottleMember');
+      if (status) status.textContent = error.message || 'Bottle ownership could not be verified.';
+    } finally {
+      setBusy(false);
+    }
+  };
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    await connect();
   });
+  mintButton?.addEventListener('click', async () => {
+    setBusy(true);
+    try {
+      const wallet = requireEthereumWallet();
+      const config = bottleContractConfig();
+      await ensureBottleChain(wallet, config.chainId);
+      const accounts = await wallet.request({ method: 'eth_requestAccounts' });
+      const from = accounts?.[0];
+      if (!from) throw new Error('Connect an Ethereum account before minting.');
+      showAddress(from);
+      if (status) status.textContent = 'Confirm the Bottle mint transaction in your wallet…';
+      const transaction = { from, to: config.contract, data: config.mintData };
+      if (config.mintValue) transaction.value = config.mintValue;
+      const transactionHash = await wallet.request({ method: 'eth_sendTransaction', params: [transaction] });
+      if (status) status.textContent = `Bottle mint submitted (${transactionHash.slice(0, 10)}…). Waiting for confirmation…`;
+      let receipt = null;
+      for (let attempt = 0; attempt < 60 && !receipt; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 2000));
+        receipt = await wallet.request({ method: 'eth_getTransactionReceipt', params: [transactionHash] });
+      }
+      if (!receipt) throw new Error('Mint confirmation is still pending. Reconnect after it confirms.');
+      if (receipt.status && BigInt(receipt.status) !== 1n) throw new Error('The Bottle mint transaction failed.');
+      await verifyAndUnlock(from);
+    } catch (error) {
+      if (status) status.textContent = error.message || 'The Bottle could not be minted.';
+    } finally {
+      setBusy(false);
+    }
+  });
+  window.ethereum?.on?.('accountsChanged', () => window.location.reload());
+  window.ethereum?.on?.('chainChanged', () => window.location.reload());
 }
 
 marketQualityToggle?.addEventListener('change', () => renderMarketplace());
