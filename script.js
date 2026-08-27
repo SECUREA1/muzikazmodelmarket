@@ -72,6 +72,62 @@ function initHeaderWalletConnect() {
 
 initHeaderWalletConnect();
 
+function initHeroGateway() {
+  const hero = document.querySelector('.hero[data-hero-mode]');
+  const controls = [...(hero?.querySelectorAll('[data-hero-path]') || [])];
+  const description = hero?.querySelector('#hero-description');
+  const action = hero?.querySelector('.hero-primary-action');
+  if (!hero || !description || !action || !controls.length) return;
+
+  const paths = {
+    explore: {
+      description: 'Drop into living 3D districts, meet the crew, and discover a world that moves at your frequency.',
+      label: 'Enter the world',
+      href: '#world-map'
+    },
+    create: {
+      description: 'Shape an avatar, claim your space, and turn your sound into a world the whole crew can experience.',
+      label: 'Start creating',
+      href: 'members.html'
+    },
+    collect: {
+      description: 'Catch limited character drops, creator-built worlds, and rare gear before they disappear from the signal.',
+      label: 'Shop the drops',
+      href: '#marketplace-preview'
+    }
+  };
+
+  const selectPath = (button) => {
+    const key = button.dataset.heroPath;
+    const path = paths[key];
+    if (!path) return;
+    hero.dataset.heroMode = key;
+    description.textContent = path.description;
+    action.href = path.href;
+    action.innerHTML = `${path.label} <span aria-hidden="true">↗</span>`;
+    controls.forEach((control) => {
+      const active = control === button;
+      control.classList.toggle('is-active', active);
+      control.setAttribute('aria-selected', String(active));
+      control.tabIndex = active ? 0 : -1;
+    });
+  };
+
+  controls.forEach((button, index) => {
+    button.addEventListener('click', () => selectPath(button));
+    button.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      event.preventDefault();
+      const offset = event.key === 'ArrowRight' ? 1 : -1;
+      const next = controls[(index + offset + controls.length) % controls.length];
+      next.focus();
+      selectPath(next);
+    });
+  });
+}
+
+initHeroGateway();
+
 // One catalog drives both the world map and the marketplace. Coordinates belong
 // to the asset, so a purchased world always resolves to the same map location.
 const WORLD_ASSETS = [
