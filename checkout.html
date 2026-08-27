@@ -78,14 +78,25 @@
                     <div><span>Tax estimate</span><strong id="summary-tax">$0.00</strong></div>
                     <div class="grand-total"><span>Total</span><strong id="summary-total">$0.00</strong></div>
                 </div>
-                <p class="checkout-note">Demo card: use any 16 digit number, future expiry, any name, and any 3 digit CVC.</p>
                 <p class="checkout-note">Ethereum price: <strong>0.0001 ETH per cart item</strong>. Your wallet shows the final network fee separately.</p>
                 <p class="checkout-note">MZK price: <strong id="summary-mzk-total">0 MZK</strong>. Need tokens? <a href="buy-mzk.html">Swap ETH, SOL, or ADA for MZK</a>.</p>
             </aside>
 
             <form class="payment-form" id="payment-form">
+                <section class="checkout-owner" aria-labelledby="checkout-owner-title">
+                    <div>
+                        <p class="kicker">Claim destination</p>
+                        <h2 id="checkout-owner-title">Your wallet. Your Backpack.</h2>
+                        <p id="checkout-owner-copy">Checking the active member and wallet…</p>
+                    </div>
+                    <dl>
+                        <div><dt>Backpack</dt><dd id="checkout-backpack-owner">Not signed in</dd></div>
+                        <div><dt>MZK wallet</dt><dd id="checkout-wallet-owner">Loading…</dd></div>
+                    </dl>
+                    <a class="btn ghost" href="members.html#bottle-login">Switch account</a>
+                </section>
                 <fieldset>
-                    <legend>Contact and delivery</legend>
+                    <legend>Receipt and delivery</legend>
                     <div class="form-grid">
                         <label>Email <input type="email" name="email" autocomplete="email" required placeholder="crew@muzikaz.example" /></label>
                         <label>Full name <input name="name" autocomplete="name" required placeholder="Muzikaz Collector" /></label>
@@ -98,17 +109,8 @@
 
                 <fieldset>
                     <legend>Payment method</legend>
-                    <p class="payment-intro">Choose one payment route. Every option uses the same cart total and keeps its details on one clean row.</p>
+                    <p class="payment-intro">Choose a wallet payment. Before approval, we verify the active wallet and show exactly which Backpack will receive every claim.</p>
                     <div class="payment-stack">
-                        <section class="payment-rail payment-rail-card" aria-labelledby="card-payment-title">
-                            <div class="payment-rail-heading"><strong id="card-payment-title">Card</strong><span>Secure demo checkout</span></div>
-                            <div class="form-grid payment-card-fields">
-                                <label>Card number <input name="card" inputmode="numeric" autocomplete="cc-number" required pattern="[0-9 ]{15,23}" placeholder="4242 4242 4242 4242" /></label>
-                                <label>Name on card <input name="cardName" autocomplete="cc-name" required placeholder="Muzikaz Collector" /></label>
-                                <label>Expiry <input name="expiry" autocomplete="cc-exp" required pattern="(0[1-9]|1[0-2])\/[0-9]{2}" placeholder="12/30" /></label>
-                                <label>CVC <input name="cvc" inputmode="numeric" autocomplete="cc-csc" required pattern="[0-9]{3,4}" placeholder="123" /></label>
-                            </div>
-                        </section>
                         <section class="payment-rail" aria-labelledby="mzk-payment-title">
                             <div class="payment-rail-heading"><strong id="mzk-payment-title">MZK</strong><span>100 MZK per $1</span></div>
                             <p id="checkout-mzk-balance">Wallet loading…</p>
@@ -133,9 +135,8 @@
                     <button type="button" class="link-button quote-refresh" id="refresh-crypto-quotes">Refresh live ADA/SOL quotes</button>
                 </fieldset>
 
-                <label class="terms-check"><input type="checkbox" required /> I agree to process this demo payment and receive MUZIKAZ order updates.</label>
-                <button type="submit" class="pay-button" id="pay-button">Pay <span id="pay-button-total">$0.00</span></button>
-                <p class="status-message" id="payment-status" role="status">Complete the checkout form to process your payment.</p>
+                <label class="terms-check"><input id="checkout-terms" type="checkbox" required /> I confirm the displayed Backpack and wallet are mine and agree to receive MUZIKAZ order updates.</label>
+                <p class="status-message" id="payment-status" role="status">Confirm your details, then choose a wallet payment above.</p>
             </form>
         </section>
 
