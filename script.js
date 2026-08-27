@@ -123,12 +123,18 @@ function hasBottleEntitlement(email) {
 
 function bottleContractConfig() {
   const contract = String(window.MUZIKAZ_BOTTLE_CONTRACT_ADDRESS || document.querySelector('meta[name="muzikaz-bottle-contract"]')?.content || '').trim();
+  const approvedContracts = [
+    contract,
+    ...String(window.MUZIKAZ_BOTTLE_APPROVED_CONTRACTS || '').split(','),
+    ...Array.from(document.querySelectorAll('meta[name="muzikaz-bottle-approved-contract"]'), (meta) => meta.content)
+  ].map((address) => String(address).trim()).filter(Boolean);
   const chainId = String(window.MUZIKAZ_BOTTLE_CHAIN_ID || document.querySelector('meta[name="muzikaz-bottle-chain-id"]')?.content || '').trim().toLowerCase();
   const mintData = String(window.MUZIKAZ_BOTTLE_MINT_DATA || BOTTLE_MINT_SELECTOR).trim();
   const mintValue = String(window.MUZIKAZ_BOTTLE_MINT_VALUE || '').trim();
   if (!/^0x[a-fA-F0-9]{40}$/.test(contract)) throw new Error('The MUZIKAZ Bottle contract address is not configured.');
+  if (approvedContracts.some((address) => !/^0x[a-fA-F0-9]{40}$/.test(address))) throw new Error('An approved MUZIKAZ Bottle contract address is invalid.');
   if (mintValue && !/^0x[a-fA-F0-9]+$/.test(mintValue)) throw new Error('The Bottle mint value must be hexadecimal wei.');
-  return { contract, chainId, mintData, mintValue };
+  return { contract, approvedContracts: [...new Set(approvedContracts.map((address) => address.toLowerCase()))], chainId, mintData, mintValue };
 }
 
 function requireEthereumWallet() {
@@ -152,11 +158,18 @@ async function validateBottleOwnership(address) {
   const config = bottleContractConfig();
   await ensureBottleChain(wallet, config.chainId);
   const ownerWord = String(address).toLowerCase().replace(/^0x/, '').padStart(64, '0');
-  const result = await wallet.request({ method: 'eth_call', params: [{ to: config.contract, data: BOTTLE_BALANCE_OF_SELECTOR + ownerWord }, 'latest'] });
-  let balance;
-  try { balance = BigInt(result || '0x0'); } catch (error) { throw new Error('The Bottle contract returned an invalid ownership balance.'); }
-  if (balance < 1n) throw new Error('This wallet does not own a MUZIKAZ Bottle. Mint one to enter.');
-  return { balance, config };
+  for (const contract of config.approvedContracts) {
+    let result;
+    try {
+      result = await wallet.request({ method: 'eth_call', params: [{ to: contract, data: BOTTLE_BALANCE_OF_SELECTOR + ownerWord }, 'latest'] });
+    } catch (error) {
+      continue;
+    }
+    let balance;
+    try { balance = BigInt(result || '0x0'); } catch (error) { continue; }
+    if (balance >= 1n) return { balance, contract, config };
+  }
+  throw new Error('This wallet does not own a token from an approved MUZIKAZ Bottle contract. Mint one to enter.');
 }
 
 function readOwnedProfiles() {

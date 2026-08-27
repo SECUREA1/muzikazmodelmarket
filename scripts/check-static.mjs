@@ -192,6 +192,9 @@ for (const requiredLoginGate of ['id="member-locked-content" data-locked="true" 
 if (!membersHtml.includes('name="muzikaz-bottle-contract" content="0x0F1254772810EA4D06E5c61E3E4b54d740367Aa8"')) {
   throw new Error('members.html must use the approved MUZIKAZ Bottle access contract.');
 }
+if (!membersHtml.includes('name="muzikaz-bottle-approved-contract" content="0xEf74118D5fB730E9B2729c7303DC29980b4771f0"')) {
+  throw new Error('members.html must include the additional approved Bottle access-token contract.');
+}
 if (membersHtml.includes('public/js/avatar-selection.js')) {
   throw new Error('members.html must not require avatar selection before Bottle login.');
 }
@@ -223,6 +226,9 @@ for (const requiredBottleAccessFlow of ['eth_requestAccounts', 'eth_call', 'eth_
   if (!appScript.includes(requiredBottleAccessFlow)) {
     throw new Error(`script.js is missing Bottle mint/validation access flow: ${requiredBottleAccessFlow}`);
   }
+}
+if (!appScript.includes('config.approvedContracts') || !appScript.includes('MUZIKAZ_BOTTLE_APPROVED_CONTRACTS')) {
+  throw new Error('script.js must validate ownership across all approved Bottle contracts.');
 }
 for (const requiredAdminFlow of ["/api/admin/login", "muzikazAdminToken", "x-admin-token", "muzikaz:admin-authenticated"]) {
   if (!appScript.includes(requiredAdminFlow)) {

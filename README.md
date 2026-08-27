@@ -39,6 +39,11 @@ against the configured MUZIKAZ Bottle ERC-721/ERC-1155 contract. Set the
 `members.html` for deployment, or inject `window.MUZIKAZ_BOTTLE_CONTRACT_ADDRESS`
 and `window.MUZIKAZ_BOTTLE_CHAIN_ID` before `script.js` loads. The chain ID must
 use hexadecimal EIP-1193 form (for example, `0x1` for Ethereum mainnet).
+Additional access-token contracts can be approved with repeated
+`muzikaz-bottle-approved-contract` meta tags or a comma-separated
+`window.MUZIKAZ_BOTTLE_APPROVED_CONTRACTS` value. Ownership of a token from any
+approved contract unlocks the Bottle member area; minting continues to use the
+primary `muzikaz-bottle-contract` address.
 
 The default mint transaction calls `mint()` (`0x1249c58b`). Contracts with a
 different public mint signature must inject the complete encoded calldata as
