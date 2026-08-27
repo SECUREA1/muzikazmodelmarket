@@ -230,6 +230,12 @@ for (const id of ['payment-form', 'checkout-items', 'confirmation-panel']) {
 for (const requiredEthereumCheckout of ['muzikaz-market-payment-address', 'muzikaz-market-item-price-wei', 'ethereum-wallet-connect', 'ethereum-wallet-pay', 'ethereum-wallet-total']) {
   if (!checkoutHtml.includes(requiredEthereumCheckout)) throw new Error(`checkout.html is missing permanent Ethereum cart checkout marker ${requiredEthereumCheckout}`);
 }
+for (const requiredWalletClaimMarker of ['checkout-backpack-owner', 'checkout-wallet-owner', 'checkout-terms']) {
+  if (!checkoutHtml.includes(requiredWalletClaimMarker)) throw new Error(`checkout.html is missing wallet-to-Backpack claim marker ${requiredWalletClaimMarker}`);
+}
+for (const removedCardField of ['autocomplete="cc-number"', 'autocomplete="cc-name"', 'autocomplete="cc-exp"', 'autocomplete="cc-csc"']) {
+  if (checkoutHtml.includes(removedCardField)) throw new Error(`checkout.html must not collect removed credit-card field ${removedCardField}`);
+}
 
 const css = await readFile('dist/styles.css', 'utf8');
 if (!css.includes("url('reference.png')")) {

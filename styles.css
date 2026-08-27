@@ -1320,6 +1320,10 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
 .totals-table strong{color:var(--lime)}
 .grand-total{font-size:24px}
 .payment-form{min-width:0;padding:24px;display:grid;gap:20px}
+.checkout-owner{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.8fr) auto;gap:18px;align-items:center;padding:18px;border:1px solid rgba(255,193,7,.45);border-radius:16px;background:linear-gradient(135deg,rgba(255,193,7,.1),rgba(0,0,0,.3))}
+.checkout-owner.is-matched{border-color:rgba(156,255,0,.55);background:linear-gradient(135deg,rgba(156,255,0,.12),rgba(0,0,0,.3))}
+.checkout-owner h2,.checkout-owner p{margin:0}.checkout-owner h2{font-size:24px}.checkout-owner .kicker{margin-bottom:4px}.checkout-owner p:not(.kicker){color:var(--muted);line-height:1.45;text-transform:none}
+.checkout-owner dl{margin:0;display:grid;gap:8px}.checkout-owner dl div{min-width:0;padding:9px 11px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(0,0,0,.35)}.checkout-owner dt{color:var(--muted);font-size:11px;font-weight:900;text-transform:uppercase}.checkout-owner dd{margin:3px 0 0;color:#fff;font-weight:900;overflow-wrap:anywhere}
 .payment-form fieldset{min-width:0;border:0;border-top:1px solid rgba(156,255,0,.25);padding:20px 0 0;margin:0}
 .payment-form legend{padding:0 8px;color:var(--lime);font-weight:900;letter-spacing:.5px}
 .form-grid{display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:14px}
@@ -1354,13 +1358,8 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
 .payment-rail>button,.ethereum-actions button{width:100%;min-width:0;justify-content:center;white-space:normal}
 .ethereum-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0}
 .ethereum-actions button:disabled{opacity:.45;cursor:not-allowed}
-.payment-rail-card{grid-template-columns:minmax(130px,.55fr) minmax(0,2fr)}
-.payment-card-fields{grid-template-columns:minmax(180px,1.3fr) minmax(160px,1fr) minmax(90px,.55fr) minmax(80px,.45fr);width:100%}
-.payment-card-fields label{min-width:0}.payment-card-fields input{min-width:0}
 .quote-refresh{display:block;margin:12px 0 0 auto}
 .backpack-buy{flex-wrap:wrap}.backpack-buy [data-backpack-crypto]{padding:9px 12px;font-size:11px}
-.pay-button{justify-content:center;font-size:18px;background:var(--lime);color:#000;border-color:#fff}
-.pay-button:disabled{opacity:.45;cursor:not-allowed;background:#27321c;color:#aaa;border-color:#44522f}
 .confirmation-panel{padding:28px;text-align:center}
 .confirmation-panel h2{font-family:Bangers,cursive;color:var(--lime);font-size:64px;margin:0 0 10px}
 .confirmation-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:18px}
@@ -1373,8 +1372,8 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
   .checkout-hero,.payment-checkout,.confirmation-panel{width:calc(100% - 24px)}
   .checkout-hero,.payment-form,.order-summary-card{padding:18px}
   .checkout-hero h1{font-size:clamp(46px,15vw,68px);overflow-wrap:anywhere}
-  .payment-rail,.payment-rail-card{grid-template-columns:1fr;gap:10px;padding:15px}
-  .payment-card-fields{grid-template-columns:1fr}
+  .payment-rail{grid-template-columns:1fr;gap:10px;padding:15px}
+  .checkout-owner{grid-template-columns:1fr}
   .ethereum-actions{grid-template-columns:1fr}
   .payment-rail>button{width:100%}
 }

@@ -389,8 +389,8 @@ function escapeMarkup(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
 }
 
-function claimOwnedAsset(assetName, source = 'Marketplace claim') {
-  const owner = normalizeMemberEmail(currentMemberEmail);
+function claimOwnedAsset(assetName, source = 'Marketplace claim', targetOwner = currentMemberEmail) {
+  const owner = normalizeMemberEmail(targetOwner);
   if (!owner || !assetName) return;
   const profiles = readOwnedProfiles();
   const owned = profiles[owner] || [];
@@ -2186,6 +2186,47 @@ initBottleLogin();
 const checkoutItems = document.querySelector('#checkout-items');
 const paymentForm = document.querySelector('#payment-form');
 
+function checkoutOwner(method, paymentOwner = '') {
+  if (method === 'MZK') return normalizeMemberEmail(window.MZKWallet?.walletId());
+  return normalizeMemberEmail(paymentOwner);
+}
+
+function claimCheckoutItems(items, owner, source) {
+  const normalizedOwner = normalizeMemberEmail(owner);
+  if (!normalizedOwner) throw new Error('Connect a wallet before claiming this order.');
+  items.forEach((item) => {
+    for (let quantity = 0; quantity < (Number(item.quantity) || 1); quantity += 1) claimOwnedAsset(item.name, source, normalizedOwner);
+  });
+  currentMemberEmail = normalizedOwner;
+  window.localStorage.setItem('muzikazBottleMemberEmail', normalizedOwner);
+  renderCheckoutIdentity();
+  return normalizedOwner;
+}
+
+function validateWalletCheckout() {
+  if (!paymentForm?.reportValidity()) {
+    document.querySelector('#payment-status').textContent = 'Complete the receipt and delivery details and confirm the claim destination first.';
+    return false;
+  }
+  return true;
+}
+
+function renderCheckoutIdentity() {
+  const backpack = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail'));
+  const wallet = normalizeMemberEmail(window.MZKWallet?.walletId());
+  const backpackLabel = document.querySelector('#checkout-backpack-owner');
+  const walletLabel = document.querySelector('#checkout-wallet-owner');
+  const copy = document.querySelector('#checkout-owner-copy');
+  if (!backpackLabel || !walletLabel || !copy) return;
+  backpackLabel.textContent = backpack || 'Not signed in';
+  walletLabel.textContent = wallet?.startsWith('guest-') ? 'Guest wallet' : (wallet || 'Not connected');
+  const matched = Boolean(backpack && wallet && backpack === wallet);
+  copy.textContent = matched
+    ? 'Verified match: MZK purchases will be claimed to this same Backpack identity.'
+    : 'Wallet payments are claimed only to the address that approves them. MZK claims go to the active MZK wallet shown here.';
+  document.querySelector('.checkout-owner')?.classList.toggle('is-matched', matched);
+}
+
 function formatCheckoutMoney(amount) {
   return `$${Number(amount || 0).toFixed(2)}`;
 }
@@ -2222,11 +2263,7 @@ function completeEthereumOrder({ items, from, transactionHash, totalWei }) {
   const owner = normalizeMemberEmail(from);
   const receipt = { orderId, total: formatEth(totalWei), from, to: marketPaymentConfig().address, transactionHash, items, paidAt: new Date().toISOString(), method: 'Ethereum' };
   window.localStorage.setItem('muzikazLastReceipt', JSON.stringify(receipt));
-  currentMemberEmail = owner;
-  window.localStorage.setItem('muzikazBottleMemberEmail', owner);
-  items.forEach((item) => {
-    for (let quantity = 0; quantity < (Number(item.quantity) || 1); quantity += 1) claimOwnedAsset(item.name, `Ethereum order ${orderId}`);
-  });
+  claimCheckoutItems(items, owner, `Ethereum order ${orderId}`);
   writeCart([]);
   renderCheckoutPage();
   document.querySelector('#confirmation-copy').textContent = `Receipt ${orderId} is confirmed on-chain for ${formatEth(totalWei)}. ${items.length} cart line${items.length === 1 ? '' : 's'} now belong to ${from}. Transaction: ${transactionHash}`;
@@ -2244,9 +2281,7 @@ function completeCryptoOrder(items, payment) {
   const orderId = `MZ-${payment.currency}-${payment.transactionHash.slice(0, 8).toUpperCase()}`;
   const receipt = { orderId, total: `$${payment.usd.toFixed(2)}`, from: payment.address, to: payment.recipient, transactionHash: payment.transactionHash, items, paidAt: new Date().toISOString(), method: payment.currency };
   window.localStorage.setItem('muzikazLastReceipt', JSON.stringify(receipt));
-  currentMemberEmail = normalizeMemberEmail(payment.address);
-  window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-  items.forEach((item) => { for (let quantity = 0; quantity < (Number(item.quantity) || 1); quantity += 1) claimOwnedAsset(item.name, `${payment.currency} order ${orderId}`); });
+  claimCheckoutItems(items, checkoutOwner(payment.currency, payment.address), `${payment.currency} order ${orderId}`);
   writeCart([]);
   renderCheckoutPage();
   document.querySelector('#confirmation-copy').textContent = `Receipt ${orderId} is submitted on-chain for ${payment.amount} ${payment.currency} ($${payment.usd.toFixed(2)} quoted value). Transaction: ${payment.transactionHash}`;
@@ -2261,10 +2296,13 @@ function initMzkCheckout() {
   button.addEventListener('click', () => {
     const items = readCart(), amount = Math.round(checkoutUsdTotal() * window.MZKWallet.MZK_PER_USD);
     if (!items.length) return;
+    if (!validateWalletCheckout()) return;
+    const owner = checkoutOwner('MZK');
+    if (!owner || owner.startsWith('guest-')) { status.innerHTML = 'Sign in or connect your member wallet before paying with MZK so the claim reaches the correct Backpack. <a href="members.html#bottle-login">Connect account</a>.'; return; }
     const result = window.MZKWallet.spend(amount, `MUZIKAZ cart purchase (${items.length} lines)`, `mzk-order:${Date.now()}`);
     if (!result.ok) { status.innerHTML = `You need ${amount.toLocaleString()} MZK. <a href="buy-mzk.html">Buy MZK with ETH, SOL, or ADA</a>.`; return; }
     const orderId = `MZ-MZK-${Date.now().toString().slice(-6)}`;
-    items.forEach((item) => { for (let count = 0; count < (Number(item.quantity) || 1); count += 1) claimOwnedAsset(item.name, `MZK order ${orderId}`); });
+    claimCheckoutItems(items, owner, `MZK order ${orderId}`);
     window.localStorage.setItem('muzikazLastReceipt', JSON.stringify({ orderId, total: `${amount} MZK`, items, paidAt: new Date().toISOString(), method: 'MZK' }));
     writeCart([]); renderCheckoutPage(); status.textContent = `${amount.toLocaleString()} MZK paid. Receipt ${orderId} is ready.`;
     document.querySelector('#confirmation-copy').textContent = `Receipt ${orderId} is confirmed for ${amount.toLocaleString()} MZK. Every purchased asset is now in your Backpack.`;
@@ -2291,6 +2329,7 @@ function initMultiChainCheckout() {
   buttons.forEach((button) => button.addEventListener('click', async () => {
     const items = readCart();
     if (!items.length) return;
+    if (!validateWalletCheckout()) return;
     buttons.forEach((item) => { item.disabled = true; });
     try {
       status.textContent = `Connect ${button.dataset.cryptoPay === 'SOL' ? 'Phantom' : 'Lace'} and approve the exact recipient and value…`;
@@ -2342,6 +2381,7 @@ function initEthereumCheckout() {
   payButton.addEventListener('click', async () => {
     const items = readCart();
     if (!items.length) return;
+    if (!validateWalletCheckout()) return;
     payButton.disabled = true;
     connectButton.disabled = true;
     try {
@@ -2382,8 +2422,6 @@ function renderCheckoutPage() {
   document.querySelector('#summary-total').textContent = formatCheckoutMoney(total);
   const mzkTotal = document.querySelector('#summary-mzk-total');
   if (mzkTotal) mzkTotal.textContent = `${Math.round(total * 100).toLocaleString()} MZK`;
-  document.querySelector('#pay-button-total').textContent = formatCheckoutMoney(total);
-  document.querySelector('#pay-button').disabled = !items.length;
   const ethereumTotal = document.querySelector('#ethereum-wallet-total');
   if (ethereumTotal) ethereumTotal.textContent = formatEth(MARKET_ITEM_PRICE_WEI * BigInt(items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)));
   const ethereumPay = document.querySelector('#ethereum-wallet-pay');
@@ -2396,33 +2434,13 @@ document.querySelector('#checkout-clear-cart')?.addEventListener('click', () => 
   document.querySelector('#payment-status').textContent = 'Cart cleared. Add products to process a new payment.';
 });
 
-paymentForm?.addEventListener('submit', (event) => {
-  event.preventDefault();
-  const items = readCart();
-  const status = document.querySelector('#payment-status');
-  if (!items.length) {
-    status.textContent = 'Add at least one item before processing payment.';
-    return;
-  }
-  if (!paymentForm.reportValidity()) return;
-  const data = new FormData(paymentForm);
-  const orderId = `MZ-${Date.now().toString().slice(-6)}`;
-  const total = document.querySelector('#summary-total').textContent;
-  const receipt = { orderId, total, email: data.get('email'), items, paidAt: new Date().toISOString(), method: data.get('method') };
-  window.localStorage.setItem('muzikazLastReceipt', JSON.stringify(receipt));
-  currentMemberEmail = normalizeMemberEmail(data.get('email'));
-  window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-  items.forEach((item) => claimOwnedAsset(item.name, `Paid order ${orderId}`));
-  writeCart([]);
-  renderCheckoutPage();
-  status.textContent = `Payment processed for ${total}. Receipt ${orderId} sent to ${data.get('email')}.`;
-  document.querySelector('#confirmation-copy').textContent = `Receipt ${orderId} is confirmed for ${total} by ${data.get('method')}. Your ${items.length} cart line${items.length === 1 ? '' : 's'} are ready for fulfillment.`;
-  document.querySelector('#confirmation-panel').hidden = false;
-  document.querySelector('#confirmation-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  paymentForm.reset();
-});
+paymentForm?.addEventListener('submit', (event) => event.preventDefault());
 
 renderCheckoutPage();
+renderCheckoutIdentity();
+window.addEventListener('mzk:identity-changed', renderCheckoutIdentity);
+window.addEventListener('mzk:wallet-connection-changed', renderCheckoutIdentity);
+window.addEventListener('storage', renderCheckoutIdentity);
 initEthereumCheckout();
 initMultiChainCheckout();
 initMzkCheckout();
