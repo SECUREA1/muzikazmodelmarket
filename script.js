@@ -298,6 +298,18 @@ function claimOwnedAsset(assetName, source = 'Marketplace claim') {
   renderOwnedCollection(owner);
 }
 
+function syncStarterLoadout(loadout) {
+  if (!loadout?.owner) return;
+  currentMemberEmail = normalizeMemberEmail(loadout.owner);
+  window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+  claimOwnedAsset(`Avatar · ${loadout.avatar}`, 'First-time Builder Loadout');
+  claimOwnedAsset(`MUZIKAZ World · ${loadout.land}`, 'Random public land starter plot');
+  (loadout.assets || []).forEach((asset) => claimOwnedAsset(asset, 'First-time Builder Loadout'));
+}
+
+window.addEventListener('mzk:starter-loadout-claimed', (event) => syncStarterLoadout(event.detail));
+if (window.MZKWallet?.starterLoadout()) syncStarterLoadout(window.MZKWallet.starterLoadout());
+
 function ownedAssetDetail(assetName) {
   const worldAsset = findWorldAsset(assetName);
   if (worldAsset) return { title: assetName, type: worldAsset.kind, image: worldAsset.logo, copy: `${worldAsset.detail}. Located at X ${worldAsset.x}, Y ${worldAsset.y}.`, href: `index.html?world=${worldAsset.id}#world-map` };
@@ -2087,6 +2099,24 @@ function completeCryptoOrder(items, payment) {
   document.querySelector('#confirmation-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+function initMzkCheckout() {
+  const button = document.querySelector('#checkout-mzk-pay'), status = document.querySelector('#payment-status');
+  if (!button || !window.MZKWallet) return;
+  window.MZKWallet.mount('#checkout-mzk-balance');
+  button.addEventListener('click', () => {
+    const items = readCart(), amount = Math.round(checkoutUsdTotal() * window.MZKWallet.MZK_PER_USD);
+    if (!items.length) return;
+    const result = window.MZKWallet.spend(amount, `MUZIKAZ cart purchase (${items.length} lines)`, `mzk-order:${Date.now()}`);
+    if (!result.ok) { status.innerHTML = `You need ${amount.toLocaleString()} MZK. <a href="buy-mzk.html">Buy MZK with ETH, SOL, or ADA</a>.`; return; }
+    const orderId = `MZ-MZK-${Date.now().toString().slice(-6)}`;
+    items.forEach((item) => { for (let count = 0; count < (Number(item.quantity) || 1); count += 1) claimOwnedAsset(item.name, `MZK order ${orderId}`); });
+    window.localStorage.setItem('muzikazLastReceipt', JSON.stringify({ orderId, total: `${amount} MZK`, items, paidAt: new Date().toISOString(), method: 'MZK' }));
+    writeCart([]); renderCheckoutPage(); status.textContent = `${amount.toLocaleString()} MZK paid. Receipt ${orderId} is ready.`;
+    document.querySelector('#confirmation-copy').textContent = `Receipt ${orderId} is confirmed for ${amount.toLocaleString()} MZK. Every purchased asset is now in your Backpack.`;
+    document.querySelector('#confirmation-panel').hidden = false;
+  });
+}
+
 function initMultiChainCheckout() {
   const buttons = [...document.querySelectorAll('[data-crypto-pay]')];
   const refreshButton = document.querySelector('#refresh-crypto-quotes');
@@ -2195,6 +2225,8 @@ function renderCheckoutPage() {
   document.querySelector('#summary-shipping').textContent = subtotal ? (shipping ? formatCheckoutMoney(shipping) : 'Free') : '$0.00';
   document.querySelector('#summary-tax').textContent = formatCheckoutMoney(tax);
   document.querySelector('#summary-total').textContent = formatCheckoutMoney(total);
+  const mzkTotal = document.querySelector('#summary-mzk-total');
+  if (mzkTotal) mzkTotal.textContent = `${Math.round(total * 100).toLocaleString()} MZK`;
   document.querySelector('#pay-button-total').textContent = formatCheckoutMoney(total);
   document.querySelector('#pay-button').disabled = !items.length;
   const ethereumTotal = document.querySelector('#ethereum-wallet-total');
@@ -2238,6 +2270,7 @@ paymentForm?.addEventListener('submit', (event) => {
 renderCheckoutPage();
 initEthereumCheckout();
 initMultiChainCheckout();
+initMzkCheckout();
 
 function initPublicModelExplorer() {
   const viewer = document.querySelector('#public-model-viewer');
