@@ -1412,7 +1412,7 @@ fn create(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
         201,
         true,
         &model_json(&m),
-        "Model published live to the MUZIKAZ Model Market.",
+        "Model published live to MUZIKAZ WORLD.",
         false,
     )
 }

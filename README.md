@@ -1,6 +1,6 @@
 # muzikazmodelmarket
 
-Static MUZIKAZ Model Market landing page served by a small Rust HTTP server.
+Static MUZIKAZ WORLD experience served by a small Rust HTTP server.
 
 ## Render deployment
 
