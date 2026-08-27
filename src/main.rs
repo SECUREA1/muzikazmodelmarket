@@ -175,6 +175,7 @@ struct State {
     derivatives: Arc<RwLock<Vec<AssetDerivative>>>,
     house_users: Arc<RwLock<Vec<HouseUser>>>,
     chat_messages: Arc<RwLock<Vec<ChatMessage>>>,
+    users: Arc<RwLock<HashMap<String, String>>>,
 }
 fn main() -> std::io::Result<()> {
     let port = env::var("PORT").unwrap_or("4173".into());
@@ -203,6 +204,7 @@ fn main() -> std::io::Result<()> {
         derivatives: Arc::new(RwLock::new(load_derivatives(
             &data.join("asset-derivatives.json"),
         ))),
+        users: Arc::new(RwLock::new(load_users(&data.join("users.json")))),
         data,
         uploads,
         public_base: env::var("PUBLIC_BASE_URL").unwrap_or_default(),
@@ -327,6 +329,8 @@ fn api(
     match (method, path) {
         ("GET", "/api/health") | ("HEAD", "/api/health") => health(s, st, method == "HEAD"),
         ("POST", "/api/admin/login") => admin_login(s, st, body),
+        ("GET", "/api/wallet/state") => wallet_state(s, st, headers, None),
+        ("PUT", "/api/wallet/state") => wallet_state(s, st, headers, Some(body)),
         ("GET", "/api/environments") => list_environments(s, st),
         ("GET", "/api/avatar-options") => avatar_options(s, st, headers),
         ("GET", "/api/profile/avatar") => get_avatar_profile(s, st, headers),
@@ -1650,11 +1654,161 @@ fn write_resp(
     body: &[u8],
     head: bool,
 ) -> std::io::Result<()> {
-    write!(s,"HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {ct}\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Accept, Authorization, X-MUZIKAZ-Session, X-User-Id, X-User-Name, X-User-Email, X-User-Role, X-Admin-Token, X-MUZIKAZ-Land-Asset\r\nAccess-Control-Max-Age: 86400\r\nCross-Origin-Resource-Policy: cross-origin\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",body.len())?;
+    write!(s,"HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Type: {ct}\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Accept, Authorization, X-Wallet-Address, X-MUZIKAZ-Session, X-User-Id, X-User-Name, X-User-Email, X-User-Role, X-Admin-Token, X-MUZIKAZ-Land-Asset\r\nAccess-Control-Max-Age: 86400\r\nCross-Origin-Resource-Policy: cross-origin\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",body.len())?;
     if !head {
         s.write_all(body)?
     }
     s.flush()
+}
+
+fn load_users(path: &Path) -> HashMap<String, String> {
+    let mut users = HashMap::new();
+    for line in fs::read_to_string(path).unwrap_or_default().lines() {
+        let line = line.trim().trim_end_matches(',');
+        if !line.starts_with('"') {
+            continue;
+        }
+        if let Some(split) = line.find("\":") {
+            let wallet = &line[1..split];
+            let record = line[split + 2..].trim();
+            if wallet != "schemaVersion" && wallet != "users" && record.starts_with('{') {
+                users.insert(wallet.to_string(), record.to_string());
+            }
+        }
+    }
+    users
+}
+
+fn wallet_id(headers: &HashMap<String, String>) -> Option<String> {
+    let value = headers
+        .get("x-wallet-address")
+        .or_else(|| headers.get("x-user-id"))?
+        .trim()
+        .to_lowercase();
+    let ethereum = value.len() == 42
+        && value.starts_with("0x")
+        && value[2..].chars().all(|c| c.is_ascii_hexdigit());
+    let named = (3..=128).contains(&value.len())
+        && value
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || ".-_:@".contains(c));
+    (ethereum || named).then_some(value)
+}
+
+fn persist_users(st: &State, users: &HashMap<String, String>) -> std::io::Result<()> {
+    fs::create_dir_all(&st.data)?;
+    let path = st.data.join("users.json");
+    let temporary = st
+        .data
+        .join(format!("users.json.{}.tmp", std::process::id()));
+    let mut entries: Vec<_> = users
+        .iter()
+        .map(|(wallet, record)| format!("    \"{}\": {}", esc(wallet), record))
+        .collect();
+    entries.sort();
+    fs::write(
+        &temporary,
+        format!(
+            "{{\n  \"schemaVersion\": 1,\n  \"users\": {{\n{}\n  }}\n}}\n",
+            entries.join(",\n")
+        ),
+    )?;
+    fs::rename(temporary, path)
+}
+
+fn wallet_state(
+    s: &mut TcpStream,
+    st: &State,
+    headers: &HashMap<String, String>,
+    body: Option<&[u8]>,
+) -> std::io::Result<()> {
+    let Some(wallet) = wallet_id(headers) else {
+        return json(
+            s,
+            400,
+            false,
+            "{}",
+            "A valid X-Wallet-Address header is required",
+            false,
+        );
+    };
+    if let Some(bytes) = body {
+        let input = String::from_utf8_lossy(bytes);
+        let Some(items) = raw_json(&input, "items") else {
+            return json(
+                s,
+                400,
+                false,
+                "{}",
+                "Wallet state requires an items array",
+                false,
+            );
+        };
+        let Some(tokens) = raw_json(&input, "tokens") else {
+            return json(
+                s,
+                400,
+                false,
+                "{}",
+                "Wallet state requires a tokens object",
+                false,
+            );
+        };
+        let Some(memory) = raw_json(&input, "memory") else {
+            return json(
+                s,
+                400,
+                false,
+                "{}",
+                "Wallet state requires a memory object",
+                false,
+            );
+        };
+        if !items.starts_with('[')
+            || !tokens.starts_with('{')
+            || !memory.starts_with('{')
+            || memory.len() > 1_000_000
+            || items.matches("\"id\"").count() > 10_000
+        {
+            return json(
+                s,
+                400,
+                false,
+                "{}",
+                "Invalid wallet items, tokens, or memory",
+                false,
+            );
+        }
+        let mut users = st.users.write().unwrap();
+        let created = users
+            .get(&wallet)
+            .map(|v| val(v, "createdAt"))
+            .filter(|v| !v.is_empty())
+            .unwrap_or_else(now);
+        let record = format!("{{\"walletId\":\"{}\",\"tokens\":{},\"items\":{},\"memory\":{},\"createdAt\":\"{}\",\"updatedAt\":\"{}\"}}", esc(&wallet), tokens, items, memory, esc(&created), esc(&now()));
+        users.insert(wallet.clone(), record.clone());
+        if let Err(error) = persist_users(st, &users) {
+            return json(
+                s,
+                500,
+                false,
+                "{}",
+                &format!("Wallet storage failed: {error}"),
+                false,
+            );
+        }
+        return json(
+            s,
+            200,
+            true,
+            &record,
+            "Wallet state saved permanently",
+            false,
+        );
+    }
+    let users = st.users.read().unwrap();
+    let record = users.get(&wallet).cloned().unwrap_or_else(|| format!("{{\"walletId\":\"{}\",\"tokens\":{{\"MZK\":0}},\"items\":[],\"memory\":{{}},\"createdAt\":null,\"updatedAt\":null}}", esc(&wallet)));
+    json(s, 200, true, &record, "Wallet state loaded", false)
 }
 fn model_json(m: &Model) -> String {
     format!("{{\"id\":\"{}\",\"title\":\"{}\",\"creatorName\":\"{}\",\"description\":\"{}\",\"category\":\"{}\",\"placementType\":\"{}\",\"modelType\":\"{}\",\"modelUrl\":\"{}\",\"iosModelUrl\":{},\"thumbnailUrl\":{},\"publishedAt\":\"{}\",\"updatedAt\":\"{}\",\"status\":\"{}\",\"featured\":{},\"spawnPosition\":{},\"scale\":{},\"rotation\":{},\"environment\":{} }}",esc(&m.id),esc(&m.title),esc(&m.creator),esc(&m.description),esc(&m.category),esc(&m.placement_type),esc(&m.model_type),esc(&m.model_url),opt(&m.ios_model_url),opt(&m.thumbnail_url),esc(&m.published_at),esc(&m.updated_at),esc(&m.status),m.featured,m.spawn_position,m.scale,m.rotation,opt(&m.environment))
@@ -2080,9 +2234,21 @@ fn has_backpack_land(headers: &HashMap<String, String>) -> bool {
         .map(|value| value.to_ascii_lowercase())
         .unwrap_or_default();
     [
-        "muzikaz world", "digital land", "world plot", "land asset", "land world",
-        "land reservation", "land deed", "land claim", "volt city", "skyline deck",
-        "echo gardens", "crew plaza", "studio ridge", "neon docks", "bassline badlands",
+        "muzikaz world",
+        "digital land",
+        "world plot",
+        "land asset",
+        "land world",
+        "land reservation",
+        "land deed",
+        "land claim",
+        "volt city",
+        "skyline deck",
+        "echo gardens",
+        "crew plaza",
+        "studio ridge",
+        "neon docks",
+        "bassline badlands",
         "pixel peaks",
     ]
     .iter()
