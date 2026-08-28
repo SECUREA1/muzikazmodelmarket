@@ -286,12 +286,14 @@ async function ensureBottleChain(wallet, chainId) {
   }
 }
 
-async function validateBottleOwnership(address) {
+async function validateBottleOwnership(address, requiredContract = '') {
   const wallet = requireEthereumWallet();
   const config = bottleContractConfig();
   await ensureBottleChain(wallet, config.chainId);
   const ownerWord = String(address).toLowerCase().replace(/^0x/, '').padStart(64, '0');
-  for (const contract of config.approvedContracts) {
+  const contracts = requiredContract ? config.approvedContracts.filter((contract) => contract === requiredContract.toLowerCase()) : config.approvedContracts;
+  if (!contracts.length) throw new Error('The requested access contract is not approved for this member vault.');
+  for (const contract of contracts) {
     let result;
     try {
       result = await wallet.request({ method: 'eth_call', params: [{ to: contract, data: BOTTLE_BALANCE_OF_SELECTOR + ownerWord }, 'latest'] });
@@ -1999,6 +2001,7 @@ function initBottleLogin() {
   const status = document.querySelector('#bottle-login-status');
   const addressLabel = document.querySelector('#bottle-wallet-address');
   const connectButton = document.querySelector('#bottle-wallet-connect');
+  const meknxButton = document.querySelector('#meknx-wallet-entry');
   const loadoutButton = document.querySelector('#bottle-backpack-loadout');
   const loadoutCurrency = document.querySelector('#bottle-loadout-currency');
   const loadoutPrice = document.querySelector('#bottle-loadout-price');
@@ -2013,6 +2016,7 @@ function initBottleLogin() {
   let walletRequestActive = false;
   const setBusy = (busy) => {
     if (connectButton) connectButton.disabled = busy;
+    if (meknxButton) meknxButton.disabled = busy;
     if (loadoutButton) loadoutButton.disabled = busy;
     if (mintButton) mintButton.disabled = busy || (Number(form.dataset.purchaseStep) || 1) < 3;
   };
@@ -2058,8 +2062,8 @@ function initBottleLogin() {
     document.body.classList.add('is-member-authenticated');
     if (status) status.textContent = message;
   };
-  const verifyAndUnlock = async (address) => {
-    const ownership = await validateBottleOwnership(address);
+  const verifyAndUnlock = async (address, requiredContract = '') => {
+    const ownership = await validateBottleOwnership(address, requiredContract);
     const profile = window.MZKWallet?.connectIdentity({ address, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
     currentMemberEmail = normalizeMemberEmail(address);
     grantBottleAccess(currentMemberEmail, 'ethereum-contract', ownership.config.contract);
@@ -2121,6 +2125,23 @@ function initBottleLogin() {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     await connect();
+  });
+  meknxButton?.addEventListener('click', async () => {
+    walletRequestActive = true;
+    setBusy(true);
+    if (status) status.textContent = 'Connecting Ethereum and checking the MEKNX access contract…';
+    try {
+      const wallet = requireEthereumWallet();
+      const address = await requestEthereumAccount(wallet, { chooseAccount: meknxButton.dataset.connected === 'true' });
+      showAddress(address);
+      await verifyAndUnlock(address, meknxButton.dataset.contract);
+    } catch (error) {
+      window.sessionStorage.removeItem('muzikazBottleMember');
+      if (status) status.textContent = error.message || 'MEKNX contract ownership could not be verified.';
+    } finally {
+      walletRequestActive = false;
+      setBusy(false);
+    }
   });
   loadoutCurrency?.addEventListener('change', updateLoadoutQuote);
   loadoutButton?.addEventListener('click', async () => {

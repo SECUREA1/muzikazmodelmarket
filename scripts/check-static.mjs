@@ -196,7 +196,7 @@ for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace
     throw new Error(`members.html is missing subscriber section #${id}`);
   }
 }
-for (const requiredLoginGate of ['id="member-locked-content" data-locked="true" hidden', 'id="bottle-wallet-connect"', 'id="bottle-wallet-mint"', 'name="muzikaz-bottle-contract"']) {
+for (const requiredLoginGate of ['id="member-locked-content" data-locked="true" hidden', 'id="bottle-wallet-connect"', 'id="bottle-wallet-mint"', 'id="meknx-wallet-entry"', 'name="muzikaz-bottle-contract"']) {
   if (!membersHtml.includes(requiredLoginGate)) {
     throw new Error(`members.html is missing its Bottle-only login gate: ${requiredLoginGate}`);
   }
