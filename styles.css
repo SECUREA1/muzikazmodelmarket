@@ -904,10 +904,31 @@ body{overflow-x:hidden}.topbar{font-size:12px}.site-header{position:sticky;heigh
 
 /* Original platform entry: keep the login and market graphics aligned with the early index. */
 body.original-platform{
-background:radial-gradient(circle at 50% 0, #162200 0, #040504 42%, #000 100%)}
+background-color:#020402;
+background-image:
+linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.82)),
+url('dark_smoke_green_fx_2x.png'),
+url('smoke_energy_background_large_2x.png');
+background-position:center top,center top,center 70vh;
+background-size:cover,100% auto,100% auto;
+background-repeat:no-repeat,no-repeat,repeat-y;
+background-attachment:scroll,fixed,fixed}
 body.original-platform::before{content:none}
 body.original-platform .start-bg{
 background:linear-gradient(90deg, rgba(0,0,0,.92), rgba(0,0,0,.42), rgba(0,0,0,.92)), url('smoke_energy_background_large_2x.png') center/cover no-repeat}
+
+/* The homepage presents the deposited GLBs themselves rather than static
+   character renders. Background artwork remains atmospheric and separate. */
+body.original-platform .hero-poster{background:radial-gradient(circle at 50% 52%,rgba(156,255,0,.18),transparent 42%),rgba(0,0,0,.18)}
+body.original-platform .hero-character{width:48%;height:76%;object-fit:contain;background:transparent;filter:drop-shadow(0 20px 20px rgba(0,0,0,.72));--poster-color:transparent}
+body.original-platform .hero-character--one{left:2%;bottom:3%}
+body.original-platform .hero-character--two{right:1%;bottom:1%}
+body.original-platform .card[data-preview-model]{background-image:linear-gradient(180deg,rgba(10,20,9,.28),rgba(0,0,0,.94)),url('dark_smoke_green_fx.png');background-position:center;background-size:cover}
+body.original-platform .card-model-stage{position:absolute;inset:0;z-index:1}
+body.original-platform .card-model-stage .connected-model-viewer{width:100%;height:72%;background:transparent;--poster-color:transparent}
+body.original-platform .card[data-preview-model]>div:last-child{position:relative;z-index:2}
+body.original-platform .model-detail-art[data-connected-model-ready="true"]{background-image:radial-gradient(circle,rgba(156,255,0,.12),transparent 64%),url('dark_smoke_green_fx.png')!important;background-size:cover!important}
+body.original-platform .model-detail-art .connected-model-viewer{width:100%;height:240px;background:transparent;--poster-color:transparent}
 body.original-platform .hero{
 grid-template-columns:320px 1fr}
 body.original-platform .hero:before{
@@ -2186,6 +2207,12 @@ section,
 .house-main-controls-button{position:absolute;z-index:10;top:18px;right:18px;display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 16px;border:1px solid #fff1ce;border-radius:999px;background:linear-gradient(135deg,#ffb13b,#f15a14 58%,#be2e08);box-shadow:0 0 12px rgba(255,126,26,.96),0 0 30px rgba(255,91,14,.7),inset 0 1px 0 rgba(255,255,255,.65);color:#200900;font-size:12px;font-weight:1000;letter-spacing:.1em;line-height:1;text-decoration:none;text-transform:uppercase;transition:transform .18s ease,filter .18s ease,box-shadow .18s ease}.house-main-controls-button:hover,.house-main-controls-button:focus-visible{transform:translateY(-2px) scale(1.03);filter:brightness(1.12);box-shadow:0 6px 16px rgba(0,0,0,.35),0 0 18px rgba(255,159,43,1),0 0 42px rgba(255,91,14,.85);outline:2px solid #fff;outline-offset:3px}@media(max-width:640px){.house-main-controls-button{display:none}}
 .house-stage.is-ghost-level .house-reticle.is-toxic-target{color:#b5f4ff;text-shadow:0 0 10px #fff,0 0 26px #278cff}
 
+/* GLB-first homepage overrides live at the end of the cascade so the original
+   image-oriented hero rules cannot turn these viewers back into thumbnails. */
+body.original-platform .hero-character{width:48%!important;height:76%!important;pointer-events:auto;background:transparent;--poster-color:transparent}
+body.original-platform .hero-character--one{right:-8%;left:auto;bottom:-3%}
+body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opacity:1}
+
 .crib-social{position:absolute;z-index:35;right:14px;bottom:96px}.crib-chat-toggle{display:flex;gap:12px;align-items:center;padding:10px 14px;border:1px solid #dfff70;border-radius:999px;background:rgba(3,10,5,.94);color:#fff;box-shadow:0 0 22px rgba(156,255,0,.25)}.crib-chat-toggle b{color:var(--lime)}.crib-chat-panel{position:absolute;right:0;bottom:52px;width:min(360px,calc(100vw - 28px));overflow:hidden;border:1px solid rgba(156,255,0,.55);border-radius:18px;background:rgba(2,8,5,.97);box-shadow:0 18px 60px #000}.crib-chat-panel header{display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid rgba(156,255,0,.25)}.crib-chat-panel header div{display:grid}.crib-chat-panel header small{color:#aab5ad;text-transform:none}.crib-chat-panel header button{padding:4px 10px}.crib-player-list{display:flex;gap:6px;overflow-x:auto;padding:10px}.crib-player-list span{flex:none;padding:5px 9px;border:1px solid var(--player-color);border-radius:999px;color:#fff;font-size:11px}.crib-player-list span:before{content:'•';margin-right:5px;color:var(--player-color)}.crib-chat-messages{height:190px;margin:0;padding:8px 14px;overflow-y:auto;list-style:none}.crib-chat-messages li{display:grid;grid-template-columns:auto 1fr;gap:8px;margin:7px 0;color:#fff;font-size:13px;text-transform:none}.crib-chat-messages strong{color:var(--lime)}#crib-chat-form{display:flex;gap:7px;padding:10px;border-top:1px solid rgba(156,255,0,.22)}#crib-chat-form input{min-width:0;flex:1}#crib-chat-form button{padding:9px 12px}#crib-chat-status{min-height:16px;margin:0;padding:0 12px 8px;color:#ffd45c;font-size:11px;text-transform:none}@media(max-width:620px){.crib-social{right:max(8px,env(safe-area-inset-right));bottom:max(72px,calc(60px + env(safe-area-inset-bottom)))}.crib-chat-panel{position:fixed;inset:auto max(7px,env(safe-area-inset-right)) max(76px,calc(64px + env(safe-area-inset-bottom))) max(7px,env(safe-area-inset-left));width:auto;max-height:min(70svh,560px);display:flex;flex-direction:column}.crib-chat-panel[hidden]{display:none}.crib-chat-messages{min-height:96px;height:auto;flex:1}#crib-chat-form input{font-size:16px}}
 
 /* RAD-TOX is one bounded viewport: stage, overlays, HUD and touch docks never
@@ -2814,3 +2841,8 @@ body.original-platform .hero-copy>p:not(.world-kicker){max-width:650px;margin:25
 /* Ordered Builder Loadout purchase panel */
 .member-hero{grid-template-columns:1fr}.member-login-card{position:relative}.bottle-login-form{grid-template-columns:1fr 1.35fr;margin:0}.loadout-intro{grid-column:1/-1;padding-right:210px}.wallet-connect-top{position:absolute;top:24px;right:24px;min-width:185px;background:transparent;color:var(--lime);border-color:var(--lime)}.wallet-connect-top[data-connected="true"]{color:#fff;border-color:#24d8ff}.purple-bottle-preview{grid-column:1/-1;display:grid;grid-template-columns:140px 1fr;grid-template-rows:auto auto 1fr;column-gap:18px;align-items:center;padding:18px;border:1px solid rgba(189,93,255,.62);border-radius:18px;background:radial-gradient(circle at 12% 50%,rgba(176,56,255,.3),transparent 28%),linear-gradient(135deg,rgba(69,14,96,.35),rgba(0,0,0,.72))}.purple-bottle-preview img{grid-row:1/4;width:140px;height:150px;object-fit:contain;filter:hue-rotate(185deg) saturate(1.8) drop-shadow(0 0 22px rgba(190,65,255,.7))}.purple-bottle-preview span{width:max-content;max-width:100%;padding:5px 9px;border-radius:999px;background:#a43cff;color:#fff;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.purple-bottle-preview strong{font-family:Bangers,cursive;color:#dca3ff;font-size:31px;letter-spacing:.04em}.purple-bottle-preview small{color:#d4c4db;line-height:1.45;text-transform:none}.loadout-details{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.loadout-step{display:flex;align-items:center;gap:7px;padding:8px;border-bottom:2px solid rgba(255,255,255,.16);color:#777;font-size:11px;font-weight:900;text-transform:uppercase}.loadout-step b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#282828}.loadout-step.is-active{border-color:var(--lime);color:#fff}.loadout-step.is-active b{background:var(--lime);color:#000}.loadout-details ul{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 0;padding:0;list-style:none}.loadout-details li{display:grid;gap:4px;padding:11px;border:1px solid rgba(255,255,255,.12);border-radius:11px;background:rgba(255,255,255,.035)}.loadout-details li strong{color:#fff;font-size:12px}.loadout-details li small{color:var(--muted);font-size:10px;line-height:1.35;text-transform:none}.bottle-login-form .loadout-currency>span{font-size:11px;letter-spacing:.12em;text-transform:uppercase}.loadout-pay-button{min-height:74px;background:linear-gradient(135deg,var(--lime),#5f9e00);color:#041000;box-shadow:0 0 24px rgba(156,255,0,.18)}
 @media(max-width:950px){.bottle-login-form{grid-template-columns:1fr}.loadout-intro{padding-right:0;padding-top:68px}.wallet-connect-top{left:24px;right:24px;width:auto}.purple-bottle-preview{grid-template-columns:90px 1fr}.purple-bottle-preview img{width:90px;height:120px}.loadout-details ul{grid-template-columns:1fr}}
+
+/* Final GLB hero sizing: these rules intentionally follow all legacy hero art. */
+body.original-platform .hero-character{width:48%!important;height:76%!important;pointer-events:auto;background:transparent;--poster-color:transparent}
+body.original-platform .hero-character--one{right:-8%;left:auto;bottom:-3%}
+body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opacity:1}
