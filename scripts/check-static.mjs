@@ -261,13 +261,13 @@ for (const requiredBottleAccessFlow of ['eth_requestAccounts', 'eth_call', 'eth_
 for (const requiredMarketPaymentFlow of ['MARKET_PAYMENT_ADDRESS', 'MARKET_ITEM_PRICE_WEI', 'marketPaymentConfig', 'waitForMarketTransaction', 'completeEthereumOrder', 'wallet_revokePermissions']) {
   if (!appScript.includes(requiredMarketPaymentFlow)) throw new Error(`script.js is missing Ethereum marketplace checkout behavior ${requiredMarketPaymentFlow}`);
 }
-for (const requiredMintReward of ['0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238', 'BACKPACK_LOADOUT_USD = 5', 'Unrevealed MUZIKAZ Land', 'Unrevealed MUZIKAZ Bottle', 'grantBottleMintBackpackAssets']) {
+for (const requiredMintReward of ['0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238', 'BACKPACK_LOADOUT_USD = 5', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
-for (const requiredLoadoutCopy of ['$5 USD · Live ETH quote', 'Mint the Magic Bottle', 'collect your Backpack assets into your wallet']) {
+for (const requiredLoadoutCopy of ['$5 USD · Live ETH quote', 'Minting is optional', 'Continue without minting']) {
   if (!membersHtml.includes(requiredLoadoutCopy)) throw new Error(`members.html is missing $5 Loadout or Magic Bottle guidance: ${requiredLoadoutCopy}`);
 }
-for (const requiredLoadoutFlow of ['Not part of the main collection', 'Purple Magic Bottle', 'Buy pack &amp; pay with ETH', 'data-purchase-step="payment"']) {
+for (const requiredLoadoutFlow of ['Builder drop · optional mint', 'Violet Wish Bottle', 'Unlock loadout &amp; pay with ETH', 'id="bottle-continue"', 'data-purchase-step="payment"']) {
   if (!membersHtml.includes(requiredLoadoutFlow)) throw new Error(`members.html is missing the ordered Purple Bottle loadout flow: ${requiredLoadoutFlow}`);
 }
 if (!appScript.includes('config.approvedContracts') || !appScript.includes('MUZIKAZ_BOTTLE_APPROVED_CONTRACTS')) {
