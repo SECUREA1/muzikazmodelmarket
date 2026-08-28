@@ -1,10 +1,10 @@
 services:
   - type: web
     name: muzikaz-model-market
-    runtime: rust
+    runtime: node
     plan: free
-    buildCommand: cargo build --release
-    startCommand: ./target/release/muzikazmodelmarket
+    buildCommand: npm ci && npm run build
+    startCommand: node server.mjs
     healthCheckPath: /api/health
     envVars:
       - key: PORT

@@ -146,6 +146,14 @@
                 </aside>
                 <div class="owned-assets-board">
                     <div class="owned-assets-summary" id="owned-assets-summary"></div>
+                    <section class="member-exchange" id="member-exchange" aria-labelledby="member-exchange-title">
+                        <div><p class="kicker">Live member market</p><h3 id="member-exchange-title">Trade packs &amp; talk</h3><p>Select any registered member to see their shared Backpack, listed packs, trade history, and conversation.</p></div>
+                        <label>Member directory <select id="exchange-member-select"><option value="">Connect your member wallet</option></select></label>
+                        <p class="status-message" id="exchange-status" role="status">Connect your wallet to join the member directory.</p>
+                        <div class="exchange-packs" id="exchange-packs"></div>
+                        <div class="exchange-activity"><ol id="exchange-trades"><li>No shared trades yet.</li></ol><ol id="exchange-messages"><li>No messages yet.</li></ol></div>
+                        <form id="exchange-message-form"><label>Message selected member <input name="message" maxlength="500" autocomplete="off" placeholder="Ask about a pack or propose a trade" required></label><button type="submit">Send message</button></form>
+                    </section>
                     <div class="owned-assets-grid" id="owned-assets-grid"></div>
                     <section class="backpack-transactions" aria-labelledby="backpack-transactions-title">
                         <div><p class="kicker">Profile transactions</p><h3 id="backpack-transactions-title">Backpack trade activity</h3></div>
@@ -372,6 +380,7 @@
     <script src="mzk-wallet.js"></script>
     <script src="wallet-payments.js"></script>
   <script src="script.js"></script>
+  <script src="member-market.js"></script>
   <script src="battle-theme.js"></script>
     <script src="backpack-widget.js"></script>
 </body>
