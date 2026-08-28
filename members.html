@@ -56,24 +56,38 @@
     <main>
         <section class="member-hero" id="bottle-login" aria-labelledby="bottle-login-title">
             <div class="member-login-card">
-                <p class="kicker">Bottle members only</p>
-                <h1 id="bottle-login-title">Member login</h1>
-                <p>Connect an Ethereum wallet to prove that it owns a MUZIKAZ Bottle contract token. The $5 Backpack Loadout adds one unrevealed land and one unrevealed Bottle to the paying wallet's in-game Backpack.</p>
-                <form id="bottle-login-form" class="bottle-login-form">
-                    <button type="submit" id="bottle-wallet-connect">Connect Ethereum wallet</button>
-                    <label class="loadout-currency">Pay for loadout with
+                <form id="bottle-login-form" class="bottle-login-form" data-purchase-step="payment">
+                    <button type="submit" class="wallet-connect-top" id="bottle-wallet-connect"><span>Connect ETH wallet</span><small>Member access</small></button>
+                    <div class="loadout-intro">
+                        <p class="kicker">Builder pack · separate drop</p>
+                        <h1 id="bottle-login-title">Buy your loadout</h1>
+                        <p>Start with a ready-to-open Backpack pack. This purchase adds the two unrevealed game assets below to the paying wallet.</p>
+                    </div>
+                    <aside class="purple-bottle-preview" aria-label="Purple Magic Bottle loadout bonus">
+                        <span>Not part of the main collection</span>
+                        <img src="muzikaz_transparent_assets/products/muzikaz_bottle.png" alt="Purple Magic Bottle included with the Backpack Loadout" />
+                        <strong>Purple Magic Bottle</strong>
+                        <small>Exclusive Builder Loadout bottle. It is separate from the main MUZIKAZ Bottle collection and does not grant collection membership until minted and verified.</small>
+                    </aside>
+                    <div class="loadout-details" aria-label="Backpack Loadout details">
+                        <span class="loadout-step is-active" data-loadout-step="1"><b>1</b> Select payment</span>
+                        <span class="loadout-step" data-loadout-step="2"><b>2</b> Pay $5</span>
+                        <span class="loadout-step" data-loadout-step="3"><b>3</b> Mint bottle</span>
+                        <ul><li><strong>1× Unrevealed land</strong><small>Random in-game starter plot</small></li><li><strong>1× Purple Magic Bottle</strong><small>Loadout-only bottle, outside the main collection</small></li><li><strong>$5 USD</strong><small>Live crypto quote before wallet approval</small></li></ul>
+                    </div>
+                    <label class="loadout-currency"><span>Choose how to pay</span>
                         <select id="bottle-loadout-currency" aria-label="Backpack Loadout payment currency">
                             <option value="ETH">ETH · Ethereum</option>
                             <option value="SOL">SOL · Phantom</option>
                             <option value="ADA">ADA · Lace</option>
                         </select>
                     </label>
-                    <button type="button" id="bottle-backpack-loadout">Buy Backpack Loadout <small id="bottle-loadout-price">$5 USD · Live ETH quote · Land + Bottle</small></button>
+                    <button type="button" class="loadout-pay-button" id="bottle-backpack-loadout"><span>Buy pack &amp; pay with ETH</span><small id="bottle-loadout-price">$5 USD · Live ETH quote · Land + Bottle</small></button>
                     <div class="magic-bottle-mint">
-                        <span>Next step</span>
+                        <span>Step 3 · after payment</span>
                         <strong>Collect your Backpack assets on-chain</strong>
                         <small>After buying your Loadout, mint the Magic Bottle to collect your Backpack assets into your wallet.</small>
-                        <button type="button" class="ghost" id="bottle-wallet-mint">Mint the Magic Bottle</button>
+                        <button type="button" class="ghost" id="bottle-wallet-mint" disabled>Mint the Magic Bottle · Purple Loadout Edition</button>
                     </div>
                 </form>
                 <p class="wallet-address" id="bottle-wallet-address" hidden></p>

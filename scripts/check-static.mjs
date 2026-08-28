@@ -267,6 +267,9 @@ for (const requiredMintReward of ['0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238', 
 for (const requiredLoadoutCopy of ['$5 USD · Live ETH quote', 'Mint the Magic Bottle', 'collect your Backpack assets into your wallet']) {
   if (!membersHtml.includes(requiredLoadoutCopy)) throw new Error(`members.html is missing $5 Loadout or Magic Bottle guidance: ${requiredLoadoutCopy}`);
 }
+for (const requiredLoadoutFlow of ['Not part of the main collection', 'Purple Magic Bottle', 'Buy pack &amp; pay with ETH', 'data-purchase-step="payment"']) {
+  if (!membersHtml.includes(requiredLoadoutFlow)) throw new Error(`members.html is missing the ordered Purple Bottle loadout flow: ${requiredLoadoutFlow}`);
+}
 if (!appScript.includes('config.approvedContracts') || !appScript.includes('MUZIKAZ_BOTTLE_APPROVED_CONTRACTS')) {
   throw new Error('script.js must validate ownership across all approved Bottle contracts.');
 }
