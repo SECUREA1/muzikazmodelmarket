@@ -6,11 +6,23 @@ const requiredFiles = [
   'dist/styles.css',
   'dist/script.js',
   'dist/battle-theme.js',
+  'dist/backpack-widget.js',
+  'dist/backpack-widget.css',
   'dist/public/js/rad-tox-launcher.js',
   'dist/reference.png',
 ];
 
 await Promise.all(requiredFiles.map((file) => access(file)));
+
+const backpackPages = ['avatar-whitepaper.html', 'beasts.html', 'brand-kit.html', 'buy-mzk.html', 'chaines-ar-collectibles.html', 'chaos.html', 'checkout.html', 'crew-market.html', 'index.html', 'index0.html', 'index1.html', 'legends.html', 'login.html', 'members.html', 'model-explorer.html', 'model-market.html', 'new-legends.html', 'online-events.html', 'originals.html', 'quest-board.html', 'token-mixer.html', 'trait-avatars.html', 'voice-changer.html'];
+for (const page of backpackPages) {
+  const html = await readFile(`dist/${page}`, 'utf8');
+  if (!html.includes('mzk-wallet.js') || !html.includes('backpack-widget.js')) throw new Error(`${page} must expose the Ethereum wallet and Backpack controls.`);
+}
+const backpackWidget = await readFile('dist/backpack-widget.js', 'utf8');
+for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', 'data-open-backpack', 'Trade market', 'Buy / swap MZK']) {
+  if (!backpackWidget.includes(feature)) throw new Error(`The global Ethereum Backpack is missing ${feature}.`);
+}
 
 const excludedBuildDirectories = ['scripts', 'node_modules', 'muzikaz_rust_render_app', 'muzikaz_github_website', 'uploads', 'data'];
 for (const directory of excludedBuildDirectories) {
