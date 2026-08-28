@@ -19,7 +19,7 @@ const BOTTLE_MINT_SELECTOR = '0x1249c58b';
 const BOTTLE_MINT_PAYMENT_ADDRESS = '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238';
 const BACKPACK_LOADOUT_USD = 5;
 const BOTTLE_MINT_REWARDS_KEY = 'muzikazBottleMintRewards';
-const BOTTLE_MINT_BACKPACK_ASSETS = ['Unrevealed MUZIKAZ Land', 'Unrevealed MUZIKAZ Bottle'];
+const BOTTLE_MINT_BACKPACK_ASSETS = ['Unrevealed MUZIKAZ Land', 'Violet Wish Bottle'];
 const MARKET_PAYMENT_ADDRESS = '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238';
 const MARKET_ITEM_PRICE_WEI = 100000000000000n; // 0.0001 ETH for every cart unit.
 
@@ -2006,6 +2006,7 @@ function initBottleLogin() {
   const loadoutCurrency = document.querySelector('#bottle-loadout-currency');
   const loadoutPrice = document.querySelector('#bottle-loadout-price');
   const mintButton = document.querySelector('#bottle-wallet-mint');
+  const continueButton = document.querySelector('#bottle-continue');
   const identityPanel = document.querySelector('#wallet-identity');
   const usernameInput = document.querySelector('#wallet-username');
   const usernameSave = document.querySelector('#wallet-username-save');
@@ -2019,24 +2020,26 @@ function initBottleLogin() {
     if (meknxButton) meknxButton.disabled = busy;
     if (loadoutButton) loadoutButton.disabled = busy;
     if (mintButton) mintButton.disabled = busy || (Number(form.dataset.purchaseStep) || 1) < 3;
+    if (continueButton) continueButton.disabled = busy || (Number(form.dataset.purchaseStep) || 1) < 3;
   };
   const updateLoadoutQuote = async () => {
     const currency = loadoutCurrency?.value || 'ETH';
     const payLabel = loadoutButton?.querySelector('span');
-    if (payLabel) payLabel.textContent = `Buy pack & pay with ${currency}`;
+    if (payLabel) payLabel.textContent = `Unlock loadout & pay with ${currency}`;
     if (!loadoutPrice) return;
     loadoutPrice.textContent = `Loading live ${currency} quote…`;
     try {
       const quote = await window.MuzikazWalletPayments.quote(BACKPACK_LOADOUT_USD, currency);
-      loadoutPrice.textContent = `$${BACKPACK_LOADOUT_USD} USD ≈ ${quote.amount} ${currency} · Land + Bottle`;
+      loadoutPrice.textContent = `$${BACKPACK_LOADOUT_USD} USD ≈ ${quote.amount} ${currency} · Land + Wish Bottle`;
     } catch (error) {
-      loadoutPrice.textContent = `$${BACKPACK_LOADOUT_USD} USD · ${currency} live quote required · Land + Bottle`;
+      loadoutPrice.textContent = `$${BACKPACK_LOADOUT_USD} USD · ${currency} live quote required · Land + Wish Bottle`;
     }
   };
   const setPurchaseStep = (step) => {
     form.dataset.purchaseStep = String(step);
     form.querySelectorAll('[data-loadout-step]').forEach((item) => item.classList.toggle('is-active', Number(item.dataset.loadoutStep) <= step));
     if (mintButton) mintButton.disabled = step < 3;
+    if (continueButton) continueButton.disabled = step < 3;
   };
   const showAddress = (address) => {
     if (!addressLabel) return;
@@ -2081,6 +2084,18 @@ function initBottleLogin() {
       window.location.href = redirect;
       return;
     }
+    scrollToSection('member-locked-content');
+  };
+  const continueWithPaidLoadout = (payment) => {
+    const owner = normalizeMemberEmail(payment?.owner);
+    if (!owner || !payment?.paymentHash) throw new Error('Complete the $5 Loadout payment before continuing.');
+    currentMemberEmail = owner;
+    grantBottleAccess(owner, 'backpack-loadout-payment', payment.paymentHash);
+    window.sessionStorage.setItem('muzikazBottleMember', 'true');
+    window.localStorage.setItem('muzikazBottleMemberEmail', owner);
+    showAddress(owner);
+    renderOwnedCollection(owner);
+    unlock('Payment confirmed. Welcome to the creator vault — no Bottle mint required.');
     scrollToSection('member-locked-content');
   };
   const waitForTransactionReceipt = async (wallet, transactionHash, label) => {
@@ -2152,7 +2167,7 @@ function initBottleLogin() {
       const quote = await window.MuzikazWalletPayments.quote(BACKPACK_LOADOUT_USD, currency);
       setPurchaseStep(2);
       const walletName = currency === 'SOL' ? 'Phantom' : currency === 'ADA' ? 'Lace' : 'your Ethereum wallet';
-      if (status) status.textContent = `Confirm ${quote.amount} ${currency} (equivalent to $${BACKPACK_LOADOUT_USD} USD) in ${walletName}. The Loadout includes one in-game land and one Purple Magic Bottle outside the main collection.`;
+      if (status) status.textContent = `Confirm ${quote.amount} ${currency} (equivalent to $${BACKPACK_LOADOUT_USD} USD) in ${walletName}. The Loadout includes one in-game land and one Violet Wish Bottle; no mint is required to continue.`;
       const payment = await window.MuzikazWalletPayments.pay(BACKPACK_LOADOUT_USD, currency);
       const paymentHash = payment.transactionHash;
       const owner = payment.address;
@@ -2166,8 +2181,9 @@ function initBottleLogin() {
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
       grantBottleMintBackpackAssets(owner, paymentHash);
       window.localStorage.setItem('muzikazLoadoutPayment', JSON.stringify({ owner, paymentHash, currency }));
+      grantBottleAccess(owner, 'backpack-loadout-payment', paymentHash);
       setPurchaseStep(3);
-      if (status) status.textContent = `$${BACKPACK_LOADOUT_USD} Backpack Loadout confirmed with ${currency} (${String(paymentHash).slice(0, 10)}…) — one unrevealed land and one Purple Magic Bottle outside the main collection were added to ${owner}'s Backpack. Mint the Magic Bottle below to collect your Backpack assets into your wallet.`;
+      if (status) status.textContent = `$${BACKPACK_LOADOUT_USD} Backpack Loadout confirmed with ${currency} (${String(paymentHash).slice(0, 10)}…) — your land and Violet Wish Bottle are in the Backpack. Continue now without minting, or optionally mint the collectible on-chain.`;
       renderOwnedCollection(currentMemberEmail);
     } catch (error) {
       if (status) status.textContent = error.message || 'The Backpack Loadout could not be purchased.';
@@ -2181,6 +2197,13 @@ function initBottleLogin() {
     window.localStorage.removeItem('muzikazLoadoutPayment');
   }
   updateLoadoutQuote();
+  continueButton?.addEventListener('click', () => {
+    try {
+      continueWithPaidLoadout(JSON.parse(window.localStorage.getItem('muzikazLoadoutPayment') || 'null'));
+    } catch (error) {
+      if (status) status.textContent = error.message || 'The paid Loadout could not be opened.';
+    }
+  });
   mintButton?.addEventListener('click', async () => {
     setBusy(true);
     try {
@@ -2191,15 +2214,15 @@ function initBottleLogin() {
       const from = accounts?.[0];
       if (!from) throw new Error('Connect an Ethereum account before minting.');
       showAddress(from);
-      if (status) status.textContent = 'Confirm the Magic Bottle mint transaction in your wallet…';
+      if (status) status.textContent = 'Confirm the optional Violet Wish Bottle mint transaction in your wallet…';
       const transaction = { from, to: config.contract, data: config.mintData };
       if (config.mintValue) transaction.value = config.mintValue;
       const transactionHash = await wallet.request({ method: 'eth_sendTransaction', params: [transaction] });
-      if (status) status.textContent = `Magic Bottle mint submitted (${transactionHash.slice(0, 10)}…). Waiting for confirmation…`;
-      await waitForTransactionReceipt(wallet, transactionHash, 'Magic Bottle mint');
+      if (status) status.textContent = `Violet Wish Bottle mint submitted (${transactionHash.slice(0, 10)}…). Waiting for confirmation…`;
+      await waitForTransactionReceipt(wallet, transactionHash, 'Violet Wish Bottle mint');
       await verifyAndUnlock(from);
     } catch (error) {
-      if (status) status.textContent = error.message || 'The Magic Bottle could not be minted.';
+      if (status) status.textContent = error.message || 'The optional Violet Wish Bottle could not be minted.';
     } finally {
       setBusy(false);
     }
