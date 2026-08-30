@@ -10,6 +10,7 @@ const addModelButton = document.querySelector('[data-add-model]');
 const modelPageLink = document.querySelector('#model-page-link');
 let cartItems = 0;
 const CART_KEY = 'muzikazCheckoutCart';
+const BACKPACK_ASSETS_KEY = 'muzikazBackpackAssetsV1';
 const BACKPACK_MARKET_KEY = 'muzikazBackpackMarket';
 const BACKPACK_TRANSACTIONS_KEY = 'muzikazBackpackTransactions';
 const BACKPACK_STARTING_TOKENS = 500;
@@ -168,15 +169,28 @@ function syncCartCount() {
   if (cartCount) cartCount.textContent = String(cartItems);
 }
 
-function addCartLine(name, price, meta = '') {
+function normalizeDeliverable(deliverable) {
+  if (!deliverable?.modelUrl || !/\.(?:glb|gltf)(?:[?#]|$)/i.test(deliverable.modelUrl)) return null;
+  return {
+    id: String(deliverable.id || deliverable.modelUrl),
+    name: String(deliverable.name || '3D model'),
+    modelUrl: String(deliverable.modelUrl),
+    iosModelUrl: String(deliverable.iosModelUrl || ''),
+    format: String(deliverable.format || deliverable.modelUrl.split('?')[0].split('.').pop() || 'glb').toLowerCase(),
+    category: String(deliverable.category || '3D Model')
+  };
+}
+
+function addCartLine(name, price, meta = '', deliverable = null) {
   if (!name) return;
   const items = readCart();
-  const key = `${name}|${meta}`;
+  const asset = normalizeDeliverable(deliverable);
+  const key = `${name}|${meta}|${asset?.id || ''}|${asset?.modelUrl || ''}`;
   const existing = items.find((item) => item.key === key);
   if (existing) {
     existing.quantity += 1;
   } else {
-    items.push({ key, name, price: Number(price) || 0, meta, quantity: 1 });
+    items.push({ key, name, price: Number(price) || 0, meta, quantity: 1, deliverable: asset });
   }
   writeCart(items);
 }
@@ -843,7 +857,13 @@ addModelButton?.addEventListener('click', () => {
     return;
   }
   const model = getModel(selectedModel);
-  addCartLine(`${selectedModel} 3D Model Pack`, parsePrice(model.price), model.type);
+  const deliverable = ownerGlbModels.find((item) => normalizeArModelKey(item.id) === normalizeArModelKey(model.glbModelId || model.id));
+  if (!deliverable) {
+    if (modelStatus) modelStatus.textContent = `${selectedModel} is still loading its exact GLB. Try again in a moment.`;
+    loadOwnerGlbModels();
+    return;
+  }
+  addCartLine(`${selectedModel} · ${model.character} 3D Model`, parsePrice(model.price), `${model.type} · Exact GLB delivered to Backpack`, deliverable);
   updateCart(addModelButton, 'Model added');
   if (modelStatus) modelStatus.textContent = `${selectedModel} model added to your cart.`;
 });
@@ -851,7 +871,7 @@ addModelButton?.addEventListener('click', () => {
 document.addEventListener('muzikaz:add-model-to-cart', (event) => {
   const model = event.detail || {};
   if (!model.name) return;
-  addCartLine(`${model.name} 3D Model`, model.price, `${model.category || '3D Model'} · Adds to Backpack after purchase`);
+  addCartLine(`${model.name} 3D Model`, model.price, `${model.category || '3D Model'} · Exact GLB delivered to Backpack`, model);
   const status = document.querySelector('#explorer-live-models-status') || modelStatus;
   if (status) status.textContent = `${model.name} added to your cart. Complete checkout to add it to your Backpack.`;
 });
@@ -935,14 +955,14 @@ const siteTwoProducts = [
 
 const assetCatalog = {
   models: [
-    { id: 'originals', page: 'originals.html', name: 'Originals', css: 'monkey', character: 'Ape', type: 'Character Models', file: 'reference.png', price: '$39.00', copy: 'Classic starter poses, mascot turnarounds, and brand-ready preview files.', merch: ['Neon Hoodie', 'Bolt Keychain'] },
-    { id: 'legends', page: 'legends.html', name: 'Legends', css: 'robot', character: 'Cyber Wolf', type: '3D Model Packs', file: 'futuristic_armored_wolf_humanoid.png', price: '$64.00', copy: 'Armored future icon with dramatic neon render support and creator-safe styling.', merch: ['Crew Cap', 'Beat Bottle'] },
-    { id: 'beasts', page: 'beasts.html', name: 'Beasts', css: 'beast', character: 'Red Beast', type: '3D Model Packs', file: 'fierce_demon_hybrid_in_action.png', price: '$58.00', copy: 'Monster-power render pack connected to safe fantasy presentation rules.', merch: ['Wristband', 'Lanyard'] },
-    { id: 'crew', page: 'crew-market.html', name: 'Crew', css: 'penguin', character: 'Crew Penguin', type: 'Character Models', file: 'the_crew_banner_2x_transparent.png', price: '$44.00', copy: 'Street-smart mascot assets for friendly drops, banners, and fan pages.', merch: ['Crew Cap', 'Lanyard'] },
-    { id: 'chaos', page: 'chaos.html', name: 'Chaos', css: 'chaos', character: 'Chaos Ape', type: '3D Model Packs', file: 'character_traits_overview_panel_2x.png', price: '$69.00', copy: 'High-energy hybrid concepts for the loudest MUZIKAZ creator collection.', merch: ['Neon Hoodie', 'Wristband'] },
-    { id: 'new-legends', page: 'new-legends.html', name: 'New Legends', css: 'new-legends', character: 'Unlocked Crew', type: 'Character Models', file: 'new_legends_unlocked_2x_transparent.png', price: '$52.00', copy: 'Expanded platform collection art for fresh mascot launches and hero tiles.', merch: ['Hero Banner', 'Tagline Tee'] },
-    { id: 'trait-avatars', page: 'trait-avatars.html', name: 'Trait Avatars', css: 'trait-avatars', character: 'Avatar Lineup', type: 'Character Models', file: 'trait_avatars_row_1_2x.png', price: '$46.00', copy: 'Row-ready mascot avatars built for picker graphics, social posts, and profile drops.', merch: ['Avatar Sticker Sheet', 'Crew Cap'] },
-    { id: 'online-events', page: 'online-events.html', name: 'Online Events', css: 'online-events', character: 'Event Crew', type: 'Event Model Packs', file: 'available_online_events_banner_2x_transparent.png', price: '$55.00', copy: 'Event-ready visual set for stream drops, ticket pages, and online campaigns.', merch: ['Event Pass', 'Lanyard'] },
+    { id: 'originals', glbModelId: 'aape', page: 'originals.html', name: 'Originals', css: 'monkey', character: 'Ape', type: 'Character Models', file: 'reference.png', price: '$39.00', copy: 'Classic starter poses, mascot turnarounds, and brand-ready preview files.', merch: ['Neon Hoodie', 'Bolt Keychain'] },
+    { id: 'legends', glbModelId: 'voltwolf', page: 'legends.html', name: 'Legends', css: 'robot', character: 'Cyber Wolf', type: '3D Model Packs', file: 'futuristic_armored_wolf_humanoid.png', price: '$64.00', copy: 'Armored future icon with dramatic neon render support and creator-safe styling.', merch: ['Crew Cap', 'Beat Bottle'] },
+    { id: 'beasts', glbModelId: 'sharko', page: 'beasts.html', name: 'Beasts', css: 'beast', character: 'Red Beast', type: '3D Model Packs', file: 'fierce_demon_hybrid_in_action.png', price: '$58.00', copy: 'Monster-power render pack connected to safe fantasy presentation rules.', merch: ['Wristband', 'Lanyard'] },
+    { id: 'crew', glbModelId: 'ioncduck', page: 'crew-market.html', name: 'Crew', css: 'penguin', character: 'Crew Penguin', type: 'Character Models', file: 'the_crew_banner_2x_transparent.png', price: '$44.00', copy: 'Street-smart mascot assets for friendly drops, banners, and fan pages.', merch: ['Crew Cap', 'Lanyard'] },
+    { id: 'chaos', glbModelId: 'flaminglow', page: 'chaos.html', name: 'Chaos', css: 'chaos', character: 'Chaos Ape', type: '3D Model Packs', file: 'character_traits_overview_panel_2x.png', price: '$69.00', copy: 'High-energy hybrid concepts for the loudest MUZIKAZ creator collection.', merch: ['Neon Hoodie', 'Wristband'] },
+    { id: 'new-legends', glbModelId: 'muzikaz', page: 'new-legends.html', name: 'New Legends', css: 'new-legends', character: 'Unlocked Crew', type: 'Character Models', file: 'new_legends_unlocked_2x_transparent.png', price: '$52.00', copy: 'Expanded platform collection art for fresh mascot launches and hero tiles.', merch: ['Hero Banner', 'Tagline Tee'] },
+    { id: 'trait-avatars', glbModelId: 'pixella', page: 'trait-avatars.html', name: 'Trait Avatars', css: 'trait-avatars', character: 'Avatar Lineup', type: 'Character Models', file: 'trait_avatars_row_1_2x.png', price: '$46.00', copy: 'Row-ready mascot avatars built for picker graphics, social posts, and profile drops.', merch: ['Avatar Sticker Sheet', 'Crew Cap'] },
+    { id: 'online-events', glbModelId: 'beedeere', page: 'online-events.html', name: 'Online Events', css: 'online-events', character: 'Event Crew', type: 'Event Model Packs', file: 'available_online_events_banner_2x_transparent.png', price: '$55.00', copy: 'Event-ready visual set for stream drops, ticket pages, and online campaigns.', merch: ['Event Pass', 'Lanyard'] },
   ],
   websitePackages: [
     { id: 'starter-site', page: 'index.html', name: 'Starter Website Bundle', category: 'Website Packages', price: '$20.00', asset: 'hero_banner_full_2x_transparent.png', copy: 'One-page starter layout with hero, product callouts, and connected checkout buttons.' },
@@ -1200,7 +1220,7 @@ document.addEventListener('click', (event) => {
   if (productButton) {
     const productName = productButton.dataset.product;
     const product = assetCatalog.retail.find((item) => item.name === productName) || marketplaceListings.find((item) => item.name === productName);
-    addCartLine(productName, parsePrice(product?.price), product?.category || product?.type || 'Store item');
+    addCartLine(productName, parsePrice(product?.price), product?.category || product?.type || 'Store item', product?.modelUrl ? product : null);
     updateCart(productButton);
   }
 });
@@ -1699,7 +1719,13 @@ document.querySelector('#checkout-add')?.addEventListener('click', (event) => {
   const character = siteTwoCharacters[Number(document.querySelector('#checkout-character-select')?.value)] || siteTwoCharacters[0];
   const product = siteTwoProducts[Number(document.querySelector('#checkout-product-select')?.value)] || siteTwoProducts[0];
   const qty = Math.max(1, Number(document.querySelector('#checkout-qty')?.value) || 1);
-  for (let index = 0; index < qty; index += 1) addCartLine(`${character.name} ${product.name}`, product.price, `${document.querySelector('#checkout-size-select')?.value || ''} · ${document.querySelector('#checkout-color-select')?.value || ''}`);
+  const deliverable = modelForCharacter(character);
+  if (!deliverable?.modelUrl) {
+    alert(`${character.name}'s displayed GLB is still loading. Try checkout again in a moment.`);
+    loadOwnerGlbModels();
+    return;
+  }
+  for (let index = 0; index < qty; index += 1) addCartLine(`${character.name} ${product.name}`, product.price, `${document.querySelector('#checkout-size-select')?.value || ''} · ${document.querySelector('#checkout-color-select')?.value || ''} · Includes displayed ${deliverable.name} GLB`, deliverable);
   updateCart(event.currentTarget, 'Checkout added');
   alert(`${character.name} ${product.name} is in your cart. Complete checkout to add the purchased asset to your Backpack.`);
 });
@@ -2256,6 +2282,15 @@ function claimCheckoutItems(items, owner, source) {
   items.forEach((item) => {
     for (let quantity = 0; quantity < (Number(item.quantity) || 1); quantity += 1) claimOwnedAsset(item.name, source, normalizedOwner);
   });
+  const backpacks = readBackpackData(BACKPACK_ASSETS_KEY, {});
+  backpacks[normalizedOwner] ||= [];
+  items.forEach((item) => {
+    const deliverable = normalizeDeliverable(item.deliverable);
+    if (!deliverable) return;
+    const entitlement = { ...deliverable, orderItem: item.name, source, acquiredAt: new Date().toISOString() };
+    if (!backpacks[normalizedOwner].some((asset) => asset.id === entitlement.id && asset.modelUrl === entitlement.modelUrl)) backpacks[normalizedOwner].push(entitlement);
+  });
+  window.localStorage.setItem(BACKPACK_ASSETS_KEY, JSON.stringify(backpacks));
   currentMemberEmail = normalizedOwner;
   window.localStorage.setItem('muzikazBottleMemberEmail', normalizedOwner);
   renderCheckoutIdentity();
@@ -2467,7 +2502,7 @@ function renderCheckoutPage() {
   } else {
     checkoutItems.innerHTML = items.map((item) => `
       <article class="checkout-item">
-        <div><strong>${item.name}</strong><span>${item.meta || 'MUZIKAZ store item'} · Qty ${item.quantity}</span></div>
+        <div><strong>${item.name}</strong><span>${item.meta || 'MUZIKAZ store item'} · Qty ${item.quantity}${item.deliverable?.modelUrl ? ` · Delivers ${item.deliverable.name} (${item.deliverable.format.toUpperCase()})` : ''}</span></div>
         <b>${formatCheckoutMoney(item.price * item.quantity)}</b>
       </article>`).join('');
   }

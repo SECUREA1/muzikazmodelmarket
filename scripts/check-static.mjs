@@ -273,6 +273,12 @@ for (const requiredBottleAccessFlow of ['eth_requestAccounts', 'eth_call', 'eth_
 for (const requiredMarketPaymentFlow of ['MARKET_PAYMENT_ADDRESS', 'MARKET_ITEM_PRICE_WEI', 'marketPaymentConfig', 'waitForMarketTransaction', 'completeEthereumOrder', 'wallet_revokePermissions']) {
   if (!appScript.includes(requiredMarketPaymentFlow)) throw new Error(`script.js is missing Ethereum marketplace checkout behavior ${requiredMarketPaymentFlow}`);
 }
+for (const requiredModelDeliveryFlow of ['muzikazBackpackAssetsV1', 'normalizeDeliverable', 'Exact GLB delivered to Backpack', 'item.deliverable?.modelUrl']) {
+  if (!appScript.includes(requiredModelDeliveryFlow)) throw new Error(`script.js is missing exact purchased-model delivery behavior ${requiredModelDeliveryFlow}`);
+}
+for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelAssets', '<model-viewer']) {
+  if (!backpackWidget.includes(requiredBackpackModelFlow)) throw new Error(`Backpack widget is missing purchased GLB rendering behavior ${requiredBackpackModelFlow}`);
+}
 for (const requiredMintReward of ['0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238', 'BACKPACK_LOADOUT_USD = 5', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
