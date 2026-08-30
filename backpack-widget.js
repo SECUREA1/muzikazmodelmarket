@@ -65,8 +65,14 @@
     const utilityBar = document.createElement('aside');
     utilityBar.className = 'mzk-site-utility';
     utilityBar.setAttribute('aria-label', 'Support and administration');
-    utilityBar.innerHTML = `<a href="mailto:crew@muzikaz.example">Support</a><button type="button" data-open-admin-login aria-haspopup="dialog">Admin login</button>`;
+    utilityBar.innerHTML = `<button type="button" data-open-support-chat aria-haspopup="dialog" aria-controls="muzikaz-support-chat">Support</button><button type="button" data-open-admin-login aria-haspopup="dialog">Admin login</button>`;
     document.body.appendChild(utilityBar);
+
+    const supportChat = document.querySelector('.support-chat');
+    supportChat?.classList.add('is-utility-linked');
+    utilityBar.querySelector('[data-open-support-chat]').addEventListener('click', () => {
+      document.querySelector('.support-chat-toggle')?.click();
+    });
 
     const adminDialog = document.createElement('section');
     adminDialog.className = 'mzk-admin-dialog';

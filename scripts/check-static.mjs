@@ -23,8 +23,12 @@ const backpackWidget = await readFile('dist/backpack-widget.js', 'utf8');
 for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', 'data-open-backpack', 'Trade market', 'Buy / swap MZK']) {
   if (!backpackWidget.includes(feature)) throw new Error(`The global Ethereum Backpack is missing ${feature}.`);
 }
-for (const utilityFeature of ['Support', 'Admin login', 'data-global-admin-form', '/api/admin/login']) {
+for (const utilityFeature of ['Support', 'data-open-support-chat', 'Admin login', 'data-global-admin-form', '/api/admin/login']) {
   if (!backpackWidget.includes(utilityFeature)) throw new Error(`The global page utility bar is missing ${utilityFeature}.`);
+}
+const supportScript = await readFile('dist/script.js', 'utf8');
+for (const supportFeature of ['https://muzikazmodelmarket.onrender.com', "new URL('/ws/support', supportServiceUrl)", "root.id = 'muzikaz-support-chat'"]) {
+  if (!supportScript.includes(supportFeature)) throw new Error(`The support chat is missing its Render service connection: ${supportFeature}`);
 }
 
 const excludedBuildDirectories = ['scripts', 'node_modules', 'muzikaz_rust_render_app', 'muzikaz_github_website', 'uploads', 'data'];
