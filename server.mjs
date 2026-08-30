@@ -4,6 +4,7 @@ import { createReadStream, createWriteStream } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { UserJsonDatabase, cleanWallet } from './user-json-database.mjs';
+import { LoadoutCodeStore } from './loadout-code-store.mjs';
 
 const root = process.cwd();
 const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
@@ -16,6 +17,7 @@ const modelsFile = join(dataDir, 'published-models.json');
 const avatarProfilesFile = join(dataDir, 'avatar-profiles.json');
 const userDatabaseFile = process.env.MUZIKAZ_USER_DATABASE_FILE || join(dataDir, 'users.json');
 const userDatabase = new UserJsonDatabase(userDatabaseFile);
+const loadoutCodeStore = new LoadoutCodeStore(process.env.MUZIKAZ_LOADOUT_CODES_FILE || join(dataDir, 'loadout-codes.json'));
 const publicAvatarManifest = join(root, 'public', 'models', 'avatars.json');
 const environmentDataFile = process.env.MUZIKAZ_ENVIRONMENT_DATA_FILE || join(dataDir, 'environments.json');
 const repositoryEnvironmentManifest = join(root, 'public', 'models', 'environments', 'environments.json');
@@ -189,6 +191,9 @@ createServer(async (req, res) => {
       if (credentials.username !== 'jodel' || credentials.password !== 'boots') return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
       const token = randomUUID(); adminSessions.add(token); return sendJson(res, 200, assetResponse({ token }));
     }
+    if (url.pathname === '/api/admin/loadout-codes' && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.create(await bodyJson(req)))); }
+    if (url.pathname === '/api/admin/loadout-codes' && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.list())); }
+    if (url.pathname === '/api/loadout-codes/redeem' && req.method === 'POST') { const body = await bodyJson(req); return sendJson(res, 200, assetResponse(await loadoutCodeStore.redeem(body.code, body.wallet))); }
 
     if (url.pathname === '/api/wallet/state' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.get(requestWallet(req))));
     if (url.pathname === '/api/wallet/state' && req.method === 'PUT') return sendJson(res, 200, assetResponse(await userDatabase.put(requestWallet(req), await bodyJson(req))));
@@ -249,5 +254,5 @@ createServer(async (req, res) => {
     const cacheControl = extension === '.glb' || extension === '.usdz' ? 'public, max-age=31536000, immutable' : extension === '.json' ? 'no-cache' : 'public, max-age=3600';
     res.writeHead(200, corsHeaders({ 'Content-Type': mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }));
     createReadStream(filePath).pipe(res);
-  } catch (error) { if (!res.headersSent) sendJson(res, url.pathname.startsWith('/api/') ? 400 : 404, { error: error.message || 'Not found' }); }
+  } catch (error) { if (!res.headersSent) sendJson(res, error.statusCode || (url.pathname.startsWith('/api/') ? 400 : 404), { success: false, message: error.message || 'Not found' }); }
 }).listen(port, () => console.log(`MUZIKAZ shared house server running on http://localhost:${port}`));

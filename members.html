@@ -97,6 +97,11 @@
                         </select>
                     </label>
                     <button type="button" class="loadout-pay-button" id="bottle-backpack-loadout"><span>Unlock loadout &amp; pay with ETH</span><small id="bottle-loadout-price">$30 USD · Live ETH quote · Land + Wish Bottle</small></button>
+                    <aside class="loadout-access-code" aria-labelledby="loadout-access-code-title">
+                        <div><p class="kicker">Admin-issued guest pass</p><strong id="loadout-access-code-title">Have a one-time Loadout Code?</strong><small>Connect your Ethereum wallet, then burn the code once to waive the $30 Loadout price. The pass binds the creator vault, asset-generation tools, land, and complimentary Violet Wish Bottle claim to that wallet.</small></div>
+                        <label><span>Secret Loadout Code</span><input id="loadout-access-code" autocomplete="one-time-code" spellcheck="false" maxlength="18" placeholder="MZK-XXXX-XXXX-XXXX" /></label>
+                        <button type="button" id="loadout-code-redeem">Connect ETH &amp; apply $30 pass</button>
+                    </aside>
                     <div class="magic-bottle-mint">
                         <span>After payment · you choose</span>
                         <strong>Your vault is ready. Minting is optional.</strong>
@@ -329,6 +334,14 @@
                     <button type="button" id="admin-logout">Sign out</button>
                 </div>
                 <p class="status-message land-upload-notice"><strong>Land-owner upload gate:</strong> avatar, asset, and game uploads unlock only when this profile owns MUZIKAZ World land in its Drop Backpack.</p>
+                <section class="loadout-code-generator" aria-labelledby="loadout-code-generator-title">
+                    <p class="kicker">Single-use wallet access</p><h3 id="loadout-code-generator-title">Loadout burn-code generator</h3>
+                    <p>Create a secret pass that waives the $30 Loadout price once. The first redemption permanently burns it and binds all benefits to the connected Ethereum wallet.</p>
+                    <form id="loadout-code-generator-form"><label>Internal label <input name="label" maxlength="80" placeholder="Guest / campaign note" /></label><label>Expires in <select name="expiresInDays"><option value="1">1 day</option><option value="7" selected>7 days</option><option value="30">30 days</option></select></label><button type="submit">Generate one-time code</button></form>
+                    <output id="loadout-code-output" aria-live="polite">No active code generated in this session.</output>
+                    <button type="button" class="ghost" id="loadout-code-copy" hidden>Copy secret code</button>
+                    <p class="status-message" id="loadout-code-admin-status" role="status">Codes are shown once; share them through a private channel.</p>
+                </section>
                 <form class="upload-zone asset-upload-panel" id="graphic-upload-form">
                     <strong>Upload Graphics</strong>
                     <input type="file" id="asset-upload" name="file" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" multiple />
