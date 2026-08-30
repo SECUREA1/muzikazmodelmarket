@@ -18,7 +18,7 @@ const BOTTLE_ACCESS_KEY = 'muzikazBottleAccess';
 const BOTTLE_BALANCE_OF_SELECTOR = '0x70a08231';
 const BOTTLE_MINT_SELECTOR = '0x1249c58b';
 const BOTTLE_MINT_PAYMENT_ADDRESS = '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238';
-const BACKPACK_LOADOUT_USD = 5;
+const BACKPACK_LOADOUT_USD = 30;
 const BOTTLE_MINT_REWARDS_KEY = 'muzikazBottleMintRewards';
 const BOTTLE_MINT_BACKPACK_ASSETS = ['Unrevealed MUZIKAZ Land', 'Violet Wish Bottle'];
 const MARKET_PAYMENT_ADDRESS = '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238';
@@ -2114,7 +2114,7 @@ function initBottleLogin() {
   };
   const continueWithPaidLoadout = (payment) => {
     const owner = normalizeMemberEmail(payment?.owner);
-    if (!owner || !payment?.paymentHash) throw new Error('Complete the $5 Loadout payment before continuing.');
+    if (!owner || !payment?.paymentHash) throw new Error(`Complete the $${BACKPACK_LOADOUT_USD} Loadout payment before continuing.`);
     currentMemberEmail = owner;
     grantBottleAccess(owner, 'backpack-loadout-payment', payment.paymentHash);
     window.sessionStorage.setItem('muzikazBottleMember', 'true');

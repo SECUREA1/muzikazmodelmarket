@@ -279,11 +279,11 @@ for (const requiredModelDeliveryFlow of ['muzikazBackpackAssetsV1', 'normalizeDe
 for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelAssets', '<model-viewer']) {
   if (!backpackWidget.includes(requiredBackpackModelFlow)) throw new Error(`Backpack widget is missing purchased GLB rendering behavior ${requiredBackpackModelFlow}`);
 }
-for (const requiredMintReward of ['0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238', 'BACKPACK_LOADOUT_USD = 5', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
+for (const requiredMintReward of ['0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238', 'BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
-for (const requiredLoadoutCopy of ['$5 USD · Live ETH quote', 'Minting is optional', 'Continue without minting']) {
-  if (!membersHtml.includes(requiredLoadoutCopy)) throw new Error(`members.html is missing $5 Loadout or Magic Bottle guidance: ${requiredLoadoutCopy}`);
+for (const requiredLoadoutCopy of ['$30 USD · Live ETH quote', 'Minting is optional', 'Continue without minting']) {
+  if (!membersHtml.includes(requiredLoadoutCopy)) throw new Error(`members.html is missing $30 Loadout or Magic Bottle guidance: ${requiredLoadoutCopy}`);
 }
 for (const requiredLoadoutFlow of ['Builder drop · optional mint', 'Violet Wish Bottle', 'Unlock loadout &amp; pay with ETH', 'id="bottle-continue"', 'data-purchase-step="payment"']) {
   if (!membersHtml.includes(requiredLoadoutFlow)) throw new Error(`members.html is missing the ordered Purple Bottle loadout flow: ${requiredLoadoutFlow}`);
