@@ -3061,3 +3061,41 @@ function initAssetDashboard(){
   loadAssets(); metrics();
 }
 document.addEventListener('muzikaz:admin-authenticated', initAssetDashboard);
+
+function initSupportChat() {
+  if (document.querySelector('.support-chat')) return;
+  const userIdKey = 'muzikazSupportUserId';
+  const userId = localStorage.getItem(userIdKey) || (crypto.randomUUID?.() || `guest-${Date.now()}`);
+  localStorage.setItem(userIdKey, userId);
+  const adminToken = sessionStorage.getItem('muzikazAdminToken') || '';
+  const isAdmin = Boolean(adminToken);
+  const name = localStorage.getItem('muzikazSupportName') || (isAdmin ? 'MUZIKAZ Support' : 'Guest');
+  const root = document.createElement('aside');
+  root.className = 'support-chat';
+  root.innerHTML = `<button class="support-chat-toggle" type="button" aria-label="Open support chat" aria-expanded="false"><span aria-hidden="true">💬</span><b>Support</b><i hidden>0</i></button><section class="support-chat-panel" hidden aria-label="Live support chat"><header><div><strong>${isAdmin ? 'Support inbox' : 'MUZIKAZ Support'}</strong><small><span class="support-presence"></span><span class="support-connection">Connecting…</span></small></div><button class="support-chat-close" type="button" aria-label="Close support chat">×</button></header><label class="support-thread-picker" ${isAdmin ? '' : 'hidden'}>Conversation<select aria-label="Customer conversation"><option value="">Choose a customer</option></select></label><div class="support-messages" role="log" aria-live="polite" aria-relevant="additions"></div><p class="support-empty">${isAdmin ? 'New customer conversations will appear here.' : 'Hi! Send us a message and a logged-in admin will reply here.'}</p><form><label class="sr-only" for="support-message-input">Message</label><textarea id="support-message-input" maxlength="1000" rows="2" placeholder="Type your message…" required></textarea><button type="submit">Send</button></form></section>`;
+  document.body.append(root);
+  const toggle = root.querySelector('.support-chat-toggle'); const panel = root.querySelector('.support-chat-panel'); const close = root.querySelector('.support-chat-close');
+  const log = root.querySelector('.support-messages'); const empty = root.querySelector('.support-empty'); const status = root.querySelector('.support-connection');
+  const unread = toggle.querySelector('i'); const picker = root.querySelector('select'); const input = root.querySelector('textarea');
+  let socket; let reconnectTimer; let unreadCount = 0; let selectedThread = ''; const messages = [];
+  function setOpen(open) { panel.hidden = !open; toggle.setAttribute('aria-expanded', String(open)); root.classList.toggle('is-open', open); if (open) { unreadCount = 0; unread.hidden = true; input.focus(); } }
+  toggle.addEventListener('click', () => setOpen(panel.hidden)); close.addEventListener('click', () => setOpen(false));
+  function visibleMessages() { return isAdmin ? messages.filter((item) => item.threadId === selectedThread) : messages; }
+  function render() {
+    const view = visibleMessages(); empty.hidden = view.length > 0; log.replaceChildren(...view.map((item) => { const article = document.createElement('article'); article.className = `support-message ${item.sender === (isAdmin ? 'admin' : 'user') ? 'is-mine' : ''}`; const meta = document.createElement('small'); meta.textContent = `${item.name} · ${new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`; const copy = document.createElement('p'); copy.textContent = item.message; article.append(meta, copy); return article; })); log.scrollTop = log.scrollHeight;
+  }
+  function syncThreads() { if (!isAdmin) return; const current = picker.value; const threads = [...new Map(messages.map((item) => [item.threadId, item.sender === 'user' ? item.name : item.threadId])).entries()]; picker.replaceChildren(new Option('Choose a customer', ''), ...threads.map(([id, label]) => new Option(label || id, id))); picker.value = current || threads.at(-1)?.[0] || ''; selectedThread = picker.value; }
+  picker.addEventListener('change', () => { selectedThread = picker.value; render(); });
+  function connect() {
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'; const query = new URLSearchParams({ userId, name }); if (adminToken) query.set('adminToken', adminToken);
+    socket = new WebSocket(`${protocol}//${location.host}/ws/support?${query}`);
+    socket.addEventListener('open', () => { status.textContent = isAdmin ? 'Online as admin' : 'Support online'; root.classList.add('is-online'); });
+    socket.addEventListener('message', ({ data }) => { const payload = JSON.parse(data); if (payload.type === 'history') messages.splice(0, messages.length, ...payload.messages); if (payload.type === 'message' && !messages.some((item) => item.id === payload.message.id)) { messages.push(payload.message); if (panel.hidden && payload.message.sender !== (isAdmin ? 'admin' : 'user')) { unreadCount += 1; unread.textContent = unreadCount; unread.hidden = false; } } syncThreads(); render(); });
+    socket.addEventListener('close', () => { root.classList.remove('is-online'); status.textContent = 'Reconnecting…'; clearTimeout(reconnectTimer); reconnectTimer = setTimeout(connect, 2500); });
+    socket.addEventListener('error', () => socket.close());
+  }
+  root.querySelector('form').addEventListener('submit', (event) => { event.preventDefault(); const message = input.value.trim(); if (!message || socket?.readyState !== WebSocket.OPEN) return; socket.send(JSON.stringify({ type: 'message', threadId: selectedThread, message })); input.value = ''; });
+  connect();
+}
+
+initSupportChat();
