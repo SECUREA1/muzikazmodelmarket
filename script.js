@@ -1069,9 +1069,10 @@ function initMarketSectionToggle() {
 
 function initFlexLabCategories() {
   const select = document.querySelector('#flex-category-select');
-  const cards = document.querySelectorAll('[data-flex-card]');
+  const buttons = Array.from(document.querySelectorAll('[data-flex-category]'));
+  const cards = document.querySelectorAll('#character-world-assets [data-flex-card]');
   const panel = document.querySelector('#flex-category-panel');
-  if (!select || !cards.length) return;
+  if ((!select && !buttons.length) || !cards.length) return;
   const summaries = {
     All: 'Showing every character and world asset category in one connected MUZIKAZ collection.',
     Avatars: '3D character drops, skins, traits, poses, and profile-ready avatar variants.',
@@ -1084,21 +1085,41 @@ function initFlexLabCategories() {
   };
   const cardList = Array.from(cards);
   const categories = ['All', ...new Set(cardList.map((card) => card.dataset.flexCard))];
-  select.replaceChildren(...categories.map((category) => {
-    const count = category === 'All' ? cardList.length : cardList.filter((card) => card.dataset.flexCard === category).length;
-    return new Option(`${category === 'All' ? 'All categories' : category} (${count})`, category);
-  }));
-  function selectCategory(category) {
-    select.value = category;
+  if (select) {
+    select.replaceChildren(...categories.map((category) => {
+      const count = category === 'All' ? cardList.length : cardList.filter((card) => card.dataset.flexCard === category).length;
+      return new Option(`${category === 'All' ? 'All categories' : category} (${count})`, category);
+    }));
+  }
+  function selectCategory(requestedCategory, { focus = false } = {}) {
+    const category = categories.includes(requestedCategory) ? requestedCategory : 'All';
+    if (select) select.value = category;
+    buttons.forEach((button) => {
+      const active = button.dataset.flexCategory === category;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-selected', String(active));
+      button.tabIndex = active ? 0 : -1;
+      if (active && focus) button.focus();
+    });
     cards.forEach((card) => {
       const visible = category === 'All' || card.dataset.flexCard === category;
       card.hidden = !visible;
       card.classList.toggle('is-selected', visible && category !== 'All');
     });
-    if (panel) panel.innerHTML = `<strong>${category === 'All' ? 'Full loadout selected' : `${category} shelf selected`}</strong><span>${summaries[category] || summaries.All}</span>`;
+    if (panel) panel.innerHTML = `<strong>${category === 'All' ? 'Full asset universe selected' : `${category} selected`}</strong><span>${summaries[category] || summaries.All}</span>`;
   }
-  select.addEventListener('change', () => selectCategory(select.value || 'All'));
-  selectCategory('All');
+  select?.addEventListener('change', () => selectCategory(select.value || 'All'));
+  buttons.forEach((button, index) => {
+    button.setAttribute('role', 'tab');
+    button.addEventListener('click', () => selectCategory(button.dataset.flexCategory || 'All'));
+    button.addEventListener('keydown', (event) => {
+      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+      selectCategory(buttons[next].dataset.flexCategory || 'All', { focus: true });
+    });
+  });
+  selectCategory(window.location.hash === '#character-world-avatars' ? 'Avatars' : 'All');
 }
 
 function initWorldPlot() {
