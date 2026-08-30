@@ -188,7 +188,7 @@ createServer(async (req, res) => {
     if (url.pathname === '/api/health' && req.method === 'GET') return sendJson(res, 200, { success: true, service: 'muzikaz-member-market' });
     if (url.pathname === '/api/admin/login' && req.method === 'POST') {
       const credentials = await bodyJson(req);
-      if (credentials.username !== 'jodel' || credentials.password !== 'boots') return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
+      if (credentials.username !== 'admin' || credentials.password !== 'boots') return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
       const token = randomUUID(); adminSessions.add(token); return sendJson(res, 200, assetResponse({ token }));
     }
     if (url.pathname === '/api/admin/loadout-codes' && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.create(await bodyJson(req)))); }

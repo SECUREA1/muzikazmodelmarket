@@ -23,6 +23,9 @@ const backpackWidget = await readFile('dist/backpack-widget.js', 'utf8');
 for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', 'data-open-backpack', 'Trade market', 'Buy / swap MZK']) {
   if (!backpackWidget.includes(feature)) throw new Error(`The global Ethereum Backpack is missing ${feature}.`);
 }
+for (const utilityFeature of ['Support', 'Admin login', 'data-global-admin-form', '/api/admin/login']) {
+  if (!backpackWidget.includes(utilityFeature)) throw new Error(`The global page utility bar is missing ${utilityFeature}.`);
+}
 
 const excludedBuildDirectories = ['scripts', 'node_modules', 'muzikaz_rust_render_app', 'muzikaz_github_website', 'uploads', 'data'];
 for (const directory of excludedBuildDirectories) {

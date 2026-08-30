@@ -62,6 +62,41 @@
     drawer.innerHTML = `<div class="mzk-backpack-scrim" data-close-backpack></div><div class="mzk-backpack-panel"><header>${icon()}<div><p>ETHEREUM ACCOUNT INVENTORY</p><h2 id="global-backpack-title">My Backpack</h2><small data-drawer-address>Connect an Ethereum wallet to open your account.</small></div><button type="button" data-close-backpack aria-label="Close Backpack">×</button></header><div class="mzk-backpack-account"><div><span>Wallet</span><strong data-account-address>Not connected</strong></div><div><span>Network</span><strong data-account-network>—</strong></div><div><span>MZK balance</span><strong data-account-balance>0 MZK</strong></div></div><p class="mzk-backpack-status" data-backpack-status role="status" aria-live="polite"></p><div class="mzk-backpack-items" data-backpack-items></div><nav aria-label="Backpack network"><a href="model-market.html">Trade market <b>↗</b></a><a href="buy-mzk.html">Buy / swap MZK <b>↗</b></a><a href="members.html#owned-collection">Full account <b>↗</b></a></nav><div class="mzk-backpack-trades"><h3>Recent market activity</h3><ol data-backpack-trades></ol></div></div>`;
     document.body.appendChild(drawer);
 
+    const utilityBar = document.createElement('aside');
+    utilityBar.className = 'mzk-site-utility';
+    utilityBar.setAttribute('aria-label', 'Support and administration');
+    utilityBar.innerHTML = `<a href="mailto:crew@muzikaz.example">Support</a><button type="button" data-open-admin-login aria-haspopup="dialog">Admin login</button>`;
+    document.body.appendChild(utilityBar);
+
+    const adminDialog = document.createElement('section');
+    adminDialog.className = 'mzk-admin-dialog';
+    adminDialog.hidden = true;
+    adminDialog.setAttribute('role', 'dialog');
+    adminDialog.setAttribute('aria-modal', 'true');
+    adminDialog.setAttribute('aria-labelledby', 'global-admin-login-title');
+    adminDialog.innerHTML = `<div class="mzk-admin-scrim" data-close-admin-login></div><div class="mzk-admin-card"><button class="mzk-admin-close" type="button" data-close-admin-login aria-label="Close administrator login">×</button><p>Restricted access</p><h2 id="global-admin-login-title">Administrator sign in</h2><form data-global-admin-form><label>Username<input name="username" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Sign in</button></form><small data-global-admin-status role="status" aria-live="polite">Enter your administrator credentials.</small></div>`;
+    document.body.appendChild(adminDialog);
+
+    const adminForm = adminDialog.querySelector('[data-global-admin-form]');
+    const adminStatus = adminDialog.querySelector('[data-global-admin-status]');
+    const openAdminButton = utilityBar.querySelector('[data-open-admin-login]');
+    const closeAdmin = () => { adminDialog.hidden = true; document.documentElement.classList.remove('mzk-admin-open'); openAdminButton.focus(); };
+    openAdminButton.addEventListener('click', () => { adminDialog.hidden = false; document.documentElement.classList.add('mzk-admin-open'); adminForm.querySelector('input').focus(); });
+    adminDialog.addEventListener('click', (event) => { if (event.target.closest('[data-close-admin-login]')) closeAdmin(); });
+    adminForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      adminStatus.textContent = 'Authenticating administrator…';
+      try {
+        const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(adminForm))) });
+        const result = await response.json();
+        if (!response.ok || !result.success || !result.data?.token) throw new Error(result.message || 'Authentication failed.');
+        sessionStorage.setItem('muzikazAdminToken', result.data.token);
+        adminForm.reset();
+        adminStatus.textContent = 'Access granted. Opening the command center…';
+        window.setTimeout(() => { window.location.href = 'members.html#admin'; }, 350);
+      } catch (error) { adminStatus.textContent = error.message || 'Authentication failed.'; }
+    });
+
     const button = dock.querySelector('[data-open-backpack]');
     const connectButton = dock.querySelector('[data-widget-connect]');
     let lastFocused = null;
@@ -133,7 +168,7 @@
     button.addEventListener('click', open);
     connectButton?.addEventListener('click', connect);
     drawer.addEventListener('click', (event) => { if (event.target.closest('[data-close-backpack]')) close(); });
-    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !drawer.hidden) close(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !drawer.hidden) close(); else if (event.key === 'Escape' && !adminDialog.hidden) closeAdmin(); });
     window.addEventListener('mzk:wallet-connection-changed', renderButton);
     window.addEventListener('mzk:balance-changed', renderButton);
     renderButton();
