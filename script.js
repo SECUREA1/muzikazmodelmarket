@@ -2054,6 +2054,8 @@ function initBottleLogin() {
   const loadoutPrice = document.querySelector('#bottle-loadout-price');
   const mintButton = document.querySelector('#bottle-wallet-mint');
   const continueButton = document.querySelector('#bottle-continue');
+  const accessCodeInput = document.querySelector('#loadout-access-code');
+  const accessCodeButton = document.querySelector('#loadout-code-redeem');
   const identityPanel = document.querySelector('#wallet-identity');
   const usernameInput = document.querySelector('#wallet-username');
   const usernameSave = document.querySelector('#wallet-username-save');
@@ -2068,6 +2070,7 @@ function initBottleLogin() {
     if (loadoutButton) loadoutButton.disabled = busy;
     if (mintButton) mintButton.disabled = busy || (Number(form.dataset.purchaseStep) || 1) < 3;
     if (continueButton) continueButton.disabled = busy || (Number(form.dataset.purchaseStep) || 1) < 3;
+    if (accessCodeButton) accessCodeButton.disabled = busy;
   };
   const updateLoadoutQuote = async () => {
     const currency = loadoutCurrency?.value || 'ETH';
@@ -2206,6 +2209,37 @@ function initBottleLogin() {
     }
   });
   loadoutCurrency?.addEventListener('change', updateLoadoutQuote);
+  accessCodeInput?.addEventListener('input', () => { accessCodeInput.value = accessCodeInput.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''); });
+  accessCodeButton?.addEventListener('click', async () => {
+    setBusy(true);
+    try {
+      const code = accessCodeInput?.value.trim();
+      if (!code) throw new Error('Enter the secret one-time Loadout Code.');
+      if (status) status.textContent = 'Connect the Ethereum wallet that will receive this one-time Loadout…';
+      const wallet = requireEthereumWallet();
+      const address = await requestEthereumAccount(wallet, { chooseAccount: connectButton?.dataset.connected === 'true' });
+      showAddress(address);
+      if (status) status.textContent = 'Burning the code and binding its Loadout to your wallet…';
+      const response = await fetch('/api/loadout-codes/redeem', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code, wallet: address }) });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || 'The Loadout Code could not be applied.');
+      const grant = result.data;
+      currentMemberEmail = normalizeMemberEmail(address);
+      grantBottleAccess(currentMemberEmail, 'admin-loadout-code', grant.id);
+      window.sessionStorage.setItem('muzikazBottleMember', 'true');
+      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      claimOwnedAsset('Unrevealed MUZIKAZ Land', 'One-time Admin Loadout', currentMemberEmail);
+      claimOwnedAsset('Violet Wish Bottle · Complimentary Mint Claim', 'One-time Admin Loadout', currentMemberEmail);
+      window.localStorage.setItem('muzikazLoadoutCodeGrant', JSON.stringify({ ...grant, owner: currentMemberEmail }));
+      setPurchaseStep(3);
+      renderOwnedCollection(currentMemberEmail);
+      unlock(`One-time code burned. $${grant.discountUsd} Loadout price waived; creator tools, land, and your complimentary Violet Wish Bottle claim are now bound to ${shortAddress(address)}.`);
+      if (accessCodeInput) accessCodeInput.value = '';
+      scrollToSection('member-locked-content');
+    } catch (error) {
+      if (status) status.textContent = error.message || 'The one-time Loadout Code could not be applied.';
+    } finally { setBusy(false); }
+  });
   loadoutButton?.addEventListener('click', async () => {
     setBusy(true);
     try {
@@ -2956,6 +2990,29 @@ function initAdminLogin() {
     } catch (error) { status.textContent = error.message || 'Authentication failed.'; }
   });
   document.querySelector('#admin-logout')?.addEventListener('click', () => conceal('Signed out. Administrator authentication is required.'));
+  const codeForm = document.querySelector('#loadout-code-generator-form');
+  const codeOutput = document.querySelector('#loadout-code-output');
+  const codeStatus = document.querySelector('#loadout-code-admin-status');
+  const copyButton = document.querySelector('#loadout-code-copy');
+  let currentCode = '';
+  codeForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (codeStatus) codeStatus.textContent = 'Generating a cryptographically random single-use code…';
+    try {
+      const response = await fetch('/api/admin/loadout-codes', { method: 'POST', headers: { 'x-admin-token': sessionStorage.getItem(tokenKey) || '', 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(codeForm))) });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || 'Code generation failed.');
+      currentCode = result.data.code;
+      codeOutput.textContent = currentCode;
+      copyButton.hidden = false;
+      codeStatus.textContent = `Ready until ${new Date(result.data.expiresAt).toLocaleString()}. It will permanently burn on first wallet redemption.`;
+    } catch (error) { if (codeStatus) codeStatus.textContent = error.message || 'Code generation failed.'; }
+  });
+  copyButton?.addEventListener('click', async () => {
+    if (!currentCode) return;
+    try { await navigator.clipboard.writeText(currentCode); codeStatus.textContent = 'Secret code copied. Share it privately; it can be used only once.'; }
+    catch { codeStatus.textContent = `Copy is unavailable. Select the displayed code manually: ${currentCode}`; }
+  });
 }
 initAdminLogin();
 
