@@ -30,7 +30,7 @@ export function renderPublishedModelCard(model,{explorer=false,index=0}={}){
   renderAvatarAsset(viewer,avatar,{priority:index<6});
   const card=createEl('article',{class:`published-model-card live-model-card ${explorer?'explorer-live-card':''}`,id:`published-model-${avatar.id}`,'data-avatar-id':avatar.id},[viewer,createEl('span',{class:'status-badge',text:avatar.category}),createEl('h3',{text:avatar.name}),createEl('p',{class:'creator-meta',text:`Published by ${avatar.owner} • ${formatPublishDate(avatar.publishedAt)}`}),createEl('p',{class:'live-description',text:avatar.description||'No description provided.'}),actions]);
   addButton.addEventListener('click',()=>{
-    document.dispatchEvent(new CustomEvent('muzikaz:add-model-to-cart',{detail:{id:avatar.id,name:avatar.name,price:avatar.price,category:avatar.category}}));
+    document.dispatchEvent(new CustomEvent('muzikaz:add-model-to-cart',{detail:{id:avatar.id,name:avatar.name,price:avatar.price,category:avatar.category,modelUrl:avatar.modelUrl,iosModelUrl:avatar.iosModelUrl,format:avatar.format}}));
     const originalText=addButton.textContent;
     addButton.textContent='Added';
     addButton.disabled=true;

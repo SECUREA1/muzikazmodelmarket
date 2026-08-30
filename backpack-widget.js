@@ -5,6 +5,7 @@
   const MARKET_KEY = 'muzikazBackpackMarket';
   const TRANSACTIONS_KEY = 'muzikazBackpackTransactions';
   const PROFILE_ASSETS_KEY = 'muzikazOwnedProfiles';
+  const MODEL_ASSETS_KEY = 'muzikazBackpackAssetsV1';
 
   const icon = (className = '') => `<svg class="${className}" viewBox="0 0 48 48" aria-hidden="true"><path d="M15 18v-3a9 9 0 0 1 18 0v3"/><path d="M12 18h24a4 4 0 0 1 4 4v19H8V22a4 4 0 0 1 4-4Z"/><path d="M16 28h16v13H16z"/><path d="M8 25H5v11h3M40 25h3v11h-3"/><path d="M19 14h10"/></svg>`;
   const walletIcon = () => '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 13h28a5 5 0 0 1 5 5v22H8a4 4 0 0 1-4-4V13a5 5 0 0 1 5-5h25"/><path d="M31 23h12v10H31a5 5 0 0 1 0-10Z"/><circle cx="33" cy="28" r="1"/></svg>';
@@ -25,6 +26,10 @@
       (loadout.assets || []).forEach(add);
     }
     return values;
+  }
+
+  function localModelAssets(address) {
+    return safeJson(MODEL_ASSETS_KEY, {})[String(address || '').toLowerCase()] || [];
   }
 
   function ensureStyles() {
@@ -93,7 +98,8 @@
       } catch (_) {
         status.textContent = 'Showing this device’s Backpack. Network sync is temporarily unavailable.';
       }
-      const items = [...new Set([...remoteItems.map((item) => typeof item === 'string' ? item : item?.name), ...localItems(activeAddress)].filter(Boolean))];
+      const modelAssets = localModelAssets(activeAddress);
+      const items = [...new Set([...remoteItems.map((item) => typeof item === 'string' ? item : item?.name), ...localItems(activeAddress), ...modelAssets.map((asset) => asset.name)].filter(Boolean))];
       if (remoteState && items.length !== remoteItems.length) {
         try {
           await fetch(API_PATH, { method: 'PUT', headers: { 'X-Wallet-Address': activeAddress, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ items, tokens: { ...(remoteState.tokens || {}), MZK: window.MZKWallet.balance(activeAddress) }, memory: remoteState.memory || {} }) });
@@ -106,7 +112,10 @@
       drawer.querySelector('[data-account-address]').title = activeAddress;
       drawer.querySelector('[data-account-network]').textContent = network;
       drawer.querySelector('[data-account-balance]').textContent = `${window.MZKWallet.balance(activeAddress).toLocaleString()} MZK`;
-      drawer.querySelector('[data-backpack-items]').innerHTML = items.length ? items.map((item) => `<article>${icon()}<div><strong>${escapeHtml(item)}</strong><small>Connected to ${short(activeAddress)}</small></div></article>`).join('') : `<div class="mzk-backpack-empty">${icon()}<strong>Your Backpack is ready</strong><p>Collect a model, land deed, avatar, wearable, or market drop and it will appear under this Ethereum account.</p></div>`;
+      const modelCards = modelAssets.map((asset) => `<article class="mzk-backpack-model"><model-viewer src="${escapeHtml(asset.modelUrl)}" ${asset.iosModelUrl ? `ios-src="${escapeHtml(asset.iosModelUrl)}"` : ''} camera-controls auto-rotate shadow-intensity="1" alt="${escapeHtml(asset.name)} purchased 3D model"></model-viewer><div><strong>${escapeHtml(asset.name)}</strong><small>Purchased GLB · Connected to ${short(activeAddress)}</small></div></article>`);
+      const modelNames = new Set(modelAssets.map((asset) => asset.name));
+      const itemCards = items.filter((item) => !modelNames.has(item)).map((item) => `<article>${icon()}<div><strong>${escapeHtml(item)}</strong><small>Connected to ${short(activeAddress)}</small></div></article>`);
+      drawer.querySelector('[data-backpack-items]').innerHTML = modelCards.length || itemCards.length ? [...modelCards, ...itemCards].join('') : `<div class="mzk-backpack-empty">${icon()}<strong>Your Backpack is ready</strong><p>Collect a model, land deed, avatar, wearable, or market drop and it will appear under this Ethereum account.</p></div>`;
       const transactions = safeJson(TRANSACTIONS_KEY, []).filter((tx) => [tx.buyer, tx.seller, tx.owner].map(String).map((value) => value.toLowerCase()).includes(activeAddress)).slice(-4).reverse();
       drawer.querySelector('[data-backpack-trades]').innerHTML = transactions.length ? transactions.map((tx) => `<li><span>${escapeHtml(tx.asset || tx.reason || 'Backpack trade')}</span><b>${Number(tx.tokenValue || tx.amount || 0).toLocaleString()} MZK</b></li>`).join('') : '<li><span>No Backpack trades yet.</span><a href="model-market.html">Explore market</a></li>';
       return true;
