@@ -6,6 +6,7 @@
 --line:#315500;
 --text:#f5f5f5;
 --muted:#cfd5c8}
+.theme-status__mobile{display:none}
 *{
 box-sizing:border-box}
 html{
@@ -1900,6 +1901,75 @@ section,
   .mobile-control{
     min-height:50px;
   }
+}
+
+/* Mobile editorial system: one branded, readable rhythm across every route. */
+@media(max-width:720px){
+  body{
+    background:radial-gradient(circle at 50% 0,#1b2b05 0,#050705 34rem,#000 100%);
+    font-size:16px;
+    line-height:1.55;
+    text-rendering:optimizeLegibility;
+    -webkit-text-size-adjust:100%;
+  }
+  .theme-status{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    color:#efffd0;
+    font-family:Bangers,cursive;
+    font-size:17px;
+    font-weight:400;
+    letter-spacing:.11em;
+  }
+  .theme-status::before{content:'⚡';color:var(--lime);font-family:Inter,sans-serif;font-size:14px}
+  .theme-status__desktop{display:none}
+  .theme-status__mobile{display:inline}
+  :where(p,li,dd,label,small,.status-message){line-height:1.6}
+  :where(p,li,dd,.hero p,.world-atlas__header>p,.market-toggle-heading>p,.card p,.products p){
+    color:#d9e2d4;
+    font-size:max(15px,.95rem);
+    letter-spacing:.005em;
+  }
+  :where(h1,h2,h3,h4){text-wrap:balance}
+  :where(p,li,dd){text-wrap:pretty}
+  :where(.page-shell,.world-atlas,.market-toggle-shell,.explorer-hero,.explorer-controls,.daily-reward-panel,.mzk-swap-shell){
+    width:calc(100% - 20px);
+    max-width:none;
+  }
+  :where(.section-title,.world-atlas__header,.market-toggle-heading,.explorer-copy,.member-login-card,.admin-login-card){text-align:left}
+  :where(.section-title h2,.world-atlas h2,.market-toggle-heading h2,.explorer-copy h1,.member-login-card h1){
+    line-height:.95;
+    letter-spacing:.025em;
+  }
+  :where(.kicker,.world-kicker,.hero-live){
+    color:#caff63;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.14em;
+    line-height:1.4;
+  }
+  :where(.card,.products article,.feature-strip article,.world-atlas__panel,.explorer-copy,.explorer-controls article,.quest-card,.daily-tier,.member-exchange,.admin-login-card){
+    border-color:rgba(156,255,0,.32);
+    box-shadow:0 14px 34px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.035);
+  }
+  :where(input,select,textarea){min-height:48px;font-size:16px}
+  :where(.btn,button,[role="button"]){line-height:1.25;letter-spacing:.035em}
+  .feature-strip{grid-template-columns:1fr 1fr}
+  .feature-strip article{align-items:flex-start;gap:12px}
+  .feature-strip b{font-size:28px;line-height:1}
+  .feature-strip strong{font-size:13px;letter-spacing:.04em}
+  .feature-strip span{font-size:13px;line-height:1.45}
+  .section-title a{min-height:44px;display:inline-flex;align-items:center;text-align:right}
+}
+
+@media(max-width:480px){
+  .feature-strip{grid-template-columns:1fr}
+  .feature-strip article{border-right:0;border-bottom:1px solid var(--line)}
+  .feature-strip article:last-child{border-bottom:0}
+  :where(.hero-live,.world-statline,.world-atlas__live){font-size:11px}
+  :where(.section-title h2,.market-toggle-heading h2){font-size:clamp(32px,10vw,42px)}
+  .section-title{align-items:end}
 }
 
 /* Interactive MUZIKAZ world atlas */
