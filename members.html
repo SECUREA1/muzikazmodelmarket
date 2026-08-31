@@ -103,21 +103,21 @@
                     <button type="button" class="loadout-pay-button" id="bottle-backpack-loadout"><span>Unlock loadout &amp; pay with ETH</span><small id="bottle-loadout-price">$30 USD · Live ETH quote · Land + Wish Bottle</small></button>
                     <aside class="loadout-access-code" aria-labelledby="loadout-access-code-title">
                         <div class="loadout-access-code__copy">
-                            <p class="kicker">Admin-issued guest pass</p>
-                            <strong id="loadout-access-code-title">Have a one-time Loadout Code?</strong>
-                            <small>Connect your Ethereum wallet, then burn the code once to waive the $30 Loadout price. The pass binds the creator vault, asset-generation tools, land, and complimentary Violet Wish Bottle claim to that wallet.</small>
+                            <p class="kicker">One account. One code. Any device.</p>
+                            <strong id="loadout-access-code-title">Have an MZK Access Code?</strong>
+                            <small>Connect your Ethereum wallet and enter your private MZK Access Code. If it includes a Loadout Pass, your $30 price is waived automatically. First activation binds it to your account and wallet; afterward, this same code securely reopens your Backpack on any device.</small>
                         </div>
                         <div class="loadout-access-code__actions">
-                            <label><span>Secret Loadout Code</span><input id="loadout-access-code" autocomplete="one-time-code" spellcheck="false" maxlength="18" placeholder="MZK-XXXX-XXXX-XXXX" /></label>
-                            <button type="button" id="loadout-code-redeem">Connect ETH &amp; apply $30 pass</button>
+                            <label><span>MZK Access Code</span><input id="loadout-access-code" type="password" autocomplete="off" spellcheck="false" maxlength="24" placeholder="MZK-XXXX-XXXX-XXXX-XXXX" /></label>
+                            <button type="button" id="loadout-code-redeem">Connect ETH &amp; Activate Access</button>
                         </div>
                     </aside>
                     <div class="magic-bottle-mint">
-                        <span>After payment · you choose</span>
-                        <strong>Your vault is ready. Minting is optional.</strong>
-                        <small>Continue straight to your creator tools, or mint the Violet Wish Bottle if you want the collectible recorded on-chain.</small>
+                        <span>After activation</span>
+                        <strong>Your Loadout Is Ready</strong>
+                        <small>Your MUZIKAZ account is active. Your Backpack, creator vault, land entitlement, marketplace account and complimentary Violet Wish Bottle claim are connected. Minting is optional.</small>
                         <div class="post-payment-actions">
-                            <button type="button" id="bottle-continue" disabled>Continue without minting <span aria-hidden="true">→</span></button>
+                            <button type="button" id="bottle-continue" disabled>Continue to Creator Tools <span aria-hidden="true">→</span></button>
                             <button type="button" class="ghost" id="bottle-wallet-mint" disabled>Optional: mint Violet Wish Bottle</button>
                         </div>
                     </div>
@@ -130,7 +130,11 @@
                     <label class="wallet-json-import">Restore wallet JSON <input type="file" id="wallet-json-import" accept="application/json,.json" /></label>
                     <small id="wallet-token-identity"></small>
                 </div>
-                <p class="status-message" id="bottle-login-status" role="status">Wallet connection and on-chain Bottle ownership are required.</p>
+                <p class="status-message" id="bottle-login-status" role="status">Access is available through a paid Loadout, activated MZK Access Code, approved MEKNX entitlement, or another administrator-granted entitlement. Bottle minting is optional.</p>
+                <aside class="loadout-access-code" aria-labelledby="account-access-title">
+                    <div class="loadout-access-code__copy"><p class="kicker">MZK Access Code</p><strong id="account-access-title">Open your MUZIKAZ account</strong><small>Enter the private MZK Access Code connected to your account to reopen your Backpack, creator tools, marketplace profile and playable account without reconnecting your wallet.</small></div>
+                    <form class="loadout-access-code__actions" id="account-access-form"><label><span>MZK Access Code</span><input name="code" type="password" autocomplete="current-password" maxlength="24" placeholder="MZK-XXXX-XXXX-XXXX-XXXX" required /></label><button type="submit">Open My Account</button></form>
+                </aside>
                 <aside class="meknx-bypass" aria-labelledby="meknx-bypass-title">
                     <div>
                         <p class="kicker">Already hold the access contract?</p>
@@ -142,6 +146,7 @@
             </div>
         </section>
         <div class="member-locked-content" id="member-locked-content" data-locked="true" hidden>
+        <section class="section-block" aria-labelledby="manage-access-title"><div class="section-title"><span></span><h2 id="manage-access-title">Manage MZK Access Code</h2></div><p><strong>One account. One code. Any device.</strong> Rotation or revocation changes only your credential; your wallet bindings, Backpack, assets, MZK, land and Bottle claims stay with this account.</p><div class="post-payment-actions"><button type="button" id="mzk-access-rotate">Rotate Access Code</button><button type="button" class="ghost" id="mzk-access-revoke">Revoke Access Code</button></div><output id="mzk-access-manage-output" class="status-message" aria-live="polite">Your full code is shown only when it is created or rotated.</output></section>
         <section class="section-block member-benefits" aria-labelledby="member-benefits-title">
             <div class="section-title"><span></span><h2 id="member-benefits-title">What subscribers get</h2><span></span></div>
             <div class="benefit-grid">
@@ -345,12 +350,13 @@
                 </div>
                 <p class="status-message land-upload-notice"><strong>Land-owner upload gate:</strong> avatar, asset, and game uploads unlock only when this profile owns MUZIKAZ World land in its Drop Backpack.</p>
                 <section class="loadout-code-generator" aria-labelledby="loadout-code-generator-title">
-                    <p class="kicker">Single-use wallet access</p><h3 id="loadout-code-generator-title">Loadout burn-code generator</h3>
-                    <p>Create a secret pass that waives the $30 Loadout price once. The first redemption permanently burns it and binds all benefits to the connected Ethereum wallet.</p>
-                    <form id="loadout-code-generator-form"><label>Internal label <input name="label" maxlength="80" placeholder="Guest / campaign note" /></label><label>Expires in <select name="expiresInDays"><option value="1">1 day</option><option value="7" selected>7 days</option><option value="30">30 days</option></select></label><button type="submit">Generate one-time code</button></form>
-                    <output id="loadout-code-output" aria-live="polite">No active code generated in this session.</output>
+                    <p class="kicker">Canonical account credentials</p><h3 id="loadout-code-generator-title">MZK Access Manager</h3>
+                    <p>Generate one credential whose optional entitlements redeem once while the activated account login remains usable. Full secrets are never listed again.</p>
+                    <form id="loadout-code-generator-form"><label>Internal label <input name="label" maxlength="80" placeholder="Guest / campaign note" /></label><label>Campaign / source <input name="campaign" maxlength="80" /></label><label>Expiration before activation <select name="expiresInDays"><option value="1">1 day</option><option value="7" selected>7 days</option><option value="30">30 days</option><option value="365">1 year</option></select></label><label>Maximum activation date <input name="maximumActivationDate" type="datetime-local" /></label><label><input name="waiveLoadout" type="checkbox" checked /> Waive $30 Loadout</label><label><input name="violetBottle" type="checkbox" checked /> Include Violet Wish Bottle</label><label><input name="starterLand" type="checkbox" checked /> Include starter land</label><label>Promotional MZK <input name="promotionalMzk" type="number" min="0" max="1000000" value="0" /></label><label><input name="creatorVault" type="checkbox" checked /> Enable creator tools</label><button type="submit">Generate Access Code</button></form>
+                    <output id="loadout-code-output" aria-live="polite">No MZK Access Code generated in this session.</output>
                     <button type="button" class="ghost" id="loadout-code-copy" hidden>Copy secret code</button>
                     <p class="status-message" id="loadout-code-admin-status" role="status">Codes are shown once; share them through a private channel.</p>
+                    <div class="table-wrap"><table><thead><tr><th>Masked code</th><th>Label / campaign</th><th>Status</th><th>Created / activated</th><th>Wallet / username</th><th>Loadout redeemed</th><th>Expiration</th><th>Control</th></tr></thead><tbody id="mzk-access-admin-table"><tr><td colspan="8">Authenticate to load credentials.</td></tr></tbody></table></div>
                 </section>
                 <form class="upload-zone asset-upload-panel" id="graphic-upload-form">
                     <strong>Upload Graphics</strong>

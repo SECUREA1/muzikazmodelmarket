@@ -2062,6 +2062,8 @@ function initBottleLogin() {
   const tokenIdentity = document.querySelector('#wallet-token-identity');
   if (!form || !lockedContent) return;
   let walletRequestActive = false;
+  const rememberAccountSession = (session) => { window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt }; return session.account; };
+  const authenticateWalletAccount = async (wallet) => { const response = await fetch('/api/access/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ wallet }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Wallet account authentication failed.'); return rememberAccountSession(result.data); };
   const setBusy = (busy) => {
     if (connectButton) connectButton.disabled = busy;
     if (meknxButton) meknxButton.disabled = busy;
@@ -2116,6 +2118,7 @@ function initBottleLogin() {
   const verifyAndUnlock = async (address, requiredContract = '') => {
     const ownership = await validateBottleOwnership(address, requiredContract);
     const profile = window.MZKWallet?.connectIdentity({ address, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
+    await authenticateWalletAccount(address);
     currentMemberEmail = normalizeMemberEmail(address);
     grantBottleAccess(currentMemberEmail, 'ethereum-contract', ownership.config.contract);
     window.sessionStorage.setItem('muzikazBottleMember', 'true');
@@ -2212,30 +2215,29 @@ function initBottleLogin() {
     setBusy(true);
     try {
       const code = accessCodeInput?.value.trim();
-      if (!code) throw new Error('Enter the secret one-time Loadout Code.');
-      if (status) status.textContent = 'Connect the Ethereum wallet that will receive this one-time Loadout…';
+      if (!code) throw new Error('Enter your private MZK Access Code.');
+      if (status) status.textContent = 'Connect the Ethereum wallet that will be bound to this account…';
       const wallet = requireEthereumWallet();
       const address = await requestEthereumAccount(wallet, { chooseAccount: connectButton?.dataset.connected === 'true' });
       showAddress(address);
-      if (status) status.textContent = 'Burning the code and binding its Loadout to your wallet…';
-      const response = await fetch('/api/loadout-codes/redeem', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code, wallet: address }) });
+      if (status) status.textContent = 'Activating the account and redeeming included entitlements once…';
+      const response = await fetch('/api/access/activate', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code, wallet: address, username: usernameInput?.value || '' }) });
       const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message || 'The Loadout Code could not be applied.');
-      const grant = result.data;
+      if (!response.ok || !result.success) throw new Error(result.message || 'The MZK Access Code could not be activated.');
+      const account = rememberAccountSession(result.data);
       currentMemberEmail = normalizeMemberEmail(address);
-      grantBottleAccess(currentMemberEmail, 'admin-loadout-code', grant.id);
+      grantBottleAccess(currentMemberEmail, 'mzk-access-code', account.accountId);
       window.sessionStorage.setItem('muzikazBottleMember', 'true');
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-      claimOwnedAsset('Unrevealed MUZIKAZ Land', 'One-time Admin Loadout', currentMemberEmail);
-      claimOwnedAsset('Violet Wish Bottle · Complimentary Mint Claim', 'One-time Admin Loadout', currentMemberEmail);
-      window.localStorage.setItem('muzikazLoadoutCodeGrant', JSON.stringify({ ...grant, owner: currentMemberEmail }));
+      (account.landAssets || []).forEach((asset) => claimOwnedAsset(asset, 'MZK Access entitlement', currentMemberEmail));
+      (account.bottleClaims || []).forEach((asset) => claimOwnedAsset(`${asset} · Complimentary Mint Claim`, 'MZK Access entitlement', currentMemberEmail));
       setPurchaseStep(3);
       renderOwnedCollection(currentMemberEmail);
-      unlock(`One-time code burned. $${grant.discountUsd} Loadout price waived; creator tools, land, and your complimentary Violet Wish Bottle claim are now bound to ${shortAddress(address)}.`);
+      unlock(`Your MUZIKAZ account is active. The one-time entitlements were redeemed and this same MZK Access Code can now reopen account ${account.accountId} on any device.`);
       if (accessCodeInput) accessCodeInput.value = '';
       scrollToSection('member-locked-content');
     } catch (error) {
-      if (status) status.textContent = error.message || 'The one-time Loadout Code could not be applied.';
+      if (status) status.textContent = error.message || 'The MZK Access Code could not be activated.';
     } finally { setBusy(false); }
   });
   loadoutButton?.addEventListener('click', async () => {
@@ -2261,8 +2263,14 @@ function initBottleLogin() {
       grantBottleMintBackpackAssets(owner, paymentHash);
       window.localStorage.setItem('muzikazLoadoutPayment', JSON.stringify({ owner, paymentHash, currency }));
       grantBottleAccess(owner, 'backpack-loadout-payment', paymentHash);
+      const account = await authenticateWalletAccount(owner);
+      const paidResponse = await fetch('/api/account/loadout/paid', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': window.MuzikazAccountSession.csrfToken }, body: JSON.stringify({ paymentId: paymentHash }) });
+      const paidResult = await paidResponse.json(); if (!paidResponse.ok || !paidResult.success) throw new Error(paidResult.message || 'The paid Loadout could not be attached to your account.');
+      const credentialResponse = await fetch('/api/account/access-code', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': window.MuzikazAccountSession.csrfToken }, body: '{}' });
+      const credentialResult = await credentialResponse.json();
+      if (!credentialResponse.ok || !credentialResult.success) throw new Error(credentialResult.message || 'Your account was created, but its MZK Access Code could not be generated.');
       setPurchaseStep(3);
-      if (status) status.textContent = `$${BACKPACK_LOADOUT_USD} Backpack Loadout confirmed with ${currency} (${String(paymentHash).slice(0, 10)}…) — your land and Violet Wish Bottle are in the Backpack. Continue now without minting, or optionally mint the collectible on-chain.`;
+      if (status) status.textContent = credentialResult.data.code ? `$${BACKPACK_LOADOUT_USD} Loadout confirmed. Save your MZK Access Code now—it will not be shown again: ${credentialResult.data.code}` : `$${BACKPACK_LOADOUT_USD} Loadout confirmed for account ${account.accountId}. Your existing MZK Access Code remains your one account credential.`;
       renderOwnedCollection(currentMemberEmail);
     } catch (error) {
       if (status) status.textContent = error.message || 'The Backpack Loadout could not be purchased.';
@@ -2320,6 +2328,32 @@ loadOwnerGlbModels().then(renderSubscriberGlbLibrary);
 document.querySelector('#owned-profile-select')?.addEventListener('change', (event) => renderOwnedCollection(event.currentTarget.value));
 renderOwnedCollection();
 initBottleLogin();
+
+function initMzkAccessAccount() {
+  const loginForm = document.querySelector('#account-access-form');
+  const locked = document.querySelector('#member-locked-content');
+  const status = document.querySelector('#bottle-login-status');
+  const output = document.querySelector('#mzk-access-manage-output');
+  const showAccount = (session) => {
+    window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt };
+    locked.hidden = false; locked.dataset.locked = 'false'; document.body.classList.add('is-member-authenticated');
+    window.sessionStorage.setItem('muzikazBottleMember', 'true');
+    if (status) status.textContent = `Account ${session.account.accountId} reopened. Backpack, wallets, MZK, land, assets, creator tools and claims loaded from one canonical account.`;
+    scrollToSection('member-locked-content');
+  };
+  loginForm?.addEventListener('submit', async (event) => {
+    event.preventDefault(); const button = loginForm.querySelector('button'); button.disabled = true;
+    try { const response = await fetch('/api/access/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(loginForm))) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Account could not be opened.'); loginForm.reset(); showAccount(result.data); }
+    catch (error) { if (status) status.textContent = error.message; } finally { button.disabled = false; }
+  });
+  async function manage(action) {
+    const session = window.MuzikazAccountSession; if (!session?.csrfToken) throw new Error('Open your account again before managing its credential.');
+    const response = await fetch(`/api/account/access-code/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': session.csrfToken }, body: '{}' }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || `Access Code ${action} failed.`); return result.data;
+  }
+  document.querySelector('#mzk-access-rotate')?.addEventListener('click', async () => { try { const result = await manage('rotate'); output.textContent = `Save this new MZK Access Code now; it will not be shown again: ${result.code}`; } catch (error) { output.textContent = error.message; } });
+  document.querySelector('#mzk-access-revoke')?.addEventListener('click', async () => { if (!confirm('Revoke wallet-free code access? Your account and wallet access will remain intact.')) return; try { await manage('revoke'); output.textContent = 'MZK Access Code revoked. Your account data and wallet bindings are unchanged.'; } catch (error) { output.textContent = error.message; } });
+}
+initMzkAccessAccount();
 
 const checkoutItems = document.querySelector('#checkout-items');
 const paymentForm = document.querySelector('#payment-form');
@@ -3012,23 +3046,34 @@ function initAdminLogin() {
   const codeOutput = document.querySelector('#loadout-code-output');
   const codeStatus = document.querySelector('#loadout-code-admin-status');
   const copyButton = document.querySelector('#loadout-code-copy');
+  const codeTable = document.querySelector('#mzk-access-admin-table');
   let currentCode = '';
+  const loadAccessCodes = async () => {
+    if (!codeTable) return;
+    const response = await fetch('/api/admin/access-codes', { headers: { 'x-admin-token': sessionStorage.getItem(tokenKey) || '', Accept: 'application/json' } }); const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.message || 'Credentials could not be loaded.');
+    codeTable.innerHTML = result.data.length ? result.data.map((item) => `<tr><td>${escapeHtml(item.maskedCode)}</td><td>${escapeHtml(item.label)}<small>${escapeHtml(item.campaign || '')}</small></td><td>${escapeHtml(item.status)}</td><td>${new Date(item.createdAt).toLocaleDateString()}<small>${item.activatedAt ? new Date(item.activatedAt).toLocaleDateString() : 'Not activated'}</small></td><td>${escapeHtml(item.boundWallet ? shortAddress(item.boundWallet) : '—')}<small>${escapeHtml(item.accountUsername || '')}</small></td><td>${item.loadoutRedeemed ? 'Yes' : 'No'}</td><td>${item.expiresAt ? new Date(item.expiresAt).toLocaleString() : '—'}</td><td><button type="button" data-access-revoke="${item.id}" ${item.status === 'revoked' ? 'disabled' : ''}>Revoke</button></td></tr>`).join('') : '<tr><td colspan="8">No credentials issued.</td></tr>';
+  };
+  document.addEventListener('muzikaz:admin-authenticated', () => loadAccessCodes().catch((error) => { if (codeStatus) codeStatus.textContent = error.message; }));
+  codeTable?.addEventListener('click', async (event) => { const id = event.target.closest('[data-access-revoke]')?.dataset.accessRevoke; if (!id) return; try { const response = await fetch(`/api/admin/access-codes/${id}/revoke`, { method: 'POST', headers: { 'x-admin-token': sessionStorage.getItem(tokenKey) || '', Accept: 'application/json' } }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message); await loadAccessCodes(); } catch (error) { codeStatus.textContent = error.message || 'Revoke failed.'; } });
   codeForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (codeStatus) codeStatus.textContent = 'Generating a cryptographically random single-use code…';
+    if (codeStatus) codeStatus.textContent = 'Generating a cryptographically random MZK Access Code…';
     try {
-      const response = await fetch('/api/admin/loadout-codes', { method: 'POST', headers: { 'x-admin-token': sessionStorage.getItem(tokenKey) || '', 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(codeForm))) });
+      const fields = Object.fromEntries(new FormData(codeForm)); for (const name of ['waiveLoadout', 'violetBottle', 'starterLand', 'creatorVault']) fields[name] = codeForm.elements[name].checked;
+      const response = await fetch('/api/admin/access-codes', { method: 'POST', headers: { 'x-admin-token': sessionStorage.getItem(tokenKey) || '', 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(fields) });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || 'Code generation failed.');
       currentCode = result.data.code;
       codeOutput.textContent = currentCode;
       copyButton.hidden = false;
-      codeStatus.textContent = `Ready until ${new Date(result.data.expiresAt).toLocaleString()}. It will permanently burn on first wallet redemption.`;
+      codeStatus.textContent = `Issued until ${new Date(result.data.expiresAt).toLocaleString()}. Entitlements redeem once; the activated credential remains the account login.`;
+      await loadAccessCodes();
     } catch (error) { if (codeStatus) codeStatus.textContent = error.message || 'Code generation failed.'; }
   });
   copyButton?.addEventListener('click', async () => {
     if (!currentCode) return;
-    try { await navigator.clipboard.writeText(currentCode); codeStatus.textContent = 'Secret code copied. Share it privately; it can be used only once.'; }
+    try { await navigator.clipboard.writeText(currentCode); codeStatus.textContent = 'Secret copied. Share privately; its included entitlements redeem once and the credential remains active afterward.'; }
     catch { codeStatus.textContent = `Copy is unavailable. Select the displayed code manually: ${currentCode}`; }
   });
 }

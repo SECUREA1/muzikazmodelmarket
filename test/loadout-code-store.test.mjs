@@ -3,30 +3,26 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { LoadoutCodeStore } from '../loadout-code-store.mjs';
+import { MzkAccountStore } from '../loadout-code-store.mjs';
 
-test('creates a server-stored secret and burns it on first wallet redemption', async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), 'mzk-loadout-'));
-  t.after(() => rm(directory, { recursive: true, force: true }));
-  const file = join(directory, 'codes.json');
-  const store = new LoadoutCodeStore(file);
-  const grant = await store.create({ label: 'Launch guest', expiresInDays: 7 });
-  assert.match(grant.code, /^MZK-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
-  assert.equal(grant.discountUsd, 30);
-  assert.equal((await readFile(file, 'utf8')).includes(grant.code), false, 'plaintext secret must not be persisted');
+async function fixture(t) { const directory = await mkdtemp(join(tmpdir(), 'mzk-access-')); t.after(() => rm(directory, { recursive: true, force: true })); return { file: join(directory, 'accounts.json'), store: new MzkAccountStore(join(directory, 'accounts.json')) }; }
 
-  const wallet = '0x1111111111111111111111111111111111111111';
-  const redeemed = await store.redeem(grant.code.toLowerCase(), wallet);
-  assert.equal(redeemed.redeemedBy, wallet);
-  await assert.rejects(store.redeem(grant.code, wallet), /already been burned/);
+test('activates one hashed MZK Access Code and keeps it usable as account login', async (t) => {
+  const { file, store } = await fixture(t); const grant = await store.create({ label: 'Launch', promotionalMzk: 250 });
+  assert.match(grant.code, /^MZK(?:-[A-Z2-9]{4}){4}$/); assert.equal((await readFile(file, 'utf8')).includes(grant.code), false);
+  const wallet = '0x1111111111111111111111111111111111111111'; const activated = await store.activate(grant.code.toLowerCase(), wallet);
+  assert.equal(activated.credential.status, 'activated'); assert.equal(activated.credential.loadoutRedeemed, true); assert.equal(activated.account.mzkBalance, 250);
+  const login = await store.authenticate(grant.code); assert.equal(login.accountId, activated.account.accountId); assert.equal(login.primaryEthereumWallet, wallet);
+  await assert.rejects(store.activate(grant.code, wallet), /already activated/);
+  assert.equal((await store.authenticate(grant.code)).mzkBalance, 250, 'one-time grant is never duplicated');
 });
 
-test('rejects malformed codes and wallets without consuming a grant', async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), 'mzk-loadout-'));
-  t.after(() => rm(directory, { recursive: true, force: true }));
-  const store = new LoadoutCodeStore(join(directory, 'codes.json'));
-  const grant = await store.create();
-  await assert.rejects(store.redeem('not-a-code', '0x1111111111111111111111111111111111111111'), /valid MUZIKAZ/);
-  await assert.rejects(store.redeem(grant.code, 'not-a-wallet'), /valid Ethereum wallet/);
-  assert.equal((await store.list())[0].redeemedAt, null);
+test('rotation preserves the canonical account and revokes the prior credential', async (t) => {
+  const { store } = await fixture(t); const issued = await store.create(); const activated = await store.activate(issued.code, '0x2222222222222222222222222222222222222222');
+  const rotated = await store.rotate(activated.account.accountId); assert.equal(rotated.account.accountId, activated.account.accountId); assert.deepEqual(rotated.account.landAssets, activated.account.landAssets);
+  await assert.rejects(store.authenticate(issued.code), /not active/); assert.equal((await store.authenticate(rotated.code)).accountId, activated.account.accountId);
+});
+
+test('recognized wallets always resolve to the same canonical account', async (t) => {
+  const { store } = await fixture(t); const wallet = '0x3333333333333333333333333333333333333333'; const first = await store.findByWallet(wallet); const second = await store.findByWallet(wallet.toUpperCase().replace('0X', '0x')); assert.equal(first.accountId, second.accountId);
 });
