@@ -101,7 +101,7 @@
         sessionStorage.setItem('muzikazAdminToken', result.data.token);
         adminForm.reset();
         adminStatus.textContent = 'Access granted. Opening the command center…';
-        window.setTimeout(() => { window.location.href = 'members.html#admin'; }, 350);
+        window.setTimeout(() => { window.location.href = 'admin.html'; }, 350);
       } catch (error) { adminStatus.textContent = error.message || 'Authentication failed.'; }
     });
 
