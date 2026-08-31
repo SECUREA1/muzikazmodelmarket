@@ -87,13 +87,13 @@
                 <p class="checkout-note">MZK price: <strong id="summary-mzk-total">0 MZK</strong>. Need tokens? <a href="buy-mzk.html">Fund MZK with any supported payment asset</a>.</p>
             </aside>
 
-            <muzikaz-payment-checkout item-name="Marketplace cart" product-id="marketplace-cart" product-type="MARKETPLACE" base-price="1"></muzikaz-payment-checkout>
-            <form class="payment-form" id="payment-form">
+            <div class="checkout-flow">
+                <form class="payment-form" id="payment-form">
                 <section class="checkout-owner" aria-labelledby="checkout-owner-title">
                     <div>
                         <p class="kicker">Claim destination</p>
                         <h2 id="checkout-owner-title">Your wallet. Your Backpack.</h2>
-                        <p id="checkout-owner-copy">Checking the active member and wallet…</p>
+                        <p id="checkout-owner-copy">Wallet payments are claimed only to the address that approves them. MZK claims go to the active MZK wallet shown here.</p>
                     </div>
                     <dl>
                         <div><dt>Backpack</dt><dd id="checkout-backpack-owner">Not signed in</dd></div>
@@ -122,12 +122,21 @@
                             <p id="checkout-mzk-balance">Wallet loading…</p>
                             <button type="button" id="checkout-mzk-pay">Pay with MZK</button>
                         </section>
-
+                    </div>
                 </fieldset>
 
                 <label class="terms-check"><input id="checkout-terms" type="checkbox" required /> I confirm the displayed Backpack and wallet are mine and agree to receive MUZIKAZ order updates.</label>
                 <p class="status-message" id="payment-status" role="status">Confirm your details, then choose a wallet payment above.</p>
-            </form>
+                </form>
+                <div class="checkout-alternative" aria-labelledby="crypto-payment-title">
+                    <div class="checkout-alternative-heading">
+                        <p class="kicker">Other wallet currencies</p>
+                        <h2 id="crypto-payment-title">Pay on another network</h2>
+                        <p>Use the same order total with a supported cryptocurrency and network.</p>
+                    </div>
+                    <muzikaz-payment-checkout item-name="Marketplace cart" product-id="marketplace-cart" product-type="MARKETPLACE" base-price="1"></muzikaz-payment-checkout>
+                </div>
+            </div>
         </section>
 
         <section class="confirmation-panel" id="confirmation-panel" hidden aria-live="polite">
