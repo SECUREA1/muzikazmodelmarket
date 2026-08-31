@@ -67,7 +67,7 @@
     const utilityBar = document.createElement('aside');
     utilityBar.className = 'mzk-site-utility';
     utilityBar.setAttribute('aria-label', 'Support and administration');
-    utilityBar.innerHTML = `<button type="button" data-open-support-chat aria-haspopup="dialog" aria-controls="muzikaz-support-chat">Support</button><button type="button" data-open-admin-login aria-haspopup="dialog">Admin login</button>`;
+    utilityBar.innerHTML = `<button type="button" data-open-admin-login aria-label="Admin login" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.3c0 4.7 3.2 8.2 7.5 9.7 4.3-1.5 7.5-5 7.5-9.7V6L12 3Z"/><path d="M9.5 11.5V10a2.5 2.5 0 0 1 5 0v1.5M9 11.5h6v4H9z"/></svg><span>Admin</span></button><button type="button" data-open-support-chat aria-haspopup="dialog" aria-controls="muzikaz-support-chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 9 9 0 0 1-3.2-.7L4 20l1.6-4.1A7.4 7.4 0 0 1 4 11.5 7.5 7.5 0 0 1 12 4a7.5 7.5 0 0 1 8 7.5Z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/></svg><span>Support</span></button>`;
     document.body.appendChild(utilityBar);
 
     const supportChat = document.querySelector('.support-chat');
