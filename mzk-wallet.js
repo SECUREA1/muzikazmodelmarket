@@ -4,31 +4,18 @@
   const ACTIVE_KEY = 'muzikazMzkActiveWalletV1';
   const CONNECTED_KEY = 'muzikazConnectedEthereumWalletV1';
   const CONNECTED_CHAIN_KEY = 'muzikazConnectedEthereumChainV1';
-  const ACCESS_SESSION_KEY = 'muzikazAccessCodeSessionV1';
   const MIGRATION_KEY = 'muzikazMzkWalletMigrationV1';
   const STARTING_MZK = 0;
   const MZK_PER_USD = 100;
   const MINIMUM_PURCHASE_USD = 5;
   const GAME_ENTRY_MZK = 4000;
-  const SWAP_BACK_RATE = 0.5;
-  const LOCKED_LIQUIDITY_RATE = 0.5;
-  const MINIMUM_SWAP_BACK_MZK = 1000;
   const LOADOUT_KEY = 'muzikazStarterLoadoutsV1';
   const STARTER_AVATARS = ['Sparky', 'Nexus', 'Fiona', 'Dax', 'Buzz', 'Luna', 'Muz Cat', 'Ion Wolf'];
   const STARTER_LANDS = ['Skyline Deck', 'Echo Gardens', 'Crew Plaza', 'Studio Ridge', 'Neon Docks'];
   const normalize = (value) => String(value || '').trim().toLowerCase();
   const uid = (prefix = 'mzk') => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const validAddress = (value) => /^0x[a-f0-9]{40}$/.test(normalize(value));
-  function accessSession() { try { const value = JSON.parse(localStorage.getItem(ACCESS_SESSION_KEY) || 'null'); return value?.token && Date.parse(value.expiresAt) > Date.now() ? value : null; } catch (_) { return null; } }
-  const connectedAddress = () => { const address = normalize(localStorage.getItem(CONNECTED_KEY) || accessSession()?.walletId); return validAddress(address) ? address : ''; };
-  const accessToken = () => accessSession()?.token || '';
-  async function loginWithAccessCode(code) {
-    const response = await fetch('/api/access-codes/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code }) });
-    const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Access-code login failed.');
-    localStorage.setItem(ACCESS_SESSION_KEY, JSON.stringify(result.data)); localStorage.setItem('voice3.wallet', result.data.walletId); ensureWallet(result.data.walletId);
-    window.dispatchEvent(new CustomEvent('mzk:wallet-connection-changed', { detail: { address: result.data.walletId, chainId: '', accessCode: true } })); return result.data;
-  }
-  function logoutAccessCode() { localStorage.removeItem(ACCESS_SESSION_KEY); updateBrowserConnection([]); }
+  const connectedAddress = () => { const address = normalize(localStorage.getItem(CONNECTED_KEY)); return validAddress(address) ? address : ''; };
   const parse = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch (_) { return fallback; } };
   const profiles = () => { const value = parse(PROFILE_KEY, {}); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; };
   const activeProfile = () => profiles()[normalize(localStorage.getItem(ACTIVE_KEY))] || null;
@@ -45,13 +32,6 @@
   function randomItem(items) { const values = new Uint32Array(1); if (globalThis.crypto?.getRandomValues) globalThis.crypto.getRandomValues(values); else values[0] = Math.floor(Math.random() * 0xffffffff); return items[values[0] % items.length]; }
   function claimStarterLoadout() { const owner = normalize(walletId()), existing = starterLoadout(owner); if (existing) return { ok: true, firstEntry: false, balance: balance(owner), loadout: existing }; const payment = spend(GAME_ENTRY_MZK, 'First-time Builder Loadout package', uid('starter-loadout'), { package: 'builder-loadout-v1' }); if (!payment.ok) return payment; const loadout = { id: uid('loadout'), owner, avatar: randomItem(STARTER_AVATARS), land: randomItem(STARTER_LANDS), assets: ['Builder Tool Kit', 'Starter Room Shell', 'Public Community Spot'], entryPaidMzk: GAME_ENTRY_MZK, claimedAt: new Date().toISOString() }; const all = loadouts(); all[owner] = loadout; localStorage.setItem(LOADOUT_KEY, JSON.stringify(all)); window.dispatchEvent(new CustomEvent('mzk:starter-loadout-claimed', { detail: loadout })); return { ok: true, firstEntry: true, balance: balance(owner), loadout }; }
   function spend(amount, reason, id = uid('spend'), meta = {}) { amount = Math.abs(Number(amount) || 0); ensureWallet(); const existing = read().find((entry) => entry.id === id); if (existing) return { ok: true, duplicate: true, balance: balance(), tx: existing }; if (!amount || balance() < amount) return { ok: false, error: 'INSUFFICIENT_MZK', balance: balance() }; const tx = record({ id, amount: -amount, kind: 'spend', reason, ...meta }); return { ok: true, tx, balance: balance() }; }
-  function completeSwapBack(amount, payout = {}) {
-    amount = Number(amount); const transactionHash = String(payout.transactionHash || '').trim();
-    if (!Number.isFinite(amount) || amount < MINIMUM_SWAP_BACK_MZK) throw new Error(`Minimum swap back is ${MINIMUM_SWAP_BACK_MZK.toLocaleString()} MZK.`);
-    const payoutUsd = Math.round((amount / MZK_PER_USD) * SWAP_BACK_RATE * 100) / 100;
-    if (!transactionHash || !(Number(payout.paidAmount) > 0) || Number(payout.mzk) !== amount || Number(payout.payoutUsd) !== payoutUsd || payout.liquidityLocked !== true) throw new Error('Confirmed 50% payout and liquidity-lock proof is required before MZK can be deducted.');
-    return spend(amount, `${amount.toLocaleString()} MZK swapped back to ${String(payout.currency || '').toUpperCase()}`, `mzk:swap-back:${transactionHash}`, { payoutCurrency: String(payout.currency || '').toUpperCase(), payoutAmount: Number(payout.paidAmount), payoutUsd, lockedLiquidityUsd: Number(payout.lockedLiquidityUsd), liquidityRate: LOCKED_LIQUIDITY_RATE, destinationAddress: String(payout.destinationAddress || ''), transactionHash });
-  }
   function transfer(from, to, amount, reason, id = uid('transfer'), meta = {}) { from = normalize(from); to = normalize(to); amount = Math.abs(Number(amount) || 0); ensureWallet(from); ensureWallet(to); if (!from || !to || from === to || !amount) return { ok: false, error: 'INVALID_TRANSFER', balance: balance(from) }; if (read().some((entry) => entry.id === `${id}:debit`)) return { ok: true, duplicate: true, balance: balance(from) }; if (balance(from) < amount) return { ok: false, error: 'INSUFFICIENT_MZK', balance: balance(from) }; record({ id: `${id}:debit`, owner: from, amount: -amount, kind: 'transfer', reason, counterparty: to, ...meta }); record({ id: `${id}:credit`, owner: to, amount, kind: 'transfer', reason, counterparty: from, ...meta }); return { ok: true, balance: balance(from) }; }
   function connectIdentity({ address, chainId, contract, tokenIds = [] }) {
     address = normalize(address); contract = normalize(contract); chainId = normalize(chainId);
@@ -101,5 +81,5 @@
     provider.on?.('disconnect', () => updateBrowserConnection([]));
   }
   document.addEventListener('click', (event) => { const start = event.target.closest?.('[data-house-start]'); if (!start || start.dataset.mzkEntryPaid === 'true') return; ensureWallet(); const owned = starterLoadout(); if (!owned && balance() < GAME_ENTRY_MZK) { event.preventDefault(); event.stopImmediatePropagation(); const returnTo = `${location.pathname.split('/').pop() || 'index.html'}${location.hash}`; location.href = `buy-mzk.html?return=${encodeURIComponent(returnTo)}#swap`; return; } const claimed = claimStarterLoadout(); if (!claimed.ok) { event.preventDefault(); event.stopImmediatePropagation(); return; } start.dataset.mzkEntryPaid = 'true'; start.dataset.mzkLoadoutId = claimed.loadout.id; }, true);
-  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), accessToken, loginWithAccessCode, logoutAccessCode, connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
+  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
 })();

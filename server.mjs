@@ -7,7 +7,6 @@ import { UserJsonDatabase, cleanWallet } from './user-json-database.mjs';
 import { LoadoutCodeStore } from './loadout-code-store.mjs';
 import { PaymentOrderStore } from './payment-order-store.mjs';
 import { verifyPaymentTransaction } from './payment-verifier.mjs';
-import { cryptoPayoutService } from './crypto-payout-service.mjs';
 
 const root = process.cwd();
 const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
@@ -22,7 +21,6 @@ const userDatabaseFile = process.env.MUZIKAZ_USER_DATABASE_FILE || join(dataDir,
 const userDatabase = new UserJsonDatabase(userDatabaseFile);
 const loadoutCodeStore = new LoadoutCodeStore(process.env.MUZIKAZ_LOADOUT_CODES_FILE || join(dataDir, 'loadout-codes.json'));
 const paymentOrderStore = new PaymentOrderStore(process.env.MUZIKAZ_PAYMENT_ORDERS_FILE || join(dataDir, 'payment-orders.json'), { verifyTransaction: verifyPaymentTransaction });
-const accessCodeStore = new AccessCodeStore(process.env.MUZIKAZ_ACCESS_CODES_FILE || join(dataDir, 'access-codes.json'));
 const publicAvatarManifest = join(root, 'public', 'models', 'avatars.json');
 const environmentDataFile = process.env.MUZIKAZ_ENVIRONMENT_DATA_FILE || join(dataDir, 'environments.json');
 const repositoryEnvironmentManifest = join(root, 'public', 'models', 'environments', 'environments.json');
@@ -30,7 +28,6 @@ const clients = new Set();
 const presence = new Map();
 const chatMessages = [];
 const adminSessions = new Set();
-const accessSessions = new Map();
 const supportSockets = new Set();
 const supportMessages = [];
 const port = Number(process.env.PORT || 4173);
@@ -95,12 +92,7 @@ async function readModels() { await ensureStorage(); return JSON.parse(await rea
 async function writeModels(records) { await ensureStorage(); await writeFile(modelsFile, JSON.stringify(records, null, 2)); }
 async function writeAssets(records) { await ensureStorage(); await writeFile(assetsFile, JSON.stringify(records, null, 2)); }
 function user(req) { return { id: cleanText(req.headers['x-user-id'], 'demo-user'), role: 'user', name: cleanText(req.headers['x-user-name'], 'MUZIKAZ Creator') }; }
-function accessSession(req) {
-  const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, ''); const active = accessSessions.get(token) || null;
-  if (active && Date.parse(active.expiresAt) <= Date.now()) { accessSessions.delete(token); return null; }
-  return active;
-}
-function requestWallet(req) { return cleanWallet(accessSession(req)?.walletId || req.headers['x-wallet-address'] || req.headers['x-user-id']); }
+function requestWallet(req) { return cleanWallet(req.headers['x-wallet-address'] || req.headers['x-user-id']); }
 function isAdmin(req) { const token = String(req.headers['x-admin-token'] || ''); return (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || adminSessions.has(token); }
 function requireAdmin(req, res) { if (isAdmin(req)) return true; sendJson(res, 403, { success: false, message: 'Admin authorization required' }); return false; }
 function landAssetFromBackpack(req) { return cleanText(req.headers['x-muzikaz-land-asset'], '').trim(); }
@@ -237,21 +229,6 @@ const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders()); res.end(); return; }
   try {
     if (url.pathname === '/api/health' && req.method === 'GET') return sendJson(res, 200, { success: true, service: 'muzikaz-member-market' });
-    if (url.pathname === '/api/access-codes/issue' && req.method === 'POST') {
-      const body = await bodyJson(req); const walletId = cleanWallet(body.wallet);
-      return sendJson(res, 201, assetResponse(await accessCodeStore.issue(walletId)));
-    }
-    if (url.pathname === '/api/access-codes/login' && req.method === 'POST') {
-      const identity = await accessCodeStore.authenticate((await bodyJson(req)).code);
-      const token = randomUUID(); const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      accessSessions.set(token, { walletId: identity.walletId, expiresAt });
-      return sendJson(res, 200, assetResponse({ token, walletId: identity.walletId, expiresAt }));
-    }
-    if (url.pathname === '/api/access-codes/session' && req.method === 'GET') {
-      const active = accessSession(req);
-      if (!active || Date.parse(active.expiresAt) <= Date.now()) return sendJson(res, 401, { success: false, message: 'Access-code session expired.' });
-      return sendJson(res, 200, assetResponse(active));
-    }
     if (url.pathname === '/api/admin/login' && req.method === 'POST') {
       const credentials = await bodyJson(req);
       if (credentials.username !== 'admin' || credentials.password !== 'boots') return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
