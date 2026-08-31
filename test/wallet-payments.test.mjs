@@ -7,7 +7,7 @@ const configSource = await readFile('payment-config.js', 'utf8');
 const paymentsSource = await readFile('wallet-payments.js', 'utf8');
 
 function loadPayments(extraWindow = {}) {
-  const window = { location: { opened: '', assign(uri) { this.opened = uri; } }, ...extraWindow };
+  const window = { opened: [], open(uri, target, features) { this.opened.push({ uri, target, features }); return {}; }, ...extraWindow };
   const context = vm.createContext({ window, globalThis: window, fetch: async () => { throw new Error('Unexpected fetch'); }, URL, Date, BigInt });
   vm.runInContext(configSource, context);
   vm.runInContext(paymentsSource, context);
@@ -22,8 +22,16 @@ test('opens the correct wallet payment URI when chain providers are unavailable'
     const result = await window.MuzikazWalletPayments.initiate(quote);
     assert.equal(result.opened, true);
     assert.equal(result.walletName, walletName);
-    assert.equal(window.location.opened, quote.uri);
+    assert.deepEqual(window.opened.at(-1), { uri: quote.uri, target: '_blank', features: 'noopener,noreferrer' });
   }
+});
+
+test('hands ADA to Lace without loading the Mesh SDK or BigNumber', async () => {
+  const window = loadPayments({ cardano: { lace: { enable() { throw new Error('CIP-30 should not be invoked'); } } } });
+  const network = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS.ADA;
+  const result = await window.MuzikazWalletPayments.initiate({ currency: 'ADA', amount: 12.5, recipient: network.address, uri: window.MuzikazPaymentConfig.paymentUri('ADA', 12.5) }, 'lace');
+  assert.equal(result.opened, true);
+  assert.match(result.uri, /^web\+cardano:/);
 });
 
 test('prefers the injected MetaMask provider for EVM payment', async () => {
