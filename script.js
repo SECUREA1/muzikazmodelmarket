@@ -2060,11 +2060,6 @@ function initBottleLogin() {
   const jsonDownload = document.querySelector('#wallet-json-download');
   const jsonImport = document.querySelector('#wallet-json-import');
   const tokenIdentity = document.querySelector('#wallet-token-identity');
-  const accountCodeInput = document.querySelector('#account-access-code');
-  const accountCodeLogin = document.querySelector('#account-access-login');
-  const accountCodeIssue = document.querySelector('#account-access-issue');
-  const accountCodeCreate = document.querySelector('#account-access-create');
-  const accountCodeOutput = document.querySelector('#account-access-output');
   if (!form || !lockedContent) return;
   let walletRequestActive = false;
   const setBusy = (busy) => {
@@ -2118,17 +2113,6 @@ function initBottleLogin() {
     document.body.classList.add('is-member-authenticated');
     if (status) status.textContent = message;
   };
-  const offerAccessCode = () => { if (accountCodeIssue) accountCodeIssue.hidden = false; };
-  const createAccessCode = async (wallet) => {
-    offerAccessCode();
-    const response = await fetch('/api/access-codes/issue', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ wallet }) });
-    const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Access code could not be created.');
-    if (result.data.alreadyIssued) accountCodeOutput.textContent = 'Your wallet already has a code. Use the private copy you saved when it was created.';
-    else accountCodeOutput.textContent = result.data.code;
-    accountCodeOutput.setAttribute('aria-label', result.data.alreadyIssued ? 'Access code already issued' : 'Your new private access code');
-    accountCodeCreate.disabled = true;
-    return result.data;
-  };
   const verifyAndUnlock = async (address, requiredContract = '') => {
     const ownership = await validateBottleOwnership(address, requiredContract);
     const profile = window.MZKWallet?.connectIdentity({ address, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
@@ -2142,8 +2126,6 @@ function initBottleLogin() {
     if (tokenIdentity) tokenIdentity.textContent = `Verified identity: ${ownership.config.chainId} · ${ownership.contract} · Bottle token ${ownership.tokenIds.length ? ownership.tokenIds.join(', ') : 'ownership confirmed (contract does not expose token IDs)'}`;
     renderOwnedCollection(currentMemberEmail);
     unlock(`Bottle ownership verified on-chain. ${ownership.balance.toString()} Bottle token${ownership.balance === 1n ? '' : 's'} found.`);
-    offerAccessCode();
-    await createAccessCode(address);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
@@ -2206,28 +2188,6 @@ function initBottleLogin() {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     await connect();
-  });
-  accountCodeInput?.addEventListener('input', () => { accountCodeInput.value = accountCodeInput.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''); });
-  accountCodeLogin?.addEventListener('click', async () => {
-    setBusy(true);
-    try {
-      const session = await window.MZKWallet.loginWithAccessCode(accountCodeInput?.value);
-      currentMemberEmail = normalizeMemberEmail(session.walletId);
-      window.sessionStorage.setItem('muzikazBottleMember', 'true'); window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-      showAddress(session.walletId); renderOwnedCollection(currentMemberEmail);
-      unlock(`Access code accepted. Your ${shortAddress(session.walletId)} Backpack and playable account are available without connecting a wallet.`);
-      if (identityPanel) identityPanel.hidden = false; if (accountCodeInput) accountCodeInput.value = '';
-      scrollToSection('member-locked-content');
-    } catch (error) { if (status) status.textContent = error.message || 'Access-code login failed.'; }
-    finally { setBusy(false); }
-  });
-  accountCodeCreate?.addEventListener('click', async () => {
-    setBusy(true);
-    try {
-      const wallet = window.MZKWallet.connectedAddress(); if (!wallet || window.MZKWallet.accessToken?.()) throw new Error('Connect and verify your Ethereum wallet before creating its code.');
-      await createAccessCode(wallet);
-    } catch (error) { if (status) status.textContent = error.message || 'Access code could not be created.'; }
-    finally { setBusy(false); }
   });
   meknxButton?.addEventListener('click', async () => {
     walletRequestActive = true;
