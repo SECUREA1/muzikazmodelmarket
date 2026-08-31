@@ -6,6 +6,8 @@
 
 The browser creates an order before opening a wallet, submits the resulting transaction ID, and waits for the server-side verifier. Only `PAID` orders may be fulfilled; transaction IDs are globally unique and fulfillment is idempotent. Opening a wallet or broadcasting a transaction never grants MZK or an asset.
 
+The checkout uses MetaMask for Ethereum-compatible chains, Phantom for Solana, and Lace for Cardano when their browser providers are available. If a provider is not injected (including on mobile), the same payment button opens the chain payment URI in the corresponding wallet app. Bitcoin and Dogecoin use their native payment URI. After an external wallet opens, the customer returns to checkout and submits its transaction ID for verification.
+
 EVM verification checks the transaction on the selected chain's dedicated RPC, exact destination, native value, success receipt, and confirmation threshold. Native-chain verifier adapters must return the exact destination, received amount, confirmations, and failure state. Required production configuration:
 
 - `MUZIKAZ_ETH_RPC_URL`, `MUZIKAZ_POL_RPC_URL`, `MUZIKAZ_BNB_RPC_URL`
