@@ -91,9 +91,13 @@
                     </div>
                     <label class="loadout-currency"><span>Choose how to pay</span>
                         <select id="bottle-loadout-currency" aria-label="Backpack Loadout payment currency">
-                            <option value="ETH">ETH · Ethereum</option>
-                            <option value="SOL">SOL · Phantom</option>
-                            <option value="ADA">ADA · Lace</option>
+                                                        <option value="ETH">ETH · Ethereum Mainnet</option>
+                            <option value="POL">POL · Polygon</option>
+                            <option value="BNB">BNB · BNB Smart Chain</option>
+                            <option value="SOL">SOL · Solana</option>
+                            <option value="ADA">ADA · Cardano</option>
+                            <option value="BTC">BTC · Bitcoin</option>
+                            <option value="DOGE">DOGE · Dogecoin</option>
                         </select>
                     </label>
                     <button type="button" class="loadout-pay-button" id="bottle-backpack-loadout"><span>Unlock loadout &amp; pay with ETH</span><small id="bottle-loadout-price">$30 USD · Live ETH quote · Land + Wish Bottle</small></button>
@@ -399,7 +403,7 @@
     <script type="module" src="public/js/connected-models.js"></script>
     <script src="public/js/api-connection.js"></script>
     <script src="mzk-wallet.js"></script>
-    <script src="wallet-payments.js"></script>
+    <script src="payment-config.js"></script><script src="wallet-payments.js"></script><script src="muzikaz-payment-checkout.js"></script>
   <script src="script.js"></script>
   <script src="member-market.js"></script>
   <script src="battle-theme.js"></script>

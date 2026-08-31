@@ -246,8 +246,8 @@ for (const id of ['payment-form', 'checkout-items', 'confirmation-panel']) {
     throw new Error(`checkout.html is missing checkout section #${id}`);
   }
 }
-for (const requiredEthereumCheckout of ['muzikaz-market-payment-address', 'muzikaz-market-item-price-wei', 'ethereum-wallet-connect', 'ethereum-wallet-pay', 'ethereum-wallet-total']) {
-  if (!checkoutHtml.includes(requiredEthereumCheckout)) throw new Error(`checkout.html is missing permanent Ethereum cart checkout marker ${requiredEthereumCheckout}`);
+for (const requiredPaymentCheckout of ['muzikaz-payment-checkout', 'payment-config.js', 'wallet-payments.js', 'product-type="MARKETPLACE"']) {
+  if (!checkoutHtml.includes(requiredPaymentCheckout)) throw new Error(`checkout.html is missing unified payment checkout marker ${requiredPaymentCheckout}`);
 }
 for (const requiredWalletClaimMarker of ['checkout-backpack-owner', 'checkout-wallet-owner', 'checkout-terms']) {
   if (!checkoutHtml.includes(requiredWalletClaimMarker)) throw new Error(`checkout.html is missing wallet-to-Backpack claim marker ${requiredWalletClaimMarker}`);
@@ -277,8 +277,8 @@ for (const requiredBottleAccessFlow of ['eth_requestAccounts', 'eth_call', 'eth_
     throw new Error(`script.js is missing Bottle mint/validation access flow: ${requiredBottleAccessFlow}`);
   }
 }
-for (const requiredMarketPaymentFlow of ['MARKET_PAYMENT_ADDRESS', 'MARKET_ITEM_PRICE_WEI', 'marketPaymentConfig', 'waitForMarketTransaction', 'completeEthereumOrder', 'wallet_revokePermissions']) {
-  if (!appScript.includes(requiredMarketPaymentFlow)) throw new Error(`script.js is missing Ethereum marketplace checkout behavior ${requiredMarketPaymentFlow}`);
+for (const requiredMarketPaymentFlow of ['MuzikazPaymentConfig', 'MARKET_ITEM_PRICE_WEI', 'marketPaymentConfig', 'wallet_revokePermissions']) {
+  if (!appScript.includes(requiredMarketPaymentFlow)) throw new Error(`script.js is missing marketplace checkout behavior ${requiredMarketPaymentFlow}`);
 }
 for (const requiredModelDeliveryFlow of ['muzikazBackpackAssetsV1', 'normalizeDeliverable', 'Exact GLB delivered to Backpack', 'item.deliverable?.modelUrl']) {
   if (!appScript.includes(requiredModelDeliveryFlow)) throw new Error(`script.js is missing exact purchased-model delivery behavior ${requiredModelDeliveryFlow}`);
@@ -286,7 +286,7 @@ for (const requiredModelDeliveryFlow of ['muzikazBackpackAssetsV1', 'normalizeDe
 for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelAssets', '<model-viewer']) {
   if (!backpackWidget.includes(requiredBackpackModelFlow)) throw new Error(`Backpack widget is missing purchased GLB rendering behavior ${requiredBackpackModelFlow}`);
 }
-for (const requiredMintReward of ['0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238', 'BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
+for (const requiredMintReward of ['BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
 for (const requiredLoadoutCopy of ['$30 USD · Live ETH quote', 'Minting is optional', 'Continue without minting']) {
