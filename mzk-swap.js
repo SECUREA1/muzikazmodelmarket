@@ -7,6 +7,7 @@
   const BOTTLE_BONUS_RATE = 0.1;
   const form = document.querySelector('#mzk-swap-form'), usdInput = document.querySelector('#mzk-usd'), output = document.querySelector('#mzk-output'), buy = document.querySelector('#mzk-buy'), quoteCopy = document.querySelector('#mzk-quote'), status = document.querySelector('#mzk-status');
   const quickButtons = [...document.querySelectorAll('[data-usd]')];
+  const returnForm = document.querySelector('#mzk-swap-back-form'), returnAmount = document.querySelector('#mzk-return-amount'), returnCurrency = document.querySelector('#mzk-return-currency'), returnAddress = document.querySelector('#mzk-return-address'), returnOutput = document.querySelector('#mzk-return-output'), returnButton = document.querySelector('#mzk-return-button'), returnStatus = document.querySelector('#mzk-return-status');
   const selectedCurrency = () => new FormData(form).get('currency');
   const baseTokens = () => Math.round(Number(usdInput.value || 0) * window.MZKWallet.MZK_PER_USD);
   const bonusTokens = () => bottleBonus && Number(usdInput.value) >= BOTTLE_BONUS_MINIMUM_USD ? Math.round(baseTokens() * BOTTLE_BONUS_RATE) : 0;
@@ -49,5 +50,31 @@
     document.querySelector('.mzk-form-heading .kicker').textContent = 'Bottle buyer allocation';
     document.querySelector('.mzk-form-heading h2').textContent = 'Claim 10% more MZK';
   }
-  window.MZKWallet.mount('#mzk-balance', { compact: true }); refresh();
+  let returnQuote;
+  async function refreshReturnQuote() {
+    const mzk = Number(returnAmount.value); returnQuote = null;
+    if (mzk < window.MZKWallet.MINIMUM_SWAP_BACK_MZK) { returnOutput.textContent = `Minimum ${window.MZKWallet.MINIMUM_SWAP_BACK_MZK.toLocaleString()} MZK`; returnButton.disabled = true; return; }
+    if (mzk > window.MZKWallet.balance()) { returnOutput.textContent = 'Amount exceeds your MZK balance'; returnButton.disabled = true; return; }
+    try {
+      const usd = (mzk / window.MZKWallet.MZK_PER_USD) * window.MZKWallet.SWAP_BACK_RATE;
+      returnQuote = await window.MuzikazWalletPayments.quote(usd, returnCurrency.value);
+      returnOutput.textContent = `${returnQuote.amount} ${returnQuote.currency} ≈ $${usd.toFixed(2)}`; returnButton.disabled = false;
+    } catch (error) { returnOutput.textContent = error.message; returnButton.disabled = true; }
+  }
+  let returnTimer;
+  returnAmount.addEventListener('input', () => { clearTimeout(returnTimer); returnTimer = setTimeout(refreshReturnQuote, 250); });
+  returnCurrency.addEventListener('change', refreshReturnQuote);
+  returnForm.addEventListener('submit', async (event) => {
+    event.preventDefault(); await refreshReturnQuote(); if (!returnQuote || returnButton.disabled) return;
+    const mzk = Number(returnAmount.value); returnButton.disabled = true;
+    try {
+      returnStatus.textContent = 'Requesting the crypto payout. Your MZK has not been deducted…';
+      const payout = await window.MuzikazWalletPayments.requestPayout({ mzk, currency: returnQuote.currency, quotedAmount: returnQuote.amount, destinationAddress: returnAddress.value.trim(), walletId: window.MZKWallet.walletId() });
+      const completed = window.MZKWallet.completeSwapBack(mzk, payout);
+      if (!completed.ok) throw new Error(completed.error === 'INSUFFICIENT_MZK' ? 'Your MZK balance changed before the swap could be recorded. Contact support with the payout transaction hash.' : 'The swap could not be recorded.');
+      returnStatus.textContent = `Payout confirmed: ${payout.paidAmount} ${payout.currency}. ${mzk.toLocaleString()} MZK deducted. Transaction ${payout.transactionHash.slice(0, 12)}…`;
+    } catch (error) { returnStatus.textContent = error.message || 'The swap was not completed. No MZK was deducted.'; }
+    finally { refreshReturnQuote(); }
+  });
+  window.MZKWallet.mount('#mzk-balance', { compact: true }); refresh(); refreshReturnQuote();
 }());
