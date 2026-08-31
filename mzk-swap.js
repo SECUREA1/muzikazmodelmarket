@@ -5,9 +5,14 @@
   const bottleBonus = params.get('offer') === 'bottle10';
   const BOTTLE_BONUS_MINIMUM_USD = 100;
   const BOTTLE_BONUS_RATE = 0.1;
-  const form = document.querySelector('#mzk-swap-form'), usdInput = document.querySelector('#mzk-usd'), output = document.querySelector('#mzk-output'), buy = document.querySelector('#mzk-buy'), quoteCopy = document.querySelector('#mzk-quote'), status = document.querySelector('#mzk-status');
+  const form = document.querySelector('#mzk-swap-form'), usdInput = document.querySelector('#mzk-usd'), output = document.querySelector('#mzk-output'), buy = document.querySelector('#mzk-buy'), quoteCopy = document.querySelector('#mzk-quote'), status = document.querySelector('#mzk-status'), walletSelect = document.querySelector('#mzk-payment-wallet');
   const quickButtons = [...document.querySelectorAll('[data-usd]')];
   const selectedCurrency = () => new FormData(form).get('currency');
+  const selectedWallet = () => walletSelect.value;
+  function renderWallets() {
+    const wallets = window.MuzikazWalletPayments.compatibleWallets(selectedCurrency()).filter(({ id }) => ['metamask', 'phantom', 'lace'].includes(id));
+    walletSelect.innerHTML = wallets.map(({ id, name }) => `<option value="${id}">${name}</option>`).join('');
+  }
   const baseTokens = () => Math.round(Number(usdInput.value || 0) * window.MZKWallet.MZK_PER_USD);
   const bonusTokens = () => bottleBonus && Number(usdInput.value) >= BOTTLE_BONUS_MINIMUM_USD ? Math.round(baseTokens() * BOTTLE_BONUS_RATE) : 0;
   const tokens = () => baseTokens() + bonusTokens();
@@ -15,7 +20,7 @@
   async function refresh() {
     const usd = Number(usdInput.value), amount = tokens();
     output.textContent = `${amount.toLocaleString()} MZK`;
-    buy.querySelector('span').textContent = `Acquire ${amount.toLocaleString()} MZK`;
+    buy.querySelector('span').textContent = `Pay & receive ${amount.toLocaleString()} MZK`;
     const minimum = bottleBonus ? BOTTLE_BONUS_MINIMUM_USD : PRESALE_MINIMUM_USD;
     buy.disabled = usd < minimum;
     quickButtons.forEach((button) => button.classList.toggle('is-active', Number(button.dataset.usd) === usd));
@@ -28,12 +33,12 @@
   }
   function schedule() { clearTimeout(quoteTimer); quoteTimer = setTimeout(refresh, 250); }
   quickButtons.forEach((button) => button.addEventListener('click', () => { usdInput.value = button.dataset.usd; refresh(); }));
-  usdInput.addEventListener('input', schedule); form.addEventListener('change', refresh);
+  usdInput.addEventListener('input', schedule); form.addEventListener('change', (event) => { if (event.target.name === 'currency') renderWallets(); refresh(); });
   form.addEventListener('submit', async (event) => {
     event.preventDefault(); const usd = Number(usdInput.value); const minimum = bottleBonus ? BOTTLE_BONUS_MINIMUM_USD : PRESALE_MINIMUM_USD; if (usd < minimum) return; buy.disabled = true;
     try {
-      status.textContent = `Connect your ${selectedCurrency()} wallet and approve the swap…`;
-      const payment = await window.MuzikazWalletPayments.pay(usd, selectedCurrency());
+      status.textContent = `Opening ${walletSelect.selectedOptions[0].textContent}. Approve the exact transfer to submit it…`;
+      const payment = await window.MuzikazWalletPayments.pay(usd, selectedCurrency(), { productId: 'mzk-land-presale', productType: 'MZK_PURCHASE', quantity: tokens() }, selectedWallet());
       const entry = window.MZKWallet.creditPurchase(usd, payment);
       const bonus = bonusTokens();
       if (bonus) window.MZKWallet.record({ id: `mzk:bottle-bonus:${payment.transactionHash}`, amount: bonus, kind: 'bonus', reason: `Bottle buyer 10% bonus on $${usd.toFixed(2)} MZK purchase`, transactionHash: payment.transactionHash });
@@ -49,5 +54,5 @@
     document.querySelector('.mzk-form-heading .kicker').textContent = 'Bottle buyer allocation';
     document.querySelector('.mzk-form-heading h2').textContent = 'Claim 10% more MZK';
   }
-  window.MZKWallet.mount('#mzk-balance', { compact: true }); refresh();
+  window.MZKWallet.mount('#mzk-balance', { compact: true }); renderWallets(); refresh();
 }());
