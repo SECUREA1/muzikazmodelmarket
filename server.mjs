@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, stat, unlink } from 'node:fs/promises';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { UserJsonDatabase, cleanWallet } from './user-json-database.mjs';
 import { LoadoutCodeStore } from './loadout-code-store.mjs';
 import { PaymentOrderStore } from './payment-order-store.mjs';
@@ -19,7 +19,7 @@ const modelsFile = join(dataDir, 'published-models.json');
 const avatarProfilesFile = join(dataDir, 'avatar-profiles.json');
 const userDatabaseFile = process.env.MUZIKAZ_USER_DATABASE_FILE || join(dataDir, 'users.json');
 const userDatabase = new UserJsonDatabase(userDatabaseFile);
-const loadoutCodeStore = new LoadoutCodeStore(process.env.MUZIKAZ_LOADOUT_CODES_FILE || join(dataDir, 'loadout-codes.json'));
+const loadoutCodeStore = new LoadoutCodeStore(process.env.MUZIKAZ_ACCOUNTS_FILE || join(dataDir, 'accounts.json'), { legacyCodesFile: process.env.MUZIKAZ_LOADOUT_CODES_FILE || join(dataDir, 'loadout-codes.json'), legacyUsersFile: userDatabaseFile });
 const paymentOrderStore = new PaymentOrderStore(process.env.MUZIKAZ_PAYMENT_ORDERS_FILE || join(dataDir, 'payment-orders.json'), { verifyTransaction: verifyPaymentTransaction });
 const publicAvatarManifest = join(root, 'public', 'models', 'avatars.json');
 const environmentDataFile = process.env.MUZIKAZ_ENVIRONMENT_DATA_FILE || join(dataDir, 'environments.json');
@@ -28,6 +28,8 @@ const clients = new Set();
 const presence = new Map();
 const chatMessages = [];
 const adminSessions = new Set();
+const accountSessions = new Map();
+const accessAttempts = new Map();
 const supportSockets = new Set();
 const supportMessages = [];
 const port = Number(process.env.PORT || 4173);
@@ -95,6 +97,10 @@ function user(req) { return { id: cleanText(req.headers['x-user-id'], 'demo-user
 function requestWallet(req) { return cleanWallet(req.headers['x-wallet-address'] || req.headers['x-user-id']); }
 function isAdmin(req) { const token = String(req.headers['x-admin-token'] || ''); return (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || adminSessions.has(token); }
 function requireAdmin(req, res) { if (isAdmin(req)) return true; sendJson(res, 403, { success: false, message: 'Admin authorization required' }); return false; }
+function cookie(req, name) { return String(req.headers.cookie || '').split(';').map((part) => part.trim().split('=')).find(([key]) => key === name)?.[1] || ''; }
+function openAccountSession(res, account) { const token = randomBytes(32).toString('base64url'); const csrfToken = randomBytes(24).toString('base64url'); accountSessions.set(token, { accountId: account.accountId, csrfToken, expiresAt: Date.now() + 8 * 60 * 60 * 1000 }); res.setHeader('Set-Cookie', `mzk_session=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=28800${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`); return { account, csrfToken, expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() }; }
+function accountSession(req, res, csrf = false) { const token = cookie(req, 'mzk_session'); const current = accountSessions.get(token); if (!current || current.expiresAt <= Date.now()) { accountSessions.delete(token); sendJson(res, 401, { success: false, message: 'Your account session has expired.' }); return null; } if (csrf) { const supplied = String(req.headers['x-csrf-token'] || ''); const a = Buffer.from(supplied); const b = Buffer.from(current.csrfToken); if (a.length !== b.length || !timingSafeEqual(a, b)) { sendJson(res, 403, { success: false, message: 'Invalid CSRF token.' }); return null; } } return current; }
+function throttleAccess(req) { const key = String(req.socket.remoteAddress || 'unknown'); const now = Date.now(); const attempt = accessAttempts.get(key) || { failures: 0, resetAt: now + 15 * 60_000 }; if (attempt.resetAt <= now) { attempt.failures = 0; attempt.resetAt = now + 15 * 60_000; } if (attempt.failures >= 8) throw Object.assign(new Error('Too many failed access attempts. Try again later.'), { statusCode: 429 }); accessAttempts.set(key, attempt); return { success: () => accessAttempts.delete(key), failure: () => { attempt.failures += 1; } }; }
 function landAssetFromBackpack(req) { return cleanText(req.headers['x-muzikaz-land-asset'], '').trim(); }
 function requireLandOwnership(req, res) {
   const landAsset = landAssetFromBackpack(req);
@@ -234,9 +240,18 @@ const server = createServer(async (req, res) => {
       if (credentials.username !== 'admin' || credentials.password !== 'boots') return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
       const token = randomUUID(); adminSessions.add(token); return sendJson(res, 200, assetResponse({ token }));
     }
-    if (url.pathname === '/api/admin/loadout-codes' && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.create(await bodyJson(req)))); }
-    if (url.pathname === '/api/admin/loadout-codes' && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.list())); }
-    if (url.pathname === '/api/loadout-codes/redeem' && req.method === 'POST') { const body = await bodyJson(req); return sendJson(res, 200, assetResponse(await loadoutCodeStore.redeem(body.code, body.wallet))); }
+    if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.create(await bodyJson(req)))); }
+    if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.list())); }
+    const adminAccessRevoke = url.pathname.match(/^\/api\/admin\/access-codes\/([^/]+)\/revoke$/);
+    if (adminAccessRevoke && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.adminRevoke(adminAccessRevoke[1]))); }
+    if ((url.pathname === '/api/access/activate' || url.pathname === '/api/loadout-codes/redeem') && req.method === 'POST') { const body = await bodyJson(req); const result = await loadoutCodeStore.activate(body.code, body.wallet, body.username); return sendJson(res, 200, assetResponse(openAccountSession(res, result.account))); }
+    if (url.pathname === '/api/access/login' && req.method === 'POST') { const attempt = throttleAccess(req); try { const account = await loadoutCodeStore.authenticate((await bodyJson(req)).code); attempt.success(); return sendJson(res, 200, assetResponse(openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
+    if (url.pathname === '/api/access/wallet' && req.method === 'POST') { const account = await loadoutCodeStore.findByWallet((await bodyJson(req)).wallet); return sendJson(res, 200, assetResponse(openAccountSession(res, account))); }
+    if (url.pathname === '/api/account/loadout/paid' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; const body = await bodyJson(req); const account = await loadoutCodeStore.getAccount(active.accountId); return sendJson(res, 200, assetResponse(await loadoutCodeStore.grantPaidLoadout(account.primaryEthereumWallet, body.paymentId))); }
+    if (url.pathname === '/api/account' && req.method === 'GET') { const active = accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return account ? sendJson(res, 200, assetResponse(account)) : sendJson(res, 404, { success: false, message: 'Account not found.' }); }
+    if (url.pathname === '/api/account/access-code' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.ensureAccountCode(active.accountId))); }
+    if (url.pathname === '/api/account/access-code/rotate' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.rotate(active.accountId))); }
+    if (url.pathname === '/api/account/access-code/revoke' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.revoke(active.accountId))); }
 
     if (url.pathname === '/api/payments/orders' && req.method === 'POST') return sendJson(res, 201, assetResponse(await paymentOrderStore.create(await bodyJson(req))));
     if (url.pathname === '/api/admin/sales' && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await paymentOrderStore.list())); }
@@ -320,4 +335,5 @@ server.on('upgrade', (req, socket) => {
   socket.on('data', (chunk) => consumeWebsocketFrames(socket, chunk));
   socket.on('close', () => supportSockets.delete(socket)); socket.on('error', () => supportSockets.delete(socket));
 });
+await loadoutCodeStore.migrate();
 server.listen(port, () => console.log(`MUZIKAZ shared house server running on http://localhost:${port}`));
