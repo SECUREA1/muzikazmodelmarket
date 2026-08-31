@@ -50,4 +50,16 @@
     document.querySelector('.mzk-form-heading h2').textContent = 'Claim 10% more MZK';
   }
   window.MZKWallet.mount('#mzk-balance', { compact: true }); refresh();
+  const returnForm = document.querySelector('#mzk-swap-back-form'), returnInput = document.querySelector('#mzk-return-amount'), returnOutput = document.querySelector('#mzk-return-output'), returnCurrency = document.querySelector('#mzk-return-currency'), returnQuote = document.querySelector('#mzk-return-quote'), returnButton = document.querySelector('#mzk-return-button'), returnStatus = document.querySelector('#mzk-return-status');
+  async function refreshReturn() {
+    const mzk = Math.floor(Number(returnInput.value) || 0), usd = mzk / window.MZKWallet.MZK_PER_USD * window.MZKWallet.SWAP_BACK_RATE;
+    returnOutput.textContent = `$${usd.toFixed(2)}`; returnButton.querySelector('span').textContent = `Swap back ${mzk.toLocaleString()} MZK`; returnButton.disabled = mzk < window.MZKWallet.MINIMUM_SWAP_BACK_MZK || mzk > window.MZKWallet.balance();
+    if (mzk < window.MZKWallet.MINIMUM_SWAP_BACK_MZK) returnQuote.textContent = `Minimum swap back: ${window.MZKWallet.MINIMUM_SWAP_BACK_MZK.toLocaleString()} MZK.`;
+    else if (mzk > window.MZKWallet.balance()) returnQuote.textContent = `Available balance: ${window.MZKWallet.balance().toLocaleString()} MZK.`;
+    else try { const q = await window.MuzikazWalletPayments.quote(usd, returnCurrency.value); returnQuote.textContent = `${mzk.toLocaleString()} MZK → ${q.amount} ${q.currency} (60% value · $${usd.toFixed(2)})`; } catch (error) { returnQuote.textContent = error.message; }
+  }
+  let returnTimer; function scheduleReturn() { clearTimeout(returnTimer); returnTimer = setTimeout(refreshReturn, 250); }
+  returnInput.addEventListener('input', scheduleReturn); returnCurrency.addEventListener('change', refreshReturn);
+  returnForm.addEventListener('submit', async (event) => { event.preventDefault(); returnButton.disabled = true; try { const mzk = Math.floor(Number(returnInput.value)), usd = mzk / window.MZKWallet.MZK_PER_USD * window.MZKWallet.SWAP_BACK_RATE; if (mzk > window.MZKWallet.balance()) throw new Error('Your MZK balance is too low for this swap.'); const wallet = window.MZKWallet.connectedAddress() || await window.MZKWallet.connectBrowserWallet(); returnStatus.textContent = 'Requesting the crypto payout…'; const payout = await window.MuzikazWalletPayments.requestPayout(usd, returnCurrency.value, wallet, mzk); const result = window.MZKWallet.completeSwapBack(mzk, payout); if (!result.ok) throw new Error('Your MZK balance is too low for this swap.'); returnStatus.textContent = `${mzk.toLocaleString()} MZK swapped for ${payout.amount} ${payout.currency}. Transaction ${payout.transactionHash.slice(0, 12)}…`; } catch (error) { returnStatus.textContent = error.message || 'Swap back was not completed. Your MZK was not changed.'; } finally { refreshReturn(); } });
+  window.addEventListener('mzk:balance-changed', refreshReturn); refreshReturn();
 }());
