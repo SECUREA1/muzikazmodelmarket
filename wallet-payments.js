@@ -45,10 +45,10 @@
     return { opened: true, walletName, uri: q.uri };
   }
   function evmErrorCode(error) { return error?.code ?? error?.data?.originalError?.code; }
-  function isUnauthorizedPolygonRpc(error, network) {
-    if (network.chainId !== '0x89') return false;
+  function isUnavailableRpc(error, network) {
+    if (!network.rpcUrls?.length) return false;
     const message = [error?.message, error?.data?.message, error?.data?.originalError?.message].filter(Boolean).join(' ');
-    return /unauthorized|not authorized|401/i.test(message);
+    return /unauthorized|not authorized|401|rpc|network error|failed to fetch|disconnected/i.test(message);
   }
   async function addEvmNetwork(provider, network) {
     if (!network.rpcUrls?.length || !network.nativeCurrency) throw new Error(`${network.network} is not configured for automatic wallet setup.`);
@@ -78,13 +78,13 @@
     try {
       return await provider.request(request);
     } catch (error) {
-      if (!isUnauthorizedPolygonRpc(error, network)) throw error;
+      if (!isUnavailableRpc(error, network)) throw error;
       try {
         await addEvmNetwork(provider, network);
         await switchEvm(provider, network);
         return await provider.request(request);
       } catch (_) {
-        throw new Error(`Your wallet's Polygon RPC is unauthorized. Set the Polygon Mainnet RPC URL to ${network.rpcUrls[0]}, then try again.`);
+        throw new Error(`Your wallet's ${network.network} RPC is unavailable. Set its RPC URL to ${network.rpcUrls[0]}, then try again.`);
       }
     }
   }

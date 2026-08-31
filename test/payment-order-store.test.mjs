@@ -12,6 +12,16 @@ test('central payment config exposes seven official network destinations', () =>
   assert.equal(new Set(PAYMENT_STATUSES).size, 8);
 });
 
+test('every browser-switchable EVM network has complete RPC metadata', () => {
+  const evmNetworks = Object.values(MUZIKAZ_PAYMENT_NETWORKS).filter(({ type }) => type === 'evm');
+  for (const network of evmNetworks) {
+    assert.match(network.chainId, /^0x[0-9a-f]+$/);
+    assert.equal(network.nativeCurrency.decimals, 18);
+    assert.match(network.rpcUrls[0], /^https:\/\//);
+    assert.match(network.blockExplorerUrls[0], /^https:\/\//);
+  }
+});
+
 test('orders separate payment and asset networks and only fulfill after verification', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'muzikaz-payment-'));
   const store = new PaymentOrderStore(join(dir, 'orders.json'), { verifyTransaction: async () => ({ verified: true, amountReceived: 1.5, confirmations: 6 }) });

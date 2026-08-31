@@ -45,11 +45,13 @@
     if (document.querySelector('[data-global-backpack]') || !window.MZKWallet) return;
     ensureStyles();
     const existingWalletButton = document.querySelector('#wallet-connect');
+    const headerMount = document.querySelector('.global-site-header .icons, .site-header .icons, .site-header .header-actions');
     const dock = document.createElement('div');
-    dock.className = existingWalletButton ? 'mzk-backpack-dock is-inline' : 'mzk-backpack-dock';
+    dock.className = existingWalletButton || headerMount ? 'mzk-backpack-dock is-inline' : 'mzk-backpack-dock';
     dock.dataset.globalBackpack = '';
     dock.innerHTML = `${existingWalletButton ? '' : `<button class="mzk-wallet-button" type="button" data-widget-connect>${walletIcon()}<span>Connect Ethereum</span></button>`}<button class="mzk-backpack-button" type="button" data-open-backpack aria-haspopup="dialog" aria-expanded="false">${icon()}<span>Backpack</span><small data-backpack-address>Connect wallet</small></button>`;
     if (existingWalletButton) existingWalletButton.insertAdjacentElement('afterend', dock);
+    else if (headerMount) headerMount.prepend(dock);
     else document.body.appendChild(dock);
 
     const drawer = document.createElement('section');
