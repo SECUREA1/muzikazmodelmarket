@@ -157,6 +157,23 @@ struct ChatMessage {
     message: String,
     created_at: String,
 }
+#[derive(Clone, Debug)]
+struct PaymentOrder {
+    order_id: String,
+    user_id: String,
+    wallet: String,
+    purchase_type: String,
+    item_id: String,
+    base_price: f64,
+    payment_asset: String,
+    payment_network: String,
+    destination_address: String,
+    expected_amount: f64,
+    transaction_hash: String,
+    payment_status: String,
+    confirmations: u64,
+    created_at: String,
+}
 #[derive(Clone)]
 struct State {
     root: PathBuf,
@@ -175,6 +192,7 @@ struct State {
     derivatives: Arc<RwLock<Vec<AssetDerivative>>>,
     house_users: Arc<RwLock<Vec<HouseUser>>>,
     chat_messages: Arc<RwLock<Vec<ChatMessage>>>,
+    payment_orders: Arc<RwLock<Vec<PaymentOrder>>>,
     users: Arc<RwLock<HashMap<String, String>>>,
 }
 fn main() -> std::io::Result<()> {
@@ -205,7 +223,7 @@ fn main() -> std::io::Result<()> {
             &data.join("asset-derivatives.json"),
         ))),
         users: Arc::new(RwLock::new(load_users(&data.join("users.json")))),
-        data,
+        data: data.clone(),
         uploads,
         public_base: env::var("PUBLIC_BASE_URL").unwrap_or_default(),
         max_bytes: env::var("MAX_MODEL_UPLOAD_MB")
@@ -218,6 +236,9 @@ fn main() -> std::io::Result<()> {
         admin_sessions: Arc::new(RwLock::new(HashSet::new())),
         house_users: Arc::new(RwLock::new(Vec::new())),
         chat_messages: Arc::new(RwLock::new(Vec::new())),
+        payment_orders: Arc::new(RwLock::new(load_payment_orders(
+            &data.join("payment-orders.json"),
+        ))),
     };
     let listener = TcpListener::bind(format!("0.0.0.0:{port}"))?;
     println!("Serving {} on http://0.0.0.0:{port}", state.root.display());
@@ -329,6 +350,7 @@ fn api(
     match (method, path) {
         ("GET", "/api/health") | ("HEAD", "/api/health") => health(s, st, method == "HEAD"),
         ("POST", "/api/admin/login") => admin_login(s, st, body),
+        ("POST", "/api/payments/orders") => create_payment_order(s, st, body),
         ("GET", "/api/wallet/state") => wallet_state(s, st, headers, None),
         ("PUT", "/api/wallet/state") => wallet_state(s, st, headers, Some(body)),
         ("GET", "/api/environments") => list_environments(s, st),
@@ -343,6 +365,7 @@ fn api(
         ("GET", "/api/admin/assets/pending") => admin_pending(s, st, headers),
         ("GET", "/api/admin/analytics") => admin_analytics(s, st, headers),
         ("GET", "/api/admin/storage") => admin_storage(s, st, headers),
+        ("GET", "/api/admin/data") => admin_data(s, st, headers),
         ("GET", "/api/models/mine") => list_models(s, st, headers, "mine"),
         ("GET", "/api/models/public") => list_models(s, st, headers, "public"),
         (_, "/api/avatars/published") if method == "GET" => {
@@ -397,6 +420,9 @@ fn api(
             } else {
                 create(s, st, body)
             }
+        }
+        _ if path.starts_with("/api/payments/orders/") => {
+            payment_order_route(s, st, method, path, body)
         }
         _ if method == "GET" && path.starts_with("/api/houses/") && path.ends_with("/avatars") => {
             house_avatars(s, st, method, path, headers, body)
@@ -2144,6 +2170,214 @@ fn uuid() -> String {
         std::process::id()
     )
 }
+fn payment_network(asset: &str) -> Option<(&'static str, &'static str)> {
+    match asset {
+        "ETH" => Some(("Ethereum Mainnet", "0xe4949a8Bb40A96A30bEaEa4C5f6ac06e9a446d16")),
+        "POL" => Some(("Polygon", "0xe4949a8Bb40A96A30bEaEa4C5f6ac06e9a446d16")),
+        "BNB" => Some(("BNB Smart Chain", "0xe4949a8Bb40A96A30bEaEa4C5f6ac06e9a446d16")),
+        "SOL" => Some(("Solana Mainnet", "CZbaAbfZ97N9cocF221S3pyVP1isA59XTdciYspN27dA")),
+        "ADA" => Some(("Cardano Mainnet", "addr1qx0ltv489yhkkd7uthdaka88sd373hxlhzg2glfupewesd9xj50w8ales2f8h0cpw7949l8xpvsnyvah348glfeyk26qjqmxp6")),
+        "BTC" => Some(("Bitcoin Mainnet", "3Ga2sP3ghtMpXxo3mZfE2fJ1EXEMB7GvEJ")),
+        "DOGE" => Some(("Dogecoin Mainnet", "DToEWmramFNbQ7Jut1NKKCHLpJSFPiJ4hv")),
+        _ => None,
+    }
+}
+fn payment_order_json(order: &PaymentOrder) -> String {
+    format!(
+        "{{\"orderId\":\"{}\",\"userId\":\"{}\",\"wallet\":\"{}\",\"purchaseType\":\"{}\",\"itemId\":\"{}\",\"fiatCurrency\":\"USD\",\"basePrice\":{},\"paymentAsset\":\"{}\",\"paymentNetwork\":\"{}\",\"destinationAddress\":\"{}\",\"expectedAmount\":{},\"transactionHash\":{},\"paymentStatus\":\"{}\",\"confirmations\":{},\"createdAt\":\"{}\"}}",
+        esc(&order.order_id), esc(&order.user_id), esc(&order.wallet), esc(&order.purchase_type),
+        esc(&order.item_id), order.base_price, esc(&order.payment_asset), esc(&order.payment_network),
+        esc(&order.destination_address), order.expected_amount,
+        if order.transaction_hash.is_empty() { "null".into() } else { format!("\"{}\"", esc(&order.transaction_hash)) },
+        esc(&order.payment_status), order.confirmations, esc(&order.created_at)
+    )
+}
+fn persist_payment_orders(st: &State, orders: &[PaymentOrder]) -> std::io::Result<()> {
+    fs::create_dir_all(&st.data)?;
+    fs::write(
+        st.data.join("payment-orders.json"),
+        format!(
+            "[{}]",
+            orders
+                .iter()
+                .map(payment_order_json)
+                .collect::<Vec<_>>()
+                .join(",")
+        ),
+    )
+}
+fn load_payment_orders(path: &Path) -> Vec<PaymentOrder> {
+    let input = fs::read_to_string(path).unwrap_or_default();
+    input
+        .split('{')
+        .skip(1)
+        .map(|part| format!("{{{part}"))
+        .filter_map(|item| {
+            let order_id = val(&item, "orderId");
+            if order_id.is_empty() {
+                return None;
+            }
+            let transaction_hash = val(&item, "transactionHash");
+            Some(PaymentOrder {
+                order_id,
+                user_id: val(&item, "userId"),
+                wallet: val(&item, "wallet"),
+                purchase_type: val(&item, "purchaseType"),
+                item_id: val(&item, "itemId"),
+                base_price: val(&item, "basePrice").parse().unwrap_or(0.0),
+                payment_asset: val(&item, "paymentAsset"),
+                payment_network: val(&item, "paymentNetwork"),
+                destination_address: val(&item, "destinationAddress"),
+                expected_amount: val(&item, "expectedAmount").parse().unwrap_or(0.0),
+                transaction_hash: if transaction_hash == "null" {
+                    String::new()
+                } else {
+                    transaction_hash
+                },
+                payment_status: val(&item, "paymentStatus"),
+                confirmations: val(&item, "confirmations").parse().unwrap_or(0),
+                created_at: val(&item, "createdAt"),
+            })
+        })
+        .collect()
+}
+fn create_payment_order(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
+    let input = String::from_utf8_lossy(body);
+    let asset = val(&input, "paymentAsset").to_ascii_uppercase();
+    let base_price = val(&input, "basePrice").parse::<f64>().unwrap_or(0.0);
+    let expected_amount = val(&input, "expectedAmount").parse::<f64>().unwrap_or(0.0);
+    let Some((network, destination)) = payment_network(&asset) else {
+        return json(
+            s,
+            400,
+            false,
+            "{}",
+            "Choose a supported payment asset.",
+            false,
+        );
+    };
+    if !(base_price > 0.0 && expected_amount > 0.0) {
+        return json(
+            s,
+            400,
+            false,
+            "{}",
+            "A positive order price and crypto amount are required.",
+            false,
+        );
+    }
+    let order = PaymentOrder {
+        order_id: uuid(),
+        user_id: val(&input, "userId"),
+        wallet: val(&input, "wallet"),
+        purchase_type: val(&input, "purchaseType"),
+        item_id: val(&input, "itemId"),
+        base_price,
+        payment_asset: asset,
+        payment_network: network.into(),
+        destination_address: destination.into(),
+        expected_amount,
+        transaction_hash: String::new(),
+        payment_status: "AWAITING_PAYMENT".into(),
+        confirmations: 0,
+        created_at: now(),
+    };
+    let mut orders = st.payment_orders.write().unwrap();
+    orders.push(order.clone());
+    persist_payment_orders(st, &orders)?;
+    json(
+        s,
+        201,
+        true,
+        &payment_order_json(&order),
+        "Payment order created",
+        false,
+    )
+}
+fn payment_order_route(
+    s: &mut TcpStream,
+    st: &State,
+    method: &str,
+    path: &str,
+    body: &[u8],
+) -> std::io::Result<()> {
+    let tail = path.trim_start_matches("/api/payments/orders/");
+    let mut parts = tail.split('/');
+    let id = parts.next().unwrap_or("");
+    let action = parts.next();
+    let mut orders = st.payment_orders.write().unwrap();
+    let Some(index) = orders.iter().position(|order| order.order_id == id) else {
+        return json(s, 404, false, "{}", "Payment order not found.", false);
+    };
+    if method == "GET" && action.is_none() {
+        return json(
+            s,
+            200,
+            true,
+            &payment_order_json(&orders[index]),
+            "Payment order loaded",
+            false,
+        );
+    }
+    if method == "POST" && matches!(action, Some("submit") | Some("verify")) {
+        if action == Some("submit") {
+            let hash = val(&String::from_utf8_lossy(body), "transactionHash");
+            if hash.is_empty() {
+                return json(
+                    s,
+                    400,
+                    false,
+                    "{}",
+                    "A transaction hash or transaction ID is required.",
+                    false,
+                );
+            }
+            if orders
+                .iter()
+                .any(|order| order.order_id != id && order.transaction_hash == hash)
+            {
+                return json(
+                    s,
+                    409,
+                    false,
+                    "{}",
+                    "This transaction has already been assigned to another order.",
+                    false,
+                );
+            }
+            orders[index].transaction_hash = hash;
+        }
+        orders[index].payment_status = "CONFIRMING".into();
+        let result = payment_order_json(&orders[index]);
+        persist_payment_orders(st, &orders)?;
+        return json(
+            s,
+            200,
+            true,
+            &result,
+            "Transaction submitted for independent on-chain verification",
+            false,
+        );
+    }
+    if method == "POST" && action == Some("fulfill") {
+        return json(
+            s,
+            409,
+            false,
+            "{}",
+            "Only an independently verified PAID order can be fulfilled.",
+            false,
+        );
+    }
+    json(
+        s,
+        405,
+        false,
+        "{}",
+        "Unsupported payment order action.",
+        false,
+    )
+}
 fn status(c: u16) -> &'static str {
     match c {
         200 => "OK",
@@ -2152,6 +2386,7 @@ fn status(c: u16) -> &'static str {
         403 => "Forbidden",
         404 => "Not Found",
         405 => "Method Not Allowed",
+        409 => "Conflict",
         413 => "Payload Too Large",
         500 => "Internal Server Error",
         _ => "OK",
@@ -2274,7 +2509,7 @@ fn require_backpack_land(
 fn admin_login(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
     let payload = String::from_utf8_lossy(body);
     // Credentials are checked only on the server; clients receive a random session token.
-    if val(&payload, "username") != "jodel" || val(&payload, "password") != "boots" {
+    if val(&payload, "username") != "giraff" || val(&payload, "password") != "boots" {
         return json(
             s,
             401,
@@ -2840,6 +3075,72 @@ fn admin_storage(
             st.max_bytes
         ),
         "Storage loaded",
+        false,
+    )
+}
+
+/// Returns one authenticated, read-only snapshot of every persisted collection used by the
+/// coded marketplace. Keeping this server-side prevents private users, drafts, and sales from
+/// leaking through the public APIs while giving the command center a complete operational view.
+fn admin_data(s: &mut TcpStream, st: &State, h: &HashMap<String, String>) -> std::io::Result<()> {
+    if !is_admin(h, st) {
+        return json(s, 403, false, "{}", "Admin authorization required", false);
+    }
+
+    let users = st.users.read().unwrap();
+    let mut user_records: Vec<_> = users
+        .iter()
+        .map(|(wallet, record)| {
+            if record.trim_start().starts_with('{') {
+                format!(
+                    "{{\"walletKey\":\"{}\",\"record\":{}}}",
+                    esc(wallet),
+                    record
+                )
+            } else {
+                format!("{{\"walletKey\":\"{}\",\"record\":null}}", esc(wallet))
+            }
+        })
+        .collect();
+    user_records.sort();
+
+    let assets = st.assets.read().unwrap();
+    let models = st.models.read().unwrap();
+    let orders = st.payment_orders.read().unwrap();
+    let assignments = st.assignments.read().unwrap();
+    let derivatives = st.derivatives.read().unwrap();
+    let environments = st.environments.read().unwrap();
+    let avatars = st.avatars.read().unwrap();
+    let profiles = st.avatar_profiles.read().unwrap();
+    let mut revenue: f64 = orders
+        .iter()
+        .filter(|order| matches!(order.payment_status.as_str(), "PAID" | "FULFILLED"))
+        .map(|order| order.base_price)
+        .sum();
+    if revenue.abs() < f64::EPSILON {
+        revenue = 0.0;
+    }
+
+    let body = format!(
+        "{{\"generatedAt\":\"{}\",\"summary\":{{\"users\":{},\"submissions\":{},\"models\":{},\"sales\":{},\"paidRevenueUsd\":{:.2},\"designAssignments\":{},\"environments\":{},\"avatars\":{}}},\"users\":[{}],\"submissions\":[{}],\"models\":[{}],\"sales\":[{}],\"customizations\":[{}],\"derivatives\":[{}],\"environments\":[{}],\"avatars\":[{}],\"avatarProfiles\":[{}]}}",
+        now(), users.len(), assets.len(), models.len(), orders.len(), revenue,
+        assignments.len(), environments.len(), avatars.len(),
+        user_records.join(","),
+        assets.iter().map(asset_json).collect::<Vec<_>>().join(","),
+        models.iter().map(model_json).collect::<Vec<_>>().join(","),
+        orders.iter().map(payment_order_json).collect::<Vec<_>>().join(","),
+        assignments.iter().map(assignment_json).collect::<Vec<_>>().join(","),
+        derivatives.iter().map(derivative_json).collect::<Vec<_>>().join(","),
+        environments.iter().map(environment_json).collect::<Vec<_>>().join(","),
+        avatars.iter().map(avatar_json).collect::<Vec<_>>().join(","),
+        profiles.iter().map(profile_json).collect::<Vec<_>>().join(",")
+    );
+    json(
+        s,
+        200,
+        true,
+        &body,
+        "Complete administrator data loaded",
         false,
     )
 }
