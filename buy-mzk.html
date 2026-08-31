@@ -55,6 +55,11 @@
         <fieldset><legend>Pay from your wallet</legend><label><input type="radio" name="currency" value="ETH" checked><span>◈</span> ETH</label><label><input type="radio" name="currency" value="POL"><span>◈</span> POL</label><label><input type="radio" name="currency" value="BNB"><span>◈</span> BNB</label><label><input type="radio" name="currency" value="SOL"><span>◈</span> SOL</label><label><input type="radio" name="currency" value="ADA"><span>◈</span> ADA</label><label><input type="radio" name="currency" value="BTC"><span>◈</span> BTC</label><label><input type="radio" name="currency" value="DOGE"><span>◈</span> DOGE</label></fieldset>
         <p id="mzk-quote">Loading live wallet quote…</p>
         <button class="btn mzk-buy-button" type="submit" id="mzk-buy"><span>Acquire 4,000 MZK</span><b>→</b></button>
+        <div class="mzk-manual-confirm" id="mzk-manual-confirm" hidden>
+          <label for="mzk-transaction-hash">Transaction hash / ID</label>
+          <div><input id="mzk-transaction-hash" autocomplete="off" placeholder="Paste after sending from your wallet"><button type="button" id="mzk-submit-transaction">Verify payment</button></div>
+          <small>Your MZK and permanent deed remain locked until the on-chain payment is verified.</small>
+        </div>
         <p id="mzk-status" role="status">Your wallet displays the exact asset amount, destination, and network fee before approval.</p>
         <div class="mzk-trust"><span>◈ Wallet approved</span><span>◆ On-chain receipt</span><span>◉ Permanent deed</span></div>
       </form>

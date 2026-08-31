@@ -6,12 +6,28 @@
   const BOTTLE_BONUS_MINIMUM_USD = 100;
   const BOTTLE_BONUS_RATE = 0.1;
   const form = document.querySelector('#mzk-swap-form'), usdInput = document.querySelector('#mzk-usd'), output = document.querySelector('#mzk-output'), buy = document.querySelector('#mzk-buy'), quoteCopy = document.querySelector('#mzk-quote'), status = document.querySelector('#mzk-status');
+  const manualConfirm = document.querySelector('#mzk-manual-confirm'), transactionHash = document.querySelector('#mzk-transaction-hash'), submitTransaction = document.querySelector('#mzk-submit-transaction');
   const quickButtons = [...document.querySelectorAll('[data-usd]')];
   const selectedCurrency = () => new FormData(form).get('currency');
   const baseTokens = () => Math.round(Number(usdInput.value || 0) * window.MZKWallet.MZK_PER_USD);
   const bonusTokens = () => bottleBonus && Number(usdInput.value) >= BOTTLE_BONUS_MINIMUM_USD ? Math.round(baseTokens() * BOTTLE_BONUS_RATE) : 0;
   const tokens = () => baseTokens() + bonusTokens();
-  let quoteTimer;
+  let quoteTimer, pendingPayment;
+  function resetPendingPayment() { pendingPayment = null; manualConfirm.hidden = true; transactionHash.value = ''; }
+  function creditVerifiedPayment(payment) {
+    const entry = window.MZKWallet.creditPurchase(pendingPayment.usd, payment);
+    const bonus = bonusTokens();
+    if (bonus) window.MZKWallet.record({ id: `mzk:bottle-bonus:${payment.transactionHash}`, amount: bonus, kind: 'bonus', reason: `Bottle buyer 10% bonus on $${pendingPayment.usd.toFixed(2)} MZK purchase`, transactionHash: payment.transactionHash });
+    status.textContent = `${(entry.amount + bonus).toLocaleString()} MZK added${bonus ? `, including your ${bonus.toLocaleString()} MZK Bottle bonus` : ''}. On-chain payment verified.`;
+    resetPendingPayment();
+    const destination = params.get('return'); if (destination) setTimeout(() => { location.href = destination; }, 900);
+  }
+  async function verifyTransaction(hash) {
+    const value = String(hash || '').trim(); if (!pendingPayment?.order?.orderId || !value) throw new Error('Paste the transaction hash / ID from your wallet first.');
+    const verified = await window.MuzikazWalletPayments.submitOrder(pendingPayment.order.orderId, value);
+    if (!['PAID', 'FULFILLED'].includes(verified.paymentStatus)) throw new Error(`${verified.paymentNetwork}: ${verified.paymentStatus}. MZK remains locked until the payment is confirmed.`);
+    creditVerifiedPayment({ ...pendingPayment.quote, ...verified, transactionHash: value });
+  }
   async function refresh() {
     const usd = Number(usdInput.value), amount = tokens();
     output.textContent = `${amount.toLocaleString()} MZK`;
@@ -27,18 +43,19 @@
     } catch (error) { quoteCopy.textContent = error.message; }
   }
   function schedule() { clearTimeout(quoteTimer); quoteTimer = setTimeout(refresh, 250); }
-  quickButtons.forEach((button) => button.addEventListener('click', () => { usdInput.value = button.dataset.usd; refresh(); }));
-  usdInput.addEventListener('input', schedule); form.addEventListener('change', refresh);
+  quickButtons.forEach((button) => button.addEventListener('click', () => { resetPendingPayment(); usdInput.value = button.dataset.usd; refresh(); }));
+  usdInput.addEventListener('input', () => { resetPendingPayment(); schedule(); }); form.addEventListener('change', () => { resetPendingPayment(); refresh(); });
+  submitTransaction.addEventListener('click', async () => { submitTransaction.disabled = true; try { status.textContent = 'Verifying the on-chain payment…'; await verifyTransaction(transactionHash.value); } catch (error) { status.textContent = error.message; } finally { submitTransaction.disabled = false; } });
   form.addEventListener('submit', async (event) => {
     event.preventDefault(); const usd = Number(usdInput.value); const minimum = bottleBonus ? BOTTLE_BONUS_MINIMUM_USD : PRESALE_MINIMUM_USD; if (usd < minimum) return; buy.disabled = true;
     try {
-      status.textContent = `Connect your ${selectedCurrency()} wallet and approve the swap…`;
-      const payment = await window.MuzikazWalletPayments.pay(usd, selectedCurrency());
-      const entry = window.MZKWallet.creditPurchase(usd, payment);
-      const bonus = bonusTokens();
-      if (bonus) window.MZKWallet.record({ id: `mzk:bottle-bonus:${payment.transactionHash}`, amount: bonus, kind: 'bonus', reason: `Bottle buyer 10% bonus on $${usd.toFixed(2)} MZK purchase`, transactionHash: payment.transactionHash });
-      status.textContent = `${(entry.amount + bonus).toLocaleString()} MZK added${bonus ? `, including your ${bonus.toLocaleString()} MZK Bottle bonus` : ''}. Transaction ${payment.transactionHash.slice(0, 12)}…`;
-      const destination = new URLSearchParams(location.search).get('return'); if (destination) setTimeout(() => { location.href = destination; }, 900);
+      status.textContent = `Preparing your ${selectedCurrency()} wallet payment…`;
+      const quote = await window.MuzikazWalletPayments.quote(usd, selectedCurrency());
+      const order = await window.MuzikazWalletPayments.createOrder(quote, { productType: 'MZK', productId: `mzk-${tokens()}`, quantity: tokens(), metadata: { creditedMzk: tokens() } });
+      pendingPayment = { usd, quote, order };
+      const sent = await window.MuzikazWalletPayments.initiate(quote);
+      if (sent.opened) { manualConfirm.hidden = false; status.textContent = `${sent.walletName} opened with the exact ${quote.amount} ${quote.currency} request. Complete it, then paste the transaction hash / ID below.`; transactionHash.focus(); }
+      else await verifyTransaction(sent.transactionHash);
     } catch (error) { status.textContent = error.message || 'The swap was not completed. No MZK was added.'; }
     finally { buy.disabled = false; refresh(); }
   });

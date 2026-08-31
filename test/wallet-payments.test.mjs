@@ -56,3 +56,21 @@ test('rejects a wallet selected for an incompatible network', async () => {
     /does not support Solana Mainnet/
   );
 });
+
+test('Cardano uses a dependency-free wallet handoff even when Lace is injected', async () => {
+  const window = loadPayments({ cardano: { lace: { enable() { throw new Error('CIP-30 should not be invoked by the handoff'); } } } });
+  const network = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS.ADA;
+  const uri = window.MuzikazPaymentConfig.paymentUri('ADA', 382.506694);
+  const result = await window.MuzikazWalletPayments.initiate({ currency: 'ADA', amount: 382.506694, recipient: network.address, uri });
+  assert.deepEqual({ opened: result.opened, walletName: result.walletName, uri: result.uri }, { opened: true, walletName: 'Lace', uri });
+});
+
+test('wallet handoff preserves checkout when a new-window handler is available', async () => {
+  const calls = [];
+  const window = loadPayments({ open(...args) { calls.push(args); } });
+  const network = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS.BTC;
+  const uri = window.MuzikazPaymentConfig.paymentUri('BTC', 0.001);
+  await window.MuzikazWalletPayments.initiate({ currency: 'BTC', amount: 0.001, recipient: network.address, uri });
+  assert.deepEqual(calls, [[uri, '_blank', 'noopener,noreferrer']]);
+  assert.equal(window.location.opened, '');
+});
