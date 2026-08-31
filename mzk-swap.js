@@ -8,11 +8,15 @@
   const form = document.querySelector('#mzk-swap-form'), usdInput = document.querySelector('#mzk-usd'), output = document.querySelector('#mzk-output'), buy = document.querySelector('#mzk-buy'), quoteCopy = document.querySelector('#mzk-quote'), status = document.querySelector('#mzk-status'), walletSelect = document.querySelector('#mzk-payment-wallet'), verification = document.querySelector('#mzk-payment-verification'), transactionInput = document.querySelector('#mzk-transaction-id'), verifyButton = document.querySelector('#mzk-verify-payment'), orderReference = document.querySelector('#mzk-order-reference');
   const PENDING_KEY = 'muzikazPendingMzkPaymentV1';
   const quickButtons = [...document.querySelectorAll('[data-usd]')];
-  const selectedCurrency = () => new FormData(form).get('currency');
-  const selectedWallet = () => walletSelect.value;
+  const currencyNames = { ETH: 'Ethereum', POL: 'Polygon', BNB: 'BNB Chain', SOL: 'Solana', ADA: 'Cardano', BTC: 'Bitcoin', DOGE: 'Dogecoin' };
+  const selectedCurrency = () => new FormData(form).get('currency') || 'ETH';
+  const selectedWallet = () => new FormData(form).get('wallet') || 'automatic';
+  function choice(name, value, label, checked = false) { return `<label class="payment-choice"><input type="radio" name="${name}" value="${value}" ${checked ? 'checked' : ''}><span>${window.MuzikazWalletPayments.icon(value)}<b>${value}</b><small>${label}</small></span></label>`; }
+  document.querySelector('#mzk-currency').insertAdjacentHTML('beforeend', Object.keys(currencyNames).map((symbol, index) => choice('currency', symbol, currencyNames[symbol], index === 0)).join(''));
   function renderWallets() {
     const wallets = window.MuzikazWalletPayments.compatibleWallets(selectedCurrency());
-    walletSelect.innerHTML = wallets.map(({ id, name }) => `<option value="${id}">${name}</option>`).join('');
+    walletSelect.querySelectorAll('.payment-choice').forEach((item) => item.remove());
+    walletSelect.insertAdjacentHTML('beforeend', wallets.map(({ id, name, hardware }, index) => choice('wallet', id, hardware ? `${name} · hardware` : name, index === 0)).join(''));
   }
   const baseTokens = () => Math.round(Number(usdInput.value || 0) * window.MZKWallet.MZK_PER_USD);
   const bonusTokens = () => bottleBonus && Number(usdInput.value) >= BOTTLE_BONUS_MINIMUM_USD ? Math.round(baseTokens() * BOTTLE_BONUS_RATE) : 0;
@@ -51,7 +55,7 @@
   form.addEventListener('submit', async (event) => {
     event.preventDefault(); const usd = Number(usdInput.value); const minimum = bottleBonus ? BOTTLE_BONUS_MINIMUM_USD : PRESALE_MINIMUM_USD; if (usd < minimum) return; buy.disabled = true;
     try {
-      status.textContent = `Opening ${walletSelect.selectedOptions[0].textContent}. Approve the exact transfer to submit it…`;
+      status.textContent = `Opening ${walletSelect.querySelector('input:checked').closest('label').querySelector('small').textContent}. Approve the exact transfer to submit it…`;
       const quote = await window.MuzikazWalletPayments.quote(usd, selectedCurrency());
       const order = await window.MuzikazWalletPayments.createOrder(quote, { productId: 'mzk-land-presale', productType: 'MZK_PURCHASE', quantity: tokens() });
       const pending = { orderId: order.orderId, usd, tokens: tokens(), bonus: bonusTokens(), currency: quote.currency, amount: quote.amount };
