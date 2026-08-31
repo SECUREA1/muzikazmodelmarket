@@ -7,7 +7,7 @@ const configSource = await readFile('payment-config.js', 'utf8');
 const paymentsSource = await readFile('wallet-payments.js', 'utf8');
 
 function loadPayments(extraWindow = {}) {
-  const window = { opened: [], location: { assigned: [], assign(uri) { this.assigned.push(uri); } }, open(uri, target, features) { this.opened.push({ uri, target, features }); return {}; }, ...extraWindow };
+  const window = { opened: [], focusedPopups: 0, location: { assigned: [], assign(uri) { this.assigned.push(uri); } }, open(uri, target, features) { this.opened.push({ uri, target, features }); return { focus: () => { this.focusedPopups += 1; } }; }, ...extraWindow };
   const context = vm.createContext({ window, globalThis: window, fetch: async () => { throw new Error('Unexpected fetch'); }, URL, URLSearchParams, Date, BigInt });
   vm.runInContext(configSource, context);
   vm.runInContext(paymentsSource, context);
@@ -26,12 +26,27 @@ test('opens the correct wallet payment URI when chain providers are unavailable'
   }
 });
 
-test('hands ADA to Lace without loading the Mesh SDK or BigNumber', async () => {
-  const window = loadPayments({ cardano: { lace: { enable() { throw new Error('CIP-30 should not be invoked'); } } } });
+test('connects Lace through CIP-30 before opening its prepared ADA payment', async () => {
+  const calls = [];
+  const window = loadPayments({ cardano: { lace: { async enable() { calls.push('enable'); return { async getNetworkId() { calls.push('network'); return 1; }, async getUsedAddresses() { calls.push('addresses'); return ['lace-address-cbor']; } }; } } } });
   const network = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS.ADA;
   const result = await window.MuzikazWalletPayments.initiate({ currency: 'ADA', amount: 12.5, recipient: network.address, uri: window.MuzikazPaymentConfig.paymentUri('ADA', 12.5) }, 'lace');
   assert.equal(result.opened, true);
+  assert.equal(result.connected, true);
+  assert.equal(result.address, 'lace-address-cbor');
+  assert.deepEqual(calls, ['enable', 'network', 'addresses']);
   assert.match(result.uri, /^web\+cardano:/);
+  assert.equal(window.focusedPopups, 1);
+});
+
+test('asks Lace users to switch to Cardano Mainnet before payment', async () => {
+  const window = loadPayments({ cardano: { lace: { async enable() { return { async getNetworkId() { return 0; } }; } } } });
+  const network = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS.ADA;
+  await assert.rejects(
+    window.MuzikazWalletPayments.initiate({ currency: 'ADA', amount: 1, recipient: network.address, uri: 'web+cardano:test' }, 'lace'),
+    /Switch Lace to Cardano Mainnet/
+  );
+  assert.equal(window.opened.length, 0);
 });
 
 test('opens Ledger Live with a prepared send instead of a generic wallet handler', async () => {
