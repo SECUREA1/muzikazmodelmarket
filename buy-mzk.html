@@ -53,12 +53,18 @@
         <div class="mzk-quick" role="group" aria-label="Presale allocations"><button class="is-active" type="button" data-usd="40"><b>$40</b><span>Entry</span></button><button type="button" data-usd="75"><b>$75</b><span>Creator</span></button><button type="button" data-usd="100"><b>$100</b><span>Founder</span></button></div>
         <div class="mzk-conversion"><span>You receive</span><output id="mzk-output">4,000 MZK</output><small>Fixed MUZIKAZ store rate</small></div>
         <div class="mzk-payment-selectors">
-          <label><span>1. Payment currency</span><select id="mzk-currency" name="currency"><option value="ETH">ETH · Ethereum</option><option value="POL">POL · Polygon</option><option value="BNB">BNB · BNB Smart Chain</option><option value="SOL">SOL · Solana</option><option value="ADA">ADA · Cardano</option></select></label>
+          <label><span>1. Payment currency</span><select id="mzk-currency" name="currency"><option value="ETH">ETH · Ethereum</option><option value="POL">POL · Polygon</option><option value="BNB">BNB · BNB Smart Chain</option><option value="SOL">SOL · Solana</option><option value="ADA">ADA · Cardano</option><option value="BTC">BTC · Bitcoin</option><option value="DOGE">DOGE · Dogecoin</option></select></label>
           <label><span>2. Wallet</span><select id="mzk-payment-wallet" name="wallet" aria-describedby="mzk-wallet-help"></select></label>
         </div>
-        <small id="mzk-wallet-help" class="mzk-wallet-help">Select a wallet, then approve the prepared transfer. The transaction is submitted automatically.</small>
+        <small id="mzk-wallet-help" class="mzk-wallet-help">Select a wallet, approve the prepared transfer, then paste its transaction ID below. Your Backpack stays open while an external wallet handles payment.</small>
         <p id="mzk-quote">Loading live wallet quote…</p>
         <button class="btn mzk-buy-button" type="submit" id="mzk-buy"><span>Pay &amp; receive 4,000 MZK</span><b>→</b></button>
+        <section class="mzk-payment-verification" id="mzk-payment-verification" hidden aria-labelledby="mzk-verify-title">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 12h34v25H7zM7 17h34M13 28l6 6 16-16"/></svg>
+          <div><strong id="mzk-verify-title">Verify your payment</strong><small id="mzk-order-reference"></small></div>
+          <label><span>Transaction hash / ID</span><input id="mzk-transaction-id" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="Paste the receipt from your wallet"></label>
+          <button class="btn" id="mzk-verify-payment" type="button">Verify on-chain &amp; add MZK</button>
+        </section>
         <p id="mzk-status" role="status">Your wallet displays the exact asset amount, destination, and network fee before approval.</p>
         <div class="mzk-trust"><span>◈ Wallet approved</span><span>◆ On-chain receipt</span><span>◉ Permanent deed</span></div>
       </form>
