@@ -249,8 +249,11 @@ for (const id of ['payment-form', 'checkout-items', 'confirmation-panel']) {
 for (const requiredPaymentCheckout of ['muzikaz-payment-checkout', 'payment-config.js', 'wallet-payments.js', 'product-type="MARKETPLACE"']) {
   if (!checkoutHtml.includes(requiredPaymentCheckout)) throw new Error(`checkout.html is missing unified payment checkout marker ${requiredPaymentCheckout}`);
 }
-for (const requiredWalletClaimMarker of ['checkout-backpack-owner', 'checkout-wallet-owner', 'checkout-terms']) {
+for (const requiredWalletClaimMarker of ['checkout-backpack-owner', 'checkout-wallet-owner', 'share-personal-information']) {
   if (!checkoutHtml.includes(requiredWalletClaimMarker)) throw new Error(`checkout.html is missing wallet-to-Backpack claim marker ${requiredWalletClaimMarker}`);
+}
+for (const prohibitedPersonalField of ['autocomplete="name"', 'autocomplete="street-address"', 'autocomplete="address-level2"', 'autocomplete="address-level1"', 'autocomplete="postal-code"']) {
+  if (checkoutHtml.includes(prohibitedPersonalField)) throw new Error(`Crypto checkout must not collect personal field ${prohibitedPersonalField}`);
 }
 for (const removedCardField of ['autocomplete="cc-number"', 'autocomplete="cc-name"', 'autocomplete="cc-exp"', 'autocomplete="cc-csc"']) {
   if (checkoutHtml.includes(removedCardField)) throw new Error(`checkout.html must not collect removed credit-card field ${removedCardField}`);

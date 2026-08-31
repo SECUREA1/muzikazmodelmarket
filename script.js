@@ -2351,10 +2351,7 @@ function claimCheckoutItems(items, owner, source) {
 }
 
 function validateWalletCheckout() {
-  if (!paymentForm?.reportValidity()) {
-    document.querySelector('#payment-status').textContent = 'Complete the receipt and delivery details and confirm the claim destination first.';
-    return false;
-  }
+  if (!readCart().length) { document.querySelector('#payment-status').textContent = 'Your cart is empty.'; return false; }
   return true;
 }
 
@@ -2583,8 +2580,9 @@ function renderCheckoutPage() {
   if (mzkTotal) mzkTotal.textContent = `${Math.round(total * 100).toLocaleString()} MZK`;
   const unifiedCheckout = document.querySelector('muzikaz-payment-checkout');
   if (unifiedCheckout) {
-    unifiedCheckout.checkoutProduct = { productId: 'marketplace-cart', productType: 'MARKETPLACE', quantity: items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0), userId: checkoutOwner('MZK'), metadata: { receiptEmail: paymentForm?.elements.email?.value || '', items } };
-    unifiedCheckout.checkoutValidator = () => { unifiedCheckout.checkoutProduct.metadata.receiptEmail = paymentForm?.elements.email?.value || ''; return validateWalletCheckout(); };
+    const sharing = Boolean(paymentForm?.elements.sharePersonalInformation?.checked);
+    unifiedCheckout.checkoutProduct = { productId: 'marketplace-cart', productType: 'MARKETPLACE', quantity: items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0), userId: window.MZKWallet?.connectedAddress?.() || checkoutOwner('MZK'), wallet: window.MZKWallet?.connectedAddress?.() || '', metadata: { receiptEmail: sharing ? (paymentForm?.elements.email?.value || '') : '', items } };
+    unifiedCheckout.checkoutValidator = () => { unifiedCheckout.checkoutProduct.metadata.receiptEmail = paymentForm?.elements.sharePersonalInformation?.checked ? (paymentForm?.elements.email?.value || '') : ''; return validateWalletCheckout(); };
     if (total > 0 && unifiedCheckout.getAttribute('base-price') !== String(total)) { unifiedCheckout.setAttribute('base-price', String(total)); unifiedCheckout.refresh?.(); }
   }
   const ethereumTotal = document.querySelector('#ethereum-wallet-total');
@@ -2600,6 +2598,12 @@ document.querySelector('#checkout-clear-cart')?.addEventListener('click', () => 
 });
 
 paymentForm?.addEventListener('submit', (event) => event.preventDefault());
+paymentForm?.elements.sharePersonalInformation?.addEventListener('change', (event) => {
+  document.querySelector('#optional-personal-information').hidden = !event.currentTarget.checked;
+  const copy = event.currentTarget.nextElementSibling?.querySelector('small');
+  if (copy) copy.textContent = event.currentTarget.checked ? 'ON — optional receipt information will be shared.' : 'OFF — declined by default. This never affects wallet payments or delivery.';
+  if (!event.currentTarget.checked && paymentForm.elements.email) paymentForm.elements.email.value = '';
+});
 
 renderCheckoutPage();
 renderCheckoutIdentity();
