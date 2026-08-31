@@ -872,6 +872,12 @@ document.addEventListener('pointerdown', (event) => {
   if (!event.target.closest('.global-site-header')) closeMenu();
 });
 
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || !nav?.classList.contains('is-open')) return;
+  closeMenu();
+  menuButton?.focus();
+});
+
 window.addEventListener('resize', syncHeaderLayout, { passive: true });
 syncHeaderLayout();
 
