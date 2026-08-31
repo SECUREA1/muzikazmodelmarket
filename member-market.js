@@ -9,7 +9,7 @@
   if (!select || !packs || !window.MUZIKAZ_API) return;
 
   const escape = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
-  const owner = () => String(localStorage.getItem('muzikazBottleMemberEmail') || window.MZKWallet?.walletId?.() || '').trim().toLowerCase();
+  const owner = () => String(window.MZKWallet?.connectedAddress?.() || window.MZKWallet?.walletId?.() || '').trim().toLowerCase();
   const headers = () => ({ Accept: 'application/json', 'Content-Type': 'application/json', 'X-Wallet-Address': owner() });
   const api = async (path, options = {}) => {
     const response = await window.MUZIKAZ_API.fetch(path, { ...options, headers: { ...headers(), ...(options.headers || {}) } });
@@ -75,4 +75,5 @@
   });
   function showError(error) { status.textContent = error.message || 'The member market is unavailable.'; }
   registerExistingWallet().then(() => loadMembers()).catch(showError);
+  window.addEventListener('mzk:wallet-connection-changed', () => registerExistingWallet().then(() => loadMembers(owner())).catch(showError));
 }());
