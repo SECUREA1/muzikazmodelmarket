@@ -41,7 +41,9 @@
   function evmProvider(walletId = 'automatic') { const available = providers(); if (walletId === 'phantom') return available.find((provider) => provider.isPhantom) || window.phantom?.ethereum || null; if (walletId === 'metamask') return available.find((provider) => provider.isMetaMask) || null; return available.find((provider) => provider.isMetaMask) || available.find((provider) => provider.request) || null; }
   function compatibleWallets(currency) { const network = NETWORKS[String(currency).toUpperCase()]; return network ? Object.values(WALLETS).filter((wallet) => wallet.types.includes(network.type)) : []; }
   function openWallet(q, walletName) {
-    window.open(q.uri, '_blank', 'noopener,noreferrer');
+    const popup = window.open(q.uri, '_blank', 'noopener,noreferrer');
+    if (!popup) throw new Error(`${walletName} could not open because the wallet pop-up was blocked. Allow pop-ups for this site, then try again.`);
+    popup.focus?.();
     return { opened: true, walletName, uri: q.uri };
   }
   function ledgerCurrency(network) {
@@ -105,7 +107,27 @@
   }
   async function sendEvm(q, walletId = 'automatic') { const provider = evmProvider(walletId); const selectedName = WALLETS[walletId]?.name || 'MetaMask'; if (!provider?.request) return openWallet(q, selectedName === 'Best available wallet' ? 'MetaMask' : selectedName); const network = NETWORKS[q.currency]; await switchEvm(provider, network); await requestEvm(provider, { method: 'eth_getBlockByNumber', params: ['latest', false] }, network); const [address] = await requestEvm(provider, { method: 'eth_requestAccounts' }, network); const value = BigInt(Math.ceil(q.amount * 1e9)) * 1000000000n; const transactionHash = await requestEvm(provider, { method: 'eth_sendTransaction', params: [{ from: address, to: q.recipient, value: `0x${value.toString(16)}` }] }, network); return { address, transactionHash, walletName: selectedName === 'Best available wallet' ? (provider.isPhantom ? 'Phantom' : 'MetaMask') : selectedName }; }
   async function sendSolana(q) { const provider = window.phantom?.solana || (window.solana?.isPhantom ? window.solana : null); if (!provider?.connect || !provider?.signAndSendTransaction) throw new Error('Install or open Phantom, then try again.'); const web3 = await import('https://esm.sh/@solana/web3.js@1.98.4'); const connection = new web3.Connection(web3.clusterApiUrl('mainnet-beta'), 'confirmed'); const connected = await provider.connect(); const from = connected.publicKey || provider.publicKey; const transaction = new web3.Transaction().add(web3.SystemProgram.transfer({ fromPubkey: from, toPubkey: new web3.PublicKey(q.recipient), lamports: Math.ceil(q.amount * web3.LAMPORTS_PER_SOL) })); transaction.feePayer = from; transaction.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash; const result = await provider.signAndSendTransaction(transaction); return { address: from.toString(), transactionHash: result.signature || result }; }
-  async function initiate(q, walletId = 'automatic') { const network = NETWORKS[q.currency]; const wallet = WALLETS[walletId] || WALLETS.automatic; if (!wallet.types.includes(network.type)) throw new Error(`${wallet.name} does not support ${network.network}. Choose a compatible wallet.`); if (wallet.hardware) return openHardwareWallet(q, wallet); if (network.type === 'evm') return sendEvm(q, walletId); if (network.type === 'solana') return (window.phantom?.solana || window.solana?.isPhantom) ? sendSolana(q) : openWallet(q, 'Phantom'); if (network.type === 'cardano') return openWallet(q, wallet.id === 'automatic' ? 'Lace' : wallet.name); return openWallet(q, wallet.id === 'automatic' ? `${network.name} wallet` : wallet.name); }
+  function cardanoProvider(walletId = 'automatic') {
+    if (walletId !== 'automatic' && walletId !== 'lace') return null;
+    return window.cardano?.lace || null;
+  }
+  async function sendCardano(q, walletId = 'automatic') {
+    const connector = cardanoProvider(walletId);
+    const walletName = walletId === 'automatic' ? 'Lace' : (WALLETS[walletId]?.name || 'Lace');
+    if (!connector?.enable) return openWallet(q, walletName);
+    let api;
+    try { api = await connector.enable(); } catch (error) {
+      if (error?.code === -3 || /refus|reject|declin|cancel/i.test(error?.message || '')) throw new Error(`${walletName} connection was declined. Reopen the wallet and approve this site, then try again.`);
+      throw new Error(`${walletName} could not connect. Unlock the wallet, approve this site, and try again.`);
+    }
+    if (!api) throw new Error(`${walletName} connected without a Cardano API. Update the wallet extension, then try again.`);
+    const networkId = typeof api.getNetworkId === 'function' ? await api.getNetworkId() : null;
+    if (networkId !== null && Number(networkId) !== 1) throw new Error(`Switch ${walletName} to Cardano Mainnet before paying.`);
+    const used = typeof api.getUsedAddresses === 'function' ? await api.getUsedAddresses() : [];
+    const address = used?.[0] || (typeof api.getChangeAddress === 'function' ? await api.getChangeAddress() : '');
+    return { ...openWallet(q, walletName), address, connected: true };
+  }
+  async function initiate(q, walletId = 'automatic') { const network = NETWORKS[q.currency]; const wallet = WALLETS[walletId] || WALLETS.automatic; if (!wallet.types.includes(network.type)) throw new Error(`${wallet.name} does not support ${network.network}. Choose a compatible wallet.`); if (wallet.hardware) return openHardwareWallet(q, wallet); if (network.type === 'evm') return sendEvm(q, walletId); if (network.type === 'solana') return (window.phantom?.solana || window.solana?.isPhantom) ? sendSolana(q) : openWallet(q, 'Phantom'); if (network.type === 'cardano') return sendCardano(q, walletId); return openWallet(q, wallet.id === 'automatic' ? `${network.name} wallet` : wallet.name); }
   async function pay(usd, currency, product = {}, walletId = 'automatic') { const q = await quote(usd, currency); const order = await createOrder(q, product); const sent = await initiate(q, walletId); if (sent.opened) throw new Error(`${sent.walletName} opened. Approve the prepared payment in your wallet; the transaction will submit automatically when the wallet returns a receipt.`); const verified = await submitOrder(order.orderId, sent.transactionHash, sent.address); if (!['PAID', 'FULFILLED'].includes(verified.paymentStatus)) throw new Error(`Transaction submitted for ${verified.paymentNetwork}. Status: ${verified.paymentStatus}. Assets and MZK remain locked until independent verification.`); return { ...q, ...sent, orderId: order.orderId, paymentStatus: verified.paymentStatus }; }
   async function quoteEthValue(eth, currency) { const liveRates = await rates(); return quote(Number(eth) * liveRates.ETH, currency); }
   window.MuzikazWalletPayments = { NETWORKS, RECIPIENTS, WALLETS, compatibleWallets, icon, rates, quote, quoteEthValue, createOrder, submitOrder, initiate, pay, paymentUri };
