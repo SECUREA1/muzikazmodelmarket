@@ -3001,3 +3001,6 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 .payment-choice input:checked+span{border-color:#9cff00;background:rgba(156,255,0,.12);box-shadow:inset 0 0 0 1px rgba(156,255,0,.25)}
 .payment-choice input:focus-visible+span{outline:2px solid #fff;outline-offset:2px}
 @media(max-width:600px){.payment-selectors,.mzk-payment-selectors{grid-template-columns:1fr}}
+
+/* Persistent administrator sales ledger */
+.sales-ledger{grid-column:1/-1;min-width:0;padding:22px;border:1px solid rgba(156,255,0,.38);border-radius:18px;background:#050705}.sales-ledger-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.sales-ledger-heading h3{margin:2px 0 0}.sales-table-wrap{max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:12px}.sales-ledger table{width:100%;min-width:950px;border-collapse:collapse;text-align:left}.sales-ledger th,.sales-ledger td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}.sales-ledger th{color:var(--lime);font-size:11px;letter-spacing:.08em;text-transform:uppercase}.sales-ledger td small,.sales-ledger td span{display:block;color:var(--muted);margin-top:4px}.sale-status{font-weight:900;color:#ffd36a}.sale-status.is-fulfilled{color:var(--lime)}

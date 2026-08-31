@@ -2582,7 +2582,11 @@ function renderCheckoutPage() {
   const mzkTotal = document.querySelector('#summary-mzk-total');
   if (mzkTotal) mzkTotal.textContent = `${Math.round(total * 100).toLocaleString()} MZK`;
   const unifiedCheckout = document.querySelector('muzikaz-payment-checkout');
-  if (unifiedCheckout && total > 0 && unifiedCheckout.getAttribute('base-price') !== String(total)) { unifiedCheckout.setAttribute('base-price', String(total)); unifiedCheckout.refresh?.(); }
+  if (unifiedCheckout) {
+    unifiedCheckout.checkoutProduct = { productId: 'marketplace-cart', productType: 'MARKETPLACE', quantity: items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0), userId: checkoutOwner('MZK'), metadata: { receiptEmail: paymentForm?.elements.email?.value || '', items } };
+    unifiedCheckout.checkoutValidator = () => { unifiedCheckout.checkoutProduct.metadata.receiptEmail = paymentForm?.elements.email?.value || ''; return validateWalletCheckout(); };
+    if (total > 0 && unifiedCheckout.getAttribute('base-price') !== String(total)) { unifiedCheckout.setAttribute('base-price', String(total)); unifiedCheckout.refresh?.(); }
+  }
   const ethereumTotal = document.querySelector('#ethereum-wallet-total');
   if (ethereumTotal) ethereumTotal.textContent = formatEth(MARKET_ITEM_PRICE_WEI * BigInt(items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)));
   const ethereumPay = document.querySelector('#ethereum-wallet-pay');
@@ -3068,7 +3072,10 @@ function initAssetDashboard(){
   document.querySelector('[data-open-assignment]')?.addEventListener('click',()=>{const panel=document.getElementById('asset-assignment-panel'); if(panel){panel.hidden=!panel.hidden; renderAssignmentOptions(); panel.scrollIntoView({behavior:'smooth',block:'center'});}});
   document.getElementById('asset-assignment-panel')?.addEventListener('submit',(e)=>{e.preventDefault(); const asset=cachedAssets.find(a=>a.id===document.getElementById('assignment-asset')?.value); if(asset) assign(asset,document.getElementById('assignment-model')?.value,document.getElementById('assignment-slot')?.value);});
   async function metrics(){try{const m=await api('/api/admin/analytics'); document.getElementById('metric-orders').textContent=m.totalOrders||128;document.getElementById('metric-inventory').textContent=m.inventoryUnits||842;document.getElementById('metric-conversion').textContent=m.conversionRate||'7.4%';document.getElementById('metric-uploads').textContent=m.totalUploads||0;document.getElementById('metric-pending').textContent=m.pendingApprovals||0;document.getElementById('metric-storage').textContent=m.storageUsage||0;}catch{}}
-  loadAssets(); metrics();
+  const saleBody=document.getElementById('sales-table-body'), saleStatus=document.getElementById('sales-status');
+  async function loadSales(){if(!saleBody)return; saleStatus.textContent='Loading sales from the payment database…';try{const orders=await api('/api/admin/sales');saleBody.replaceChildren(...orders.map(order=>{const row=document.createElement('tr');const items=order.fulfillment?.items||order.metadata?.items||[];const cells=[`${order.orderId}\n${new Date(order.createdAt).toLocaleString()}`,`${order.wallet||order.userId||'Not supplied'}\n${order.metadata?.receiptEmail||''}`,items.length?items.map(item=>`${item.name} × ${item.quantity}`).join('\n'):'No item snapshot',`${order.expectedAmount} ${order.paymentAsset}\n$${Number(order.basePrice).toFixed(2)} USD`,order.paymentStatus,order.transactionHash||'Awaiting transaction'];cells.forEach((value,index)=>{const cell=document.createElement('td');String(value).split('\n').forEach((line,lineIndex)=>{const element=document.createElement(lineIndex?'small':index===4?'strong':'span');element.textContent=line;if(index===4)element.className=`sale-status ${order.paymentStatus==='FULFILLED'?'is-fulfilled':''}`;cell.append(element);});row.append(cell);});return row;}));saleStatus.textContent=`${orders.length} payment record${orders.length===1?'':'s'} loaded. Fulfilled rows include the exact delivered item snapshot.`;}catch(error){saleStatus.textContent=error.message||'Sales could not be loaded.';}}
+  document.getElementById('sales-refresh')?.addEventListener('click',loadSales);
+  loadAssets(); metrics(); loadSales();
 }
 document.addEventListener('muzikaz:admin-authenticated', initAssetDashboard);
 

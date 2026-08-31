@@ -31,3 +31,14 @@ test('a transaction ID cannot be reused across orders', async () => {
   await store.submit(first.orderId, 'btc-tx');
   await assert.rejects(store.submit(second.orderId, 'btc-tx'), /already been assigned/);
 });
+
+test('verified cart orders persist the buyer wallet and exact fulfilled items for sales reporting', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'muzikaz-orders-'));
+  const store = new PaymentOrderStore(join(dir, 'orders.json'), { verifyTransaction: async () => ({ verified: true, amountReceived: 2, confirmations: 12 }) });
+  const created = await store.create({ userId: 'member', purchaseType: 'MARKETPLACE', itemId: 'marketplace-cart', basePrice: 50, paymentAsset: 'ETH', expectedAmount: 2, metadata: { receiptEmail: 'buyer@example.com', items: [{ id: 'model-1', name: 'Neon Model', quantity: 2, price: 25, deliverable: { id: 'model-1', name: 'Neon Model GLB', format: 'glb', modelUrl: '/models/neon.glb' } }] } });
+  const fulfilled = await store.submit(created.orderId, 'eth-cart-transaction', '0x1111111111111111111111111111111111111111');
+  assert.equal(fulfilled.paymentStatus, 'FULFILLED');
+  assert.equal(fulfilled.wallet, '0x1111111111111111111111111111111111111111');
+  assert.deepEqual(fulfilled.fulfillment.items, fulfilled.metadata.items);
+  assert.equal((await store.list())[0].metadata.receiptEmail, 'buyer@example.com');
+});
