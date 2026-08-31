@@ -7,14 +7,17 @@ async function jsonRequest(url, body) {
 }
 
 async function verifyEvm(order, rpcUrl) {
-  const [receiptResponse, transactionResponse, blockResponse] = await Promise.all([
+  const [receiptResponse, transactionResponse, blockResponse, chainResponse] = await Promise.all([
     jsonRequest(rpcUrl, { jsonrpc: '2.0', id: 1, method: 'eth_getTransactionReceipt', params: [order.transactionHash] }),
     jsonRequest(rpcUrl, { jsonrpc: '2.0', id: 2, method: 'eth_getTransactionByHash', params: [order.transactionHash] }),
-    jsonRequest(rpcUrl, { jsonrpc: '2.0', id: 3, method: 'eth_blockNumber', params: [] })
+    jsonRequest(rpcUrl, { jsonrpc: '2.0', id: 3, method: 'eth_blockNumber', params: [] }),
+    jsonRequest(rpcUrl, { jsonrpc: '2.0', id: 4, method: 'eth_chainId', params: [] })
   ]);
   const receipt = receiptResponse.result; const transaction = transactionResponse.result;
   if (!receipt || !transaction) return { verified: false, confirmations: 0, amountReceived: 0 };
+  if (String(chainResponse.result || '').toLowerCase() !== String(order.chainId || '').toLowerCase()) return { failed: true, confirmations: 0, amountReceived: 0 };
   if (String(transaction.to || '').toLowerCase() !== order.destinationAddress.toLowerCase()) return { failed: true, confirmations: 0, amountReceived: 0 };
+  if (order.wallet && String(transaction.from || '').toLowerCase() !== order.wallet.toLowerCase()) return { failed: true, confirmations: 0, amountReceived: 0 };
   const amountReceived = Number(BigInt(transaction.value || '0x0')) / 1e18;
   const confirmations = Number(BigInt(blockResponse.result) - BigInt(receipt.blockNumber) + 1n);
   return { verified: receipt.status === '0x1' && confirmations >= minimumConfirmations[order.paymentAsset], confirmations, amountReceived };
@@ -31,7 +34,9 @@ export async function verifyPaymentTransaction(order) {
   if (!verifierUrl) return { verified: false, confirmations: 0, amountReceived: 0, providerRequired: true };
   const result = await jsonRequest(verifierUrl, { transactionHash: order.transactionHash, destinationAddress: order.destinationAddress, expectedAmount: order.expectedAmount, paymentNetwork: order.paymentNetwork });
   const confirmations = Number(result.confirmations || 0); const amountReceived = Number(result.amountReceived || 0);
-  return { verified: result.destinationAddress === order.destinationAddress && amountReceived >= order.expectedAmount && confirmations >= minimumConfirmations[symbol], confirmations, amountReceived, failed: result.failed === true };
+  const recipientMatches = String(result.destinationAddress || '').toLowerCase() === String(order.destinationAddress).toLowerCase();
+  const senderMatches = !order.wallet || String(result.senderWallet || '').toLowerCase() === String(order.wallet).toLowerCase();
+  return { verified: recipientMatches && senderMatches && amountReceived >= order.expectedAmount && confirmations >= minimumConfirmations[symbol] && result.success !== false, confirmations, amountReceived, failed: result.failed === true || !recipientMatches || !senderMatches };
 }
 
 export { minimumConfirmations };

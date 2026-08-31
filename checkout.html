@@ -101,16 +101,13 @@
                     </dl>
                     <a class="btn ghost" href="members.html#bottle-login">Switch account</a>
                 </section>
-                <fieldset>
-                    <legend>Receipt and delivery</legend>
-                    <div class="form-grid">
-                        <label>Email <input type="email" name="email" autocomplete="email" required placeholder="crew@muzikaz.example" /></label>
-                        <label>Full name <input name="name" autocomplete="name" required placeholder="Muzikaz Collector" /></label>
-                        <label>Address <input name="address" autocomplete="street-address" required placeholder="100 Neon Beat Ave" /></label>
-                        <label>City <input name="city" autocomplete="address-level2" required placeholder="Atlanta" /></label>
-                        <label>State <input name="state" autocomplete="address-level1" required maxlength="2" placeholder="GA" /></label>
-                        <label>ZIP <input name="zip" autocomplete="postal-code" required pattern="[0-9]{5}(-[0-9]{4})?" placeholder="30303" /></label>
+                <fieldset class="checkout-privacy">
+                    <legend>Privacy</legend>
+                    <label class="privacy-toggle"><input id="share-personal-information" name="sharePersonalInformation" type="checkbox" /><span><strong>Share optional personal information</strong><small>OFF — declined by default. This never affects wallet payments or delivery.</small></span></label>
+                    <div class="optional-personal-information" id="optional-personal-information" hidden>
+                        <label>Optional receipt email <input type="email" name="email" autocomplete="email" placeholder="crew@muzikaz.example" /></label>
                     </div>
+                    <p class="checkout-note">Your connected wallet is your payment and Backpack identity. MUZIKAZ never requests seed phrases, private keys, or recovery phrases.</p>
                 </fieldset>
 
                 <fieldset>
@@ -125,8 +122,7 @@
                     </div>
                 </fieldset>
 
-                <label class="terms-check"><input id="checkout-terms" type="checkbox" required /> I confirm the displayed Backpack and wallet are mine and agree to receive MUZIKAZ order updates.</label>
-                <p class="status-message" id="payment-status" role="status">Confirm your details, then choose a wallet payment above.</p>
+                <p class="status-message" id="payment-status" role="status">Waiting for wallet. Choose a payment asset, connect, and approve the transaction in your wallet.</p>
                 </form>
                 <div class="checkout-alternative" aria-labelledby="crypto-payment-title">
                     <div class="checkout-alternative-heading">
