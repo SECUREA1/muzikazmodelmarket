@@ -7,6 +7,7 @@ import { UserJsonDatabase, cleanWallet } from './user-json-database.mjs';
 import { LoadoutCodeStore } from './loadout-code-store.mjs';
 import { PaymentOrderStore } from './payment-order-store.mjs';
 import { verifyPaymentTransaction } from './payment-verifier.mjs';
+import { MobileWalletHandoffStore } from './mobile-wallet-handoff-store.mjs';
 
 const root = process.cwd();
 const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
@@ -21,6 +22,7 @@ const userDatabaseFile = process.env.MUZIKAZ_USER_DATABASE_FILE || join(dataDir,
 const userDatabase = new UserJsonDatabase(userDatabaseFile);
 const loadoutCodeStore = new LoadoutCodeStore(process.env.MUZIKAZ_LOADOUT_CODES_FILE || join(dataDir, 'loadout-codes.json'));
 const paymentOrderStore = new PaymentOrderStore(process.env.MUZIKAZ_PAYMENT_ORDERS_FILE || join(dataDir, 'payment-orders.json'), { verifyTransaction: verifyPaymentTransaction });
+const mobileWalletHandoffs = new MobileWalletHandoffStore(process.env.MUZIKAZ_WALLET_HANDOFFS_FILE || join(dataDir, 'wallet-handoffs.json'));
 const publicAvatarManifest = join(root, 'public', 'models', 'avatars.json');
 const environmentDataFile = process.env.MUZIKAZ_ENVIRONMENT_DATA_FILE || join(dataDir, 'environments.json');
 const repositoryEnvironmentManifest = join(root, 'public', 'models', 'environments', 'environments.json');
@@ -238,6 +240,18 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/admin/loadout-codes' && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.list())); }
     if (url.pathname === '/api/loadout-codes/redeem' && req.method === 'POST') { const body = await bodyJson(req); return sendJson(res, 200, assetResponse(await loadoutCodeStore.redeem(body.code, body.wallet))); }
 
+    if (url.pathname === '/api/wallet/handoffs' && req.method === 'POST') {
+      const body = await bodyJson(req); const desktopSessionId = session(req); const created = await mobileWalletHandoffs.create({ ...body, userId: user(req).id, desktopSessionId });
+      const mobileUrl = `${url.origin}/wallet/mobile/${created.token}`;
+      return sendJson(res, 201, assetResponse({ ...created, token: undefined, mobileUrl }));
+    }
+    const handoffDesktop = url.pathname.match(/^\/api\/wallet\/handoffs\/([^/]+)$/);
+    if (handoffDesktop && req.method === 'GET') { const record = await mobileWalletHandoffs.byDesktop(handoffDesktop[1], String(req.headers['x-handoff-secret'] || ''), session(req)); return record ? sendJson(res, 200, assetResponse(mobileWalletHandoffs.serialize(record))) : sendJson(res, 404, { success: false, message: 'Wallet request not found for this desktop session.' }); }
+    const handoffMobile = url.pathname.match(/^\/api\/wallet\/mobile\/([^/]+)$/);
+    if (handoffMobile && req.method === 'GET') { const record = await mobileWalletHandoffs.byToken(handoffMobile[1]); if (!record) return sendJson(res, 404, { success: false, message: 'Wallet request not found.' }); if (record.status === 'waiting_for_mobile') await mobileWalletHandoffs.open(handoffMobile[1]); return sendJson(res, 200, assetResponse(mobileWalletHandoffs.serialize(record, true))); }
+    const handoffAction = url.pathname.match(/^\/api\/wallet\/mobile\/([^/]+)\/(state|cancel)$/);
+    if (handoffAction && req.method === 'POST') { const body = await bodyJson(req).catch(() => ({})); const status = handoffAction[2] === 'cancel' ? 'rejected' : cleanText(body.status); if (['approved', 'confirming'].includes(status)) return sendJson(res, 400, { success: false, message: 'Only the server-side verifier may approve wallet results.' }); const record = await mobileWalletHandoffs.transitionToken(handoffAction[1], status, body.result || null); return sendJson(res, 200, assetResponse(record)); }
+
     if (url.pathname === '/api/payments/orders' && req.method === 'POST') return sendJson(res, 201, assetResponse(await paymentOrderStore.create(await bodyJson(req))));
     if (url.pathname === '/api/admin/sales' && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await paymentOrderStore.list())); }
     const paymentOrder = url.pathname.match(/^\/api\/payments\/orders\/([^/]+)$/);
@@ -291,7 +305,8 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/houses/ioncore-house/voice/signal' && req.method === 'POST') { const from = session(req); const sender = presence.get(from); if (!sender) return sendJson(res, 401, { error: 'Join the Vibe Crib before using voice.' }); const body = await bodyJson(req); const to = cleanText(body.to, ''); if (!to || to === from || !presence.has(to)) return sendJson(res, 400, { error: 'Voice recipient is unavailable.' }); const kind = ['offer','answer','candidate','hangup'].includes(body.kind) ? body.kind : ''; if (!kind) return sendJson(res, 400, { error: 'Unsupported voice signal.' }); broadcastTo(to, 'house-voice-signal', { from, to, kind, payload: body.payload || null }); return sendJson(res, 202, { ok: true }); }
     if (url.pathname === '/api/houses/ioncore-house/chat' && req.method === 'GET') return sendJson(res, 200, { messages: chatMessages.slice(-50) });
     if (url.pathname === '/api/houses/ioncore-house/chat' && req.method === 'POST') { const id = session(req); const person = presence.get(id); if (!person) return sendJson(res, 401, { error: 'Join the Vibe Crib before chatting.' }); const body = await bodyJson(req); const message = cleanText(body.message, '').trim(); if (!message) return sendJson(res, 400, { error: 'Message cannot be empty.' }); const record = { id: randomUUID(), sessionId: id, username: person.username, message, createdAt: new Date().toISOString() }; person.message = message; person.lastActiveAt = record.createdAt; chatMessages.push(record); broadcast('house-presence-updated', presencePayload()); if (chatMessages.length > 100) chatMessages.splice(0, chatMessages.length - 100); broadcast('house-chat-message', record); return sendJson(res, 201, record); }
-    let path = normalize(decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)).replace(/^[/\\]+/, '');
+    const mobileWalletRoute = /^\/wallet\/mobile\/[A-Za-z0-9_-]{20,}$/.test(url.pathname);
+    let path = normalize(decodeURIComponent(url.pathname === '/' ? '/index.html' : mobileWalletRoute ? '/wallet-mobile.html' : url.pathname)).replace(/^[/\\]+/, '');
     if (path.includes('..')) return sendJson(res, 400, { error: 'Bad path' });
     const pathsToTry = [join(root, 'dist', path), join(root, path)];
     if (!extname(path)) pathsToTry.push(join(root, 'dist', path + '.html'), join(root, path + '.html'));
