@@ -16,3 +16,9 @@ EVM verification checks the transaction on the selected chain's dedicated RPC, e
 - Optional `MUZIKAZ_PAYMENT_ORDERS_FILE` (defaults to `data/payment-orders.json`)
 
 Without the relevant provider, an order intentionally remains `CONFIRMING`; it is never credited optimistically. Provider URLs should point to trusted indexers or an internal verification service and must not expose private keys or seed phrases.
+
+## Wallet and hardware-wallet compatibility
+
+The wallet selector only offers wallets compatible with the selected chain. MetaMask can pay the EVM assets, Phantom can pay Solana and supported EVM assets, and Lace pays Cardano. Ledger and Trezor are hardware signers rather than standalone injected web wallets: connect the device account to a compatible MetaMask, Phantom, or Lace companion first. Bitcoin and Dogecoin payments open their standard payment URI for approval in a compatible desktop/mobile companion. Trezor is not offered for Solana because Trezor does not support Solana signing.
+
+A provider-backed payment is one approval: checkout creates the order, requests the transfer, captures the returned transaction identifier, and submits it for independent verification. URI handoffs cannot safely expose a transaction identifier to the browser, so the customer must return and paste it. Products remain locked until the verifier reports `PAID`; a `muzikaz-payment-status` event provides the verified order to the delivery integration, and fulfillment must be idempotently recorded as `FULFILLED` by the server.

@@ -2462,6 +2462,17 @@ function initMultiChainCheckout() {
   const buttons = [...document.querySelectorAll('[data-crypto-pay]')];
   const refreshButton = document.querySelector('#refresh-crypto-quotes');
   const status = document.querySelector('#payment-status');
+  const unifiedCheckout = document.querySelector('muzikaz-payment-checkout');
+  unifiedCheckout?.addEventListener('muzikaz-payment-status', (event) => {
+    if (!['PAID', 'FULFILLED'].includes(event.detail.paymentStatus)) return;
+    const receiptKey = `muzikazDeliveredPayment:${event.detail.orderId}`;
+    if (localStorage.getItem(receiptKey)) return;
+    const items = readCart();
+    if (!items.length) return;
+    localStorage.setItem(receiptKey, 'true');
+    completeCryptoOrder(items, event.detail);
+    if (status) status.textContent = `${event.detail.currency} payment verified. Your receipt is ready and purchased products were delivered to your Backpack.`;
+  });
   if (!buttons.length || !window.MuzikazWalletPayments) return;
   const refresh = async () => {
     const total = checkoutUsdTotal();
