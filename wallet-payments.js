@@ -39,8 +39,51 @@
     window.open(q.uri, '_blank', 'noopener,noreferrer');
     return { opened: true, walletName, uri: q.uri };
   }
-  async function switchEvm(provider, network) { try { await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: network.chainId }] }); } catch (error) { throw new Error(`Switch MetaMask to ${network.network} before paying. ${error.message || ''}`.trim()); } }
-  async function sendEvm(q, walletId = 'automatic') { const provider = evmProvider(walletId); const selectedName = WALLETS[walletId]?.name || 'MetaMask'; if (!provider?.request) return openWallet(q, selectedName === 'Best available wallet' ? 'MetaMask' : selectedName); const network = NETWORKS[q.currency]; await switchEvm(provider, network); const [address] = await provider.request({ method: 'eth_requestAccounts' }); const value = BigInt(Math.ceil(q.amount * 1e9)) * 1000000000n; const transactionHash = await provider.request({ method: 'eth_sendTransaction', params: [{ from: address, to: q.recipient, value: `0x${value.toString(16)}` }] }); return { address, transactionHash, walletName: selectedName === 'Best available wallet' ? (provider.isPhantom ? 'Phantom' : 'MetaMask') : selectedName }; }
+  function evmErrorCode(error) { return error?.code ?? error?.data?.originalError?.code; }
+  function isUnauthorizedPolygonRpc(error, network) {
+    if (network.chainId !== '0x89') return false;
+    const message = [error?.message, error?.data?.message, error?.data?.originalError?.message].filter(Boolean).join(' ');
+    return /unauthorized|not authorized|401/i.test(message);
+  }
+  async function addEvmNetwork(provider, network) {
+    if (!network.rpcUrls?.length || !network.nativeCurrency) throw new Error(`${network.network} is not configured for automatic wallet setup.`);
+    await provider.request({ method: 'wallet_addEthereumChain', params: [{
+      chainId: network.chainId,
+      chainName: network.network,
+      nativeCurrency: network.nativeCurrency,
+      rpcUrls: network.rpcUrls,
+      blockExplorerUrls: network.blockExplorerUrls
+    }] });
+  }
+  async function switchEvm(provider, network) {
+    try {
+      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: network.chainId }] });
+    } catch (error) {
+      if (Number(evmErrorCode(error)) === 4902) {
+        try {
+          await addEvmNetwork(provider, network);
+          await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: network.chainId }] });
+          return;
+        } catch (_) { /* Use the actionable error below. */ }
+      }
+      throw new Error(`Switch your wallet to ${network.network} before paying.`);
+    }
+  }
+  async function requestEvm(provider, request, network) {
+    try {
+      return await provider.request(request);
+    } catch (error) {
+      if (!isUnauthorizedPolygonRpc(error, network)) throw error;
+      try {
+        await addEvmNetwork(provider, network);
+        await switchEvm(provider, network);
+        return await provider.request(request);
+      } catch (_) {
+        throw new Error(`Your wallet's Polygon RPC is unauthorized. Set the Polygon Mainnet RPC URL to ${network.rpcUrls[0]}, then try again.`);
+      }
+    }
+  }
+  async function sendEvm(q, walletId = 'automatic') { const provider = evmProvider(walletId); const selectedName = WALLETS[walletId]?.name || 'MetaMask'; if (!provider?.request) return openWallet(q, selectedName === 'Best available wallet' ? 'MetaMask' : selectedName); const network = NETWORKS[q.currency]; await switchEvm(provider, network); await requestEvm(provider, { method: 'eth_getBlockByNumber', params: ['latest', false] }, network); const [address] = await requestEvm(provider, { method: 'eth_requestAccounts' }, network); const value = BigInt(Math.ceil(q.amount * 1e9)) * 1000000000n; const transactionHash = await requestEvm(provider, { method: 'eth_sendTransaction', params: [{ from: address, to: q.recipient, value: `0x${value.toString(16)}` }] }, network); return { address, transactionHash, walletName: selectedName === 'Best available wallet' ? (provider.isPhantom ? 'Phantom' : 'MetaMask') : selectedName }; }
   async function sendSolana(q) { const provider = window.phantom?.solana || (window.solana?.isPhantom ? window.solana : null); if (!provider?.connect || !provider?.signAndSendTransaction) throw new Error('Install or open Phantom, then try again.'); const web3 = await import('https://esm.sh/@solana/web3.js@1.98.4'); const connection = new web3.Connection(web3.clusterApiUrl('mainnet-beta'), 'confirmed'); const connected = await provider.connect(); const from = connected.publicKey || provider.publicKey; const transaction = new web3.Transaction().add(web3.SystemProgram.transfer({ fromPubkey: from, toPubkey: new web3.PublicKey(q.recipient), lamports: Math.ceil(q.amount * web3.LAMPORTS_PER_SOL) })); transaction.feePayer = from; transaction.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash; const result = await provider.signAndSendTransaction(transaction); return { address: from.toString(), transactionHash: result.signature || result }; }
   async function initiate(q, walletId = 'automatic') { const network = NETWORKS[q.currency]; const wallet = WALLETS[walletId] || WALLETS.automatic; if (!wallet.types.includes(network.type)) throw new Error(`${wallet.name} does not support ${network.network}. Choose a compatible wallet.`); if (network.type === 'evm') return sendEvm(q, walletId); if (network.type === 'solana') return (window.phantom?.solana || window.solana?.isPhantom) ? sendSolana(q) : openWallet(q, wallet.hardware ? wallet.name : 'Phantom'); if (network.type === 'cardano') return openWallet(q, wallet.id === 'automatic' ? 'Lace' : wallet.name); return openWallet(q, wallet.id === 'automatic' ? `${network.name} wallet` : wallet.name); }
   async function pay(usd, currency, product = {}, walletId = 'automatic') { const q = await quote(usd, currency); const order = await createOrder(q, product); const sent = await initiate(q, walletId); if (sent.opened) throw new Error(`${sent.walletName} opened. Approve the prepared payment in your wallet; the transaction will submit automatically when the wallet returns a receipt.`); const verified = await submitOrder(order.orderId, sent.transactionHash); if (!['PAID', 'FULFILLED'].includes(verified.paymentStatus)) throw new Error(`Transaction submitted for ${verified.paymentNetwork}. Status: ${verified.paymentStatus}. Assets and MZK remain locked until independent verification.`); return { ...q, ...sent, orderId: order.orderId, paymentStatus: verified.paymentStatus }; }
