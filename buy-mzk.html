@@ -69,6 +69,16 @@
         <div class="mzk-trust"><span>◈ Wallet approved</span><span>◆ On-chain receipt</span><span>◉ Permanent deed</span></div>
       </form>
       <p class="mzk-market-note"><b>OPEN MARKET</b> Need a custom allocation? Enter any amount above $40 to fund owner-priced marketplace purchases.</p>
+      <form class="mzk-swap-back-card" id="mzk-swap-back-form">
+        <div class="mzk-form-heading"><div><p class="kicker">Return MZK</p><h2>Swap back to crypto</h2></div><span>50%<br><small>transfer value</small></span></div>
+        <p class="mzk-swap-back-intro">A payout must be confirmed on-chain before your MZK is deducted.</p>
+        <label class="mzk-amount-label"><span>Amount to return <small>MZK</small></span><span class="mzk-currency-input"><input id="mzk-return-amount" type="number" min="1000" step="1" value="1000" inputmode="numeric" required></span></label>
+        <label class="mzk-swap-back-field"><span>Payout currency</span><select id="mzk-return-currency"><option>ETH</option><option>POL</option><option>BNB</option><option>SOL</option><option>ADA</option><option>BTC</option><option>DOGE</option></select></label>
+        <label class="mzk-swap-back-field"><span>Destination wallet</span><input id="mzk-return-address" autocomplete="off" placeholder="Your receiving wallet address" required></label>
+        <div class="mzk-conversion"><span>Estimated payout</span><output id="mzk-return-output">Loading live quote…</output><small>50% transfers back · 50% remains locked as liquidity</small></div>
+        <button class="btn mzk-buy-button" type="submit" id="mzk-return-button"><span>Request confirmed payout</span><b>→</b></button>
+        <p id="mzk-return-status" role="status">MZK remains in your wallet unless the provider returns a confirmed transaction hash.</p>
+      </form>
     </aside>
   </main>
   <script src="mzk-wallet.js"></script><script src="payment-config.js"></script><script src="wallet-payments.js"></script><script src="muzikaz-payment-checkout.js"></script><script src="mzk-swap.js"></script>

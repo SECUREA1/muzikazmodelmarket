@@ -7,6 +7,7 @@ import { UserJsonDatabase, cleanWallet } from './user-json-database.mjs';
 import { LoadoutCodeStore } from './loadout-code-store.mjs';
 import { PaymentOrderStore } from './payment-order-store.mjs';
 import { verifyPaymentTransaction } from './payment-verifier.mjs';
+import { cryptoPayoutService } from './crypto-payout-service.mjs';
 
 const root = process.cwd();
 const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
