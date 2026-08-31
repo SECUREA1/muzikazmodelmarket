@@ -104,12 +104,13 @@
                     <aside class="loadout-access-code" aria-labelledby="loadout-access-code-title">
                         <div class="loadout-access-code__copy">
                             <p class="kicker">One account. One code. Any device.</p>
-                            <strong id="loadout-access-code-title">Have an MZK Access Code?</strong>
-                            <small>Connect your Ethereum wallet and enter your private MZK Access Code. If it includes a Loadout Pass, your $30 price is waived automatically. First activation binds it to your account and wallet; afterward, this same code securely reopens your Backpack on any device.</small>
+                            <strong id="loadout-access-code-title">Use your MZK Access Code</strong>
+                            <small>Enter your private code once. New codes activate with your Ethereum wallet and automatically waive the $30 price when a Loadout Pass is included. Already activated? Open your Backpack, creator tools, marketplace profile and playable account on any device—no wallet reconnection required.</small>
                         </div>
                         <div class="loadout-access-code__actions">
-                            <label><span>MZK Access Code</span><input id="loadout-access-code" type="password" autocomplete="off" spellcheck="false" maxlength="24" placeholder="MZK-XXXX-XXXX-XXXX-XXXX" /></label>
+                            <label><span>MZK Access Code</span><input id="loadout-access-code" name="code" type="password" autocomplete="current-password" spellcheck="false" maxlength="24" placeholder="MZK-XXXX-XXXX-XXXX-XXXX" /></label>
                             <button type="button" id="loadout-code-redeem">Connect ETH &amp; Activate Access</button>
+                            <button type="button" class="ghost" id="account-access-open">Open My Account</button>
                         </div>
                     </aside>
                     <div class="magic-bottle-mint">
@@ -131,10 +132,6 @@
                     <small id="wallet-token-identity"></small>
                 </div>
                 <p class="status-message" id="bottle-login-status" role="status">Access is available through a paid Loadout, activated MZK Access Code, approved MEKNX entitlement, or another administrator-granted entitlement. Bottle minting is optional.</p>
-                <aside class="loadout-access-code" aria-labelledby="account-access-title">
-                    <div class="loadout-access-code__copy"><p class="kicker">MZK Access Code</p><strong id="account-access-title">Open your MUZIKAZ account</strong><small>Enter the private MZK Access Code connected to your account to reopen your Backpack, creator tools, marketplace profile and playable account without reconnecting your wallet.</small></div>
-                    <form class="loadout-access-code__actions" id="account-access-form"><label><span>MZK Access Code</span><input name="code" type="password" autocomplete="current-password" maxlength="24" placeholder="MZK-XXXX-XXXX-XXXX-XXXX" required /></label><button type="submit">Open My Account</button></form>
-                </aside>
                 <aside class="meknx-bypass" aria-labelledby="meknx-bypass-title">
                     <div>
                         <p class="kicker">Already hold the access contract?</p>

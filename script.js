@@ -2330,7 +2330,8 @@ renderOwnedCollection();
 initBottleLogin();
 
 function initMzkAccessAccount() {
-  const loginForm = document.querySelector('#account-access-form');
+  const accessCodeInput = document.querySelector('#loadout-access-code');
+  const openButton = document.querySelector('#account-access-open');
   const locked = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   const output = document.querySelector('#mzk-access-manage-output');
@@ -2341,10 +2342,17 @@ function initMzkAccessAccount() {
     if (status) status.textContent = `Account ${session.account.accountId} reopened. Backpack, wallets, MZK, land, assets, creator tools and claims loaded from one canonical account.`;
     scrollToSection('member-locked-content');
   };
-  loginForm?.addEventListener('submit', async (event) => {
-    event.preventDefault(); const button = loginForm.querySelector('button'); button.disabled = true;
-    try { const response = await fetch('/api/access/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(loginForm))) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Account could not be opened.'); loginForm.reset(); showAccount(result.data); }
-    catch (error) { if (status) status.textContent = error.message; } finally { button.disabled = false; }
+  openButton?.addEventListener('click', async () => {
+    openButton.disabled = true;
+    try {
+      const code = accessCodeInput?.value.trim();
+      if (!code) throw new Error('Enter your private MZK Access Code.');
+      const response = await fetch('/api/access/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code }) });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || 'Account could not be opened.');
+      accessCodeInput.value = '';
+      showAccount(result.data);
+    } catch (error) { if (status) status.textContent = error.message; } finally { openButton.disabled = false; }
   });
   async function manage(action) {
     const session = window.MuzikazAccountSession; if (!session?.csrfToken) throw new Error('Open your account again before managing its credential.');
