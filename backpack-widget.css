@@ -18,3 +18,13 @@
   .global-site-header .world-logo{width:min(112px,31vw);min-width:0}
   .global-site-header .mzk-backpack-dock.is-inline .mzk-wallet-button{display:none}
 }
+
+/* Bottom-right two-button utility pill. */
+.mzk-site-utility{right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));overflow:hidden;border:1px solid rgba(156,255,0,.55);border-radius:999px;background:rgba(3,9,5,.97);box-shadow:0 10px 34px rgba(0,0,0,.58),0 0 20px rgba(156,255,0,.12)}
+.mzk-site-utility button{display:flex;align-items:center;gap:7px;padding:10px 14px;color:#dce8df}
+.mzk-site-utility button:first-child{border-right:0;color:#dce8df}
+.mzk-site-utility button+button{border-left:1px solid rgba(156,255,0,.25);color:#9cff00}
+.mzk-site-utility svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.mzk-site-utility button:hover,.mzk-site-utility button:focus-visible{color:#071007;outline:none}
+.mzk-site-utility button:focus-visible{box-shadow:inset 0 0 0 2px #fff}
+@media(max-width:700px){.mzk-site-utility{right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom))}}
