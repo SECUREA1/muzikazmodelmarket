@@ -8,6 +8,8 @@ The browser creates an order before opening a wallet, submits the resulting tran
 
 The checkout uses MetaMask for Ethereum-compatible chains, Phantom for Solana, and Lace for Cardano when their browser providers are available. If a provider is not injected (including on mobile), the same payment button opens the chain payment URI in the corresponding wallet app. Bitcoin and Dogecoin use their native payment URI. After an external wallet opens, the customer returns to checkout and submits its transaction ID for verification.
 
+Before a Polygon transfer, checkout probes the active RPC. If a wallet has a stale custom Polygon endpoint that returns `Unauthorized`, checkout asks the wallet to restore Polygon Mainnet with the public `https://polygon.drpc.org` endpoint and retries once. If the wallet refuses to update an existing network, checkout displays the exact RPC URL the customer must enter in the wallet's network settings instead of exposing the raw provider error.
+
 EVM verification checks the transaction on the selected chain's dedicated RPC, exact destination, native value, success receipt, and confirmation threshold. Native-chain verifier adapters must return the exact destination, received amount, confirmations, and failure state. Required production configuration:
 
 - `MUZIKAZ_ETH_RPC_URL`, `MUZIKAZ_POL_RPC_URL`, `MUZIKAZ_BNB_RPC_URL`

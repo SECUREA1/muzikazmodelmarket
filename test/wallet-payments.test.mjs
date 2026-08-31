@@ -34,7 +34,26 @@ test('prefers the injected MetaMask provider for EVM payment', async () => {
   const result = await window.MuzikazWalletPayments.initiate({ currency: 'ETH', amount: 1, recipient: network.address, uri: 'ethereum:test' });
   assert.equal(result.walletName, 'MetaMask');
   assert.equal(result.transactionHash, '0xhash');
-  assert.deepEqual(calls.map(({ method }) => method), ['wallet_switchEthereumChain', 'eth_requestAccounts', 'eth_sendTransaction']);
+  assert.deepEqual(calls.map(({ method }) => method), ['wallet_switchEthereumChain', 'eth_getBlockByNumber', 'eth_requestAccounts', 'eth_sendTransaction']);
+});
+
+test('repairs an unauthorized Polygon RPC before requesting payment', async () => {
+  const calls = []; let blockAttempts = 0;
+  const metamask = { isMetaMask: true, async request(request) {
+    calls.push(request);
+    if (request.method === 'eth_getBlockByNumber' && blockAttempts++ === 0) throw new Error('RPC 0x89 Custom eth_getBlockByNumber: Unauthorized');
+    if (request.method === 'eth_requestAccounts') return ['0xabc'];
+    if (request.method === 'eth_sendTransaction') return '0xpolygonhash';
+    return '0x1';
+  } };
+  const window = loadPayments({ ethereum: metamask });
+  const network = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS.POL;
+  const result = await window.MuzikazWalletPayments.initiate({ currency: 'POL', amount: 1, recipient: network.address, uri: 'ethereum:test' }, 'metamask');
+  assert.equal(result.transactionHash, '0xpolygonhash');
+  const addRequest = calls.find(({ method }) => method === 'wallet_addEthereumChain');
+  assert.equal(addRequest.params[0].chainId, '0x89');
+  assert.deepEqual(Array.from(addRequest.params[0].rpcUrls), ['https://polygon.drpc.org']);
+  assert.equal(calls.filter(({ method }) => method === 'eth_getBlockByNumber').length, 2);
 });
 
 
