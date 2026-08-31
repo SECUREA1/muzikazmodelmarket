@@ -132,7 +132,8 @@
       let remoteItems = [];
       let remoteState = null;
       try {
-        const response = await fetch(API_PATH, { headers: { 'X-Wallet-Address': activeAddress, Accept: 'application/json' } });
+        const token = window.MZKWallet.accessToken?.();
+        const response = await fetch(API_PATH, { headers: { 'X-Wallet-Address': activeAddress, ...(token ? { Authorization: `Bearer ${token}` } : {}), Accept: 'application/json' } });
         const payload = await response.json();
         if (!response.ok || !payload.success) throw new Error(payload.message || 'Backpack sync failed.');
         remoteState = payload.data;
@@ -145,7 +146,7 @@
       const items = [...new Set([...remoteItems.map((item) => typeof item === 'string' ? item : item?.name), ...localItems(activeAddress), ...modelAssets.map((asset) => asset.name)].filter(Boolean))];
       if (remoteState && items.length !== remoteItems.length) {
         try {
-          await fetch(API_PATH, { method: 'PUT', headers: { 'X-Wallet-Address': activeAddress, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ items, tokens: { ...(remoteState.tokens || {}), MZK: window.MZKWallet.balance(activeAddress) }, memory: remoteState.memory || {} }) });
+          await fetch(API_PATH, { method: 'PUT', headers: { 'X-Wallet-Address': activeAddress, ...(token ? { Authorization: `Bearer ${token}` } : {}), 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ items, tokens: { ...(remoteState.tokens || {}), MZK: window.MZKWallet.balance(activeAddress) }, memory: remoteState.memory || {} }) });
         } catch (_) { /* Local inventory is still available when durable sync cannot be written. */ }
       }
       let network = 'Ethereum';

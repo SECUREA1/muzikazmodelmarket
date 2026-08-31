@@ -220,6 +220,12 @@ for (const requiredLoginGate of ['id="member-locked-content" data-locked="true" 
     throw new Error(`members.html is missing its Bottle-only login gate: ${requiredLoginGate}`);
   }
 }
+for (const accessCodeFeature of ['id="account-access-code"', 'id="account-access-login"', 'id="account-access-create"']) {
+  if (!membersHtml.includes(accessCodeFeature)) throw new Error(`members.html is missing wallet-free account access: ${accessCodeFeature}`);
+}
+for (const accessApiFeature of ['loginWithAccessCode', 'accessToken', 'muzikazAccessCodeSessionV1']) {
+  if (!mzkWallet.includes(accessApiFeature)) throw new Error(`mzk-wallet.js is missing access-code support: ${accessApiFeature}`);
+}
 if (!membersHtml.includes('name="muzikaz-bottle-contract" content="0x0F1254772810EA4D06E5c61E3E4b54d740367Aa8"')) {
   throw new Error('members.html must use the approved MUZIKAZ Bottle access contract.');
 }
