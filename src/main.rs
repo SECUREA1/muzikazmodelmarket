@@ -365,6 +365,7 @@ fn api(
         ("GET", "/api/admin/assets/pending") => admin_pending(s, st, headers),
         ("GET", "/api/admin/analytics") => admin_analytics(s, st, headers),
         ("GET", "/api/admin/storage") => admin_storage(s, st, headers),
+        ("GET", "/api/admin/data") => admin_data(s, st, headers),
         ("GET", "/api/models/mine") => list_models(s, st, headers, "mine"),
         ("GET", "/api/models/public") => list_models(s, st, headers, "public"),
         (_, "/api/avatars/published") if method == "GET" => {
@@ -2508,7 +2509,7 @@ fn require_backpack_land(
 fn admin_login(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
     let payload = String::from_utf8_lossy(body);
     // Credentials are checked only on the server; clients receive a random session token.
-    if val(&payload, "username") != "jodel" || val(&payload, "password") != "boots" {
+    if val(&payload, "username") != "giraff" || val(&payload, "password") != "boots" {
         return json(
             s,
             401,
@@ -3074,6 +3075,72 @@ fn admin_storage(
             st.max_bytes
         ),
         "Storage loaded",
+        false,
+    )
+}
+
+/// Returns one authenticated, read-only snapshot of every persisted collection used by the
+/// coded marketplace. Keeping this server-side prevents private users, drafts, and sales from
+/// leaking through the public APIs while giving the command center a complete operational view.
+fn admin_data(s: &mut TcpStream, st: &State, h: &HashMap<String, String>) -> std::io::Result<()> {
+    if !is_admin(h, st) {
+        return json(s, 403, false, "{}", "Admin authorization required", false);
+    }
+
+    let users = st.users.read().unwrap();
+    let mut user_records: Vec<_> = users
+        .iter()
+        .map(|(wallet, record)| {
+            if record.trim_start().starts_with('{') {
+                format!(
+                    "{{\"walletKey\":\"{}\",\"record\":{}}}",
+                    esc(wallet),
+                    record
+                )
+            } else {
+                format!("{{\"walletKey\":\"{}\",\"record\":null}}", esc(wallet))
+            }
+        })
+        .collect();
+    user_records.sort();
+
+    let assets = st.assets.read().unwrap();
+    let models = st.models.read().unwrap();
+    let orders = st.payment_orders.read().unwrap();
+    let assignments = st.assignments.read().unwrap();
+    let derivatives = st.derivatives.read().unwrap();
+    let environments = st.environments.read().unwrap();
+    let avatars = st.avatars.read().unwrap();
+    let profiles = st.avatar_profiles.read().unwrap();
+    let mut revenue: f64 = orders
+        .iter()
+        .filter(|order| matches!(order.payment_status.as_str(), "PAID" | "FULFILLED"))
+        .map(|order| order.base_price)
+        .sum();
+    if revenue.abs() < f64::EPSILON {
+        revenue = 0.0;
+    }
+
+    let body = format!(
+        "{{\"generatedAt\":\"{}\",\"summary\":{{\"users\":{},\"submissions\":{},\"models\":{},\"sales\":{},\"paidRevenueUsd\":{:.2},\"designAssignments\":{},\"environments\":{},\"avatars\":{}}},\"users\":[{}],\"submissions\":[{}],\"models\":[{}],\"sales\":[{}],\"customizations\":[{}],\"derivatives\":[{}],\"environments\":[{}],\"avatars\":[{}],\"avatarProfiles\":[{}]}}",
+        now(), users.len(), assets.len(), models.len(), orders.len(), revenue,
+        assignments.len(), environments.len(), avatars.len(),
+        user_records.join(","),
+        assets.iter().map(asset_json).collect::<Vec<_>>().join(","),
+        models.iter().map(model_json).collect::<Vec<_>>().join(","),
+        orders.iter().map(payment_order_json).collect::<Vec<_>>().join(","),
+        assignments.iter().map(assignment_json).collect::<Vec<_>>().join(","),
+        derivatives.iter().map(derivative_json).collect::<Vec<_>>().join(","),
+        environments.iter().map(environment_json).collect::<Vec<_>>().join(","),
+        avatars.iter().map(avatar_json).collect::<Vec<_>>().join(","),
+        profiles.iter().map(profile_json).collect::<Vec<_>>().join(",")
+    );
+    json(
+        s,
+        200,
+        true,
+        &body,
+        "Complete administrator data loaded",
         false,
     )
 }

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>MUZIKAZ · Admin Data Center</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="index.html"><span>ϟ</span> MUZIKAZ</a>
+    <div><small>Restricted workspace</small><strong>ADMIN DATA CENTER</strong></div>
+    <button id="sign-out" type="button" hidden>Sign out</button>
+  </header>
+
+  <main>
+    <section class="login-panel" id="login-panel" aria-labelledby="login-title">
+      <p class="eyebrow">Authorized personnel only</p>
+      <h1 id="login-title">Open the command center.</h1>
+      <p>All submissions, users, sales, model settings, designs, and customization records are protected behind server authentication.</p>
+      <form id="login-form">
+        <label>Username<input name="username" autocomplete="username" required autofocus></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Authenticate</button>
+      </form>
+      <p id="login-status" role="status">Enter administrator credentials.</p>
+    </section>
+
+    <section id="dashboard" hidden>
+      <div class="hero">
+        <div><p class="eyebrow">Live operational overview</p><h1>Everything in one place.</h1><p id="last-updated">Loading the latest server snapshot…</p></div>
+        <div class="hero-actions"><button id="refresh" type="button">Refresh data</button><button id="export" type="button">Export JSON</button></div>
+      </div>
+      <div class="metrics" id="metrics" aria-label="Marketplace totals"></div>
+      <div class="toolbar">
+        <label>Search every record<input id="search" type="search" placeholder="Wallet, title, status, model, order…"></label>
+        <label>Data view<select id="view"></select></label>
+      </div>
+      <section class="data-panel" aria-live="polite">
+        <div class="panel-heading"><div><p class="eyebrow" id="view-kicker">Records</p><h2 id="view-title">All data</h2></div><strong id="record-count">0 records</strong></div>
+        <div class="table-scroll"><table><thead id="table-head"></thead><tbody id="table-body"></tbody></table></div>
+        <p class="empty" id="empty" hidden>No matching records in this view.</p>
+      </section>
+      <section class="options-panel">
+        <div><p class="eyebrow">Coded model controls</p><h2>Design & publishing options</h2></div>
+        <div id="coded-options" class="option-grid"></div>
+      </section>
+    </section>
+  </main>
+  <script src="admin.js"></script>
+</body>
+</html>

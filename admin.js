@@ -1,0 +1,111 @@
+(() => {
+  const tokenKey = 'muzikazAdminToken';
+  const views = {
+    submissions: { title: 'Submissions & designs', columns: ['title','ownerDisplayName','fileType','category','intendedUse','status','visibility','updatedAt'] },
+    users: { title: 'Users & wallets', columns: ['walletKey','displayName','walletId','mzk','items','updatedAt'] },
+    sales: { title: 'Sales & payment orders', columns: ['orderId','userId','purchaseType','itemId','basePrice','paymentAsset','paymentStatus','transactionHash','createdAt'] },
+    models: { title: 'Published model records', columns: ['title','creatorName','category','modelType','placementType','status','scale','environment','updatedAt'] },
+    customizations: { title: 'Customizations & assignments', columns: ['id','assetId','modelId','displayType','materialSlot','opacity','approved','published','updatedAt'] },
+    derivatives: { title: 'Generated designs', columns: ['id','assetId','kind','status','url','createdAt'] },
+    environments: { title: 'Environment options', columns: ['name','visibility','collisionMode','scale','fileSize','modelUrl','updatedAt'] },
+    avatars: { title: 'Avatar submissions', columns: ['avatarName','username','ownerId','avatarType','houseId','roomId','visibility','updatedAt'] },
+    avatarProfiles: { title: 'Avatar selections', columns: ['userId','displayName','assetId','accessType','scale','selectedAt'] }
+  };
+  const codedOptions = {
+    'Submission status': ['draft','pending_review','approved','rejected','published','archived'],
+    'Visibility': ['private','public after approval','public'],
+    'Design use': ['3D model texture','Model thumbnail','Marketplace tile','Product preview','Homepage banner','Avatar image','Sticker design','Merch graphic','Environment background','Promotional graphic'],
+    'Display slots': ['floor graphic','thumbnail','poster texture','wall display','product mockup image','model information card','environment billboard','store tile','avatar badge','loading image','promotional overlay'],
+    'Model formats': ['GLB','GLTF','USDZ','Reality'],
+    'Viewer options': ['Default scale','Rotation','Position','Environment','Animation','Auto-rotate','Camera controls','AR','Shadow','Background']
+  };
+  const $ = (selector) => document.querySelector(selector);
+  let snapshot = null;
+  let openRow = null;
+
+  function token() { return sessionStorage.getItem(tokenKey) || ''; }
+  function present(value) {
+    if (value == null || value === '') return '—';
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+  }
+  function normalizeUser(item) {
+    const record = item.record || {};
+    const profile = record.memory?.profile || {};
+    return { ...item, displayName: profile.displayName || record.displayName || '—', walletId: record.walletId || item.walletKey, mzk: record.tokens?.MZK ?? 0, items: record.items?.length ?? 0, updatedAt: record.updatedAt };
+  }
+  function records() {
+    const key = $('#view').value;
+    const list = key === 'users' ? (snapshot?.users || []).map(normalizeUser) : (snapshot?.[key] || []);
+    const query = $('#search').value.trim().toLowerCase();
+    return query ? list.filter((item) => JSON.stringify(item).toLowerCase().includes(query)) : list;
+  }
+  function renderTable() {
+    const key = $('#view').value;
+    const config = views[key];
+    const list = records();
+    $('#view-title').textContent = config.title;
+    $('#view-kicker').textContent = key.replace(/([A-Z])/g, ' $1');
+    $('#record-count').textContent = `${list.length} record${list.length === 1 ? '' : 's'}`;
+    $('#table-head').innerHTML = `<tr>${config.columns.map((column) => `<th>${column.replace(/([A-Z])/g, ' $1')}</th>`).join('')}<th>Details</th></tr>`;
+    $('#table-body').replaceChildren(...list.map((item, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `${config.columns.map((column) => `<td title="${present(item[column]).replaceAll('&','&amp;').replaceAll('"','&quot;')}">${present(item[column]).replaceAll('&','&amp;').replaceAll('<','&lt;')}</td>`).join('')}<td><button type="button">Inspect</button></td>`;
+      row.querySelector('button').addEventListener('click', () => {
+        openRow?.remove();
+        const detail = document.createElement('tr'); detail.className = 'detail-row';
+        const cell = document.createElement('td'); cell.colSpan = config.columns.length + 1;
+        const pre = document.createElement('pre'); pre.textContent = JSON.stringify(item, null, 2);
+        cell.append(pre); detail.append(cell); row.after(detail); openRow = detail;
+      });
+      row.dataset.index = index;
+      return row;
+    }));
+    $('#empty').hidden = list.length > 0;
+  }
+  function renderSnapshot() {
+    $('#metrics').replaceChildren(...Object.entries(snapshot.summary || {}).map(([label, value]) => {
+      const card = document.createElement('article'); card.className = 'metric';
+      card.innerHTML = `<b>${label === 'paidRevenueUsd' ? `$${Number(value).toLocaleString(undefined,{minimumFractionDigits:2})}` : Number(value).toLocaleString()}</b><span>${label.replace(/([A-Z])/g, ' $1')}</span>`;
+      return card;
+    }));
+    $('#last-updated').textContent = `Server snapshot ${new Date(Number(snapshot.generatedAt) * 1000).toLocaleString()}`;
+    renderTable();
+  }
+  async function loadData() {
+    $('#last-updated').textContent = 'Loading the latest server snapshot…';
+    const response = await fetch('/api/admin/data', { headers: { 'x-admin-token': token(), Accept: 'application/json' }, cache: 'no-store' });
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.message || 'Administrator data could not be loaded.');
+    snapshot = result.data; renderSnapshot();
+  }
+  function showLogin(message = 'Enter administrator credentials.') {
+    sessionStorage.removeItem(tokenKey); $('#dashboard').hidden = true; $('#login-panel').hidden = false; $('#sign-out').hidden = true;
+    $('#login-status').textContent = message;
+  }
+  async function showDashboard() {
+    $('#login-panel').hidden = true; $('#dashboard').hidden = false; $('#sign-out').hidden = false;
+    try { await loadData(); } catch (error) { showLogin(error.message); }
+  }
+  $('#view').replaceChildren(...Object.entries(views).map(([value, config]) => new Option(config.title, value)));
+  $('#coded-options').replaceChildren(...Object.entries(codedOptions).map(([name, options]) => {
+    const card = document.createElement('article'); card.className = 'option-card';
+    const title = document.createElement('b'); title.textContent = name;
+    const copy = document.createElement('span'); copy.textContent = options.join(' · ');
+    card.append(title, copy); return card;
+  }));
+  $('#login-form').addEventListener('submit', async (event) => {
+    event.preventDefault(); $('#login-status').textContent = 'Authenticating…';
+    try {
+      const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(event.currentTarget))) });
+      const result = await response.json();
+      if (!response.ok || !result.success || !result.data?.token) throw new Error(result.message || 'Authentication failed.');
+      sessionStorage.setItem(tokenKey, result.data.token); event.currentTarget.reset(); await showDashboard();
+    } catch (error) { $('#login-status').textContent = error.message || 'Authentication failed.'; $('#login-status').className = 'error'; }
+  });
+  $('#view').addEventListener('change', renderTable); $('#search').addEventListener('input', renderTable);
+  $('#refresh').addEventListener('click', () => loadData().catch((error) => { $('#last-updated').textContent = error.message; $('#last-updated').className = 'error'; }));
+  $('#export').addEventListener('click', () => { const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' })); link.download = `muzikaz-admin-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(link.href); });
+  $('#sign-out').addEventListener('click', () => showLogin('Signed out. Enter administrator credentials.'));
+  token() ? showDashboard() : showLogin();
+})();
