@@ -131,6 +131,14 @@
                     <small id="wallet-token-identity"></small>
                 </div>
                 <p class="status-message" id="bottle-login-status" role="status">Wallet connection and on-chain Bottle ownership are required.</p>
+                <aside class="loadout-access-code" aria-labelledby="account-access-title">
+                    <div class="loadout-access-code__copy"><p class="kicker">Mobile &amp; remote access</p><strong id="account-access-title">Enter without your wallet</strong><small>Use the private access code created for your wallet to reopen the same Backpack and playable account. Keep it secret.</small></div>
+                    <div class="loadout-access-code__actions"><label><span>Account access code</span><input id="account-access-code" autocomplete="one-time-code" spellcheck="false" maxlength="23" placeholder="MZK-XXXX-XXXX-XXXX-XXXX" /></label><button type="button" id="account-access-login">Open my account</button></div>
+                </aside>
+                <aside class="loadout-access-code" id="account-access-issue" hidden>
+                    <div class="loadout-access-code__copy"><p class="kicker">Your wallet-free login</p><strong>Save your unique access code</strong><small id="account-access-issued">This code is shown only when first created. Store it in a password manager; it opens your full account.</small></div>
+                    <div class="loadout-access-code__actions"><button type="button" id="account-access-create">Create my access code</button><output id="account-access-output"></output></div>
+                </aside>
                 <aside class="meknx-bypass" aria-labelledby="meknx-bypass-title">
                     <div>
                         <p class="kicker">Already hold the access contract?</p>

@@ -4,6 +4,7 @@
   const ACTIVE_KEY = 'muzikazMzkActiveWalletV1';
   const CONNECTED_KEY = 'muzikazConnectedEthereumWalletV1';
   const CONNECTED_CHAIN_KEY = 'muzikazConnectedEthereumChainV1';
+  const ACCESS_SESSION_KEY = 'muzikazAccessCodeSessionV1';
   const MIGRATION_KEY = 'muzikazMzkWalletMigrationV1';
   const STARTING_MZK = 0;
   const MZK_PER_USD = 100;
@@ -15,7 +16,16 @@
   const normalize = (value) => String(value || '').trim().toLowerCase();
   const uid = (prefix = 'mzk') => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const validAddress = (value) => /^0x[a-f0-9]{40}$/.test(normalize(value));
-  const connectedAddress = () => { const address = normalize(localStorage.getItem(CONNECTED_KEY)); return validAddress(address) ? address : ''; };
+  function accessSession() { try { const value = JSON.parse(localStorage.getItem(ACCESS_SESSION_KEY) || 'null'); return value?.token && Date.parse(value.expiresAt) > Date.now() ? value : null; } catch (_) { return null; } }
+  const connectedAddress = () => { const address = normalize(localStorage.getItem(CONNECTED_KEY) || accessSession()?.walletId); return validAddress(address) ? address : ''; };
+  const accessToken = () => accessSession()?.token || '';
+  async function loginWithAccessCode(code) {
+    const response = await fetch('/api/access-codes/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code }) });
+    const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Access-code login failed.');
+    localStorage.setItem(ACCESS_SESSION_KEY, JSON.stringify(result.data)); localStorage.setItem('voice3.wallet', result.data.walletId); ensureWallet(result.data.walletId);
+    window.dispatchEvent(new CustomEvent('mzk:wallet-connection-changed', { detail: { address: result.data.walletId, chainId: '', accessCode: true } })); return result.data;
+  }
+  function logoutAccessCode() { localStorage.removeItem(ACCESS_SESSION_KEY); updateBrowserConnection([]); }
   const parse = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch (_) { return fallback; } };
   const profiles = () => { const value = parse(PROFILE_KEY, {}); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; };
   const activeProfile = () => profiles()[normalize(localStorage.getItem(ACTIVE_KEY))] || null;
@@ -81,5 +91,5 @@
     provider.on?.('disconnect', () => updateBrowserConnection([]));
   }
   document.addEventListener('click', (event) => { const start = event.target.closest?.('[data-house-start]'); if (!start || start.dataset.mzkEntryPaid === 'true') return; ensureWallet(); const owned = starterLoadout(); if (!owned && balance() < GAME_ENTRY_MZK) { event.preventDefault(); event.stopImmediatePropagation(); const returnTo = `${location.pathname.split('/').pop() || 'index.html'}${location.hash}`; location.href = `buy-mzk.html?return=${encodeURIComponent(returnTo)}#swap`; return; } const claimed = claimStarterLoadout(); if (!claimed.ok) { event.preventDefault(); event.stopImmediatePropagation(); return; } start.dataset.mzkEntryPaid = 'true'; start.dataset.mzkLoadoutId = claimed.loadout.id; }, true);
-  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
+  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), accessToken, loginWithAccessCode, logoutAccessCode, connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
 })();
