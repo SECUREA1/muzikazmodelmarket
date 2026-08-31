@@ -36,3 +36,23 @@ test('prefers the injected MetaMask provider for EVM payment', async () => {
   assert.equal(result.transactionHash, '0xhash');
   assert.deepEqual(calls.map(({ method }) => method), ['wallet_switchEthereumChain', 'eth_requestAccounts', 'eth_sendTransaction']);
 });
+
+
+test('only offers wallets compatible with each payment chain', () => {
+  const window = loadPayments();
+  const solana = Array.from(window.MuzikazWalletPayments.compatibleWallets('SOL'), ({ id }) => id);
+  const cardano = Array.from(window.MuzikazWalletPayments.compatibleWallets('ADA'), ({ id }) => id);
+  assert.deepEqual(solana, ['automatic', 'phantom', 'ledger']);
+  assert.deepEqual(cardano, ['automatic', 'lace', 'ledger', 'trezor']);
+  assert.equal(window.MuzikazWalletPayments.WALLETS.ledger.hardware, true);
+  assert.equal(window.MuzikazWalletPayments.WALLETS.trezor.hardware, true);
+});
+
+test('rejects a wallet selected for an incompatible network', async () => {
+  const window = loadPayments();
+  const network = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS.SOL;
+  await assert.rejects(
+    window.MuzikazWalletPayments.initiate({ currency: 'SOL', amount: 1, recipient: network.address, uri: 'solana:test' }, 'trezor'),
+    /does not support Solana Mainnet/
+  );
+});
