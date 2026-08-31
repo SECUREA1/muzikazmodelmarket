@@ -62,7 +62,9 @@
       sessionStorage.setItem(PENDING_KEY, JSON.stringify(pending)); showPending(pending);
       const sent = await window.MuzikazWalletPayments.initiate(quote, selectedWallet());
       if (sent.transactionHash) { transactionInput.value = sent.transactionHash; verifyButton.click(); }
-      else status.textContent = `${sent.walletName} opened in a new window. Approve the payment, then paste its transaction ID to verify and receive MZK.`;
+      else status.textContent = sent.requiresManualEntry
+        ? `${sent.walletName} opened. In Send, enter ${quote.amount} ${quote.currency} to ${quote.recipient}, approve it on your device, then paste its transaction ID below.`
+        : `${sent.walletName} opened with the ${quote.amount} ${quote.currency} payment prepared. Approve it on your device, then paste its transaction ID below.`;
     } catch (error) { status.textContent = error.message || 'The swap was not completed. No MZK was added.'; }
     finally { buy.disabled = false; refresh(); }
   });

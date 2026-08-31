@@ -7,8 +7,8 @@ const configSource = await readFile('payment-config.js', 'utf8');
 const paymentsSource = await readFile('wallet-payments.js', 'utf8');
 
 function loadPayments(extraWindow = {}) {
-  const window = { opened: [], open(uri, target, features) { this.opened.push({ uri, target, features }); return {}; }, ...extraWindow };
-  const context = vm.createContext({ window, globalThis: window, fetch: async () => { throw new Error('Unexpected fetch'); }, URL, Date, BigInt });
+  const window = { opened: [], location: { assigned: [], assign(uri) { this.assigned.push(uri); } }, open(uri, target, features) { this.opened.push({ uri, target, features }); return {}; }, ...extraWindow };
+  const context = vm.createContext({ window, globalThis: window, fetch: async () => { throw new Error('Unexpected fetch'); }, URL, URLSearchParams, Date, BigInt });
   vm.runInContext(configSource, context);
   vm.runInContext(paymentsSource, context);
   return window;
@@ -32,6 +32,28 @@ test('hands ADA to Lace without loading the Mesh SDK or BigNumber', async () => 
   const result = await window.MuzikazWalletPayments.initiate({ currency: 'ADA', amount: 12.5, recipient: network.address, uri: window.MuzikazPaymentConfig.paymentUri('ADA', 12.5) }, 'lace');
   assert.equal(result.opened, true);
   assert.match(result.uri, /^web\+cardano:/);
+});
+
+test('opens Ledger Live with a prepared send instead of a generic wallet handler', async () => {
+  const window = loadPayments();
+  const network = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS.BTC;
+  const quote = { currency: 'BTC', amount: 0.001, recipient: network.address, uri: window.MuzikazPaymentConfig.paymentUri('BTC', 0.001) };
+  const result = await window.MuzikazWalletPayments.initiate(quote, 'ledger');
+  assert.equal(result.walletName, 'Ledger');
+  assert.match(result.uri, /^ledgerlive:\/\/send\?currency=bitcoin&recipient=/);
+  assert.equal(window.location.assigned[0], result.uri);
+  assert.equal(window.opened.length, 0);
+});
+
+test('opens Trezor Suite and returns the exact payment request for manual Send entry', async () => {
+  const window = loadPayments();
+  const network = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS.DOGE;
+  const quote = { currency: 'DOGE', amount: 25, recipient: network.address, uri: window.MuzikazPaymentConfig.paymentUri('DOGE', 25) };
+  const result = await window.MuzikazWalletPayments.initiate(quote, 'trezor');
+  assert.equal(result.walletName, 'Trezor');
+  assert.equal(result.requiresManualEntry, true);
+  assert.equal(result.paymentUri, quote.uri);
+  assert.deepEqual(window.opened[0], { uri: 'https://suite.trezor.io/web/', target: '_blank', features: 'noopener,noreferrer' });
 });
 
 test('prefers the injected MetaMask provider for EVM payment', async () => {

@@ -2990,14 +2990,14 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 
 /* SVG-first menu and payment choices */
 .menu-toggle .menu-icon{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-.payment-selectors,.mzk-payment-selectors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.payment-choice-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0;margin:0;padding:10px;border:1px solid #30392c}
+.payment-selectors,.mzk-payment-selectors{display:grid;grid-template-columns:1fr;gap:12px;min-width:0}
+.payment-choice-group{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(112px,100%),1fr));gap:8px;min-width:0;margin:0;padding:10px;border:1px solid #30392c}
 .payment-choice-group legend{padding:0 6px;color:#aeb7aa;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
 .payment-choice{min-width:0;cursor:pointer}
 .payment-choice input{position:absolute;width:1px!important;height:1px;padding:0!important;opacity:0}
-.payment-choice>span{display:grid;grid-template-columns:30px 1fr;grid-template-rows:auto auto;gap:1px 8px;align-items:center;min-height:54px;padding:8px;border:1px solid #3b4736;border-radius:8px;background:#080b07;color:#fff}
-.payment-choice svg{grid-row:1/3;width:28px;height:28px;fill:none;stroke:#9cff00;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.payment-choice b{align-self:end;font-size:11px}.payment-choice small{overflow:hidden;color:#8f9988;font-size:8px;text-overflow:ellipsis;white-space:nowrap}
+.payment-choice>span{display:grid;grid-template-columns:clamp(24px,3vw,30px) minmax(0,1fr);grid-template-rows:auto auto;gap:1px 8px;align-items:center;width:100%;min-width:0;min-height:58px;padding:8px;border:1px solid #3b4736;border-radius:8px;background:#080b07;color:#fff;overflow:hidden}
+.payment-choice svg{grid-row:1/3;display:block;width:100%;max-width:28px;height:auto;max-height:28px;aspect-ratio:1;fill:none;stroke:#9cff00;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.payment-choice b{align-self:end;min-width:0;font-size:11px;overflow-wrap:anywhere}.payment-choice small{min-width:0;overflow:hidden;color:#8f9988;font-size:8px;text-overflow:ellipsis;white-space:nowrap}
 .payment-choice input:checked+span{border-color:#9cff00;background:rgba(156,255,0,.12);box-shadow:inset 0 0 0 1px rgba(156,255,0,.25)}
 .payment-choice input:focus-visible+span{outline:2px solid #fff;outline-offset:2px}
 @media(max-width:600px){.payment-selectors,.mzk-payment-selectors{grid-template-columns:1fr}}
