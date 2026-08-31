@@ -17,11 +17,9 @@ const BACKPACK_STARTING_TOKENS = 500;
 const BOTTLE_ACCESS_KEY = 'muzikazBottleAccess';
 const BOTTLE_BALANCE_OF_SELECTOR = '0x70a08231';
 const BOTTLE_MINT_SELECTOR = '0x1249c58b';
-const BOTTLE_MINT_PAYMENT_ADDRESS = '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238';
 const BACKPACK_LOADOUT_USD = 30;
 const BOTTLE_MINT_REWARDS_KEY = 'muzikazBottleMintRewards';
 const BOTTLE_MINT_BACKPACK_ASSETS = ['Unrevealed MUZIKAZ Land', 'Violet Wish Bottle'];
-const MARKET_PAYMENT_ADDRESS = '0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238';
 const MARKET_ITEM_PRICE_WEI = 100000000000000n; // 0.0001 ETH for every cart unit.
 
 function initHeaderWalletConnect() {
@@ -754,7 +752,7 @@ function renderOwnedCollection(preferredOwner = currentMemberEmail) {
     const listing = backpackListing(owner, asset);
     const controls = owner === currentMemberEmail
       ? `<form class="backpack-price-form" data-backpack-price="${assetIndex}"><label>Token value <span><input name="tokenValue" type="number" min="1" max="1000000" step="1" value="${listing.tokenValue}" aria-label="Token value for ${escapeMarkup(detail.title)}"><b>MZK</b></span></label><button type="submit">${listing.listed ? 'Update price' : 'List for trade'}</button>${listing.listed ? `<button type="button" class="ghost" data-backpack-unlist="${assetIndex}">Unlist</button>` : ''}</form>`
-      : listing.listed ? `<div class="backpack-buy"><strong>${listing.tokenValue.toLocaleString()} MZK / $${listing.tokenValue.toLocaleString()} crypto value</strong><button type="button" data-backpack-buy="${assetIndex}">Trade with MZK</button><button type="button" class="ghost" data-backpack-crypto="SOL" data-backpack-buy="${assetIndex}">Phantom · SOL</button><button type="button" class="ghost" data-backpack-crypto="ADA" data-backpack-buy="${assetIndex}">Lace · ADA</button></div>` : '<p class="backpack-not-listed">Not currently listed for trade</p>';
+      : listing.listed ? `<div class="backpack-buy"><strong>${listing.tokenValue.toLocaleString()} MZK / $${listing.tokenValue.toLocaleString()} crypto value</strong><button type="button" data-backpack-buy="${assetIndex}">Trade with MZK</button>${['ETH', 'POL', 'BNB', 'SOL', 'ADA', 'BTC', 'DOGE'].map((symbol) => `<button type="button" class="ghost" data-backpack-crypto="${symbol}" data-backpack-buy="${assetIndex}">${symbol}</button>`).join('')}</div>` : '<p class="backpack-not-listed">Not currently listed for trade</p>';
     return `<article><img src="${escapeMarkup(detail.image)}" alt="${escapeMarkup(detail.title)}"><span class="pill">🎒 ${escapeMarkup(detail.type)}</span><h3>${escapeMarkup(detail.title)}</h3><p>${escapeMarkup(detail.copy)}</p>${detail.href ? `<a class="card-link" href="${escapeMarkup(detail.href)}">View map claim</a>` : ''}${controls}</article>`;
   }).join('') || '<article><h3>Backpack empty</h3><p>Add marketplace drops, checkout character products, claim collectibles, or upload graphics to build this account pack.</p></article>';
   if (transactionList) {
@@ -2247,7 +2245,7 @@ function initBottleLogin() {
       if (!window.MuzikazWalletPayments?.quote) throw new Error('Crypto wallet payments are not available. Reload the page and try again.');
       const quote = await window.MuzikazWalletPayments.quote(BACKPACK_LOADOUT_USD, currency);
       setPurchaseStep(2);
-      const walletName = currency === 'SOL' ? 'Phantom' : currency === 'ADA' ? 'Lace' : 'your Ethereum wallet';
+      const walletName = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS[currency]?.name || `${currency} wallet`;
       if (status) status.textContent = `Confirm ${quote.amount} ${currency} (equivalent to $${BACKPACK_LOADOUT_USD} USD) in ${walletName}. The Loadout includes one in-game land and one Violet Wish Bottle; no mint is required to continue.`;
       const payment = await window.MuzikazWalletPayments.pay(BACKPACK_LOADOUT_USD, currency);
       const paymentHash = payment.transactionHash;
@@ -2381,7 +2379,8 @@ function formatCheckoutMoney(amount) {
 }
 
 function marketPaymentConfig() {
-  const address = String(document.querySelector('meta[name="muzikaz-market-payment-address"]')?.content || MARKET_PAYMENT_ADDRESS).trim();
+  const ethereum = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS.ETH;
+  const address = ethereum.address;
   const chainId = String(document.querySelector('meta[name="muzikaz-market-chain-id"]')?.content || '0x1').trim().toLowerCase();
   const configuredWei = String(document.querySelector('meta[name="muzikaz-market-item-price-wei"]')?.content || `0x${MARKET_ITEM_PRICE_WEI.toString(16)}`).trim();
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) throw new Error('The marketplace payment wallet is not configured correctly.');
@@ -2449,7 +2448,7 @@ function initMzkCheckout() {
     const owner = checkoutOwner('MZK');
     if (!owner || owner.startsWith('guest-')) { status.innerHTML = 'Sign in or connect your member wallet before paying with MZK so the claim reaches the correct Backpack. <a href="members.html#bottle-login">Connect account</a>.'; return; }
     const result = window.MZKWallet.spend(amount, `MUZIKAZ cart purchase (${items.length} lines)`, `mzk-order:${Date.now()}`);
-    if (!result.ok) { status.innerHTML = `You need ${amount.toLocaleString()} MZK. <a href="buy-mzk.html">Buy MZK with ETH, SOL, or ADA</a>.`; return; }
+    if (!result.ok) { status.innerHTML = `You need ${amount.toLocaleString()} MZK. <a href="buy-mzk.html">Buy MZK with ETH, POL, BNB, SOL, ADA, BTC, or DOGE</a>.`; return; }
     const orderId = `MZ-MZK-${Date.now().toString().slice(-6)}`;
     claimCheckoutItems(items, owner, `MZK order ${orderId}`);
     window.localStorage.setItem('muzikazLastReceipt', JSON.stringify({ orderId, total: `${amount} MZK`, items, paidAt: new Date().toISOString(), method: 'MZK' }));
@@ -2571,6 +2570,8 @@ function renderCheckoutPage() {
   document.querySelector('#summary-total').textContent = formatCheckoutMoney(total);
   const mzkTotal = document.querySelector('#summary-mzk-total');
   if (mzkTotal) mzkTotal.textContent = `${Math.round(total * 100).toLocaleString()} MZK`;
+  const unifiedCheckout = document.querySelector('muzikaz-payment-checkout');
+  if (unifiedCheckout && total > 0 && unifiedCheckout.getAttribute('base-price') !== String(total)) { unifiedCheckout.setAttribute('base-price', String(total)); unifiedCheckout.refresh?.(); }
   const ethereumTotal = document.querySelector('#ethereum-wallet-total');
   if (ethereumTotal) ethereumTotal.textContent = formatEth(MARKET_ITEM_PRICE_WEI * BigInt(items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)));
   const ethereumPay = document.querySelector('#ethereum-wallet-pay');
@@ -2590,8 +2591,6 @@ renderCheckoutIdentity();
 window.addEventListener('mzk:identity-changed', renderCheckoutIdentity);
 window.addEventListener('mzk:wallet-connection-changed', renderCheckoutIdentity);
 window.addEventListener('storage', renderCheckoutIdentity);
-initEthereumCheckout();
-initMultiChainCheckout();
 initMzkCheckout();
 
 function initPublicModelExplorer() {

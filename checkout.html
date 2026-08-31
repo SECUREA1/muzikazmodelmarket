@@ -6,7 +6,6 @@
     <meta name="description" content="Secure checkout for MUZIKAZ model packs, merch, collectible drops, wallet payments, and owned asset summaries." />
     <meta name="keywords" content="MUZIKAZ, muzikaz.com, 3D model market, character models, mascot merch, creator dashboard, wallet rewards, brand kit, neon collectibles" />
     <meta name="author" content="MUZIKAZ" />
-    <meta name="muzikaz-market-payment-address" content="0xb2FC582e01E705e52e8B2D012F2F8b6eCC9C7238" />
     <meta name="muzikaz-market-chain-id" content="0x1" />
     <meta name="muzikaz-market-item-price-wei" content="0x5af3107a4000" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
@@ -35,7 +34,7 @@
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Secure checkout for MUZIKAZ model packs, merch, collectible drops, wallet payments, and owned asset summaries.","sameAs":["https://muzikaz.com/"]}</script>
     <div class="topbar">
         <span>Every item purchasable with MZK</span>
-        <span>100 MZK = $1 · buy from ETH, SOL, or ADA</span>
+        <span>100 MZK = $1 · ETH · POL · BNB · SOL · ADA · BTC · DOGE</span>
     </div>
     <header class="site-header global-site-header">
         <a class="logo world-logo" href="index.html#home" aria-label="MUZIKAZ WORLD home">
@@ -61,7 +60,7 @@
             <div>
                 <p class="kicker">Final step</p>
                 <h1 id="checkout-title">Process your MUZIKAZ payment.</h1>
-                <p>Pay the same USD cart value with Ethereum, SOL through Phantom, or ADA through Lace. Review the live quote and destination in your wallet before approving.</p>
+                <p>Pay the same canonical USD cart value with ETH, POL, BNB, SOL, ADA, BTC, or DOGE. Payment network and any separately configured asset/mint network remain independent.</p>
             </div>
             <div class="checkout-trust-grid" aria-label="Checkout protections">
                 <article><strong>SSL ready</strong><span>Hosted payment gateway handoff fields are grouped for real processors.</span></article>
@@ -84,10 +83,11 @@
                     <div><span>Tax estimate</span><strong id="summary-tax">$0.00</strong></div>
                     <div class="grand-total"><span>Total</span><strong id="summary-total">$0.00</strong></div>
                 </div>
-                <p class="checkout-note">Ethereum price: <strong>0.0001 ETH per cart item</strong>. Your wallet shows the final network fee separately.</p>
-                <p class="checkout-note">MZK price: <strong id="summary-mzk-total">0 MZK</strong>. Need tokens? <a href="buy-mzk.html">Swap ETH, SOL, or ADA for MZK</a>.</p>
+                <p class="checkout-note">Crypto required amounts are calculated from one canonical USD order total using live market rates.</p>
+                <p class="checkout-note">MZK price: <strong id="summary-mzk-total">0 MZK</strong>. Need tokens? <a href="buy-mzk.html">Fund MZK with any supported payment asset</a>.</p>
             </aside>
 
+            <muzikaz-payment-checkout item-name="Marketplace cart" product-id="marketplace-cart" product-type="MARKETPLACE" base-price="1"></muzikaz-payment-checkout>
             <form class="payment-form" id="payment-form">
                 <section class="checkout-owner" aria-labelledby="checkout-owner-title">
                     <div>
@@ -122,23 +122,7 @@
                             <p id="checkout-mzk-balance">Wallet loading…</p>
                             <button type="button" id="checkout-mzk-pay">Pay with MZK</button>
                         </section>
-                        <section class="payment-rail" id="ethereum-checkout" aria-labelledby="ethereum-checkout-title">
-                            <div class="payment-rail-heading"><strong id="ethereum-checkout-title">Ethereum</strong><span id="ethereum-price-copy">0.0001 ETH per item</span></div>
-                            <div class="payment-rail-details"><p id="ethereum-wallet-address">No Ethereum wallet connected.</p><small>Recipient <code id="ethereum-payment-recipient">0xb2FC…7238</code> · Mainnet fees shown in wallet</small></div>
-                            <div class="ethereum-actions"><button type="button" class="ghost" id="ethereum-wallet-connect">Connect wallet</button><button type="button" id="ethereum-wallet-pay" disabled>Pay <span id="ethereum-wallet-total">0 ETH</span></button></div>
-                        </section>
-                        <section class="payment-rail" id="multi-chain-checkout" aria-labelledby="multi-chain-title">
-                            <div class="payment-rail-heading"><strong id="multi-chain-title">SOL</strong><span>Phantom</span></div>
-                            <div class="payment-rail-details"><p id="sol-quote">Load a live quote to continue.</p><small>Recipient <code>CB7H…QauH</code></small></div>
-                            <button type="button" class="ghost" data-crypto-pay="SOL">Pay with Phantom</button>
-                        </section>
-                        <section class="payment-rail">
-                            <div class="payment-rail-heading"><strong>ADA</strong><span>Lace</span></div>
-                            <div class="payment-rail-details"><p id="ada-quote">Load a live quote to continue.</p><small>Recipient <code>addr1q…l59xj</code></small></div>
-                            <button type="button" class="ghost" data-crypto-pay="ADA">Pay with Lace</button>
-                        </section>
-                    </div>
-                    <button type="button" class="link-button quote-refresh" id="refresh-crypto-quotes">Refresh live ADA/SOL quotes</button>
+
                 </fieldset>
 
                 <label class="terms-check"><input id="checkout-terms" type="checkbox" required /> I confirm the displayed Backpack and wallet are mine and agree to receive MUZIKAZ order updates.</label>
@@ -162,7 +146,7 @@
         <div><h4>Shop</h4><a href="index.html#models">Models</a><a href="index.html#merch">Merch</a></div>
         <div><h4>Support</h4><a href="mailto:crew@muzikaz.example">Contact</a><a href="members.html">Bottle Login</a></div>
     </footer>
-    <script src="mzk-wallet.js"></script><script src="wallet-payments.js"></script>
+    <script src="mzk-wallet.js"></script><script src="payment-config.js"></script><script src="wallet-payments.js"></script><script src="muzikaz-payment-checkout.js"></script>
     <script src="script.js"></script>
   <script src="battle-theme.js"></script>
     <script src="backpack-widget.js"></script>
