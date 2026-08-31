@@ -6,25 +6,6 @@
 
 The browser creates an order before opening a wallet, submits the resulting transaction ID, and waits for the server-side verifier. Only `PAID` orders may be fulfilled; transaction IDs are globally unique and fulfillment is idempotent. Opening a wallet or broadcasting a transaction never grants MZK or an asset.
 
-## Desktop-to-mobile handoff
-
-The main wallet button always offers MetaMask, Phantom, and Lace on either this computer or a phone. A phone choice creates a server-persisted, single-purpose handoff and shows a scannable QR plus a normal mobile link. The QR contains only a 256-bit opaque token. The server stores its SHA-256 digest, binds it to the account, desktop session, wallet, exact chain, scope, and any payment-order reference, and gives the desktop a separate secret for status polling. Connection requests expire after ten minutes; authentication, linking, and payment requests expire after five. Terminal requests cannot transition or replay.
-
-The mobile approval route uses only an injected wallet's documented browser interface: EIP-1193 for MetaMask, Phantom's injected Solana provider, and Lace's CIP-30 provider. When that provider is unavailable, it tells the customer to open the same HTTPS page through the wallet's supported DApp browser. It deliberately does not invent a Lace URI. A scan only opens and displays an intent; it cannot approve, sign, submit, link, or credit anything. Mobile clients are also prohibited from setting `approved` or `confirming`: those are reserved for server verification.
-
-This repository has no bundled wallet SDK. The existing static application therefore uses the injected official interfaces and its secure HTTPS bridge rather than pretending that a direct connector exists. MetaMask SDK/Connect can replace the bridge for its native remote session once it is added through the project's build pipeline; transaction intent and independent server verification remain mandatory either way.
-
-### Manual cross-device matrix
-
-- Windows Chrome and macOS Safari/Chrome → Android/iPhone: scan each MetaMask, Phantom, and Lace request; compare the four-character pairing code; reject once; allow one request to expire; refresh both pages.
-- Android Chrome and iPhone Safari: confirm the application remains usable directly and the wallet page presents an open-in-supported-DApp-browser instruction instead of a same-device QR.
-- MetaMask: exercise Ethereum and Polygon separately and confirm a chain mismatch blocks continuation.
-- Phantom: exercise injected mobile Solana connect, rejection, refresh, and expiry. Transaction completion is accepted only after Solana verification.
-- Lace: exercise the actual current Lace CIP-30/DApp-browser path, rejection, refresh, and expiry. Do not mark a mobile signing case passed if the tested Lace release does not expose it.
-- For every payment, refresh after submission and confirm the existing order is resumed rather than recreated; confirm duplicate transaction identifiers are not credited.
-
-Current-SDK documentation must be rechecked before changing connectors. During this implementation the package registry and documentation search endpoints were unavailable in the build environment, so no SDK was guessed, added, or upgraded. The integration intentionally stays within the already implemented standard providers.
-
 The checkout uses MetaMask for Ethereum-compatible chains, Phantom for Solana, and Lace for Cardano when their browser providers are available. If a provider is not injected (including on mobile), the same payment button opens the chain payment URI in the corresponding wallet app. Bitcoin and Dogecoin use their native payment URI. After an external wallet opens, the customer returns to checkout and submits its transaction ID for verification.
 
 Before a Polygon transfer, checkout probes the active RPC. If a wallet has a stale custom Polygon endpoint that returns `Unauthorized`, checkout asks the wallet to restore Polygon Mainnet with the public `https://polygon.drpc.org` endpoint and retries once. If the wallet refuses to update an existing network, checkout displays the exact RPC URL the customer must enter in the wallet's network settings instead of exposing the raw provider error.
