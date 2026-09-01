@@ -8,6 +8,8 @@ const requiredFiles = [
   'dist/battle-theme.js',
   'dist/backpack-widget.js',
   'dist/backpack-widget.css',
+  'dist/admin.html',
+  'dist/admin.js',
   'dist/public/js/rad-tox-launcher.js',
   'dist/reference.png',
 ];
@@ -29,6 +31,13 @@ for (const utilityFeature of ['Support', 'data-open-support-chat', 'Admin login'
 }
 for (const adminHandoffFeature of ["sessionStorage.getItem('muzikazAdminToken')", "window.location.href = 'admin.html'"]) {
   if (!backpackWidget.includes(adminHandoffFeature)) throw new Error(`The global admin control is missing its authenticated command-center handoff: ${adminHandoffFeature}.`);
+}
+if (!backpackWidget.includes("get('admin') === 'login'")) throw new Error('The global admin login must reopen when the command center redirects an unauthenticated visitor.');
+const adminHtml = await readFile('dist/admin.html', 'utf8');
+const adminScript = await readFile('dist/admin.js', 'utf8');
+if (adminHtml.includes('Authorized personnel only') || adminHtml.includes('id="login-form"')) throw new Error('admin.html must not show a second administrator login.');
+for (const handoffFeature of ["window.location.replace('index.html?admin=login')", 'token() ? showDashboard() : returnToLogin()']) {
+  if (!adminScript.includes(handoffFeature)) throw new Error(`The command center is missing its single-login handoff: ${handoffFeature}.`);
 }
 const supportScript = await readFile('dist/script.js', 'utf8');
 for (const supportFeature of ['https://muzikazmodelmarket.onrender.com', "new URL('/ws/support', supportServiceUrl)", "root.id = 'muzikaz-support-chat'"]) {

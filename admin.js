@@ -98,13 +98,13 @@
     if (!codes.length) table.innerHTML = '<tr><td colspan="8">No one-time Loadout passes have been generated.</td></tr>';
   }
   async function loadAccessCodes() { renderAccessCodes(await accessRequest()); }
-  function showLogin(message = 'Enter administrator credentials.') {
-    sessionStorage.removeItem(tokenKey); $('#dashboard').hidden = true; $('#login-panel').hidden = false; $('#sign-out').hidden = true;
-    $('#login-status').textContent = message;
+  function returnToLogin() {
+    sessionStorage.removeItem(tokenKey);
+    window.location.replace('index.html?admin=login');
   }
   async function showDashboard() {
-    $('#login-panel').hidden = true; $('#dashboard').hidden = false; $('#sign-out').hidden = false;
-    try { await Promise.all([loadData(), loadAccessCodes()]); } catch (error) { showLogin(error.message); }
+    $('#dashboard').hidden = false; $('#sign-out').hidden = false;
+    try { await Promise.all([loadData(), loadAccessCodes()]); } catch { returnToLogin(); }
   }
   $('#view').replaceChildren(...Object.entries(views).map(([value, config]) => new Option(config.title, value)));
   $('#coded-options').replaceChildren(...Object.entries(codedOptions).map(([name, options]) => {
@@ -113,15 +113,6 @@
     const copy = document.createElement('span'); copy.textContent = options.join(' · ');
     card.append(title, copy); return card;
   }));
-  $('#login-form').addEventListener('submit', async (event) => {
-    event.preventDefault(); $('#login-status').textContent = 'Authenticating…';
-    try {
-      const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(event.currentTarget))) });
-      const result = await response.json();
-      if (!response.ok || !result.success || !result.data?.token) throw new Error(result.message || 'Authentication failed.');
-      sessionStorage.setItem(tokenKey, result.data.token); event.currentTarget.reset(); await showDashboard();
-    } catch (error) { $('#login-status').textContent = error.message || 'Authentication failed.'; $('#login-status').className = 'error'; }
-  });
   $('#view').addEventListener('change', renderTable); $('#search').addEventListener('input', renderTable);
   $('#refresh').addEventListener('click', () => loadData().catch((error) => { $('#last-updated').textContent = error.message; $('#last-updated').className = 'error'; }));
   $('#access-code-form').addEventListener('submit', async (event) => {
@@ -144,6 +135,6 @@
     catch (error) { $('#access-code-status').textContent = error.message || 'The pass could not be revoked.'; }
   });
   $('#export').addEventListener('click', () => { const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' })); link.download = `muzikaz-admin-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(link.href); });
-  $('#sign-out').addEventListener('click', () => showLogin('Signed out. Enter administrator credentials.'));
-  token() ? showDashboard() : showLogin();
+  $('#sign-out').addEventListener('click', returnToLogin);
+  token() ? showDashboard() : returnToLogin();
 })();

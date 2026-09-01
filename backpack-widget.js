@@ -101,6 +101,7 @@
       document.documentElement.classList.add('mzk-admin-open');
       adminForm.querySelector('input').focus();
     });
+    if (new URLSearchParams(window.location.search).get('admin') === 'login') openAdminButton.click();
     adminDialog.addEventListener('click', (event) => { if (event.target.closest('[data-close-admin-login]')) closeAdmin(); });
     adminForm.addEventListener('submit', async (event) => {
       event.preventDefault();
