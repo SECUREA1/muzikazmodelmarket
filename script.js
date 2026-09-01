@@ -3058,16 +3058,9 @@ function initAdminLogin() {
   };
   const openAdminCenter = () => window.location.replace('admin.html');
   const validateStoredSession = async () => {
-    const token = storedAdminToken();
-    status.textContent = 'Checking administrator session…';
-    try {
-      const response = await fetch('/api/admin/session', { headers: { ...(token ? { 'x-admin-token': token } : {}), Accept: 'application/json' }, cache: 'no-store' });
-      if (!response.ok) throw new Error('Your administrator session has expired.');
-      openAdminCenter();
-    } catch (error) {
-      if (token) forgetAdminToken();
-      conceal(error.message || 'Administrator authentication is required.');
-    }
+    const token = sessionStorage.getItem(tokenKey);
+    if (!token) return conceal();
+    openAdminCenter();
   };
   validateStoredSession();
   form.addEventListener('submit', async (event) => {

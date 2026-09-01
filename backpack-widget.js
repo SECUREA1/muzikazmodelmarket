@@ -144,6 +144,7 @@
 
     const button = dock.querySelector('[data-open-backpack]');
     const connectButton = dock.querySelector('[data-widget-connect]');
+    const mobileBackpackButtons = [...document.querySelectorAll('.mobile-header-action[aria-label="View backpack"]')];
     let lastFocused = null;
 
     async function connect() {
@@ -211,14 +212,14 @@
     }
     function close() { drawer.hidden = true; document.documentElement.classList.remove('mzk-backpack-open'); button.setAttribute('aria-expanded', 'false'); lastFocused?.focus?.(); }
     button.addEventListener('click', open);
-    mobileHeader.querySelector('[data-mobile-open-backpack]')?.addEventListener('click', open);
-    mobileHeader.querySelector('[data-mobile-wallet]')?.addEventListener('click', () => existingWalletButton ? existingWalletButton.click() : connect());
-    const menuButton = mobileHeader.querySelector('[data-mobile-menu-toggle]');
-    const menu = mobileHeader.querySelector('.mzk-mobile-menu');
-    const toggleMenu = (force) => { const openMenu = force ?? menu.hidden; menu.hidden = !openMenu; menuButton.setAttribute('aria-expanded', String(openMenu)); mobileHeader.classList.toggle('is-menu-open', openMenu); };
-    menuButton?.addEventListener('click', () => toggleMenu());
-    menu?.addEventListener('click', (event) => { if (event.target.closest('a')) toggleMenu(false); });
-    document.addEventListener('click', (event) => { if (!menu.hidden && !mobileHeader.contains(event.target)) toggleMenu(false); });
+    mobileBackpackButtons.forEach((mobileButton) => {
+      mobileButton.setAttribute('aria-haspopup', 'dialog');
+      mobileButton.setAttribute('aria-controls', 'global-backpack-title');
+      mobileButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        open();
+      });
+    });
     connectButton?.addEventListener('click', connect);
     drawer.addEventListener('click', (event) => { if (event.target.closest('[data-close-backpack]')) close(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !drawer.hidden) close(); else if (event.key === 'Escape' && !adminDialog.hidden) closeAdmin(); else if (event.key === 'Escape' && !menu.hidden) { toggleMenu(false); menuButton.focus(); } });

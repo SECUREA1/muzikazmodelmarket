@@ -3295,78 +3295,45 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
   .model-market-page .market-toggle-button{font-size:9px}
 }
 
-/* Baseline compact navigation. The shared Backpack widget replaces this on
-   phones with the refined two-row commerce header and labeled menu. */
+/* Refined two-row mobile masthead: shopping actions stay one tap away while the
+   labelled menu keeps the complete destination list readable and uncluttered. */
+.mobile-header-action{display:none}
 @media(max-width:720px){
-  /* The compact header is the only mobile masthead; the promotional strip used
-     to leave a detached row above it in phone browsers. */
   .topbar{display:none}
   .global-site-header{
-    display:flex;
-    flex-wrap:wrap;
-    height:auto;
-    min-height:68px;
-    padding-bottom:7px;
+    display:grid;grid-template-columns:minmax(112px,1fr) auto;grid-template-rows:auto auto;
+    height:auto;min-height:116px;padding:8px 10px;gap:7px 8px;
+    background:linear-gradient(135deg,rgba(2,8,2,.98),rgba(8,18,5,.98));
+    border-bottom:1px solid rgba(156,255,0,.52);
+    box-shadow:0 8px 28px rgba(0,0,0,.7),0 1px 18px rgba(156,255,0,.12)
   }
-  .global-site-header .world-logo{order:1}
-  .global-site-header .icons{order:2;margin-left:auto}
-  .global-site-header .menu-toggle{display:none!important}
-  .global-site-header .global-nav,
-  .model-market-page .global-site-header .global-nav{
-    position:static;
-    order:3;
-    display:grid;
-    grid-template-columns:repeat(9,minmax(0,1fr));
-    flex:1 0 100%;
-    width:100%;
-    max-height:none;
-    margin:0;
-    padding:5px;
-    gap:3px;
-    overflow:visible;
-    border:1px solid rgba(156,255,0,.2);
-    border-radius:10px;
-    background:rgba(0,0,0,.46);
-    box-shadow:none;
-    opacity:1;
-    visibility:visible!important;
-    pointer-events:auto;
-    transform:none;
+  .global-site-header .world-logo{grid-column:1;grid-row:1;width:min(146px,100%);margin:0}
+  .global-site-header .icons{grid-column:2;grid-row:1;display:grid;grid-template-columns:repeat(3,minmax(48px,1fr));gap:5px;margin:0}
+  .global-site-header .icons :is(.wallet-connect,.cart){display:none}
+  .global-site-header .mobile-header-action{display:grid;place-items:center;gap:2px;min-width:48px;min-height:52px;padding:5px 3px;border:1px solid rgba(156,255,0,.3);border-radius:10px;background:rgba(156,255,0,.055);color:#fff;text-decoration:none}
+  .global-site-header .mobile-header-action svg{width:22px;height:22px;fill:none;stroke:var(--lime);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px rgba(156,255,0,.7))}
+  .global-site-header .mobile-header-action span{font-size:8px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap}
+  .global-site-header .menu-toggle{grid-column:1/-1;grid-row:2;display:flex!important;align-items:center;justify-content:center;gap:9px;width:100%;min-height:40px;border:1px solid rgba(156,255,0,.34);border-radius:9px;background:rgba(0,0,0,.5);color:var(--lime);font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+  .global-site-header .menu-toggle[aria-expanded="true"]{background:rgba(156,255,0,.14);box-shadow:inset 0 0 16px rgba(156,255,0,.12)}
+  .global-site-header .global-nav,.model-market-page .global-site-header .global-nav{
+    position:absolute;top:100%;left:10px;right:10px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    width:auto;max-height:calc(100dvh - 126px);margin:0;padding:8px;gap:6px;overflow:auto;
+    border:1px solid rgba(156,255,0,.48);border-radius:0 0 14px 14px;background:rgba(1,5,1,.985);
+    box-shadow:0 24px 55px rgba(0,0,0,.85);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-8px)
   }
-  .global-nav .nav-link,
-  .global-nav .nav-link:hover,
-  .global-nav .nav-link:focus-visible,
-  .global-nav .nav-link.active{
-    width:100%;
-    min-width:0;
-    min-height:40px;
-    justify-content:center;
-    padding:7px 2px;
-    border-color:rgba(156,255,0,.14);
-  }
-  .global-nav .nav-link span,
-  .global-nav .nav-link--icon span{
-    position:absolute;
-    width:1px;
-    height:1px;
-    overflow:hidden;
-    clip-path:inset(50%);
-    white-space:nowrap;
-  }
+  .global-site-header .global-nav.is-open{opacity:1;visibility:visible!important;pointer-events:auto;transform:translateY(0)}
+  .global-nav .nav-link,.global-nav .nav-link:hover,.global-nav .nav-link:focus-visible,.global-nav .nav-link.active{width:100%;min-width:0;min-height:42px;justify-content:flex-start;padding:9px;border-color:rgba(156,255,0,.14)}
+  .global-nav .nav-link span,.global-nav .nav-link--icon span{position:static;width:auto;height:auto;overflow:visible;clip-path:none;white-space:normal;font-size:10px}
   .global-nav .nav-link::after{display:none}
-  .global-nav .nav-icon{
-    display:block;
-    width:21px;
-    max-width:100%;
-    height:21px;
-    flex-basis:21px;
-  }
-  .global-site-header :is(.nav-icon,.icon-button svg){
-    color:var(--lime);
-    stroke:var(--lime);
-    filter:drop-shadow(0 0 4px rgba(156,255,0,.95)) drop-shadow(0 0 10px rgba(156,255,0,.55));
-  }
-  .global-site-header .wallet-connect img{
-    filter:brightness(0) saturate(100%) invert(87%) sepia(94%) saturate(1811%) hue-rotate(31deg) brightness(108%) contrast(106%) drop-shadow(0 0 7px rgba(156,255,0,.9));
-  }
+  .global-nav .nav-icon{display:block;width:21px;max-width:100%;height:21px;flex-basis:21px}
+  .global-site-header :is(.nav-icon,.icon-button svg){color:var(--lime);stroke:var(--lime);filter:drop-shadow(0 0 4px rgba(156,255,0,.95)) drop-shadow(0 0 10px rgba(156,255,0,.55))}
 }
+@media(max-width:390px){
+  .global-site-header{grid-template-columns:minmax(92px,1fr) auto;padding-inline:7px;column-gap:5px}
+  .global-site-header .world-logo{width:112px}
+  .global-site-header .icons{grid-template-columns:repeat(3,46px);gap:3px}
+  .global-site-header .mobile-header-action{min-width:0}
+}
+.market-directory-listings{grid-column:1/-1;margin-top:12px;padding-top:16px;border-top:1px solid rgba(156,255,0,.25)}
+.market-directory-listings>div{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:10px}
+.market-directory-listings article{display:grid;align-content:start;gap:8px;padding:14px;border:1px solid rgba(156,255,0,.25);border-radius:10px;background:rgba(156,255,0,.045)}

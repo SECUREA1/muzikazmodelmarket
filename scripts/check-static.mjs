@@ -35,9 +35,7 @@ for (const page of mobileHeaderPages) {
   const navIconCount = (navigation.match(/<svg class="nav-icon"/g) || []).length;
   if (!navigation.includes('aria-hidden="false"')) throw new Error(`${page} must expose the complete mobile navigation to assistive technology.`);
   if (navIconCount !== 9) throw new Error(`${page} must show all 9 SVG mobile navigation destinations; found ${navIconCount}.`);
-}
-for (const feature of ['mzk-mobile-commerce-row', '>Checkout<', '>Buy MZK<', '>Backpack<', 'mzk-mobile-world-row', 'data-mobile-menu-toggle', '>Menu<', 'aria-controls="mzk-mobile-menu"']) {
-  if (!backpackWidget.includes(feature)) throw new Error(`The two-row mobile MUZIKAZ header is missing ${feature}.`);
+  if (!html.includes('class="menu-toggle"') || !html.includes('aria-controls="primary-navigation"')) throw new Error(`${page} must include a labelled, accessible mobile menu toggle.`);
 }
 
 for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', 'data-open-backpack', 'Trade market', 'Buy / swap MZK']) {
