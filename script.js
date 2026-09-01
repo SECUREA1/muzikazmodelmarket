@@ -212,7 +212,7 @@ function closeMenu() {
   nav?.classList.remove('is-open');
   menuButton?.setAttribute('aria-expanded', 'false');
   menuButton?.setAttribute('aria-label', 'Open menu');
-  if (nav && window.matchMedia('(max-width: 1380px)').matches) nav.setAttribute('aria-hidden', 'true');
+  if (nav && window.matchMedia('(max-width: 720px)').matches) nav.setAttribute('aria-hidden', 'true');
 }
 
 function openMenu() {
@@ -225,7 +225,7 @@ function openMenu() {
 
 function syncHeaderLayout() {
   if (!nav) return;
-  if (window.matchMedia('(max-width: 1380px)').matches) {
+  if (window.matchMedia('(max-width: 720px)').matches) {
     nav.setAttribute('aria-hidden', String(!nav.classList.contains('is-open')));
   } else {
     nav.classList.remove('is-open');

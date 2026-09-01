@@ -2963,7 +2963,7 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 .global-nav .nav-link--icon::after{position:absolute;top:calc(100% + 8px);left:50%;z-index:40;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:#050705;color:#fff;content:attr(data-label);font-size:10px;white-space:nowrap;opacity:0;pointer-events:none;transform:translate(-50%,-4px);transition:.15s}
 .global-nav .nav-link--icon:hover::after,.global-nav .nav-link--icon:focus-visible::after{opacity:1;transform:translate(-50%,0)}
 .global-site-header .icons{gap:6px}.global-site-header .icon-button.cart{min-width:44px;padding:7px}
-@media(max-width:1380px){
+@media(max-width:720px){
  .global-site-header .menu-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:46px}
  .global-site-header .global-nav{display:flex;position:fixed;top:76px;left:12px;right:12px;z-index:30;max-height:calc(100vh - 92px);overflow:auto;padding:12px;background:rgba(0,0,0,.98);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 55px rgba(0,0,0,.72);flex-direction:column;align-items:stretch;gap:5px;transform:translateY(-14px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
  .global-site-header .global-nav.is-open{opacity:1;pointer-events:auto;transform:none}
@@ -2986,12 +2986,78 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 .global-site-header :is(a,button):focus-visible{outline:3px solid #fff;outline-offset:2px}
 .global-site-header button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 @supports not (backdrop-filter:blur(1px)){.site-header{background:#030503}}
-@media(max-width:1380px){
+@media(max-width:720px){
  .global-site-header .global-nav[aria-hidden="true"]{visibility:hidden}
  .global-site-header .global-nav[aria-hidden="false"]{visibility:visible}
  .global-site-header .global-nav{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 }
 @media(prefers-reduced-motion:reduce){.global-site-header .global-nav{transition:none}}
+
+/* Keep the primary SVG actions in the header until the layout is genuinely
+   mobile. Mid-sized screens use compact icon buttons instead of the detached
+   utility-bar treatment; phones receive the labelled toggle list below. */
+@media(min-width:721px) and (max-width:1380px){
+  .global-site-header .global-nav{
+    position:static;
+    display:flex;
+    flex:1 1 auto;
+    justify-content:flex-end;
+    align-items:center;
+    gap:4px;
+    margin-left:auto;
+    padding:0;
+    overflow:visible;
+    background:transparent;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    transform:none;
+    opacity:1;
+    pointer-events:auto;
+    visibility:visible!important;
+  }
+  .global-nav .nav-link,
+  .global-nav .nav-link:hover,
+  .global-nav .nav-link:focus-visible,
+  .global-nav .nav-link.active{
+    width:38px;
+    min-width:38px;
+    min-height:38px;
+    justify-content:center;
+    padding:7px;
+    border-radius:9px;
+  }
+  .global-nav .nav-link span{
+    position:absolute;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+    clip-path:inset(50%);
+  }
+  .global-nav .nav-link::after{
+    position:absolute;
+    top:calc(100% + 8px);
+    left:50%;
+    z-index:40;
+    padding:6px 8px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    background:#050705;
+    color:#fff;
+    content:attr(data-label);
+    font-size:10px;
+    white-space:nowrap;
+    opacity:0;
+    pointer-events:none;
+    transform:translate(-50%,-4px);
+  }
+  .global-nav .nav-link:hover::after,
+  .global-nav .nav-link:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+  .global-site-header .icons{display:flex;margin-left:0;gap:6px}
+  .global-site-header .wallet-connect span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+  .global-site-header .menu-toggle{display:none}
+}
+.global-site-header .icon-button.cart svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 /* Mobile reading and navigation baseline. Keep the display type for headlines,
    while using familiar sentence case and comfortable measures for body copy. */
