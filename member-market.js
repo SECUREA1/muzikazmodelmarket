@@ -37,6 +37,11 @@
     select.innerHTML = peerMembers.map((member) => `<option value="${escape(member.walletId)}">${escape(member.displayName)}${member.walletId === owner() ? ' (you)' : ''} · ${member.itemCount} packs · ${member.listedCount} listed</option>`).join('') || '<option value="">No members yet</option>';
     if (preferred && peerMembers.some((member) => member.walletId === preferred)) select.value = preferred;
     await loadProfile(select.value);
+    const profiles = await Promise.all(peerMembers.map((member) => api(`/api/market/members/${encodeURIComponent(member.walletId)}`)));
+    const listed = profiles.flatMap((profile) => profile.items.filter((item) => item.listing?.active).map((item) => ({ profile, item })));
+    const directory = document.createElement('section'); directory.className = 'market-directory-listings'; directory.setAttribute('aria-label', 'All member marketplace listings');
+    directory.innerHTML = `<h4>All member listings</h4><div>${listed.map(({ profile, item }) => `<article><span class="pill">${escape(profile.displayName)}</span><h4>${escape(item.name || item.title || item.id)}</h4><strong>${Number(item.listing.priceMzk).toLocaleString()} MZK</strong>${profile.walletId === owner() ? '<small>Your listing</small>' : `<button type="button" data-directory-owner="${escape(profile.walletId)}" data-exchange-buy="${escape(item.id)}">Trade now</button>`}</article>`).join('') || '<p>No members have active listings yet.</p>'}</div>`;
+    packs.append(directory);
   }
 
   async function loadProfile(peer) {
@@ -57,6 +62,7 @@
   select.addEventListener('change', () => loadProfile(select.value).catch(showError));
   packs.addEventListener('click', async (event) => {
     const button = event.target.closest('[data-exchange-buy]'); if (!button) return;
+    if (button.dataset.directoryOwner) select.value = button.dataset.directoryOwner;
     button.disabled = true; status.textContent = 'Completing the atomic MZK transfer…';
     try {
       const trade = await api('/api/market/trades', { method: 'POST', body: JSON.stringify({ sellerId: select.value, itemId: button.dataset.exchangeBuy, requestId: `${owner()}:${Date.now()}:${button.dataset.exchangeBuy}` }) });
