@@ -35,16 +35,16 @@
       <div class="metrics" id="metrics" aria-label="Marketplace totals"></div>
       <section class="access-panel" aria-labelledby="access-title">
         <div class="access-heading">
-          <div><p class="eyebrow">One-time member signup</p><h2 id="access-title">Loadout access passes</h2></div>
-          <p>Generate a single-use signup code that grants the same Loadout, land, Violet Wish Bottle, game access, and creator tools as a paid member.</p>
+          <div><p class="eyebrow">Connected member onboarding</p><h2 id="access-title">Startup loadout passcodes</h2></div>
+          <p>Generate a passcode that connects a new user to a canonical account and grants the same startup Loadout, land, Violet Wish Bottle, game access, and creator tools as a paid member.</p>
         </div>
         <form id="access-code-form" class="access-form">
           <label>Internal label<input name="label" maxlength="80" placeholder="Guest name or campaign note"></label>
           <label>Expires before signup<select name="expiresInDays"><option value="1">1 day</option><option value="7" selected>7 days</option><option value="30">30 days</option><option value="365">1 year</option></select></label>
-          <button type="submit">Generate one-time code</button>
+          <button type="submit">Generate startup passcode</button>
         </form>
         <div class="secret-row"><output id="access-code-output" aria-live="polite">No code generated in this session.</output><button id="access-code-copy" class="secondary" type="button" hidden>Copy code</button></div>
-        <p id="access-code-status" class="access-status" role="status">The full secret is shown only once. Send it to the member privately.</p>
+        <p id="access-code-status" class="access-status" role="status">The full secret is shown only once. Its startup grants redeem once; after activation, the user keeps the passcode as their account login.</p>
         <div class="table-scroll access-table"><table><thead><tr><th>Code</th><th>Label</th><th>Status</th><th>Created</th><th>Signup deadline</th><th>Member wallet</th><th>Loadout</th><th>Control</th></tr></thead><tbody id="access-code-table"><tr><td colspan="8">Loading access passes…</td></tr></tbody></table></div>
       </section>
       <div class="toolbar">

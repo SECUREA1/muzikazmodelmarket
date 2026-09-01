@@ -33,6 +33,8 @@ const accessAttempts = new Map();
 const supportSockets = new Set();
 const supportMessages = [];
 const port = Number(process.env.PORT || 4173);
+const adminUsername = process.env.MUZIKAZ_ADMIN_USERNAME || 'giraff';
+const adminPassword = process.env.MUZIKAZ_ADMIN_PASSWORD || 'boots';
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
 const maxEnvironmentBytes = Number(process.env.MUZIKAZ_ENVIRONMENT_MAX_BYTES || 150 * 1024 * 1024);
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
@@ -96,6 +98,7 @@ async function writeAssets(records) { await ensureStorage(); await writeFile(ass
 function user(req) { return { id: cleanText(req.headers['x-user-id'], 'demo-user'), role: 'user', name: cleanText(req.headers['x-user-name'], 'MUZIKAZ Creator') }; }
 function requestWallet(req) { return cleanWallet(req.headers['x-wallet-address'] || req.headers['x-user-id']); }
 function isAdmin(req) { const token = String(req.headers['x-admin-token'] || ''); return (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || adminSessions.has(token); }
+function matchesSecret(candidate, expected) { const supplied = Buffer.from(String(candidate || '')); const configured = Buffer.from(expected); return supplied.length === configured.length && timingSafeEqual(supplied, configured); }
 function requireAdmin(req, res) { if (isAdmin(req)) return true; sendJson(res, 403, { success: false, message: 'Admin authorization required' }); return false; }
 function cookie(req, name) { return String(req.headers.cookie || '').split(';').map((part) => part.trim().split('=')).find(([key]) => key === name)?.[1] || ''; }
 function openAccountSession(res, account) { const token = randomBytes(32).toString('base64url'); const csrfToken = randomBytes(24).toString('base64url'); accountSessions.set(token, { accountId: account.accountId, csrfToken, expiresAt: Date.now() + 8 * 60 * 60 * 1000 }); res.setHeader('Set-Cookie', `mzk_session=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=28800${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`); return { account, csrfToken, expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() }; }
@@ -237,7 +240,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/health' && req.method === 'GET') return sendJson(res, 200, { success: true, service: 'muzikaz-member-market' });
     if (url.pathname === '/api/admin/login' && req.method === 'POST') {
       const credentials = await bodyJson(req);
-      if (credentials.username !== 'admin' || credentials.password !== 'boots') return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
+      if (!matchesSecret(credentials.username, adminUsername) || !matchesSecret(credentials.password, adminPassword)) return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
       const token = randomUUID(); adminSessions.add(token); return sendJson(res, 200, assetResponse({ token }));
     }
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.create(await bodyJson(req)))); }

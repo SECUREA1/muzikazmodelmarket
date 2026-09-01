@@ -20,6 +20,7 @@ for (const page of backpackPages) {
   if (!html.includes('mzk-wallet.js') || !html.includes('backpack-widget.js')) throw new Error(`${page} must expose the Ethereum wallet and Backpack controls.`);
 }
 const backpackWidget = await readFile('dist/backpack-widget.js', 'utf8');
+const serverSource = await readFile('server.mjs', 'utf8');
 for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', 'data-open-backpack', 'Trade market', 'Buy / swap MZK']) {
   if (!backpackWidget.includes(feature)) throw new Error(`The global Ethereum Backpack is missing ${feature}.`);
 }
@@ -308,6 +309,9 @@ for (const requiredAdminFlow of ["/api/admin/login", "muzikazAdminToken", "x-adm
   if (!appScript.includes(requiredAdminFlow)) {
     throw new Error(`script.js is missing protected-admin flow: ${requiredAdminFlow}`);
   }
+}
+if (!serverSource.includes("process.env.MUZIKAZ_ADMIN_USERNAME || 'giraff'") || !serverSource.includes("process.env.MUZIKAZ_ADMIN_PASSWORD || 'boots'")) {
+  throw new Error('The configured giraff administrator credentials are not connected to the server login.');
 }
 
 const apiConnection = await readFile('dist/public/js/api-connection.js', 'utf8');
