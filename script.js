@@ -3075,6 +3075,7 @@ function initAdminLogin() {
     dashboard.hidden = false;
     document.dispatchEvent(new Event('muzikaz:admin-authenticated'));
   };
+  const openAdminCenter = () => window.location.replace('admin.html');
   const validateStoredSession = async () => {
     const token = sessionStorage.getItem(tokenKey);
     if (!token) return conceal();
@@ -3082,7 +3083,7 @@ function initAdminLogin() {
     try {
       const response = await fetch('/api/admin/analytics', { headers: { 'x-admin-token': token, Accept: 'application/json' } });
       if (!response.ok) throw new Error('Your administrator session has expired.');
-      reveal();
+      openAdminCenter();
     } catch (error) {
       conceal(error.message || 'Administrator authentication is required.');
     }
@@ -3095,7 +3096,7 @@ function initAdminLogin() {
       const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(credentials) });
       const result = await response.json();
       if (!response.ok || !result.success || !result.data?.token) throw new Error(result.message || 'Authentication failed');
-      sessionStorage.setItem(tokenKey, result.data.token); form.reset(); reveal();
+      sessionStorage.setItem(tokenKey, result.data.token); form.reset(); openAdminCenter();
     } catch (error) { status.textContent = error.message || 'Authentication failed.'; }
   });
   document.querySelector('#admin-logout')?.addEventListener('click', () => conceal('Signed out. Administrator authentication is required.'));
