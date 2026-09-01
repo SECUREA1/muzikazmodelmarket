@@ -32,6 +32,7 @@ const accountSessions = new Map();
 const accessAttempts = new Map();
 const supportSockets = new Set();
 const supportMessages = [];
+const memberSockets = new Set();
 const port = Number(process.env.PORT || 4173);
 const adminUsername = process.env.MUZIKAZ_ADMIN_USERNAME || 'giraff';
 const adminPassword = process.env.MUZIKAZ_ADMIN_PASSWORD || 'boots';
@@ -208,6 +209,39 @@ function consumeWebsocketFrames(socket, chunk) {
     } catch { sendSupport(socket, { type: 'error', message: 'That support message could not be read.' }); }
   }
 }
+function broadcastMember(record) {
+  for (const client of memberSockets) {
+    if (client.memberUserId === record.from || client.memberUserId === record.to) sendSupport(client, { type: 'message', message: record });
+  }
+}
+async function memberHistory(client) {
+  try {
+    const activity = await userDatabase.activity(client.memberUserId);
+    sendSupport(client, { type: 'history', messages: activity.messages || [] });
+  } catch (error) { sendSupport(client, { type: 'error', message: error.message }); }
+}
+function consumeMemberFrames(socket, chunk) {
+  socket.memberBuffer = Buffer.concat([socket.memberBuffer || Buffer.alloc(0), chunk]);
+  while (socket.memberBuffer.length >= 2) {
+    const second = socket.memberBuffer[1]; let length = second & 127; let offset = 2;
+    if (length === 126) { if (socket.memberBuffer.length < 4) return; length = socket.memberBuffer.readUInt16BE(2); offset = 4; }
+    if (length === 127 || length > 4096) return socket.destroy();
+    const masked = Boolean(second & 128); if (masked) offset += 4;
+    if (socket.memberBuffer.length < offset + length) return;
+    const opcode = socket.memberBuffer[0] & 15;
+    if (opcode === 8) return socket.end();
+    const payload = Buffer.from(socket.memberBuffer.subarray(offset, offset + length));
+    if (masked) { const mask = socket.memberBuffer.subarray(offset - 4, offset); for (let i = 0; i < payload.length; i += 1) payload[i] ^= mask[i % 4]; }
+    socket.memberBuffer = socket.memberBuffer.subarray(offset + length);
+    if (opcode !== 1) continue;
+    try {
+      const input = JSON.parse(payload.toString('utf8'));
+      userDatabase.message({ from: socket.memberUserId, to: input.to, text: input.message })
+        .then(broadcastMember)
+        .catch((error) => sendSupport(socket, { type: 'error', message: error.message }));
+    } catch { sendSupport(socket, { type: 'error', message: 'That member message could not be read.' }); }
+  }
+}
 function clampNumber(value, min, max, fallback = 0) { const n = Number(value); return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback; }
 function roomId(position) { if (position.z < 3.2 && position.x < -1.6) return 'front-west'; if (position.z < 3.2) return 'front-hall'; if (position.z < 5.9) return 'middle-gallery'; return position.x < 1.1 ? 'back-lounge' : 'back-east'; }
 function sanitizeRecord(input, ownerId) { const position = { x: clampNumber(input?.position?.x, -4.65, 4.65), y: 0, z: clampNumber(input?.position?.z, .35, 8.65, 2.5) }; const scale = clampNumber(input?.scale?.x, .35, 2.4, 1); const avatarUrl = String(input?.avatarUrl || 'logo_symbol_crop_2x_transparent.png'); if (/^(javascript|data:text\/html)/i.test(avatarUrl)) throw new Error('Unsafe avatar URL'); return { id: cleanText(input?.id, randomUUID()), houseId: 'ioncore-house', ownerId, username: cleanText(input?.username, 'Guest'), avatarName: cleanText(input?.avatarName, 'Shared avatar'), avatarType: cleanText(input?.avatarType, 'image-sprite'), avatarUrl, thumbnailUrl: cleanText(input?.thumbnailUrl, ''), message: cleanText(input?.message, ''), position, rotation: { x: 0, y: 0, z: clampNumber(input?.rotation?.z, -Math.PI * 4, Math.PI * 4) }, scale: { x: scale, y: scale, z: scale }, roomId: roomId(position), visibility: 'public', createdAt: input?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() }; }
@@ -328,8 +362,17 @@ const server = createServer(async (req, res) => {
 
 server.on('upgrade', (req, socket) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
-  if (url.pathname !== '/ws/support' || String(req.headers.upgrade).toLowerCase() !== 'websocket') return socket.destroy();
+  if (!['/ws/support', '/ws/members'].includes(url.pathname) || String(req.headers.upgrade).toLowerCase() !== 'websocket') return socket.destroy();
   const key = req.headers['sec-websocket-key']; if (!key) return socket.destroy();
+  if (url.pathname === '/ws/members') {
+    try { socket.memberUserId = cleanWallet(url.searchParams.get('userId')); }
+    catch { return socket.destroy(); }
+    socket.write(['HTTP/1.1 101 Switching Protocols', 'Upgrade: websocket', 'Connection: Upgrade', `Sec-WebSocket-Accept: ${createHash('sha1').update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64')}`, '\r\n'].join('\r\n'));
+    memberSockets.add(socket); memberHistory(socket);
+    socket.on('data', (chunk) => consumeMemberFrames(socket, chunk));
+    socket.on('close', () => memberSockets.delete(socket)); socket.on('error', () => memberSockets.delete(socket));
+    return;
+  }
   const token = url.searchParams.get('adminToken') || '';
   socket.supportAdmin = (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || adminSessions.has(token);
   socket.supportUserId = cleanText(url.searchParams.get('userId'), randomUUID());
