@@ -34,7 +34,7 @@ for (const page of mobileHeaderPages) {
   const navIconCount = (navigation.match(/<svg class="nav-icon"/g) || []).length;
   if (!navigation.includes('aria-hidden="false"')) throw new Error(`${page} must expose the complete mobile navigation to assistive technology.`);
   if (navIconCount !== 9) throw new Error(`${page} must show all 9 SVG mobile navigation destinations; found ${navIconCount}.`);
-  if (html.includes('class="menu-toggle"')) throw new Error(`${page} must not hide its mobile SVG navigation behind a hamburger menu.`);
+  if (!html.includes('class="menu-toggle"') || !html.includes('aria-controls="primary-navigation"')) throw new Error(`${page} must include a labelled, accessible mobile menu toggle.`);
 }
 
 for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', 'data-open-backpack', 'Trade market', 'Buy / swap MZK']) {
