@@ -3351,5 +3351,11 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
     white-space:nowrap;
   }
   .global-nav .nav-link::after{display:none}
-  .global-nav .nav-icon{width:21px;height:21px;flex-basis:21px}
+  .global-nav .nav-icon{
+    display:block;
+    width:21px;
+    max-width:100%;
+    height:21px;
+    flex-basis:21px;
+  }
 }
