@@ -212,7 +212,9 @@ function closeMenu() {
   nav?.classList.remove('is-open');
   menuButton?.setAttribute('aria-expanded', 'false');
   menuButton?.setAttribute('aria-label', 'Open menu');
-  if (nav && window.matchMedia('(max-width: 720px)').matches) nav.setAttribute('aria-hidden', 'true');
+  if (nav && window.matchMedia('(max-width: 720px)').matches) {
+    nav.setAttribute('aria-hidden', String(!nav.closest('.global-site-header')));
+  }
 }
 
 function openMenu() {
@@ -226,7 +228,7 @@ function openMenu() {
 function syncHeaderLayout() {
   if (!nav) return;
   if (window.matchMedia('(max-width: 720px)').matches) {
-    nav.setAttribute('aria-hidden', String(!nav.classList.contains('is-open')));
+    nav.setAttribute('aria-hidden', String(!nav.closest('.global-site-header') && !nav.classList.contains('is-open')));
   } else {
     nav.classList.remove('is-open');
     nav.setAttribute('aria-hidden', 'false');
