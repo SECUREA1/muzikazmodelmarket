@@ -23,6 +23,20 @@ for (const page of backpackPages) {
 }
 const backpackWidget = await readFile('dist/backpack-widget.js', 'utf8');
 const serverSource = await readFile('server.mjs', 'utf8');
+
+// The compact mobile header intentionally exposes every SVG destination without
+// a second hamburger menu. Keep all participating pages in sync with that
+// always-visible, keyboard- and screen-reader-accessible navigation contract.
+const mobileHeaderPages = ['avatar-whitepaper.html', 'buy-mzk.html', 'checkout.html', 'index.html', 'members.html', 'model-market.html'];
+for (const page of mobileHeaderPages) {
+  const html = await readFile(`dist/${page}`, 'utf8');
+  const navigation = html.match(/<nav class="nav global-nav"[\s\S]*?<\/nav>/)?.[0] || '';
+  const navIconCount = (navigation.match(/<svg class="nav-icon"/g) || []).length;
+  if (!navigation.includes('aria-hidden="false"')) throw new Error(`${page} must expose the complete mobile navigation to assistive technology.`);
+  if (navIconCount !== 9) throw new Error(`${page} must show all 9 SVG mobile navigation destinations; found ${navIconCount}.`);
+  if (html.includes('class="menu-toggle"')) throw new Error(`${page} must not hide its mobile SVG navigation behind a hamburger menu.`);
+}
+
 for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', 'data-open-backpack', 'Trade market', 'Buy / swap MZK']) {
   if (!backpackWidget.includes(feature)) throw new Error(`The global Ethereum Backpack is missing ${feature}.`);
 }
