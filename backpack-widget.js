@@ -119,6 +119,7 @@
 
     const button = dock.querySelector('[data-open-backpack]');
     const connectButton = dock.querySelector('[data-widget-connect]');
+    const mobileBackpackButtons = [...document.querySelectorAll('.mobile-header-action[aria-label="View backpack"]')];
     let lastFocused = null;
 
     async function connect() {
@@ -186,6 +187,14 @@
     }
     function close() { drawer.hidden = true; document.documentElement.classList.remove('mzk-backpack-open'); button.setAttribute('aria-expanded', 'false'); lastFocused?.focus?.(); }
     button.addEventListener('click', open);
+    mobileBackpackButtons.forEach((mobileButton) => {
+      mobileButton.setAttribute('aria-haspopup', 'dialog');
+      mobileButton.setAttribute('aria-controls', 'global-backpack-title');
+      mobileButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        open();
+      });
+    });
     connectButton?.addEventListener('click', connect);
     drawer.addEventListener('click', (event) => { if (event.target.closest('[data-close-backpack]')) close(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !drawer.hidden) close(); else if (event.key === 'Escape' && !adminDialog.hidden) closeAdmin(); });

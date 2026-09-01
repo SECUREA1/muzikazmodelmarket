@@ -242,6 +242,28 @@ const server = createServer(async (req, res) => {
       if (!matchesSecret(credentials.username, adminUsername) || !matchesSecret(credentials.password, adminPassword)) return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
       const token = randomUUID(); adminSessions.add(token); return sendJson(res, 200, assetResponse({ token }));
     }
+    if (url.pathname === '/api/admin/data' && req.method === 'GET') {
+      if (!requireAdmin(req, res)) return;
+      const [submissions, models, usersData, sales, environments, avatars, avatarProfiles] = await Promise.all([
+        readAssets(), readModels(), userDatabase.initialize().then(() => userDatabase.read()), paymentOrderStore.list(),
+        readUploadedEnvironments(), readAvatars(), readAvatarProfiles()
+      ]);
+      const users = Object.entries(usersData.users || {}).map(([walletKey, record]) => ({ walletKey, record }));
+      const paidSales = sales.filter((order) => ['PAID', 'FULFILLED'].includes(order.paymentStatus));
+      return sendJson(res, 200, assetResponse({
+        generatedAt: Math.floor(Date.now() / 1000),
+        summary: {
+          submissions: submissions.length,
+          users: users.length,
+          sales: sales.length,
+          paidRevenueUsd: paidSales.reduce((total, order) => total + Number(order.basePrice || 0), 0),
+          models: models.length,
+          environments: environments.length,
+          avatars: avatars.length
+        },
+        submissions, users, sales, models, customizations: [], derivatives: [], environments, avatars, avatarProfiles
+      }));
+    }
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.create(await bodyJson(req)))); }
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.list())); }
     const adminAccessRevoke = url.pathname.match(/^\/api\/admin\/access-codes\/([^/]+)\/revoke$/);
