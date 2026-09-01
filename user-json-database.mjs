@@ -1,7 +1,8 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-const EMPTY_DATABASE = { schemaVersion: 1, users: {}, trades: [], messages: [] };
+const SCHEMA_VERSION = 2;
+const EMPTY_DATABASE = { schemaVersion: SCHEMA_VERSION, users: {}, trades: [], messages: [], transactions: [], landDeeds: {} };
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function plainObject(value) { return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
@@ -26,6 +27,20 @@ function cleanMemory(value) {
   if (Buffer.byteLength(encoded) > 1_000_000) throw new Error('memory cannot exceed 1 MB.');
   return clone(memory);
 }
+function mergeMemory(previous, incoming) {
+  const output = clone(plainObject(previous));
+  for (const [key, value] of Object.entries(plainObject(incoming))) {
+    output[key] = plainObject(value) && plainObject(output[key]) === output[key]
+      ? mergeMemory(output[key], value) : clone(value);
+  }
+  return cleanMemory(output);
+}
+function appendTransaction(data, transaction) {
+  data.transactions ||= [];
+  const record = { id: `mzk-${Date.now()}-${data.transactions.length + 1}`, ...transaction, createdAt: new Date().toISOString() };
+  data.transactions.push(record);
+  return record;
+}
 
 export class UserJsonDatabase {
   constructor(file) { this.file = file; this.queue = Promise.resolve(); }
@@ -40,7 +55,8 @@ export class UserJsonDatabase {
 
   async read() {
     const data = JSON.parse(await readFile(this.file, 'utf8'));
-    if (!data || data.schemaVersion !== 1 || !plainObject(data.users)) throw new Error('Unsupported user database schema.');
+    if (!data || ![1, SCHEMA_VERSION].includes(data.schemaVersion) || !plainObject(data.users)) throw new Error('Unsupported user database schema.');
+    if (data.schemaVersion === 1) Object.assign(data, { schemaVersion: SCHEMA_VERSION, transactions: data.transactions || [], landDeeds: data.landDeeds || {} });
     return data;
   }
 
@@ -66,7 +82,7 @@ export class UserJsonDatabase {
     const wallet = cleanWallet(walletId);
     await this.initialize();
     const record = (await this.read()).users[wallet];
-    return clone(record || { walletId: wallet, tokens: { MZK: 0 }, items: [], memory: {}, createdAt: null, updatedAt: null });
+    return clone(record || { walletId: wallet, tokens: { MZK: 0 }, items: [], memory: {}, createdAt: null, updatedAt: null, revision: 0 });
   }
 
   async members() {
@@ -122,8 +138,11 @@ export class UserJsonDatabase {
       sellerUser.items.splice(index, 1); item.listing = { ...item.listing, active: false };
       buyerUser.items.push(item);
       const now = new Date().toISOString(); buyerUser.updatedAt = now; sellerUser.updatedAt = now;
+      buyerUser.revision = Number(buyerUser.revision || 0) + 1; sellerUser.revision = Number(sellerUser.revision || 0) + 1;
       const trade = { id: `trade-${data.trades.length + 1}`, requestId: id, buyerId: buyer, sellerId: seller, itemId, itemName: String(item.name || item.title || item.id), priceMzk: price, createdAt: now };
       data.trades.push(trade); if (data.trades.length > 1000) data.trades.splice(0, data.trades.length - 1000);
+      appendTransaction(data, { type: 'MARKET_PURCHASE', walletId: buyer, counterpartyId: seller, amountMzk: -price, balanceAfterMzk: buyerUser.tokens.MZK, requestId: id, tradeId: trade.id });
+      appendTransaction(data, { type: 'MARKET_SALE', walletId: seller, counterpartyId: buyer, amountMzk: price, balanceAfterMzk: sellerUser.tokens.MZK, requestId: id, tradeId: trade.id });
       return trade;
     });
   }
@@ -143,7 +162,35 @@ export class UserJsonDatabase {
     const wallet = cleanWallet(walletId); const peer = peerId ? cleanWallet(peerId) : '';
     await this.initialize(); const data = await this.read();
     const touches = (a, b) => (a === wallet || b === wallet) && (!peer || a === peer || b === peer);
-    return { trades: (data.trades || []).filter((entry) => touches(entry.buyerId, entry.sellerId)).slice(-100), messages: (data.messages || []).filter((entry) => touches(entry.from, entry.to)).slice(-100) };
+    return { trades: (data.trades || []).filter((entry) => touches(entry.buyerId, entry.sellerId)).slice(-100), messages: (data.messages || []).filter((entry) => touches(entry.from, entry.to)).slice(-100), transactions: (data.transactions || []).filter((entry) => entry.walletId === wallet || entry.counterpartyId === wallet).slice(-100) };
+  }
+
+  async landDeeds(walletId) {
+    const wallet = cleanWallet(walletId); await this.initialize(); const data = await this.read();
+    return clone(Object.values(data.landDeeds || {}).filter((deed) => deed.ownerId === wallet && deed.status === 'active'));
+  }
+
+  claimLand({ walletId, worldId, name, priceMzk, requestId }) {
+    const wallet = cleanWallet(walletId); const world = String(worldId || '').trim().toLowerCase(); const request = String(requestId || '').trim(); const price = Math.trunc(Number(priceMzk));
+    if (!/^[a-z0-9][a-z0-9-]{1,79}$/.test(world)) throw new Error('A valid world id is required.');
+    if (!request || request.length > 140) throw new Error('A land claim request id is required.');
+    if (!Number.isSafeInteger(price) || price < 0 || price > 1_000_000) throw new Error('A valid MZK deed price is required.');
+    return this.transaction((data) => {
+      data.landDeeds ||= {}; data.transactions ||= [];
+      const prior = Object.values(data.landDeeds).find((deed) => deed.requestId === request);
+      if (prior) return prior;
+      const user = data.users[wallet]; if (!user) throw new Error('Member wallet not found.');
+      const existing = data.landDeeds[world]; if (existing?.status === 'active') throw new Error('This land deed has already been claimed.');
+      const balance = Number(user.tokens?.MZK || 0); if (balance < price) throw new Error('The wallet does not have enough MZK.');
+      user.tokens.MZK = balance - price;
+      const now = new Date().toISOString();
+      const deed = { id: `deed-${world}`, worldId: world, name: String(name || world).slice(0, 140), ownerId: wallet, priceMzk: price, requestId: request, status: 'active', acquiredAt: now, updatedAt: now };
+      data.landDeeds[world] = deed;
+      if (!user.items.some((item) => item.id === deed.id)) user.items.push({ id: deed.id, type: 'land-deed', worldId: world, name: deed.name, acquiredAt: now });
+      user.revision = Number(user.revision || 0) + 1; user.updatedAt = now;
+      appendTransaction(data, { type: 'LAND_DEED_PURCHASE', walletId: wallet, amountMzk: -price, balanceAfterMzk: user.tokens.MZK, requestId: request, deedId: deed.id, worldId: world });
+      return deed;
+    });
   }
 
   put(walletId, input) {
@@ -162,10 +209,13 @@ export class UserJsonDatabase {
         walletId: wallet,
         tokens: normalizedTokens,
         items: body.items === undefined ? (previous.items || []) : cleanItems(body.items),
-        memory: body.memory === undefined ? (previous.memory || {}) : cleanMemory(body.memory),
+        memory: body.memory === undefined ? (previous.memory || {}) : mergeMemory(previous.memory, body.memory),
         createdAt: previous.createdAt || now,
-        updatedAt: now
+        updatedAt: now,
+        revision: Number(previous.revision || 0) + 1
       };
+      const before = Number(previous.tokens?.MZK || 0); const after = Number(record.tokens.MZK || 0);
+      if (before !== after) appendTransaction(data, { type: 'WALLET_STATE_ADJUSTMENT', walletId: wallet, amountMzk: after - before, balanceAfterMzk: after, requestId: String(body.requestId || `state-${record.revision}`) });
       data.users[wallet] = record;
       return record;
     });

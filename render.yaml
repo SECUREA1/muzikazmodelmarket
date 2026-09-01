@@ -2,7 +2,7 @@ services:
   - type: web
     name: muzikaz-model-market
     runtime: node
-    plan: free
+    plan: starter
     buildCommand: npm ci && npm run build
     startCommand: node server.mjs
     healthCheckPath: /api/health
@@ -12,8 +12,12 @@ services:
       - key: PUBLIC_BASE_URL
         value: https://muzikazmodelmarket.onrender.com
       - key: MUZIKAZ_DATA_DIR
-        value: data
+        value: /var/data/muzikaz
       - key: UPLOAD_STORAGE_PATH
         value: data/uploads/models
       - key: MAX_MODEL_UPLOAD_MB
         value: 50
+    disk:
+      name: muzikaz-live-data
+      mountPath: /var/data
+      sizeGB: 1

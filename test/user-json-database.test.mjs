@@ -16,9 +16,30 @@ test('persists items, token balances, and memory for each wallet', async (t) => 
   const reopened = new UserJsonDatabase(file);
   assert.deepEqual(await reopened.get(wallet), {
     walletId: wallet, tokens: { MZK: 725 }, items: [{ id: 'land-1', type: 'land' }], memory: { world: { level: 4 } },
-    createdAt: (await reopened.get(wallet)).createdAt, updatedAt: (await reopened.get(wallet)).updatedAt
+    createdAt: (await reopened.get(wallet)).createdAt, updatedAt: (await reopened.get(wallet)).updatedAt, revision: 1
   });
-  assert.equal(JSON.parse(await readFile(file, 'utf8')).schemaVersion, 1);
+  assert.equal(JSON.parse(await readFile(file, 'utf8')).schemaVersion, 2);
+});
+
+test('deep-merges shared memory and preserves an append-only MZK adjustment history', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'muzikaz-users-')); t.after(() => rm(directory, { recursive: true, force: true }));
+  const file = join(directory, 'users.json'); const database = new UserJsonDatabase(file);
+  await database.put('player-one', { tokens: { MZK: 10 }, items: [], memory: { world: { level: 2, quests: 4 } }, requestId: 'seed' });
+  await database.put('player-one', { tokens: { MZK: 15 }, memory: { world: { level: 3 }, profile: { displayName: 'One' } }, requestId: 'reward-1' });
+  const state = await database.get('player-one'); const disk = JSON.parse(await readFile(file, 'utf8'));
+  assert.deepEqual(state.memory, { world: { level: 3, quests: 4 }, profile: { displayName: 'One' } });
+  assert.equal(state.revision, 2); assert.deepEqual(disk.transactions.map(({ amountMzk }) => amountMzk), [10, 5]);
+});
+
+test('atomically purchases and permanently indexes one shared land deed', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'muzikaz-users-')); t.after(() => rm(directory, { recursive: true, force: true }));
+  const database = new UserJsonDatabase(join(directory, 'users.json'));
+  await database.put('land-owner', { tokens: { MZK: 5000 }, items: [], memory: {} });
+  const deed = await database.claimLand({ walletId: 'land-owner', worldId: 'volt-city', name: 'Volt City', priceMzk: 4000, requestId: 'claim-1' });
+  assert.equal(deed.ownerId, 'land-owner'); assert.equal((await database.get('land-owner')).tokens.MZK, 1000);
+  assert.equal((await database.landDeeds('land-owner'))[0].id, 'deed-volt-city');
+  assert.equal((await database.claimLand({ walletId: 'land-owner', worldId: 'volt-city', name: 'Volt City', priceMzk: 4000, requestId: 'claim-1' })).id, deed.id);
+  assert.equal((await database.activity('land-owner')).transactions.at(-1).type, 'LAND_DEED_PURCHASE');
 });
 
 test('serializes concurrent wallet updates without losing users', async (t) => {
