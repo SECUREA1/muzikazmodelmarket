@@ -7,7 +7,7 @@
   const PROFILE_ASSETS_KEY = 'muzikazOwnedProfiles';
   const MODEL_ASSETS_KEY = 'muzikazBackpackAssetsV1';
 
-  const icon = (className = '') => `<svg class="${className}" viewBox="0 0 48 48" aria-hidden="true"><path d="M15 18v-3a9 9 0 0 1 18 0v3"/><path d="M12 18h24a4 4 0 0 1 4 4v19H8V22a4 4 0 0 1 4-4Z"/><path d="M16 28h16v13H16z"/><path d="M8 25H5v11h3M40 25h3v11h-3"/><path d="M19 14h10"/></svg>`;
+  const icon = (className = '') => `<svg class="${className}" viewBox="0 0 48 48" aria-hidden="true"><path d="M15 18v-3a9 9 0 0 1 18 0v3"/><path d="M12 18h24a4 4 0 0 1 4 4v19H8V22a4 4 0 0 1 4-4Z"/><path d="M16 28h16v13H16z"/><path d="M8 25H5v11h3M40 25h3v11h-3"/><path d="M19 14h10M12 25h28M20 32h8"/></svg>`;
   const walletIcon = () => '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 13h28a5 5 0 0 1 5 5v22H8a4 4 0 0 1-4-4V13a5 5 0 0 1 5-5h25"/><path d="M31 23h12v10H31a5 5 0 0 1 0-10Z"/><circle cx="33" cy="28" r="1"/></svg>';
   const short = (value) => value ? `${value.slice(0, 6)}…${value.slice(-4)}` : 'Not connected';
   const safeJson = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch (_) { return fallback; } };
@@ -54,6 +54,24 @@
     else if (headerMount) headerMount.prepend(dock);
     else document.body.appendChild(dock);
 
+    const siteHeader = document.querySelector('.global-site-header');
+    const mobileHeader = document.createElement('div');
+    mobileHeader.className = 'mzk-mobile-header';
+    mobileHeader.innerHTML = `<nav class="mzk-mobile-commerce-row" aria-label="Purchase and account actions">
+      <a href="checkout.html" aria-label="Open checkout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h10l3-8H6M9 20h.01M17 20h.01"/></svg><span>Checkout</span></a>
+      <a href="buy-mzk.html" aria-label="Buy MZK"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M17 6.5c-1-1-2.5-1.5-5-1.5-3 0-5 1.2-5 3s2 3 5 3 5 1.2 5 3-2 3-5 3c-2.5 0-4-.5-5-1.5"/></svg><span>Buy MZK</span></a>
+      <button type="button" data-mobile-open-backpack aria-label="Open Backpack">${icon()}<span>Backpack</span></button>
+    </nav>
+    <div class="mzk-mobile-world-row">
+      <a class="mzk-mobile-world-brand" href="index.html#home" aria-label="MUZIKAZ WORLD home"><img src="public/assets/muzikaz-world-logo.svg" alt=""><span>World</span></a>
+      <button type="button" data-mobile-wallet aria-label="Connect wallet">${walletIcon()}<span>Wallet</span></button>
+      <button type="button" class="mzk-mobile-menu-toggle" data-mobile-menu-toggle aria-expanded="false" aria-controls="mzk-mobile-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span></button>
+    </div>
+    <nav class="mzk-mobile-menu" id="mzk-mobile-menu" aria-label="MUZIKAZ WORLD menu" hidden>
+      <a href="index.html#models">Models</a><a href="index.html#world-map">World Map</a><a href="index.html#marketplace-preview">Marketplace</a><a href="index.html#character-world-assets">Characters &amp; Worlds</a><a href="index.html#merch">Merch</a><a href="avatar-whitepaper.html">Whitepaper</a><a href="members.html">Member Access</a><a href="model-market.html">MUZIKAZ World</a>
+    </nav>`;
+    if (siteHeader) siteHeader.appendChild(mobileHeader);
+
     const drawer = document.createElement('section');
     drawer.className = 'mzk-backpack-drawer';
     drawer.dataset.backpackDrawer = '';
@@ -88,15 +106,22 @@
     const adminForm = adminDialog.querySelector('[data-global-admin-form]');
     const adminStatus = adminDialog.querySelector('[data-global-admin-status]');
     const openAdminButton = utilityBar.querySelector('[data-open-admin-login]');
+    const adminToken = () => localStorage.getItem('muzikazAdminToken') || sessionStorage.getItem('muzikazAdminToken') || '';
+    const rememberAdmin = (token) => { localStorage.setItem('muzikazAdminToken', token); sessionStorage.setItem('muzikazAdminToken', token); };
+    const hasAdminSession = async () => {
+      const token = adminToken();
+      const response = await fetch('/api/admin/session', { headers: { ...(token ? { 'x-admin-token': token } : {}), Accept: 'application/json' }, cache: 'no-store' });
+      return response.ok;
+    };
     const closeAdmin = () => { adminDialog.hidden = true; document.documentElement.classList.remove('mzk-admin-open'); openAdminButton.focus(); };
-    openAdminButton.addEventListener('click', () => {
+    openAdminButton.addEventListener('click', async () => {
       // A successful login is shared with the standalone command center for the
       // lifetime of this tab. Do not put an already authenticated administrator
       // through the utility login dialog a second time.
-      if (sessionStorage.getItem('muzikazAdminToken')) {
+      try { if (await hasAdminSession()) {
         window.location.href = 'admin.html';
         return;
-      }
+      } } catch { /* Show the sign-in surface only when the session cannot be verified. */ }
       adminDialog.hidden = false;
       document.documentElement.classList.add('mzk-admin-open');
       adminForm.querySelector('input').focus();
@@ -110,7 +135,7 @@
         const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(adminForm))) });
         const result = await response.json();
         if (!response.ok || !result.success || !result.data?.token) throw new Error(result.message || 'Authentication failed.');
-        sessionStorage.setItem('muzikazAdminToken', result.data.token);
+        rememberAdmin(result.data.token);
         adminForm.reset();
         adminStatus.textContent = 'Access granted. Opening the command center…';
         window.setTimeout(() => { window.location.href = 'admin.html'; }, 350);
@@ -197,7 +222,7 @@
     });
     connectButton?.addEventListener('click', connect);
     drawer.addEventListener('click', (event) => { if (event.target.closest('[data-close-backpack]')) close(); });
-    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !drawer.hidden) close(); else if (event.key === 'Escape' && !adminDialog.hidden) closeAdmin(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !drawer.hidden) close(); else if (event.key === 'Escape' && !adminDialog.hidden) closeAdmin(); else if (event.key === 'Escape' && !menu.hidden) { toggleMenu(false); menuButton.focus(); } });
     window.addEventListener('mzk:wallet-connection-changed', renderButton);
     window.addEventListener('mzk:balance-changed', renderButton);
     renderButton();

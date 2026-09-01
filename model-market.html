@@ -242,6 +242,11 @@
 
         <section class="section-block public-marketplace market-toggle-panel" id="marketplace-preview" data-market-panel="marketplace-preview" role="tabpanel" aria-labelledby="market-toggle-marketplace">
             <div class="section-title"><span></span><h2>Marketplace engine</h2><a href="members.html#marketplace">Open the market</a></div>
+            <section class="user-market-shelf public-user-market" aria-labelledby="public-user-listings-title">
+                <div><p class="kicker">Live member inventory</p><h3 id="public-user-listings-title">All User Marketplace Listings</h3><p>Browse every active MZK listing from every registered seller.</p></div>
+                <p class="status-message" data-user-market-status role="status">Loading all user listings…</p>
+                <div class="user-market-grid" data-user-market-listings></div>
+            </section>
             <div class="market-engine-grid" aria-label="Connected marketplace collections">
                 <article><img data-connected-model="originals" src="muzikaz_high_level_image_pack1/04_collection_tiles/originals_tile_2x.png" alt="Originals collection tile"><span class="pill">Character Models</span><h3>Originals Pack</h3><p>Starter mascot page with hero art, supporting graphics, logo assets, and connected hoodie/keychain merch.</p><a class="card-link" href="originals.html">Open page</a></article>
                 <article><img data-connected-model="legends" src="futuristic_armored_wolf_humanoid.png" alt="Legends cyber wolf tile"><span class="pill">3D Model Packs</span><h3>Legends Pack</h3><p>Armored future icon with model preview, retail pairings, drop content, and full collection HTML.</p><a class="card-link" href="legends.html">Open page</a></article>
@@ -366,7 +371,9 @@
     <!-- The GLB game module is injected by the launcher after the player presses
          Begin RAD-TOX. Keeping Three.js and the 12 MB world off the critical
          path prevents the landing page from stalling on mobile devices. -->
+    <script src="contract-ownership.js"></script>
     <script src="script.js"></script>
+    <script src="marketplace-listings.js"></script>
   <script src="battle-theme.js"></script>
     <script src="backpack-widget.js"></script>
   <script src="global-header.js"></script>

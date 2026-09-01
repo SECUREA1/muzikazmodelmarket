@@ -8,6 +8,8 @@ const requiredFiles = [
   'dist/battle-theme.js',
   'dist/backpack-widget.js',
   'dist/backpack-widget.css',
+  'dist/contract-ownership.js',
+  'dist/marketplace-listings.js',
   'dist/admin.html',
   'dist/admin.js',
   'dist/public/js/rad-tox-launcher.js',
@@ -24,9 +26,8 @@ for (const page of backpackPages) {
 const backpackWidget = await readFile('dist/backpack-widget.js', 'utf8');
 const serverSource = await readFile('server.mjs', 'utf8');
 
-// The compact mobile header intentionally exposes every SVG destination without
-// a second hamburger menu. Keep all participating pages in sync with that
-// always-visible, keyboard- and screen-reader-accessible navigation contract.
+// Desktop destinations remain in the source markup while the shared Backpack
+// widget builds the same refined two-row commerce masthead on every phone page.
 const mobileHeaderPages = ['avatar-whitepaper.html', 'buy-mzk.html', 'checkout.html', 'index.html', 'members.html', 'model-market.html'];
 for (const page of mobileHeaderPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
@@ -43,16 +44,23 @@ for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', '
 for (const utilityFeature of ['Support', 'data-open-support-chat', 'Admin login', 'data-global-admin-form', '/api/admin/login']) {
   if (!backpackWidget.includes(utilityFeature)) throw new Error(`The global page utility bar is missing ${utilityFeature}.`);
 }
-for (const adminHandoffFeature of ["sessionStorage.getItem('muzikazAdminToken')", "window.location.href = 'admin.html'"]) {
+for (const adminHandoffFeature of ["localStorage.getItem('muzikazAdminToken')", "'/api/admin/session'", "window.location.href = 'admin.html'"]) {
   if (!backpackWidget.includes(adminHandoffFeature)) throw new Error(`The global admin control is missing its authenticated command-center handoff: ${adminHandoffFeature}.`);
 }
 if (!backpackWidget.includes("get('admin') === 'login'")) throw new Error('The global admin login must reopen when the command center redirects an unauthenticated visitor.');
 const adminHtml = await readFile('dist/admin.html', 'utf8');
 const adminScript = await readFile('dist/admin.js', 'utf8');
 if (adminHtml.includes('Authorized personnel only') || adminHtml.includes('id="login-form"')) throw new Error('admin.html must not show a second administrator login.');
-for (const handoffFeature of ["window.location.replace('index.html?admin=login')", 'token() ? showDashboard() : returnToLogin()']) {
+for (const handoffFeature of ["window.location.replace('index.html?admin=login')", "fetch('/api/admin/session'", "localStorage.getItem(tokenKey)"]) {
   if (!adminScript.includes(handoffFeature)) throw new Error(`The command center is missing its single-login handoff: ${handoffFeature}.`);
 }
+for (const generatorFeature of ['MZK Loadout Pass Generator', 'Generate MZK Loadout Pass Code']) if (!adminHtml.includes(generatorFeature)) throw new Error(`The admin Loadout generator label is missing ${generatorFeature}.`);
+for (const adminSessionFeature of ["'/api/admin/session'", "'/api/admin/logout'", 'persistentAdminToken', "cookie(req, 'mzk_admin')"]) if (!serverSource.includes(adminSessionFeature)) throw new Error(`Persistent administrator access is missing ${adminSessionFeature}.`);
+const contractOwnership = await readFile('dist/contract-ownership.js', 'utf8');
+for (const contractFeature of ['eth_getCode', '80ac58cd', 'd9b67a26', '0x70a08231', '0x00fdd58e']) if (!contractOwnership.includes(contractFeature)) throw new Error(`The contract ownership checker is missing ${contractFeature}.`);
+const memberMarket = await readFile('dist/marketplace-listings.js', 'utf8');
+for (const listingFeature of ["api('/api/market/listings')", 'data-buy-user-listing', 'Buy with MZK']) if (!memberMarket.includes(listingFeature)) throw new Error(`The aggregate user marketplace is missing ${listingFeature}.`);
+if (!serverSource.includes("url.pathname === '/api/market/listings' && req.method === 'GET'")) throw new Error('The server must expose every active user marketplace listing.');
 const supportScript = await readFile('dist/script.js', 'utf8');
 for (const supportFeature of ['https://muzikazmodelmarket.onrender.com', "new URL('/ws/support', supportServiceUrl)", "root.id = 'muzikaz-support-chat'"]) {
   if (!supportScript.includes(supportFeature)) throw new Error(`The support chat is missing its Render service connection: ${supportFeature}`);
