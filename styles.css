@@ -3160,3 +3160,70 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 
 /* Privacy-first Web3 checkout */
 .privacy-toggle{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid rgba(156,255,0,.3);border-radius:12px;background:rgba(156,255,0,.055);cursor:pointer}.privacy-toggle input{width:20px!important;height:20px;margin:2px 0 0;accent-color:var(--lime)}.privacy-toggle span{display:grid;gap:4px}.privacy-toggle strong{color:#fff}.privacy-toggle small{color:var(--muted);line-height:1.4}.optional-personal-information{margin-top:12px}.optional-personal-information[hidden]{display:none}.payment-progress{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:0;padding:0;list-style:none}.payment-progress li{padding:7px 4px;border:1px solid rgba(156,255,0,.25);border-radius:8px;color:#b8c2b2;font-size:9px;font-weight:800;text-align:center;text-transform:uppercase}@media(max-width:600px){.payment-progress{grid-template-columns:repeat(3,1fr)}}
+
+/* Model market mobile controls: one compact header line and a fitted tab strip. */
+@media(max-width:720px){
+  .model-market-page .global-site-header{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    align-items:center;
+    column-gap:6px;
+  }
+  .model-market-page .global-site-header .world-logo{
+    width:min(122px,100%);
+    min-width:0;
+  }
+  .model-market-page .global-site-header .icons{
+    min-width:0;
+    margin:0;
+  }
+  .model-market-page .global-site-header :is(.icon-button,.menu-toggle){
+    width:44px;
+    min-width:44px;
+    min-height:44px;
+    padding:7px;
+  }
+  .model-market-page .global-site-header .global-nav{
+    position:absolute;
+    top:100%;
+    bottom:auto;
+    width:auto;
+    max-height:calc(100dvh - 78px - env(safe-area-inset-bottom));
+  }
+  .model-market-page .market-toggle-shell{
+    padding-inline:10px;
+  }
+  .model-market-page .market-toggle-bar{
+    display:flex;
+    align-items:stretch;
+    gap:5px;
+    width:100%;
+    padding:5px;
+    overflow:visible;
+  }
+  .model-market-page .market-toggle-button{
+    flex:1 1 0;
+    min-width:0;
+    min-height:66px;
+    width:auto;
+    padding:7px 3px;
+    flex-direction:column;
+    justify-content:center;
+    gap:5px;
+    font-size:10px;
+    line-height:1.15;
+    text-align:center;
+    overflow-wrap:anywhere;
+  }
+  .model-market-page .market-toggle-button svg{
+    width:22px;
+    height:22px;
+    flex:0 0 22px;
+  }
+}
+@media(max-width:360px){
+  .model-market-page .global-site-header{grid-template-columns:minmax(0,1fr) 40px 40px}
+  .model-market-page .global-site-header .world-logo{width:104px}
+  .model-market-page .global-site-header :is(.icon-button,.menu-toggle){width:40px;min-width:40px}
+  .model-market-page .market-toggle-button{font-size:9px}
+}
