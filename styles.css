@@ -3295,8 +3295,8 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
   .model-market-page .market-toggle-button{font-size:9px}
 }
 
-/* Mobile uses the complete desktop action set directly in the header. There is
-   no second, hidden hamburger list: every destination remains one tap away. */
+/* Baseline compact navigation. The shared Backpack widget replaces this on
+   phones with the refined two-row commerce header and labeled menu. */
 @media(max-width:720px){
   /* The compact header is the only mobile masthead; the promotional strip used
      to leave a detached row above it in phone browsers. */

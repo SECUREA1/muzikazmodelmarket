@@ -104,6 +104,23 @@ export class UserJsonDatabase {
     return { walletId: wallet, displayName: String(user.memory?.profile?.displayName || user.memory?.profile?.username || wallet), items: user.items || [], updatedAt: user.updatedAt };
   }
 
+  async marketListings() {
+    await this.initialize();
+    const data = await this.read();
+    return Object.values(data.users).flatMap((user) => {
+      const sellerId = user.walletId;
+      const sellerName = String(user.memory?.profile?.displayName || user.memory?.profile?.username || sellerId);
+      return (user.items || []).filter((item) => item.listing?.active).map((item) => ({
+        sellerId, sellerName, itemId: item.id,
+        itemName: String(item.name || item.title || item.id),
+        itemType: String(item.type || 'Backpack item'),
+        priceMzk: Number(item.listing.priceMzk),
+        listedAt: item.listing.updatedAt || user.updatedAt,
+        thumbnailUrl: String(item.thumbnailUrl || item.previewUrl || '')
+      }));
+    }).sort((a, b) => String(b.listedAt || '').localeCompare(String(a.listedAt || '')) || a.itemName.localeCompare(b.itemName));
+  }
+
   listItem(walletId, itemId, price, active = true) {
     const wallet = cleanWallet(walletId); const amount = Math.trunc(Number(price));
     if (!Number.isSafeInteger(amount) || amount < 1 || amount > 1_000_000) throw new Error('A listing price from 1 to 1,000,000 MZK is required.');

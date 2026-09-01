@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, stat, unlink } from 'node:fs/promises';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
-import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { UserJsonDatabase, cleanWallet } from './user-json-database.mjs';
 import { LoadoutCodeStore } from './loadout-code-store.mjs';
 import { PaymentOrderStore } from './payment-order-store.mjs';
@@ -27,7 +27,6 @@ const repositoryEnvironmentManifest = join(root, 'public', 'models', 'environmen
 const clients = new Set();
 const presence = new Map();
 const chatMessages = [];
-const adminSessions = new Set();
 const accountSessions = new Map();
 const accessAttempts = new Map();
 const supportSockets = new Set();
@@ -35,6 +34,8 @@ const supportMessages = [];
 const port = Number(process.env.PORT || 4173);
 const adminUsername = process.env.MUZIKAZ_ADMIN_USERNAME || 'giraff';
 const adminPassword = process.env.MUZIKAZ_ADMIN_PASSWORD || 'boots';
+const adminSessionSecret = process.env.MUZIKAZ_ADMIN_SESSION_SECRET || `${adminUsername}\0${adminPassword}\0muzikaz-admin-session`;
+const persistentAdminToken = createHmac('sha256', adminSessionSecret).update(`admin:${adminUsername}`).digest('base64url');
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
 const maxEnvironmentBytes = Number(process.env.MUZIKAZ_ENVIRONMENT_MAX_BYTES || 150 * 1024 * 1024);
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
@@ -97,7 +98,8 @@ async function writeModels(records) { await ensureStorage(); await writeFile(mod
 async function writeAssets(records) { await ensureStorage(); await writeFile(assetsFile, JSON.stringify(records, null, 2)); }
 function user(req) { return { id: cleanText(req.headers['x-user-id'], 'demo-user'), role: 'user', name: cleanText(req.headers['x-user-name'], 'MUZIKAZ Creator') }; }
 function requestWallet(req) { return cleanWallet(req.headers['x-wallet-address'] || req.headers['x-user-id']); }
-function isAdmin(req) { const token = String(req.headers['x-admin-token'] || ''); return (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || adminSessions.has(token); }
+function matchesAdminToken(value) { const supplied = Buffer.from(String(value || '')); const expected = Buffer.from(persistentAdminToken); return supplied.length === expected.length && timingSafeEqual(supplied, expected); }
+function isAdmin(req) { const token = String(req.headers['x-admin-token'] || cookie(req, 'mzk_admin') || ''); return (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || matchesAdminToken(token); }
 function matchesSecret(candidate, expected) { const supplied = Buffer.from(String(candidate || '')); const configured = Buffer.from(expected); return supplied.length === configured.length && timingSafeEqual(supplied, configured); }
 function requireAdmin(req, res) { if (isAdmin(req)) return true; sendJson(res, 403, { success: false, message: 'Admin authorization required' }); return false; }
 function cookie(req, name) { return String(req.headers.cookie || '').split(';').map((part) => part.trim().split('=')).find(([key]) => key === name)?.[1] || ''; }
@@ -240,8 +242,11 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/admin/login' && req.method === 'POST') {
       const credentials = await bodyJson(req);
       if (!matchesSecret(credentials.username, adminUsername) || !matchesSecret(credentials.password, adminPassword)) return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
-      const token = randomUUID(); adminSessions.add(token); return sendJson(res, 200, assetResponse({ token }));
+      res.setHeader('Set-Cookie', `mzk_admin=${persistentAdminToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=315360000${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+      return sendJson(res, 200, assetResponse({ token: persistentAdminToken, persistent: true }));
     }
+    if (url.pathname === '/api/admin/session' && req.method === 'GET') return isAdmin(req) ? sendJson(res, 200, assetResponse({ authenticated: true })) : sendJson(res, 401, { success: false, message: 'Administrator authentication is required.' });
+    if (url.pathname === '/api/admin/logout' && req.method === 'POST') { res.setHeader('Set-Cookie', `mzk_admin=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`); return sendJson(res, 200, assetResponse({ authenticated: false })); }
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.create(await bodyJson(req)))); }
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.list())); }
     const adminAccessRevoke = url.pathname.match(/^\/api\/admin\/access-codes\/([^/]+)\/revoke$/);
@@ -269,6 +274,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/market/members' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.members()));
     const marketProfile = url.pathname.match(/^\/api\/market\/members\/([^/]+)$/);
     if (marketProfile && req.method === 'GET') { const profile = await userDatabase.marketProfile(decodeURIComponent(marketProfile[1])); return profile ? sendJson(res, 200, assetResponse(profile)) : sendJson(res, 404, { success: false, message: 'Member not found' }); }
+    if (url.pathname === '/api/market/listings' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.marketListings()));
     if (url.pathname === '/api/market/listings' && req.method === 'PUT') { const body = await bodyJson(req); return sendJson(res, 200, assetResponse(await userDatabase.listItem(requestWallet(req), cleanText(body.itemId), body.priceMzk, body.active !== false))); }
     if (url.pathname === '/api/market/trades' && req.method === 'POST') { const body = await bodyJson(req); return sendJson(res, 201, assetResponse(await userDatabase.trade({ buyerId: requestWallet(req), sellerId: body.sellerId, itemId: body.itemId, requestId: body.requestId }))); }
     if (url.pathname === '/api/market/messages' && req.method === 'POST') { const body = await bodyJson(req); return sendJson(res, 201, assetResponse(await userDatabase.message({ from: requestWallet(req), to: body.to, text: body.text }))); }
@@ -293,6 +299,16 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/models/upload' && req.method === 'POST') { if (!await requireLandOwnership(req, res) || !requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await saveAssetUpload(req, true))); }
     if (url.pathname === '/api/assets/mine' && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await readAssets())); }
     if (url.pathname === '/api/assets/public' && req.method === 'GET') { const assets = await readAssets(); return sendJson(res, 200, assetResponse(assets.filter(isPublicAsset))); }
+    if (url.pathname === '/api/admin/data' && req.method === 'GET') {
+      if (!requireAdmin(req, res)) return;
+      await userDatabase.initialize();
+      const [assets, orders, models, environments, users, avatars, avatarProfiles] = await Promise.all([readAssets(), paymentOrderStore.list(), readModels(), combinedEnvironments(), userDatabase.read(), readAvatars(), readAvatarProfiles()]);
+      const userRows = Object.entries(users.users || {}).map(([walletKey, record]) => ({ walletKey, record }));
+      const customizations = assets.filter((asset) => asset.relatedModelId || asset.publishLocation).map((asset) => ({ id: asset.id, assetId: asset.id, modelId: asset.relatedModelId || '', displayType: asset.publishLocation || '', approved: ['approved', 'published'].includes(asset.status), published: asset.status === 'published', updatedAt: asset.updatedAt }));
+      const derivatives = assets.flatMap((asset) => (asset.derivatives || []).map((derivative) => ({ assetId: asset.id, ...derivative })));
+      const summary = { users: userRows.length, submissions: assets.length, publishedModels: models.length, activeListings: (await userDatabase.marketListings()).length, sales: orders.length, paidRevenueUsd: orders.filter((order) => ['PAID', 'FULFILLED'].includes(order.paymentStatus)).reduce((total, order) => total + Number(order.basePrice || order.usdTotal || 0), 0), environments: environments.length, avatarProfiles: avatarProfiles.length };
+      return sendJson(res, 200, assetResponse({ generatedAt: Math.floor(Date.now() / 1000), summary, submissions: assets, users: userRows, sales: orders, models, customizations, derivatives, environments, avatars, avatarProfiles }));
+    }
     if (url.pathname === '/api/admin/analytics' && req.method === 'GET') { if (!requireAdmin(req, res)) return; const [assets, orders] = await Promise.all([readAssets(), paymentOrderStore.list()]); return sendJson(res, 200, assetResponse({ totalOrders: orders.length, inventoryUnits: orders.filter((order) => order.paymentStatus === 'FULFILLED').reduce((total, order) => total + (order.fulfillment?.items || []).reduce((sum, item) => sum + item.quantity, 0), 0), conversionRate: orders.length ? `${Math.round(orders.filter((order) => ['PAID', 'FULFILLED'].includes(order.paymentStatus)).length / orders.length * 1000) / 10}%` : '0%', totalUploads: assets.length, pendingApprovals: assets.filter((a) => a.status === 'pending_review').length, storageUsage: assets.reduce((n, a) => n + (a.fileSize || 0), 0) })); }
     const assetAction = url.pathname.match(/^\/api\/assets\/([^/]+)\/([^/]+)$/);
     if (assetAction && req.method === 'POST') { if (!requireAdmin(req, res)) return; const [ , id, action ] = assetAction; const assets = await readAssets(); const asset = assets.find((a) => a.id === id); if (!asset) return sendJson(res, 404, { success: false, message: 'Asset not found' }); const body = await bodyJson(req).catch(() => ({})); const now = new Date().toISOString(); if (action === 'approve') { asset.status = 'approved'; asset.approvedAt = now; } else if (action === 'reject') { asset.status = 'rejected'; asset.moderatorNote = cleanText(body.reason, 'Changes required'); } else if (action === 'publish') { asset.status = 'published'; asset.visibility = 'public'; asset.publishedAt = now; } else if (action === 'unpublish') { asset.visibility = 'private'; } else if (action === 'archive') { asset.status = 'archived'; } else if (action === 'assign-model') { asset.relatedModelId = cleanText(body.modelId, asset.relatedModelId); asset.publishLocation = cleanText(body.displayType, asset.publishLocation); } else { return sendJson(res, 400, { success: false, message: 'Unknown action' }); } asset.updatedAt = now; await writeAssets(assets); return sendJson(res, 200, assetResponse(asset)); }
@@ -331,7 +347,7 @@ server.on('upgrade', (req, socket) => {
   if (url.pathname !== '/ws/support' || String(req.headers.upgrade).toLowerCase() !== 'websocket') return socket.destroy();
   const key = req.headers['sec-websocket-key']; if (!key) return socket.destroy();
   const token = url.searchParams.get('adminToken') || '';
-  socket.supportAdmin = (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || adminSessions.has(token);
+  socket.supportAdmin = (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || matchesAdminToken(token);
   socket.supportUserId = cleanText(url.searchParams.get('userId'), randomUUID());
   socket.supportName = cleanText(url.searchParams.get('name'), 'Guest');
   socket.write(['HTTP/1.1 101 Switching Protocols', 'Upgrade: websocket', 'Connection: Upgrade', `Sec-WebSocket-Accept: ${createHash('sha1').update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64')}`, '\r\n'].join('\r\n'));

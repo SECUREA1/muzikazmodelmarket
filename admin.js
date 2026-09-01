@@ -24,7 +24,8 @@
   let openRow = null;
   let currentAccessCode = '';
 
-  function token() { return sessionStorage.getItem(tokenKey) || ''; }
+  function token() { return localStorage.getItem(tokenKey) || sessionStorage.getItem(tokenKey) || ''; }
+  function authHeaders(extra = {}) { const value = token(); return { ...(value ? { 'x-admin-token': value } : {}), ...extra }; }
   function present(value) {
     if (value == null || value === '') return '—';
     if (typeof value === 'object') return JSON.stringify(value);
@@ -75,23 +76,23 @@
   }
   async function loadData() {
     $('#last-updated').textContent = 'Loading the latest server snapshot…';
-    const response = await fetch('/api/admin/data', { headers: { 'x-admin-token': token(), Accept: 'application/json' }, cache: 'no-store' });
+    const response = await fetch('/api/admin/data', { headers: authHeaders({ Accept: 'application/json' }), cache: 'no-store' });
     const result = await response.json();
-    if (!response.ok || !result.success) throw new Error(result.message || 'Administrator data could not be loaded.');
+    if (!response.ok || !result.success) { const error = new Error(result.message || 'Administrator data could not be loaded.'); error.status = response.status; throw error; }
     snapshot = result.data; renderSnapshot();
   }
   const formatDate = (value) => value ? new Date(value).toLocaleString() : '—';
   async function accessRequest(path = '/api/admin/access-codes', options = {}) {
-    const response = await fetch(path, { ...options, headers: { 'x-admin-token': token(), Accept: 'application/json', ...options.headers } });
+    const response = await fetch(path, { ...options, headers: authHeaders({ Accept: 'application/json', ...options.headers }) });
     const result = await response.json();
-    if (!response.ok || !result.success) throw new Error(result.message || 'Access passes could not be loaded.');
+    if (!response.ok || !result.success) { const error = new Error(result.message || 'Access passes could not be loaded.'); error.status = response.status; throw error; }
     return result.data;
   }
   function renderAccessCodes(codes) {
     const table = $('#access-code-table');
     table.replaceChildren(...codes.map((code) => {
       const row = document.createElement('tr');
-      const values = [code.maskedCode, code.label || 'Admin Loadout Pass', code.status, formatDate(code.createdAt), formatDate(code.expiresAt), code.boundWallet || 'Not activated', code.loadoutRedeemed ? 'Granted' : 'Pending'];
+      const values = [code.maskedCode, code.label || 'MZK Loadout Pass', code.status, formatDate(code.createdAt), formatDate(code.expiresAt), code.boundWallet || 'Not activated', code.loadoutRedeemed ? 'Granted' : 'Pending'];
       values.forEach((value) => { const cell = document.createElement('td'); cell.textContent = value; cell.title = value; row.append(cell); });
       const control = document.createElement('td'); const revoke = document.createElement('button'); revoke.type = 'button'; revoke.textContent = 'Revoke'; revoke.disabled = code.status === 'revoked' || code.status === 'expired'; revoke.dataset.revokeAccessCode = code.id; control.append(revoke); row.append(control); return row;
     }));
@@ -100,11 +101,17 @@
   async function loadAccessCodes() { renderAccessCodes(await accessRequest()); }
   function returnToLogin() {
     sessionStorage.removeItem(tokenKey);
+    localStorage.removeItem(tokenKey);
     window.location.replace('index.html?admin=login');
   }
   async function showDashboard() {
     $('#dashboard').hidden = false; $('#sign-out').hidden = false;
-    try { await Promise.all([loadData(), loadAccessCodes()]); } catch { returnToLogin(); }
+    try { await Promise.all([loadData(), loadAccessCodes()]); }
+    catch (error) {
+      if ([401, 403].includes(error.status)) return returnToLogin();
+      $('#last-updated').textContent = `${error.message || 'The server is temporarily unavailable.'} Your administrator session remains active; use Refresh data to retry.`;
+      $('#last-updated').className = 'error';
+    }
   }
   $('#view').replaceChildren(...Object.entries(views).map(([value, config]) => new Option(config.title, value)));
   $('#coded-options').replaceChildren(...Object.entries(codedOptions).map(([name, options]) => {
@@ -119,7 +126,7 @@
     event.preventDefault(); const status = $('#access-code-status'); status.textContent = 'Generating a secure one-time signup code…'; status.className = 'access-status';
     try {
       const fields = Object.fromEntries(new FormData(event.currentTarget));
-      const code = await accessRequest('/api/admin/access-codes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...fields, waiveLoadout: true, violetBottle: true, starterLand: true, creatorVault: true }) });
+      const code = await accessRequest('/api/admin/loadout-codes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...fields, waiveLoadout: true, violetBottle: true, starterLand: true, creatorVault: true }) });
       currentAccessCode = code.code; $('#access-code-output').textContent = currentAccessCode; $('#access-code-copy').hidden = false;
       status.textContent = `Ready to share privately. It can be activated once before ${formatDate(code.expiresAt)}.`; await loadAccessCodes(); event.currentTarget.reset();
     } catch (error) { status.textContent = error.message || 'Code generation failed.'; status.className = 'access-status error'; }
@@ -135,6 +142,13 @@
     catch (error) { $('#access-code-status').textContent = error.message || 'The pass could not be revoked.'; }
   });
   $('#export').addEventListener('click', () => { const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' })); link.download = `muzikaz-admin-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(link.href); });
-  $('#sign-out').addEventListener('click', returnToLogin);
-  token() ? showDashboard() : returnToLogin();
+  $('#sign-out').addEventListener('click', async () => { try { await fetch('/api/admin/logout', { method: 'POST', headers: authHeaders({ Accept: 'application/json' }) }); } finally { returnToLogin(); } });
+  (async () => {
+    if (token()) return showDashboard();
+    try {
+      const response = await fetch('/api/admin/session', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      if (response.ok) return showDashboard();
+    } catch { /* A missing stored token cannot authorize an offline command center. */ }
+    returnToLogin();
+  })();
 })();

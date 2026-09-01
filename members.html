@@ -160,7 +160,7 @@
                     <h3 id="owned-current-user">Login required</h3>
                     <p id="owned-current-copy">Log in above to tie purchased, uploaded, and claimed assets to your account.</p>
                     <label>Open backpack <select id="owned-profile-select" disabled><option>Login to view members</option></select></label>
-                    <div class="backpack-wallet" aria-live="polite"><span>Trade wallet</span><strong id="backpack-token-balance">— MZK</strong><small>Trade with MZK, or pay the listed value in ADA with Lace or SOL with Phantom.</small></div>
+                    <div class="backpack-wallet" aria-live="polite"><span>Trade wallet</span><strong id="backpack-token-balance">— MZK</strong><small>All user marketplace listings buy, sell, and settle in MZK.</small></div>
                 </aside>
                 <div class="owned-assets-board">
                     <div class="owned-assets-summary" id="owned-assets-summary"></div>
@@ -171,6 +171,11 @@
                         <div class="exchange-packs" id="exchange-packs"></div>
                         <div class="exchange-activity"><ol id="exchange-trades"><li>No shared trades yet.</li></ol><ol id="exchange-messages"><li>No messages yet.</li></ol></div>
                         <form id="exchange-message-form"><label>Message selected member <input name="message" maxlength="500" autocomplete="off" placeholder="Ask about a pack or propose a trade" required></label><button type="submit">Send message</button></form>
+                    </section>
+                    <section class="user-market-shelf" aria-labelledby="all-user-listings-title">
+                        <div><p class="kicker">All active sellers</p><h3 id="all-user-listings-title">User Marketplace Listings</h3><p>Every active item listed by every MUZIKAZ member appears here together.</p></div>
+                        <p class="status-message" data-user-market-status role="status">Loading all user listings…</p>
+                        <div class="user-market-grid" data-user-market-listings></div>
                     </section>
                     <div class="owned-assets-grid" id="owned-assets-grid"></div>
                     <section class="backpack-transactions" aria-labelledby="backpack-transactions-title">
@@ -346,9 +351,9 @@
                 </div>
                 <p class="status-message land-upload-notice"><strong>Land-owner upload gate:</strong> avatar, asset, and game uploads unlock only when this profile owns MUZIKAZ World land in its Drop Backpack.</p>
                 <section class="loadout-code-generator" aria-labelledby="loadout-code-generator-title">
-                    <p class="kicker">Canonical account credentials</p><h3 id="loadout-code-generator-title">MZK Access Manager</h3>
+                    <p class="kicker">Canonical account credentials</p><h3 id="loadout-code-generator-title">MZK Loadout Pass Generator</h3>
                     <p>Generate one credential whose optional entitlements redeem once while the activated account login remains usable. Full secrets are never listed again.</p>
-                    <form id="loadout-code-generator-form"><label>Internal label <input name="label" maxlength="80" placeholder="Guest / campaign note" /></label><label>Campaign / source <input name="campaign" maxlength="80" /></label><label>Expiration before activation <select name="expiresInDays"><option value="1">1 day</option><option value="7" selected>7 days</option><option value="30">30 days</option><option value="365">1 year</option></select></label><label>Maximum activation date <input name="maximumActivationDate" type="datetime-local" /></label><label><input name="waiveLoadout" type="checkbox" checked /> Waive $30 Loadout</label><label><input name="violetBottle" type="checkbox" checked /> Include Violet Wish Bottle</label><label><input name="starterLand" type="checkbox" checked /> Include starter land</label><label>Promotional MZK <input name="promotionalMzk" type="number" min="0" max="1000000" value="0" /></label><label><input name="creatorVault" type="checkbox" checked /> Enable creator tools</label><button type="submit">Generate Access Code</button></form>
+                    <form id="loadout-code-generator-form"><label>Internal label <input name="label" maxlength="80" placeholder="New user or campaign note" /></label><label>Campaign / source <input name="campaign" maxlength="80" /></label><label>Expiration before activation <select name="expiresInDays"><option value="1">1 day</option><option value="7" selected>7 days</option><option value="30">30 days</option><option value="365">1 year</option></select></label><label>Maximum activation date <input name="maximumActivationDate" type="datetime-local" /></label><label><input name="waiveLoadout" type="checkbox" checked /> Waive $30 Loadout</label><label><input name="violetBottle" type="checkbox" checked /> Include Violet Wish Bottle</label><label><input name="starterLand" type="checkbox" checked /> Include starter land</label><label>Promotional MZK <input name="promotionalMzk" type="number" min="0" max="1000000" value="0" /></label><label><input name="creatorVault" type="checkbox" checked /> Enable creator tools</label><button type="submit">Generate MZK Loadout Pass Code</button></form>
                     <output id="loadout-code-output" aria-live="polite">No MZK Access Code generated in this session.</output>
                     <button type="button" class="ghost" id="loadout-code-copy" hidden>Copy secret code</button>
                     <p class="status-message" id="loadout-code-admin-status" role="status">Codes are shown once; share them through a private channel.</p>
@@ -407,8 +412,10 @@
     <script src="public/js/api-connection.js"></script>
     <script src="mzk-wallet.js"></script>
     <script src="payment-config.js"></script><script src="wallet-payments.js"></script><script src="muzikaz-payment-checkout.js"></script>
+  <script src="contract-ownership.js"></script>
   <script src="script.js"></script>
   <script src="member-market.js"></script>
+  <script src="marketplace-listings.js"></script>
   <script src="battle-theme.js"></script>
     <script src="backpack-widget.js"></script>
 </body>

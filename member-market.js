@@ -67,7 +67,7 @@
   packs.addEventListener('submit', async (event) => {
     const listing = event.target.closest('[data-exchange-list]'); if (!listing) return;
     event.preventDefault();
-    try { await api('/api/market/listings', { method: 'PUT', body: JSON.stringify({ itemId: listing.dataset.exchangeList, priceMzk: Number(listing.elements.price.value), active: true }) }); await loadMembers(owner()); status.textContent = 'Pack listing is live for every member.'; } catch (error) { showError(error); }
+    try { await api('/api/market/listings', { method: 'PUT', body: JSON.stringify({ itemId: listing.dataset.exchangeList, priceMzk: Number(listing.elements.price.value), active: true }) }); await loadMembers(owner()); status.textContent = 'Pack listing is live for every member.'; window.dispatchEvent(new CustomEvent('muzikaz:market-listings-changed')); } catch (error) { showError(error); }
   });
   form?.addEventListener('submit', async (event) => {
     event.preventDefault(); const input = form.elements.message;

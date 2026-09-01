@@ -26,3 +26,15 @@ test('rotation preserves the canonical account and revokes the prior credential'
 test('recognized wallets always resolve to the same canonical account', async (t) => {
   const { store } = await fixture(t); const wallet = '0x3333333333333333333333333333333333333333'; const first = await store.findByWallet(wallet); const second = await store.findByWallet(wallet.toUpperCase().replace('0X', '0x')); assert.equal(first.accountId, second.accountId);
 });
+
+test('default MZK Loadout Pass creates and fully grants a brand-new user account', async (t) => {
+  const { store } = await fixture(t); const issued = await store.create();
+  assert.equal(issued.label, 'MZK Loadout Pass');
+  const activated = await store.activate(issued.code, '0x4444444444444444444444444444444444444444', 'New User');
+  assert.equal(activated.account.username, 'New User');
+  assert.equal(activated.account.loadoutStatus, 'waived');
+  assert.equal(activated.account.creatorVaultAccess, true);
+  assert.equal(activated.account.gameAccess, true);
+  assert.deepEqual(activated.account.landAssets, ['Unrevealed MUZIKAZ Land']);
+  assert.deepEqual(activated.account.bottleClaims, ['Violet Wish Bottle']);
+});

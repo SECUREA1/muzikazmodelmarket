@@ -329,31 +329,10 @@ async function validateBottleOwnership(address, requiredContract = '') {
   const wallet = requireEthereumWallet();
   const config = bottleContractConfig();
   await ensureBottleChain(wallet, config.chainId);
-  const ownerWord = String(address).toLowerCase().replace(/^0x/, '').padStart(64, '0');
-  const contracts = requiredContract ? config.approvedContracts.filter((contract) => contract === requiredContract.toLowerCase()) : config.approvedContracts;
-  if (!contracts.length) throw new Error('The requested access contract is not approved for this member vault.');
-  for (const contract of contracts) {
-    let result;
-    try {
-      result = await wallet.request({ method: 'eth_call', params: [{ to: contract, data: BOTTLE_BALANCE_OF_SELECTOR + ownerWord }, 'latest'] });
-    } catch (error) {
-      continue;
-    }
-    let balance;
-    try { balance = BigInt(result || '0x0'); } catch (error) { continue; }
-    if (balance >= 1n) {
-      const tokenIds = [];
-      for (let index = 0n; index < balance; index += 1n) {
-        const indexWord = index.toString(16).padStart(64, '0');
-        try {
-          const tokenResult = await wallet.request({ method: 'eth_call', params: [{ to: contract, data: '0x2f745c59' + ownerWord + indexWord }, 'latest'] });
-          tokenIds.push(BigInt(tokenResult || '0x0').toString());
-        } catch (error) { break; /* ERC-721 Enumerable is optional; ownership is still valid. */ }
-      }
-      return { balance, contract, tokenIds, config };
-    }
-  }
-  throw new Error('This wallet does not own a token from an approved MUZIKAZ Bottle contract. Mint one to enter.');
+  if (!window.MuzikazContractOwnership?.verify) throw new Error('The secure contract ownership checker did not load. Refresh and try again.');
+  const tokenIdsByContract = Object.fromEntries(Array.from(document.querySelectorAll('[data-contract][data-token-ids]'), (element) => [String(element.dataset.contract).toLowerCase(), String(element.dataset.tokenIds).split(',').map((id) => id.trim()).filter(Boolean)]));
+  const ownership = await window.MuzikazContractOwnership.verify({ wallet, address, contracts: config.approvedContracts, requiredContract, tokenIdsByContract });
+  return { ...ownership, config };
 }
 
 function readOwnedProfiles() {
@@ -3064,8 +3043,10 @@ function initAdminLogin() {
   const status = document.querySelector('#admin-login-status');
   if (!form || !card || !dashboard) return;
   const tokenKey = 'muzikazAdminToken';
+  const storedAdminToken = () => localStorage.getItem(tokenKey) || sessionStorage.getItem(tokenKey) || '';
+  const rememberAdminToken = (token) => { localStorage.setItem(tokenKey, token); sessionStorage.setItem(tokenKey, token); };
+  const forgetAdminToken = () => { localStorage.removeItem(tokenKey); sessionStorage.removeItem(tokenKey); };
   const conceal = (message = 'Administrator authentication is required.') => {
-    sessionStorage.removeItem(tokenKey);
     dashboard.hidden = true;
     card.hidden = false;
     status.textContent = message;
@@ -3077,14 +3058,14 @@ function initAdminLogin() {
   };
   const openAdminCenter = () => window.location.replace('admin.html');
   const validateStoredSession = async () => {
-    const token = sessionStorage.getItem(tokenKey);
-    if (!token) return conceal();
+    const token = storedAdminToken();
     status.textContent = 'Checking administrator session…';
     try {
-      const response = await fetch('/api/admin/analytics', { headers: { 'x-admin-token': token, Accept: 'application/json' } });
+      const response = await fetch('/api/admin/session', { headers: { ...(token ? { 'x-admin-token': token } : {}), Accept: 'application/json' }, cache: 'no-store' });
       if (!response.ok) throw new Error('Your administrator session has expired.');
       openAdminCenter();
     } catch (error) {
+      if (token) forgetAdminToken();
       conceal(error.message || 'Administrator authentication is required.');
     }
   };
@@ -3096,10 +3077,10 @@ function initAdminLogin() {
       const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(credentials) });
       const result = await response.json();
       if (!response.ok || !result.success || !result.data?.token) throw new Error(result.message || 'Authentication failed');
-      sessionStorage.setItem(tokenKey, result.data.token); form.reset(); openAdminCenter();
+      rememberAdminToken(result.data.token); form.reset(); openAdminCenter();
     } catch (error) { status.textContent = error.message || 'Authentication failed.'; }
   });
-  document.querySelector('#admin-logout')?.addEventListener('click', () => conceal('Signed out. Administrator authentication is required.'));
+  document.querySelector('#admin-logout')?.addEventListener('click', async () => { try { await fetch('/api/admin/logout', { method: 'POST', headers: { ...(storedAdminToken() ? { 'x-admin-token': storedAdminToken() } : {}), Accept: 'application/json' } }); } finally { forgetAdminToken(); conceal('Signed out. Administrator authentication is required.'); } });
   const codeForm = document.querySelector('#loadout-code-generator-form');
   const codeOutput = document.querySelector('#loadout-code-output');
   const codeStatus = document.querySelector('#loadout-code-admin-status');
@@ -3108,18 +3089,18 @@ function initAdminLogin() {
   let currentCode = '';
   const loadAccessCodes = async () => {
     if (!codeTable) return;
-    const response = await fetch('/api/admin/access-codes', { headers: { 'x-admin-token': sessionStorage.getItem(tokenKey) || '', Accept: 'application/json' } }); const result = await response.json();
+    const response = await fetch('/api/admin/access-codes', { headers: { 'x-admin-token': storedAdminToken(), Accept: 'application/json' } }); const result = await response.json();
     if (!response.ok || !result.success) throw new Error(result.message || 'Credentials could not be loaded.');
     codeTable.innerHTML = result.data.length ? result.data.map((item) => `<tr><td>${escapeHtml(item.maskedCode)}</td><td>${escapeHtml(item.label)}<small>${escapeHtml(item.campaign || '')}</small></td><td>${escapeHtml(item.status)}</td><td>${new Date(item.createdAt).toLocaleDateString()}<small>${item.activatedAt ? new Date(item.activatedAt).toLocaleDateString() : 'Not activated'}</small></td><td>${escapeHtml(item.boundWallet ? shortAddress(item.boundWallet) : '—')}<small>${escapeHtml(item.accountUsername || '')}</small></td><td>${item.loadoutRedeemed ? 'Yes' : 'No'}</td><td>${item.expiresAt ? new Date(item.expiresAt).toLocaleString() : '—'}</td><td><button type="button" data-access-revoke="${item.id}" ${item.status === 'revoked' ? 'disabled' : ''}>Revoke</button></td></tr>`).join('') : '<tr><td colspan="8">No credentials issued.</td></tr>';
   };
   document.addEventListener('muzikaz:admin-authenticated', () => loadAccessCodes().catch((error) => { if (codeStatus) codeStatus.textContent = error.message; }));
-  codeTable?.addEventListener('click', async (event) => { const id = event.target.closest('[data-access-revoke]')?.dataset.accessRevoke; if (!id) return; try { const response = await fetch(`/api/admin/access-codes/${id}/revoke`, { method: 'POST', headers: { 'x-admin-token': sessionStorage.getItem(tokenKey) || '', Accept: 'application/json' } }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message); await loadAccessCodes(); } catch (error) { codeStatus.textContent = error.message || 'Revoke failed.'; } });
+  codeTable?.addEventListener('click', async (event) => { const id = event.target.closest('[data-access-revoke]')?.dataset.accessRevoke; if (!id) return; try { const response = await fetch(`/api/admin/access-codes/${id}/revoke`, { method: 'POST', headers: { 'x-admin-token': storedAdminToken(), Accept: 'application/json' } }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message); await loadAccessCodes(); } catch (error) { codeStatus.textContent = error.message || 'Revoke failed.'; } });
   codeForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (codeStatus) codeStatus.textContent = 'Generating a cryptographically random MZK Access Code…';
     try {
       const fields = Object.fromEntries(new FormData(codeForm)); for (const name of ['waiveLoadout', 'violetBottle', 'starterLand', 'creatorVault']) fields[name] = codeForm.elements[name].checked;
-      const response = await fetch('/api/admin/access-codes', { method: 'POST', headers: { 'x-admin-token': sessionStorage.getItem(tokenKey) || '', 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(fields) });
+      const response = await fetch('/api/admin/loadout-codes', { method: 'POST', headers: { 'x-admin-token': storedAdminToken(), 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(fields) });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || 'Code generation failed.');
       currentCode = result.data.code;
