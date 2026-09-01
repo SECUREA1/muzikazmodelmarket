@@ -89,7 +89,18 @@
     const adminStatus = adminDialog.querySelector('[data-global-admin-status]');
     const openAdminButton = utilityBar.querySelector('[data-open-admin-login]');
     const closeAdmin = () => { adminDialog.hidden = true; document.documentElement.classList.remove('mzk-admin-open'); openAdminButton.focus(); };
-    openAdminButton.addEventListener('click', () => { adminDialog.hidden = false; document.documentElement.classList.add('mzk-admin-open'); adminForm.querySelector('input').focus(); });
+    openAdminButton.addEventListener('click', () => {
+      // A successful login is shared with the standalone command center for the
+      // lifetime of this tab. Do not put an already authenticated administrator
+      // through the utility login dialog a second time.
+      if (sessionStorage.getItem('muzikazAdminToken')) {
+        window.location.href = 'admin.html';
+        return;
+      }
+      adminDialog.hidden = false;
+      document.documentElement.classList.add('mzk-admin-open');
+      adminForm.querySelector('input').focus();
+    });
     adminDialog.addEventListener('click', (event) => { if (event.target.closest('[data-close-admin-login]')) closeAdmin(); });
     adminForm.addEventListener('submit', async (event) => {
       event.preventDefault();
