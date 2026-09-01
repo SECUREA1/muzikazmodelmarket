@@ -6,9 +6,12 @@
   const TRANSACTIONS_KEY = 'muzikazBackpackTransactions';
   const PROFILE_ASSETS_KEY = 'muzikazOwnedProfiles';
   const MODEL_ASSETS_KEY = 'muzikazBackpackAssetsV1';
+  const previewSlots = ['Avatar', 'Companion', 'Head', 'Neck', 'Torso', 'Tool', 'Collectible', 'Land', 'Bottle', 'Environment'];
 
   const icon = (className = '') => `<svg class="${className}" viewBox="0 0 48 48" aria-hidden="true"><path d="M15 18v-3a9 9 0 0 1 18 0v3"/><path d="M12 18h24a4 4 0 0 1 4 4v19H8V22a4 4 0 0 1 4-4Z"/><path d="M16 28h16v13H16z"/><path d="M8 25H5v11h3M40 25h3v11h-3"/><path d="M19 14h10M12 25h28M20 32h8"/></svg>`;
   const walletIcon = () => '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 13h28a5 5 0 0 1 5 5v22H8a4 4 0 0 1-4-4V13a5 5 0 0 1 5-5h25"/><path d="M31 23h12v10H31a5 5 0 0 1 0-10Z"/><circle cx="33" cy="28" r="1"/></svg>';
+  const adminIcon = () => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.3c0 4.7 3.2 8.2 7.5 9.7 4.3-1.5 7.5-5 7.5-9.7V6L12 3Z"/><path d="M9.5 11.5V10a2.5 2.5 0 0 1 5 0v1.5M9 11.5h6v4H9z"/></svg>';
+  const supportIcon = () => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 9 9 0 0 1-3.2-.7L4 20l1.6-4.1A7.4 7.4 0 0 1 4 11.5 7.5 7.5 0 0 1 12 4a7.5 7.5 0 0 1 8 7.5Z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/></svg>';
   const short = (value) => value ? `${value.slice(0, 6)}…${value.slice(-4)}` : 'Not connected';
   const safeJson = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch (_) { return fallback; } };
   const escapeHtml = (value) => String(value || '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
@@ -68,7 +71,7 @@
       <button type="button" class="mzk-mobile-menu-toggle" data-mobile-menu-toggle aria-expanded="false" aria-controls="mzk-mobile-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span></button>
     </div>
     <nav class="mzk-mobile-menu" id="mzk-mobile-menu" aria-label="MUZIKAZ WORLD menu" hidden>
-      <a href="index.html#models">Models</a><a href="index.html#world-map">World Map</a><a href="index.html#marketplace-preview">Marketplace</a><a href="index.html#character-world-assets">Characters &amp; Worlds</a><a href="index.html#merch">Merch</a><a href="avatar-whitepaper.html">Whitepaper</a><a href="members.html">Member Access</a><a href="model-market.html">MUZIKAZ World</a>
+      <a href="index.html">Home</a><a href="index.html#models">Models</a><a href="model-market.html">Market</a><a href="model-explorer.html">World</a><a href="members.html">Members</a><button type="button" data-mobile-support>${supportIcon()}<span>Support</span></button><button type="button" data-mobile-admin>${adminIcon()}<span>Admin</span></button>
     </nav>`;
     if (siteHeader) siteHeader.appendChild(mobileHeader);
 
@@ -85,7 +88,7 @@
     const utilityBar = document.createElement('aside');
     utilityBar.className = 'mzk-site-utility';
     utilityBar.setAttribute('aria-label', 'Support and administration');
-    utilityBar.innerHTML = `<button type="button" data-open-admin-login aria-label="Admin login" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.3c0 4.7 3.2 8.2 7.5 9.7 4.3-1.5 7.5-5 7.5-9.7V6L12 3Z"/><path d="M9.5 11.5V10a2.5 2.5 0 0 1 5 0v1.5M9 11.5h6v4H9z"/></svg><span>Admin</span></button><button type="button" data-open-support-chat aria-haspopup="dialog" aria-controls="muzikaz-support-chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 9 9 0 0 1-3.2-.7L4 20l1.6-4.1A7.4 7.4 0 0 1 4 11.5 7.5 7.5 0 0 1 12 4a7.5 7.5 0 0 1 8 7.5Z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/></svg><span>Support</span></button>`;
+    utilityBar.innerHTML = `<button type="button" data-open-admin-login aria-label="Admin login" aria-haspopup="dialog">${adminIcon()}<span>Admin</span></button><button type="button" data-open-support-chat aria-haspopup="dialog" aria-controls="muzikaz-support-chat">${supportIcon()}<span>Support</span></button>`;
     document.body.appendChild(utilityBar);
 
     const supportChat = document.querySelector('.support-chat');
@@ -106,6 +109,11 @@
     const adminForm = adminDialog.querySelector('[data-global-admin-form]');
     const adminStatus = adminDialog.querySelector('[data-global-admin-status]');
     const openAdminButton = utilityBar.querySelector('[data-open-admin-login]');
+    const menu = mobileHeader.querySelector('[data-mobile-menu-toggle]')?.nextElementSibling || mobileHeader.querySelector('.mzk-mobile-menu');
+    const menuButton = mobileHeader.querySelector('[data-mobile-menu-toggle]');
+    const toggleMenu = (open) => { if (!menu || !menuButton) return; menu.hidden = !open; menuButton.setAttribute('aria-expanded', String(open)); };
+    menuButton?.addEventListener('click', () => toggleMenu(menu.hidden));
+    menu?.addEventListener('click', () => toggleMenu(false));
     const adminToken = () => localStorage.getItem('muzikazAdminToken') || sessionStorage.getItem('muzikazAdminToken') || '';
     const rememberAdmin = (token) => { localStorage.setItem('muzikazAdminToken', token); sessionStorage.setItem('muzikazAdminToken', token); };
     const hasAdminSession = async () => {
@@ -126,6 +134,8 @@
       document.documentElement.classList.add('mzk-admin-open');
       adminForm.querySelector('input').focus();
     });
+    mobileHeader.querySelector('[data-mobile-admin]')?.addEventListener('click', () => openAdminButton.click());
+    mobileHeader.querySelector('[data-mobile-support]')?.addEventListener('click', () => utilityBar.querySelector('[data-open-support-chat]').click());
     if (new URLSearchParams(window.location.search).get('admin') === 'login') openAdminButton.click();
     adminDialog.addEventListener('click', (event) => { if (event.target.closest('[data-close-admin-login]')) closeAdmin(); });
     adminForm.addEventListener('submit', async (event) => {
@@ -161,9 +171,20 @@
       if (connectButton) connectButton.querySelector('span').textContent = address ? short(address) : 'Connect Ethereum';
     }
 
+    function renderGuestBackpack(message = 'Connect or sign in to load your MUZIKAZ items.') {
+      drawer.querySelector('[data-drawer-address]').textContent = 'Preview — no items shown here are owned.';
+      drawer.querySelector('[data-account-address]').textContent = 'Not connected';
+      drawer.querySelector('[data-account-network]').textContent = 'Preview';
+      drawer.querySelector('[data-account-balance]').textContent = '—';
+      drawer.querySelector('[data-backpack-status]').textContent = message;
+      drawer.querySelector('[data-backpack-items]').innerHTML = `<div class="mzk-backpack-preview"><div class="mzk-backpack-preview-copy"><strong>Backpack template</strong><span>Empty slots preview the supported inventory layout. They are not assets, NFTs, or a balance.</span><button type="button" data-preview-connect>Connect wallet</button></div><div class="mzk-backpack-slot-grid">${previewSlots.map((slot) => `<div class="mzk-backpack-slot">${icon()}<strong>${slot}</strong><small>Empty slot</small></div>`).join('')}</div></div>`;
+      drawer.querySelector('[data-preview-connect]')?.addEventListener('click', connect);
+      drawer.querySelector('[data-backpack-trades]').innerHTML = '<li><span>Sign in to view account activity.</span><a href="members.html">Member access</a></li>';
+    }
+
     async function loadBackpack() {
       const address = window.MZKWallet.connectedAddress();
-      if (!address) { await connect(); if (!window.MZKWallet.connectedAddress()) return false; }
+      if (!address) { renderGuestBackpack(); return false; }
       const activeAddress = window.MZKWallet.connectedAddress();
       const status = drawer.querySelector('[data-backpack-status]');
       status.textContent = 'Syncing this wallet’s Backpack…';
@@ -203,12 +224,12 @@
     }
 
     async function open() {
-      if (!await loadBackpack()) return;
       lastFocused = document.activeElement;
       drawer.hidden = false;
       document.documentElement.classList.add('mzk-backpack-open');
       button.setAttribute('aria-expanded', 'true');
       drawer.querySelector('[data-close-backpack]').focus?.();
+      await loadBackpack();
     }
     function close() { drawer.hidden = true; document.documentElement.classList.remove('mzk-backpack-open'); button.setAttribute('aria-expanded', 'false'); lastFocused?.focus?.(); }
     button.addEventListener('click', open);

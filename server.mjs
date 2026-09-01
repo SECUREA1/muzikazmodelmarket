@@ -279,6 +279,14 @@ const server = createServer(async (req, res) => {
       res.setHeader('Set-Cookie', `mzk_admin=${persistentAdminToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=315360000${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
       return sendJson(res, 200, assetResponse({ token: persistentAdminToken, persistent: true }));
     }
+    if (url.pathname === '/api/admin/session' && req.method === 'GET') {
+      if (!isAdmin(req)) return sendJson(res, 401, { success: false, code: 'ADMIN_SESSION_EXPIRED', message: 'Administrator session is missing or expired.' });
+      return sendJson(res, 200, assetResponse({ authenticated: true, persistent: true }));
+    }
+    if (url.pathname === '/api/admin/logout' && req.method === 'POST') {
+      res.setHeader('Set-Cookie', `mzk_admin=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+      return sendJson(res, 200, assetResponse({ authenticated: false }));
+    }
     if (url.pathname === '/api/admin/data' && req.method === 'GET') {
       if (!requireAdmin(req, res)) return;
       const [submissions, models, usersData, sales, environments, avatars, avatarProfiles] = await Promise.all([
