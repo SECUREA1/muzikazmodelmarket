@@ -54,6 +54,12 @@ least one Bottle token.
 
 ## Land location data
 
+### Canonical live wallet and deed memory
+
+The Node service keeps wallet state, nested game memory, MZK ledger entries, market trades, and land deeds together in the server-side `MUZIKAZ_DATA_DIR/users.json` database. Writes are serialized and atomically renamed, memory updates are deep-merged, every MZK balance change is appended to the ledger, and deed claims debit MZK and assign the deed in one transaction. Browser `localStorage` is a display cache only and is not accepted as proof of land ownership; upload gates query the canonical deed index.
+
+Production must mount persistent storage. `render.yaml` mounts `/var/data` and points `MUZIKAZ_DATA_DIR` at `/var/data/muzikaz`, allowing every browser connected to the live service to share the same durable state across deploys and process restarts. Do not deploy the transaction service with an ephemeral `data/` directory.
+
 The calculated world-atlas inventory is committed as
 `data/land-worlds.json`. It records eight fixed system pins, five public-area
 plots, seven route connections, and an empty list for owner-created wild-land

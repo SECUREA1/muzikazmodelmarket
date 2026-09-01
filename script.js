@@ -1199,15 +1199,25 @@ function initWorldPlot() {
 
   spaces.forEach((space) => space.addEventListener('click', () => selectSpace(space.dataset.worldSpace)));
   consent.addEventListener('change', () => { reserveButton.disabled = ownedPlotNames().includes(selectedSpace) || !consent.checked; });
-  agreement.addEventListener('submit', (event) => {
+  agreement.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!consent.checked) return;
     if (ownedPlotNames().includes(selectedSpace)) return;
-    const purchase = window.MZKWallet?.spend(STARTER_PLOT_MZK, `Starter land deed · ${selectedSpace}`, `starter-land:${owner}:${selectedSpace}`, { asset: selectedSpace, type: 'starter-land' });
-    if (!purchase?.ok) {
-      window.location.href = `buy-mzk.html?return=${encodeURIComponent('model-market.html#muzikaz-world-plot')}#swap`;
+    const walletId = window.MZKWallet?.connectedAddress?.() || owner;
+    const worldId = selectedSpace.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const requestId = `starter-land:${walletId}:${worldId}`;
+    reserveButton.disabled = true; reserveButton.textContent = 'Recording deed…';
+    let deed;
+    try {
+      const response = await fetch('/api/land/claims', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Wallet-Address': walletId }, body: JSON.stringify({ worldId, requestId }) });
+      const result = await response.json(); if (!response.ok) throw new Error(result.message || 'The live deed database rejected this claim.');
+      deed = result.data || result;
+    } catch (error) {
+      reserveButton.disabled = false; reserveButton.textContent = `Claim ${selectedSpace} · ${STARTER_PLOT_MZK.toLocaleString()} MZK`;
+      selection.innerHTML = `<span class="world-plot__selection-number">!</span><span><strong>Claim not recorded.</strong> ${escapeHtml(error.message)}</span><small>Your MZK was not spent locally. Reconnect to the live service and retry.</small>`;
       return;
     }
+    window.MZKWallet?.spend(STARTER_PLOT_MZK, `Starter land deed · ${selectedSpace}`, requestId, { asset: selectedSpace, deedId: deed.id, type: 'starter-land' });
     claimOwnedAsset(`MUZIKAZ World · ${selectedSpace}`, 'Public-area plot claim');
     updateOwnedCount();
     updateCart(reserveButton, 'Plot claimed');
