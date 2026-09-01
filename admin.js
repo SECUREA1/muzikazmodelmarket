@@ -22,6 +22,7 @@
   const $ = (selector) => document.querySelector(selector);
   let snapshot = null;
   let openRow = null;
+  let currentAccessCode = '';
 
   function token() { return sessionStorage.getItem(tokenKey) || ''; }
   function present(value) {
@@ -79,13 +80,31 @@
     if (!response.ok || !result.success) throw new Error(result.message || 'Administrator data could not be loaded.');
     snapshot = result.data; renderSnapshot();
   }
+  const formatDate = (value) => value ? new Date(value).toLocaleString() : '—';
+  async function accessRequest(path = '/api/admin/access-codes', options = {}) {
+    const response = await fetch(path, { ...options, headers: { 'x-admin-token': token(), Accept: 'application/json', ...options.headers } });
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.message || 'Access passes could not be loaded.');
+    return result.data;
+  }
+  function renderAccessCodes(codes) {
+    const table = $('#access-code-table');
+    table.replaceChildren(...codes.map((code) => {
+      const row = document.createElement('tr');
+      const values = [code.maskedCode, code.label || 'Admin Loadout Pass', code.status, formatDate(code.createdAt), formatDate(code.expiresAt), code.boundWallet || 'Not activated', code.loadoutRedeemed ? 'Granted' : 'Pending'];
+      values.forEach((value) => { const cell = document.createElement('td'); cell.textContent = value; cell.title = value; row.append(cell); });
+      const control = document.createElement('td'); const revoke = document.createElement('button'); revoke.type = 'button'; revoke.textContent = 'Revoke'; revoke.disabled = code.status === 'revoked' || code.status === 'expired'; revoke.dataset.revokeAccessCode = code.id; control.append(revoke); row.append(control); return row;
+    }));
+    if (!codes.length) table.innerHTML = '<tr><td colspan="8">No one-time Loadout passes have been generated.</td></tr>';
+  }
+  async function loadAccessCodes() { renderAccessCodes(await accessRequest()); }
   function showLogin(message = 'Enter administrator credentials.') {
     sessionStorage.removeItem(tokenKey); $('#dashboard').hidden = true; $('#login-panel').hidden = false; $('#sign-out').hidden = true;
     $('#login-status').textContent = message;
   }
   async function showDashboard() {
     $('#login-panel').hidden = true; $('#dashboard').hidden = false; $('#sign-out').hidden = false;
-    try { await loadData(); } catch (error) { showLogin(error.message); }
+    try { await Promise.all([loadData(), loadAccessCodes()]); } catch (error) { showLogin(error.message); }
   }
   $('#view').replaceChildren(...Object.entries(views).map(([value, config]) => new Option(config.title, value)));
   $('#coded-options').replaceChildren(...Object.entries(codedOptions).map(([name, options]) => {
@@ -105,6 +124,25 @@
   });
   $('#view').addEventListener('change', renderTable); $('#search').addEventListener('input', renderTable);
   $('#refresh').addEventListener('click', () => loadData().catch((error) => { $('#last-updated').textContent = error.message; $('#last-updated').className = 'error'; }));
+  $('#access-code-form').addEventListener('submit', async (event) => {
+    event.preventDefault(); const status = $('#access-code-status'); status.textContent = 'Generating a secure one-time signup code…'; status.className = 'access-status';
+    try {
+      const fields = Object.fromEntries(new FormData(event.currentTarget));
+      const code = await accessRequest('/api/admin/access-codes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...fields, waiveLoadout: true, violetBottle: true, starterLand: true, creatorVault: true }) });
+      currentAccessCode = code.code; $('#access-code-output').textContent = currentAccessCode; $('#access-code-copy').hidden = false;
+      status.textContent = `Ready to share privately. It can be activated once before ${formatDate(code.expiresAt)}.`; await loadAccessCodes(); event.currentTarget.reset();
+    } catch (error) { status.textContent = error.message || 'Code generation failed.'; status.className = 'access-status error'; }
+  });
+  $('#access-code-copy').addEventListener('click', async () => {
+    if (!currentAccessCode) return;
+    try { await navigator.clipboard.writeText(currentAccessCode); $('#access-code-status').textContent = 'Code copied. It grants the paid-member Loadout when the recipient activates it.'; }
+    catch { $('#access-code-status').textContent = `Clipboard unavailable. Copy the displayed code manually: ${currentAccessCode}`; }
+  });
+  $('#access-code-table').addEventListener('click', async (event) => {
+    const id = event.target.closest('[data-revoke-access-code]')?.dataset.revokeAccessCode; if (!id) return;
+    try { await accessRequest(`/api/admin/access-codes/${encodeURIComponent(id)}/revoke`, { method: 'POST' }); $('#access-code-status').textContent = 'Access pass revoked.'; await loadAccessCodes(); }
+    catch (error) { $('#access-code-status').textContent = error.message || 'The pass could not be revoked.'; }
+  });
   $('#export').addEventListener('click', () => { const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' })); link.download = `muzikaz-admin-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(link.href); });
   $('#sign-out').addEventListener('click', () => showLogin('Signed out. Enter administrator credentials.'));
   token() ? showDashboard() : showLogin();
