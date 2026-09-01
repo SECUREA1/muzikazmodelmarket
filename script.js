@@ -1,5 +1,5 @@
-const menuButton = document.querySelector('.menu-toggle');
-const nav = document.querySelector('.nav');
+const menuButton = document.querySelector('.site-header:not(.global-site-header) .menu-toggle');
+const nav = document.querySelector('.site-header:not(.global-site-header) .nav');
 const cartCount = document.querySelector('#cart-count');
 const modelStatus = document.querySelector('#model-status');
 const modelDetail = document.querySelector('#model-detail');
