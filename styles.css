@@ -3294,3 +3294,62 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
   .model-market-page .global-site-header :is(.icon-button,.menu-toggle){width:40px;min-width:40px}
   .model-market-page .market-toggle-button{font-size:9px}
 }
+
+/* Mobile uses the complete desktop action set directly in the header. There is
+   no second, hidden hamburger list: every destination remains one tap away. */
+@media(max-width:720px){
+  .global-site-header{
+    display:flex;
+    flex-wrap:wrap;
+    height:auto;
+    min-height:68px;
+    padding-bottom:7px;
+  }
+  .global-site-header .world-logo{order:1}
+  .global-site-header .icons{order:2;margin-left:auto}
+  .global-site-header .menu-toggle{display:none!important}
+  .global-site-header .global-nav,
+  .model-market-page .global-site-header .global-nav{
+    position:static;
+    order:3;
+    display:grid;
+    grid-template-columns:repeat(9,minmax(0,1fr));
+    flex:1 0 100%;
+    width:100%;
+    max-height:none;
+    margin:0;
+    padding:5px;
+    gap:3px;
+    overflow:visible;
+    border:1px solid rgba(156,255,0,.2);
+    border-radius:10px;
+    background:rgba(0,0,0,.46);
+    box-shadow:none;
+    opacity:1;
+    visibility:visible!important;
+    pointer-events:auto;
+    transform:none;
+  }
+  .global-nav .nav-link,
+  .global-nav .nav-link:hover,
+  .global-nav .nav-link:focus-visible,
+  .global-nav .nav-link.active{
+    width:100%;
+    min-width:0;
+    min-height:40px;
+    justify-content:center;
+    padding:7px 2px;
+    border-color:rgba(156,255,0,.14);
+  }
+  .global-nav .nav-link span,
+  .global-nav .nav-link--icon span{
+    position:absolute;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+    clip-path:inset(50%);
+    white-space:nowrap;
+  }
+  .global-nav .nav-link::after{display:none}
+  .global-nav .nav-icon{width:21px;height:21px;flex-basis:21px}
+}
