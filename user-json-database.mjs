@@ -85,6 +85,37 @@ export class UserJsonDatabase {
     return clone(record || { walletId: wallet, tokens: { MZK: 0 }, items: [], memory: {}, createdAt: null, updatedAt: null, revision: 0 });
   }
 
+  /**
+   * Materialize an access-code account in the durable game/market database.
+   * This is intentionally additive: logging in must never replace saves,
+   * listings, uploaded-asset references, or other application memory.
+   */
+  ensureAccount(account) {
+    const wallet = cleanWallet(account?.primaryEthereumWallet);
+    const entitlementItems = [
+      ...(account.gameAssets || []).map((name) => ({ id: `access-game-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'game-asset', source: 'mzk-access-code' })),
+      ...(account.landAssets || []).map((name) => ({ id: `access-land-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'land-entitlement', source: 'mzk-access-code' })),
+      ...(account.bottleClaims || []).map((name) => ({ id: `access-claim-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'collectible-claim', source: 'mzk-access-code' }))
+    ];
+    return this.transaction((data) => {
+      const previous = data.users[wallet] || {};
+      const now = new Date().toISOString();
+      const knownIds = new Set((previous.items || []).map((item) => item.id));
+      const items = [...(previous.items || []), ...entitlementItems.filter((item) => !knownIds.has(item.id))];
+      const memory = mergeMemory(previous.memory, {
+        account: { accountId: account.accountId, backpackId: account.backpackId, accessCodeStatus: account.accessCodeStatus, gameAccess: Boolean(account.gameAccess), creatorVaultAccess: Boolean(account.creatorVaultAccess) },
+        profile: account.username ? { username: account.username, displayName: account.username } : {}
+      });
+      const tokens = { ...(previous.tokens || {}) };
+      const firstAccountSync = previous.memory?.account?.accountId !== account.accountId;
+      if (tokens.MZK === undefined) tokens.MZK = 0;
+      if (firstAccountSync) tokens.MZK = Number(tokens.MZK || 0) + Number(account.mzkBalance || 0);
+      const record = { walletId: wallet, tokens, items, memory, createdAt: previous.createdAt || account.createdAt || now, updatedAt: now, revision: Number(previous.revision || 0) + 1 };
+      data.users[wallet] = record;
+      return record;
+    });
+  }
+
   async members() {
     await this.initialize();
     const data = await this.read();
