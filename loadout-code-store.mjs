@@ -16,11 +16,18 @@ const enabled = (value, fallback = true) => value == null ? fallback : ![false, 
 const STANDARD_LOADOUT_ASSETS = ['Starter Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear'];
 const STANDARD_LAND_ASSETS = ['Unrevealed MUZIKAZ Land'];
 const STANDARD_BOTTLE_CLAIMS = ['Violet Wish Bottle'];
+const STANDARD_STARTER_MZK = 500;
 
 // Wallet and code login are two keys to one account, so both must expose the
 // same complete, idempotently provisioned Backpack. This also repairs older
 // accounts that were created before the standard loadout became inclusive.
 function grantStandardLoadout(account) {
+  // This welcome balance belongs to the account rather than a credential or
+  // login attempt, so every entry path can safely run this repair function.
+  if (!account.starterMzkGranted) {
+    account.mzkBalance = Number(account.mzkBalance || 0) + STANDARD_STARTER_MZK;
+    account.starterMzkGranted = true;
+  }
   account.loadoutStatus = account.loadoutStatus === 'paid' ? 'paid' : 'included';
   account.loadoutRedeemed = true;
   account.creatorVaultAccess = true;
@@ -60,7 +67,7 @@ function expireIssuedCredentials(data, now = Date.now()) {
 }
 function accountRecord(id, wallet = '', username = '') {
   const now = new Date().toISOString();
-  return { accountId: id || `usr_${randomUUID()}`, username, accessCodeStatus: null, accessCodeCreatedAt: null, accessCodeActivatedAt: null, accessCodeLastUsedAt: null, primaryEthereumWallet: wallet || null, connectedWallets: wallet ? [{ chain: 'ETH', address: wallet, boundAt: now }] : [], loadoutStatus: 'none', loadoutPaymentId: null, loadoutRedeemed: false, backpackId: `pack_${randomUUID()}`, mzkBalance: 0, landAssets: [], gameAssets: [], purchasedAssets: [], bottleClaims: [], bottleNFTs: [], creatorVaultAccess: false, marketplaceAccess: true, gameAccess: false, createdAt: now, updatedAt: now };
+  return { accountId: id || `usr_${randomUUID()}`, username, accessCodeStatus: null, accessCodeCreatedAt: null, accessCodeActivatedAt: null, accessCodeLastUsedAt: null, primaryEthereumWallet: wallet || null, connectedWallets: wallet ? [{ chain: 'ETH', address: wallet, boundAt: now }] : [], loadoutStatus: 'none', loadoutPaymentId: null, loadoutRedeemed: false, backpackId: `pack_${randomUUID()}`, mzkBalance: 0, starterMzkGranted: false, landAssets: [], gameAssets: [], purchasedAssets: [], bottleClaims: [], bottleNFTs: [], creatorVaultAccess: false, marketplaceAccess: true, gameAccess: false, createdAt: now, updatedAt: now };
 }
 
 export class MzkAccountStore {

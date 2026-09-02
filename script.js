@@ -2338,8 +2338,9 @@ function initBottleLogin() {
       const credentialResult = await credentialResponse.json();
       if (!credentialResponse.ok || !credentialResult.success) throw new Error(credentialResult.message || 'Your account was created, but its MZK Access Code could not be generated.');
       setPurchaseStep(3);
-      if (status) status.textContent = credentialResult.data.code ? `$${BACKPACK_LOADOUT_USD} Loadout confirmed. Save your MZK Access Code now—it will not be shown again: ${credentialResult.data.code}` : `$${BACKPACK_LOADOUT_USD} Loadout confirmed for account ${account.accountId}. Your existing MZK Access Code remains your one account credential.`;
+      unlock(credentialResult.data.code ? `$${BACKPACK_LOADOUT_USD} Loadout confirmed. Full member and multiplayer access is open with 500 starter MZK. Save your MZK Access Code now—it will not be shown again: ${credentialResult.data.code}` : `$${BACKPACK_LOADOUT_USD} Loadout confirmed for account ${account.accountId}. Full member and multiplayer access is open with your existing MZK Access Code.`);
       renderOwnedCollection(currentMemberEmail);
+      scrollToSection('member-locked-content');
     } catch (error) {
       if (status) status.textContent = error.message || 'The Backpack Loadout could not be purchased.';
     } finally {
