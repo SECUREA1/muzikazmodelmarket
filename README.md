@@ -1,26 +1,26 @@
 # muzikazmodelmarket
 
-Static MUZIKAZ WORLD experience served by a small Rust HTTP server.
+MUZIKAZ WORLD experience served by its persistent Node.js API and static frontend.
 
 ## Render deployment
 
-This repository is intentionally configured as a **Rust Web Service** on Render so it can stay on the Rust runtime for future backend work.
+Deploy this repository from the committed `render.yaml` blueprint. It runs the Node.js service that owns the admin, account, Loadout Pass, payment, wallet, and marketplace APIs; deploying only the static files or the legacy Rust binary leaves those operational routes unavailable.
 
 Use these Render settings:
 
 ```txt
 Service type: Web Service
-Runtime: Rust
+Runtime: Node
 Branch: main
 Root Directory: leave blank
-Build Command: cargo build --release
-Start Command: ./target/release/muzikazmodelmarket
+Build Command: npm ci && npm run build
+Start Command: node server.mjs
 Health Check Path: /api/health
 ```
 
-Do not use `npm start` or `cargo run --release` as the Render start command. Render should start the compiled release binary directly.
+The blueprint auto-deploys commits and mounts `/var/data`. All mutable JSON databases and uploaded avatars, assets, and environments are explicitly placed below `/var/data/muzikaz`, so an API restart or a new deployment does not reset the admin totals or generated Loadout Passes. Set `MUZIKAZ_ADMIN_USERNAME`, `MUZIKAZ_ADMIN_PASSWORD`, and `MUZIKAZ_ADMIN_SESSION_SECRET` to secret production values in Render; do not add their values to this file.
 
-The Rust server serves files from `dist/` when a static build exists. If `dist/index.html` is not present, it serves the checked-in site files from the repository root, which keeps the Render Rust deployment independent of Node.
+The Node service serves files from `dist/` when a static build exists and falls back to the checked-in site files during local development.
 
 ## Local checks
 

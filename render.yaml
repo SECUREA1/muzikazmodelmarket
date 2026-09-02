@@ -6,6 +6,7 @@ services:
     buildCommand: npm ci && npm run build
     startCommand: node server.mjs
     healthCheckPath: /api/health
+    autoDeployTrigger: commit
     envVars:
       - key: PORT
         value: 10000
@@ -13,6 +14,20 @@ services:
         value: https://muzikazmodelmarket.onrender.com
       - key: MUZIKAZ_DATA_DIR
         value: /var/data/muzikaz
+      - key: MUZIKAZ_USER_DATABASE_FILE
+        value: /var/data/muzikaz/users.json
+      - key: MUZIKAZ_ACCOUNTS_FILE
+        value: /var/data/muzikaz/accounts.json
+      - key: MUZIKAZ_PAYMENT_ORDERS_FILE
+        value: /var/data/muzikaz/payment-orders.json
+      - key: MUZIKAZ_AVATAR_UPLOAD_DIR
+        value: /var/data/muzikaz/uploads/avatars
+      - key: MUZIKAZ_ASSET_UPLOAD_DIR
+        value: /var/data/muzikaz/uploads/assets
+      - key: MUZIKAZ_ENVIRONMENT_UPLOAD_DIR
+        value: /var/data/muzikaz/uploads/environments
+      - key: MUZIKAZ_ENVIRONMENT_DATA_FILE
+        value: /var/data/muzikaz/environments.json
       - key: UPLOAD_STORAGE_PATH
         value: data/uploads/models
       - key: MAX_MODEL_UPLOAD_MB

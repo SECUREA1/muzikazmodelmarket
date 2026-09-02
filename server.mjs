@@ -10,7 +10,7 @@ import { verifyPaymentTransaction } from './payment-verifier.mjs';
 
 const root = process.cwd();
 const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
-const uploadDir = process.env.MUZIKAZ_UPLOAD_DIR || join(root, 'uploads', 'avatars');
+const uploadDir = process.env.MUZIKAZ_AVATAR_UPLOAD_DIR || process.env.MUZIKAZ_UPLOAD_DIR || join(root, 'uploads', 'avatars');
 const assetUploadDir = process.env.MUZIKAZ_ASSET_UPLOAD_DIR || join(root, 'uploads', 'assets');
 const environmentUploadDir = process.env.MUZIKAZ_ENVIRONMENT_UPLOAD_DIR || join(root, 'uploads', 'environments');
 const dataFile = join(dataDir, 'shared-house-avatars.json');
@@ -238,7 +238,10 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders()); res.end(); return; }
   try {
-    if (url.pathname === '/api/health' && req.method === 'GET') return sendJson(res, 200, { success: true, service: 'muzikaz-member-market' });
+    if (url.pathname === '/api/health' && req.method === 'GET') {
+      await ensureStorage();
+      return sendJson(res, 200, { success: true, service: 'muzikaz-member-market', storage: 'ready', persistentStorageConfigured: dataDir.startsWith('/var/data') });
+    }
     if (url.pathname === '/api/admin/login' && req.method === 'POST') {
       const credentials = await bodyJson(req);
       if (!matchesSecret(credentials.username, adminUsername) || !matchesSecret(credentials.password, adminPassword)) return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
