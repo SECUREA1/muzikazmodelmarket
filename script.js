@@ -2228,10 +2228,7 @@ function initBottleLogin() {
       setBusy(false);
     }
   };
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    await connect();
-  });
+  connectButton?.addEventListener('click', connect);
   meknxButton?.addEventListener('click', async () => {
     walletRequestActive = true;
     setBusy(true);
@@ -2251,21 +2248,29 @@ function initBottleLogin() {
   });
   loadoutCurrency?.addEventListener('change', updateLoadoutQuote);
   accessCodeInput?.addEventListener('input', () => { accessCodeInput.value = accessCodeInput.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''); });
-  accessCodeButton?.addEventListener('click', async () => {
+  const openAccessCodeAccount = async ({ connectFirst = false } = {}) => {
     setBusy(true);
     try {
       const code = accessCodeInput?.value.trim();
       if (!code) throw new Error('Enter your private MZK Access Code.');
-      if (status) status.textContent = 'Opening the MUZIKAZ account connected to this code…';
+      let address = '';
+      if (connectFirst) {
+        if (status) status.textContent = 'Connect MetaMask to validate this MZK Access Code…';
+        address = await requestEthereumAccount(requireEthereumWallet(), { chooseAccount: connectButton?.dataset.connected === 'true' });
+        showAddress(address);
+      } else if (status) {
+        status.textContent = 'Opening the MUZIKAZ account connected to this code…';
+      }
       const submitCode = async (wallet = '') => {
         const response = await fetch('/api/access/activate', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code, wallet, username: usernameInput?.value || '' }) });
-        const result = await response.json();
+        const result = await response.json().catch(() => ({ success: false, message: `The access service returned an unreadable response (${response.status}).` }));
         return { response, result };
       };
-      let { response, result } = await submitCode();
+      let { response, result } = await submitCode(address);
       if (response.status === 428) {
         if (status) status.textContent = 'This new code needs an Ethereum account. Connect the wallet that will permanently own this MUZIKAZ account…';
-        const address = await requestEthereumAccount(requireEthereumWallet());
+        address = await requestEthereumAccount(requireEthereumWallet());
+        showAddress(address);
         ({ response, result } = await submitCode(address));
       }
       if (!response.ok || !result.success) throw new Error(result.message || 'The MZK Access Code could not be activated.');
@@ -2288,25 +2293,13 @@ function initBottleLogin() {
     } catch (error) {
       if (status) status.textContent = error.message || 'The MZK Access Code could not be activated.';
     } finally { setBusy(false); }
-  });
-  walletValidateButton?.addEventListener('click', async () => {
-    setBusy(true);
-    try {
-      const session = window.MuzikazAccountSession;
-      if (!session?.csrfToken) throw new Error('Submit your MZK Access Code to open the account before connecting a wallet.');
-      if (status) status.textContent = 'Connect the Ethereum wallet to validate it against this MZK account…';
-      const wallet = requireEthereumWallet();
-      const address = await requestEthereumAccount(wallet, { chooseAccount: connectButton?.dataset.connected === 'true' });
-      const response = await fetch('/api/account/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': session.csrfToken }, body: JSON.stringify({ wallet: address }) });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message || 'The wallet could not be validated against this account.');
-      window.MuzikazAccountSession.account = result.data;
-      showAddress(address);
-      if (identityPanel) identityPanel.hidden = false;
-      if (status) status.textContent = `Wallet ${shortAddress(address)} is validated and connected to account ${result.data.accountId}. Your Access Code remains usable without reconnecting.`;
-    } catch (error) {
-      if (status) status.textContent = error.message || 'The wallet could not be validated.';
-    } finally { setBusy(false); }
+  };
+  accessCodeButton?.addEventListener('click', () => openAccessCodeAccount());
+  walletValidateButton?.addEventListener('click', () => openAccessCodeAccount({ connectFirst: true }));
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (accessCodeInput?.value.trim()) await openAccessCodeAccount();
+    else await connect();
   });
   loadoutButton?.addEventListener('click', async () => {
     setBusy(true);
