@@ -41,3 +41,12 @@ test('shared header exposes checkout and member access and checkout uses the ver
   assert.match(checkoutSource, /event\.detail\.fulfillment\?\.items \|\| event\.detail\.metadata\?\.items/);
   assert.doesNotMatch(checkoutSource, /claimOwnedAsset\(title, 'Designer save'\)/);
 });
+
+test('cart navigation carries items across origins and checkout refreshes from storage', () => {
+  assert.match(checkoutSource, /checkout\.html\?cart=\$\{encodeURIComponent\(cart\)\}/);
+  assert.match(checkoutSource, /params\.get\('cart'\)/);
+  assert.match(checkoutSource, /location\.hash\.startsWith\('#cart='\)/);
+  assert.match(checkoutSource, /params\.delete\('cart'\)/);
+  assert.match(checkoutSource, /addEventListener\('storage', renderCheckoutPage\)/);
+  assert.match(checkoutSource, /addEventListener\('mzk:cart-changed', renderCheckoutPage\)/);
+});

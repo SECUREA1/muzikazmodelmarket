@@ -158,24 +158,32 @@ function readCart() {
 }
 
 // Keep the cart attached to checkout navigation as well as localStorage. This
-// matters when a mobile browser follows the site's alternate Render hostname:
-// localStorage is origin-scoped, while the URL fragment survives that handoff.
-function portableCartFragment(items = readCart()) {
+// matters when a browser follows the site's alternate Render hostname because
+// localStorage is origin-scoped. Use a query parameter rather than a fragment:
+// fragments can be consumed or discarded by mobile in-app browsers and never
+// reach the destination server during a redirect.
+function portableCartParameter(items = readCart()) {
   if (!items.length) return '';
   const bytes = new TextEncoder().encode(JSON.stringify(items));
   let binary = '';
   bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
-  return `#cart=${btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 function checkoutUrl() {
-  return `checkout.html${portableCartFragment()}`;
+  const cart = portableCartParameter();
+  return cart ? `checkout.html?cart=${encodeURIComponent(cart)}` : 'checkout.html';
 }
 
 function restorePortableCart() {
-  if (!checkoutItems || !window.location.hash.startsWith('#cart=')) return;
+  if (!checkoutItems) return;
   try {
-    const encoded = window.location.hash.slice(6).replace(/-/g, '+').replace(/_/g, '/');
+    // Continue accepting the former hash format so links already shared from a
+    // previous deployment still restore correctly.
+    const params = new URLSearchParams(window.location.search);
+    const encodedCart = params.get('cart') || (window.location.hash.startsWith('#cart=') ? window.location.hash.slice(6) : '');
+    if (!encodedCart) return;
+    const encoded = encodedCart.replace(/-/g, '+').replace(/_/g, '/');
     const binary = atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '='));
     const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
     const items = JSON.parse(new TextDecoder().decode(bytes));
@@ -185,9 +193,11 @@ function restorePortableCart() {
     // The checkout URL is the most recent representation of the cart and must
     // win over an empty (or stale) store belonging to the destination origin.
     writeCart(items);
-    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    params.delete('cart');
+    const remainingQuery = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${remainingQuery ? `?${remainingQuery}` : ''}`);
   } catch (_) {
-    // Ignore malformed fragments and retain the cart already stored locally.
+    // Ignore malformed portable data and retain the cart already stored locally.
   }
 }
 
@@ -2716,6 +2726,8 @@ renderCheckoutIdentity();
 window.addEventListener('mzk:identity-changed', renderCheckoutIdentity);
 window.addEventListener('mzk:wallet-connection-changed', renderCheckoutIdentity);
 window.addEventListener('storage', renderCheckoutIdentity);
+window.addEventListener('storage', renderCheckoutPage);
+window.addEventListener('mzk:cart-changed', renderCheckoutPage);
 initMzkCheckout();
 
 function initPublicModelExplorer() {
