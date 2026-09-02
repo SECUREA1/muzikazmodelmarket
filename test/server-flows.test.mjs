@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -55,4 +55,14 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' } } }) });
   await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });
   const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['New User Pack']);
+});
+
+test('member loadout entry uses the shared API connection and legacy redemption fallback', async () => {
+  const source = await readFile(new URL('../script.js', import.meta.url), 'utf8');
+  assert.match(source, /const accountApiFetch = .*window\.MUZIKAZ_API\?\.fetch/s);
+  assert.match(source, /accountApiFetch\('\/api\/access\/wallet'/);
+  assert.match(source, /accountApiFetch\('\/api\/access\/activate'/);
+  assert.match(source, /response\.status === 404.*accountApiFetch\('\/api\/loadout-codes\/redeem'/s);
+  assert.match(source, /accountApiFetch\('\/api\/account\/loadout\/paid'/);
+  assert.match(source, /accountApiFetch\('\/api\/account\/access-code'/);
 });
