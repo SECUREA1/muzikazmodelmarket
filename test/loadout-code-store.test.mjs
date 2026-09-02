@@ -29,7 +29,7 @@ test('recognized wallets always resolve to the same canonical account', async (t
   assert.equal(first.loadoutRedeemed, true);
   assert.deepEqual(first.landAssets, ['Unrevealed MUZIKAZ Land']);
   assert.deepEqual(first.bottleClaims, ['Violet Wish Bottle']);
-  assert.deepEqual(first.gameAssets, ['Starter Avatar', 'Explorer Tool Kit', 'RAD-TOX Starter Gear']);
+  assert.deepEqual(first.gameAssets, ['Starter Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
 });
 
 test('default MZK Loadout Pass creates and fully grants a wallet-connected user account', async (t) => {
@@ -44,7 +44,7 @@ test('default MZK Loadout Pass creates and fully grants a wallet-connected user 
   assert.equal(activated.account.gameAccess, true);
   assert.deepEqual(activated.account.landAssets, ['Unrevealed MUZIKAZ Land']);
   assert.deepEqual(activated.account.bottleClaims, ['Violet Wish Bottle']);
-  assert.deepEqual(activated.account.gameAssets, ['Starter Avatar', 'Explorer Tool Kit', 'RAD-TOX Starter Gear']);
+  assert.deepEqual(activated.account.gameAssets, ['Starter Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
   assert.equal((await store.authenticate(issued.code)).accountId, activated.account.accountId, 'the access code reopens the wallet-connected account');
 });
 

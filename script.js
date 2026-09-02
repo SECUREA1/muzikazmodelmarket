@@ -2145,6 +2145,16 @@ function initBottleLogin() {
     document.body.classList.add('is-member-authenticated');
     if (status) status.textContent = message;
   };
+  const syncAccessCodeBackpack = (account) => {
+    const owner = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
+    [
+      ...(account.gameAssets || []),
+      ...(account.landAssets || []),
+      ...(account.purchasedAssets || [])
+    ].forEach((asset) => claimOwnedAsset(asset, 'MZK Access · Paid Loadout standard', owner));
+    (account.bottleClaims || []).forEach((asset) => claimOwnedAsset(`${asset} · Complimentary Mint Claim`, 'MZK Access · Paid Loadout standard', owner));
+    return owner;
+  };
   const verifyAndUnlock = async (address, requiredContract = '') => {
     const ownership = await validateBottleOwnership(address, requiredContract);
     const profile = window.MZKWallet?.connectIdentity({ address, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
@@ -2260,16 +2270,20 @@ function initBottleLogin() {
       }
       if (!response.ok || !result.success) throw new Error(result.message || 'The MZK Access Code could not be activated.');
       const account = rememberAccountSession(result.data);
-      currentMemberEmail = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
+      currentMemberEmail = syncAccessCodeBackpack(account);
       grantBottleAccess(currentMemberEmail, 'mzk-access-code', account.accountId);
       window.sessionStorage.setItem('muzikazBottleMember', 'true');
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-      (account.landAssets || []).forEach((asset) => claimOwnedAsset(asset, 'MZK Access entitlement', currentMemberEmail));
-      (account.bottleClaims || []).forEach((asset) => claimOwnedAsset(`${asset} · Complimentary Mint Claim`, 'MZK Access entitlement', currentMemberEmail));
       setPurchaseStep(3);
       renderOwnedCollection(currentMemberEmail);
       showAddress(account.primaryEthereumWallet);
       unlock(`Account ${account.accountId} is open. This MZK Access Code and Ethereum account ${shortAddress(account.primaryEthereumWallet)} now resolve to the same Backpack, assets, MZK, land and creator tools.`);
+      const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
+      if (redirect) {
+        window.sessionStorage.removeItem('muzikazLoginRedirect');
+        window.location.href = redirect;
+        return;
+      }
       scrollToSection('member-locked-content');
     } catch (error) {
       if (status) status.textContent = error.message || 'The MZK Access Code could not be activated.';
