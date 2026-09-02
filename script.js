@@ -2403,6 +2403,12 @@ function initMzkAccessAccount() {
   const locked = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   const output = document.querySelector('#mzk-access-manage-output');
+  const sharedCode = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('access-code');
+  if (accessCodeInput && sharedCode && /^MZK(?:-[A-Z2-9]{4}){4}$/i.test(sharedCode)) {
+    accessCodeInput.value = sharedCode.toUpperCase();
+    if (status) status.textContent = 'Your shared MZK Loadout Pass is ready. Connect the intended Ethereum wallet to activate it.';
+    history.replaceState(null, '', `${window.location.pathname}${window.location.search}#bottle-login`);
+  }
   const showAccount = (session) => {
     window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt };
     locked.hidden = false; locked.dataset.locked = 'false'; document.body.classList.add('is-member-authenticated');

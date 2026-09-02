@@ -38,3 +38,15 @@ test('default MZK Loadout Pass creates and fully grants a brand-new user account
   assert.deepEqual(activated.account.landAssets, ['Unrevealed MUZIKAZ Land']);
   assert.deepEqual(activated.account.bottleClaims, ['Violet Wish Bottle']);
 });
+
+test('generated passes expose a shareable activation path and honor form boolean values', async (t) => {
+  const { store } = await fixture(t);
+  const issued = await store.create({ label: '  ', waiveLoadout: 'false', violetBottle: '0', starterLand: 'off', creatorVault: 'no' });
+  assert.equal(issued.label, 'MZK Loadout Pass');
+  assert.equal(issued.activationPath, `/members.html#access-code=${issued.code}`);
+  const activated = await store.activate(issued.code, '0x6666666666666666666666666666666666666666');
+  assert.equal(activated.account.loadoutStatus, 'none');
+  assert.deepEqual(activated.account.landAssets, []);
+  assert.deepEqual(activated.account.bottleClaims, []);
+  assert.equal(activated.account.creatorVaultAccess, false);
+});
