@@ -21,6 +21,21 @@ test('persists items, token balances, and memory for each wallet', async (t) => 
   assert.equal(JSON.parse(await readFile(file, 'utf8')).schemaVersion, 2);
 });
 
+test('access-code account sync adds entitlements once and preserves game and market memory', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'mzk-users-')); t.after(() => rm(directory, { recursive: true, force: true }));
+  const file = join(directory, 'users.json'); const database = new UserJsonDatabase(file);
+  const wallet = '0x1212121212121212121212121212121212121212';
+  await database.put(wallet, { tokens: { MZK: 25 }, items: [{ id: 'uploaded-model', name: 'My upload' }], memory: { world: { level: 9 }, market: { watchlist: ['volt-wolf'] } } });
+  const account = { accountId: 'usr-access', backpackId: 'pack-access', primaryEthereumWallet: wallet, username: 'Builder', accessCodeStatus: 'activated', gameAccess: true, creatorVaultAccess: true, mzkBalance: 100, gameAssets: ['Starter Avatar'], landAssets: ['Unrevealed MUZIKAZ Land'], bottleClaims: ['Violet Wish Bottle'] };
+  await database.ensureAccount(account); await database.ensureAccount(account);
+  const restored = await database.get(wallet);
+  assert.equal(restored.tokens.MZK, 125, 'promotional balance is granted once');
+  assert.equal(restored.items.filter((item) => item.id === 'uploaded-model').length, 1);
+  assert.equal(restored.items.filter((item) => item.source === 'mzk-access-code').length, 3);
+  assert.deepEqual(restored.memory.world, { level: 9 }); assert.deepEqual(restored.memory.market, { watchlist: ['volt-wolf'] });
+  assert.equal(restored.memory.account.gameAccess, true);
+});
+
 test('deep-merges shared memory and preserves an append-only MZK adjustment history', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'muzikaz-users-')); t.after(() => rm(directory, { recursive: true, force: true }));
   const file = join(directory, 'users.json'); const database = new UserJsonDatabase(file);
