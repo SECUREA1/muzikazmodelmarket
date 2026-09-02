@@ -71,7 +71,12 @@
     utilityBar.className = `mzk-site-utility${headerMount ? ' is-header-utility' : ''}`;
     utilityBar.setAttribute('aria-label', 'Support and administration');
     utilityBar.innerHTML = `<button type="button" data-open-admin-login aria-label="Admin login" aria-haspopup="dialog">${adminIcon()}<span>Admin</span></button><button type="button" data-open-support-chat aria-haspopup="dialog" aria-controls="muzikaz-support-chat">${supportIcon()}<span>Support</span></button>`;
-    (document.querySelector('.global-site-header .global-nav, .site-header .nav') || headerMount || document.body).appendChild(utilityBar);
+    const headerNavigation = document.querySelector('.global-site-header .global-nav, .site-header .nav');
+    // Put the staff controls at the top of the phone toggle list. Keeping them
+    // inside the existing navigation also preserves the SVG header introduced
+    // by df3b8c6 instead of replacing it with a second mobile-only masthead.
+    if (headerNavigation) headerNavigation.prepend(utilityBar);
+    else (headerMount || document.body).appendChild(utilityBar);
 
     const supportChat = document.querySelector('.support-chat');
     supportChat?.classList.add('is-utility-linked');
