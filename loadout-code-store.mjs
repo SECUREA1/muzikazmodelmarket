@@ -10,7 +10,10 @@ const normalizeCode = (value) => String(value || '').trim().toUpperCase().replac
 const normalizeWallet = (value) => String(value || '').trim().toLowerCase();
 const unique = (values) => [...new Set(values.filter(Boolean))];
 const enabled = (value, fallback = true) => value == null ? fallback : ![false, 0, '0', 'false', 'off', 'no'].includes(typeof value === 'string' ? value.trim().toLowerCase() : value);
-const STANDARD_LOADOUT_ASSETS = ['Starter Avatar', 'Explorer Tool Kit', 'RAD-TOX Starter Gear'];
+// Keep access-code accounts at parity with the paid Builder Loadout advertised
+// in the member hub and game. These are durable Backpack entries, not merely UI
+// flags, so every exclusive surface sees the same complete entitlement set.
+const STANDARD_LOADOUT_ASSETS = ['Starter Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear'];
 const STANDARD_LAND_ASSETS = ['Unrevealed MUZIKAZ Land'];
 const STANDARD_BOTTLE_CLAIMS = ['Violet Wish Bottle'];
 
