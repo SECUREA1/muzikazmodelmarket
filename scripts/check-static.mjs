@@ -5,6 +5,7 @@ const requiredFiles = [
   ...htmlPages.map((page) => `dist/${page}`),
   'dist/styles.css',
   'dist/script.js',
+  'dist/global-header.js',
   'dist/battle-theme.js',
   'dist/backpack-widget.js',
   'dist/backpack-widget.css',
@@ -28,6 +29,12 @@ const serverSource = await readFile('server.mjs', 'utf8');
 
 // The compact destination menu and four-button commerce masthead stay
 // consistent on every page that uses the shared mobile header.
+const unifiedHeaderPages = htmlPages;
+for (const page of unifiedHeaderPages) {
+  const html = await readFile(`dist/${page}`, 'utf8');
+  if (!html.includes('global-header.js')) throw new Error(`${page} must load the unified global header component.`);
+}
+
 const mobileHeaderPages = ['avatar-whitepaper.html', 'buy-mzk.html', 'checkout.html', 'index.html', 'members.html', 'model-market.html'];
 for (const page of mobileHeaderPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
