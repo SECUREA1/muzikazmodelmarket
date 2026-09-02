@@ -44,6 +44,10 @@
   const walletButton = header.querySelector('#wallet-connect');
   const checkoutLink = header.querySelector('[href="checkout.html"]');
   const cartCount = header.querySelector('.header-cart-count');
+  const cartCheckoutUrl = () => {
+    if (typeof window.checkoutUrl === 'function') return window.checkoutUrl();
+    return checkoutLink.href;
+  };
   const renderCartCount = () => {
     let count = 0;
     let cart = [];
@@ -51,12 +55,18 @@
       cart = JSON.parse(localStorage.getItem('muzikazCheckoutCart') || '[]');
       if (Array.isArray(cart)) count = cart.reduce((sum, item) => sum + Math.max(1, Number(item?.quantity) || 1), 0);
     } catch (_) { /* A malformed local cart is treated as empty. */ }
-    if (count && typeof window.checkoutUrl === 'function') checkoutLink.href = window.checkoutUrl();
+    if (count) checkoutLink.href = cartCheckoutUrl();
     else checkoutLink.href = 'checkout.html';
     cartCount.textContent = String(count);
     cartCount.hidden = count === 0;
     checkoutLink.setAttribute('aria-label', `Checkout, ${count} ${count === 1 ? 'item' : 'items'}`);
   };
+  // Rebuild the portable cart URL at the moment it is tapped. Mobile browsers
+  // can suspend a tab between adding an item and opening checkout, so the href
+  // prepared by an earlier render may not contain the newest cart snapshot.
+  checkoutLink.addEventListener('click', () => {
+    if (cartCount.textContent !== '0') checkoutLink.href = cartCheckoutUrl();
+  });
   const walletLabel = walletButton.querySelector('span');
   const walletStatus = header.querySelector('#wallet-connect-status');
   const renderWallet = (message = '') => {
