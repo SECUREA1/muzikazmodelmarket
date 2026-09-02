@@ -4,6 +4,8 @@
 
   var root = document.documentElement;
   var configured = window.MUZIKAZ_API_BASE || window.MUZIKAZ_SHARED_AVATAR_API || root.getAttribute('data-api-base') || '';
+  var staticHost = /(?:github\.io|pages\.dev|netlify\.app|vercel\.app)$/i.test(window.location.hostname) || window.location.protocol === 'file:';
+  if (!configured && staticHost) configured = 'https://muzikazmodelmarket.onrender.com';
   var base;
   try {
     base = new window.URL(configured || window.location.origin, window.location.href);
@@ -26,7 +28,7 @@
     request.headers = options.headers || {};
     request.cache = options.cache || 'no-store';
     request.mode = 'cors';
-    request.credentials = 'omit';
+    request.credentials = new window.URL(url(path)).origin === window.location.origin ? 'same-origin' : 'omit';
     var timeout = Number(options.timeout) || 15000;
     var retries = options.retries == null ? (/^(GET|HEAD)$/i.test(options.method || 'GET') ? 1 : 0) : Number(options.retries);
     delete request.timeout;

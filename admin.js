@@ -26,6 +26,7 @@
 
   function token() { return localStorage.getItem(tokenKey) || sessionStorage.getItem(tokenKey) || ''; }
   function authHeaders(extra = {}) { const value = token(); return { ...(value ? { 'x-admin-token': value } : {}), ...extra }; }
+  function apiFetch(path, options = {}) { return window.MUZIKAZ_API?.fetch ? window.MUZIKAZ_API.fetch(path, options) : fetch(path, options); }
   function present(value) {
     if (value == null || value === '') return '—';
     if (typeof value === 'object') return JSON.stringify(value);
@@ -76,14 +77,14 @@
   }
   async function loadData() {
     $('#last-updated').textContent = 'Loading the latest server snapshot…';
-    const response = await fetch('/api/admin/data', { headers: authHeaders({ Accept: 'application/json' }), cache: 'no-store' });
+    const response = await apiFetch('/api/admin/data', { headers: authHeaders({ Accept: 'application/json' }), cache: 'no-store' });
     const result = await response.json();
     if (!response.ok || !result.success) { const error = new Error(result.message || 'Administrator data could not be loaded.'); error.status = response.status; throw error; }
     snapshot = result.data; renderSnapshot();
   }
   const formatDate = (value) => value ? new Date(value).toLocaleString() : '—';
   async function accessRequest(path = '/api/admin/access-codes', options = {}) {
-    const response = await fetch(path, { ...options, headers: authHeaders({ Accept: 'application/json', ...options.headers }) });
+    const response = await apiFetch(path, { ...options, headers: authHeaders({ Accept: 'application/json', ...options.headers }) });
     const result = await response.json();
     if (!response.ok || !result.success) { const error = new Error(result.message || 'Access passes could not be loaded.'); error.status = response.status; throw error; }
     return result.data;
@@ -142,11 +143,11 @@
     catch (error) { $('#access-code-status').textContent = error.message || 'The pass could not be revoked.'; }
   });
   $('#export').addEventListener('click', () => { const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' })); link.download = `muzikaz-admin-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(link.href); });
-  $('#sign-out').addEventListener('click', async () => { try { await fetch('/api/admin/logout', { method: 'POST', headers: authHeaders({ Accept: 'application/json' }) }); } finally { returnToLogin(); } });
+  $('#sign-out').addEventListener('click', async () => { try { await apiFetch('/api/admin/logout', { method: 'POST', headers: authHeaders({ Accept: 'application/json' }) }); } finally { returnToLogin(); } });
   (async () => {
     if (token()) return showDashboard();
     try {
-      const response = await fetch('/api/admin/session', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      const response = await apiFetch('/api/admin/session', { headers: authHeaders({ Accept: 'application/json' }), cache: 'no-store' });
       if (response.ok) return showDashboard();
     } catch { /* A missing stored token cannot authorize an offline command center. */ }
     returnToLogin();

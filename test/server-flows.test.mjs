@@ -26,6 +26,7 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   const health = await json(`${base}/api/health`);
   assert.equal(health.body.storage, 'ready');
   assert.equal(health.body.persistentStorageConfigured, false);
+  assert.equal(health.response.headers.get('access-control-allow-origin'), '*', 'static admin deployments can call the live API');
 
   const login = await json(`${base}/api/admin/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'test-admin', password: 'test-password' }) });
   assert.equal(login.response.status, 200); assert.equal(login.body.data.persistent, true); assert.ok(login.body.data.token);

@@ -53,7 +53,7 @@ if (!backpackWidget.includes("get('admin') === 'login'")) throw new Error('The g
 const adminHtml = await readFile('dist/admin.html', 'utf8');
 const adminScript = await readFile('dist/admin.js', 'utf8');
 if (adminHtml.includes('Authorized personnel only') || adminHtml.includes('id="login-form"')) throw new Error('admin.html must not show a second administrator login.');
-for (const handoffFeature of ["window.location.replace('index.html?admin=login')", "fetch('/api/admin/session'", "localStorage.getItem(tokenKey)"]) {
+for (const handoffFeature of ["window.location.replace('index.html?admin=login')", "apiFetch('/api/admin/session'", "localStorage.getItem(tokenKey)"]) {
   if (!adminScript.includes(handoffFeature)) throw new Error(`The command center is missing its single-login handoff: ${handoffFeature}.`);
 }
 for (const generatorFeature of ['MZK Loadout Pass Generator', 'Generate MZK Loadout Pass Code']) if (!adminHtml.includes(generatorFeature)) throw new Error(`The admin Loadout generator label is missing ${generatorFeature}.`);
@@ -309,11 +309,12 @@ for (const requiredAdminMarkup of ['id="admin-login-form"', 'name="username"', '
   }
 }
 const appScript = await readFile('dist/script.js', 'utf8');
+const bottleAccessSources = appScript + await readFile('dist/contract-ownership.js', 'utf8');
 if (!appScript.includes('initModelMarketGate') || !appScript.includes("sessionStorage.setItem('muzikazBottleMember', 'true')")) {
   throw new Error('The Model Market cover must share the verified members-area Bottle login session.');
 }
 for (const requiredBottleAccessFlow of ['eth_requestAccounts', 'eth_call', 'eth_sendTransaction', 'eth_getTransactionReceipt', 'validateBottleOwnership', 'BOTTLE_BALANCE_OF_SELECTOR']) {
-  if (!appScript.includes(requiredBottleAccessFlow)) {
+  if (!bottleAccessSources.includes(requiredBottleAccessFlow)) {
     throw new Error(`script.js is missing Bottle mint/validation access flow: ${requiredBottleAccessFlow}`);
   }
 }
@@ -348,13 +349,13 @@ if (!serverSource.includes("process.env.MUZIKAZ_ADMIN_USERNAME || 'giraff'") || 
 }
 
 const apiConnection = await readFile('dist/public/js/api-connection.js', 'utf8');
-for (const requiredCompatibilityFeature of ['MUZIKAZ_API_BASE', 'MUZIKAZ_SHARED_AVATAR_API', "request.mode = 'cors'", 'Promise.race', "data-api-connected"]) {
+for (const requiredCompatibilityFeature of ['MUZIKAZ_API_BASE', 'MUZIKAZ_SHARED_AVATAR_API', 'muzikazmodelmarket.onrender.com', "request.mode = 'cors'", 'Promise.race', "data-api-connected"]) {
   if (!apiConnection.includes(requiredCompatibilityFeature)) {
     throw new Error(`Cross-browser API connection is missing ${requiredCompatibilityFeature}`);
   }
 }
 const modelExplorerHtml = await readFile('dist/model-explorer.html', 'utf8');
-if (!mainHtml.includes('public/js/api-connection.js') || !modelExplorerHtml.includes('public/js/api-connection.js') || !membersHtml.includes('public/js/api-connection.js')) {
+if (!mainHtml.includes('public/js/api-connection.js') || !modelExplorerHtml.includes('public/js/api-connection.js') || !membersHtml.includes('public/js/api-connection.js') || !adminHtml.includes('public/js/api-connection.js')) {
   throw new Error('Every game and avatar entry point must initialize its cross-browser API connection.');
 }
 for (const page of [['index.html', mainHtml], ['model-market.html', modelMarketHtml], ['model-explorer.html', modelExplorerHtml]]) {
