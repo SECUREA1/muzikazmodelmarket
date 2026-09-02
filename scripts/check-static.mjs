@@ -59,11 +59,14 @@ for (const adminHandoffFeature of ["localStorage.getItem('muzikazAdminToken')", 
 if (!backpackWidget.includes("get('admin') === 'login'")) throw new Error('The global admin login must reopen when the command center redirects an unauthenticated visitor.');
 const adminHtml = await readFile('dist/admin.html', 'utf8');
 const adminScript = await readFile('dist/admin.js', 'utf8');
+const memberScript = await readFile('dist/script.js', 'utf8');
 if (adminHtml.includes('Authorized personnel only') || adminHtml.includes('id="login-form"')) throw new Error('admin.html must not show a second administrator login.');
 for (const handoffFeature of ["window.location.replace('index.html?admin=login')", "apiFetch('/api/admin/session'", "localStorage.getItem(tokenKey)"]) {
   if (!adminScript.includes(handoffFeature)) throw new Error(`The command center is missing its single-login handoff: ${handoffFeature}.`);
 }
 for (const generatorFeature of ['MZK Loadout Pass Generator', 'Generate MZK Loadout Pass Code']) if (!adminHtml.includes(generatorFeature)) throw new Error(`The admin Loadout generator label is missing ${generatorFeature}.`);
+for (const shareFeature of ['id="access-code-share"', 'Share activation link']) if (!adminHtml.includes(shareFeature)) throw new Error(`The admin Loadout sharing control is missing ${shareFeature}.`);
+for (const activationFeature of ["get('access-code')", 'shared MZK Loadout Pass']) if (!memberScript.includes(activationFeature)) throw new Error(`The member Loadout activation handoff is missing ${activationFeature}.`);
 for (const adminSessionFeature of ["'/api/admin/session'", "'/api/admin/logout'", 'persistentAdminToken', "cookie(req, 'mzk_admin')"]) if (!serverSource.includes(adminSessionFeature)) throw new Error(`Persistent administrator access is missing ${adminSessionFeature}.`);
 const contractOwnership = await readFile('dist/contract-ownership.js', 'utf8');
 for (const contractFeature of ['eth_getCode', '80ac58cd', 'd9b67a26', '0x70a08231', '0x00fdd58e']) if (!contractOwnership.includes(contractFeature)) throw new Error(`The contract ownership checker is missing ${contractFeature}.`);

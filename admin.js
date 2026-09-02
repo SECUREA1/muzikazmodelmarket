@@ -128,7 +128,7 @@
     try {
       const fields = Object.fromEntries(new FormData(event.currentTarget));
       const code = await accessRequest('/api/admin/loadout-codes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...fields, waiveLoadout: true, violetBottle: true, starterLand: true, creatorVault: true }) });
-      currentAccessCode = code.code; $('#access-code-output').textContent = currentAccessCode; $('#access-code-copy').hidden = false;
+      currentAccessCode = code.code; $('#access-code-output').textContent = currentAccessCode; $('#access-code-copy').hidden = false; $('#access-code-share').hidden = false;
       status.textContent = `Ready to share privately. It can be activated once before ${formatDate(code.expiresAt)}.`; await loadAccessCodes(); event.currentTarget.reset();
     } catch (error) { status.textContent = error.message || 'Code generation failed.'; status.className = 'access-status error'; }
   });
@@ -136,6 +136,18 @@
     if (!currentAccessCode) return;
     try { await navigator.clipboard.writeText(currentAccessCode); $('#access-code-status').textContent = 'Code copied. It grants the paid-member Loadout when the recipient activates it.'; }
     catch { $('#access-code-status').textContent = `Clipboard unavailable. Copy the displayed code manually: ${currentAccessCode}`; }
+  });
+  $('#access-code-share').addEventListener('click', async () => {
+    if (!currentAccessCode) return;
+    const url = new URL(`members.html#access-code=${encodeURIComponent(currentAccessCode)}`, window.location.href).href;
+    const share = { title: 'Your MUZIKAZ Loadout Pass', text: 'Activate your private MUZIKAZ Loadout Pass.', url };
+    try {
+      if (navigator.share) await navigator.share(share);
+      else await navigator.clipboard.writeText(url);
+      $('#access-code-status').textContent = navigator.share ? 'Private activation link shared.' : 'Private activation link copied. Send it directly to the recipient.';
+    } catch (error) {
+      if (error.name !== 'AbortError') $('#access-code-status').textContent = `Sharing is unavailable. Copy this private link manually: ${url}`;
+    }
   });
   $('#access-code-table').addEventListener('click', async (event) => {
     const id = event.target.closest('[data-revoke-access-code]')?.dataset.revokeAccessCode; if (!id) return;
