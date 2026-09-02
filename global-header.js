@@ -1,12 +1,13 @@
 (function () {
   const header = document.querySelector('.site-header');
-  if (!header || header.classList.contains('global-site-header')) return;
+  if (!header || header.dataset.globalHeaderReady === 'true') return;
 
   const current = location.pathname.split('/').pop() || 'index.html';
   const active = (href) => href.split('#')[0] === current ? ' active' : '';
   const icon = (path) => `<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="${path}"/></svg>`;
 
   header.className = 'site-header global-site-header';
+  header.dataset.globalHeaderReady = 'true';
   header.innerHTML = `
     <a class="logo world-logo" href="index.html#home" aria-label="MUZIKAZ WORLD home"><img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ WORLD"></a>
     <nav class="nav global-nav" id="primary-navigation" aria-label="Primary navigation" aria-hidden="false">
@@ -18,7 +19,8 @@
       <a class="nav-link${active('avatar-whitepaper.html')}" href="avatar-whitepaper.html">${icon('M6 3h9l3 3v15H6zM14 3v4h4M9 11h6M9 15h6')}<span>Whitepaper</span></a>
     </nav>
     <div class="icons" aria-label="Account shortcuts">
-      <a class="mobile-header-action" href="checkout.html" aria-label="Checkout">${icon('M3 4h2l2 11h10l3-8H6M9 20h.01M17 20h.01')}<span>Checkout</span></a>
+      <a class="mobile-header-action header-primary-action" href="checkout.html" aria-label="Checkout, 0 items">${icon('M3 4h2l2 11h10l3-8H6M9 20h.01M17 20h.01')}<span>Checkout</span><b class="header-cart-count" aria-hidden="true">0</b></a>
+      <a class="mobile-header-action header-primary-action" href="members.html" aria-label="Member access">${icon('M12 12a4 4 0 100-8 4 4 0 000 8M5 21a7 7 0 0114 0')}<span>Members</span></a>
       <a class="mobile-header-action" href="buy-mzk.html" aria-label="Buy MZK">${icon('M12 2v20M17 6.5c-1-1-2.5-1.5-5-1.5-3 0-5 1.2-5 3s2 3 5 3 5 1.2 5 3-2 3-5 3c-2.5 0-4-.5-5-1.5')}<span>Buy MZK</span></a>
       <a class="mobile-header-action" href="members.html#owned-collection" aria-label="View backpack">${icon('M8 8V6a4 4 0 018 0v2M6 8h12a2 2 0 012 2v10H4V10a2 2 0 012-2Z')}<span>Backpack</span></a>
       <button class="wallet-connect" id="wallet-connect" type="button" aria-describedby="wallet-connect-status" title="Connect wallet"><img src="muzikaz_bolt_logo_editable.svg" alt="" aria-hidden="true"><span>Connect wallet</span></button>
@@ -40,6 +42,18 @@
   });
 
   const walletButton = header.querySelector('#wallet-connect');
+  const checkoutLink = header.querySelector('[href="checkout.html"]');
+  const cartCount = header.querySelector('.header-cart-count');
+  const renderCartCount = () => {
+    let count = 0;
+    try {
+      const cart = JSON.parse(localStorage.getItem('muzikazCheckoutCart') || '[]');
+      if (Array.isArray(cart)) count = cart.reduce((sum, item) => sum + Math.max(1, Number(item?.quantity) || 1), 0);
+    } catch (_) { /* A malformed local cart is treated as empty. */ }
+    cartCount.textContent = String(count);
+    cartCount.hidden = count === 0;
+    checkoutLink.setAttribute('aria-label', `Checkout, ${count} ${count === 1 ? 'item' : 'items'}`);
+  };
   const walletLabel = walletButton.querySelector('span');
   const walletStatus = header.querySelector('#wallet-connect-status');
   const renderWallet = (message = '') => {
@@ -71,5 +85,8 @@
     }
   });
   window.addEventListener('mzk:wallet-connection-changed', () => renderWallet());
+  window.addEventListener('storage', renderCartCount);
+  window.addEventListener('mzk:cart-changed', renderCartCount);
+  renderCartCount();
   renderWallet();
 })();
