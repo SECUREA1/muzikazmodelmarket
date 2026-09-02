@@ -34,7 +34,7 @@ function initHeaderWalletConnect() {
     button.classList.toggle('is-connected', Boolean(address));
     button.setAttribute('aria-pressed', String(Boolean(address)));
     label.textContent = address ? shortAddress(address) : 'Connect wallet';
-    status.textContent = message || (address ? `Ethereum wallet ${shortAddress(address)} connected.` : 'Wallet not connected.');
+    if (status) status.textContent = message || (address ? `Ethereum wallet ${shortAddress(address)} connected.` : 'Wallet not connected.');
   };
   button.addEventListener('click', async () => {
     if (pending) return;
