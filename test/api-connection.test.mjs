@@ -60,6 +60,39 @@ test('an invalid access code response is not mistaken for a missing API route', 
   assert.deepEqual(requests, ['https://world.muzikaz.example/api/access/activate']);
 });
 
+test('punctuated route-not-found responses retry on the hosted account service', async () => {
+  const requests = [];
+  const { window } = loadConnection(async (url) => {
+    requests.push(url);
+    if (requests.length === 1) return new Response(JSON.stringify({ message: 'API route not found.' }), { status: 404, headers: { 'content-type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'content-type': 'application/json' } });
+  });
+
+  const response = await window.MUZIKAZ_API.fetch('/api/access/activate', { method: 'POST' });
+  assert.equal(response.status, 200);
+  assert.deepEqual(requests, [
+    'https://world.muzikaz.example/api/access/activate',
+    'https://muzikazmodelmarket.onrender.com/api/access/activate'
+  ]);
+});
+
+test('CORS-style fetch failures retry POST activation without another user submission', async () => {
+  const requests = [];
+  const { window, attributes } = loadConnection(async (url) => {
+    requests.push(url);
+    if (requests.length === 1) throw new TypeError('Failed to fetch');
+    return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'content-type': 'application/json' } });
+  });
+
+  const response = await window.MUZIKAZ_API.fetch('/api/access/activate', { method: 'POST' });
+  assert.equal(response.status, 200);
+  assert.deepEqual(requests, [
+    'https://world.muzikaz.example/api/access/activate',
+    'https://muzikazmodelmarket.onrender.com/api/access/activate'
+  ]);
+  assert.equal(attributes['data-api-fallback'], 'hosted');
+});
+
 test('hosted account requests include the session cookie needed by paid loadout follow-ups', async () => {
   let requestOptions;
   const { window } = loadConnection(async (_url, options) => {

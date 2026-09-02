@@ -32,7 +32,7 @@
       if (!/json/i.test(contentType)) return true;
       try {
         var payload = JSON.parse(body);
-        return /(?:api\s+)?route\s+(?:not\s+)?found|^not found$/i.test(String(payload.message || payload.error || '').trim());
+        return /^(?:(?:api\s+)?route\s+(?:not\s+)?found|not found)[.!\s]*$/i.test(String(payload.message || payload.error || '').trim());
       } catch (ignore) {
         return true;
       }
@@ -81,6 +81,15 @@
         });
       }, function (error) {
         window.clearTimeout(timer);
+        /*
+         * Some static hosts answer API requests without CORS headers. Browsers
+         * expose that as a rejected fetch instead of the host's 404 response,
+         * so the response-based fallback above never gets a chance to run.
+         * Move POST requests (including access-code activation) to the account
+         * service immediately as well; this does not consume a retry or ask the
+         * member to submit their code a second time.
+         */
+        if (useHostedApi()) return attempt(remaining);
         if (remaining > 0) return attempt(remaining - 1);
         throw error;
       });
