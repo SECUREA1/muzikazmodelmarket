@@ -67,4 +67,6 @@ test('member loadout entry uses the shared API connection and legacy redemption 
   assert.match(source, /accountApiFetch\('\/api\/account\/access-code'/);
   assert.ok(source.includes('[A-Z0-9]{8}-[A-Z0-9]{8}'), 'legacy Rust pass format remains accepted by the member login');
   assert.ok(source.includes("document.querySelector('#loadout-code-redeem')?.click()"), 'shared pass links automatically submit the member login');
+  assert.ok(source.includes('window.MZKWallet?.provisionStandardLoadout(account)'), 'account entitlements are imported into the playable local Backpack');
+  assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'successful code entry opens the game page');
 });

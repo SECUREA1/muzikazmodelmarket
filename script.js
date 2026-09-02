@@ -2153,6 +2153,7 @@ function initBottleLogin() {
   };
   const syncAccessCodeBackpack = (account) => {
     const owner = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
+    window.MZKWallet?.provisionStandardLoadout(account);
     [
       ...(account.gameAssets || []),
       ...(account.landAssets || []),
@@ -2300,7 +2301,7 @@ function initBottleLogin() {
         window.location.href = redirect;
         return;
       }
-      scrollToSection('member-locked-content');
+      window.location.href = 'model-market.html?access=loadout#house-explorer';
     } catch (error) {
       if (status) status.textContent = error.message || 'The MZK Access Code could not be activated.';
     } finally { setBusy(false); }
@@ -2338,10 +2339,12 @@ function initBottleLogin() {
       const account = await authenticateWalletAccount(owner);
       const paidResponse = await accountApiFetch('/api/account/loadout/paid', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': window.MuzikazAccountSession.csrfToken }, body: JSON.stringify({ paymentId: paymentHash }) });
       const paidResult = await paidResponse.json(); if (!paidResponse.ok || !paidResult.success) throw new Error(paidResult.message || 'The paid Loadout could not be attached to your account.');
+      syncAccessCodeBackpack(paidResult.data);
       const credentialResponse = await accountApiFetch('/api/account/access-code', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': window.MuzikazAccountSession.csrfToken }, body: '{}' });
       const credentialResult = await credentialResponse.json();
       if (!credentialResponse.ok || !credentialResult.success) throw new Error(credentialResult.message || 'Your account was created, but its MZK Access Code could not be generated.');
       setPurchaseStep(3);
+      if (continueButton) continueButton.innerHTML = 'Enter RAD-TOX Game <span aria-hidden="true">→</span>';
       unlock(credentialResult.data.code ? `$${BACKPACK_LOADOUT_USD} Loadout confirmed. Full member and multiplayer access is open with 500 starter MZK. Save your MZK Access Code now—it will not be shown again: ${credentialResult.data.code}` : `$${BACKPACK_LOADOUT_USD} Loadout confirmed for account ${account.accountId}. Full member and multiplayer access is open with your existing MZK Access Code.`);
       renderOwnedCollection(currentMemberEmail);
       scrollToSection('member-locked-content');
@@ -2360,6 +2363,7 @@ function initBottleLogin() {
   continueButton?.addEventListener('click', () => {
     try {
       continueWithPaidLoadout(JSON.parse(window.localStorage.getItem('muzikazLoadoutPayment') || 'null'));
+      window.location.href = 'model-market.html?access=loadout#house-explorer';
     } catch (error) {
       if (status) status.textContent = error.message || 'The paid Loadout could not be opened.';
     }

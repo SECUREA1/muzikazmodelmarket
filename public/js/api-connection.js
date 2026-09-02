@@ -60,7 +60,8 @@
     request.headers = options.headers || {};
     request.cache = options.cache || 'no-store';
     request.mode = 'cors';
-    request.credentials = new window.URL(url(path)).origin === window.location.origin ? 'same-origin' : 'omit';
+    /* Preserve the account cookie when a branded frontend uses the hosted API. */
+    request.credentials = 'include';
     var timeout = Number(options.timeout) || 15000;
     var retries = options.retries == null ? (/^(GET|HEAD)$/i.test(options.method || 'GET') ? 1 : 0) : Number(options.retries);
     delete request.timeout;
