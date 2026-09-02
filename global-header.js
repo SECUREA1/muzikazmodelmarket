@@ -46,10 +46,13 @@
   const cartCount = header.querySelector('.header-cart-count');
   const renderCartCount = () => {
     let count = 0;
+    let cart = [];
     try {
-      const cart = JSON.parse(localStorage.getItem('muzikazCheckoutCart') || '[]');
+      cart = JSON.parse(localStorage.getItem('muzikazCheckoutCart') || '[]');
       if (Array.isArray(cart)) count = cart.reduce((sum, item) => sum + Math.max(1, Number(item?.quantity) || 1), 0);
     } catch (_) { /* A malformed local cart is treated as empty. */ }
+    if (count && typeof window.checkoutUrl === 'function') checkoutLink.href = window.checkoutUrl();
+    else checkoutLink.href = 'checkout.html';
     cartCount.textContent = String(count);
     cartCount.hidden = count === 0;
     checkoutLink.setAttribute('aria-label', `Checkout, ${count} ${count === 1 ? 'item' : 'items'}`);

@@ -157,6 +157,40 @@ function readCart() {
   }
 }
 
+// Keep the cart attached to checkout navigation as well as localStorage. This
+// matters when a mobile browser follows the site's alternate Render hostname:
+// localStorage is origin-scoped, while the URL fragment survives that handoff.
+function portableCartFragment(items = readCart()) {
+  if (!items.length) return '';
+  const bytes = new TextEncoder().encode(JSON.stringify(items));
+  let binary = '';
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return `#cart=${btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
+}
+
+function checkoutUrl() {
+  return `checkout.html${portableCartFragment()}`;
+}
+
+function restorePortableCart() {
+  if (!checkoutItems || !window.location.hash.startsWith('#cart=')) return;
+  try {
+    const encoded = window.location.hash.slice(6).replace(/-/g, '+').replace(/_/g, '/');
+    const binary = atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '='));
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    const items = JSON.parse(new TextDecoder().decode(bytes));
+    if (!Array.isArray(items) || !items.length || items.length > 100) throw new Error('Invalid portable cart');
+    const valid = items.every((item) => item && typeof item.name === 'string' && item.name.length <= 300 && Number.isFinite(Number(item.price)) && Number(item.price) >= 0 && Number.isFinite(Number(item.quantity)) && Number(item.quantity) > 0);
+    if (!valid) throw new Error('Invalid portable cart items');
+    // The checkout URL is the most recent representation of the cart and must
+    // win over an empty (or stale) store belonging to the destination origin.
+    writeCart(items);
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+  } catch (_) {
+    // Ignore malformed fragments and retain the cart already stored locally.
+  }
+}
+
 function writeCart(items) {
   window.localStorage.setItem(CART_KEY, JSON.stringify(items));
   window.dispatchEvent(new CustomEvent('mzk:cart-changed', { detail: { items } }));
@@ -908,7 +942,7 @@ document.querySelector('#model-linked-data')?.addEventListener('click', (event) 
 
 document.querySelector('[data-action="cart"]')?.addEventListener('click', () => {
   if (cartItems) {
-    window.location.href = 'checkout.html';
+    window.location.href = checkoutUrl();
   } else {
     alert('Your MUZIKAZ cart is empty. Add merch or models to begin.');
   }
@@ -2394,6 +2428,8 @@ initMzkAccessAccount();
 const checkoutItems = document.querySelector('#checkout-items');
 const paymentForm = document.querySelector('#payment-form');
 
+restorePortableCart();
+
 function checkoutOwner(method, paymentOwner = '') {
   if (method === 'MZK') return normalizeMemberEmail(window.MZKWallet?.walletId());
   return normalizeMemberEmail(paymentOwner);
@@ -2634,7 +2670,7 @@ function renderCheckoutPage() {
   } else {
     checkoutItems.innerHTML = items.map((item) => `
       <article class="checkout-item">
-        <div><strong>${item.name}</strong><span>${item.meta || 'MUZIKAZ store item'} · Qty ${item.quantity}${item.deliverable?.modelUrl ? ` · Delivers ${item.deliverable.name} (${item.deliverable.format.toUpperCase()})` : ''}</span></div>
+        <div><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.meta || 'MUZIKAZ store item')} · Qty ${Number(item.quantity) || 1}${item.deliverable?.modelUrl ? ` · Delivers ${escapeHtml(item.deliverable.name)} (${escapeHtml(String(item.deliverable.format || 'GLB').toUpperCase())})` : ''}</span></div>
         <b>${formatCheckoutMoney(item.price * item.quantity)}</b>
       </article>`).join('');
   }
