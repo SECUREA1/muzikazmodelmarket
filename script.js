@@ -2090,9 +2090,15 @@ function initBottleLogin() {
   const jsonImport = document.querySelector('#wallet-json-import');
   const tokenIdentity = document.querySelector('#wallet-token-identity');
   if (!form || !lockedContent) return;
+  // Member access can be rendered from a static/custom-domain frontend while the
+  // account service remains on Render. Keep every loadout request on the shared
+  // API connection instead of accidentally posting to the page host.
+  const accountApiFetch = (path, options = {}) => window.MUZIKAZ_API?.fetch
+    ? window.MUZIKAZ_API.fetch(path, options)
+    : fetch(path, options);
   let walletRequestActive = false;
   const rememberAccountSession = (session) => { window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt }; return session.account; };
-  const authenticateWalletAccount = async (wallet) => { const response = await fetch('/api/access/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ wallet }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Wallet account authentication failed.'); return rememberAccountSession(result.data); };
+  const authenticateWalletAccount = async (wallet) => { const response = await accountApiFetch('/api/access/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ wallet }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Wallet account authentication failed.'); return rememberAccountSession(result.data); };
   const setBusy = (busy) => {
     if (connectButton) connectButton.disabled = busy;
     if (meknxButton) meknxButton.disabled = busy;
@@ -2262,7 +2268,12 @@ function initBottleLogin() {
         status.textContent = 'Opening the MUZIKAZ account connected to this code…';
       }
       const submitCode = async (wallet = '') => {
-        const response = await fetch('/api/access/activate', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code, wallet, username: usernameInput?.value || '' }) });
+        const options = { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code, wallet, username: usernameInput?.value || '' }) };
+        let response = await accountApiFetch('/api/access/activate', options);
+        // Older MUZIKAZ API deployments exposed the same activation operation
+        // under this route. Supporting it keeps every previously generated
+        // admin/loadout code usable during a rolling deployment.
+        if (response.status === 404) response = await accountApiFetch('/api/loadout-codes/redeem', options);
         const result = await response.json().catch(() => ({ success: false, message: `The access service returned an unreadable response (${response.status}).` }));
         return { response, result };
       };
@@ -2325,9 +2336,9 @@ function initBottleLogin() {
       window.localStorage.setItem('muzikazLoadoutPayment', JSON.stringify({ owner, paymentHash, currency }));
       grantBottleAccess(owner, 'backpack-loadout-payment', paymentHash);
       const account = await authenticateWalletAccount(owner);
-      const paidResponse = await fetch('/api/account/loadout/paid', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': window.MuzikazAccountSession.csrfToken }, body: JSON.stringify({ paymentId: paymentHash }) });
+      const paidResponse = await accountApiFetch('/api/account/loadout/paid', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': window.MuzikazAccountSession.csrfToken }, body: JSON.stringify({ paymentId: paymentHash }) });
       const paidResult = await paidResponse.json(); if (!paidResponse.ok || !paidResult.success) throw new Error(paidResult.message || 'The paid Loadout could not be attached to your account.');
-      const credentialResponse = await fetch('/api/account/access-code', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': window.MuzikazAccountSession.csrfToken }, body: '{}' });
+      const credentialResponse = await accountApiFetch('/api/account/access-code', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': window.MuzikazAccountSession.csrfToken }, body: '{}' });
       const credentialResult = await credentialResponse.json();
       if (!credentialResponse.ok || !credentialResult.success) throw new Error(credentialResult.message || 'Your account was created, but its MZK Access Code could not be generated.');
       setPurchaseStep(3);
@@ -2403,7 +2414,8 @@ function initMzkAccessAccount() {
   }
   async function manage(action) {
     const session = window.MuzikazAccountSession; if (!session?.csrfToken) throw new Error('Open your account again before managing its credential.');
-    const response = await fetch(`/api/account/access-code/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': session.csrfToken }, body: '{}' }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || `Access Code ${action} failed.`); return result.data;
+    const apiFetch = window.MUZIKAZ_API?.fetch ? window.MUZIKAZ_API.fetch : fetch;
+    const response = await apiFetch(`/api/account/access-code/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': session.csrfToken }, body: '{}' }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || `Access Code ${action} failed.`); return result.data;
   }
   document.querySelector('#mzk-access-rotate')?.addEventListener('click', async () => { try { const result = await manage('rotate'); output.textContent = `Save this new MZK Access Code now; it will not be shown again: ${result.code}`; } catch (error) { output.textContent = error.message; } });
   document.querySelector('#mzk-access-revoke')?.addEventListener('click', async () => { if (!confirm('Revoke wallet-free code access? Your account and wallet access will remain intact.')) return; try { await manage('revoke'); output.textContent = 'MZK Access Code revoked. Your account data and wallet bindings are unchanged.'; } catch (error) { output.textContent = error.message; } });
