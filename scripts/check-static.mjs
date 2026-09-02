@@ -67,6 +67,7 @@ for (const handoffFeature of ["window.location.replace('index.html?admin=login')
 }
 for (const generatorFeature of ['MZK Loadout Pass Generator', 'Generate MZK Loadout Pass Code']) if (!adminHtml.includes(generatorFeature)) throw new Error(`The admin Loadout generator label is missing ${generatorFeature}.`);
 for (const shareFeature of ['id="access-code-share"', 'Share activation link']) if (!adminHtml.includes(shareFeature)) throw new Error(`The admin Loadout sharing control is missing ${shareFeature}.`);
+if (!adminScript.includes('const form = event.currentTarget;') || adminScript.includes('event.currentTarget.reset()')) throw new Error('The admin Loadout generator must retain its form across asynchronous code creation.');
 for (const activationFeature of ["get('access-code')", 'shared MZK Loadout Pass']) if (!memberScript.includes(activationFeature)) throw new Error(`The member Loadout activation handoff is missing ${activationFeature}.`);
 for (const adminSessionFeature of ["'/api/admin/session'", "'/api/admin/logout'", 'persistentAdminToken', "cookie(req, 'mzk_admin')"]) if (!serverSource.includes(adminSessionFeature)) throw new Error(`Persistent administrator access is missing ${adminSessionFeature}.`);
 const contractOwnership = await readFile('dist/contract-ownership.js', 'utf8');
