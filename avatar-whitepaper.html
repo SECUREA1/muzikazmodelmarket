@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="The MUZIKAZ World Avatar Standard: a precise, implementation-ready contract for identity, custody, equipment, permissions, progression, and creator assets.">
+  <meta name="description" content="The MUZIKAZ World whitepaper: land, playable identity, creator assets, toys, merchandise, retail drops, MZK utility, and transparent intake and burn accounting.">
   <meta name="theme-color" content="#050705">
-  <title>Avatar Identity Whitepaper | MUZIKAZ World</title>
+  <title>MUZIKAZ World Whitepaper | Assets, Land &amp; MZK</title>
   <link rel="icon" type="image/svg+xml" href="muzikaz_bolt_logo_editable.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,22 +40,22 @@
   <main>
     <section class="whitepaper-hero">
       <div>
-        <p class="whitepaper-kicker"><span>Technical specification</span> Version 1.0.0 · August 2026</p>
-        <h1>Identity<br>you can <em>play.</em></h1>
-        <p class="whitepaper-lede">An avatar is the playable identity layer of MUZIKAZ World—not merely an image, token, or 3D file. This specification connects a stable identity to versioned media, verified control, compatible equipment, permissions, and live game state.</p>
-        <div class="spec-status"><b>Public reference</b><span>Schema: JSON Schema 2020-12</span><span>Contract: avatar@1.0.0</span></div>
-        <div class="whitepaper-actions"><a href="#identity-model">Explore the architecture</a><a href="model-market.html#character-world-assets">Open Model Market</a></div>
+        <p class="whitepaper-kicker"><span>Platform whitepaper</span> Version 2.0.0 · September 2026</p>
+        <h1>One world.<br>Every asset <em>works.</em></h1>
+        <p class="whitepaper-lede">MUZIKAZ World connects playable characters, deeded land, creator tools, 3D and AR collectibles, toys, streetwear, retail drops, audio, games, and MZK in one asset system. This paper documents what has been built, how each asset functions, and how value enters, moves through, and leaves the MZK economy.</p>
+        <div class="spec-status"><b>Living public reference</b><span>Platform: world@2.0.0</span><span>Avatar: avatar@1.0.0</span><span>Last revised: 2026-09-02</span></div>
+        <div class="whitepaper-actions"><a href="#platform-map">Explore the ecosystem</a><a href="model-market.html#character-world-assets">Open Model Market</a></div>
       </div>
       <aside class="identity-stack" aria-label="Avatar architecture summary">
-        <span>01 <b>Character IP</b><small>Shared identity, lore, rig</small></span>
-        <span>02 <b>Avatar asset</b><small>Playable edition and traits</small></span>
-        <span>03 <b>Control</b><small>Who may use the instance</small></span>
-        <span>04 <b>Backpack + equip</b><small>Loadout and compatibility</small></span>
-        <span>05 <b>World state</b><small>Play, permissions, progress</small></span>
+        <span>01 <b>Identity + characters</b><small>Playable IP, avatars, traits</small></span>
+        <span>02 <b>Land + world space</b><small>Deeds, permissions, building</small></span>
+        <span>03 <b>Products + drops</b><small>Toys, merch, AR, retail</small></span>
+        <span>04 <b>MZK utility</b><small>Acquire, spend, trade, reward</small></span>
+        <span>05 <b>Asset functions</b><small>Backpack, equip, place, create</small></span>
       </aside>
     </section>
 
-    <aside class="scope-banner"><b>What this document defines</b><p>The portable avatar record and the rules used to resolve it. Commerce, blockchain custody, authentication, and game-state storage are integrations—not requirements of the core schema.</p><a href="#reference-contract">Read the contract ↓</a></aside>
+    <aside class="scope-banner"><b>What this document defines</b><p>The complete current product architecture: asset classes and functions, land and creator access, retail-to-digital connections, MZK flows, and the narrower portable avatar contract. It separates live implementation from forward-looking policy so utility is not confused with a promise of profit.</p><a href="#economy">Read MZK flows ↓</a></aside>
 
     <section class="whitepaper-principles" aria-label="Core principles">
       <article><b>Canonical</b><p>Stable identifiers point to explicit, versioned records; media changes never silently rewrite an owned edition.</p></article>
@@ -64,8 +64,90 @@
       <article><b>Verifiable</b><p>Content hashes, approval status, and server-side authorization protect the path from catalog to session.</p></article>
     </section>
 
+    <nav class="whitepaper-toc" aria-label="Whitepaper contents"><b>Contents</b><a href="#platform-map">Platform</a><a href="#land">Land</a><a href="#products">Toys + retail</a><a href="#economy">MZK economy</a><a href="#asset-functions">Asset functions</a><a href="#identity-model">Avatar standard</a><a href="#reference-contract">Reference</a></nav>
+
+    <section class="whitepaper-section" id="platform-map">
+      <header><p>01 · The connected platform</p><h2>From character file to living creative economy.</h2></header>
+      <p class="section-intro">The project is designed as a loop rather than a set of isolated storefronts. A character can begin as a 3D model, become a playable avatar and AR collectible, appear on a physical product, headline a timed drop, live in a Backpack, and activate experiences on owned land. Creator output returns to the same catalog and market.</p>
+      <div class="ecosystem-grid">
+        <article><span>Discover</span><h3>Model market</h3><p>Originals, Crew, Chaos, Beasts, Legends, and New Legends collection destinations connect character art, model packs, graphics, brand assets, and related merchandise.</p><a href="model-market.html">Browse the market →</a></article>
+        <article><span>Own + carry</span><h3>Drop Backpack</h3><p>A single inventory for avatars, lands, props, wearables, pets, vehicles, purchases, loadout entitlements, and assets listed for member-to-member trade.</p><a href="members.html#owned-collection">Open Backpack →</a></article>
+        <article><span>Create</span><h3>Creator stack</h3><p>Land-gated model, image, and environment publishing; a live merch designer; asset assignments; approval workflows; reusable audio; and world placement tools.</p><a href="members.html#designer">Enter creator tools →</a></article>
+        <article><span>Play + share</span><h3>World experiences</h3><p>Walkable 3D environments, designated avatars, multiplayer presence and chat, RAD-TOX play, quests, a Voice3 mixer, and web-based AR previews.</p><a href="model-explorer.html">Explore in 3D →</a></article>
+      </div>
+      <div class="status-key"><b>Delivery language</b><span><i class="status-live"></i><strong>Built</strong> means a working surface or server route exists.</span><span><i class="status-policy"></i><strong>Policy</strong> means the accounting or governance rule defined here.</span><span><i class="status-future"></i><strong>Planned</strong> means no present entitlement is implied.</span></div>
+    </section>
+
+    <section class="whitepaper-section" id="land">
+      <header><p>02 · Land assets</p><h2>Land is the permission layer for building.</h2></header>
+      <div class="land-summary"><article><b>8</b><span>fixed atlas locations</span></article><article><b>5</b><span>starter public-area plots</span></article><article><b>3</b><span>linked 3D environments</span></article><article><b>1</b><span>free community spot per public claim</span></article></div>
+      <div class="whitepaper-columns">
+        <article class="layer-card layer-card--accent"><span>Deed utility</span><h3>Build, publish, host</h3><p>A canonical land deed unlocks avatar, asset, game, and environment upload gates. Owner and delegated roles control editing and placement; visitors retain public exploration and play. A deed is a world permission object, not merely a map picture.</p></article>
+        <article class="layer-card"><span>Atlas design</span><h3>Connected places</h3><p>Volt City, Skyline Deck, Echo Gardens, Crew Plaza, Studio Ridge, Neon Docks, Bassline Badlands, and Pixel Peaks form the fixed route. Public-area claims are deeds inside those areas; dynamic wild-land claims may add one owner pin without inventing a fixed global supply.</p></article>
+      </div>
+      <ol class="flow-line land-flow"><li><b>Fund</b><span>Acquire MZK after verified payment</span></li><li><b>Claim</b><span>Atomic MZK debit + deed issue</span></li><li><b>Pin</b><span>Correlate profile, Backpack, space, pixel</span></li><li><b>Build</b><span>Place approved assets and environments</span></li><li><b>Operate</b><span>Host games, social rooms, stores, drops</span></li></ol>
+      <p class="design-note"><b>Canonical-state rule:</b> browser storage is only a display cache. Land ownership, MZK debits, deed assignment, listings, and world memory resolve through persistent wallet records. A permanent world object is valid only when profile, Backpack, space, map pixel, and owned asset agree.</p>
+      <div class="whitepaper-actions"><a href="index.html#world-map">View world map</a><a href="buy-mzk.html">Open land exchange</a></div>
+    </section>
+
+    <section class="whitepaper-section" id="products">
+      <header><p>03 · Toys, merch &amp; retail drops</p><h2>Physical expression connects back to the character.</h2></header>
+      <p class="section-intro">MUZIKAZ’s retail layer turns world identity into products people can wear, collect, customize, scan, and bring back into digital experiences. Product checkout and digital ownership are distinct records; a physical order does not imply token ownership unless a drop explicitly grants it.</p>
+      <div class="product-lanes">
+        <article><span>Wear</span><h3>Streetwear + accessories</h3><p>Hoodies, caps, wristbands, bottles, lanyards, and keychains sit beside character-specific products, colorways, logo placements, sleeve text, and custom artwork.</p></article>
+        <article><span>Collect</span><h3>Toys + display figures</h3><p>Character toys, mascot figures, bottle collectibles, and the IonCore display figure extend character IP into shelf-scale products. Digital 3D previews and collection identity support the retail drop without representing guaranteed manufacturing inventory.</p></article>
+        <article><span>Place</span><h3>3D + AR collectibles</h3><p>The CHAINeS browser supports numbered collectibles, synchronized model viewing, WebXR/Scene Viewer placement, and optional USDZ Quick Look assets.</p></article>
+        <article><span>Customize</span><h3>Drop lab</h3><p>The member studio supplies product templates, safe areas, layers, uploads, character selection, typography, color, transforms, saved drafts, and order specifications.</p></article>
+      </div>
+      <h3 class="subsection-title">Retail drop lifecycle</h3>
+      <ol class="flow-line retail-flow"><li><b>Character</b><span>Approved IP + model record</span></li><li><b>Design</b><span>Product template + safe artwork</span></li><li><b>Drop</b><span>Edition, price, window, availability</span></li><li><b>Checkout</b><span>Fiat/crypto payment verification</span></li><li><b>Fulfill</b><span>Physical order and explicit digital grants</span></li></ol>
+      <div class="accuracy-callout"><b>Drop integrity</b><p>Every offer should state whether it is physical, digital, redeemable, consumable, tradable, limited, made-to-order, or bundled. Scarcity claims must follow actual inventory controls. Royalties, redemption deadlines, geographic shipping, refunds, taxes, and manufacturing partners must be disclosed at the point of sale.</p></div>
+      <div class="whitepaper-actions"><a href="index.html#merch">Shop merch</a><a href="chaines-ar-collectibles.html">View AR collectibles</a></div>
+    </section>
+
+    <section class="whitepaper-section economy-section" id="economy">
+      <header><p>04 · MZK economy</p><h2>Every intake and burn leaves a receipt.</h2></header>
+      <p class="section-intro">MZK is the platform utility and accounting unit used to access functions—not equity, debt, a share of revenue, or a promise of appreciation. The current store quote uses <strong>100 MZK per US dollar</strong>, with a <strong>$40 / 4,000 MZK</strong> land-purchase minimum. Quotes, bonuses, and availability remain offer terms, not market-value guarantees.</p>
+      <div class="mzk-cycle" aria-label="MZK value flow"><article><b>01</b><span>Intake</span><p>Verified payment, quest reward, admin entitlement, or received transfer creates an idempotent credit.</p></article><i>→</i><article><b>02</b><span>Hold</span><p>The wallet record stores balance, items, memory, and an append-only activity trail.</p></article><i>→</i><article><b>03</b><span>Use</span><p>Land, cart items, creator actions, consumable refills, game actions, or market trades request authorization.</p></article><i>→</i><article><b>04</b><span>Settle</span><p>The service classifies the debit as burn, seller transfer, treasury intake, or reversible reservation.</p></article></div>
+      <div class="economy-table" role="table" aria-label="MZK sources and sinks">
+        <div class="economy-row economy-head" role="row"><b>Event</b><b>Asset function</b><b>Ledger treatment</b><b>Current status</b></div>
+        <div class="economy-row" role="row"><span>Verified MZK purchase</span><span>Fund wallet and land/market access</span><span>Credit after payment confirmation</span><strong>Built</strong></div>
+        <div class="economy-row" role="row"><span>Quest participation</span><span>Reward useful creator activity</span><span>Idempotent reward credit</span><strong>Built</strong></div>
+        <div class="economy-row" role="row"><span>Land claim</span><span>Issue deed and building permission</span><span>Atomic debit + asset grant</span><strong>Built</strong></div>
+        <div class="economy-row" role="row"><span>Backpack market trade</span><span>Move listed asset to buyer</span><span>Buyer debit + seller credit</span><strong>Built</strong></div>
+        <div class="economy-row" role="row"><span>Retail/cart checkout</span><span>Purchase product or asset</span><span>Debit + receipt + explicit grant</span><strong>Built</strong></div>
+        <div class="economy-row" role="row"><span>Voice3 sound placement</span><span>Add a reusable sound to a mix</span><span>1 MZK debit; undo can reverse it</span><strong>Built</strong></div>
+        <div class="economy-row" role="row"><span>Consumable refill / game action</span><span>Restore or activate item utility</span><span>Configured debit; e.g. carrot refill or RAD-TOX use</span><strong>Built</strong></div>
+        <div class="economy-row" role="row"><span>Protocol burn</span><span>Retire settled utility units</span><span>Burn receipt + supply counter update</span><em>Policy / planned</em></div>
+      </div>
+      <div class="burn-policy">
+        <article><span>Intake</span><h3>Value enters only after proof.</h3><p>External-payment intake remains pending until network verification. Reward intake requires a unique event ID. Loadout codes are one-time credentials: activation consumes the code and materializes its assets without silently replacing existing wallet state.</p></article>
+        <article><span>Debit</span><h3>Authorization precedes function.</h3><p>The engine checks identity, balance, ownership, price, and request ID before changing both asset and MZK state. Duplicate requests resolve to the original result. A failed operation must not debit the wallet.</p></article>
+        <article><span>Burn</span><h3>Retirement must be explicit.</h3><p>A <strong>spend is not automatically a burn</strong>. Transfers credit a seller; refundable reservations remain liabilities; treasury intake remains circulating until separately retired. Only an irreversible, publicly classified retirement may be reported as burned.</p></article>
+      </div>
+      <pre class="receipt-example" aria-label="MZK settlement receipt example"><code>{
+  "eventId": "mzk:settlement:&lt;unique-request-id&gt;",
+  "walletId": "&lt;authenticated-wallet&gt;",
+  "assetId": "&lt;land-product-or-consumable&gt;",
+  "amountMzk": 5,
+  "function": "consumable_refill",
+  "disposition": "burn",
+  "status": "settled",
+  "createdAt": "&lt;ISO-8601&gt;"
+}</code></pre>
+      <p class="schema-note"><b>Transparency commitment:</b> Until a server-backed burn registry and supply counters are published, the interface must call implemented reductions <em>spends</em> or <em>debits</em>, not token burns. Future burn reporting should expose gross intake, transfers, treasury-held units, reversed spends, retired units, and net circulating change without exposing private user data.</p>
+    </section>
+
+    <section class="whitepaper-section" id="asset-functions">
+      <header><p>05 · Asset function matrix</p><h2>Ownership answers “what can I do?”</h2></header>
+      <div class="function-grid">
+        <article><b>Avatars</b><p>Designate, equip, animate, spawn, appear in multiplayer, carry traits and permissions.</p></article><article><b>Land</b><p>Claim, pin, build, configure, delegate, publish, host, list, and transfer.</p></article><article><b>Wearables</b><p>Equip to compatible slots, customize appearance, save to loadout, trade when allowed.</p></article><article><b>Props</b><p>Place, display, interact, consume, refill, or assign to products and environments.</p></article><article><b>Pets</b><p>Equip as companions, follow the player, receive compatible consumables, appear in scenes.</p></article><article><b>Vehicles</b><p>Store, spawn in permitted worlds, display, and connect to future traversal rules.</p></article><article><b>Audio</b><p>Record, upload, arrange, trim, loop, mix, export, and mint through explicit flows.</p></article><article><b>Graphics</b><p>Use as thumbnails, textures, posters, store tiles, product art, badges, and overlays.</p></article><article><b>Toys + merch</b><p>Buy, customize, fulfill physically, pair with a character, and receive only disclosed digital grants.</p></article>
+      </div>
+      <p class="design-note"><b>Function metadata:</b> each asset should declare controller, type, media, compatibility, allowed actions, world scope, transferability, consumability, quantity, cost, cooldown, expiration, approval state, and provenance. Interfaces must disable unsupported functions rather than imply them.</p>
+    </section>
+
     <section class="whitepaper-section" id="identity-model">
-      <header><p>01 · Data model</p><h2>Character and instance are different layers.</h2></header>
+      <header><p>06 · Avatar data model</p><h2>Character and instance are different layers.</h2></header>
       <div class="whitepaper-columns">
         <article class="layer-card"><span>Shared definition · one-to-many</span><h3>Character</h3><p><strong>Black Sheep</strong> defines the creative identity: lore, licensed media, rig and animation profiles, compatible fit families, default classes, and balanced base traits.</p></article>
         <article class="layer-card layer-card--accent"><span>Portable record · unique ID</span><h3>Avatar instance</h3><p><strong>Black Sheep #0013</strong> binds an edition to its assets, traits, controller reference, compatibility, permissions, and schema version. XP, health, location, and cooldowns remain in game state.</p></article>
@@ -80,7 +162,7 @@
     </section>
 
     <section class="whitepaper-section" id="ownership">
-      <header><p>02 · Control and loadout</p><h2>Marketplace → Backpack → Equip → Enter World.</h2></header>
+      <header><p>07 · Control and loadout</p><h2>Marketplace → Backpack → Equip → Enter World.</h2></header>
       <ol class="flow-line"><li><b>Acquire</b><span>Buy, claim, mint, or receive</span></li><li><b>Backpack</b><span>Store a reference to Avatar ID</span></li><li><b>Designate</b><span>Select one active avatar</span></li><li><b>Equip</b><span>Validate slots and fit profile</span></li><li><b>Spawn</b><span>Verify, load, attach, apply</span></li></ol>
       <div class="whitepaper-columns ownership-copy">
         <article><h3>Backpack references, never duplicates</h3><p>An inventory entry records the asset ID, acquisition state, and listing lock. The canonical service resolves current media, traits, and compatibility. Transfers change the controller without moving large model data.</p></article>
@@ -92,7 +174,7 @@
     </section>
 
     <section class="whitepaper-section" id="gameplay-state">
-      <header><p>03 · Gameplay and progression</p><h2>Permanent truth and live state move at different speeds.</h2></header>
+      <header><p>08 · Gameplay and progression</p><h2>Permanent truth and live state move at different speeds.</h2></header>
       <div class="state-split">
         <article><span>Durable identity layer</span><h3>Provenance</h3><ul><li>Stable avatar and character IDs</li><li>Controller reference and optional token metadata</li><li>Edition and immutable traits</li><li>Creator attribution and content hash</li></ul></article>
         <article><span>Game database</span><h3>Living state</h3><ul><li>XP, level, health, and quest progress</li><li>Equipped items and unlocked actions</li><li>Achievements, cosmetics, and location</li><li>Cooldowns and world session state</li></ul></article>
@@ -105,7 +187,7 @@
     </section>
 
     <section class="whitepaper-section" id="creator-standard">
-      <header><p>04 · Interoperability</p><h2>A strict creator standard makes an open world possible.</h2></header>
+      <header><p>09 · Interoperability</p><h2>A strict creator standard makes an open world possible.</h2></header>
       <div class="standard-grid">
         <article><b>Asset validation</b><p>glTF 2.0 / GLB, optional USDZ, declared byte and geometry budgets, PBR textures, HTTPS or same-origin URLs, collision bounds, units in meters, origin, scale, and spawn clearance.</p></article>
         <article><b>Rig validation</b><p>Versioned rig profile, attachment bones, skin weights, humanoid or custom classification, neutral pose, root motion policy, and retargeting map.</p></article>
@@ -116,7 +198,7 @@
     </section>
 
     <section class="whitepaper-section implementation-section" id="reference-contract">
-      <header><p>05 · Reference contract</p><h2>One standardized object for market and world.</h2></header>
+      <header><p>10 · Reference contract</p><h2>One standardized object for market and world.</h2></header>
       <pre aria-label="Avatar JSON example"><code>{
   "id": "avatar_black_sheep_0013",
   "characterId": "black_sheep",
@@ -142,7 +224,7 @@
       <div class="whitepaper-actions"><a href="public/models/avatar-schema.json" download>Download JSON Schema</a><a href="model-market.html#character-world-avatars">Browse avatars</a></div>
     </section>
   </main>
-  <footer class="whitepaper-footer"><a class="whitepaper-brand" href="model-market.html"><img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ World"></a><p>Avatar Identity &amp; Playable Character Standard · 1.0.0</p><a href="#top">Back to top ↑</a></footer>
+  <footer class="whitepaper-footer"><a class="whitepaper-brand" href="model-market.html"><img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ World"></a><p>MUZIKAZ World Platform Whitepaper · 2.0.0 · Avatar Standard 1.0.0</p><a href="#top">Back to top ↑</a></footer>
   <script src="script.js"></script>
   <script src="battle-theme.js"></script>
     <script src="mzk-wallet.js"></script>
