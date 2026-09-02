@@ -2246,9 +2246,18 @@ function initBottleLogin() {
     try {
       const code = accessCodeInput?.value.trim();
       if (!code) throw new Error('Enter your private MZK Access Code.');
-      if (status) status.textContent = 'Creating your full account and building its game-ready Backpack…';
-      const response = await fetch('/api/access/activate', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code, username: usernameInput?.value || '' }) });
-      const result = await response.json();
+      if (status) status.textContent = 'Opening the MUZIKAZ account connected to this code…';
+      const submitCode = async (wallet = '') => {
+        const response = await fetch('/api/access/activate', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code, wallet, username: usernameInput?.value || '' }) });
+        const result = await response.json();
+        return { response, result };
+      };
+      let { response, result } = await submitCode();
+      if (response.status === 428) {
+        if (status) status.textContent = 'This new code needs an Ethereum account. Connect the wallet that will permanently own this MUZIKAZ account…';
+        const address = await requestEthereumAccount(requireEthereumWallet());
+        ({ response, result } = await submitCode(address));
+      }
       if (!response.ok || !result.success) throw new Error(result.message || 'The MZK Access Code could not be activated.');
       const account = rememberAccountSession(result.data);
       currentMemberEmail = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
@@ -2259,7 +2268,8 @@ function initBottleLogin() {
       (account.bottleClaims || []).forEach((asset) => claimOwnedAsset(`${asset} · Complimentary Mint Claim`, 'MZK Access entitlement', currentMemberEmail));
       setPurchaseStep(3);
       renderOwnedCollection(currentMemberEmail);
-      unlock(`Account ${account.accountId} is open with its completed game-standard Backpack, land, Wish Bottle claim, marketplace and creator tools. Wallet validation is optional and available at any time.`);
+      showAddress(account.primaryEthereumWallet);
+      unlock(`Account ${account.accountId} is open. This MZK Access Code and Ethereum account ${shortAddress(account.primaryEthereumWallet)} now resolve to the same Backpack, assets, MZK, land and creator tools.`);
       scrollToSection('member-locked-content');
     } catch (error) {
       if (status) status.textContent = error.message || 'The MZK Access Code could not be activated.';
@@ -2380,7 +2390,7 @@ function initMzkAccessAccount() {
   const sharedCode = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('access-code');
   if (accessCodeInput && sharedCode && /^MZK(?:-[A-Z2-9]{4}){4}$/i.test(sharedCode)) {
     accessCodeInput.value = sharedCode.toUpperCase();
-    if (status) status.textContent = 'Your shared MZK Loadout Pass is ready. Submit it to create and open the full account; wallet validation is optional.';
+    if (status) status.textContent = 'Your shared MZK Loadout Pass is ready. Submit it to open its account; a new pass will ask you to connect its Ethereum owner once.';
     history.replaceState(null, '', `${window.location.pathname}${window.location.search}#bottle-login`);
   }
   async function manage(action) {
