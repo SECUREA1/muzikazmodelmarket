@@ -124,12 +124,20 @@
   $('#view').addEventListener('change', renderTable); $('#search').addEventListener('input', renderTable);
   $('#refresh').addEventListener('click', () => loadData().catch((error) => { $('#last-updated').textContent = error.message; $('#last-updated').className = 'error'; }));
   $('#access-code-form').addEventListener('submit', async (event) => {
-    event.preventDefault(); const status = $('#access-code-status'); status.textContent = 'Generating a secure one-time signup code…'; status.className = 'access-status';
+    event.preventDefault();
+    // A dispatched event's currentTarget is cleared once execution crosses an
+    // await boundary. Keep the form reference so a successfully issued pass is
+    // not reported as a failure when the form is reset after the list refresh.
+    const form = event.currentTarget;
+    const status = $('#access-code-status'); status.textContent = 'Generating a secure one-time signup code…'; status.className = 'access-status';
     try {
-      const fields = Object.fromEntries(new FormData(event.currentTarget));
+      const fields = Object.fromEntries(new FormData(form));
       const code = await accessRequest('/api/admin/loadout-codes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...fields, waiveLoadout: true, violetBottle: true, starterLand: true, creatorVault: true }) });
       currentAccessCode = code.code; $('#access-code-output').textContent = currentAccessCode; $('#access-code-copy').hidden = false; $('#access-code-share').hidden = false;
-      status.textContent = `Ready to share privately. It can be activated once before ${formatDate(code.expiresAt)}.`; await loadAccessCodes(); event.currentTarget.reset();
+      form.reset();
+      status.textContent = `Ready to share privately. It can be activated once before ${formatDate(code.expiresAt)}.`;
+      try { await loadAccessCodes(); }
+      catch { status.textContent += ' The pass was created, but the list could not be refreshed; use Refresh data to retry.'; }
     } catch (error) { status.textContent = error.message || 'Code generation failed.'; status.className = 'access-status error'; }
   });
   $('#access-code-copy').addEventListener('click', async () => {
