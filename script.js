@@ -2407,10 +2407,13 @@ function initMzkAccessAccount() {
   const status = document.querySelector('#bottle-login-status');
   const output = document.querySelector('#mzk-access-manage-output');
   const sharedCode = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('access-code');
-  if (accessCodeInput && sharedCode && /^MZK(?:-[A-Z2-9]{4}){4}$/i.test(sharedCode)) {
+  if (accessCodeInput && sharedCode && /^MZK-(?:[A-Z2-9]{4}(?:-[A-Z2-9]{4}){3}|[A-Z0-9]{8}-[A-Z0-9]{8})$/i.test(sharedCode)) {
     accessCodeInput.value = sharedCode.toUpperCase();
-    if (status) status.textContent = 'Your shared MZK Loadout Pass is ready. Submit it to open its account; a new pass will ask you to connect its Ethereum owner once.';
+    if (status) status.textContent = 'Opening your shared MZK Loadout Pass…';
     history.replaceState(null, '', `${window.location.pathname}${window.location.search}#bottle-login`);
+    // Activated codes open immediately without a wallet prompt. A first-use
+    // code follows the same submit path and asks for its permanent owner once.
+    window.setTimeout(() => document.querySelector('#loadout-code-redeem')?.click(), 0);
   }
   async function manage(action) {
     const session = window.MuzikazAccountSession; if (!session?.csrfToken) throw new Error('Open your account again before managing its credential.');

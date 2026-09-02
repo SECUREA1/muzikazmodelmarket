@@ -65,4 +65,6 @@ test('member loadout entry uses the shared API connection and legacy redemption 
   assert.match(source, /response\.status === 404.*accountApiFetch\('\/api\/loadout-codes\/redeem'/s);
   assert.match(source, /accountApiFetch\('\/api\/account\/loadout\/paid'/);
   assert.match(source, /accountApiFetch\('\/api\/account\/access-code'/);
+  assert.ok(source.includes('[A-Z0-9]{8}-[A-Z0-9]{8}'), 'legacy Rust pass format remains accepted by the member login');
+  assert.ok(source.includes("document.querySelector('#loadout-code-redeem')?.click()"), 'shared pass links automatically submit the member login');
 });
