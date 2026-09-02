@@ -159,6 +159,7 @@ function readCart() {
 
 function writeCart(items) {
   window.localStorage.setItem(CART_KEY, JSON.stringify(items));
+  window.dispatchEvent(new CustomEvent('mzk:cart-changed', { detail: { items } }));
   syncCartCount();
 }
 
@@ -1688,7 +1689,6 @@ document.querySelector('[data-add-custom]')?.addEventListener('click', (event) =
   const product = designerProducts.find((item) => item.name === order.product) || { price: 74.99 };
   addCartLine(title, product.price * order.quantity, `Custom merch designer · ${order.uploads.length} upload(s) · ${order.logoStyle}`);
   updateCart(event.currentTarget, 'Design added');
-  claimOwnedAsset(title, 'Designer save');
   setDesignerStatus('Checkout-ready custom order added with final summary, text, upload references, quantity, and notes.');
 });
 document.querySelector('#asset-upload')?.addEventListener('change', (event) => {
@@ -2534,7 +2534,7 @@ function initMultiChainCheckout() {
     if (!['PAID', 'FULFILLED'].includes(event.detail.paymentStatus)) return;
     const receiptKey = `muzikazDeliveredPayment:${event.detail.orderId}`;
     if (localStorage.getItem(receiptKey)) return;
-    const items = readCart();
+    const items = event.detail.fulfillment?.items || event.detail.metadata?.items || [];
     if (!items.length) return;
     localStorage.setItem(receiptKey, 'true');
     completeCryptoOrder(items, event.detail);

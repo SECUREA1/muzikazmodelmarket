@@ -3298,6 +3298,9 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 /* Refined two-row mobile masthead: shopping actions stay one tap away while the
    labelled menu keeps the complete destination list readable and uncluttered. */
 .mobile-header-action{display:none}
+.global-site-header .header-primary-action{position:relative;display:inline-flex;align-items:center;gap:5px;min-height:40px;padding:6px 8px;border:1px solid rgba(156,255,0,.28);border-radius:9px;color:#fff;text-decoration:none;font-size:10px;font-weight:900;text-transform:uppercase}
+.global-site-header .header-primary-action svg{width:19px;height:19px;fill:none;stroke:var(--lime);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.global-site-header .header-cart-count{position:absolute;top:-6px;right:-5px;display:grid;place-items:center;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:var(--lime);color:#020402;font-size:10px;line-height:1}
 @media(max-width:720px){
   .topbar{display:none}
   .global-site-header{
@@ -3308,7 +3311,7 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
     box-shadow:0 8px 28px rgba(0,0,0,.7),0 1px 18px rgba(156,255,0,.12)
   }
   .global-site-header .world-logo{grid-column:1;grid-row:1;width:min(146px,100%);margin:0}
-  .global-site-header .icons{grid-column:2;grid-row:1;display:grid;grid-template-columns:repeat(4,minmax(48px,1fr));gap:5px;margin:0}
+  .global-site-header .icons{grid-column:2;grid-row:1;display:grid;grid-template-columns:repeat(5,minmax(44px,1fr));gap:5px;margin:0}
   .global-site-header .icons .cart{display:none}
   .global-site-header :is(.mobile-header-action,.wallet-connect){display:grid;place-items:center;gap:2px;min-width:48px;min-height:52px;padding:5px 3px;border:1px solid rgba(156,255,0,.3);border-radius:10px;background:rgba(156,255,0,.055);color:#fff;text-decoration:none}
   .global-site-header .mobile-header-action svg{width:22px;height:22px;fill:none;stroke:var(--lime);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px rgba(156,255,0,.7))}
@@ -3331,7 +3334,7 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 @media(max-width:390px){
   .global-site-header{grid-template-columns:minmax(92px,1fr) auto;padding-inline:7px;column-gap:5px}
   .global-site-header .world-logo{width:112px}
-  .global-site-header .icons{grid-template-columns:repeat(4,minmax(42px,1fr));gap:3px}
+  .global-site-header .icons{grid-template-columns:repeat(5,minmax(38px,1fr));gap:3px}
   .global-site-header .mobile-header-action{min-width:0}
 }
 .market-directory-listings{grid-column:1/-1;margin-top:12px;padding-top:16px;border-top:1px solid rgba(156,255,0,.25)}
