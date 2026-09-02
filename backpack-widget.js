@@ -72,10 +72,10 @@
     utilityBar.setAttribute('aria-label', 'Support and administration');
     utilityBar.innerHTML = `<button type="button" data-open-admin-login aria-label="Admin login" aria-haspopup="dialog">${adminIcon()}<span>Admin</span></button><button type="button" data-open-support-chat aria-haspopup="dialog" aria-controls="muzikaz-support-chat">${supportIcon()}<span>Support</span></button>`;
     const headerNavigation = document.querySelector('.global-site-header .global-nav, .site-header .nav');
-    // Put the staff controls at the bottom of the phone toggle list. Keeping them
+    // Put the staff controls at the top of the phone toggle list. Keeping them
     // inside the existing navigation also preserves the SVG header introduced
     // by df3b8c6 instead of replacing it with a second mobile-only masthead.
-    if (headerNavigation) headerNavigation.append(utilityBar);
+    if (headerNavigation) headerNavigation.prepend(utilityBar);
     else (headerMount || document.body).appendChild(utilityBar);
 
     const supportChat = document.querySelector('.support-chat');

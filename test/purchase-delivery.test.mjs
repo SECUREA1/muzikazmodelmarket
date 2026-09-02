@@ -6,8 +6,6 @@ import vm from 'node:vm';
 const walletSource = await readFile('mzk-wallet.js', 'utf8');
 const headerSource = await readFile('global-header.js', 'utf8');
 const checkoutSource = await readFile('script.js', 'utf8');
-const backpackSource = await readFile('backpack-widget.js', 'utf8');
-const backpackStyles = await readFile('backpack-widget.css', 'utf8');
 
 function loadMzkWallet() {
   const values = new Map();
@@ -44,11 +42,10 @@ test('shared header exposes checkout and member access and checkout uses the ver
   assert.doesNotMatch(checkoutSource, /claimOwnedAsset\(title, 'Designer save'\)/);
 });
 
-test('mobile navigation keeps staff utilities last and refreshes the cart snapshot when checkout is tapped', () => {
-  assert.match(backpackSource, /headerNavigation\.append\(utilityBar\)/);
-  assert.doesNotMatch(backpackSource, /headerNavigation\.prepend\(utilityBar\)/);
-  assert.match(backpackStyles, /margin:4px 0 0;order:1/);
-  assert.match(headerSource, /checkoutLink\.addEventListener\('click'/);
-  assert.match(headerSource, /checkoutLink\.href = cartCheckoutUrl\(\)/);
-  assert.match(checkoutSource, /restorePortableCart\(\)/);
+test('cart keeps the proven same-origin mobile checkout flow', () => {
+  assert.match(checkoutSource, /localStorage\.getItem\(CART_KEY\)/);
+  assert.match(checkoutSource, /localStorage\.setItem\(CART_KEY, JSON\.stringify\(items\)\)/);
+  assert.match(checkoutSource, /window\.location\.href = 'checkout\.html'/);
+  assert.doesNotMatch(checkoutSource, /portableCartParameter|restorePortableCart|checkoutUrl/);
+  assert.doesNotMatch(headerSource, /cartCheckoutUrl|[?&]cart=/);
 });

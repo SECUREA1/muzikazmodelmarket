@@ -1338,7 +1338,6 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
 }
 .checkout-item strong,.empty-cart strong{display:block;color:#fff}
 .checkout-item b{color:var(--lime)}
-.checkout-item img{width:64px;height:64px;flex:0 0 auto;border-radius:9px;object-fit:cover}.checkout-item>div:first-of-type{min-width:0;overflow-wrap:anywhere}.checkout-item span{display:block}.checkout-line-actions{display:grid;justify-items:end;gap:7px}.quantity-controls{display:flex!important;align-items:center;gap:7px}.quantity-controls button,.remove-cart-line{min-width:44px!important;min-height:44px!important;padding:8px!important}.quantity-controls output{min-width:2ch;text-align:center}.remove-cart-line{background:transparent!important;color:var(--lime)!important}
 .totals-table{display:grid;gap:10px;margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
 .totals-table span{color:#fff;font-weight:900}
 .totals-table strong{color:var(--lime)}
@@ -1400,7 +1399,6 @@ background-image:linear-gradient(145deg, rgba(21,21,21,.42), rgba(8,8,8,.88)), v
   .checkout-owner{grid-template-columns:1fr}
   .ethereum-actions{grid-template-columns:1fr}
   .payment-rail>button{width:100%}
-  .checkout-item{align-items:flex-start;flex-wrap:wrap}.checkout-line-actions{width:100%;grid-template-columns:auto 1fr auto;align-items:center;justify-items:start}.checkout-line-actions .quantity-controls{justify-self:center}.checkout-line-actions .remove-cart-line{justify-self:end;width:auto!important}.order-summary-card,.payment-form{min-width:0;overflow:hidden}
 }
 
 /* Public GLB/USDZ 3D explorer with floor cursor controls */
