@@ -13,7 +13,7 @@ test('activates one hashed MZK Access Code and keeps it usable as account login'
   const wallet = '0x1111111111111111111111111111111111111111'; const activated = await store.activate(grant.code.toLowerCase(), wallet);
   assert.equal(activated.credential.status, 'activated'); assert.equal(activated.credential.loadoutRedeemed, true); assert.equal(activated.account.mzkBalance, 250);
   const login = await store.authenticate(grant.code); assert.equal(login.accountId, activated.account.accountId); assert.equal(login.primaryEthereumWallet, wallet);
-  await assert.rejects(store.activate(grant.code, wallet), /already activated/);
+  assert.equal((await store.activate(grant.code)).account.accountId, activated.account.accountId, 'submitting an active code reopens its account');
   assert.equal((await store.authenticate(grant.code)).mzkBalance, 250, 'one-time grant is never duplicated');
 });
 
@@ -30,23 +30,33 @@ test('recognized wallets always resolve to the same canonical account', async (t
 test('default MZK Loadout Pass creates and fully grants a brand-new user account', async (t) => {
   const { store } = await fixture(t); const issued = await store.create();
   assert.equal(issued.label, 'MZK Loadout Pass');
-  const activated = await store.activate(issued.code, '0x4444444444444444444444444444444444444444', 'New User');
+  const activated = await store.activate(issued.code, '', 'New User');
   assert.equal(activated.account.username, 'New User');
+  assert.equal(activated.account.primaryEthereumWallet, null, 'wallet connection is optional at account creation');
   assert.equal(activated.account.loadoutStatus, 'waived');
   assert.equal(activated.account.creatorVaultAccess, true);
   assert.equal(activated.account.gameAccess, true);
   assert.deepEqual(activated.account.landAssets, ['Unrevealed MUZIKAZ Land']);
   assert.deepEqual(activated.account.bottleClaims, ['Violet Wish Bottle']);
+  assert.deepEqual(activated.account.gameAssets, ['Starter Avatar', 'Explorer Tool Kit', 'RAD-TOX Starter Gear']);
+  const connected = await store.connectWallet(activated.account.accountId, '0x4444444444444444444444444444444444444444');
+  assert.equal(connected.primaryEthereumWallet, '0x4444444444444444444444444444444444444444');
 });
 
-test('generated passes expose a shareable activation path and honor form boolean values', async (t) => {
+test('generated passes expose a shareable activation path and always build the game-standard loadout', async (t) => {
   const { store } = await fixture(t);
   const issued = await store.create({ label: '  ', waiveLoadout: 'false', violetBottle: '0', starterLand: 'off', creatorVault: 'no' });
   assert.equal(issued.label, 'MZK Loadout Pass');
   assert.equal(issued.activationPath, `/members.html#access-code=${issued.code}`);
   const activated = await store.activate(issued.code, '0x6666666666666666666666666666666666666666');
-  assert.equal(activated.account.loadoutStatus, 'none');
-  assert.deepEqual(activated.account.landAssets, []);
-  assert.deepEqual(activated.account.bottleClaims, []);
-  assert.equal(activated.account.creatorVaultAccess, false);
+  assert.equal(activated.account.loadoutStatus, 'waived');
+  assert.deepEqual(activated.account.landAssets, ['Unrevealed MUZIKAZ Land']);
+  assert.deepEqual(activated.account.bottleClaims, ['Violet Wish Bottle']);
+  assert.equal(activated.account.creatorVaultAccess, true);
+});
+
+test('a wallet cannot be validated against two access-code accounts', async (t) => {
+  const { store } = await fixture(t); const first = await store.activate((await store.create()).code); const second = await store.activate((await store.create()).code);
+  const wallet = '0x7777777777777777777777777777777777777777'; await store.connectWallet(first.account.accountId, wallet);
+  await assert.rejects(store.connectWallet(second.account.accountId, wallet), /already connected/);
 });

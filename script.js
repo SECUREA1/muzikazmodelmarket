@@ -2082,6 +2082,7 @@ function initBottleLogin() {
   const continueButton = document.querySelector('#bottle-continue');
   const accessCodeInput = document.querySelector('#loadout-access-code');
   const accessCodeButton = document.querySelector('#loadout-code-redeem');
+  const walletValidateButton = document.querySelector('#account-wallet-validate');
   const identityPanel = document.querySelector('#wallet-identity');
   const usernameInput = document.querySelector('#wallet-username');
   const usernameSave = document.querySelector('#wallet-username-save');
@@ -2099,6 +2100,7 @@ function initBottleLogin() {
     if (mintButton) mintButton.disabled = busy || (Number(form.dataset.purchaseStep) || 1) < 3;
     if (continueButton) continueButton.disabled = busy || (Number(form.dataset.purchaseStep) || 1) < 3;
     if (accessCodeButton) accessCodeButton.disabled = busy;
+    if (walletValidateButton) walletValidateButton.disabled = busy;
   };
   const updateLoadoutQuote = async () => {
     const currency = loadoutCurrency?.value || 'ETH';
@@ -2244,16 +2246,12 @@ function initBottleLogin() {
     try {
       const code = accessCodeInput?.value.trim();
       if (!code) throw new Error('Enter your private MZK Access Code.');
-      if (status) status.textContent = 'Connect the Ethereum wallet that will be bound to this account…';
-      const wallet = requireEthereumWallet();
-      const address = await requestEthereumAccount(wallet, { chooseAccount: connectButton?.dataset.connected === 'true' });
-      showAddress(address);
-      if (status) status.textContent = 'Activating the account and redeeming included entitlements once…';
-      const response = await fetch('/api/access/activate', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code, wallet: address, username: usernameInput?.value || '' }) });
+      if (status) status.textContent = 'Creating your full account and building its game-ready Backpack…';
+      const response = await fetch('/api/access/activate', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code, username: usernameInput?.value || '' }) });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || 'The MZK Access Code could not be activated.');
       const account = rememberAccountSession(result.data);
-      currentMemberEmail = normalizeMemberEmail(address);
+      currentMemberEmail = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
       grantBottleAccess(currentMemberEmail, 'mzk-access-code', account.accountId);
       window.sessionStorage.setItem('muzikazBottleMember', 'true');
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
@@ -2261,11 +2259,29 @@ function initBottleLogin() {
       (account.bottleClaims || []).forEach((asset) => claimOwnedAsset(`${asset} · Complimentary Mint Claim`, 'MZK Access entitlement', currentMemberEmail));
       setPurchaseStep(3);
       renderOwnedCollection(currentMemberEmail);
-      unlock(`Your MUZIKAZ account is active. The one-time entitlements were redeemed and this same MZK Access Code can now reopen account ${account.accountId} on any device.`);
-      if (accessCodeInput) accessCodeInput.value = '';
+      unlock(`Account ${account.accountId} is open with its completed game-standard Backpack, land, Wish Bottle claim, marketplace and creator tools. Wallet validation is optional and available at any time.`);
       scrollToSection('member-locked-content');
     } catch (error) {
       if (status) status.textContent = error.message || 'The MZK Access Code could not be activated.';
+    } finally { setBusy(false); }
+  });
+  walletValidateButton?.addEventListener('click', async () => {
+    setBusy(true);
+    try {
+      const session = window.MuzikazAccountSession;
+      if (!session?.csrfToken) throw new Error('Submit your MZK Access Code to open the account before connecting a wallet.');
+      if (status) status.textContent = 'Connect the Ethereum wallet to validate it against this MZK account…';
+      const wallet = requireEthereumWallet();
+      const address = await requestEthereumAccount(wallet, { chooseAccount: connectButton?.dataset.connected === 'true' });
+      const response = await fetch('/api/account/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': session.csrfToken }, body: JSON.stringify({ wallet: address }) });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || 'The wallet could not be validated against this account.');
+      window.MuzikazAccountSession.account = result.data;
+      showAddress(address);
+      if (identityPanel) identityPanel.hidden = false;
+      if (status) status.textContent = `Wallet ${shortAddress(address)} is validated and connected to account ${result.data.accountId}. Your Access Code remains usable without reconnecting.`;
+    } catch (error) {
+      if (status) status.textContent = error.message || 'The wallet could not be validated.';
     } finally { setBusy(false); }
   });
   loadoutButton?.addEventListener('click', async () => {
@@ -2359,35 +2375,14 @@ initBottleLogin();
 
 function initMzkAccessAccount() {
   const accessCodeInput = document.querySelector('#loadout-access-code');
-  const openButton = document.querySelector('#account-access-open');
-  const locked = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   const output = document.querySelector('#mzk-access-manage-output');
   const sharedCode = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('access-code');
   if (accessCodeInput && sharedCode && /^MZK(?:-[A-Z2-9]{4}){4}$/i.test(sharedCode)) {
     accessCodeInput.value = sharedCode.toUpperCase();
-    if (status) status.textContent = 'Your shared MZK Loadout Pass is ready. Connect the intended Ethereum wallet to activate it.';
+    if (status) status.textContent = 'Your shared MZK Loadout Pass is ready. Submit it to create and open the full account; wallet validation is optional.';
     history.replaceState(null, '', `${window.location.pathname}${window.location.search}#bottle-login`);
   }
-  const showAccount = (session) => {
-    window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt };
-    locked.hidden = false; locked.dataset.locked = 'false'; document.body.classList.add('is-member-authenticated');
-    window.sessionStorage.setItem('muzikazBottleMember', 'true');
-    if (status) status.textContent = `Account ${session.account.accountId} reopened. Backpack, wallets, MZK, land, assets, creator tools and claims loaded from one canonical account.`;
-    scrollToSection('member-locked-content');
-  };
-  openButton?.addEventListener('click', async () => {
-    openButton.disabled = true;
-    try {
-      const code = accessCodeInput?.value.trim();
-      if (!code) throw new Error('Enter your private MZK Access Code.');
-      const response = await fetch('/api/access/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code }) });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message || 'Account could not be opened.');
-      accessCodeInput.value = '';
-      showAccount(result.data);
-    } catch (error) { if (status) status.textContent = error.message; } finally { openButton.disabled = false; }
-  });
   async function manage(action) {
     const session = window.MuzikazAccountSession; if (!session?.csrfToken) throw new Error('Open your account again before managing its credential.');
     const response = await fetch(`/api/account/access-code/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': session.csrfToken }, body: '{}' }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || `Access Code ${action} failed.`); return result.data;
