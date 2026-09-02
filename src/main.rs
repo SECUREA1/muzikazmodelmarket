@@ -174,6 +174,15 @@ struct PaymentOrder {
     confirmations: u64,
     created_at: String,
 }
+#[derive(Clone, Debug)]
+struct LoadoutCode {
+    id: String,
+    code: String,
+    label: String,
+    status: String,
+    created_at: u64,
+    expires_at: u64,
+}
 #[derive(Clone)]
 struct State {
     root: PathBuf,
@@ -193,6 +202,7 @@ struct State {
     house_users: Arc<RwLock<Vec<HouseUser>>>,
     chat_messages: Arc<RwLock<Vec<ChatMessage>>>,
     payment_orders: Arc<RwLock<Vec<PaymentOrder>>>,
+    loadout_codes: Arc<RwLock<Vec<LoadoutCode>>>,
     users: Arc<RwLock<HashMap<String, String>>>,
 }
 fn main() -> std::io::Result<()> {
@@ -238,6 +248,9 @@ fn main() -> std::io::Result<()> {
         chat_messages: Arc::new(RwLock::new(Vec::new())),
         payment_orders: Arc::new(RwLock::new(load_payment_orders(
             &data.join("payment-orders.json"),
+        ))),
+        loadout_codes: Arc::new(RwLock::new(load_loadout_codes(
+            &data.join("loadout-codes-rust.json"),
         ))),
     };
     let listener = TcpListener::bind(format!("0.0.0.0:{port}"))?;
@@ -350,6 +363,14 @@ fn api(
     match (method, path) {
         ("GET", "/api/health") | ("HEAD", "/api/health") => health(s, st, method == "HEAD"),
         ("POST", "/api/admin/login") => admin_login(s, st, body),
+        ("GET", "/api/admin/session") => admin_session(s, st, headers),
+        ("POST", "/api/admin/logout") => admin_logout(s, st, headers),
+        ("GET", "/api/admin/access-codes") | ("GET", "/api/admin/loadout-codes") => {
+            admin_loadout_codes(s, st, headers)
+        }
+        ("POST", "/api/admin/access-codes") | ("POST", "/api/admin/loadout-codes") => {
+            create_loadout_code(s, st, headers, body)
+        }
         ("POST", "/api/payments/orders") => create_payment_order(s, st, body),
         ("GET", "/api/wallet/state") => wallet_state(s, st, headers, None),
         ("PUT", "/api/wallet/state") => wallet_state(s, st, headers, Some(body)),
@@ -423,6 +444,12 @@ fn api(
         }
         _ if path.starts_with("/api/payments/orders/") => {
             payment_order_route(s, st, method, path, body)
+        }
+        _ if method == "POST"
+            && path.starts_with("/api/admin/access-codes/")
+            && path.ends_with("/revoke") =>
+        {
+            revoke_loadout_code(s, st, headers, path)
         }
         _ if method == "GET" && path.starts_with("/api/houses/") && path.ends_with("/avatars") => {
             house_avatars(s, st, method, path, headers, body)
@@ -2529,6 +2556,185 @@ fn admin_login(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()
         "Administrator authenticated",
         false,
     )
+}
+fn admin_session(
+    s: &mut TcpStream,
+    st: &State,
+    headers: &HashMap<String, String>,
+) -> std::io::Result<()> {
+    if !is_admin(headers, st) {
+        return json(
+            s,
+            401,
+            false,
+            "{}",
+            "Administrator session is missing or expired.",
+            false,
+        );
+    }
+    json(
+        s,
+        200,
+        true,
+        "{\"authenticated\":true,\"persistent\":true}",
+        "Administrator authenticated",
+        false,
+    )
+}
+fn admin_logout(
+    s: &mut TcpStream,
+    st: &State,
+    headers: &HashMap<String, String>,
+) -> std::io::Result<()> {
+    if let Some(token) = headers.get("x-admin-token") {
+        st.admin_sessions.write().unwrap().remove(token);
+    }
+    json(
+        s,
+        200,
+        true,
+        "{\"authenticated\":false}",
+        "Administrator signed out",
+        false,
+    )
+}
+fn loadout_code_json(code: &LoadoutCode, include_secret: bool) -> String {
+    let secret = if include_secret {
+        format!(
+            ",\"code\":\"{}\",\"activationPath\":\"/members.html#access-code={}\"",
+            esc(&code.code),
+            esc(&code.code)
+        )
+    } else {
+        String::new()
+    };
+    format!(
+        "{{\"id\":\"{}\",\"maskedCode\":\"MZK-••••-{}\",\"label\":\"{}\",\"status\":\"{}\",\"createdAt\":{},\"expiresAt\":{},\"boundWallet\":null,\"loadoutRedeemed\":false{}}}",
+        esc(&code.id), esc(&code.code.chars().rev().take(4).collect::<String>().chars().rev().collect::<String>()),
+        esc(&code.label), esc(&code.status), code.created_at * 1000, code.expires_at * 1000, secret
+    )
+}
+fn persist_loadout_codes(st: &State, codes: &[LoadoutCode]) {
+    let _ = fs::create_dir_all(&st.data);
+    let body = format!(
+        "[{}]",
+        codes
+            .iter()
+            .map(|code| loadout_code_json(code, true))
+            .collect::<Vec<_>>()
+            .join(",")
+    );
+    let _ = fs::write(st.data.join("loadout-codes-rust.json"), body);
+}
+fn load_loadout_codes(path: &Path) -> Vec<LoadoutCode> {
+    fs::read_to_string(path)
+        .unwrap_or_default()
+        .split("{\"")
+        .skip(1)
+        .map(|part| format!("{{\"{}", part))
+        .filter_map(|item| {
+            let id = val(&item, "id");
+            if id.is_empty() {
+                return None;
+            }
+            Some(LoadoutCode {
+                id,
+                code: val(&item, "code"),
+                label: val(&item, "label"),
+                status: val(&item, "status"),
+                created_at: val(&item, "createdAt").parse::<u64>().unwrap_or(0) / 1000,
+                expires_at: val(&item, "expiresAt").parse::<u64>().unwrap_or(0) / 1000,
+            })
+        })
+        .collect()
+}
+fn admin_loadout_codes(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+) -> std::io::Result<()> {
+    if !is_admin(h, st) {
+        return json(s, 403, false, "{}", "Admin authorization required", false);
+    }
+    let codes = st.loadout_codes.read().unwrap();
+    json(
+        s,
+        200,
+        true,
+        &format!(
+            "[{}]",
+            codes
+                .iter()
+                .map(|code| loadout_code_json(code, false))
+                .collect::<Vec<_>>()
+                .join(",")
+        ),
+        "Loadout passes loaded",
+        false,
+    )
+}
+fn create_loadout_code(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    body: &[u8],
+) -> std::io::Result<()> {
+    if !is_admin(h, st) {
+        return json(s, 403, false, "{}", "Admin authorization required", false);
+    }
+    let payload = String::from_utf8_lossy(body);
+    let days = val(&payload, "expiresInDays")
+        .parse::<u64>()
+        .unwrap_or(7)
+        .clamp(1, 365);
+    let created_at = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    let id = uuid();
+    let code = format!("MZK-{}-{}", &id[..8], &uuid()[..8]).to_ascii_uppercase();
+    let label = {
+        let value = val(&payload, "label");
+        if value.is_empty() {
+            "MZK Loadout Pass".into()
+        } else {
+            trim(value, 80)
+        }
+    };
+    let record = LoadoutCode {
+        id,
+        code,
+        label,
+        status: "active".into(),
+        created_at,
+        expires_at: created_at + days * 86_400,
+    };
+    let response = loadout_code_json(&record, true);
+    let mut codes = st.loadout_codes.write().unwrap();
+    codes.insert(0, record);
+    persist_loadout_codes(st, &codes);
+    json(s, 201, true, &response, "Loadout pass created", false)
+}
+fn revoke_loadout_code(
+    s: &mut TcpStream,
+    st: &State,
+    h: &HashMap<String, String>,
+    path: &str,
+) -> std::io::Result<()> {
+    if !is_admin(h, st) {
+        return json(s, 403, false, "{}", "Admin authorization required", false);
+    }
+    let id = path
+        .trim_start_matches("/api/admin/access-codes/")
+        .trim_end_matches("/revoke");
+    let mut codes = st.loadout_codes.write().unwrap();
+    let Some(code) = codes.iter_mut().find(|code| code.id == id) else {
+        return json(s, 404, false, "{}", "Credential not found.", false);
+    };
+    code.status = "revoked".into();
+    let response = loadout_code_json(code, false);
+    persist_loadout_codes(st, &codes);
+    json(s, 200, true, &response, "Loadout pass revoked", false)
 }
 fn require_user(
     s: &mut TcpStream,
