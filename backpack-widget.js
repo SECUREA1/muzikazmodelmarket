@@ -57,24 +57,6 @@
     else if (headerMount) headerMount.prepend(dock);
     else document.body.appendChild(dock);
 
-    const siteHeader = document.querySelector('.global-site-header');
-    const mobileHeader = document.createElement('div');
-    mobileHeader.className = 'mzk-mobile-header';
-    mobileHeader.innerHTML = `<nav class="mzk-mobile-commerce-row" aria-label="Purchase and account actions">
-      <a href="checkout.html" aria-label="Open checkout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h10l3-8H6M9 20h.01M17 20h.01"/></svg><span>Checkout</span></a>
-      <a href="buy-mzk.html" aria-label="Buy MZK"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M17 6.5c-1-1-2.5-1.5-5-1.5-3 0-5 1.2-5 3s2 3 5 3 5 1.2 5 3-2 3-5 3c-2.5 0-4-.5-5-1.5"/></svg><span>Buy MZK</span></a>
-      <button type="button" data-mobile-open-backpack aria-label="Open Backpack">${icon()}<span>Backpack</span></button>
-    </nav>
-    <div class="mzk-mobile-world-row">
-      <a class="mzk-mobile-world-brand" href="index.html#home" aria-label="MUZIKAZ WORLD home"><img src="public/assets/muzikaz-world-logo.svg" alt=""><span>World</span></a>
-      <button type="button" data-mobile-wallet aria-label="Connect wallet">${walletIcon()}<span>Wallet</span></button>
-      <button type="button" class="mzk-mobile-menu-toggle" data-mobile-menu-toggle aria-expanded="false" aria-controls="mzk-mobile-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span></button>
-    </div>
-    <nav class="mzk-mobile-menu" id="mzk-mobile-menu" aria-label="MUZIKAZ WORLD menu" hidden>
-      <a href="index.html">Home</a><a href="index.html#models">Models</a><a href="model-market.html">Market</a><a href="model-explorer.html">World</a><a href="members.html">Members</a><button type="button" data-mobile-support>${supportIcon()}<span>Support</span></button><button type="button" data-mobile-admin>${adminIcon()}<span>Admin</span></button>
-    </nav>`;
-    if (siteHeader) siteHeader.appendChild(mobileHeader);
-
     const drawer = document.createElement('section');
     drawer.className = 'mzk-backpack-drawer';
     drawer.dataset.backpackDrawer = '';
@@ -86,10 +68,10 @@
     document.body.appendChild(drawer);
 
     const utilityBar = document.createElement('aside');
-    utilityBar.className = 'mzk-site-utility';
+    utilityBar.className = `mzk-site-utility${headerMount ? ' is-header-utility' : ''}`;
     utilityBar.setAttribute('aria-label', 'Support and administration');
     utilityBar.innerHTML = `<button type="button" data-open-admin-login aria-label="Admin login" aria-haspopup="dialog">${adminIcon()}<span>Admin</span></button><button type="button" data-open-support-chat aria-haspopup="dialog" aria-controls="muzikaz-support-chat">${supportIcon()}<span>Support</span></button>`;
-    document.body.appendChild(utilityBar);
+    (document.querySelector('.global-site-header .global-nav, .site-header .nav') || headerMount || document.body).appendChild(utilityBar);
 
     const supportChat = document.querySelector('.support-chat');
     supportChat?.classList.add('is-utility-linked');
@@ -109,11 +91,6 @@
     const adminForm = adminDialog.querySelector('[data-global-admin-form]');
     const adminStatus = adminDialog.querySelector('[data-global-admin-status]');
     const openAdminButton = utilityBar.querySelector('[data-open-admin-login]');
-    const menu = mobileHeader.querySelector('[data-mobile-menu-toggle]')?.nextElementSibling || mobileHeader.querySelector('.mzk-mobile-menu');
-    const menuButton = mobileHeader.querySelector('[data-mobile-menu-toggle]');
-    const toggleMenu = (open) => { if (!menu || !menuButton) return; menu.hidden = !open; menuButton.setAttribute('aria-expanded', String(open)); };
-    menuButton?.addEventListener('click', () => toggleMenu(menu.hidden));
-    menu?.addEventListener('click', () => toggleMenu(false));
     const adminToken = () => localStorage.getItem('muzikazAdminToken') || sessionStorage.getItem('muzikazAdminToken') || '';
     const rememberAdmin = (token) => { localStorage.setItem('muzikazAdminToken', token); sessionStorage.setItem('muzikazAdminToken', token); };
     const hasAdminSession = async () => {
@@ -134,8 +111,6 @@
       document.documentElement.classList.add('mzk-admin-open');
       adminForm.querySelector('input').focus();
     });
-    mobileHeader.querySelector('[data-mobile-admin]')?.addEventListener('click', () => openAdminButton.click());
-    mobileHeader.querySelector('[data-mobile-support]')?.addEventListener('click', () => utilityBar.querySelector('[data-open-support-chat]').click());
     if (new URLSearchParams(window.location.search).get('admin') === 'login') openAdminButton.click();
     adminDialog.addEventListener('click', (event) => { if (event.target.closest('[data-close-admin-login]')) closeAdmin(); });
     adminForm.addEventListener('submit', async (event) => {

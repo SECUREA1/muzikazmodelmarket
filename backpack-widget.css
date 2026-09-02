@@ -30,29 +30,37 @@
 .mzk-site-utility button:focus-visible{box-shadow:inset 0 0 0 2px #fff}
 @media(max-width:700px){.mzk-site-utility{right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom))}}
 
-/* Two-row phone masthead: commerce first, then an even MUZIKAZ WORLD row. */
-.mzk-mobile-header{display:none}
-@media(max-width:720px){
-  .global-site-header{display:block!important;position:sticky!important;height:auto!important;min-height:0!important;padding:max(6px,env(safe-area-inset-top)) 6px 6px!important;background:linear-gradient(180deg,rgba(4,8,5,.99),rgba(4,9,6,.96))!important;border-bottom:1px solid rgba(156,255,0,.38)!important;box-shadow:0 10px 30px rgba(0,0,0,.72),0 0 22px rgba(156,255,0,.08)!important}
-  .global-site-header>:not(.mzk-mobile-header){display:none!important}
-  .mzk-mobile-header{display:grid;width:100%;gap:5px;font-family:Inter,Arial,sans-serif}
-  .mzk-mobile-commerce-row,.mzk-mobile-world-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;width:100%}
-  .mzk-mobile-commerce-row :is(a,button),.mzk-mobile-world-row :is(a,button){display:flex;min-width:0;min-height:42px;align-items:center;justify-content:center;gap:6px;margin:0;padding:7px 5px;border:1px solid rgba(156,255,0,.3);border-radius:10px;background:linear-gradient(180deg,rgba(21,33,18,.98),rgba(7,13,8,.98));color:#f5fff1;text-decoration:none;box-shadow:inset 0 1px rgba(255,255,255,.04);font:900 10px/1 Inter,Arial,sans-serif;letter-spacing:.02em;text-transform:uppercase;cursor:pointer}
-  .mzk-mobile-commerce-row :is(a,button):hover,.mzk-mobile-commerce-row :is(a,button):focus-visible,.mzk-mobile-world-row :is(a,button):hover,.mzk-mobile-world-row :is(a,button):focus-visible{border-color:#9cff00;background:#9cff00;color:#071007;outline:none}
-  .mzk-mobile-commerce-row svg,.mzk-mobile-world-row svg{width:21px;height:21px;flex:0 0 21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px rgba(156,255,0,.65))}
-  .mzk-mobile-commerce-row button>svg{width:23px;height:23px}
-  .mzk-mobile-world-row{border-top:1px solid rgba(255,255,255,.06);padding-top:5px}
-  .mzk-mobile-world-brand img{width:min(84px,23vw);height:23px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(156,255,0,.35))}
-  .mzk-mobile-world-brand span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
-  .mzk-mobile-menu-toggle[aria-expanded="true"]{border-color:#9cff00!important;color:#9cff00!important;box-shadow:0 0 16px rgba(156,255,0,.2)!important}
-  .mzk-mobile-menu[hidden]{display:none!important}
-  .mzk-mobile-menu{position:absolute;z-index:10020;top:calc(100% + 1px);right:6px;left:6px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:8px;border:1px solid rgba(156,255,0,.5);border-radius:0 0 14px 14px;background:rgba(3,8,4,.99);box-shadow:0 22px 45px rgba(0,0,0,.86),0 0 28px rgba(156,255,0,.1)}
-  .mzk-mobile-menu :is(a,button){display:flex;min-height:42px;align-items:center;gap:8px;padding:8px 11px;border:1px solid rgba(156,255,0,.18);border-radius:8px;background:rgba(156,255,0,.055);color:#f4fff0;font:800 11px/1.2 Inter,Arial,sans-serif;text-decoration:none;cursor:pointer}
-  .mzk-mobile-menu :is(a,button):hover,.mzk-mobile-menu :is(a,button):focus-visible{border-color:#9cff00;background:#9cff00;color:#071007;outline:none}
-  .mzk-mobile-menu button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-}
-
 /* Shared user-listing shelf used by the member vault and public market. */
 .user-market-shelf{display:grid;gap:12px;margin:18px 0;padding:18px;border:1px solid rgba(156,255,0,.28);border-radius:18px;background:linear-gradient(135deg,rgba(156,255,0,.07),rgba(5,8,6,.92))}
 .user-market-shelf h3,.user-market-shelf p{margin:0}.user-market-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.user-market-card{display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;padding:12px;border:1px solid rgba(156,255,0,.22);border-radius:13px;background:#080d09}.user-market-card>img,.user-market-card__icon{width:52px;height:52px;border-radius:10px;object-fit:cover;background:#15200f}.user-market-card__icon{display:grid;place-items:center;color:#9cff00;font:36px Bangers,Impact,sans-serif}.user-market-card h4,.user-market-card strong,.user-market-card small{display:block;margin:3px 0}.user-market-card strong{color:#9cff00}.user-market-card>button{grid-column:1/-1;min-height:38px;border:1px solid #9cff00;border-radius:9px;background:#9cff00;color:#071007;font-weight:900;cursor:pointer}.user-market-card>button:disabled{border-color:#445047;background:#1a211c;color:#879189;cursor:default}.user-market-empty{grid-column:1/-1;padding:18px;border:1px dashed #415044;border-radius:12px;color:#aab5ad;text-align:center}
 @media(max-width:520px){.user-market-grid{grid-template-columns:1fr}.user-market-shelf{padding:12px}.user-market-card{grid-template-columns:46px 1fr}.user-market-card>img,.user-market-card__icon{width:46px;height:46px}}
+
+/* Keep account and staff actions in the original SVG header on every viewport. */
+.mzk-site-utility.is-header-utility{
+  position:static;
+  z-index:auto;
+  flex:0 0 auto;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  overflow:visible;
+}
+.mzk-site-utility.is-header-utility button{
+  min-height:42px;
+  border:1px solid rgba(156,255,0,.3);
+  border-radius:9px;
+  background:rgba(156,255,0,.055);
+}
+.mzk-site-utility.is-header-utility button+button{margin-left:5px}
+.mzk-site-utility.is-header-utility svg{display:block;flex:0 0 20px;width:20px;height:20px}
+@media(max-width:850px){
+  .global-site-header .global-nav .mzk-site-utility.is-header-utility,
+  .site-header .nav .mzk-site-utility.is-header-utility{display:grid;width:100%;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+  .mzk-site-utility.is-header-utility button{justify-content:center;min-height:48px}
+  .mzk-site-utility.is-header-utility button+button{margin-left:0}
+}
+@media(max-width:700px){
+  .mzk-backpack-dock.is-inline .mzk-backpack-button{display:flex;gap:5px;justify-content:center;min-width:44px}
+  .mzk-backpack-dock.is-inline .mzk-backpack-button>svg{display:block;width:26px;height:26px;flex:0 0 26px}
+}
