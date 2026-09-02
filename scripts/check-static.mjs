@@ -342,7 +342,7 @@ for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelA
 for (const requiredMintReward of ['BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
-for (const requiredLoadoutCopy of ['$30 USD · Live ETH quote', 'Minting is optional', 'Continue to Creator Tools', 'MZK Access Code', 'Open Account with Access Code', 'Connect MetaMask &amp; Open Account', 'One account. One code. Any device.']) {
+for (const requiredLoadoutCopy of ['$30 USD · Live ETH quote', 'Minting is optional', 'Enter RAD-TOX Game', 'MZK Access Code', 'Open Account with Access Code', 'Connect MetaMask &amp; Open Account', 'One account. One code. Any device.']) {
   if (!membersHtml.includes(requiredLoadoutCopy)) throw new Error(`members.html is missing $30 Loadout or Magic Bottle guidance: ${requiredLoadoutCopy}`);
 }
 for (const requiredAccessCodeAction of ["openAccessCodeAccount({ connectFirst: true })", "connectButton?.addEventListener('click', connect)", "if (accessCodeInput?.value.trim()) await openAccessCodeAccount()"]) {

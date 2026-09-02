@@ -59,3 +59,13 @@ test('an invalid access code response is not mistaken for a missing API route', 
   assert.equal(response.status, 404);
   assert.deepEqual(requests, ['https://world.muzikaz.example/api/access/activate']);
 });
+
+test('hosted account requests include the session cookie needed by paid loadout follow-ups', async () => {
+  let requestOptions;
+  const { window } = loadConnection(async (_url, options) => {
+    requestOptions = options;
+    return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'content-type': 'application/json' } });
+  });
+  await window.MUZIKAZ_API.fetch('/api/account/loadout/paid', { method: 'POST' });
+  assert.equal(requestOptions.credentials, 'include');
+});
