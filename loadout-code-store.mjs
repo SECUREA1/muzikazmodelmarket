@@ -10,6 +10,7 @@ const normalizeCode = (value) => String(value || '').trim().toUpperCase().replac
 const normalizeWallet = (value) => String(value || '').trim().toLowerCase();
 const unique = (values) => [...new Set(values.filter(Boolean))];
 const enabled = (value, fallback = true) => value == null ? fallback : ![false, 0, '0', 'false', 'off', 'no'].includes(typeof value === 'string' ? value.trim().toLowerCase() : value);
+const STANDARD_LOADOUT_ASSETS = ['Starter Avatar', 'Explorer Tool Kit', 'RAD-TOX Starter Gear'];
 
 function generateCode() {
   const bytes = randomBytes(16);
@@ -83,18 +84,27 @@ export class MzkAccountStore {
       data.credentials.unshift(record); return { ...publicCredential(record), code, activationPath: `/members.html#access-code=${encodeURIComponent(code)}` };
     });
   }
-  activate(code, wallet, username = '') { return this.serialized(async (data) => {
-    const normalized = normalizeCode(code); const address = normalizeWallet(wallet); if (!ACCESS_CODE_PATTERN.test(normalized)) throw Object.assign(new Error('Enter a valid MZK Access Code.'), { statusCode: 400 }); if (!WALLET_PATTERN.test(address)) throw Object.assign(new Error('Connect a valid Ethereum wallet before activation.'), { statusCode: 400 });
+  activate(code, wallet = '', username = '') { return this.serialized(async (data) => {
+    const normalized = normalizeCode(code); const address = normalizeWallet(wallet); if (!ACCESS_CODE_PATTERN.test(normalized)) throw Object.assign(new Error('Enter a valid MZK Access Code.'), { statusCode: 400 }); if (address && !WALLET_PATTERN.test(address)) throw Object.assign(new Error('Enter a valid Ethereum wallet.'), { statusCode: 400 });
     const credential = data.credentials.find((item) => verifies(normalized, { hash: item.codeHash, salt: item.codeSalt })); if (!credential) throw Object.assign(new Error('This MZK Access Code is invalid.'), { statusCode: 404 });
     if (credential.status === 'revoked') throw Object.assign(new Error('This MZK Access Code has been revoked.'), { statusCode: 403 });
     if (credential.status === 'issued' && Date.parse(credential.expiresAt) <= Date.now()) throw Object.assign(new Error('This MZK Access Code expired before activation.'), { statusCode: 410 });
     if (credential.status === 'expired') throw Object.assign(new Error('This MZK Access Code expired before activation.'), { statusCode: 410 });
-    if (credential.status === 'activated') throw Object.assign(new Error('This code is already activated. Use Open My Account instead.'), { statusCode: 409 });
-    let account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address)); if (credential.accountId) account ||= data.accounts.find((a) => a.accountId === credential.accountId); if (!account) { account = accountRecord('', address, String(username).slice(0, 40)); data.accounts.push(account); }
-    const now = new Date().toISOString(); if (!account.connectedWallets.some((w) => w.chain === 'ETH' && w.address === address)) account.connectedWallets.push({ chain: 'ETH', address, boundAt: now }); account.primaryEthereumWallet ||= address;
-    if (!credential.loadoutRedeemed) { const e = credential.entitlements; if (e.waiveLoadout) account.loadoutStatus = 'waived'; account.creatorVaultAccess ||= e.creatorVault; account.gameAccess ||= e.creatorVault; if (e.starterLand) account.landAssets = unique([...account.landAssets, 'Unrevealed MUZIKAZ Land']); if (e.violetBottle) account.bottleClaims = unique([...account.bottleClaims, 'Violet Wish Bottle']); account.mzkBalance += e.promotionalMzk; account.loadoutRedeemed = true; credential.loadoutRedeemed = true; }
-    Object.assign(credential, { status: 'activated', activatedAt: now, lastUsedAt: now, boundWallet: address, accountId: account.accountId, accountUsername: account.username }); Object.assign(account, { accessCodeStatus: 'activated', accessCodeCreatedAt: credential.createdAt, accessCodeActivatedAt: now, accessCodeLastUsedAt: now, updatedAt: now });
+    let account = credential.accountId ? data.accounts.find((a) => a.accountId === credential.accountId) : null;
+    if (!account && address) account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address));
+    if (!account) { account = accountRecord('', address, String(username).slice(0, 40)); data.accounts.push(account); }
+    const now = new Date().toISOString(); if (address && !account.connectedWallets.some((w) => w.chain === 'ETH' && w.address === address)) account.connectedWallets.push({ chain: 'ETH', address, boundAt: now }); if (address) account.primaryEthereumWallet ||= address;
+    if (!credential.loadoutRedeemed) { const e = credential.entitlements; account.loadoutStatus = 'waived'; account.creatorVaultAccess = true; account.gameAccess = true; account.landAssets = unique([...account.landAssets, 'Unrevealed MUZIKAZ Land']); account.bottleClaims = unique([...account.bottleClaims, 'Violet Wish Bottle']); account.gameAssets = unique([...account.gameAssets, ...STANDARD_LOADOUT_ASSETS]); account.mzkBalance += e.promotionalMzk; account.loadoutRedeemed = true; credential.loadoutRedeemed = true; }
+    Object.assign(credential, { status: 'activated', activatedAt: credential.activatedAt || now, lastUsedAt: now, boundWallet: credential.boundWallet || address || null, accountId: account.accountId, accountUsername: account.username }); Object.assign(account, { accessCodeStatus: 'activated', accessCodeCreatedAt: credential.createdAt, accessCodeActivatedAt: credential.activatedAt, accessCodeLastUsedAt: now, updatedAt: now });
     return { account: publicAccount(account), credential: publicCredential(credential) };
+  }); }
+  connectWallet(accountId, wallet) { return this.serialized(async (data) => {
+    const address = normalizeWallet(wallet); if (!WALLET_PATTERN.test(address)) throw Object.assign(new Error('Connect a valid Ethereum wallet.'), { statusCode: 400 });
+    const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 });
+    const other = data.accounts.find((a) => a.accountId !== accountId && a.connectedWallets.some((w) => w.address === address)); if (other) throw Object.assign(new Error('This wallet is already connected to another MUZIKAZ account.'), { statusCode: 409 });
+    const now = new Date().toISOString(); if (!account.connectedWallets.some((w) => w.chain === 'ETH' && w.address === address)) account.connectedWallets.push({ chain: 'ETH', address, boundAt: now }); account.primaryEthereumWallet ||= address; account.updatedAt = now;
+    for (const credential of data.credentials) if (credential.accountId === accountId && credential.status === 'activated') credential.boundWallet ||= address;
+    return publicAccount(account);
   }); }
   authenticate(code) { return this.serialized(async (data) => { const normalized = normalizeCode(code); if (!ACCESS_CODE_PATTERN.test(normalized)) throw Object.assign(new Error('Enter a valid MZK Access Code.'), { statusCode: 400 }); const credential = data.credentials.find((item) => verifies(normalized, { hash: item.codeHash, salt: item.codeSalt })); if (!credential || credential.status !== 'activated') throw Object.assign(new Error('The MZK Access Code is not active.'), { statusCode: 401 }); const account = data.accounts.find((a) => a.accountId === credential.accountId); if (!account) throw Object.assign(new Error('The account connected to this code was not found.'), { statusCode: 404 }); const now = new Date().toISOString(); credential.lastUsedAt = now; account.accessCodeLastUsedAt = now; account.updatedAt = now; return publicAccount(account); }); }
   findByWallet(wallet) { return this.serialized(async (data) => { const address = normalizeWallet(wallet); if (!WALLET_PATTERN.test(address)) throw Object.assign(new Error('A valid Ethereum wallet is required.'), { statusCode: 400 }); let account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address)); if (!account) { account = accountRecord('', address); data.accounts.push(account); } return publicAccount(account); }); }

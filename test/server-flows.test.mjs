@@ -38,8 +38,11 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(pass.response.status, 201); assert.equal(pass.body.data.label, 'MZK Loadout Pass');
   assert.equal(pass.body.data.activationPath, `/members.html#access-code=${pass.body.data.code}`, 'admin receives a directly shareable activation route');
   const wallet = '0x5555555555555555555555555555555555555555';
-  const activation = await json(`${base}/api/access/activate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: pass.body.data.code, wallet, username: 'New User' }) });
-  assert.equal(activation.response.status, 200); assert.equal(activation.body.data.account.loadoutStatus, 'waived'); assert.equal(activation.body.data.account.creatorVaultAccess, true);
+  const activation = await json(`${base}/api/access/activate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: pass.body.data.code, username: 'New User' }) });
+  assert.equal(activation.response.status, 200); assert.equal(activation.body.data.account.loadoutStatus, 'waived'); assert.equal(activation.body.data.account.creatorVaultAccess, true); assert.equal(activation.body.data.account.primaryEthereumWallet, null);
+  const accountCookie = activation.response.headers.get('set-cookie').split(';')[0];
+  const walletLink = await json(`${base}/api/account/wallet`, { method: 'POST', headers: { Cookie: accountCookie, 'Content-Type': 'application/json', 'x-csrf-token': activation.body.data.csrfToken }, body: JSON.stringify({ wallet }) });
+  assert.equal(walletLink.response.status, 200); assert.equal(walletLink.body.data.primaryEthereumWallet, wallet);
 
   await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' } } }) });
   await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });

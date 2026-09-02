@@ -341,7 +341,7 @@ for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelA
 for (const requiredMintReward of ['BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
-for (const requiredLoadoutCopy of ['$30 USD · Live ETH quote', 'Minting is optional', 'Continue to Creator Tools', 'MZK Access Code', 'Open My Account', 'One account. One code. Any device.']) {
+for (const requiredLoadoutCopy of ['$30 USD · Live ETH quote', 'Minting is optional', 'Continue to Creator Tools', 'MZK Access Code', 'Create &amp; Open Full Account', 'Connect Wallet to Validate', 'One account. One code. Any device.']) {
   if (!membersHtml.includes(requiredLoadoutCopy)) throw new Error(`members.html is missing $30 Loadout or Magic Bottle guidance: ${requiredLoadoutCopy}`);
 }
 for (const requiredLoadoutFlow of ['Builder drop · optional mint', 'Violet Wish Bottle', 'Unlock loadout &amp; pay with ETH', 'id="bottle-continue"', 'data-purchase-step="payment"']) {
