@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -89,4 +89,22 @@ test('a wallet cannot be validated against two access-code accounts', async (t) 
   const { store } = await fixture(t); const wallet = '0x7777777777777777777777777777777777777777';
   const first = await store.activate((await store.create()).code, wallet); const second = await store.activate((await store.create()).code, '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
   await assert.rejects(store.connectWallet(second.account.accountId, wallet), /already connected/);
+});
+
+test('imports legacy Rust Loadout Pass secrets and keeps them as reusable member logins', async (t) => {
+  const { file } = await fixture(t);
+  const legacyFile = join(file, '..', 'loadout-codes-rust.json');
+  const code = 'MZK-12345678-ABCD9E99';
+  await writeFile(legacyFile, JSON.stringify([{
+    id: 'legacy-pass', code, label: 'MZK Loadout Pass', status: 'active',
+    createdAt: Date.now(), expiresAt: Date.now() + 86400000
+  }]));
+  const store = new MzkAccountStore(file, { legacyCodesFile: legacyFile });
+  await store.migrate();
+  assert.equal((await readFile(file, 'utf8')).includes(code), false, 'the imported database stores only a salted hash');
+  const activated = await store.activate(code, '0x9999999999999999999999999999999999999999');
+  assert.equal(activated.account.gameAccess, true);
+  assert.equal((await store.authenticate(code)).accountId, activated.account.accountId);
+  await store.migrate();
+  assert.equal((await store.list()).filter((item) => item.id === 'legacy-pass').length, 1, 'migration is idempotent');
 });

@@ -2,7 +2,11 @@ import { createHash, pbkdf2Sync, randomBytes, randomUUID, timingSafeEqual } from
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-export const ACCESS_CODE_PATTERN = /^MZK(?:-[A-Z2-9]{4}){4}$/;
+// Current credentials use four readable groups. The first Loadout Pass
+// generator (the legacy Rust service) issued two eight-character groups, and
+// those unexpired secrets must remain valid account credentials after the
+// account service migration.
+export const ACCESS_CODE_PATTERN = /^MZK-(?:[A-Z2-9]{4}(?:-[A-Z2-9]{4}){3}|[A-Z0-9]{8}-[A-Z0-9]{8})$/;
 const WALLET_PATTERN = /^0x[a-f0-9]{40}$/;
 const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -77,9 +81,8 @@ export class MzkAccountStore {
   serialized(work) { const operation = this.queue.then(async () => { const data = await this.records(); const result = await work(data); await this.save(data); return result; }, async () => { const data = await this.records(); const result = await work(data); await this.save(data); return result; }); this.queue = operation.catch(() => {}); return operation; }
   async migrate() {
     return this.serialized(async (data) => {
-      if (data.migrations?.canonicalAccountsV2) return { migrated: false };
       data.migrations ||= {};
-      try {
+      if (!data.migrations.canonicalAccountsV2) try {
         const legacy = JSON.parse(await readFile(this.legacyUsersFile, 'utf8'));
         for (const [walletId, user] of Object.entries(legacy.users || {})) {
           const wallet = normalizeWallet(walletId); if (!WALLET_PATTERN.test(wallet) || data.accounts.some((a) => a.connectedWallets.some((w) => w.address === wallet))) continue;
@@ -89,7 +92,7 @@ export class MzkAccountStore {
       } catch (error) { if (error.code !== 'ENOENT') throw error; }
       // Old one-time hashes cannot safely become login credentials because their raw secrets are unavailable.
       // Redeemed wallet grants are merged into their canonical wallet account without duplicating benefits.
-      try {
+      if (!data.migrations.canonicalAccountsV2) try {
         const legacyCodes = JSON.parse(await readFile(this.legacyCodesFile, 'utf8'));
         for (const old of legacyCodes) if (old.redeemedBy) {
           const wallet = normalizeWallet(old.redeemedBy); let account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === wallet));
@@ -98,7 +101,35 @@ export class MzkAccountStore {
           account.landAssets = unique([...account.landAssets, 'Unrevealed MUZIKAZ Land']); account.bottleClaims = unique([...account.bottleClaims, 'Violet Wish Bottle']);
         }
       } catch (error) { if (error.code !== 'ENOENT') throw error; }
-      data.migrations.canonicalAccountsV2 = new Date().toISOString(); return { migrated: true, accounts: data.accounts.length };
+      if (!data.migrations.canonicalAccountsV2) data.migrations.canonicalAccountsV2 = new Date().toISOString();
+
+      // Rust stored the generated secret because it predated reusable account
+      // credentials. Import each still-recognizable pass once, replacing the
+      // plaintext with the canonical salted hash in accounts.json. This has a
+      // separate marker so deployments that already ran V2 still receive the
+      // compatibility repair.
+      if (!data.migrations.legacyRustCredentialsV3) {
+        try {
+          const legacyCodes = JSON.parse(await readFile(this.legacyCodesFile, 'utf8'));
+          for (const old of Array.isArray(legacyCodes) ? legacyCodes : []) {
+            const code = normalizeCode(old.code);
+            if (!ACCESS_CODE_PATTERN.test(code) || data.credentials.some((item) => verifies(code, { hash: item.codeHash, salt: item.codeSalt }))) continue;
+            const secret = hashCode(code);
+            const createdAt = new Date(old.createdAt || Date.now());
+            const expiresAt = new Date(old.expiresAt || createdAt.getTime() + 7 * 86400000);
+            data.credentials.push({
+              id: old.id || randomUUID(), codeHash: secret.hash, codeSalt: secret.salt, maskedCode: mask(code),
+              label: String(old.label || '').trim().slice(0, 80) || 'MZK Loadout Pass', campaign: '',
+              status: old.status === 'revoked' ? 'revoked' : (expiresAt <= new Date() ? 'expired' : 'issued'),
+              createdAt: createdAt.toISOString(), expiresAt: expiresAt.toISOString(), activatedAt: null, lastUsedAt: null,
+              boundWallet: null, accountId: null, accountUsername: null, loadoutRedeemed: false,
+              entitlements: { waiveLoadout: true, violetBottle: true, starterLand: true, promotionalMzk: 0, creatorVault: true }
+            });
+          }
+        } catch (error) { if (error.code !== 'ENOENT') throw error; }
+        data.migrations.legacyRustCredentialsV3 = new Date().toISOString();
+      }
+      return { migrated: true, accounts: data.accounts.length, credentials: data.credentials.length };
     });
   }
   create(options = {}) {
