@@ -26,15 +26,17 @@ for (const page of backpackPages) {
 const backpackWidget = await readFile('dist/backpack-widget.js', 'utf8');
 const serverSource = await readFile('server.mjs', 'utf8');
 
-// Desktop destinations remain in the source markup while the shared Backpack
-// widget builds the same refined two-row commerce masthead on every phone page.
+// The compact destination menu and four-button commerce masthead stay
+// consistent on every page that uses the shared mobile header.
 const mobileHeaderPages = ['avatar-whitepaper.html', 'buy-mzk.html', 'checkout.html', 'index.html', 'members.html', 'model-market.html'];
 for (const page of mobileHeaderPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
   const navigation = html.match(/<nav class="nav global-nav"[\s\S]*?<\/nav>/)?.[0] || '';
   const navIconCount = (navigation.match(/<svg class="nav-icon"/g) || []).length;
+  const headerActions = (html.match(/class="mobile-header-action"/g) || []).length;
   if (!navigation.includes('aria-hidden="false"')) throw new Error(`${page} must expose the complete mobile navigation to assistive technology.`);
-  if (navIconCount !== 9) throw new Error(`${page} must show all 9 SVG mobile navigation destinations; found ${navIconCount}.`);
+  if (navIconCount !== 6) throw new Error(`${page} must show 6 unique SVG mobile navigation destinations; found ${navIconCount}.`);
+  if (headerActions !== 3 || !html.includes('class="wallet-connect"')) throw new Error(`${page} must expose four evenly sized mobile header actions.`);
   if (!html.includes('class="menu-toggle"') || !html.includes('aria-controls="primary-navigation"')) throw new Error(`${page} must include a labelled, accessible mobile menu toggle.`);
 }
 
