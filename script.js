@@ -150,8 +150,19 @@ function parsePrice(value) {
 
 function readCart() {
   try {
-    const saved = JSON.parse(window.localStorage.getItem(CART_KEY) || '[]');
-    return Array.isArray(saved) ? saved : [];
+    let raw = window.localStorage.getItem(CART_KEY);
+    if (!raw && window.MuzikazCartCore) {
+      for (const key of window.MuzikazCartCore.LEGACY_KEYS) {
+        const legacy = window.localStorage.getItem(key);
+        if (!legacy) continue;
+        const migrated = window.MuzikazCartCore.normalizeCart(JSON.parse(legacy));
+        if (migrated?.length) { raw = JSON.stringify(migrated); window.localStorage.setItem(CART_KEY, raw); }
+        window.localStorage.removeItem(key);
+        break;
+      }
+    }
+    const saved = JSON.parse(raw || '[]');
+    return window.MuzikazCartCore?.normalizeCart(saved) || [];
   } catch (error) {
     return [];
   }
@@ -159,41 +170,36 @@ function readCart() {
 
 // Keep the cart attached to checkout navigation as well as localStorage. This
 // matters when a mobile browser follows the site's alternate Render hostname:
-// localStorage is origin-scoped, while the URL fragment survives that handoff.
-function portableCartFragment(items = readCart()) {
-  if (!items.length) return '';
-  const bytes = new TextEncoder().encode(JSON.stringify(items));
-  let binary = '';
-  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
-  return `#cart=${btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
+// localStorage is origin-scoped, while the query payload survives that handoff.
+function portableCartParameter(items = readCart()) {
+  const payload = window.MuzikazCartCore?.encode(items) || '';
+  return payload ? `cart=${encodeURIComponent(payload)}` : '';
 }
 
-function checkoutUrl() {
-  return `checkout.html${portableCartFragment()}`;
+function checkoutUrl(base = 'checkout.html') {
+  return window.MuzikazCartCore?.checkoutUrl(readCart(), base) || base;
 }
 
 function restorePortableCart() {
-  if (!checkoutItems || !window.location.hash.startsWith('#cart=')) return;
+  if (!checkoutItems || !window.MuzikazCartCore) return false;
   try {
-    const encoded = window.location.hash.slice(6).replace(/-/g, '+').replace(/_/g, '/');
-    const binary = atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '='));
-    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
-    const items = JSON.parse(new TextDecoder().decode(bytes));
-    if (!Array.isArray(items) || !items.length || items.length > 100) throw new Error('Invalid portable cart');
-    const valid = items.every((item) => item && typeof item.name === 'string' && item.name.length <= 300 && Number.isFinite(Number(item.price)) && Number(item.price) >= 0 && Number.isFinite(Number(item.quantity)) && Number(item.quantity) > 0);
-    if (!valid) throw new Error('Invalid portable cart items');
+    const restored = window.MuzikazCartCore.restore();
+    if (!restored.restored) return false;
     // The checkout URL is the most recent representation of the cart and must
     // win over an empty (or stale) store belonging to the destination origin.
-    writeCart(items);
-    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    writeCart(restored.items);
+    window.history.replaceState(null, '', restored.cleanUrl);
+    return true;
   } catch (_) {
     // Ignore malformed fragments and retain the cart already stored locally.
+    return false;
   }
 }
 
 function writeCart(items) {
-  window.localStorage.setItem(CART_KEY, JSON.stringify(items));
-  window.dispatchEvent(new CustomEvent('mzk:cart-changed', { detail: { items } }));
+  const normalized = window.MuzikazCartCore?.normalizeCart(items) || [];
+  window.localStorage.setItem(CART_KEY, JSON.stringify(normalized));
+  window.dispatchEvent(new CustomEvent('mzk:cart-changed', { detail: { items: normalized } }));
   syncCartCount();
 }
 
@@ -226,7 +232,7 @@ function addCartLine(name, price, meta = '', deliverable = null) {
   if (existing) {
     existing.quantity += 1;
   } else {
-    items.push({ key, name, price: Number(price) || 0, meta, quantity: 1, deliverable: asset });
+    items.push({ id: key, key, name, price: Number(price) || 0, currency: 'USD', productType: asset ? 'MODEL' : 'STORE_ITEM', meta, quantity: 1, deliverable: asset });
   }
   writeCart(items);
 }
@@ -2670,8 +2676,9 @@ function renderCheckoutPage() {
   } else {
     checkoutItems.innerHTML = items.map((item) => `
       <article class="checkout-item">
-        <div><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.meta || 'MUZIKAZ store item')} · Qty ${Number(item.quantity) || 1}${item.deliverable?.modelUrl ? ` · Delivers ${escapeHtml(item.deliverable.name)} (${escapeHtml(String(item.deliverable.format || 'GLB').toUpperCase())})` : ''}</span></div>
-        <b>${formatCheckoutMoney(item.price * item.quantity)}</b>
+        ${item.image ? `<img src="${escapeHtml(item.image)}" alt="" loading="lazy">` : ''}
+        <div><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.meta || item.productType || 'MUZIKAZ store item')}${item.deliverable?.modelUrl ? ` · Delivers ${escapeHtml(item.deliverable.name)} (${escapeHtml(String(item.deliverable.format || 'GLB').toUpperCase())})` : ''}</span><span>${formatCheckoutMoney(item.price)} each · ${escapeHtml(item.currency)}</span></div>
+        <div class="checkout-line-actions"><b>${formatCheckoutMoney(item.price * item.quantity)}</b><span class="quantity-controls"><button type="button" data-cart-quantity="-1" data-cart-key="${escapeHtml(item.key)}" aria-label="Decrease ${escapeHtml(item.name)} quantity">−</button><output aria-label="Quantity">${item.quantity}</output><button type="button" data-cart-quantity="1" data-cart-key="${escapeHtml(item.key)}" aria-label="Increase ${escapeHtml(item.name)} quantity">+</button></span><button class="remove-cart-line" type="button" data-cart-remove="${escapeHtml(item.key)}">Remove</button></div>
       </article>`).join('');
   }
   const subtotal = items.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -2697,6 +2704,16 @@ function renderCheckoutPage() {
   if (ethereumPay && !items.length) ethereumPay.disabled = true;
 }
 
+checkoutItems?.addEventListener('click', (event) => {
+  const quantityButton = event.target.closest('[data-cart-quantity]');
+  const removeButton = event.target.closest('[data-cart-remove]');
+  if (!quantityButton && !removeButton) return;
+  const key = quantityButton?.dataset.cartKey || removeButton.dataset.cartRemove;
+  const items = readCart(); const item = items.find((line) => line.key === key);
+  if (removeButton || (item && item.quantity + Number(quantityButton.dataset.cartQuantity) < 1)) writeCart(items.filter((line) => line.key !== key));
+  else if (item) { item.quantity = Math.min(window.MuzikazCartCore.MAX_QUANTITY, item.quantity + Number(quantityButton.dataset.cartQuantity)); writeCart(items); }
+});
+
 document.querySelector('#checkout-clear-cart')?.addEventListener('click', () => {
   writeCart([]);
   renderCheckoutPage();
@@ -2715,7 +2732,8 @@ renderCheckoutPage();
 renderCheckoutIdentity();
 window.addEventListener('mzk:identity-changed', renderCheckoutIdentity);
 window.addEventListener('mzk:wallet-connection-changed', renderCheckoutIdentity);
-window.addEventListener('storage', renderCheckoutIdentity);
+window.addEventListener('storage', (event) => { renderCheckoutIdentity(); if (!event.key || event.key === CART_KEY) renderCheckoutPage(); });
+window.addEventListener('mzk:cart-changed', renderCheckoutPage);
 initMzkCheckout();
 
 function initPublicModelExplorer() {
