@@ -91,7 +91,10 @@ export class MzkAccountStore {
     if (credential.status === 'issued' && Date.parse(credential.expiresAt) <= Date.now()) throw Object.assign(new Error('This MZK Access Code expired before activation.'), { statusCode: 410 });
     if (credential.status === 'expired') throw Object.assign(new Error('This MZK Access Code expired before activation.'), { statusCode: 410 });
     let account = credential.accountId ? data.accounts.find((a) => a.accountId === credential.accountId) : null;
+    const connectedEthereum = account?.connectedWallets.filter((w) => w.chain === 'ETH') || [];
+    if (connectedEthereum.length && address && !connectedEthereum.some((w) => w.address === address)) throw Object.assign(new Error('This MZK Access Code is connected to a different Ethereum account.'), { statusCode: 409 });
     if (!account && address) account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address));
+    if ((!account || !connectedEthereum.length) && !address) throw Object.assign(new Error('Connect an Ethereum wallet to activate this MZK Access Code. After activation, the code can open the connected account on its own.'), { statusCode: 428 });
     if (!account) { account = accountRecord('', address, String(username).slice(0, 40)); data.accounts.push(account); }
     const now = new Date().toISOString(); if (address && !account.connectedWallets.some((w) => w.chain === 'ETH' && w.address === address)) account.connectedWallets.push({ chain: 'ETH', address, boundAt: now }); if (address) account.primaryEthereumWallet ||= address;
     if (!credential.loadoutRedeemed) { const e = credential.entitlements; account.loadoutStatus = 'waived'; account.creatorVaultAccess = true; account.gameAccess = true; account.landAssets = unique([...account.landAssets, 'Unrevealed MUZIKAZ Land']); account.bottleClaims = unique([...account.bottleClaims, 'Violet Wish Bottle']); account.gameAssets = unique([...account.gameAssets, ...STANDARD_LOADOUT_ASSETS]); account.mzkBalance += e.promotionalMzk; account.loadoutRedeemed = true; credential.loadoutRedeemed = true; }
