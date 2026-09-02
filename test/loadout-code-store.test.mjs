@@ -11,10 +11,10 @@ test('activates one hashed MZK Access Code and keeps it usable as account login'
   const { file, store } = await fixture(t); const grant = await store.create({ label: 'Launch', promotionalMzk: 250 });
   assert.match(grant.code, /^MZK(?:-[A-Z2-9]{4}){4}$/); assert.equal((await readFile(file, 'utf8')).includes(grant.code), false);
   const wallet = '0x1111111111111111111111111111111111111111'; const activated = await store.activate(grant.code.toLowerCase(), wallet);
-  assert.equal(activated.credential.status, 'activated'); assert.equal(activated.credential.loadoutRedeemed, true); assert.equal(activated.account.mzkBalance, 250);
+  assert.equal(activated.credential.status, 'activated'); assert.equal(activated.credential.loadoutRedeemed, true); assert.equal(activated.account.mzkBalance, 750);
   const login = await store.authenticate(grant.code); assert.equal(login.accountId, activated.account.accountId); assert.equal(login.primaryEthereumWallet, wallet);
   assert.equal((await store.activate(grant.code)).account.accountId, activated.account.accountId, 'submitting an active code reopens its account');
-  assert.equal((await store.authenticate(grant.code)).mzkBalance, 250, 'one-time grant is never duplicated');
+  assert.equal((await store.authenticate(grant.code)).mzkBalance, 750, 'starter and promotional grants are never duplicated');
 });
 
 test('rotation preserves the canonical account and revokes the prior credential', async (t) => {
@@ -27,6 +27,7 @@ test('recognized wallets always resolve to the same canonical account', async (t
   const { store } = await fixture(t); const wallet = '0x3333333333333333333333333333333333333333'; const first = await store.findByWallet(wallet); const second = await store.findByWallet(wallet.toUpperCase().replace('0X', '0x')); assert.equal(first.accountId, second.accountId);
   assert.equal(first.loadoutStatus, 'included');
   assert.equal(first.loadoutRedeemed, true);
+  assert.equal(first.mzkBalance, 500);
   assert.deepEqual(first.landAssets, ['Unrevealed MUZIKAZ Land']);
   assert.deepEqual(first.bottleClaims, ['Violet Wish Bottle']);
   assert.deepEqual(first.gameAssets, ['Starter Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
@@ -42,6 +43,7 @@ test('default MZK Loadout Pass creates and fully grants a wallet-connected user 
   assert.equal(activated.account.loadoutStatus, 'included');
   assert.equal(activated.account.creatorVaultAccess, true);
   assert.equal(activated.account.gameAccess, true);
+  assert.equal(activated.account.mzkBalance, 500);
   assert.deepEqual(activated.account.landAssets, ['Unrevealed MUZIKAZ Land']);
   assert.deepEqual(activated.account.bottleClaims, ['Violet Wish Bottle']);
   assert.deepEqual(activated.account.gameAssets, ['Starter Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
@@ -80,6 +82,7 @@ test('wallet and code login return the same fully provisioned account', async (t
   assert.deepEqual(codeAccount.bottleClaims, reopenedWithWallet.bottleClaims);
   assert.equal(codeAccount.creatorVaultAccess, true);
   assert.equal(codeAccount.gameAccess, true);
+  assert.equal(codeAccount.mzkBalance, 500);
 });
 
 test('a wallet cannot be validated against two access-code accounts', async (t) => {

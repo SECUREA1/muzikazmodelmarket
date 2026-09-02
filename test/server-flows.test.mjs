@@ -40,10 +40,12 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   const wallet = '0x5555555555555555555555555555555555555555';
   const activation = await json(`${base}/api/access/activate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: pass.body.data.code, wallet, username: 'New User' }) });
   assert.equal(activation.response.status, 200); assert.equal(activation.body.data.account.loadoutStatus, 'included'); assert.equal(activation.body.data.account.creatorVaultAccess, true); assert.equal(activation.body.data.account.primaryEthereumWallet, wallet);
+  assert.equal(activation.body.data.account.mzkBalance, 500, 'admin Loadout codes include the full 500 MZK starter grant');
   const accountCookie = activation.response.headers.get('set-cookie').split(';')[0];
   const codeOnlyState = await json(`${base}/api/wallet/state`, { headers: { Cookie: accountCookie } });
   assert.equal(codeOnlyState.response.status, 200, 'an access-code session resolves its validated Ethereum address');
   assert.ok(codeOnlyState.body.data.items.some((item) => item.name === 'Starter Avatar'), 'the loadout is in durable game memory');
+  assert.equal(codeOnlyState.body.data.tokens.MZK, 500, 'the starter balance is available to multiplayer and market APIs');
   const walletLink = await json(`${base}/api/account/wallet`, { method: 'POST', headers: { Cookie: accountCookie, 'Content-Type': 'application/json', 'x-csrf-token': activation.body.data.csrfToken }, body: JSON.stringify({ wallet }) });
   assert.equal(walletLink.response.status, 200); assert.equal(walletLink.body.data.primaryEthereumWallet, wallet);
   const walletLogin = await json(`${base}/api/access/wallet`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wallet }) });
