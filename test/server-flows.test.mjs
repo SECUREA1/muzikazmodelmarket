@@ -103,3 +103,14 @@ test('member loadout entry uses the shared canonical account API', async () => {
   assert.ok(!source.includes('window.MZKWallet?.provisionStandardLoadout(account)'), 'local storage is not an ownership authority');
   assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'successful code entry opens the game page');
 });
+
+test('verified member access persists locally and unlocks member worlds without an API reconnect', async () => {
+  const source = await readFile(new URL('../script.js', import.meta.url), 'utf8');
+  const publisher = await readFile(new URL('../public/js/model-publisher.js', import.meta.url), 'utf8');
+  assert.ok(source.includes("const VERIFIED_MEMBER_KEY = 'muzikazVerifiedMemberAccessV1'"));
+  assert.ok(source.includes('rememberVerifiedMemberAccess(currentMemberEmail, \'mzk-access-code\', account.accountId)'), 'activated access codes retain verified member access');
+  assert.ok(source.includes("rememberVerifiedMemberAccess(currentMemberEmail, 'verified-purchase', payment.orderId)"), 'verified purchases retain member access');
+  assert.ok(source.includes("requiredContract ? 'meknx-holder' : 'ethereum-contract'"), 'verified MEKNX ownership retains holder access');
+  assert.ok(source.indexOf('const verifiedAccess = readVerifiedMemberAccess();', source.indexOf('const restoreSession')) < source.indexOf("accountApiFetch('/api/account/bootstrap')", source.indexOf('const restoreSession')), 'local verified access is restored before any bootstrap request');
+  assert.ok(publisher.includes("window.MUZIKAZMemberAccess?.isVerified?.()===true"), 'verified members bypass the separate land publishing restriction');
+});
