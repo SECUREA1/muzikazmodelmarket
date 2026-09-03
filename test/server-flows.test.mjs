@@ -52,6 +52,17 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(walletLogin.body.data.account.backpackId, activation.body.data.account.backpackId, 'opening Ethereum attaches it to the code-created Backpack');
   assert.deepEqual(walletLogin.body.data.account.gameAssets, ['Starter Avatar', 'Unrevealed Loadout Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
 
+  const bypassDenied = await json(`${base}/api/access/admin-bypass`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'wrong' }) });
+  assert.equal(bypassDenied.response.status, 401, 'an incorrect owner word cannot bypass the Bottle gate');
+  const bypass = await json(`${base}/api/access/admin-bypass`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'test-password' }) });
+  assert.equal(bypass.response.status, 200, 'the configured admin word opens an owner Loadout session');
+  assert.equal(bypass.body.data.account.mzkBalance, 500);
+  assert.equal(bypass.body.data.account.gameAccess, true);
+  const bypassCookie = bypass.response.headers.get('set-cookie').split(';')[0];
+  const game = await json(`${base}/api/game/session`, { method: 'POST', headers: { Cookie: bypassCookie, 'X-CSRF-Token': bypass.body.data.csrfToken } });
+  assert.equal(game.response.status, 201, 'the owner bypass proceeds through the authenticated game-session route');
+  assert.match(game.response.headers.get('set-cookie'), /^mzk_game=/);
+
   await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' } } }) });
   await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });
   const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['New User Pack']);
@@ -67,6 +78,8 @@ test('member loadout entry uses the shared canonical account API', async () => {
   assert.ok(source.includes('[A-Z0-9]{8}-[A-Z0-9]{8}'), 'legacy Rust pass format remains accepted by the member login');
   assert.ok(source.includes("document.querySelector('#loadout-code-redeem')?.click()"), 'shared pass links automatically submit the member login');
   assert.ok(source.includes("accountApiFetch('/api/backpack')"), 'owned Backpack data is loaded from the authenticated server session');
+  assert.ok(source.includes("accountApiFetch('/api/game/session'"), 'successful entry creates the required short-lived game session before navigation');
+  assert.ok(source.includes("accountApiFetch('/api/access/admin-bypass'"), 'the Bottle page owner shortcut uses the server-validated bypass route');
   assert.ok(!source.includes('window.MZKWallet?.provisionStandardLoadout(account)'), 'local storage is not an ownership authority');
   assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'successful code entry opens the game page');
 });

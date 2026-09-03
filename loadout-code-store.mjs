@@ -173,6 +173,14 @@ export class MzkAccountStore {
   }); }
   authenticate(code) { return this.serialized(async (data) => { const normalized = normalizeCode(code); if (!ACCESS_CODE_PATTERN.test(normalized)) throw Object.assign(new Error('Enter a valid MZK Access Code.'), { statusCode: 400 }); const credential = data.credentials.find((item) => verifies(normalized, { hash: item.codeHash, salt: item.codeSalt })); if (!credential || credential.status !== 'activated') throw Object.assign(new Error('The MZK Access Code is not active.'), { statusCode: 401 }); const account = data.accounts.find((a) => a.accountId === credential.accountId); if (!account) throw Object.assign(new Error('The account connected to this code was not found.'), { statusCode: 404 }); const now = new Date().toISOString(); credential.lastUsedAt = now; grantStandardLoadout(account); account.accessCodeLastUsedAt = now; account.updatedAt = now; return publicAccount(account); }); }
   findByWallet(wallet) { return this.serialized(async (data) => { const address = normalizeWallet(wallet); if (!WALLET_PATTERN.test(address)) throw Object.assign(new Error('A valid Ethereum wallet is required.'), { statusCode: 400 }); let account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address)); if (!account) { account = accountRecord('', address); data.accounts.push(account); } account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
+  adminBypass() { return this.serialized(async (data) => {
+    // Keep one durable, wallet-free Backpack for the owner shortcut. The server
+    // validates the configured admin secret before this method is called.
+    let account = data.accounts.find((item) => item.adminBypass === true);
+    if (!account) { account = accountRecord('', '', 'MUZIKAZ Admin'); account.adminBypass = true; data.accounts.push(account); }
+    grantStandardLoadout(account); account.updatedAt = new Date().toISOString();
+    return publicAccount(account);
+  }); }
   fulfillPaidLoadout(order, accountId = '') { return this.serialized(async (data) => {
     const paymentId = String(order?.orderId || '').trim();
     if (!paymentId || !['PAID', 'FULFILLED'].includes(order?.paymentStatus) || order.purchaseType !== 'LOADOUT' || order.itemId !== 'standard-loadout' || Number(order.basePrice) < 30) throw Object.assign(new Error('Only a server-verified standard Loadout payment can be fulfilled.'), { statusCode: 409 });

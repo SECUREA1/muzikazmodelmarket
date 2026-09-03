@@ -2090,6 +2090,8 @@ function initBottleLogin() {
   const jsonDownload = document.querySelector('#wallet-json-download');
   const jsonImport = document.querySelector('#wallet-json-import');
   const tokenIdentity = document.querySelector('#wallet-token-identity');
+  const adminBypassPassword = document.querySelector('#admin-game-bypass-password');
+  const adminBypassButton = document.querySelector('#admin-game-bypass-button');
   if (!form || !lockedContent) return;
   // Member access can be rendered from a static/custom-domain frontend while the
   // account service remains on Render. Keep every loadout request on the shared
@@ -2108,6 +2110,7 @@ function initBottleLogin() {
     if (continueButton) continueButton.disabled = busy || (Number(form.dataset.purchaseStep) || 1) < 3;
     if (accessCodeButton) accessCodeButton.disabled = busy;
     if (walletValidateButton) walletValidateButton.disabled = busy;
+    if (adminBypassButton) adminBypassButton.disabled = busy;
   };
   const updateLoadoutQuote = async () => {
     const currency = loadoutCurrency?.value || 'ETH';
@@ -2156,6 +2159,15 @@ function initBottleLogin() {
     const owner = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
     return owner;
   };
+  const enterGame = async () => {
+    const session = window.MuzikazAccountSession;
+    if (!session?.csrfToken) throw new Error('Open your Loadout account before entering the game.');
+    if (status) status.textContent = 'Preparing your authenticated RAD-TOX game session…';
+    const response = await accountApiFetch('/api/game/session', { method: 'POST', headers: { Accept: 'application/json', 'x-csrf-token': session.csrfToken }, body: '{}' });
+    const result = await response.json().catch(() => ({ success: false, message: `The game service returned an unreadable response (${response.status}).` }));
+    if (!response.ok || !result.success) throw new Error(result.message || 'The RAD-TOX game session could not be opened.');
+    window.location.href = 'model-market.html?access=loadout#house-explorer';
+  };
   const verifyAndUnlock = async (address, requiredContract = '') => {
     const ownership = await validateBottleOwnership(address, requiredContract);
     const profile = window.MZKWallet?.connectIdentity({ address, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
@@ -2176,18 +2188,6 @@ function initBottleLogin() {
       window.location.href = redirect;
       return;
     }
-    scrollToSection('member-locked-content');
-  };
-  const continueWithPaidLoadout = (payment) => {
-    const owner = normalizeMemberEmail(payment?.owner);
-    if (!owner || !payment?.paymentHash) throw new Error(`Complete the $${BACKPACK_LOADOUT_USD} Loadout payment before continuing.`);
-    currentMemberEmail = owner;
-    grantBottleAccess(owner, 'backpack-loadout-payment', payment.paymentHash);
-    window.sessionStorage.setItem('muzikazBottleMember', 'true');
-    window.localStorage.setItem('muzikazBottleMemberEmail', owner);
-    showAddress(owner);
-    renderOwnedCollection(owner);
-    unlock('Payment confirmed. Welcome to the creator vault — no Bottle mint required.');
     scrollToSection('member-locked-content');
   };
   const waitForTransactionReceipt = async (wallet, transactionHash, label) => {
@@ -2287,13 +2287,32 @@ function initBottleLogin() {
         window.location.href = redirect;
         return;
       }
-      window.location.href = 'members.html?backpack=open#owned-collection';
+      await enterGame();
     } catch (error) {
       if (status) status.textContent = error.message || 'The MZK Access Code could not be activated.';
     } finally { setBusy(false); }
   };
   accessCodeButton?.addEventListener('click', () => openAccessCodeAccount());
   walletValidateButton?.addEventListener('click', () => openAccessCodeAccount({ connectFirst: true }));
+  adminBypassButton?.addEventListener('click', async () => {
+    setBusy(true);
+    try {
+      const password = adminBypassPassword?.value || '';
+      if (!password) throw new Error('Enter the admin bypass word.');
+      if (status) status.textContent = 'Validating the admin bypass and preparing RAD-TOX…';
+      const response = await accountApiFetch('/api/access/admin-bypass', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ password }) });
+      const result = await response.json().catch(() => ({ success: false, message: `The admin service returned an unreadable response (${response.status}).` }));
+      if (!response.ok || !result.success) throw new Error(result.message || 'Admin bypass failed.');
+      const account = rememberAccountSession(result.data);
+      currentMemberEmail = syncAccessCodeBackpack(account);
+      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      window.sessionStorage.setItem('muzikazBottleMember', 'true');
+      setPurchaseStep(3);
+      unlock('Admin Loadout opened. Entering RAD-TOX now…');
+      await enterGame();
+    } catch (error) { if (status) status.textContent = error.message || 'Admin bypass failed.'; }
+    finally { setBusy(false); }
+  });
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (accessCodeInput?.value.trim()) await openAccessCodeAccount();
@@ -2348,10 +2367,9 @@ function initBottleLogin() {
     window.localStorage.removeItem('muzikazLoadoutPayment');
   }
   updateLoadoutQuote();
-  continueButton?.addEventListener('click', () => {
+  continueButton?.addEventListener('click', async () => {
     try {
-      continueWithPaidLoadout(JSON.parse(window.localStorage.getItem('muzikazLoadoutPayment') || 'null'));
-      window.location.href = 'model-market.html?access=loadout#house-explorer';
+      await enterGame();
     } catch (error) {
       if (status) status.textContent = error.message || 'The paid Loadout could not be opened.';
     }
