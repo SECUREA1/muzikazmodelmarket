@@ -177,6 +177,15 @@ test('repairs partially provisioned accounts only from durable Loadout entitleme
   const repaired = await store.repairEntitledAccount(account.accountId);
   assert.equal(repaired.loadoutAccess, true); assert.equal(repaired.gameAccess, true); assert.equal(repaired.memberAccess, true); assert.ok(repaired.gameAssets.includes('RAD-TOX Starter Gear'));
 
+  const interruptedData = JSON.parse(await readFile(file, 'utf8'));
+  const interrupted = interruptedData.accounts.find((item) => item.accountId === account.accountId);
+  interrupted.loadoutAccess = false; interrupted.loadoutRedeemed = false; interrupted.loadoutStatus = 'none'; interrupted.loadoutPaymentId = null; interrupted.gameAccess = false; interrupted.gameAssets = []; interrupted.accessCodeStatus = 'activated';
+  await writeFile(file, JSON.stringify(interruptedData));
+  const accessCodeRepaired = await store.repairEntitledAccount(account.accountId);
+  assert.equal(accessCodeRepaired.loadoutAccess, true, 'activated access restores the Backpack Loadout');
+  assert.equal(accessCodeRepaired.gameAccess, true, 'any account that entered valid access can enter the game');
+  assert.ok(accessCodeRepaired.gameAssets.includes('Starter Avatar'));
+
   const unentitled = await store.findByWallet('0x9999999999999999999999999999999999999999');
   const unchanged = await store.repairEntitledAccount(unentitled.accountId);
   assert.equal(unchanged.loadoutAccess, false); assert.equal(unchanged.gameAccess, false); assert.deepEqual(unchanged.gameAssets, []);

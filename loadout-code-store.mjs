@@ -23,6 +23,21 @@ const STANDARD_BOTTLE_CLAIMS = ['Violet Wish Bottle'];
 const STANDARD_STARTER_MZK = 500;
 export const LOADOUT_PROVISIONING_VERSION = 1;
 
+// A confirmed payment and an activated access credential are equivalent ways
+// into the member experience. Centralizing that rule prevents older or
+// partially-written accounts from opening an empty Backpack or hitting the
+// game gate after they have already supplied valid access.
+function hasLoadoutEntitlement(account, credentials = []) {
+  return account.loadoutAccess === true
+    || account.loadoutRedeemed === true
+    || ['paid', 'included', 'waived'].includes(account.loadoutStatus)
+    || Boolean(account.loadoutPaymentId)
+    || credentials.some((credential) => credential.accountId === account.accountId
+      && credential.status === 'activated'
+      && credential.purpose === 'standard-loadout'
+      && credential.loadoutRedeemed === true);
+}
+
 // Wallet and code login are two keys to one account, so both must expose the
 // same complete, idempotently provisioned Backpack. This also repairs older
 // accounts that were created before the standard loadout became inclusive.
@@ -126,7 +141,7 @@ export class MzkAccountStore {
         for (const account of data.accounts) {
           if (account.loadoutProvisioningVersion == null && account.provisioningVersion != null) account.loadoutProvisioningVersion = account.provisioningVersion;
           delete account.provisioningVersion;
-          if (account.loadoutAccess === true || account.loadoutRedeemed === true || account.loadoutStatus === 'paid' || account.loadoutPaymentId) grantStandardLoadout(account);
+          if (hasLoadoutEntitlement(account, data.credentials)) grantStandardLoadout(account);
         }
         data.migrations.loadoutProvisioningVersionV5 = new Date().toISOString();
       }
@@ -203,7 +218,7 @@ export class MzkAccountStore {
     for (const credential of data.credentials) if (credential.accountId === accountId && credential.status === 'activated') credential.boundWallet ||= address;
     return publicAccount(account);
   }); }
-  authenticate(code) { return this.serialized(async (data) => { const normalized = normalizeCode(code); if (!ACCESS_CODE_PATTERN.test(normalized)) throw Object.assign(new Error('Enter a valid MZK Access Code.'), { statusCode: 400 }); const credential = data.credentials.find((item) => verifies(normalized, { hash: item.codeHash, salt: item.codeSalt })); if (!credential || credential.status !== 'activated') throw Object.assign(new Error('The MZK Access Code is not active.'), { statusCode: 401 }); const account = data.accounts.find((a) => a.accountId === credential.accountId); if (!account) throw Object.assign(new Error('The account connected to this code was not found.'), { statusCode: 404 }); const now = new Date().toISOString(); credential.lastUsedAt = now; if (account.loadoutRedeemed) grantStandardLoadout(account); account.accessCodeLastUsedAt = now; account.updatedAt = now; return publicAccount(account); }); }
+  authenticate(code) { return this.serialized(async (data) => { const normalized = normalizeCode(code); if (!ACCESS_CODE_PATTERN.test(normalized)) throw Object.assign(new Error('Enter a valid MZK Access Code.'), { statusCode: 400 }); const credential = data.credentials.find((item) => verifies(normalized, { hash: item.codeHash, salt: item.codeSalt })); if (!credential || credential.status !== 'activated') throw Object.assign(new Error('The MZK Access Code is not active.'), { statusCode: 401 }); const account = data.accounts.find((a) => a.accountId === credential.accountId); if (!account) throw Object.assign(new Error('The account connected to this code was not found.'), { statusCode: 404 }); const now = new Date().toISOString(); credential.lastUsedAt = now; if (hasLoadoutEntitlement(account, [credential])) grantStandardLoadout(account); account.accessCodeLastUsedAt = now; account.updatedAt = now; return publicAccount(account); }); }
   findByWallet(wallet) { return this.serialized(async (data) => { const address = normalizeWallet(wallet); if (!WALLET_PATTERN.test(address)) throw Object.assign(new Error('A valid Ethereum wallet is required.'), { statusCode: 400 }); let account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address)); if (!account) { account = accountRecord('', address); data.accounts.push(account); } account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
   adminBypass() { return this.serialized(async (data) => {
     // Keep one durable, wallet-free Backpack for the owner shortcut. The server
@@ -242,7 +257,7 @@ export class MzkAccountStore {
   repairEntitledAccount(accountId) { return this.serialized(async (data) => {
     const account = data.accounts.find((item) => item.accountId === accountId);
     if (!account) throw Object.assign(new Error('The session account no longer exists.'), { statusCode: 401, code: 'ACCOUNT_NOT_FOUND' });
-    if (account.loadoutAccess === true || account.loadoutRedeemed === true || account.loadoutStatus === 'paid' || Boolean(account.loadoutPaymentId)) {
+    if (hasLoadoutEntitlement(account, data.credentials)) {
       grantStandardLoadout(account);
       account.updatedAt = new Date().toISOString();
     }
