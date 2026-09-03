@@ -31,6 +31,14 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   assert.notEqual(first.body.data.account.accountId, second.body.data.account.accountId);
   const firstHeaders = { cookie: first.cookie }; const secondHeaders = { cookie: second.cookie };
   const session = await json(base, '/api/session', { headers: firstHeaders });
+  const bearerHeaders = { authorization: `Bearer ${first.body.data.portableSession}` };
+  const bootstrap = await json(base, '/api/account/bootstrap', { headers: { ...bearerHeaders, cookie: 'mzk_session=stale-cookie' } });
+  assert.equal(bootstrap.response.status, 200, 'a fresh bearer session takes precedence over a stale cookie');
+  assert.equal(bootstrap.body.data.accountId, first.body.data.account.accountId);
+  assert.equal(bootstrap.body.data.loadout.entitled, true);
+  assert.equal(bootstrap.body.data.loadout.provisioningVersion, 1);
+  assert.equal(bootstrap.body.data.permissions.radTox, true);
+  assert.ok(bootstrap.body.data.backpack.assets.some((asset) => asset.name === 'RAD-TOX Starter Gear'));
   const backpack = await json(base, '/api/backpack?accountId=' + second.body.data.account.accountId, { headers: firstHeaders });
   assert.equal(backpack.body.data.accountId, first.body.data.account.accountId, 'query parameters cannot cross account boundaries');
   assert.equal((await json(base, '/api/backpack', { headers: secondHeaders })).body.data.accountId, second.body.data.account.accountId);
@@ -44,8 +52,12 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   assert.equal(selection.body.data.selectedAvatarId, 'starter-avatar');
   const gameCreation = await json(base, '/api/game/session', { method: 'POST', headers: csrfHeaders, body: '{}' });
   assert.equal(gameCreation.response.status, 201);
+  const bearerGame = await json(base, '/api/game/session', { method: 'POST', headers: { ...bearerHeaders, cookie: 'mzk_session=stale-cookie' }, body: '{}' });
+  assert.equal(bearerGame.response.status, 201, 'bearer mutations do not require cookie CSRF but remain authenticated');
   const game = await json(base, '/api/game/session', { headers: { cookie: `${first.cookie}; ${gameCreation.cookie}` } });
   assert.equal(game.body.data.accountId, first.body.data.account.accountId); assert.equal(game.body.data.selectedAvatar.id, 'starter-avatar');
   assert.equal((await json(base, '/api/game/session', { headers: firstHeaders })).response.status, 401);
   assert.equal((await json(base, '/api/does-not-exist')).body.code, 'API_ROUTE_NOT_FOUND');
+  assert.equal((await json(base, '/api/session', { method: 'DELETE', headers: bearerHeaders })).response.status, 200);
+  assert.equal((await json(base, '/api/account/bootstrap', { headers: bearerHeaders })).response.status, 401, 'disconnect invalidates the portable session');
 });

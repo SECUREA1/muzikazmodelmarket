@@ -2100,7 +2100,7 @@ function initBottleLogin() {
     ? window.MUZIKAZ_API.fetch(path, options)
     : fetch(path, options);
   let walletRequestActive = false;
-  const rememberAccountSession = (session) => { window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt }; return session.account; };
+  const rememberAccountSession = (session) => { if (session.portableSession) window.sessionStorage.setItem('muzikazPortableSession', session.portableSession); window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt }; return session.account; };
   const authenticateWalletAccount = async (wallet) => { const response = await accountApiFetch('/api/access/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ wallet }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Wallet account authentication failed.'); return rememberAccountSession(result.data); };
   const setBusy = (busy) => {
     if (connectButton) connectButton.disabled = busy;
@@ -2141,6 +2141,10 @@ function initBottleLogin() {
     }
   };
   const clearConnectedSession = () => {
+    const session = window.MuzikazAccountSession;
+    if (session) accountApiFetch('/api/session', { method: 'DELETE', headers: session.csrfToken ? { 'x-csrf-token': session.csrfToken } : {} }).catch(() => {});
+    window.sessionStorage.removeItem('muzikazPortableSession');
+    window.MuzikazAccountSession = null;
     window.sessionStorage.removeItem('muzikazBottleMember');
     window.localStorage.removeItem('muzikazBottleMemberEmail');
     showAddress('');
@@ -2410,16 +2414,15 @@ function initBottleLogin() {
       const sessionResult = await sessionResponse.json();
       if (sessionResponse.status === 401) { clearConnectedSession(); if (status) status.textContent = 'Sign in with an Access Code, purchase, or verified wallet.'; return; }
       if (!sessionResponse.ok || !sessionResult.success) throw new Error(sessionResult.message || 'Session check failed.');
-      const accountResponse = await accountApiFetch('/api/account');
-      const accountResult = await accountResponse.json();
-      const backpackResponse = await accountApiFetch('/api/backpack');
-      const backpackResult = await backpackResponse.json();
-      if (!accountResponse.ok || !backpackResponse.ok) throw new Error(accountResult.message || backpackResult.message || 'Backpack request failed.');
-      const account = accountResult.data;
-      window.MuzikazAccountSession = { csrfToken: sessionResult.data.csrfToken, account, expiresAt: sessionResult.data.expiresAt, backpack: backpackResult.data };
+      const bootstrapResponse = await accountApiFetch('/api/account/bootstrap');
+      const bootstrapResult = await bootstrapResponse.json();
+      if (!bootstrapResponse.ok || !bootstrapResult.success) throw new Error(bootstrapResult.message || 'Account bootstrap failed.');
+      const state = bootstrapResult.data;
+      const account = { accountId: state.accountId, connectedWallets: state.boundWallets, primaryEthereumWallet: state.boundWallets.find((wallet) => wallet.chain === 'ETH')?.address || null, loadoutAccess: state.loadout.entitled, loadoutProvisioningVersion: state.loadout.provisioningVersion };
+      window.MuzikazAccountSession = { csrfToken: sessionResult.data.csrfToken, account, expiresAt: state.session.expiresAt, backpack: state.backpack };
       currentMemberEmail = syncAccessCodeBackpack(account);
       showAddress(account.primaryEthereumWallet);
-      unlock(backpackResult.data.status === 'empty' ? 'Your account is open. This Backpack is currently empty.' : 'Welcome back. Your persistent Backpack is ready.');
+      unlock(state.permissions.members ? 'Welcome back. Your persistent Backpack is ready.' : 'Your account is open, but a Loadout is required.');
       renderOwnedCollection(currentMemberEmail);
     } catch (error) {
       lockedContent.hidden = true;

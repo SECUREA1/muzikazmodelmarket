@@ -57,7 +57,11 @@
     var request = {};
     var key;
     for (key in options) if (Object.prototype.hasOwnProperty.call(options, key)) request[key] = options[key];
-    request.headers = options.headers || {};
+    request.headers = {};
+    for (key in (options.headers || {})) if (Object.prototype.hasOwnProperty.call(options.headers, key)) request.headers[key] = options.headers[key];
+    /* Portable sessions are tab-scoped and are never placed in URLs. */
+    var portable = window.sessionStorage && window.sessionStorage.getItem('muzikazPortableSession');
+    if (portable && !request.headers.Authorization && !request.headers.authorization) request.headers.Authorization = 'Bearer ' + portable;
     request.cache = options.cache || 'no-store';
     request.mode = 'cors';
     /* Preserve the account cookie when a branded frontend uses the hosted API. */
