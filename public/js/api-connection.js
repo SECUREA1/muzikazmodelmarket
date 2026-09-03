@@ -57,7 +57,16 @@
     var request = {};
     var key;
     for (key in options) if (Object.prototype.hasOwnProperty.call(options, key)) request[key] = options[key];
-    request.headers = options.headers || {};
+    request.headers = {};
+    var headerName;
+    for (headerName in (options.headers || {})) if (Object.prototype.hasOwnProperty.call(options.headers, headerName)) request.headers[headerName] = options.headers[headerName];
+    /* Third-party cookies are blocked by several browsers and embedded webviews.
+     * Carry the same short-lived account session explicitly when the member site
+     * and persistent API are on different origins. */
+    var sessionToken = getSessionToken();
+    var hasAuthorization = false;
+    for (headerName in request.headers) if (headerName.toLowerCase() === 'authorization') hasAuthorization = true;
+    if (sessionToken && !hasAuthorization) request.headers.Authorization = 'Bearer ' + sessionToken;
     request.cache = options.cache || 'no-store';
     request.mode = 'cors';
     /* Preserve the account cookie when a branded frontend uses the hosted API. */
@@ -97,8 +106,19 @@
     return attempt(retries);
   }
 
+  function getSessionToken() {
+    try { return window.localStorage.getItem('muzikazAccountSessionToken') || ''; } catch (ignore) { return ''; }
+  }
+
+  function setSessionToken(token) {
+    try {
+      if (token) window.localStorage.setItem('muzikazAccountSessionToken', token);
+      else window.localStorage.removeItem('muzikazAccountSessionToken');
+    } catch (ignore) {}
+  }
+
   window.MUZIKAZ_API_BASE = base;
   window.MUZIKAZ_SHARED_AVATAR_API = base;
-  window.MUZIKAZ_API = { base: base, url: url, fetch: fetchApi };
+  window.MUZIKAZ_API = { base: base, url: url, fetch: fetchApi, getSessionToken: getSessionToken, setSessionToken: setSessionToken };
   root.setAttribute('data-api-connected', 'true');
 }(window, document));

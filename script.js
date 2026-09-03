@@ -2100,7 +2100,7 @@ function initBottleLogin() {
     ? window.MUZIKAZ_API.fetch(path, options)
     : fetch(path, options);
   let walletRequestActive = false;
-  const rememberAccountSession = (session) => { window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt }; return session.account; };
+  const rememberAccountSession = (session) => { window.MUZIKAZ_API?.setSessionToken?.(session.sessionToken); window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt }; return session.account; };
   const authenticateWalletAccount = async (wallet) => { const response = await accountApiFetch('/api/access/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ wallet }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Wallet account authentication failed.'); return rememberAccountSession(result.data); };
   const setBusy = (busy) => {
     if (connectButton) connectButton.disabled = busy;
@@ -2141,6 +2141,7 @@ function initBottleLogin() {
     }
   };
   const clearConnectedSession = () => {
+    window.MUZIKAZ_API?.setSessionToken?.('');
     window.sessionStorage.removeItem('muzikazBottleMember');
     window.localStorage.removeItem('muzikazBottleMemberEmail');
     showAddress('');
