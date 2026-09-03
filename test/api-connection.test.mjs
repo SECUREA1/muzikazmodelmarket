@@ -116,3 +116,14 @@ test('portable account sessions authorize cross-origin game requests when cookie
   assert.equal(requestOptions.headers.Authorization, 'Bearer portable-session');
   assert.equal(requestOptions.headers['X-CSRF-Token'], 'csrf');
 });
+
+test('session invalidation and logout remove the portable credential', async () => {
+  const responses = [new Response('{}', { status: 401 }), new Response(JSON.stringify({ success: true }), { status: 200 })];
+  const { window } = loadConnection(async () => responses.shift());
+  window.MUZIKAZ_API.setSessionToken('expired-session');
+  await window.MUZIKAZ_API.fetch('/api/backpack');
+  assert.equal(window.MUZIKAZ_API.getSessionToken(), '');
+  window.MUZIKAZ_API.setSessionToken('active-session');
+  await window.MUZIKAZ_API.logout('csrf-token');
+  assert.equal(window.MUZIKAZ_API.getSessionToken(), '');
+});

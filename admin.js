@@ -135,7 +135,7 @@
       const code = await accessRequest('/api/admin/loadout-codes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...fields, waiveLoadout: true, violetBottle: true, starterLand: true, creatorVault: true }) });
       currentAccessCode = code.code; $('#access-code-output').textContent = currentAccessCode; $('#access-code-copy').hidden = false; $('#access-code-share').hidden = false;
       form.reset();
-      status.textContent = `Ready to share privately. It can be activated once before ${formatDate(code.expiresAt)}.`;
+      status.textContent = code.expiresAt ? `Ready to share privately. It can be activated once before ${formatDate(code.expiresAt)}.` : 'Ready to share privately. It is active now and does not expire.';
       try { await loadAccessCodes(); }
       catch { status.textContent += ' The pass was created, but the list could not be refreshed; use Refresh data to retry.'; }
     } catch (error) { status.textContent = error.message || 'Code generation failed.'; status.className = 'access-status error'; }

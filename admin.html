@@ -28,7 +28,7 @@
         </div>
         <form id="access-code-form" class="access-form">
           <label>Internal label<input name="label" maxlength="80" placeholder="Guest name or campaign note"></label>
-          <label>Expires before signup<select name="expiresInDays"><option value="1">1 day</option><option value="7" selected>7 days</option><option value="30">30 days</option><option value="365">1 year</option></select></label>
+          <label>Activation expiration<select name="expiresInDays"><option value="" selected>No expiration</option><option value="1">1 day</option><option value="7">7 days</option><option value="30">30 days</option><option value="365">1 year</option></select></label>
           <button type="submit">Generate MZK Loadout Pass Code</button>
         </form>
         <div class="secret-row"><output id="access-code-output" aria-live="polite">No code generated in this session.</output><button id="access-code-copy" class="secondary" type="button" hidden>Copy code</button><button id="access-code-share" class="secondary" type="button" hidden>Share activation link</button></div>
