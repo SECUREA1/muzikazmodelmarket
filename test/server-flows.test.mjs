@@ -100,6 +100,9 @@ test('member loadout entry uses the shared canonical account API', async () => {
   assert.ok(!source.slice(source.indexOf('const enterGame'), source.indexOf('const verifyAndUnlock')).includes("accountApiFetch('/api/game/session'"), 'members navigation does not create and discard a game session');
   assert.ok(source.includes("window.sessionStorage.setItem('muzikazGameSessionToken'"), 'the destination persists its game token for protected requests');
   assert.ok(source.includes("accountApiFetch('/api/access/admin-bypass'"), 'the Bottle page owner shortcut uses the server-validated bypass route');
+  assert.ok(source.includes('const openAuthenticatedSubscriber = (account, message) =>'), 'authenticated pass options share one subscriber-area opening process');
+  assert.ok(source.includes("openAuthenticatedSubscriber(account, account.primaryEthereumWallet"), 'an MZK Access Code opens the subscriber area instead of forcing a game redirect');
+  assert.ok(source.includes("openAuthenticatedSubscriber(account, 'Admin Loadout opened."), 'the admin pass opens the same subscriber area');
   assert.ok(!source.includes('window.MZKWallet?.provisionStandardLoadout(account)'), 'local storage is not an ownership authority');
-  assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'successful code entry opens the game page');
+  assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'the subscriber area retains an explicit RAD-TOX entry route');
 });
