@@ -36,6 +36,7 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   assert.equal(bootstrap.body.data.account.loadoutAccess, true);
   assert.equal(bootstrap.body.data.permissions.radTox, true);
   assert.equal(bootstrap.body.data.backpack.status, 'ready');
+  assert.ok(bootstrap.body.data.backpack.entitlements.includes('backpack-loadout'));
   const backpack = await json(base, '/api/backpack?accountId=' + second.body.data.account.accountId, { headers: firstHeaders });
   assert.equal(backpack.body.data.accountId, first.body.data.account.accountId, 'query parameters cannot cross account boundaries');
   assert.equal((await json(base, '/api/backpack', { headers: secondHeaders })).body.data.accountId, second.body.data.account.accountId);
