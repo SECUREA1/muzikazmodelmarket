@@ -9,7 +9,6 @@ const requiredFiles = [
   'dist/battle-theme.js',
   'dist/backpack-widget.js',
   'dist/backpack-widget.css',
-  'dist/members-entry.js',
   'dist/contract-ownership.js',
   'dist/marketplace-listings.js',
   'dist/admin.html',
@@ -20,7 +19,7 @@ const requiredFiles = [
 
 await Promise.all(requiredFiles.map((file) => access(file)));
 
-const backpackPages = ['avatar-whitepaper.html', 'beasts.html', 'brand-kit.html', 'buy-mzk.html', 'chaines-ar-collectibles.html', 'chaos.html', 'checkout.html', 'crew-market.html', 'index.html', 'index0.html', 'index1.html', 'legends.html', 'login.html', 'model-explorer.html', 'model-market.html', 'new-legends.html', 'online-events.html', 'originals.html', 'quest-board.html', 'token-mixer.html', 'trait-avatars.html', 'voice-changer.html'];
+const backpackPages = ['avatar-whitepaper.html', 'beasts.html', 'brand-kit.html', 'buy-mzk.html', 'chaines-ar-collectibles.html', 'chaos.html', 'checkout.html', 'crew-market.html', 'index.html', 'index0.html', 'index1.html', 'legends.html', 'login.html', 'members.html', 'model-explorer.html', 'model-market.html', 'new-legends.html', 'online-events.html', 'originals.html', 'quest-board.html', 'token-mixer.html', 'trait-avatars.html', 'voice-changer.html'];
 for (const page of backpackPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
   if (!html.includes('mzk-wallet.js') || !html.includes('backpack-widget.js')) throw new Error(`${page} must expose the Ethereum wallet and Backpack controls.`);
@@ -30,13 +29,13 @@ const serverSource = await readFile('server.mjs', 'utf8');
 
 // The compact destination menu and four-button commerce masthead stay
 // consistent on every page that uses the shared mobile header.
-const unifiedHeaderPages = htmlPages.filter((page) => page !== 'members.html');
+const unifiedHeaderPages = htmlPages;
 for (const page of unifiedHeaderPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
   if (!html.includes('global-header.js')) throw new Error(`${page} must load the unified global header component.`);
 }
 
-const mobileHeaderPages = ['avatar-whitepaper.html', 'buy-mzk.html', 'checkout.html', 'index.html', 'model-market.html'];
+const mobileHeaderPages = ['avatar-whitepaper.html', 'buy-mzk.html', 'checkout.html', 'index.html', 'members.html', 'model-market.html'];
 for (const page of mobileHeaderPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
   const navigation = html.match(/<nav class="nav global-nav"[\s\S]*?<\/nav>/)?.[0] || '';
@@ -93,7 +92,7 @@ for (const directory of excludedBuildDirectories) {
 
 for (const page of htmlPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
-  const requiredAssets = page === 'members.html' ? ['styles.css', 'members-entry.js'] : page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js', 'battle-theme.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js', 'battle-theme.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js', 'battle-theme.js'] : ['styles.css', 'script.js', 'battle-theme.js'];
+  const requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js', 'battle-theme.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js', 'battle-theme.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js', 'battle-theme.js'] : ['styles.css', 'script.js', 'battle-theme.js'];
 
   for (const asset of requiredAssets) {
     if (!html.includes(asset)) {
@@ -260,6 +259,22 @@ for (const page of ['index.html', 'model-market.html', 'model-explorer.html', 'b
   const html = await readFile(`dist/${page}`, 'utf8');
   if (!html.includes('4,000 MZK')) throw new Error(`${page} must display the 4,000 MZK starter-land price.`);
 }
+for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace']) {
+  if (!membersHtml.includes(`id="${id}"`)) {
+    throw new Error(`members.html is missing subscriber section #${id}`);
+  }
+}
+for (const requiredLoginGate of ['id="member-locked-content" data-locked="true" hidden', 'id="bottle-wallet-connect"', 'id="bottle-wallet-mint"', 'id="meknx-wallet-entry"', 'name="muzikaz-bottle-contract"']) {
+  if (!membersHtml.includes(requiredLoginGate)) {
+    throw new Error(`members.html is missing its Bottle-only login gate: ${requiredLoginGate}`);
+  }
+}
+if (!membersHtml.includes('name="muzikaz-bottle-contract" content="0x0F1254772810EA4D06E5c61E3E4b54d740367Aa8"')) {
+  throw new Error('members.html must use the approved MUZIKAZ Bottle access contract.');
+}
+for (const walletIdentityFeature of ['id="wallet-username"', 'id="wallet-json-download"', 'id="wallet-json-import"']) {
+  if (!membersHtml.includes(walletIdentityFeature)) throw new Error(`members.html is missing wallet identity control: ${walletIdentityFeature}`);
+}
 for (const walletBindingFeature of ['connectIdentity', 'setUsername', 'exportWallet', 'importWallet']) {
   if (!mzkWallet.includes(walletBindingFeature)) throw new Error(`mzk-wallet.js is missing wallet binding feature: ${walletBindingFeature}`);
 }
@@ -267,7 +282,12 @@ for (const walletConnectFeature of ['connectBrowserWallet', 'disconnectBrowserWa
   if (!mzkWallet.includes(walletConnectFeature)) throw new Error(`The app wallet control is missing ${walletConnectFeature}.`);
 }
 
-if (!membersHtml.includes('data-entry-option="meknx"') || !membersHtml.includes('data-entry-option="pay"')) throw new Error('members.html must offer both simple game-entry choices.');
+if (!membersHtml.includes('name="muzikaz-bottle-approved-contract" content="0xEf74118D5fB730E9B2729c7303DC29980b4771f0"')) {
+  throw new Error('members.html must include the additional approved Bottle access-token contract.');
+}
+if (membersHtml.includes('public/js/avatar-selection.js')) {
+  throw new Error('members.html must not require avatar selection before Bottle login.');
+}
 
 const checkoutHtml = await readFile('dist/checkout.html', 'utf8');
 for (const id of ['payment-form', 'checkout-items', 'confirmation-panel']) {
@@ -295,6 +315,11 @@ if (!css.includes("url('reference.png')")) {
 
 console.log('Static build output contains all public and member pages with required references.');
 
+for (const requiredAdminMarkup of ['id="admin-login-form"', 'name="username"', 'name="password"', 'data-asset-dashboard hidden']) {
+  if (!membersHtml.includes(requiredAdminMarkup)) {
+    throw new Error(`members.html is missing protected-admin markup: ${requiredAdminMarkup}`);
+  }
+}
 const appScript = await readFile('dist/script.js', 'utf8');
 const bottleAccessSources = appScript + await readFile('dist/contract-ownership.js', 'utf8');
 if (!appScript.includes('initModelMarketGate') || !appScript.includes("sessionStorage.setItem('muzikazBottleMember', 'true')")) {
@@ -317,6 +342,15 @@ for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelA
 for (const requiredMintReward of ['BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
+for (const requiredLoadoutCopy of ['$30 USD · Live ETH quote', 'Minting is optional', 'Enter RAD-TOX Game', 'MZK Access Code', 'Open Account with Access Code', 'Connect MetaMask &amp; Open Account', 'One account. One code. Any device.']) {
+  if (!membersHtml.includes(requiredLoadoutCopy)) throw new Error(`members.html is missing $30 Loadout or Magic Bottle guidance: ${requiredLoadoutCopy}`);
+}
+for (const requiredAccessCodeAction of ["openAccessCodeAccount({ connectFirst: true })", "connectButton?.addEventListener('click', connect)", "if (accessCodeInput?.value.trim()) await openAccessCodeAccount()"]) {
+  if (!appScript.includes(requiredAccessCodeAction)) throw new Error(`script.js is missing interactive Access Code behavior: ${requiredAccessCodeAction}`);
+}
+for (const requiredLoadoutFlow of ['Builder drop · optional mint', 'Violet Wish Bottle', 'Unlock loadout &amp; pay with ETH', 'id="bottle-continue"', 'data-purchase-step="payment"']) {
+  if (!membersHtml.includes(requiredLoadoutFlow)) throw new Error(`members.html is missing the ordered Purple Bottle loadout flow: ${requiredLoadoutFlow}`);
+}
 if (!appScript.includes('config.approvedContracts') || !appScript.includes('MUZIKAZ_BOTTLE_APPROVED_CONTRACTS')) {
   throw new Error('script.js must validate ownership across all approved Bottle contracts.');
 }
@@ -336,7 +370,7 @@ for (const requiredCompatibilityFeature of ['MUZIKAZ_API_BASE', 'MUZIKAZ_SHARED_
   }
 }
 const modelExplorerHtml = await readFile('dist/model-explorer.html', 'utf8');
-if (!mainHtml.includes('public/js/api-connection.js') || !modelExplorerHtml.includes('public/js/api-connection.js') || !adminHtml.includes('public/js/api-connection.js')) {
+if (!mainHtml.includes('public/js/api-connection.js') || !modelExplorerHtml.includes('public/js/api-connection.js') || !membersHtml.includes('public/js/api-connection.js') || !adminHtml.includes('public/js/api-connection.js')) {
   throw new Error('Every game and avatar entry point must initialize its cross-browser API connection.');
 }
 for (const page of [['index.html', mainHtml], ['model-market.html', modelMarketHtml], ['model-explorer.html', modelExplorerHtml]]) {

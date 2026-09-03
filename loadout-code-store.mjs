@@ -213,6 +213,14 @@ export class MzkAccountStore {
     grantStandardLoadout(account); account.updatedAt = new Date().toISOString();
     return publicAccount(account);
   }); }
+  grantMeknxLoadout(accountId, contract = '') { return this.serialized(async (data) => {
+    const account = data.accounts.find((item) => item.accountId === accountId);
+    if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 });
+    grantStandardLoadout(account);
+    account.meknxEntitlement = { contract: String(contract || '').toLowerCase(), verifiedAt: new Date().toISOString() };
+    account.updatedAt = account.meknxEntitlement.verifiedAt;
+    return publicAccount(account);
+  }); }
   fulfillPaidLoadout(order, accountId = '') { return this.serialized(async (data) => {
     const paymentId = String(order?.orderId || '').trim();
     if (!paymentId || !['PAID', 'FULFILLED'].includes(order?.paymentStatus) || order.purchaseType !== 'LOADOUT' || order.itemId !== 'standard-loadout' || Number(order.basePrice) < 30) throw Object.assign(new Error('Only a server-verified standard Loadout payment can be fulfilled.'), { statusCode: 409 });

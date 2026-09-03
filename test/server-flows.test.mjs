@@ -60,6 +60,15 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(walletLogin.body.data.account.backpackId, activation.body.data.account.backpackId, 'opening Ethereum attaches it to the code-created Backpack');
   assert.deepEqual(walletLogin.body.data.account.gameAssets, ['Starter Avatar', 'Unrevealed Loadout Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
 
+  const meknxWallet = '0x6666666666666666666666666666666666666666';
+  const meknxLogin = await json(`${base}/api/access/wallet`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wallet: meknxWallet }) });
+  const meknxCookie = meknxLogin.response.headers.get('set-cookie').split(';')[0];
+  const meknxGrant = await json(`${base}/api/account/meknx-loadout`, { method: 'POST', headers: { Cookie: meknxCookie, 'X-CSRF-Token': meknxLogin.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ contract: '0xEf74118D5fB730E9B2729c7303DC29980b4771f0' }) });
+  assert.equal(meknxGrant.response.status, 200);
+  assert.equal(meknxGrant.body.data.mzkBalance, 500);
+  assert.equal(meknxGrant.body.data.gameAccess, true);
+  assert.equal((await json(`${base}/api/account/bootstrap`, { headers: { Cookie: meknxCookie } })).body.data.permissions.radTox, true, 'MEKNX sign-in opens the complete authenticated platform and RAD-TOX');
+
   const bypassDenied = await json(`${base}/api/access/admin-bypass`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'wrong' }) });
   assert.equal(bypassDenied.response.status, 401, 'an incorrect owner word cannot bypass the Bottle gate');
   const bypass = await json(`${base}/api/access/admin-bypass`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'test-password' }) });
@@ -76,15 +85,21 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['New User Pack']);
 });
 
-test('member loadout entry is simple and only the saved admin bypass uses the account API', async () => {
-  const html = await readFile(new URL('../members.html', import.meta.url), 'utf8');
-  const entry = await readFile(new URL('../members-entry.js', import.meta.url), 'utf8');
-  assert.ok(!html.includes('api-connection.js'));
-  assert.equal((entry.match(/\/api\//g) || []).length, 1);
-  assert.ok(entry.includes("fetch('/api/access/admin-bypass'"));
-  assert.ok(html.includes('data-entry-option="meknx"'));
-  assert.ok(html.includes('data-entry-option="pay"'));
-  assert.ok(entry.includes("window.localStorage.setItem('muzikazStarterLoadout'"));
-  assert.ok(entry.includes("accountId: account.accountId"));
-  assert.ok(entry.includes("window.location.assign('model-market.html?access='"));
+test('member loadout entry uses the shared canonical account API', async () => {
+  const source = await readFile(new URL('../script.js', import.meta.url), 'utf8');
+  assert.match(source, /const accountApiFetch = .*window\.MUZIKAZ_API\?\.fetch/s);
+  assert.match(source, /accountApiFetch\('\/api\/access\/wallet'/);
+  assert.match(source, /accountApiFetch\('\/api\/access\/activate'/);
+  assert.match(source, /accountApiFetch\('\/api\/account\/loadout\/paid'/);
+  assert.match(source, /accountApiFetch\('\/api\/account\/access-code'/);
+  assert.match(source, /accountApiFetch\('\/api\/account\/meknx-loadout'/, 'verified MEKNX entry provisions the canonical account');
+  assert.ok(source.includes('Your full account, 500 MZK, Builder Loadout, Backpack, creator tools and RAD-TOX access are ready.'));
+  assert.ok(source.includes('[A-Z0-9]{8}-[A-Z0-9]{8}'), 'legacy Rust pass format remains accepted by the member login');
+  assert.ok(source.includes("document.querySelector('#loadout-code-redeem')?.click()"), 'shared pass links automatically submit the member login');
+  assert.ok(source.includes("accountApiFetch('/api/account/bootstrap')"), 'account and Backpack state are loaded from authoritative bootstrap');
+  assert.ok(!source.slice(source.indexOf('const enterGame'), source.indexOf('const verifyAndUnlock')).includes("accountApiFetch('/api/game/session'"), 'members navigation does not create and discard a game session');
+  assert.ok(source.includes("window.sessionStorage.setItem('muzikazGameSessionToken'"), 'the destination persists its game token for protected requests');
+  assert.ok(source.includes("accountApiFetch('/api/access/admin-bypass'"), 'the Bottle page owner shortcut uses the server-validated bypass route');
+  assert.ok(!source.includes('window.MZKWallet?.provisionStandardLoadout(account)'), 'local storage is not an ownership authority');
+  assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'successful code entry opens the game page');
 });
