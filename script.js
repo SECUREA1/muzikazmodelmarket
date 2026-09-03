@@ -493,6 +493,10 @@ function initModelMarketGate() {
       const gameResult = await game.json().catch(() => ({ success: false, message: `The game service returned an unreadable response (${game.status}).` }));
       if (!game.ok || !gameResult.success) throw new Error(gameResult.message || 'RAD-TOX game-session creation failed.');
       window.MuzikazGameSessionToken = gameResult.data.gameSessionToken;
+      window.sessionStorage.setItem('muzikazGameSessionToken', gameResult.data.gameSessionToken);
+      const validation = await accountApiFetch('/api/game/session', { headers: { Accept: 'application/json', 'X-Game-Session': gameResult.data.gameSessionToken } });
+      const validationResult = await validation.json().catch(() => ({ success: false, message: `The game validation response was unreadable (${validation.status}).` }));
+      if (!validation.ok || !validationResult.success) throw new Error(validationResult.message || 'RAD-TOX game-session validation failed.');
       uncover(state.account);
     } catch (error) {
       if (status) status.textContent = error.message || 'RAD-TOX authorization failed.';
@@ -506,6 +510,7 @@ function initModelMarketGate() {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
       window.MuzikazAccountSession = null;
       window.MuzikazGameSessionToken = '';
+      window.sessionStorage.removeItem('muzikazGameSessionToken');
       document.body.classList.add('model-market-gated');
       cover.removeAttribute('hidden');
       if (status) status.textContent = 'Disconnected. Open your account again to enter RAD-TOX.';
@@ -2134,20 +2139,8 @@ function initBottleLogin() {
     return owner;
   };
   const enterGame = async () => {
-    const session = window.MuzikazAccountSession;
-    if (!session?.csrfToken) throw new Error('Open your Loadout account before entering the game.');
-    if (status) status.textContent = 'Preparing your authenticated RAD-TOX game session…';
-    const response = await accountApiFetch('/api/game/session', { method: 'POST', headers: { Accept: 'application/json', 'x-csrf-token': session.csrfToken }, body: '{}' });
-    const result = await response.json().catch(() => ({ success: false, message: `The game service returned an unreadable response (${response.status}).` }));
-    // During a rolling backend deploy, older account services do not expose the
-    // short-lived game-session route. The already authenticated Loadout session
-    // is the legacy game entitlement, so continue rather than displaying the
-    // backend's route-not-found response and trapping the player on this page.
-    if (response.status === 404 && (result.code === 'API_ROUTE_NOT_FOUND' || /api\s+route\s+not\s+found/i.test(result.message || ''))) {
-      window.location.href = 'model-market.html?access=loadout#house-explorer';
-      return;
-    }
-    if (!response.ok || !result.success) throw new Error(result.message || 'The RAD-TOX game session could not be opened.');
+    if (!window.MuzikazAccountSession?.permissions?.radTox) throw new Error('Open an entitled Loadout account before entering RAD-TOX.');
+    // model-market owns game-session creation after its authoritative bootstrap.
     window.location.href = 'model-market.html?access=loadout#house-explorer';
   };
   const verifyAndUnlock = async (address, requiredContract = '') => {

@@ -51,7 +51,7 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   assert.equal(gameCreation.response.status, 201);
   const game = await json(base, '/api/game/session', { headers: { cookie: `${first.cookie}; ${gameCreation.cookie}` } });
   assert.equal(game.body.data.accountId, first.body.data.account.accountId); assert.equal(game.body.data.selectedAvatar.id, 'starter-avatar');
-  assert.equal((await json(base, '/api/game/session', { headers: firstHeaders })).response.status, 401);
+  assert.equal((await json(base, '/api/game/session', { headers: firstHeaders })).response.status, 410);
   const bearerHeaders = { authorization: `Bearer ${first.body.data.sessionToken}`, 'x-csrf-token': first.body.data.csrfToken };
   assert.equal((await json(base, '/api/backpack', { headers: bearerHeaders })).body.data.accountId, first.body.data.account.accountId);
   assert.equal((await json(base, '/api/game/session', { method: 'POST', headers: bearerHeaders, body: '{}' })).response.status, 201, 'portable sessions can unlock RAD-TOX without a third-party cookie');

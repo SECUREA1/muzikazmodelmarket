@@ -44,7 +44,9 @@ function grantStandardLoadout(account) {
   account.memberAccess = true;
   account.worldAccess = true;
   account.avatarAccess = true;
-  account.provisioningVersion = LOADOUT_PROVISIONING_VERSION;
+  account.marketplaceAccess = true;
+  account.loadoutProvisioningVersion = LOADOUT_PROVISIONING_VERSION;
+  delete account.provisioningVersion;
   account.provisionedAt ||= new Date().toISOString();
   return account;
 }
@@ -78,7 +80,7 @@ function expireIssuedCredentials(data, now = Date.now()) {
 }
 function accountRecord(id, wallet = '', username = '') {
   const now = new Date().toISOString();
-  return { accountId: id || `usr_${randomUUID()}`, username, accessCodeStatus: null, accessCodeCreatedAt: null, accessCodeActivatedAt: null, accessCodeLastUsedAt: null, primaryEthereumWallet: wallet || null, connectedWallets: wallet ? [{ chain: 'ETH', address: wallet, boundAt: now }] : [], loadoutStatus: 'none', loadoutPaymentId: null, loadoutRedeemed: false, loadoutAccess: false, backpackId: `pack_${randomUUID()}`, mzkBalance: 0, starterMzkGranted: false, landAssets: [], gameAssets: [], purchasedAssets: [], bottleClaims: [], bottleNFTs: [], selectedAvatarId: 'starter-avatar', creatorVaultAccess: false, marketplaceAccess: true, gameAccess: false, createdAt: now, updatedAt: now };
+  return { accountId: id || `usr_${randomUUID()}`, username, accessCodeStatus: null, accessCodeCreatedAt: null, accessCodeActivatedAt: null, accessCodeLastUsedAt: null, primaryEthereumWallet: wallet || null, connectedWallets: wallet ? [{ chain: 'ETH', address: wallet, boundAt: now }] : [], loadoutStatus: 'none', loadoutPaymentId: null, loadoutRedeemed: false, loadoutAccess: false, backpackId: `pack_${randomUUID()}`, mzkBalance: 0, starterMzkGranted: false, landAssets: [], gameAssets: [], purchasedAssets: [], bottleClaims: [], bottleNFTs: [], selectedAvatarId: 'starter-avatar', creatorVaultAccess: false, marketplaceAccess: false, memberAccess: false, worldAccess: false, avatarAccess: false, gameAccess: false, loadoutProvisioningVersion: 0, createdAt: now, updatedAt: now };
 }
 
 export class MzkAccountStore {
@@ -119,6 +121,14 @@ export class MzkAccountStore {
           if (account.loadoutAccess !== true) account.loadoutAccess = false;
         }
         data.migrations.loadoutAccessV4 = new Date().toISOString();
+      }
+      if (!data.migrations.loadoutProvisioningVersionV5) {
+        for (const account of data.accounts) {
+          if (account.loadoutProvisioningVersion == null && account.provisioningVersion != null) account.loadoutProvisioningVersion = account.provisioningVersion;
+          delete account.provisioningVersion;
+          if (account.loadoutAccess === true || account.loadoutRedeemed === true || account.loadoutStatus === 'paid' || account.loadoutPaymentId) grantStandardLoadout(account);
+        }
+        data.migrations.loadoutProvisioningVersionV5 = new Date().toISOString();
       }
 
       // Rust stored the generated secret because it predated reusable account
@@ -224,7 +234,7 @@ export class MzkAccountStore {
   repairEntitledAccount(accountId) { return this.serialized(async (data) => {
     const account = data.accounts.find((item) => item.accountId === accountId);
     if (!account) throw Object.assign(new Error('The session account no longer exists.'), { statusCode: 401, code: 'ACCOUNT_NOT_FOUND' });
-    if (account.loadoutAccess === true) {
+    if (account.loadoutAccess === true || account.loadoutRedeemed === true || account.loadoutStatus === 'paid' || Boolean(account.loadoutPaymentId)) {
       grantStandardLoadout(account);
       account.updatedAt = new Date().toISOString();
     }

@@ -43,7 +43,7 @@ test('default MZK Loadout Pass creates a full Backpack before a user has a walle
   assert.equal(activated.account.creatorVaultAccess, true);
   assert.equal(activated.account.gameAccess, true);
   assert.equal(activated.account.mzkBalance, 500);
-  assert.equal(activated.account.provisioningVersion, 1);
+  assert.equal(activated.account.loadoutProvisioningVersion, 1);
   assert.equal(activated.account.memberAccess, true);
   assert.equal(activated.account.worldAccess, true);
   assert.deepEqual(activated.account.landAssets, ['Unrevealed MUZIKAZ Land']);
