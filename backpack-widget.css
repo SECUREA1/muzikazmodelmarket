@@ -70,3 +70,5 @@
 .backpack-asset-art.is-unrevealed { display:grid; place-items:center; min-height:180px; border:1px solid rgba(163,255,18,.45); border-radius:16px; background:radial-gradient(circle,rgba(163,255,18,.2),rgba(20,9,35,.96) 62%); }
 .backpack-asset-art.is-unrevealed span { font:900 4rem/1 system-ui; color:#a3ff12; filter:drop-shadow(0 0 18px rgba(163,255,18,.65)); }
 .unrevealed-label { display:inline-block; margin:.5rem 0; padding:.3rem .65rem; border-radius:999px; background:#a3ff12; color:#13091f; text-transform:uppercase; letter-spacing:.08em; }
+/* Administration is intentionally undiscoverable in the public utility bar. */
+[data-open-admin-login]{display:none!important}

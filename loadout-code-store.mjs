@@ -279,6 +279,7 @@ export class MzkAccountStore {
   }); }
   selectAvatar(accountId, avatarId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const id = String(avatarId || ''); if (id !== 'starter-avatar') throw Object.assign(new Error('That avatar is Unrevealed and cannot be used yet. Starter Avatar remains available.'), { statusCode: 409 }); account.selectedAvatarId = id; account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
   async getAccount(accountId) { const account = (await this.records()).accounts.find((a) => a.accountId === accountId); return account ? publicAccount(account) : null; }
+  async adminAccounts() { return (await this.records()).accounts.map(publicAccount); }
   repairEntitledAccount(accountId) { return this.serialized(async (data) => {
     const account = data.accounts.find((item) => item.accountId === accountId);
     if (!account) throw Object.assign(new Error('The session account no longer exists.'), { statusCode: 401, code: 'ACCOUNT_NOT_FOUND' });

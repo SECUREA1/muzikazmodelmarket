@@ -1,6 +1,7 @@
 (() => {
   const tokenKey = 'muzikazAdminToken';
   const views = {
+    accounts: { title: 'Subscriber signups', columns: ['accountId','username','subscriberEmail','primaryEthereumWallet','loadoutStatus','mzkBalance','createdAt','updatedAt'] },
     submissions: { title: 'Submissions & designs', columns: ['title','ownerDisplayName','fileType','category','intendedUse','status','visibility','updatedAt'] },
     users: { title: 'Users & wallets', columns: ['walletKey','displayName','walletId','mzk','items','updatedAt'] },
     sales: { title: 'Sales & payment orders', columns: ['orderId','userId','purchaseType','itemId','basePrice','paymentAsset','paymentStatus','transactionHash','createdAt'] },

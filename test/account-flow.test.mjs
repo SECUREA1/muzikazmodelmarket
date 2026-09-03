@@ -24,12 +24,11 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   assert.equal(unauthenticated.response.status, 401); assert.equal(unauthenticated.body.code, 'SESSION_REQUIRED');
   assert.match(unauthenticated.response.headers.get('content-type'), /json/);
 
-  const admin = await json(base, '/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'giraff', password: 'boots' }) });
-  const makeCode = async () => (await json(base, '/api/admin/access-codes', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-token': admin.body.data.token }, body: '{}' })).body.data.code;
-  const redeem = async (code) => json(base, '/api/access-codes/redeem', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
-  const first = await redeem(await makeCode()); const second = await redeem(await makeCode());
+  const subscribe = (username, email) => json(base, '/api/access/subscriber', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username, email, password: 'secret7' }) });
+  const first = await subscribe('First Member', 'first@example.com');
+  const second = await subscribe('Second Member', 'second@example.com');
   assert.notEqual(first.body.data.account.accountId, second.body.data.account.accountId);
-  assert.match(first.body.data.sessionToken, /^[A-Za-z0-9_-]+$/, 'code entry returns a portable API session for browsers that block third-party cookies');
+  assert.match(first.body.data.sessionToken, /^[A-Za-z0-9_-]+$/, 'email entry returns a portable API session for browsers that block third-party cookies');
   const firstHeaders = { cookie: first.cookie }; const secondHeaders = { cookie: second.cookie };
   const session = await json(base, '/api/session', { headers: firstHeaders });
   const bootstrap = await json(base, '/api/account/bootstrap', { headers: firstHeaders });

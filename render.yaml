@@ -30,6 +30,8 @@ services:
         value: 300
       - key: MUZIKAZ_CORS_ORIGINS
         value: https://muzikaz.com,https://www.muzikaz.com,https://muzikazmodelmarket.onrender.com
+      - key: MUZIKAZ_ETH_RPC_URL
+        sync: false
       - key: MUZIKAZ_AVATAR_UPLOAD_DIR
         value: /var/data/muzikaz/uploads/avatars
       - key: MUZIKAZ_ASSET_UPLOAD_DIR
