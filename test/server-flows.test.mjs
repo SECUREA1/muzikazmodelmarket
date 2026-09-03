@@ -50,23 +50,23 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(walletLogin.response.status, 200); assert.equal(walletLogin.body.data.account.primaryEthereumWallet, wallet);
   assert.equal(walletLogin.body.data.account.accountId, activation.body.data.account.accountId, 'wallet and code open one canonical account');
   assert.equal(walletLogin.body.data.account.backpackId, activation.body.data.account.backpackId, 'opening Ethereum attaches it to the code-created Backpack');
-  assert.deepEqual(walletLogin.body.data.account.gameAssets, ['Starter Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
+  assert.deepEqual(walletLogin.body.data.account.gameAssets, ['Starter Avatar', 'Unrevealed Loadout Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
 
   await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' } } }) });
   await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });
   const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['New User Pack']);
 });
 
-test('member loadout entry uses the shared API connection and legacy redemption fallback', async () => {
+test('member loadout entry uses the shared canonical account API', async () => {
   const source = await readFile(new URL('../script.js', import.meta.url), 'utf8');
   assert.match(source, /const accountApiFetch = .*window\.MUZIKAZ_API\?\.fetch/s);
   assert.match(source, /accountApiFetch\('\/api\/access\/wallet'/);
-  assert.match(source, /accountApiFetch\('\/api\/access\/activate'/);
-  assert.match(source, /response\.status === 404.*accountApiFetch\('\/api\/loadout-codes\/redeem'/s);
+  assert.match(source, /accountApiFetch\('\/api\/access-codes\/redeem'/);
   assert.match(source, /accountApiFetch\('\/api\/account\/loadout\/paid'/);
   assert.match(source, /accountApiFetch\('\/api\/account\/access-code'/);
   assert.ok(source.includes('[A-Z0-9]{8}-[A-Z0-9]{8}'), 'legacy Rust pass format remains accepted by the member login');
   assert.ok(source.includes("document.querySelector('#loadout-code-redeem')?.click()"), 'shared pass links automatically submit the member login');
-  assert.ok(source.includes('window.MZKWallet?.provisionStandardLoadout(account)'), 'account entitlements are imported into the playable local Backpack');
+  assert.ok(source.includes("accountApiFetch('/api/backpack')"), 'owned Backpack data is loaded from the authenticated server session');
+  assert.ok(!source.includes('window.MZKWallet?.provisionStandardLoadout(account)'), 'local storage is not an ownership authority');
   assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'successful code entry opens the game page');
 });

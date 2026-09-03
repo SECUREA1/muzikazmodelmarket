@@ -2154,13 +2154,6 @@ function initBottleLogin() {
   };
   const syncAccessCodeBackpack = (account) => {
     const owner = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
-    window.MZKWallet?.provisionStandardLoadout(account);
-    [
-      ...(account.gameAssets || []),
-      ...(account.landAssets || []),
-      ...(account.purchasedAssets || [])
-    ].forEach((asset) => claimOwnedAsset(asset, 'MZK Access · Paid Loadout standard', owner));
-    (account.bottleClaims || []).forEach((asset) => claimOwnedAsset(`${asset} · Complimentary Mint Claim`, 'MZK Access · Paid Loadout standard', owner));
     return owner;
   };
   const verifyAndUnlock = async (address, requiredContract = '') => {
@@ -2271,11 +2264,7 @@ function initBottleLogin() {
       }
       const submitCode = async (wallet = '') => {
         const options = { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code, wallet, username: usernameInput?.value || '' }) };
-        let response = await accountApiFetch('/api/access/activate', options);
-        // Older MUZIKAZ API deployments exposed the same activation operation
-        // under this route. Supporting it keeps every previously generated
-        // admin/loadout code usable during a rolling deployment.
-        if (response.status === 404) response = await accountApiFetch('/api/loadout-codes/redeem', options);
+        const response = await accountApiFetch('/api/access-codes/redeem', options);
         const result = await response.json().catch(() => ({ success: false, message: `The access service returned an unreadable response (${response.status}).` }));
         return { response, result };
       };
@@ -2394,6 +2383,34 @@ function initBottleLogin() {
     if (!walletRequestActive) window.location.reload();
   });
   window.ethereum?.on?.('chainChanged', () => window.location.reload());
+  // Cookies, not browser inventory keys, restore membership. A failed request is
+  // kept distinct from an authenticated but empty Backpack and can be retried.
+  const restoreSession = async () => {
+    if (status) status.textContent = 'Checking your MUZIKAZ account session…';
+    try {
+      const sessionResponse = await accountApiFetch('/api/session');
+      const sessionResult = await sessionResponse.json();
+      if (sessionResponse.status === 401) { clearConnectedSession(); if (status) status.textContent = 'Sign in with an Access Code, purchase, or verified wallet.'; return; }
+      if (!sessionResponse.ok || !sessionResult.success) throw new Error(sessionResult.message || 'Session check failed.');
+      const accountResponse = await accountApiFetch('/api/account');
+      const accountResult = await accountResponse.json();
+      const backpackResponse = await accountApiFetch('/api/backpack');
+      const backpackResult = await backpackResponse.json();
+      if (!accountResponse.ok || !backpackResponse.ok) throw new Error(accountResult.message || backpackResult.message || 'Backpack request failed.');
+      const account = accountResult.data;
+      window.MuzikazAccountSession = { csrfToken: sessionResult.data.csrfToken, account, expiresAt: sessionResult.data.expiresAt, backpack: backpackResult.data };
+      currentMemberEmail = syncAccessCodeBackpack(account);
+      showAddress(account.primaryEthereumWallet);
+      unlock(backpackResult.data.status === 'empty' ? 'Your account is open. This Backpack is currently empty.' : 'Welcome back. Your persistent Backpack is ready.');
+      renderOwnedCollection(currentMemberEmail);
+    } catch (error) {
+      lockedContent.hidden = true;
+      lockedContent.dataset.locked = 'true';
+      if (status) status.innerHTML = `${escapeHtml(error.message || 'Backpack could not be loaded.')} <button type="button" id="member-session-retry">Retry</button>`;
+      document.querySelector('#member-session-retry')?.addEventListener('click', restoreSession, { once: true });
+    }
+  };
+  restoreSession();
 }
 
 marketQualityToggle?.addEventListener('change', () => renderMarketplace());

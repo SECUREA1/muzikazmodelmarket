@@ -45,7 +45,7 @@ test('default MZK Loadout Pass creates a full Backpack before a user has a walle
   assert.equal(activated.account.mzkBalance, 500);
   assert.deepEqual(activated.account.landAssets, ['Unrevealed MUZIKAZ Land']);
   assert.deepEqual(activated.account.bottleClaims, ['Violet Wish Bottle']);
-  assert.deepEqual(activated.account.gameAssets, ['Starter Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
+  assert.deepEqual(activated.account.gameAssets, ['Starter Avatar', 'Unrevealed Loadout Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
   const wallet = '0x4444444444444444444444444444444444444444';
   const connected = await store.connectWallet(activated.account.accountId, wallet);
   assert.equal(connected.backpackId, activated.account.backpackId, 'connecting Ethereum keeps the code-created Backpack');
