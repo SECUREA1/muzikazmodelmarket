@@ -2173,6 +2173,17 @@ function initBottleLogin() {
     const owner = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
     return owner;
   };
+  const openAuthenticatedSubscriber = (account, message) => {
+    currentMemberEmail = syncAccessCodeBackpack(account);
+    grantBottleAccess(currentMemberEmail, 'authenticated-account', account.accountId);
+    window.sessionStorage.setItem('muzikazBottleMember', 'true');
+    window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+    setPurchaseStep(3);
+    showAddress(account.primaryEthereumWallet);
+    renderOwnedCollection(currentMemberEmail);
+    unlock(message);
+    scrollToSection('member-locked-content');
+  };
   const enterGame = async () => {
     if (!window.MuzikazAccountSession?.permissions?.radTox) throw new Error('Open an entitled Loadout account before entering RAD-TOX.');
     // model-market owns game-session creation after its authoritative bootstrap.
@@ -2290,14 +2301,7 @@ function initBottleLogin() {
       let { response, result } = await submitCode(address);
       if (!response.ok || !result.success) throw new Error(result.message || 'The MZK Access Code could not be activated.');
       const account = rememberAccountSession(result.data);
-      currentMemberEmail = syncAccessCodeBackpack(account);
-      grantBottleAccess(currentMemberEmail, 'mzk-access-code', account.accountId);
-      window.sessionStorage.setItem('muzikazBottleMember', 'true');
-      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-      setPurchaseStep(3);
-      renderOwnedCollection(currentMemberEmail);
-      showAddress(account.primaryEthereumWallet);
-      unlock(account.primaryEthereumWallet
+      openAuthenticatedSubscriber(account, account.primaryEthereumWallet
         ? `Account ${account.accountId} is open. This MZK Access Code and Ethereum account ${shortAddress(account.primaryEthereumWallet)} now resolve to the same Backpack, assets, MZK, land and creator tools.`
         : `Account ${account.accountId} is open with a new Backpack, starter MZK, land and creator tools. Connect Ethereum later and that wallet will open this same Backpack.`);
       const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
@@ -2306,7 +2310,6 @@ function initBottleLogin() {
         window.location.href = redirect;
         return;
       }
-      await enterGame();
     } catch (error) {
       if (status) status.textContent = error.message || 'The MZK Access Code could not be activated.';
     } finally { setBusy(false); }
@@ -2323,12 +2326,7 @@ function initBottleLogin() {
       const result = await response.json().catch(() => ({ success: false, message: `The admin service returned an unreadable response (${response.status}).` }));
       if (!response.ok || !result.success) throw new Error(result.message || 'Admin bypass failed.');
       const account = rememberAccountSession(result.data);
-      currentMemberEmail = syncAccessCodeBackpack(account);
-      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-      window.sessionStorage.setItem('muzikazBottleMember', 'true');
-      setPurchaseStep(3);
-      unlock('Admin Loadout opened. Entering RAD-TOX now…');
-      await enterGame();
+      openAuthenticatedSubscriber(account, 'Admin Loadout opened. The complete subscribers area, Backpack, creator tools and RAD-TOX entry are ready.');
     } catch (error) { if (status) status.textContent = error.message || 'Admin bypass failed.'; }
     finally { setBusy(false); }
   });
