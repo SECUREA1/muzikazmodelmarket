@@ -82,3 +82,13 @@ test('production CORS origins receive complete credentialed preflight headers', 
   }
   const denied = await fetch(base + '/api/health', { headers: { Origin: 'https://evil.example' } }); assert.equal(denied.status, 403); assert.equal((await denied.json()).code, 'CORS_ORIGIN_DENIED');
 });
+
+test('subscriber credentials receive the same 500 MZK Loadout and portable session', async (t) => {
+  const base = await runningServer(t);
+  const login = await json(base, '/api/access/subscriber', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'Subscriber', email: 'subscriber@example.com', password: 'secret7' }) });
+  assert.equal(login.response.status, 200); assert.equal(login.body.data.account.mzkBalance, 500); assert.equal(login.body.data.account.loadoutAccess, true); assert.ok(login.body.data.sessionToken);
+  const backpack = await json(base, '/api/backpack', { headers: { authorization: `Bearer ${login.body.data.sessionToken}` } });
+  assert.equal(backpack.body.data.status, 'ready'); assert.equal(backpack.body.data.mzkBalance, 500); assert.ok(backpack.body.data.entitlements.includes('members-game'));
+  const reopened = await json(base, '/api/access/subscriber', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'Subscriber', email: 'subscriber@example.com', password: 'secret7' }) });
+  assert.equal(reopened.body.data.account.accountId, login.body.data.account.accountId); assert.equal(reopened.body.data.account.mzkBalance, 500);
+});
