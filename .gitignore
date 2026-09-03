@@ -5,3 +5,16 @@ dist/
 
 # Generated from data/land-worlds.json by npm run build:land-data.
 /data/land-worlds.sqlite
+
+# Live member records and uploads belong on encrypted service storage/backups,
+# never in public source-control history.
+/data/accounts.json
+/data/users.json
+/data/account-sessions.json
+/data/game-sessions.json
+/data/payment-orders.json
+/data/asset-library.json
+/data/published-models.json
+/data/avatar-profiles.json
+/data/environments.json
+/uploads/

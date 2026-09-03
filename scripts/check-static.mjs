@@ -262,7 +262,7 @@ for (const page of ['index.html', 'model-market.html', 'model-explorer.html', 'b
   const html = await readFile(`dist/${page}`, 'utf8');
   if (!html.includes('4,000 MZK')) throw new Error(`${page} must display the 4,000 MZK starter-land price.`);
 }
-for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace']) {
+for (const id of ['bottle-login', 'designer', 'ar-viewer', 'marketplace']) {
   if (!membersHtml.includes(`id="${id}"`)) {
     throw new Error(`members.html is missing subscriber section #${id}`);
   }
@@ -318,10 +318,11 @@ if (!css.includes("url('reference.png')")) {
 
 console.log('Static build output contains all public and member pages with required references.');
 
-for (const requiredAdminMarkup of ['id="admin-login-form"', 'name="username"', 'name="password"', 'data-asset-dashboard hidden']) {
-  if (!membersHtml.includes(requiredAdminMarkup)) {
-    throw new Error(`members.html is missing protected-admin markup: ${requiredAdminMarkup}`);
-  }
+for (const hiddenMemberControl of ['id="admin-login-form"', 'id="loadout-access-code"', 'id="admin-game-bypass-button"', 'id="bottle-backpack-loadout"']) {
+  if (membersHtml.includes(hiddenMemberControl)) throw new Error(`members.html publicly exposes disabled access control: ${hiddenMemberControl}`);
+}
+for (const requiredMemberControl of ['id="member-simple-email"', 'id="member-simple-password"', 'id="meknx-wallet-entry"']) {
+  if (!membersHtml.includes(requiredMemberControl)) throw new Error(`members.html is missing approved member access control: ${requiredMemberControl}`);
 }
 const appScript = await readFile('dist/script.js', 'utf8');
 const bottleAccessSources = appScript + await readFile('dist/contract-ownership.js', 'utf8');
@@ -345,14 +346,8 @@ for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelA
 for (const requiredMintReward of ['BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
-for (const requiredLoadoutCopy of ['$30 USD · Live ETH quote', 'Minting is optional', 'Enter RAD-TOX Game', 'MZK Access Code', 'Open Account with Access Code', 'Connect MetaMask &amp; Open Account', 'One account. One code. Any device.']) {
-  if (!membersHtml.includes(requiredLoadoutCopy)) throw new Error(`members.html is missing $30 Loadout or Magic Bottle guidance: ${requiredLoadoutCopy}`);
-}
-for (const requiredAccessCodeAction of ["openAccessCodeAccount({ connectFirst: true })", "connectButton?.addEventListener('click', connect)", "if (accessCodeInput?.value.trim()) await openAccessCodeAccount()"]) {
-  if (!appScript.includes(requiredAccessCodeAction)) throw new Error(`script.js is missing interactive Access Code behavior: ${requiredAccessCodeAction}`);
-}
-for (const requiredLoadoutFlow of ['Builder drop · optional mint', 'Violet Wish Bottle', 'Unlock loadout &amp; pay with ETH', 'id="bottle-continue"', 'data-purchase-step="payment"']) {
-  if (!membersHtml.includes(requiredLoadoutFlow)) throw new Error(`members.html is missing the ordered Purple Bottle loadout flow: ${requiredLoadoutFlow}`);
+for (const requiredLoadoutCopy of ['Email &amp; password access', 'MEKNX holder entry', '500 MZK and the complete Loadout package', 'Enter RAD-TOX Game']) {
+  if (!membersHtml.includes(requiredLoadoutCopy)) throw new Error(`members.html is missing approved subscriber Loadout guidance: ${requiredLoadoutCopy}`);
 }
 if (!appScript.includes('config.approvedContracts') || !appScript.includes('MUZIKAZ_BOTTLE_APPROVED_CONTRACTS')) {
   throw new Error('script.js must validate ownership across all approved Bottle contracts.');
@@ -362,9 +357,7 @@ for (const requiredAdminFlow of ["/api/admin/login", "muzikazAdminToken", "x-adm
     throw new Error(`script.js is missing protected-admin flow: ${requiredAdminFlow}`);
   }
 }
-if (!serverSource.includes("process.env.MUZIKAZ_ADMIN_USERNAME || 'giraff'") || !serverSource.includes("process.env.MUZIKAZ_ADMIN_PASSWORD || 'boots'")) {
-  throw new Error('The configured giraff administrator credentials are not connected to the server login.');
-}
+if (!serverSource.includes("process.env.MUZIKAZ_ADMIN_USERNAME || ''") || !serverSource.includes("process.env.MUZIKAZ_ADMIN_PASSWORD || ''")) throw new Error('Administrator credentials must be deployment secrets without source defaults.');
 
 const apiConnection = await readFile('dist/public/js/api-connection.js', 'utf8');
 for (const requiredCompatibilityFeature of ['MUZIKAZ_API_BASE', 'MUZIKAZ_SHARED_AVATAR_API', 'muzikazmodelmarket.onrender.com', "request.mode = 'cors'", 'Promise.race', "data-api-connected"]) {

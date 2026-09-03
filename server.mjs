@@ -8,6 +8,7 @@ import { LoadoutCodeStore } from './loadout-code-store.mjs';
 import { PaymentOrderStore, MUZIKAZ_PAYMENT_NETWORKS } from './payment-order-store.mjs';
 import { verifyPaymentTransaction } from './payment-verifier.mjs';
 import { DurableSessionStore } from './session-store.mjs';
+import { verifyMeknxOwnership } from './meknx-ownership.mjs';
 
 const root = process.cwd();
 const serviceStartedAt = new Date().toISOString();
@@ -41,8 +42,8 @@ const accessAttempts = new Map();
 const supportSockets = new Set();
 const supportMessages = [];
 const port = Number(process.env.PORT || 4173);
-const adminUsername = process.env.MUZIKAZ_ADMIN_USERNAME || 'giraff';
-const adminPassword = process.env.MUZIKAZ_ADMIN_PASSWORD || 'boots';
+const adminUsername = process.env.MUZIKAZ_ADMIN_USERNAME || '';
+const adminPassword = process.env.MUZIKAZ_ADMIN_PASSWORD || '';
 const adminSessionSecret = process.env.MUZIKAZ_ADMIN_SESSION_SECRET || `${adminUsername}\0${adminPassword}\0muzikaz-admin-session`;
 const persistentAdminToken = createHmac('sha256', adminSessionSecret).update(`admin:${adminUsername}`).digest('base64url');
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
@@ -131,8 +132,8 @@ function requestWallet(req) {
   return cleanWallet(req.headers['x-wallet-address'] || req.headers['x-user-id'] || sessionWallet);
 }
 function matchesAdminToken(value) { const supplied = Buffer.from(String(value || '')); const expected = Buffer.from(persistentAdminToken); return supplied.length === expected.length && timingSafeEqual(supplied, expected); }
-function isAdmin(req) { const token = String(req.headers['x-admin-token'] || cookie(req, 'mzk_admin') || ''); return (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || matchesAdminToken(token); }
-function matchesSecret(candidate, expected) { const supplied = Buffer.from(String(candidate || '')); const configured = Buffer.from(expected); return supplied.length === configured.length && timingSafeEqual(supplied, configured); }
+function isAdmin(req) { const token = String(req.headers['x-admin-token'] || cookie(req, 'mzk_admin') || ''); return (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || (Boolean(adminUsername && adminPassword) && matchesAdminToken(token)); }
+function matchesSecret(candidate, expected) { const supplied = Buffer.from(String(candidate || '')); const configured = Buffer.from(expected); return configured.length > 0 && supplied.length === configured.length && timingSafeEqual(supplied, configured); }
 function requireAdmin(req, res) { if (isAdmin(req)) return true; sendJson(res, 403, { success: false, message: 'Admin authorization required' }); return false; }
 function cookie(req, name) { return String(req.headers.cookie || '').split(';').map((part) => part.trim().split('=')).find(([key]) => key === name)?.[1] || ''; }
 function sessionCookie(name, value, maxAge) { const production = process.env.NODE_ENV === 'production'; return `${name}=${value}; Path=/; HttpOnly; SameSite=${production ? 'None' : 'Lax'}; Max-Age=${maxAge}${production ? '; Secure' : ''}`; }
@@ -375,9 +376,9 @@ const server = createServer(async (req, res) => {
     }
     if (url.pathname === '/api/admin/data' && req.method === 'GET') {
       if (!requireAdmin(req, res)) return;
-      const [submissions, models, usersData, sales, environments, avatars, avatarProfiles] = await Promise.all([
-        readAssets(), readModels(), userDatabase.initialize().then(() => userDatabase.read()), paymentOrderStore.list(),
-        readUploadedEnvironments(), readAvatars(), readAvatarProfiles()
+      const [submissions, models, usersData, accounts, sales, environments, avatars, avatarProfiles] = await Promise.all([
+        readAssets(), readModels(), userDatabase.initialize().then(() => userDatabase.read()), loadoutCodeStore.adminAccounts(),
+        paymentOrderStore.list(), readUploadedEnvironments(), readAvatars(), readAvatarProfiles()
       ]);
       const users = Object.entries(usersData.users || {}).map(([walletKey, record]) => ({ walletKey, record }));
       const paidSales = sales.filter((order) => ['PAID', 'FULFILLED'].includes(order.paymentStatus));
@@ -385,27 +386,26 @@ const server = createServer(async (req, res) => {
         generatedAt: Math.floor(Date.now() / 1000),
         summary: {
           submissions: submissions.length,
-          users: users.length,
+          users: accounts.length,
           sales: sales.length,
           paidRevenueUsd: paidSales.reduce((total, order) => total + Number(order.basePrice || 0), 0),
           models: models.length,
           environments: environments.length,
           avatars: avatars.length
         },
-        submissions, users, sales, models, customizations: [], derivatives: [], environments, avatars, avatarProfiles
+        submissions, users, accounts, sales, models, customizations: [], derivatives: [], environments, avatars, avatarProfiles
       }));
     }
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.create(await bodyJson(req)))); }
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.list())); }
     const adminAccessRevoke = url.pathname.match(/^\/api\/admin\/(?:access-codes|loadout-codes)\/([^/]+)\/revoke$/);
     if (adminAccessRevoke && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.adminRevoke(decodeURIComponent(adminAccessRevoke[1])))); }
-    if ((url.pathname === '/api/access-codes/redeem' || url.pathname === '/api/access/activate' || url.pathname === '/api/loadout-codes/redeem') && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); const current = await resolveAccountSession(req); const result = await loadoutCodeStore.activate(body.code, body.wallet, body.username, current?.accountId || ''); await userDatabase.ensureAccount(result.account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, result.account))); } catch (error) { attempt.failure(); throw error; } }
+    if ((url.pathname === '/api/access-codes/redeem' || url.pathname === '/api/access/activate' || url.pathname === '/api/loadout-codes/redeem' || url.pathname === '/api/access/login') && req.method === 'POST') return authorizationError(res, 403, 'ACCESS_METHOD_DISABLED', 'Use email and password or verified MEKNX ownership to enter.', 'authentication');
     if (url.pathname === '/api/access/subscriber' && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); const account = await loadoutCodeStore.subscriberLogin(body.username, body.email, body.password); await userDatabase.ensureAccount(account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
-    if (url.pathname === '/api/access/admin-bypass' && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); if (!matchesSecret(body.password, adminPassword)) throw Object.assign(new Error('The admin bypass word is incorrect.'), { statusCode: 401 }); const account = await loadoutCodeStore.adminBypass(); await userDatabase.ensureAccount(account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
-    if (url.pathname === '/api/access/login' && req.method === 'POST') { const attempt = throttleAccess(req); try { const account = await loadoutCodeStore.authenticate((await bodyJson(req)).code); await userDatabase.ensureAccount(account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
+    if (url.pathname === '/api/access/admin-bypass' && req.method === 'POST') return authorizationError(res, 403, 'ACCESS_METHOD_DISABLED', 'Administrator credentials do not grant member access.', 'authentication');
     if (url.pathname === '/api/access/wallet' && req.method === 'POST') { const wallet = (await bodyJson(req)).wallet; const active = await resolveAccountSession(req); const current = active ? await loadoutCodeStore.getAccount(active.accountId) : null; const account = current && !current.primaryEthereumWallet ? await loadoutCodeStore.connectWallet(current.accountId, wallet) : await loadoutCodeStore.findByWallet(wallet); await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); }
-    if (url.pathname === '/api/account/meknx-loadout' && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; const body = await bodyJson(req); const contract = String(body.contract || '').toLowerCase(); if (contract !== '0xef74118d5fb730e9b2729c7303dc29980b4771f0') return authorizationError(res, 403, 'MEKNX_CONTRACT_REQUIRED', 'The approved MEKNX contract must be verified before granting this Loadout.', 'entitlement'); const account = await loadoutCodeStore.grantMeknxLoadout(active.accountId, contract); await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(account)); }
-    if (url.pathname === '/api/account/loadout/paid' && req.method === 'POST') { const body = await bodyJson(req); const order = await paymentOrderStore.get(body.orderId); if (!order || !paymentOrderStore.authorize(order, body.claimToken)) return sendJson(res, 401, { success: false, code: 'PURCHASE_CLAIM_INVALID', message: 'The purchase claim is invalid.' }); const verified = ['PAID', 'FULFILLED'].includes(order.paymentStatus) ? order : await paymentOrderStore.verify(order.orderId); if (!['PAID', 'FULFILLED'].includes(verified.paymentStatus)) return sendJson(res, 202, { success: false, code: 'PURCHASE_PENDING', message: 'The payment is still awaiting independent confirmation.' }); const active = await resolveAccountSession(req); const granted = await loadoutCodeStore.fulfillPaidLoadout(verified, active?.accountId || ''); await userDatabase.ensureAccount(granted); return sendJson(res, 200, assetResponse(await openAccountSession(res, granted))); }
+    if (url.pathname === '/api/account/meknx-loadout' && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; const body = await bodyJson(req); const contract = String(body.contract || '').toLowerCase(); if (contract !== '0xef74118d5fb730e9b2729c7303dc29980b4771f0') return authorizationError(res, 403, 'MEKNX_CONTRACT_REQUIRED', 'The approved MEKNX contract must be verified before granting this Loadout.', 'entitlement'); const canonical = await loadoutCodeStore.getAccount(active.accountId); const wallet = canonical?.primaryEthereumWallet; const proof = await verifyMeknxOwnership(wallet, contract); const account = await loadoutCodeStore.grantMeknxLoadout(active.accountId, contract); await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse({ ...account, meknxEntitlement: proof })); }
+    if (url.pathname === '/api/account/loadout/paid' && req.method === 'POST') return authorizationError(res, 403, 'ACCESS_METHOD_DISABLED', 'Loadout access is available through email/password membership or verified MEKNX ownership.', 'entitlement');
     if (url.pathname === '/api/account' && req.method === 'GET') { const active = await accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return account ? sendJson(res, 200, assetResponse(account)) : sendJson(res, 404, { success: false, message: 'Account not found.' }); }
     if ((url.pathname === '/api/wallets/attach' || url.pathname === '/api/account/wallet') && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; const account = await loadoutCodeStore.connectWallet(active.accountId, (await bodyJson(req)).wallet); active.wallet = account.primaryEthereumWallet; await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(account)); }
     if (url.pathname === '/api/account/avatar' && req.method === 'PUT') { const active = await accountSession(req, res, true); if (!active) return; const account = await loadoutCodeStore.selectAvatar(active.accountId, (await bodyJson(req)).avatarId); await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(account)); }
