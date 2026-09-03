@@ -760,7 +760,8 @@ function renderOwnedCollection(preferredOwner = currentMemberEmail) {
     const controls = owner === currentMemberEmail
       ? `<form class="backpack-price-form" data-backpack-price="${assetIndex}"><label>Token value <span><input name="tokenValue" type="number" min="1" max="1000000" step="1" value="${listing.tokenValue}" aria-label="Token value for ${escapeMarkup(detail.title)}"><b>MZK</b></span></label><button type="submit">${listing.listed ? 'Update price' : 'List for trade'}</button>${listing.listed ? `<button type="button" class="ghost" data-backpack-unlist="${assetIndex}">Unlist</button>` : ''}</form>`
       : listing.listed ? `<div class="backpack-buy"><strong>${listing.tokenValue.toLocaleString()} MZK / $${listing.tokenValue.toLocaleString()} crypto value</strong><button type="button" data-backpack-buy="${assetIndex}">Trade with MZK</button>${['ETH', 'POL', 'BNB', 'SOL', 'ADA', 'BTC', 'DOGE'].map((symbol) => `<button type="button" class="ghost" data-backpack-crypto="${symbol}" data-backpack-buy="${assetIndex}">${symbol}</button>`).join('')}</div>` : '<p class="backpack-not-listed">Not currently listed for trade</p>';
-    return `<article><img src="${escapeMarkup(detail.image)}" alt="${escapeMarkup(detail.title)}"><span class="pill">🎒 ${escapeMarkup(detail.type)}</span><h3>${escapeMarkup(detail.title)}</h3><p>${escapeMarkup(detail.copy)}</p>${detail.href ? `<a class="card-link" href="${escapeMarkup(detail.href)}">View map claim</a>` : ''}${controls}</article>`;
+    const unrevealed = /unrevealed/i.test(asset);
+    return `<article class="${unrevealed ? 'backpack-mystery-card' : ''}"><div class="backpack-asset-art ${unrevealed ? 'is-unrevealed' : ''}">${unrevealed ? '<span aria-hidden="true">?</span>' : `<img src="${escapeMarkup(detail.image)}" alt="${escapeMarkup(detail.title)}">`}</div><span class="pill">🎒 ${escapeMarkup(detail.type)}</span>${unrevealed ? '<strong class="unrevealed-label">Unrevealed</strong>' : ''}<h3>${escapeMarkup(detail.title)}</h3><p>${unrevealed ? 'Owned by this Backpack. Identity and hidden metadata remain sealed until the official reveal.' : escapeMarkup(detail.copy)}</p>${detail.href ? `<a class="card-link" href="${escapeMarkup(detail.href)}">View map claim</a>` : ''}${controls}</article>`;
   }).join('') || '<article><h3>Backpack empty</h3><p>Add marketplace drops, checkout character products, claim collectibles, or upload graphics to build this account pack.</p></article>';
   if (transactionList) {
     const transactions = readBackpackData(BACKPACK_TRANSACTIONS_KEY, []);
@@ -2301,7 +2302,7 @@ function initBottleLogin() {
         window.location.href = redirect;
         return;
       }
-      window.location.href = 'model-market.html?access=loadout#house-explorer';
+      window.location.href = 'members.html?backpack=open#owned-collection';
     } catch (error) {
       if (status) status.textContent = error.message || 'The MZK Access Code could not be activated.';
     } finally { setBusy(false); }
@@ -2322,7 +2323,7 @@ function initBottleLogin() {
       setPurchaseStep(2);
       const walletName = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS[currency]?.name || `${currency} wallet`;
       if (status) status.textContent = `Confirm ${quote.amount} ${currency} (equivalent to $${BACKPACK_LOADOUT_USD} USD) in ${walletName}. The Loadout includes one in-game land and one Violet Wish Bottle; no mint is required to continue.`;
-      const payment = await window.MuzikazWalletPayments.pay(BACKPACK_LOADOUT_USD, currency);
+      const payment = await window.MuzikazWalletPayments.pay(BACKPACK_LOADOUT_USD, currency, { purchaseType: 'LOADOUT', itemId: 'standard-loadout' });
       const paymentHash = payment.transactionHash;
       const owner = payment.address;
       if (!paymentHash || !owner) throw new Error(`${currency} payment confirmation did not include a wallet address and transaction hash.`);
@@ -2331,15 +2332,15 @@ function initBottleLogin() {
         if (status) status.textContent = `Backpack Loadout purchase submitted (${String(paymentHash).slice(0, 10)}…). Waiting for confirmation…`;
         await waitForTransactionReceipt(requireEthereumWallet(), paymentHash, 'Backpack Loadout purchase');
       }
-      currentMemberEmail = normalizeMemberEmail(owner);
+      // The server owns payment truth and fulfillment. Persist only the opaque
+      // recovery pair so an interrupted callback can be resumed safely.
+      window.localStorage.setItem('muzikazLoadoutRecovery', JSON.stringify({ orderId: payment.orderId, claimToken: payment.claimToken }));
+      const paidResponse = await accountApiFetch('/api/account/loadout/paid', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ orderId: payment.orderId, claimToken: payment.claimToken }) });
+      const paidResult = await paidResponse.json(); if (!paidResponse.ok || !paidResult.success) throw new Error(paidResult.message || 'The verified Loadout is still synchronizing. Reload to retry safely.');
+      const account = rememberAccountSession(paidResult.data);
+      currentMemberEmail = syncAccessCodeBackpack(account);
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-      grantBottleMintBackpackAssets(owner, paymentHash);
-      window.localStorage.setItem('muzikazLoadoutPayment', JSON.stringify({ owner, paymentHash, currency }));
-      grantBottleAccess(owner, 'backpack-loadout-payment', paymentHash);
-      const account = await authenticateWalletAccount(owner);
-      const paidResponse = await accountApiFetch('/api/account/loadout/paid', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': window.MuzikazAccountSession.csrfToken }, body: JSON.stringify({ paymentId: paymentHash }) });
-      const paidResult = await paidResponse.json(); if (!paidResponse.ok || !paidResult.success) throw new Error(paidResult.message || 'The paid Loadout could not be attached to your account.');
-      syncAccessCodeBackpack(paidResult.data);
+      window.localStorage.removeItem('muzikazLoadoutRecovery');
       const credentialResponse = await accountApiFetch('/api/account/access-code', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': window.MuzikazAccountSession.csrfToken }, body: '{}' });
       const credentialResult = await credentialResponse.json();
       if (!credentialResponse.ok || !credentialResult.success) throw new Error(credentialResult.message || 'Your account was created, but its MZK Access Code could not be generated.');
@@ -2354,6 +2355,8 @@ function initBottleLogin() {
       setBusy(false);
     }
   });
+  const recoverPurchase = async () => { try { const recovery = JSON.parse(window.localStorage.getItem('muzikazLoadoutRecovery') || 'null'); if (!recovery?.orderId || !recovery?.claimToken) return; if (status) status.textContent = 'Synchronizing your verified Loadout and Backpack…'; const response = await accountApiFetch('/api/account/loadout/paid', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(recovery) }); const result = await response.json(); if (response.status === 202) { window.setTimeout(recoverPurchase, 4000); return; } if (!response.ok || !result.success) throw new Error(result.message); const account = rememberAccountSession(result.data); currentMemberEmail = syncAccessCodeBackpack(account); window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail); window.localStorage.removeItem('muzikazLoadoutRecovery'); setPurchaseStep(3); renderOwnedCollection(currentMemberEmail); unlock('Loadout synchronized. Your populated Backpack is ready.'); scrollToSection('owned-collection'); } catch (error) { if (status) status.textContent = error.message || 'Loadout synchronization was interrupted. Reload to retry.'; } };
+  recoverPurchase();
   try {
     if (JSON.parse(window.localStorage.getItem('muzikazLoadoutPayment') || 'null')?.paymentHash) setPurchaseStep(3);
   } catch (error) {
