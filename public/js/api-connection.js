@@ -88,9 +88,12 @@
       });
       return window.Promise.race([window.fetch(url(requestPath), request), expired]).then(function (response) {
         window.clearTimeout(timer);
-        if (response.status === 401 && sessionToken && !/^\/api\/access\//.test(requestPath)) setSessionToken('');
+        var invalidation = window.Promise.resolve();
+        if (response.status === 401 && sessionToken) {
+          invalidation = response.clone().json().then(function (payload) { if (payload && (payload.code === 'SESSION_REQUIRED' || payload.code === 'ACCOUNT_NOT_FOUND')) setSessionToken(''); }, function () {});
+        }
         if (response.status >= 500 && remaining > 0) return attempt(remaining - 1, requestPath, aliases);
-        return routeIsMissing(response).then(function (missing) {
+        return invalidation.then(function () { return routeIsMissing(response); }).then(function (missing) {
           if (missing && useHostedApi()) return attempt(remaining, requestPath, aliases);
           /* Deployments can briefly serve the previous account-route contract
            * while Render rolls a new server revision. Try its equivalent route
@@ -119,8 +122,7 @@
 
   function getSessionToken() {
     try {
-      var token = window.sessionStorage.getItem('muzikazAccountSessionToken') || window.localStorage.getItem('muzikazAccountSessionToken') || '';
-      if (token) window.sessionStorage.setItem('muzikazAccountSessionToken', token);
+      var token = window.sessionStorage.getItem('muzikazAccountSessionToken') || '';
       window.localStorage.removeItem('muzikazAccountSessionToken');
       return token;
     } catch (ignore) { return ''; }
@@ -136,10 +138,9 @@
 
   function logout(csrfToken) {
     return fetchApi('/api/session', { method: 'DELETE', headers: { 'X-CSRF-Token': csrfToken || '' }, retries: 0 }).then(function (response) {
-      setSessionToken('');
+      if (response.ok || response.status === 401) { setSessionToken(''); try { window.sessionStorage.removeItem('muzikazGameSessionToken'); } catch (ignore) {} }
       return response;
     }, function (error) {
-      setSessionToken('');
       throw error;
     });
   }

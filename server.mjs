@@ -7,6 +7,7 @@ import { UserJsonDatabase, cleanWallet } from './user-json-database.mjs';
 import { LoadoutCodeStore } from './loadout-code-store.mjs';
 import { PaymentOrderStore, MUZIKAZ_PAYMENT_NETWORKS } from './payment-order-store.mjs';
 import { verifyPaymentTransaction } from './payment-verifier.mjs';
+import { DurableSessionStore } from './session-store.mjs';
 
 const root = process.cwd();
 const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
@@ -27,8 +28,12 @@ const repositoryEnvironmentManifest = join(root, 'public', 'models', 'environmen
 const clients = new Set();
 const presence = new Map();
 const chatMessages = [];
-const accountSessions = new Map();
-const gameSessions = new Map();
+const accountSessionsFile = process.env.MUZIKAZ_ACCOUNT_SESSIONS_FILE || join(dataDir, 'account-sessions.json');
+const gameSessionsFile = process.env.MUZIKAZ_GAME_SESSIONS_FILE || join(dataDir, 'game-sessions.json');
+const accountSessionTtl = Number(process.env.MUZIKAZ_SESSION_TTL_SECONDS || 28_800);
+const gameSessionTtl = Number(process.env.MUZIKAZ_GAME_SESSION_TTL_SECONDS || 300);
+const accountSessionStore = new DurableSessionStore(accountSessionsFile, { ttlSeconds: accountSessionTtl, maxActivePerAccount: Number(process.env.MUZIKAZ_MAX_ACTIVE_SESSIONS || 8), kind: 'account' });
+const gameSessionStore = new DurableSessionStore(gameSessionsFile, { ttlSeconds: gameSessionTtl, maxActivePerAccount: Number(process.env.MUZIKAZ_MAX_ACTIVE_GAME_SESSIONS || 12), kind: 'game' });
 const accessAttempts = new Map();
 const supportSockets = new Set();
 const supportMessages = [];
@@ -113,13 +118,13 @@ async function readModels() { await ensureStorage(); return JSON.parse(await rea
 async function writeModels(records) { await ensureStorage(); await writeFile(modelsFile, JSON.stringify(records, null, 2)); }
 async function writeAssets(records) { await ensureStorage(); await writeFile(assetsFile, JSON.stringify(records, null, 2)); }
 function user(req) {
-  const active = accountSessions.get(cookie(req, 'mzk_session'));
-  const sessionWallet = active?.expiresAt > Date.now() ? (active.wallet || `account:${active.accountId}`) : '';
+  const active = req.muzikazAuthentication?.session;
+  const sessionWallet = active ? (active.wallet || `account:${active.accountId}`) : '';
   return { id: cleanText(req.headers['x-user-id'] || sessionWallet, 'demo-user'), role: 'user', name: cleanText(req.headers['x-user-name'], 'MUZIKAZ Creator') };
 }
 function requestWallet(req) {
-  const active = accountSessions.get(cookie(req, 'mzk_session'));
-  const sessionWallet = active?.expiresAt > Date.now() ? (active.wallet || `account:${active.accountId}`) : '';
+  const active = req.muzikazAuthentication?.session;
+  const sessionWallet = active ? (active.wallet || `account:${active.accountId}`) : '';
   return cleanWallet(req.headers['x-wallet-address'] || req.headers['x-user-id'] || sessionWallet);
 }
 function matchesAdminToken(value) { const supplied = Buffer.from(String(value || '')); const expected = Buffer.from(persistentAdminToken); return supplied.length === expected.length && timingSafeEqual(supplied, expected); }
@@ -129,14 +134,29 @@ function requireAdmin(req, res) { if (isAdmin(req)) return true; sendJson(res, 4
 function cookie(req, name) { return String(req.headers.cookie || '').split(';').map((part) => part.trim().split('=')).find(([key]) => key === name)?.[1] || ''; }
 function sessionCookie(name, value, maxAge) { const production = process.env.NODE_ENV === 'production'; return `${name}=${value}; Path=/; HttpOnly; SameSite=${production ? 'None' : 'Lax'}; Max-Age=${maxAge}${production ? '; Secure' : ''}`; }
 function bearer(req) { const match = String(req.headers.authorization || '').match(/^Bearer\s+([A-Za-z0-9_-]+)$/i); return match?.[1] || ''; }
-// Prefer the explicit token: a browser may retain an expired cookie after the
-// API has issued a fresh portable session to a static/custom-domain frontend.
-function sessionToken(req) { return bearer(req) || cookie(req, 'mzk_session'); }
-const accountSessionToken = sessionToken;
-function openAccountSession(res, account) { const previous = accountSessionToken(res.muzikazRequest); if (previous) accountSessions.delete(previous); const token = randomBytes(32).toString('base64url'); const csrfToken = randomBytes(24).toString('base64url'); const expiresAt = Date.now() + 8 * 60 * 60 * 1000; accountSessions.set(token, { accountId: account.accountId, wallet: account.primaryEthereumWallet, csrfToken, expiresAt }); res.setHeader('Set-Cookie', sessionCookie('mzk_session', token, 28800)); return { authenticated: true, account, sessionToken: token, csrfToken, expiresAt: new Date(expiresAt).toISOString() }; }
+function accountSessionToken(req) { return bearer(req) || cookie(req, 'mzk_session'); }
+async function openAccountSession(res, account) {
+  const created = await accountSessionStore.createSession(account);
+  res.setHeader('Set-Cookie', sessionCookie('mzk_session', created.token, accountSessionTtl));
+  return { authenticated: true, account, sessionToken: created.token, csrfToken: created.csrfToken, expiresAt: created.session.expiresAt };
+}
 function authorizationError(res, status, code, message, stage) { return sendJson(res, status, { success: false, code, message, stage }); }
-function optionalAccountSession(req) { const token = sessionToken(req); const current = accountSessions.get(token); if (!current || current.expiresAt <= Date.now()) { if (token) accountSessions.delete(token); return null; } return current; }
-function accountSession(req, res, csrf = false) { const token = sessionToken(req); const current = optionalAccountSession(req); if (!current) { authorizationError(res, 401, 'SESSION_REQUIRED', 'Your account session is missing, invalid, or expired.', 'authentication'); return null; } if (csrf) { const supplied = String(req.headers['x-csrf-token'] || ''); const a = Buffer.from(supplied); const b = Buffer.from(current.csrfToken); if (a.length !== b.length || !timingSafeEqual(a, b)) { authorizationError(res, 401, 'CSRF_INVALID', 'The account session proof is invalid.', 'authentication'); return null; } } return current; }
+async function resolveAccountSession(req) {
+  const explicit = bearer(req); const token = explicit || cookie(req, 'mzk_session');
+  if (!token) return null;
+  const session = await accountSessionStore.authenticateSession(token);
+  if (!session) return null;
+  const authentication = { ...session, token, session, mechanism: explicit ? 'bearer' : 'cookie' };
+  req.muzikazAuthentication = authentication; return authentication;
+}
+async function accountSession(req, res, csrf = false) {
+  const authentication = await resolveAccountSession(req);
+  if (!authentication) { authorizationError(res, 401, 'SESSION_REQUIRED', 'Your account session is missing, invalid, revoked, or expired.', 'authentication'); return null; }
+  if (csrf && authentication.mechanism === 'cookie' && !(await accountSessionStore.validCsrf(authentication.session, String(req.headers['x-csrf-token'] || '')))) {
+    authorizationError(res, 401, 'CSRF_INVALID', 'The cookie session proof is invalid.', 'csrf'); return null;
+  }
+  return authentication;
+}
 async function entitledAccount(active, res) {
   const canonical = await loadoutCodeStore.getAccount(active.accountId);
   if (!canonical) { authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'The session account no longer exists.', 'account'); return null; }
@@ -267,7 +287,7 @@ function corsHeaders(extra = {}, origin = '') {
   const development = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/.test(origin);
   const production = /^https:\/\/(?:www\.)?muzikaz\.com$/.test(origin) || origin === 'https://muzikazmodelmarket.onrender.com';
   const allowedOrigin = origin && (configured.includes(origin) || development || production) ? origin : '';
-  return { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin, 'Access-Control-Allow-Credentials': 'true', Vary: 'Origin' } : {}), 'Access-Control-Allow-Methods': 'GET, PUT, POST, PATCH, DELETE, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Wallet-Address, X-MUZIKAZ-Session, X-User-Id, X-User-Role, X-User-Name, X-Admin-Token, X-MUZIKAZ-Land-Asset, X-CSRF-Token', 'Cross-Origin-Resource-Policy': 'cross-origin', ...extra };
+  return { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin, 'Access-Control-Allow-Credentials': 'true', Vary: 'Origin' } : {}), 'Access-Control-Allow-Methods': 'GET, PUT, POST, PATCH, DELETE, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Wallet-Address, X-MUZIKAZ-Session, X-User-Id, X-User-Role, X-User-Name, X-Admin-Token, X-MUZIKAZ-Land-Asset, X-CSRF-Token, X-Game-Session, X-Idempotency-Key', 'Cross-Origin-Resource-Policy': 'cross-origin', ...extra };
 }
 function sendJson(res, status, data) { res.writeHead(status, corsHeaders({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }, res.muzikazRequestOrigin)); res.end(JSON.stringify(data)); }
 function isPublicAssetUrl(value) { try { const url = new URL(value, 'http://localhost'); return url.protocol === 'https:' || url.pathname.startsWith('/uploads/') || (url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)); } catch { return false; } }
@@ -297,15 +317,38 @@ const server = createServer(async (req, res) => {
       await ensureStorage();
       return sendJson(res, 200, { success: true, service: 'muzikaz-member-market', storage: 'ready', persistentStorageConfigured: dataDir.startsWith('/var/data') });
     }
-    if (url.pathname === '/api/account/bootstrap' && req.method === 'GET') { const active = accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); if (!account) return authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'The session account no longer exists.', 'account'); await loadoutCodeStore.repairEntitledAccount(account.accountId); const canonical = await loadoutCodeStore.getAccount(account.accountId); return sendJson(res, 200, assetResponse({ authenticated: true, account: canonical, backpack: backpackFor(canonical), permissions: { members: canonical.loadoutAccess === true && canonical.memberAccess === true, backpack: canonical.loadoutAccess === true, avatarSelection: canonical.loadoutAccess === true && canonical.avatarAccess === true, creatorTools: canonical.loadoutAccess === true && canonical.creatorVaultAccess === true, radTox: canonical.loadoutAccess === true && canonical.gameAccess === true, games: canonical.loadoutAccess === true && canonical.worldAccess === true }, csrfToken: active.csrfToken, expiresAt: new Date(active.expiresAt).toISOString() })); }
-    if (url.pathname === '/api/session' && req.method === 'GET') { const active = accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); if (!account) return authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'The session account no longer exists.', 'account'); return sendJson(res, 200, assetResponse({ authenticated: true, accountId: account.accountId, backpackId: account.backpackId, csrfToken: active.csrfToken, expiresAt: new Date(active.expiresAt).toISOString() })); }
-    if (url.pathname === '/api/session' && req.method === 'DELETE') { const token = sessionToken(req); const active = accountSession(req, res); if (!active) return; accountSessions.delete(token); for (const [gameToken, game] of gameSessions) if (game.accountId === active.accountId) gameSessions.delete(gameToken); res.setHeader('Set-Cookie', [sessionCookie('mzk_session', '', 0), sessionCookie('mzk_game', '', 0)]); return sendJson(res, 200, assetResponse({ authenticated: false })); }
-    if (url.pathname === '/api/session/logout' && req.method === 'POST') { const token = accountSessionToken(req); const active = accountSession(req, res, true); if (!active) return; accountSessions.delete(token); for (const [gameToken, game] of gameSessions) if (game.accountId === active.accountId) gameSessions.delete(gameToken); res.setHeader('Set-Cookie', [sessionCookie('mzk_session', '', 0), sessionCookie('mzk_game', '', 0)]); return sendJson(res, 200, assetResponse({ authenticated: false })); }
-    if (url.pathname === '/api/backpack' && req.method === 'GET') { const active = accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return account ? sendJson(res, 200, assetResponse(backpackFor(account))) : sendJson(res, 404, { success: false, code: 'ACCOUNT_NOT_FOUND', message: 'Account not found.' }); }
-    if (url.pathname === '/api/avatars' && req.method === 'GET') { const active = accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return sendJson(res, 200, assetResponse(backpackFor(account).avatars)); }
-    if (url.pathname === '/api/avatar-selection' && req.method === 'PUT') { const active = accountSession(req, res, true); if (!active) return; const account = await loadoutCodeStore.selectAvatar(active.accountId, (await bodyJson(req)).avatarId); return sendJson(res, 200, assetResponse({ selectedAvatarId: account.selectedAvatarId, updatedAt: account.updatedAt })); }
-    if (url.pathname === '/api/game/session' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; const account = await entitledAccount(active, res); if (!account) return; const backpack = backpackFor(account); const avatar = backpack.avatars.find((item) => item.id === backpack.selectedAvatarId && item.eligible) || STARTER_AVATAR; const token = randomBytes(32).toString('base64url'); const expiresAt = Date.now() + 5 * 60_000; gameSessions.set(token, { accountId: account.accountId, avatarId: avatar.id, expiresAt }); res.setHeader('Set-Cookie', sessionCookie('mzk_game', token, 300)); return sendJson(res, 201, assetResponse({ gameSessionToken: token, expiresAt: new Date(expiresAt).toISOString() })); }
-    if (url.pathname === '/api/game/session' && req.method === 'GET') { const active = accountSession(req, res); if (!active) return; const account = await entitledAccount(active, res); if (!account) return; const gameToken = String(req.headers['x-game-session'] || cookie(req, 'mzk_game')); const game = gameSessions.get(gameToken); if (!game || game.expiresAt <= Date.now()) return authorizationError(res, 401, 'GAME_SESSION_REQUIRED', 'Create a new game session for this account.', 'game-session'); if (game.accountId !== active.accountId) return authorizationError(res, 409, 'GAME_SESSION_ACCOUNT_CONFLICT', 'The game session belongs to a different account.', 'account-state'); const backpack = backpackFor(account); const selectedAvatar = backpack.avatars.find((item) => item.id === game.avatarId && item.eligible) || STARTER_AVATAR; return sendJson(res, 200, assetResponse({ accountId: account.accountId, backpack, selectedAvatar, warning: selectedAvatar.id !== game.avatarId ? 'The selected model is unavailable; Starter Avatar was loaded.' : null, expiresAt: new Date(game.expiresAt).toISOString() })); }
+    if (url.pathname === '/api/account/bootstrap' && req.method === 'GET') {
+      const active = await accountSession(req, res); if (!active) return;
+      const account = await loadoutCodeStore.getAccount(active.accountId);
+      if (!account) return authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'The session account no longer exists.', 'account');
+      await loadoutCodeStore.repairEntitledAccount(account.accountId);
+      const canonical = await loadoutCodeStore.getAccount(account.accountId);
+      const csrfToken = await accountSessionStore.issueCsrf(active.token);
+      return sendJson(res, 200, assetResponse({ authenticated: true, account: canonical, backpack: backpackFor(canonical), permissions: { members: canonical.loadoutAccess === true && canonical.memberAccess === true, backpack: canonical.loadoutAccess === true, avatarSelection: canonical.loadoutAccess === true && canonical.avatarAccess === true, creatorTools: canonical.loadoutAccess === true && canonical.creatorVaultAccess === true, marketplace: canonical.loadoutAccess === true && canonical.marketplaceAccess === true, radTox: canonical.loadoutAccess === true && canonical.gameAccess === true, games: canonical.loadoutAccess === true && canonical.gameAccess === true, world: canonical.loadoutAccess === true && canonical.worldAccess === true }, session: { mechanism: active.mechanism, createdAt: active.createdAt, expiresAt: active.expiresAt }, csrfToken, expiresAt: active.expiresAt }));
+    }
+    if (url.pathname === '/api/session' && req.method === 'GET') { const active = await accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); if (!account) return authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'The session account no longer exists.', 'account'); const csrfToken = await accountSessionStore.issueCsrf(active.token); return sendJson(res, 200, assetResponse({ authenticated: true, accountId: account.accountId, backpackId: account.backpackId, csrfToken, expiresAt: active.expiresAt, mechanism: active.mechanism })); }
+    if ((url.pathname === '/api/session' && req.method === 'DELETE') || (url.pathname === '/api/session/logout' && req.method === 'POST')) {
+      const active = await accountSession(req, res, true); if (!active) return;
+      await accountSessionStore.revokeSession(active.token); await gameSessionStore.revokeByParent(active.id);
+      res.setHeader('Set-Cookie', [sessionCookie('mzk_session', '', 0), sessionCookie('mzk_game', '', 0)]); return sendJson(res, 200, assetResponse({ authenticated: false }));
+    }
+    if (url.pathname === '/api/backpack' && req.method === 'GET') { const active = await accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return account ? sendJson(res, 200, assetResponse(backpackFor(account))) : authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'Account not found.', 'account'); }
+    if (url.pathname === '/api/avatars' && req.method === 'GET') { const active = await accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return sendJson(res, 200, assetResponse(backpackFor(account).avatars)); }
+    if (url.pathname === '/api/avatar-selection' && req.method === 'PUT') { const active = await accountSession(req, res, true); if (!active) return; const account = await loadoutCodeStore.selectAvatar(active.accountId, (await bodyJson(req)).avatarId); return sendJson(res, 200, assetResponse({ selectedAvatarId: account.selectedAvatarId, updatedAt: account.updatedAt })); }
+    if (url.pathname === '/api/game/session' && req.method === 'POST') {
+      const active = await accountSession(req, res, true); if (!active) return; const account = await entitledAccount(active, res); if (!account) return;
+      const backpack = backpackFor(account); const avatar = backpack.avatars.find((item) => item.id === backpack.selectedAvatarId && item.eligible) || STARTER_AVATAR;
+      const created = await gameSessionStore.createSession(account, { accountSessionId: active.id, avatarId: avatar.id });
+      res.setHeader('Set-Cookie', sessionCookie('mzk_game', created.token, gameSessionTtl)); return sendJson(res, 201, assetResponse({ gameSessionToken: created.token, expiresAt: created.session.expiresAt }));
+    }
+    if (url.pathname === '/api/game/session' && req.method === 'GET') {
+      const active = await accountSession(req, res); if (!active) return; const account = await entitledAccount(active, res); if (!account) return;
+      const gameToken = String(req.headers['x-game-session'] || cookie(req, 'mzk_game')); const game = await gameSessionStore.authenticateSession(gameToken);
+      if (!game) return authorizationError(res, 410, 'GAME_SESSION_EXPIRED', 'The game session is missing, revoked, or expired.', 'game-session');
+      if (game.accountId !== active.accountId || game.accountSessionId !== active.id) return authorizationError(res, 409, 'GAME_SESSION_ACCOUNT_CONFLICT', 'The game session belongs to a different account session.', 'account-state');
+      const backpack = backpackFor(account); const selectedAvatar = backpack.avatars.find((item) => item.id === game.avatarId && item.eligible) || STARTER_AVATAR;
+      return sendJson(res, 200, assetResponse({ accountId: account.accountId, backpack, selectedAvatar, warning: selectedAvatar.id !== game.avatarId ? 'The selected model is unavailable; Starter Avatar was loaded.' : null, expiresAt: game.expiresAt }));
+    }
     if (url.pathname === '/api/admin/login' && req.method === 'POST') {
       const credentials = await bodyJson(req);
       if (!matchesSecret(credentials.username, adminUsername) || !matchesSecret(credentials.password, adminPassword)) return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
@@ -346,17 +389,17 @@ const server = createServer(async (req, res) => {
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.list())); }
     const adminAccessRevoke = url.pathname.match(/^\/api\/admin\/(?:access-codes|loadout-codes)\/([^/]+)\/revoke$/);
     if (adminAccessRevoke && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.adminRevoke(decodeURIComponent(adminAccessRevoke[1])))); }
-    if ((url.pathname === '/api/access-codes/redeem' || url.pathname === '/api/access/activate' || url.pathname === '/api/loadout-codes/redeem') && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); const current = optionalAccountSession(req); const result = await loadoutCodeStore.activate(body.code, body.wallet, body.username, current?.accountId || ''); await userDatabase.ensureAccount(result.account); attempt.success(); return sendJson(res, 200, assetResponse(openAccountSession(res, result.account))); } catch (error) { attempt.failure(); throw error; } }
-    if (url.pathname === '/api/access/admin-bypass' && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); if (!matchesSecret(body.password, adminPassword)) throw Object.assign(new Error('The admin bypass word is incorrect.'), { statusCode: 401 }); const account = await loadoutCodeStore.adminBypass(); await userDatabase.ensureAccount(account); attempt.success(); return sendJson(res, 200, assetResponse(openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
-    if (url.pathname === '/api/access/login' && req.method === 'POST') { const attempt = throttleAccess(req); try { const account = await loadoutCodeStore.authenticate((await bodyJson(req)).code); await userDatabase.ensureAccount(account); attempt.success(); return sendJson(res, 200, assetResponse(openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
-    if (url.pathname === '/api/access/wallet' && req.method === 'POST') { const wallet = (await bodyJson(req)).wallet; const active = optionalAccountSession(req); const current = active ? await loadoutCodeStore.getAccount(active.accountId) : null; const account = current && !current.primaryEthereumWallet ? await loadoutCodeStore.connectWallet(current.accountId, wallet) : await loadoutCodeStore.findByWallet(wallet); await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(openAccountSession(res, account))); }
-    if (url.pathname === '/api/account/loadout/paid' && req.method === 'POST') { const body = await bodyJson(req); const order = await paymentOrderStore.get(body.orderId); if (!order || !paymentOrderStore.authorize(order, body.claimToken)) return sendJson(res, 401, { success: false, code: 'PURCHASE_CLAIM_INVALID', message: 'The purchase claim is invalid.' }); const verified = ['PAID', 'FULFILLED'].includes(order.paymentStatus) ? order : await paymentOrderStore.verify(order.orderId); if (!['PAID', 'FULFILLED'].includes(verified.paymentStatus)) return sendJson(res, 202, { success: false, code: 'PURCHASE_PENDING', message: 'The payment is still awaiting independent confirmation.' }); const active = optionalAccountSession(req); const granted = await loadoutCodeStore.fulfillPaidLoadout(verified, active?.accountId || ''); await userDatabase.ensureAccount(granted); return sendJson(res, 200, assetResponse(openAccountSession(res, granted))); }
-    if (url.pathname === '/api/account' && req.method === 'GET') { const active = accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return account ? sendJson(res, 200, assetResponse(account)) : sendJson(res, 404, { success: false, message: 'Account not found.' }); }
-    if ((url.pathname === '/api/wallets/attach' || url.pathname === '/api/account/wallet') && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; const account = await loadoutCodeStore.connectWallet(active.accountId, (await bodyJson(req)).wallet); active.wallet = account.primaryEthereumWallet; await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(account)); }
-    if (url.pathname === '/api/account/avatar' && req.method === 'PUT') { const active = accountSession(req, res, true); if (!active) return; const account = await loadoutCodeStore.selectAvatar(active.accountId, (await bodyJson(req)).avatarId); await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(account)); }
-    if (url.pathname === '/api/account/access-code' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.ensureAccountCode(active.accountId))); }
-    if (url.pathname === '/api/account/access-code/rotate' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.rotate(active.accountId))); }
-    if (url.pathname === '/api/account/access-code/revoke' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.revoke(active.accountId))); }
+    if ((url.pathname === '/api/access-codes/redeem' || url.pathname === '/api/access/activate' || url.pathname === '/api/loadout-codes/redeem') && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); const current = await resolveAccountSession(req); const result = await loadoutCodeStore.activate(body.code, body.wallet, body.username, current?.accountId || ''); await userDatabase.ensureAccount(result.account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, result.account))); } catch (error) { attempt.failure(); throw error; } }
+    if (url.pathname === '/api/access/admin-bypass' && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); if (!matchesSecret(body.password, adminPassword)) throw Object.assign(new Error('The admin bypass word is incorrect.'), { statusCode: 401 }); const account = await loadoutCodeStore.adminBypass(); await userDatabase.ensureAccount(account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
+    if (url.pathname === '/api/access/login' && req.method === 'POST') { const attempt = throttleAccess(req); try { const account = await loadoutCodeStore.authenticate((await bodyJson(req)).code); await userDatabase.ensureAccount(account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
+    if (url.pathname === '/api/access/wallet' && req.method === 'POST') { const wallet = (await bodyJson(req)).wallet; const active = await resolveAccountSession(req); const current = active ? await loadoutCodeStore.getAccount(active.accountId) : null; const account = current && !current.primaryEthereumWallet ? await loadoutCodeStore.connectWallet(current.accountId, wallet) : await loadoutCodeStore.findByWallet(wallet); await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); }
+    if (url.pathname === '/api/account/loadout/paid' && req.method === 'POST') { const body = await bodyJson(req); const order = await paymentOrderStore.get(body.orderId); if (!order || !paymentOrderStore.authorize(order, body.claimToken)) return sendJson(res, 401, { success: false, code: 'PURCHASE_CLAIM_INVALID', message: 'The purchase claim is invalid.' }); const verified = ['PAID', 'FULFILLED'].includes(order.paymentStatus) ? order : await paymentOrderStore.verify(order.orderId); if (!['PAID', 'FULFILLED'].includes(verified.paymentStatus)) return sendJson(res, 202, { success: false, code: 'PURCHASE_PENDING', message: 'The payment is still awaiting independent confirmation.' }); const active = await resolveAccountSession(req); const granted = await loadoutCodeStore.fulfillPaidLoadout(verified, active?.accountId || ''); await userDatabase.ensureAccount(granted); return sendJson(res, 200, assetResponse(await openAccountSession(res, granted))); }
+    if (url.pathname === '/api/account' && req.method === 'GET') { const active = await accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return account ? sendJson(res, 200, assetResponse(account)) : sendJson(res, 404, { success: false, message: 'Account not found.' }); }
+    if ((url.pathname === '/api/wallets/attach' || url.pathname === '/api/account/wallet') && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; const account = await loadoutCodeStore.connectWallet(active.accountId, (await bodyJson(req)).wallet); active.wallet = account.primaryEthereumWallet; await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(account)); }
+    if (url.pathname === '/api/account/avatar' && req.method === 'PUT') { const active = await accountSession(req, res, true); if (!active) return; const account = await loadoutCodeStore.selectAvatar(active.accountId, (await bodyJson(req)).avatarId); await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(account)); }
+    if (url.pathname === '/api/account/access-code' && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.ensureAccountCode(active.accountId))); }
+    if (url.pathname === '/api/account/access-code/rotate' && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.rotate(active.accountId))); }
+    if (url.pathname === '/api/account/access-code/revoke' && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.revoke(active.accountId))); }
 
     if (url.pathname === '/api/payments/orders' && req.method === 'POST') return sendJson(res, 201, assetResponse(await paymentOrderStore.create(await trustedLoadoutOrder(await bodyJson(req)))));
     if (url.pathname === '/api/admin/sales' && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await paymentOrderStore.list())); }
@@ -365,7 +408,7 @@ const server = createServer(async (req, res) => {
     const paymentAction = url.pathname.match(/^\/api\/payments\/orders\/([^/]+)\/(submit|verify|fulfill)$/);
     if (paymentAction && req.method === 'POST') { const body = await bodyJson(req).catch(() => ({})); const [, id, action] = paymentAction; if (action === 'fulfill' && !requireAdmin(req, res)) return; const result = action === 'submit' ? await paymentOrderStore.submit(id, body.transactionHash, body.wallet) : action === 'verify' ? await paymentOrderStore.verify(id) : await paymentOrderStore.fulfill(id, body.fulfillment); return sendJson(res, 200, assetResponse(result)); }
 
-    if (url.pathname === '/api/wallet/state' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.get(requestWallet(req))));
+    if (url.pathname === '/api/wallet/state' && req.method === 'GET') { await resolveAccountSession(req); return sendJson(res, 200, assetResponse(await userDatabase.get(requestWallet(req)))); }
     if (url.pathname === '/api/wallet/state' && req.method === 'PUT') return sendJson(res, 200, assetResponse(await userDatabase.put(requestWallet(req), await bodyJson(req))));
     if (url.pathname === '/api/land/deeds' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.landDeeds(requestWallet(req))));
     if (url.pathname === '/api/land/claims' && req.method === 'POST') { const body = await bodyJson(req); const allowed = new Map([['volt-city', 'Volt City'], ['skyline-deck', 'Skyline Deck'], ['echo-gardens', 'Echo Gardens'], ['crew-plaza', 'Crew Plaza'], ['studio-ridge', 'Studio Ridge'], ['neon-docks', 'Neon Docks'], ['bassline-badlands', 'Bassline Badlands'], ['pixel-peaks', 'Pixel Peaks']]); const worldId = cleanText(body.worldId).toLowerCase(); if (!allowed.has(worldId)) return sendJson(res, 400, { success: false, message: 'Unknown MUZIKAZ world.' }); return sendJson(res, 201, assetResponse(await userDatabase.claimLand({ walletId: requestWallet(req), worldId, name: allowed.get(worldId), priceMzk: 4000, requestId: body.requestId }))); }

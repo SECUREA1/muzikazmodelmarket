@@ -20,6 +20,16 @@ services:
         value: /var/data/muzikaz/accounts.json
       - key: MUZIKAZ_PAYMENT_ORDERS_FILE
         value: /var/data/muzikaz/payment-orders.json
+      - key: MUZIKAZ_ACCOUNT_SESSIONS_FILE
+        value: /var/data/muzikaz/account-sessions.json
+      - key: MUZIKAZ_GAME_SESSIONS_FILE
+        value: /var/data/muzikaz/game-sessions.json
+      - key: MUZIKAZ_SESSION_TTL_SECONDS
+        value: 28800
+      - key: MUZIKAZ_GAME_SESSION_TTL_SECONDS
+        value: 300
+      - key: MUZIKAZ_CORS_ORIGINS
+        value: https://muzikaz.com,https://www.muzikaz.com,https://muzikazmodelmarket.onrender.com
       - key: MUZIKAZ_AVATAR_UPLOAD_DIR
         value: /var/data/muzikaz/uploads/avatars
       - key: MUZIKAZ_ASSET_UPLOAD_DIR
