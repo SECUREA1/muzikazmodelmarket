@@ -2166,6 +2166,14 @@ function initBottleLogin() {
     if (status) status.textContent = 'Preparing your authenticated RAD-TOX game session…';
     const response = await accountApiFetch('/api/game/session', { method: 'POST', headers: { Accept: 'application/json', 'x-csrf-token': session.csrfToken }, body: '{}' });
     const result = await response.json().catch(() => ({ success: false, message: `The game service returned an unreadable response (${response.status}).` }));
+    // During a rolling backend deploy, older account services do not expose the
+    // short-lived game-session route. The already authenticated Loadout session
+    // is the legacy game entitlement, so continue rather than displaying the
+    // backend's route-not-found response and trapping the player on this page.
+    if (response.status === 404 && (result.code === 'API_ROUTE_NOT_FOUND' || /api\s+route\s+not\s+found/i.test(result.message || ''))) {
+      window.location.href = 'model-market.html?access=loadout#house-explorer';
+      return;
+    }
     if (!response.ok || !result.success) throw new Error(result.message || 'The RAD-TOX game session could not be opened.');
     window.location.href = 'model-market.html?access=loadout#house-explorer';
   };

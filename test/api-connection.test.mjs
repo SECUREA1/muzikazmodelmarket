@@ -78,6 +78,23 @@ test('punctuated route-not-found responses retry on the hosted account service',
   ]);
 });
 
+test('access-code submission negotiates the legacy activation route during a rolling deploy', async () => {
+  const requests = [];
+  const { window } = loadConnection(async (url) => {
+    requests.push(url);
+    if (requests.length < 3) return new Response(JSON.stringify({ code: 'API_ROUTE_NOT_FOUND', message: 'API route not found.' }), { status: 404, headers: { 'content-type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'content-type': 'application/json' } });
+  });
+
+  const response = await window.MUZIKAZ_API.fetch('/api/access-codes/redeem', { method: 'POST' });
+  assert.equal(response.status, 200);
+  assert.deepEqual(requests, [
+    'https://world.muzikaz.example/api/access-codes/redeem',
+    'https://muzikazmodelmarket.onrender.com/api/access-codes/redeem',
+    'https://muzikazmodelmarket.onrender.com/api/access/activate'
+  ]);
+});
+
 test('CORS-style fetch failures retry POST activation without another user submission', async () => {
   const requests = [];
   const { window, attributes } = loadConnection(async (url) => {
