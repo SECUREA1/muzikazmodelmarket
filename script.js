@@ -2279,12 +2279,6 @@ function initBottleLogin() {
         return { response, result };
       };
       let { response, result } = await submitCode(address);
-      if (response.status === 428) {
-        if (status) status.textContent = 'This new code needs an Ethereum account. Connect the wallet that will permanently own this MUZIKAZ account…';
-        address = await requestEthereumAccount(requireEthereumWallet());
-        showAddress(address);
-        ({ response, result } = await submitCode(address));
-      }
       if (!response.ok || !result.success) throw new Error(result.message || 'The MZK Access Code could not be activated.');
       const account = rememberAccountSession(result.data);
       currentMemberEmail = syncAccessCodeBackpack(account);
@@ -2294,7 +2288,9 @@ function initBottleLogin() {
       setPurchaseStep(3);
       renderOwnedCollection(currentMemberEmail);
       showAddress(account.primaryEthereumWallet);
-      unlock(`Account ${account.accountId} is open. This MZK Access Code and Ethereum account ${shortAddress(account.primaryEthereumWallet)} now resolve to the same Backpack, assets, MZK, land and creator tools.`);
+      unlock(account.primaryEthereumWallet
+        ? `Account ${account.accountId} is open. This MZK Access Code and Ethereum account ${shortAddress(account.primaryEthereumWallet)} now resolve to the same Backpack, assets, MZK, land and creator tools.`
+        : `Account ${account.accountId} is open with a new Backpack, starter MZK, land and creator tools. Connect Ethereum later and that wallet will open this same Backpack.`);
       const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
       if (redirect) {
         window.sessionStorage.removeItem('muzikazLoginRedirect');

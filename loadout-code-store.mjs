@@ -151,7 +151,9 @@ export class MzkAccountStore {
     const connectedEthereum = account?.connectedWallets.filter((w) => w.chain === 'ETH') || [];
     if (connectedEthereum.length && address && !connectedEthereum.some((w) => w.address === address)) throw Object.assign(new Error('This MZK Access Code is connected to a different Ethereum account.'), { statusCode: 409 });
     if (!account && address) account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address));
-    if ((!account || !connectedEthereum.length) && !address) throw Object.assign(new Error('Connect an Ethereum wallet to activate this MZK Access Code. After activation, the code can open the connected account on its own.'), { statusCode: 428 });
+    // An admin pass is itself sufficient to create the account and Backpack.
+    // The recipient may not have an Ethereum wallet installed yet; when they
+    // connect one later, connectWallet binds it to this same canonical account.
     if (!account) { account = accountRecord('', address, String(username).slice(0, 40)); data.accounts.push(account); }
     const now = new Date().toISOString(); if (address && !account.connectedWallets.some((w) => w.chain === 'ETH' && w.address === address)) account.connectedWallets.push({ chain: 'ETH', address, boundAt: now }); if (address) account.primaryEthereumWallet ||= address;
     if (!credential.loadoutRedeemed) { account.mzkBalance += credential.entitlements.promotionalMzk; credential.loadoutRedeemed = true; }
