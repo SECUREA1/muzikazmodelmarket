@@ -2070,6 +2070,10 @@ function initBottleLogin() {
   const tokenIdentity = document.querySelector('#wallet-token-identity');
   const adminBypassPassword = document.querySelector('#admin-game-bypass-password');
   const adminBypassButton = document.querySelector('#admin-game-bypass-button');
+  const simpleUsername = document.querySelector('#member-simple-username');
+  const simpleEmail = document.querySelector('#member-simple-email');
+  const simplePassword = document.querySelector('#member-simple-password');
+  const simpleSubmit = document.querySelector('#member-simple-submit');
   if (!form || !lockedContent) return;
   // Member access can be rendered from a static/custom-domain frontend while the
   // account service remains on Render. Keep every loadout request on the shared
@@ -2090,6 +2094,7 @@ function initBottleLogin() {
     if (accessCodeButton) accessCodeButton.disabled = busy;
     if (walletValidateButton) walletValidateButton.disabled = busy;
     if (adminBypassButton) adminBypassButton.disabled = busy;
+    if (simpleSubmit) simpleSubmit.disabled = busy;
   };
   const updateLoadoutQuote = async () => {
     const currency = loadoutCurrency?.value || 'ETH';
@@ -2135,6 +2140,35 @@ function initBottleLogin() {
     document.body.classList.add('is-member-authenticated');
     if (status) status.textContent = message;
   };
+  const localMember = () => {
+    try { return JSON.parse(window.localStorage.getItem('muzikazSimpleMember') || 'null'); }
+    catch { window.localStorage.removeItem('muzikazSimpleMember'); return null; }
+  };
+  const openLocalMember = (profile, message) => {
+    currentMemberEmail = normalizeMemberEmail(profile.email);
+    window.sessionStorage.setItem('muzikazBottleMember', 'true');
+    window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+    window.MuzikazAccountSession = {
+      account: { accountId: `local:${currentMemberEmail}`, username: profile.username, loadoutAccess: true, memberAccess: true, gameAccess: true },
+      permissions: { members: true, radTox: true }
+    };
+    setPurchaseStep(3);
+    renderOwnedCollection(currentMemberEmail);
+    unlock(message || `Welcome ${profile.username}. Your subscriber area is ready without an API or wallet.`);
+  };
+  simpleSubmit?.addEventListener('click', () => {
+    const username = simpleUsername?.value.trim() || '';
+    const email = simpleEmail?.value.trim().toLowerCase() || '';
+    const password = simplePassword?.value || '';
+    if (username.length < 2) { if (status) status.textContent = 'Enter a username with at least 2 characters.'; simpleUsername?.focus(); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { if (status) status.textContent = 'Enter a valid email address.'; simpleEmail?.focus(); return; }
+    if (password.length < 6) { if (status) status.textContent = 'Enter a password with at least 6 characters.'; simplePassword?.focus(); return; }
+    const profile = { username: username.slice(0, 24), email, savedAt: new Date().toISOString() };
+    window.localStorage.setItem('muzikazSimpleMember', JSON.stringify(profile));
+    simplePassword.value = '';
+    openLocalMember(profile);
+    scrollToSection('member-locked-content');
+  });
   const syncAccessCodeBackpack = (account) => {
     const owner = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
     return owner;
@@ -2300,7 +2334,8 @@ function initBottleLogin() {
   });
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (accessCodeInput?.value.trim()) await openAccessCodeAccount();
+    if (simpleUsername?.value.trim() || simpleEmail?.value.trim() || simplePassword?.value) simpleSubmit?.click();
+    else if (accessCodeInput?.value.trim()) await openAccessCodeAccount();
     else await connect();
   });
   loadoutButton?.addEventListener('click', async () => {
@@ -2389,6 +2424,13 @@ function initBottleLogin() {
   // Cookies, not browser inventory keys, restore membership. A failed request is
   // kept distinct from an authenticated but empty Backpack and can be retried.
   const restoreSession = async () => {
+    const savedMember = localMember();
+    if (savedMember?.email && savedMember?.username) {
+      if (simpleUsername) simpleUsername.value = savedMember.username;
+      if (simpleEmail) simpleEmail.value = savedMember.email;
+      openLocalMember(savedMember, `Welcome back ${savedMember.username}. Your subscriber area is available on this device without an API check.`);
+      return;
+    }
     if (status) status.textContent = 'Checking your MUZIKAZ account session…';
     try {
       const bootstrapResponse = await accountApiFetch('/api/account/bootstrap');

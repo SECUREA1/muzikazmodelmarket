@@ -66,9 +66,22 @@
                     <button type="button" class="wallet-connect-top" id="bottle-wallet-connect"><b aria-hidden="true">Ξ</b><span>Connect ETH</span><small>Wallet</small></button>
                     <div class="loadout-intro">
                         <p class="kicker">Builder pack · separate drop</p>
-                        <h1 id="bottle-login-title">Buy your loadout</h1>
-                        <p>Buy in with any listed payment option or enter a valid pre-bought/admin Loadout code. Either route immediately opens the full members area and multiplayer with 500 MZK, a starter avatar, land, and the complete Builder Loadout.</p>
+                        <h1 id="bottle-login-title">Enter the subscribers area</h1>
+                        <p>Use a username, email and password for immediate access. A $30 Loadout purchase or verified MEKNX wallet also opens the full members area and multiplayer.</p>
                     </div>
+                    <aside class="member-simple-access" aria-labelledby="member-simple-access-title">
+                        <div>
+                            <p class="kicker">No wallet or access API required</p>
+                            <strong id="member-simple-access-title">Email &amp; password access</strong>
+                            <small>Create or reopen your subscriber profile directly on this device. Your password is checked in the browser and is never saved or sent to an API.</small>
+                        </div>
+                        <div class="member-simple-access__fields">
+                            <label><span>Username</span><input id="member-simple-username" name="username" autocomplete="username" minlength="2" maxlength="24" placeholder="Your username" /></label>
+                            <label><span>Email</span><input id="member-simple-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" /></label>
+                            <label><span>Password</span><input id="member-simple-password" name="password" type="password" autocomplete="current-password" minlength="6" placeholder="6 or more characters" /></label>
+                            <button type="button" id="member-simple-submit">Enter subscribers area <span aria-hidden="true">→</span></button>
+                        </div>
+                    </aside>
                     <aside class="purple-bottle-preview" aria-label="Violet Wish Bottle loadout collectible">
                         <span>Builder drop · optional mint</span>
                         <img src="muzikaz_transparent_assets/products/muzikaz_bottle.png" alt="Violet Wish Bottle included with the Backpack Loadout" />
@@ -140,7 +153,7 @@
                     <label class="wallet-json-import">Restore wallet JSON <input type="file" id="wallet-json-import" accept="application/json,.json" /></label>
                     <small id="wallet-token-identity"></small>
                 </div>
-                <p class="status-message" id="bottle-login-status" role="status">Access is available through a paid Loadout, activated MZK Access Code, approved MEKNX entitlement, or another administrator-granted entitlement. Bottle minting is optional.</p>
+                <p class="status-message" id="bottle-login-status" role="status">Enter with an email, password and username, a paid $30 Loadout, or an approved MEKNX verification. Bottle minting is optional.</p>
                 <aside class="meknx-bypass" aria-labelledby="meknx-bypass-title">
                     <div>
                         <p class="kicker">Already hold the access contract?</p>
