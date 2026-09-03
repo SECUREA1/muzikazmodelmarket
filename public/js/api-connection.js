@@ -83,6 +83,7 @@
       });
       return window.Promise.race([window.fetch(url(path), request), expired]).then(function (response) {
         window.clearTimeout(timer);
+        if (response.status === 401 && sessionToken && !/^\/api\/access\//.test(path)) setSessionToken('');
         if (response.status >= 500 && remaining > 0) return attempt(remaining - 1);
         return routeIsMissing(response).then(function (missing) {
           if (missing && useHostedApi()) return attempt(remaining);
@@ -117,8 +118,18 @@
     } catch (ignore) {}
   }
 
+  function logout(csrfToken) {
+    return fetchApi('/api/session/logout', { method: 'POST', headers: { 'X-CSRF-Token': csrfToken || '' }, retries: 0 }).then(function (response) {
+      setSessionToken('');
+      return response;
+    }, function (error) {
+      setSessionToken('');
+      throw error;
+    });
+  }
+
   window.MUZIKAZ_API_BASE = base;
   window.MUZIKAZ_SHARED_AVATAR_API = base;
-  window.MUZIKAZ_API = { base: base, url: url, fetch: fetchApi, getSessionToken: getSessionToken, setSessionToken: setSessionToken };
+  window.MUZIKAZ_API = { base: base, url: url, fetch: fetchApi, getSessionToken: getSessionToken, setSessionToken: setSessionToken, logout: logout };
   root.setAttribute('data-api-connected', 'true');
 }(window, document));

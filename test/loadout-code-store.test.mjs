@@ -43,6 +43,9 @@ test('default MZK Loadout Pass creates a full Backpack before a user has a walle
   assert.equal(activated.account.creatorVaultAccess, true);
   assert.equal(activated.account.gameAccess, true);
   assert.equal(activated.account.mzkBalance, 500);
+  assert.equal(activated.account.provisioningVersion, 1);
+  assert.equal(activated.account.memberAccess, true);
+  assert.equal(activated.account.worldAccess, true);
   assert.deepEqual(activated.account.landAssets, ['Unrevealed MUZIKAZ Land']);
   assert.deepEqual(activated.account.bottleClaims, ['Violet Wish Bottle']);
   assert.deepEqual(activated.account.gameAssets, ['Starter Avatar', 'Unrevealed Loadout Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
@@ -51,6 +54,28 @@ test('default MZK Loadout Pass creates a full Backpack before a user has a walle
   assert.equal(connected.backpackId, activated.account.backpackId, 'connecting Ethereum keeps the code-created Backpack');
   assert.equal((await store.findByWallet(wallet)).accountId, activated.account.accountId, 'the wallet reopens the code-created account');
   assert.equal((await store.authenticate(issued.code)).accountId, activated.account.accountId, 'the access code still reopens the wallet-connected account');
+});
+
+test('passes default to no expiry, record revocation, reject wrong purpose and cannot switch authenticated accounts', async (t) => {
+  const { file, store } = await fixture(t);
+  const permanent = await store.create();
+  assert.equal(permanent.expiresAt, null);
+  const first = await store.activate(permanent.code);
+  const other = await store.activate((await store.create()).code);
+  await assert.rejects(store.activate(permanent.code, '', '', other.account.accountId), /permanently bound/);
+  assert.equal((await store.activate(permanent.code, '', '', first.account.accountId)).account.accountId, first.account.accountId);
+
+  const revocable = await store.create();
+  const revoked = await store.adminRevoke(revocable.id);
+  assert.equal(revoked.status, 'revoked');
+  assert.ok(revoked.revokedAt);
+  await assert.rejects(store.activate(revocable.code), /revoked/);
+
+  const wrongCode = await store.create();
+  const stored = JSON.parse(await readFile(file, 'utf8'));
+  stored.credentials.find((item) => item.id === wrongCode.id).purpose = 'newsletter';
+  await writeFile(file, JSON.stringify(stored));
+  await assert.rejects(store.activate(wrongCode.code), /not a Loadout Pass/);
 });
 
 test('an activated code cannot be rebound to a different Ethereum account', async (t) => {
@@ -72,7 +97,7 @@ test('generated passes expose a shareable activation path and always build the g
   assert.equal(activated.account.creatorVaultAccess, true);
 });
 
-test('wallet and code login return the same fully provisioned account', async (t) => {
+test('wallet and account-code login preserve the same unentitled canonical account', async (t) => {
   const { store } = await fixture(t); const wallet = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
   const walletAccount = await store.findByWallet(wallet);
   const credential = await store.ensureAccountCode(walletAccount.accountId);
@@ -83,9 +108,9 @@ test('wallet and code login return the same fully provisioned account', async (t
   assert.deepEqual(codeAccount.gameAssets, reopenedWithWallet.gameAssets);
   assert.deepEqual(codeAccount.landAssets, reopenedWithWallet.landAssets);
   assert.deepEqual(codeAccount.bottleClaims, reopenedWithWallet.bottleClaims);
-  assert.equal(codeAccount.creatorVaultAccess, true);
-  assert.equal(codeAccount.gameAccess, true);
-  assert.equal(codeAccount.mzkBalance, 500);
+  assert.equal(codeAccount.creatorVaultAccess, false);
+  assert.equal(codeAccount.gameAccess, false);
+  assert.equal(codeAccount.mzkBalance, 0);
 });
 
 test('a wallet cannot be validated against two access-code accounts', async (t) => {
