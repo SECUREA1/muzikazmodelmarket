@@ -33,6 +33,17 @@ test('recognized wallets always resolve to the same canonical account', async (t
   assert.deepEqual(first.gameAssets, []);
 });
 
+test('subscriber login creates and reopens the same fully provisioned Backpack', async (t) => {
+  const { file, store } = await fixture(t);
+  const created = await store.subscriberLogin('Muz Fan', 'FAN@example.com', 'secret7');
+  assert.equal(created.mzkBalance, 500); assert.equal(created.loadoutAccess, true); assert.equal(created.gameAccess, true); assert.equal(created.creatorVaultAccess, true);
+  assert.equal(created.passwordHash, undefined); assert.equal(created.passwordSalt, undefined);
+  const reopened = await store.subscriberLogin('Muz Fan 2', 'fan@example.com', 'secret7');
+  assert.equal(reopened.accountId, created.accountId); assert.equal(reopened.backpackId, created.backpackId); assert.equal(reopened.mzkBalance, 500); assert.equal(reopened.username, 'Muz Fan 2');
+  await assert.rejects(store.subscriberLogin('Muz Fan', 'fan@example.com', 'wrong-password'), /incorrect/);
+  const stored = await readFile(file, 'utf8'); assert.equal(stored.includes('secret7'), false); assert.equal(stored.includes('wrong-password'), false);
+});
+
 test('default MZK Loadout Pass creates a full Backpack before a user has a wallet', async (t) => {
   const { store } = await fixture(t); const issued = await store.create();
   assert.equal(issued.label, 'MZK Loadout Pass');

@@ -62,8 +62,8 @@ const adminHtml = await readFile('dist/admin.html', 'utf8');
 const adminScript = await readFile('dist/admin.js', 'utf8');
 const memberScript = await readFile('dist/script.js', 'utf8');
 const simpleMembersHtml = await readFile('dist/members.html', 'utf8');
-for (const simpleAccessFeature of ['id="member-simple-username"', 'id="member-simple-email"', 'id="member-simple-password"', 'id="member-simple-submit"']) if (!simpleMembersHtml.includes(simpleAccessFeature)) throw new Error(`The API-free subscriber login is missing ${simpleAccessFeature}.`);
-for (const simpleAccessBehavior of ["localStorage.setItem('muzikazSimpleMember'", 'openLocalMember(savedMember', 'password.length < 6']) if (!memberScript.includes(simpleAccessBehavior)) throw new Error(`The API-free subscriber login behavior is missing ${simpleAccessBehavior}.`);
+for (const simpleAccessFeature of ['id="member-simple-username"', 'id="member-simple-email"', 'id="member-simple-password"', 'id="member-simple-submit"']) if (!simpleMembersHtml.includes(simpleAccessFeature)) throw new Error(`The subscriber login is missing ${simpleAccessFeature}.`);
+for (const simpleAccessBehavior of ["accountApiFetch('/api/access/subscriber'", 'rememberAccountSession(result.data)', 'password.length < 6']) if (!memberScript.includes(simpleAccessBehavior)) throw new Error(`The canonical subscriber login behavior is missing ${simpleAccessBehavior}.`);
 if (adminHtml.includes('Authorized personnel only') || adminHtml.includes('id="login-form"')) throw new Error('admin.html must not show a second administrator login.');
 for (const handoffFeature of ["window.location.replace('index.html?admin=login')", "apiFetch('/api/admin/session'", "localStorage.getItem(tokenKey)"]) {
   if (!adminScript.includes(handoffFeature)) throw new Error(`The command center is missing its single-login handoff: ${handoffFeature}.`);

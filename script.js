@@ -2140,34 +2140,24 @@ function initBottleLogin() {
     document.body.classList.add('is-member-authenticated');
     if (status) status.textContent = message;
   };
-  const localMember = () => {
-    try { return JSON.parse(window.localStorage.getItem('muzikazSimpleMember') || 'null'); }
-    catch { window.localStorage.removeItem('muzikazSimpleMember'); return null; }
-  };
-  const openLocalMember = (profile, message) => {
-    currentMemberEmail = normalizeMemberEmail(profile.email);
-    window.sessionStorage.setItem('muzikazBottleMember', 'true');
-    window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-    window.MuzikazAccountSession = {
-      account: { accountId: `local:${currentMemberEmail}`, username: profile.username, loadoutAccess: true, memberAccess: true, gameAccess: true },
-      permissions: { members: true, radTox: true }
-    };
-    setPurchaseStep(3);
-    renderOwnedCollection(currentMemberEmail);
-    unlock(message || `Welcome ${profile.username}. Your subscriber area is ready without an API or wallet.`);
-  };
-  simpleSubmit?.addEventListener('click', () => {
+  simpleSubmit?.addEventListener('click', async () => {
     const username = simpleUsername?.value.trim() || '';
     const email = simpleEmail?.value.trim().toLowerCase() || '';
     const password = simplePassword?.value || '';
     if (username.length < 2) { if (status) status.textContent = 'Enter a username with at least 2 characters.'; simpleUsername?.focus(); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { if (status) status.textContent = 'Enter a valid email address.'; simpleEmail?.focus(); return; }
     if (password.length < 6) { if (status) status.textContent = 'Enter a password with at least 6 characters.'; simplePassword?.focus(); return; }
-    const profile = { username: username.slice(0, 24), email, savedAt: new Date().toISOString() };
-    window.localStorage.setItem('muzikazSimpleMember', JSON.stringify(profile));
-    simplePassword.value = '';
-    openLocalMember(profile);
-    scrollToSection('member-locked-content');
+    setBusy(true);
+    try {
+      if (status) status.textContent = 'Opening your subscriber account and Backpack…';
+      const response = await accountApiFetch('/api/access/subscriber', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ username, email, password }) });
+      const result = await response.json().catch(() => ({ success: false, message: `The subscriber service returned an unreadable response (${response.status}).` }));
+      if (!response.ok || !result.success) throw new Error(result.message || 'Subscriber login failed.');
+      simplePassword.value = '';
+      const account = rememberAccountSession(result.data);
+      openAuthenticatedSubscriber(account, `Welcome ${account.username}. Your 500 MZK, complete Backpack, creator tools and RAD-TOX access are ready.`);
+    } catch (error) { if (status) status.textContent = error.message || 'Subscriber login failed.'; }
+    finally { setBusy(false); }
   });
   const syncAccessCodeBackpack = (account) => {
     const owner = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
