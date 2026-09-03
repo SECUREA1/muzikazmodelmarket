@@ -1,433 +1,67 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Subscriber dashboard for MUZIKAZ creator uploads, tabs, wallets, merch designer tools, avatar photos, and marketplace drops." />
-    <meta name="keywords" content="MUZIKAZ, muzikaz.com, 3D model market, character models, mascot merch, creator dashboard, wallet rewards, brand kit, neon collectibles" />
-    <meta name="author" content="MUZIKAZ" />
-    <meta name="robots" content="index, follow, max-image-preview:large" />
-    <meta name="muzikaz-bottle-contract" content="0x0F1254772810EA4D06E5c61E3E4b54d740367Aa8" />
-    <meta name="muzikaz-bottle-approved-contract" content="0xEf74118D5fB730E9B2729c7303DC29980b4771f0" />
-    <meta name="muzikaz-bottle-chain-id" content="0x1" />
-    <link rel="canonical" href="https://muzikaz.com/members.html" />
-    <link rel="icon" type="image/svg+xml" href="muzikaz_bolt_logo_editable.svg" />
-    <link rel="apple-touch-icon" href="logo_symbol_crop_2x_transparent.png" />
-    <link rel="manifest" href="site.webmanifest" />
-    <link rel="alternate" type="application/rss+xml" title="MUZIKAZ Drops Feed" href="feed.xml" />
-    <meta property="og:site_name" content="MUZIKAZ" />
-    <meta property="og:type" content="profile" />
-    <meta property="og:title" content="MUZIKAZ Bottle Login Dashboard | Creator Tools" />
-    <meta property="og:description" content="Subscriber dashboard for MUZIKAZ creator uploads, tabs, wallets, merch designer tools, avatar photos, and marketplace drops." />
-    <meta property="og:url" content="https://muzikaz.com/members.html" />
-    <meta property="og:image" content="https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="MUZIKAZ Bottle Login Dashboard | Creator Tools" />
-    <meta name="twitter:description" content="Subscriber dashboard for MUZIKAZ creator uploads, tabs, wallets, merch designer tools, avatar photos, and marketplace drops." />
-    <meta name="twitter:image" content="https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png" />
-    <title>MUZIKAZ Bottle Login Dashboard | Creator Tools</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Choose a MUZIKAZ loadout and enter the RAD-TOX game." />
+  <title>Enter MUZIKAZ World</title>
+  <link rel="icon" type="image/svg+xml" href="muzikaz_bolt_logo_editable.svg" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="original-platform members-page">
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Subscriber dashboard for MUZIKAZ creator uploads, tabs, wallets, merch designer tools, avatar photos, and marketplace drops.","sameAs":["https://muzikaz.com/"]}</script>
-    <div class="topbar" data-member-area>
-        <span>Bottle subscribers get the private drop lab</span>
-        <span>Custom stickers · AR avatar viewer · live merch designer</span>
-    </div>
-    <header class="site-header global-site-header">
-        <a class="logo world-logo" href="index.html#home" aria-label="MUZIKAZ WORLD home">
-            <img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ WORLD" />
-        </a>
-        <nav class="nav global-nav" id="primary-navigation" aria-label="Primary navigation" aria-hidden="false">
-            <a class="nav-link" href="index.html#models" data-label="Models" aria-label="Models"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg><span>Models</span></a>
-            <a class="nav-link" href="index.html#world-map" data-label="World Map" aria-label="World Map"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l5-2 8 3 5-2v13l-5 2-8-3-5 2zM8 4v13M16 7v13"/></svg><span>World Map</span></a>
-            <a class="nav-link" href="index.html#marketplace-preview" data-label="Market" aria-label="Market"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1-5H5zM6 9v11h12V9M9 20v-6h6v6"/></svg><span>Market</span></a>
-            <a class="nav-link" href="index.html#character-world-assets" data-label="Characters & Worlds" aria-label="Characters & Worlds"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a5 5 0 015 5c0 3-2 4-5 4S7 11 7 8a5 5 0 015-5zM4 21c.5-5 3-7 8-7s7.5 2 8 7"/></svg><span>Characters & Worlds</span></a>
-            <a class="nav-link" href="index.html#merch" data-label="Merch" aria-label="Merch"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l4 2 4-2 5 3-3 5-2-1v9H8v-9l-2 1-3-5z"/></svg><span>Merch</span></a>
-            <a class="nav-link nav-link--icon" href="avatar-whitepaper.html" data-label="Whitepaper" aria-label="Whitepaper"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6zM14 3v4h4M9 11h6M9 15h6"/></svg><span>Whitepaper</span></a>
-        </nav>
-        <div class="icons" aria-label="Store shortcuts">
-            <a class="mobile-header-action" href="checkout.html" aria-label="Checkout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h10l3-8H6M9 20h.01M17 20h.01"/></svg><span>Checkout</span></a>
-            <a class="mobile-header-action" href="buy-mzk.html" aria-label="Buy MZK"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M17 6.5c-1-1-2.5-1.5-5-1.5-3 0-5 1.2-5 3s2 3 5 3 5 1.2 5 3-2 3-5 3c-2.5 0-4-.5-5-1.5"/></svg><span>Buy MZK</span></a>
-            <a class="mobile-header-action" href="members.html#owned-collection" aria-label="View backpack"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8V6a4 4 0 0 1 8 0v2M6 8h12a2 2 0 0 1 2 2v10H4V10a2 2 0 0 1 2-2Z"/><path d="M8 12v2M16 12v2M8 17h8"/></svg><span>Backpack</span></a>
-            <button class="wallet-connect" id="wallet-connect" type="button" aria-describedby="wallet-connect-status" title="Connect wallet"><img src="muzikaz_bolt_logo_editable.svg" alt="" aria-hidden="true" /><span>Connect wallet</span></button>
-            <span class="sr-only" id="wallet-connect-status" role="status" aria-live="polite">Wallet not connected.</span>
+<body class="game-entry-page">
+  <header class="game-entry-header">
+    <a href="index.html" aria-label="MUZIKAZ WORLD home">
+      <img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ WORLD" />
+    </a>
+    <a href="model-market.html#house-explorer">Games</a>
+  </header>
 
-        </div>
-        <button class="menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Open menu"><svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span></button>
-    </header>
-    <main>
-        <section class="member-hero" id="bottle-login" aria-labelledby="bottle-login-title">
-            <div class="member-login-card">
-                <form id="bottle-login-form" class="bottle-login-form" data-purchase-step="payment">
-                    <button type="button" class="wallet-connect-top" id="bottle-wallet-connect"><b aria-hidden="true">Ξ</b><span>Connect ETH</span><small>Wallet</small></button>
-                    <div class="loadout-intro">
-                        <p class="kicker">Builder pack · separate drop</p>
-                        <h1 id="bottle-login-title">Buy your loadout</h1>
-                        <p>Buy in with any listed payment option or enter a valid pre-bought/admin Loadout code. Either route immediately opens the full members area and multiplayer with 500 MZK, a starter avatar, land, and the complete Builder Loadout.</p>
-                    </div>
-                    <aside class="purple-bottle-preview" aria-label="Violet Wish Bottle loadout collectible">
-                        <span>Builder drop · optional mint</span>
-                        <img src="muzikaz_transparent_assets/products/muzikaz_bottle.png" alt="Violet Wish Bottle included with the Backpack Loadout" />
-                        <div class="purple-bottle-preview__copy">
-                            <p class="kicker">A little wish-power for your world</p>
-                            <strong>Violet Wish Bottle</strong>
-                            <small>A dreamy, loadout-only genie collectible glowing outside the main MUZIKAZ Bottle collection. Your $30 payment opens the creator vault immediately; minting it on-chain is always optional.</small>
-                        </div>
-                    </aside>
-                    <aside class="bottle-mzk-offer" aria-labelledby="bottle-mzk-offer-title">
-                        <div class="bottle-mzk-offer__graphic" aria-hidden="true"><span>MZK</span><b>+10%</b><i>Ϟ</i></div>
-                        <div>
-                            <p class="kicker">Bottle buyer bonus</p>
-                            <strong id="bottle-mzk-offer-title">Power up your Backpack for 10% more.</strong>
-                            <small>After your Bottle purchase, choose an additional MZK allocation of $100 or more and receive a 10% token bonus. $100 unlocks 11,000 MZK instead of 10,000.</small>
-                        </div>
-                        <a class="btn bottle-mzk-offer__cta" href="buy-mzk.html?offer=bottle10&amp;amount=100&amp;return=members.html%23bottle-login">Unlock 10% bonus <span aria-hidden="true">→</span></a>
-                    </aside>
-                    <div class="loadout-details" aria-label="Backpack Loadout details">
-                        <span class="loadout-step is-active" data-loadout-step="1"><b>1</b> Select payment</span>
-                        <span class="loadout-step" data-loadout-step="2"><b>2</b> Pay $30</span>
-                        <span class="loadout-step" data-loadout-step="3"><b>3</b> Enter the vault</span>
-                        <ul><li><strong>500 MZK + starter avatar</strong><small>Ready for your multiplayer loadout</small></li><li><strong>1× Unrevealed land</strong><small>Random in-game starter plot</small></li><li><strong>1× Violet Wish Bottle</strong><small>Genie-inspired collectible · optional mint</small></li><li><strong>Instant full access</strong><small>Members area, creator tools and multiplayer</small></li></ul>
-                    </div>
-                    <label class="loadout-currency"><span>Choose how to pay</span>
-                        <select id="bottle-loadout-currency" aria-label="Backpack Loadout payment currency">
-                                                        <option value="ETH">ETH · Ethereum Mainnet</option>
-                            <option value="POL">POL · Polygon</option>
-                            <option value="BNB">BNB · BNB Smart Chain</option>
-                            <option value="SOL">SOL · Solana</option>
-                            <option value="ADA">ADA · Cardano</option>
-                            <option value="BTC">BTC · Bitcoin</option>
-                            <option value="DOGE">DOGE · Dogecoin</option>
-                        </select>
-                    </label>
-                    <button type="button" class="loadout-pay-button" id="bottle-backpack-loadout"><span>Unlock loadout &amp; pay with ETH</span><small id="bottle-loadout-price">$30 USD · Live ETH quote · Land + Wish Bottle</small></button>
-                    <aside class="loadout-access-code" aria-labelledby="loadout-access-code-title">
-                        <div class="loadout-access-code__copy">
-                            <p class="kicker">One account. One code. Any device.</p>
-                            <strong id="loadout-access-code-title">Use your MZK Access Code</strong>
-                            <small>Submit an unused admin/loadout code or a pre-bought login code to receive the same full access as a purchase: 500 MZK, starter avatar, land, complete Backpack, creator tools and multiplayer. A new code opens a wallet-free account immediately; connect Ethereum later if you choose, without changing your Backpack.</small>
-                        </div>
-                        <div class="loadout-access-code__actions">
-                            <label><span>MZK Access Code</span><input id="loadout-access-code" name="code" type="password" autocomplete="current-password" spellcheck="false" maxlength="24" placeholder="MZK-XXXX-XXXX-XXXX-XXXX" /></label>
-                            <button type="button" id="loadout-code-redeem">Open Account with Access Code</button>
-                            <button type="button" class="ghost" id="account-wallet-validate">Connect MetaMask &amp; Open Account</button>
-                        </div>
-                    </aside>
-                    <aside class="admin-game-bypass" aria-labelledby="admin-game-bypass-title">
-                        <div><p class="kicker">Site owner shortcut</p><strong id="admin-game-bypass-title">Admin game bypass</strong><small>Enter the private admin word to open the complete Loadout and continue directly to RAD-TOX.</small></div>
-                        <label><span>Admin word</span><input id="admin-game-bypass-password" type="password" autocomplete="current-password" placeholder="Admin word" /></label>
-                        <button type="button" id="admin-game-bypass-button">Bypass &amp; enter game <span aria-hidden="true">→</span></button>
-                    </aside>
-                    <div class="magic-bottle-mint">
-                        <span>After activation</span>
-                        <strong>Your Loadout Is Ready</strong>
-                        <small>Your MUZIKAZ account is active. Your Backpack, creator vault, land entitlement, marketplace account and complimentary Violet Wish Bottle claim are connected. Minting is optional.</small>
-                        <div class="post-payment-actions">
-                            <button type="button" id="bottle-continue" disabled>Enter RAD-TOX Game <span aria-hidden="true">→</span></button>
-                            <button type="button" class="ghost" id="bottle-wallet-mint" disabled>Optional: mint Violet Wish Bottle</button>
-                        </div>
-                    </div>
-                </form>
-                <p class="wallet-address" id="bottle-wallet-address" hidden></p>
-                <div class="wallet-identity" id="wallet-identity" hidden>
-                    <label>Wallet username <input id="wallet-username" maxlength="24" autocomplete="nickname" placeholder="Choose a public username" /></label>
-                    <button type="button" id="wallet-username-save">Save username</button>
-                    <button type="button" class="ghost" id="wallet-json-download">Download wallet JSON</button>
-                    <label class="wallet-json-import">Restore wallet JSON <input type="file" id="wallet-json-import" accept="application/json,.json" /></label>
-                    <small id="wallet-token-identity"></small>
-                </div>
-                <p class="status-message" id="bottle-login-status" role="status">Access is available through a paid Loadout, activated MZK Access Code, approved MEKNX entitlement, or another administrator-granted entitlement. Bottle minting is optional.</p>
-                <aside class="meknx-bypass" aria-labelledby="meknx-bypass-title">
-                    <div>
-                        <p class="kicker">Already hold the access contract?</p>
-                        <strong id="meknx-bypass-title">MEKNX holder entry</strong>
-                        <small>Connect an Ethereum wallet that owns a token from the approved MEKNX contract to skip the Bottle purchase and enter the member vault.</small>
-                    </div>
-                    <button type="button" id="meknx-wallet-entry" data-contract="0xEf74118D5fB730E9B2729c7303DC29980b4771f0"><b aria-hidden="true">Ξ</b> Connect Ethereum &amp; enter</button>
-                </aside>
-            </div>
-        </section>
-        <div class="member-locked-content" id="member-locked-content" data-locked="true" hidden>
-        <section class="section-block" aria-labelledby="manage-access-title"><div class="section-title"><span></span><h2 id="manage-access-title">Manage MZK Access Code</h2></div><p><strong>One account. One code. Any device.</strong> Rotation or revocation changes only your credential; your wallet bindings, Backpack, assets, MZK, land and Bottle claims stay with this account.</p><div class="post-payment-actions"><button type="button" id="mzk-access-rotate">Rotate Access Code</button><button type="button" class="ghost" id="mzk-access-revoke">Revoke Access Code</button></div><output id="mzk-access-manage-output" class="status-message" aria-live="polite">Your full code is shown only when it is created or rotated.</output></section>
-        <section class="section-block member-benefits" aria-labelledby="member-benefits-title">
-            <div class="section-title"><span></span><h2 id="member-benefits-title">What subscribers get</h2><span></span></div>
-            <div class="benefit-grid">
-                <article><h3>Product upgrades</h3><p>Early colorways, sleeve-text presets, logo placements, character bundles, and priority custom product slots.</p></article>
-                <article><h3>Custom graphics</h3><p>Upload sticker sheets, mascot graphics, logo patches, and event art into a private generated-asset queue.</p></article>
-                <article><h3>Legendary drops</h3><p>Access new legends, limited Friday drops, connected marketplace bundles, and avatar viewer previews before public release.</p></article>
-            </div>
-        </section>
+  <main class="game-entry-main">
+    <section class="game-entry-panel" aria-labelledby="game-entry-title">
+      <p class="kicker">RAD-TOX game access</p>
+      <h1 id="game-entry-title">Pick a loadout. Enter the game.</h1>
+      <p class="game-entry-intro">No account checks, access codes, API calls, or loading loops. Choose either entry option and continue straight to the games area with the starter loadout.</p>
 
-        <section class="section-block owned-assets-block" id="owned-collection" aria-labelledby="owned-assets-title">
-            <div class="section-title"><span></span><h2 id="owned-assets-title">⚡ My Drop Backpack</h2><a href="#marketplace">Add drops</a></div>
-            <div class="owned-assets-layout">
-                <aside class="owned-profile-card">
-                    <p class="kicker">Backpack owner</p>
-                    <h3 id="owned-current-user">Login required</h3>
-                    <p id="owned-current-copy">Log in above to tie purchased, uploaded, and claimed assets to your account.</p>
-                    <label>Open backpack <select id="owned-profile-select" disabled><option>Login to view members</option></select></label>
-                    <div class="backpack-wallet" aria-live="polite"><span>Trade wallet</span><strong id="backpack-token-balance">— MZK</strong><small>All user marketplace listings buy, sell, and settle in MZK.</small></div>
-                </aside>
-                <div class="owned-assets-board">
-                    <div class="owned-assets-summary" id="owned-assets-summary"></div>
-                    <section class="member-exchange" id="member-exchange" aria-labelledby="member-exchange-title">
-                        <div><p class="kicker">Live member market</p><h3 id="member-exchange-title">Trade packs &amp; talk</h3><p>Select any registered member to see their shared Backpack, listed packs, trade history, and conversation.</p></div>
-                        <label>Member directory <select id="exchange-member-select"><option value="">Connect your member wallet</option></select></label>
-                        <p class="status-message" id="exchange-status" role="status">Connect your wallet to join the member directory.</p>
-                        <div class="exchange-packs" id="exchange-packs"></div>
-                        <div class="exchange-activity"><ol id="exchange-trades"><li>No shared trades yet.</li></ol><ol id="exchange-messages"><li>No messages yet.</li></ol></div>
-                        <form id="exchange-message-form"><label>Message selected member <input name="message" maxlength="500" autocomplete="off" placeholder="Ask about a pack or propose a trade" required></label><button type="submit">Send message</button></form>
-                    </section>
-                    <section class="user-market-shelf" aria-labelledby="all-user-listings-title">
-                        <div><p class="kicker">All active sellers</p><h3 id="all-user-listings-title">User Marketplace Listings</h3><p>Every active item listed by every MUZIKAZ member appears here together.</p></div>
-                        <p class="status-message" data-user-market-status role="status">Loading all user listings…</p>
-                        <div class="user-market-grid" data-user-market-listings></div>
-                    </section>
-                    <div class="owned-assets-grid" id="owned-assets-grid"></div>
-                    <section class="backpack-transactions" aria-labelledby="backpack-transactions-title">
-                        <div><p class="kicker">Profile transactions</p><h3 id="backpack-transactions-title">Backpack trade activity</h3></div>
-                        <p id="backpack-trade-status" class="status-message" role="status">Owners can set a token value and list an item. Open another user's Backpack to trade.</p>
-                        <ol id="backpack-transaction-list"><li>No trades yet.</li></ol>
-                    </section>
-                </div>
-            </div>
-        </section>
-        <section class="section-block member-tool-launchpad" id="member-creator-tools" aria-labelledby="member-tools-title">
-            <div class="section-title"><span></span><h2 id="member-tools-title">Subscriber creator tools</h2><span>Unlocked after bottle login</span></div>
-            <div class="benefit-grid">
-                <article><h3>🧭 VibeVerse Explorer</h3><p>Publish, preview, and manage live 3D model spaces from inside the subscriber vault.</p><a class="btn ghost" href="model-explorer.html">Open VibeVerse</a></article>
-                <article><h3>Token Mixer</h3><p>Arrange audio clips, spend MZK, export WAV sessions, and mint finished mixes.</p><a class="btn ghost" href="token-mixer.html">Open Token Mixer</a></article>
-                <article><h3>Voice Changer</h3><p>Record voice clips, apply effects, crop audio, and send sounds into the shared mixer library.</p><a class="btn ghost" href="voice-changer.html">Open Voice Changer</a></article>
-                <article><h3>Quest Board</h3><p>Complete creator actions, earn MZK, and track Voice3 reward history.</p><a class="btn ghost" href="quest-board.html">Open Quest Board</a></article>
-                <article><h3>OMConsole Control Pack</h3><p>Add gesture, facial tone, muscle, and EEG control paths to a custom website package, then buy the integration pack and tailor the design to your creator workflow.</p><a class="btn ghost" href="#marketplace" data-market-jump="OMConsole Package">Buy OMConsole Pack · $49</a></article>
-                <article><h3>Website Bundle Kits</h3><p>Pick from four unified $20 website bundles: Starter, Drop Page, Creator Vault, or Event Landing. Brand Kit assets now live here with the web package slots.</p><a class="btn ghost" href="#marketplace" data-market-jump="Website Packages">View $20 bundles</a></article>
-                <article><h3>Character & World Asset Categories</h3><p>Build connected 3D character shelves with companions, wearables, props, and Vibe Crib environments so every MUZIKAZ character can anchor a complete world in the market.</p><a class="btn ghost" href="#marketplace" data-market-jump="Character & World Assets">View Character & World Assets</a></article>
-            </div>
-        </section>
+      <div class="game-entry-options" role="radiogroup" aria-label="Choose a game entry option">
+        <button class="game-entry-option" type="button" role="radio" aria-checked="false" data-entry-option="meknx">
+          <span class="game-entry-option__icon" aria-hidden="true">M</span>
+          <span><strong>MEKNX</strong><small>Enter with the MEKNX loadout</small></span>
+          <b aria-hidden="true">Select</b>
+        </button>
+        <button class="game-entry-option" type="button" role="radio" aria-checked="false" data-entry-option="pay">
+          <span class="game-entry-option__icon game-entry-option__icon--pay" aria-hidden="true">ϟ</span>
+          <span><strong>Pay Loadout</strong><small>Enter with the standard player loadout</small></span>
+          <b aria-hidden="true">Select</b>
+        </button>
+      </div>
 
-        <section class="section-block subscriber-glb-library" id="subscriber-models" aria-labelledby="subscriber-models-title">
-            <div class="section-title"><span></span><h2 id="subscriber-models-title">Subscriber GLB library</h2><span>Interactive 3D previews</span></div>
-            <p class="section-subheading">Browse every published owner model directly in the subscriber vault. Drag to rotate, scroll to zoom, or open a supported model in AR.</p>
-            <div class="subscriber-glb-grid" id="subscriber-glb-grid" aria-live="polite"><p class="model-library-status">Loading subscriber models…</p></div>
-        </section>
+      <section class="game-entry-loadout" aria-labelledby="starter-loadout-title">
+        <div><p class="kicker">Included in either choice</p><h2 id="starter-loadout-title">Starter Loadout</h2></div>
+        <ul>
+          <li><b>500 MZK</b><span>Game wallet</span></li>
+          <li><b>Starter avatar</b><span>Ready to play</span></li>
+          <li><b>1 land</b><span>World access</span></li>
+          <li><b>Drop Backpack</b><span>Loadout equipped</span></li>
+        </ul>
+      </section>
 
-        <section class="section-block designer-block live-merch-studio" id="designer">
-            <div class="section-title"><span></span><h2>Live merch designer</h2><a href="#marketplace">Open marketplace</a></div>
-            <div class="designer-callout">
-                <p class="kicker">Featured open marketplace drop</p>
-                <h3>Chaos Ape custom stickers drop</h3>
-                <p>Build a production-ready sticker sheet: upload art, drag it inside the cutline-safe zone, save a reusable draft, and attach a complete design specification to your custom order.</p>
-            </div>
-            <details class="button-menu studio-tabs" open>
-                <summary>Customize sections</summary>
-                <div class="button-group" aria-label="Customizer sections">
-                    <button type="button" data-studio-jump="product">Product</button><button type="button" data-studio-jump="character">Character</button><button type="button" data-studio-jump="text">Text</button><button type="button" data-studio-jump="logo">Logo</button><button type="button" data-studio-jump="upload">Custom Upload</button><button type="button" data-studio-jump="layout">Layout</button><button type="button" data-studio-jump="order">Order Summary</button>
-                </div>
-            </details>
-            <div class="designer-layout studio-layout">
-                <article class="designer-preview studio-preview" aria-live="polite">
-                    <div class="mockup sticker-sheet-mockup" id="designer-mockup" data-product-template="avatar-stickers">
-                        <div class="print-template-label" id="print-template-label">Sticker sheet print area</div>
-                        <div class="sticker-sheet-stage" id="sticker-stage">
-                            <div class="safe-area-guide" aria-hidden="true"><span>PRINT-SAFE AREA</span></div>
-                            <img class="product-template-art" id="product-template-art" src="trait_avatars_row_2_2x.png" alt="Avatar Sticker Sheet product template" />
-                            <span class="sticker-cutline main-character" id="preview-character">Chaos Ape</span>
-                            <img class="character-art-layer" id="character-art-layer" src="character_traits_overview_panel_2x.png" alt="Chaos Ape artwork" />
-                            <strong class="sticker-cutline logo-sticker" id="preview-name">MUZIKAZ</strong>
-                            <b class="sticker-cutline number-sticker" id="preview-number">88</b>
-                            <small class="sticker-cutline sleeve-sticker" id="preview-sleeve">LIVE THE BEAT</small>
-                            <span class="sticker-cutline mini-sticker">CHAOS</span>
-                            <div class="upload-layer-zone" id="upload-layer-zone" aria-label="Uploaded custom art layer zone"></div>
-                        </div>
-                    </div>
-                    <div class="preview-copy">
-                        <p class="kicker" id="preview-meta">Avatar Sticker Sheet · M · Wordmark · Chaos / 3D Model Packs</p>
-                        <h3 id="preview-title">Chaos Ape custom stickers drop</h3>
-                        <ul class="preview-values" id="preview-values"><li>Chaos Ape</li><li>MUZIKAZ</li><li>88</li><li>LIVE THE BEAT</li></ul>
-                        <div class="preview-actions button-group"><button type="button" id="save-design">Save draft</button><button type="button" id="load-design">Load draft</button><button type="button" id="duplicate-design">Duplicate layer</button><button type="button" class="ghost" id="download-design-spec">Download print spec</button></div>
-                        <p class="status-message studio-status" id="designer-status" role="status">Upload PNG, JPG, JPEG, or SVG artwork to place it on the merch preview.</p>
-                    </div>
-                </article>
-                <form class="designer-controls studio-controls" id="designer-controls">
-                    <fieldset id="product"><legend>Product</legend><label>Product <select name="product" id="design-product"></select></label><label>Size <select name="size"><option>S</option><option selected>M</option><option>L</option><option>XL</option><option>2XL</option></select></label><label>Color <input type="color" name="color" value="#9cff00" /></label><label>Print shape <select name="printShape" id="print-shape"><option value="auto" selected>Auto product template</option><option value="sheet">Sticker sheet cutlines</option><option value="front">Front chest panel</option><option value="patch">Badge / patch area</option><option value="wrap">Wraparound label</option><option value="poster">Poster safe area</option></select></label><label>Layout style <select name="layout"><option>Chaos / 3D Model Packs</option><option>Sticker Grid</option><option>Streetwear Front Panel</option><option>Packaging Mockup</option></select></label></fieldset>
-                    <fieldset id="character"><legend>Character</legend><label>Character <select name="character" id="design-character"></select></label></fieldset>
-                    <fieldset id="text"><legend>Text</legend><label>Name <input name="name" maxlength="16" value="MUZIKAZ" /></label><label>Number <input name="number" maxlength="2" value="88" /></label><label>Sleeve Text <input name="sleeve" maxlength="22" value="LIVE THE BEAT" /></label></fieldset>
-                    <fieldset id="logo"><legend>Logo</legend><label>Logo Style <select name="logo"><option selected>Wordmark</option><option>Lightning Crest</option><option>Badge Patch</option><option>Custom Upload Logo</option></select></label></fieldset>
-                    <fieldset id="upload"><legend>Custom Upload</legend><label class="design-upload-drop">Upload custom design <input type="file" id="design-upload" accept="image/png,image/jpeg,image/jpg,image/svg+xml" /></label><p class="upload-guidance">PNG, JPG, JPEG, or SVG · 5 MB max · transparent PNG recommended. Keep important artwork inside the dotted safe area.</p><details class="button-menu layer-menu" open><summary>Layer options</summary><div class="upload-tools button-group"><button type="button" data-layer-action="center">Center align</button><button type="button" data-layer-action="front">Move front</button><button type="button" data-layer-action="back">Move back</button><button type="button" data-layer-action="duplicate">Duplicate</button><button type="button" data-layer-action="flip-x">Flip H</button><button type="button" data-layer-action="flip-y">Flip V</button><button type="button" data-layer-action="delete">Delete</button></div></details><label>Resize <input type="range" id="upload-scale" min="40" max="220" value="100" /></label><label>Rotate <input type="range" id="upload-rotate" min="-180" max="180" value="0" /></label></fieldset>
-                    <fieldset id="layout"><legend>Layers</legend><ol class="layer-stack" id="layer-stack"><li>Base product template</li><li>Live print shape / safe area</li><li>Product color</li><li>Character art</li><li>Logo / wordmark</li><li>Name</li><li>Number</li><li>Sleeve text</li><li>Uploaded custom art</li><li>Effects or outlines</li></ol></fieldset>
-                    <fieldset id="order"><legend>Order Summary</legend><label>Quantity <input name="quantity" type="number" min="1" max="99" value="1" /></label><label>Design notes <textarea name="notes" rows="3" placeholder="Add print notes, correction requests, or placement instructions"></textarea></label><div class="order-summary" id="designer-order-summary"></div><button type="button" data-add-custom>Add to cart / order</button><button type="button" id="edit-design">Make a Correction / Edit Design</button></fieldset>
-                </form>
-            </div>
-        </section>
+      <p class="game-entry-status" id="game-entry-status" role="status" aria-live="polite">Select MEKNX or Pay Loadout to continue.</p>
+      <button class="game-entry-launch" id="game-entry-launch" type="button" disabled>Enter RAD-TOX <span aria-hidden="true">→</span></button>
 
-        <section class="section-block character-shop-block" id="character-shop">
-            <div class="section-title"><span></span><h2>3D model character checkout</h2><a href="#marketplace">View marketplace</a></div>
-            <div class="designer-callout character-world-callout">
-                <p class="kicker">Character & World Asset shelf</p>
-                <h3>Every selected character can carry custom avatars, pets, accessories, furniture, props, and room environments.</h3>
-                <p>Use the picker below to choose the mascot, then send compatible assets to checkout or filter the marketplace for character-specific asset bundles and gaming studio packs.</p>
-            </div>
-            <div class="checkout-layout">
-                <aside class="checkout-panel">
-                    <p class="kicker">Muzikaz Site 2 product picker</p>
-                    <h3 id="checkout-character-name">Select a character</h3>
-                    <p id="checkout-character-copy">Pick any MUZIKAZ character, then checkout any product style for that mascot.</p>
-                    <div class="checkout-preview">
-                        <model-viewer id="checkout-character-model" camera-controls touch-action="pan-y" auto-rotate shadow-intensity="1" alt="Selected MUZIKAZ character 3D model"></model-viewer>
-                    </div>
-                    <div class="checkout-options">
-                        <label>Character <select id="checkout-character-select"></select></label>
-                        <label>Product <select id="checkout-product-select"></select></label>
-                        <label>Size / format <select id="checkout-size-select"></select></label>
-                        <label>Colorway <select id="checkout-color-select"></select></label>
-                        <label>Quantity <input id="checkout-qty" type="number" min="1" max="99" value="1" /></label>
-                    </div>
-                    <div class="checkout-total"><span>Ready checkout</span><strong id="checkout-total">$0.00</strong></div>
-                    <button type="button" id="checkout-add">Checkout selected character product</button>
-                </aside>
-                <div>
-                    <div class="character-catalog" id="character-catalog"></div>
-                    <div class="product-catalog" id="checkout-product-catalog"></div>
-                </div>
-            </div>
-        </section>
+      <details class="game-entry-admin">
+        <summary>Admin bypass</summary>
+        <form id="game-entry-admin-form">
+          <div>
+            <strong>Open the saved admin account</strong>
+            <small>The admin word restores the same permanent account, Backpack, balance, and game loadout on every login.</small>
+          </div>
+          <label><span>Admin word</span><input id="game-entry-admin-password" type="password" autocomplete="current-password" required /></label>
+          <button id="game-entry-admin-submit" type="submit">Open admin loadout <span aria-hidden="true">→</span></button>
+        </form>
+      </details>
+    </section>
+  </main>
 
-
-        <section class="section-block ar-viewer-block" id="ar-viewer">
-            <div class="section-title"><span></span><h2>Pop-out AR character viewer</h2><a href="#character-shop">Choose checkout</a></div>
-            <div class="ar-viewer-layout">
-                <aside class="ar-file-panel">
-                    <p class="kicker">File viewer</p>
-                    <h3 id="ar-character-name">Select a character</h3>
-                    <p id="ar-character-copy">Pick any MUZIKAZ character from the collection list, preview the character file, then launch the highlighted AR pop-out on Android or Apple iPhone.</p>
-                    <label class="ar-file-drop">
-                        <input type="file" id="ar-file-input" accept="image/*,.glb,.gltf,.usdz,.reality" />
-                        <span>Upload optional AR file</span>
-                        <small>Images preview instantly. GLB/GLTF/ USDZ files can replace the selected character source.</small>
-                    </label>
-                    <div class="ar-file-meta" id="ar-file-meta">Using built-in character collection artwork.</div>
-                    <button class="ar-popout-button" type="button" id="ar-popout-button">🚀 Pop out AR viewer</button>
-                </aside>
-                <div class="ar-stage-card">
-                    <div class="ar-stage-toolbar">
-                        <label>Character <select id="ar-character-select"></select></label>
-                        <strong id="ar-device-label">iPhone + Android ready</strong>
-                    </div>
-                    <div class="ar-device-frame" id="ar-device-frame">
-                        <img id="ar-preview-img" alt="Selected MUZIKAZ character AR preview" />
-                        <model-viewer id="ar-model-viewer" camera-controls touch-action="pan-y" ar ar-modes="webxr scene-viewer quick-look" shadow-intensity="1" exposure="1" alt="Selected MUZIKAZ AR model" hidden></model-viewer>
-                    </div>
-                    <div class="ar-character-strip" id="ar-character-strip" aria-label="AR character picker"></div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section-block marketplace-block" id="marketplace">
-            <div class="section-title"><span></span><h2>Marketplace engine</h2><a href="#admin">Manage store</a></div>
-            <div class="market-controls" aria-label="Marketplace filters and quality controls">
-                <div>
-                    <p class="kicker">Process quality</p>
-                    <label class="quality-toggle"><input type="checkbox" id="market-quality-toggle" checked /> <span>Curated quality only</span></label>
-                </div>
-                <div>
-                    <p class="kicker">Category</p>
-                    <label class="selection-dropdown">Choose a category <select id="market-categories" aria-label="Marketplace category"></select></label>
-                </div>
-            </div>
-            <label class="selection-dropdown market-tabs">Choose a listing type <select id="market-tabs" aria-label="Marketplace listing type"></select></label>
-            <p class="market-status" id="market-status" role="status">Loading marketplace listings.</p>
-            <div class="market-grid" id="market-grid"></div>
-        </section>
-
-        <section class="section-block admin-block" id="admin">
-            <div class="section-title"><span></span><h2>Admin command center</h2></div>
-            <section class="admin-login-card" id="admin-login" aria-labelledby="admin-login-title">
-                <p class="kicker">Restricted access</p><h3 id="admin-login-title">Administrator sign in</h3>
-                <p>Sign in to access upload moderation, analytics, publishing, and the shared asset library.</p>
-                <form id="admin-login-form" class="admin-login-form">
-                    <label>Username <input name="username" autocomplete="username" required /></label>
-                    <label>Password <input name="password" type="password" autocomplete="current-password" required /></label>
-                    <button type="submit">Open command center</button>
-                </form><p id="admin-login-status" class="status-message" role="status">Administrator authentication is required.</p>
-            </section>
-            <div class="admin-layout asset-command-center" data-asset-dashboard hidden aria-label="Administrator command center">
-                <div class="admin-command-bar">
-                    <p>Authenticated administrator workspace</p>
-                    <button type="button" id="admin-logout">Sign out</button>
-                </div>
-                <p class="status-message land-upload-notice"><strong>Land-owner upload gate:</strong> avatar, asset, and game uploads unlock only when this profile owns MUZIKAZ World land in its Drop Backpack.</p>
-                <section class="loadout-code-generator" aria-labelledby="loadout-code-generator-title">
-                    <p class="kicker">Canonical account credentials</p><h3 id="loadout-code-generator-title">MZK Loadout Pass Generator</h3>
-                    <p>Generate one credential whose optional entitlements redeem once while the activated account login remains usable. Full secrets are never listed again.</p>
-                    <form id="loadout-code-generator-form"><label>Internal label <input name="label" maxlength="80" placeholder="New user or campaign note" /></label><label>Campaign / source <input name="campaign" maxlength="80" /></label><label>Expiration before activation <select name="expiresInDays"><option value="1">1 day</option><option value="7" selected>7 days</option><option value="30">30 days</option><option value="365">1 year</option></select></label><label>Maximum activation date <input name="maximumActivationDate" type="datetime-local" /></label><label><input name="waiveLoadout" type="checkbox" checked /> Waive $30 Loadout</label><label><input name="violetBottle" type="checkbox" checked /> Include Violet Wish Bottle</label><label><input name="starterLand" type="checkbox" checked /> Include starter land</label><label>Promotional MZK <input name="promotionalMzk" type="number" min="0" max="1000000" value="0" /></label><label><input name="creatorVault" type="checkbox" checked /> Enable creator tools</label><button type="submit">Generate MZK Loadout Pass Code</button></form>
-                    <output id="loadout-code-output" aria-live="polite">No MZK Access Code generated in this session.</output>
-                    <button type="button" class="ghost" id="loadout-code-copy" hidden>Copy secret code</button>
-                    <p class="status-message" id="loadout-code-admin-status" role="status">Codes are shown once; share them through a private channel.</p>
-                    <div class="table-wrap"><table><thead><tr><th>Masked code</th><th>Label / campaign</th><th>Status</th><th>Created / activated</th><th>Wallet / username</th><th>Loadout redeemed</th><th>Expiration</th><th>Control</th></tr></thead><tbody id="mzk-access-admin-table"><tr><td colspan="8">Authenticate to load credentials.</td></tr></tbody></table></div>
-                </section>
-                <form class="upload-zone asset-upload-panel" id="graphic-upload-form">
-                    <strong>Upload Graphics</strong>
-                    <input type="file" id="asset-upload" name="file" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" multiple />
-                    <span>PNG · JPG · GIF · SVG · WEBP</span>
-                    <small>Drag files here or use the file picker. SVG files are sanitized server-side.</small>
-                    <progress id="graphic-upload-progress" max="100" value="0"></progress>
-                    <div id="graphic-preview" class="asset-preview-grid"></div>
-                    <input name="title" placeholder="Title" />
-                    <textarea name="description" placeholder="Description"></textarea>
-                    <input name="creator" placeholder="Creator name" />
-                    <input name="category" placeholder="Category" />
-                    <input name="tags" placeholder="Tags" />
-                    <select name="visibility"><option value="private">Private</option><option value="public">Public after approval</option></select>
-                    <select name="intendedUse"><option>3D model texture</option><option>Model thumbnail</option><option>Marketplace tile</option><option>Product preview</option><option>Homepage banner</option><option>Avatar image</option><option>Sticker design</option><option>Merch graphic</option><option>Environment background</option><option>Promotional graphic</option></select>
-                    <input name="relatedModelId" placeholder="Related model ID" />
-                    <input name="productAssignment" placeholder="Product assignment" />
-                    <input name="collectionAssignment" placeholder="Collection assignment" />
-                    <input name="publishLocation" placeholder="Publish location" />
-                    <div class="button-row"><button type="submit" name="status" value="pending_review">Submit for approval</button><button type="submit" name="status" value="draft">Save as draft</button><button type="button" id="cancel-graphic-upload">Cancel upload</button><button type="button" id="retry-graphic-upload">Retry failed upload</button></div>
-                </form>
-                <form class="upload-zone asset-upload-panel" id="model-upload-form">
-                    <strong>Upload 3D Model</strong>
-                    <input type="file" name="file" accept=".glb,.gltf,.usdz,.reality" required />
-                    <progress id="model-upload-progress" max="100" value="0"></progress>
-                    <input type="file" name="usdz" accept=".usdz" /><input type="file" name="thumbnail" accept="image/*" /><input type="file" name="textures" accept="image/*,.bin,.mtl,.obj" multiple />
-                    <input name="title" placeholder="Model title" /><textarea name="description" placeholder="Description"></textarea><input name="category" placeholder="Category" /><input name="creator" placeholder="Creator" /><input name="tags" placeholder="Tags" />
-                    <input name="defaultScale" placeholder="Default scale" /><input name="defaultRotation" placeholder="Default rotation" /><input name="defaultPosition" placeholder="Default position" />
-                    <input name="environment" placeholder="Environment selection" /><input name="animation" placeholder="Animation selector" />
-                    <label><input type="checkbox" name="autoRotate" checked /> Auto-rotate</label><label><input type="checkbox" name="cameraControls" checked /> Camera controls</label><label><input type="checkbox" name="arEnabled" /> AR enabled</label><label><input type="checkbox" name="shadow" /> Shadow</label><input name="background" placeholder="Background setting" />
-                    <select name="visibility"><option value="private">Private</option><option value="public">Public after approval</option></select>
-                    <div class="button-row"><button type="submit" name="status" value="draft">Save draft</button><button type="button" id="preview-model-upload">Preview</button><button type="submit" name="status" value="pending_review">Submit for approval</button><button type="submit" name="status" value="published" data-admin-only>Publish</button></div>
-                    <model-viewer id="model-upload-preview" camera-controls auto-rotate hidden></model-viewer>
-                </form>
-                <div class="admin-list"><h3>Generated assets</h3><ul id="asset-list"><li><b id="metric-thumbnails">0</b> Thumbnails ready</li><li><b id="metric-store-tiles">0</b> Store tiles ready</li><li><b id="metric-product-previews">0</b> Product previews ready</li></ul><button type="button" id="regenerate-derivatives">Regenerate derivatives</button></div>
-                <div class="analytics"><h3>Analytics</h3><p><b id="metric-orders">128</b> Orders</p><p><b id="metric-inventory">842</b> Inventory units</p><p><b id="metric-conversion">7.4%</b> Conversion</p><p><b id="metric-uploads">0</b> Uploads</p><p><b id="metric-pending">0</b> Pending approvals</p><p><b id="metric-storage">0</b> Storage bytes</p></div>
-                <section class="sales-ledger" aria-labelledby="sales-ledger-title"><div class="sales-ledger-heading"><div><p class="kicker">Database records</p><h3 id="sales-ledger-title">Sales &amp; fulfillment</h3></div><button type="button" id="sales-refresh">Refresh sales</button></div><p id="sales-status" role="status">Loading verified payment records…</p><div class="sales-table-wrap"><table><thead><tr><th>Order / date</th><th>Customer wallet</th><th>Items</th><th>Payment</th><th>Status</th><th>Transaction</th></tr></thead><tbody id="sales-table-body"></tbody></table></div></section>
-                <div class="asset-library"><h3>Shared Asset Library</h3><label class="selection-dropdown asset-tabs">Choose an asset view <select id="asset-tabs" aria-label="Asset library view"></select></label><p id="asset-status" aria-live="polite">Loading assets…</p><div class="asset-card-grid" id="asset-card-grid"></div></div>
-                <div class="user-dashboard"><h3>User upload dashboard</h3><p>My models · My graphics · Drafts · Pending review · Approved · Published · Rejected · Storage used</p><div class="button-row"><button type="button" data-tab-jump="Images" data-focus-form="graphic-upload-form">Upload new graphic</button><button type="button" data-tab-jump="3D Models" data-focus-form="model-upload-form">Upload new 3D model</button><button type="button" data-tab-jump="My Uploads" data-open-assignment>Assign graphic to model</button></div><form class="asset-assignment-panel" id="asset-assignment-panel" hidden><strong>Assign graphic to model floor/display</strong><label>Graphic asset <select id="assignment-asset"></select></label><label>Model ID <input id="assignment-model" placeholder="Model ID or product space" /></label><label>Display slot <select id="assignment-slot"><option>floor graphic</option><option>thumbnail</option><option>poster texture</option><option>wall display</option><option>product mockup image</option><option>model information card</option><option>environment billboard</option><option>store tile</option><option>avatar badge</option><option>loading image</option><option>promotional overlay</option></select></label><button type="submit">Save assignment</button></form></div>
-            </div>
-        </section>
-
-        </div>
-    </main>
-    <footer id="contact" data-member-area>
-        <div><a class="logo" href="index.html#start"><span class="bolt">ϟ</span><span>MUZIKAZ</span></a><p>Bottle subscriber vault for custom MUZIKAZ product upgrades and legendary drops.</p></div>
-        <div><h4>Vault</h4><a href="#designer">Designer</a><a href="#admin">Uploads</a></div>
-        <div><h4>Support</h4><a href="mailto:crew@muzikaz.example">Contact</a><a href="index.html#crew">Crew</a></div>
-    </footer>
-    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-    <script type="module" src="public/js/connected-models.js"></script>
-    <script src="public/js/api-connection.js"></script>
-    <script src="mzk-wallet.js"></script>
-    <script src="payment-config.js"></script><script src="wallet-payments.js"></script><script src="muzikaz-payment-checkout.js"></script>
-  <script src="contract-ownership.js"></script>
-  <script src="script.js"></script>
-  <script src="member-market.js"></script>
-  <script src="marketplace-listings.js"></script>
-  <script src="battle-theme.js"></script>
-    <script src="backpack-widget.js"></script>
-  <script src="global-header.js"></script>
+  <script src="members-entry.js"></script>
 </body>
 </html>
