@@ -166,3 +166,18 @@ test('unverified, failed, underpriced, and wrong-product orders grant nothing', 
   await assert.rejects(store.fulfillPaidLoadout({ ...base, purchaseType: 'GENERIC' }), /server-verified/);
   await assert.rejects(readFile(file, 'utf8'), { code: 'ENOENT' });
 });
+
+test('repairs partially provisioned accounts only from durable Loadout entitlement', async (t) => {
+  const { file, store } = await fixture(t);
+  const activated = await store.activate((await store.create()).code);
+  const data = JSON.parse(await readFile(file, 'utf8'));
+  const account = data.accounts.find((item) => item.accountId === activated.account.accountId);
+  account.gameAccess = false; account.memberAccess = false; account.worldAccess = false; account.gameAssets = [];
+  await writeFile(file, JSON.stringify(data));
+  const repaired = await store.repairEntitledAccount(account.accountId);
+  assert.equal(repaired.loadoutAccess, true); assert.equal(repaired.gameAccess, true); assert.equal(repaired.memberAccess, true); assert.ok(repaired.gameAssets.includes('RAD-TOX Starter Gear'));
+
+  const unentitled = await store.findByWallet('0x9999999999999999999999999999999999999999');
+  const unchanged = await store.repairEntitledAccount(unentitled.accountId);
+  assert.equal(unchanged.loadoutAccess, false); assert.equal(unchanged.gameAccess, false); assert.deepEqual(unchanged.gameAssets, []);
+});

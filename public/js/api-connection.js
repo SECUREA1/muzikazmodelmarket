@@ -108,18 +108,24 @@
   }
 
   function getSessionToken() {
-    try { return window.localStorage.getItem('muzikazAccountSessionToken') || ''; } catch (ignore) { return ''; }
+    try {
+      var token = window.sessionStorage.getItem('muzikazAccountSessionToken') || window.localStorage.getItem('muzikazAccountSessionToken') || '';
+      if (token) window.sessionStorage.setItem('muzikazAccountSessionToken', token);
+      window.localStorage.removeItem('muzikazAccountSessionToken');
+      return token;
+    } catch (ignore) { return ''; }
   }
 
   function setSessionToken(token) {
     try {
-      if (token) window.localStorage.setItem('muzikazAccountSessionToken', token);
-      else window.localStorage.removeItem('muzikazAccountSessionToken');
+      if (token) window.sessionStorage.setItem('muzikazAccountSessionToken', token);
+      else window.sessionStorage.removeItem('muzikazAccountSessionToken');
+      window.localStorage.removeItem('muzikazAccountSessionToken');
     } catch (ignore) {}
   }
 
   function logout(csrfToken) {
-    return fetchApi('/api/session/logout', { method: 'POST', headers: { 'X-CSRF-Token': csrfToken || '' }, retries: 0 }).then(function (response) {
+    return fetchApi('/api/session', { method: 'DELETE', headers: { 'X-CSRF-Token': csrfToken || '' }, retries: 0 }).then(function (response) {
       setSessionToken('');
       return response;
     }, function (error) {

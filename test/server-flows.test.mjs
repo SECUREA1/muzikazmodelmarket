@@ -79,7 +79,7 @@ test('member loadout entry uses the shared canonical account API', async () => {
   assert.match(source, /accountApiFetch\('\/api\/account\/access-code'/);
   assert.ok(source.includes('[A-Z0-9]{8}-[A-Z0-9]{8}'), 'legacy Rust pass format remains accepted by the member login');
   assert.ok(source.includes("document.querySelector('#loadout-code-redeem')?.click()"), 'shared pass links automatically submit the member login');
-  assert.ok(source.includes("accountApiFetch('/api/backpack')"), 'owned Backpack data is loaded from the authenticated server session');
+  assert.ok(source.includes("accountApiFetch('/api/account/bootstrap')"), 'account and Backpack state are loaded from authoritative bootstrap');
   assert.ok(source.includes("accountApiFetch('/api/game/session'"), 'successful entry creates the required short-lived game session before navigation');
   assert.ok(source.includes("accountApiFetch('/api/access/admin-bypass'"), 'the Bottle page owner shortcut uses the server-validated bypass route');
   assert.ok(!source.includes('window.MZKWallet?.provisionStandardLoadout(account)'), 'local storage is not an ownership authority');
