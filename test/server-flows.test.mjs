@@ -81,6 +81,7 @@ test('member loadout entry uses the shared canonical account API', async () => {
   assert.ok(source.includes("document.querySelector('#loadout-code-redeem')?.click()"), 'shared pass links automatically submit the member login');
   assert.ok(source.includes("accountApiFetch('/api/backpack')"), 'owned Backpack data is loaded from the authenticated server session');
   assert.ok(source.includes("accountApiFetch('/api/game/session'"), 'successful entry creates the required short-lived game session before navigation');
+  assert.ok(source.includes("result.code === 'API_ROUTE_NOT_FOUND'"), 'a rolling backend deploy cannot trap an authenticated member on the login page');
   assert.ok(source.includes("accountApiFetch('/api/access/admin-bypass'"), 'the Bottle page owner shortcut uses the server-validated bypass route');
   assert.ok(!source.includes('window.MZKWallet?.provisionStandardLoadout(account)'), 'local storage is not an ownership authority');
   assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'successful code entry opens the game page');

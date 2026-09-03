@@ -8,6 +8,9 @@
   if (!configured && staticHost) configured = 'https://muzikazmodelmarket.onrender.com';
   var base;
   var hostedApi = new window.URL('https://muzikazmodelmarket.onrender.com');
+  var compatibleRoutes = {
+    '/api/access-codes/redeem': ['/api/access/activate', '/api/loadout-codes/redeem']
+  };
   try {
     base = new window.URL(configured || window.location.origin, window.location.href);
     /* Never let an old http configuration create mixed-content failures on mobile. */
@@ -76,17 +79,24 @@
     delete request.timeout;
     delete request.retries;
 
-    function attempt(remaining) {
+    function attempt(remaining, requestPath, aliases) {
+      requestPath = requestPath || path;
+      aliases = aliases || (compatibleRoutes[path] || []).slice();
       var timer;
       var expired = new window.Promise(function (_, reject) {
         timer = window.setTimeout(function () { reject(new Error('The MUZIKAZ API connection timed out.')); }, timeout);
       });
-      return window.Promise.race([window.fetch(url(path), request), expired]).then(function (response) {
+      return window.Promise.race([window.fetch(url(requestPath), request), expired]).then(function (response) {
         window.clearTimeout(timer);
-        if (response.status === 401 && sessionToken && !/^\/api\/access\//.test(path)) setSessionToken('');
-        if (response.status >= 500 && remaining > 0) return attempt(remaining - 1);
+        if (response.status === 401 && sessionToken && !/^\/api\/access\//.test(requestPath)) setSessionToken('');
+        if (response.status >= 500 && remaining > 0) return attempt(remaining - 1, requestPath, aliases);
         return routeIsMissing(response).then(function (missing) {
-          if (missing && useHostedApi()) return attempt(remaining);
+          if (missing && useHostedApi()) return attempt(remaining, requestPath, aliases);
+          /* Deployments can briefly serve the previous account-route contract
+           * while Render rolls a new server revision. Try its equivalent route
+           * in the same request so a valid code never strands the member on
+           * members.html or asks them to submit the credential again. */
+          if (missing && aliases.length) return attempt(remaining, aliases.shift(), aliases);
           return response;
         });
       }, function (error) {
@@ -99,8 +109,8 @@
          * service immediately as well; this does not consume a retry or ask the
          * member to submit their code a second time.
          */
-        if (useHostedApi()) return attempt(remaining);
-        if (remaining > 0) return attempt(remaining - 1);
+        if (useHostedApi()) return attempt(remaining, requestPath, aliases);
+        if (remaining > 0) return attempt(remaining - 1, requestPath, aliases);
         throw error;
       });
     }
