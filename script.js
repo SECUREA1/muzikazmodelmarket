@@ -468,78 +468,51 @@ function initModelMarketGate() {
   const disconnectButton = document.querySelector('#model-market-wallet-disconnect');
   const addressLabel = document.querySelector('#model-market-wallet-address');
   if (!cover || !form) return;
-
-  const setBusy = (busy) => {
-    if (connectButton) connectButton.disabled = busy;
-    if (disconnectButton) disconnectButton.disabled = busy;
-    form.setAttribute('aria-busy', String(busy));
-  };
-  const showAddress = (address = '') => {
-    if (addressLabel) {
-      addressLabel.hidden = !address;
-      addressLabel.textContent = address ? `Connected wallet: ${address}` : '';
-    }
-    if (disconnectButton) disconnectButton.hidden = !address;
-    if (connectButton) connectButton.textContent = address ? 'Choose another wallet' : 'Connect Ethereum wallet';
-  };
-  const uncover = (address = currentMemberEmail) => {
+  const accountApiFetch = (path, options = {}) => window.MUZIKAZ_API?.fetch ? window.MUZIKAZ_API.fetch(path, options) : fetch(path, options);
+  const setBusy = (busy) => { if (connectButton) connectButton.disabled = busy; if (disconnectButton) disconnectButton.disabled = busy; form.setAttribute('aria-busy', String(busy)); };
+  const uncover = (account) => {
+    currentMemberEmail = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
     document.body.classList.remove('model-market-gated');
     cover.setAttribute('hidden', '');
-    document.dispatchEvent(new CustomEvent('muzikaz:member-authenticated', { detail: { address } }));
+    document.dispatchEvent(new CustomEvent('muzikaz:member-authenticated', { detail: { account } }));
   };
-  const clearSession = (message = 'Wallet disconnected from this browser session.') => {
-    window.sessionStorage.removeItem('muzikazBottleMember');
-    window.localStorage.removeItem('muzikazBottleMemberEmail');
-    currentMemberEmail = '';
-    showAddress();
-    if (status) status.textContent = message;
-  };
-  const verify = async ({ chooseAccount = false, address = '' } = {}) => {
+  const bootstrap = async () => {
     setBusy(true);
+    if (status) status.textContent = 'Restoring your Loadout account…';
     try {
-      const wallet = requireEthereumWallet();
-      const account = address || await requestEthereumAccount(wallet, { chooseAccount });
-      showAddress(account);
-      if (status) status.textContent = 'Checking Bottle ownership on Ethereum…';
-      const ownership = await validateBottleOwnership(account);
-      currentMemberEmail = normalizeMemberEmail(account);
-      grantBottleAccess(currentMemberEmail, 'ethereum-contract', ownership.contract);
-      window.sessionStorage.setItem('muzikazBottleMember', 'true');
-      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-      if (window.MZKWallet?.connectIdentity) window.MZKWallet.connectIdentity({ address: account, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
-      if (status) status.textContent = `Verified ${ownership.balance.toString()} Bottle token${ownership.balance === 1n ? '' : 's'}. Opening the market…`;
-      uncover(account);
+      const response = await accountApiFetch('/api/account/bootstrap');
+      const result = await response.json().catch(() => ({ success: false, message: `The account service returned an unreadable response (${response.status}).` }));
+      if (!response.ok || !result.success) throw new Error(result.message || 'Account bootstrap failed.');
+      const state = result.data;
+      window.MuzikazAccountSession = { csrfToken: state.csrfToken, account: state.account, backpack: state.backpack, permissions: state.permissions, expiresAt: state.expiresAt };
+      if (state.account.loadoutAccess !== true || state.permissions.radTox !== true) throw new Error('This account does not have access to RAD-TOX.');
+      if (addressLabel) { addressLabel.hidden = false; addressLabel.textContent = `Loadout account: ${state.account.username || state.account.accountId}`; }
+      // A direct game URL is a supported entry path: establish its short-lived
+      // server game contract only after canonical bootstrap authorizes it.
+      const game = await accountApiFetch('/api/game/session', { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-Token': state.csrfToken }, body: '{}' });
+      const gameResult = await game.json().catch(() => ({ success: false, message: `The game service returned an unreadable response (${game.status}).` }));
+      if (!game.ok || !gameResult.success) throw new Error(gameResult.message || 'RAD-TOX game-session creation failed.');
+      window.MuzikazGameSessionToken = gameResult.data.gameSessionToken;
+      uncover(state.account);
     } catch (error) {
-      window.sessionStorage.removeItem('muzikazBottleMember');
-      if (status) status.textContent = error?.code === 4001 ? 'Wallet connection was cancelled. Nothing was changed.' : (error.message || 'Bottle ownership could not be verified.');
-    } finally {
-      setBusy(false);
-    }
+      if (status) status.textContent = error.message || 'RAD-TOX authorization failed.';
+    } finally { setBusy(false); }
   };
-
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    await verify({ chooseAccount: Boolean(currentMemberEmail) });
+  form.addEventListener('submit', (event) => { event.preventDefault(); window.location.href = 'members.html'; });
+  connectButton?.addEventListener('click', () => { window.location.href = 'members.html'; });
+  disconnectButton?.addEventListener('click', async () => {
+    try { await window.MUZIKAZ_API?.logout?.(window.MuzikazAccountSession?.csrfToken); } finally {
+      window.sessionStorage.removeItem('muzikazBottleMember');
+      window.sessionStorage.removeItem('muzikazLoginRedirect');
+      window.MuzikazAccountSession = null;
+      window.MuzikazGameSessionToken = '';
+      document.body.classList.add('model-market-gated');
+      cover.removeAttribute('hidden');
+      if (status) status.textContent = 'Disconnected. Open your account again to enter RAD-TOX.';
+    }
   });
-  disconnectButton?.addEventListener('click', () => clearSession());
-  window.ethereum?.on?.('accountsChanged', (accounts) => {
-    const address = String(accounts?.[0] || '');
-    if (!address) return clearSession('Wallet disconnected. Connect a Bottle-owning wallet to continue.');
-    clearSession('Wallet account changed. Rechecking Bottle ownership…');
-    verify({ address });
-  });
-
-  // A prior session is only reopened after the wallet still exposes the same
-  // account and its on-chain Bottle balance is checked again.
-  if (hasBottleLogin() && window.ethereum?.request) {
-    window.ethereum.request({ method: 'eth_accounts' }).then((accounts) => {
-      const address = String(accounts?.[0] || '');
-      if (normalizeMemberEmail(address) === normalizeMemberEmail(currentMemberEmail)) verify({ address });
-      else clearSession('Reconnect your Bottle wallet to open the market.');
-    }).catch(() => clearSession('Reconnect your Bottle wallet to open the market.'));
-  }
+  bootstrap();
 }
-
 initModelMarketGate();
 
 function initWorldAtlas() {
@@ -2415,20 +2388,16 @@ function initBottleLogin() {
   const restoreSession = async () => {
     if (status) status.textContent = 'Checking your MUZIKAZ account session…';
     try {
-      const sessionResponse = await accountApiFetch('/api/session');
-      const sessionResult = await sessionResponse.json();
-      if (sessionResponse.status === 401) { clearConnectedSession(); if (status) status.textContent = 'Sign in with an Access Code, purchase, or verified wallet.'; return; }
-      if (!sessionResponse.ok || !sessionResult.success) throw new Error(sessionResult.message || 'Session check failed.');
-      const accountResponse = await accountApiFetch('/api/account');
-      const accountResult = await accountResponse.json();
-      const backpackResponse = await accountApiFetch('/api/backpack');
-      const backpackResult = await backpackResponse.json();
-      if (!accountResponse.ok || !backpackResponse.ok) throw new Error(accountResult.message || backpackResult.message || 'Backpack request failed.');
-      const account = accountResult.data;
-      window.MuzikazAccountSession = { csrfToken: sessionResult.data.csrfToken, account, expiresAt: sessionResult.data.expiresAt, backpack: backpackResult.data };
+      const bootstrapResponse = await accountApiFetch('/api/account/bootstrap');
+      const bootstrapResult = await bootstrapResponse.json();
+      if (bootstrapResponse.status === 401) { clearConnectedSession(); if (status) status.textContent = 'Sign in with an Access Code, purchase, or verified wallet.'; return; }
+      if (!bootstrapResponse.ok || !bootstrapResult.success) throw new Error(bootstrapResult.message || 'Account bootstrap failed.');
+      const { account, backpack, permissions, csrfToken, expiresAt } = bootstrapResult.data;
+      window.MuzikazAccountSession = { csrfToken, account, expiresAt, backpack, permissions };
       currentMemberEmail = syncAccessCodeBackpack(account);
       showAddress(account.primaryEthereumWallet);
-      unlock(backpackResult.data.status === 'empty' ? 'Your account is open. This Backpack is currently empty.' : 'Welcome back. Your persistent Backpack is ready.');
+      if (account.loadoutAccess === true && permissions.members) { setPurchaseStep(3); unlock('Welcome back. Your persistent Loadout, Backpack, avatars, creator tools and games are ready.'); }
+      else unlock(backpack.status === 'empty' ? 'Your account is open. Add a Loadout to unlock member tools and games.' : 'Your account is open.');
       renderOwnedCollection(currentMemberEmail);
     } catch (error) {
       lockedContent.hidden = true;

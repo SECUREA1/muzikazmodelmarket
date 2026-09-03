@@ -35,6 +35,7 @@ function grantStandardLoadout(account) {
   }
   account.loadoutStatus = account.loadoutStatus === 'paid' ? 'paid' : 'included';
   account.loadoutRedeemed = true;
+  account.loadoutAccess = true;
   account.creatorVaultAccess = true;
   account.gameAccess = true;
   account.landAssets = unique([...(account.landAssets || []), ...STANDARD_LAND_ASSETS]);
@@ -77,7 +78,7 @@ function expireIssuedCredentials(data, now = Date.now()) {
 }
 function accountRecord(id, wallet = '', username = '') {
   const now = new Date().toISOString();
-  return { accountId: id || `usr_${randomUUID()}`, username, accessCodeStatus: null, accessCodeCreatedAt: null, accessCodeActivatedAt: null, accessCodeLastUsedAt: null, primaryEthereumWallet: wallet || null, connectedWallets: wallet ? [{ chain: 'ETH', address: wallet, boundAt: now }] : [], loadoutStatus: 'none', loadoutPaymentId: null, loadoutRedeemed: false, backpackId: `pack_${randomUUID()}`, mzkBalance: 0, starterMzkGranted: false, landAssets: [], gameAssets: [], purchasedAssets: [], bottleClaims: [], bottleNFTs: [], selectedAvatarId: 'starter-avatar', creatorVaultAccess: false, marketplaceAccess: true, gameAccess: false, createdAt: now, updatedAt: now };
+  return { accountId: id || `usr_${randomUUID()}`, username, accessCodeStatus: null, accessCodeCreatedAt: null, accessCodeActivatedAt: null, accessCodeLastUsedAt: null, primaryEthereumWallet: wallet || null, connectedWallets: wallet ? [{ chain: 'ETH', address: wallet, boundAt: now }] : [], loadoutStatus: 'none', loadoutPaymentId: null, loadoutRedeemed: false, loadoutAccess: false, backpackId: `pack_${randomUUID()}`, mzkBalance: 0, starterMzkGranted: false, landAssets: [], gameAssets: [], purchasedAssets: [], bottleClaims: [], bottleNFTs: [], selectedAvatarId: 'starter-avatar', creatorVaultAccess: false, marketplaceAccess: true, gameAccess: false, createdAt: now, updatedAt: now };
 }
 
 export class MzkAccountStore {
@@ -108,6 +109,17 @@ export class MzkAccountStore {
         }
       } catch (error) { if (error.code !== 'ENOENT') throw error; }
       if (!data.migrations.canonicalAccountsV2) data.migrations.canonicalAccountsV2 = new Date().toISOString();
+
+      // V4 makes the durable account flag the sole authorization entitlement.
+      // Existing grants are upgraded once; runtime authorization never infers
+      // entitlement from mutable Backpack contents, wallets, or client input.
+      if (!data.migrations.loadoutAccessV4) {
+        for (const account of data.accounts) {
+          if (account.loadoutAccess !== true && (account.loadoutRedeemed === true || account.loadoutStatus === 'paid' || account.loadoutStatus === 'included' || account.loadoutStatus === 'waived')) account.loadoutAccess = true;
+          if (account.loadoutAccess !== true) account.loadoutAccess = false;
+        }
+        data.migrations.loadoutAccessV4 = new Date().toISOString();
+      }
 
       // Rust stored the generated secret because it predated reusable account
       // credentials. Import each still-recognizable pass once, replacing the
@@ -209,6 +221,15 @@ export class MzkAccountStore {
   }); }
   selectAvatar(accountId, avatarId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const id = String(avatarId || ''); if (id !== 'starter-avatar') throw Object.assign(new Error('That avatar is Unrevealed and cannot be used yet. Starter Avatar remains available.'), { statusCode: 409 }); account.selectedAvatarId = id; account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
   async getAccount(accountId) { const account = (await this.records()).accounts.find((a) => a.accountId === accountId); return account ? publicAccount(account) : null; }
+  repairEntitledAccount(accountId) { return this.serialized(async (data) => {
+    const account = data.accounts.find((item) => item.accountId === accountId);
+    if (!account) throw Object.assign(new Error('The session account no longer exists.'), { statusCode: 401, code: 'ACCOUNT_NOT_FOUND' });
+    if (account.loadoutAccess === true) {
+      grantStandardLoadout(account);
+      account.updatedAt = new Date().toISOString();
+    }
+    return publicAccount(account);
+  }); }
   ensureAccountCode(accountId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const active = data.credentials.find((c) => c.accountId === accountId && c.status === 'activated'); if (active) return { created: false, credential: publicCredential(active) }; const code = generateCode(); const secret = hashCode(code); const now = new Date().toISOString(); const record = { id: randomUUID(), codeHash: secret.hash, codeSalt: secret.salt, maskedCode: mask(code), label: 'Account credential', campaign: '', status: 'activated', createdAt: now, expiresAt: null, activatedAt: now, lastUsedAt: null, boundWallet: account.primaryEthereumWallet, accountId, accountUsername: account.username, loadoutRedeemed: account.loadoutRedeemed, entitlements: {} }; data.credentials.unshift(record); Object.assign(account, { accessCodeStatus: 'activated', accessCodeCreatedAt: now, accessCodeActivatedAt: now, updatedAt: now }); return { created: true, code, credential: publicCredential(record) }; }); }
   rotate(accountId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); for (const c of data.credentials) if (c.accountId === accountId && c.status === 'activated') c.status = 'revoked'; const code = generateCode(); const secret = hashCode(code); const now = new Date().toISOString(); const record = { id: randomUUID(), codeHash: secret.hash, codeSalt: secret.salt, maskedCode: mask(code), label: 'Rotated account credential', campaign: '', status: 'activated', createdAt: now, expiresAt: null, activatedAt: now, lastUsedAt: null, boundWallet: account.primaryEthereumWallet, accountId, accountUsername: account.username, loadoutRedeemed: account.loadoutRedeemed, entitlements: {} }; data.credentials.unshift(record); account.accessCodeCreatedAt = now; account.accessCodeActivatedAt = now; account.accessCodeStatus = 'activated'; account.updatedAt = now; return { code, credential: publicCredential(record), account: publicAccount(account) }; }); }
   revoke(accountId) { return this.serialized(async (data) => { let found = false; for (const c of data.credentials) if (c.accountId === accountId && c.status === 'activated') { c.status = 'revoked'; found = true; } const account = data.accounts.find((a) => a.accountId === accountId); if (account) { account.accessCodeStatus = 'revoked'; account.updatedAt = new Date().toISOString(); } return { revoked: found, account: account && publicAccount(account) }; }); }

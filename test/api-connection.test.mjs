@@ -14,7 +14,8 @@ function loadConnection(fetch) {
     fetch,
     setTimeout,
     clearTimeout,
-    localStorage: { getItem: (key) => storage.get(key) || null, setItem: (key, value) => storage.set(key, String(value)), removeItem: (key) => storage.delete(key) },
+    localStorage: { getItem: (key) => storage.get('local:' + key) || null, setItem: (key, value) => storage.set('local:' + key, String(value)), removeItem: (key) => storage.delete('local:' + key) },
+    sessionStorage: { getItem: (key) => storage.get('session:' + key) || null, setItem: (key, value) => storage.set('session:' + key, String(value)), removeItem: (key) => storage.delete('session:' + key) },
     location: {
       href: 'https://world.muzikaz.example/members.html',
       origin: 'https://world.muzikaz.example',
