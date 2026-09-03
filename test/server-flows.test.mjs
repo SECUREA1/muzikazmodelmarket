@@ -76,19 +76,15 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['New User Pack']);
 });
 
-test('member loadout entry uses the shared canonical account API', async () => {
-  const source = await readFile(new URL('../script.js', import.meta.url), 'utf8');
-  assert.match(source, /const accountApiFetch = .*window\.MUZIKAZ_API\?\.fetch/s);
-  assert.match(source, /accountApiFetch\('\/api\/access\/wallet'/);
-  assert.match(source, /accountApiFetch\('\/api\/access\/activate'/);
-  assert.match(source, /accountApiFetch\('\/api\/account\/loadout\/paid'/);
-  assert.match(source, /accountApiFetch\('\/api\/account\/access-code'/);
-  assert.ok(source.includes('[A-Z0-9]{8}-[A-Z0-9]{8}'), 'legacy Rust pass format remains accepted by the member login');
-  assert.ok(source.includes("document.querySelector('#loadout-code-redeem')?.click()"), 'shared pass links automatically submit the member login');
-  assert.ok(source.includes("accountApiFetch('/api/account/bootstrap')"), 'account and Backpack state are loaded from authoritative bootstrap');
-  assert.ok(!source.slice(source.indexOf('const enterGame'), source.indexOf('const verifyAndUnlock')).includes("accountApiFetch('/api/game/session'"), 'members navigation does not create and discard a game session');
-  assert.ok(source.includes("window.sessionStorage.setItem('muzikazGameSessionToken'"), 'the destination persists its game token for protected requests');
-  assert.ok(source.includes("accountApiFetch('/api/access/admin-bypass'"), 'the Bottle page owner shortcut uses the server-validated bypass route');
-  assert.ok(!source.includes('window.MZKWallet?.provisionStandardLoadout(account)'), 'local storage is not an ownership authority');
-  assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'successful code entry opens the game page');
+test('member loadout entry is simple and only the saved admin bypass uses the account API', async () => {
+  const html = await readFile(new URL('../members.html', import.meta.url), 'utf8');
+  const entry = await readFile(new URL('../members-entry.js', import.meta.url), 'utf8');
+  assert.ok(!html.includes('api-connection.js'));
+  assert.equal((entry.match(/\/api\//g) || []).length, 1);
+  assert.ok(entry.includes("fetch('/api/access/admin-bypass'"));
+  assert.ok(html.includes('data-entry-option="meknx"'));
+  assert.ok(html.includes('data-entry-option="pay"'));
+  assert.ok(entry.includes("window.localStorage.setItem('muzikazStarterLoadout'"));
+  assert.ok(entry.includes("accountId: account.accountId"));
+  assert.ok(entry.includes("window.location.assign('model-market.html?access='"));
 });
