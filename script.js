@@ -15,6 +15,7 @@ const BACKPACK_MARKET_KEY = 'muzikazBackpackMarket';
 const BACKPACK_TRANSACTIONS_KEY = 'muzikazBackpackTransactions';
 const BACKPACK_STARTING_TOKENS = 500;
 const BOTTLE_ACCESS_KEY = 'muzikazBottleAccess';
+const VERIFIED_MEMBER_KEY = 'muzikazVerifiedMemberAccessV1';
 const BOTTLE_BALANCE_OF_SELECTOR = '0x70a08231';
 const BOTTLE_MINT_SELECTOR = '0x1249c58b';
 const BACKPACK_LOADOUT_USD = 30;
@@ -272,6 +273,34 @@ function hasBottleEntitlement(email) {
   return Boolean(readBottleAccess()[normalizeMemberEmail(email)]);
 }
 
+function readVerifiedMemberAccess() {
+  try {
+    const access = JSON.parse(window.localStorage.getItem(VERIFIED_MEMBER_KEY) || 'null');
+    return access?.verified === true && access.owner ? access : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function rememberVerifiedMemberAccess(owner, source, reference = '') {
+  const normalizedOwner = normalizeMemberEmail(owner);
+  if (!normalizedOwner) return null;
+  const access = { verified: true, owner: normalizedOwner, source, reference, verifiedAt: new Date().toISOString() };
+  window.localStorage.setItem(VERIFIED_MEMBER_KEY, JSON.stringify(access));
+  window.localStorage.setItem('muzikazBottleMemberEmail', normalizedOwner);
+  window.localStorage.setItem('muzikazBottleMember', 'true');
+  window.sessionStorage.setItem('muzikazBottleMember', 'true');
+  grantBottleAccess(normalizedOwner, source, reference);
+  window.dispatchEvent(new CustomEvent('muzikaz:member-access-unlocked', { detail: access }));
+  return access;
+}
+
+window.MUZIKAZMemberAccess = {
+  current: readVerifiedMemberAccess,
+  isVerified: () => Boolean(readVerifiedMemberAccess()),
+  remember: rememberVerifiedMemberAccess
+};
+
 function bottleContractConfig() {
   const contract = String(window.MUZIKAZ_BOTTLE_CONTRACT_ADDRESS || document.querySelector('meta[name="muzikaz-bottle-contract"]')?.content || '').trim();
   const approvedContracts = [
@@ -457,7 +486,7 @@ function ownedAssetDetail(assetName) {
 
 function hasBottleLogin() {
   const email = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail);
-  return window.sessionStorage.getItem('muzikazBottleMember') === 'true' && hasBottleEntitlement(email);
+  return Boolean(readVerifiedMemberAccess()) || (window.sessionStorage.getItem('muzikazBottleMember') === 'true' && hasBottleEntitlement(email));
 }
 
 function initModelMarketGate() {
@@ -477,6 +506,13 @@ function initModelMarketGate() {
     document.dispatchEvent(new CustomEvent('muzikaz:member-authenticated', { detail: { account } }));
   };
   const bootstrap = async () => {
+    const verifiedAccess = readVerifiedMemberAccess();
+    if (verifiedAccess) {
+      currentMemberEmail = verifiedAccess.owner;
+      if (addressLabel) { addressLabel.hidden = false; addressLabel.textContent = `Verified member: ${verifiedAccess.owner}`; }
+      uncover({ accountId: verifiedAccess.reference || verifiedAccess.owner, primaryEthereumWallet: verifiedAccess.owner.startsWith('0x') ? verifiedAccess.owner : null });
+      return;
+    }
     setBusy(true);
     if (status) status.textContent = 'Restoring your Loadout account…';
     try {
@@ -2147,19 +2183,20 @@ function initBottleLogin() {
   const verifyAndUnlock = async (address, requiredContract = '') => {
     const ownership = await validateBottleOwnership(address, requiredContract);
     const profile = window.MZKWallet?.connectIdentity({ address, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
-    await authenticateWalletAccount(address);
+    // On-chain ownership is the authority for holder access. The account API is
+    // optional here so an API outage cannot relock World or VibeVerse.
+    try { await authenticateWalletAccount(address); } catch (error) { console.info('[MUZIKAZ Member] Continuing with verified on-chain access.', error.message); }
     if (requiredContract) {
-      const response = await accountApiFetch('/api/account/meknx-loadout', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': window.MuzikazAccountSession.csrfToken }, body: JSON.stringify({ contract: ownership.contract }) });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message || 'The MEKNX Loadout could not be added to your account.');
-      window.MuzikazAccountSession.account = result.data;
-      window.MuzikazAccountSession.permissions = accountPermissions(result.data);
-      syncAccessCodeBackpack(result.data);
+      try {
+        if (window.MuzikazAccountSession?.csrfToken) {
+          const response = await accountApiFetch('/api/account/meknx-loadout', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': window.MuzikazAccountSession.csrfToken }, body: JSON.stringify({ contract: ownership.contract }) });
+          const result = await response.json();
+          if (response.ok && result.success) { window.MuzikazAccountSession.account = result.data; window.MuzikazAccountSession.permissions = accountPermissions(result.data); syncAccessCodeBackpack(result.data); }
+        }
+      } catch (error) { console.info('[MUZIKAZ Member] Account sync deferred; holder access remains open.', error.message); }
     }
     currentMemberEmail = normalizeMemberEmail(address);
-    grantBottleAccess(currentMemberEmail, 'ethereum-contract', ownership.config.contract);
-    window.sessionStorage.setItem('muzikazBottleMember', 'true');
-    window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+    rememberVerifiedMemberAccess(currentMemberEmail, requiredContract ? 'meknx-holder' : 'ethereum-contract', ownership.contract);
     showAddress(address);
     if (identityPanel) identityPanel.hidden = false;
     if (usernameInput) usernameInput.value = profile?.username || '';
@@ -2258,8 +2295,7 @@ function initBottleLogin() {
       const account = rememberAccountSession(result.data);
       currentMemberEmail = syncAccessCodeBackpack(account);
       grantBottleAccess(currentMemberEmail, 'mzk-access-code', account.accountId);
-      window.sessionStorage.setItem('muzikazBottleMember', 'true');
-      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      rememberVerifiedMemberAccess(currentMemberEmail, 'mzk-access-code', account.accountId);
       setPurchaseStep(3);
       renderOwnedCollection(currentMemberEmail);
       showAddress(account.primaryEthereumWallet);
@@ -2272,7 +2308,7 @@ function initBottleLogin() {
         window.location.href = redirect;
         return;
       }
-      await enterGame();
+      scrollToSection('member-locked-content');
     } catch (error) {
       if (status) status.textContent = error.message || 'The MZK Access Code could not be activated.';
     } finally { setBusy(false); }
@@ -2328,7 +2364,7 @@ function initBottleLogin() {
       const paidResult = await paidResponse.json(); if (!paidResponse.ok || !paidResult.success) throw new Error(paidResult.message || 'The verified Loadout is still synchronizing. Reload to retry safely.');
       const account = rememberAccountSession(paidResult.data);
       currentMemberEmail = syncAccessCodeBackpack(account);
-      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      rememberVerifiedMemberAccess(currentMemberEmail, 'verified-purchase', payment.orderId);
       window.localStorage.removeItem('muzikazLoadoutRecovery');
       const credentialResponse = await accountApiFetch('/api/account/access-code', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-csrf-token': window.MuzikazAccountSession.csrfToken }, body: '{}' });
       const credentialResult = await credentialResponse.json();
@@ -2389,6 +2425,15 @@ function initBottleLogin() {
   // Cookies, not browser inventory keys, restore membership. A failed request is
   // kept distinct from an authenticated but empty Backpack and can be retried.
   const restoreSession = async () => {
+    const verifiedAccess = readVerifiedMemberAccess();
+    if (verifiedAccess) {
+      currentMemberEmail = verifiedAccess.owner;
+      window.MuzikazAccountSession ||= { account: { accountId: verifiedAccess.reference || verifiedAccess.owner, loadoutAccess: true, memberAccess: true, gameAccess: true, worldAccess: true }, permissions: { members: true, radTox: true, world: true, creatorTools: true } };
+      setPurchaseStep(3);
+      unlock(`Welcome back. Your verified ${verifiedAccess.source.replaceAll('-', ' ')} access keeps Members, World and VibeVerse unlocked on this device.`);
+      renderOwnedCollection(currentMemberEmail);
+      return;
+    }
     if (status) status.textContent = 'Checking your MUZIKAZ account session…';
     try {
       const bootstrapResponse = await accountApiFetch('/api/account/bootstrap');
