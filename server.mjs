@@ -5,7 +5,7 @@ import { extname, join, normalize } from 'node:path';
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { UserJsonDatabase, cleanWallet } from './user-json-database.mjs';
 import { LoadoutCodeStore } from './loadout-code-store.mjs';
-import { PaymentOrderStore } from './payment-order-store.mjs';
+import { PaymentOrderStore, MUZIKAZ_PAYMENT_NETWORKS } from './payment-order-store.mjs';
 import { verifyPaymentTransaction } from './payment-verifier.mjs';
 
 const root = process.cwd();
@@ -42,6 +42,21 @@ const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; char
 const allowedUploadTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const maxHouseUsers = 15;
 const presenceTtlMs = 30_000;
+let paymentRatesCache = null;
+async function trustedLoadoutOrder(input) {
+  if (String(input.purchaseType || '').toUpperCase() !== 'LOADOUT') return input;
+  if (String(input.itemId || '') !== 'standard-loadout') throw Object.assign(new Error('Unknown Loadout product.'), { statusCode: 400 });
+  const asset = String(input.paymentAsset || '').toUpperCase(); const network = MUZIKAZ_PAYMENT_NETWORKS[asset];
+  if (!network) throw Object.assign(new Error('Unsupported Loadout payment asset.'), { statusCode: 400 });
+  if (!paymentRatesCache || Date.now() - paymentRatesCache.savedAt > 60_000) {
+    const ids = [...new Set(Object.values(MUZIKAZ_PAYMENT_NETWORKS).map((item) => item.rateId))].join(',');
+    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`, { headers: { Accept: 'application/json' } });
+    if (!response.ok) throw Object.assign(new Error('Independent payment quote is unavailable. No order was created.'), { statusCode: 503 });
+    paymentRatesCache = { savedAt: Date.now(), values: await response.json() };
+  }
+  const usdRate = Number(paymentRatesCache.values[network.rateId]?.usd); if (!(usdRate > 0)) throw Object.assign(new Error('Independent payment quote is unavailable. No order was created.'), { statusCode: 503 });
+  const factor = 10 ** network.decimals; return { ...input, purchaseType: 'LOADOUT', itemId: 'standard-loadout', basePrice: 30, quantity: 1, expectedAmount: Math.ceil((30 / usdRate) * factor) / factor };
+}
 
 function activePresence() {
   const cutoff = Date.now() - presenceTtlMs;
@@ -98,7 +113,7 @@ async function writeModels(records) { await ensureStorage(); await writeFile(mod
 async function writeAssets(records) { await ensureStorage(); await writeFile(assetsFile, JSON.stringify(records, null, 2)); }
 function user(req) {
   const active = accountSessions.get(cookie(req, 'mzk_session'));
-  const sessionWallet = active?.expiresAt > Date.now() ? active.wallet : '';
+  const sessionWallet = active?.expiresAt > Date.now() ? (active.wallet || `account:${active.accountId}`) : '';
   return { id: cleanText(req.headers['x-user-id'] || sessionWallet, 'demo-user'), role: 'user', name: cleanText(req.headers['x-user-name'], 'MUZIKAZ Creator') };
 }
 function requestWallet(req) {
@@ -298,11 +313,12 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/account/loadout/paid' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; const body = await bodyJson(req); const account = await loadoutCodeStore.getAccount(active.accountId); const granted = await loadoutCodeStore.grantPaidLoadout(account.primaryEthereumWallet, body.paymentId); await userDatabase.ensureAccount(granted); return sendJson(res, 200, assetResponse(granted)); }
     if (url.pathname === '/api/account' && req.method === 'GET') { const active = accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return account ? sendJson(res, 200, assetResponse(account)) : sendJson(res, 404, { success: false, message: 'Account not found.' }); }
     if (url.pathname === '/api/account/wallet' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; const account = await loadoutCodeStore.connectWallet(active.accountId, (await bodyJson(req)).wallet); active.wallet = account.primaryEthereumWallet; await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(account)); }
+    if (url.pathname === '/api/account/avatar' && req.method === 'PUT') { const active = accountSession(req, res, true); if (!active) return; const account = await loadoutCodeStore.selectAvatar(active.accountId, (await bodyJson(req)).avatarId); await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(account)); }
     if (url.pathname === '/api/account/access-code' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.ensureAccountCode(active.accountId))); }
     if (url.pathname === '/api/account/access-code/rotate' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.rotate(active.accountId))); }
     if (url.pathname === '/api/account/access-code/revoke' && req.method === 'POST') { const active = accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.revoke(active.accountId))); }
 
-    if (url.pathname === '/api/payments/orders' && req.method === 'POST') return sendJson(res, 201, assetResponse(await paymentOrderStore.create(await bodyJson(req))));
+    if (url.pathname === '/api/payments/orders' && req.method === 'POST') return sendJson(res, 201, assetResponse(await paymentOrderStore.create(await trustedLoadoutOrder(await bodyJson(req)))));
     if (url.pathname === '/api/admin/sales' && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await paymentOrderStore.list())); }
     const paymentOrder = url.pathname.match(/^\/api\/payments\/orders\/([^/]+)$/);
     if (paymentOrder && req.method === 'GET') { const order = await paymentOrderStore.get(paymentOrder[1]); return order ? sendJson(res, 200, assetResponse(order)) : sendJson(res, 404, { success: false, message: 'Payment order not found.' }); }

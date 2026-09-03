@@ -1,6 +1,6 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import paymentConfig from './payment-config.js';
 
 const { MUZIKAZ_PAYMENT_NETWORKS, PAYMENT_STATUSES } = paymentConfig;
@@ -32,11 +32,13 @@ export class PaymentOrderStore {
     const basePrice = Number(input.basePrice); const expectedAmount = Number(input.expectedAmount);
     if (!network || !(basePrice > 0) || !(expectedAmount > 0)) throw new Error('A supported asset, positive base price, and expected amount are required.');
     const now = new Date().toISOString();
+    const claimToken = randomBytes(24).toString('base64url');
     const metadata = input.metadata && typeof input.metadata === 'object' ? { items: cleanItems(input.metadata), receiptEmail: String(input.metadata.receiptEmail || '').slice(0, 254) } : { items: [] };
-    const order = { orderId: randomUUID(), userId: String(input.userId || input.wallet || 'guest').slice(0, 140), wallet: String(input.wallet || '').slice(0, 140), purchaseType: String(input.purchaseType || 'GENERIC').slice(0, 60), itemId: String(input.itemId || '').slice(0, 140), quantity: Math.max(1, Number(input.quantity) || 1), metadata, fiatCurrency: 'USD', basePrice, paymentAsset: network.symbol, paymentNetwork: network.network, chainId: network.chainId || null, assetNetwork: String(input.assetNetwork || '').slice(0, 80) || null, destinationAddress: network.address, expectedAmount, transactionHash: null, amountReceived: 0, confirmations: 0, paymentStatus: 'AWAITING_PAYMENT', createdAt: now, confirmedAt: null, fulfilledAt: null };
-    const records = await this.records(); records.push(order); await this.save(records); return order;
+    const order = { orderId: randomUUID(), claimTokenHash: createHash('sha256').update(claimToken).digest('hex'), userId: String(input.userId || input.wallet || 'guest').slice(0, 140), wallet: String(input.wallet || '').slice(0, 140), purchaseType: String(input.purchaseType || 'GENERIC').slice(0, 60), itemId: String(input.itemId || '').slice(0, 140), quantity: Math.max(1, Number(input.quantity) || 1), metadata, fiatCurrency: 'USD', basePrice, paymentAsset: network.symbol, paymentNetwork: network.network, chainId: network.chainId || null, assetNetwork: String(input.assetNetwork || '').slice(0, 80) || null, destinationAddress: network.address, expectedAmount, transactionHash: null, amountReceived: 0, confirmations: 0, paymentStatus: 'AWAITING_PAYMENT', createdAt: now, confirmedAt: null, fulfilledAt: null };
+    const records = await this.records(); records.push(order); await this.save(records); return { ...order, claimToken, claimTokenHash: undefined };
   }); }
   async get(id) { return (await this.records()).find((order) => order.orderId === id) || null; }
+  authorize(order, token) { const supplied = createHash('sha256').update(String(token || '')).digest(); const expected = Buffer.from(String(order?.claimTokenHash || ''), 'hex'); return expected.length === supplied.length && timingSafeEqual(expected, supplied); }
   async list() { return (await this.records()).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))); }
   async submit(id, transactionHash, wallet = '') { return this.locked(async () => {
     const hash = String(transactionHash || '').trim(); if (!hash) throw new Error('A transaction hash or transaction ID is required.');

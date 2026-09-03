@@ -25,12 +25,12 @@ test('rotation preserves the canonical account and revokes the prior credential'
 
 test('recognized wallets always resolve to the same canonical account', async (t) => {
   const { store } = await fixture(t); const wallet = '0x3333333333333333333333333333333333333333'; const first = await store.findByWallet(wallet); const second = await store.findByWallet(wallet.toUpperCase().replace('0X', '0x')); assert.equal(first.accountId, second.accountId);
-  assert.equal(first.loadoutStatus, 'included');
-  assert.equal(first.loadoutRedeemed, true);
-  assert.equal(first.mzkBalance, 500);
-  assert.deepEqual(first.landAssets, ['Unrevealed MUZIKAZ Land']);
-  assert.deepEqual(first.bottleClaims, ['Violet Wish Bottle']);
-  assert.deepEqual(first.gameAssets, ['Starter Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
+  assert.equal(first.loadoutStatus, 'none', 'an unverified wallet receives no Loadout');
+  assert.equal(first.loadoutRedeemed, false);
+  assert.equal(first.mzkBalance, 0);
+  assert.deepEqual(first.landAssets, []);
+  assert.deepEqual(first.bottleClaims, []);
+  assert.deepEqual(first.gameAssets, []);
 });
 
 test('default MZK Loadout Pass creates a full Backpack before a user has a wallet', async (t) => {
@@ -110,4 +110,34 @@ test('imports legacy Rust Loadout Pass secrets and keeps them as reusable member
   assert.equal((await store.authenticate(code)).accountId, activated.account.accountId);
   await store.migrate();
   assert.equal((await store.list()).filter((item) => item.id === 'legacy-pass').length, 1, 'migration is idempotent');
+});
+
+test('verified paid order provisions once and preserves the Backpack through wallet attachment', async (t) => {
+  const { store } = await fixture(t);
+  const order = { orderId: 'order-loadout-1', paymentStatus: 'PAID', purchaseType: 'LOADOUT', itemId: 'standard-loadout', basePrice: 30, wallet: '' };
+  const first = await store.fulfillPaidLoadout(order);
+  const replay = await store.fulfillPaidLoadout(order);
+  assert.equal(replay.accountId, first.accountId);
+  assert.equal(replay.backpackId, first.backpackId);
+  assert.equal(replay.mzkBalance, 500);
+  assert.equal(replay.gameAssets.filter((item) => item === 'Starter Avatar').length, 1);
+  assert.deepEqual(replay.landAssets, ['Unrevealed MUZIKAZ Land']);
+  assert.deepEqual(replay.bottleClaims, ['Violet Wish Bottle']);
+  assert.equal(replay.creatorVaultAccess, true);
+  const selected = await store.selectAvatar(first.accountId, 'starter-avatar');
+  const connected = await store.connectWallet(first.accountId, '0x4545454545454545454545454545454545454545');
+  assert.equal(connected.selectedAvatarId, selected.selectedAvatarId);
+  assert.equal(connected.backpackId, first.backpackId);
+  assert.equal(connected.mzkBalance, 500);
+  await assert.rejects(store.selectAvatar(first.accountId, 'unrevealed-loadout-avatar'), /Unrevealed/);
+});
+
+test('unverified, failed, underpriced, and wrong-product orders grant nothing', async (t) => {
+  const { file, store } = await fixture(t);
+  const base = { orderId: 'bad', paymentStatus: 'PAID', purchaseType: 'LOADOUT', itemId: 'standard-loadout', basePrice: 30 };
+  await assert.rejects(store.fulfillPaidLoadout({ ...base, paymentStatus: 'CONFIRMING' }), /server-verified/);
+  await assert.rejects(store.fulfillPaidLoadout({ ...base, paymentStatus: 'FAILED' }), /server-verified/);
+  await assert.rejects(store.fulfillPaidLoadout({ ...base, basePrice: 29 }), /server-verified/);
+  await assert.rejects(store.fulfillPaidLoadout({ ...base, purchaseType: 'GENERIC' }), /server-verified/);
+  await assert.rejects(readFile(file, 'utf8'), { code: 'ENOENT' });
 });

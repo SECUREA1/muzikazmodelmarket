@@ -94,8 +94,8 @@ export class UserJsonDatabase {
     const accountKey = cleanWallet(`account:${account?.accountId}`);
     const wallet = cleanWallet(account?.primaryEthereumWallet || accountKey);
     const entitlementItems = [
-      ...(account.gameAssets || []).map((name) => ({ id: `access-game-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'game-asset', source: 'mzk-access-code' })),
-      ...(account.landAssets || []).map((name) => ({ id: `access-land-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'land-entitlement', source: 'mzk-access-code' })),
+      ...(account.gameAssets || []).map((name) => ({ id: `access-game-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'game-asset', source: 'mzk-access-code', revealStatus: /unrevealed/i.test(String(name)) ? 'unrevealed' : 'revealed' })),
+      ...(account.landAssets || []).map((name) => ({ id: `access-land-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'land-entitlement', source: 'mzk-access-code', revealStatus: /unrevealed/i.test(String(name)) ? 'unrevealed' : 'revealed' })),
       ...(account.bottleClaims || []).map((name) => ({ id: `access-claim-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'collectible-claim', source: 'mzk-access-code' }))
     ];
     return this.transaction((data) => {
@@ -107,7 +107,7 @@ export class UserJsonDatabase {
       const knownIds = new Set((previous.items || []).map((item) => item.id));
       const items = [...(previous.items || []), ...entitlementItems.filter((item) => !knownIds.has(item.id))];
       const memory = mergeMemory(previous.memory, {
-        account: { accountId: account.accountId, backpackId: account.backpackId, accessCodeStatus: account.accessCodeStatus, gameAccess: Boolean(account.gameAccess), creatorVaultAccess: Boolean(account.creatorVaultAccess) },
+        account: { accountId: account.accountId, backpackId: account.backpackId, accessCodeStatus: account.accessCodeStatus, gameAccess: Boolean(account.gameAccess), creatorVaultAccess: Boolean(account.creatorVaultAccess), selectedAvatarId: account.selectedAvatarId || 'starter-avatar' },
         profile: account.username ? { username: account.username, displayName: account.username } : {}
       });
       const tokens = { ...(previous.tokens || {}) };

@@ -52,3 +52,14 @@ test('verified cart orders persist the buyer wallet and exact fulfilled items fo
   assert.deepEqual(fulfilled.fulfillment.items, fulfilled.metadata.items);
   assert.equal((await store.list())[0].metadata.receiptEmail, 'buyer@example.com');
 });
+
+test('order recovery uses a secret claim token that is stored only as a hash', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'muzikaz-payment-'));
+  const store = new PaymentOrderStore(join(dir, 'orders.json'));
+  const created = await store.create({ purchaseType: 'LOADOUT', itemId: 'standard-loadout', basePrice: 30, paymentAsset: 'ETH', expectedAmount: .01 });
+  assert.ok(created.claimToken);
+  const persisted = await store.get(created.orderId);
+  assert.equal(persisted.claimToken, undefined);
+  assert.equal(store.authorize(persisted, created.claimToken), true);
+  assert.equal(store.authorize(persisted, 'wrong-token'), false);
+});
