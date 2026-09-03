@@ -7,12 +7,14 @@ const source = await readFile(new URL('../public/js/api-connection.js', import.m
 
 function loadConnection(fetch) {
   const attributes = {};
+  const storage = new Map();
   const window = {
     URL,
     Promise,
     fetch,
     setTimeout,
     clearTimeout,
+    localStorage: { getItem: (key) => storage.get(key) || null, setItem: (key, value) => storage.set(key, String(value)), removeItem: (key) => storage.delete(key) },
     location: {
       href: 'https://world.muzikaz.example/members.html',
       origin: 'https://world.muzikaz.example',
@@ -101,4 +103,16 @@ test('hosted account requests include the session cookie needed by paid loadout 
   });
   await window.MUZIKAZ_API.fetch('/api/account/loadout/paid', { method: 'POST' });
   assert.equal(requestOptions.credentials, 'include');
+});
+
+test('portable account sessions authorize cross-origin game requests when cookies are blocked', async () => {
+  let requestOptions;
+  const { window } = loadConnection(async (_url, options) => {
+    requestOptions = options;
+    return new Response(JSON.stringify({ success: true }), { status: 201, headers: { 'content-type': 'application/json' } });
+  });
+  window.MUZIKAZ_API.setSessionToken('portable-session');
+  await window.MUZIKAZ_API.fetch('/api/game/session', { method: 'POST', headers: { 'X-CSRF-Token': 'csrf' } });
+  assert.equal(requestOptions.headers.Authorization, 'Bearer portable-session');
+  assert.equal(requestOptions.headers['X-CSRF-Token'], 'csrf');
 });
