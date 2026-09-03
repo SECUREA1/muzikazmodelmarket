@@ -33,22 +33,24 @@ test('recognized wallets always resolve to the same canonical account', async (t
   assert.deepEqual(first.gameAssets, []);
 });
 
-test('default MZK Loadout Pass creates and fully grants a wallet-connected user account', async (t) => {
+test('default MZK Loadout Pass creates a full Backpack before a user has a wallet', async (t) => {
   const { store } = await fixture(t); const issued = await store.create();
   assert.equal(issued.label, 'MZK Loadout Pass');
-  const walletless = await store.activate(issued.code, '', 'New User');
-  assert.equal(walletless.account.primaryEthereumWallet, null);
-  const activated = { ...walletless, account: await store.connectWallet(walletless.account.accountId, '0x4444444444444444444444444444444444444444') };
+  const activated = await store.activate(issued.code, '', 'New User');
   assert.equal(activated.account.username, 'New User');
-  assert.equal(activated.account.primaryEthereumWallet, '0x4444444444444444444444444444444444444444');
+  assert.equal(activated.account.primaryEthereumWallet, null);
   assert.equal(activated.account.loadoutStatus, 'included');
   assert.equal(activated.account.creatorVaultAccess, true);
   assert.equal(activated.account.gameAccess, true);
   assert.equal(activated.account.mzkBalance, 500);
   assert.deepEqual(activated.account.landAssets, ['Unrevealed MUZIKAZ Land']);
   assert.deepEqual(activated.account.bottleClaims, ['Violet Wish Bottle']);
-  assert.deepEqual(activated.account.gameAssets, ['Starter Avatar', 'Unrevealed Loadout Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
-  assert.equal((await store.authenticate(issued.code)).accountId, activated.account.accountId, 'the access code reopens the wallet-connected account');
+  assert.deepEqual(activated.account.gameAssets, ['Starter Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
+  const wallet = '0x4444444444444444444444444444444444444444';
+  const connected = await store.connectWallet(activated.account.accountId, wallet);
+  assert.equal(connected.backpackId, activated.account.backpackId, 'connecting Ethereum keeps the code-created Backpack');
+  assert.equal((await store.findByWallet(wallet)).accountId, activated.account.accountId, 'the wallet reopens the code-created account');
+  assert.equal((await store.authenticate(issued.code)).accountId, activated.account.accountId, 'the access code still reopens the wallet-connected account');
 });
 
 test('an activated code cannot be rebound to a different Ethereum account', async (t) => {

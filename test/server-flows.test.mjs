@@ -38,19 +38,19 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(pass.response.status, 201); assert.equal(pass.body.data.label, 'MZK Loadout Pass');
   assert.equal(pass.body.data.activationPath, `/members.html#access-code=${pass.body.data.code}`, 'admin receives a directly shareable activation route');
   const wallet = '0x5555555555555555555555555555555555555555';
-  const activation = await json(`${base}/api/access/activate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: pass.body.data.code, wallet, username: 'New User' }) });
-  assert.equal(activation.response.status, 200); assert.equal(activation.body.data.account.loadoutStatus, 'included'); assert.equal(activation.body.data.account.creatorVaultAccess, true); assert.equal(activation.body.data.account.primaryEthereumWallet, wallet);
+  const activation = await json(`${base}/api/access/activate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: pass.body.data.code, username: 'New User' }) });
+  assert.equal(activation.response.status, 200); assert.equal(activation.body.data.account.loadoutStatus, 'included'); assert.equal(activation.body.data.account.creatorVaultAccess, true); assert.equal(activation.body.data.account.primaryEthereumWallet, null);
   assert.equal(activation.body.data.account.mzkBalance, 500, 'admin Loadout codes include the full 500 MZK starter grant');
   const accountCookie = activation.response.headers.get('set-cookie').split(';')[0];
   const codeOnlyState = await json(`${base}/api/wallet/state`, { headers: { Cookie: accountCookie } });
-  assert.equal(codeOnlyState.response.status, 200, 'an access-code session resolves its validated Ethereum address');
+  assert.equal(codeOnlyState.response.status, 200, 'an access-code session opens the new Backpack without an Ethereum address');
   assert.ok(codeOnlyState.body.data.items.some((item) => item.name === 'Starter Avatar'), 'the loadout is in durable game memory');
   assert.equal(codeOnlyState.body.data.tokens.MZK, 500, 'the starter balance is available to multiplayer and market APIs');
-  const walletLink = await json(`${base}/api/account/wallet`, { method: 'POST', headers: { Cookie: accountCookie, 'Content-Type': 'application/json', 'x-csrf-token': activation.body.data.csrfToken }, body: JSON.stringify({ wallet }) });
-  assert.equal(walletLink.response.status, 200); assert.equal(walletLink.body.data.primaryEthereumWallet, wallet);
-  const walletLogin = await json(`${base}/api/access/wallet`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wallet }) });
+  const walletLogin = await json(`${base}/api/access/wallet`, { method: 'POST', headers: { Cookie: accountCookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ wallet }) });
+  assert.equal(walletLogin.response.status, 200); assert.equal(walletLogin.body.data.account.primaryEthereumWallet, wallet);
   assert.equal(walletLogin.body.data.account.accountId, activation.body.data.account.accountId, 'wallet and code open one canonical account');
-  assert.deepEqual(walletLogin.body.data.account.gameAssets, ['Starter Avatar', 'Unrevealed Loadout Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
+  assert.equal(walletLogin.body.data.account.backpackId, activation.body.data.account.backpackId, 'opening Ethereum attaches it to the code-created Backpack');
+  assert.deepEqual(walletLogin.body.data.account.gameAssets, ['Starter Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
 
   await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' } } }) });
   await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });

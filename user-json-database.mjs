@@ -91,17 +91,18 @@ export class UserJsonDatabase {
    * listings, uploaded-asset references, or other application memory.
    */
   ensureAccount(account) {
-    const wallet = cleanWallet(account?.primaryEthereumWallet || `account:${account?.accountId}`);
+    const accountKey = cleanWallet(`account:${account?.accountId}`);
+    const wallet = cleanWallet(account?.primaryEthereumWallet || accountKey);
     const entitlementItems = [
       ...(account.gameAssets || []).map((name) => ({ id: `access-game-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'game-asset', source: 'mzk-access-code', revealStatus: /unrevealed/i.test(String(name)) ? 'unrevealed' : 'revealed' })),
       ...(account.landAssets || []).map((name) => ({ id: `access-land-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'land-entitlement', source: 'mzk-access-code', revealStatus: /unrevealed/i.test(String(name)) ? 'unrevealed' : 'revealed' })),
       ...(account.bottleClaims || []).map((name) => ({ id: `access-claim-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'collectible-claim', source: 'mzk-access-code' }))
     ];
     return this.transaction((data) => {
-      const walletlessKey = `account:${account.accountId}`;
-      const walletless = wallet !== walletlessKey ? data.users[walletlessKey] : null;
-      const previous = data.users[wallet] || walletless || {};
-      if (walletless && wallet !== walletlessKey) delete data.users[walletlessKey];
+      // Code-only signup begins under a stable account key. Move that exact
+      // game record to the Ethereum address on first connection so balances,
+      // inventory, and memory remain one Backpack rather than being copied.
+      const previous = data.users[wallet] || data.users[accountKey] || {};
       const now = new Date().toISOString();
       const knownIds = new Set((previous.items || []).map((item) => item.id));
       const items = [...(previous.items || []), ...entitlementItems.filter((item) => !knownIds.has(item.id))];
@@ -115,6 +116,7 @@ export class UserJsonDatabase {
       if (firstAccountSync) tokens.MZK = Number(tokens.MZK || 0) + Number(account.mzkBalance || 0);
       const record = { walletId: wallet, tokens, items, memory, createdAt: previous.createdAt || account.createdAt || now, updatedAt: now, revision: Number(previous.revision || 0) + 1 };
       data.users[wallet] = record;
+      if (wallet !== accountKey) delete data.users[accountKey];
       return record;
     });
   }

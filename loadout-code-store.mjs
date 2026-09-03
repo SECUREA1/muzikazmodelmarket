@@ -153,6 +153,9 @@ export class MzkAccountStore {
     if (!account && address) account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address));
     // A credential is itself sufficient proof for a wallet-free account. Ethereum
     // can be attached later without changing the stable account or Backpack IDs.
+    // An admin pass is itself sufficient to create the account and Backpack.
+    // The recipient may not have an Ethereum wallet installed yet; when they
+    // connect one later, connectWallet binds it to this same canonical account.
     if (!account) { account = accountRecord('', address, String(username).slice(0, 40)); data.accounts.push(account); }
     const now = new Date().toISOString(); if (address && !account.connectedWallets.some((w) => w.chain === 'ETH' && w.address === address)) account.connectedWallets.push({ chain: 'ETH', address, boundAt: now }); if (address) account.primaryEthereumWallet ||= address;
     if (!credential.loadoutRedeemed) { account.mzkBalance += credential.entitlements.promotionalMzk; credential.loadoutRedeemed = true; }
