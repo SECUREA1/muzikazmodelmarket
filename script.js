@@ -2238,8 +2238,9 @@ function initBottleLogin() {
         status.textContent = 'Opening the MUZIKAZ account connected to this code…';
       }
       const submitCode = async (wallet = '') => {
-        const options = { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code, wallet, username: usernameInput?.value || '' }) };
-        const response = await accountApiFetch('/api/access-codes/redeem', options);
+        const idempotencyKey = window.crypto?.randomUUID?.() || `activation-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const options = { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Idempotency-Key': idempotencyKey }, body: JSON.stringify({ code, wallet, username: usernameInput?.value || '' }) };
+        const response = await accountApiFetch('/api/access/activate', options);
         const result = await response.json().catch(() => ({ success: false, message: `The access service returned an unreadable response (${response.status}).` }));
         return { response, result };
       };

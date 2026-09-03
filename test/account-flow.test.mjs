@@ -72,3 +72,12 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   assert.equal((await json(base, '/api/account/bootstrap', { headers: bearerHeaders })).response.status, 401, 'DELETE revokes the portable session');
   assert.equal((await json(base, '/api/does-not-exist')).body.code, 'API_ROUTE_NOT_FOUND');
 });
+
+test('production CORS origins receive complete credentialed preflight headers', async (t) => {
+  const base = await runningServer(t);
+  for (const origin of ['https://muzikaz.com', 'https://www.muzikaz.com', 'https://muzikazmodelmarket.onrender.com']) {
+    const response = await fetch(base + '/api/access/activate', { method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'Content-Type,Authorization,X-CSRF-Token,X-Game-Session,X-Idempotency-Key' } });
+    assert.equal(response.status, 204); assert.equal(response.headers.get('access-control-allow-origin'), origin); assert.equal(response.headers.get('access-control-allow-credentials'), 'true'); assert.match(response.headers.get('access-control-allow-methods'), /OPTIONS/); assert.match(response.headers.get('access-control-allow-headers'), /X-Idempotency-Key/i); assert.equal(response.headers.get('cache-control'), 'no-store');
+  }
+  const denied = await fetch(base + '/api/health', { headers: { Origin: 'https://evil.example' } }); assert.equal(denied.status, 403); assert.equal((await denied.json()).code, 'CORS_ORIGIN_DENIED');
+});

@@ -25,9 +25,15 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
 
   const health = await json(`${base}/api/health`, { headers: { Origin: 'https://admin.muzikaz.test' } });
   assert.equal(health.body.storage, 'ready');
+  assert.equal(health.body.service, 'muzikaz-member-market');
+  assert.equal(health.body.version, '1.0.0');
+  assert.ok(health.body.commit);
+  assert.ok(health.body.startedAt);
+  assert.deepEqual(health.body.routes, { accountBootstrap: true, accessActivation: true, gameSession: true });
   assert.equal(health.body.persistentStorageConfigured, false);
   assert.equal(health.response.headers.get('access-control-allow-origin'), 'https://admin.muzikaz.test', 'approved static admin deployments can call the live API with credentials');
   assert.equal(health.response.headers.get('access-control-allow-credentials'), 'true');
+  assert.ok(health.response.headers.get('x-request-id'));
   assert.equal((await json(`${base}/api/health`, { headers: { Origin: 'https://evil.example' } })).response.headers.get('access-control-allow-origin'), null, 'unknown origins are never reflected');
 
   const login = await json(`${base}/api/admin/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'test-admin', password: 'test-password' }) });
@@ -74,7 +80,7 @@ test('member loadout entry uses the shared canonical account API', async () => {
   const source = await readFile(new URL('../script.js', import.meta.url), 'utf8');
   assert.match(source, /const accountApiFetch = .*window\.MUZIKAZ_API\?\.fetch/s);
   assert.match(source, /accountApiFetch\('\/api\/access\/wallet'/);
-  assert.match(source, /accountApiFetch\('\/api\/access-codes\/redeem'/);
+  assert.match(source, /accountApiFetch\('\/api\/access\/activate'/);
   assert.match(source, /accountApiFetch\('\/api\/account\/loadout\/paid'/);
   assert.match(source, /accountApiFetch\('\/api\/account\/access-code'/);
   assert.ok(source.includes('[A-Z0-9]{8}-[A-Z0-9]{8}'), 'legacy Rust pass format remains accepted by the member login');

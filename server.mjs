@@ -10,6 +10,9 @@ import { verifyPaymentTransaction } from './payment-verifier.mjs';
 import { DurableSessionStore } from './session-store.mjs';
 
 const root = process.cwd();
+const serviceStartedAt = new Date().toISOString();
+const serviceVersion = process.env.npm_package_version || '1.0.0';
+const deploymentCommit = process.env.RENDER_GIT_COMMIT || process.env.MUZIKAZ_DEPLOY_COMMIT || process.env.GIT_COMMIT || 'development';
 const dataDir = process.env.MUZIKAZ_DATA_DIR || join(root, 'data');
 const uploadDir = process.env.MUZIKAZ_AVATAR_UPLOAD_DIR || process.env.MUZIKAZ_UPLOAD_DIR || join(root, 'uploads', 'avatars');
 const assetUploadDir = process.env.MUZIKAZ_ASSET_UPLOAD_DIR || join(root, 'uploads', 'assets');
@@ -287,9 +290,14 @@ function corsHeaders(extra = {}, origin = '') {
   const development = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/.test(origin);
   const production = /^https:\/\/(?:www\.)?muzikaz\.com$/.test(origin) || origin === 'https://muzikazmodelmarket.onrender.com';
   const allowedOrigin = origin && (configured.includes(origin) || development || production) ? origin : '';
-  return { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin, 'Access-Control-Allow-Credentials': 'true', Vary: 'Origin' } : {}), 'Access-Control-Allow-Methods': 'GET, PUT, POST, PATCH, DELETE, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Wallet-Address, X-MUZIKAZ-Session, X-User-Id, X-User-Role, X-User-Name, X-Admin-Token, X-MUZIKAZ-Land-Asset, X-CSRF-Token, X-Game-Session, X-Idempotency-Key', 'Cross-Origin-Resource-Policy': 'cross-origin', ...extra };
+  return { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin, 'Access-Control-Allow-Credentials': 'true' } : {}), Vary: 'Origin', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-CSRF-Token,X-Game-Session,X-Idempotency-Key,X-Wallet-Address,X-MUZIKAZ-Session,X-User-Id,X-User-Role,X-User-Name,X-Admin-Token,X-MUZIKAZ-Land-Asset', 'Cross-Origin-Resource-Policy': 'cross-origin', 'Cache-Control': 'no-store', ...extra };
 }
-function sendJson(res, status, data) { res.writeHead(status, corsHeaders({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }, res.muzikazRequestOrigin)); res.end(JSON.stringify(data)); }
+function originAllowed(origin) { return !origin || Boolean(corsHeaders({}, origin)['Access-Control-Allow-Origin']); }
+function sendJson(res, status, data) {
+  const requestId = res.muzikazRequestId || randomUUID();
+  if (status >= 400 && res.muzikazRequest) console.warn('[MUZIKAZ API]', JSON.stringify({ requestId, method: res.muzikazRequest.method, pathname: new URL(res.muzikazRequest.url, 'http://localhost').pathname, origin: res.muzikazRequestOrigin || null, authenticationMechanism: res.muzikazRequest.muzikazAuthentication?.mechanism || null, hasBearerToken: Boolean(bearer(res.muzikazRequest)), hasSessionCookie: Boolean(cookie(res.muzikazRequest, 'mzk_session')), status, errorCode: data?.code || 'REQUEST_FAILED', stage: data?.stage || 'request' }));
+  res.writeHead(status, corsHeaders({ 'Content-Type': 'application/json; charset=utf-8', 'X-Request-ID': requestId }, res.muzikazRequestOrigin)); res.end(JSON.stringify(data));
+}
 function isPublicAssetUrl(value) { try { const url = new URL(value, 'http://localhost'); return url.protocol === 'https:' || url.pathname.startsWith('/uploads/') || (url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)); } catch { return false; } }
 function cleanList(value, allowed = null) { const list = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : []; return [...new Set(list.map((item) => cleanText(item, '').trim().toLowerCase()).filter((item) => item && (!allowed || allowed.has(item))))]; }
 function cleanTraits(value) { if (!value || typeof value !== 'object' || Array.isArray(value)) return {}; return Object.fromEntries(Object.entries(value).slice(0, 40).map(([key, score]) => [cleanText(key, '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, ''), clampNumber(score, 0, 100, 0)]).filter(([key]) => key)); }
@@ -310,12 +318,14 @@ async function uploadFile(req) { const type = String(req.headers['content-type']
 const server = createServer(async (req, res) => {
   res.muzikazRequest = req;
   res.muzikazRequestOrigin = String(req.headers.origin || '');
+  res.muzikazRequestId = String(req.headers['x-request-id'] || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80) || randomUUID();
   const url = new URL(req.url, `http://${req.headers.host}`);
-  if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders({}, res.muzikazRequestOrigin)); res.end(); return; }
+  if (url.pathname.startsWith('/api/') && !originAllowed(res.muzikazRequestOrigin)) return sendJson(res, 403, { success: false, code: 'CORS_ORIGIN_DENIED', message: 'This origin is not allowed to call the MUZIKAZ API.', stage: 'cors' });
+  if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders({ 'X-Request-ID': res.muzikazRequestId }, res.muzikazRequestOrigin)); res.end(); return; }
   try {
     if (url.pathname === '/api/health' && req.method === 'GET') {
       await ensureStorage();
-      return sendJson(res, 200, { success: true, service: 'muzikaz-member-market', storage: 'ready', persistentStorageConfigured: dataDir.startsWith('/var/data') });
+      return sendJson(res, 200, { success: true, service: 'muzikaz-member-market', version: serviceVersion, commit: deploymentCommit, startedAt: serviceStartedAt, storage: 'ready', persistentStorageConfigured: dataDir.startsWith('/var/data'), routes: { accountBootstrap: true, accessActivation: true, gameSession: true } });
     }
     if (url.pathname === '/api/account/bootstrap' && req.method === 'GET') {
       const active = await accountSession(req, res); if (!active) return;
