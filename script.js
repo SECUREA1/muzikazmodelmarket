@@ -2070,10 +2070,6 @@ function initBottleLogin() {
   const tokenIdentity = document.querySelector('#wallet-token-identity');
   const adminBypassPassword = document.querySelector('#admin-game-bypass-password');
   const adminBypassButton = document.querySelector('#admin-game-bypass-button');
-  const simpleUsername = document.querySelector('#member-simple-username');
-  const simpleEmail = document.querySelector('#member-simple-email');
-  const simplePassword = document.querySelector('#member-simple-password');
-  const simpleSubmit = document.querySelector('#member-simple-submit');
   if (!form || !lockedContent) return;
   // Member access can be rendered from a static/custom-domain frontend while the
   // account service remains on Render. Keep every loadout request on the shared
@@ -2082,8 +2078,7 @@ function initBottleLogin() {
     ? window.MUZIKAZ_API.fetch(path, options)
     : fetch(path, options);
   let walletRequestActive = false;
-  const accountPermissions = (account) => ({ members: account.loadoutAccess === true && account.memberAccess === true, radTox: account.loadoutAccess === true && account.gameAccess === true });
-  const rememberAccountSession = (session) => { window.MUZIKAZ_API?.setSessionToken?.(session.sessionToken); window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, permissions: session.permissions || accountPermissions(session.account), expiresAt: session.expiresAt }; return session.account; };
+  const rememberAccountSession = (session) => { window.MUZIKAZ_API?.setSessionToken?.(session.sessionToken); window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt }; return session.account; };
   const authenticateWalletAccount = async (wallet) => { const response = await accountApiFetch('/api/access/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ wallet }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Wallet account authentication failed.'); return rememberAccountSession(result.data); };
   const setBusy = (busy) => {
     if (connectButton) connectButton.disabled = busy;
@@ -2094,7 +2089,6 @@ function initBottleLogin() {
     if (accessCodeButton) accessCodeButton.disabled = busy;
     if (walletValidateButton) walletValidateButton.disabled = busy;
     if (adminBypassButton) adminBypassButton.disabled = busy;
-    if (simpleSubmit) simpleSubmit.disabled = busy;
   };
   const updateLoadoutQuote = async () => {
     const currency = loadoutCurrency?.value || 'ETH';
@@ -2140,39 +2134,9 @@ function initBottleLogin() {
     document.body.classList.add('is-member-authenticated');
     if (status) status.textContent = message;
   };
-  simpleSubmit?.addEventListener('click', async () => {
-    const username = simpleUsername?.value.trim() || '';
-    const email = simpleEmail?.value.trim().toLowerCase() || '';
-    const password = simplePassword?.value || '';
-    if (username.length < 2) { if (status) status.textContent = 'Enter a username with at least 2 characters.'; simpleUsername?.focus(); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { if (status) status.textContent = 'Enter a valid email address.'; simpleEmail?.focus(); return; }
-    if (password.length < 6) { if (status) status.textContent = 'Enter a password with at least 6 characters.'; simplePassword?.focus(); return; }
-    setBusy(true);
-    try {
-      if (status) status.textContent = 'Opening your subscriber account and Backpack…';
-      const response = await accountApiFetch('/api/access/subscriber', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ username, email, password }) });
-      const result = await response.json().catch(() => ({ success: false, message: `The subscriber service returned an unreadable response (${response.status}).` }));
-      if (!response.ok || !result.success) throw new Error(result.message || 'Subscriber login failed.');
-      simplePassword.value = '';
-      const account = rememberAccountSession(result.data);
-      openAuthenticatedSubscriber(account, `Welcome ${account.username}. Your 500 MZK, complete Backpack, creator tools and RAD-TOX access are ready.`);
-    } catch (error) { if (status) status.textContent = error.message || 'Subscriber login failed.'; }
-    finally { setBusy(false); }
-  });
   const syncAccessCodeBackpack = (account) => {
     const owner = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
     return owner;
-  };
-  const openAuthenticatedSubscriber = (account, message) => {
-    currentMemberEmail = syncAccessCodeBackpack(account);
-    grantBottleAccess(currentMemberEmail, 'authenticated-account', account.accountId);
-    window.sessionStorage.setItem('muzikazBottleMember', 'true');
-    window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-    setPurchaseStep(3);
-    showAddress(account.primaryEthereumWallet);
-    renderOwnedCollection(currentMemberEmail);
-    unlock(message);
-    scrollToSection('member-locked-content');
   };
   const enterGame = async () => {
     if (!window.MuzikazAccountSession?.permissions?.radTox) throw new Error('Open an entitled Loadout account before entering RAD-TOX.');
@@ -2183,14 +2147,6 @@ function initBottleLogin() {
     const ownership = await validateBottleOwnership(address, requiredContract);
     const profile = window.MZKWallet?.connectIdentity({ address, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
     await authenticateWalletAccount(address);
-    if (requiredContract) {
-      const response = await accountApiFetch('/api/account/meknx-loadout', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': window.MuzikazAccountSession.csrfToken }, body: JSON.stringify({ contract: ownership.contract }) });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message || 'The MEKNX Loadout could not be added to your account.');
-      window.MuzikazAccountSession.account = result.data;
-      window.MuzikazAccountSession.permissions = accountPermissions(result.data);
-      syncAccessCodeBackpack(result.data);
-    }
     currentMemberEmail = normalizeMemberEmail(address);
     grantBottleAccess(currentMemberEmail, 'ethereum-contract', ownership.config.contract);
     window.sessionStorage.setItem('muzikazBottleMember', 'true');
@@ -2200,7 +2156,7 @@ function initBottleLogin() {
     if (usernameInput) usernameInput.value = profile?.username || '';
     if (tokenIdentity) tokenIdentity.textContent = `Verified identity: ${ownership.config.chainId} · ${ownership.contract} · Bottle token ${ownership.tokenIds.length ? ownership.tokenIds.join(', ') : 'ownership confirmed (contract does not expose token IDs)'}`;
     renderOwnedCollection(currentMemberEmail);
-    unlock(requiredContract ? `MEKNX verified. Your full account, 500 MZK, Builder Loadout, Backpack, creator tools and RAD-TOX access are ready.` : `Bottle ownership verified on-chain. ${ownership.balance.toString()} Bottle token${ownership.balance === 1n ? '' : 's'} found.`);
+    unlock(`Bottle ownership verified on-chain. ${ownership.balance.toString()} Bottle token${ownership.balance === 1n ? '' : 's'} found.`);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
@@ -2291,7 +2247,14 @@ function initBottleLogin() {
       let { response, result } = await submitCode(address);
       if (!response.ok || !result.success) throw new Error(result.message || 'The MZK Access Code could not be activated.');
       const account = rememberAccountSession(result.data);
-      openAuthenticatedSubscriber(account, account.primaryEthereumWallet
+      currentMemberEmail = syncAccessCodeBackpack(account);
+      grantBottleAccess(currentMemberEmail, 'mzk-access-code', account.accountId);
+      window.sessionStorage.setItem('muzikazBottleMember', 'true');
+      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      setPurchaseStep(3);
+      renderOwnedCollection(currentMemberEmail);
+      showAddress(account.primaryEthereumWallet);
+      unlock(account.primaryEthereumWallet
         ? `Account ${account.accountId} is open. This MZK Access Code and Ethereum account ${shortAddress(account.primaryEthereumWallet)} now resolve to the same Backpack, assets, MZK, land and creator tools.`
         : `Account ${account.accountId} is open with a new Backpack, starter MZK, land and creator tools. Connect Ethereum later and that wallet will open this same Backpack.`);
       const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
@@ -2300,6 +2263,7 @@ function initBottleLogin() {
         window.location.href = redirect;
         return;
       }
+      await enterGame();
     } catch (error) {
       if (status) status.textContent = error.message || 'The MZK Access Code could not be activated.';
     } finally { setBusy(false); }
@@ -2316,14 +2280,18 @@ function initBottleLogin() {
       const result = await response.json().catch(() => ({ success: false, message: `The admin service returned an unreadable response (${response.status}).` }));
       if (!response.ok || !result.success) throw new Error(result.message || 'Admin bypass failed.');
       const account = rememberAccountSession(result.data);
-      openAuthenticatedSubscriber(account, 'Admin Loadout opened. The complete subscribers area, Backpack, creator tools and RAD-TOX entry are ready.');
+      currentMemberEmail = syncAccessCodeBackpack(account);
+      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      window.sessionStorage.setItem('muzikazBottleMember', 'true');
+      setPurchaseStep(3);
+      unlock('Admin Loadout opened. Entering RAD-TOX now…');
+      await enterGame();
     } catch (error) { if (status) status.textContent = error.message || 'Admin bypass failed.'; }
     finally { setBusy(false); }
   });
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (simpleUsername?.value.trim() || simpleEmail?.value.trim() || simplePassword?.value) simpleSubmit?.click();
-    else if (accessCodeInput?.value.trim()) await openAccessCodeAccount();
+    if (accessCodeInput?.value.trim()) await openAccessCodeAccount();
     else await connect();
   });
   loadoutButton?.addEventListener('click', async () => {
@@ -2412,13 +2380,6 @@ function initBottleLogin() {
   // Cookies, not browser inventory keys, restore membership. A failed request is
   // kept distinct from an authenticated but empty Backpack and can be retried.
   const restoreSession = async () => {
-    const savedMember = localMember();
-    if (savedMember?.email && savedMember?.username) {
-      if (simpleUsername) simpleUsername.value = savedMember.username;
-      if (simpleEmail) simpleEmail.value = savedMember.email;
-      openLocalMember(savedMember, `Welcome back ${savedMember.username}. Your subscriber area is available on this device without an API check.`);
-      return;
-    }
     if (status) status.textContent = 'Checking your MUZIKAZ account session…';
     try {
       const bootstrapResponse = await accountApiFetch('/api/account/bootstrap');

@@ -24,18 +24,18 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   assert.equal(unauthenticated.response.status, 401); assert.equal(unauthenticated.body.code, 'SESSION_REQUIRED');
   assert.match(unauthenticated.response.headers.get('content-type'), /json/);
 
-  const subscribe = (username, email) => json(base, '/api/access/subscriber', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username, email, password: 'secret7' }) });
-  const first = await subscribe('First Member', 'first@example.com');
-  const second = await subscribe('Second Member', 'second@example.com');
+  const admin = await json(base, '/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'giraff', password: 'boots' }) });
+  const makeCode = async () => (await json(base, '/api/admin/access-codes', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-token': admin.body.data.token }, body: '{}' })).body.data.code;
+  const redeem = async (code) => json(base, '/api/access-codes/redeem', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
+  const first = await redeem(await makeCode()); const second = await redeem(await makeCode());
   assert.notEqual(first.body.data.account.accountId, second.body.data.account.accountId);
-  assert.match(first.body.data.sessionToken, /^[A-Za-z0-9_-]+$/, 'email entry returns a portable API session for browsers that block third-party cookies');
+  assert.match(first.body.data.sessionToken, /^[A-Za-z0-9_-]+$/, 'code entry returns a portable API session for browsers that block third-party cookies');
   const firstHeaders = { cookie: first.cookie }; const secondHeaders = { cookie: second.cookie };
   const session = await json(base, '/api/session', { headers: firstHeaders });
   const bootstrap = await json(base, '/api/account/bootstrap', { headers: firstHeaders });
   assert.equal(bootstrap.body.data.account.loadoutAccess, true);
   assert.equal(bootstrap.body.data.permissions.radTox, true);
   assert.equal(bootstrap.body.data.backpack.status, 'ready');
-  assert.ok(bootstrap.body.data.backpack.entitlements.includes('backpack-loadout'));
   const backpack = await json(base, '/api/backpack?accountId=' + second.body.data.account.accountId, { headers: firstHeaders });
   assert.equal(backpack.body.data.accountId, first.body.data.account.accountId, 'query parameters cannot cross account boundaries');
   assert.equal((await json(base, '/api/backpack', { headers: secondHeaders })).body.data.accountId, second.body.data.account.accountId);
@@ -80,14 +80,4 @@ test('production CORS origins receive complete credentialed preflight headers', 
     assert.equal(response.status, 204); assert.equal(response.headers.get('access-control-allow-origin'), origin); assert.equal(response.headers.get('access-control-allow-credentials'), 'true'); assert.match(response.headers.get('access-control-allow-methods'), /OPTIONS/); assert.match(response.headers.get('access-control-allow-headers'), /X-Idempotency-Key/i); assert.equal(response.headers.get('cache-control'), 'no-store');
   }
   const denied = await fetch(base + '/api/health', { headers: { Origin: 'https://evil.example' } }); assert.equal(denied.status, 403); assert.equal((await denied.json()).code, 'CORS_ORIGIN_DENIED');
-});
-
-test('subscriber credentials receive the same 500 MZK Loadout and portable session', async (t) => {
-  const base = await runningServer(t);
-  const login = await json(base, '/api/access/subscriber', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'Subscriber', email: 'subscriber@example.com', password: 'secret7' }) });
-  assert.equal(login.response.status, 200); assert.equal(login.body.data.account.mzkBalance, 500); assert.equal(login.body.data.account.loadoutAccess, true); assert.ok(login.body.data.sessionToken);
-  const backpack = await json(base, '/api/backpack', { headers: { authorization: `Bearer ${login.body.data.sessionToken}` } });
-  assert.equal(backpack.body.data.status, 'ready'); assert.equal(backpack.body.data.mzkBalance, 500); assert.ok(backpack.body.data.entitlements.includes('members-game'));
-  const reopened = await json(base, '/api/access/subscriber', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'Subscriber', email: 'subscriber@example.com', password: 'secret7' }) });
-  assert.equal(reopened.body.data.account.accountId, login.body.data.account.accountId); assert.equal(reopened.body.data.account.mzkBalance, 500);
 });
