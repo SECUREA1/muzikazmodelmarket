@@ -33,17 +33,6 @@ test('recognized wallets always resolve to the same canonical account', async (t
   assert.deepEqual(first.gameAssets, []);
 });
 
-test('subscriber login creates and reopens the same fully provisioned Backpack', async (t) => {
-  const { file, store } = await fixture(t);
-  const created = await store.subscriberLogin('Muz Fan', 'FAN@example.com', 'secret7');
-  assert.equal(created.mzkBalance, 500); assert.equal(created.loadoutAccess, true); assert.equal(created.gameAccess, true); assert.equal(created.creatorVaultAccess, true);
-  assert.equal(created.passwordHash, undefined); assert.equal(created.passwordSalt, undefined);
-  const reopened = await store.subscriberLogin('Muz Fan 2', 'fan@example.com', 'secret7');
-  assert.equal(reopened.accountId, created.accountId); assert.equal(reopened.backpackId, created.backpackId); assert.equal(reopened.mzkBalance, 500); assert.equal(reopened.username, 'Muz Fan 2');
-  await assert.rejects(store.subscriberLogin('Muz Fan', 'fan@example.com', 'wrong-password'), /incorrect/);
-  const stored = await readFile(file, 'utf8'); assert.equal(stored.includes('secret7'), false); assert.equal(stored.includes('wrong-password'), false);
-});
-
 test('default MZK Loadout Pass creates a full Backpack before a user has a wallet', async (t) => {
   const { store } = await fixture(t); const issued = await store.create();
   assert.equal(issued.label, 'MZK Loadout Pass');
@@ -187,15 +176,6 @@ test('repairs partially provisioned accounts only from durable Loadout entitleme
   await writeFile(file, JSON.stringify(data));
   const repaired = await store.repairEntitledAccount(account.accountId);
   assert.equal(repaired.loadoutAccess, true); assert.equal(repaired.gameAccess, true); assert.equal(repaired.memberAccess, true); assert.ok(repaired.gameAssets.includes('RAD-TOX Starter Gear'));
-
-  const interruptedData = JSON.parse(await readFile(file, 'utf8'));
-  const interrupted = interruptedData.accounts.find((item) => item.accountId === account.accountId);
-  interrupted.loadoutAccess = false; interrupted.loadoutRedeemed = false; interrupted.loadoutStatus = 'none'; interrupted.loadoutPaymentId = null; interrupted.gameAccess = false; interrupted.gameAssets = []; interrupted.accessCodeStatus = 'activated';
-  await writeFile(file, JSON.stringify(interruptedData));
-  const accessCodeRepaired = await store.repairEntitledAccount(account.accountId);
-  assert.equal(accessCodeRepaired.loadoutAccess, true, 'activated access restores the Backpack Loadout');
-  assert.equal(accessCodeRepaired.gameAccess, true, 'any account that entered valid access can enter the game');
-  assert.ok(accessCodeRepaired.gameAssets.includes('Starter Avatar'));
 
   const unentitled = await store.findByWallet('0x9999999999999999999999999999999999999999');
   const unchanged = await store.repairEntitledAccount(unentitled.accountId);

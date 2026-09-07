@@ -12,7 +12,6 @@ const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const normalizeCode = (value) => String(value || '').trim().toUpperCase().replace(/\s+/g, '');
 const normalizeWallet = (value) => String(value || '').trim().toLowerCase();
-const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 const unique = (values) => [...new Set(values.filter(Boolean))];
 const enabled = (value, fallback = true) => value == null ? fallback : ![false, 0, '0', 'false', 'off', 'no'].includes(typeof value === 'string' ? value.trim().toLowerCase() : value);
 // Keep access-code accounts at parity with the paid Builder Loadout advertised
@@ -23,21 +22,6 @@ const STANDARD_LAND_ASSETS = ['Unrevealed MUZIKAZ Land'];
 const STANDARD_BOTTLE_CLAIMS = ['Violet Wish Bottle'];
 const STANDARD_STARTER_MZK = 500;
 export const LOADOUT_PROVISIONING_VERSION = 1;
-
-// A confirmed payment and an activated access credential are equivalent ways
-// into the member experience. Centralizing that rule prevents older or
-// partially-written accounts from opening an empty Backpack or hitting the
-// game gate after they have already supplied valid access.
-function hasLoadoutEntitlement(account, credentials = []) {
-  return account.loadoutAccess === true
-    || account.loadoutRedeemed === true
-    || ['paid', 'included', 'waived'].includes(account.loadoutStatus)
-    || Boolean(account.loadoutPaymentId)
-    || credentials.some((credential) => credential.accountId === account.accountId
-      && credential.status === 'activated'
-      && credential.purpose === 'standard-loadout'
-      && credential.loadoutRedeemed === true);
-}
 
 // Wallet and code login are two keys to one account, so both must expose the
 // same complete, idempotently provisioned Backpack. This also repairs older
@@ -75,22 +59,14 @@ function generateCode() {
 function hashCode(code, salt = randomBytes(16).toString('hex')) {
   return { salt, hash: pbkdf2Sync(normalizeCode(code), salt, 210_000, 32, 'sha256').toString('hex') };
 }
-function hashPassword(password, salt = randomBytes(16).toString('hex')) {
-  return { salt, hash: pbkdf2Sync(String(password), salt, 210_000, 32, 'sha256').toString('hex') };
-}
 function verifies(code, credential) {
   const candidate = Buffer.from(hashCode(code, credential.salt).hash, 'hex');
   const expected = Buffer.from(credential.hash, 'hex');
   return candidate.length === expected.length && timingSafeEqual(candidate, expected);
 }
-function verifiesPassword(password, account) {
-  const candidate = Buffer.from(hashPassword(password, account.passwordSalt).hash, 'hex');
-  const expected = Buffer.from(account.passwordHash, 'hex');
-  return candidate.length === expected.length && timingSafeEqual(candidate, expected);
-}
 function mask(code) { return `${code.slice(0, 8)}-••••-••••-${code.slice(-4)}`; }
 function publicAccount(account) {
-  const safe = clone(account); delete safe.accessCodeHash; delete safe.accessCodeSalt; delete safe.passwordHash; delete safe.passwordSalt; return safe;
+  const safe = clone(account); delete safe.accessCodeHash; delete safe.accessCodeSalt; return safe;
 }
 function publicCredential(record) {
   return { id: record.id, maskedCode: record.maskedCode, label: record.label, campaign: record.campaign, purpose: record.purpose || 'standard-loadout', status: record.status, createdAt: record.createdAt, activatedAt: record.activatedAt || null, revokedAt: record.revokedAt || null, expiresAt: record.expiresAt || null, boundWallet: record.boundWallet || null, accountId: record.accountId || null, accountUsername: record.accountUsername || null, loadoutRedeemed: Boolean(record.loadoutRedeemed), entitlements: clone(record.entitlements) };
@@ -150,7 +126,7 @@ export class MzkAccountStore {
         for (const account of data.accounts) {
           if (account.loadoutProvisioningVersion == null && account.provisioningVersion != null) account.loadoutProvisioningVersion = account.provisioningVersion;
           delete account.provisioningVersion;
-          if (hasLoadoutEntitlement(account, data.credentials)) grantStandardLoadout(account);
+          if (account.loadoutAccess === true || account.loadoutRedeemed === true || account.loadoutStatus === 'paid' || account.loadoutPaymentId) grantStandardLoadout(account);
         }
         data.migrations.loadoutProvisioningVersionV5 = new Date().toISOString();
       }
@@ -227,38 +203,14 @@ export class MzkAccountStore {
     for (const credential of data.credentials) if (credential.accountId === accountId && credential.status === 'activated') credential.boundWallet ||= address;
     return publicAccount(account);
   }); }
-  authenticate(code) { return this.serialized(async (data) => { const normalized = normalizeCode(code); if (!ACCESS_CODE_PATTERN.test(normalized)) throw Object.assign(new Error('Enter a valid MZK Access Code.'), { statusCode: 400 }); const credential = data.credentials.find((item) => verifies(normalized, { hash: item.codeHash, salt: item.codeSalt })); if (!credential || credential.status !== 'activated') throw Object.assign(new Error('The MZK Access Code is not active.'), { statusCode: 401 }); const account = data.accounts.find((a) => a.accountId === credential.accountId); if (!account) throw Object.assign(new Error('The account connected to this code was not found.'), { statusCode: 404 }); const now = new Date().toISOString(); credential.lastUsedAt = now; if (hasLoadoutEntitlement(account, [credential])) grantStandardLoadout(account); account.accessCodeLastUsedAt = now; account.updatedAt = now; return publicAccount(account); }); }
+  authenticate(code) { return this.serialized(async (data) => { const normalized = normalizeCode(code); if (!ACCESS_CODE_PATTERN.test(normalized)) throw Object.assign(new Error('Enter a valid MZK Access Code.'), { statusCode: 400 }); const credential = data.credentials.find((item) => verifies(normalized, { hash: item.codeHash, salt: item.codeSalt })); if (!credential || credential.status !== 'activated') throw Object.assign(new Error('The MZK Access Code is not active.'), { statusCode: 401 }); const account = data.accounts.find((a) => a.accountId === credential.accountId); if (!account) throw Object.assign(new Error('The account connected to this code was not found.'), { statusCode: 404 }); const now = new Date().toISOString(); credential.lastUsedAt = now; if (account.loadoutRedeemed) grantStandardLoadout(account); account.accessCodeLastUsedAt = now; account.updatedAt = now; return publicAccount(account); }); }
   findByWallet(wallet) { return this.serialized(async (data) => { const address = normalizeWallet(wallet); if (!WALLET_PATTERN.test(address)) throw Object.assign(new Error('A valid Ethereum wallet is required.'), { statusCode: 400 }); let account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address)); if (!account) { account = accountRecord('', address); data.accounts.push(account); } account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
-  subscriberLogin(username, email, password) { return this.serialized(async (data) => {
-    const name = String(username || '').trim().slice(0, 24); const address = normalizeEmail(email); const secret = String(password || '');
-    if (name.length < 2) throw Object.assign(new Error('Enter a username with at least 2 characters.'), { statusCode: 400 });
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) throw Object.assign(new Error('Enter a valid email address.'), { statusCode: 400 });
-    if (secret.length < 6 || secret.length > 128) throw Object.assign(new Error('Enter a password with 6 to 128 characters.'), { statusCode: 400 });
-    let account = data.accounts.find((item) => normalizeEmail(item.subscriberEmail) === address);
-    if (account) {
-      if (!account.passwordHash || !account.passwordSalt || !verifiesPassword(secret, account)) throw Object.assign(new Error('The email or password is incorrect.'), { statusCode: 401 });
-      account.username = name;
-    } else {
-      const passwordSecret = hashPassword(secret); account = accountRecord('', '', name);
-      Object.assign(account, { subscriberEmail: address, passwordHash: passwordSecret.hash, passwordSalt: passwordSecret.salt }); data.accounts.push(account);
-    }
-    grantStandardLoadout(account); account.subscriberLastLoginAt = new Date().toISOString(); account.updatedAt = account.subscriberLastLoginAt;
-    return publicAccount(account);
-  }); }
   adminBypass() { return this.serialized(async (data) => {
     // Keep one durable, wallet-free Backpack for the owner shortcut. The server
     // validates the configured admin secret before this method is called.
     let account = data.accounts.find((item) => item.adminBypass === true);
     if (!account) { account = accountRecord('', '', 'MUZIKAZ Admin'); account.adminBypass = true; data.accounts.push(account); }
     grantStandardLoadout(account); account.updatedAt = new Date().toISOString();
-    return publicAccount(account);
-  }); }
-  grantMeknxLoadout(accountId, contract = '') { return this.serialized(async (data) => {
-    const account = data.accounts.find((item) => item.accountId === accountId);
-    if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 });
-    grantStandardLoadout(account);
-    account.meknxEntitlement = { contract: String(contract || '').toLowerCase(), verifiedAt: new Date().toISOString() };
-    account.updatedAt = account.meknxEntitlement.verifiedAt;
     return publicAccount(account);
   }); }
   fulfillPaidLoadout(order, accountId = '') { return this.serialized(async (data) => {
@@ -279,11 +231,10 @@ export class MzkAccountStore {
   }); }
   selectAvatar(accountId, avatarId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const id = String(avatarId || ''); if (id !== 'starter-avatar') throw Object.assign(new Error('That avatar is Unrevealed and cannot be used yet. Starter Avatar remains available.'), { statusCode: 409 }); account.selectedAvatarId = id; account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
   async getAccount(accountId) { const account = (await this.records()).accounts.find((a) => a.accountId === accountId); return account ? publicAccount(account) : null; }
-  async adminAccounts() { return (await this.records()).accounts.map(publicAccount); }
   repairEntitledAccount(accountId) { return this.serialized(async (data) => {
     const account = data.accounts.find((item) => item.accountId === accountId);
     if (!account) throw Object.assign(new Error('The session account no longer exists.'), { statusCode: 401, code: 'ACCOUNT_NOT_FOUND' });
-    if (hasLoadoutEntitlement(account, data.credentials)) {
+    if (account.loadoutAccess === true || account.loadoutRedeemed === true || account.loadoutStatus === 'paid' || Boolean(account.loadoutPaymentId)) {
       grantStandardLoadout(account);
       account.updatedAt = new Date().toISOString();
     }
