@@ -896,8 +896,10 @@ document.querySelector('[data-action="cart"]')?.addEventListener('click', () => 
 document.querySelector('.newsletter form')?.addEventListener('submit', (event) => {
   event.preventDefault();
   const input = event.currentTarget.querySelector('input');
-  alert(`Welcome to the crew${input.value ? ', ' + input.value : ''}!`);
-  input.value = '';
+  const recipient = event.currentTarget.dataset.emailRecipient || 'jodelchad@chaines.io';
+  const subject = encodeURIComponent('MUZIKAZ crew signup');
+  const body = encodeURIComponent(`Please add ${input.value} to the MUZIKAZ crew mailing list.`);
+  window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
 });
 
 

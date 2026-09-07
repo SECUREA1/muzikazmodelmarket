@@ -70,8 +70,8 @@
             <div class="hero-poster">
                 <div class="hero-poster__glow" aria-hidden="true"></div>
                 <img src="public/assets/muzikaz-world-poster.svg" alt="Enter MUZIKAZ WORLD — your avatar, your sound, your universe" />
-                <model-viewer class="hero-character hero-character--one" src="public/models/VOLTWOLF.glb" camera-controls auto-rotate autoplay shadow-intensity="1.2" interaction-prompt="none" alt="Interactive 3D VOLTWOLF character"></model-viewer>
-                <model-viewer class="hero-character hero-character--two" src="public/models/sharko.glb" camera-controls auto-rotate autoplay shadow-intensity="1.2" interaction-prompt="none" alt="Interactive 3D Sharko character"></model-viewer>
+                <model-viewer class="hero-character hero-character--one" src="public/models/VOLTWOLF.glb" camera-controls auto-rotate autoplay ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1.2" interaction-prompt="none" alt="Interactive 3D VOLTWOLF character"><button class="ar-button" slot="ar-button" type="button">Place VOLTWOLF in AR</button></model-viewer>
+                <model-viewer class="hero-character hero-character--two" src="public/models/sharko.glb" camera-controls auto-rotate autoplay ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1.2" interaction-prompt="none" alt="Interactive 3D Sharko character"><button class="ar-button" slot="ar-button" type="button">Place Sharko in AR</button></model-viewer>
                 <div class="hero-signal" aria-hidden="true"><i></i><span>World signal</span><b>98%</b></div>
             </div>
             <div class="hero-copy">
@@ -376,8 +376,8 @@
                 <h2>Join the <em>crew</em></h2>
                 <p>Get collection alerts, render previews, and exclusive online event codes.</p>
             </div>
-            <form>
-                <input type="email" placeholder="you@example.com" aria-label="Email address" required />
+            <form action="mailto:jodelchad@chaines.io" method="post" enctype="text/plain" data-email-recipient="jodelchad@chaines.io">
+                <input type="email" name="email" placeholder="you@example.com" aria-label="Email address" required />
                 <button type="submit">Sign up</button>
             </form>
             <div class="mini-cast" role="img" aria-label="MUZIKAZ character avatar row"></div>
@@ -390,7 +390,7 @@
             <p>Neon model-market landing page powered by the included MUZIKAZ asset pack.</p>
         </div>
         <div><h4>Shop</h4><a href="#models">Models</a><a href="#merch">Merch</a><a href="members.html">Bottle Login</a></div>
-        <div><h4>Support</h4><a href="mailto:crew@muzikaz.example">Contact</a><a href="#crew">Drops</a></div>
+        <div><h4>Support</h4><a href="mailto:jodelchad@chaines.io">Contact</a><a href="#crew">Drops</a></div>
         <div><h4>Company</h4><a href="#crew">Crew</a><a href="#home">About</a></div>
         <div><h4>Follow</h4><p class="socials">◎ ♫ ✕</p></div>
     </footer>
