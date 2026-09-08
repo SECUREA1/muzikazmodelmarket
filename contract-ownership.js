@@ -6,7 +6,9 @@
   const BALANCE_OF_ADDRESS = '0x70a08231';
   const BALANCE_OF_1155 = '0x00fdd58e';
   const TOKEN_OF_OWNER_BY_INDEX = '0x2f745c59';
+  const OWNER_OF = '0x6352211e';
   const SUPPORTS_INTERFACE = '0x01ffc9a7';
+  const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
   const ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/;
 
   const word = (value) => String(value).replace(/^0x/, '').padStart(64, '0');
@@ -52,6 +54,25 @@
     return tokenIds;
   }
 
+  async function transferredTokenIds(wallet, contract, owner) {
+    // A few otherwise ERC-721-compatible collections revert balanceOf. Recover
+    // their token IDs from transfers to this account, then use ownerOf for the
+    // authoritative current-owner check (a transfer-away is therefore safe).
+    const logs = await wallet.request({
+      method: 'eth_getLogs',
+      params: [{ address: contract, fromBlock: '0x0', toBlock: 'latest', topics: [TRANSFER_TOPIC, null, `0x${word(owner)}`] }]
+    });
+    const candidates = [...new Set((Array.isArray(logs) ? logs : []).map((log) => log?.topics?.[3]).filter((topic) => /^0x[0-9a-fA-F]{64}$/.test(topic)))];
+    const owned = [];
+    for (const tokenWord of candidates) {
+      try {
+        const result = await reliableCall(wallet, contract, OWNER_OF + tokenWord.slice(2));
+        if (`0x${result.slice(-40)}`.toLowerCase() === owner.toLowerCase()) owned.push(asBigInt(tokenWord).toString());
+      } catch { /* Burned tokens and nonstandard entries are not currently owned. */ }
+    }
+    return owned;
+  }
+
   async function verify({ wallet, address, contracts, requiredContract = '', tokenIdsByContract = {} }) {
     if (!wallet?.request) throw new Error('An EIP-1193 Ethereum wallet is required.');
     if (!ADDRESS_PATTERN.test(address)) throw new Error('A valid Ethereum wallet address is required.');
@@ -76,7 +97,13 @@
             const is721 = await supports(wallet, contract, ERC721_INTERFACE);
             return { balance, contract, tokenIds: await enumerableTokenIds(wallet, contract, address, balance), standard: is721 ? 'ERC-721' : 'NFT balanceOf' };
           }
-        } catch (error) { balanceCallError = error; /* The approved collection may be ERC-1155 instead. */ }
+        } catch (error) {
+          balanceCallError = error;
+          try {
+            const tokenIds = await transferredTokenIds(wallet, contract, address);
+            if (tokenIds.length) return { balance: BigInt(tokenIds.length), contract, tokenIds, standard: 'ERC-721' };
+          } catch { /* The approved collection may be ERC-1155 instead. */ }
+        }
 
         const code = await wallet.request({ method: 'eth_getCode', params: [contract, 'latest'] });
         if (!code || code === '0x') continue;

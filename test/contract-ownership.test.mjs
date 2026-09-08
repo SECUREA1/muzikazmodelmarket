@@ -67,6 +67,23 @@ test('retries a transient MetaMask balance call instead of reporting an owner as
   assert.equal(result.balance, 1n); assert.equal(balanceCalls, 2);
 });
 
+test('opens access when balanceOf reverts but transfer history confirms a currently owned NFT', async () => {
+  const ownership = await checker(); const contract = '0x9b32d046da71698bceeff7b829f9ebe95974d631';
+  const owner = '0x4444444444444444444444444444444444444444';
+  const tokenWord = '2a'.padStart(64, '0');
+  const wallet = { request: async ({ method, params }) => {
+    if (method === 'eth_getLogs') {
+      assert.equal(params[0].topics[2], `0x${owner.slice(2).padStart(64, '0')}`);
+      return [{ topics: [params[0].topics[0], `0x${'0'.repeat(64)}`, `0x${'0'.repeat(64)}`, `0x${tokenWord}`] }];
+    }
+    if (method === 'eth_call' && params[0].data.startsWith('0x70a08231')) throw new Error('execution reverted');
+    if (method === 'eth_call' && params[0].data.startsWith('0x6352211e')) return `0x${owner.slice(2).padStart(64, '0')}`;
+    throw new Error('unexpected call');
+  } };
+  const result = await ownership.verify({ wallet, address: owner, contracts: [contract], requiredContract: contract });
+  assert.equal(result.balance, 1n); assert.equal(result.standard, 'ERC-721'); assert.deepEqual([...result.tokenIds], ['42']);
+});
+
 test('does not mislabel an unreadable approved contract as an unowned NFT', async () => {
   const ownership = await checker(); const contract = '0x9b32d046da71698bceeff7b829f9ebe95974d631';
   const wallet = { request: async () => { throw new Error('RPC unavailable'); } };
