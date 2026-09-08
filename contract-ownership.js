@@ -47,18 +47,21 @@
     for (const contract of targets) {
       if (!ADDRESS_PATTERN.test(contract)) continue;
       try {
+        // Query the approved collection's balance directly before optional
+        // discovery calls. Some injected MetaMask RPC endpoints restrict
+        // eth_getCode or ERC-165 probes even though eth_call works normally;
+        // treating that restriction as a zero balance hid valid NFTs.
+        try {
+          const balance = await erc721Balance(wallet, contract, address);
+          if (balance > 0n) {
+            const is721 = await supports(wallet, contract, ERC721_INTERFACE);
+            return { balance, contract, tokenIds: await enumerableTokenIds(wallet, contract, address, balance), standard: is721 ? 'ERC-721' : 'NFT balanceOf' };
+          }
+        } catch { /* The approved collection may be ERC-1155 instead. */ }
+
         const code = await wallet.request({ method: 'eth_getCode', params: [contract, 'latest'] });
         if (!code || code === '0x') continue;
-        const [is721, is1155] = await Promise.all([supports(wallet, contract, ERC721_INTERFACE), supports(wallet, contract, ERC1155_INTERFACE)]);
-
-        // ERC-721 and older NFT contracts expose balanceOf(address). The fallback
-        // keeps valid pre-ERC165 collections usable while still checking bytecode.
-        if (is721 || !is1155) {
-          try {
-            const balance = await erc721Balance(wallet, contract, address);
-            if (balance > 0n) return { balance, contract, tokenIds: await enumerableTokenIds(wallet, contract, address, balance), standard: is721 ? 'ERC-721' : 'NFT balanceOf' };
-          } catch { /* Try an explicitly configured ERC-1155 token set next. */ }
-        }
+        const is1155 = await supports(wallet, contract, ERC1155_INTERFACE);
 
         const configuredIds = tokenIdsByContract[contract] || tokenIdsByContract[contract.toLowerCase()] || [];
         if (is1155 && configuredIds.length) {
