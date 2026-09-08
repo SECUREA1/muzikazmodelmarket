@@ -33,6 +33,18 @@ npm run check
 
 ## Ethereum Bottle member gate
 
+The main-page 3D House Explorer has a separate Single Player gate backed only
+by Black Genie Bottle ownership at
+`0x9B32d046DA71698BCEEff7b829F9Ebe95974D631` on Ethereum mainnet. It asks for
+MetaMask, verifies ownership with read-only RPC calls, offers the contract's
+free `claim` transaction when needed, and re-verifies after confirmation before
+loading the game. This does not grant or modify paid Loadout, multiplayer,
+land, creator, or premium permissions. Override `MUZIKAZ_BLACK_GENIE_TOKEN_ID`
+before the gate script only if the public claim uses a token ID other than `0`.
+The browser signs its own free claim; no Thirdweb secret key is required or
+permitted in frontend configuration. Any Thirdweb server integration must read
+its secret from the deployment environment only.
+
 `members.html` stays locked until an injected EIP-1193 wallet proves ownership
 against the configured MUZIKAZ Bottle ERC-721/ERC-1155 contract. Set the
 `muzikaz-bottle-contract` and `muzikaz-bottle-chain-id` meta values in
