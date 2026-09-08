@@ -21,7 +21,7 @@ test('verifies the configured MEKNX-style ERC-721 contract with balanceOf(addres
   } };
   const result = await ownership.verify({ wallet, address: '0x1111111111111111111111111111111111111111', contracts: [contract], requiredContract: contract });
   assert.equal(result.standard, 'ERC-721'); assert.equal(result.balance, 1n); assert.deepEqual([...result.tokenIds], ['42']);
-  assert.ok(calls.some((call) => call.method === 'eth_getCode'));
+  assert.ok(calls.some((call) => call.method === 'eth_call' && call.params[0].data.startsWith('0x70a08231')));
 });
 
 test('supports an explicitly configured ERC-1155 token id set', async () => {
@@ -35,4 +35,18 @@ test('supports an explicitly configured ERC-1155 token id set', async () => {
   } };
   const result = await ownership.verify({ wallet, address: '0x3333333333333333333333333333333333333333', contracts: [contract], tokenIdsByContract: { [contract]: ['41', '42'] } });
   assert.equal(result.standard, 'ERC-1155'); assert.equal(result.balance, 2n); assert.deepEqual([...result.tokenIds], ['42']);
+});
+
+test('recognizes an owned approved NFT when MetaMask RPC blocks contract discovery', async () => {
+  const ownership = await checker(); const contract = '0x9b32d046da71698bceeff7b829f9ebe95974d631';
+  const wallet = { request: async ({ method, params }) => {
+    if (method === 'eth_getCode') throw new Error('The RPC method is restricted');
+    const data = params[0].data;
+    if (data.startsWith('0x70a08231')) return '0x1';
+    if (data.startsWith('0x01ffc9a7')) throw new Error('ERC-165 probe unavailable');
+    if (data.startsWith('0x2f745c59')) throw new Error('Collection is not enumerable');
+    throw new Error('unexpected call');
+  } };
+  const result = await ownership.verify({ wallet, address: '0x4444444444444444444444444444444444444444', contracts: [contract], requiredContract: contract });
+  assert.equal(result.contract, contract); assert.equal(result.balance, 1n); assert.equal(result.standard, 'NFT balanceOf'); assert.deepEqual([...result.tokenIds], []);
 });
