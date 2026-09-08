@@ -257,8 +257,11 @@ const membersHtml = await readFile('dist/members.html', 'utf8');
 const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
 if (!mzkWallet.includes('const GAME_ENTRY_MZK = 0')) throw new Error('Single Player must not debit MZK.');
 const blackGenieAccess = await readFile('dist/public/js/black-genie-access.js', 'utf8');
-for (const marker of ['0x9B32d046DA71698BCEEff7b829F9Ebe95974D631', "var MAINNET = '0x1'", "chain = String(await provider.request({ method: 'eth_chainId' })).toLowerCase();", 'eth_requestAccounts', 'wallet_switchEthereumChain', 'provider confirms that its switch', 'eth_getTransactionReceipt', 'Free Mint Black Genie Bottle', 'assertWalletStillSelected(provider, address)', 'authorized = false', 'button.disabled = false', 'openGame(button)']) {
-  if (!blackGenieAccess.includes(marker)) throw new Error(`Black Genie Single Player gate is missing: ${marker}`);
+for (const marker of ['eth_requestAccounts', 'connectedAddress(provider)', 'authorized = false', 'button.disabled = false', 'openGame(button)']) {
+  if (!blackGenieAccess.includes(marker)) throw new Error(`Single Player wallet gate is missing: ${marker}`);
+}
+for (const removedValidation of ['eth_call', 'wallet_switchEthereumChain', 'eth_getTransactionReceipt']) {
+  if (blackGenieAccess.includes(removedValidation)) throw new Error(`Single Player must not perform NFT validation: ${removedValidation}`);
 }
 for (const page of ['model-market.html', 'buy-mzk.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
