@@ -5,11 +5,45 @@
   var CONTRACT = '0x9B32d046DA71698BCEEff7b829F9Ebe95974D631';
   var MAINNET = '0x1';
   var MINT_SELECTOR = '0x1249c58b'; // mint()
+  var MOBILE_PASSCODE = 'boots';
   // Authorization is deliberately single-use. It exists only while this gate
   // redispatches the click that starts RAD-TOX, so a later play attempt always
   // gets a fresh on-chain ownership check.
   var authorized = false;
   var busy = false;
+
+  function isMobileDevice() {
+    return window.matchMedia('(max-width: 768px)').matches || navigator.maxTouchPoints > 0;
+  }
+
+  function installMobilePasscode() {
+    var surface = document.querySelector('[data-house-start-surface] .game-overlay__content');
+    if (!surface || surface.querySelector('.black-genie-passcode')) return;
+
+    var form = document.createElement('form');
+    form.className = 'black-genie-passcode';
+    form.hidden = !isMobileDevice();
+    form.innerHTML = '<label for="black-genie-passcode-input">Mobile pass code</label><div><input id="black-genie-passcode-input" name="passcode" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Enter pass code" aria-describedby="black-genie-passcode-help" required><button class="btn" type="submit">Unlock</button></div><small id="black-genie-passcode-help">On a mobile device, enter the Single Player pass code instead of connecting a wallet.</small>';
+    surface.appendChild(form);
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      var input = form.elements.passcode;
+      var button = document.querySelector('[data-house-start]');
+      if (!isMobileDevice() || !button) return;
+      if (String(input.value || '').trim().toLowerCase() !== MOBILE_PASSCODE) {
+        input.setAttribute('aria-invalid', 'true');
+        setMessage('That pass code is not recognized. Try again or connect the Black Genie Bottle wallet.');
+        input.focus();
+        return;
+      }
+      input.removeAttribute('aria-invalid');
+      input.value = '';
+      setMessage('Mobile pass code accepted. Opening Single Player…');
+      openGame(button);
+    });
+  }
 
   function metamask() {
     var providers = (window.ethereum && window.ethereum.providers) || (window.ethereum ? [window.ethereum] : []);
@@ -163,4 +197,6 @@
     event.stopImmediatePropagation();
     enter(button);
   }, true);
+
+  installMobilePasscode();
 }());

@@ -68,6 +68,11 @@ place a Thirdweb secret key in HTML, browser JavaScript, Render public variables
 or this repository; any future Thirdweb server integration must read its secret
 only from a protected backend environment variable.
 
+On mobile devices, the launcher also shows a pass-code field for players who
+cannot use the wallet flow. Entering `boots` opens Single Player with the same
+single-use launch authorization; desktop visitors continue to use Black Genie
+Bottle ownership verification.
+
 ## Land location data
 
 ### Canonical live wallet and deed memory
