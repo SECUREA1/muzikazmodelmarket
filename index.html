@@ -160,7 +160,7 @@
                     <section class="house-game-start game-overlay" id="house-game-start" data-house-start-surface aria-labelledby="house-game-start-title">
                         <div class="game-overlay__content">
                         <h3 id="house-game-start-title">Ready to play?</h3>
-                        <p id="house-game-load-status" role="status"><strong class="starter-price">Starter land · 4,000 MZK</strong> First entry unlocks your permanent Builder Loadout: 1 random avatar, 1 random public land plot, a community spot, room shell, and builder tools. Return entry is free.</p>
+                        <p id="house-game-load-status" role="status"><strong class="starter-price">Black Genie Bottle NFT required</strong> Connect MetaMask on Ethereum mainnet. Bottle owners enter Single Player immediately; everyone else can free mint the access pass.</p>
                         <span class="game-loading-indicator" aria-hidden="true"></span>
                         <button class="btn house-start-button" type="button" data-house-start>Begin Game</button>
                         </div>
@@ -397,6 +397,8 @@
 
     <!-- ES5 fallback loads before module-only game code so RAD-TOX remains playable in IE11. -->
     <script src="mzk-wallet.js"></script>
+    <script src="contract-ownership.js"></script>
+    <script src="public/js/black-genie-access.js"></script>
     <script src="public/js/rad-tox-launcher.js"></script>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script type="module" src="public/js/model-gallery.js"></script>
