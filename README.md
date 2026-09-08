@@ -52,18 +52,15 @@ hexadecimal wei as `window.MUZIKAZ_BOTTLE_MINT_VALUE`. Access is granted only
 after the receipt confirms and a fresh `balanceOf(address)` call returns at
 least one Bottle token.
 
-## Black Genie single-player pass
+## Single-player wallet login
 
 The 3D House Explorer's **Single Player** launcher is independent from member,
-loadout, multiplayer, land, creator, and premium entitlements. It asks for
-MetaMask, switches to Ethereum mainnet, and verifies NFT ownership against the
-Black Genie Bottle contract `0x9B32d046DA71698BCEEff7b829F9Ebe95974D631`.
-Owners launch immediately. Non-owners see the free-mint dialog; after the mint
-receipt confirms, ownership is checked again before the existing RAD-TOX game
-launcher is invoked. Each launch authorization is single-use: the gate confirms
-that the same wallet is still selected on Ethereum mainnet after the ownership
-call, and a later play attempt performs a new contract check. The browser uses
-only standard EIP-1193 RPC calls. Never
+loadout, multiplayer, land, creator, NFT, and premium entitlements. It asks for
+an EIP-1193 browser wallet and launches as soon as the wallet returns a valid
+account. It does not read an NFT contract, require Ethereum mainnet, or mint an
+access token. Each launch authorization is single-use, so the click that follows
+the wallet response opens the existing RAD-TOX game launcher without leaving a
+persistent browser-side bypass. Never
 place a Thirdweb secret key in HTML, browser JavaScript, Render public variables,
 or this repository; any future Thirdweb server integration must read its secret
 only from a protected backend environment variable.
