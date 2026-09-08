@@ -5,6 +5,9 @@
   var CONTRACT = '0x9B32d046DA71698BCEEff7b829F9Ebe95974D631';
   var MAINNET = '0x1';
   var MINT_SELECTOR = '0x1249c58b'; // mint()
+  // Authorization is deliberately single-use. It exists only while this gate
+  // redispatches the click that starts RAD-TOX, so a later play attempt always
+  // gets a fresh on-chain ownership check.
   var authorized = false;
   var busy = false;
 
@@ -59,11 +62,23 @@
     }
   }
 
+  async function assertWalletStillSelected(provider, address) {
+    var chain = String(await provider.request({ method: 'eth_chainId' })).toLowerCase();
+    var accounts = await provider.request({ method: 'eth_accounts' });
+    var selected = String(accounts && accounts[0] || '').toLowerCase();
+    if (chain !== MAINNET) throw new Error('Switch MetaMask to Ethereum mainnet to enter Single Player.');
+    if (selected !== address.toLowerCase()) throw new Error('Your selected MetaMask account changed. Select Begin Game to validate it.');
+  }
+
   function openGame(button) {
     authorized = true;
     overlay().hidden = true;
     setMessage('Black Genie Bottle verified. Opening Single Player…');
-    button.click();
+    try {
+      button.click();
+    } finally {
+      authorized = false;
+    }
   }
 
   async function enter(button) {
@@ -76,7 +91,10 @@
       setMessage('Connect MetaMask to check your Black Genie Bottle on Ethereum mainnet…');
       var address = await account(provider);
       setMessage('Checking Black Genie Bottle ownership…');
-      if (await owns(provider, address)) openGame(button);
+      if (await owns(provider, address)) {
+        await assertWalletStillSelected(provider, address);
+        openGame(button);
+      }
       else { overlay().hidden = false; setMessage('No Black Genie Bottle was found. Free mint one to unlock Single Player.'); }
     } catch (error) {
       setMessage(error && error.message || 'MetaMask could not verify access. Try again.');
@@ -114,6 +132,7 @@
       await receipt(provider, hash);
       setMessage('Mint confirmed. Verifying your new Black Genie Bottle…');
       if (!await owns(provider, address)) throw new Error('Mint confirmed, but ownership is not indexed yet. Select Begin Game to check again.');
+      await assertWalletStillSelected(provider, address);
       openGame(button);
     } catch (error) {
       setMessage(error && error.message || 'The Black Genie Bottle could not be minted.');
