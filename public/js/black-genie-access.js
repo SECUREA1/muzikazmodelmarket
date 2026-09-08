@@ -74,6 +74,10 @@
     authorized = true;
     overlay().hidden = true;
     setMessage('Black Genie Bottle verified. Opening Single Player…');
+    // enter() disables the control while the on-chain check is running. A
+    // disabled HTML button ignores HTMLElement.click(), so re-enable it before
+    // redispatching the authorized click to the existing game launcher.
+    button.disabled = false;
     try {
       button.click();
     } finally {
