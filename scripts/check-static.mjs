@@ -254,8 +254,12 @@ for (const requiredGateMarkup of ['id="model-market-cover"', 'id="model-market-l
 }
 const membersHtml = await readFile('dist/members.html', 'utf8');
 const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
-if (!mzkWallet.includes('const GAME_ENTRY_MZK = 4000')) throw new Error('Starter land and Builder Loadout must cost exactly 4,000 MZK.');
-for (const page of ['index.html', 'model-market.html', 'model-explorer.html', 'buy-mzk.html']) {
+if (!mzkWallet.includes('const GAME_ENTRY_MZK = 0')) throw new Error('Single Player must not debit MZK.');
+const blackGenieAccess = await readFile('dist/public/js/black-genie-access.js', 'utf8');
+for (const marker of ['0x9B32d046DA71698BCEEff7b829F9Ebe95974D631', "var MAINNET = '0x1'", 'eth_requestAccounts', 'wallet_switchEthereumChain', 'eth_getTransactionReceipt', 'Free Mint Black Genie Bottle', 'openGame(button)']) {
+  if (!blackGenieAccess.includes(marker)) throw new Error(`Black Genie Single Player gate is missing: ${marker}`);
+}
+for (const page of ['model-market.html', 'buy-mzk.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
   if (!html.includes('4,000 MZK')) throw new Error(`${page} must display the 4,000 MZK starter-land price.`);
 }
