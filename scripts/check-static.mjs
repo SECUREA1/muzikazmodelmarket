@@ -117,7 +117,7 @@ for (const walletBrandMarker of ['id="wallet-connect"', 'muzikaz_bolt_logo_edita
   if (!mainHtml.includes(walletBrandMarker)) throw new Error(`The app header is missing wallet or official-logo branding: ${walletBrandMarker}`);
 }
 
-for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'Begin Game', 'game-loading-indicator']) {
+for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', 'Connect MetaMask', 'id="bottle-free-mint"', 'public/js/black-genie-access.js', 'game-loading-indicator']) {
   if (!mainHtml.includes(requiredGameMarkup)) {
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
