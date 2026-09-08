@@ -40,10 +40,11 @@ for (const page of mobileHeaderPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
   const navigation = html.match(/<nav class="nav global-nav"[\s\S]*?<\/nav>/)?.[0] || '';
   const navIconCount = (navigation.match(/<svg class="nav-icon"/g) || []).length;
-  const headerActions = (html.match(/class="mobile-header-action"/g) || []).length;
+  const headerActions = (html.match(/class="[^"]*\bmobile-header-action\b[^"]*"/g) || []).length;
   if (!navigation.includes('aria-hidden="false"')) throw new Error(`${page} must expose the complete mobile navigation to assistive technology.`);
   if (navIconCount !== 6) throw new Error(`${page} must show 6 unique SVG mobile navigation destinations; found ${navIconCount}.`);
   if (headerActions !== 3 || !html.includes('class="wallet-connect"')) throw new Error(`${page} must expose four evenly sized mobile header actions.`);
+  if (!html.includes('header-mzk-action') || !html.includes('href="buy-mzk.html"')) throw new Error(`${page} must expose the MZK purchase action in its header.`);
   if (!html.includes('aria-describedby="wallet-connect-status"') || !html.includes('id="wallet-connect-status"')) throw new Error(`${page} must include the wallet connection status used during page initialization.`);
   if (!html.includes('class="menu-toggle"') || !html.includes('aria-controls="primary-navigation"')) throw new Error(`${page} must include a labelled, accessible mobile menu toggle.`);
 }

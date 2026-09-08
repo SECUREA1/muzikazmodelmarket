@@ -21,7 +21,7 @@
     <div class="icons" aria-label="Account shortcuts">
       <a class="mobile-header-action header-primary-action" href="checkout.html" aria-label="Checkout, 0 items">${icon('M3 4h2l2 11h10l3-8H6M9 20h.01M17 20h.01')}<span>Checkout</span><b class="header-cart-count" aria-hidden="true">0</b></a>
       <a class="mobile-header-action header-primary-action" href="members.html" aria-label="Member access">${icon('M12 12a4 4 0 100-8 4 4 0 000 8M5 21a7 7 0 0114 0')}<span>Members</span></a>
-      <a class="mobile-header-action" href="buy-mzk.html" aria-label="Buy MZK">${icon('M12 2v20M17 6.5c-1-1-2.5-1.5-5-1.5-3 0-5 1.2-5 3s2 3 5 3 5 1.2 5 3-2 3-5 3c-2.5 0-4-.5-5-1.5')}<span>Buy MZK</span></a>
+      <a class="mobile-header-action header-primary-action header-mzk-action" href="buy-mzk.html" aria-label="Buy MZK">${icon('M12 2v20M17 6.5c-1-1-2.5-1.5-5-1.5-3 0-5 1.2-5 3s2 3 5 3 5 1.2 5 3-2 3-5 3c-2.5 0-4-.5-5-1.5')}<span>$MZK</span></a>
       <a class="mobile-header-action" href="members.html#owned-collection" aria-label="View backpack">${icon('M8 8V6a4 4 0 018 0v2M6 8h12a2 2 0 012 2v10H4V10a2 2 0 012-2Z')}<span>Backpack</span></a>
       <button class="wallet-connect" id="wallet-connect" type="button" aria-describedby="wallet-connect-status" title="Connect wallet"><img src="muzikaz_bolt_logo_editable.svg" alt="" aria-hidden="true"><span>Connect wallet</span></button>
       <span class="sr-only" id="wallet-connect-status" role="status" aria-live="polite">Wallet not connected.</span>
