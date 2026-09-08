@@ -50,3 +50,28 @@ test('recognizes an owned approved NFT when MetaMask RPC blocks contract discove
   const result = await ownership.verify({ wallet, address: '0x4444444444444444444444444444444444444444', contracts: [contract], requiredContract: contract });
   assert.equal(result.contract, contract); assert.equal(result.balance, 1n); assert.equal(result.standard, 'NFT balanceOf'); assert.deepEqual([...result.tokenIds], []);
 });
+
+test('retries a transient MetaMask balance call instead of reporting an owner as missing', async () => {
+  const ownership = await checker(); const contract = '0x9b32d046da71698bceeff7b829f9ebe95974d631';
+  let balanceCalls = 0;
+  const wallet = { request: async ({ method, params }) => {
+    if (method === 'eth_call' && params[0].data.startsWith('0x70a08231')) {
+      balanceCalls += 1;
+      if (balanceCalls === 1) throw new Error('network changed');
+      return '0x1';
+    }
+    if (method === 'eth_call') throw new Error('optional probe unavailable');
+    throw new Error('unexpected call');
+  } };
+  const result = await ownership.verify({ wallet, address: '0x4444444444444444444444444444444444444444', contracts: [contract], requiredContract: contract });
+  assert.equal(result.balance, 1n); assert.equal(balanceCalls, 2);
+});
+
+test('does not mislabel an unreadable approved contract as an unowned NFT', async () => {
+  const ownership = await checker(); const contract = '0x9b32d046da71698bceeff7b829f9ebe95974d631';
+  const wallet = { request: async () => { throw new Error('RPC unavailable'); } };
+  await assert.rejects(
+    ownership.verify({ wallet, address: '0x4444444444444444444444444444444444444444', contracts: [contract], requiredContract: contract }),
+    /could not read the approved NFT contract.*RPC unavailable/
+  );
+});

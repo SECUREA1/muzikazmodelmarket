@@ -14,13 +14,29 @@
   const asBigInt = (value) => { try { return BigInt(value || '0x0'); } catch { return 0n; } };
   const call = (wallet, contract, data) => wallet.request({ method: 'eth_call', params: [{ to: contract, data }, 'latest'] });
 
+  async function reliableCall(wallet, contract, data) {
+    let lastError;
+    // Injected RPCs occasionally fail the first request immediately after a
+    // chain/account change. Never turn that transport failure into "not owned".
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const result = await call(wallet, contract, data);
+        if (typeof result !== 'string' || !/^0x[0-9a-fA-F]+$/.test(result)) throw new Error('The wallet returned an invalid contract response.');
+        return result;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError;
+  }
+
   async function supports(wallet, contract, interfaceId) {
     try { return asBigInt(await call(wallet, contract, SUPPORTS_INTERFACE + interfaceWord(interfaceId))) === 1n; }
     catch { return false; }
   }
 
   async function erc721Balance(wallet, contract, owner) {
-    return asBigInt(await call(wallet, contract, BALANCE_OF_ADDRESS + word(owner)));
+    return asBigInt(await reliableCall(wallet, contract, BALANCE_OF_ADDRESS + word(owner)));
   }
 
   async function erc1155Balance(wallet, contract, owner, tokenId) {
@@ -46,6 +62,8 @@
 
     for (const contract of targets) {
       if (!ADDRESS_PATTERN.test(contract)) continue;
+      let balanceCallSucceeded = false;
+      let balanceCallError;
       try {
         // Query the approved collection's balance directly before optional
         // discovery calls. Some injected MetaMask RPC endpoints restrict
@@ -53,11 +71,12 @@
         // treating that restriction as a zero balance hid valid NFTs.
         try {
           const balance = await erc721Balance(wallet, contract, address);
+          balanceCallSucceeded = true;
           if (balance > 0n) {
             const is721 = await supports(wallet, contract, ERC721_INTERFACE);
             return { balance, contract, tokenIds: await enumerableTokenIds(wallet, contract, address, balance), standard: is721 ? 'ERC-721' : 'NFT balanceOf' };
           }
-        } catch { /* The approved collection may be ERC-1155 instead. */ }
+        } catch (error) { balanceCallError = error; /* The approved collection may be ERC-1155 instead. */ }
 
         const code = await wallet.request({ method: 'eth_getCode', params: [contract, 'latest'] });
         if (!code || code === '0x') continue;
@@ -70,7 +89,12 @@
           const balance = balances.reduce((total, value) => total + value, 0n);
           if (balance > 0n) return { balance, contract, tokenIds: ownedIds, standard: 'ERC-1155' };
         }
-      } catch { /* One broken RPC/contract must not block the other approved contracts. */ }
+      } catch (error) { balanceCallError ||= error; /* One broken RPC/contract must not block the other approved contracts. */ }
+
+      // A confirmed zero is a real non-owner result. An RPC failure is not:
+      // surface it so the access gate asks the owner to retry rather than
+      // incorrectly offering a mint for an NFT that is already in the wallet.
+      if (!balanceCallSucceeded && balanceCallError) throw new Error(`The wallet could not read the approved NFT contract. ${balanceCallError.message || 'Try again.'}`);
     }
     throw new Error('This wallet does not own a token from the required approved contract.');
   }
