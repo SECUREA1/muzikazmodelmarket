@@ -41,13 +41,23 @@
   }
 
   async function account(provider) {
-    var accounts = await provider.request({ method: 'eth_requestAccounts' });
-    var address = String(accounts && accounts[0] || '');
-    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) throw new Error('Connect a valid MetaMask account to continue.');
     var chain = String(await provider.request({ method: 'eth_chainId' })).toLowerCase();
     if (chain !== MAINNET) {
       await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: MAINNET }] });
     }
+
+    // Ask for the account after the network switch. MetaMask connections are
+    // chain-scoped, so an address read before switching can be stale even when
+    // the correct mainnet account is visibly selected in the wallet.
+    var accounts = await provider.request({ method: 'eth_requestAccounts' });
+    var address = String(accounts && accounts[0] || '');
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) throw new Error('Connect a valid MetaMask account to continue.');
+
+    // Do not query the NFT contract until the provider confirms that its switch
+    // completed. This avoids interpreting a zero balance from the prior chain
+    // as "No Black Genie Bottle was found."
+    chain = String(await provider.request({ method: 'eth_chainId' })).toLowerCase();
+    if (chain !== MAINNET) throw new Error('Switch MetaMask to Ethereum mainnet to check your Black Genie Bottle.');
     return address;
   }
 
