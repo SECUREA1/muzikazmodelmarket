@@ -148,12 +148,14 @@ test('verified paid order provisions once and preserves the Backpack through wal
   assert.equal(replay.gameAssets.filter((item) => item === 'Starter Avatar').length, 1);
   assert.deepEqual(replay.landAssets, ['Unrevealed MUZIKAZ Land']);
   assert.deepEqual(replay.bottleClaims, ['Black Genie Bottle', 'Violet Wish Bottle']);
+  assert.deepEqual(replay.bottlePurchases, [{ orderId: 'order-loadout-1', wallet: null, priceUsd: 30, bottles: ['Black Genie Bottle', 'Violet Wish Bottle'], purchasedAt: replay.bottlePurchases[0].purchasedAt }]);
   assert.equal(replay.creatorVaultAccess, true);
   const selected = await store.selectAvatar(first.accountId, 'starter-avatar');
   const connected = await store.connectWallet(first.accountId, '0x4545454545454545454545454545454545454545');
   assert.equal(connected.selectedAvatarId, selected.selectedAvatarId);
   assert.equal(connected.backpackId, first.backpackId);
   assert.equal(connected.mzkBalance, 5000);
+  assert.equal(connected.bottlePurchases[0].wallet, '0x4545454545454545454545454545454545454545');
   await assert.rejects(store.selectAvatar(first.accountId, 'unrevealed-loadout-avatar'), /Unrevealed/);
 });
 
@@ -179,6 +181,7 @@ test('$200 paid pass adds the Golden Bottle and custom in-game asset order', asy
   const account = await store.fulfillPaidLoadout({ orderId: 'order-loadout-200', paymentStatus: 'PAID', purchaseType: 'LOADOUT', itemId: 'standard-loadout', basePrice: 200, wallet: '' });
   assert.equal(account.mzkBalance, 26000);
   assert.deepEqual(account.bottleClaims, ['Black Genie Bottle', 'Violet Wish Bottle', 'Golden Genie Bottle']);
+  assert.deepEqual(account.bottlePurchases[0].bottles, ['Black Genie Bottle', 'Violet Wish Bottle', 'Golden Genie Bottle']);
   assert.ok(account.gameAssets.includes('Custom In-Game Asset Order'));
 });
 

@@ -97,7 +97,10 @@ export class UserJsonDatabase {
     const entitlementItems = [
       ...(account.gameAssets || []).map((name) => ({ id: `access-game-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'game-asset', source: 'mzk-access-code', revealStatus: /unrevealed/i.test(String(name)) ? 'unrevealed' : 'revealed' })),
       ...(account.landAssets || []).map((name) => ({ id: `access-land-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'land-entitlement', source: 'mzk-access-code', revealStatus: /unrevealed/i.test(String(name)) ? 'unrevealed' : 'revealed' })),
-      ...(account.bottleClaims || []).map((name) => ({ id: `access-claim-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'collectible-claim', source: 'mzk-access-code' }))
+      ...(account.bottleClaims || []).map((name) => {
+        const sales = (account.bottlePurchases || []).filter((purchase) => (purchase.bottles || []).includes(name));
+        return { id: `access-claim-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`, name, type: 'collectible-claim', source: sales.length ? 'verified-sale' : 'mzk-access-code', saleOrderIds: sales.map((purchase) => purchase.orderId) };
+      })
     ];
     return this.transaction((data) => {
       // Code-only signup begins under a stable account key. Move that exact
@@ -105,10 +108,13 @@ export class UserJsonDatabase {
       // inventory, and memory remain one Backpack rather than being copied.
       const previous = data.users[wallet] || data.users[accountKey] || {};
       const now = new Date().toISOString();
-      const knownIds = new Set((previous.items || []).map((item) => item.id));
-      const items = [...(previous.items || []), ...entitlementItems.filter((item) => !knownIds.has(item.id))];
+      const entitlementById = new Map(entitlementItems.map((item) => [item.id, item]));
+      const items = (previous.items || []).map((item) => entitlementById.has(item.id) ? { ...item, ...entitlementById.get(item.id) } : item);
+      const knownIds = new Set(items.map((item) => item.id));
+      items.push(...entitlementItems.filter((item) => !knownIds.has(item.id)));
       const memory = mergeMemory(previous.memory, {
-        account: { accountId: account.accountId, backpackId: account.backpackId, accessCodeStatus: account.accessCodeStatus, gameAccess: Boolean(account.gameAccess), creatorVaultAccess: Boolean(account.creatorVaultAccess), selectedAvatarId: account.selectedAvatarId || 'starter-avatar' },
+        account: { accountId: account.accountId, backpackId: account.backpackId, accessCodeStatus: account.accessCodeStatus, gameAccess: Boolean(account.gameAccess), creatorVaultAccess: Boolean(account.creatorVaultAccess), selectedAvatarId: account.selectedAvatarId || 'starter-avatar', bottleClaims: clone(account.bottleClaims || []), bottlePurchases: clone(account.bottlePurchases || []), purchaseTierUsd: Number(account.purchaseTierUsd || 0), paymentMzkValue: Number(account.paymentMzkValue || 0) },
+        backpack: { backpackId: account.backpackId, bottleClaims: clone(account.bottleClaims || []), bottlePurchases: clone(account.bottlePurchases || []), syncedAt: now },
         profile: account.username ? { username: account.username, displayName: account.username } : {}
       });
       const tokens = { ...(previous.tokens || {}) };

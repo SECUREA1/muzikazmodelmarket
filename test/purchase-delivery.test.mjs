@@ -61,6 +61,18 @@ test('verified purchases put tier bottles and custom rewards in the local Backpa
   assert.ok(loadout.assets.includes('Custom In-Game Asset Order'));
 });
 
+test('returning account sync merges newly purchased sale Bottles into the existing wallet Backpack', () => {
+  const { wallet, localStorage } = loadMzkWallet();
+  const owner = '0x4444444444444444444444444444444444444444';
+  const base = { accountId: 'returning', primaryEthereumWallet: owner, gameAccess: true, loadoutStatus: 'paid', mzkBalance: 2000, gameAssets: ['Starter Avatar'], landAssets: [], bottleClaims: ['Black Genie Bottle'], purchaseTierUsd: 5, updatedAt: '2026-09-08T00:00:00.000Z' };
+  wallet.provisionStandardLoadout(base);
+  wallet.provisionStandardLoadout({ ...base, mzkBalance: 26000, bottleClaims: ['Black Genie Bottle', 'Violet Wish Bottle', 'Golden Genie Bottle'], bottlePurchases: [{ orderId: 'upgrade-sale' }], purchaseTierUsd: 200, updatedAt: '2026-09-09T00:00:00.000Z' });
+  const backpack = JSON.parse(localStorage.getItem('muzikazStarterLoadoutsV1'))[owner];
+  assert.ok(backpack.assets.includes('Golden Genie Bottle'));
+  assert.deepEqual(backpack.bottleClaims, ['Black Genie Bottle', 'Violet Wish Bottle', 'Golden Genie Bottle']);
+  assert.equal(backpack.bottlePurchases[0].orderId, 'upgrade-sale');
+});
+
 test('shared header exposes checkout and member access and checkout uses the verified item snapshot', () => {
   assert.match(headerSource, /href="checkout\.html"/);
   assert.match(headerSource, /href="members\.html" aria-label="Member access"/);
