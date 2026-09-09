@@ -199,7 +199,7 @@ export class MzkAccountStore {
     const address = normalizeWallet(wallet); if (!WALLET_PATTERN.test(address)) throw Object.assign(new Error('Connect a valid Ethereum wallet.'), { statusCode: 400 });
     const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 });
     const other = data.accounts.find((a) => a.accountId !== accountId && a.connectedWallets.some((w) => w.address === address)); if (other) throw Object.assign(new Error('This wallet is already connected to another MUZIKAZ account.'), { statusCode: 409 });
-    const now = new Date().toISOString(); if (!account.connectedWallets.some((w) => w.chain === 'ETH' && w.address === address)) account.connectedWallets.push({ chain: 'ETH', address, boundAt: now }); account.primaryEthereumWallet ||= address; if (account.loadoutRedeemed) grantStandardLoadout(account); account.updatedAt = now;
+    const now = new Date().toISOString(); if (!account.connectedWallets.some((w) => w.chain === 'ETH' && w.address === address)) account.connectedWallets.push({ chain: 'ETH', address, boundAt: now }); account.primaryEthereumWallet ||= address; for (const purchase of account.bottlePurchases || []) purchase.wallet ||= address; if (account.loadoutRedeemed) grantStandardLoadout(account); account.updatedAt = now;
     for (const credential of data.credentials) if (credential.accountId === accountId && credential.status === 'activated') credential.boundWallet ||= address;
     return publicAccount(account);
   }); }
@@ -236,7 +236,15 @@ export class MzkAccountStore {
     if (account.mzkBalance < paidMzk) account.mzkBalance = paidMzk;
     account.paymentMzkValue = Math.max(Number(account.paymentMzkValue || 0), paidMzk);
     account.purchaseTierUsd = Math.max(Number(account.purchaseTierUsd || 0), price);
-    account.bottleClaims = unique([...(account.bottleClaims || []), ...(price >= 30 ? ['Violet Wish Bottle'] : []), ...(price >= 200 ? ['Golden Genie Bottle'] : [])]);
+    const saleBottles = ['Black Genie Bottle', ...(price >= 30 ? ['Violet Wish Bottle'] : []), ...(price >= 200 ? ['Golden Genie Bottle'] : [])];
+    account.bottleClaims = unique([...(account.bottleClaims || []), ...saleBottles]);
+    // Keep the verified sale behind every Bottle, rather than relying on a
+    // browser cache or only on the highest tier. This record follows the
+    // canonical account/Backpack when its wallet returns on another device.
+    account.bottlePurchases ||= [];
+    if (!account.bottlePurchases.some((purchase) => purchase.orderId === paymentId)) {
+      account.bottlePurchases.push({ orderId: paymentId, wallet: WALLET_PATTERN.test(address) ? address : null, priceUsd: price, bottles: saleBottles, purchasedAt: order.confirmedAt || order.fulfilledAt || now });
+    }
     if (price >= 200) account.gameAssets = unique([...(account.gameAssets || []), 'Custom In-Game Asset Order']);
     account.updatedAt = now; return publicAccount(account);
   }); }

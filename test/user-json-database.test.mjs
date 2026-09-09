@@ -51,6 +51,19 @@ test('tier upgrades add only new MZK value without erasing market spending', asy
   assert.ok(upgraded.items.some((item) => item.name === 'Custom In-Game Asset Order'));
 });
 
+test('verified sale Bottles persist in Backpack inventory and MZK memory', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'mzk-users-')); t.after(() => rm(directory, { recursive: true, force: true }));
+  const database = new UserJsonDatabase(join(directory, 'users.json'));
+  const wallet = '0x5656565656565656565656565656565656565656';
+  const purchase = { orderId: 'sale-200', wallet, priceUsd: 200, bottles: ['Black Genie Bottle', 'Violet Wish Bottle', 'Golden Genie Bottle'], purchasedAt: '2026-09-09T00:00:00.000Z' };
+  await database.ensureAccount({ accountId: 'usr-sale', backpackId: 'pack-sale', primaryEthereumWallet: wallet, gameAccess: true, creatorVaultAccess: true, mzkBalance: 26000, purchaseTierUsd: 200, paymentMzkValue: 26000, gameAssets: [], landAssets: [], bottleClaims: purchase.bottles, bottlePurchases: [purchase] });
+  const restored = await database.get(wallet);
+  assert.deepEqual(restored.memory.backpack.bottleClaims, purchase.bottles);
+  assert.deepEqual(restored.memory.account.bottlePurchases, [purchase]);
+  assert.equal(restored.memory.account.paymentMzkValue, 26000);
+  assert.ok(restored.items.every((item) => item.source === 'verified-sale' && item.saleOrderIds.includes('sale-200')));
+});
+
 test('deep-merges shared memory and preserves an append-only MZK adjustment history', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'muzikaz-users-')); t.after(() => rm(directory, { recursive: true, force: true }));
   const file = join(directory, 'users.json'); const database = new UserJsonDatabase(file);
