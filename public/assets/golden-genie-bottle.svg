@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 420" role="img" aria-labelledby="title desc">
+  <title id="title">Golden Genie Bottle</title><desc id="desc">A premium golden magical bottle with bright jewel details.</desc>
+  <defs><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff2a8"/><stop offset=".25" stop-color="#f7bf2d"/><stop offset=".58" stop-color="#8f5100"/><stop offset=".82" stop-color="#ffd95d"/><stop offset="1" stop-color="#6c3900"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <rect width="320" height="420" rx="34" fill="#120d03"/><circle cx="160" cy="220" r="128" fill="#ffd85a" opacity=".12"/>
+  <g stroke="#ffe477" stroke-width="7" stroke-linejoin="round" filter="url(#glow)"><path fill="url(#gold)" d="M124 65h72l-8 83c54 16 87 59 87 115 0 78-48 122-115 122S45 341 45 263c0-56 33-99 87-115z"/><path fill="url(#gold)" d="M112 43h96v35h-96zM102 31h116v20H102z"/><path fill="none" d="M87 244c22-46 124-49 148 0-13 14-37 25-75 25s-62-11-73-25z"/></g>
+  <path d="m160 180-25 52h21l-13 61 45-76h-24l20-37z" fill="#fff6bd" filter="url(#glow)"/><text x="160" y="404" fill="#ffe477" font-family="system-ui,sans-serif" font-size="17" font-weight="900" text-anchor="middle">GOLDEN GENIE · CUSTOM DROP</text>
+</svg>

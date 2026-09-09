@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 420" role="img" aria-labelledby="title desc">
+  <title id="title">Black Genie Bottle</title><desc id="desc">A glossy black magical bottle with neon green MUZIKAZ accents.</desc>
+  <defs><linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#394139"/><stop offset=".42" stop-color="#050706"/><stop offset=".8" stop-color="#111713"/><stop offset="1"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <rect width="320" height="420" rx="34" fill="#070b08"/><circle cx="160" cy="220" r="128" fill="#9cff00" opacity=".08"/>
+  <g stroke="#9cff00" stroke-width="7" stroke-linejoin="round" filter="url(#glow)"><path fill="url(#body)" d="M124 65h72l-8 83c54 16 87 59 87 115 0 78-48 122-115 122S45 341 45 263c0-56 33-99 87-115z"/><path fill="#080b09" d="M112 43h96v35h-96zM102 31h116v20H102z"/><path fill="none" d="M87 244c22-46 124-49 148 0-13 14-37 25-75 25s-62-11-73-25z"/></g>
+  <path d="m160 180-25 52h21l-13 61 45-76h-24l20-37z" fill="#9cff00" filter="url(#glow)"/><text x="160" y="404" fill="#9cff00" font-family="system-ui,sans-serif" font-size="17" font-weight="900" text-anchor="middle">BLACK GENIE · ENTRY DROP</text>
+</svg>

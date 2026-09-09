@@ -39,7 +39,7 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   const backpack = await json(base, '/api/backpack?accountId=' + second.body.data.account.accountId, { headers: firstHeaders });
   assert.equal(backpack.body.data.accountId, first.body.data.account.accountId, 'query parameters cannot cross account boundaries');
   assert.equal((await json(base, '/api/backpack', { headers: secondHeaders })).body.data.accountId, second.body.data.account.accountId);
-  assert.equal(backpack.body.data.status, 'ready'); assert.equal(backpack.body.data.mzkBalance, 500);
+  assert.equal(backpack.body.data.status, 'ready'); assert.equal(backpack.body.data.mzkBalance, 2000);
   assert.ok(backpack.body.data.assets.every((asset) => asset.id && asset.state));
 
   const csrfHeaders = { ...firstHeaders, 'content-type': 'application/json', 'x-csrf-token': session.body.data.csrfToken };

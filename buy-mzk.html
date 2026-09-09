@@ -36,7 +36,7 @@
       <div class="mzk-edition"><span>FOUNDING LAND RELEASE</span><b>SECTOR 01 / 2026</b></div>
       <p class="kicker">MUZIKAZ WORLD · land exchange</p>
       <h1><span class="mzk-heading-desktop">Own the signal.<br><em>Build the world.</em></span><span class="mzk-heading-mobile">Purchase MZK securely</span></h1>
-      <p class="mzk-lead"><span class="mzk-lead-desktop">Secure a permanent connected deed during the <strong>$40–$100 presale</strong>. After launch, owners control their listings across the open marketplace, with current land values designed to span <strong>$40–$1,000</strong>.</span><span class="mzk-lead-mobile">Purchase MZK to secure a MUZIKAZ WORLD land deed. Presale deeds range from <strong>$40 to $100</strong>. Marketplace listings may range from <strong>$40 to $1,000</strong> and are priced by their owners.</span></p>
+      <p class="mzk-lead"><span class="mzk-lead-desktop">Start Single Player for <strong>$5</strong> and receive a Black Genie Bottle, avatar, land item, and game Loadout. Higher tiers add collectible bottles; the $200 custom tier includes a made-to-order in-game asset.</span><span class="mzk-lead-mobile">First-buy tiers: $5 gives 2,000 MZK + Black Bottle; $30 gives 5,000 MZK + Violet Bottle; $100 gives 13,000 MZK; and $200 gives 26,000 MZK + Golden Bottle and a custom in-game asset order.</span></p>
       <div class="mzk-rate-cards" aria-label="Land market details">
         <article><span>Presale entry</span><strong>$40</strong><small>4,000 MZK · one-time deed</small></article>
         <article class="is-featured"><span>Founding range</span><strong>$40–$100</strong><small>Limited Sector 01 release</small></article>
@@ -53,9 +53,9 @@
       <div class="mzk-terminal__head"><span><i></i> SECURE EXCHANGE</span><strong id="mzk-balance">0 MZK</strong></div>
       <form class="mzk-swap-card" id="mzk-swap-form">
         <div class="mzk-form-heading"><div><p class="kicker">Fund your world</p><h2>Choose your allocation</h2></div><span>100 MZK<br><small>= $1 USD</small></span></div>
-        <label class="mzk-amount-label"><span>Purchase amount <small>USD</small></span><span class="mzk-currency-input"><b>$</b><input id="mzk-usd" type="number" min="40" step="0.01" value="40" inputmode="decimal" required></span></label>
-        <div class="mzk-quick" role="group" aria-label="Presale allocations"><button class="is-active" type="button" data-usd="40"><b>$40</b><span>Entry</span></button><button type="button" data-usd="75"><b>$75</b><span>Creator</span></button><button type="button" data-usd="100"><b>$100</b><span>Founder</span></button></div>
-        <div class="mzk-conversion"><span>You receive</span><output id="mzk-output">4,000 MZK</output><small>Fixed MUZIKAZ store rate</small></div>
+        <label class="mzk-amount-label"><span>Purchase amount <small>USD</small></span><span class="mzk-currency-input"><b>$</b><input id="mzk-usd" type="number" min="5" step="0.01" value="5" inputmode="decimal" required></span></label>
+        <div class="mzk-quick" role="group" aria-label="MZK allocations"><button class="is-active" type="button" data-usd="5"><b>$5</b><span>Black · 2K</span></button><button type="button" data-usd="30"><b>$30</b><span>Violet · 5K</span></button><button type="button" data-usd="100"><b>$100</b><span>13K MZK</span></button><button type="button" data-usd="200"><b>$200</b><span>Gold + Custom</span></button></div>
+        <div class="mzk-conversion"><span>You receive</span><output id="mzk-output">2,000 MZK</output><small>First-buy offer · includes free game Loadout</small></div>
         <div class="mzk-payment-selectors">
           <fieldset class="payment-choice-group" id="mzk-currency"><legend>1. Payment currency</legend></fieldset>
           <fieldset class="payment-choice-group" id="mzk-payment-wallet" aria-describedby="mzk-wallet-help"><legend>2. Wallet</legend></fieldset>
@@ -63,11 +63,11 @@
         <small id="mzk-wallet-help" class="mzk-wallet-help">Select a wallet and approve the prepared transfer. MUZIKAZ detects the transaction and credits MZK automatically after independent confirmation.</small>
         <label class="privacy-toggle"><input type="checkbox" name="sharePersonalInformation"><span><strong>Share optional personal information</strong><small>OFF — declined by default. Payment continues normally.</small></span></label>
         <p id="mzk-quote">Loading live wallet quote…</p>
-        <button class="btn mzk-buy-button" type="submit" id="mzk-buy"><span>Pay &amp; receive 4,000 MZK</span><b>→</b></button>
+        <button class="btn mzk-buy-button" type="submit" id="mzk-buy"><span>Pay &amp; receive 2,000 MZK</span><b>→</b></button>
         <p id="mzk-status" role="status">Your wallet displays the exact asset amount, destination, and network fee before approval.</p>
         <div class="mzk-trust"><span>◈ Wallet approved</span><span>◆ On-chain receipt</span><span>◉ Permanent deed</span></div>
       </form>
-      <p class="mzk-market-note"><b>OPEN MARKET</b> Need a custom allocation? Enter any amount above $40 to fund owner-priced marketplace purchases.</p>
+      <p class="mzk-market-note"><b>OPEN MARKET</b> Start at $5, or enter a custom allocation to fund owner-priced marketplace purchases.</p>
     </aside>
   </main>
   <script src="mzk-wallet.js"></script><script src="payment-config.js"></script><script src="wallet-payments.js"></script><script src="muzikaz-payment-checkout.js"></script><script src="mzk-swap.js"></script>

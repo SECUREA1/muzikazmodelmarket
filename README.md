@@ -52,25 +52,14 @@ hexadecimal wei as `window.MUZIKAZ_BOTTLE_MINT_VALUE`. Access is granted only
 after the receipt confirms and a fresh `balanceOf(address)` call returns at
 least one Bottle token.
 
-## Black Genie single-player pass
+## MZK single-player entry
 
-The 3D House Explorer's **Single Player** launcher is independent from member,
-loadout, multiplayer, land, creator, and premium entitlements. It asks for
-MetaMask, switches to Ethereum mainnet, and verifies NFT ownership against the
-Black Genie Bottle contract `0x9B32d046DA71698BCEEff7b829F9Ebe95974D631`.
-Owners launch immediately. Non-owners see the free-mint dialog; after the mint
-receipt confirms, ownership is checked again before the existing RAD-TOX game
-launcher is invoked. Each launch authorization is single-use: the gate confirms
-that the same wallet is still selected on Ethereum mainnet after the ownership
-call, and a later play attempt performs a new contract check. The browser uses
-only standard EIP-1193 RPC calls. Never
-place a Thirdweb secret key in HTML, browser JavaScript, Render public variables,
-or this repository; any future Thirdweb server integration must read its secret
-only from a protected backend environment variable.
-
-On mobile and desktop devices, the launcher also shows a pass-code field for
-players who cannot use the wallet flow. Entering `boots` opens Single Player
-with the same single-use launch authorization.
+The 3D House Explorer's **Single Player** launcher costs 500 MZK ($5) on first
+entry and provisions a starter avatar, land item, and Builder Loadout in the
+player Backpack. The verified $5 payment also delivers the Black Genie Bottle;
+$30 adds the Violet Bottle; and $200 adds the Golden Bottle plus a custom
+in-game asset order. First MZK purchases receive 2,000 MZK from $5, 5,000 MZK
+at $30, 13,000 MZK at $100, or 26,000 MZK at $200.
 
 ## Land location data
 

@@ -11,10 +11,10 @@ test('activates one hashed MZK Access Code and keeps it usable as account login'
   const { file, store } = await fixture(t); const grant = await store.create({ label: 'Launch', promotionalMzk: 250 });
   assert.match(grant.code, /^MZK(?:-[A-Z2-9]{4}){4}$/); assert.equal((await readFile(file, 'utf8')).includes(grant.code), false);
   const wallet = '0x1111111111111111111111111111111111111111'; const activated = await store.activate(grant.code.toLowerCase(), wallet);
-  assert.equal(activated.credential.status, 'activated'); assert.equal(activated.credential.loadoutRedeemed, true); assert.equal(activated.account.mzkBalance, 750);
+  assert.equal(activated.credential.status, 'activated'); assert.equal(activated.credential.loadoutRedeemed, true); assert.equal(activated.account.mzkBalance, 2250);
   const login = await store.authenticate(grant.code); assert.equal(login.accountId, activated.account.accountId); assert.equal(login.primaryEthereumWallet, wallet);
   assert.equal((await store.activate(grant.code)).account.accountId, activated.account.accountId, 'submitting an active code reopens its account');
-  assert.equal((await store.authenticate(grant.code)).mzkBalance, 750, 'starter and promotional grants are never duplicated');
+  assert.equal((await store.authenticate(grant.code)).mzkBalance, 2250, 'starter and promotional grants are never duplicated');
 });
 
 test('rotation preserves the canonical account and revokes the prior credential', async (t) => {
@@ -42,12 +42,12 @@ test('default MZK Loadout Pass creates a full Backpack before a user has a walle
   assert.equal(activated.account.loadoutStatus, 'included');
   assert.equal(activated.account.creatorVaultAccess, true);
   assert.equal(activated.account.gameAccess, true);
-  assert.equal(activated.account.mzkBalance, 500);
+  assert.equal(activated.account.mzkBalance, 2000);
   assert.equal(activated.account.loadoutProvisioningVersion, 1);
   assert.equal(activated.account.memberAccess, true);
   assert.equal(activated.account.worldAccess, true);
   assert.deepEqual(activated.account.landAssets, ['Unrevealed MUZIKAZ Land']);
-  assert.deepEqual(activated.account.bottleClaims, ['Violet Wish Bottle']);
+  assert.deepEqual(activated.account.bottleClaims, ['Black Genie Bottle']);
   assert.deepEqual(activated.account.gameAssets, ['Starter Avatar', 'Unrevealed Loadout Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear']);
   const wallet = '0x4444444444444444444444444444444444444444';
   const connected = await store.connectWallet(activated.account.accountId, wallet);
@@ -93,7 +93,7 @@ test('generated passes expose a shareable activation path and always build the g
   const activated = await store.activate(issued.code, '0x6666666666666666666666666666666666666666');
   assert.equal(activated.account.loadoutStatus, 'included');
   assert.deepEqual(activated.account.landAssets, ['Unrevealed MUZIKAZ Land']);
-  assert.deepEqual(activated.account.bottleClaims, ['Violet Wish Bottle']);
+  assert.deepEqual(activated.account.bottleClaims, ['Black Genie Bottle']);
   assert.equal(activated.account.creatorVaultAccess, true);
 });
 
@@ -144,16 +144,16 @@ test('verified paid order provisions once and preserves the Backpack through wal
   const replay = await store.fulfillPaidLoadout(order);
   assert.equal(replay.accountId, first.accountId);
   assert.equal(replay.backpackId, first.backpackId);
-  assert.equal(replay.mzkBalance, 500);
+  assert.equal(replay.mzkBalance, 5000);
   assert.equal(replay.gameAssets.filter((item) => item === 'Starter Avatar').length, 1);
   assert.deepEqual(replay.landAssets, ['Unrevealed MUZIKAZ Land']);
-  assert.deepEqual(replay.bottleClaims, ['Violet Wish Bottle']);
+  assert.deepEqual(replay.bottleClaims, ['Black Genie Bottle', 'Violet Wish Bottle']);
   assert.equal(replay.creatorVaultAccess, true);
   const selected = await store.selectAvatar(first.accountId, 'starter-avatar');
   const connected = await store.connectWallet(first.accountId, '0x4545454545454545454545454545454545454545');
   assert.equal(connected.selectedAvatarId, selected.selectedAvatarId);
   assert.equal(connected.backpackId, first.backpackId);
-  assert.equal(connected.mzkBalance, 500);
+  assert.equal(connected.mzkBalance, 5000);
   await assert.rejects(store.selectAvatar(first.accountId, 'unrevealed-loadout-avatar'), /Unrevealed/);
 });
 
@@ -162,9 +162,24 @@ test('unverified, failed, underpriced, and wrong-product orders grant nothing', 
   const base = { orderId: 'bad', paymentStatus: 'PAID', purchaseType: 'LOADOUT', itemId: 'standard-loadout', basePrice: 30 };
   await assert.rejects(store.fulfillPaidLoadout({ ...base, paymentStatus: 'CONFIRMING' }), /server-verified/);
   await assert.rejects(store.fulfillPaidLoadout({ ...base, paymentStatus: 'FAILED' }), /server-verified/);
-  await assert.rejects(store.fulfillPaidLoadout({ ...base, basePrice: 29 }), /server-verified/);
+  await assert.rejects(store.fulfillPaidLoadout({ ...base, basePrice: 4 }), /server-verified/);
   await assert.rejects(store.fulfillPaidLoadout({ ...base, purchaseType: 'GENERIC' }), /server-verified/);
   await assert.rejects(readFile(file, 'utf8'), { code: 'ENOENT' });
+});
+
+test('$100 paid pass provisions $130 in MZK value', async (t) => {
+  const { store } = await fixture(t);
+  const account = await store.fulfillPaidLoadout({ orderId: 'order-loadout-100', paymentStatus: 'PAID', purchaseType: 'LOADOUT', itemId: 'standard-loadout', basePrice: 100, wallet: '' });
+  assert.equal(account.mzkBalance, 13000);
+  assert.equal(account.paymentMzkValue, 13000);
+});
+
+test('$200 paid pass adds the Golden Bottle and custom in-game asset order', async (t) => {
+  const { store } = await fixture(t);
+  const account = await store.fulfillPaidLoadout({ orderId: 'order-loadout-200', paymentStatus: 'PAID', purchaseType: 'LOADOUT', itemId: 'standard-loadout', basePrice: 200, wallet: '' });
+  assert.equal(account.mzkBalance, 26000);
+  assert.deepEqual(account.bottleClaims, ['Black Genie Bottle', 'Violet Wish Bottle', 'Golden Genie Bottle']);
+  assert.ok(account.gameAssets.includes('Custom In-Game Asset Order'));
 });
 
 test('repairs partially provisioned accounts only from durable Loadout entitlement', async (t) => {
