@@ -182,6 +182,16 @@ test('$200 paid pass adds the Golden Bottle and custom in-game asset order', asy
   assert.ok(account.gameAssets.includes('Custom In-Game Asset Order'));
 });
 
+test('a paid account can upgrade from the $5 tier to the $200 custom tier', async (t) => {
+  const { store } = await fixture(t);
+  const starter = await store.fulfillPaidLoadout({ orderId: 'upgrade-5', paymentStatus: 'PAID', purchaseType: 'LOADOUT', itemId: 'standard-loadout', basePrice: 5, wallet: '' });
+  const upgraded = await store.fulfillPaidLoadout({ orderId: 'upgrade-200', paymentStatus: 'PAID', purchaseType: 'LOADOUT', itemId: 'standard-loadout', basePrice: 200, wallet: '' }, starter.accountId);
+  assert.equal(upgraded.purchaseTierUsd, 200);
+  assert.equal(upgraded.paymentMzkValue, 26000);
+  assert.ok(upgraded.bottleClaims.includes('Golden Genie Bottle'));
+  assert.ok(upgraded.gameAssets.includes('Custom In-Game Asset Order'));
+});
+
 test('repairs partially provisioned accounts only from durable Loadout entitlement', async (t) => {
   const { file, store } = await fixture(t);
   const activated = await store.activate((await store.create()).code);

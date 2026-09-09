@@ -217,7 +217,7 @@ export class MzkAccountStore {
     const paymentId = String(order?.orderId || '').trim();
     if (!paymentId || !['PAID', 'FULFILLED'].includes(order?.paymentStatus) || order.purchaseType !== 'LOADOUT' || order.itemId !== 'standard-loadout' || Number(order.basePrice) < 5) throw Object.assign(new Error('Only a server-verified Loadout payment of $5 or more can be fulfilled.'), { statusCode: 409 });
     let account = accountId ? data.accounts.find((a) => a.accountId === accountId) : null;
-    const already = data.accounts.find((a) => a.loadoutPaymentId === paymentId);
+    const already = data.accounts.find((a) => a.loadoutPaymentId === paymentId || (a.loadoutPaymentIds || []).includes(paymentId));
     if (already && account && already.accountId !== account.accountId) throw Object.assign(new Error('This purchase was already claimed by another account.'), { statusCode: 409 });
     account ||= already;
     const address = normalizeWallet(order.wallet);
@@ -226,12 +226,16 @@ export class MzkAccountStore {
     if (account && WALLET_PATTERN.test(address) && !account.connectedWallets.some((w) => w.address === address)) { const boundAt = new Date().toISOString(); account.connectedWallets.push({ chain: 'ETH', address, boundAt }); account.primaryEthereumWallet ||= address; }
     if (!account && WALLET_PATTERN.test(address)) account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address));
     if (!account) { account = accountRecord('', WALLET_PATTERN.test(address) ? address : ''); data.accounts.push(account); }
-    if (account.loadoutPaymentId && account.loadoutPaymentId !== paymentId) return publicAccount(account);
-    const now = new Date().toISOString(); account.loadoutStatus = 'paid'; account.loadoutPaymentId = paymentId; grantStandardLoadout(account);
+    // A member can start at $5 and later buy a higher tier. Keep every verified
+    // order id for replay protection instead of treating the first order as a
+    // permanent ceiling on this Backpack.
+    account.loadoutPaymentIds = unique([...(account.loadoutPaymentIds || []), ...(account.loadoutPaymentId ? [account.loadoutPaymentId] : []), paymentId]);
+    const now = new Date().toISOString(); account.loadoutStatus = 'paid'; account.loadoutPaymentId ||= paymentId; grantStandardLoadout(account);
     const price = Number(order.basePrice);
     const paidMzk = price >= 200 ? 26000 : price >= 100 ? 13000 : price >= 30 ? 5000 : 2000;
     if (account.mzkBalance < paidMzk) account.mzkBalance = paidMzk;
-    account.paymentMzkValue = paidMzk;
+    account.paymentMzkValue = Math.max(Number(account.paymentMzkValue || 0), paidMzk);
+    account.purchaseTierUsd = Math.max(Number(account.purchaseTierUsd || 0), price);
     account.bottleClaims = unique([...(account.bottleClaims || []), ...(price >= 30 ? ['Violet Wish Bottle'] : []), ...(price >= 200 ? ['Golden Genie Bottle'] : [])]);
     if (price >= 200) account.gameAssets = unique([...(account.gameAssets || []), 'Custom In-Game Asset Order']);
     account.updatedAt = now; return publicAccount(account);

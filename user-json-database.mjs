@@ -30,6 +30,7 @@ function cleanMemory(value) {
 function mergeMemory(previous, incoming) {
   const output = clone(plainObject(previous));
   for (const [key, value] of Object.entries(plainObject(incoming))) {
+    if (value === undefined) continue;
     output[key] = plainObject(value) && plainObject(output[key]) === output[key]
       ? mergeMemory(output[key], value) : clone(value);
   }
@@ -111,9 +112,14 @@ export class UserJsonDatabase {
         profile: account.username ? { username: account.username, displayName: account.username } : {}
       });
       const tokens = { ...(previous.tokens || {}) };
-      const firstAccountSync = previous.memory?.account?.accountId !== account.accountId;
+      const previouslyGrantedMzk = previous.memory?.account?.accountId === account.accountId
+        ? Number(previous.memory.account.mzkGranted || 0) : 0;
+      const canonicalGrantMzk = Math.max(0, Number(account.mzkBalance || 0));
       if (tokens.MZK === undefined) tokens.MZK = 0;
-      if (firstAccountSync) tokens.MZK = Number(tokens.MZK || 0) + Number(account.mzkBalance || 0);
+      // Preserve market spending while adding only newly purchased tier value.
+      // Repeated login/sync calls therefore cannot duplicate the balance.
+      if (canonicalGrantMzk > previouslyGrantedMzk) tokens.MZK = Number(tokens.MZK || 0) + canonicalGrantMzk - previouslyGrantedMzk;
+      memory.account.mzkGranted = Math.max(previouslyGrantedMzk, canonicalGrantMzk);
       const record = { walletId: wallet, tokens, items, memory, createdAt: previous.createdAt || account.createdAt || now, updatedAt: now, revision: Number(previous.revision || 0) + 1 };
       data.users[wallet] = record;
       if (wallet !== accountKey) delete data.users[accountKey];
