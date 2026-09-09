@@ -41,6 +41,12 @@
     status.textContent = `${entry.amount.toLocaleString()} MZK added to your wallet and Backpack with the free avatar, land item, and game Loadout. Transaction ${payment.transactionHash.slice(0, 12)}…`;
   }
   quickButtons.forEach((button) => button.addEventListener('click', () => { usdInput.value = button.dataset.usd; refresh(); }));
+  document.querySelectorAll('[data-fund-package]').forEach((button) => button.addEventListener('click', () => {
+    usdInput.value = button.dataset.fundPackage;
+    refresh();
+    document.querySelector('.mzk-terminal')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    usdInput.focus({ preventScroll: true });
+  }));
   usdInput.addEventListener('input', schedule); form.addEventListener('change', (event) => { if (event.target.name === 'currency') renderWallets(); refresh(); });
   form.addEventListener('submit', async (event) => {
     event.preventDefault(); const usd = Number(usdInput.value); const minimum = bottleBonus ? BOTTLE_BONUS_MINIMUM_USD : PRESALE_MINIMUM_USD; if (usd < minimum) return; buy.disabled = true;

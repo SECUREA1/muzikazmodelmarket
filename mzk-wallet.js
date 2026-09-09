@@ -30,10 +30,11 @@
     usd = Number(usd);
     const firstPurchase = !history(owner).some((entry) => entry.kind === 'purchase');
     if (!firstPurchase) return Math.round(usd * MZK_PER_USD);
-    if (usd >= 200) return 26000;
-    if (usd >= 100) return 13000;
-    if (usd >= 30) return 5000;
-    return 2000;
+    const baseTokens = Math.round(usd * MZK_PER_USD);
+    if (usd >= 200) return Math.max(baseTokens, 26000);
+    if (usd >= 100) return Math.max(baseTokens, 13000);
+    if (usd >= 30) return Math.max(baseTokens, 5000);
+    return Math.max(baseTokens, 2000);
   }
   function grantPurchaseRewards(usd, owner) {
     const all = loadouts(), current = all[owner] || {};
