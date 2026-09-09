@@ -43,6 +43,13 @@ test('first-buy MZK values follow the $20, $50, and $130 offer tiers', () => {
   }
 });
 
+test('first-buy allocations above the promotional tiers keep their full market value', () => {
+  for (const [usd, expected] of [[299, 29900], [599, 59900], [999, 99900], [1499, 149900]]) {
+    const { wallet } = loadMzkWallet();
+    assert.equal(wallet.purchaseTokens(usd, `0x${String(usd).padStart(40, '0')}`), expected);
+  }
+});
+
 test('verified purchases put tier bottles and custom rewards in the local Backpack', () => {
   const { wallet, localStorage } = loadMzkWallet();
   const owner = '0x3333333333333333333333333333333333333333';
