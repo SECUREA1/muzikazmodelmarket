@@ -36,6 +36,21 @@ test('access-code account sync adds entitlements once and preserves game and mar
   assert.equal(restored.memory.account.gameAccess, true);
 });
 
+test('tier upgrades add only new MZK value without erasing market spending', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'mzk-users-')); t.after(() => rm(directory, { recursive: true, force: true }));
+  const database = new UserJsonDatabase(join(directory, 'users.json'));
+  const wallet = '0x3434343434343434343434343434343434343434';
+  const account = { accountId: 'usr-upgrade', backpackId: 'pack-upgrade', primaryEthereumWallet: wallet, gameAccess: true, creatorVaultAccess: true, mzkBalance: 2000, gameAssets: ['Starter Avatar'], landAssets: ['Unrevealed MUZIKAZ Land'], bottleClaims: ['Black Genie Bottle'] };
+  await database.ensureAccount(account);
+  await database.put(wallet, { tokens: { MZK: 1500 } }); // 500 MZK spent in a market.
+  await database.ensureAccount({ ...account, mzkBalance: 26000, bottleClaims: [...account.bottleClaims, 'Violet Wish Bottle', 'Golden Genie Bottle'], gameAssets: [...account.gameAssets, 'Custom In-Game Asset Order'] });
+  await database.ensureAccount({ ...account, mzkBalance: 26000 });
+  const upgraded = await database.get(wallet);
+  assert.equal(upgraded.tokens.MZK, 25500, 'the $200 tier adds 24,000 MZK and preserves the prior 500 MZK spend');
+  assert.ok(upgraded.items.some((item) => item.name === 'Golden Genie Bottle'));
+  assert.ok(upgraded.items.some((item) => item.name === 'Custom In-Game Asset Order'));
+});
+
 test('deep-merges shared memory and preserves an append-only MZK adjustment history', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'muzikaz-users-')); t.after(() => rm(directory, { recursive: true, force: true }));
   const file = join(directory, 'users.json'); const database = new UserJsonDatabase(file);
