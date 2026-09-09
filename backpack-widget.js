@@ -12,6 +12,15 @@
   const walletIcon = () => '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 13h28a5 5 0 0 1 5 5v22H8a4 4 0 0 1-4-4V13a5 5 0 0 1 5-5h25"/><path d="M31 23h12v10H31a5 5 0 0 1 0-10Z"/><circle cx="33" cy="28" r="1"/></svg>';
   const adminIcon = () => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.3c0 4.7 3.2 8.2 7.5 9.7 4.3-1.5 7.5-5 7.5-9.7V6L12 3Z"/><path d="M9.5 11.5V10a2.5 2.5 0 0 1 5 0v1.5M9 11.5h6v4H9z"/></svg>';
   const supportIcon = () => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 9 9 0 0 1-3.2-.7L4 20l1.6-4.1A7.4 7.4 0 0 1 4 11.5 7.5 7.5 0 0 1 12 4a7.5 7.5 0 0 1 8 7.5Z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/></svg>';
+  const activityIcon = (kind) => {
+    const paths = {
+      hidden: '<path d="M12 20h24v24H12zM17 20v-3a7 7 0 0 1 14 0v3"/><path d="M21 30a3 3 0 1 1 5 2.2V36"/><circle cx="23.5" cy="39" r="1"/>',
+      land: '<path d="m5 34 10-17 9 12 6-8 13 18H5z"/><path d="m15 17 5-9 8 14M8 39h32"/>',
+      avatar: '<circle cx="24" cy="15" r="8"/><path d="M9 42c1-11 6-17 15-17s14 6 15 17"/>',
+      item: '<path d="M9 15h30v27H9zM9 23h30M18 15a6 6 0 0 1 12 0"/><path d="M20 31h8"/>'
+    };
+    return `<svg viewBox="0 0 48 48" aria-hidden="true">${paths[kind] || paths.item}</svg>`;
+  };
   const short = (value) => value ? `${value.slice(0, 6)}…${value.slice(-4)}` : 'Not connected';
   const safeJson = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch (_) { return fallback; } };
   const escapeHtml = (value) => String(value || '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
@@ -159,7 +168,7 @@
       drawer.querySelector('[data-backpack-status]').textContent = message;
       drawer.querySelector('[data-backpack-items]').innerHTML = `<div class="mzk-backpack-preview"><div class="mzk-backpack-preview-copy"><strong>Backpack template</strong><span>Empty slots preview the supported inventory layout. They are not assets, NFTs, or a balance.</span><button type="button" data-preview-connect>Connect wallet</button></div><div class="mzk-backpack-slot-grid">${previewSlots.map((slot) => `<div class="mzk-backpack-slot">${icon()}<strong>${slot}</strong><small>Empty slot</small></div>`).join('')}</div></div>`;
       drawer.querySelector('[data-preview-connect]')?.addEventListener('click', connect);
-      drawer.querySelector('[data-backpack-trades]').innerHTML = '<li><span>Sign in to view account activity.</span><a href="members.html">Member access</a></li>';
+      drawer.querySelector('[data-backpack-trades]').innerHTML = `<li class="mzk-activity-card is-locked">${activityIcon('hidden')}<div class="mzk-activity-copy"><strong>Private account activity</strong><span>Connect to reveal purchases, sales, and payment methods.</span></div><span class="mzk-payment-badge is-locked">${activityIcon('hidden')}<b>Hidden</b></span></li><li class="mzk-activity-help"><span>Every completed trade records its payment here.</span><a href="members.html">Member access</a></li>`;
     }
 
     async function loadBackpack() {
@@ -199,7 +208,18 @@
       const itemCards = items.filter((item) => !modelNames.has(item)).map((item) => `<article>${icon()}<div><strong>${escapeHtml(item)}</strong><small>Connected to ${short(activeAddress)}</small></div></article>`);
       drawer.querySelector('[data-backpack-items]').innerHTML = modelCards.length || itemCards.length ? [...modelCards, ...itemCards].join('') : `<div class="mzk-backpack-empty">${icon()}<strong>Your Backpack is ready</strong><p>Collect a model, land deed, avatar, wearable, or market drop and it will appear under this Ethereum account.</p></div>`;
       const transactions = safeJson(TRANSACTIONS_KEY, []).filter((tx) => [tx.buyer, tx.seller, tx.owner].map(String).map((value) => value.toLowerCase()).includes(activeAddress)).slice(-4).reverse();
-      drawer.querySelector('[data-backpack-trades]').innerHTML = transactions.length ? transactions.map((tx) => `<li><span>${escapeHtml(tx.asset || tx.reason || 'Backpack trade')}</span><b>${Number(tx.tokenValue || tx.amount || 0).toLocaleString()} MZK</b></li>`).join('') : '<li><span>No Backpack trades yet.</span><a href="model-market.html">Explore market</a></li>';
+      drawer.querySelector('[data-backpack-trades]').innerHTML = transactions.length ? transactions.map((tx) => {
+        const rawAsset = tx.asset || tx.reason || 'Backpack trade';
+        const unrevealed = /unrevealed|mystery|sealed/i.test(rawAsset);
+        const asset = unrevealed ? 'Unrevealed drop' : rawAsset;
+        const category = unrevealed ? 'hidden' : /land|world|environment/i.test(rawAsset) ? 'land' : /avatar|character|companion/i.test(rawAsset) ? 'avatar' : 'item';
+        const isSeller = String(tx.seller || tx.owner || '').toLowerCase() === activeAddress;
+        const payment = tx.cryptoPayment;
+        const amount = Number(payment?.amount ?? tx.tokenValue ?? tx.amount ?? 0);
+        const currency = payment?.currency || 'MZK';
+        const validDate = tx.createdAt && !Number.isNaN(new Date(tx.createdAt).getTime());
+        return `<li class="mzk-activity-card${unrevealed ? ' is-unrevealed' : ''}">${activityIcon(category)}<div class="mzk-activity-copy"><span>${isSeller ? 'Sold' : 'Purchased'} · ${unrevealed ? 'Identity hidden until reveal' : 'Completed trade'}</span><strong>${escapeHtml(asset)}</strong>${validDate ? `<time datetime="${escapeHtml(tx.createdAt)}">${new Date(tx.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</time>` : ''}</div><span class="mzk-payment-badge${currency === 'MZK' ? ' is-mzk' : ''}">${currency === 'MZK' ? '<i aria-hidden="true">M</i>' : walletIcon()}<span><small>${isSeller ? 'Received' : 'Paid'}</small><b>${Number.isFinite(amount) ? amount.toLocaleString() : '0'} ${escapeHtml(currency)}</b></span></span></li>`;
+      }).join('') : `<li class="mzk-activity-card is-empty">${activityIcon('item')}<div class="mzk-activity-copy"><strong>No market activity yet</strong><span>Purchases, swaps, and sales will appear here with their payment method.</span></div><a href="model-market.html">Explore market</a></li>`;
       return true;
     }
 
