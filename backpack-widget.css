@@ -70,4 +70,21 @@
 .backpack-asset-art.is-unrevealed { display:grid; place-items:center; min-height:180px; border:1px solid rgba(163,255,18,.45); border-radius:16px; background:radial-gradient(circle,rgba(163,255,18,.2),rgba(20,9,35,.96) 62%); }
 .backpack-asset-art.is-unrevealed span { font:900 4rem/1 system-ui; color:#a3ff12; filter:drop-shadow(0 0 18px rgba(163,255,18,.65)); }
 .unrevealed-label { display:inline-block; margin:.5rem 0; padding:.3rem .65rem; border-radius:999px; background:#a3ff12; color:#13091f; text-transform:uppercase; letter-spacing:.08em; }
-.mzk-backpack-items article>img{flex:none;width:58px;height:76px;border:1px solid rgba(156,255,0,.35);border-radius:9px;object-fit:cover;background:#070b08}
+
+/* Activity cards distinguish the asset, trade direction, and payment rail at a glance. */
+.mzk-backpack-trades ol{gap:8px}
+.mzk-backpack-trades .mzk-activity-card{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:11px;align-items:center;padding:11px;border:1px solid #26372a;border-radius:13px;background:linear-gradient(105deg,#0d130e,#080b09)}
+.mzk-activity-card>svg{box-sizing:border-box;width:38px;height:38px;padding:7px;border:1px solid #3c5140;border-radius:10px;background:#131b14;fill:none;stroke:#9cff00;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mzk-activity-copy{display:grid;gap:2px;min-width:0}
+.mzk-activity-copy>span,.mzk-activity-copy time{color:#819086;font-size:8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.mzk-activity-copy strong{overflow:hidden;color:#f1f6f2;font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.mzk-payment-badge{display:flex;gap:7px;align-items:center;padding:7px 9px;border:1px solid #415046;border-radius:10px;background:#121713}
+.mzk-payment-badge>svg{width:20px;height:20px;fill:none;stroke:#b6c2b9;stroke-width:2}
+.mzk-payment-badge>span{display:grid;gap:1px}.mzk-payment-badge small{color:#839087;font-size:7px;font-weight:900;text-transform:uppercase}.mzk-payment-badge b{color:#fff;font-size:10px;white-space:nowrap}
+.mzk-payment-badge.is-mzk{border-color:rgba(156,255,0,.48);background:rgba(156,255,0,.08)}
+.mzk-payment-badge>i{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#9cff00;color:#071007;font:900 12px Inter,Arial,sans-serif;font-style:normal;box-shadow:0 0 12px rgba(156,255,0,.25)}
+.mzk-activity-card.is-unrevealed>svg,.mzk-activity-card.is-locked>svg{stroke:#c5ff67;background:radial-gradient(circle,rgba(156,255,0,.18),#121714)}
+.mzk-payment-badge.is-locked{color:#aeb9b0}.mzk-payment-badge.is-locked>svg{width:17px}.mzk-payment-badge.is-locked>b{text-transform:uppercase;letter-spacing:.08em}
+.mzk-backpack-trades .mzk-activity-help{display:flex;justify-content:space-between;gap:10px;padding:4px 2px;background:transparent;color:#78867c;font-size:9px}
+.mzk-activity-card.is-empty>a{font-size:10px;font-weight:900;white-space:nowrap}
+@media(max-width:700px){.mzk-backpack-trades .mzk-activity-card{grid-template-columns:38px minmax(0,1fr)}.mzk-payment-badge,.mzk-activity-card.is-empty>a{grid-column:2;justify-self:start}.mzk-activity-card>svg{width:36px;height:36px}.mzk-backpack-trades .mzk-activity-help{display:grid}}
