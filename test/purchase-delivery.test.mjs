@@ -25,13 +25,33 @@ test('verified MZK purchases credit the explicitly recorded member instead of th
   localStorage.setItem('voice3.wallet', '0x1111111111111111111111111111111111111111');
   const owner = '0x2222222222222222222222222222222222222222';
   wallet.creditPurchase(40, { owner, transactionHash: 'verified-payment', currency: 'ETH' });
-  assert.equal(wallet.balance(owner), 4000);
+  assert.equal(wallet.balance(owner), 5000);
   assert.equal(wallet.balance('0x1111111111111111111111111111111111111111'), 0);
 });
 
 test('MZK purchases cannot be credited to an anonymous guest identity', () => {
   const { wallet } = loadMzkWallet();
   assert.throws(() => wallet.creditPurchase(40, { owner: 'guest-123', transactionHash: 'payment' }), /Connect a member wallet/);
+});
+
+test('first-buy MZK values follow the $20, $50, and $130 offer tiers', () => {
+  for (const [usd, expected] of [[5, 2000], [30, 5000], [100, 13000], [200, 26000]]) {
+    const { wallet } = loadMzkWallet();
+    const owner = `0x${String(usd).padStart(40, '0')}`;
+    assert.equal(wallet.creditPurchase(usd, { owner, transactionHash: `tier-${usd}` }).amount, expected);
+    assert.equal(wallet.creditPurchase(usd, { owner, transactionHash: `repeat-${usd}` }).amount, usd * 100);
+  }
+});
+
+test('verified purchases put tier bottles and custom rewards in the local Backpack', () => {
+  const { wallet, localStorage } = loadMzkWallet();
+  const owner = '0x3333333333333333333333333333333333333333';
+  wallet.creditPurchase(200, { owner, transactionHash: 'gold-tier' });
+  const loadout = JSON.parse(localStorage.getItem('muzikazStarterLoadoutsV1'))[owner];
+  assert.ok(loadout.assets.includes('Black Genie Bottle · SVG collectible'));
+  assert.ok(loadout.assets.includes('Violet Wish Bottle'));
+  assert.ok(loadout.assets.includes('Golden Genie Bottle · SVG collectible'));
+  assert.ok(loadout.assets.includes('Custom In-Game Asset Order'));
 });
 
 test('shared header exposes checkout and member access and checkout uses the verified item snapshot', () => {

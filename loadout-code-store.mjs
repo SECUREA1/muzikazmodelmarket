@@ -19,8 +19,8 @@ const enabled = (value, fallback = true) => value == null ? fallback : ![false, 
 // flags, so every exclusive surface sees the same complete entitlement set.
 const STANDARD_LOADOUT_ASSETS = ['Starter Avatar', 'Unrevealed Loadout Avatar', 'Community Spot', 'Starter Room Shell', 'Builder Tool Kit', 'Creator Market Station', 'RAD-TOX Starter Gear'];
 const STANDARD_LAND_ASSETS = ['Unrevealed MUZIKAZ Land'];
-const STANDARD_BOTTLE_CLAIMS = ['Violet Wish Bottle'];
-const STANDARD_STARTER_MZK = 500;
+const STANDARD_BOTTLE_CLAIMS = ['Black Genie Bottle'];
+const STANDARD_STARTER_MZK = 2000;
 export const LOADOUT_PROVISIONING_VERSION = 1;
 
 // Wallet and code login are two keys to one account, so both must expose the
@@ -215,7 +215,7 @@ export class MzkAccountStore {
   }); }
   fulfillPaidLoadout(order, accountId = '') { return this.serialized(async (data) => {
     const paymentId = String(order?.orderId || '').trim();
-    if (!paymentId || !['PAID', 'FULFILLED'].includes(order?.paymentStatus) || order.purchaseType !== 'LOADOUT' || order.itemId !== 'standard-loadout' || Number(order.basePrice) < 30) throw Object.assign(new Error('Only a server-verified standard Loadout payment can be fulfilled.'), { statusCode: 409 });
+    if (!paymentId || !['PAID', 'FULFILLED'].includes(order?.paymentStatus) || order.purchaseType !== 'LOADOUT' || order.itemId !== 'standard-loadout' || Number(order.basePrice) < 5) throw Object.assign(new Error('Only a server-verified Loadout payment of $5 or more can be fulfilled.'), { statusCode: 409 });
     let account = accountId ? data.accounts.find((a) => a.accountId === accountId) : null;
     const already = data.accounts.find((a) => a.loadoutPaymentId === paymentId);
     if (already && account && already.accountId !== account.accountId) throw Object.assign(new Error('This purchase was already claimed by another account.'), { statusCode: 409 });
@@ -227,7 +227,14 @@ export class MzkAccountStore {
     if (!account && WALLET_PATTERN.test(address)) account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address));
     if (!account) { account = accountRecord('', WALLET_PATTERN.test(address) ? address : ''); data.accounts.push(account); }
     if (account.loadoutPaymentId && account.loadoutPaymentId !== paymentId) return publicAccount(account);
-    const now = new Date().toISOString(); account.loadoutStatus = 'paid'; account.loadoutPaymentId = paymentId; grantStandardLoadout(account); account.updatedAt = now; return publicAccount(account);
+    const now = new Date().toISOString(); account.loadoutStatus = 'paid'; account.loadoutPaymentId = paymentId; grantStandardLoadout(account);
+    const price = Number(order.basePrice);
+    const paidMzk = price >= 200 ? 26000 : price >= 100 ? 13000 : price >= 30 ? 5000 : 2000;
+    if (account.mzkBalance < paidMzk) account.mzkBalance = paidMzk;
+    account.paymentMzkValue = paidMzk;
+    account.bottleClaims = unique([...(account.bottleClaims || []), ...(price >= 30 ? ['Violet Wish Bottle'] : []), ...(price >= 200 ? ['Golden Genie Bottle'] : [])]);
+    if (price >= 200) account.gameAssets = unique([...(account.gameAssets || []), 'Custom In-Game Asset Order']);
+    account.updatedAt = now; return publicAccount(account);
   }); }
   selectAvatar(accountId, avatarId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const id = String(avatarId || ''); if (id !== 'starter-avatar') throw Object.assign(new Error('That avatar is Unrevealed and cannot be used yet. Starter Avatar remains available.'), { statusCode: 409 }); account.selectedAvatarId = id; account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
   async getAccount(accountId) { const account = (await this.records()).accounts.find((a) => a.accountId === accountId); return account ? publicAccount(account) : null; }

@@ -1,10 +1,9 @@
 (function () {
   'use strict';
-  const PRESALE_MINIMUM_USD = 40;
+  const PRESALE_MINIMUM_USD = 5;
   const params = new URLSearchParams(window.location.search);
   const bottleBonus = params.get('offer') === 'bottle10';
   const BOTTLE_BONUS_MINIMUM_USD = 100;
-  const BOTTLE_BONUS_RATE = 0.1;
   const form = document.querySelector('#mzk-swap-form'), usdInput = document.querySelector('#mzk-usd'), output = document.querySelector('#mzk-output'), buy = document.querySelector('#mzk-buy'), quoteCopy = document.querySelector('#mzk-quote'), status = document.querySelector('#mzk-status'), walletSelect = document.querySelector('#mzk-payment-wallet');
   const PENDING_KEY = 'muzikazPendingMzkPaymentV1';
   const quickButtons = [...document.querySelectorAll('[data-usd]')];
@@ -18,9 +17,7 @@
     walletSelect.querySelectorAll('.payment-choice').forEach((item) => item.remove());
     walletSelect.insertAdjacentHTML('beforeend', wallets.map(({ id, name, hardware }, index) => choice('wallet', id, hardware ? `${name} · hardware` : name, index === 0)).join(''));
   }
-  const baseTokens = () => Math.round(Number(usdInput.value || 0) * window.MZKWallet.MZK_PER_USD);
-  const bonusTokens = () => bottleBonus && Number(usdInput.value) >= BOTTLE_BONUS_MINIMUM_USD ? Math.round(baseTokens() * BOTTLE_BONUS_RATE) : 0;
-  const tokens = () => baseTokens() + bonusTokens();
+  const tokens = () => window.MZKWallet.purchaseTokens(Number(usdInput.value || 0));
   let quoteTimer;
   async function refresh() {
     const usd = Number(usdInput.value), amount = tokens();
@@ -33,17 +30,15 @@
     if (usd < PRESALE_MINIMUM_USD) { quoteCopy.textContent = 'Land presale minimum: $40 / 4,000 MZK.'; return; }
     try {
       const quote = await window.MuzikazWalletPayments.quote(usd, selectedCurrency());
-      quoteCopy.textContent = `${quote.amount} ${quote.currency} ≈ $${usd.toFixed(2)} · ${amount.toLocaleString()} MZK${bonusTokens() ? ` (includes ${bonusTokens().toLocaleString()} bonus)` : ''}`;
+      quoteCopy.textContent = `${quote.amount} ${quote.currency} ≈ $${usd.toFixed(2)} · ${amount.toLocaleString()} MZK${amount > usd * 100 ? ' (first-buy value)' : ''}`;
     } catch (error) { quoteCopy.textContent = error.message; }
   }
   function schedule() { clearTimeout(quoteTimer); quoteTimer = setTimeout(refresh, 250); }
   const readPending = () => { try { return JSON.parse(sessionStorage.getItem(PENDING_KEY) || 'null'); } catch (_) { return null; } };
   function creditVerified(pending, payment) {
     const entry = window.MZKWallet.creditPurchase(pending.usd, { ...payment, owner: pending.owner, currency: pending.currency });
-    const bonus = pending.bonus || 0;
-    if (bonus) window.MZKWallet.record({ id: `mzk:bottle-bonus:${payment.transactionHash}`, owner: pending.owner, amount: bonus, kind: 'bonus', reason: `Bottle buyer 10% bonus on $${pending.usd.toFixed(2)} MZK purchase`, transactionHash: payment.transactionHash });
     sessionStorage.removeItem(PENDING_KEY);
-    status.textContent = `${(entry.amount + bonus).toLocaleString()} MZK added to your wallet and Backpack. Transaction ${payment.transactionHash.slice(0, 12)}…`;
+    status.textContent = `${entry.amount.toLocaleString()} MZK added to your wallet and Backpack with the free avatar, land item, and game Loadout. Transaction ${payment.transactionHash.slice(0, 12)}…`;
   }
   quickButtons.forEach((button) => button.addEventListener('click', () => { usdInput.value = button.dataset.usd; refresh(); }));
   usdInput.addEventListener('input', schedule); form.addEventListener('change', (event) => { if (event.target.name === 'currency') renderWallets(); refresh(); });
@@ -55,7 +50,7 @@
       status.textContent = `Opening ${walletSelect.querySelector('input:checked').closest('label').querySelector('small').textContent}. Approve the exact transfer to submit it…`;
       const quote = await window.MuzikazWalletPayments.quote(usd, selectedCurrency());
       const order = await window.MuzikazWalletPayments.createOrder(quote, { productId: 'mzk-land-presale', productType: 'MZK_PURCHASE', quantity: tokens(), userId: owner, wallet: window.MZKWallet.connectedAddress() || owner, metadata: { mzkOwner: owner, tokens: tokens() } });
-      const pending = { orderId: order.orderId, owner, usd, tokens: tokens(), bonus: bonusTokens(), currency: quote.currency, amount: quote.amount };
+      const pending = { orderId: order.orderId, owner, usd, tokens: tokens(), currency: quote.currency, amount: quote.amount };
       sessionStorage.setItem(PENDING_KEY, JSON.stringify(pending));
       const sent = await window.MuzikazWalletPayments.initiate(quote, selectedWallet());
       if (!sent.transactionHash) throw new Error(`${sent.walletName} opened with the prepared payment. Complete it in the wallet; automatic return detection is required to credit MZK.`);
@@ -73,5 +68,6 @@
     document.querySelector('.mzk-form-heading .kicker').textContent = 'Bottle buyer allocation';
     document.querySelector('.mzk-form-heading h2').textContent = 'Claim 10% more MZK';
   }
+  else if (Number(params.get('amount')) >= PRESALE_MINIMUM_USD) usdInput.value = String(Number(params.get('amount')));
   window.MZKWallet.mount('#mzk-balance', { compact: true }); renderWallets(); refresh();
 }());

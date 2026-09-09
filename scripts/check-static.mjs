@@ -255,10 +255,10 @@ for (const requiredGateMarkup of ['id="model-market-cover"', 'id="model-market-l
 }
 const membersHtml = await readFile('dist/members.html', 'utf8');
 const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
-if (!mzkWallet.includes('const GAME_ENTRY_MZK = 0')) throw new Error('Single Player must not debit MZK.');
+if (!mzkWallet.includes('const GAME_ENTRY_MZK = 500')) throw new Error('Single Player must cost exactly $5 / 500 MZK.');
 const blackGenieAccess = await readFile('dist/public/js/black-genie-access.js', 'utf8');
-for (const marker of ['0x9B32d046DA71698BCEEff7b829F9Ebe95974D631', "var MAINNET = '0x1'", "chain = String(await provider.request({ method: 'eth_chainId' })).toLowerCase();", 'eth_requestAccounts', 'wallet_switchEthereumChain', 'provider confirms that its switch', 'eth_getTransactionReceipt', 'Free Mint Black Genie Bottle', 'assertWalletStillSelected(provider, address)', 'authorized = false', 'button.disabled = false', 'openGame(button)']) {
-  if (!blackGenieAccess.includes(marker)) throw new Error(`Black Genie Single Player gate is missing: ${marker}`);
+for (const marker of ['wallet.claimStarterLoadout()', '500 MZK ($5)', 'Black Genie Bottle and free Loadout are delivered after payment', 'free avatar, land item, and game Loadout', 'authorized = false', 'button.disabled = false', 'openGame(button)']) {
+  if (!blackGenieAccess.includes(marker)) throw new Error(`MZK Single Player gate is missing: ${marker}`);
 }
 for (const page of ['model-market.html', 'buy-mzk.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
@@ -347,7 +347,7 @@ for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelA
 for (const requiredMintReward of ['BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
-for (const requiredLoadoutCopy of ['$30 USD · Live ETH quote', 'Minting is optional', 'Enter RAD-TOX Game', 'MZK Access Code', 'Open Account with Access Code', 'Connect MetaMask &amp; Open Account', 'One account. One code. Any device.']) {
+for (const requiredLoadoutCopy of ['$30 USD · Live ETH quote', 'never required for Single Player', 'Enter RAD-TOX Game', 'MZK Access Code', 'Open Account with Access Code', 'Connect MetaMask &amp; Open Account', 'One account. One code. Any device.']) {
   if (!membersHtml.includes(requiredLoadoutCopy)) throw new Error(`members.html is missing $30 Loadout or Magic Bottle guidance: ${requiredLoadoutCopy}`);
 }
 for (const requiredAccessCodeAction of ["openAccessCodeAccount({ connectFirst: true })", "connectButton?.addEventListener('click', connect)", "if (accessCodeInput?.value.trim()) await openAccessCodeAccount()"]) {

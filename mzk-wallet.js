@@ -8,7 +8,7 @@
   const STARTING_MZK = 0;
   const MZK_PER_USD = 100;
   const MINIMUM_PURCHASE_USD = 5;
-  const GAME_ENTRY_MZK = 0;
+  const GAME_ENTRY_MZK = 500;
   const LOADOUT_KEY = 'muzikazStarterLoadoutsV1';
   const STARTER_AVATARS = ['Sparky', 'Nexus', 'Fiona', 'Dax', 'Buzz', 'Luna', 'Muz Cat', 'Ion Wolf'];
   const STARTER_LANDS = ['Skyline Deck', 'Echo Gardens', 'Crew Plaza', 'Studio Ridge', 'Neon Docks'];
@@ -26,7 +26,26 @@
   const history = (owner = walletId()) => read().filter((entry) => entry.walletId === normalize(owner));
   function record({ id = uid(), owner = walletId(), amount, kind, reason = 'MZK activity', ...meta }) { const ledger = read(); const existing = ledger.find((entry) => entry.id === id); if (existing) return existing; const entry = { id, walletId: normalize(owner), currency: 'MZK', kind: kind || (amount < 0 ? 'spend' : 'earn'), amount: Number(amount) || 0, reason, createdAt: new Date().toISOString(), ...meta }; ledger.push(entry); write(ledger); return entry; }
   function ensureWallet(owner = walletId()) { owner = normalize(owner); if (!owner || owner.startsWith('guest-') || history(owner).length) return balance(owner); record({ id: `mzk:welcome:${owner}`, owner, amount: STARTING_MZK, kind: 'welcome', reason: 'MUZIKAZ member wallet welcome balance' }); return balance(owner); }
-  function creditPurchase(usd, payment = {}) { usd = Number(usd); if (!Number.isFinite(usd) || usd < MINIMUM_PURCHASE_USD) throw new Error(`Minimum MZK purchase is $${MINIMUM_PURCHASE_USD}.`); const owner = normalize(payment.owner || walletId()); if (!owner || owner.startsWith('guest-')) throw new Error('Connect a member wallet before purchasing MZK.'); const amount = Math.round(usd * MZK_PER_USD); const transactionHash = String(payment.transactionHash || uid('purchase')); return record({ id: `mzk:purchase:${transactionHash}`, owner, amount, kind: 'purchase', reason: `${amount.toLocaleString()} MZK purchased for $${usd.toFixed(2)}`, usd, paymentCurrency: payment.currency || '', transactionHash }); }
+  function purchaseTokens(usd, owner = walletId()) {
+    usd = Number(usd);
+    const firstPurchase = !history(owner).some((entry) => entry.kind === 'purchase');
+    if (!firstPurchase) return Math.round(usd * MZK_PER_USD);
+    if (usd >= 200) return 26000;
+    if (usd >= 100) return 13000;
+    if (usd >= 30) return 5000;
+    return 2000;
+  }
+  function grantPurchaseRewards(usd, owner) {
+    const all = loadouts(), current = all[owner] || {};
+    const rewards = ['Black Genie Bottle · SVG collectible'];
+    if (usd >= 30) rewards.push('Violet Wish Bottle');
+    if (usd >= 200) rewards.push('Golden Genie Bottle · SVG collectible', 'Custom In-Game Asset Order');
+    all[owner] = { id: current.id || uid('loadout'), owner, avatar: current.avatar || randomItem(STARTER_AVATARS), land: current.land || randomItem(STARTER_LANDS), assets: [...new Set([...(current.assets || []), 'Builder Tool Kit', 'Starter Room Shell', 'Public Community Spot', ...rewards])], entryPaidMzk: current.entryPaidMzk || 0, paymentQualified: true, purchaseTierUsd: Math.max(Number(current.purchaseTierUsd) || 0, usd), claimedAt: current.claimedAt || new Date().toISOString() };
+    localStorage.setItem(LOADOUT_KEY, JSON.stringify(all));
+    window.dispatchEvent(new CustomEvent('mzk:starter-loadout-claimed', { detail: all[owner] }));
+    return all[owner];
+  }
+  function creditPurchase(usd, payment = {}) { usd = Number(usd); if (!Number.isFinite(usd) || usd < MINIMUM_PURCHASE_USD) throw new Error(`Minimum MZK purchase is $${MINIMUM_PURCHASE_USD}.`); const owner = normalize(payment.owner || walletId()); if (!owner || owner.startsWith('guest-')) throw new Error('Connect a member wallet before purchasing MZK.'); const amount = purchaseTokens(usd, owner); const transactionHash = String(payment.transactionHash || uid('purchase')); const entry = record({ id: `mzk:purchase:${transactionHash}`, owner, amount, kind: 'purchase', reason: `${amount.toLocaleString()} MZK received for $${usd.toFixed(2)}${amount > Math.round(usd * MZK_PER_USD) ? ' first-buy offer' : ''}`, usd, paymentCurrency: payment.currency || '', transactionHash }); grantPurchaseRewards(usd, owner); return entry; }
   function loadouts() { const value = parse(LOADOUT_KEY, {}); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
   function starterLoadout(owner = walletId()) { return loadouts()[normalize(owner)] || null; }
   function provisionStandardLoadout(account = {}) {
@@ -94,5 +113,5 @@
     provider.on?.('chainChanged', (chainId) => updateBrowserConnection(connectedAddress() ? [connectedAddress()] : [], chainId));
     provider.on?.('disconnect', () => updateBrowserConnection([]));
   }
-  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, provisionStandardLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
+  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, purchaseTokens, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, provisionStandardLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
 })();
