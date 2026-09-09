@@ -245,7 +245,8 @@ export class MzkAccountStore {
   repairEntitledAccount(accountId) { return this.serialized(async (data) => {
     const account = data.accounts.find((item) => item.accountId === accountId);
     if (!account) throw Object.assign(new Error('The session account no longer exists.'), { statusCode: 401, code: 'ACCOUNT_NOT_FOUND' });
-    if (account.loadoutAccess === true || account.loadoutRedeemed === true || account.loadoutStatus === 'paid' || Boolean(account.loadoutPaymentId)) {
+    const ownsGenieBottle = (account.bottleClaims || []).some((claim) => /genie|wish bottle/i.test(String(claim)));
+    if (account.loadoutAccess === true || account.loadoutRedeemed === true || account.loadoutStatus === 'paid' || Boolean(account.loadoutPaymentId) || ownsGenieBottle) {
       grantStandardLoadout(account);
       account.updatedAt = new Date().toISOString();
     }

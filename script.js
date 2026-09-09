@@ -18,6 +18,7 @@ const BOTTLE_ACCESS_KEY = 'muzikazBottleAccess';
 const BOTTLE_BALANCE_OF_SELECTOR = '0x70a08231';
 const BOTTLE_MINT_SELECTOR = '0x1249c58b';
 const BACKPACK_LOADOUT_USD = 30;
+const BACKPACK_LOADOUT_TIERS = Object.freeze({ 5: 'Black Bottle · 2,000 MZK', 30: 'Violet Bottle · 5,000 MZK', 100: '13,000 MZK', 200: 'Golden Bottle · 26,000 MZK + custom asset' });
 const BOTTLE_MINT_REWARDS_KEY = 'muzikazBottleMintRewards';
 const BOTTLE_MINT_BACKPACK_ASSETS = ['Unrevealed MUZIKAZ Land', 'Violet Wish Bottle'];
 const MARKET_ITEM_PRICE_WEI = 100000000000000n; // 0.0001 ETH for every cart unit.
@@ -2059,6 +2060,7 @@ function initBottleLogin() {
   const loadoutButton = document.querySelector('#bottle-backpack-loadout');
   const loadoutCurrency = document.querySelector('#bottle-loadout-currency');
   const loadoutPrice = document.querySelector('#bottle-loadout-price');
+  const loadoutTiers = [...document.querySelectorAll('[name="loadout-tier"]')];
   const mintButton = document.querySelector('#bottle-wallet-mint');
   const continueButton = document.querySelector('#bottle-continue');
   const accessCodeInput = document.querySelector('#loadout-access-code');
@@ -2080,6 +2082,7 @@ function initBottleLogin() {
     ? window.MUZIKAZ_API.fetch(path, options)
     : fetch(path, options);
   let walletRequestActive = false;
+  const selectedLoadoutPrice = () => { const price = Number(loadoutTiers.find((input) => input.checked)?.value || BACKPACK_LOADOUT_USD); return BACKPACK_LOADOUT_TIERS[price] ? price : BACKPACK_LOADOUT_USD; };
   const rememberAccountSession = (session) => { window.MUZIKAZ_API?.setSessionToken?.(session.sessionToken); window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt }; return session.account; };
   const authenticateWalletAccount = async (wallet) => { const response = await accountApiFetch('/api/access/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ wallet }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Wallet account authentication failed.'); return rememberAccountSession(result.data); };
   const setBusy = (busy) => {
@@ -2094,15 +2097,16 @@ function initBottleLogin() {
   };
   const updateLoadoutQuote = async () => {
     const currency = loadoutCurrency?.value || 'ETH';
+    const price = selectedLoadoutPrice();
     const payLabel = loadoutButton?.querySelector('span');
     if (payLabel) payLabel.textContent = `Unlock loadout & pay with ${currency}`;
     if (!loadoutPrice) return;
     loadoutPrice.textContent = `Loading live ${currency} quote…`;
     try {
-      const quote = await window.MuzikazWalletPayments.quote(BACKPACK_LOADOUT_USD, currency);
-      loadoutPrice.textContent = `$${BACKPACK_LOADOUT_USD} USD ≈ ${quote.amount} ${currency} · Land + Wish Bottle`;
+      const quote = await window.MuzikazWalletPayments.quote(price, currency);
+      loadoutPrice.textContent = `$${price} USD ≈ ${quote.amount} ${currency} · ${BACKPACK_LOADOUT_TIERS[price]}`;
     } catch (error) {
-      loadoutPrice.textContent = `$${BACKPACK_LOADOUT_USD} USD · ${currency} live quote required · Land + Wish Bottle`;
+      loadoutPrice.textContent = `$${price} USD · ${currency} live quote required · ${BACKPACK_LOADOUT_TIERS[price]}`;
     }
   };
   const setPurchaseStep = (step) => {
@@ -2197,7 +2201,25 @@ function initBottleLogin() {
       }
       const address = await requestEthereumAccount(wallet, { chooseAccount });
       showAddress(address);
-      await verifyAndUnlock(address);
+      const connectedAccount = await authenticateWalletAccount(address);
+      const backpackBottle = (connectedAccount.bottleClaims || []).find((claim) => /genie|wish bottle/i.test(String(claim)));
+      if (backpackBottle) {
+        const bootstrapResponse = await accountApiFetch('/api/account/bootstrap');
+        const bootstrapResult = await bootstrapResponse.json();
+        if (!bootstrapResponse.ok || !bootstrapResult.success) throw new Error(bootstrapResult.message || 'Backpack access could not be restored.');
+        const { account, backpack, permissions, csrfToken, expiresAt } = bootstrapResult.data;
+        window.MuzikazAccountSession = { account, backpack, permissions, csrfToken, expiresAt };
+        currentMemberEmail = normalizeMemberEmail(address);
+        grantBottleAccess(currentMemberEmail, 'connected-backpack', backpackBottle);
+        window.sessionStorage.setItem('muzikazBottleMember', 'true');
+        window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+        setPurchaseStep(3);
+        renderOwnedCollection(currentMemberEmail);
+        unlock(`${backpackBottle} found in this connected Backpack. Designated member, marketplace, avatar and game access is ready.`);
+        scrollToSection('member-locked-content');
+      } else {
+        await verifyAndUnlock(address);
+      }
     } catch (error) {
       window.sessionStorage.removeItem('muzikazBottleMember');
       if (status) status.textContent = error.message || 'Bottle ownership could not be verified.';
@@ -2225,6 +2247,7 @@ function initBottleLogin() {
     }
   });
   loadoutCurrency?.addEventListener('change', updateLoadoutQuote);
+  loadoutTiers.forEach((input) => input.addEventListener('change', updateLoadoutQuote));
   accessCodeInput?.addEventListener('input', () => { accessCodeInput.value = accessCodeInput.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''); });
   const openAccessCodeAccount = async ({ connectFirst = false } = {}) => {
     setBusy(true);
@@ -2300,12 +2323,13 @@ function initBottleLogin() {
     setBusy(true);
     try {
       const currency = loadoutCurrency?.value || 'ETH';
+      const price = selectedLoadoutPrice();
       if (!window.MuzikazWalletPayments?.quote) throw new Error('Crypto wallet payments are not available. Reload the page and try again.');
-      const quote = await window.MuzikazWalletPayments.quote(BACKPACK_LOADOUT_USD, currency);
+      const quote = await window.MuzikazWalletPayments.quote(price, currency);
       setPurchaseStep(2);
       const walletName = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS[currency]?.name || `${currency} wallet`;
-      if (status) status.textContent = `Confirm ${quote.amount} ${currency} (equivalent to $${BACKPACK_LOADOUT_USD} USD) in ${walletName}. The Loadout includes one in-game land and one Violet Wish Bottle; no mint is required to continue.`;
-      const payment = await window.MuzikazWalletPayments.pay(BACKPACK_LOADOUT_USD, currency, { purchaseType: 'LOADOUT', itemId: 'standard-loadout' });
+      if (status) status.textContent = `Confirm ${quote.amount} ${currency} (equivalent to $${price} USD) in ${walletName}. This tier includes ${BACKPACK_LOADOUT_TIERS[price]}; no mint is required to continue.`;
+      const payment = await window.MuzikazWalletPayments.pay(price, currency, { purchaseType: 'LOADOUT', itemId: 'standard-loadout' });
       const paymentHash = payment.transactionHash;
       const owner = payment.address;
       if (!paymentHash || !owner) throw new Error(`${currency} payment confirmation did not include a wallet address and transaction hash.`);
@@ -2328,7 +2352,7 @@ function initBottleLogin() {
       if (!credentialResponse.ok || !credentialResult.success) throw new Error(credentialResult.message || 'Your account was created, but its MZK Access Code could not be generated.');
       setPurchaseStep(3);
       if (continueButton) continueButton.innerHTML = 'Enter RAD-TOX Game <span aria-hidden="true">→</span>';
-      unlock(credentialResult.data.code ? `$${BACKPACK_LOADOUT_USD} Loadout confirmed. Full member and multiplayer access is open with 500 starter MZK. Save your MZK Access Code now—it will not be shown again: ${credentialResult.data.code}` : `$${BACKPACK_LOADOUT_USD} Loadout confirmed for account ${account.accountId}. Full member and multiplayer access is open with your existing MZK Access Code.`);
+      unlock(credentialResult.data.code ? `$${price} Loadout confirmed. Full member and multiplayer access is open with 500 starter MZK. Save your MZK Access Code now—it will not be shown again: ${credentialResult.data.code}` : `$${price} Loadout confirmed for account ${account.accountId}. Full member and multiplayer access is open with your existing MZK Access Code.`);
       renderOwnedCollection(currentMemberEmail);
       scrollToSection('member-locked-content');
     } catch (error) {

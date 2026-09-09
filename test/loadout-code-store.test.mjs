@@ -206,3 +206,17 @@ test('repairs partially provisioned accounts only from durable Loadout entitleme
   const unchanged = await store.repairEntitledAccount(unentitled.accountId);
   assert.equal(unchanged.loadoutAccess, false); assert.equal(unchanged.gameAccess, false); assert.deepEqual(unchanged.gameAssets, []);
 });
+
+test('a connected Backpack with any Genie Bottle restores designated access', async (t) => {
+  const { file, store } = await fixture(t);
+  const account = await store.findByWallet('0x7777777777777777777777777777777777777777');
+  const data = JSON.parse(await readFile(file, 'utf8'));
+  data.accounts.find((item) => item.accountId === account.accountId).bottleClaims = ['Golden Genie Bottle'];
+  await writeFile(file, JSON.stringify(data));
+  const repaired = await store.repairEntitledAccount(account.accountId);
+  assert.equal(repaired.loadoutAccess, true);
+  assert.equal(repaired.memberAccess, true);
+  assert.equal(repaired.marketplaceAccess, true);
+  assert.equal(repaired.avatarAccess, true);
+  assert.equal(repaired.gameAccess, true);
+});
