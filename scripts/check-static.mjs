@@ -87,7 +87,7 @@ for (const marketFeature of ['header-market-buttons', 'header-market-button', 'G
 }
 const globalStyles = await readFile('dist/styles.css', 'utf8');
 for (const mobileHeaderLayout of [
-  '.global-site-header .icons{grid-column:2;grid-row:1;display:grid;width:100%;min-width:0;grid-template-columns:repeat(4,minmax(0,1fr))',
+  '.global-site-header .icons{grid-column:1;grid-row:2;display:grid;width:100%;min-width:0;grid-template-columns:repeat(4,minmax(0,1fr))',
   '.global-site-header .header-market-buttons{display:grid;grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr))'
 ]) {
   if (!globalStyles.includes(mobileHeaderLayout)) throw new Error(`The evenly distributed mobile header layout is missing ${mobileHeaderLayout}.`);

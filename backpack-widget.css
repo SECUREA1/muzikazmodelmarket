@@ -10,9 +10,14 @@
 .site-header .icons .mzk-backpack-dock.is-inline{margin-left:0}
 .site-header .mzk-backpack-dock.is-inline+*{flex:none}
 @media(max-width:700px){
+  .global-site-header .icons:has(.mzk-backpack-dock){grid-template-columns:repeat(5,minmax(0,1fr))}
   .site-header .mzk-backpack-dock.is-inline{gap:5px}
   .site-header .mzk-backpack-dock.is-inline .mzk-wallet-button{width:42px;padding:7px;justify-content:center}
   .site-header .mzk-backpack-dock.is-inline .mzk-wallet-button span{display:none}
+  .site-header .mzk-backpack-dock.is-inline .mzk-backpack-button{display:grid;grid-template-columns:1fr;place-items:center;gap:2px;min-height:52px;padding:5px 3px;border-radius:10px}
+  .site-header .mzk-backpack-dock.is-inline .mzk-backpack-button>svg{width:22px;height:22px}
+  .site-header .mzk-backpack-dock.is-inline .mzk-backpack-button span{display:block;align-self:auto;min-width:0;font-size:8px;line-height:1;text-align:center;text-transform:uppercase;white-space:nowrap}
+  .site-header .mzk-backpack-dock.is-inline .mzk-backpack-button small{display:none}
 }
 @media(max-width:430px){
   /* The account shortcuts are a five-column grid on phones.  Do not switch the
