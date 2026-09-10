@@ -3270,3 +3270,56 @@ function initSupportChat() {
 }
 
 initSupportChat();
+
+function initSpaceBuilder() {
+  const root = document.querySelector('#space-builder');
+  if (!root) return;
+  const catalog = [
+    { id: 'neon-district', name: 'Neon District Full Map', type: 'Map', icon: '🗺️', cost: 80 },
+    { id: 'haunted-studio', name: 'Haunted Studio Full Map', type: 'Map', icon: '🏚️', cost: 75 },
+    { id: 'chaos-ape', name: 'Chaos Ape Avatar', type: 'Avatar', icon: '🐵', cost: 25 },
+    { id: 'volt-runner', name: 'Volt Runner Avatar', type: 'Avatar', icon: '⚡', cost: 25 },
+    { id: 'echo-ghost', name: 'Echo Ghost', type: 'Ghost', icon: '👻', cost: 18 },
+    { id: 'bassline-phantom', name: 'Bassline Phantom', type: 'Ghost', icon: '👻', cost: 22 },
+    { id: 'toxic-guard', name: 'Toxic Guard', type: 'Enemy', icon: '☣️', cost: 20 },
+    { id: 'neon-drone', name: 'Neon Drone', type: 'Enemy', icon: '🤖', cost: 16 },
+    { id: 'mzk-cache', name: 'MZK Reward Cache', type: 'Reward', icon: '💰', cost: 10 },
+    { id: 'violet-bottle', name: 'Violet Bottle Reward', type: 'Reward', icon: '🧪', cost: 12 },
+    { id: 'volt-blaster', name: 'Volt Blaster', type: 'Weapon', icon: '🔫', cost: 15 },
+    { id: 'bass-sword', name: 'Bass Sword', type: 'Weapon', icon: '⚔️', cost: 15 },
+    { id: 'health-pack', name: 'Health Pack', type: 'Item', icon: '❤️', cost: 6 },
+    { id: 'builder-key', name: 'Builder Key', type: 'Item', icon: '🗝️', cost: 8 }
+  ];
+  const colors = { Map: '#9cff00', Avatar: '#69d8ff', Ghost: '#c895ff', Enemy: '#ff5d65', Reward: '#ffd24c', Weapon: '#ff8a3d', Item: '#f5f5f5' };
+  const types = [...new Set(catalog.map((asset) => asset.type))];
+  const owner = () => window.MZKWallet?.connectedAddress?.() || window.MZKWallet?.walletId?.() || 'guest-builder';
+  const draftKey = () => `muzikaz.spaceBuilder.draft.${owner()}`;
+  const publishedKey = 'muzikaz.spaceBuilder.published';
+  const coinKey = () => `muzikaz.spaceBuilder.coins.${owner()}`;
+  const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
+  let state = read(draftKey(), { id: crypto.randomUUID?.() || `space-${Date.now()}`, name: 'My MUZIKAZ Arena', enabledTypes: types, objects: [], spentMzk: 0, version: 0 });
+  let coins = Number(localStorage.getItem(coinKey()) ?? 500);
+  const toggles = root.querySelector('#space-type-toggles'); const select = root.querySelector('#space-asset-select'); const status = root.querySelector('#space-builder-status'); const name = root.querySelector('#space-builder-name');
+  const save = () => { state.name = name.value.trim() || 'Untitled MUZIKAZ Space'; localStorage.setItem(draftKey(), JSON.stringify(state)); };
+  const balance = () => Number(window.MZKWallet?.balance?.() || 0);
+  function enabled() { return new Set([...toggles.querySelectorAll('input:checked')].map((input) => input.value)); }
+  function renderCatalog() { const active = enabled(); state.enabledTypes = [...active]; const prior = select.value; select.replaceChildren(...catalog.filter((asset) => active.has(asset.type)).map((asset) => new Option(`${asset.icon} ${asset.name} · ${asset.cost} MZK`, asset.id))); if ([...select.options].some((option) => option.value === prior)) select.value = prior; save(); }
+  function renderPublished() { const box = root.querySelector('#space-published-list'); const maps = read(publishedKey, []).filter((map) => map.owner === owner()); box.replaceChildren(...(maps.length ? maps.slice().reverse().map((map) => { const card = document.createElement('article'); card.className = 'published-space-card'; const title = document.createElement('h4'); title.textContent = map.name; const copy = document.createElement('p'); copy.textContent = `v${map.version} · ${map.objects.length} objects · ${map.publishCostCoins} Coins · ${new Date(map.publishedAt).toLocaleString()}`; const detail = document.createElement('small'); detail.textContent = [...new Set(map.objects.map((object) => object.type))].join(' · '); card.append(title, copy, detail); return card; }) : [Object.assign(document.createElement('p'), { textContent: 'No maps published from this browser yet.' })])); }
+  function render() {
+    name.value = state.name; root.querySelector('#space-builder-mzk').textContent = `${balance().toLocaleString()} MZK`; root.querySelector('#space-builder-coins').textContent = `${coins.toLocaleString()} Coins`;
+    root.querySelector('#space-object-count').textContent = state.objects.length; root.querySelector('#space-build-cost').textContent = Number(state.spentMzk || 0).toLocaleString();
+    const stage = root.querySelector('#space-map-stage'); stage.replaceChildren(...(state.objects.length ? state.objects.map((object) => { const tile = document.createElement('article'); tile.className = 'space-map-object'; tile.style.setProperty('--asset-color', colors[object.type]); const icon = document.createElement('i'); icon.textContent = object.icon; const label = document.createElement('strong'); label.textContent = object.name; const kind = document.createElement('small'); kind.textContent = `${object.type} · spawn ${object.spawnOrder}`; tile.append(icon, label, kind); return tile; }) : [Object.assign(document.createElement('span'), { className: 'space-map-empty', textContent: 'Your map is ready for its first spawn.' })]));
+    const list = root.querySelector('#space-loadout-list'); list.replaceChildren(...(state.objects.length ? state.objects.map((object) => { const row = document.createElement('li'); const label = document.createElement('span'); label.textContent = `${object.icon} ${object.name}`; const meta = document.createElement('small'); meta.textContent = `${object.type} · ${object.cost} MZK`; const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'ghost'; remove.textContent = 'Remove'; remove.setAttribute('aria-label', `Remove ${object.name}`); remove.onclick = () => { state.objects = state.objects.filter((item) => item.instanceId !== object.instanceId).map((item, index) => ({ ...item, spawnOrder: index + 1 })); save(); render(); status.textContent = `${object.name} removed from this layout. Its settled MZK addition remains in the wallet ledger.`; }; row.append(label, meta, remove); return row; }) : [Object.assign(document.createElement('li'), { textContent: 'No assets added yet.' })])); renderPublished();
+  }
+  toggles.replaceChildren(...types.map((type) => { const label = document.createElement('label'); const input = document.createElement('input'); input.type = 'checkbox'; input.value = type; input.checked = state.enabledTypes?.includes(type) !== false; input.addEventListener('change', renderCatalog); label.append(input, document.createTextNode(type)); return label; }));
+  renderCatalog(); render();
+  root.querySelector('#space-add-asset').addEventListener('click', () => { const asset = catalog.find((item) => item.id === select.value); if (!asset) return; const requestId = `space-add:${state.id}:${crypto.randomUUID?.() || Date.now()}`; const payment = window.MZKWallet?.spend?.(asset.cost, `Game space addition · ${asset.name}`, requestId, { spaceId: state.id, assetId: asset.id, assetType: asset.type }); if (!payment?.ok) { status.textContent = `You need ${Math.max(0, asset.cost - balance())} more MZK to add ${asset.name}. Connect or fund your wallet, then retry.`; return render(); } state.objects.push({ ...asset, instanceId: requestId, spawnOrder: state.objects.length + 1, addedAt: new Date().toISOString() }); state.spentMzk = Number(state.spentMzk || 0) + asset.cost; save(); render(); status.textContent = `${asset.name} added to the gameplay loadout for ${asset.cost} MZK.`; });
+  name.addEventListener('change', save);
+  root.querySelector('#space-save-draft').addEventListener('click', () => { save(); status.textContent = 'Draft saved to this wallet profile. No additional tokens or coins were used.'; });
+  function manifest(published = false) { save(); return { schema: 'muzikaz-game-space-v1', id: state.id, owner: owner(), name: state.name, version: state.version + (published ? 1 : 0), status: published ? 'published' : 'draft', enabledTypes: state.enabledTypes, spentMzk: state.spentMzk, publishCostCoins: published ? 100 : 0, objects: state.objects, updatedAt: new Date().toISOString() }; }
+  root.querySelector('#space-export-map').addEventListener('click', () => { const data = manifest(); const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })); link.download = `${state.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'muzikaz-space'}.json`; link.click(); URL.revokeObjectURL(link.href); status.textContent = 'Versioned game manifest exported for engine loadout use.'; });
+  root.querySelector('#space-publish-map').addEventListener('click', () => { if (!state.objects.length) { status.textContent = 'Add at least one gameplay asset before publishing.'; return; } if (coins < 100) { status.textContent = `You need ${100 - coins} more Builder Coins to publish this map.`; return; } const map = manifest(true); coins -= 100; localStorage.setItem(coinKey(), String(coins)); localStorage.setItem(publishedKey, JSON.stringify([...read(publishedKey, []), { ...map, publishedAt: new Date().toISOString() }])); state.version = map.version; save(); render(); status.textContent = `${map.name} v${map.version} published. 100 Builder Coins settled; ${map.objects.length} objects are ready for gameplay.`; });
+  window.addEventListener('mzk:wallet-updated', render);
+}
+
+initSpaceBuilder();

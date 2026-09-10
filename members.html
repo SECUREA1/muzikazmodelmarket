@@ -333,6 +333,32 @@
             </div>
         </section>
 
+        <section class="section-block space-builder-block" id="space-builder" aria-labelledby="space-builder-title">
+            <div class="section-title"><span></span><h2 id="space-builder-title">Game Space Builder</h2><a href="#marketplace">Find more assets</a></div>
+            <div class="space-builder-shell">
+                <header class="space-builder-header">
+                    <div><p class="kicker">Build → loadout → publish</p><h3>Populate a complete playable map</h3><p>Choose exactly what can spawn in your new space. Each addition spends its listed MZK once; publishing uses Builder Coins and freezes a versioned gameplay manifest.</p></div>
+                    <div class="space-builder-wallet" aria-label="Builder balances"><span>Wallet <strong id="space-builder-mzk">— MZK</strong></span><span>Builder bank <strong id="space-builder-coins">500 Coins</strong></span></div>
+                </header>
+                <div class="space-builder-layout">
+                    <aside class="space-builder-controls">
+                        <label>Space name <input id="space-builder-name" maxlength="48" value="My MUZIKAZ Arena" /></label>
+                        <fieldset><legend>Spawn toggles</legend><div class="space-type-toggles" id="space-type-toggles"></div></fieldset>
+                        <label>Asset list <select id="space-asset-select" size="8" aria-label="Available game assets"></select></label>
+                        <button type="button" id="space-add-asset">Add selected asset</button>
+                        <p class="status-message" id="space-builder-status" role="status">Select a category and add assets to begin your map.</p>
+                    </aside>
+                    <section class="space-builder-preview" aria-label="Game map loadout preview">
+                        <div class="space-map-stage" id="space-map-stage"><span class="space-map-empty">Your map is ready for its first spawn.</span></div>
+                        <div class="space-builder-summary"><span><b id="space-object-count">0</b> gameplay objects</span><span><b id="space-build-cost">0</b> MZK spent</span><span><b id="space-publish-cost">100</b> Coins to publish</span></div>
+                        <ol class="space-loadout-list" id="space-loadout-list"><li>No assets added yet.</li></ol>
+                        <div class="button-row"><button type="button" class="ghost" id="space-save-draft">Save draft</button><button type="button" class="ghost" id="space-export-map">Export game manifest</button><button type="button" id="space-publish-map">Publish map · 100 Coins</button></div>
+                    </section>
+                </div>
+                <section class="space-published" aria-labelledby="space-published-title"><h3 id="space-published-title">Published game maps</h3><div id="space-published-list"><p>No maps published from this browser yet.</p></div></section>
+            </div>
+        </section>
+
         <section class="section-block marketplace-block" id="marketplace">
             <div class="section-title"><span></span><h2>Marketplace engine</h2><a href="#admin">Manage store</a></div>
             <div class="market-controls" aria-label="Marketplace filters and quality controls">
