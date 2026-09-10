@@ -2580,6 +2580,11 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 .model-market-page.model-market-gated{overflow:hidden}
 .model-market-page.model-market-gated>:not(.model-market-cover):not(script){visibility:hidden}
 .model-market-page:not(.model-market-gated) .model-market-cover{display:none}
+
+/* One Market control exposes the player and creator economies in the shared header. */
+.header-market-menu{position:relative;display:flex}.header-market-menu>.nav-link{font:inherit;cursor:pointer}.header-market-menu>.nav-link b{margin-left:3px;color:#9cff00}.header-market-options{position:absolute;z-index:9200;top:calc(100% + 10px);left:0;width:min(310px,85vw);padding:7px;border:1px solid rgba(156,255,0,.5);border-radius:13px;background:#071009;box-shadow:0 20px 55px rgba(0,0,0,.7)}.header-market-options[hidden]{display:none}.header-market-options a{display:grid;gap:3px;padding:12px;border-radius:9px;color:#fff;text-decoration:none}.header-market-options a:hover,.header-market-options a:focus-visible{background:rgba(156,255,0,.12);outline:none}.header-market-options strong{color:#dfff75;font-size:12px}.header-market-options small{color:#91a095;font-size:9px}.header-market-menu.active>.nav-link,.header-market-menu.is-open>.nav-link{color:#9cff00}
+.market-mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:min(560px,94%);margin:22px auto;padding:6px;border:1px solid rgba(156,255,0,.35);border-radius:14px;background:#070d08}.market-mode-switch a{display:grid;gap:2px;padding:11px 16px;border-radius:9px;color:#aab7ad;text-align:center;text-decoration:none}.market-mode-switch a[aria-current="page"]{background:#9cff00;color:#071007}.market-mode-switch strong{font-size:12px;text-transform:uppercase}.market-mode-switch small{font-size:9px}
+@media(max-width:850px){.header-market-menu{display:grid;width:100%}.header-market-options{position:static;width:auto;margin:5px 0}.header-market-menu>.nav-link{width:100%}}
 @media(max-width:800px){.model-market-cover-card{grid-template-columns:1fr}.model-market-cover .member-bottle{min-height:220px}.model-market-cover{align-items:start}.model-market-cover .member-login-card h1{font-size:clamp(42px,13vw,64px)}.model-market-cover .bottle-login-form{grid-template-columns:1fr}}
 
 /* Profile Backpack token market */

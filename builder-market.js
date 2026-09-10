@@ -40,7 +40,10 @@
     if (action === 'remove-placement') return confirm('Remove this instance from the world?') && api(`/api/builder/placements/${encodeURIComponent(id)}`, { method:'DELETE' }).then(refresh);
   }
   document.addEventListener('click', (event) => { const tab = event.target.closest('[data-builder-tab]'); if (tab) { document.querySelectorAll('[data-builder-tab]').forEach((item) => item.classList.toggle('active', item === tab)); document.querySelectorAll('[data-builder-panel]').forEach((item) => item.classList.toggle('active', item.dataset.builderPanel === tab.dataset.builderTab)); } const action = event.target.closest('[data-action]'); if (action) Promise.resolve(act(action.dataset.action, action.dataset.id)).catch((error) => status(error.message, true)); });
-  $('#builder-category').innerHTML += categories.map((category) => `<option>${category}</option>`).join(''); $('#builder-category').addEventListener('change', () => refresh().catch((error) => status(error.message, true))); $('#open-create-asset').addEventListener('click', createAsset);
+  $('#builder-category').innerHTML += categories.map((category) => `<option>${category}</option>`).join('');
+  const requestedCategory = new URLSearchParams(location.search).get('category');
+  if (categories.includes(requestedCategory)) $('#builder-category').value = requestedCategory;
+  $('#builder-category').addEventListener('change', () => refresh().catch((error) => status(error.message, true))); $('#open-create-asset').addEventListener('click', createAsset);
   const requestedTab = location.hash.slice(1); if (['market','backpack','worlds'].includes(requestedTab)) document.querySelector(`[data-builder-tab="${requestedTab}"]`)?.click();
   api('/api/account/bootstrap').then((bootstrap) => { state.csrf = bootstrap.csrfToken || ''; return refresh(); }).catch((error) => { status(`${error.message} Sign in through Members to use the Builder Market.`, true); $('#builder-account').textContent = 'Authentication required'; });
 }());

@@ -7,6 +7,11 @@
   const PROFILE_ASSETS_KEY = 'muzikazOwnedProfiles';
   const MODEL_ASSETS_KEY = 'muzikazBackpackAssetsV1';
   const previewSlots = ['Avatar', 'Companion', 'Head', 'Neck', 'Torso', 'Tool', 'Collectible', 'Land', 'Bottle', 'Environment'];
+  const builderCategories = [
+    ['Enemies & NPCs', 'NPC', '☠'], ['Environments', 'WORLD', '◈'], ['Buildings', 'BUILDINGS', '⌂'],
+    ['Terrain', 'TERRAIN', '▲'], ['Props & assets', 'PROPS', '▣'], ['Vehicles', 'VEHICLES', '▷'],
+    ['Game systems', 'GAME SYSTEMS', '⌘'], ['AI & functions', 'AI', '✹'], ['Audio & effects', 'EFFECTS', '✷']
+  ];
 
   const icon = (className = '') => `<svg class="${className}" viewBox="0 0 48 48" aria-hidden="true"><path d="M15 18v-3a9 9 0 0 1 18 0v3"/><path d="M12 18h24a4 4 0 0 1 4 4v19H8V22a4 4 0 0 1 4-4Z"/><path d="M16 28h16v13H16z"/><path d="M8 25H5v11h3M40 25h3v11h-3"/><path d="M19 14h10M12 25h28M20 32h8"/></svg>`;
   const walletIcon = () => '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 13h28a5 5 0 0 1 5 5v22H8a4 4 0 0 1-4-4V13a5 5 0 0 1 5-5h25"/><path d="M31 23h12v10H31a5 5 0 0 1 0-10Z"/><circle cx="33" cy="28" r="1"/></svg>';
@@ -73,7 +78,7 @@
     drawer.setAttribute('role', 'dialog');
     drawer.setAttribute('aria-modal', 'true');
     drawer.setAttribute('aria-labelledby', 'global-backpack-title');
-    drawer.innerHTML = `<div class="mzk-backpack-scrim" data-close-backpack></div><div class="mzk-backpack-panel"><header>${icon()}<div><p>ETHEREUM ACCOUNT INVENTORY</p><h2 id="global-backpack-title">My Backpack</h2><small data-drawer-address>Connect an Ethereum wallet to open your account.</small></div><button type="button" data-close-backpack aria-label="Close Backpack">×</button></header><div class="mzk-backpack-account"><div><span>Wallet</span><strong data-account-address>Not connected</strong></div><div><span>Network</span><strong data-account-network>—</strong></div><div><span>MZK balance</span><strong data-account-balance>0 MZK</strong></div></div><p class="mzk-backpack-status" data-backpack-status role="status" aria-live="polite"></p><div class="mzk-backpack-items" data-backpack-items></div><nav aria-label="Backpack network"><a href="model-market.html">Trade market <b>↗</b></a><a href="buy-mzk.html">Buy / swap MZK <b>↗</b></a><a href="members.html#owned-collection">Full account <b>↗</b></a></nav><div class="mzk-backpack-trades"><h3>Recent market activity</h3><ol data-backpack-trades></ol></div></div>`;
+    drawer.innerHTML = `<div class="mzk-backpack-scrim" data-close-backpack></div><div class="mzk-backpack-panel"><header>${icon()}<div><p>PLAYER + CREATOR INVENTORY</p><h2 id="global-backpack-title">My Backpack</h2><small data-drawer-address>Connect an Ethereum wallet to open your account.</small></div><button type="button" data-close-backpack aria-label="Close Backpack">×</button></header><div class="mzk-backpack-switch" role="tablist" aria-label="Choose backpack"><button type="button" role="tab" aria-selected="true" data-backpack-view="game"><span>In-game Backpack</span><small>Original play-ready items</small></button><button type="button" role="tab" aria-selected="false" data-backpack-view="builder"><span>Builder Backpack</span><small>Creator-owned assets</small></button></div><div data-backpack-view-panel="game"><div class="mzk-backpack-account"><div><span>Wallet</span><strong data-account-address>Not connected</strong></div><div><span>Network</span><strong data-account-network>—</strong></div><div><span>MZK balance</span><strong data-account-balance>0 MZK</strong></div></div><p class="mzk-backpack-status" data-backpack-status role="status" aria-live="polite"></p><div class="mzk-backpack-items" data-backpack-items></div><nav aria-label="Backpack network"><a href="model-market.html">Game market <b>↗</b></a><a href="buy-mzk.html">Buy / swap MZK <b>↗</b></a><a href="members.html#owned-collection">Full account <b>↗</b></a></nav><div class="mzk-backpack-trades"><h3>Recent market activity</h3><ol data-backpack-trades></ol></div></div><div class="mzk-builder-view" data-backpack-view-panel="builder" hidden><div class="mzk-builder-intro"><p>OWNED CREATOR INVENTORY</p><h3>Your Builder Backpack</h3><span>Builder assets are kept separate from the original game Backpack so creators can edit, configure and place them into owned worlds.</span><p class="mzk-builder-status" data-builder-backpack-status role="status">Open this tab to load your Builder Backpack.</p><div class="mzk-builder-owned" data-builder-backpack-items></div><div><a href="builder-market.html#backpack">Manage Builder Backpack</a><a href="builder-market.html#backpack" class="is-secondary">Import / create asset</a></div></div><h3 class="mzk-builder-market-title">Add from Builder Market</h3><div class="mzk-builder-category-grid">${builderCategories.map(([label, category, glyph]) => `<a href="builder-market.html?category=${encodeURIComponent(category)}#market"><i aria-hidden="true">${glyph}</i><strong>${label}</strong><small>Browse &amp; add</small></a>`).join('')}</div><div class="mzk-builder-workflow"><strong>Build with existing creator logic</strong><ol><li><b>1</b><span>Buy or import reusable game assets</span></li><li><b>2</b><span>Configure behavior per placed instance</span></li><li><b>3</b><span>Place into owned land and expand your world</span></li></ol><a href="builder-market.html#worlds">Manage my land / worlds ↗</a></div></div></div>`;
     document.body.appendChild(drawer);
 
     const utilityBar = document.createElement('aside');
@@ -143,8 +148,53 @@
 
     const button = dock.querySelector('[data-open-backpack]');
     const connectButton = dock.querySelector('[data-widget-connect]');
-    const mobileBackpackButtons = [...document.querySelectorAll('.mobile-header-action[aria-label="View backpack"]')];
+    const mobileBackpackButtons = [...document.querySelectorAll('.mobile-header-action[aria-label="View backpack"], .mobile-header-action[aria-label="View Builder Backpack"]')];
     let lastFocused = null;
+    let builderBackpackLoaded = false;
+
+    async function loadBuilderBackpack() {
+      if (builderBackpackLoaded) return;
+      const status = drawer.querySelector('[data-builder-backpack-status]');
+      const items = drawer.querySelector('[data-builder-backpack-items]');
+      status.textContent = 'Loading your authenticated Builder Backpack…';
+      try {
+        const request = window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API) || window.fetch.bind(window);
+        const response = await request('/api/builder/backpack', { headers: { Accept: 'application/json' }, credentials: 'include' });
+        const payload = await response.json();
+        if (!response.ok || payload.success === false) throw new Error(payload.message || 'Builder account access is required.');
+        const assets = Array.isArray(payload.data?.assets) ? payload.data.assets : [];
+        items.innerHTML = assets.length ? assets.slice(0, 6).map((asset) => `<a href="builder-market.html#backpack"><i aria-hidden="true">${builderCategories.find((category) => category[1] === asset.builder_category)?.[2] || '▣'}</i><span><strong>${escapeHtml(asset.name)}</strong><small>${escapeHtml(asset.builder_category)} · v${escapeHtml(asset.version || '1.0.0')}</small></span><b>EDIT ↗</b></a>`).join('') : '<p>Your Builder Backpack is ready. Import an asset or add one from the Builder Market.</p>';
+        status.textContent = `${assets.length} owned builder ${assets.length === 1 ? 'asset' : 'assets'} · server verified`;
+        builderBackpackLoaded = true;
+      } catch (error) {
+        items.innerHTML = '<a href="members.html"><span><strong>Open account access</strong><small>Sign in to load server-owned builder assets.</small></span><b>SIGN IN ↗</b></a>';
+        status.textContent = error.message || 'Sign in to load your Builder Backpack.';
+      }
+    }
+
+    function selectView(view) {
+      const selected = view === 'builder' ? 'builder' : 'game';
+      drawer.querySelectorAll('[data-backpack-view]').forEach((tab) => {
+        const active = tab.dataset.backpackView === selected;
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+      });
+      drawer.querySelectorAll('[data-backpack-view-panel]').forEach((panel) => { panel.hidden = panel.dataset.backpackViewPanel !== selected; });
+      drawer.querySelector('#global-backpack-title').textContent = selected === 'builder' ? 'Builder Backpack' : 'My Backpack';
+      if (selected === 'builder') loadBuilderBackpack();
+    }
+    drawer.querySelector('.mzk-backpack-switch').addEventListener('click', (event) => {
+      const tab = event.target.closest('[data-backpack-view]');
+      if (tab) selectView(tab.dataset.backpackView);
+    });
+    drawer.querySelector('.mzk-backpack-switch').addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      event.preventDefault();
+      const next = drawer.querySelector(`[data-backpack-view="${event.key === 'ArrowRight' ? 'builder' : 'game'}"]`);
+      selectView(next.dataset.backpackView);
+      next.focus();
+    });
+    selectView('game');
 
     async function connect() {
       connectButton?.setAttribute('disabled', '');
@@ -224,8 +274,9 @@
       return true;
     }
 
-    async function open() {
+    async function open(view = 'game') {
       lastFocused = document.activeElement;
+      selectView(view);
       drawer.hidden = false;
       document.documentElement.classList.add('mzk-backpack-open');
       button.setAttribute('aria-expanded', 'true');
@@ -233,13 +284,13 @@
       await loadBackpack();
     }
     function close() { drawer.hidden = true; document.documentElement.classList.remove('mzk-backpack-open'); button.setAttribute('aria-expanded', 'false'); lastFocused?.focus?.(); }
-    button.addEventListener('click', open);
+    button.addEventListener('click', () => open('game'));
     mobileBackpackButtons.forEach((mobileButton) => {
       mobileButton.setAttribute('aria-haspopup', 'dialog');
       mobileButton.setAttribute('aria-controls', 'global-backpack-title');
       mobileButton.addEventListener('click', (event) => {
         event.preventDefault();
-        open();
+        open(mobileButton.getAttribute('aria-label') === 'View Builder Backpack' ? 'builder' : 'game');
       });
     });
     connectButton?.addEventListener('click', connect);

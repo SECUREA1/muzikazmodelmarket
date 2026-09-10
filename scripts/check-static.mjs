@@ -51,8 +51,15 @@ for (const page of mobileHeaderPages) {
   if (!html.includes('class="menu-toggle"') || !html.includes('aria-controls="primary-navigation"')) throw new Error(`${page} must include a labelled, accessible mobile menu toggle.`);
 }
 
-for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', 'data-open-backpack', 'Trade market', 'Buy / swap MZK']) {
+for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', 'data-open-backpack', 'Game market', 'Buy / swap MZK']) {
   if (!backpackWidget.includes(feature)) throw new Error(`The global Ethereum Backpack is missing ${feature}.`);
+}
+for (const toggleFeature of ['data-backpack-view="game"', 'data-backpack-view="builder"', 'In-game Backpack', 'Builder Backpack', 'Enemies & NPCs', 'Environments']) {
+  if (!backpackWidget.includes(toggleFeature)) throw new Error(`The Backpack / Builder Market toggle is missing ${toggleFeature}.`);
+}
+const globalHeader = await readFile('dist/global-header.js', 'utf8');
+for (const marketFeature of ['header-market-menu', 'Game Market', 'Builder Market', 'aria-haspopup="true"']) {
+  if (!globalHeader.includes(marketFeature)) throw new Error(`The shared Market dropdown is missing ${marketFeature}.`);
 }
 for (const utilityFeature of ['Support', 'data-open-support-chat', 'Admin login', 'data-global-admin-form', '/api/admin/login']) {
   if (!backpackWidget.includes(utilityFeature)) throw new Error(`The global page utility bar is missing ${utilityFeature}.`);

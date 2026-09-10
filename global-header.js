@@ -11,9 +11,15 @@
   header.innerHTML = `
     <a class="logo world-logo" href="index.html#home" aria-label="MUZIKAZ WORLD home"><img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ WORLD"></a>
     <nav class="nav global-nav" id="primary-navigation" aria-label="Primary navigation" aria-hidden="false">
-      <a class="nav-link${active('index.html')}" href="index.html#models">${icon('M4 5h16v14H4zM8 9h8M8 13h5')}<span>Models</span></a>
+      <div class="header-market-menu${['model-market.html', 'builder-market.html'].includes(current) ? ' active' : ''}">
+        <button class="nav-link" type="button" aria-expanded="false" aria-haspopup="true" aria-controls="header-market-options">${icon('M4 9h16l-1-5H5zM6 9v11h12V9M9 20v-6h6v6')}<span>Market</span><b aria-hidden="true">⌄</b></button>
+        <div class="header-market-options" id="header-market-options" hidden>
+          <a href="model-market.html"><strong>Game Market</strong><small>Avatars, collectibles &amp; in-game assets</small></a>
+          <a href="builder-market.html"><strong>Builder Market</strong><small>World systems, enemies &amp; environments</small></a>
+        </div>
+      </div>
       <a class="nav-link${active('model-explorer.html')}" href="model-explorer.html">${icon('M3 6l5-2 8 3 5-2v13l-5 2-8-3-5 2zM8 4v13M16 7v13')}<span>World Map</span></a>
-      <a class="nav-link${active('builder-market.html')}" href="builder-market.html">${icon('M4 9h16l-1-5H5zM6 9v11h12V9M9 20v-6h6v6')}<span>Build Market</span></a>
+      <a class="nav-link${active('index.html')}" href="index.html#models">${icon('M4 5h16v14H4zM8 9h8M8 13h5')}<span>Models</span></a>
       <a class="nav-link${active('crew-market.html')}" href="crew-market.html">${icon('M12 3a5 5 0 015 5c0 3-2 4-5 4S7 11 7 8a5 5 0 015-5zM4 21c.5-5 3-7 8-7s7.5 2 8 7')}<span>Characters &amp; Worlds</span></a>
       <a class="nav-link" href="index.html#merch">${icon('M8 4l4 2 4-2 5 3-3 5-2-1v9H8v-9l-2 1-3-5z')}<span>Merch</span></a>
       <a class="nav-link nav-link--icon${active('avatar-whitepaper.html')}" href="avatar-whitepaper.html" data-label="Whitepaper" aria-label="Whitepaper" title="Whitepaper">${icon('M6 3h9l3 3v15H6zM14 3v4h4M9 11h6M9 15h6')}<span>Whitepaper</span></a>
@@ -30,12 +36,24 @@
 
   const menu = header.querySelector('.menu-toggle');
   const nav = header.querySelector('.global-nav');
+  const marketMenu = header.querySelector('.header-market-menu');
+  const marketButton = marketMenu.querySelector('button');
+  const marketOptions = marketMenu.querySelector('.header-market-options');
+  const toggleMarket = (open) => {
+    marketOptions.hidden = !open;
+    marketButton.setAttribute('aria-expanded', String(open));
+    marketMenu.classList.toggle('is-open', open);
+  };
+  marketButton.addEventListener('click', (event) => { event.stopPropagation(); toggleMarket(marketOptions.hidden); });
+  document.addEventListener('click', (event) => { if (!marketMenu.contains(event.target)) toggleMarket(false); });
+  marketMenu.addEventListener('keydown', (event) => { if (event.key === 'Escape') { toggleMarket(false); marketButton.focus(); } });
   menu.addEventListener('click', () => {
     const isOpen = nav.classList.toggle('is-open');
     menu.setAttribute('aria-expanded', String(isOpen));
     menu.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
   });
-  nav.addEventListener('click', () => {
+  nav.addEventListener('click', (event) => {
+    if (event.target.closest('.header-market-menu>button')) return;
     nav.classList.remove('is-open');
     menu.setAttribute('aria-expanded', 'false');
     menu.setAttribute('aria-label', 'Open menu');
