@@ -85,6 +85,13 @@ const globalHeader = await readFile('dist/global-header.js', 'utf8');
 for (const marketFeature of ['header-market-buttons', 'header-market-button', 'Game Market', 'Builder Market', 'aria-label="Markets"']) {
   if (!globalHeader.includes(marketFeature)) throw new Error(`The two-button Market navigation is missing ${marketFeature}.`);
 }
+const globalStyles = await readFile('dist/styles.css', 'utf8');
+for (const mobileHeaderLayout of [
+  '.global-site-header .icons{grid-column:2;grid-row:1;display:grid;width:100%;min-width:0;grid-template-columns:repeat(4,minmax(0,1fr))',
+  '.global-site-header .header-market-buttons{display:grid;grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr))'
+]) {
+  if (!globalStyles.includes(mobileHeaderLayout)) throw new Error(`The evenly distributed mobile header layout is missing ${mobileHeaderLayout}.`);
+}
 for (const utilityFeature of ['Support', 'data-open-support-chat', 'Admin login', 'data-global-admin-form', '/api/admin/login']) {
   if (!backpackWidget.includes(utilityFeature)) throw new Error(`The global page utility bar is missing ${utilityFeature}.`);
 }

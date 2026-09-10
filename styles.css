@@ -3324,7 +3324,7 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
     box-shadow:0 8px 28px rgba(0,0,0,.7),0 1px 18px rgba(156,255,0,.12)
   }
   .global-site-header .world-logo{grid-column:1;grid-row:1;width:min(146px,100%);margin:0}
-  .global-site-header .icons{grid-column:2;grid-row:1;display:grid;width:100%;min-width:0;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:0}
+  .global-site-header .icons{grid-column:2;grid-row:1;display:grid;width:100%;min-width:0;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:0}
   .global-site-header .icons .cart{display:none}
   .global-site-header :is(.mobile-header-action,.wallet-connect){display:grid;place-items:center;gap:2px;width:100%;min-width:0;min-height:52px;padding:5px 3px;border:1px solid rgba(156,255,0,.3);border-radius:10px;background:rgba(156,255,0,.055);color:#fff;text-decoration:none}
   .global-site-header .mobile-header-action svg{width:22px;height:22px;fill:none;stroke:var(--lime);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px rgba(156,255,0,.7))}
@@ -3339,6 +3339,8 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
     box-shadow:0 24px 55px rgba(0,0,0,.85);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-8px)
   }
   .global-site-header .global-nav.is-open{opacity:1;visibility:visible!important;pointer-events:auto;transform:translateY(0)}
+  .global-site-header .header-market-buttons{display:grid;grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%}
+  .global-site-header .header-market-button{width:100%;min-width:0;justify-content:flex-start;text-align:left}
   .global-site-header .header-market-menu{grid-column:1/-1}
   .global-site-header .header-market-menu>.nav-link{justify-content:center;min-height:48px;border-color:rgba(156,255,0,.42);background:rgba(156,255,0,.08)}
   .global-site-header .header-market-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:6px;padding:5px}
@@ -3353,7 +3355,7 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 @media(max-width:390px){
   .global-site-header{grid-template-columns:minmax(92px,112px) minmax(0,1fr);padding-inline:7px;column-gap:5px}
   .global-site-header .world-logo{width:112px}
-  .global-site-header .icons{grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}
+  .global-site-header .icons{grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
   .global-site-header :is(.mobile-header-action,.wallet-connect){min-width:0;padding-inline:1px}
   .global-site-header :is(.mobile-header-action,.wallet-connect) span{font-size:7px}
 }
