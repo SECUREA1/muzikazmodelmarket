@@ -1,5 +1,6 @@
 const menuButton = document.querySelector('.menu-toggle');
 const nav = document.querySelector('.nav');
+const mobileLogoMenuButton = document.querySelector('.global-site-header .world-logo');
 const cartCount = document.querySelector('#cart-count');
 const modelStatus = document.querySelector('#model-status');
 const modelDetail = document.querySelector('#model-detail');
@@ -214,28 +215,42 @@ function closeMenu() {
   nav?.classList.remove('is-open');
   menuButton?.setAttribute('aria-expanded', 'false');
   menuButton?.setAttribute('aria-label', 'Open menu');
+  if (window.matchMedia('(max-width: 720px)').matches) {
+    mobileLogoMenuButton?.setAttribute('aria-expanded', 'false');
+    mobileLogoMenuButton?.setAttribute('aria-label', 'Open menu');
+  }
   if (nav && window.matchMedia('(max-width: 720px)').matches) {
     nav.setAttribute('aria-hidden', String(!nav.closest('.global-site-header')));
   }
 }
 
 function openMenu() {
-  if (!nav || !menuButton) return;
+  if (!nav) return;
   nav.classList.add('is-open');
   nav.setAttribute('aria-hidden', 'false');
-  menuButton.setAttribute('aria-expanded', 'true');
-  menuButton.setAttribute('aria-label', 'Close menu');
+  menuButton?.setAttribute('aria-expanded', 'true');
+  menuButton?.setAttribute('aria-label', 'Close menu');
+  mobileLogoMenuButton?.setAttribute('aria-expanded', 'true');
+  mobileLogoMenuButton?.setAttribute('aria-label', 'Close menu');
 }
 
 function syncHeaderLayout() {
   if (!nav) return;
   if (window.matchMedia('(max-width: 720px)').matches) {
+    mobileLogoMenuButton?.setAttribute('role', 'button');
+    mobileLogoMenuButton?.setAttribute('aria-controls', 'primary-navigation');
+    mobileLogoMenuButton?.setAttribute('aria-label', 'Open menu');
+    mobileLogoMenuButton?.setAttribute('aria-expanded', String(nav.classList.contains('is-open')));
     nav.setAttribute('aria-hidden', String(!nav.closest('.global-site-header') && !nav.classList.contains('is-open')));
   } else {
     nav.classList.remove('is-open');
     nav.setAttribute('aria-hidden', 'false');
     menuButton?.setAttribute('aria-expanded', 'false');
     menuButton?.setAttribute('aria-label', 'Open menu');
+    mobileLogoMenuButton?.removeAttribute('role');
+    mobileLogoMenuButton?.removeAttribute('aria-controls');
+    mobileLogoMenuButton?.removeAttribute('aria-expanded');
+    mobileLogoMenuButton?.setAttribute('aria-label', 'MUZIKAZ WORLD home');
   }
 }
 
@@ -820,6 +835,12 @@ document.querySelector('#owned-assets-grid')?.addEventListener('click', async (e
 
 menuButton?.addEventListener('click', () => nav?.classList.contains('is-open') ? closeMenu() : openMenu());
 
+mobileLogoMenuButton?.addEventListener('click', (event) => {
+  if (!window.matchMedia('(max-width: 720px)').matches) return;
+  event.preventDefault();
+  nav?.classList.contains('is-open') ? closeMenu() : openMenu();
+});
+
 nav?.addEventListener('click', (event) => {
   const link = event.target instanceof Element ? event.target.closest('a') : null;
   if (link) {
@@ -837,7 +858,7 @@ document.addEventListener('pointerdown', (event) => {
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape' || !nav?.classList.contains('is-open')) return;
   closeMenu();
-  menuButton?.focus();
+  (window.matchMedia('(max-width: 720px)').matches ? mobileLogoMenuButton : menuButton)?.focus();
 });
 
 window.addEventListener('resize', syncHeaderLayout, { passive: true });
