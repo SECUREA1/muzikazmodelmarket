@@ -419,28 +419,6 @@ const server = createServer(async (req, res) => {
       res.setHeader('Set-Cookie', `mzk_admin=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
       return sendJson(res, 200, assetResponse({ authenticated: false }));
     }
-    if (url.pathname === '/api/admin/data' && req.method === 'GET') {
-      if (!requireAdmin(req, res)) return;
-      const [submissions, models, usersData, sales, environments, avatars, avatarProfiles] = await Promise.all([
-        readAssets(), readModels(), userDatabase.initialize().then(() => userDatabase.read()), paymentOrderStore.list(),
-        readUploadedEnvironments(), readAvatars(), readAvatarProfiles()
-      ]);
-      const users = Object.entries(usersData.users || {}).map(([walletKey, record]) => ({ walletKey, record }));
-      const paidSales = sales.filter((order) => ['PAID', 'FULFILLED'].includes(order.paymentStatus));
-      return sendJson(res, 200, assetResponse({
-        generatedAt: Math.floor(Date.now() / 1000),
-        summary: {
-          submissions: submissions.length,
-          users: users.length,
-          sales: sales.length,
-          paidRevenueUsd: paidSales.reduce((total, order) => total + Number(order.basePrice || 0), 0),
-          models: models.length,
-          environments: environments.length,
-          avatars: avatars.length
-        },
-        submissions, users, sales, models, customizations: [], derivatives: [], environments, avatars, avatarProfiles
-      }));
-    }
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.create(await bodyJson(req)))); }
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.list())); }
     const adminAccessRevoke = url.pathname.match(/^\/api\/admin\/(?:access-codes|loadout-codes)\/([^/]+)\/revoke$/);
@@ -516,10 +494,27 @@ const server = createServer(async (req, res) => {
       await userDatabase.initialize();
       const [assets, orders, models, environments, users, avatars, avatarProfiles] = await Promise.all([readAssets(), paymentOrderStore.list(), readModels(), combinedEnvironments(), userDatabase.read(), readAvatars(), readAvatarProfiles()]);
       const userRows = Object.entries(users.users || {}).map(([walletKey, record]) => ({ walletKey, record }));
+      const mzkTransactions = (users.transactions || []).slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      const backpackItems = userRows.flatMap(({ walletKey, record }) => (record.items || []).map((item) => ({
+        walletId: record.walletId || walletKey, backpackId: record.memory?.backpack?.backpackId || record.memory?.account?.backpackId || '',
+        itemId: item.id, name: item.name || item.title || item.id, itemType: item.type || 'Backpack item',
+        source: item.source || '', revealStatus: item.revealStatus || '', listed: Boolean(item.listing?.active),
+        priceMzk: item.listing?.priceMzk ?? '', acquiredAt: item.acquiredAt || '', updatedAt: item.listing?.updatedAt || record.updatedAt || '', record: item
+      })));
+      const builderItems = Object.values(users.builderAssets || {}).map((item) => ({ itemId: item.id, name: item.name, itemType: item.asset_type, source: 'builder', ownerId: users.builderOwnership?.[item.id]?.owner_id || item.creator || '', status: Object.values(users.builderListings || {}).find((listing) => listing.asset_id === item.id)?.listing_status || 'unlisted', version: item.version, updatedAt: item.updated_at, record: item }));
+      const items = [
+        ...assets.map((item) => ({ itemId: item.id, name: item.title, itemType: item.fileType, source: 'submission', ownerId: item.ownerId, status: item.status, version: item.version || '', updatedAt: item.updatedAt, record: item })),
+        ...models.map((item) => ({ itemId: item.id, name: item.name || item.title, itemType: item.modelType || item.format, source: 'published-model', ownerId: item.ownerId || item.owner || item.creatorName, status: item.status, version: item.version || '', updatedAt: item.updatedAt || item.publishedAt, record: item })),
+        ...builderItems
+      ];
+      const spaces = [
+        ...Object.values(users.landDeeds || {}).map((deed) => ({ spaceId: deed.id, recordType: 'land-deed', worldId: deed.worldId, ownerId: deed.ownerId, assetId: '', assetVersion: '', saveState: 'saved', publishState: deed.status === 'active' ? 'published' : deed.status, specVersion: 'mzk-space@1', coordinateSystem: 'right-handed-y-up', transform: '', configuration: '', functionalSettings: '', savedAt: deed.updatedAt || deed.acquiredAt, publishedAt: deed.status === 'active' ? (deed.acquiredAt || deed.updatedAt) : '', record: deed })),
+        ...Object.values(users.builderPlacements || {}).map((placement) => ({ spaceId: placement.placement_id, recordType: 'builder-placement', worldId: placement.world_id, ownerId: placement.owner_id, assetId: placement.asset_id, assetVersion: placement.asset_version, saveState: 'saved', publishState: placement.status === 'placed' ? 'published' : placement.status, specVersion: 'mzk-space@1', coordinateSystem: 'right-handed-y-up', transform: placement.transform, configuration: placement.configuration, functionalSettings: placement.functional_settings, savedAt: placement.updated_at || placement.created_at, publishedAt: placement.status === 'placed' ? placement.created_at : '', record: placement }))
+      ].sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')));
       const customizations = assets.filter((asset) => asset.relatedModelId || asset.publishLocation).map((asset) => ({ id: asset.id, assetId: asset.id, modelId: asset.relatedModelId || '', displayType: asset.publishLocation || '', approved: ['approved', 'published'].includes(asset.status), published: asset.status === 'published', updatedAt: asset.updatedAt }));
       const derivatives = assets.flatMap((asset) => (asset.derivatives || []).map((derivative) => ({ assetId: asset.id, ...derivative })));
-      const summary = { users: userRows.length, submissions: assets.length, publishedModels: models.length, activeListings: (await userDatabase.marketListings()).length, sales: orders.length, paidRevenueUsd: orders.filter((order) => ['PAID', 'FULFILLED'].includes(order.paymentStatus)).reduce((total, order) => total + Number(order.basePrice || order.usdTotal || 0), 0), environments: environments.length, avatarProfiles: avatarProfiles.length };
-      return sendJson(res, 200, assetResponse({ generatedAt: Math.floor(Date.now() / 1000), summary, submissions: assets, users: userRows, sales: orders, models, customizations, derivatives, environments, avatars, avatarProfiles }));
+      const summary = { users: userRows.length, mzkTransactions: mzkTransactions.length, backpackItems: backpackItems.length, spaces: spaces.length, submissions: assets.length, publishedModels: models.length, activeListings: (await userDatabase.marketListings()).length, sales: orders.length, paidRevenueUsd: orders.filter((order) => ['PAID', 'FULFILLED'].includes(order.paymentStatus)).reduce((total, order) => total + Number(order.basePrice || order.usdTotal || 0), 0), environments: environments.length, avatarProfiles: avatarProfiles.length };
+      return sendJson(res, 200, assetResponse({ generatedAt: Math.floor(Date.now() / 1000), summary, mzkTransactions, items, backpackItems, spaces, submissions: assets, users: userRows, sales: orders, models, customizations, derivatives, environments, avatars, avatarProfiles }));
     }
     if (url.pathname === '/api/admin/analytics' && req.method === 'GET') { if (!requireAdmin(req, res)) return; const [assets, orders] = await Promise.all([readAssets(), paymentOrderStore.list()]); return sendJson(res, 200, assetResponse({ totalOrders: orders.length, inventoryUnits: orders.filter((order) => order.paymentStatus === 'FULFILLED').reduce((total, order) => total + (order.fulfillment?.items || []).reduce((sum, item) => sum + item.quantity, 0), 0), conversionRate: orders.length ? `${Math.round(orders.filter((order) => ['PAID', 'FULFILLED'].includes(order.paymentStatus)).length / orders.length * 1000) / 10}%` : '0%', totalUploads: assets.length, pendingApprovals: assets.filter((a) => a.status === 'pending_review').length, storageUsage: assets.reduce((n, a) => n + (a.fileSize || 0), 0) })); }
     const assetAction = url.pathname.match(/^\/api\/assets\/([^/]+)\/([^/]+)$/);
