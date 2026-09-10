@@ -18,7 +18,7 @@ test('persists items, token balances, and memory for each wallet', async (t) => 
     walletId: wallet, tokens: { MZK: 725 }, items: [{ id: 'land-1', type: 'land' }], memory: { world: { level: 4 } },
     createdAt: (await reopened.get(wallet)).createdAt, updatedAt: (await reopened.get(wallet)).updatedAt, revision: 1
   });
-  assert.equal(JSON.parse(await readFile(file, 'utf8')).schemaVersion, 2);
+  assert.equal(JSON.parse(await readFile(file, 'utf8')).schemaVersion, 3);
 });
 
 test('access-code account sync adds entitlements once and preserves game and market memory', async (t) => {
@@ -135,4 +135,34 @@ test('stores private member messages and filters activity by conversation', asyn
   const conversation = await database.activity('two', 'one');
   assert.equal(conversation.messages.length, 1);
   assert.equal(conversation.messages[0].text, 'Would you trade that pack?');
+});
+
+test('builder market atomically settles MZK, transfers one ownership record, and supports configured land placement', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'muzikaz-builders-')); t.after(() => rm(directory, { recursive: true, force: true }));
+  const database = new UserJsonDatabase(join(directory, 'users.json'));
+  await database.put('builder-seller', { tokens: { MZK: 20 }, items: [], memory: {} });
+  await database.put('builder-buyer', { tokens: { MZK: 1000 }, items: [], memory: {} });
+  const created = await database.createBuilderAsset('builder-seller', { name: 'Toxic Damage Zone', asset_type: 'game_function', asset_usage: 'ignored-by-server', builder_category: 'FUNCTIONS', function_data: { type: 'damage_zone', damage: 5, interval_ms: 1000 }, version: '1.2.0' });
+  assert.equal(created.asset.asset_usage, 'game_builder');
+  const listing = await database.listBuilderAsset('builder-seller', { asset_id: created.asset.id, price_mzk: 500 });
+  const purchase = await database.purchaseBuilderAsset('builder-buyer', listing.listing_id, 'builder-checkout-1');
+  assert.equal(purchase.listing.listing_status, 'sold'); assert.equal(purchase.listing.transaction_id, purchase.transaction.id);
+  assert.equal((await database.get('builder-buyer')).tokens.MZK, 500); assert.equal((await database.get('builder-seller')).tokens.MZK, 520);
+  assert.equal((await database.builderBackpack('builder-buyer')).assets[0].id, created.asset.id);
+  assert.equal(Object.keys((await database.read()).builderOwnership).length, 1, 'sale updates rather than duplicates authoritative ownership');
+  assert.equal(await database.builderMarket().then((records) => records.length), 0, 'sold assets leave the Build Market');
+  assert.equal((await database.purchaseBuilderAsset('builder-buyer', listing.listing_id, 'builder-checkout-1')).transaction.id, purchase.transaction.id, 'purchase request is idempotent');
+  await database.claimLand({ walletId:'builder-buyer', worldId:'test-world', name:'Test World', priceMzk:0, requestId:'land-for-placement' });
+  const placement = await database.placeBuilderAsset('builder-buyer', { world_id:'test-world', asset_id:created.asset.id, transform:{ position:[1,2,3], rotation:[0,0,0], scale:[1,1,1] }, configuration:{ damage:9 } });
+  assert.deepEqual(placement.configuration, { damage:9 }); assert.equal((await database.builderBackpack('builder-buyer')).assets[0].function_data.damage, 5, 'instance configuration does not mutate the source manifest');
+});
+
+test('builder operations reject forged ownership, balances, categories, and world access', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'muzikaz-builder-security-')); t.after(() => rm(directory, { recursive: true, force: true }));
+  const database = new UserJsonDatabase(join(directory, 'users.json'));
+  await database.put('owner-one', { tokens:{ MZK:0 }, items:[], memory:{} }); await database.put('attacker-two', { tokens:{ MZK:999 }, items:[], memory:{} });
+  const { asset } = await database.createBuilderAsset('owner-one', { name:'Portal Door', asset_type:'interactive_prop', builder_category:'INTERACTIVE', function:{ type:'teleporter' } });
+  await assert.rejects(database.listBuilderAsset('attacker-two', { asset_id:asset.id, price_mzk:1 }), /authoritative asset owner/);
+  await assert.rejects(database.placeBuilderAsset('attacker-two', { asset_id:asset.id, world_id:'stolen-land' }), /ownership is required/);
+  assert.throws(() => database.createBuilderAsset('owner-one', { name:'Bad', asset_type:'prop', builder_category:'NOT REAL' }), /Unsupported builder category/);
 });

@@ -162,6 +162,31 @@ async function accountSession(req, res, csrf = false) {
   }
   return authentication;
 }
+
+async function builderContext(req, res, csrf = false) {
+  const session = await accountSession(req, res, csrf); if (!session) return null;
+  const account = await loadoutCodeStore.getAccount(session.accountId);
+  if (!account) { authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'The session account no longer exists.', 'account'); return null; }
+  const state = await userDatabase.ensureAccount(account);
+  const walletId = state.walletId;
+  const hasSupportedBalance = Object.entries(state.tokens || {}).some(([symbol, amount]) => symbol === 'MZK' || (Number(amount) > 0 && /^[A-Z0-9_-]{2,16}$/.test(symbol)));
+  const land = await userDatabase.landDeeds(walletId);
+  const access = Boolean(account.memberAccess || account.loadoutAccess || account.marketplaceAccess || account.creatorVaultAccess || account.worldAccess || hasSupportedBalance || land.length);
+  if (!access) { authorizationError(res, 403, 'BUILDER_MARKET_ACCESS_REQUIRED', 'A member, builder role, land deed, MZK balance, or supported MUZIKAZ token is required.', 'permission'); return null; }
+  const permissions = {
+    'market.builder.access': true, 'market.builder.buy': true, 'market.builder.sell': true,
+    'builder.asset.place': Boolean(account.worldAccess || account.creatorVaultAccess || land.length),
+    'builder.asset.configure': Boolean(account.worldAccess || account.creatorVaultAccess || land.length),
+    'builder.asset.publish': Boolean(account.creatorVaultAccess || account.marketplaceAccess || account.memberAccess),
+    'builder.world.edit': Boolean(account.worldAccess || account.creatorVaultAccess || land.length)
+  };
+  return { session, account, state, walletId, land, permissions };
+}
+
+function requireBuilderPermission(context, res, permission) {
+  if (context?.permissions?.[permission]) return true;
+  authorizationError(res, 403, 'BUILDER_PERMISSION_REQUIRED', `Permission ${permission} is required.`, 'permission'); return false;
+}
 async function entitledAccount(active, res) {
   const canonical = await loadoutCodeStore.getAccount(active.accountId);
   if (!canonical) { authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'The session account no longer exists.', 'account'); return null; }
@@ -419,6 +444,21 @@ const server = createServer(async (req, res) => {
     if (paymentOrder && req.method === 'GET') { const order = await paymentOrderStore.get(paymentOrder[1]); return order ? sendJson(res, 200, assetResponse(order)) : sendJson(res, 404, { success: false, message: 'Payment order not found.' }); }
     const paymentAction = url.pathname.match(/^\/api\/payments\/orders\/([^/]+)\/(submit|verify|fulfill)$/);
     if (paymentAction && req.method === 'POST') { const body = await bodyJson(req).catch(() => ({})); const [, id, action] = paymentAction; if (action === 'fulfill' && !requireAdmin(req, res)) return; const result = action === 'submit' ? await paymentOrderStore.submit(id, body.transactionHash, body.wallet) : action === 'verify' ? await paymentOrderStore.verify(id) : await paymentOrderStore.fulfill(id, body.fulfillment); return sendJson(res, 200, assetResponse(result)); }
+
+    if (url.pathname === '/api/builder/permissions' && req.method === 'GET') { const context = await builderContext(req, res); if (!context) return; return sendJson(res, 200, assetResponse({ account_id: context.account.accountId, owner_id: context.walletId, mzk_balance: Number(context.state.tokens?.MZK || 0), permissions: context.permissions, land: context.land })); }
+    if (url.pathname === '/api/builder/market' && req.method === 'GET') { const context = await builderContext(req, res); if (!context) return; return sendJson(res, 200, assetResponse(await userDatabase.builderMarket(url.searchParams.get('category') || ''))); }
+    if (url.pathname === '/api/builder/backpack' && req.method === 'GET') { const context = await builderContext(req, res); if (!context) return; return sendJson(res, 200, assetResponse(await userDatabase.builderBackpack(context.walletId))); }
+    if (url.pathname === '/api/builder/assets' && req.method === 'POST') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.asset.publish')) return; return sendJson(res, 201, assetResponse(await userDatabase.createBuilderAsset(context.walletId, await bodyJson(req)))); }
+    if (url.pathname === '/api/builder/listings' && req.method === 'POST') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'market.builder.sell')) return; return sendJson(res, 201, assetResponse(await userDatabase.listBuilderAsset(context.walletId, await bodyJson(req)))); }
+    const builderListing = url.pathname.match(/^\/api\/builder\/listings\/([^/]+)$/);
+    if (builderListing && req.method === 'DELETE') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'market.builder.sell')) return; return sendJson(res, 200, assetResponse(await userDatabase.cancelBuilderListing(context.walletId, decodeURIComponent(builderListing[1])))); }
+    const builderPurchase = url.pathname.match(/^\/api\/builder\/listings\/([^/]+)\/purchase$/);
+    if (builderPurchase && req.method === 'POST') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'market.builder.buy')) return; const body = await bodyJson(req); return sendJson(res, 201, assetResponse(await userDatabase.purchaseBuilderAsset(context.walletId, decodeURIComponent(builderPurchase[1]), body.request_id || body.requestId))); }
+    if (url.pathname === '/api/builder/placements' && req.method === 'GET') { const context = await builderContext(req, res); if (!context) return; return sendJson(res, 200, assetResponse((await userDatabase.builderBackpack(context.walletId)).placements)); }
+    if (url.pathname === '/api/builder/placements' && req.method === 'POST') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.asset.place')) return; return sendJson(res, 201, assetResponse(await userDatabase.placeBuilderAsset(context.walletId, await bodyJson(req)))); }
+    const builderPlacement = url.pathname.match(/^\/api\/builder\/placements\/([^/]+)$/);
+    if (builderPlacement && req.method === 'PATCH') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.asset.configure')) return; return sendJson(res, 200, assetResponse(await userDatabase.updateBuilderPlacement(context.walletId, decodeURIComponent(builderPlacement[1]), await bodyJson(req)))); }
+    if (builderPlacement && req.method === 'DELETE') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.world.edit')) return; return sendJson(res, 200, assetResponse(await userDatabase.updateBuilderPlacement(context.walletId, decodeURIComponent(builderPlacement[1]), {}, true))); }
 
     if (url.pathname === '/api/wallet/state' && req.method === 'GET') { await resolveAccountSession(req); return sendJson(res, 200, assetResponse(await userDatabase.get(requestWallet(req)))); }
     if (url.pathname === '/api/wallet/state' && req.method === 'PUT') return sendJson(res, 200, assetResponse(await userDatabase.put(requestWallet(req), await bodyJson(req))));
