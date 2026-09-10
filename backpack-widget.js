@@ -6,6 +6,7 @@
   const TRANSACTIONS_KEY = 'muzikazBackpackTransactions';
   const PROFILE_ASSETS_KEY = 'muzikazOwnedProfiles';
   const MODEL_ASSETS_KEY = 'muzikazBackpackAssetsV1';
+  const PANEL_WIDTH_KEY = 'muzikazBackpackPanelWidthV1';
   const previewSlots = ['Avatar', 'Companion', 'Head', 'Neck', 'Torso', 'Tool', 'Collectible', 'Land', 'Bottle', 'Environment'];
   const builderCategories = [
     ['Enemies & NPCs', 'NPC', '☠'], ['Environments', 'WORLD', '◈'], ['Buildings', 'BUILDINGS', '⌂'],
@@ -17,6 +18,7 @@
   const walletIcon = () => '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 13h28a5 5 0 0 1 5 5v22H8a4 4 0 0 1-4-4V13a5 5 0 0 1 5-5h25"/><path d="M31 23h12v10H31a5 5 0 0 1 0-10Z"/><circle cx="33" cy="28" r="1"/></svg>';
   const adminIcon = () => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.3c0 4.7 3.2 8.2 7.5 9.7 4.3-1.5 7.5-5 7.5-9.7V6L12 3Z"/><path d="M9.5 11.5V10a2.5 2.5 0 0 1 5 0v1.5M9 11.5h6v4H9z"/></svg>';
   const supportIcon = () => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 9 9 0 0 1-3.2-.7L4 20l1.6-4.1A7.4 7.4 0 0 1 4 11.5 7.5 7.5 0 0 1 12 4a7.5 7.5 0 0 1 8 7.5Z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/></svg>';
+  const expandIcon = () => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>';
   const activityIcon = (kind) => {
     const paths = {
       hidden: '<path d="M12 20h24v24H12zM17 20v-3a7 7 0 0 1 14 0v3"/><path d="M21 30a3 3 0 1 1 5 2.2V36"/><circle cx="23.5" cy="39" r="1"/>',
@@ -49,6 +51,11 @@
     return safeJson(MODEL_ASSETS_KEY, {})[String(address || '').toLowerCase()] || [];
   }
 
+  function inventoryLabel(name) {
+    const value = String(name || '');
+    return previewSlots.find((slot) => new RegExp(slot === 'Head' ? 'head|hat|hair|helmet' : slot === 'Neck' ? 'neck|chain|necklace' : slot === 'Torso' ? 'torso|shirt|jacket|armor|wearable' : slot, 'i').test(value)) || 'Collectible';
+  }
+
   function ensureStyles() {
     if (document.querySelector('link[data-backpack-widget-styles]')) return;
     const link = document.createElement('link');
@@ -78,7 +85,7 @@
     drawer.setAttribute('role', 'dialog');
     drawer.setAttribute('aria-modal', 'true');
     drawer.setAttribute('aria-labelledby', 'global-backpack-title');
-    drawer.innerHTML = `<div class="mzk-backpack-scrim" data-close-backpack></div><div class="mzk-backpack-panel"><header>${icon()}<div><p>PLAYER + CREATOR INVENTORY</p><h2 id="global-backpack-title">My Backpack</h2><small data-drawer-address>Connect an Ethereum wallet to open your account.</small></div><button type="button" data-close-backpack aria-label="Close Backpack">×</button></header><div class="mzk-backpack-switch" role="tablist" aria-label="Choose backpack"><button type="button" role="tab" aria-selected="true" data-backpack-view="game"><span>In-game Backpack</span><small>Original play-ready items</small></button><button type="button" role="tab" aria-selected="false" data-backpack-view="builder"><span>Builder Backpack</span><small>Creator-owned assets</small></button></div><div data-backpack-view-panel="game"><div class="mzk-backpack-account"><div><span>Wallet</span><strong data-account-address>Not connected</strong></div><div><span>Network</span><strong data-account-network>—</strong></div><div><span>MZK balance</span><strong data-account-balance>0 MZK</strong></div></div><p class="mzk-backpack-status" data-backpack-status role="status" aria-live="polite"></p><div class="mzk-backpack-items" data-backpack-items></div><nav aria-label="Backpack network"><a href="model-market.html">Game market <b>↗</b></a><a href="buy-mzk.html">Buy / swap MZK <b>↗</b></a><a href="members.html#owned-collection">Full account <b>↗</b></a></nav><div class="mzk-backpack-trades"><h3>Recent market activity</h3><ol data-backpack-trades></ol></div></div><div class="mzk-builder-view" data-backpack-view-panel="builder" hidden><div class="mzk-builder-intro"><p>OWNED CREATOR INVENTORY</p><h3>Your Builder Backpack</h3><span>Builder assets are kept separate from the original game Backpack so creators can edit, configure and place them into owned worlds.</span><p class="mzk-builder-status" data-builder-backpack-status role="status">Open this tab to load your Builder Backpack.</p><div class="mzk-builder-owned" data-builder-backpack-items></div><div><a href="builder-market.html#backpack">Manage Builder Backpack</a><a href="builder-market.html#backpack" class="is-secondary">Import / create asset</a></div></div><h3 class="mzk-builder-market-title">Add from Builder Market</h3><div class="mzk-builder-category-grid">${builderCategories.map(([label, category, glyph]) => `<a href="builder-market.html?category=${encodeURIComponent(category)}#market"><i aria-hidden="true">${glyph}</i><strong>${label}</strong><small>Browse &amp; add</small></a>`).join('')}</div><div class="mzk-builder-workflow"><strong>Build with existing creator logic</strong><ol><li><b>1</b><span>Buy or import reusable game assets</span></li><li><b>2</b><span>Configure behavior per placed instance</span></li><li><b>3</b><span>Place into owned land and expand your world</span></li></ol><a href="builder-market.html#worlds">Manage my land / worlds ↗</a></div></div></div>`;
+    drawer.innerHTML = `<div class="mzk-backpack-scrim" data-close-backpack></div><div class="mzk-backpack-panel"><button class="mzk-backpack-resize" type="button" data-resize-backpack aria-label="Resize Backpack. Drag left or right, or use arrow keys." title="Drag to stretch Backpack"><span>Drag to stretch</span></button><header>${icon()}<div><p>PLAYER + CREATOR INVENTORY</p><h2 id="global-backpack-title">My Backpack</h2><small data-drawer-address>Connect an Ethereum wallet to open your account.</small></div><div class="mzk-backpack-window-actions"><button type="button" data-expand-backpack aria-label="Expand Backpack" aria-pressed="false" title="Expand Backpack">${expandIcon()}</button><button type="button" data-close-backpack aria-label="Close Backpack">×</button></div></header><div class="mzk-backpack-switch" role="tablist" aria-label="Choose backpack"><button type="button" role="tab" aria-selected="true" data-backpack-view="game"><span>In-game Backpack</span><small>Original play-ready items</small></button><button type="button" role="tab" aria-selected="false" data-backpack-view="builder"><span>Builder Backpack</span><small>Creator-owned assets</small></button></div><div data-backpack-view-panel="game"><div class="mzk-backpack-account"><div><span>Wallet</span><strong data-account-address>Not connected</strong></div><div><span>Network</span><strong data-account-network>—</strong></div><div><span>MZK balance</span><strong data-account-balance>0 MZK</strong></div></div><p class="mzk-backpack-status" data-backpack-status role="status" aria-live="polite"></p><div class="mzk-backpack-items" data-backpack-items></div><nav aria-label="Backpack network"><a href="model-market.html">Game market <b>↗</b></a><a href="buy-mzk.html">Buy / swap MZK <b>↗</b></a><a href="members.html#owned-collection">Full account <b>↗</b></a></nav><div class="mzk-backpack-trades"><h3>Recent market activity</h3><ol data-backpack-trades></ol></div></div><div class="mzk-builder-view" data-backpack-view-panel="builder" hidden><div class="mzk-builder-intro"><p>OWNED CREATOR INVENTORY</p><h3>Your Builder Backpack</h3><span>Builder assets are kept separate from the original game Backpack so creators can edit, configure and place them into owned worlds.</span><p class="mzk-builder-status" data-builder-backpack-status role="status">Open this tab to load your Builder Backpack.</p><div class="mzk-builder-owned" data-builder-backpack-items></div><div><a href="builder-market.html#backpack">Manage Builder Backpack</a><a href="builder-market.html#backpack" class="is-secondary">Import / create asset</a></div></div><h3 class="mzk-builder-market-title">Add from Builder Market</h3><div class="mzk-builder-category-grid">${builderCategories.map(([label, category, glyph]) => `<a href="builder-market.html?category=${encodeURIComponent(category)}#market"><i aria-hidden="true">${glyph}</i><strong>${label}</strong><small>Browse &amp; add</small></a>`).join('')}</div><div class="mzk-builder-workflow"><strong>Build with existing creator logic</strong><ol><li><b>1</b><span>Buy or import reusable game assets</span></li><li><b>2</b><span>Configure behavior per placed instance</span></li><li><b>3</b><span>Place into owned land and expand your world</span></li></ol><a href="builder-market.html#worlds">Manage my land / worlds ↗</a></div></div></div>`;
     document.body.appendChild(drawer);
 
     const utilityBar = document.createElement('aside');
@@ -149,8 +156,53 @@
     const button = dock.querySelector('[data-open-backpack]');
     const connectButton = dock.querySelector('[data-widget-connect]');
     const mobileBackpackButtons = [...document.querySelectorAll('[data-header-backpack], .mobile-header-action[aria-label="View backpack"], .mobile-header-action[aria-label="View Builder Backpack"]')];
+    const panel = drawer.querySelector('.mzk-backpack-panel');
+    const resizeHandle = drawer.querySelector('[data-resize-backpack]');
+    const expandButton = drawer.querySelector('[data-expand-backpack]');
     let lastFocused = null;
     let builderBackpackLoaded = false;
+
+    const clampPanelWidth = (width) => Math.min(window.innerWidth, Math.max(360, width));
+    const setPanelWidth = (width, persist = true) => {
+      const nextWidth = clampPanelWidth(width);
+      panel.style.setProperty('--backpack-panel-width', `${nextWidth}px`);
+      panel.classList.remove('is-expanded');
+      expandButton.setAttribute('aria-pressed', 'false');
+      expandButton.setAttribute('aria-label', 'Expand Backpack');
+      if (persist) localStorage.setItem(PANEL_WIDTH_KEY, String(Math.round(nextWidth)));
+    };
+    const savedWidth = Number(localStorage.getItem(PANEL_WIDTH_KEY));
+    if (Number.isFinite(savedWidth) && savedWidth > 0) setPanelWidth(savedWidth, false);
+    resizeHandle.addEventListener('pointerdown', (event) => {
+      if (window.matchMedia('(max-width: 700px)').matches) return;
+      event.preventDefault();
+      resizeHandle.setPointerCapture(event.pointerId);
+      panel.classList.add('is-resizing');
+    });
+    resizeHandle.addEventListener('pointermove', (event) => {
+      if (!resizeHandle.hasPointerCapture(event.pointerId)) return;
+      setPanelWidth(window.innerWidth - event.clientX, false);
+    });
+    const finishResize = (event) => {
+      if (!resizeHandle.hasPointerCapture(event.pointerId)) return;
+      resizeHandle.releasePointerCapture(event.pointerId);
+      panel.classList.remove('is-resizing');
+      localStorage.setItem(PANEL_WIDTH_KEY, String(Math.round(panel.getBoundingClientRect().width)));
+    };
+    resizeHandle.addEventListener('pointerup', finishResize);
+    resizeHandle.addEventListener('pointercancel', finishResize);
+    resizeHandle.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const currentWidth = panel.getBoundingClientRect().width;
+      setPanelWidth(event.key === 'Home' ? 360 : event.key === 'End' ? window.innerWidth : currentWidth + (event.key === 'ArrowLeft' ? 40 : -40));
+    });
+    expandButton.addEventListener('click', () => {
+      const expanded = !panel.classList.contains('is-expanded');
+      panel.classList.toggle('is-expanded', expanded);
+      expandButton.setAttribute('aria-pressed', String(expanded));
+      expandButton.setAttribute('aria-label', expanded ? 'Restore Backpack size' : 'Expand Backpack');
+    });
 
     async function loadBuilderBackpack() {
       if (builderBackpackLoaded) return;
@@ -252,11 +304,13 @@
       drawer.querySelector('[data-account-address]').title = activeAddress;
       drawer.querySelector('[data-account-network]').textContent = network;
       drawer.querySelector('[data-account-balance]').textContent = `${window.MZKWallet.balance(activeAddress).toLocaleString()} MZK`;
-      const modelCards = modelAssets.map((asset) => `<article class="mzk-backpack-model"><model-viewer src="${escapeHtml(asset.modelUrl)}" ${asset.iosModelUrl ? `ios-src="${escapeHtml(asset.iosModelUrl)}"` : ''} camera-controls auto-rotate shadow-intensity="1" alt="${escapeHtml(asset.name)} purchased 3D model"></model-viewer><div><strong>${escapeHtml(asset.name)}</strong><small>Purchased GLB · Connected to ${short(activeAddress)}</small></div></article>`);
+      const modelCards = modelAssets.map((asset) => `<article class="mzk-backpack-model"><model-viewer src="${escapeHtml(asset.modelUrl)}" ${asset.iosModelUrl ? `ios-src="${escapeHtml(asset.iosModelUrl)}"` : ''} camera-controls auto-rotate shadow-intensity="1" alt="${escapeHtml(asset.name)} purchased 3D model"></model-viewer><div><span class="mzk-inventory-label">3D Model</span><strong>${escapeHtml(asset.name)}</strong><small>Purchased GLB · Connected to ${short(activeAddress)}</small></div></article>`);
       const modelNames = new Set(modelAssets.map((asset) => asset.name));
       const bottleArt = (item) => /Black Genie Bottle/i.test(item) ? 'public/assets/black-genie-bottle.svg' : /Golden Genie Bottle/i.test(item) ? 'public/assets/golden-genie-bottle.svg' : '';
-      const itemCards = items.filter((item) => !modelNames.has(item)).map((item) => `<article>${bottleArt(item) ? `<img src="${bottleArt(item)}" alt="${escapeHtml(item)} Backpack artwork" loading="lazy">` : icon()}<div><strong>${escapeHtml(item)}</strong><small>Connected to ${short(activeAddress)}</small></div></article>`);
-      drawer.querySelector('[data-backpack-items]').innerHTML = modelCards.length || itemCards.length ? [...modelCards, ...itemCards].join('') : `<div class="mzk-backpack-empty">${icon()}<strong>Your Backpack is ready</strong><p>Collect a model, land deed, avatar, wearable, or market drop and it will appear under this Ethereum account.</p></div>`;
+      const occupiedSlots = new Set(items.map(inventoryLabel));
+      const itemCards = items.filter((item) => !modelNames.has(item)).map((item) => `<article>${bottleArt(item) ? `<img src="${bottleArt(item)}" alt="${escapeHtml(item)} Backpack artwork" loading="lazy">` : icon()}<div><span class="mzk-inventory-label">${inventoryLabel(item)}</span><strong>${escapeHtml(item)}</strong><small>Connected to ${short(activeAddress)}</small></div></article>`);
+      const emptySlots = previewSlots.filter((slot) => !occupiedSlots.has(slot)).map((slot) => `<div class="mzk-backpack-slot is-empty">${icon()}<strong>${slot}</strong><small>Empty slot</small></div>`);
+      drawer.querySelector('[data-backpack-items]').innerHTML = `<div class="mzk-backpack-owned">${[...modelCards, ...itemCards].join('') || `<div class="mzk-backpack-empty">${icon()}<strong>Your Backpack is ready</strong><p>Collect a model, land deed, avatar, wearable, or market drop and it will appear under this Ethereum account.</p></div>`}</div><div class="mzk-backpack-slot-grid" aria-label="Available Backpack slots">${emptySlots.join('') || '<p class="mzk-backpack-slots-full">Every Backpack slot contains an item.</p>'}</div>`;
       const transactions = safeJson(TRANSACTIONS_KEY, []).filter((tx) => [tx.buyer, tx.seller, tx.owner].map(String).map((value) => value.toLowerCase()).includes(activeAddress)).slice(-4).reverse();
       drawer.querySelector('[data-backpack-trades]').innerHTML = transactions.length ? transactions.map((tx) => {
         const rawAsset = tx.asset || tx.reason || 'Backpack trade';
@@ -294,7 +348,7 @@
     });
     connectButton?.addEventListener('click', connect);
     drawer.addEventListener('click', (event) => { if (event.target.closest('[data-close-backpack]')) close(); });
-    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !drawer.hidden) close(); else if (event.key === 'Escape' && !adminDialog.hidden) closeAdmin(); else if (event.key === 'Escape' && !menu.hidden) { toggleMenu(false); menuButton.focus(); } });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !drawer.hidden) close(); else if (event.key === 'Escape' && !adminDialog.hidden) closeAdmin(); });
     window.addEventListener('mzk:wallet-connection-changed', renderButton);
     window.addEventListener('mzk:balance-changed', renderButton);
     renderButton();

@@ -162,3 +162,22 @@
 .mzk-builder-category-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.mzk-builder-category-grid a{display:grid;place-items:center;min-height:92px;padding:9px;border:1px solid #2b3e2e;border-radius:12px;background:#090e0a;color:#fff;text-align:center;text-decoration:none}.mzk-builder-category-grid a:hover,.mzk-builder-category-grid a:focus-visible{border-color:#9cff00;background:rgba(156,255,0,.09)}.mzk-builder-category-grid i{color:#9cff00;font:normal 24px/1 sans-serif}.mzk-builder-category-grid strong{margin-top:5px;font-size:10px}.mzk-builder-category-grid small{color:#7f9182;font-size:8px}
 .mzk-builder-workflow{display:grid;gap:10px;padding:16px;border:1px solid #28372b;border-radius:14px;background:#080c09}.mzk-builder-workflow>strong{font-size:13px}.mzk-builder-workflow ol{display:grid;gap:8px;margin:0;padding:0;list-style:none}.mzk-builder-workflow li{display:flex;align-items:center;gap:9px;color:#abb8ae;font-size:10px}.mzk-builder-workflow li b{display:grid;place-items:center;flex:0 0 24px;height:24px;border-radius:50%;background:#1d2c1f;color:#9cff00}.mzk-builder-workflow>a{justify-self:start;background:transparent;color:#9cff00}
 @media(max-width:420px){.mzk-backpack-switch,.mzk-builder-view{padding-right:12px;padding-left:12px}.mzk-builder-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mzk-builder-intro>div{display:grid}.mzk-builder-intro a{text-align:center}}
+
+/* The inventory drawer can be stretched by pulling its visible edge or opened
+   into a full-stack workspace. The CSS variable is restored by the widget. */
+.mzk-backpack-panel{width:min(var(--backpack-panel-width,520px),100%);container-type:inline-size;transition:width .2s ease}
+.mzk-backpack-panel.is-expanded{width:100%}
+.mzk-backpack-panel.is-resizing{transition:none;user-select:none}
+.mzk-backpack-resize{position:fixed;z-index:2;top:50%;right:min(calc(var(--backpack-panel-width,520px) - 15px),calc(100% - 15px));display:grid!important;place-items:center;width:30px!important;height:104px!important;padding:0!important;transform:translateY(-50%);border:1px solid rgba(156,255,0,.7)!important;border-radius:999px!important;background:#0b120c!important;color:#9cff00!important;cursor:ew-resize!important;touch-action:none;box-shadow:0 8px 30px #000!important}
+.mzk-backpack-panel.is-expanded .mzk-backpack-resize{right:calc(100% - 15px)}
+.mzk-backpack-resize::before{content:'⋮';font-size:27px;line-height:1}
+.mzk-backpack-resize span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.mzk-backpack-window-actions{display:flex;gap:7px;align-items:center}
+.mzk-backpack-window-actions [data-expand-backpack]{display:grid;place-items:center}
+.mzk-backpack-window-actions [data-expand-backpack] svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mzk-backpack-owned{display:grid;gap:9px}
+.mzk-inventory-label{display:inline-block!important;margin-bottom:5px;padding:3px 7px;border:1px solid rgba(156,255,0,.42);border-radius:999px;color:#bfff64!important;font-size:8px!important;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.mzk-backpack-slots-full{grid-column:1/-1;margin:0;padding:14px;border:1px dashed #49604d;border-radius:12px;color:#aeb9b0;text-align:center}
+@container (min-width:650px){.mzk-backpack-slot-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.mzk-backpack-account{grid-template-columns:repeat(3,minmax(0,1fr))}.mzk-builder-category-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:700px){.mzk-backpack-panel{width:100%!important}.mzk-backpack-resize,.mzk-backpack-window-actions [data-expand-backpack]{display:none!important}.mzk-backpack-panel>header{padding-left:16px;padding-right:16px}}
+@media(prefers-reduced-motion:reduce){.mzk-backpack-panel{transition:none}}
