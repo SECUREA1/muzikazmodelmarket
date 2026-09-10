@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Buy, sell, configure and place reusable MUZIKAZ game-development assets with MZK.">
+  <title>BUILD MARKET | MUZIKAZ</title>
+  <link rel="icon" href="muzikaz_bolt_logo_editable.svg"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="builder-market.css">
+  <script src="public/js/api-connection.js"></script>
+</head>
+<body class="original-platform builder-page">
+  <div class="topbar"><span>MUZIKAZ CREATOR ECONOMY</span><span>GAME ASSETS · FUNCTIONS · WORLDS</span><span>MZK SETTLEMENT</span></div>
+  <header class="site-header global-site-header"></header>
+  <main>
+    <section class="builder-hero">
+      <p class="kicker">Authenticated MUZIKAZ builders · No Genie Bottle required</p>
+      <h1>BUILD <em>MARKET</em></h1>
+      <p>Own the systems behind your world. Buy and sell models, mechanics, AI, audio and configurable game functions with MZK.</p>
+      <div class="builder-account-strip"><span>Balance <strong id="builder-balance">— MZK</strong></span><span>Account <strong id="builder-account">Checking session…</strong></span><a href="members.html">Account access</a></div>
+    </section>
+    <nav class="builder-tabs" aria-label="Builder areas"><button class="active" data-builder-tab="market">BUILD MARKET</button><button data-builder-tab="backpack">BUILDER BACKPACK</button><button data-builder-tab="worlds">MY LAND / WORLDS</button></nav>
+    <p class="builder-status" id="builder-status" role="status">Connecting to your MUZIKAZ account…</p>
+    <section class="builder-panel active" data-builder-panel="market" aria-labelledby="market-title">
+      <header><div><p class="kicker">asset_usage = game_builder</p><h2 id="market-title">Reusable assets for playable worlds</h2></div><select id="builder-category" aria-label="Filter category"><option value="">ALL CATEGORIES</option></select></header>
+      <div class="builder-grid" id="builder-listings"></div>
+    </section>
+    <section class="builder-panel" data-builder-panel="backpack" aria-labelledby="backpack-title">
+      <header><div><p class="kicker">Owned development inventory</p><h2 id="backpack-title">BUILDER BACKPACK</h2></div><button id="open-create-asset" type="button">IMPORT / CREATE ASSET</button></header>
+      <div class="builder-grid" id="builder-assets"></div>
+    </section>
+    <section class="builder-panel" data-builder-panel="worlds" aria-labelledby="worlds-title">
+      <header><div><p class="kicker">Independent instance configuration</p><h2 id="worlds-title">MY LAND / WORLDS</h2></div><a class="builder-link" href="model-explorer.html">OPEN WORLD MAP</a></header>
+      <div class="builder-grid" id="builder-worlds"></div><h3>Placed instances</h3><div class="builder-grid" id="builder-placements"></div>
+    </section>
+  </main>
+  <dialog id="builder-dialog"><form method="dialog" id="builder-form"><button class="dialog-close" value="cancel" aria-label="Close">×</button><h2 id="builder-dialog-title">Builder asset</h2><div id="builder-form-fields"></div><p id="builder-dialog-status" role="status"></p><button id="builder-dialog-submit" value="default">SAVE</button></form></dialog>
+  <script src="mzk-wallet.js"></script><script src="backpack-widget.js"></script><script src="global-header.js"></script><script src="builder-market.js"></script><script src="battle-theme.js"></script>
+</body></html>

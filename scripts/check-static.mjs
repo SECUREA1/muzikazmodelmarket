@@ -1,6 +1,6 @@
 import { access, readFile } from 'node:fs/promises';
 
-const htmlPages = ['index.html', 'model-market.html', 'avatar-whitepaper.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html', 'checkout.html', 'model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
+const htmlPages = ['index.html', 'model-market.html', 'builder-market.html', 'avatar-whitepaper.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html', 'checkout.html', 'model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
 const requiredFiles = [
   ...htmlPages.map((page) => `dist/${page}`),
   'dist/styles.css',
@@ -11,6 +11,8 @@ const requiredFiles = [
   'dist/backpack-widget.css',
   'dist/contract-ownership.js',
   'dist/marketplace-listings.js',
+  'dist/builder-market.js',
+  'dist/builder-market.css',
   'dist/admin.html',
   'dist/admin.js',
   'dist/public/js/rad-tox-launcher.js',
@@ -19,7 +21,7 @@ const requiredFiles = [
 
 await Promise.all(requiredFiles.map((file) => access(file)));
 
-const backpackPages = ['avatar-whitepaper.html', 'beasts.html', 'brand-kit.html', 'buy-mzk.html', 'chaines-ar-collectibles.html', 'chaos.html', 'checkout.html', 'crew-market.html', 'index.html', 'index0.html', 'index1.html', 'legends.html', 'login.html', 'members.html', 'model-explorer.html', 'model-market.html', 'new-legends.html', 'online-events.html', 'originals.html', 'quest-board.html', 'token-mixer.html', 'trait-avatars.html', 'voice-changer.html'];
+const backpackPages = ['avatar-whitepaper.html', 'beasts.html', 'brand-kit.html', 'builder-market.html', 'buy-mzk.html', 'chaines-ar-collectibles.html', 'chaos.html', 'checkout.html', 'crew-market.html', 'index.html', 'index0.html', 'index1.html', 'legends.html', 'login.html', 'members.html', 'model-explorer.html', 'model-market.html', 'new-legends.html', 'online-events.html', 'originals.html', 'quest-board.html', 'token-mixer.html', 'trait-avatars.html', 'voice-changer.html'];
 for (const page of backpackPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
   if (!html.includes('mzk-wallet.js') || !html.includes('backpack-widget.js')) throw new Error(`${page} must expose the Ethereum wallet and Backpack controls.`);
@@ -93,7 +95,7 @@ for (const directory of excludedBuildDirectories) {
 
 for (const page of htmlPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
-  const requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js', 'battle-theme.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js', 'battle-theme.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js', 'battle-theme.js'] : ['styles.css', 'script.js', 'battle-theme.js'];
+  const requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js', 'battle-theme.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js', 'battle-theme.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js', 'battle-theme.js'] : page === 'builder-market.html' ? ['styles.css', 'builder-market.css', 'builder-market.js', 'battle-theme.js'] : ['styles.css', 'script.js', 'battle-theme.js'];
 
   for (const asset of requiredAssets) {
     if (!html.includes(asset)) {
