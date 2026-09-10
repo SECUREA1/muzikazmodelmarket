@@ -15,9 +15,23 @@
   .site-header .mzk-backpack-dock.is-inline .mzk-wallet-button span{display:none}
 }
 @media(max-width:430px){
-  .global-site-header .icons:has(.mzk-backpack-dock){display:flex}
+  /* The account shortcuts are a five-column grid on phones.  Do not switch the
+     row to flex when Backpack is injected: its text then contributes an
+     intrinsic width and pushes the last control beyond the viewport. */
+  .global-site-header .icons:has(.mzk-backpack-dock){
+    display:grid;
+    width:100%;
+    min-width:0;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+  }
   .global-site-header .world-logo{width:min(112px,31vw);min-width:0}
   .global-site-header .mzk-backpack-dock.is-inline .mzk-wallet-button{display:none}
+  .global-site-header .mzk-backpack-dock.is-inline,
+  .global-site-header .mzk-backpack-dock.is-inline .mzk-backpack-button{
+    width:100%;
+    min-width:0;
+  }
+  .global-site-header .mzk-backpack-dock.is-inline .mzk-backpack-button{padding-inline:2px}
 }
 
 /* Bottom-right two-button utility pill. */
