@@ -3,13 +3,13 @@
   "description": "Public in-game Drop Backpack catalog. Every supported asset type has a repository-owned manifest under public/models/backpack.",
   "correlation": {"profileId":"muzikaz-public","backpackId":"muzikaz-public-pack","homeSpaceId":"space-studio-ridge","landCatalog":"/public/models/land-spaces.json","dropPolicy":"profile-backpack-space-pixel-required"},
   "assets": [
-    {"id":"backpack-aape","name":"AAPE","owner":"MUZIKAZ","type":"avatars","modelUrl":"/public/models/AAPE.glb","format":"glb","visibility":"public","scale":1},
-    {"id":"backpack-dax","name":"DAX","owner":"MUZIKAZ","type":"avatars","modelUrl":"/public/models/DAX.glb","format":"glb","visibility":"public","scale":1},
+    {"id":"backpack-aape","name":"AAPE","owner":"MUZIKAZ","type":"avatars","modelUrl":"/public/models/avatars/AAPE.glb","format":"glb","visibility":"public","scale":1},
+    {"id":"backpack-dax","name":"DAX","owner":"MUZIKAZ","type":"avatars","modelUrl":"/public/models/avatars/DAX.glb","format":"glb","visibility":"public","scale":1},
     {"id":"muzikaz-main","name":"MUZIKAZ Main Floor","owner":"MUZIKAZ","type":"lands","environmentId":"muzikaz-main","visibility":"public"},
-    {"id":"drone-engine","name":"Drone Engine","owner":"MUZIKAZ","type":"vehicles","modelUrl":"/public/models/DRONE ENGINE.glb","format":"glb","visibility":"public","scale":1},
-    {"id":"beeduck-companion","name":"BEE Duck Companion","owner":"MUZIKAZ","type":"pets","modelUrl":"/public/models/BEEDUCK.glb","format":"glb","visibility":"public","scale":0.7},
-    {"id":"ion-core-prop","name":"IonCore Display Figure","owner":"MUZIKAZ","type":"props","modelUrl":"/public/models/IONCDUCK.glb","format":"glb","visibility":"public","scale":0.65},
+    {"id":"drone-engine","name":"Drone Engine","owner":"MUZIKAZ","type":"vehicles","modelUrl":"/public/models/vehicles/DRONE ENGINE.glb","format":"glb","visibility":"public","scale":1},
+    {"id":"beeduck-companion","name":"BEE Duck Companion","owner":"MUZIKAZ","type":"pets","modelUrl":"/public/models/avatars/BEEDUCK.glb","format":"glb","visibility":"public","scale":0.7},
+    {"id":"ion-core-prop","name":"IonCore Display Figure","owner":"MUZIKAZ","type":"props","modelUrl":"/public/models/avatars/IONCDUCK.glb","format":"glb","visibility":"public","scale":0.65},
     {"id":"bee-duck-carrot","name":"Bee Duck Carrot","owner":"MUZIKAZ","type":"props","thumbnailUrl":"/public/images/carrot-item.svg","format":"svg","visibility":"public","consumable":true,"quantity":1,"refillCostMzk":5,"description":"A crunchy speed snack. Feed it to Bee Duck, then refill it for 5 MZK."},
-    {"id":"volt-wolf-wearable","name":"Volt Wolf Armor","owner":"MUZIKAZ","type":"wearables","modelUrl":"/public/models/VOLTWOLF.glb","format":"glb","visibility":"public","scale":0.8}
+    {"id":"volt-wolf-wearable","name":"Volt Wolf Armor","owner":"MUZIKAZ","type":"wearables","modelUrl":"/public/models/avatars/VOLTWOLF.glb","format":"glb","visibility":"public","scale":0.8}
   ]
 }

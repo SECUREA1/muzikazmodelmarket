@@ -42,12 +42,24 @@ export class EnvironmentLoader {
         if (gltf.animations?.length) { const mixer = new THREE.AnimationMixer(gltf.scene); gltf.animations.forEach((clip) => mixer.clipAction(clip).play()); nextMixers.push(mixer); }
       }
       nextWorld.updateMatrixWorld(true);
+      const authoredBounds = new THREE.Box3().setFromObject(nextWorld);
+      const authoredSize = authoredBounds.getSize(new THREE.Vector3());
+      const authoredFootprint = Math.max(authoredSize.x, authoredSize.z);
+      const playableSize = Number(environment.playableSize);
+      if (playableSize > 0 && authoredFootprint > 0) {
+        const normalization = THREE.MathUtils.clamp(playableSize / authoredFootprint, 0.01, 100);
+        this.spaceScale *= normalization;
+        nextWorld.scale.setScalar(this.baseScale * this.spaceScale);
+        nextWorld.userData.playableSize = playableSize;
+        nextWorld.userData.authoredFootprint = authoredFootprint;
+        nextWorld.updateMatrixWorld(true);
+      }
       const quality = applyWorldQuality(nextWorld, this.renderer);
       const collision = buildCollision(nextWorld, environment.collisionMode);
       if (!collision.visibleMeshes.length) throw new Error('Missing meshes: the GLB loaded, but no renderable world meshes were found.');
       const spawn = resolveSafeSpawn(nextWorld, collision.visibleMeshes, environment.spawn);
       this.unload(); this.world = nextWorld; this.activeEnvironment = environment; this.mixers = nextMixers; this.meshes = collision.visibleMeshes; this.octree = collision.octree; this.bounds = spawn.bounds; this.scene.add(nextWorld); this.onProgress(100);
-      return { world: nextWorld, mixers: nextMixers, meshes: collision.visibleMeshes, octree: collision.octree, spawn, quality, collision };
+      return { world: nextWorld, mixers: nextMixers, meshes: collision.visibleMeshes, octree: collision.octree, spawn, quality, collision, scale: this.spaceScale };
     } catch (error) { nextMixers.forEach((m) => m.stopAllAction()); nextWorld.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); throw error; }
   }
 }

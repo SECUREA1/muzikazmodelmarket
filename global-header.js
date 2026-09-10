@@ -11,12 +11,9 @@
   header.innerHTML = `
     <a class="logo world-logo" href="index.html#home" aria-label="MUZIKAZ WORLD home"><img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ WORLD"></a>
     <nav class="nav global-nav" id="primary-navigation" aria-label="Primary navigation" aria-hidden="false">
-      <div class="header-market-menu${['model-market.html', 'builder-market.html'].includes(current) ? ' active' : ''}">
-        <button class="nav-link" type="button" aria-expanded="false" aria-haspopup="true" aria-controls="header-market-options">${icon('M4 9h16l-1-5H5zM6 9v11h12V9M9 20v-6h6v6')}<span>Market</span><b aria-hidden="true">⌄</b></button>
-        <div class="header-market-options" id="header-market-options" hidden>
-          <a href="model-market.html"><strong>Game Market</strong><small>Avatars, collectibles &amp; in-game assets</small></a>
-          <a href="builder-market.html"><strong>Builder Market</strong><small>World systems, enemies &amp; environments</small></a>
-        </div>
+      <div class="header-market-buttons" aria-label="Markets">
+        <a class="nav-link header-market-button${active('model-market.html')}" href="model-market.html">${icon('M4 9h16l-1-5H5zM6 9v11h12V9M9 20v-6h6v6')}<span>Game Market</span></a>
+        <a class="nav-link header-market-button${active('builder-market.html')}" href="builder-market.html">${icon('M4 5h16v14H4zM8 9h8M8 13h5')}<span>Builder Market</span></a>
       </div>
       <a class="nav-link${active('model-explorer.html')}" href="model-explorer.html">${icon('M3 6l5-2 8 3 5-2v13l-5 2-8-3-5 2zM8 4v13M16 7v13')}<span>World Map</span></a>
       <a class="nav-link${active('index.html')}" href="index.html#models">${icon('M4 5h16v14H4zM8 9h8M8 13h5')}<span>Models</span></a>
@@ -35,24 +32,12 @@
 
   const menu = header.querySelector('.menu-toggle');
   const nav = header.querySelector('.global-nav');
-  const marketMenu = header.querySelector('.header-market-menu');
-  const marketButton = marketMenu.querySelector('button');
-  const marketOptions = marketMenu.querySelector('.header-market-options');
-  const toggleMarket = (open) => {
-    marketOptions.hidden = !open;
-    marketButton.setAttribute('aria-expanded', String(open));
-    marketMenu.classList.toggle('is-open', open);
-  };
-  marketButton.addEventListener('click', (event) => { event.stopPropagation(); toggleMarket(marketOptions.hidden); });
-  document.addEventListener('click', (event) => { if (!marketMenu.contains(event.target)) toggleMarket(false); });
-  marketMenu.addEventListener('keydown', (event) => { if (event.key === 'Escape') { toggleMarket(false); marketButton.focus(); } });
   menu.addEventListener('click', () => {
     const isOpen = nav.classList.toggle('is-open');
     menu.setAttribute('aria-expanded', String(isOpen));
     menu.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
   });
   nav.addEventListener('click', (event) => {
-    if (event.target.closest('.header-market-menu>button')) return;
     nav.classList.remove('is-open');
     menu.setAttribute('aria-expanded', 'false');
     menu.setAttribute('aria-label', 'Open menu');

@@ -198,7 +198,7 @@ async function entitledAccount(active, res) {
   if (repaired.gameAccess !== true) { authorizationError(res, 500, 'GAME_PERMISSION_REPAIR_FAILED', 'The entitled account could not be provisioned for game access.', 'permission'); return null; }
   return repaired;
 }
-const STARTER_AVATAR = { id: 'starter-avatar', name: 'Starter Avatar', state: 'revealed', eligible: true, modelUrl: '/public/models/avatar.glb' };
+const STARTER_AVATAR = { id: 'starter-avatar', name: 'Starter Avatar', state: 'revealed', eligible: true, modelUrl: '/public/models/avatars/avatar.glb' };
 function backpackFor(account) {
   const stateAsset = (name, type) => ({ id: createHash('sha256').update(`${type}:${name}`).digest('hex').slice(0, 20), name, type, state: /^Unrevealed/i.test(name) ? 'unrevealed' : 'revealed' });
   const assets = [...(account.gameAssets || []).map((name) => stateAsset(name, 'game')), ...(account.purchasedAssets || []).map((name) => stateAsset(name, 'purchase'))];

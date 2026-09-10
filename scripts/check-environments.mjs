@@ -9,8 +9,8 @@ for (const required of ['muzikaz-main', 'muzikaz-upper', 'muzikaz-full-house']) 
   if (!records.some((record) => record.id === required)) throw new Error(`Missing ${required} environment.`);
 }
 const sheepBase = records.find((record) => record.id === 'sheepbase');
-if (!sheepBase || Number(sheepBase.spaceScale) !== 35) {
-  throw new Error('Sheep Base must use its 35x authored-world scale (30% smaller than 50x).');
+if (!sheepBase || Number(sheepBase.playableSize) !== 60) {
+  throw new Error('Sheep Base must normalize to its 60-meter playable arena footprint.');
 }
 const environmentDirectory = 'public/models/environments';
 const environmentFiles = (await readdir(environmentDirectory, { withFileTypes: true }))
@@ -20,12 +20,15 @@ const listedEnvironmentFiles = new Set(records.flatMap((record) => record.modelU
 for (const file of environmentFiles) {
   if (!listedEnvironmentFiles.has(file)) throw new Error(`Environment manifest must include every environment model, including ${file}.`);
 }
-const avatarFiles = (await readdir('public/models', { withFileTypes: true }))
-  .filter((entry) => entry.isFile() && /\.(glb|gltf)$/i.test(entry.name))
-  .map((entry) => entry.name);
+const labeledModelFolders = ['avatars', 'props', 'vehicles'];
+const categorizedFiles = (await Promise.all(labeledModelFolders.map(async (folder) =>
+  (await readdir(`public/models/${folder}`, { withFileTypes: true }))
+    .filter((entry) => entry.isFile() && /\.(glb|gltf)$/i.test(entry.name))
+    .map((entry) => `${folder}/${entry.name}`)
+))).flat();
 const listedAvatarFiles = new Set((Array.isArray(avatarCatalog.models) ? avatarCatalog.models : [])
-  .map((record) => decodeURIComponent(String(record.modelUrl || '').split('/').pop())));
-for (const file of avatarFiles) {
+  .map((record) => decodeURIComponent(String(record.modelUrl || '').replace(/^\/?public\/models\//, ''))));
+for (const file of categorizedFiles) {
   if (!listedAvatarFiles.has(file)) throw new Error(`Avatar catalog must include every model in public/models, including ${file}.`);
 }
 for (const record of records) {
@@ -41,5 +44,6 @@ for (const record of records) {
   }
   if (!record.spawn || !Number.isFinite(Number(record.spawn.y))) throw new Error(`${record.id} needs spawn metadata.`);
   if (!Number.isFinite(Number(record.spaceScale)) || Number(record.spaceScale) < 0.1 || Number(record.spaceScale) > 100) throw new Error(`${record.id} needs a spaceScale between 0.1 and 100.`);
+  if (!record.playable || !Number.isFinite(Number(record.playableSize)) || Number(record.playableSize) < 20) throw new Error(`${record.id} needs a playable size of at least 20 meters.`);
 }
-console.log(`Validated ${records.length} repository environments, ${avatarFiles.length} avatars, and GLB headers.`);
+console.log(`Validated ${records.length} repository environments, ${categorizedFiles.length} categorized models, and GLB headers.`);

@@ -1,14 +1,14 @@
 {
-  "ownerInstructions": "Deposit GLB or GLTF model files in this public/models folder. This catalog is loaded by the homepage, model explorer, marketplace/member AR viewer, and CHAINeS AR collectible browser. Use relative URLs such as public/models/character.glb. Optional iosModelUrl USDZ files enable iOS Quick Look AR.",
+  "ownerInstructions": "Deposit GLB/GLTF files into the labeled public/models/avatars, props, vehicles, or environments folder, then add complete catalog metadata. These records power marketplace, backpack, AR, and playable-world placement.",
   "models": [
     {
       "id": "318bb72e-99a3-4258-9684-8db3b35cc753-2",
       "number": 1,
       "name": "IonCore Sentinel",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "A blue-and-steel armored MUZIKAZ guardian with gold energy details, built for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/318bb72e-99a3-4258-9684-8db3b35cc753 2.glb",
+      "modelUrl": "public/models/avatars/318bb72e-99a3-4258-9684-8db3b35cc753 2.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -25,16 +25,17 @@
         "x": -280,
         "z": 0
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "aape",
       "number": 2,
       "name": "AAPE",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/AAPE.glb",
+      "modelUrl": "public/models/avatars/AAPE.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -51,16 +52,17 @@
         "x": 0,
         "z": 0
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "beedeere",
       "number": 3,
       "name": "BEEDEERE",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/BEEDEERE.glb",
+      "modelUrl": "public/models/avatars/BEEDEERE.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -77,16 +79,17 @@
         "x": 280,
         "z": 0
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "beeduck",
       "number": 4,
       "name": "BEEDUCK",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/BEEDUCK.glb",
+      "modelUrl": "public/models/avatars/BEEDUCK.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -103,16 +106,17 @@
         "x": -280,
         "z": 220
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "byte",
       "number": 5,
       "name": "BYTE",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/BYTE.glb",
+      "modelUrl": "public/models/avatars/BYTE.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -129,16 +133,17 @@
         "x": 0,
         "z": 220
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "dax",
       "number": 6,
       "name": "DAX",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/DAX.glb",
+      "modelUrl": "public/models/avatars/DAX.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -155,16 +160,17 @@
         "x": 280,
         "z": 220
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "drone-engine",
       "number": 7,
       "name": "DRONE ENGINE",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Vehicles",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/DRONE ENGINE.glb",
+      "modelUrl": "public/models/vehicles/DRONE ENGINE.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -181,16 +187,17 @@
         "x": -280,
         "z": 440
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "vehicle"
     },
     {
       "id": "flaminglow",
       "number": 8,
       "name": "FLAMINGLOW",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/FLAMINGLOW.glb",
+      "modelUrl": "public/models/avatars/FLAMINGLOW.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -207,16 +214,17 @@
         "x": 0,
         "z": 440
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "ioncduck",
       "number": 9,
       "name": "IONCDUCK",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/IONCDUCK.glb",
+      "modelUrl": "public/models/avatars/IONCDUCK.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -233,16 +241,17 @@
         "x": 280,
         "z": 440
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "mousey",
       "number": 10,
       "name": "MOUSEY",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/MOUSEY.glb",
+      "modelUrl": "public/models/avatars/MOUSEY.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -259,16 +268,17 @@
         "x": -280,
         "z": 660
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "muzikaz",
       "number": 11,
       "name": "MUZIKAZ",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/MUZIKAZ.glb",
+      "modelUrl": "public/models/avatars/MUZIKAZ.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -285,16 +295,17 @@
         "x": 0,
         "z": 660
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "muzkat",
       "number": 12,
       "name": "MUZKAT",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/MUZKAT.glb",
+      "modelUrl": "public/models/avatars/MUZKAT.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -311,16 +322,17 @@
         "x": 280,
         "z": 660
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "pixella",
       "number": 13,
       "name": "Pixella",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/pixella.glb",
+      "modelUrl": "public/models/avatars/pixella.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -337,16 +349,17 @@
         "x": -280,
         "z": 880
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "rebel-black-sheep",
       "number": 14,
       "name": "Rebel Black Sheep",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/rebel black sheep.glb",
+      "modelUrl": "public/models/avatars/rebel black sheep.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -363,16 +376,17 @@
         "x": 0,
         "z": 880
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "remix",
       "number": 15,
       "name": "Remix",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/remix.glb",
+      "modelUrl": "public/models/avatars/remix.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -389,16 +403,17 @@
         "x": 280,
         "z": 880
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "ronaldo",
       "number": 16,
       "name": "Ronaldo",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/ronaldo.glb",
+      "modelUrl": "public/models/avatars/ronaldo.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -415,16 +430,17 @@
         "x": -280,
         "z": 1100
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "sharko",
       "number": 17,
       "name": "Sharko",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/sharko.glb",
+      "modelUrl": "public/models/avatars/sharko.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -441,16 +457,17 @@
         "x": 0,
         "z": 1100
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "voltwolf",
       "number": 18,
       "name": "VOLTWOLF",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/VOLTWOLF.glb",
+      "modelUrl": "public/models/avatars/VOLTWOLF.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -467,16 +484,17 @@
         "x": 280,
         "z": 1100
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
     },
     {
       "id": "wolfie",
       "number": 19,
       "name": "Wolfie",
       "owner": "MUZIKAZ",
-      "category": "Owner GLB Library",
+      "category": "Playable Avatars",
       "description": "MUZIKAZ owner-deposited 3D collectible model for site previews, marketplace cards, and AR-capable viewers.",
-      "modelUrl": "public/models/wolfie.glb",
+      "modelUrl": "public/models/avatars/wolfie.glb",
       "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
       "iosModelUrl": "",
       "format": "glb",
@@ -493,7 +511,440 @@
         "x": -280,
         "z": 1320
       },
-      "publishedAt": "2026-07-16T00:00:00.000Z"
+      "publishedAt": "2026-07-16T00:00:00.000Z",
+      "assetType": "avatar"
+    },
+    {
+      "id": "buzzed",
+      "name": "Buzzed",
+      "owner": "MUZIKAZ",
+      "category": "Playable Avatars",
+      "assetType": "avatar",
+      "description": "Buzzed is a labeled MUZIKAZ avatar GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/avatars/BUZZED.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 20
+    },
+    {
+      "id": "donkley-kongley",
+      "name": "Donkley Kongley",
+      "owner": "MUZIKAZ",
+      "category": "Playable Avatars",
+      "assetType": "avatar",
+      "description": "Donkley Kongley is a labeled MUZIKAZ avatar GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/avatars/DONKLEY_KONGLEY.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 21
+    },
+    {
+      "id": "houndette",
+      "name": "Houndette",
+      "owner": "MUZIKAZ",
+      "category": "Playable Avatars",
+      "assetType": "avatar",
+      "description": "Houndette is a labeled MUZIKAZ avatar GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/avatars/HOUNDETTE.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 22
+    },
+    {
+      "id": "nervey-the-nervous-system",
+      "name": "Nervey The Nervous System",
+      "owner": "MUZIKAZ",
+      "category": "Playable Avatars",
+      "assetType": "avatar",
+      "description": "Nervey The Nervous System is a labeled MUZIKAZ avatar GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/avatars/NERVEY_THE_NERVOUS_SYSTEM.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 23
+    },
+    {
+      "id": "robocop",
+      "name": "Robocop",
+      "owner": "MUZIKAZ",
+      "category": "Playable Avatars",
+      "assetType": "avatar",
+      "description": "Robocop is a labeled MUZIKAZ avatar GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/avatars/ROBOCOP.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 24
+    },
+    {
+      "id": "shonda",
+      "name": "Shonda",
+      "owner": "MUZIKAZ",
+      "category": "Playable Avatars",
+      "assetType": "avatar",
+      "description": "Shonda is a labeled MUZIKAZ avatar GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/avatars/SHONDA.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 25
+    },
+    {
+      "id": "terrorist-1",
+      "name": "Terrorist 1",
+      "owner": "MUZIKAZ",
+      "category": "Playable Avatars",
+      "assetType": "avatar",
+      "description": "Terrorist 1 is a labeled MUZIKAZ avatar GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/avatars/TERRORIST_1.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 26
+    },
+    {
+      "id": "tyla-1",
+      "name": "Tyla 1",
+      "owner": "MUZIKAZ",
+      "category": "Playable Avatars",
+      "assetType": "avatar",
+      "description": "Tyla 1 is a labeled MUZIKAZ avatar GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/avatars/TYLA_1.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 27
+    },
+    {
+      "id": "tyla-2",
+      "name": "Tyla 2",
+      "owner": "MUZIKAZ",
+      "category": "Playable Avatars",
+      "assetType": "avatar",
+      "description": "Tyla 2 is a labeled MUZIKAZ avatar GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/avatars/TYLA_2.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 28
+    },
+    {
+      "id": "tyson",
+      "name": "Tyson",
+      "owner": "MUZIKAZ",
+      "category": "Playable Avatars",
+      "assetType": "avatar",
+      "description": "Tyson is a labeled MUZIKAZ avatar GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/avatars/TYSON.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 29
+    },
+    {
+      "id": "untitled-crew-character",
+      "name": "Untitled Crew Character",
+      "owner": "MUZIKAZ",
+      "category": "Playable Avatars",
+      "assetType": "avatar",
+      "description": "Untitled Crew Character is a labeled MUZIKAZ avatar GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/avatars/UNTITLED_CREW_CHARACTER.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 30
+    },
+    {
+      "id": "yucky-inmate",
+      "name": "Yucky Inmate",
+      "owner": "MUZIKAZ",
+      "category": "Playable Avatars",
+      "assetType": "avatar",
+      "description": "Yucky Inmate is a labeled MUZIKAZ avatar GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/avatars/YUCKY_INMATE.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 31
+    },
+    {
+      "id": "bronze-couch",
+      "name": "Bronze Couch",
+      "owner": "MUZIKAZ",
+      "category": "Game Props",
+      "assetType": "prop",
+      "description": "Bronze Couch is a labeled MUZIKAZ prop GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/props/BRONZE_COUCH.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 32
+    },
+    {
+      "id": "gold-microphone",
+      "name": "Gold Microphone",
+      "owner": "MUZIKAZ",
+      "category": "Game Props",
+      "assetType": "prop",
+      "description": "Gold Microphone is a labeled MUZIKAZ prop GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/props/GOLD_MICROPHONE.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 33
+    },
+    {
+      "id": "holophone-gold",
+      "name": "Holophone Gold",
+      "owner": "MUZIKAZ",
+      "category": "Game Props",
+      "assetType": "prop",
+      "description": "Holophone Gold is a labeled MUZIKAZ prop GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/props/HOLOPHONE_GOLD.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 34
+    },
+    {
+      "id": "holophone-silver",
+      "name": "Holophone Silver",
+      "owner": "MUZIKAZ",
+      "category": "Game Props",
+      "assetType": "prop",
+      "description": "Holophone Silver is a labeled MUZIKAZ prop GLB, ready for marketplace preview and playable game placement.",
+      "modelUrl": "public/models/props/HOLOPHONE_SILVER.glb",
+      "thumbnailUrl": "brand_name_tagline_panel_2x_transparent.png",
+      "iosModelUrl": "",
+      "format": "glb",
+      "visibility": "public",
+      "intendedUse": [
+        "site-3d-display",
+        "ar-display",
+        "sales",
+        "games"
+      ],
+      "scale": 1,
+      "rotation": 0,
+      "spawnPosition": {
+        "x": 0,
+        "z": 0
+      },
+      "publishedAt": "2026-09-10T00:00:00.000Z",
+      "number": 35
     }
   ]
 }
