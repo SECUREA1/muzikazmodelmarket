@@ -1122,7 +1122,7 @@ function initFlexLabCategories() {
 }
 
 function initWorldPlot() {
-  const STARTER_PLOT_MZK = 1000;
+  const STARTER_PLOT_MZK = 4000;
   const plot = document.querySelector('#muzikaz-world-plot');
   const spaces = Array.from(document.querySelectorAll('[data-world-space]'));
   const consent = document.querySelector('#world-plot-consent');
@@ -1130,6 +1130,7 @@ function initWorldPlot() {
   const reserveButton = agreement?.querySelector('button[type="submit"]');
   const selection = document.querySelector('#world-plot-selection');
   const ownedCount = document.querySelector('#world-plots-owned');
+  const purchaseLink = document.querySelector('#world-plot-purchase');
   if (!plot || !spaces.length || !consent || !agreement || !reserveButton || !selection) return;
 
   const owner = normalizeMemberEmail(currentMemberEmail || window.localStorage.getItem('muzikazBottleMemberEmail'));
@@ -1154,9 +1155,16 @@ function initWorldPlot() {
     });
     const selectedIndex = spaces.findIndex((space) => space.dataset.worldSpace === name) + 1;
     const isOwned = ownedPlotNames().includes(name);
+    const worldId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     selection.innerHTML = `<span class="world-plot__selection-number">${String(selectedIndex).padStart(2, '0')}</span><span><strong>${name} selected.</strong> This public-area plot includes one free spot in its community.</span><small>Plot status <b>${isOwned ? 'Owned by you' : 'Available'}</b></small>`;
     reserveButton.textContent = isOwned ? `${name} owned` : `Claim ${name} · ${STARTER_PLOT_MZK.toLocaleString()} MZK`;
     reserveButton.disabled = isOwned || !consent.checked;
+    if (purchaseLink) {
+      purchaseLink.href = `buy-mzk.html?purchase=land&amount=40&world=${encodeURIComponent(worldId)}&return=${encodeURIComponent(`model-market.html?world=${worldId}#muzikaz-world-plot`)}`;
+      purchaseLink.querySelector('strong').textContent = isOwned ? `${name} already owned` : `Purchase ${name} · $40`;
+      purchaseLink.classList.toggle('is-owned', isOwned);
+      purchaseLink.setAttribute('aria-disabled', String(isOwned));
+    }
   };
 
   spaces.forEach((space) => space.addEventListener('click', () => selectSpace(space.dataset.worldSpace)));

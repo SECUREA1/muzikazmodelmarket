@@ -3,6 +3,8 @@
   const PRESALE_MINIMUM_USD = 5;
   const params = new URLSearchParams(window.location.search);
   const bottleBonus = params.get('offer') === 'bottle10';
+  const landPurchase = params.get('purchase') === 'land';
+  const selectedLand = String(params.get('world') || 'starter-land').replace(/[^a-z0-9-]/gi, '').slice(0, 80);
   const BOTTLE_BONUS_MINIMUM_USD = 100;
   const form = document.querySelector('#mzk-swap-form'), usdInput = document.querySelector('#mzk-usd'), output = document.querySelector('#mzk-output'), buy = document.querySelector('#mzk-buy'), quoteCopy = document.querySelector('#mzk-quote'), status = document.querySelector('#mzk-status'), walletSelect = document.querySelector('#mzk-payment-wallet');
   const PENDING_KEY = 'muzikazPendingMzkPaymentV1';
@@ -17,7 +19,7 @@
     walletSelect.querySelectorAll('.payment-choice').forEach((item) => item.remove());
     walletSelect.insertAdjacentHTML('beforeend', wallets.map(({ id, name, hardware }, index) => choice('wallet', id, hardware ? `${name} · hardware` : name, index === 0)).join(''));
   }
-  const tokens = () => window.MZKWallet.purchaseTokens(Number(usdInput.value || 0));
+  const tokens = () => landPurchase ? 4000 : window.MZKWallet.purchaseTokens(Number(usdInput.value || 0));
   let quoteTimer;
   async function refresh() {
     const usd = Number(usdInput.value), amount = tokens();
@@ -36,9 +38,11 @@
   function schedule() { clearTimeout(quoteTimer); quoteTimer = setTimeout(refresh, 250); }
   const readPending = () => { try { return JSON.parse(sessionStorage.getItem(PENDING_KEY) || 'null'); } catch (_) { return null; } };
   function creditVerified(pending, payment) {
-    const entry = window.MZKWallet.creditPurchase(pending.usd, { ...payment, owner: pending.owner, currency: pending.currency });
+    const entry = window.MZKWallet.creditPurchase(pending.usd, { ...payment, owner: pending.owner, currency: pending.currency, purchaseType: landPurchase ? 'LAND_TIER' : 'MZK_PURCHASE' });
     sessionStorage.removeItem(PENDING_KEY);
-    status.textContent = `${entry.amount.toLocaleString()} MZK added to your wallet and Backpack with the free avatar, land item, and game Loadout. Transaction ${payment.transactionHash.slice(0, 12)}…`;
+    status.textContent = landPurchase
+      ? `${entry.amount.toLocaleString()} MZK added. Returning you to claim your selected one-time land deed…`
+      : `${entry.amount.toLocaleString()} MZK added to your wallet and Backpack with the free avatar, land item, and game Loadout. Transaction ${payment.transactionHash.slice(0, 12)}…`;
   }
   quickButtons.forEach((button) => button.addEventListener('click', () => { usdInput.value = button.dataset.usd; refresh(); }));
   document.querySelectorAll('[data-fund-package]').forEach((button) => button.addEventListener('click', () => {
@@ -55,7 +59,7 @@
       if (!owner || owner.startsWith('guest-')) throw new Error('Connect or sign in to Member access before purchasing MZK so the tokens reach the correct user.');
       status.textContent = `Opening ${walletSelect.querySelector('input:checked').closest('label').querySelector('small').textContent}. Approve the exact transfer to submit it…`;
       const quote = await window.MuzikazWalletPayments.quote(usd, selectedCurrency());
-      const order = await window.MuzikazWalletPayments.createOrder(quote, { productId: 'mzk-land-presale', productType: 'MZK_PURCHASE', quantity: tokens(), userId: owner, wallet: window.MZKWallet.connectedAddress() || owner, metadata: { mzkOwner: owner, tokens: tokens() } });
+      const order = await window.MuzikazWalletPayments.createOrder(quote, { productId: landPurchase ? `land-tier-${selectedLand}` : 'mzk-land-presale', productType: landPurchase ? 'LAND_TIER' : 'MZK_PURCHASE', quantity: landPurchase ? 1 : tokens(), userId: owner, wallet: window.MZKWallet.connectedAddress() || owner, metadata: { mzkOwner: owner, tokens: tokens(), worldId: landPurchase ? selectedLand : undefined, oneTime: landPurchase || undefined } });
       const pending = { orderId: order.orderId, owner, usd, tokens: tokens(), currency: quote.currency, amount: quote.amount };
       sessionStorage.setItem(PENDING_KEY, JSON.stringify(pending));
       const sent = await window.MuzikazWalletPayments.initiate(quote, selectedWallet());
@@ -67,7 +71,18 @@
     } catch (error) { status.textContent = error.message || 'The swap was not completed. No MZK was added.'; }
     finally { buy.disabled = false; refresh(); }
   });
-  if (bottleBonus) {
+  if (landPurchase) {
+    document.body.classList.add('land-tier-active');
+    usdInput.min = '40';
+    usdInput.value = '40';
+    usdInput.readOnly = true;
+    document.querySelector('.mzk-form-heading .kicker').textContent = 'One-time land tier';
+    document.querySelector('.mzk-form-heading h2').textContent = 'Purchase your land deed';
+    document.querySelector('.mzk-amount-label > span').innerHTML = 'Land tier <small>USD · one time</small>';
+    document.querySelector('.mzk-conversion small').textContent = 'Exactly 4,000 MZK · enough to claim one selected starter plot';
+    quickButtons.forEach((button) => { button.hidden = Number(button.dataset.usd) !== 40; });
+  }
+  else if (bottleBonus) {
     document.body.classList.add('bottle-bonus-active');
     usdInput.min = String(BOTTLE_BONUS_MINIMUM_USD);
     usdInput.value = String(Math.max(BOTTLE_BONUS_MINIMUM_USD, Number(params.get('amount')) || BOTTLE_BONUS_MINIMUM_USD));
