@@ -16,6 +16,11 @@ const requiredFiles = [
   'dist/admin.html',
   'dist/admin.js',
   'dist/public/js/rad-tox-launcher.js',
+  'dist/brand_name_tagline_panel_2x.png',
+  'dist/logo_symbol_crop_2x_transparent.png',
+  'dist/site.webmanifest',
+  'dist/pwa.js',
+  'dist/service-worker.js',
   'dist/reference.png',
 ];
 
@@ -35,6 +40,22 @@ const unifiedHeaderPages = htmlPages;
 for (const page of unifiedHeaderPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
   if (!html.includes('global-header.js')) throw new Error(`${page} must load the unified global header component.`);
+}
+
+// Every public surface must retain installed-app identity and a raster social
+// card. SVG previews are not consistently rendered by sharing crawlers.
+for (const page of htmlPages) {
+  const html = await readFile(`dist/${page}`, 'utf8');
+  for (const brandMarker of ['site.webmanifest', 'logo_symbol_crop_2x_transparent.png', 'brand_name_tagline_panel_2x.png', 'og:image:width', 'twitter:image:alt', 'pwa.js']) {
+    if (!html.includes(brandMarker)) throw new Error(`${page} is missing required app/share branding: ${brandMarker}`);
+  }
+}
+const webManifest = JSON.parse(await readFile('dist/site.webmanifest', 'utf8'));
+if (!webManifest.icons?.some((icon) => icon.src.endsWith('.svg') && icon.sizes === 'any' && icon.purpose.includes('maskable'))) throw new Error('The installed app manifest is missing its scalable maskable MUZIKAZ icon.');
+if (!webManifest.screenshots?.some((shot) => shot.src.includes('brand_name_tagline_panel_2x.png'))) throw new Error('The installed app manifest is missing branded store artwork.');
+const serviceWorker = await readFile('dist/service-worker.js', 'utf8');
+for (const offlineBrandAsset of ['muzikaz-world-logo.svg', 'muzikaz_bolt_logo_editable.svg', 'brand_name_tagline_panel_2x.png', 'logo_symbol_crop_2x_transparent.png']) {
+  if (!serviceWorker.includes(offlineBrandAsset)) throw new Error(`The downloadable app shell does not preserve ${offlineBrandAsset} offline.`);
 }
 
 const mobileHeaderPages = ['avatar-whitepaper.html', 'buy-mzk.html', 'checkout.html', 'index.html', 'members.html', 'model-market.html'];
