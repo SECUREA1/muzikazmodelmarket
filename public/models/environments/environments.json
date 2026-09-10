@@ -1,29 +1,56 @@
 [
   {
     "id": "muzikaz-main",
-    "aliases": ["muzimakz-main"],
     "name": "MUZIKAZ Main Floor",
-    "description": "Complete walkable MUZIKAZ main-floor environment.",
+    "label": "Interior level",
+    "category": "Interior level",
+    "levelOrder": 1,
+    "playable": true,
+    "description": "Complete walkable main-floor campaign environment.",
     "modelUrl": "/public/models/environments/muzimakzmain.glb",
     "thumbnailUrl": "",
-    "spawn": { "x": 0, "y": 1, "z": 2, "rotationY": 0 },
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "rotationY": 0
+    },
     "scale": 1,
-    "spaceScale": 2.5,
-    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "spaceScale": 1,
+    "playableSize": 32,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
     "collisionMode": "auto",
     "visibility": "public",
     "source": "repository"
   },
   {
     "id": "muzikaz-upper",
-    "name": "MUZIKAZ Upper Floor",
-    "description": "Complete walkable MUZIKAZ upper-floor environment.",
+    "name": "MUZIKAZ Upper Deck",
+    "label": "Interior level",
+    "category": "Interior level",
+    "levelOrder": 2,
+    "playable": true,
+    "description": "Complete walkable upper-deck campaign environment.",
     "modelUrl": "/public/models/environments/muzikazupper.glb",
     "thumbnailUrl": "",
-    "spawn": { "x": 0, "y": 1, "z": 2, "rotationY": 0 },
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "rotationY": 0
+    },
     "scale": 1,
-    "spaceScale": 2.5,
-    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "spaceScale": 1,
+    "playableSize": 28,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
     "collisionMode": "auto",
     "visibility": "public",
     "source": "repository"
@@ -31,13 +58,251 @@
   {
     "id": "sheepbase",
     "name": "Sheep Base",
-    "description": "Walkable Sheep Base environment discovered from the repository environment library.",
+    "label": "Base level",
+    "category": "Base level",
+    "levelOrder": 3,
+    "playable": true,
+    "description": "Open Sheep Base combat environment scaled to a full playable arena.",
     "modelUrl": "/public/models/environments/sheepbase.glb",
     "thumbnailUrl": "",
-    "spawn": { "x": 0, "y": 1, "z": 2, "rotationY": 0 },
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "rotationY": 0
+    },
     "scale": 1,
-    "spaceScale": 35,
-    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "spaceScale": 1,
+    "playableSize": 60,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository"
+  },
+  {
+    "id": "studio-ridge-in",
+    "name": "Studio Ridge Interior",
+    "label": "Interior level",
+    "category": "Interior level",
+    "levelOrder": 4,
+    "playable": true,
+    "description": "Playable Studio Ridge interior with collision-safe floor spawning.",
+    "modelUrl": "/public/models/environments/STUDIORIDGE_IN.glb",
+    "thumbnailUrl": "",
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "rotationY": 0
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 28,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository"
+  },
+  {
+    "id": "studio-ridge-out",
+    "name": "Studio Ridge Outdoors",
+    "label": "Outdoor map",
+    "category": "Outdoor map",
+    "levelOrder": 5,
+    "playable": true,
+    "description": "Playable Studio Ridge exterior map sized as an outdoor encounter space.",
+    "modelUrl": "/public/models/environments/STUDIORIDGE_OUT.glb",
+    "thumbnailUrl": "",
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "rotationY": 0
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 80,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository"
+  },
+  {
+    "id": "crew-plaza-in",
+    "name": "Crew Plaza Entrance",
+    "label": "Interior level",
+    "category": "Interior level",
+    "levelOrder": 6,
+    "playable": true,
+    "description": "Playable Crew Plaza entry level.",
+    "modelUrl": "/public/models/environments/CREWPLAZA_IN.glb",
+    "thumbnailUrl": "",
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "rotationY": 0
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 28,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository"
+  },
+  {
+    "id": "crew-plaza-inside",
+    "name": "Crew Plaza Interior",
+    "label": "Interior level",
+    "category": "Interior level",
+    "levelOrder": 7,
+    "playable": true,
+    "description": "Playable complete Crew Plaza interior level.",
+    "modelUrl": "/public/models/environments/CREWPLAZA_INSIDE.glb",
+    "thumbnailUrl": "",
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "rotationY": 0
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 32,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository"
+  },
+  {
+    "id": "crew-plaza-outdoors",
+    "name": "Crew Plaza Outdoors",
+    "label": "Outdoor map",
+    "category": "Outdoor map",
+    "levelOrder": 8,
+    "playable": true,
+    "description": "Playable Crew Plaza exterior map sized as a full encounter space.",
+    "modelUrl": "/public/models/environments/CREWPLAZA_OUTDOORS.glb",
+    "thumbnailUrl": "",
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "rotationY": 0
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 90,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository"
+  },
+  {
+    "id": "jail-cells",
+    "name": "Jail Cells",
+    "label": "Challenge level",
+    "category": "Challenge level",
+    "levelOrder": 9,
+    "playable": true,
+    "description": "Playable close-quarters jail cell challenge level.",
+    "modelUrl": "/public/models/environments/JAILCELLS.glb",
+    "thumbnailUrl": "",
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "rotationY": 0
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 26,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository"
+  },
+  {
+    "id": "kitchen",
+    "name": "Kitchen",
+    "label": "Interior level",
+    "category": "Interior level",
+    "levelOrder": 10,
+    "playable": true,
+    "description": "Playable kitchen encounter level.",
+    "modelUrl": "/public/models/environments/KITCHEN_1.glb",
+    "thumbnailUrl": "",
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "rotationY": 0
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 24,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository"
+  },
+  {
+    "id": "kitchen-upper-deck",
+    "name": "Kitchen Upper Deck",
+    "label": "Interior level",
+    "category": "Interior level",
+    "levelOrder": 11,
+    "playable": true,
+    "description": "Playable upper-deck kitchen environment.",
+    "modelUrl": "/public/models/environments/KITCHNER_UPPER_DECK.glb",
+    "thumbnailUrl": "",
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "rotationY": 0
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 30,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
     "collisionMode": "auto",
     "visibility": "public",
     "source": "repository"
@@ -45,13 +310,30 @@
   {
     "id": "muzikaz-full-house",
     "name": "MUZIKAZ Full House",
-    "description": "Main and upper-floor MUZIKAZ GLBs intentionally loaded together as one walkthrough world.",
-    "modelUrls": ["/public/models/environments/muzimakzmain.glb", "/public/models/environments/muzikazupper.glb"],
+    "label": "Combined map",
+    "category": "Combined map",
+    "levelOrder": 12,
+    "playable": true,
+    "description": "Main and upper-floor MUZIKAZ GLBs loaded together as one complete walkthrough world.",
+    "modelUrls": [
+      "/public/models/environments/muzimakzmain.glb",
+      "/public/models/environments/muzikazupper.glb"
+    ],
     "thumbnailUrl": "",
-    "spawn": { "x": 0, "y": 1, "z": 2, "rotationY": 0 },
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "rotationY": 0
+    },
     "scale": 1,
-    "spaceScale": 2.5,
-    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "spaceScale": 1,
+    "playableSize": 32,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
     "collisionMode": "auto",
     "visibility": "public",
     "source": "repository",

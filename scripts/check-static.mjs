@@ -82,8 +82,8 @@ for (const resizeFeature of ['data-resize-backpack', 'data-expand-backpack', 'PA
   if (!backpackWidget.includes(resizeFeature)) throw new Error(`The stretchable, fully labelled Backpack is missing ${resizeFeature}.`);
 }
 const globalHeader = await readFile('dist/global-header.js', 'utf8');
-for (const marketFeature of ['header-market-menu', 'Game Market', 'Builder Market', 'aria-haspopup="true"']) {
-  if (!globalHeader.includes(marketFeature)) throw new Error(`The shared Market dropdown is missing ${marketFeature}.`);
+for (const marketFeature of ['header-market-buttons', 'header-market-button', 'Game Market', 'Builder Market', 'aria-label="Markets"']) {
+  if (!globalHeader.includes(marketFeature)) throw new Error(`The two-button Market navigation is missing ${marketFeature}.`);
 }
 for (const utilityFeature of ['Support', 'data-open-support-chat', 'Admin login', 'data-global-admin-form', '/api/admin/login']) {
   if (!backpackWidget.includes(utilityFeature)) throw new Error(`The global page utility bar is missing ${utilityFeature}.`);

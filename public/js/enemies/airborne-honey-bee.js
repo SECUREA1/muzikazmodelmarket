@@ -3,10 +3,10 @@ import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/
 
 // BEEDEERE is the repository's non-BeeDuck bee asset.  Keeping this cache at
 // module scope makes React/dev re-entry and level restarts share one download.
-export const BEE_GLB_PATH = 'public/models/BEEDEERE.glb';
+export const BEE_GLB_PATH = 'public/models/avatars/BEEDEERE.glb';
 export const BEE_CONFIG = Object.freeze({ id:'bee', modelPath:BEE_GLB_PATH, label:'Honey bee', modelSize:1.45, airborne:true, minimumGroundClearance:1.75, hoverSpeed:2.1, hoverAmount:.18, detectionRadius:13, attackRange:7, retreatDistance:2.75, retreatResumeDistance:4.25, attackCooldown:1.25, projectileSpeed:9, projectileLifetime:3, honeyDamage:7, playerDamageCooldown:.7, sprayCount:3, spraySpread:.1, maxHealth:20, gunDamage:1, laserDamage:1, batDamage:1, roamRadius:8 });
-export const AAPE_BOSS_CONFIG = Object.freeze({ ...BEE_CONFIG, id:'aape', modelPath:'public/models/AAPE.glb', label:'AAPE sword boss', modelSize:2.1, airborne:false, attackRange:2.45, retreatDistance:0, attackCooldown:.85, maxHealth:20, swordDamage:12, swordReach:2.4 });
-export const BEEDUCK_BOSS_CONFIG = Object.freeze({ ...BEE_CONFIG, id:'beeduck', modelPath:'public/models/BEEDUCK.glb', label:'BEEDUCK honey boss', modelSize:2.9, maxHealth:20, sprayCount:5, spraySpread:.16, honeyDamage:10 });
+export const AAPE_BOSS_CONFIG = Object.freeze({ ...BEE_CONFIG, id:'aape', modelPath:'public/models/avatars/AAPE.glb', label:'AAPE sword boss', modelSize:2.1, airborne:false, attackRange:2.45, retreatDistance:0, attackCooldown:.85, maxHealth:20, swordDamage:12, swordReach:2.4 });
+export const BEEDUCK_BOSS_CONFIG = Object.freeze({ ...BEE_CONFIG, id:'beeduck', modelPath:'public/models/avatars/BEEDUCK.glb', label:'BEEDUCK honey boss', modelSize:2.9, maxHealth:20, sprayCount:5, spraySpread:.16, honeyDamage:10 });
 const assetPromises = new Map();
 function loadBossAsset(path) { if (!assetPromises.has(path)) assetPromises.set(path,new GLTFLoader().loadAsync(path)); return assetPromises.get(path); }
 function disposeObject(root) { root?.traverse(o => { if (!o.isMesh) return; o.geometry?.dispose?.(); const materials=Array.isArray(o.material)?o.material:[o.material]; materials.forEach(m=>m?.dispose?.()); }); }
