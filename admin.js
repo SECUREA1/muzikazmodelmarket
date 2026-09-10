@@ -1,6 +1,10 @@
 (() => {
   const tokenKey = 'muzikazAdminToken';
   const views = {
+    mzkTransactions: { title: 'All MZK transactions', columns: ['id','type','walletId','counterpartyId','amountMzk','balanceAfterMzk','requestId','createdAt'] },
+    items: { title: 'All item records', columns: ['itemId','name','itemType','source','ownerId','status','version','updatedAt'] },
+    backpackItems: { title: 'All Backpack items', columns: ['walletId','backpackId','itemId','name','itemType','source','revealStatus','listed','priceMzk','acquiredAt','updatedAt'] },
+    spaces: { title: 'Saved & published spaces', columns: ['spaceId','recordType','worldId','ownerId','assetId','assetVersion','saveState','publishState','specVersion','coordinateSystem','transform','configuration','functionalSettings','savedAt','publishedAt'] },
     submissions: { title: 'Submissions & designs', columns: ['title','ownerDisplayName','fileType','category','intendedUse','status','visibility','updatedAt'] },
     users: { title: 'Users & wallets', columns: ['walletKey','displayName','walletId','mzk','items','updatedAt'] },
     sales: { title: 'Sales & payment orders', columns: ['orderId','userId','purchaseType','itemId','basePrice','paymentAsset','paymentStatus','transactionHash','createdAt'] },
@@ -31,6 +35,13 @@
     if (value == null || value === '') return '—';
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);
+  }
+  function csvCell(value) { const text = present(value); return `"${text.replaceAll('"', '""')}"`; }
+  function exportSpreadsheet() {
+    const key = $('#view').value; const config = views[key]; const list = records();
+    const csv = [config.columns.map(csvCell).join(','), ...list.map((item) => config.columns.map((column) => csvCell(item[column])).join(','))].join('\r\n');
+    const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' }));
+    link.download = `muzikaz-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}-${new Date().toISOString().slice(0,10)}.csv`; link.click(); URL.revokeObjectURL(link.href);
   }
   function normalizeUser(item) {
     const record = item.record || {};
@@ -123,6 +134,8 @@
   }));
   $('#view').addEventListener('change', renderTable); $('#search').addEventListener('input', renderTable);
   $('#refresh').addEventListener('click', () => loadData().catch((error) => { $('#last-updated').textContent = error.message; $('#last-updated').className = 'error'; }));
+  $('#export-sheet').addEventListener('click', exportSpreadsheet);
+  $('#print').addEventListener('click', () => window.print());
   $('#access-code-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     // A dispatched event's currentTarget is cleared once execution crosses an

@@ -40,7 +40,9 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(login.response.status, 200); assert.equal(login.body.data.persistent, true); assert.ok(login.body.data.token);
   const cookie = login.response.headers.get('set-cookie').split(';')[0];
   assert.equal((await json(`${base}/api/admin/session`, { headers: { Cookie: cookie } })).body.data.authenticated, true);
-  assert.equal((await json(`${base}/api/admin/data`, { headers: { Cookie: cookie } })).response.status, 200, 'persistent admin receives the full data center');
+  const adminData = await json(`${base}/api/admin/data`, { headers: { Cookie: cookie } });
+  assert.equal(adminData.response.status, 200, 'persistent admin receives the full data center');
+  for (const sheet of ['mzkTransactions', 'items', 'backpackItems', 'spaces']) assert.ok(Array.isArray(adminData.body.data[sheet]), `${sheet} is available as an administrator spreadsheet`);
 
   const pass = await json(`${base}/api/admin/loadout-codes`, { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ expiresInDays: 7, waiveLoadout: true, violetBottle: true, starterLand: true, creatorVault: true }) });
   assert.equal(pass.response.status, 201); assert.equal(pass.body.data.label, 'MZK Loadout Pass');
