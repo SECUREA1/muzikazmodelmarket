@@ -70,6 +70,12 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   const game = await json(`${base}/api/game/session`, { method: 'POST', headers: { Cookie: bypassCookie, 'X-CSRF-Token': bypass.body.data.csrfToken } });
   assert.equal(game.response.status, 201, 'the owner bypass proceeds through the authenticated game-session route');
   assert.match(game.response.headers.get('set-cookie'), /^mzk_game=/);
+  const gameCookie = game.response.headers.get('set-cookie').split(';')[0];
+  const gameplaySpend = await json(`${base}/api/game/spend`, { method: 'POST', headers: { Cookie: `${bypassCookie}; ${gameCookie}`, 'X-CSRF-Token': bypass.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ amountMzk: 50, requestId: 'owner-game-1', gameId: 'rad-tox', reason: 'match entry' }) });
+  assert.equal(gameplaySpend.response.status, 201); assert.equal(gameplaySpend.body.data.balanceAfterMzk, 1950);
+  const adminData = await json(`${base}/api/admin/data`, { headers: { Cookie: cookie } });
+  assert.equal(adminData.body.data.summary.gameplaySpentMzk, 50, 'admin pages receive the live gameplay-spend total');
+  assert.equal(adminData.body.data.gameplaySpending[0].walletId, `account:${bypass.body.data.account.accountId}`);
 
   await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' } } }) });
   await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });

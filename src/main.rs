@@ -2536,7 +2536,9 @@ fn require_backpack_land(
 fn admin_login(s: &mut TcpStream, st: &State, body: &[u8]) -> std::io::Result<()> {
     let payload = String::from_utf8_lossy(body);
     // Credentials are checked only on the server; clients receive a random session token.
-    if val(&payload, "username") != "giraff" || val(&payload, "password") != "boots" {
+    if !matches!(val(&payload, "username").as_str(), "admin" | "giraff")
+        || val(&payload, "password") != "boots"
+    {
         return json(
             s,
             401,

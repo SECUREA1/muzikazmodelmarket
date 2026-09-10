@@ -231,6 +231,45 @@ export class UserJsonDatabase {
     return { trades: (data.trades || []).filter((entry) => touches(entry.buyerId, entry.sellerId)).slice(-100), messages: (data.messages || []).filter((entry) => touches(entry.from, entry.to)).slice(-100), transactions: (data.transactions || []).filter((entry) => entry.walletId === wallet || entry.counterpartyId === wallet).slice(-100) };
   }
 
+  spendGameplay(walletId, input) {
+    const wallet = cleanWallet(walletId); const body = plainObject(input);
+    const amount = Math.trunc(Number(body.amountMzk));
+    const requestId = String(body.requestId || '').trim();
+    const gameId = String(body.gameId || 'muzikaz-gameplay').trim().slice(0, 140);
+    const reason = String(body.reason || 'gameplay').trim().slice(0, 280);
+    if (!Number.isSafeInteger(amount) || amount < 1 || amount > 1_000_000) throw new Error('Gameplay spend must be from 1 to 1,000,000 MZK.');
+    if (!requestId || requestId.length > 140) throw new Error('A gameplay spend request id is required.');
+    if (!gameId) throw new Error('A game id is required.');
+    return this.transaction((data) => {
+      data.transactions ||= [];
+      const duplicate = data.transactions.find((entry) => entry.type === 'GAMEPLAY_SPEND' && entry.walletId === wallet && entry.requestId === requestId);
+      if (duplicate) return duplicate;
+      const user = data.users[wallet];
+      if (!user) throw new Error('Member wallet not found.');
+      const balance = Number(user.tokens?.MZK || 0);
+      if (balance < amount) throw new Error('The wallet does not have enough MZK.');
+      user.tokens.MZK = balance - amount;
+      user.updatedAt = new Date().toISOString();
+      user.revision = Number(user.revision || 0) + 1;
+      return appendTransaction(data, { type: 'GAMEPLAY_SPEND', walletId: wallet, amountMzk: -amount, balanceAfterMzk: user.tokens.MZK, requestId, gameId, reason });
+    });
+  }
+
+  async gameplaySpending() {
+    await this.initialize();
+    const data = await this.read();
+    const rows = new Map();
+    for (const entry of data.transactions || []) {
+      if (entry.type !== 'GAMEPLAY_SPEND') continue;
+      const row = rows.get(entry.walletId) || { walletId: entry.walletId, spentMzk: 0, transactionCount: 0, lastSpentAt: null };
+      row.spentMzk += Math.abs(Number(entry.amountMzk || 0));
+      row.transactionCount += 1;
+      if (!row.lastSpentAt || String(entry.createdAt) > row.lastSpentAt) row.lastSpentAt = entry.createdAt;
+      rows.set(entry.walletId, row);
+    }
+    return { wallets: [...rows.values()].sort((a, b) => b.spentMzk - a.spentMzk), transactions: (data.transactions || []).filter((entry) => entry.type === 'GAMEPLAY_SPEND').slice().reverse() };
+  }
+
   async landDeeds(walletId) {
     const wallet = cleanWallet(walletId); await this.initialize(); const data = await this.read();
     return clone(Object.values(data.landDeeds || {}).filter((deed) => deed.ownerId === wallet && deed.status === 'active'));
