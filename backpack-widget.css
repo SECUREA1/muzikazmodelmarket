@@ -66,6 +66,49 @@
   .mzk-backpack-dock.is-inline .mzk-backpack-button>svg{display:block;width:26px;height:26px;flex:0 0 26px}
   .mzk-backpack-dock.is-inline .mzk-backpack-button span{display:block;font-size:8px;line-height:1;text-transform:uppercase;white-space:nowrap}
   .mzk-backpack-dock.is-inline .mzk-backpack-button small{display:none}
+
+  /* On phones, Admin completes the final row of the two-column menu while
+     Support remains reachable without opening the menu. */
+  .global-site-header .global-nav .mzk-site-utility.is-header-utility,
+  .site-header .nav .mzk-site-utility.is-header-utility{display:contents}
+  .global-site-header .global-nav .mzk-site-utility [data-open-admin-login],
+  .site-header .nav .mzk-site-utility [data-open-admin-login]{
+    order:10;
+    justify-content:flex-start;
+    width:100%;
+    min-width:0;
+    min-height:42px;
+    margin:0;
+    padding:9px;
+    gap:12px;
+    border:1px solid rgba(156,255,0,.14);
+    border-radius:10px;
+    background:transparent;
+    color:#dce8df;
+    font-size:10px;
+  }
+  .global-site-header .global-nav .mzk-site-utility [data-open-support-chat],
+  .site-header .nav .mzk-site-utility [data-open-support-chat]{
+    position:fixed;
+    right:max(12px,env(safe-area-inset-right));
+    bottom:max(12px,env(safe-area-inset-bottom));
+    z-index:8999;
+    display:flex;
+    justify-content:center;
+    width:56px;
+    height:56px;
+    min-height:56px;
+    margin:0;
+    padding:0;
+    overflow:hidden;
+    border:1px solid rgba(156,255,0,.7);
+    border-radius:50%;
+    background:#0b0e09;
+    color:#9cff00;
+    box-shadow:0 12px 38px rgba(0,0,0,.6),0 0 22px rgba(156,255,0,.18);
+  }
+  .mzk-site-utility [data-open-support-chat] span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+  .mzk-site-utility [data-open-support-chat] svg{width:25px;height:25px;flex-basis:25px}
 }
 
 /* Server-owned mystery inventory never leaks unrevealed artwork or metadata. */
