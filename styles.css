@@ -3316,16 +3316,16 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 @media(max-width:720px){
   .topbar{display:none}
   .global-site-header{
-    display:grid;grid-template-columns:minmax(112px,1fr) auto;grid-template-rows:auto auto;
+    display:grid;grid-template-columns:minmax(112px,146px) minmax(0,1fr);grid-template-rows:auto auto;
     height:auto;min-height:116px;padding:8px 10px;gap:7px 8px;
     background:linear-gradient(135deg,rgba(2,8,2,.98),rgba(8,18,5,.98));
     border-bottom:1px solid rgba(156,255,0,.52);
     box-shadow:0 8px 28px rgba(0,0,0,.7),0 1px 18px rgba(156,255,0,.12)
   }
   .global-site-header .world-logo{grid-column:1;grid-row:1;width:min(146px,100%);margin:0}
-  .global-site-header .icons{grid-column:2;grid-row:1;display:grid;grid-template-columns:repeat(5,minmax(44px,1fr));gap:5px;margin:0}
+  .global-site-header .icons{grid-column:2;grid-row:1;display:grid;width:100%;min-width:0;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:0}
   .global-site-header .icons .cart{display:none}
-  .global-site-header :is(.mobile-header-action,.wallet-connect){display:grid;place-items:center;gap:2px;min-width:48px;min-height:52px;padding:5px 3px;border:1px solid rgba(156,255,0,.3);border-radius:10px;background:rgba(156,255,0,.055);color:#fff;text-decoration:none}
+  .global-site-header :is(.mobile-header-action,.wallet-connect){display:grid;place-items:center;gap:2px;width:100%;min-width:0;min-height:52px;padding:5px 3px;border:1px solid rgba(156,255,0,.3);border-radius:10px;background:rgba(156,255,0,.055);color:#fff;text-decoration:none}
   .global-site-header .mobile-header-action svg{width:22px;height:22px;fill:none;stroke:var(--lime);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px rgba(156,255,0,.7))}
   .global-site-header .header-backpack-action{font:inherit;cursor:pointer}
   .global-site-header :is(.mobile-header-action,.wallet-connect) span{position:static;width:auto;height:auto;overflow:visible;clip-path:none;font-size:8px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap}
@@ -3350,10 +3350,11 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
   .global-site-header :is(.nav-icon,.icon-button svg){color:var(--lime);stroke:var(--lime);filter:drop-shadow(0 0 4px rgba(156,255,0,.95)) drop-shadow(0 0 10px rgba(156,255,0,.55))}
 }
 @media(max-width:390px){
-  .global-site-header{grid-template-columns:minmax(92px,1fr) auto;padding-inline:7px;column-gap:5px}
+  .global-site-header{grid-template-columns:minmax(92px,112px) minmax(0,1fr);padding-inline:7px;column-gap:5px}
   .global-site-header .world-logo{width:112px}
-  .global-site-header .icons{grid-template-columns:repeat(5,minmax(38px,1fr));gap:3px}
-  .global-site-header .mobile-header-action{min-width:0}
+  .global-site-header .icons{grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}
+  .global-site-header :is(.mobile-header-action,.wallet-connect){min-width:0;padding-inline:1px}
+  .global-site-header :is(.mobile-header-action,.wallet-connect) span{font-size:7px}
 }
 
 /* Desktop masthead: reserve a real column for every destination and account
