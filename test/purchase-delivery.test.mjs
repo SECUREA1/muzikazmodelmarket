@@ -34,6 +34,15 @@ test('MZK purchases cannot be credited to an anonymous guest identity', () => {
   assert.throws(() => wallet.creditPurchase(40, { owner: 'guest-123', transactionHash: 'payment' }), /Connect a member wallet/);
 });
 
+test('$40 land tier credits exactly one deed price without unrelated Loadout rewards', () => {
+  const { wallet, localStorage } = loadMzkWallet();
+  const owner = '0x4040404040404040404040404040404040404040';
+  const entry = wallet.creditPurchase(40, { owner, transactionHash: 'land-tier', currency: 'ETH', purchaseType: 'LAND_TIER' });
+  assert.equal(entry.amount, 4000);
+  assert.equal(entry.purchaseType, 'LAND_TIER');
+  assert.equal(localStorage.getItem('muzikazStarterLoadoutsV1'), null);
+});
+
 test('first-buy MZK values follow the $20, $50, and $130 offer tiers', () => {
   for (const [usd, expected] of [[5, 2000], [30, 5000], [100, 13000], [200, 26000]]) {
     const { wallet } = loadMzkWallet();

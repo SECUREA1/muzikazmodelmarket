@@ -52,13 +52,15 @@ const allowedUploadTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const maxHouseUsers = 15;
 const presenceTtlMs = 30_000;
 let paymentRatesCache = null;
-async function trustedLoadoutOrder(input) {
-  if (String(input.purchaseType || '').toUpperCase() !== 'LOADOUT') return input;
-  if (String(input.itemId || '') !== 'standard-loadout') throw Object.assign(new Error('Unknown Loadout product.'), { statusCode: 400 });
+async function trustedPurchaseOrder(input) {
+  const purchaseType = String(input.purchaseType || '').toUpperCase();
+  if (!['LOADOUT', 'LAND_TIER'].includes(purchaseType)) return input;
+  const landTier = purchaseType === 'LAND_TIER';
+  if (landTier ? !/^land-tier-[a-z0-9-]+$/.test(String(input.itemId || '')) : String(input.itemId || '') !== 'standard-loadout') throw Object.assign(new Error(`Unknown ${landTier ? 'land tier' : 'Loadout'} product.`), { statusCode: 400 });
   const asset = String(input.paymentAsset || '').toUpperCase(); const network = MUZIKAZ_PAYMENT_NETWORKS[asset];
   if (!network) throw Object.assign(new Error('Unsupported Loadout payment asset.'), { statusCode: 400 });
   const requestedPrice = Number(input.basePrice);
-  const tierPrice = [5, 30, 100, 200].includes(requestedPrice) ? requestedPrice : 30;
+  const tierPrice = landTier ? 40 : ([5, 30, 100, 200].includes(requestedPrice) ? requestedPrice : 30);
   if (!paymentRatesCache || Date.now() - paymentRatesCache.savedAt > 60_000) {
     const ids = [...new Set(Object.values(MUZIKAZ_PAYMENT_NETWORKS).map((item) => item.rateId))].join(',');
     const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`, { headers: { Accept: 'application/json' } });
@@ -66,7 +68,7 @@ async function trustedLoadoutOrder(input) {
     paymentRatesCache = { savedAt: Date.now(), values: await response.json() };
   }
   const usdRate = Number(paymentRatesCache.values[network.rateId]?.usd); if (!(usdRate > 0)) throw Object.assign(new Error('Independent payment quote is unavailable. No order was created.'), { statusCode: 503 });
-  const factor = 10 ** network.decimals; return { ...input, purchaseType: 'LOADOUT', itemId: 'standard-loadout', basePrice: tierPrice, quantity: 1, expectedAmount: Math.ceil((tierPrice / usdRate) * factor) / factor };
+  const factor = 10 ** network.decimals; return { ...input, purchaseType: landTier ? 'LAND_TIER' : 'LOADOUT', itemId: landTier ? input.itemId : 'standard-loadout', basePrice: tierPrice, quantity: 1, expectedAmount: Math.ceil((tierPrice / usdRate) * factor) / factor };
 }
 
 function activePresence() {
@@ -438,7 +440,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/account/access-code/rotate' && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.rotate(active.accountId))); }
     if (url.pathname === '/api/account/access-code/revoke' && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.revoke(active.accountId))); }
 
-    if (url.pathname === '/api/payments/orders' && req.method === 'POST') return sendJson(res, 201, assetResponse(await paymentOrderStore.create(await trustedLoadoutOrder(await bodyJson(req)))));
+    if (url.pathname === '/api/payments/orders' && req.method === 'POST') return sendJson(res, 201, assetResponse(await paymentOrderStore.create(await trustedPurchaseOrder(await bodyJson(req)))));
     if (url.pathname === '/api/admin/sales' && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await paymentOrderStore.list())); }
     const paymentOrder = url.pathname.match(/^\/api\/payments\/orders\/([^/]+)$/);
     if (paymentOrder && req.method === 'GET') { const order = await paymentOrderStore.get(paymentOrder[1]); return order ? sendJson(res, 200, assetResponse(order)) : sendJson(res, 404, { success: false, message: 'Payment order not found.' }); }
