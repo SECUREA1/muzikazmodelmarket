@@ -280,13 +280,20 @@
       status.textContent = 'Syncing this wallet’s Backpack…';
       let remoteItems = [];
       let remoteState = null;
+      let gameCatalog = [];
+      try {
+        const accountRequest = window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API) || window.fetch.bind(window);
+        const accountResponse = await accountRequest('/api/backpack', { headers: { Accept: 'application/json' }, credentials: 'include' });
+        const accountPayload = await accountResponse.json().catch(() => ({}));
+        if (accountResponse.ok && accountPayload.success !== false) gameCatalog = accountPayload.data?.catalogAssets || [];
+      } catch (_) { /* Wallet inventory remains available without an account session. */ }
       try {
         const response = await fetch(API_PATH, { headers: { 'X-Wallet-Address': activeAddress, Accept: 'application/json' } });
         const payload = await response.json();
         if (!response.ok || !payload.success) throw new Error(payload.message || 'Backpack sync failed.');
         remoteState = payload.data;
         remoteItems = Array.isArray(remoteState?.items) ? remoteState.items : [];
-        status.textContent = 'Backpack synced with the MUZIKAZ market network.';
+        status.textContent = gameCatalog.length ? `Backpack synced. ${gameCatalog.length} play-ready MUZIKAZ assets loaded from the game server.` : 'Backpack synced with the MUZIKAZ market network.';
       } catch (_) {
         status.textContent = 'Showing this device’s Backpack. Network sync is temporarily unavailable.';
       }
@@ -305,12 +312,14 @@
       drawer.querySelector('[data-account-network]').textContent = network;
       drawer.querySelector('[data-account-balance]').textContent = `${window.MZKWallet.balance(activeAddress).toLocaleString()} MZK`;
       const modelCards = modelAssets.map((asset) => `<article class="mzk-backpack-model"><model-viewer src="${escapeHtml(asset.modelUrl)}" ${asset.iosModelUrl ? `ios-src="${escapeHtml(asset.iosModelUrl)}"` : ''} camera-controls auto-rotate shadow-intensity="1" alt="${escapeHtml(asset.name)} purchased 3D model"></model-viewer><div><span class="mzk-inventory-label">3D Model</span><strong>${escapeHtml(asset.name)}</strong><small>Purchased GLB · Connected to ${short(activeAddress)}</small></div></article>`);
+      const catalogLabel = (asset) => asset.assetType === 'environment' ? 'Environment' : asset.assetType === 'avatar' ? 'Avatar' : asset.assetType === 'vehicle' ? 'Vehicle' : 'Prop';
+      const catalogCards = gameCatalog.map((asset) => `<article class="mzk-backpack-catalog-item" data-asset-type="${escapeHtml(asset.assetType)}">${icon()}<div><span class="mzk-inventory-label">${catalogLabel(asset)}</span><strong>${escapeHtml(asset.name)}</strong><small>${escapeHtml(asset.category)} · Included in game</small></div></article>`);
       const modelNames = new Set(modelAssets.map((asset) => asset.name));
       const bottleArt = (item) => /Black Genie Bottle/i.test(item) ? 'public/assets/black-genie-bottle.svg' : /Golden Genie Bottle/i.test(item) ? 'public/assets/golden-genie-bottle.svg' : '';
       const occupiedSlots = new Set(items.map(inventoryLabel));
       const itemCards = items.filter((item) => !modelNames.has(item)).map((item) => `<article>${bottleArt(item) ? `<img src="${bottleArt(item)}" alt="${escapeHtml(item)} Backpack artwork" loading="lazy">` : icon()}<div><span class="mzk-inventory-label">${inventoryLabel(item)}</span><strong>${escapeHtml(item)}</strong><small>Connected to ${short(activeAddress)}</small></div></article>`);
       const emptySlots = previewSlots.filter((slot) => !occupiedSlots.has(slot)).map((slot) => `<div class="mzk-backpack-slot is-empty">${icon()}<strong>${slot}</strong><small>Empty slot</small></div>`);
-      drawer.querySelector('[data-backpack-items]').innerHTML = `<div class="mzk-backpack-owned">${[...modelCards, ...itemCards].join('') || `<div class="mzk-backpack-empty">${icon()}<strong>Your Backpack is ready</strong><p>Collect a model, land deed, avatar, wearable, or market drop and it will appear under this Ethereum account.</p></div>`}</div><div class="mzk-backpack-slot-grid" aria-label="Available Backpack slots">${emptySlots.join('') || '<p class="mzk-backpack-slots-full">Every Backpack slot contains an item.</p>'}</div>`;
+      drawer.querySelector('[data-backpack-items]').innerHTML = `<div class="mzk-backpack-owned">${[...catalogCards, ...modelCards, ...itemCards].join('') || `<div class="mzk-backpack-empty">${icon()}<strong>Your Backpack is ready</strong><p>Collect a model, land deed, avatar, wearable, or market drop and it will appear under this Ethereum account.</p></div>`}</div><div class="mzk-backpack-slot-grid" aria-label="Available Backpack slots">${emptySlots.join('') || '<p class="mzk-backpack-slots-full">Every Backpack slot contains an item.</p>'}</div>`;
       const transactions = safeJson(TRANSACTIONS_KEY, []).filter((tx) => [tx.buyer, tx.seller, tx.owner].map(String).map((value) => value.toLowerCase()).includes(activeAddress)).slice(-4).reverse();
       drawer.querySelector('[data-backpack-trades]').innerHTML = transactions.length ? transactions.map((tx) => {
         const rawAsset = tx.asset || tx.reason || 'Backpack trade';

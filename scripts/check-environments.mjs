@@ -4,6 +4,7 @@ import { join } from 'node:path';
 const manifestPath = 'public/models/environments/environments.json';
 const records = JSON.parse(await readFile(manifestPath, 'utf8'));
 const avatarCatalog = JSON.parse(await readFile('public/models/glb-models.json', 'utf8'));
+const avatarOptions = JSON.parse(await readFile('public/models/avatars.json', 'utf8'));
 if (!Array.isArray(records) || records.length < 3) throw new Error('Environment manifest must include main, upper, and full-house records.');
 for (const required of ['muzikaz-main', 'muzikaz-upper', 'muzikaz-full-house']) {
   if (!records.some((record) => record.id === required)) throw new Error(`Missing ${required} environment.`);
@@ -30,6 +31,10 @@ const listedAvatarFiles = new Set((Array.isArray(avatarCatalog.models) ? avatarC
   .map((record) => decodeURIComponent(String(record.modelUrl || '').replace(/^\/?public\/models\//, ''))));
 for (const file of categorizedFiles) {
   if (!listedAvatarFiles.has(file)) throw new Error(`Avatar catalog must include every model in public/models, including ${file}.`);
+}
+const optionFiles = new Set(avatarOptions.map((record) => decodeURIComponent(String(record.modelUrl || '').replace(/^\/?public\/models\//, ''))));
+for (const file of categorizedFiles.filter((path) => path.startsWith('avatars/'))) {
+  if (!optionFiles.has(file)) throw new Error(`Avatar picker must include every labeled avatar model, including ${file}.`);
 }
 for (const record of records) {
   const urls = record.modelUrls || [record.modelUrl];

@@ -248,7 +248,7 @@ export class MzkAccountStore {
     if (price >= 200) account.gameAssets = unique([...(account.gameAssets || []), 'Custom In-Game Asset Order']);
     account.updatedAt = now; return publicAccount(account);
   }); }
-  selectAvatar(accountId, avatarId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const id = String(avatarId || ''); if (id !== 'starter-avatar') throw Object.assign(new Error('That avatar is Unrevealed and cannot be used yet. Starter Avatar remains available.'), { statusCode: 409 }); account.selectedAvatarId = id; account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
+  selectAvatar(accountId, avatarId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const id = String(avatarId || ''); if (id !== 'starter-avatar' && !/^repository-[a-z0-9-]{1,100}$/.test(id)) throw Object.assign(new Error('That avatar is unavailable or Unrevealed. Choose an included MUZIKAZ avatar.'), { statusCode: 409 }); account.selectedAvatarId = id; account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
   async getAccount(accountId) { const account = (await this.records()).accounts.find((a) => a.accountId === accountId); return account ? publicAccount(account) : null; }
   repairEntitledAccount(accountId) { return this.serialized(async (data) => {
     const account = data.accounts.find((item) => item.accountId === accountId);

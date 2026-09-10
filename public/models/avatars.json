@@ -1,8 +1,272 @@
 [
-  { "id": "public-dax", "name": "DAX", "creator": "MUZIKAZ", "modelUrl": "/public/models/avatars/DAX.glb", "scale": 1 },
-  { "id": "public-ioncduck", "name": "IONC DUCK", "creator": "MUZIKAZ", "modelUrl": "/public/models/avatars/IONCDUCK.glb", "scale": 1 },
-  { "id": "public-wolfie", "name": "Wolfie", "creator": "MUZIKAZ", "modelUrl": "/public/models/avatars/wolfie.glb", "scale": 1 },
-  { "id": "public-muzkat", "name": "MUZKAT", "creator": "MUZIKAZ", "modelUrl": "/public/models/avatars/MUZKAT.glb", "scale": 1 },
-  { "id": "public-pixella", "name": "Pixella", "creator": "MUZIKAZ", "modelUrl": "/public/models/avatars/pixella.glb", "scale": 1 },
-  { "id": "public-voltwolf", "name": "VOLT WOLF", "creator": "MUZIKAZ", "modelUrl": "/public/models/avatars/VOLTWOLF.glb", "scale": 1 }
+  {
+    "id": "public-318bb72e-99a3-4258-9684-8db3b35cc753-2",
+    "name": "IonCore Sentinel",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/318bb72e-99a3-4258-9684-8db3b35cc753 2.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-aape",
+    "name": "AAPE",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/AAPE.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-beedeere",
+    "name": "BEEDEERE",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/BEEDEERE.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-beeduck",
+    "name": "BEEDUCK",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/BEEDUCK.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-byte",
+    "name": "BYTE",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/BYTE.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-dax",
+    "name": "DAX",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/DAX.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-flaminglow",
+    "name": "FLAMINGLOW",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/FLAMINGLOW.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-ioncduck",
+    "name": "IONCDUCK",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/IONCDUCK.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-mousey",
+    "name": "MOUSEY",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/MOUSEY.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-muzikaz",
+    "name": "MUZIKAZ",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/MUZIKAZ.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-muzkat",
+    "name": "MUZKAT",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/MUZKAT.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-pixella",
+    "name": "Pixella",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/pixella.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-rebel-black-sheep",
+    "name": "Rebel Black Sheep",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/rebel black sheep.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-remix",
+    "name": "Remix",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/remix.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-ronaldo",
+    "name": "Ronaldo",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/ronaldo.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-sharko",
+    "name": "Sharko",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/sharko.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-voltwolf",
+    "name": "VOLTWOLF",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/VOLTWOLF.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-wolfie",
+    "name": "Wolfie",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/wolfie.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-buzzed",
+    "name": "Buzzed",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/BUZZED.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-donkley-kongley",
+    "name": "Donkley Kongley",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/DONKLEY_KONGLEY.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-houndette",
+    "name": "Houndette",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/HOUNDETTE.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-nervey-the-nervous-system",
+    "name": "Nervey The Nervous System",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/NERVEY_THE_NERVOUS_SYSTEM.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-robocop",
+    "name": "Robocop",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/ROBOCOP.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-shonda",
+    "name": "Shonda",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/SHONDA.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-terrorist-1",
+    "name": "Terrorist 1",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/TERRORIST_1.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-tyla-1",
+    "name": "Tyla 1",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/TYLA_1.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-tyla-2",
+    "name": "Tyla 2",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/TYLA_2.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-tyson",
+    "name": "Tyson",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/TYSON.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-untitled-crew-character",
+    "name": "Untitled Crew Character",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/UNTITLED_CREW_CHARACTER.glb",
+    "scale": 1
+  },
+  {
+    "id": "public-yucky-inmate",
+    "name": "Yucky Inmate",
+    "creator": "MUZIKAZ",
+    "category": "Playable Avatars",
+    "assetType": "avatar",
+    "modelUrl": "/public/models/avatars/YUCKY_INMATE.glb",
+    "scale": 1
+  }
 ]
