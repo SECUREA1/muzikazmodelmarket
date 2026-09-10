@@ -50,6 +50,17 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(activation.response.status, 200); assert.equal(activation.body.data.account.loadoutStatus, 'included'); assert.equal(activation.body.data.account.creatorVaultAccess, true); assert.equal(activation.body.data.account.primaryEthereumWallet, null);
   assert.equal(activation.body.data.account.mzkBalance, 2000, 'admin Loadout codes include the full first-buy-equivalent MZK grant');
   const accountCookie = activation.response.headers.get('set-cookie').split(';')[0];
+  const gameBackpack = await json(`${base}/api/backpack`, { headers: { Cookie: accountCookie } });
+  assert.equal(gameBackpack.response.status, 200);
+  assert.equal(gameBackpack.body.data.environments.length, 12, 'every labeled repository environment is loaded into the game Backpack');
+  assert.equal(gameBackpack.body.data.avatars.filter((item) => item.source === 'repository').length, 30, 'every labeled avatar is available to the game');
+  assert.equal(gameBackpack.body.data.props.length, 4, 'prop-folder models stay in the prop inventory');
+  assert.equal(gameBackpack.body.data.vehicles.length, 1, 'vehicle-folder models stay in the vehicle inventory');
+  const dax = gameBackpack.body.data.avatars.find((item) => item.id === 'repository-dax');
+  assert.equal((await fetch(`${base}${dax.modelUrl}`)).status, 200, 'catalog model URLs resolve through the backend');
+  const avatarSelection = await json(`${base}/api/avatar-selection`, { method: 'PUT', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ avatarId: dax.id }) });
+  assert.equal(avatarSelection.response.status, 200, 'an included repository avatar can be equipped from the Backpack');
+  assert.equal(avatarSelection.body.data.selectedAvatarId, dax.id);
   const codeOnlyState = await json(`${base}/api/wallet/state`, { headers: { Cookie: accountCookie } });
   assert.equal(codeOnlyState.response.status, 200, 'an access-code session opens the new Backpack without an Ethereum address');
   assert.ok(codeOnlyState.body.data.items.some((item) => item.name === 'Starter Avatar'), 'the loadout is in durable game memory');
