@@ -64,6 +64,8 @@
 @media(max-width:700px){
   .mzk-backpack-dock.is-inline .mzk-backpack-button{display:flex;gap:5px;justify-content:center;min-width:44px}
   .mzk-backpack-dock.is-inline .mzk-backpack-button>svg{display:block;width:26px;height:26px;flex:0 0 26px}
+  .mzk-backpack-dock.is-inline .mzk-backpack-button span{display:block;font-size:8px;line-height:1;text-transform:uppercase;white-space:nowrap}
+  .mzk-backpack-dock.is-inline .mzk-backpack-button small{display:none}
 }
 
 /* Server-owned mystery inventory never leaks unrevealed artwork or metadata. */

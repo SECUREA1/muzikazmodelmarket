@@ -66,7 +66,7 @@
     const dock = document.createElement('div');
     dock.className = existingWalletButton || headerMount ? 'mzk-backpack-dock is-inline' : 'mzk-backpack-dock';
     dock.dataset.globalBackpack = '';
-    dock.innerHTML = `${existingWalletButton ? '' : `<button class="mzk-wallet-button" type="button" data-widget-connect>${walletIcon()}<span>Connect Ethereum</span></button>`}<button class="mzk-backpack-button" type="button" data-open-backpack aria-haspopup="dialog" aria-expanded="false">${icon()}<span>Backpack</span><small data-backpack-address>Connect wallet</small></button>`;
+    dock.innerHTML = `${existingWalletButton ? '' : `<button class="mzk-wallet-button" type="button" data-widget-connect>${walletIcon()}<span>Connect Ethereum</span></button>`}<button class="mzk-backpack-button" type="button" data-open-backpack aria-haspopup="dialog" aria-expanded="false" aria-label="Open Backpack">${icon()}<span>Backpack</span></button>`;
     if (existingWalletButton) existingWalletButton.insertAdjacentElement('afterend', dock);
     else if (headerMount) headerMount.prepend(dock);
     else document.body.appendChild(dock);
@@ -148,7 +148,7 @@
 
     const button = dock.querySelector('[data-open-backpack]');
     const connectButton = dock.querySelector('[data-widget-connect]');
-    const mobileBackpackButtons = [...document.querySelectorAll('.mobile-header-action[aria-label="View backpack"], .mobile-header-action[aria-label="View Builder Backpack"]')];
+    const mobileBackpackButtons = [...document.querySelectorAll('[data-header-backpack], .mobile-header-action[aria-label="View backpack"], .mobile-header-action[aria-label="View Builder Backpack"]')];
     let lastFocused = null;
     let builderBackpackLoaded = false;
 
@@ -206,7 +206,6 @@
     function renderButton() {
       const address = window.MZKWallet.connectedAddress();
       dock.classList.toggle('is-connected', Boolean(address));
-      dock.querySelector('[data-backpack-address]').textContent = address ? short(address) : 'Connect wallet';
       if (connectButton) connectButton.querySelector('span').textContent = address ? short(address) : 'Connect Ethereum';
     }
 
