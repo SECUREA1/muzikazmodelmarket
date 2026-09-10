@@ -1,20 +1,58 @@
 {
   "name": "MUZIKAZ WORLD",
   "short_name": "MUZIKAZ",
+  "id": "/?source=pwa",
   "description": "The connected MUZIKAZ universe for 3D worlds, avatars, creator drops, merch, and live experiences.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
   "background_color": "#05070a",
   "theme_color": "#b7ff35",
   "icons": [
-    { "src": "logo_symbol_crop_2x_transparent.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
-    { "src": "brand_name_tagline_panel_2x_transparent.png", "sizes": "1024x512", "type": "image/png" }
+    {
+      "src": "/muzikaz_bolt_logo_editable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
   ],
-  "categories": ["entertainment", "shopping", "music", "graphics"],
+  "screenshots": [
+    {
+      "src": "/brand_name_tagline_panel_2x.png",
+      "sizes": "816x574",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "MUZIKAZ WORLD branded app"
+    }
+  ],
+  "categories": [
+    "entertainment",
+    "shopping",
+    "music",
+    "graphics"
+  ],
   "shortcuts": [
-    { "name": "Model Explorer", "url": "/model-explorer.html", "description": "Publish and explore live MUZIKAZ 3D models." },
-    { "name": "Brand Kit", "url": "/brand-kit.html", "description": "View official MUZIKAZ logos, descriptions, and profile assets." },
-    { "name": "Wallet Quest Board", "url": "/quest-board.html", "description": "Open wallet rewards and activity feeds." }
-  ]
+    {
+      "name": "Model Explorer",
+      "url": "/model-explorer.html",
+      "description": "Publish and explore live MUZIKAZ 3D models."
+    },
+    {
+      "name": "Brand Kit",
+      "url": "/brand-kit.html",
+      "description": "View official MUZIKAZ logos, descriptions, and profile assets."
+    },
+    {
+      "name": "Wallet Quest Board",
+      "url": "/quest-board.html",
+      "description": "Open wallet rewards and activity feeds."
+    }
+  ],
+  "version": "2.2.0"
 }
