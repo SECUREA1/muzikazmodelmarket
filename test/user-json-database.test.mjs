@@ -85,6 +85,21 @@ test('atomically purchases and permanently indexes one shared land deed', async 
   assert.equal((await database.activity('land-owner')).transactions.at(-1).type, 'LAND_DEED_PURCHASE');
 });
 
+test('gameplay spending is atomic, idempotent, and monitored per wallet', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'muzikaz-users-')); t.after(() => rm(directory, { recursive: true, force: true }));
+  const database = new UserJsonDatabase(join(directory, 'users.json'));
+  await database.put('player-one', { tokens: { MZK: 100 }, items: [], memory: {} });
+  const spend = await database.spendGameplay('player-one', { amountMzk: 25, requestId: 'match-7-entry', gameId: 'rad-tox', reason: 'match entry' });
+  assert.equal(spend.type, 'GAMEPLAY_SPEND'); assert.equal(spend.balanceAfterMzk, 75);
+  const repeated = await database.spendGameplay('player-one', { amountMzk: 25, requestId: 'match-7-entry', gameId: 'rad-tox' });
+  assert.equal(repeated.id, spend.id, 'retrying a request cannot charge a wallet twice');
+  assert.equal((await database.get('player-one')).tokens.MZK, 75);
+  const monitor = await database.gameplaySpending();
+  assert.deepEqual(monitor.wallets.map(({ walletId, spentMzk, transactionCount }) => ({ walletId, spentMzk, transactionCount })), [{ walletId: 'player-one', spentMzk: 25, transactionCount: 1 }]);
+  assert.equal(monitor.transactions[0].gameId, 'rad-tox');
+  await assert.rejects(database.spendGameplay('player-one', { amountMzk: 76, requestId: 'too-much', gameId: 'rad-tox' }), /enough MZK/);
+});
+
 test('serializes concurrent wallet updates without losing users', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'muzikaz-users-'));
   t.after(() => rm(directory, { recursive: true, force: true }));

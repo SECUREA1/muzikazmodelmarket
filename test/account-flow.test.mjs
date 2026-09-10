@@ -25,6 +25,8 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   assert.match(unauthenticated.response.headers.get('content-type'), /json/);
 
   const admin = await json(base, '/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'giraff', password: 'boots' }) });
+  const standardAdmin = await json(base, '/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'admin', password: 'boots' }) });
+  assert.equal(standardAdmin.response.status, 200, 'admin / boots opens the full administrator session');
   const makeCode = async () => (await json(base, '/api/admin/access-codes', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-token': admin.body.data.token }, body: '{}' })).body.data.code;
   const redeem = async (code) => json(base, '/api/access-codes/redeem', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
   const first = await redeem(await makeCode()); const second = await redeem(await makeCode());

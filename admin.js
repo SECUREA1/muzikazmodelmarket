@@ -6,7 +6,8 @@
     backpackItems: { title: 'All Backpack items', columns: ['walletId','backpackId','itemId','name','itemType','source','revealStatus','listed','priceMzk','acquiredAt','updatedAt'] },
     spaces: { title: 'Saved & published spaces', columns: ['spaceId','recordType','worldId','ownerId','assetId','assetVersion','saveState','publishState','specVersion','coordinateSystem','transform','configuration','functionalSettings','savedAt','publishedAt'] },
     submissions: { title: 'Submissions & designs', columns: ['title','ownerDisplayName','fileType','category','intendedUse','status','visibility','updatedAt'] },
-    users: { title: 'Users & wallets', columns: ['walletKey','displayName','walletId','mzk','items','updatedAt'] },
+    users: { title: 'Users & wallets', columns: ['walletKey','displayName','walletId','mzk','gameplaySpentMzk','gameplayTransactions','lastGameplaySpendAt','items','updatedAt'] },
+    gameplaySpending: { title: 'Gameplay token spend', columns: ['walletId','gameId','reason','amountMzk','balanceAfterMzk','requestId','createdAt'] },
     sales: { title: 'Sales & payment orders', columns: ['orderId','userId','purchaseType','itemId','basePrice','paymentAsset','paymentStatus','transactionHash','createdAt'] },
     models: { title: 'Published model records', columns: ['title','creatorName','category','modelType','placementType','status','scale','environment','updatedAt'] },
     customizations: { title: 'Customizations & assignments', columns: ['id','assetId','modelId','displayType','materialSlot','opacity','approved','published','updatedAt'] },
@@ -46,7 +47,7 @@
   function normalizeUser(item) {
     const record = item.record || {};
     const profile = record.memory?.profile || {};
-    return { ...item, displayName: profile.displayName || record.displayName || '—', walletId: record.walletId || item.walletKey, mzk: record.tokens?.MZK ?? 0, items: record.items?.length ?? 0, updatedAt: record.updatedAt };
+    return { ...item, displayName: profile.displayName || record.displayName || '—', walletId: record.walletId || item.walletKey, mzk: record.tokens?.MZK ?? 0, gameplaySpentMzk: item.gameplay?.spentMzk ?? 0, gameplayTransactions: item.gameplay?.transactionCount ?? 0, lastGameplaySpendAt: item.gameplay?.lastSpentAt || '—', items: record.items?.length ?? 0, updatedAt: record.updatedAt };
   }
   function records() {
     const key = $('#view').value;

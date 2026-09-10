@@ -115,6 +115,7 @@ All JSON responses use `{ "success": boolean, "data": ..., "message": string }`.
 
 - `GET /api/health` — service, storage, and model-count health.
 - `GET /api/wallet/state` — load the requesting wallet's durable items, token balances, and application memory using `X-Wallet-Address`.
+- `POST /api/game/spend` — atomically debit gameplay MZK from the wallet bound to an authenticated account and active game session. Every idempotent request is appended to the per-wallet gameplay ledger and included in the admin data center.
 - `POST /api/loadout-codes/redeem` — atomically burn an admin-issued $30 Loadout pass and bind its creator-tool, land, and Violet Wish Bottle claim to one Ethereum wallet.
 - `GET/POST /api/admin/loadout-codes` — list or generate hashed, expiring one-time Loadout passes; requires `x-admin-token`.
 - `PUT /api/wallet/state` — atomically replace that wallet's `items`, `tokens`, and `memory` in `MUZIKAZ_DATA_DIR/users.json`.
