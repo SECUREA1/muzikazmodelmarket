@@ -78,6 +78,9 @@ for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', '
 for (const toggleFeature of ['data-backpack-view="game"', 'data-backpack-view="builder"', 'In-game Backpack', 'Builder Backpack', 'Enemies & NPCs', 'Environments']) {
   if (!backpackWidget.includes(toggleFeature)) throw new Error(`The Backpack / Builder Market toggle is missing ${toggleFeature}.`);
 }
+for (const resizeFeature of ['data-resize-backpack', 'data-expand-backpack', 'PANEL_WIDTH_KEY', 'pointermove', 'Empty slot', 'mzk-inventory-label']) {
+  if (!backpackWidget.includes(resizeFeature)) throw new Error(`The stretchable, fully labelled Backpack is missing ${resizeFeature}.`);
+}
 const globalHeader = await readFile('dist/global-header.js', 'utf8');
 for (const marketFeature of ['header-market-menu', 'Game Market', 'Builder Market', 'aria-haspopup="true"']) {
   if (!globalHeader.includes(marketFeature)) throw new Error(`The shared Market dropdown is missing ${marketFeature}.`);
