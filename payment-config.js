@@ -12,7 +12,9 @@
     SOL: Object.freeze({ symbol: 'SOL', name: 'Solana', network: 'Solana Mainnet', address: 'CZbaAbfZ97N9cocF221S3pyVP1isA59XTdciYspN27dA', type: 'solana', decimals: 9, rateId: 'solana', uri: 'solana', rpcUrls: Object.freeze(['https://api.mainnet-beta.solana.com']), blockExplorerUrls: Object.freeze(['https://explorer.solana.com']) }),
     ADA: Object.freeze({ symbol: 'ADA', name: 'Cardano', network: 'Cardano Mainnet', address: 'addr1qx0ltv489yhkkd7uthdaka88sd373hxlhzg2glfupewesd9xj50w8ales2f8h0cpw7949l8xpvsnyvah348glfeyk26qjqmxp6', type: 'cardano', decimals: 6, rateId: 'cardano', uri: 'web+cardano' }),
     BTC: Object.freeze({ symbol: 'BTC', name: 'Bitcoin', network: 'Bitcoin Mainnet', address: '3Ga2sP3ghtMpXxo3mZfE2fJ1EXEMB7GvEJ', type: 'bitcoin', decimals: 8, rateId: 'bitcoin', uri: 'bitcoin' }),
-    DOGE: Object.freeze({ symbol: 'DOGE', name: 'Dogecoin', network: 'Dogecoin Mainnet', address: 'DToEWmramFNbQ7Jut1NKKCHLpJSFPiJ4hv', type: 'dogecoin', decimals: 8, rateId: 'dogecoin', uri: 'dogecoin' })
+    DOGE: Object.freeze({ symbol: 'DOGE', name: 'Dogecoin', network: 'Dogecoin Mainnet', address: 'DToEWmramFNbQ7Jut1NKKCHLpJSFPiJ4hv', type: 'dogecoin', decimals: 8, rateId: 'dogecoin', uri: 'dogecoin' }),
+    BASE: Object.freeze({ symbol: 'BASE', name: 'Base ETH', network: 'Base Mainnet', address: EVM_ADDRESS, type: 'evm', chainId: '0x2105', decimals: 18, rateId: 'ethereum', uri: 'ethereum', nativeCurrency: Object.freeze({ name: 'Ether', symbol: 'ETH', decimals: 18 }), rpcUrls: Object.freeze(['https://mainnet.base.org']), blockExplorerUrls: Object.freeze(['https://basescan.org']) }),
+    USDC: Object.freeze({ symbol: 'USDC', name: 'USD Coin', network: 'Base Mainnet', address: EVM_ADDRESS, tokenAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', type: 'evm', chainId: '0x2105', decimals: 6, rateId: 'usd-coin', uri: 'ethereum', nativeCurrency: Object.freeze({ name: 'Ether', symbol: 'ETH', decimals: 18 }), rpcUrls: Object.freeze(['https://mainnet.base.org']), blockExplorerUrls: Object.freeze(['https://basescan.org']) })
   });
   const PAYMENT_STATUSES = Object.freeze(['CREATED', 'AWAITING_PAYMENT', 'TRANSACTION_SUBMITTED', 'CONFIRMING', 'PAID', 'FULFILLED', 'EXPIRED', 'FAILED']);
   function paymentUri(symbol, amount) {
@@ -20,6 +22,7 @@
     if (!config) throw new Error('Unsupported Muzikaz payment asset.');
     const value = Number(amount);
     const query = Number.isFinite(value) && value > 0 ? `?amount=${encodeURIComponent(value)}` : '';
+    if (config.type === 'evm' && config.tokenAddress) return `ethereum:${config.tokenAddress}@${BigInt(config.chainId).toString()}/transfer?address=${config.address}${value > 0 ? `&uint256=${BigInt(Math.ceil(value * (10 ** config.decimals)))}` : ''}`;
     if (config.type === 'evm') return `ethereum:${config.address}@${BigInt(config.chainId).toString()}${value > 0 ? `?value=${BigInt(Math.ceil(value * 1e9)) * 1000000000n}` : ''}`;
     if (config.type === 'solana') return `solana:${config.address}${query}`;
     return `${config.uri}:${config.address}${query}`;

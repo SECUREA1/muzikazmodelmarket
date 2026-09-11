@@ -1,4 +1,4 @@
-const minimumConfirmations = { ETH: 12, POL: 128, BNB: 15, SOL: 1, ADA: 15, BTC: 3, DOGE: 6 };
+const minimumConfirmations = { ETH: 12, POL: 128, BNB: 15, BASE: 12, USDC: 12, SOL: 1, ADA: 15, BTC: 3, DOGE: 6 };
 
 async function jsonRequest(url, body) {
   const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(process.env.MUZIKAZ_PAYMENT_PROVIDER_KEY ? { Authorization: `Bearer ${process.env.MUZIKAZ_PAYMENT_PROVIDER_KEY}` } : {}) }, body: JSON.stringify(body) });
@@ -16,17 +16,25 @@ async function verifyEvm(order, rpcUrl) {
   const receipt = receiptResponse.result; const transaction = transactionResponse.result;
   if (!receipt || !transaction) return { verified: false, confirmations: 0, amountReceived: 0 };
   if (String(chainResponse.result || '').toLowerCase() !== String(order.chainId || '').toLowerCase()) return { failed: true, confirmations: 0, amountReceived: 0 };
-  if (String(transaction.to || '').toLowerCase() !== order.destinationAddress.toLowerCase()) return { failed: true, confirmations: 0, amountReceived: 0 };
+  const transactionTo = String(transaction.to || '').toLowerCase();
+  if (transactionTo !== String(order.tokenAddress || order.destinationAddress).toLowerCase()) return { failed: true, confirmations: 0, amountReceived: 0 };
   if (order.wallet && String(transaction.from || '').toLowerCase() !== order.wallet.toLowerCase()) return { failed: true, confirmations: 0, amountReceived: 0 };
-  const amountReceived = Number(BigInt(transaction.value || '0x0')) / 1e18;
+  let amountReceived;
+  if (order.tokenAddress) {
+    const input = String(transaction.input || transaction.data || '').toLowerCase();
+    if (!input.startsWith('0xa9059cbb') || input.length < 138) return { failed: true, confirmations: 0, amountReceived: 0 };
+    const recipient = `0x${input.slice(34, 74)}`;
+    if (recipient !== order.destinationAddress.toLowerCase()) return { failed: true, confirmations: 0, amountReceived: 0 };
+    amountReceived = Number(BigInt(`0x${input.slice(74, 138)}`)) / (10 ** Number(order.tokenDecimals || 0));
+  } else amountReceived = Number(BigInt(transaction.value || '0x0')) / (10 ** Number(order.tokenDecimals || 18));
   const confirmations = Number(BigInt(blockResponse.result) - BigInt(receipt.blockNumber) + 1n);
   return { verified: receipt.status === '0x1' && confirmations >= minimumConfirmations[order.paymentAsset], confirmations, amountReceived };
 }
 
 export async function verifyPaymentTransaction(order) {
   const symbol = order.paymentAsset;
-  if (['ETH', 'POL', 'BNB'].includes(symbol)) {
-    const rpcUrl = process.env[`MUZIKAZ_${symbol}_RPC_URL`];
+  if (['ETH', 'POL', 'BNB', 'BASE', 'USDC'].includes(symbol)) {
+    const rpcUrl = process.env[`MUZIKAZ_${symbol}_RPC_URL`] || (symbol === 'USDC' ? process.env.MUZIKAZ_BASE_RPC_URL : '');
     if (!rpcUrl) return { verified: false, confirmations: 0, amountReceived: 0, providerRequired: true };
     return verifyEvm(order, rpcUrl);
   }

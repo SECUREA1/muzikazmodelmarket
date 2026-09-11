@@ -9,7 +9,7 @@
   const form = document.querySelector('#mzk-swap-form'), usdInput = document.querySelector('#mzk-usd'), output = document.querySelector('#mzk-output'), buy = document.querySelector('#mzk-buy'), quoteCopy = document.querySelector('#mzk-quote'), status = document.querySelector('#mzk-status'), walletSelect = document.querySelector('#mzk-payment-wallet');
   const PENDING_KEY = 'muzikazPendingMzkPaymentV1';
   const quickButtons = [...document.querySelectorAll('[data-usd]')];
-  const currencyNames = { ETH: 'Ethereum', POL: 'Polygon', BNB: 'BNB Chain', SOL: 'Solana', ADA: 'Cardano', BTC: 'Bitcoin', DOGE: 'Dogecoin' };
+  const currencyNames = { ETH: 'Ethereum', BASE: 'Base', USDC: 'USD Coin · Base', POL: 'Polygon', BNB: 'BNB Chain', SOL: 'Solana', ADA: 'Cardano', BTC: 'Bitcoin', DOGE: 'Dogecoin' };
   const selectedCurrency = () => new FormData(form).get('currency') || 'ETH';
   const selectedWallet = () => new FormData(form).get('wallet') || 'automatic';
   function choice(name, value, label, checked = false) { return `<label class="payment-choice"><input type="radio" name="${name}" value="${value}" ${checked ? 'checked' : ''}><span>${window.MuzikazWalletPayments.icon(value)}<b>${value}</b><small>${label}</small></span></label>`; }
