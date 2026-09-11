@@ -32,18 +32,25 @@
 
   const menu = header.querySelector('.menu-toggle');
   const nav = header.querySelector('.global-nav');
-  menu.addEventListener('click', () => {
+  const mobileHeader = window.matchMedia('(max-width: 720px)');
+  const walletButton = header.querySelector('#wallet-connect');
+  const walletLabel = walletButton.querySelector('span');
+  const toggleMenu = () => {
     const isOpen = nav.classList.toggle('is-open');
     menu.setAttribute('aria-expanded', String(isOpen));
     menu.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
-  });
+    walletButton.setAttribute('aria-expanded', String(isOpen));
+    if (mobileHeader.matches) walletButton.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+  };
+  menu.addEventListener('click', toggleMenu);
   nav.addEventListener('click', (event) => {
     nav.classList.remove('is-open');
     menu.setAttribute('aria-expanded', 'false');
     menu.setAttribute('aria-label', 'Open menu');
+    walletButton.setAttribute('aria-expanded', 'false');
+    if (mobileHeader.matches) walletButton.setAttribute('aria-label', 'Open menu');
   });
 
-  const walletButton = header.querySelector('#wallet-connect');
   const checkoutLink = header.querySelector('[href="checkout.html"]');
   const cartCount = header.querySelector('.header-cart-count');
   const renderCartCount = () => {
@@ -56,17 +63,20 @@
     cartCount.hidden = count === 0;
     checkoutLink.setAttribute('aria-label', `Checkout, ${count} ${count === 1 ? 'item' : 'items'}`);
   };
-  const walletLabel = walletButton.querySelector('span');
   const walletStatus = header.querySelector('#wallet-connect-status');
   const renderWallet = (message = '') => {
     const address = window.MZKWallet?.connectedAddress?.() || '';
     const short = address ? `${address.slice(0, 6)}…${address.slice(-4)}` : '';
     walletButton.classList.toggle('is-connected', Boolean(address));
-    walletButton.setAttribute('aria-pressed', String(Boolean(address)));
-    walletLabel.textContent = short || 'Connect wallet';
+    if (!mobileHeader.matches) walletButton.setAttribute('aria-pressed', String(Boolean(address)));
+    walletLabel.textContent = mobileHeader.matches ? 'Menu' : (short || 'Connect wallet');
     walletStatus.textContent = message || (short ? `Ethereum wallet ${short} connected.` : 'Wallet not connected.');
   };
   walletButton.addEventListener('click', async () => {
+    if (mobileHeader.matches) {
+      toggleMenu();
+      return;
+    }
     if (!window.MZKWallet) {
       renderWallet('Wallet service is still loading. Please try again.');
       return;
@@ -89,6 +99,28 @@
   window.addEventListener('mzk:wallet-connection-changed', () => renderWallet());
   window.addEventListener('storage', renderCartCount);
   window.addEventListener('mzk:cart-changed', renderCartCount);
+  const syncWalletButtonPurpose = () => {
+    if (mobileHeader.matches) {
+      walletButton.removeAttribute('aria-describedby');
+      walletButton.removeAttribute('aria-pressed');
+      walletButton.setAttribute('aria-controls', 'primary-navigation');
+      walletButton.setAttribute('aria-expanded', String(nav.classList.contains('is-open')));
+      walletButton.setAttribute('aria-label', nav.classList.contains('is-open') ? 'Close menu' : 'Open menu');
+      walletButton.title = 'Menu';
+      walletLabel.textContent = 'Menu';
+      return;
+    }
+    nav.classList.remove('is-open');
+    menu.setAttribute('aria-expanded', 'false');
+    walletButton.removeAttribute('aria-controls');
+    walletButton.removeAttribute('aria-expanded');
+    walletButton.setAttribute('aria-describedby', 'wallet-connect-status');
+    walletButton.setAttribute('aria-label', 'Connect wallet');
+    walletButton.title = 'Connect wallet';
+    renderWallet();
+  };
+  mobileHeader.addEventListener?.('change', syncWalletButtonPurpose);
   renderCartCount();
   renderWallet();
+  syncWalletButtonPurpose();
 })();

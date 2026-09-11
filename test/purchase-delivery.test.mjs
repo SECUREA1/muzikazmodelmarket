@@ -7,6 +7,12 @@ const walletSource = await readFile('mzk-wallet.js', 'utf8');
 const headerSource = await readFile('global-header.js', 'utf8');
 const checkoutSource = await readFile('script.js', 'utf8');
 
+test('mobile lightning button toggles the existing navigation instead of connecting a wallet', () => {
+  assert.match(headerSource, /matchMedia\('\(max-width: 720px\)'\)/);
+  assert.match(headerSource, /if \(mobileHeader\.matches\) \{\s*toggleMenu\(\);\s*return;/);
+  assert.match(headerSource, /walletButton\.setAttribute\('aria-controls', 'primary-navigation'\)/);
+});
+
 function loadMzkWallet() {
   const values = new Map();
   const localStorage = {
