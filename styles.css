@@ -3325,6 +3325,10 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
   }
   .global-site-header .world-logo{grid-column:1;grid-row:1;width:min(146px,42vw);margin:0;cursor:pointer}
   .global-site-header .icons{grid-column:1;grid-row:2;display:grid;width:100%;min-width:0;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:0}
+  /* Lead with the lightning menu on phones and move Checkout to its former
+     trailing slot, keeping the two middle account shortcuts unchanged. */
+  .global-site-header .header-menu-action{order:-1}
+  .global-site-header .header-checkout-action{order:1}
   .global-site-header .icons .cart{display:none}
   .global-site-header :is(.mobile-header-action,.wallet-connect){display:grid;place-items:center;gap:2px;width:100%;min-width:0;min-height:52px;padding:5px 3px;border:1px solid rgba(156,255,0,.3);border-radius:10px;background:rgba(156,255,0,.055);color:#fff;text-decoration:none}
   .global-site-header .mobile-header-action svg{width:22px;height:22px;fill:none;stroke:var(--lime);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px rgba(156,255,0,.7))}

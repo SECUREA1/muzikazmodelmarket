@@ -6,11 +6,18 @@ import vm from 'node:vm';
 const walletSource = await readFile('mzk-wallet.js', 'utf8');
 const headerSource = await readFile('global-header.js', 'utf8');
 const checkoutSource = await readFile('script.js', 'utf8');
+const styleSource = await readFile('styles.css', 'utf8');
 
 test('mobile lightning button toggles the existing navigation instead of connecting a wallet', () => {
   assert.match(headerSource, /matchMedia\('\(max-width: 720px\)'\)/);
   assert.match(headerSource, /if \(mobileHeader\.matches\) \{\s*toggleMenu\(\);\s*return;/);
   assert.match(headerSource, /walletButton\.setAttribute\('aria-controls', 'primary-navigation'\)/);
+});
+
+test('mobile header swaps the lightning menu and shopping cart positions', () => {
+  assert.match(headerSource, /header-checkout-action/);
+  assert.match(headerSource, /header-menu-action/);
+  assert.match(styleSource, /@media\(max-width:720px\)[\s\S]*\.header-menu-action\{order:-1\}[\s\S]*\.header-checkout-action\{order:1\}/);
 });
 
 function loadMzkWallet() {
