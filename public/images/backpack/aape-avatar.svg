@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-labelledby="title desc">
+  <title id="title">AAPE avatar</title><desc id="desc">A neon green cyber ape avatar portrait with a purple visor.</desc>
+  <defs><radialGradient id="bg"><stop stop-color="#264915"/><stop offset="1" stop-color="#050706"/></radialGradient><linearGradient id="fur" x2="1" y2="1"><stop stop-color="#caff44"/><stop offset="1" stop-color="#477d18"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <rect width="320" height="240" rx="28" fill="url(#bg)"/><path d="M0 194 320 78v162H0Z" fill="#8d18ff" opacity=".12"/><circle cx="160" cy="116" r="84" fill="none" stroke="#9cff00" stroke-opacity=".25" stroke-width="2"/>
+  <path d="M90 94 63 65l9 67m158-38 27-29-9 67" fill="#365c1d" stroke="#baff45" stroke-width="7"/><path d="M86 83q74-60 148 0l-10 101q-64 45-128 0Z" fill="url(#fur)" stroke="#e5ff9c" stroke-width="7"/>
+  <path d="M102 91q58-28 116 0l-9 42q-49 20-98 0Z" fill="#160729" stroke="#dd59ff" stroke-width="7" filter="url(#glow)"/><path d="m121 112 22-7m56 7-22-7" stroke="#9cff00" stroke-width="8" stroke-linecap="round"/>
+  <path d="M121 146q39-21 78 0l-7 37q-32 19-64 0Z" fill="#172010"/><path d="M140 165h40" stroke="#eaffc8" stroke-width="7" stroke-linecap="round"/><path d="m57 202 54-23m152 23-54-23" stroke="#9cff00" stroke-width="5" filter="url(#glow)"/>
+</svg>

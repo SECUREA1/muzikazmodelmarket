@@ -33,6 +33,16 @@ for (const page of backpackPages) {
 }
 const backpackWidget = await readFile('dist/backpack-widget.js', 'utf8');
 const serverSource = await readFile('server.mjs', 'utf8');
+const publicBackpackCatalog = JSON.parse(await readFile('dist/public/models/backpack-assets.json', 'utf8'));
+if (!Array.isArray(publicBackpackCatalog.assets) || !publicBackpackCatalog.assets.length) throw new Error('The public Backpack catalog must contain active assets.');
+for (const asset of publicBackpackCatalog.assets) {
+  if (asset.visibility !== 'public') continue;
+  if (!asset.thumbnailUrl) throw new Error(`Active Backpack asset ${asset.id} is missing its dedicated graphic.`);
+  const thumbnailPath = `dist/${asset.thumbnailUrl.replace(/^\//, '')}`;
+  await access(thumbnailPath);
+  const thumbnail = await readFile(thumbnailPath, 'utf8');
+  if (!thumbnail.includes('<title') || !thumbnail.includes('<desc')) throw new Error(`${thumbnailPath} must include an accessible title and description.`);
+}
 
 // The compact destination menu and four-button commerce masthead stay
 // consistent on every page that uses the shared mobile header.
