@@ -163,6 +163,14 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
 }
+for (const freeSinglePlayerMarker of ['Single Player · Free to play', 'no wallet, payment, account, or Genie Bottle is required']) {
+  if (!mainHtml.includes(freeSinglePlayerMarker)) {
+    throw new Error(`index.html must advertise free Single Player access: ${freeSinglePlayerMarker}`);
+  }
+}
+if (mainHtml.includes('<script src="public/js/black-genie-access.js"></script>')) {
+  throw new Error('index.html must not load the MZK payment gate for Single Player.');
+}
 for (const requiredToolsMarkup of ['id="house-tools"', 'data-house-tools', 'aria-controls="rad-tox-tools"', 'aria-haspopup="dialog"']) {
   if (!mainHtml.includes(requiredToolsMarkup)) {
     throw new Error(`index.html is missing the persistent RAD-TOX tools control: ${requiredToolsMarkup}`);
