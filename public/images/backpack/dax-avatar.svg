@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-labelledby="title desc">
+  <title id="title">DAX avatar</title><desc id="desc">A bold orange and blue futuristic DAX avatar helmet.</desc>
+  <defs><radialGradient id="bg"><stop stop-color="#183b50"/><stop offset="1" stop-color="#04070b"/></radialGradient><linearGradient id="helm" x2="1" y2="1"><stop stop-color="#ffb42c"/><stop offset=".55" stop-color="#ff5a20"/><stop offset="1" stop-color="#7e1121"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <rect width="320" height="240" rx="28" fill="url(#bg)"/><g opacity=".2" stroke="#45eaff"><path d="M18 38h85M217 38h85M18 202h85M217 202h85"/><path d="M46 15v210m228-210v210"/></g>
+  <path d="m91 72 36-38h66l36 38 10 92-42 43h-74l-42-43Z" fill="url(#helm)" stroke="#ffd36b" stroke-width="7"/><path d="m110 85 50-25 50 25-13 57-37 25-37-25Z" fill="#07151f" stroke="#53deff" stroke-width="7" filter="url(#glow)"/>
+  <path d="m122 105 29 10-27 10m74-20-29 10 27 10" fill="none" stroke="#b5f7ff" stroke-width="8" stroke-linecap="round"/><path d="m145 142 15 10 15-10" fill="none" stroke="#ff782b" stroke-width="6"/>
+  <path d="M83 183 48 215h224l-35-32-43 24h-68Z" fill="#0c2c3d" stroke="#43dfff" stroke-width="6"/>
+</svg>

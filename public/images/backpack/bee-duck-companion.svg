@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-labelledby="title desc">
+  <title id="title">BEE Duck Companion pet</title><desc id="desc">A cheerful yellow duck companion with bee stripes, tiny wings, and antennae.</desc>
+  <defs><radialGradient id="bg"><stop stop-color="#514615"/><stop offset="1" stop-color="#070704"/></radialGradient><linearGradient id="body" x2="1" y2="1"><stop stop-color="#fff36b"/><stop offset="1" stop-color="#e19a12"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <rect width="320" height="240" rx="28" fill="url(#bg)"/><g fill="#9cff00" opacity=".2"><circle cx="45" cy="51" r="5"/><circle cx="276" cy="84" r="8"/><circle cx="252" cy="193" r="4"/></g>
+  <path d="M126 75q-20-31-32-11m100 11q20-31 32-11" fill="none" stroke="#352700" stroke-width="7" stroke-linecap="round"/><circle cx="94" cy="64" r="8" fill="#9cff00" filter="url(#glow)"/><circle cx="226" cy="64" r="8" fill="#9cff00" filter="url(#glow)"/>
+  <path d="M80 144q-46-34-55 4 17 32 62 25m153-29q46-34 55 4-17 32-62 25" fill="#deeeff" fill-opacity=".76" stroke="#fff" stroke-width="6"/><ellipse cx="160" cy="139" rx="83" ry="76" fill="url(#body)" stroke="#fff7a4" stroke-width="7"/>
+  <path d="M84 120h152M79 151h162" stroke="#24220d" stroke-width="18" opacity=".9"/><path d="M124 102q14-13 27 0m18 0q14-13 27 0" fill="none" stroke="#151608" stroke-width="8" stroke-linecap="round"/><path d="m139 119 27-8 23 13-28 17-26-10Z" fill="#ff8c24" stroke="#6b3510" stroke-width="5"/><path d="M119 190q41 24 82 0" fill="none" stroke="#f6cf2d" stroke-width="9"/>
+</svg>
