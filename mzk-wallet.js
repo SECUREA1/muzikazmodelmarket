@@ -9,6 +9,7 @@
   const MZK_PER_USD = 100;
   const MINIMUM_PURCHASE_USD = 5;
   const GAME_ENTRY_MZK = 500;
+  const SINGLE_PLAYER_STARTING_MZK = 500;
   const LOADOUT_KEY = 'muzikazStarterLoadoutsV1';
   const STARTER_AVATARS = ['Sparky', 'Nexus', 'Fiona', 'Dax', 'Buzz', 'Luna', 'Muz Cat', 'Ion Wolf'];
   const STARTER_LANDS = ['Skyline Deck', 'Echo Gardens', 'Crew Plaza', 'Studio Ridge', 'Neon Docks'];
@@ -49,6 +50,14 @@
   function creditPurchase(usd, payment = {}) { usd = Number(usd); if (!Number.isFinite(usd) || usd < MINIMUM_PURCHASE_USD) throw new Error(`Minimum MZK purchase is $${MINIMUM_PURCHASE_USD}.`); const owner = normalize(payment.owner || walletId()); if (!owner || owner.startsWith('guest-')) throw new Error('Connect a member wallet before purchasing MZK.'); const landTier = payment.purchaseType === 'LAND_TIER' && usd === 40; const amount = landTier ? 4000 : purchaseTokens(usd, owner); const transactionHash = String(payment.transactionHash || uid('purchase')); const entry = record({ id: `mzk:purchase:${transactionHash}`, owner, amount, kind: 'purchase', reason: landTier ? '4,000 MZK received for $40.00 one-time land tier' : `${amount.toLocaleString()} MZK received for $${usd.toFixed(2)}${amount > Math.round(usd * MZK_PER_USD) ? ' first-buy offer' : ''}`, usd, paymentCurrency: payment.currency || '', purchaseType: landTier ? 'LAND_TIER' : 'MZK_PURCHASE', transactionHash }); if (!landTier) grantPurchaseRewards(usd, owner); return entry; }
   function loadouts() { const value = parse(LOADOUT_KEY, {}); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
   function starterLoadout(owner = walletId()) { return loadouts()[normalize(owner)] || null; }
+  function claimSinglePlayerTokens(owner = walletId()) {
+    owner = normalize(owner);
+    if (!owner) return { ok: false, error: 'INVALID_WALLET', balance: 0 };
+    const id = `mzk:single-player-starter:${owner}`;
+    const existing = read().find((entry) => entry.id === id);
+    const tx = existing || record({ id, owner, amount: SINGLE_PLAYER_STARTING_MZK, kind: 'game-starter', reason: 'Single Player starting gameplay tokens' });
+    return { ok: true, firstGrant: !existing, amount: SINGLE_PLAYER_STARTING_MZK, balance: balance(owner), tx };
+  }
   function provisionStandardLoadout(account = {}) {
     const owner = normalize(account.primaryEthereumWallet || localStorage.getItem('muzikazBottleMemberEmail'));
     if (!owner || owner.startsWith('guest-') || account.gameAccess !== true) return null;
@@ -117,5 +126,5 @@
     provider.on?.('chainChanged', (chainId) => updateBrowserConnection(connectedAddress() ? [connectedAddress()] : [], chainId));
     provider.on?.('disconnect', () => updateBrowserConnection([]));
   }
-  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, purchaseTokens, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, provisionStandardLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
+  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, SINGLE_PLAYER_STARTING_MZK, purchaseTokens, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimSinglePlayerTokens, claimStarterLoadout, provisionStandardLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
 })();
