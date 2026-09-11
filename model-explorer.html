@@ -120,8 +120,8 @@
             <span class="game-profile-wallet__identity"><small>Player profile</small><b id="game-profile-name">Guest Player</b></span>
             <span class="game-profile-wallet__balance"><small>MZK tokens</small><strong id="game-profile-mzk">0 MZK</strong></span>
           </aside>
-          <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">🌐</b><span>Multiplayer Worlds</span></button>
-          <button class="house-bottom-control" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel"><b aria-hidden="true">💬</b><span>Chat</span><b id="crib-online-count">0 / 15</b></button>
+          <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel multiplayer-paywall" data-multiplayer-control disabled><b aria-hidden="true">🔒</b><span>Members Worlds</span></button>
+          <button class="house-bottom-control" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel multiplayer-paywall" data-multiplayer-control disabled><b aria-hidden="true">🔒</b><span>Members Chat</span><b id="crib-online-count">Locked</b></button>
           <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">🎒</b><span>Backpack</span></button>
           <button class="house-bottom-control house-bottom-control-begin" id="house-tools" type="button" data-house-tools aria-haspopup="dialog" aria-expanded="false" aria-controls="rad-tox-tools"><b aria-hidden="true">🛠</b><span>Tools</span></button>
           <small class="house-firefox-label">WebGL required</small>
@@ -142,6 +142,15 @@
             <p id="crib-chat-status" role="status"></p>
           </section>
         </aside>
+        <section class="multiplayer-paywall" id="multiplayer-paywall" role="dialog" aria-modal="true" aria-labelledby="multiplayer-paywall-title" hidden>
+          <div class="multiplayer-paywall__panel">
+            <span class="multiplayer-paywall__lock" aria-hidden="true">🔒</span>
+            <p class="kicker">Members multiplayer</p>
+            <h3 id="multiplayer-paywall-title">Unlock the shared VibeVerse.</h3>
+            <p>Live worlds, member chat, presence, and voice open only after paid member access is active or a Genie Bottle is held in your account Backpack.</p>
+            <div><a class="btn" href="members.html#bottle-login">Get member access</a><button type="button" data-close-multiplayer-paywall>Keep playing solo</button></div>
+          </div>
+        </section>
       </div>
     </section>
 
