@@ -40,6 +40,9 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(login.response.status, 200); assert.equal(login.body.data.persistent, true); assert.ok(login.body.data.token);
   const cookie = login.response.headers.get('set-cookie').split(';')[0];
   assert.equal((await json(`${base}/api/admin/session`, { headers: { Cookie: cookie } })).body.data.authenticated, true);
+  const lockedMultiplayer = await json(`${base}/api/houses/ioncore-house/chat`);
+  assert.equal(lockedMultiplayer.response.status, 401, 'multiplayer data is not exposed without an account session');
+  assert.equal(lockedMultiplayer.body.code, 'SESSION_REQUIRED');
   const adminData = await json(`${base}/api/admin/data`, { headers: { Cookie: cookie } });
   assert.equal(adminData.response.status, 200, 'persistent admin receives the full data center');
   for (const sheet of ['mzkTransactions', 'items', 'backpackItems', 'spaces']) assert.ok(Array.isArray(adminData.body.data[sheet]), `${sheet} is available as an administrator spreadsheet`);
@@ -52,6 +55,9 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(activation.response.status, 200); assert.equal(activation.body.data.account.loadoutStatus, 'included'); assert.equal(activation.body.data.account.creatorVaultAccess, true); assert.equal(activation.body.data.account.primaryEthereumWallet, null);
   assert.equal(activation.body.data.account.mzkBalance, 2000, 'admin Loadout codes include the full first-buy-equivalent MZK grant');
   const accountCookie = activation.response.headers.get('set-cookie').split(';')[0];
+  const memberMultiplayer = await json(`${base}/api/houses/ioncore-house/chat`, { headers: { Cookie: accountCookie } });
+  assert.equal(memberMultiplayer.response.status, 200, 'an authoritative paid-equivalent member account crosses the multiplayer paywall');
+  assert.deepEqual(memberMultiplayer.body.messages, []);
   const gameBackpack = await json(`${base}/api/backpack`, { headers: { Cookie: accountCookie } });
   assert.equal(gameBackpack.response.status, 200);
   assert.equal(gameBackpack.body.data.environments.length, 12, 'every labeled repository environment is loaded into the game Backpack');
@@ -86,9 +92,9 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   const gameCookie = game.response.headers.get('set-cookie').split(';')[0];
   const gameplaySpend = await json(`${base}/api/game/spend`, { method: 'POST', headers: { Cookie: `${bypassCookie}; ${gameCookie}`, 'X-CSRF-Token': bypass.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ amountMzk: 50, requestId: 'owner-game-1', gameId: 'rad-tox', reason: 'match entry' }) });
   assert.equal(gameplaySpend.response.status, 201); assert.equal(gameplaySpend.body.data.balanceAfterMzk, 1950);
-  const adminData = await json(`${base}/api/admin/data`, { headers: { Cookie: cookie } });
-  assert.equal(adminData.body.data.summary.gameplaySpentMzk, 50, 'admin pages receive the live gameplay-spend total');
-  assert.equal(adminData.body.data.gameplaySpending[0].walletId, `account:${bypass.body.data.account.accountId}`);
+  const updatedAdminData = await json(`${base}/api/admin/data`, { headers: { Cookie: cookie } });
+  assert.equal(updatedAdminData.body.data.summary.gameplaySpentMzk, 50, 'admin pages receive the live gameplay-spend total');
+  assert.equal(updatedAdminData.body.data.gameplaySpending[0].walletId, `account:${bypass.body.data.account.accountId}`);
 
   await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' } } }) });
   await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });
@@ -110,4 +116,17 @@ test('member loadout entry uses the shared canonical account API', async () => {
   assert.ok(source.includes("accountApiFetch('/api/access/admin-bypass'"), 'the Bottle page owner shortcut uses the server-validated bypass route');
   assert.ok(!source.includes('window.MZKWallet?.provisionStandardLoadout(account)'), 'local storage is not an ownership authority');
   assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'successful code entry opens the game page');
+});
+
+test('the VibeVerse multiplayer client verifies server-backed access before it starts', async () => {
+  const [source, page] = await Promise.all([
+    readFile(new URL('../public/js/crib-multiplayer.js', import.meta.url), 'utf8'),
+    readFile(new URL('../model-explorer.html', import.meta.url), 'utf8')
+  ]);
+  assert.ok(source.includes("apiFetch('/api/account/bootstrap'"), 'the browser checks the canonical account instead of trusting a local membership flag');
+  assert.ok(!source.includes("localStorage.getItem('muzikazBottleMember') !== 'true'"));
+  assert.match(source, /permissions\?\.members === true && data\?\.permissions\?\.games === true/);
+  assert.match(source, /genie\|wish bottle/i, 'a server-returned Genie Bottle claim is an alternate access path');
+  assert.match(page, /data-multiplayer-control disabled/, 'multiplayer controls start locked while access is checked');
+  assert.match(page, /id="multiplayer-paywall"/);
 });
