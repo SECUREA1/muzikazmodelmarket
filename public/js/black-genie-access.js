@@ -1,4 +1,4 @@
-/* Free MZK starter grant for the single-player House Explorer. */
+/* Prepares the free single-player House Explorer demo. */
 (function () {
   'use strict';
 
@@ -21,8 +21,8 @@
     var grant = wallet.claimSinglePlayerTokens();
     if (!grant.ok) return setMessage('Single Player could not be prepared. Refresh and try again.');
     setMessage(grant.firstGrant
-      ? '500 MZK gameplay tokens added. Opening Single Player…'
-      : 'Your Single Player MZK balance is ready. Opening game…');
+      ? 'Your gameplay demo is ready. Opening Single Player…'
+      : 'Opening Single Player…');
     openGame(button);
   }
 
