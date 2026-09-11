@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { PaymentOrderStore, MUZIKAZ_PAYMENT_NETWORKS, PAYMENT_STATUSES } from '../payment-order-store.mjs';
 
 test('central payment config exposes seven official network destinations', () => {
-  assert.deepEqual(Object.keys(MUZIKAZ_PAYMENT_NETWORKS), ['ETH', 'POL', 'BNB', 'SOL', 'ADA', 'BTC', 'DOGE']);
+  assert.deepEqual(Object.keys(MUZIKAZ_PAYMENT_NETWORKS), ['ETH', 'POL', 'BNB', 'SOL', 'ADA', 'BTC', 'DOGE', 'BASE', 'USDC']);
   assert.equal(MUZIKAZ_PAYMENT_NETWORKS.POL.address, MUZIKAZ_PAYMENT_NETWORKS.ETH.address);
   assert.equal(MUZIKAZ_PAYMENT_NETWORKS.BNB.address, MUZIKAZ_PAYMENT_NETWORKS.ETH.address);
   assert.equal(new Set(PAYMENT_STATUSES).size, 8);

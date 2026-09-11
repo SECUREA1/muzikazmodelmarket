@@ -101,6 +101,28 @@ test('repairs an unauthorized Polygon RPC before requesting payment', async () =
   assert.equal(calls.filter(({ method }) => method === 'eth_getBlockByNumber').length, 2);
 });
 
+test('connects Coinbase Wallet and prepares a Base USDC token transfer', async () => {
+  const calls = [];
+  const coinbase = { isCoinbaseWallet: true, async request(request) {
+    calls.push(request);
+    if (request.method === 'eth_requestAccounts') return ['0x1111111111111111111111111111111111111111'];
+    if (request.method === 'eth_sendTransaction') return '0xusdchash';
+    return '0x1';
+  } };
+  const window = loadPayments({ ethereum: { providers: [coinbase] } });
+  const network = window.MuzikazPaymentConfig.MUZIKAZ_PAYMENT_NETWORKS.USDC;
+  const quote = { currency: 'USDC', amount: 12.5, recipient: network.address, uri: window.MuzikazPaymentConfig.paymentUri('USDC', 12.5) };
+  const result = await window.MuzikazWalletPayments.initiate(quote, 'coinbase');
+  const transaction = calls.find(({ method }) => method === 'eth_sendTransaction').params[0];
+  assert.equal(result.walletName, 'Coinbase Wallet');
+  assert.equal(result.transactionHash, '0xusdchash');
+  assert.equal(calls[0].params[0].chainId, '0x2105');
+  assert.equal(transaction.to, network.tokenAddress);
+  assert.equal(transaction.value, '0x0');
+  assert.equal(transaction.data, `0xa9059cbb${network.address.slice(2).toLowerCase().padStart(64, '0')}${(12500000).toString(16).padStart(64, '0')}`);
+  assert.match(quote.uri, /^ethereum:0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913@8453\/transfer\?/);
+});
+
 
 test('only offers wallets compatible with each payment chain', () => {
   const window = loadPayments();
@@ -110,6 +132,8 @@ test('only offers wallets compatible with each payment chain', () => {
   assert.deepEqual(cardano, ['automatic', 'lace', 'ledger', 'trezor']);
   assert.equal(window.MuzikazWalletPayments.WALLETS.ledger.hardware, true);
   assert.equal(window.MuzikazWalletPayments.WALLETS.trezor.hardware, true);
+  assert.ok(window.MuzikazWalletPayments.compatibleWallets('BASE').some(({ id }) => id === 'coinbase'));
+  assert.ok(window.MuzikazWalletPayments.compatibleWallets('USDC').some(({ id }) => id === 'coinbase'));
 });
 
 test('rejects a wallet selected for an incompatible network', async () => {
