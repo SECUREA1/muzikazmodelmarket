@@ -32,6 +32,7 @@ for (const page of backpackPages) {
   if (!html.includes('mzk-wallet.js') || !html.includes('backpack-widget.js')) throw new Error(`${page} must expose the Ethereum wallet and Backpack controls.`);
 }
 const backpackWidget = await readFile('dist/backpack-widget.js', 'utf8');
+const houseExplorerStackSource = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
 const serverSource = await readFile('server.mjs', 'utf8');
 const publicBackpackCatalog = JSON.parse(await readFile('dist/public/models/backpack-assets.json', 'utf8'));
 if (!Array.isArray(publicBackpackCatalog.assets) || !publicBackpackCatalog.assets.length) throw new Error('The public Backpack catalog must contain active assets.');
@@ -42,6 +43,9 @@ for (const asset of publicBackpackCatalog.assets) {
   await access(thumbnailPath);
   const thumbnail = await readFile(thumbnailPath, 'utf8');
   if (!thumbnail.includes('<title') || !thumbnail.includes('<desc')) throw new Error(`${thumbnailPath} must include an accessible title and description.`);
+}
+for (const stackLayer of ['backpack-stack-backdrop', 'backpack-stack-art', 'backpack-stack-type', 'backpack-stack-format']) {
+  if (!houseExplorerStackSource.includes(stackLayer)) throw new Error(`In-game GLB buttons are missing the ${stackLayer} SVG layer.`);
 }
 
 // The compact destination menu and four-button commerce masthead stay
