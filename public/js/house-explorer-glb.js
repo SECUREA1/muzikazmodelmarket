@@ -9,6 +9,7 @@ import { FLOOR_ENTRY_OFFSET, alignPointAboveFloor } from './environments/environ
 import { fetchGitHubGlbFiles, mergeGitHubAvatarFiles } from './github-glb-discovery.js';
 import { AirborneHoneyBee, BEE_CONFIG, AAPE_BOSS_CONFIG, BEEDUCK_BOSS_CONFIG } from './enemies/airborne-honey-bee.js';
 import { NeonBrainBug } from './enemies/neon-brain-bug.js';
+import { pinchScaleFactor, pointerDistance } from './pinch-scale.js';
 
 const SPRAY_COLORS = Object.freeze([{name:'Neon pink',hex:0xff3d9a},{name:'Electric blue',hex:0x36bfff},{name:'Acid lime',hex:0xb9ff36},{name:'Sunset orange',hex:0xff762e},{name:'Royal violet',hex:0x9b5cff}]);
 const legacyCanvas = document.querySelector('#house-explorer-canvas');
@@ -56,7 +57,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     scheduleGameResize();
   }
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
-  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Main controls: mouse-look</span><span>Drag/touch: look</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
+  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Main controls: mouse-look</span><span>Drag/touch: look</span><span>Two fingers on a dropped model: resize</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
 
   const controllerIcon = (path) => `<svg class="controller-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
 
@@ -289,7 +290,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
 
   let viewActive = true; let lastFrameTime = 0; const targetFrameMs = performanceMode || reducedMotion ? 1000 / 30 : 0;
-  let playerCollider = new Capsule(new THREE.Vector3(0, player.radius, 2), new THREE.Vector3(0, player.height, 2), player.radius); let dragPointer = null; let avatarDrag = null; let turnReady = true; let activeEnvironment = null;
+  let playerCollider = new Capsule(new THREE.Vector3(0, player.radius, 2), new THREE.Vector3(0, player.height, 2), player.radius); let dragPointer = null; let avatarDrag = null; let avatarPinch = null; const activeTouchPointers = new Map(); let turnReady = true; let activeEnvironment = null;
   const toxicBubbleSystem = new ToxicBubbleSystem({ scene, camera, canvas, loader: envLoader, getEnvironment: () => activeEnvironment, getPlayerPosition: () => playerRig.position.clone(), advanceEnvironment: () => loadNextEnvironment() });
   // Opening or closing the pack never changes the game state.
   const toolsButton = document.querySelector('[data-house-tools]'); const closeTools = () => { toxicBubbleSystem.closeInventory(); sprayTools.hidden=true; toolsToggle.setAttribute('aria-expanded','false'); toolsButton?.setAttribute('aria-expanded','false'); toolsButton?.focus(); }; const openTools = () => { syncToolsPortal(); sprayTools.hidden=false; toolsToggle.setAttribute('aria-expanded','true'); toolsButton?.setAttribute('aria-expanded','true'); sprayTools.querySelector('[data-rad-tool]')?.focus(); }; const toggleTools = () => sprayTools.hidden ? openTools() : closeTools(); sprayTools.addEventListener('click',(event)=>{if(event.target.closest('[data-rad-tools-toggle]')){closeTools();return;}const tool=event.target.closest('[data-rad-tool]')?.dataset.radTool,color=event.target.closest('[data-spray-color]')?.dataset.sprayColor;if(event.target.closest('[data-rad-pack-toggle]'))toxicBubbleSystem.toggleInventory();if(tool)toxicBubbleSystem.setTool(tool);if(color!==undefined)toxicBubbleSystem.setSprayColor(Number(color));}); inventoryPack.addEventListener('click',(event)=>{if(event.target.closest('[data-rad-pack-close]'))toxicBubbleSystem.closeInventory();}); document.addEventListener('keydown',(event)=>{if(event.key!=='Escape')return;if(!inventoryPack.hidden){toxicBubbleSystem.closeInventory();return;}if(!sprayTools.hidden)closeTools();}); document.addEventListener('muzikaz:rad-tox-tools-request',openTools);
@@ -634,7 +635,62 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   canvas.addEventListener('pointerdown', (event) => { if (document.pointerLockElement === canvas && event.button === 0) { toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
   canvas.addEventListener('pointerup', (event) => { if (!toxicTap || toxicTap.id !== event.pointerId) return; const moved=Math.hypot(event.clientX-toxicTap.x,event.clientY-toxicTap.y); if (!toxicTap.avatar && moved<=8) toxicConsumedClick=toxicBubbleSystem.handlePointerInteraction(event) || toxicConsumedClick; toxicTap=null; });
   canvas.addEventListener('pointercancel', () => { toxicTap=null; });
-  canvas.addEventListener('pointerdown', (e) => { if (document.pointerLockElement === canvas) return; e.preventDefault(); const avatarHit = findPlacedAvatarFromEvent(e); if (avatarHit) { avatarDrag = { id:e.pointerId, root:avatarHit.root }; dragPointer = null; setStatus(`Dragging ${avatarDisplayName(avatarHit.root)}. Release to place it just above the floor. Double-click to open its menu.`); } else dragPointer = { id:e.pointerId, x:e.clientX, y:e.clientY }; canvas.setPointerCapture?.(e.pointerId); }); canvas.addEventListener('pointermove', (e) => { if (document.pointerLockElement === canvas) return; if (avatarDrag?.id === e.pointerId) { e.preventDefault(); const floorPoint = floorPointFromPointer(e); avatarDrag.root.position.x = floorPoint.x; avatarDrag.root.position.z = floorPoint.z; avatarDrag.root.position.y = floorPoint.y + (avatarDrag.root.userData.floorLiftOffset ?? FLOOR_ENTRY_OFFSET); return; } if (!dragPointer || dragPointer.id !== e.pointerId) return; e.preventDefault(); player.yaw -= (e.clientX - dragPointer.x) * .006; player.pitch = THREE.MathUtils.clamp(player.pitch - (e.clientY - dragPointer.y) * .005, -1.25, 1.15); dragPointer.x = e.clientX; dragPointer.y = e.clientY; }); const release = (e) => { if (avatarDrag?.id === e.pointerId) { liftObjectAboveFloor(avatarDrag.root, floorPointFromPointer(e)); avatarDrag = null; } if (dragPointer?.id === e.pointerId) dragPointer = null; }; canvas.addEventListener('pointerup', release); canvas.addEventListener('pointercancel', release); canvas.addEventListener('dblclick', (e) => { if (document.pointerLockElement === canvas) return; e.preventDefault(); const avatarHit = findPlacedAvatarFromEvent(e); if (avatarHit) { avatarDrag = null; dragPointer = null; openAvatarMenu(avatarHit.root); } }); canvas.addEventListener('wheel', (e) => { if (!scrollZoomEnabled) return; e.preventDefault(); applyZoom(e.deltaY); }, { passive:false }); document.addEventListener('wheel', (e) => { if (document.pointerLockElement !== canvas || !scrollZoomEnabled) return; e.preventDefault(); applyZoom(e.deltaY); }, { passive:false });
+  canvas.addEventListener('pointerdown', (e) => {
+    if (document.pointerLockElement === canvas) return;
+    e.preventDefault();
+    if (e.pointerType === 'touch') activeTouchPointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    const avatarHit = findPlacedAvatarFromEvent(e);
+    if (avatarHit) {
+      avatarDrag = { id:e.pointerId, root:avatarHit.root };
+      dragPointer = null;
+      setStatus(`Dragging ${avatarDisplayName(avatarHit.root)}. Add a second finger to stretch or shrink it.`);
+    } else if (!(e.pointerType === 'touch' && avatarDrag)) dragPointer = { id:e.pointerId, x:e.clientX, y:e.clientY };
+    if (e.pointerType === 'touch' && avatarDrag && activeTouchPointers.size >= 2) {
+      const points = [...activeTouchPointers.entries()].slice(-2);
+      const root = avatarDrag.root;
+      avatarPinch = {
+        ids:points.map(([id]) => id),
+        root,
+        startDistance:pointerDistance(points[0][1], points[1][1]),
+        baseScale:root.scale.clone(),
+        floorPoint:new THREE.Vector3(root.position.x, root.position.y - (root.userData.floorLiftOffset ?? FLOOR_ENTRY_OFFSET), root.position.z),
+      };
+      dragPointer = null;
+      toxicTap = null;
+      setStatus(`Pinch ${avatarDisplayName(root)} with two fingers to stretch or shrink it.`);
+    }
+    canvas.setPointerCapture?.(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (document.pointerLockElement === canvas) return;
+    if (e.pointerType === 'touch' && activeTouchPointers.has(e.pointerId)) activeTouchPointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if (avatarPinch?.ids.includes(e.pointerId)) {
+      e.preventDefault();
+      const [first, second] = avatarPinch.ids.map((id) => activeTouchPointers.get(id));
+      if (!first || !second) return;
+      const largestAxis = Math.max(avatarPinch.baseScale.x, avatarPinch.baseScale.y, avatarPinch.baseScale.z);
+      const factor = pinchScaleFactor({ startDistance:avatarPinch.startDistance, currentDistance:pointerDistance(first, second), baseLargestAxis:largestAxis });
+      avatarPinch.root.scale.copy(avatarPinch.baseScale).multiplyScalar(factor);
+      liftObjectAboveFloor(avatarPinch.root, avatarPinch.floorPoint);
+      return;
+    }
+    if (avatarDrag?.id === e.pointerId) { e.preventDefault(); const floorPoint = floorPointFromPointer(e); avatarDrag.root.position.x = floorPoint.x; avatarDrag.root.position.z = floorPoint.z; avatarDrag.root.position.y = floorPoint.y + (avatarDrag.root.userData.floorLiftOffset ?? FLOOR_ENTRY_OFFSET); return; }
+    if (!dragPointer || dragPointer.id !== e.pointerId) return;
+    e.preventDefault(); player.yaw -= (e.clientX - dragPointer.x) * .006; player.pitch = THREE.MathUtils.clamp(player.pitch - (e.clientY - dragPointer.y) * .005, -1.25, 1.15); dragPointer.x = e.clientX; dragPointer.y = e.clientY;
+  });
+  const release = (e) => {
+    activeTouchPointers.delete(e.pointerId);
+    if (avatarPinch?.ids.includes(e.pointerId)) {
+      liftObjectAboveFloor(avatarPinch.root, avatarPinch.floorPoint);
+      addAvatarCollider(avatarPinch.root);
+      setStatus(`${avatarDisplayName(avatarPinch.root)} resized. Use two fingers again for another adjustment.`);
+      avatarPinch = null; avatarDrag = null; dragPointer = null;
+      return;
+    }
+    if (avatarDrag?.id === e.pointerId) { liftObjectAboveFloor(avatarDrag.root, floorPointFromPointer(e)); avatarDrag = null; }
+    if (dragPointer?.id === e.pointerId) dragPointer = null;
+  };
+  canvas.addEventListener('pointerup', release); canvas.addEventListener('pointercancel', release); canvas.addEventListener('dblclick', (e) => { if (document.pointerLockElement === canvas) return; e.preventDefault(); const avatarHit = findPlacedAvatarFromEvent(e); if (avatarHit) { avatarDrag = null; dragPointer = null; openAvatarMenu(avatarHit.root); } }); canvas.addEventListener('wheel', (e) => { if (!scrollZoomEnabled) return; e.preventDefault(); applyZoom(e.deltaY); }, { passive:false }); document.addEventListener('wheel', (e) => { if (document.pointerLockElement !== canvas || !scrollZoomEnabled) return; e.preventDefault(); applyZoom(e.deltaY); }, { passive:false });
   resetButton?.addEventListener('click', () => resetPlayer());
   document.querySelectorAll('[data-mobile-move]').forEach((oldButton) => { const button = oldButton.cloneNode(true); oldButton.replaceWith(button); const direction = button.dataset.mobileMove; const mobileLabel = { forward: '▲ Forward', back: '▼ Reverse', left: '◀ Side left', right: 'Side right ▶', jump: '⤴ Jump' }[direction]; if (mobileLabel) button.setAttribute('aria-label', mobileLabel); const begin = (e) => { e.preventDefault(); if (direction === 'jump') { if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } button.classList.add('is-active'); return; } mobile.add(direction); button.classList.add('is-active'); }; const end = (e) => { e.preventDefault(); if (direction !== 'jump') mobile.delete(direction); button.classList.remove('is-active'); }; button.addEventListener('pointerdown', begin); button.addEventListener('pointerup', end); button.addEventListener('pointercancel', end); button.addEventListener('pointerleave', end); });
   document.querySelectorAll('[data-mobile-zoom]').forEach((oldButton) => { const button = oldButton.cloneNode(true); oldButton.replaceWith(button); button.addEventListener('click', (e) => { e.preventDefault(); applyZoom(button.dataset.mobileZoom === 'in' ? -1 : 1); }); });
