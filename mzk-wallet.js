@@ -53,9 +53,13 @@
   function claimSinglePlayerTokens(owner = walletId()) {
     owner = normalize(owner);
     if (!owner) return { ok: false, error: 'INVALID_WALLET', balance: 0 };
-    const id = `mzk:single-player-starter:${owner}`;
+    // Version the demo grant so returning players whose original allowance was
+    // already consumed receive the usable MZK allocation added for RAD-TOX.
+    // The stable receipt remains idempotent, so reopening the demo cannot mint
+    // the allocation repeatedly.
+    const id = `mzk:single-player-starter:${owner}:demo-v2`;
     const existing = read().find((entry) => entry.id === id);
-    const tx = existing || record({ id, owner, amount: SINGLE_PLAYER_STARTING_MZK, kind: 'game-starter', reason: 'Single Player starting gameplay tokens' });
+    const tx = existing || record({ id, owner, amount: SINGLE_PLAYER_STARTING_MZK, kind: 'game-starter', reason: 'RAD-TOX demo MZK for gameplay spends' });
     return { ok: true, firstGrant: !existing, amount: SINGLE_PLAYER_STARTING_MZK, balance: balance(owner), tx };
   }
   function provisionStandardLoadout(account = {}) {
