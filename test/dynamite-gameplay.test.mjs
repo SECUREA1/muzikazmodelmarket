@@ -15,7 +15,12 @@ test('RAD-TOX dynamite equips, tosses, lands, and releases animated gas', async 
   assert.match(script, /toxicGas:true/, 'gas particles use their rising, expanding animation path');
   assert.match(script, /dynamiteModel\.visible=false/, 'throwing releases the held first-person stick');
   assert.match(script, /−\$\{TOXIC_BUBBLE_CONFIG\.dynamiteCost\} MZK/, 'the HUD visually confirms the token spend');
-  assert.match(script, /window\.MZKWallet\?\.balance/, 'the HUD reads the active MZK balance, including guest tokens');
+  assert.match(script, /wallet\?\.balance/, 'the HUD reads the active MZK balance, including guest tokens');
+  assert.match(script, /dataset\.radShoot/, 'a dedicated on-screen shoot button activates the equipped tool');
+  assert.match(script, /LIGHT · TOSS · BOUNCE · BOOM/, 'the shoot button explains the complete dynamite sequence');
+  assert.match(script, /data-guest-mzk-burn/, 'free guests see their cumulative MZK burn on screen');
+  assert.match(script, /userData.phase='bounce'/, 'the live dynamite records its bounce phase before detonation');
+  assert.match(script, /DYNAMITE_FUSE_SPARK/, 'the tossed dynamite carries a visibly animated lit fuse');
   assert.match(script, /playerHit=this\.getPlayerPosition\(\)\.distanceTo\(position\)<=radius/, 'the blast can hurt the throwing player');
   assert.match(script, /avatarHealth=Math\.max/, 'the blast damages avatars inside its radius');
 });
