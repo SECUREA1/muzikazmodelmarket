@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title description">
+  <title id="title">RAD-TOX dynamite stick</title>
+  <desc id="description">A red dynamite stick with a sparking animated fuse.</desc>
+  <defs>
+    <linearGradient id="body" x1="0" x2="1" y2="1"><stop stop-color="#ff5a47"/><stop offset=".52" stop-color="#d51f2f"/><stop offset="1" stop-color="#7d0718"/></linearGradient>
+    <radialGradient id="spark"><stop stop-color="#fff"/><stop offset=".25" stop-color="#fff36c"/><stop offset=".65" stop-color="#ff7a18"/><stop offset="1" stop-color="#ff2418" stop-opacity="0"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <ellipse cx="125" cy="221" rx="65" ry="13" fill="#000" opacity=".3"/>
+  <g transform="rotate(-10 128 128)">
+    <rect x="79" y="61" width="98" height="158" rx="42" fill="url(#body)" stroke="#ffbd85" stroke-width="7"/>
+    <path d="M83 101h90M81 179h94" stroke="#5f0713" stroke-width="14"/>
+    <rect x="92" y="115" width="72" height="50" rx="8" fill="#16070a" stroke="#ffd33d" stroke-width="4"/>
+    <path d="M105 143h46M128 124v38" stroke="#ffd33d" stroke-width="7"/>
+    <path d="M126 61c-1-28 27-22 25-46" fill="none" stroke="#33251c" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="152" cy="14" r="23" fill="url(#spark)" filter="url(#glow)">
+      <animate attributeName="r" values="13;25;16;23;13" dur=".55s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values=".65;1;.72;1;.65" dur=".55s" repeatCount="indefinite"/>
+    </circle>
+    <g stroke="#ffd83d" stroke-width="5" stroke-linecap="round" filter="url(#glow)">
+      <path d="m152 0 1-12M166 5l9-9M171 18h13M137 4l-7-9">
+        <animate attributeName="opacity" values="0;1;0" dur=".38s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </g>
+</svg>
