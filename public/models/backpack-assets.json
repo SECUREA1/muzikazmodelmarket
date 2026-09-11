@@ -10,6 +10,7 @@
     {"id":"beeduck-companion","name":"BEE Duck Companion","owner":"MUZIKAZ","type":"pets","modelUrl":"/public/models/avatars/BEEDUCK.glb","format":"glb","visibility":"public","scale":0.7},
     {"id":"ion-core-prop","name":"IonCore Display Figure","owner":"MUZIKAZ","type":"props","modelUrl":"/public/models/avatars/IONCDUCK.glb","format":"glb","visibility":"public","scale":0.65},
     {"id":"bee-duck-carrot","name":"Bee Duck Carrot","owner":"MUZIKAZ","type":"props","thumbnailUrl":"/public/images/carrot-item.svg","format":"svg","visibility":"public","consumable":true,"quantity":1,"refillCostMzk":5,"description":"A crunchy speed snack. Feed it to Bee Duck, then refill it for 5 MZK."},
+    {"id":"rad-tox-dynamite","name":"RAD-TOX Dynamite","owner":"MUZIKAZ","type":"props","thumbnailUrl":"/public/images/dynamite-item.svg","effectUrl":"/public/images/explosion-burst.svg","format":"svg","visibility":"public","consumable":true,"quantity":1,"useCostMzk":25,"damageRadius":4.5,"damage":100,"description":"Throw a live stick in RAD-TOX. Its animated blast deals 100 radius damage for 25 MZK per use."},
     {"id":"volt-wolf-wearable","name":"Volt Wolf Armor","owner":"MUZIKAZ","type":"wearables","modelUrl":"/public/models/avatars/VOLTWOLF.glb","format":"glb","visibility":"public","scale":0.8}
   ]
 }
