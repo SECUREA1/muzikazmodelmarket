@@ -332,15 +332,21 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     ['wearables','Wearables'],['pets','Pets'],['vehicles','Vehicles']
   ]);
   function backpackIcon(type) { return `<span class="backpack-svg-icon">${BACKPACK_ICONS[type] || BACKPACK_ICONS.props}</span>`; }
+  function backpackAssetStack(asset, imageUrl = '') {
+    const type = BACKPACK_ICONS[asset.type] ? asset.type : 'props';
+    const initials=String(asset.name||asset.id||'Item').split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join('').toUpperCase();
+    const isGlb=/\.(?:glb|gltf)(?:$|[?#])/i.test(asset.modelUrl||'') || /^(?:glb|gltf)$/i.test(asset.format||'');
+    const artwork=/\.(?:svg|png|jpe?g|webp|gif)(?:$|[?#])/i.test(imageUrl)
+      ? `<img class="backpack-asset-image" src="${escapeHtml(imageUrl)}" alt="" loading="lazy">`
+      : `<svg class="backpack-item-monogram" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="32"/><text x="40" y="46">${escapeHtml(initials)}</text></svg>`;
+    return `<span class="backpack-asset-stack backpack-asset-stack--${type}" aria-hidden="true"><svg class="backpack-stack-backdrop" viewBox="0 0 80 80"><circle cx="40" cy="40" r="37"/><path d="M14 51 40 16l26 35-26 15Z"/><path d="M14 51v7l26 15 26-15v-7L40 66Z"/></svg><span class="backpack-stack-art">${artwork}</span><span class="backpack-stack-type">${backpackIcon(type)}</span>${isGlb?'<svg class="backpack-stack-format" viewBox="0 0 34 18"><rect x=".75" y=".75" width="32.5" height="16.5" rx="5"/><text x="17" y="12">GLB</text></svg>':''}</span>`;
+  }
   function backpackAssetVisual(asset) {
     const imageUrl = asset.thumbnailUrl || asset.thumbnail_url || asset.iconUrl || asset.icon_url || asset.imageUrl || asset.image_url || '';
-    if (/\.(?:svg|png|jpe?g|webp|gif)(?:$|[?#])/i.test(imageUrl)) {
-      return `<img class="backpack-asset-image" src="${escapeHtml(imageUrl)}" alt="Preview of ${escapeHtml(asset.name)}" loading="lazy">`;
-    }
-    // Keep GLB previews GPU-free, but give every item its own recognizable SVG
-    // badge instead of repeating the category icon across the entire Backpack.
-    const initials=String(asset.name||asset.id||'Item').split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join('').toUpperCase();
-    return `<span class="backpack-orbit-icon backpack-item-badge" aria-hidden="true">${backpackIcon(asset.type)}<svg class="backpack-item-monogram" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17"/><text x="20" y="24">${escapeHtml(initials)}</text></svg></span>`;
+    // Every generated card gets the same complete SVG stack: dimensional land
+    // plate, asset art/monogram, type glyph, and a GLB format flag when linked.
+    // This also covers API and repository discoveries that have no thumbnail.
+    return backpackAssetStack(asset, imageUrl);
   }
   function backpackPieSlice(index,total=BACKPACK_CATEGORIES.length) { const points=['50% 50%']; const start=-90+(index*360/total), end=-90+((index+1)*360/total); for(let angle=start;angle<=end;angle+=5){const radians=angle*Math.PI/180;points.push(`${50+50*Math.cos(radians)}% ${50+50*Math.sin(radians)}%`);} const radians=end*Math.PI/180;points.push(`${50+50*Math.cos(radians)}% ${50+50*Math.sin(radians)}%`); return `polygon(${points.join(',')})`; }
   function syncEnvironmentSelect(worlds) { if (!environmentSelect) return; const selectedId = activeEnvironment?.id || environmentSelect.value || ''; environmentSelect.replaceChildren(...worlds.map((env) => new Option(env.name || env.id || 'House environment', env.id, false, env.id === selectedId))); environmentSelect.disabled = !worlds.length; }
