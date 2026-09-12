@@ -21,8 +21,8 @@
     var grant = wallet.claimSinglePlayerTokens();
     if (!grant.ok) return setMessage('Single Player could not be prepared. Refresh and try again.');
     setMessage(grant.firstGrant
-      ? 'Your gameplay demo is ready. Opening Single Player…'
-      : 'Opening Single Player…');
+      ? '500 MZK added for in-game display and play. Opening Single Player…'
+      : `${Number(grant.balance || 0).toLocaleString()} MZK ready for in-game display and play. Opening Single Player…`);
     openGame(button);
   }
 
