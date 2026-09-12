@@ -319,7 +319,7 @@ const membersHtml = await readFile('dist/members.html', 'utf8');
 const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
 if (!mzkWallet.includes('const SINGLE_PLAYER_STARTING_MZK = 500')) throw new Error('Single Player must grant exactly 500 starting MZK.');
 const blackGenieAccess = await readFile('dist/public/js/black-genie-access.js', 'utf8');
-for (const marker of ['wallet.claimSinglePlayerTokens()', '500 MZK added for in-game display and play', 'MZK ready for in-game display and play', 'authorized = false', 'button.disabled = false', 'openGame(button)']) {
+for (const marker of ['wallet.claimSinglePlayerTokens()', '500 MZK added for in-game display and play', 'Demo balance reset to 500 MZK', 'authorized = false', 'button.disabled = false', 'openGame(button)']) {
   if (!blackGenieAccess.includes(marker)) throw new Error(`MZK Single Player gate is missing: ${marker}`);
 }
 for (const page of ['model-market.html', 'buy-mzk.html']) {
