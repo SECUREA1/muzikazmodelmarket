@@ -20,4 +20,6 @@ test('RAD-TOX engine independently prepares and displays its spendable demo bala
   const source = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
   assert.match(source, /const demoGrant = window\.MZKWallet\?\.claimSinglePlayerTokens\?\.\(\)/);
   assert.match(source, /Number\(demoGrant\.balance \|\| 0\)\.toLocaleString\(\)/);
+  assert.match(source, /distributeSinglePlayerTokens/, 'clearing a single-player level distributes an MZK reward');
+  assert.match(source, /\+\$\{reward\.amount\} MZK distributed/, 'the level-clear message announces the distribution');
 });
