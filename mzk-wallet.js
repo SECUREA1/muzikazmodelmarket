@@ -53,14 +53,12 @@
   function claimSinglePlayerTokens(owner = walletId()) {
     owner = normalize(owner);
     if (!owner) return { ok: false, error: 'INVALID_WALLET', balance: 0 };
-    // Version the demo grant so returning players whose original allowance was
-    // already consumed receive the usable MZK allocation added for RAD-TOX.
-    // The stable receipt remains idempotent, so reopening the demo cannot mint
-    // the allocation repeatedly.
-    const id = `mzk:single-player-starter:${owner}:demo-v2`;
-    const existing = read().find((entry) => entry.id === id);
-    const tx = existing || record({ id, owner, amount: SINGLE_PLAYER_STARTING_MZK, kind: 'game-starter', reason: 'RAD-TOX demo MZK for gameplay spends' });
-    return { ok: true, firstGrant: !existing, amount: SINGLE_PLAYER_STARTING_MZK, balance: balance(owner), tx };
+    const previousBalance = balance(owner);
+    const adjustment = SINGLE_PLAYER_STARTING_MZK - previousBalance;
+    // Single Player is a repeatable gameplay demo rather than a persistent
+    // wallet grant. Every new run starts from the same spendable 500 MZK.
+    const tx = adjustment === 0 ? null : record({ id: uid('mzk:single-player-reset'), owner, amount: adjustment, kind: 'game-reset', reason: 'RAD-TOX Single Player demo balance reset to 500 MZK' });
+    return { ok: true, firstGrant: previousBalance === 0, reset: true, amount: SINGLE_PLAYER_STARTING_MZK, balance: balance(owner), tx };
   }
   function provisionStandardLoadout(account = {}) {
     const owner = normalize(account.primaryEthereumWallet || localStorage.getItem('muzikazBottleMemberEmail'));
