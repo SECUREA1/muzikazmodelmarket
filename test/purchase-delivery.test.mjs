@@ -47,6 +47,18 @@ test('MZK purchases cannot be credited to an anonymous guest identity', () => {
   assert.throws(() => wallet.creditPurchase(40, { owner: 'guest-123', transactionHash: 'payment' }), /Connect a member wallet/);
 });
 
+test('single-player milestone distributions are spendable and idempotent', () => {
+  const { wallet } = loadMzkWallet();
+  const owner = wallet.walletId();
+  wallet.claimSinglePlayerTokens(owner);
+  const first = wallet.distributeSinglePlayerTokens({ level: 1, amount: 50, distributionId: 'rad-tox-level-1-v1' }, owner);
+  const replay = wallet.distributeSinglePlayerTokens({ level: 1, amount: 50, distributionId: 'rad-tox-level-1-v1' }, owner);
+  assert.equal(first.firstDistribution, true);
+  assert.equal(replay.firstDistribution, false);
+  assert.equal(wallet.balance(owner), 550);
+  assert.equal(wallet.spend(25, 'RAD-TOX dynamite test').balance, 525);
+});
+
 test('$40 land tier credits exactly one deed price without unrelated Loadout rewards', () => {
   const { wallet, localStorage } = loadMzkWallet();
   const owner = '0x4040404040404040404040404040404040404040';
