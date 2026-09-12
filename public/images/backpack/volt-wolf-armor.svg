@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-labelledby="title desc">
-  <title id="title">Volt Wolf Armor wearable</title><desc id="desc">An electric wolf armor chest piece with angular ears and a lightning crest.</desc>
-  <defs><radialGradient id="bg"><stop stop-color="#302050"/><stop offset="1" stop-color="#050609"/></radialGradient><linearGradient id="armor" x2="1" y2="1"><stop stop-color="#dce7f1"/><stop offset=".46" stop-color="#4c6071"/><stop offset="1" stop-color="#131e29"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-  <rect width="320" height="240" rx="28" fill="url(#bg)"/><path d="M52 192 24 164m244 28 28-28M45 50l36 17m194-17-36 17" stroke="#9cff00" stroke-width="5" opacity=".5"/>
-  <path d="m89 78 20-52 38 32h26l38-32 20 52-16 56-55 35-55-35Z" fill="url(#armor)" stroke="#dcedff" stroke-width="7"/><path d="m109 81 42 21-36 21m96-42-42 21 36 21" fill="#111922" stroke="#b053ff" stroke-width="7"/><path d="m144 128 16 11 16-11-5 23h-22Z" fill="#9cff00" filter="url(#glow)"/>
-  <path d="M105 144 61 174l17 57h164l17-57-44-30-25 24h-60Z" fill="url(#armor)" stroke="#9ab1c7" stroke-width="7"/><path d="m166 161-27 32h22l-12 32 38-45h-23Z" fill="#e8ff40" stroke="#fff" stroke-width="4" filter="url(#glow)"/>
-</svg>

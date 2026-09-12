@@ -53,25 +53,10 @@
   function claimSinglePlayerTokens(owner = walletId()) {
     owner = normalize(owner);
     if (!owner) return { ok: false, error: 'INVALID_WALLET', balance: 0 };
-    // Version the demo grant so returning players whose original allowance was
-    // already consumed receive the usable MZK allocation added for RAD-TOX.
-    // The stable receipt remains idempotent, so reopening the demo cannot mint
-    // the allocation repeatedly.
-    const id = `mzk:single-player-starter:${owner}:demo-v2`;
+    const id = `mzk:single-player-starter:${owner}`;
     const existing = read().find((entry) => entry.id === id);
-    const tx = existing || record({ id, owner, amount: SINGLE_PLAYER_STARTING_MZK, kind: 'game-starter', reason: 'RAD-TOX demo MZK for gameplay spends' });
+    const tx = existing || record({ id, owner, amount: SINGLE_PLAYER_STARTING_MZK, kind: 'game-starter', reason: 'Single Player starting gameplay tokens' });
     return { ok: true, firstGrant: !existing, amount: SINGLE_PLAYER_STARTING_MZK, balance: balance(owner), tx };
-  }
-  function distributeSinglePlayerTokens({ level, amount, distributionId } = {}, owner = walletId()) {
-    owner = normalize(owner);
-    level = Math.max(1, Math.trunc(Number(level) || 1));
-    amount = Math.max(0, Math.trunc(Number(amount) || 0));
-    distributionId = normalize(distributionId);
-    if (!owner || !amount || !/^[a-z0-9][a-z0-9:_-]{2,80}$/.test(distributionId)) return { ok: false, error: 'INVALID_DISTRIBUTION', balance: balance(owner) };
-    const id = `mzk:single-player-distribution:${owner}:${distributionId}`;
-    const existing = read().find((entry) => entry.id === id);
-    const tx = existing || record({ id, owner, amount, kind: 'game-reward', reason: `RAD-TOX level ${level} clear reward`, game: 'rad-tox', level, distributionId });
-    return { ok: true, firstDistribution: !existing, amount: Number(tx.amount), balance: balance(owner), tx };
   }
   function provisionStandardLoadout(account = {}) {
     const owner = normalize(account.primaryEthereumWallet || localStorage.getItem('muzikazBottleMemberEmail'));
@@ -141,5 +126,5 @@
     provider.on?.('chainChanged', (chainId) => updateBrowserConnection(connectedAddress() ? [connectedAddress()] : [], chainId));
     provider.on?.('disconnect', () => updateBrowserConnection([]));
   }
-  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, SINGLE_PLAYER_STARTING_MZK, purchaseTokens, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimSinglePlayerTokens, distributeSinglePlayerTokens, claimStarterLoadout, provisionStandardLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
+  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, SINGLE_PLAYER_STARTING_MZK, purchaseTokens, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimSinglePlayerTokens, claimStarterLoadout, provisionStandardLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
 })();
