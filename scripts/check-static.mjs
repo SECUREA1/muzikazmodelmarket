@@ -32,7 +32,21 @@ for (const page of backpackPages) {
   if (!html.includes('mzk-wallet.js') || !html.includes('backpack-widget.js')) throw new Error(`${page} must expose the Ethereum wallet and Backpack controls.`);
 }
 const backpackWidget = await readFile('dist/backpack-widget.js', 'utf8');
+const houseExplorerStackSource = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
 const serverSource = await readFile('server.mjs', 'utf8');
+const publicBackpackCatalog = JSON.parse(await readFile('dist/public/models/backpack-assets.json', 'utf8'));
+if (!Array.isArray(publicBackpackCatalog.assets) || !publicBackpackCatalog.assets.length) throw new Error('The public Backpack catalog must contain active assets.');
+for (const asset of publicBackpackCatalog.assets) {
+  if (asset.visibility !== 'public') continue;
+  if (!asset.thumbnailUrl) throw new Error(`Active Backpack asset ${asset.id} is missing its dedicated graphic.`);
+  const thumbnailPath = `dist/${asset.thumbnailUrl.replace(/^\//, '')}`;
+  await access(thumbnailPath);
+  const thumbnail = await readFile(thumbnailPath, 'utf8');
+  if (!thumbnail.includes('<title') || !thumbnail.includes('<desc')) throw new Error(`${thumbnailPath} must include an accessible title and description.`);
+}
+for (const stackLayer of ['backpack-stack-backdrop', 'backpack-stack-art', 'backpack-stack-type', 'backpack-stack-format']) {
+  if (!houseExplorerStackSource.includes(stackLayer)) throw new Error(`In-game GLB buttons are missing the ${stackLayer} SVG layer.`);
+}
 
 // The compact destination menu and four-button commerce masthead stay
 // consistent on every page that uses the shared mobile header.
@@ -163,7 +177,7 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
 }
-for (const freeSinglePlayerMarker of ['Single Player · Free', 'Jump straight into the gameplay demo', 'no wallet, payment, account, or Genie Bottle is required']) {
+for (const freeSinglePlayerMarker of ['Single Player · Free + 500 MZK', 'Start with 500 in-game MZK tokens for display and play', 'no wallet, payment, account, or Genie Bottle is required']) {
   if (!mainHtml.includes(freeSinglePlayerMarker)) {
     throw new Error(`index.html must advertise free Single Player access: ${freeSinglePlayerMarker}`);
   }
@@ -305,7 +319,7 @@ const membersHtml = await readFile('dist/members.html', 'utf8');
 const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
 if (!mzkWallet.includes('const SINGLE_PLAYER_STARTING_MZK = 500')) throw new Error('Single Player must grant exactly 500 starting MZK.');
 const blackGenieAccess = await readFile('dist/public/js/black-genie-access.js', 'utf8');
-for (const marker of ['wallet.claimSinglePlayerTokens()', 'Your gameplay demo is ready', 'authorized = false', 'button.disabled = false', 'openGame(button)']) {
+for (const marker of ['wallet.claimSinglePlayerTokens()', '500 MZK added for in-game display and play', 'MZK ready for in-game display and play', 'authorized = false', 'button.disabled = false', 'openGame(button)']) {
   if (!blackGenieAccess.includes(marker)) throw new Error(`MZK Single Player gate is missing: ${marker}`);
 }
 for (const page of ['model-market.html', 'buy-mzk.html']) {
