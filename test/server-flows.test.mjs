@@ -83,6 +83,10 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(bypassDenied.response.status, 401, 'an incorrect owner word cannot bypass the Bottle gate');
   const bypass = await json(`${base}/api/access/admin-bypass`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'test-password' }) });
   assert.equal(bypass.response.status, 200, 'the configured admin word opens an owner Loadout session');
+  const bootsBypass = await json(`${base}/api/access/admin-bypass`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'boots' }) });
+  assert.equal(bootsBypass.response.status, 200, 'boots always opens the owner Loadout even when the data-center password is rotated');
+  const bootsCookie = bootsBypass.response.headers.get('set-cookie').split(';')[0];
+  assert.equal((await json(`${base}/api/houses/ioncore-house/chat`, { headers: { Cookie: bootsCookie } })).response.status, 200, 'the boots bypass crosses the multiplayer paywall');
   assert.equal(bypass.body.data.account.mzkBalance, 2000);
   assert.equal(bypass.body.data.account.gameAccess, true);
   const bypassCookie = bypass.response.headers.get('set-cookie').split(';')[0];
@@ -124,9 +128,11 @@ test('the VibeVerse multiplayer client verifies server-backed access before it s
     readFile(new URL('../model-explorer.html', import.meta.url), 'utf8')
   ]);
   assert.ok(source.includes("apiFetch('/api/account/bootstrap'"), 'the browser checks the canonical account instead of trusting a local membership flag');
+  assert.ok(source.includes("apiFetch('/api/access/admin-bypass'"), 'the multiplayer paywall can establish the server-backed owner session');
   assert.ok(!source.includes("localStorage.getItem('muzikazBottleMember') !== 'true'"));
   assert.match(source, /permissions\?\.members === true && data\?\.permissions\?\.games === true/);
   assert.match(source, /genie\|wish bottle/i, 'a server-returned Genie Bottle claim is an alternate access path');
   assert.match(page, /data-multiplayer-control disabled/, 'multiplayer controls start locked while access is checked');
   assert.match(page, /id="multiplayer-paywall"/);
+  assert.match(page, /id="multiplayer-admin-bypass"/, 'the multiplayer page exposes the admin-word bypass');
 });
