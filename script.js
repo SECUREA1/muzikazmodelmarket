@@ -2104,6 +2104,10 @@ function initBottleLogin() {
   const adminBypassPassword = document.querySelector('#admin-game-bypass-password');
   const adminBypassButton = document.querySelector('#admin-game-bypass-button');
   if (!form || !lockedContent) return;
+  const requestedReturn = new URLSearchParams(window.location.search).get('return');
+  if (requestedReturn && !/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(requestedReturn) && !requestedReturn.startsWith('/')) {
+    window.sessionStorage.setItem('muzikazLoginRedirect', requestedReturn);
+  }
   // Member access can be rendered from a static/custom-domain frontend while the
   // account service remains on Render. Keep every loadout request on the shared
   // API connection instead of accidentally posting to the page host.
@@ -2245,6 +2249,8 @@ function initBottleLogin() {
         setPurchaseStep(3);
         renderOwnedCollection(currentMemberEmail);
         unlock(`${backpackBottle} found in this connected Backpack. Designated member, marketplace, avatar and game access is ready.`);
+        const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
+        if (redirect) { window.sessionStorage.removeItem('muzikazLoginRedirect'); window.location.href = redirect; return; }
         scrollToSection('member-locked-content');
       } else {
         await verifyAndUnlock(address);
@@ -2449,6 +2455,8 @@ function initBottleLogin() {
       if (account.loadoutAccess === true && permissions.members) { setPurchaseStep(3); unlock('Welcome back. Your persistent Loadout, Backpack, avatars, creator tools and games are ready.'); }
       else unlock(backpack.status === 'empty' ? 'Your account is open. Add a Loadout to unlock member tools and games.' : 'Your account is open.');
       renderOwnedCollection(currentMemberEmail);
+      const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
+      if (permissions.members && redirect) { window.sessionStorage.removeItem('muzikazLoginRedirect'); window.location.href = redirect; }
     } catch (error) {
       lockedContent.hidden = true;
       lockedContent.dataset.locked = 'true';
