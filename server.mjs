@@ -408,12 +408,17 @@ const server = createServer(async (req, res) => {
   res.muzikazRequestOrigin = String(req.headers.origin || '');
   res.muzikazRequestId = String(req.headers['x-request-id'] || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80) || randomUUID();
   const url = new URL(req.url, `http://${req.headers.host}`);
+  // CDNs can reserve or shadow their own /api routes. Keep a namespaced entry
+  // point that passes through to these same handlers, allowing the browser to
+  // identify this service before it sends an access code or session credential.
+  if (url.pathname === '/api/pass-through') url.pathname = '/api';
+  else if (url.pathname.startsWith('/api/pass-through/')) url.pathname = '/api/' + url.pathname.slice('/api/pass-through/'.length);
   if (url.pathname.startsWith('/api/') && !originAllowed(res.muzikazRequestOrigin)) return sendJson(res, 403, { success: false, code: 'CORS_ORIGIN_DENIED', message: 'This origin is not allowed to call the MUZIKAZ API.', stage: 'cors' });
   if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders({ 'X-Request-ID': res.muzikazRequestId }, res.muzikazRequestOrigin)); res.end(); return; }
   try {
     if (url.pathname === '/api/health' && req.method === 'GET') {
       await ensureStorage();
-      return sendJson(res, 200, { success: true, service: 'muzikaz-member-market', version: serviceVersion, commit: deploymentCommit, startedAt: serviceStartedAt, storage: 'ready', persistentStorageConfigured: dataDir.startsWith('/var/data'), routes: { accountBootstrap: true, accessActivation: true, gameSession: true } });
+      return sendJson(res, 200, { success: true, service: 'muzikaz-member-market', version: serviceVersion, commit: deploymentCommit, startedAt: serviceStartedAt, storage: 'ready', persistentStorageConfigured: dataDir.startsWith('/var/data'), routes: { accountBootstrap: true, accessActivation: true, gameSession: true, passThrough: true } });
     }
     if (url.pathname === '/api/account/bootstrap' && req.method === 'GET') {
       const active = await accountSession(req, res); if (!active) return;
