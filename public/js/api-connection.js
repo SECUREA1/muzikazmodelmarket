@@ -5,6 +5,7 @@
   var root = document.documentElement;
   var configured = window.MUZIKAZ_API_BASE || window.MUZIKAZ_SHARED_AVATAR_API || root.getAttribute('data-api-base') || '';
   var base;
+  var apiPrefix = '';
   var hostedApi = new window.URL('https://muzikazmodelmarket.onrender.com');
   var compatibleRoutes = { '/api/access/activate': ['/api/access-codes/redeem', '/api/loadout-codes/redeem'] };
   try {
@@ -50,7 +51,8 @@
   }
 
   function url(path) {
-    return new window.URL(path, base + '/').href;
+    var routedPath = apiPrefix && /^\/api(?:\/|$)/.test(path) ? apiPrefix + path.slice(4) : path;
+    return new window.URL(routedPath, base + '/').href;
   }
 
   function requestApi(path, options) {
@@ -121,17 +123,25 @@
   /* Resolve the API host before any login POST can leave the browser. */
   root.setAttribute('data-api-connected', 'pending');
   root.setAttribute('data-api-base', base);
-  function confirm(candidate) {
-    return window.fetch(new window.URL('/api/health', candidate + '/').href, { method: 'GET', mode: 'cors', credentials: 'include', cache: 'no-store' }).then(function (response) {
+  function confirm(candidate, prefix) {
+    var healthPath = (prefix || '') + '/health';
+    return window.fetch(new window.URL(healthPath, candidate + '/').href, { method: 'GET', mode: 'cors', credentials: 'include', cache: 'no-store' }).then(function (response) {
       return response.clone().json().then(function (payload) {
         if (!response.ok || !payload || payload.service !== 'muzikaz-member-market') throw new Error('Not the MUZIKAZ member API.');
+        apiPrefix = prefix || '';
+        root.setAttribute('data-api-route', apiPrefix ? 'pass-through' : 'direct');
         return true;
       });
     });
   }
-  var ready = confirm(base).catch(function () {
+  function confirmWithPassThrough(candidate) {
+    return confirm(candidate, '/api').catch(function () {
+      return confirm(candidate, '/api/pass-through');
+    });
+  }
+  var ready = confirmWithPassThrough(base).catch(function () {
     useHostedApi();
-    return confirm(base);
+    return confirmWithPassThrough(base);
   }).then(function () {
     root.setAttribute('data-api-connected', 'true');
     root.setAttribute('data-api-base', base);

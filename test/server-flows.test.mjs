@@ -29,7 +29,10 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(health.body.version, '1.0.0');
   assert.ok(health.body.commit);
   assert.ok(health.body.startedAt);
-  assert.deepEqual(health.body.routes, { accountBootstrap: true, accessActivation: true, gameSession: true });
+  assert.deepEqual(health.body.routes, { accountBootstrap: true, accessActivation: true, gameSession: true, passThrough: true });
+  const passThroughHealth = await json(`${base}/api/pass-through/health`, { headers: { Origin: 'https://admin.muzikaz.test' } });
+  assert.equal(passThroughHealth.response.status, 200);
+  assert.equal(passThroughHealth.body.service, 'muzikaz-member-market');
   assert.equal(health.body.persistentStorageConfigured, false);
   assert.equal(health.response.headers.get('access-control-allow-origin'), 'https://admin.muzikaz.test', 'approved static admin deployments can call the live API with credentials');
   assert.equal(health.response.headers.get('access-control-allow-credentials'), 'true');
