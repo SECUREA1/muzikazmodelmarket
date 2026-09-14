@@ -2340,7 +2340,7 @@ function initBottleLogin() {
   };
   accessCodeButton?.addEventListener('click', () => openAccessCodeAccount());
   walletValidateButton?.addEventListener('click', () => openAccessCodeAccount({ connectFirst: true }));
-  adminBypassButton?.addEventListener('click', async () => {
+  const openAdminBypass = async () => {
     setBusy(true);
     try {
       const password = adminBypassPassword?.value || '';
@@ -2349,6 +2349,10 @@ function initBottleLogin() {
       const response = await accountApiFetch('/api/access/admin-bypass', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ password }) });
       const result = await response.json().catch(() => ({ success: false, message: `The admin service returned an unreadable response (${response.status}).` }));
       if (!response.ok || !result.success) throw new Error(result.message || 'Admin bypass failed.');
+      const permissions = result.data?.permissions || {};
+      if (permissions.members !== true || permissions.backpack !== true || permissions.creatorTools !== true || permissions.marketplace !== true || permissions.games !== true || permissions.world !== true) {
+        throw new Error('The admin Loadout was opened, but the members API did not return the complete access set. Reload and try again.');
+      }
       const account = rememberAccountSession(result.data);
       currentMemberEmail = syncAccessCodeBackpack(account);
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
@@ -2356,9 +2360,23 @@ function initBottleLogin() {
       setPurchaseStep(3);
       renderOwnedCollection(currentMemberEmail);
       unlock('Admin Loadout opened. The complete members area and multiplayer access are ready.');
+      const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
+      if (redirect) {
+        window.sessionStorage.removeItem('muzikazLoginRedirect');
+        window.location.href = redirect;
+        return;
+      }
       scrollToSection('member-locked-content');
     } catch (error) { if (status) status.textContent = error.message || 'Admin bypass failed.'; }
     finally { setBusy(false); }
+  };
+  adminBypassButton?.addEventListener('click', openAdminBypass);
+  // The shortcut lives inside the broader Loadout form. Capture Enter here so
+  // typing the owner word never falls through to that form's wallet flow.
+  adminBypassPassword?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    if (!adminBypassButton?.disabled) openAdminBypass();
   });
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
