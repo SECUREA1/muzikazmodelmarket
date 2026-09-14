@@ -2338,8 +2338,9 @@ function initBottleLogin() {
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
       window.sessionStorage.setItem('muzikazBottleMember', 'true');
       setPurchaseStep(3);
-      unlock('Admin Loadout opened. Entering RAD-TOX now…');
-      await enterGame();
+      renderOwnedCollection(currentMemberEmail);
+      unlock('Admin Loadout opened. The complete members area and multiplayer access are ready.');
+      scrollToSection('member-locked-content');
     } catch (error) { if (status) status.textContent = error.message || 'Admin bypass failed.'; }
     finally { setBusy(false); }
   });

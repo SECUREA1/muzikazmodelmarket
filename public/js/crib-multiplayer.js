@@ -6,6 +6,8 @@
   const apiFetch = (path, options) => window.MUZIKAZ_API ? window.MUZIKAZ_API.fetch(path, options) : fetch(apiUrl(path), options);
   const controls = [...document.querySelectorAll('[data-multiplayer-control]')];
   const paywall = document.querySelector('#multiplayer-paywall');
+  const bypassForm = document.querySelector('#multiplayer-admin-bypass');
+  const bypassStatus = document.querySelector('#multiplayer-admin-status');
   const showPaywall = () => { if (paywall) paywall.hidden = false; };
   controls.forEach((control) => control.addEventListener('click', () => { if (control.disabled) showPaywall(); }));
   paywall?.querySelector('[data-close-multiplayer-paywall]')?.addEventListener('click', () => { paywall.hidden = true; controls[0]?.focus(); });
@@ -24,8 +26,28 @@
     return data;
   }
 
-  authorizeMultiplayer().then(startMultiplayer).catch(() => {
+  const lockMultiplayerControls = () => {
     controls.forEach((control) => { control.disabled = false; control.setAttribute('aria-haspopup', 'dialog'); control.onclick = (event) => { event.preventDefault(); event.stopImmediatePropagation(); showPaywall(); }; });
+  };
+  authorizeMultiplayer().then(startMultiplayer).catch(lockMultiplayerControls);
+
+  bypassForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const submit = bypassForm.querySelector('button');
+    const password = bypassForm.querySelector('input')?.value || '';
+    submit.disabled = true;
+    if (bypassStatus) bypassStatus.textContent = 'Checking admin access…';
+    try {
+      const response = await apiFetch('/api/access/admin-bypass', { method:'POST', headers:{ 'Content-Type':'application/json', Accept:'application/json' }, body:JSON.stringify({ password }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) throw new Error(result.message || 'Admin bypass failed.');
+      window.MUZIKAZ_API?.setSessionToken?.(result.data.sessionToken);
+      paywall.hidden = true;
+      controls.forEach((control) => { control.onclick = null; control.removeAttribute('aria-haspopup'); });
+      startMultiplayer(await authorizeMultiplayer());
+    } catch (error) {
+      if (bypassStatus) bypassStatus.textContent = error.message || 'Admin bypass failed.';
+    } finally { submit.disabled = false; }
   });
 
   function startMultiplayer(accountData) {
