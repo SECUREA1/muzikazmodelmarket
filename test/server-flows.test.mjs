@@ -53,6 +53,9 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   const wallet = '0x5555555555555555555555555555555555555555';
   const activation = await json(`${base}/api/access/activate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: pass.body.data.code, username: 'New User' }) });
   assert.equal(activation.response.status, 200); assert.equal(activation.body.data.account.loadoutStatus, 'included'); assert.equal(activation.body.data.account.creatorVaultAccess, true); assert.equal(activation.body.data.account.primaryEthereumWallet, null);
+  assert.equal(activation.body.data.permissions.members, true, 'a resolved member credential immediately reports members-area access');
+  assert.equal(activation.body.data.permissions.games, true, 'a resolved member credential immediately reports game access');
+  assert.equal(activation.body.data.backpack.status, 'ready', 'a resolved member credential returns the restricted-area Backpack snapshot');
   assert.equal(activation.body.data.account.mzkBalance, 2000, 'admin Loadout codes include the full first-buy-equivalent MZK grant');
   const accountCookie = activation.response.headers.get('set-cookie').split(';')[0];
   const memberMultiplayer = await json(`${base}/api/houses/ioncore-house/chat`, { headers: { Cookie: accountCookie } });
@@ -83,6 +86,7 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(bypassDenied.response.status, 401, 'an incorrect owner word cannot bypass the Bottle gate');
   const bypass = await json(`${base}/api/access/admin-bypass`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'test-password' }) });
   assert.equal(bypass.response.status, 200, 'the configured admin word opens an owner Loadout session');
+  assert.equal(bypass.body.data.permissions.members, true, 'the owner credential opens the same restricted members area');
   const bootsBypass = await json(`${base}/api/access/admin-bypass`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'boots' }) });
   assert.equal(bootsBypass.response.status, 200, 'boots always opens the owner Loadout even when the data-center password is rotated');
   const bootsCookie = bootsBypass.response.headers.get('set-cookie').split(';')[0];

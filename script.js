@@ -2116,7 +2116,17 @@ function initBottleLogin() {
     : fetch(path, options);
   let walletRequestActive = false;
   const selectedLoadoutPrice = () => { const price = Number(loadoutTiers.find((input) => input.checked)?.value || BACKPACK_LOADOUT_USD); return BACKPACK_LOADOUT_TIERS[price] ? price : BACKPACK_LOADOUT_USD; };
-  const rememberAccountSession = (session) => { window.MUZIKAZ_API?.setSessionToken?.(session.sessionToken); window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt }; return session.account; };
+  const rememberAccountSession = (session) => {
+    window.MUZIKAZ_API?.setSessionToken?.(session.sessionToken);
+    window.MuzikazAccountSession = {
+      csrfToken: session.csrfToken,
+      account: session.account,
+      backpack: session.backpack,
+      permissions: session.permissions,
+      expiresAt: session.expiresAt
+    };
+    return session.account;
+  };
   const authenticateWalletAccount = async (wallet) => { const response = await accountApiFetch('/api/access/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ wallet }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Wallet account authentication failed.'); return rememberAccountSession(result.data); };
   const setBusy = (busy) => {
     if (connectButton) connectButton.disabled = busy;
@@ -2452,8 +2462,13 @@ function initBottleLogin() {
       window.MuzikazAccountSession = { csrfToken, account, expiresAt, backpack, permissions };
       currentMemberEmail = syncAccessCodeBackpack(account);
       showAddress(account.primaryEthereumWallet);
-      if (account.loadoutAccess === true && permissions.members) { setPurchaseStep(3); unlock('Welcome back. Your persistent Loadout, Backpack, avatars, creator tools and games are ready.'); }
-      else unlock(backpack.status === 'empty' ? 'Your account is open. Add a Loadout to unlock member tools and games.' : 'Your account is open.');
+      if (permissions.members !== true) {
+        clearConnectedSession();
+        if (status) status.textContent = 'This account is valid, but it does not include members-area access. Add a Loadout or use an entitled credential.';
+        return;
+      }
+      setPurchaseStep(3);
+      unlock('Welcome back. Your persistent Loadout, Backpack, avatars, creator tools and games are ready.');
       renderOwnedCollection(currentMemberEmail);
       const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
       if (permissions.members && redirect) { window.sessionStorage.removeItem('muzikazLoginRedirect'); window.location.href = redirect; }

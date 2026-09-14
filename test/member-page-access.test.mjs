@@ -20,3 +20,15 @@ test('members login consumes only a same-site return path', async () => {
   assert.match(source, /new URLSearchParams\(window\.location\.search\)\.get\('return'\)/);
   assert.match(source, /!\/\^\(\?:\[a-z\]/, 'absolute and protocol-relative return URLs are rejected');
 });
+
+test('every resolved login keeps authoritative permissions before opening restricted controls', async () => {
+  const source = await readFile(new URL('../script.js', import.meta.url), 'utf8');
+  assert.match(source, /backpack: session\.backpack/);
+  assert.match(source, /permissions: session\.permissions/);
+  assert.match(source, /if \(permissions\.members !== true\)/, 'an account without member permission must stay outside the restricted area');
+  assert.match(source, /lockedContent\.hidden = false/);
+  for (const credentialButton of ['bottle-wallet-connect', 'meknx-wallet-entry', 'loadout-code-redeem', 'account-wallet-validate', 'admin-game-bypass-button', 'bottle-backpack-loadout']) {
+    const html = await readFile(new URL('../members.html', import.meta.url), 'utf8');
+    assert.match(html, new RegExp(`id="${credentialButton}"`), `${credentialButton} remains connected to a credential resolver`);
+  }
+});
