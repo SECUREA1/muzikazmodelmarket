@@ -32,3 +32,13 @@ test('every resolved login keeps authoritative permissions before opening restri
     assert.match(html, new RegExp(`id="${credentialButton}"`), `${credentialButton} remains connected to a credential resolver`);
   }
 });
+
+test('the owner word submits directly to the complete members API flow', async () => {
+  const source = await readFile(new URL('../script.js', import.meta.url), 'utf8');
+  assert.match(source, /adminBypassPassword\?\.addEventListener\('keydown'/, 'the password field handles keyboard submission itself');
+  assert.match(source, /if \(event\.key !== 'Enter'\) return;/, 'Enter cannot fall through to the surrounding wallet form');
+  for (const permission of ['members', 'backpack', 'creatorTools', 'marketplace', 'games', 'world']) {
+    assert.ok(source.includes(`permissions.${permission} !== true`), `admin entry verifies ${permission} access before unlocking the UI`);
+  }
+  assert.match(source, /const redirect = window\.sessionStorage\.getItem\('muzikazLoginRedirect'\);[\s\S]*window\.location\.href = redirect;/, 'admin entry returns the member to the originally requested protected page');
+});
