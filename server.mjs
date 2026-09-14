@@ -215,6 +215,24 @@ async function multiplayerContext(req, res) {
   }
   return { active, account, ownsGenieBottle };
 }
+const MEMBER_SECTION_PERMISSIONS = Object.freeze({
+  members: 'members', backpack: 'backpack', marketplace: 'marketplace',
+  avatars: 'avatarSelection', creator: 'creatorTools', audio: 'creatorTools',
+  games: 'games', world: 'world'
+});
+function accountPermissions(account) {
+  const entitled = account.loadoutAccess === true;
+  return {
+    members: entitled && account.memberAccess === true,
+    backpack: entitled,
+    avatarSelection: entitled && account.avatarAccess === true,
+    creatorTools: entitled && account.creatorVaultAccess === true,
+    marketplace: entitled && account.marketplaceAccess === true,
+    radTox: entitled && account.gameAccess === true,
+    games: entitled && account.gameAccess === true,
+    world: entitled && account.worldAccess === true
+  };
+}
 const STARTER_AVATAR = { id: 'starter-avatar', name: 'Starter Avatar', state: 'revealed', eligible: true, modelUrl: '/public/models/avatars/DAX.glb', assetType: 'avatar', category: 'Avatars' };
 function publicModelUrl(value = '') { const url = String(value); return !url || url.startsWith('/') ? url : `/${url}`; }
 async function repositoryGameCatalog() {
@@ -396,7 +414,20 @@ const server = createServer(async (req, res) => {
       await loadoutCodeStore.repairEntitledAccount(account.accountId);
       const canonical = await loadoutCodeStore.getAccount(account.accountId);
       const csrfToken = await accountSessionStore.issueCsrf(active.token);
-      return sendJson(res, 200, assetResponse({ authenticated: true, account: canonical, backpack: await backpackFor(canonical), permissions: { members: canonical.loadoutAccess === true && canonical.memberAccess === true, backpack: canonical.loadoutAccess === true, avatarSelection: canonical.loadoutAccess === true && canonical.avatarAccess === true, creatorTools: canonical.loadoutAccess === true && canonical.creatorVaultAccess === true, marketplace: canonical.loadoutAccess === true && canonical.marketplaceAccess === true, radTox: canonical.loadoutAccess === true && canonical.gameAccess === true, games: canonical.loadoutAccess === true && canonical.gameAccess === true, world: canonical.loadoutAccess === true && canonical.worldAccess === true }, session: { mechanism: active.mechanism, createdAt: active.createdAt, expiresAt: active.expiresAt }, csrfToken, expiresAt: active.expiresAt }));
+      return sendJson(res, 200, assetResponse({ authenticated: true, account: canonical, backpack: await backpackFor(canonical), permissions: accountPermissions(canonical), session: { mechanism: active.mechanism, createdAt: active.createdAt, expiresAt: active.expiresAt }, csrfToken, expiresAt: active.expiresAt }));
+    }
+    if (url.pathname === '/api/member/access' && req.method === 'GET') {
+      const active = await accountSession(req, res); if (!active) return;
+      const account = await loadoutCodeStore.getAccount(active.accountId);
+      if (!account) return authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'The session account no longer exists.', 'account');
+      await loadoutCodeStore.repairEntitledAccount(account.accountId);
+      const canonical = await loadoutCodeStore.getAccount(account.accountId);
+      const section = cleanText(url.searchParams.get('section'), 'members').toLowerCase();
+      const permission = MEMBER_SECTION_PERMISSIONS[section];
+      if (!permission) return authorizationError(res, 400, 'MEMBER_SECTION_UNKNOWN', 'The requested member section is not recognized.', 'request');
+      const permissions = accountPermissions(canonical);
+      if (!permissions[permission]) return authorizationError(res, 403, 'MEMBER_SECTION_ACCESS_REQUIRED', `Your account does not include access to the ${section} section.`, 'permission');
+      return sendJson(res, 200, assetResponse({ authenticated: true, section, permission, allowed: true, account: { accountId: canonical.accountId, username: canonical.username }, permissions }));
     }
     if (url.pathname === '/api/session' && req.method === 'GET') { const active = await accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); if (!account) return authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'The session account no longer exists.', 'account'); const csrfToken = await accountSessionStore.issueCsrf(active.token); return sendJson(res, 200, assetResponse({ authenticated: true, accountId: account.accountId, backpackId: account.backpackId, csrfToken, expiresAt: active.expiresAt, mechanism: active.mechanism })); }
     if ((url.pathname === '/api/session' && req.method === 'DELETE') || (url.pathname === '/api/session/logout' && req.method === 'POST')) {
