@@ -32,6 +32,10 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   const first = await redeem(await makeCode()); const second = await redeem(await makeCode());
   assert.notEqual(first.body.data.account.accountId, second.body.data.account.accountId);
   assert.match(first.body.data.sessionToken, /^[A-Za-z0-9_-]+$/, 'code entry returns a portable API session for browsers that block third-party cookies');
+  const unusedCode = await makeCode();
+  const switched = await json(base, '/api/access/login', { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${first.body.data.sessionToken}` }, body: JSON.stringify({ code: unusedCode }) });
+  assert.equal(switched.response.status, 200, 'the member login route activates a new pass');
+  assert.notEqual(switched.body.data.account.accountId, first.body.data.account.accountId, 'a stale member session cannot block login to the account named by a valid pass');
   const firstHeaders = { cookie: first.cookie }; const secondHeaders = { cookie: second.cookie };
   const session = await json(base, '/api/session', { headers: firstHeaders });
   const bootstrap = await json(base, '/api/account/bootstrap', { headers: firstHeaders });
