@@ -2310,7 +2310,11 @@ function initBottleLogin() {
       const submitCode = async (wallet = '') => {
         const idempotencyKey = window.crypto?.randomUUID?.() || `activation-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const options = { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Idempotency-Key': idempotencyKey }, body: JSON.stringify({ code, wallet, username: usernameInput?.value || '' }) };
-        const response = await accountApiFetch('/api/access/activate', options);
+        // Login is intentionally account-switching: a stale session belonging
+        // to another member must not make a valid pass look permanently bound.
+        // The endpoint also activates an unused pass, so one field works for
+        // first entry and every later login without client-side status probing.
+        const response = await accountApiFetch('/api/access/login', options);
         const result = await response.json().catch(() => ({ success: false, message: `The access service returned an unreadable response (${response.status}).` }));
         return { response, result };
       };

@@ -7,7 +7,12 @@
   var base;
   var apiPrefix = '';
   var hostedApi = new window.URL('https://muzikazmodelmarket.onrender.com');
-  var compatibleRoutes = { '/api/access/activate': ['/api/access-codes/redeem', '/api/loadout-codes/redeem'] };
+  var compatibleRoutes = {
+    '/api/access/activate': ['/api/access-codes/redeem', '/api/loadout-codes/redeem'],
+    /* The current login route opens both new and returning passes. Keep older
+     * account-service revisions usable while a frontend deployment rolls out. */
+    '/api/access/login': ['/api/access/activate', '/api/access-codes/redeem', '/api/loadout-codes/redeem']
+  };
   try {
     base = new window.URL(configured || window.location.origin, window.location.href);
     /* Never let an old http configuration create mixed-content failures on mobile. */

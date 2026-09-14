@@ -57,6 +57,18 @@ test('only explicit API_ROUTE_NOT_FOUND permits an activation alias', async () =
   assert.deepEqual(requests.slice(1), ['https://muzikazmodelmarket.onrender.com/api/access/activate', 'https://muzikazmodelmarket.onrender.com/api/access-codes/redeem']);
 });
 
+test('member login falls back to activation routes during a rolling API deployment', async () => {
+  const requests = [];
+  const { window } = loadConnection(async (url) => {
+    requests.push(url);
+    if (url.endsWith('/api/health')) return health();
+    if (url.endsWith('/api/access/login')) return new Response(JSON.stringify({ code: 'API_ROUTE_NOT_FOUND' }), { status: 404, headers: { 'content-type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'content-type': 'application/json' } });
+  }, 'https://muzikazmodelmarket.onrender.com');
+  assert.equal((await window.MUZIKAZ_API.fetch('/api/access/login', { method: 'POST' })).status, 200);
+  assert.deepEqual(requests.slice(1), ['https://muzikazmodelmarket.onrender.com/api/access/login', 'https://muzikazmodelmarket.onrender.com/api/access/activate']);
+});
+
 test('invalid access and ambiguous static responses never replay a one-time activation', async () => {
   for (const response of [new Response(JSON.stringify({ code: 'ACCESS_CODE_INVALID' }), { status: 404, headers: { 'content-type': 'application/json' } }), new Response('<html>missing</html>', { status: 404, headers: { 'content-type': 'text/html' } })]) {
     let posts = 0; const { window } = loadConnection(async url => url.endsWith('/api/health') ? health() : (posts++, response.clone()), 'https://muzikazmodelmarket.onrender.com');

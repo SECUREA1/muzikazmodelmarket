@@ -29,7 +29,7 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(health.body.version, '1.0.0');
   assert.ok(health.body.commit);
   assert.ok(health.body.startedAt);
-  assert.deepEqual(health.body.routes, { accountBootstrap: true, accessActivation: true, gameSession: true, passThrough: true });
+  assert.deepEqual(health.body.routes, { accountBootstrap: true, accessActivation: true, accessLogin: true, gameSession: true, passThrough: true });
   const passThroughHealth = await json(`${base}/api/pass-through/health`, { headers: { Origin: 'https://admin.muzikaz.test' } });
   assert.equal(passThroughHealth.response.status, 200);
   assert.equal(passThroughHealth.body.service, 'muzikaz-member-market');
@@ -116,7 +116,7 @@ test('member loadout entry uses the shared canonical account API', async () => {
   const source = await readFile(new URL('../script.js', import.meta.url), 'utf8');
   assert.match(source, /const accountApiFetch = .*window\.MUZIKAZ_API\?\.fetch/s);
   assert.match(source, /accountApiFetch\('\/api\/access\/wallet'/);
-  assert.match(source, /accountApiFetch\('\/api\/access\/activate'/);
+  assert.match(source, /accountApiFetch\('\/api\/access\/login'/);
   assert.match(source, /accountApiFetch\('\/api\/account\/loadout\/paid'/);
   assert.match(source, /accountApiFetch\('\/api\/account\/access-code'/);
   assert.ok(source.includes('[A-Z0-9]{8}-[A-Z0-9]{8}'), 'legacy Rust pass format remains accepted by the member login');
