@@ -148,7 +148,15 @@ function accountSessionToken(req) { return bearer(req) || cookie(req, 'mzk_sessi
 async function openAccountSession(res, account) {
   const created = await accountSessionStore.createSession(account);
   res.setHeader('Set-Cookie', sessionCookie('mzk_session', created.token, accountSessionTtl));
-  return { authenticated: true, account, sessionToken: created.token, csrfToken: created.csrfToken, expiresAt: created.session.expiresAt };
+  return {
+    authenticated: true,
+    account,
+    backpack: await backpackFor(account),
+    permissions: accountPermissions(account),
+    sessionToken: created.token,
+    csrfToken: created.csrfToken,
+    expiresAt: created.session.expiresAt
+  };
 }
 function authorizationError(res, status, code, message, stage) { return sendJson(res, status, { success: false, code, message, stage }); }
 async function resolveAccountSession(req) {
