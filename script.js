@@ -2104,10 +2104,6 @@ function initBottleLogin() {
   const adminBypassPassword = document.querySelector('#admin-game-bypass-password');
   const adminBypassButton = document.querySelector('#admin-game-bypass-button');
   if (!form || !lockedContent) return;
-  const requestedReturn = new URLSearchParams(window.location.search).get('return');
-  if (requestedReturn && !/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(requestedReturn) && !requestedReturn.startsWith('/')) {
-    window.sessionStorage.setItem('muzikazLoginRedirect', requestedReturn);
-  }
   // Member access can be rendered from a static/custom-domain frontend while the
   // account service remains on Render. Keep every loadout request on the shared
   // API connection instead of accidentally posting to the page host.
@@ -2116,17 +2112,7 @@ function initBottleLogin() {
     : fetch(path, options);
   let walletRequestActive = false;
   const selectedLoadoutPrice = () => { const price = Number(loadoutTiers.find((input) => input.checked)?.value || BACKPACK_LOADOUT_USD); return BACKPACK_LOADOUT_TIERS[price] ? price : BACKPACK_LOADOUT_USD; };
-  const rememberAccountSession = (session) => {
-    window.MUZIKAZ_API?.setSessionToken?.(session.sessionToken);
-    window.MuzikazAccountSession = {
-      csrfToken: session.csrfToken,
-      account: session.account,
-      backpack: session.backpack,
-      permissions: session.permissions,
-      expiresAt: session.expiresAt
-    };
-    return session.account;
-  };
+  const rememberAccountSession = (session) => { window.MUZIKAZ_API?.setSessionToken?.(session.sessionToken); window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt }; return session.account; };
   const authenticateWalletAccount = async (wallet) => { const response = await accountApiFetch('/api/access/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ wallet }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Wallet account authentication failed.'); return rememberAccountSession(result.data); };
   const setBusy = (busy) => {
     if (connectButton) connectButton.disabled = busy;
@@ -2259,8 +2245,6 @@ function initBottleLogin() {
         setPurchaseStep(3);
         renderOwnedCollection(currentMemberEmail);
         unlock(`${backpackBottle} found in this connected Backpack. Designated member, marketplace, avatar and game access is ready.`);
-        const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
-        if (redirect) { window.sessionStorage.removeItem('muzikazLoginRedirect'); window.location.href = redirect; return; }
         scrollToSection('member-locked-content');
       } else {
         await verifyAndUnlock(address);
@@ -2310,11 +2294,7 @@ function initBottleLogin() {
       const submitCode = async (wallet = '') => {
         const idempotencyKey = window.crypto?.randomUUID?.() || `activation-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const options = { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Idempotency-Key': idempotencyKey }, body: JSON.stringify({ code, wallet, username: usernameInput?.value || '' }) };
-        // Login is intentionally account-switching: a stale session belonging
-        // to another member must not make a valid pass look permanently bound.
-        // The endpoint also activates an unused pass, so one field works for
-        // first entry and every later login without client-side status probing.
-        const response = await accountApiFetch('/api/access/login', options);
+        const response = await accountApiFetch('/api/access/activate', options);
         const result = await response.json().catch(() => ({ success: false, message: `The access service returned an unreadable response (${response.status}).` }));
         return { response, result };
       };
@@ -2344,7 +2324,7 @@ function initBottleLogin() {
   };
   accessCodeButton?.addEventListener('click', () => openAccessCodeAccount());
   walletValidateButton?.addEventListener('click', () => openAccessCodeAccount({ connectFirst: true }));
-  const openAdminBypass = async () => {
+  adminBypassButton?.addEventListener('click', async () => {
     setBusy(true);
     try {
       const password = adminBypassPassword?.value || '';
@@ -2353,34 +2333,15 @@ function initBottleLogin() {
       const response = await accountApiFetch('/api/access/admin-bypass', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ password }) });
       const result = await response.json().catch(() => ({ success: false, message: `The admin service returned an unreadable response (${response.status}).` }));
       if (!response.ok || !result.success) throw new Error(result.message || 'Admin bypass failed.');
-      const permissions = result.data?.permissions || {};
-      if (permissions.members !== true || permissions.backpack !== true || permissions.creatorTools !== true || permissions.marketplace !== true || permissions.games !== true || permissions.world !== true) {
-        throw new Error('The admin Loadout was opened, but the members API did not return the complete access set. Reload and try again.');
-      }
       const account = rememberAccountSession(result.data);
       currentMemberEmail = syncAccessCodeBackpack(account);
       window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
       window.sessionStorage.setItem('muzikazBottleMember', 'true');
       setPurchaseStep(3);
-      renderOwnedCollection(currentMemberEmail);
-      unlock('Admin Loadout opened. The complete members area and multiplayer access are ready.');
-      const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
-      if (redirect) {
-        window.sessionStorage.removeItem('muzikazLoginRedirect');
-        window.location.href = redirect;
-        return;
-      }
-      scrollToSection('member-locked-content');
+      unlock('Admin Loadout opened. Entering RAD-TOX now…');
+      await enterGame();
     } catch (error) { if (status) status.textContent = error.message || 'Admin bypass failed.'; }
     finally { setBusy(false); }
-  };
-  adminBypassButton?.addEventListener('click', openAdminBypass);
-  // The shortcut lives inside the broader Loadout form. Capture Enter here so
-  // typing the owner word never falls through to that form's wallet flow.
-  adminBypassPassword?.addEventListener('keydown', (event) => {
-    if (event.key !== 'Enter') return;
-    event.preventDefault();
-    if (!adminBypassButton?.disabled) openAdminBypass();
   });
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -2484,16 +2445,9 @@ function initBottleLogin() {
       window.MuzikazAccountSession = { csrfToken, account, expiresAt, backpack, permissions };
       currentMemberEmail = syncAccessCodeBackpack(account);
       showAddress(account.primaryEthereumWallet);
-      if (permissions.members !== true) {
-        clearConnectedSession();
-        if (status) status.textContent = 'This account is valid, but it does not include members-area access. Add a Loadout or use an entitled credential.';
-        return;
-      }
-      setPurchaseStep(3);
-      unlock('Welcome back. Your persistent Loadout, Backpack, avatars, creator tools and games are ready.');
+      if (account.loadoutAccess === true && permissions.members) { setPurchaseStep(3); unlock('Welcome back. Your persistent Loadout, Backpack, avatars, creator tools and games are ready.'); }
+      else unlock(backpack.status === 'empty' ? 'Your account is open. Add a Loadout to unlock member tools and games.' : 'Your account is open.');
       renderOwnedCollection(currentMemberEmail);
-      const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
-      if (permissions.members && redirect) { window.sessionStorage.removeItem('muzikazLoginRedirect'); window.location.href = redirect; }
     } catch (error) {
       lockedContent.hidden = true;
       lockedContent.dataset.locked = 'true';

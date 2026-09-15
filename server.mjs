@@ -44,8 +44,6 @@ const supportMessages = [];
 const port = Number(process.env.PORT || 4173);
 const adminUsername = process.env.MUZIKAZ_ADMIN_USERNAME || 'giraff';
 const adminPassword = process.env.MUZIKAZ_ADMIN_PASSWORD || 'boots';
-// Keep the member/game owner shortcut stable when the data-center secret rotates.
-const memberBypassPassword = 'boots';
 const adminSessionSecret = process.env.MUZIKAZ_ADMIN_SESSION_SECRET || `${adminUsername}\0${adminPassword}\0muzikaz-admin-session`;
 const persistentAdminToken = createHmac('sha256', adminSessionSecret).update(`admin:${adminUsername}`).digest('base64url');
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
@@ -148,15 +146,7 @@ function accountSessionToken(req) { return bearer(req) || cookie(req, 'mzk_sessi
 async function openAccountSession(res, account) {
   const created = await accountSessionStore.createSession(account);
   res.setHeader('Set-Cookie', sessionCookie('mzk_session', created.token, accountSessionTtl));
-  return {
-    authenticated: true,
-    account,
-    backpack: await backpackFor(account),
-    permissions: accountPermissions(account),
-    sessionToken: created.token,
-    csrfToken: created.csrfToken,
-    expiresAt: created.session.expiresAt
-  };
+  return { authenticated: true, account, sessionToken: created.token, csrfToken: created.csrfToken, expiresAt: created.session.expiresAt };
 }
 function authorizationError(res, status, code, message, stage) { return sendJson(res, status, { success: false, code, message, stage }); }
 async function resolveAccountSession(req) {
@@ -222,24 +212,6 @@ async function multiplayerContext(req, res) {
     return null;
   }
   return { active, account, ownsGenieBottle };
-}
-const MEMBER_SECTION_PERMISSIONS = Object.freeze({
-  members: 'members', backpack: 'backpack', marketplace: 'marketplace',
-  avatars: 'avatarSelection', creator: 'creatorTools', audio: 'creatorTools',
-  games: 'games', world: 'world'
-});
-function accountPermissions(account) {
-  const entitled = account.loadoutAccess === true;
-  return {
-    members: entitled && account.memberAccess === true,
-    backpack: entitled,
-    avatarSelection: entitled && account.avatarAccess === true,
-    creatorTools: entitled && account.creatorVaultAccess === true,
-    marketplace: entitled && account.marketplaceAccess === true,
-    radTox: entitled && account.gameAccess === true,
-    games: entitled && account.gameAccess === true,
-    world: entitled && account.worldAccess === true
-  };
 }
 const STARTER_AVATAR = { id: 'starter-avatar', name: 'Starter Avatar', state: 'revealed', eligible: true, modelUrl: '/public/models/avatars/DAX.glb', assetType: 'avatar', category: 'Avatars' };
 function publicModelUrl(value = '') { const url = String(value); return !url || url.startsWith('/') ? url : `/${url}`; }
@@ -408,17 +380,12 @@ const server = createServer(async (req, res) => {
   res.muzikazRequestOrigin = String(req.headers.origin || '');
   res.muzikazRequestId = String(req.headers['x-request-id'] || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80) || randomUUID();
   const url = new URL(req.url, `http://${req.headers.host}`);
-  // CDNs can reserve or shadow their own /api routes. Keep a namespaced entry
-  // point that passes through to these same handlers, allowing the browser to
-  // identify this service before it sends an access code or session credential.
-  if (url.pathname === '/api/pass-through') url.pathname = '/api';
-  else if (url.pathname.startsWith('/api/pass-through/')) url.pathname = '/api/' + url.pathname.slice('/api/pass-through/'.length);
   if (url.pathname.startsWith('/api/') && !originAllowed(res.muzikazRequestOrigin)) return sendJson(res, 403, { success: false, code: 'CORS_ORIGIN_DENIED', message: 'This origin is not allowed to call the MUZIKAZ API.', stage: 'cors' });
   if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders({ 'X-Request-ID': res.muzikazRequestId }, res.muzikazRequestOrigin)); res.end(); return; }
   try {
     if (url.pathname === '/api/health' && req.method === 'GET') {
       await ensureStorage();
-      return sendJson(res, 200, { success: true, service: 'muzikaz-member-market', version: serviceVersion, commit: deploymentCommit, startedAt: serviceStartedAt, storage: 'ready', persistentStorageConfigured: dataDir.startsWith('/var/data'), routes: { accountBootstrap: true, accessActivation: true, accessLogin: true, gameSession: true, passThrough: true } });
+      return sendJson(res, 200, { success: true, service: 'muzikaz-member-market', version: serviceVersion, commit: deploymentCommit, startedAt: serviceStartedAt, storage: 'ready', persistentStorageConfigured: dataDir.startsWith('/var/data'), routes: { accountBootstrap: true, accessActivation: true, gameSession: true } });
     }
     if (url.pathname === '/api/account/bootstrap' && req.method === 'GET') {
       const active = await accountSession(req, res); if (!active) return;
@@ -427,20 +394,7 @@ const server = createServer(async (req, res) => {
       await loadoutCodeStore.repairEntitledAccount(account.accountId);
       const canonical = await loadoutCodeStore.getAccount(account.accountId);
       const csrfToken = await accountSessionStore.issueCsrf(active.token);
-      return sendJson(res, 200, assetResponse({ authenticated: true, account: canonical, backpack: await backpackFor(canonical), permissions: accountPermissions(canonical), session: { mechanism: active.mechanism, createdAt: active.createdAt, expiresAt: active.expiresAt }, csrfToken, expiresAt: active.expiresAt }));
-    }
-    if (url.pathname === '/api/member/access' && req.method === 'GET') {
-      const active = await accountSession(req, res); if (!active) return;
-      const account = await loadoutCodeStore.getAccount(active.accountId);
-      if (!account) return authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'The session account no longer exists.', 'account');
-      await loadoutCodeStore.repairEntitledAccount(account.accountId);
-      const canonical = await loadoutCodeStore.getAccount(account.accountId);
-      const section = cleanText(url.searchParams.get('section'), 'members').toLowerCase();
-      const permission = MEMBER_SECTION_PERMISSIONS[section];
-      if (!permission) return authorizationError(res, 400, 'MEMBER_SECTION_UNKNOWN', 'The requested member section is not recognized.', 'request');
-      const permissions = accountPermissions(canonical);
-      if (!permissions[permission]) return authorizationError(res, 403, 'MEMBER_SECTION_ACCESS_REQUIRED', `Your account does not include access to the ${section} section.`, 'permission');
-      return sendJson(res, 200, assetResponse({ authenticated: true, section, permission, allowed: true, account: { accountId: canonical.accountId, username: canonical.username }, permissions }));
+      return sendJson(res, 200, assetResponse({ authenticated: true, account: canonical, backpack: await backpackFor(canonical), permissions: { members: canonical.loadoutAccess === true && canonical.memberAccess === true, backpack: canonical.loadoutAccess === true, avatarSelection: canonical.loadoutAccess === true && canonical.avatarAccess === true, creatorTools: canonical.loadoutAccess === true && canonical.creatorVaultAccess === true, marketplace: canonical.loadoutAccess === true && canonical.marketplaceAccess === true, radTox: canonical.loadoutAccess === true && canonical.gameAccess === true, games: canonical.loadoutAccess === true && canonical.gameAccess === true, world: canonical.loadoutAccess === true && canonical.worldAccess === true }, session: { mechanism: active.mechanism, createdAt: active.createdAt, expiresAt: active.expiresAt }, csrfToken, expiresAt: active.expiresAt }));
     }
     if (url.pathname === '/api/session' && req.method === 'GET') { const active = await accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); if (!account) return authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'The session account no longer exists.', 'account'); const csrfToken = await accountSessionStore.issueCsrf(active.token); return sendJson(res, 200, assetResponse({ authenticated: true, accountId: account.accountId, backpackId: account.backpackId, csrfToken, expiresAt: active.expiresAt, mechanism: active.mechanism })); }
     if ((url.pathname === '/api/session' && req.method === 'DELETE') || (url.pathname === '/api/session/logout' && req.method === 'POST')) {
@@ -514,8 +468,8 @@ const server = createServer(async (req, res) => {
     const adminAccessRevoke = url.pathname.match(/^\/api\/admin\/(?:access-codes|loadout-codes)\/([^/]+)\/revoke$/);
     if (adminAccessRevoke && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.adminRevoke(decodeURIComponent(adminAccessRevoke[1])))); }
     if ((url.pathname === '/api/access-codes/redeem' || url.pathname === '/api/access/activate' || url.pathname === '/api/loadout-codes/redeem') && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); const current = await resolveAccountSession(req); const result = await loadoutCodeStore.activate(body.code, body.wallet, body.username, current?.accountId || ''); await userDatabase.ensureAccount(result.account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, result.account))); } catch (error) { attempt.failure(); throw error; } }
-    if (url.pathname === '/api/access/admin-bypass' && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); if (!matchesSecret(body.password, memberBypassPassword) && !matchesSecret(body.password, adminPassword)) throw Object.assign(new Error('The admin bypass word is incorrect.'), { statusCode: 401 }); const account = await loadoutCodeStore.adminBypass(); await userDatabase.ensureAccount(account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
-    if (url.pathname === '/api/access/login' && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); const result = await loadoutCodeStore.activate(body.code, body.wallet, body.username); await userDatabase.ensureAccount(result.account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, result.account))); } catch (error) { attempt.failure(); throw error; } }
+    if (url.pathname === '/api/access/admin-bypass' && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); if (!matchesSecret(body.password, adminPassword)) throw Object.assign(new Error('The admin bypass word is incorrect.'), { statusCode: 401 }); const account = await loadoutCodeStore.adminBypass(); await userDatabase.ensureAccount(account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
+    if (url.pathname === '/api/access/login' && req.method === 'POST') { const attempt = throttleAccess(req); try { const account = await loadoutCodeStore.authenticate((await bodyJson(req)).code); await userDatabase.ensureAccount(account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
     if (url.pathname === '/api/access/wallet' && req.method === 'POST') { const wallet = (await bodyJson(req)).wallet; const active = await resolveAccountSession(req); const current = active ? await loadoutCodeStore.getAccount(active.accountId) : null; const account = current && !current.primaryEthereumWallet ? await loadoutCodeStore.connectWallet(current.accountId, wallet) : await loadoutCodeStore.findByWallet(wallet); await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); }
     if (url.pathname === '/api/account/loadout/paid' && req.method === 'POST') { const body = await bodyJson(req); const order = await paymentOrderStore.get(body.orderId); if (!order || !paymentOrderStore.authorize(order, body.claimToken)) return sendJson(res, 401, { success: false, code: 'PURCHASE_CLAIM_INVALID', message: 'The purchase claim is invalid.' }); const verified = ['PAID', 'FULFILLED'].includes(order.paymentStatus) ? order : await paymentOrderStore.verify(order.orderId); if (!['PAID', 'FULFILLED'].includes(verified.paymentStatus)) return sendJson(res, 202, { success: false, code: 'PURCHASE_PENDING', message: 'The payment is still awaiting independent confirmation.' }); const active = await resolveAccountSession(req); const granted = await loadoutCodeStore.fulfillPaidLoadout(verified, active?.accountId || ''); await userDatabase.ensureAccount(granted); return sendJson(res, 200, assetResponse(await openAccountSession(res, granted))); }
     if (url.pathname === '/api/account' && req.method === 'GET') { const active = await accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return account ? sendJson(res, 200, assetResponse(account)) : sendJson(res, 404, { success: false, message: 'Account not found.' }); }

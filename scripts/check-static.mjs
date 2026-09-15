@@ -177,10 +177,13 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
 }
-for (const accessMarker of ['Single Player · Access required', 'eligible Genie Bottle', '4,000 MZK land tier', 'public/js/black-genie-access.js']) {
-  if (!mainHtml.includes(accessMarker)) {
-    throw new Error(`index.html must preserve the qualified Single Player gate: ${accessMarker}`);
+for (const freeSinglePlayerMarker of ['Single Player · Free + 500 MZK', 'Start with 500 in-game MZK tokens for display and play', 'no wallet, payment, account, or Genie Bottle is required']) {
+  if (!mainHtml.includes(freeSinglePlayerMarker)) {
+    throw new Error(`index.html must advertise free Single Player access: ${freeSinglePlayerMarker}`);
   }
+}
+if (mainHtml.includes('<script src="public/js/black-genie-access.js"></script>')) {
+  throw new Error('index.html must not load the MZK payment gate for Single Player.');
 }
 for (const requiredToolsMarkup of ['id="house-tools"', 'data-house-tools', 'aria-controls="rad-tox-tools"', 'aria-haspopup="dialog"']) {
   if (!mainHtml.includes(requiredToolsMarkup)) {
@@ -314,10 +317,10 @@ for (const requiredGateMarkup of ['id="model-market-cover"', 'id="model-market-l
 }
 const membersHtml = await readFile('dist/members.html', 'utf8');
 const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
-if (mzkWallet.includes('claimSinglePlayerTokens') || mzkWallet.includes('SINGLE_PLAYER_STARTING_MZK')) throw new Error('Single Player must not mint or reset demo MZK.');
+if (!mzkWallet.includes('const SINGLE_PLAYER_STARTING_MZK = 500')) throw new Error('Single Player must grant exactly 500 starting MZK.');
 const blackGenieAccess = await readFile('dist/public/js/black-genie-access.js', 'utf8');
-for (const marker of ['Black Genie Bottle ownership gate', 'bottleClaims', "entry.purchaseType === 'LAND_TIER'", "entry.type === 'starter-land'", 'Number(entry.amount) === 4000', 'boughtLandTokens && purchasedLand', 'openGame(button']) {
-  if (!blackGenieAccess.includes(marker)) throw new Error(`Qualified Single Player gate is missing: ${marker}`);
+for (const marker of ['wallet.claimSinglePlayerTokens()', '500 MZK added for in-game display and play', 'Demo balance reset to 500 MZK', 'authorized = false', 'button.disabled = false', 'openGame(button)']) {
+  if (!blackGenieAccess.includes(marker)) throw new Error(`MZK Single Player gate is missing: ${marker}`);
 }
 for (const page of ['model-market.html', 'buy-mzk.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');

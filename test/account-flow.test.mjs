@@ -32,10 +32,6 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   const first = await redeem(await makeCode()); const second = await redeem(await makeCode());
   assert.notEqual(first.body.data.account.accountId, second.body.data.account.accountId);
   assert.match(first.body.data.sessionToken, /^[A-Za-z0-9_-]+$/, 'code entry returns a portable API session for browsers that block third-party cookies');
-  const unusedCode = await makeCode();
-  const switched = await json(base, '/api/access/login', { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${first.body.data.sessionToken}` }, body: JSON.stringify({ code: unusedCode }) });
-  assert.equal(switched.response.status, 200, 'the member login route activates a new pass');
-  assert.notEqual(switched.body.data.account.accountId, first.body.data.account.accountId, 'a stale member session cannot block login to the account named by a valid pass');
   const firstHeaders = { cookie: first.cookie }; const secondHeaders = { cookie: second.cookie };
   const session = await json(base, '/api/session', { headers: firstHeaders });
   const bootstrap = await json(base, '/api/account/bootstrap', { headers: firstHeaders });
@@ -47,11 +43,6 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   assert.equal((await json(base, '/api/backpack', { headers: secondHeaders })).body.data.accountId, second.body.data.account.accountId);
   assert.equal(backpack.body.data.status, 'ready'); assert.equal(backpack.body.data.mzkBalance, 2000);
   assert.ok(backpack.body.data.assets.every((asset) => asset.id && asset.state));
-  const audioAccess = await json(base, '/api/member/access?section=audio', { headers: firstHeaders });
-  assert.equal(audioAccess.response.status, 200);
-  assert.equal(audioAccess.body.data.allowed, true);
-  assert.equal(audioAccess.body.data.permission, 'creatorTools');
-  assert.equal((await json(base, '/api/member/access?section=unknown', { headers: firstHeaders })).response.status, 400);
 
   const csrfHeaders = { ...firstHeaders, 'content-type': 'application/json', 'x-csrf-token': session.body.data.csrfToken };
   const invalidAvatar = await json(base, '/api/avatar-selection', { method: 'PUT', headers: csrfHeaders, body: JSON.stringify({ avatarId: 'not-owned' }) });
@@ -76,8 +67,6 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   const walletOnlyHeaders = { authorization: `Bearer ${walletOnly.body.data.sessionToken}`, 'x-csrf-token': walletOnly.body.data.csrfToken };
   const denied = await json(base, '/api/game/session', { method: 'POST', headers: walletOnlyHeaders, body: '{}' });
   assert.equal(denied.response.status, 403); assert.equal(denied.body.code, 'LOADOUT_ACCESS_REQUIRED'); assert.equal(denied.body.stage, 'entitlement');
-  const deniedAudio = await json(base, '/api/member/access?section=audio', { headers: walletOnlyHeaders });
-  assert.equal(deniedAudio.response.status, 403); assert.equal(deniedAudio.body.code, 'MEMBER_SECTION_ACCESS_REQUIRED');
   const otherGame = await json(base, '/api/game/session', { headers: { ...walletOnlyHeaders, 'x-game-session': gameCreation.body.data.gameSessionToken } });
   assert.equal(otherGame.response.status, 403, 'an unentitled account cannot use another account game session');
   const logout = await json(base, '/api/session', { method: 'DELETE', headers: bearerHeaders });

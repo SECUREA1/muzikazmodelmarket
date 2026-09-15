@@ -54,13 +54,12 @@ least one Bottle token.
 
 ## MZK single-player entry
 
-The 3D House Explorer's **Single Player** launcher retains the original Black
-Genie Bottle ownership check. A verified sale Bottle in the player's Backpack
-(Black, Violet, or Golden) also qualifies. The alternative land route qualifies
-only after the same wallet buys the one-time $40 land tier for 4,000 MZK and
-spends those 4,000 MZK to complete a starter-land claim. Merely holding tokens
-or selecting land does not unlock gameplay, and launching or restarting a game
-does not create or reset a free demo balance.
+The 3D House Explorer's **Single Player** launcher costs 500 MZK ($5) on first
+entry and provisions a starter avatar, land item, and Builder Loadout in the
+player Backpack. The verified $5 payment also delivers the Black Genie Bottle;
+$30 adds the Violet Bottle; and $200 adds the Golden Bottle plus a custom
+in-game asset order. First MZK purchases receive 2,000 MZK from $5, 5,000 MZK
+at $30, 13,000 MZK at $100, or 26,000 MZK at $200.
 
 ## Land location data
 
