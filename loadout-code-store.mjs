@@ -12,6 +12,7 @@ const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const normalizeCode = (value) => String(value || '').trim().toUpperCase().replace(/\s+/g, '');
 const normalizeWallet = (value) => String(value || '').trim().toLowerCase();
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 const unique = (values) => [...new Set(values.filter(Boolean))];
 const enabled = (value, fallback = true) => value == null ? fallback : ![false, 0, '0', 'false', 'off', 'no'].includes(typeof value === 'string' ? value.trim().toLowerCase() : value);
 // Keep access-code accounts at parity with the paid Builder Loadout advertised
@@ -59,6 +60,9 @@ function generateCode() {
 function hashCode(code, salt = randomBytes(16).toString('hex')) {
   return { salt, hash: pbkdf2Sync(normalizeCode(code), salt, 210_000, 32, 'sha256').toString('hex') };
 }
+function hashPassword(password, salt = randomBytes(16).toString('hex')) {
+  return { salt, hash: pbkdf2Sync(String(password), salt, 210_000, 32, 'sha256').toString('hex') };
+}
 function verifies(code, credential) {
   const candidate = Buffer.from(hashCode(code, credential.salt).hash, 'hex');
   const expected = Buffer.from(credential.hash, 'hex');
@@ -66,7 +70,7 @@ function verifies(code, credential) {
 }
 function mask(code) { return `${code.slice(0, 8)}-••••-••••-${code.slice(-4)}`; }
 function publicAccount(account) {
-  const safe = clone(account); delete safe.accessCodeHash; delete safe.accessCodeSalt; return safe;
+  const safe = clone(account); delete safe.accessCodeHash; delete safe.accessCodeSalt; delete safe.guestPasswordHash; delete safe.guestPasswordSalt; return safe;
 }
 function publicCredential(record) {
   return { id: record.id, maskedCode: record.maskedCode, label: record.label, campaign: record.campaign, purpose: record.purpose || 'standard-loadout', status: record.status, createdAt: record.createdAt, activatedAt: record.activatedAt || null, revokedAt: record.revokedAt || null, expiresAt: record.expiresAt || null, boundWallet: record.boundWallet || null, accountId: record.accountId || null, accountUsername: record.accountUsername || null, loadoutRedeemed: Boolean(record.loadoutRedeemed), entitlements: clone(record.entitlements) };
@@ -211,6 +215,27 @@ export class MzkAccountStore {
     let account = data.accounts.find((item) => item.adminBypass === true);
     if (!account) { account = accountRecord('', '', 'MUZIKAZ Admin'); account.adminBypass = true; data.accounts.push(account); }
     grantStandardLoadout(account); account.updatedAt = new Date().toISOString();
+    return publicAccount(account);
+  }); }
+  guestLogin(email, password) { return this.serialized(async (data) => {
+    const normalizedEmail = normalizeEmail(email);
+    const suppliedPassword = String(password || '');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) || normalizedEmail.length > 254) throw Object.assign(new Error('Enter a valid guest email address.'), { statusCode: 400 });
+    if (suppliedPassword.length < 6 || suppliedPassword.length > 128) throw Object.assign(new Error('Guest passwords must be between 6 and 128 characters.'), { statusCode: 400 });
+    let account = data.accounts.find((item) => item.guestEmail === normalizedEmail);
+    if (account) {
+      const candidate = Buffer.from(hashPassword(suppliedPassword, account.guestPasswordSalt).hash, 'hex');
+      const expected = Buffer.from(account.guestPasswordHash, 'hex');
+      if (candidate.length !== expected.length || !timingSafeEqual(candidate, expected)) throw Object.assign(new Error('The guest email or password is incorrect.'), { statusCode: 401 });
+    } else {
+      account = accountRecord('', '', normalizedEmail.split('@')[0].slice(0, 40));
+      const secret = hashPassword(suppliedPassword);
+      Object.assign(account, { guestEmail: normalizedEmail, guestPasswordHash: secret.hash, guestPasswordSalt: secret.salt, guestAccess: true });
+      data.accounts.push(account);
+    }
+    grantStandardLoadout(account);
+    account.guestAccess = true;
+    account.updatedAt = new Date().toISOString();
     return publicAccount(account);
   }); }
   fulfillPaidLoadout(order, accountId = '') { return this.serialized(async (data) => {

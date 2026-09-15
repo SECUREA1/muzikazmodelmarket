@@ -316,6 +316,8 @@ for (const requiredGateMarkup of ['id="model-market-cover"', 'id="model-market-l
   }
 }
 const membersHtml = await readFile('dist/members.html', 'utf8');
+for (const guestLoginMarker of ['id="guest-member-email"', 'id="guest-member-password"', 'id="guest-member-login-button"']) if (!membersHtml.includes(guestLoginMarker)) throw new Error(`members.html is missing guest login markup: ${guestLoginMarker}`);
+for (const guestLoginFeature of ["accountApiFetch('/api/access/guest'", 'Guest access granted. Your full Backpack']) if (!memberScript.includes(guestLoginFeature)) throw new Error(`Guest member login is missing ${guestLoginFeature}.`);
 const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
 if (!mzkWallet.includes('const SINGLE_PLAYER_STARTING_MZK = 500')) throw new Error('Single Player must grant exactly 500 starting MZK.');
 const blackGenieAccess = await readFile('dist/public/js/black-genie-access.js', 'utf8');
