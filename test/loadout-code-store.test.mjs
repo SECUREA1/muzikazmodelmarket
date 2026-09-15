@@ -56,6 +56,26 @@ test('default MZK Loadout Pass creates a full Backpack before a user has a walle
   assert.equal((await store.authenticate(issued.code)).accountId, activated.account.accountId, 'the access code still reopens the wallet-connected account');
 });
 
+test('guest email login creates one password-protected full Loadout account', async (t) => {
+  const { file, store } = await fixture(t);
+  const first = await store.guestLogin(' Player@One.Example ', 'CaseSensitive7');
+  assert.equal(first.guestEmail, 'player@one.example');
+  assert.equal(first.guestAccess, true);
+  assert.equal(first.memberAccess, true);
+  assert.equal(first.gameAccess, true);
+  assert.equal(first.creatorVaultAccess, true);
+  assert.equal(first.mzkBalance, 2000);
+  assert.ok(first.gameAssets.includes('RAD-TOX Starter Gear'));
+  assert.equal(first.guestPasswordHash, undefined, 'password hashes never leave the store');
+  const returning = await store.guestLogin('player@one.example', 'CaseSensitive7');
+  assert.equal(returning.accountId, first.accountId);
+  assert.equal(returning.backpackId, first.backpackId);
+  assert.equal(returning.mzkBalance, 2000, 'repeat login does not duplicate the starter grant');
+  await assert.rejects(store.guestLogin('player@one.example', 'casesensitive7'), /incorrect/);
+  const persisted = await readFile(file, 'utf8');
+  assert.equal(persisted.includes('CaseSensitive7'), false, 'plaintext guest passwords are never persisted');
+});
+
 test('passes default to no expiry, record revocation, reject wrong purpose and cannot switch authenticated accounts', async (t) => {
   const { file, store } = await fixture(t);
   const permanent = await store.create();

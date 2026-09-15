@@ -24,6 +24,17 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   assert.equal(unauthenticated.response.status, 401); assert.equal(unauthenticated.body.code, 'SESSION_REQUIRED');
   assert.match(unauthenticated.response.headers.get('content-type'), /json/);
 
+  const guest = await json(base, '/api/access/guest', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'guest@example.com', password: 'guest-pass' }) });
+  assert.equal(guest.response.status, 200);
+  assert.equal(guest.body.data.account.memberAccess, true);
+  assert.equal(guest.body.data.account.gameAccess, true);
+  assert.ok(guest.body.data.account.gameAssets.includes('RAD-TOX Starter Gear'));
+  const guestHeaders = { authorization: `Bearer ${guest.body.data.sessionToken}`, 'x-csrf-token': guest.body.data.csrfToken };
+  assert.equal((await json(base, '/api/account/bootstrap', { headers: guestHeaders })).body.data.permissions.radTox, true);
+  assert.equal((await json(base, '/api/game/session', { method: 'POST', headers: guestHeaders, body: '{}' })).response.status, 201);
+  const wrongGuest = await json(base, '/api/access/guest', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'guest@example.com', password: 'wrong-pass' }) });
+  assert.equal(wrongGuest.response.status, 401);
+
   const admin = await json(base, '/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'giraff', password: 'boots' }) });
   const standardAdmin = await json(base, '/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'admin', password: 'boots' }) });
   assert.equal(standardAdmin.response.status, 200, 'admin / boots opens the full administrator session');

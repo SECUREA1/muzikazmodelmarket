@@ -2094,6 +2094,9 @@ function initBottleLogin() {
   const continueButton = document.querySelector('#bottle-continue');
   const accessCodeInput = document.querySelector('#loadout-access-code');
   const accessCodeButton = document.querySelector('#loadout-code-redeem');
+  const guestEmailInput = document.querySelector('#guest-member-email');
+  const guestPasswordInput = document.querySelector('#guest-member-password');
+  const guestLoginButton = document.querySelector('#guest-member-login-button');
   const walletValidateButton = document.querySelector('#account-wallet-validate');
   const identityPanel = document.querySelector('#wallet-identity');
   const usernameInput = document.querySelector('#wallet-username');
@@ -2121,6 +2124,7 @@ function initBottleLogin() {
     if (mintButton) mintButton.disabled = busy || (Number(form.dataset.purchaseStep) || 1) < 3;
     if (continueButton) continueButton.disabled = busy || (Number(form.dataset.purchaseStep) || 1) < 3;
     if (accessCodeButton) accessCodeButton.disabled = busy;
+    if (guestLoginButton) guestLoginButton.disabled = busy;
     if (walletValidateButton) walletValidateButton.disabled = busy;
     if (adminBypassButton) adminBypassButton.disabled = busy;
   };
@@ -2178,6 +2182,26 @@ function initBottleLogin() {
     // model-market owns game-session creation after its authoritative bootstrap.
     window.location.href = 'model-market.html?access=loadout#house-explorer';
   };
+  guestLoginButton?.addEventListener('click', async () => {
+    setBusy(true);
+    if (status) status.textContent = 'Opening your guest Backpack…';
+    try {
+      const response = await accountApiFetch('/api/access/guest', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ email: guestEmailInput?.value, password: guestPasswordInput?.value }) });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || 'Guest login failed.');
+      const account = rememberAccountSession(result.data);
+      currentMemberEmail = syncAccessCodeBackpack(account);
+      window.sessionStorage.setItem('muzikazBottleMember', 'true');
+      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      setPurchaseStep(3);
+      renderOwnedCollection(currentMemberEmail);
+      unlock('Guest access granted. Your full Backpack, members area, creator tools, and RAD-TOX multiplayer are ready.');
+      scrollToSection('member-locked-content');
+    } catch (error) {
+      if (status) status.textContent = error.message || 'Guest login failed.';
+    } finally { setBusy(false); }
+  });
+  [guestEmailInput, guestPasswordInput].forEach((input) => input?.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); guestLoginButton?.click(); } }));
   const verifyAndUnlock = async (address, requiredContract = '') => {
     const ownership = await validateBottleOwnership(address, requiredContract);
     const profile = window.MZKWallet?.connectIdentity({ address, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
