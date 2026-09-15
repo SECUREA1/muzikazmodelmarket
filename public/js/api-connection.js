@@ -5,14 +5,8 @@
   var root = document.documentElement;
   var configured = window.MUZIKAZ_API_BASE || window.MUZIKAZ_SHARED_AVATAR_API || root.getAttribute('data-api-base') || '';
   var base;
-  var apiPrefix = '';
   var hostedApi = new window.URL('https://muzikazmodelmarket.onrender.com');
-  var compatibleRoutes = {
-    '/api/access/activate': ['/api/access-codes/redeem', '/api/loadout-codes/redeem'],
-    /* The current login route opens both new and returning passes. Keep older
-     * account-service revisions usable while a frontend deployment rolls out. */
-    '/api/access/login': ['/api/access/activate', '/api/access-codes/redeem', '/api/loadout-codes/redeem']
-  };
+  var compatibleRoutes = { '/api/access/activate': ['/api/access-codes/redeem', '/api/loadout-codes/redeem'] };
   try {
     base = new window.URL(configured || window.location.origin, window.location.href);
     /* Never let an old http configuration create mixed-content failures on mobile. */
@@ -56,8 +50,7 @@
   }
 
   function url(path) {
-    var routedPath = apiPrefix && /^\/api(?:\/|$)/.test(path) ? apiPrefix + path.slice(4) : path;
-    return new window.URL(routedPath, base + '/').href;
+    return new window.URL(path, base + '/').href;
   }
 
   function requestApi(path, options) {
@@ -128,25 +121,17 @@
   /* Resolve the API host before any login POST can leave the browser. */
   root.setAttribute('data-api-connected', 'pending');
   root.setAttribute('data-api-base', base);
-  function confirm(candidate, prefix) {
-    var healthPath = (prefix || '') + '/health';
-    return window.fetch(new window.URL(healthPath, candidate + '/').href, { method: 'GET', mode: 'cors', credentials: 'include', cache: 'no-store' }).then(function (response) {
+  function confirm(candidate) {
+    return window.fetch(new window.URL('/api/health', candidate + '/').href, { method: 'GET', mode: 'cors', credentials: 'include', cache: 'no-store' }).then(function (response) {
       return response.clone().json().then(function (payload) {
         if (!response.ok || !payload || payload.service !== 'muzikaz-member-market') throw new Error('Not the MUZIKAZ member API.');
-        apiPrefix = prefix || '';
-        root.setAttribute('data-api-route', apiPrefix ? 'pass-through' : 'direct');
         return true;
       });
     });
   }
-  function confirmWithPassThrough(candidate) {
-    return confirm(candidate, '/api').catch(function () {
-      return confirm(candidate, '/api/pass-through');
-    });
-  }
-  var ready = confirmWithPassThrough(base).catch(function () {
+  var ready = confirm(base).catch(function () {
     useHostedApi();
-    return confirmWithPassThrough(base);
+    return confirm(base);
   }).then(function () {
     root.setAttribute('data-api-connected', 'true');
     root.setAttribute('data-api-base', base);

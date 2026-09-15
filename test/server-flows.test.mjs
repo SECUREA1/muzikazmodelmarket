@@ -29,10 +29,7 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(health.body.version, '1.0.0');
   assert.ok(health.body.commit);
   assert.ok(health.body.startedAt);
-  assert.deepEqual(health.body.routes, { accountBootstrap: true, accessActivation: true, accessLogin: true, gameSession: true, passThrough: true });
-  const passThroughHealth = await json(`${base}/api/pass-through/health`, { headers: { Origin: 'https://admin.muzikaz.test' } });
-  assert.equal(passThroughHealth.response.status, 200);
-  assert.equal(passThroughHealth.body.service, 'muzikaz-member-market');
+  assert.deepEqual(health.body.routes, { accountBootstrap: true, accessActivation: true, gameSession: true });
   assert.equal(health.body.persistentStorageConfigured, false);
   assert.equal(health.response.headers.get('access-control-allow-origin'), 'https://admin.muzikaz.test', 'approved static admin deployments can call the live API with credentials');
   assert.equal(health.response.headers.get('access-control-allow-credentials'), 'true');
@@ -56,9 +53,6 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   const wallet = '0x5555555555555555555555555555555555555555';
   const activation = await json(`${base}/api/access/activate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: pass.body.data.code, username: 'New User' }) });
   assert.equal(activation.response.status, 200); assert.equal(activation.body.data.account.loadoutStatus, 'included'); assert.equal(activation.body.data.account.creatorVaultAccess, true); assert.equal(activation.body.data.account.primaryEthereumWallet, null);
-  assert.equal(activation.body.data.permissions.members, true, 'a resolved member credential immediately reports members-area access');
-  assert.equal(activation.body.data.permissions.games, true, 'a resolved member credential immediately reports game access');
-  assert.equal(activation.body.data.backpack.status, 'ready', 'a resolved member credential returns the restricted-area Backpack snapshot');
   assert.equal(activation.body.data.account.mzkBalance, 2000, 'admin Loadout codes include the full first-buy-equivalent MZK grant');
   const accountCookie = activation.response.headers.get('set-cookie').split(';')[0];
   const memberMultiplayer = await json(`${base}/api/houses/ioncore-house/chat`, { headers: { Cookie: accountCookie } });
@@ -89,11 +83,6 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(bypassDenied.response.status, 401, 'an incorrect owner word cannot bypass the Bottle gate');
   const bypass = await json(`${base}/api/access/admin-bypass`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'test-password' }) });
   assert.equal(bypass.response.status, 200, 'the configured admin word opens an owner Loadout session');
-  assert.equal(bypass.body.data.permissions.members, true, 'the owner credential opens the same restricted members area');
-  const bootsBypass = await json(`${base}/api/access/admin-bypass`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'boots' }) });
-  assert.equal(bootsBypass.response.status, 200, 'boots always opens the owner Loadout even when the data-center password is rotated');
-  const bootsCookie = bootsBypass.response.headers.get('set-cookie').split(';')[0];
-  assert.equal((await json(`${base}/api/houses/ioncore-house/chat`, { headers: { Cookie: bootsCookie } })).response.status, 200, 'the boots bypass crosses the multiplayer paywall');
   assert.equal(bypass.body.data.account.mzkBalance, 2000);
   assert.equal(bypass.body.data.account.gameAccess, true);
   const bypassCookie = bypass.response.headers.get('set-cookie').split(';')[0];
@@ -116,7 +105,7 @@ test('member loadout entry uses the shared canonical account API', async () => {
   const source = await readFile(new URL('../script.js', import.meta.url), 'utf8');
   assert.match(source, /const accountApiFetch = .*window\.MUZIKAZ_API\?\.fetch/s);
   assert.match(source, /accountApiFetch\('\/api\/access\/wallet'/);
-  assert.match(source, /accountApiFetch\('\/api\/access\/login'/);
+  assert.match(source, /accountApiFetch\('\/api\/access\/activate'/);
   assert.match(source, /accountApiFetch\('\/api\/account\/loadout\/paid'/);
   assert.match(source, /accountApiFetch\('\/api\/account\/access-code'/);
   assert.ok(source.includes('[A-Z0-9]{8}-[A-Z0-9]{8}'), 'legacy Rust pass format remains accepted by the member login');
@@ -135,11 +124,9 @@ test('the VibeVerse multiplayer client verifies server-backed access before it s
     readFile(new URL('../model-explorer.html', import.meta.url), 'utf8')
   ]);
   assert.ok(source.includes("apiFetch('/api/account/bootstrap'"), 'the browser checks the canonical account instead of trusting a local membership flag');
-  assert.ok(source.includes("apiFetch('/api/access/admin-bypass'"), 'the multiplayer paywall can establish the server-backed owner session');
   assert.ok(!source.includes("localStorage.getItem('muzikazBottleMember') !== 'true'"));
   assert.match(source, /permissions\?\.members === true && data\?\.permissions\?\.games === true/);
   assert.match(source, /genie\|wish bottle/i, 'a server-returned Genie Bottle claim is an alternate access path');
   assert.match(page, /data-multiplayer-control disabled/, 'multiplayer controls start locked while access is checked');
   assert.match(page, /id="multiplayer-paywall"/);
-  assert.match(page, /id="multiplayer-admin-bypass"/, 'the multiplayer page exposes the admin-word bypass');
 });

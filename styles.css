@@ -3457,6 +3457,3 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 .category-svg-icon svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .loadout-link-grid a{position:relative;padding-right:48px}
 .loadout-link-grid a::after{content:'↗';position:absolute;right:15px;top:50%;display:grid;width:25px;height:25px;place-items:center;border:1px solid rgba(156,255,0,.36);border-radius:50%;color:var(--lime);font-size:13px;transform:translateY(-50%)}
-.multiplayer-paywall__panel form{display:grid;gap:8px;margin-top:20px;text-align:left}.multiplayer-paywall__panel form label{color:#9cff00;font-size:.75rem;font-weight:900;text-transform:uppercase}.multiplayer-paywall__panel form input{min-width:0;border:1px solid #667066;border-radius:999px;background:#080b08;color:#fff;padding:.8rem 1rem}.multiplayer-paywall__panel form button{border-color:#9cff00;background:#9cff00;color:#071007;padding:.8rem 1rem;font-weight:900}.multiplayer-paywall__panel #multiplayer-admin-status{min-height:1.25em;margin:.6rem 0 0;color:#d8ff9d;font-size:.82rem}
-html.member-access-pending body { visibility: hidden; }
-html.member-access-granted body { visibility: visible; }
