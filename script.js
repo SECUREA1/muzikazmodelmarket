@@ -2094,8 +2094,7 @@ function initBottleLogin() {
   const continueButton = document.querySelector('#bottle-continue');
   const accessCodeInput = document.querySelector('#loadout-access-code');
   const accessCodeButton = document.querySelector('#loadout-code-redeem');
-  const guestEmailInput = document.querySelector('#guest-member-email');
-  const guestPasswordInput = document.querySelector('#guest-member-password');
+  const memberPassageDestination = document.querySelector('#member-passage-destination');
   const guestLoginButton = document.querySelector('#guest-member-login-button');
   const walletValidateButton = document.querySelector('#account-wallet-validate');
   const identityPanel = document.querySelector('#wallet-identity');
@@ -2184,24 +2183,18 @@ function initBottleLogin() {
   };
   guestLoginButton?.addEventListener('click', async () => {
     setBusy(true);
-    if (status) status.textContent = 'Opening your guest Backpack…';
     try {
-      const response = await accountApiFetch('/api/access/guest', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ email: guestEmailInput?.value, password: guestPasswordInput?.value }) });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message || 'Guest login failed.');
-      const account = rememberAccountSession(result.data);
-      currentMemberEmail = syncAccessCodeBackpack(account);
-      window.sessionStorage.setItem('muzikazBottleMember', 'true');
-      window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+      const destination = memberPassageDestination?.value || 'character-shop';
+      currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || 'members-preview');
+      window.sessionStorage.setItem('muzikazMembersPassage', 'true');
       setPurchaseStep(3);
       renderOwnedCollection(currentMemberEmail);
-      unlock('Guest access granted. Your full Backpack, members area, creator tools, and RAD-TOX multiplayer are ready.');
-      scrollToSection('member-locked-content');
+      unlock('Members hub unlocked. Browse every section now; verification appears only when a protected purchase, trade, upload, or multiplayer action requires it.');
+      scrollToSection(destination);
     } catch (error) {
-      if (status) status.textContent = error.message || 'Guest login failed.';
+      if (status) status.textContent = error.message || 'The selected members section could not be opened.';
     } finally { setBusy(false); }
   });
-  [guestEmailInput, guestPasswordInput].forEach((input) => input?.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); guestLoginButton?.click(); } }));
   const verifyAndUnlock = async (address, requiredContract = '') => {
     const ownership = await validateBottleOwnership(address, requiredContract);
     const profile = window.MZKWallet?.connectIdentity({ address, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
@@ -2459,11 +2452,19 @@ function initBottleLogin() {
   // Cookies, not browser inventory keys, restore membership. A failed request is
   // kept distinct from an authenticated but empty Backpack and can be retried.
   const restoreSession = async () => {
+    if (window.sessionStorage.getItem('muzikazMembersPassage') === 'true') {
+      setPurchaseStep(3);
+      unlock('Members hub unlocked. Choose any sales, marketplace, creator, model, or merch section below.');
+      return;
+    }
     if (status) status.textContent = 'Checking your MUZIKAZ account session…';
     try {
       const bootstrapResponse = await accountApiFetch('/api/account/bootstrap');
       const bootstrapResult = await bootstrapResponse.json();
-      if (bootstrapResponse.status === 401) { clearConnectedSession(); if (status) status.textContent = 'Sign in with an Access Code, purchase, or verified wallet.'; return; }
+      if (bootstrapResponse.status === 401) {
+        if (window.sessionStorage.getItem('muzikazMembersPassage') === 'true') return;
+        clearConnectedSession(); if (status) status.textContent = 'Choose a members destination above, or sign in for protected account actions.'; return;
+      }
       if (!bootstrapResponse.ok || !bootstrapResult.success) throw new Error(bootstrapResult.message || 'Account bootstrap failed.');
       const { account, backpack, permissions, csrfToken, expiresAt } = bootstrapResult.data;
       window.MuzikazAccountSession = { csrfToken, account, expiresAt, backpack, permissions };
@@ -2473,6 +2474,7 @@ function initBottleLogin() {
       else unlock(backpack.status === 'empty' ? 'Your account is open. Add a Loadout to unlock member tools and games.' : 'Your account is open.');
       renderOwnedCollection(currentMemberEmail);
     } catch (error) {
+      if (window.sessionStorage.getItem('muzikazMembersPassage') === 'true') return;
       lockedContent.hidden = true;
       lockedContent.dataset.locked = 'true';
       if (status) status.innerHTML = `${escapeHtml(error.message || 'Backpack could not be loaded.')} <button type="button" id="member-session-retry">Retry</button>`;

@@ -116,6 +116,12 @@ if (!backpackWidget.includes("get('admin') === 'login'")) throw new Error('The g
 const adminHtml = await readFile('dist/admin.html', 'utf8');
 const adminScript = await readFile('dist/admin.js', 'utf8');
 const memberScript = await readFile('dist/script.js', 'utf8');
+const membersPassageHtml = await readFile('dist/members.html', 'utf8');
+for (const passageFeature of ['Members area · direct passage', 'id="member-passage-destination"', 'Sales &amp; character products', 'Unlock &amp; continue']) {
+  if (!membersPassageHtml.includes(passageFeature)) throw new Error(`The API-free members passage is missing ${passageFeature}.`);
+}
+if (membersPassageHtml.includes('id="guest-member-email"') || membersPassageHtml.includes('id="guest-member-password"')) throw new Error('The members passage must not depend on the retired guest API login form.');
+if (memberScript.includes("accountApiFetch('/api/access/guest'")) throw new Error('The members passage must not call the retired guest API route.');
 if (adminHtml.includes('Authorized personnel only') || adminHtml.includes('id="login-form"')) throw new Error('admin.html must not show a second administrator login.');
 for (const handoffFeature of ["window.location.replace('index.html?admin=login')", "apiFetch('/api/admin/session'", "localStorage.getItem(tokenKey)"]) {
   if (!adminScript.includes(handoffFeature)) throw new Error(`The command center is missing its single-login handoff: ${handoffFeature}.`);
@@ -316,8 +322,8 @@ for (const requiredGateMarkup of ['id="model-market-cover"', 'id="model-market-l
   }
 }
 const membersHtml = await readFile('dist/members.html', 'utf8');
-for (const guestLoginMarker of ['id="guest-member-email"', 'id="guest-member-password"', 'id="guest-member-login-button"']) if (!membersHtml.includes(guestLoginMarker)) throw new Error(`members.html is missing guest login markup: ${guestLoginMarker}`);
-for (const guestLoginFeature of ["accountApiFetch('/api/access/guest'", 'Guest access granted. Your full Backpack']) if (!memberScript.includes(guestLoginFeature)) throw new Error(`Guest member login is missing ${guestLoginFeature}.`);
+for (const passageMarker of ['id="member-passage-destination"', 'id="guest-member-login-button"']) if (!membersHtml.includes(passageMarker)) throw new Error(`members.html is missing direct passage markup: ${passageMarker}`);
+for (const passageFeature of ["sessionStorage.setItem('muzikazMembersPassage', 'true')", "scrollToSection(destination)"]) if (!memberScript.includes(passageFeature)) throw new Error(`Direct members passage is missing ${passageFeature}.`);
 const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
 if (!mzkWallet.includes('const SINGLE_PLAYER_STARTING_MZK = 500')) throw new Error('Single Player must grant exactly 500 starting MZK.');
 const blackGenieAccess = await readFile('dist/public/js/black-genie-access.js', 'utf8');
