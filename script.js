@@ -2094,8 +2094,6 @@ function initBottleLogin() {
   const continueButton = document.querySelector('#bottle-continue');
   const accessCodeInput = document.querySelector('#loadout-access-code');
   const accessCodeButton = document.querySelector('#loadout-code-redeem');
-  const memberPassageDestination = document.querySelector('#member-passage-destination');
-  const guestLoginButton = document.querySelector('#guest-member-login-button');
   const walletValidateButton = document.querySelector('#account-wallet-validate');
   const identityPanel = document.querySelector('#wallet-identity');
   const usernameInput = document.querySelector('#wallet-username');
@@ -2123,7 +2121,6 @@ function initBottleLogin() {
     if (mintButton) mintButton.disabled = busy || (Number(form.dataset.purchaseStep) || 1) < 3;
     if (continueButton) continueButton.disabled = busy || (Number(form.dataset.purchaseStep) || 1) < 3;
     if (accessCodeButton) accessCodeButton.disabled = busy;
-    if (guestLoginButton) guestLoginButton.disabled = busy;
     if (walletValidateButton) walletValidateButton.disabled = busy;
     if (adminBypassButton) adminBypassButton.disabled = busy;
   };
@@ -2181,20 +2178,6 @@ function initBottleLogin() {
     // model-market owns game-session creation after its authoritative bootstrap.
     window.location.href = 'model-market.html?access=loadout#house-explorer';
   };
-  guestLoginButton?.addEventListener('click', async () => {
-    setBusy(true);
-    try {
-      const destination = memberPassageDestination?.value || 'character-shop';
-      currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || 'members-preview');
-      window.sessionStorage.setItem('muzikazMembersPassage', 'true');
-      setPurchaseStep(3);
-      renderOwnedCollection(currentMemberEmail);
-      unlock('Members hub unlocked. Browse every section now; verification appears only when a protected purchase, trade, upload, or multiplayer action requires it.');
-      scrollToSection(destination);
-    } catch (error) {
-      if (status) status.textContent = error.message || 'The selected members section could not be opened.';
-    } finally { setBusy(false); }
-  });
   const verifyAndUnlock = async (address, requiredContract = '') => {
     const ownership = await validateBottleOwnership(address, requiredContract);
     const profile = window.MZKWallet?.connectIdentity({ address, chainId: ownership.config.chainId, contract: ownership.contract, tokenIds: ownership.tokenIds });
@@ -2452,19 +2435,11 @@ function initBottleLogin() {
   // Cookies, not browser inventory keys, restore membership. A failed request is
   // kept distinct from an authenticated but empty Backpack and can be retried.
   const restoreSession = async () => {
-    if (window.sessionStorage.getItem('muzikazMembersPassage') === 'true') {
-      setPurchaseStep(3);
-      unlock('Members hub unlocked. Choose any sales, marketplace, creator, model, or merch section below.');
-      return;
-    }
     if (status) status.textContent = 'Checking your MUZIKAZ account session…';
     try {
       const bootstrapResponse = await accountApiFetch('/api/account/bootstrap');
       const bootstrapResult = await bootstrapResponse.json();
-      if (bootstrapResponse.status === 401) {
-        if (window.sessionStorage.getItem('muzikazMembersPassage') === 'true') return;
-        clearConnectedSession(); if (status) status.textContent = 'Choose a members destination above, or sign in for protected account actions.'; return;
-      }
+      if (bootstrapResponse.status === 401) { clearConnectedSession(); if (status) status.textContent = 'Sign in with an Access Code, purchase, or verified wallet.'; return; }
       if (!bootstrapResponse.ok || !bootstrapResult.success) throw new Error(bootstrapResult.message || 'Account bootstrap failed.');
       const { account, backpack, permissions, csrfToken, expiresAt } = bootstrapResult.data;
       window.MuzikazAccountSession = { csrfToken, account, expiresAt, backpack, permissions };
@@ -2474,7 +2449,6 @@ function initBottleLogin() {
       else unlock(backpack.status === 'empty' ? 'Your account is open. Add a Loadout to unlock member tools and games.' : 'Your account is open.');
       renderOwnedCollection(currentMemberEmail);
     } catch (error) {
-      if (window.sessionStorage.getItem('muzikazMembersPassage') === 'true') return;
       lockedContent.hidden = true;
       lockedContent.dataset.locked = 'true';
       if (status) status.innerHTML = `${escapeHtml(error.message || 'Backpack could not be loaded.')} <button type="button" id="member-session-retry">Retry</button>`;
@@ -3074,7 +3048,6 @@ function initHouseExplorer() {
   function drawToxicBubble(bubble) { if (bubble.health <= 0) return null; const p = project({ x: bubble.x, y: bubble.y, z: bubble.z }); if (!p) return null; const size = Math.max(18, (bubble.radius * 520) / p.d); ctx.save(); ctx.translate(p.x, p.y); ctx.globalAlpha = .86; ctx.shadowBlur = 24; ctx.shadowColor = 'rgba(88,255,0,.75)'; const ooze = ctx.createRadialGradient(-size * .28, -size * .32, size * .08, 0, 0, size); ooze.addColorStop(0, 'rgba(225,255,116,.95)'); ooze.addColorStop(.42, 'rgba(86,255,0,.72)'); ooze.addColorStop(1, 'rgba(21,82,18,.42)'); ctx.fillStyle = ooze; ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.58)'; ctx.beginPath(); ctx.arc(-size * .32, -size * .34, size * .18, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(45,8,55,.48)'; for (let i = 0; i < 3; i += 1) { ctx.beginPath(); ctx.arc(Math.sin(bubble.phase + i) * size * .45, Math.cos(bubble.phase * .7 + i) * size * .36, size * .08, 0, Math.PI * 2); ctx.fill(); } const barWidth = size * 1.7, barHeight = Math.max(4, size * .12); ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(-barWidth / 2, -size - 13, barWidth, barHeight); ctx.fillStyle = bubble.health > 55 ? '#9cff00' : bubble.health > 25 ? '#ffda3a' : '#ff2e2e'; ctx.fillRect(-barWidth / 2, -size - 13, barWidth * (bubble.health / 100), barHeight); ctx.strokeStyle = 'rgba(255,255,255,.64)'; ctx.strokeRect(-barWidth / 2, -size - 13, barWidth, barHeight); ctx.restore(); return { id: bubble.id, x: p.x, y: p.y, width: size * 2, height: size * 2, depth: p.d, kind: 'toxic-bubble' }; }
   function startHouseGame() {
     if (gameStarted) return;
-    window.MZKWallet?.claimSinglePlayerTokens?.();
     gameStartScreen?.classList.add('is-loading');
     if (gameLoadStatus) gameLoadStatus.textContent = 'Loading toxic bubbles into the IonCore interior…';
     if (startGameButton) { const label = startGameButton.querySelector('span'); if (label) label.textContent = 'Loading'; else startGameButton.textContent = 'Loading toxins…'; }

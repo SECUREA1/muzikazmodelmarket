@@ -116,12 +116,6 @@ if (!backpackWidget.includes("get('admin') === 'login'")) throw new Error('The g
 const adminHtml = await readFile('dist/admin.html', 'utf8');
 const adminScript = await readFile('dist/admin.js', 'utf8');
 const memberScript = await readFile('dist/script.js', 'utf8');
-const membersPassageHtml = await readFile('dist/members.html', 'utf8');
-for (const passageFeature of ['Members area · direct passage', 'id="member-passage-destination"', 'Sales &amp; character products', 'Unlock &amp; continue']) {
-  if (!membersPassageHtml.includes(passageFeature)) throw new Error(`The API-free members passage is missing ${passageFeature}.`);
-}
-if (membersPassageHtml.includes('id="guest-member-email"') || membersPassageHtml.includes('id="guest-member-password"')) throw new Error('The members passage must not depend on the retired guest API login form.');
-if (memberScript.includes("accountApiFetch('/api/access/guest'")) throw new Error('The members passage must not call the retired guest API route.');
 if (adminHtml.includes('Authorized personnel only') || adminHtml.includes('id="login-form"')) throw new Error('admin.html must not show a second administrator login.');
 for (const handoffFeature of ["window.location.replace('index.html?admin=login')", "apiFetch('/api/admin/session'", "localStorage.getItem(tokenKey)"]) {
   if (!adminScript.includes(handoffFeature)) throw new Error(`The command center is missing its single-login handoff: ${handoffFeature}.`);
@@ -183,13 +177,8 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
 }
-for (const freeSinglePlayerMarker of ['Single Player · Free + 500 MZK', 'Start with 500 in-game MZK tokens for display and play', 'no wallet, payment, account, or Genie Bottle is required']) {
-  if (!mainHtml.includes(freeSinglePlayerMarker)) {
-    throw new Error(`index.html must advertise free Single Player access: ${freeSinglePlayerMarker}`);
-  }
-}
-if (mainHtml.includes('<script src="public/js/black-genie-access.js"></script>')) {
-  throw new Error('index.html must not load the MZK payment gate for Single Player.');
+if (!mainHtml.includes('All game versions · 4,000 MZK')) {
+  throw new Error('index.html must advertise the shared 4,000 MZK gameplay gate.');
 }
 for (const requiredToolsMarkup of ['id="house-tools"', 'data-house-tools', 'aria-controls="rad-tox-tools"', 'aria-haspopup="dialog"']) {
   if (!mainHtml.includes(requiredToolsMarkup)) {
@@ -322,13 +311,14 @@ for (const requiredGateMarkup of ['id="model-market-cover"', 'id="model-market-l
   }
 }
 const membersHtml = await readFile('dist/members.html', 'utf8');
-for (const passageMarker of ['id="member-passage-destination"', 'id="guest-member-login-button"']) if (!membersHtml.includes(passageMarker)) throw new Error(`members.html is missing direct passage markup: ${passageMarker}`);
-for (const passageFeature of ["sessionStorage.setItem('muzikazMembersPassage', 'true')", "scrollToSection(destination)"]) if (!memberScript.includes(passageFeature)) throw new Error(`Direct members passage is missing ${passageFeature}.`);
 const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
-if (!mzkWallet.includes('const SINGLE_PLAYER_STARTING_MZK = 500')) throw new Error('Single Player must grant exactly 500 starting MZK.');
-const blackGenieAccess = await readFile('dist/public/js/black-genie-access.js', 'utf8');
-for (const marker of ['wallet.claimSinglePlayerTokens()', '500 MZK added for in-game display and play', 'Demo balance reset to 500 MZK', 'authorized = false', 'button.disabled = false', 'openGame(button)']) {
-  if (!blackGenieAccess.includes(marker)) throw new Error(`MZK Single Player gate is missing: ${marker}`);
+for (const marker of ['const GAME_ENTRY_MZK = 4000', "claimStarterLoadout()", 'buy-mzk.html?amount=40', "start.dataset.mzkEntryPaid = 'true'"]) {
+  if (!mzkWallet.includes(marker)) throw new Error(`The shared 4,000 MZK gameplay gate is missing: ${marker}`);
+}
+for (const page of ['index.html', 'model-explorer.html', 'model-market.html']) {
+  const html = await readFile(`dist/${page}`, 'utf8');
+  if (!html.includes('All game versions · 4,000 MZK')) throw new Error(`${page} must display the shared 4,000 MZK gameplay gate.`);
+  if (html.includes('public/js/black-genie-access.js')) throw new Error(`${page} must not load the retired free-demo gate.`);
 }
 for (const page of ['model-market.html', 'buy-mzk.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
