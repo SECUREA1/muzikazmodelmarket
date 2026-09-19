@@ -177,8 +177,8 @@ for (const requiredGameMarkup of ['id="house-game-start"', 'data-house-start', '
     throw new Error(`index.html is missing RAD-TOX launch markup: ${requiredGameMarkup}`);
   }
 }
-if (!mainHtml.includes('All game versions · 4,000 MZK')) {
-  throw new Error('index.html must advertise the shared 4,000 MZK gameplay gate.');
+if (!mainHtml.includes('Free public demo · single player + multiplayer')) {
+  throw new Error('index.html must advertise open single-player and multiplayer demos.');
 }
 for (const requiredToolsMarkup of ['id="house-tools"', 'data-house-tools', 'aria-controls="rad-tox-tools"', 'aria-haspopup="dialog"']) {
   if (!mainHtml.includes(requiredToolsMarkup)) {
@@ -305,20 +305,19 @@ if (!modelMarketHtml.includes('href="avatar-whitepaper.html"')) throw new Error(
 for (const requiredStarterLandCopy of ['MUZIKAZ WORLD · starter land', 'Claim one of five spaces. Connect to the whole world.', 'Claim starter land</span><strong>$40 <small>USD</small>', 'id="world-plot-purchase"', 'one-time purchase · 4,000 MZK']) {
   if (!modelMarketHtml.includes(requiredStarterLandCopy)) throw new Error(`Model Market is missing connected starter-land branding: ${requiredStarterLandCopy}`);
 }
-for (const requiredGateMarkup of ['id="model-market-cover"', 'id="model-market-login-form"', 'model-market-gated']) {
+for (const requiredGateMarkup of ['id="model-market-cover"', 'id="model-market-login-form"', 'Free public demo · single player + multiplayer']) {
   if (!modelMarketHtml.includes(requiredGateMarkup)) {
     throw new Error(`model-market.html is missing its Bottle member cover: ${requiredGateMarkup}`);
   }
 }
 const membersHtml = await readFile('dist/members.html', 'utf8');
 const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
-for (const marker of ['const GAME_ENTRY_MZK = 4000', "claimStarterLoadout()", 'buy-mzk.html?amount=40', "start.dataset.mzkEntryPaid = 'true'"]) {
-  if (!mzkWallet.includes(marker)) throw new Error(`The shared 4,000 MZK gameplay gate is missing: ${marker}`);
-}
+if (!mzkWallet.includes("start.dataset.mzkDemoAccess = 'public'")) throw new Error('House Explorer launch must preserve free public demo access.');
+if (mzkWallet.includes('location.href = `buy-mzk.html?amount=40')) throw new Error('The public game demo must not redirect into token checkout.');
 for (const page of ['index.html', 'model-explorer.html', 'model-market.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
-  if (!html.includes('All game versions · 4,000 MZK')) throw new Error(`${page} must display the shared 4,000 MZK gameplay gate.`);
-  if (html.includes('public/js/black-genie-access.js')) throw new Error(`${page} must not load the retired free-demo gate.`);
+  if (!html.includes('Free public demo · single player + multiplayer')) throw new Error(`${page} must display open demo access.`);
+  if (!html.includes('MZK purchases are optional')) throw new Error(`${page} must explain that token sales are optional.`);
 }
 for (const page of ['model-market.html', 'buy-mzk.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
