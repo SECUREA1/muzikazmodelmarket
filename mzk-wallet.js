@@ -117,6 +117,12 @@
     provider.on?.('chainChanged', (chainId) => updateBrowserConnection(connectedAddress() ? [connectedAddress()] : [], chainId));
     provider.on?.('disconnect', () => updateBrowserConnection([]));
   }
-  document.addEventListener('click', (event) => { const start = event.target.closest?.('[data-house-start]'); if (!start || start.dataset.mzkEntryPaid === 'true') return; ensureWallet(); const owned = starterLoadout(); if (!owned && balance() < GAME_ENTRY_MZK) { event.preventDefault(); event.stopImmediatePropagation(); const returnTo = `${location.pathname.split('/').pop() || 'index.html'}${location.hash}`; location.href = `buy-mzk.html?amount=40&return=${encodeURIComponent(returnTo)}#swap`; return; } const claimed = claimStarterLoadout(); if (!claimed.ok) { event.preventDefault(); event.stopImmediatePropagation(); return; } start.dataset.mzkEntryPaid = 'true'; start.dataset.mzkLoadoutId = claimed.loadout.id; }, true);
+  // Playing the public demos never spends MZK. Token purchases remain available as
+  // optional collectibles and marketplace currency through the normal store flow.
+  document.addEventListener('click', (event) => {
+    const start = event.target.closest?.('[data-house-start]');
+    if (!start) return;
+    start.dataset.mzkDemoAccess = 'public';
+  }, true);
   window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, purchaseTokens, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, provisionStandardLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
 })();

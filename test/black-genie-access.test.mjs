@@ -2,13 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-test('all House Explorer versions use the original 4,000 MZK first-entry gate', async () => {
+test('all House Explorer versions open as free demos while token sales remain available', async () => {
   const wallet = await readFile(new URL('../mzk-wallet.js', import.meta.url), 'utf8');
-  assert.match(wallet, /const GAME_ENTRY_MZK = 4000/);
-  assert.match(wallet, /claimStarterLoadout\(\)/);
-  assert.match(wallet, /buy-mzk\.html\?amount=40/);
-  assert.match(wallet, /start\.dataset\.mzkEntryPaid = 'true'/);
-  assert.doesNotMatch(wallet, /claimSinglePlayerTokens|SINGLE_PLAYER_STARTING_MZK/);
+  const pages = await Promise.all(['../index.html', '../model-market.html', '../model-explorer.html'].map((url) => readFile(new URL(url, import.meta.url), 'utf8')));
+  assert.match(wallet, /mzkDemoAccess = 'public'/);
+  assert.doesNotMatch(wallet, /location\.href = `buy-mzk\.html\?amount=40/);
+  for (const page of pages) {
+    assert.match(page, /Free public demo · single player \+ multiplayer/);
+    assert.match(page, /MZK purchases are optional/);
+  }
+  assert.match(await readFile(new URL('../buy-mzk.html', import.meta.url), 'utf8'), /MZK/);
 });
 
 test('gameplay does not mint or reset MZK after the entry gate', async () => {

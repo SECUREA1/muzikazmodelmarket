@@ -118,15 +118,15 @@ test('member loadout entry uses the shared canonical account API', async () => {
   assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'successful code entry opens the game page');
 });
 
-test('the VibeVerse multiplayer client verifies server-backed access before it starts', async () => {
-  const [source, page] = await Promise.all([
+test('the VibeVerse multiplayer client opens public demo access without disabling token sales', async () => {
+  const [source, page, server] = await Promise.all([
     readFile(new URL('../public/js/crib-multiplayer.js', import.meta.url), 'utf8'),
-    readFile(new URL('../model-explorer.html', import.meta.url), 'utf8')
+    readFile(new URL('../model-explorer.html', import.meta.url), 'utf8'),
+    readFile(new URL('../server.mjs', import.meta.url), 'utf8')
   ]);
-  assert.ok(source.includes("apiFetch('/api/account/bootstrap'"), 'the browser checks the canonical account instead of trusting a local membership flag');
-  assert.ok(!source.includes("localStorage.getItem('muzikazBottleMember') !== 'true'"));
-  assert.match(source, /permissions\?\.members === true && data\?\.permissions\?\.games === true/);
-  assert.match(source, /genie\|wish bottle/i, 'a server-returned Genie Bottle claim is an alternate access path');
-  assert.match(page, /data-multiplayer-control disabled/, 'multiplayer controls start locked while access is checked');
-  assert.match(page, /id="multiplayer-paywall"/);
+  assert.match(source, /'X-MUZIKAZ-Demo': 'public'/, 'public demo requests are explicit');
+  assert.match(source, /Starter Avatar/, 'guest players receive a playable default avatar');
+  assert.doesNotMatch(page, /data-multiplayer-control disabled/, 'multiplayer controls start open');
+  assert.match(page, /href="buy-mzk.html"/, 'optional MZK sales remain available from the demo');
+  assert.match(server, /publicDemo/, 'the multiplayer API recognizes explicit public demo traffic');
 });
