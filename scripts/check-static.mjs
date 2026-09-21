@@ -328,7 +328,7 @@ for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace
     throw new Error(`members.html is missing subscriber section #${id}`);
   }
 }
-for (const requiredFreePlayEntry of ['id="member-locked-content" data-locked="false"', 'id="free-play-username"', 'id="free-play-password"', 'id="free-play-submit"', '>Begin Game</a>', '>Open All Markets</a>']) {
+for (const requiredFreePlayEntry of ['id="member-locked-content" data-locked="true" hidden', 'id="free-play-username"', 'id="free-play-password"', 'id="free-play-submit"', '>Play Game Without Signing In</a>']) {
   if (!membersHtml.includes(requiredFreePlayEntry)) {
     throw new Error(`members.html is missing its free-play entry: ${requiredFreePlayEntry}`);
   }
@@ -403,7 +403,7 @@ for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelA
 for (const requiredMintReward of ['BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
-for (const requiredFreePlayCopy of ['No member pass, wallet, purchase, or token gate is required.', 'MZK balance', 'Backpack Loadout', 'Explore Vibe Crib']) {
+for (const requiredFreePlayCopy of ['Signing in protects your MZK balance', 'game itself remains free to play without signing in', 'Backpack Loadout', 'members-only multiplayer']) {
   if (!membersHtml.includes(requiredFreePlayCopy)) throw new Error(`members.html is missing free-play guidance: ${requiredFreePlayCopy}`);
 }
 for (const requiredFreePlayAction of ["accountApiFetch('/api/access/free-play'", "renderOwnedCollection(currentMemberEmail)", "scrollToSection('member-locked-content')"]) {
