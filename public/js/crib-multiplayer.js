@@ -11,15 +11,22 @@
   paywall?.querySelector('[data-close-multiplayer-paywall]')?.addEventListener('click', () => { paywall.hidden = true; controls[0]?.focus(); });
 
   async function authorizeMultiplayer() {
-    controls.forEach((control) => { control.disabled = false; });
+    const response = await apiFetch('/api/account/bootstrap', { cache:'no-store' });
+    const result = await response.json().catch(() => ({}));
+    const data = result?.data ?? result;
+    if (!response.ok || data?.permissions?.games !== true || !data?.backpack?.backpackId) throw new Error(result.message || 'A game-enabled Loadout Pack is required.');
+    controls.forEach((control) => { control.disabled = false; const icon = control.querySelector('b'); if (icon) icon.textContent = control.id === 'house-world-button' ? '🌐' : '💬'; });
     const worldLabel = document.querySelector('#house-world-button span'); if (worldLabel) worldLabel.textContent = 'Multiplayer Worlds';
     const chatLabel = document.querySelector('#crib-chat-toggle span'); if (chatLabel) chatLabel.textContent = 'Chat';
-    return { account: { username: localStorage.getItem('muzikazBottleMemberEmail') || 'Guest Player' }, demo: true };
+    const profileName = document.querySelector('#game-profile-name');
+    const profileBalance = document.querySelector('#game-profile-mzk');
+    if (profileName) { profileName.textContent = data.account.username; profileName.title = `Loadout Pack ${data.backpack.backpackId}`; }
+    if (profileBalance) profileBalance.textContent = `${Number(data.backpack.mzkBalance || 0).toLocaleString()} MZK`;
+    return data;
   }
 
   authorizeMultiplayer().then(startMultiplayer).catch(() => {
-    controls.forEach((control) => { control.disabled = false; });
-    showPaywall();
+    controls.forEach((control) => { control.disabled = false; control.setAttribute('aria-haspopup', 'dialog'); control.onclick = (event) => { event.preventDefault(); event.stopImmediatePropagation(); showPaywall(); }; });
   });
 
   function startMultiplayer(accountData) {
@@ -33,7 +40,7 @@
   const players = $('#crib-player-list'), messages = $('#crib-chat-messages'), form = $('#crib-chat-form');
   const input = $('#crib-chat-input'), status = $('#crib-chat-status'), reactions = $('#crib-reactions');
   const emojiToggle = $('#crib-emoji-toggle'), micToggle = $('#crib-mic-toggle'), speakerToggle = $('#crib-speaker-toggle'), voiceStatus = $('#crib-voice-status');
-  const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username, 'X-MUZIKAZ-Demo': 'public' };
+  const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId };
   const peers = new Map(), remoteAudio = new Map();
   window.MUZIKAZ_HOUSE_TRACKING = { roomId:localStorage.getItem('muzikazMultiplayerWorld') || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', ...(window.MUZIKAZ_HOUSE_TRACKING || {}) };
   let joined = false, localStream = null, speakerOn = true, currentUsers = [];
@@ -102,7 +109,7 @@
   async function loadChat() { const data = await jsonResponse(await apiFetch('/api/houses/ioncore-house/chat', { headers, cache:'no-store' })); (data.messages || []).forEach(addMessage); }
   loadChat().catch(() => {});
   let events;
-  if ('EventSource' in window) { events = new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}&demo=public`), { withCredentials:true }); events.addEventListener('house-presence-updated', (event) => renderPresence(JSON.parse(event.data))); events.addEventListener('house-chat-message', (event) => addMessage(JSON.parse(event.data))); events.addEventListener('house-voice-signal', (event) => handleVoiceSignal(JSON.parse(event.data)).catch(() => { voiceStatus.textContent = 'Voice connection interrupted'; })); }
+  if ('EventSource' in window) { events = new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`), { withCredentials:true }); events.addEventListener('house-presence-updated', (event) => renderPresence(JSON.parse(event.data))); events.addEventListener('house-chat-message', (event) => addMessage(JSON.parse(event.data))); events.addEventListener('house-voice-signal', (event) => handleVoiceSignal(JSON.parse(event.data)).catch(() => { voiceStatus.textContent = 'Voice connection interrupted'; })); }
   const beginPresence = () => heartbeat().catch((error) => { status.textContent = error.message; toggle.disabled = true; });
   window.addEventListener('muzikaz:multiplayer-world-change', () => { peers.forEach((peer) => peer.close()); peers.clear(); heartbeat().catch((error) => { status.textContent = error.message; }); });
   beginPresence();
