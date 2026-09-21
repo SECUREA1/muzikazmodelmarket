@@ -328,16 +328,13 @@ for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace
     throw new Error(`members.html is missing subscriber section #${id}`);
   }
 }
-for (const requiredLoginGate of ['id="member-locked-content" data-locked="true" hidden', 'id="bottle-wallet-connect"', 'id="bottle-wallet-mint"', 'id="meknx-wallet-entry"', 'name="muzikaz-bottle-contract"']) {
-  if (!membersHtml.includes(requiredLoginGate)) {
-    throw new Error(`members.html is missing its Bottle-only login gate: ${requiredLoginGate}`);
+for (const requiredFreePlayEntry of ['id="member-locked-content" data-locked="false"', 'id="free-play-username"', 'id="free-play-password"', 'id="free-play-submit"', '>Begin Game</a>', '>Open All Markets</a>']) {
+  if (!membersHtml.includes(requiredFreePlayEntry)) {
+    throw new Error(`members.html is missing its free-play entry: ${requiredFreePlayEntry}`);
   }
 }
 if (!membersHtml.includes('name="muzikaz-bottle-contract" content="0x0F1254772810EA4D06E5c61E3E4b54d740367Aa8"')) {
   throw new Error('members.html must use the approved MUZIKAZ Bottle access contract.');
-}
-for (const walletIdentityFeature of ['id="wallet-username"', 'id="wallet-json-download"', 'id="wallet-json-import"']) {
-  if (!membersHtml.includes(walletIdentityFeature)) throw new Error(`members.html is missing wallet identity control: ${walletIdentityFeature}`);
 }
 for (const walletBindingFeature of ['connectIdentity', 'setUsername', 'exportWallet', 'importWallet']) {
   if (!mzkWallet.includes(walletBindingFeature)) throw new Error(`mzk-wallet.js is missing wallet binding feature: ${walletBindingFeature}`);
@@ -406,14 +403,11 @@ for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelA
 for (const requiredMintReward of ['BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
-for (const requiredLoadoutCopy of ['$30 USD · Live ETH quote', 'never required for Single Player', 'Enter RAD-TOX Game', 'MZK Access Code', 'Open Account with Access Code', 'Connect MetaMask &amp; Open Account', 'One account. One code. Any device.']) {
-  if (!membersHtml.includes(requiredLoadoutCopy)) throw new Error(`members.html is missing $30 Loadout or Magic Bottle guidance: ${requiredLoadoutCopy}`);
+for (const requiredFreePlayCopy of ['No member pass, wallet, purchase, or token gate is required.', 'MZK balance', 'Backpack Loadout', 'Explore Vibe Crib']) {
+  if (!membersHtml.includes(requiredFreePlayCopy)) throw new Error(`members.html is missing free-play guidance: ${requiredFreePlayCopy}`);
 }
-for (const requiredAccessCodeAction of ["openAccessCodeAccount({ connectFirst: true })", "connectButton?.addEventListener('click', connect)", "if (accessCodeInput?.value.trim()) await openAccessCodeAccount()"]) {
-  if (!appScript.includes(requiredAccessCodeAction)) throw new Error(`script.js is missing interactive Access Code behavior: ${requiredAccessCodeAction}`);
-}
-for (const requiredLoadoutFlow of ['Builder drop · optional mint', 'Violet Wish Bottle', 'Unlock loadout &amp; pay with ETH', 'id="bottle-continue"', 'data-purchase-step="payment"']) {
-  if (!membersHtml.includes(requiredLoadoutFlow)) throw new Error(`members.html is missing the ordered Purple Bottle loadout flow: ${requiredLoadoutFlow}`);
+for (const requiredFreePlayAction of ["accountApiFetch('/api/access/free-play'", "renderOwnedCollection(currentMemberEmail)", "scrollToSection('member-locked-content')"]) {
+  if (!appScript.includes(requiredFreePlayAction)) throw new Error(`script.js is missing free-play account behavior: ${requiredFreePlayAction}`);
 }
 if (!appScript.includes('config.approvedContracts') || !appScript.includes('MUZIKAZ_BOTTLE_APPROVED_CONTRACTS')) {
   throw new Error('script.js must validate ownership across all approved Bottle contracts.');

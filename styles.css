@@ -3457,3 +3457,13 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 .category-svg-icon svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .loadout-link-grid a{position:relative;padding-right:48px}
 .loadout-link-grid a::after{content:'↗';position:absolute;right:15px;top:50%;display:grid;width:25px;height:25px;place-items:center;border:1px solid rgba(156,255,0,.36);border-radius:50%;color:var(--lime);font-size:13px;transform:translateY(-50%)}
+
+/* Free-play entry keeps identity lightweight while preserving the persistent MZK Backpack. */
+.members-page .free-play-login{grid-template-columns:1fr;max-width:820px;margin-inline:auto}
+.free-play-fields{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}
+.free-play-fields label{display:grid;gap:7px;color:var(--lime);font-weight:900}
+.free-play-fields input{width:100%;box-sizing:border-box}
+.free-play-fields button{min-height:52px;white-space:nowrap}
+.free-play-launchers{display:flex;flex-wrap:wrap;gap:10px}
+.free-play-launchers .btn{flex:1;min-width:170px;text-align:center}
+@media(max-width:760px){.free-play-fields{grid-template-columns:1fr}.free-play-fields button{width:100%}}

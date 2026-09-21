@@ -70,103 +70,27 @@
     <main>
         <section class="member-hero" id="bottle-login" aria-labelledby="bottle-login-title">
             <div class="member-login-card">
-                <form id="bottle-login-form" class="bottle-login-form" data-purchase-step="payment">
-                    <button type="button" class="wallet-connect-top" id="bottle-wallet-connect"><b aria-hidden="true">Ξ</b><span>Connect ETH</span><small>Wallet</small></button>
+                <form id="bottle-login-form" class="bottle-login-form free-play-login">
                     <div class="loadout-intro">
-                        <p class="kicker">Builder pack · separate drop</p>
-                        <h1 id="bottle-login-title">Buy your loadout</h1>
-                        <p>Buy in with any listed payment option or enter a valid pre-bought/admin Loadout code. Payment opens the full members area and multiplayer with MZK, a free starter avatar, land item, and the complete Builder Loadout. No Genie Bottle is needed before payment.</p>
+                        <p class="kicker">Free play house · every world unlocked</p>
+                        <h1 id="bottle-login-title">Enter the Vibe Verse</h1>
+                        <p>Create or reopen your player name. No member pass, wallet, purchase, or token gate is required. Your MZK balance, Backpack Loadout, avatar, markets, Vibe Crib, and House Explorer stay connected to this login.</p>
                     </div>
-                    <aside class="purple-bottle-preview" aria-label="Violet Wish Bottle loadout collectible">
-                        <span>Builder drop · optional mint</span>
-                        <img src="muzikaz_transparent_assets/products/muzikaz_bottle.png" alt="Violet Wish Bottle included with the Backpack Loadout" />
-                        <div class="purple-bottle-preview__copy">
-                            <p class="kicker">A little wish-power for your world</p>
-                            <strong>Violet Wish Bottle</strong>
-                            <small>An optional collectible available after payment. It is never required for Single Player, members access, multiplayer, rewards, merch, or product checkout.</small>
-                        </div>
-                    </aside>
-                    <aside class="bottle-mzk-offer" aria-labelledby="bottle-mzk-offer-title">
-                        <div class="bottle-mzk-offer__graphic" aria-hidden="true"><span>MZK</span><b>13K</b><i>Ϟ</i></div>
-                        <div>
-                            <p class="kicker">Bottle buyer bonus</p>
-                            <strong id="bottle-mzk-offer-title">Get $130 of MZK value with the $100 pass.</strong>
-                            <small>First-buy rewards scale automatically: $5 adds the Black Bottle and 2,000 MZK; $30 adds the Violet Bottle and 5,000 MZK; $100 gives 13,000 MZK; $200 gives 26,000 MZK, the Golden Bottle, and a custom in-game asset order.</small>
-                        </div>
-                        <a class="btn bottle-mzk-offer__cta" href="buy-mzk.html?amount=100&amp;return=members.html%23bottle-login">Get 13,000 MZK <span aria-hidden="true">→</span></a>
-                    </aside>
-                    <div class="loadout-details" aria-label="Backpack Loadout details">
-                        <span class="loadout-step is-active" data-loadout-step="1"><b>1</b> Select payment</span>
-                        <span class="loadout-step" data-loadout-step="2"><b>2</b> Pay $30</span>
-                        <span class="loadout-step" data-loadout-step="3"><b>3</b> Enter the vault</span>
-                        <ul><li><strong>$5 · Black Genie Bottle</strong><small>2,000 MZK, avatar, land, and Loadout</small></li><li><strong>$30 · Violet Genie Bottle</strong><small>5,000 MZK and complete member access</small></li><li><strong>$200 · Golden Genie Bottle</strong><small>26,000 MZK + custom in-game asset order</small></li><li><strong>Instant full access</strong><small>Members, multiplayer, rewards, merch and products</small></li></ul>
+                    <div class="free-play-fields">
+                        <label><span>Username</span><input id="free-play-username" name="username" autocomplete="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_.-]+" required placeholder="Choose your player name" /></label>
+                        <label><span>Password</span><input id="free-play-password" name="password" type="password" autocomplete="current-password" minlength="6" maxlength="128" required placeholder="6+ characters" /></label>
+                        <button type="submit" id="free-play-submit">Open Free Play House <span aria-hidden="true">→</span></button>
                     </div>
-                    <fieldset class="loadout-tier-selector" aria-label="Choose your Loadout price">
-                        <legend>Choose your price &amp; rewards</legend>
-                        <label><input type="radio" name="loadout-tier" value="5" /><span><b>$5</b><small>2,000 MZK · Black Bottle</small></span></label>
-                        <label><input type="radio" name="loadout-tier" value="30" checked /><span><b>$30</b><small>5,000 MZK · Violet Bottle</small></span></label>
-                        <label><input type="radio" name="loadout-tier" value="100" /><span><b>$100</b><small>13,000 MZK</small></span></label>
-                        <label><input type="radio" name="loadout-tier" value="200" /><span><b>$200</b><small>26,000 MZK · Golden Bottle + custom asset</small></span></label>
-                    </fieldset>
-                    <label class="loadout-currency"><span>Choose how to pay</span>
-                        <select id="bottle-loadout-currency" aria-label="Backpack Loadout payment currency">
-                                                        <option value="ETH">ETH · Ethereum Mainnet</option>
-                            <option value="POL">POL · Polygon</option>
-                            <option value="BNB">BNB · BNB Smart Chain</option>
-                            <option value="SOL">SOL · Solana</option>
-                            <option value="ADA">ADA · Cardano</option>
-                            <option value="BTC">BTC · Bitcoin</option>
-                            <option value="DOGE">DOGE · Dogecoin</option>
-                        </select>
-                    </label>
-                    <button type="button" class="loadout-pay-button" id="bottle-backpack-loadout"><span>Unlock loadout &amp; pay with ETH</span><small id="bottle-loadout-price">$30 USD · Live ETH quote · Violet Bottle tier</small></button>
-                    <aside class="loadout-access-code" aria-labelledby="loadout-access-code-title">
-                        <div class="loadout-access-code__copy">
-                            <p class="kicker">One account. One code. Any device.</p>
-                            <strong id="loadout-access-code-title">Use your MZK Access Code</strong>
-                            <small>Submit an unused admin/loadout code or a pre-bought login code to receive full access: 2,000 MZK, starter avatar, land, complete Backpack, creator tools and multiplayer. A new code opens a wallet-free account immediately; connect Ethereum later if you choose, without changing your Backpack.</small>
-                        </div>
-                        <div class="loadout-access-code__actions">
-                            <label><span>MZK Access Code</span><input id="loadout-access-code" name="code" type="password" autocomplete="current-password" spellcheck="false" maxlength="24" placeholder="MZK-XXXX-XXXX-XXXX-XXXX" /></label>
-                            <button type="button" id="loadout-code-redeem">Open Account with Access Code</button>
-                            <button type="button" class="ghost" id="account-wallet-validate">Connect MetaMask &amp; Open Account</button>
-                        </div>
-                    </aside>
-                    <aside class="admin-game-bypass" aria-labelledby="admin-game-bypass-title">
-                        <div><p class="kicker">Site owner shortcut</p><strong id="admin-game-bypass-title">Admin game bypass</strong><small>Enter the private admin word to open the complete Loadout and continue directly to RAD-TOX.</small></div>
-                        <label><span>Admin word</span><input id="admin-game-bypass-password" type="password" autocomplete="current-password" placeholder="Admin word" /></label>
-                        <button type="button" id="admin-game-bypass-button">Bypass &amp; enter game <span aria-hidden="true">→</span></button>
-                    </aside>
-                    <div class="magic-bottle-mint">
-                        <span>After activation</span>
-                        <strong>Your Loadout Is Ready</strong>
-                        <small>Your MUZIKAZ account is active. Your Backpack, creator vault, land entitlement, marketplace account and complimentary Violet Wish Bottle claim are connected. Minting is optional.</small>
-                        <div class="post-payment-actions">
-                            <button type="button" id="bottle-continue" disabled>Enter RAD-TOX Game <span aria-hidden="true">→</span></button>
-                            <button type="button" class="ghost" id="bottle-wallet-mint" disabled>Optional: mint Violet Wish Bottle</button>
-                        </div>
+                    <div class="free-play-launchers" aria-label="Free play destinations">
+                        <a class="btn" href="model-market.html#house-explorer">Begin Game</a>
+                        <a class="btn ghost" href="index.html#house-explorer">Explore Vibe Crib</a>
+                        <a class="btn ghost" href="model-market.html#marketplace-preview">Open All Markets</a>
                     </div>
                 </form>
-                <p class="wallet-address" id="bottle-wallet-address" hidden></p>
-                <div class="wallet-identity" id="wallet-identity" hidden>
-                    <label>Wallet username <input id="wallet-username" maxlength="24" autocomplete="nickname" placeholder="Choose a public username" /></label>
-                    <button type="button" id="wallet-username-save">Save username</button>
-                    <button type="button" class="ghost" id="wallet-json-download">Download wallet JSON</button>
-                    <label class="wallet-json-import">Restore wallet JSON <input type="file" id="wallet-json-import" accept="application/json,.json" /></label>
-                    <small id="wallet-token-identity"></small>
-                </div>
-                <p class="status-message" id="bottle-login-status" role="status">Access is available through a paid Loadout, activated MZK Access Code, approved MEKNX entitlement, or another administrator-granted entitlement. Bottle minting is optional.</p>
-                <aside class="meknx-bypass" aria-labelledby="meknx-bypass-title">
-                    <div>
-                        <p class="kicker">Already hold the access contract?</p>
-                        <strong id="meknx-bypass-title">MEKNX holder entry</strong>
-                        <small>Connect an Ethereum wallet that owns a token from the approved MEKNX contract to skip the Bottle purchase and enter the member vault.</small>
-                    </div>
-                    <button type="button" id="meknx-wallet-entry" data-contract="0xEf74118D5fB730E9B2729c7303DC29980b4771f0"><b aria-hidden="true">Ξ</b> Connect Ethereum &amp; enter</button>
-                </aside>
+                <p class="status-message" id="bottle-login-status" role="status">Enter a username and password. New names create a free account; returning players reopen the same MZK balance and Backpack.</p>
             </div>
         </section>
-        <div class="member-locked-content" id="member-locked-content" data-locked="true" hidden>
+        <div class="member-locked-content" id="member-locked-content" data-locked="false">
         <section class="section-block" aria-labelledby="manage-access-title"><div class="section-title"><span></span><h2 id="manage-access-title">Manage MZK Access Code</h2></div><p><strong>One account. One code. Any device.</strong> Rotation or revocation changes only your credential; your wallet bindings, Backpack, assets, MZK, land and Bottle claims stay with this account.</p><div class="post-payment-actions"><button type="button" id="mzk-access-rotate">Rotate Access Code</button><button type="button" class="ghost" id="mzk-access-revoke">Revoke Access Code</button></div><output id="mzk-access-manage-output" class="status-message" aria-live="polite">Your full code is shown only when it is created or rotated.</output></section>
         <section class="section-block member-benefits" aria-labelledby="member-benefits-title">
             <div class="section-title"><span></span><h2 id="member-benefits-title">What subscribers get</h2><span></span></div>
