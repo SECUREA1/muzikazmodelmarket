@@ -314,11 +314,14 @@ const membersHtml = await readFile('dist/members.html', 'utf8');
 const mzkWallet = await readFile('dist/mzk-wallet.js', 'utf8');
 if (!mzkWallet.includes("start.dataset.mzkDemoAccess = 'public'")) throw new Error('House Explorer launch must preserve free public demo access.');
 if (mzkWallet.includes('location.href = `buy-mzk.html?amount=40')) throw new Error('The public game demo must not redirect into token checkout.');
-for (const page of ['index.html', 'model-explorer.html', 'model-market.html']) {
+for (const page of ['index.html', 'model-market.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
   if (!html.includes('Free public demo · single player + multiplayer')) throw new Error(`${page} must display open demo access.`);
   if (!html.includes('MZK purchases are optional')) throw new Error(`${page} must explain that token sales are optional.`);
 }
+const cribHtml = await readFile('dist/model-explorer.html', 'utf8');
+if (!cribHtml.includes('MZK balance and assets tied to your username and Loadout Pack') || !cribHtml.includes('data-multiplayer-control disabled')) throw new Error('Vibe Crib multiplayer must advertise and retain its Loadout Pack gate.');
+if (!cribMultiplayer.includes("apiFetch('/api/account/bootstrap'") || !cribMultiplayer.includes('data.backpack.mzkBalance') || cribMultiplayer.includes('X-MUZIKAZ-Demo')) throw new Error('Vibe Crib multiplayer must bind identity and MZK to the authenticated Backpack.');
 for (const page of ['model-market.html', 'buy-mzk.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
   if (!html.includes('4,000 MZK')) throw new Error(`${page} must display the 4,000 MZK starter-land price.`);

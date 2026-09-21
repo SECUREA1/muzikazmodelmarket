@@ -119,15 +119,17 @@ test('member loadout entry uses the shared canonical account API', async () => {
   assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'successful code entry opens the game page');
 });
 
-test('the VibeVerse multiplayer client opens public demo access without disabling token sales', async () => {
+test('the VibeVerse multiplayer client binds live play to the signed-in Loadout Pack', async () => {
   const [source, page, server] = await Promise.all([
     readFile(new URL('../public/js/crib-multiplayer.js', import.meta.url), 'utf8'),
     readFile(new URL('../model-explorer.html', import.meta.url), 'utf8'),
     readFile(new URL('../server.mjs', import.meta.url), 'utf8')
   ]);
-  assert.match(source, /'X-MUZIKAZ-Demo': 'public'/, 'public demo requests are explicit');
-  assert.match(source, /Starter Avatar/, 'guest players receive a playable default avatar');
-  assert.doesNotMatch(page, /data-multiplayer-control disabled/, 'multiplayer controls start open');
-  assert.match(page, /href="buy-mzk.html"/, 'optional MZK sales remain available from the demo');
-  assert.match(server, /publicDemo/, 'the multiplayer API recognizes explicit public demo traffic');
+  assert.match(source, /apiFetch\('\/api\/account\/bootstrap'/, 'the client restores its authoritative account and Backpack');
+  assert.match(source, /data\.account\.username/, 'the visible multiplayer identity comes from the account');
+  assert.match(source, /data\.backpack\.mzkBalance/, 'the visible token balance comes from the same Backpack');
+  assert.doesNotMatch(source, /X-MUZIKAZ-Demo/, 'clients cannot opt themselves into an anonymous server bypass');
+  assert.match(page, /data-multiplayer-control disabled/, 'multiplayer controls stay gated while account state loads');
+  assert.match(page, /Open Loadout Pack/, 'the gate sends players to their member Loadout');
+  assert.doesNotMatch(server, /publicDemo/, 'the multiplayer API has no caller-selected public bypass');
 });
