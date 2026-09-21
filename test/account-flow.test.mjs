@@ -36,6 +36,7 @@ test('canonical session, isolated Backpack, avatar and short-lived game contract
   const session = await json(base, '/api/session', { headers: firstHeaders });
   const bootstrap = await json(base, '/api/account/bootstrap', { headers: firstHeaders });
   assert.equal(bootstrap.body.data.account.loadoutAccess, true);
+  assert.equal('members' in bootstrap.body.data.permissions, false, 'login itself gates the members area without a separate API membership permission');
   assert.equal(bootstrap.body.data.permissions.radTox, true);
   assert.equal(bootstrap.body.data.backpack.status, 'ready');
   const backpack = await json(base, '/api/backpack?accountId=' + second.body.data.account.accountId, { headers: firstHeaders });

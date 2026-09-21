@@ -111,6 +111,7 @@ test('member loadout entry uses the shared canonical account API', async () => {
   assert.ok(source.includes('[A-Z0-9]{8}-[A-Z0-9]{8}'), 'legacy Rust pass format remains accepted by the member login');
   assert.ok(source.includes("document.querySelector('#loadout-code-redeem')?.click()"), 'shared pass links automatically submit the member login');
   assert.ok(source.includes("accountApiFetch('/api/account/bootstrap')"), 'account and Backpack state are loaded from authoritative bootstrap');
+  assert.ok(!source.includes('permissions.members'), 'a successful login opens the members area without a second API membership gate');
   assert.ok(!source.slice(source.indexOf('const enterGame'), source.indexOf('const verifyAndUnlock')).includes("accountApiFetch('/api/game/session'"), 'members navigation does not create and discard a game session');
   assert.ok(source.includes("window.sessionStorage.setItem('muzikazGameSessionToken'"), 'the destination persists its game token for protected requests');
   assert.ok(source.includes("accountApiFetch('/api/access/admin-bypass'"), 'the Bottle page owner shortcut uses the server-validated bypass route');
