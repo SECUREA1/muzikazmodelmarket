@@ -2112,7 +2112,7 @@ function initBottleLogin() {
     : fetch(path, options);
   let walletRequestActive = false;
   const selectedLoadoutPrice = () => { const price = Number(loadoutTiers.find((input) => input.checked)?.value || BACKPACK_LOADOUT_USD); return BACKPACK_LOADOUT_TIERS[price] ? price : BACKPACK_LOADOUT_USD; };
-  const rememberAccountSession = (session) => { window.MUZIKAZ_API?.setSessionToken?.(session.sessionToken); window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt }; return session.account; };
+  const rememberAccountSession = (session) => { window.MUZIKAZ_API?.setSessionToken?.(session.sessionToken); window.MuzikazAccountSession = { csrfToken: session.csrfToken, account: session.account, expiresAt: session.expiresAt, backpack: session.backpack, permissions: session.permissions || {} }; return session.account; };
   const authenticateWalletAccount = async (wallet) => { const response = await accountApiFetch('/api/access/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ wallet }) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message || 'Wallet account authentication failed.'); return rememberAccountSession(result.data); };
   const setBusy = (busy) => {
     if (connectButton) connectButton.disabled = busy;
@@ -2355,7 +2355,6 @@ function initBottleLogin() {
         const result = await response.json();
         if (!response.ok || !result.success) throw new Error(result.message || 'Free-play sign in failed.');
         const account = rememberAccountSession(result.data);
-        window.MuzikazAccountSession.permissions = { backpack: true, avatarSelection: true, creatorTools: true, marketplace: true, radTox: true, games: true, world: true };
         currentMemberEmail = syncAccessCodeBackpack(account);
         window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
         setPurchaseStep(3);
