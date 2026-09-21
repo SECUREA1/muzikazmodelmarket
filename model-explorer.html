@@ -82,6 +82,16 @@
             <div class="game-overlay__content">
             <h3 id="house-game-start-title">Ready to play?</h3>
             <p id="house-game-load-status" role="status"><strong class="starter-price">Vibe Crib gameplay</strong> Play solo, or open multiplayer worlds with the MZK balance and assets tied to your username and Loadout Pack.</p>
+            <section class="game-login-selection" id="game-login-selection" aria-label="Game account and avatar">
+              <div class="game-login-selection__account">
+                <span class="game-login-selection__avatar" id="game-login-avatar" aria-hidden="true">🎒</span>
+                <span><small>Backpack login</small><strong id="game-login-name">Checking account…</strong></span>
+                <a id="game-login-link" href="members.html#bottle-login" hidden>Sign in / switch</a>
+              </div>
+              <label id="game-avatar-field" hidden>Play as
+                <select id="game-avatar-select" aria-describedby="house-game-load-status"></select>
+              </label>
+            </section>
             <span class="game-loading-indicator" aria-hidden="true"></span>
             <button class="btn house-start-button" type="button" data-house-start aria-describedby="house-game-load-status">Begin Game</button>
             </div>
