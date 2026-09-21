@@ -2355,7 +2355,7 @@ function initBottleLogin() {
         const result = await response.json();
         if (!response.ok || !result.success) throw new Error(result.message || 'Free-play sign in failed.');
         const account = rememberAccountSession(result.data);
-        window.MuzikazAccountSession.permissions = { members: true, backpack: true, avatarSelection: true, creatorTools: true, marketplace: true, radTox: true, games: true, world: true };
+        window.MuzikazAccountSession.permissions = { backpack: true, avatarSelection: true, creatorTools: true, marketplace: true, radTox: true, games: true, world: true };
         currentMemberEmail = syncAccessCodeBackpack(account);
         window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
         setPurchaseStep(3);
@@ -2465,8 +2465,13 @@ function initBottleLogin() {
       window.MuzikazAccountSession = { csrfToken, account, expiresAt, backpack, permissions };
       currentMemberEmail = syncAccessCodeBackpack(account);
       showAddress(account.primaryEthereumWallet);
-      if (account.loadoutAccess === true && permissions.members) { setPurchaseStep(3); unlock('Welcome back. Your persistent Loadout, Backpack, avatars, creator tools and games are ready.'); }
-      else unlock(backpack.status === 'empty' ? 'Your account is open. Add a Loadout to unlock member tools and games.' : 'Your account is open.');
+      // A successful account login is the members-area gate. Product-specific
+      // permissions still control protected actions, but they no longer hide
+      // the entire dashboard behind a separate API membership flag.
+      if (account.loadoutAccess === true) setPurchaseStep(3);
+      unlock(account.loadoutAccess === true
+        ? 'Welcome back. Your persistent Loadout, Backpack, avatars, creator tools and games are ready.'
+        : backpack.status === 'empty' ? 'Welcome back. Your full members area is ready.' : 'Welcome back. Your account and members area are open.');
       renderOwnedCollection(currentMemberEmail);
     } catch (error) {
       lockedContent.hidden = true;
