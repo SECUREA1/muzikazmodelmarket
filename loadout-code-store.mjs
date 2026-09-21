@@ -64,9 +64,17 @@ function verifies(code, credential) {
   const expected = Buffer.from(credential.hash, 'hex');
   return candidate.length === expected.length && timingSafeEqual(candidate, expected);
 }
+function hashPassword(password, salt = randomBytes(16).toString('hex')) {
+  return { salt, hash: pbkdf2Sync(String(password), salt, 210_000, 32, 'sha256').toString('hex') };
+}
+function verifiesPassword(password, account) {
+  const candidate = Buffer.from(hashPassword(password, account.passwordSalt).hash, 'hex');
+  const expected = Buffer.from(account.passwordHash, 'hex');
+  return candidate.length === expected.length && timingSafeEqual(candidate, expected);
+}
 function mask(code) { return `${code.slice(0, 8)}-••••-••••-${code.slice(-4)}`; }
 function publicAccount(account) {
-  const safe = clone(account); delete safe.accessCodeHash; delete safe.accessCodeSalt; return safe;
+  const safe = clone(account); delete safe.accessCodeHash; delete safe.accessCodeSalt; delete safe.passwordHash; delete safe.passwordSalt; return safe;
 }
 function publicCredential(record) {
   return { id: record.id, maskedCode: record.maskedCode, label: record.label, campaign: record.campaign, purpose: record.purpose || 'standard-loadout', status: record.status, createdAt: record.createdAt, activatedAt: record.activatedAt || null, revokedAt: record.revokedAt || null, expiresAt: record.expiresAt || null, boundWallet: record.boundWallet || null, accountId: record.accountId || null, accountUsername: record.accountUsername || null, loadoutRedeemed: Boolean(record.loadoutRedeemed), entitlements: clone(record.entitlements) };
@@ -204,6 +212,28 @@ export class MzkAccountStore {
     return publicAccount(account);
   }); }
   authenticate(code) { return this.serialized(async (data) => { const normalized = normalizeCode(code); if (!ACCESS_CODE_PATTERN.test(normalized)) throw Object.assign(new Error('Enter a valid MZK Access Code.'), { statusCode: 400 }); const credential = data.credentials.find((item) => verifies(normalized, { hash: item.codeHash, salt: item.codeSalt })); if (!credential || credential.status !== 'activated') throw Object.assign(new Error('The MZK Access Code is not active.'), { statusCode: 401 }); const account = data.accounts.find((a) => a.accountId === credential.accountId); if (!account) throw Object.assign(new Error('The account connected to this code was not found.'), { statusCode: 404 }); const now = new Date().toISOString(); credential.lastUsedAt = now; if (account.loadoutRedeemed) grantStandardLoadout(account); account.accessCodeLastUsedAt = now; account.updatedAt = now; return publicAccount(account); }); }
+  freePlayLogin(username, password) { return this.serialized(async (data) => {
+    const name = String(username || '').trim();
+    const normalizedName = name.toLowerCase();
+    const secret = String(password || '');
+    if (!/^[a-zA-Z0-9_.-]{3,24}$/.test(name)) throw Object.assign(new Error('Username must be 3–24 letters, numbers, dots, dashes, or underscores.'), { statusCode: 400 });
+    if (secret.length < 6 || secret.length > 128) throw Object.assign(new Error('Password must be 6–128 characters.'), { statusCode: 400 });
+    let account = data.accounts.find((item) => String(item.username || '').trim().toLowerCase() === normalizedName);
+    if (account?.passwordHash) {
+      if (!verifiesPassword(secret, account)) throw Object.assign(new Error('Username or password is incorrect.'), { statusCode: 401 });
+    } else if (account) {
+      throw Object.assign(new Error('That username belongs to an existing account. Use its original sign-in method.'), { statusCode: 409 });
+    } else {
+      account = accountRecord('', '', name);
+      const passwordSecret = hashPassword(secret);
+      account.passwordHash = passwordSecret.hash;
+      account.passwordSalt = passwordSecret.salt;
+      data.accounts.push(account);
+    }
+    grantStandardLoadout(account);
+    account.updatedAt = new Date().toISOString();
+    return publicAccount(account);
+  }); }
   findByWallet(wallet) { return this.serialized(async (data) => { const address = normalizeWallet(wallet); if (!WALLET_PATTERN.test(address)) throw Object.assign(new Error('A valid Ethereum wallet is required.'), { statusCode: 400 }); let account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address)); if (!account) { account = accountRecord('', address); data.accounts.push(account); } account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
   adminBypass() { return this.serialized(async (data) => {
     // Keep one durable, wallet-free Backpack for the owner shortcut. The server

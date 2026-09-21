@@ -2345,7 +2345,27 @@ function initBottleLogin() {
   });
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (accessCodeInput?.value.trim()) await openAccessCodeAccount();
+    const freePlayUsername = document.querySelector('#free-play-username');
+    const freePlayPassword = document.querySelector('#free-play-password');
+    if (freePlayUsername && freePlayPassword) {
+      setBusy(true);
+      try {
+        if (status) status.textContent = 'Opening your free-play house…';
+        const response = await accountApiFetch('/api/access/free-play', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ username: freePlayUsername.value, password: freePlayPassword.value }) });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || 'Free-play sign in failed.');
+        const account = rememberAccountSession(result.data);
+        window.MuzikazAccountSession.permissions = { members: true, backpack: true, avatarSelection: true, creatorTools: true, marketplace: true, radTox: true, games: true, world: true };
+        currentMemberEmail = syncAccessCodeBackpack(account);
+        window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
+        setPurchaseStep(3);
+        renderOwnedCollection(currentMemberEmail);
+        unlock(`Welcome ${account.username}. The full Vibe Verse, markets, MZK wallet, and Backpack are ready.`);
+        scrollToSection('member-locked-content');
+      } catch (error) {
+        if (status) status.textContent = error.message || 'Free-play sign in failed.';
+      } finally { setBusy(false); }
+    } else if (accessCodeInput?.value.trim()) await openAccessCodeAccount();
     else await connect();
   });
   loadoutButton?.addEventListener('click', async () => {
@@ -2439,7 +2459,7 @@ function initBottleLogin() {
     try {
       const bootstrapResponse = await accountApiFetch('/api/account/bootstrap');
       const bootstrapResult = await bootstrapResponse.json();
-      if (bootstrapResponse.status === 401) { clearConnectedSession(); if (status) status.textContent = 'Sign in with an Access Code, purchase, or verified wallet.'; return; }
+      if (bootstrapResponse.status === 401) { clearConnectedSession(); lockedContent.hidden = false; lockedContent.dataset.locked = 'false'; if (status) status.textContent = 'Choose a username and password to save your free-play progress.'; return; }
       if (!bootstrapResponse.ok || !bootstrapResult.success) throw new Error(bootstrapResult.message || 'Account bootstrap failed.');
       const { account, backpack, permissions, csrfToken, expiresAt } = bootstrapResult.data;
       window.MuzikazAccountSession = { csrfToken, account, expiresAt, backpack, permissions };

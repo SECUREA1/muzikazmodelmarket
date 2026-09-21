@@ -17,6 +17,25 @@ test('activates one hashed MZK Access Code and keeps it usable as account login'
   assert.equal((await store.authenticate(grant.code)).mzkBalance, 2250, 'starter and promotional grants are never duplicated');
 });
 
+test('free-play username login creates and restores a complete MZK Backpack', async (t) => {
+  const { store } = await fixture(t);
+  const created = await store.freePlayLogin('VibePlayer', 'neon-house-42');
+  assert.equal(created.username, 'VibePlayer');
+  assert.equal(created.loadoutAccess, true);
+  assert.equal(created.memberAccess, true);
+  assert.equal(created.marketplaceAccess, true);
+  assert.equal(created.gameAccess, true);
+  assert.equal(created.mzkBalance, 2000);
+  assert.ok(created.gameAssets.includes('RAD-TOX Starter Gear'));
+  assert.equal(created.passwordHash, undefined, 'password hashes never leave the account store');
+
+  const restored = await store.freePlayLogin('vibeplayer', 'neon-house-42');
+  assert.equal(restored.accountId, created.accountId);
+  assert.equal(restored.mzkBalance, 2000, 'repeat login does not mint another starter balance');
+  await assert.rejects(store.freePlayLogin('VibePlayer', 'wrong-password'), /incorrect/);
+  await assert.rejects(store.freePlayLogin('VibePlayer', 'NEON-HOUSE-42'), /incorrect/, 'passwords remain case-sensitive');
+});
+
 test('rotation preserves the canonical account and revokes the prior credential', async (t) => {
   const { store } = await fixture(t); const issued = await store.create(); const activated = await store.activate(issued.code, '0x2222222222222222222222222222222222222222');
   const rotated = await store.rotate(activated.account.accountId); assert.equal(rotated.account.accountId, activated.account.accountId); assert.deepEqual(rotated.account.landAssets, activated.account.landAssets);
