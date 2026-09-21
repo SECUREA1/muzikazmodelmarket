@@ -70,3 +70,11 @@ test('portable token is retained for unrelated 401 and cleared for account sessi
   assert.equal(options.headers.Authorization, 'Bearer portable'); assert.equal(window.MUZIKAZ_API.getSessionToken(), 'portable');
   await window.MUZIKAZ_API.fetch('/api/backpack'); assert.equal(window.MUZIKAZ_API.getSessionToken(), '');
 });
+
+test('game session token follows cross-origin RAD-TOX requests', async () => {
+  let options; const { window } = loadConnection(async (url, request) => { if (url.endsWith('/api/health')) return health(); options = request; return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'content-type': 'application/json' } }); }, 'https://muzikazmodelmarket.onrender.com');
+  window.MUZIKAZ_API.setGameSessionToken('game-portable');
+  await window.MUZIKAZ_API.fetch('/api/game/session');
+  assert.equal(options.headers['X-Game-Session'], 'game-portable');
+  assert.equal(window.MUZIKAZ_API.getGameSessionToken(), 'game-portable');
+});

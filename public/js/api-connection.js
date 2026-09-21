@@ -65,9 +65,12 @@
      * Carry the same short-lived account session explicitly when the member site
      * and persistent API are on different origins. */
     var sessionToken = getSessionToken();
+    var gameSessionToken = getGameSessionToken();
     var hasAuthorization = false;
-    for (headerName in request.headers) if (headerName.toLowerCase() === 'authorization') hasAuthorization = true;
+    var hasGameSession = false;
+    for (headerName in request.headers) { if (headerName.toLowerCase() === 'authorization') hasAuthorization = true; if (headerName.toLowerCase() === 'x-game-session') hasGameSession = true; }
     if (sessionToken && !hasAuthorization) request.headers.Authorization = 'Bearer ' + sessionToken;
+    if (gameSessionToken && !hasGameSession) request.headers['X-Game-Session'] = gameSessionToken;
     request.cache = options.cache || 'no-store';
     request.mode = 'cors';
     /* Preserve the account cookie when a branded frontend uses the hosted API. */
@@ -162,6 +165,14 @@
     } catch (ignore) {}
   }
 
+  function getGameSessionToken() {
+    try { return window.sessionStorage.getItem('muzikazGameSessionToken') || ''; } catch (ignore) { return ''; }
+  }
+
+  function setGameSessionToken(token) {
+    try { if (token) window.sessionStorage.setItem('muzikazGameSessionToken', token); else window.sessionStorage.removeItem('muzikazGameSessionToken'); } catch (ignore) {}
+  }
+
   function logout(csrfToken) {
     return fetchApi('/api/session', { method: 'DELETE', headers: { 'X-CSRF-Token': csrfToken || '' }, retries: 0 }).then(function (response) {
       if (response.ok || response.status === 401) { setSessionToken(''); try { window.sessionStorage.removeItem('muzikazGameSessionToken'); } catch (ignore) {} }
@@ -173,5 +184,5 @@
 
   window.MUZIKAZ_API_BASE = base;
   window.MUZIKAZ_SHARED_AVATAR_API = base;
-  window.MUZIKAZ_API = { base: base, url: url, fetch: fetchApi, ready: ready, getSessionToken: getSessionToken, setSessionToken: setSessionToken, logout: logout };
+  window.MUZIKAZ_API = { base: base, url: url, fetch: fetchApi, ready: ready, getSessionToken: getSessionToken, setSessionToken: setSessionToken, getGameSessionToken: getGameSessionToken, setGameSessionToken: setGameSessionToken, logout: logout };
 }(window, document));
