@@ -32,6 +32,18 @@ test('browser confirms Render before submitting a credential to a static host', 
   assert.equal(attributes['data-api-base'], 'https://muzikazmodelmarket.onrender.com');
 });
 
+test('health compatibility does not block username login on a rolling deployment', async () => {
+  const requests = [];
+  const { window, attributes } = loadConnection(async (url) => {
+    requests.push(url);
+    if (url.endsWith('/api/health')) return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'content-type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'content-type': 'application/json' } });
+  }, 'https://muzikazmodelmarket.onrender.com');
+  assert.equal((await window.MUZIKAZ_API.fetch('/api/access/free-play', { method: 'POST' })).status, 200);
+  assert.deepEqual(requests, ['https://muzikazmodelmarket.onrender.com/api/health', 'https://muzikazmodelmarket.onrender.com/api/access/free-play']);
+  assert.equal(attributes['data-api-connected'], 'true');
+});
+
 test('only explicit API_ROUTE_NOT_FOUND permits an activation alias', async () => {
   const requests = [];
   const { window } = loadConnection(async (url) => {

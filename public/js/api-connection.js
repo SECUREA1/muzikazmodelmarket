@@ -124,7 +124,11 @@
   function confirm(candidate) {
     return window.fetch(new window.URL('/api/health', candidate + '/').href, { method: 'GET', mode: 'cors', credentials: 'include', cache: 'no-store' }).then(function (response) {
       return response.clone().json().then(function (payload) {
-        if (!response.ok || !payload || payload.service !== 'muzikaz-member-market') throw new Error('Not the MUZIKAZ member API.');
+        // Health payloads may gain or lose descriptive fields during a rolling
+        // deployment. A successful MUZIKAZ response is enough to send the
+        // credential to the same origin; route-level JSON errors remain the
+        // authority for compatibility fallback.
+        if (!response.ok || !payload || payload.success !== true) throw new Error('The member service is unavailable.');
         return true;
       });
     });

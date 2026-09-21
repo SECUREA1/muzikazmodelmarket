@@ -36,6 +36,15 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.ok(health.response.headers.get('x-request-id'));
   assert.equal((await json(`${base}/api/health`, { headers: { Origin: 'https://evil.example' } })).response.headers.get('access-control-allow-origin'), null, 'unknown origins are never reflected');
 
+  const usernameLogin = await json(`${base}/api/access/free-play`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'InstantPlayer', password: 'loadout-now' }) });
+  assert.equal(usernameLogin.response.status, 200, 'username and password immediately create a member session');
+  assert.equal(usernameLogin.body.data.account.loadoutAccess, true);
+  assert.equal(usernameLogin.body.data.backpack.status, 'ready', 'the complete Loadout is returned with the login response');
+  assert.equal(usernameLogin.body.data.backpack.mzkBalance, 2000);
+  assert.equal(usernameLogin.body.data.permissions.creatorTools, true);
+  assert.equal(usernameLogin.body.data.permissions.marketplace, true);
+  assert.equal(usernameLogin.body.data.permissions.games, true);
+
   const login = await json(`${base}/api/admin/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'test-admin', password: 'test-password' }) });
   assert.equal(login.response.status, 200); assert.equal(login.body.data.persistent, true); assert.ok(login.body.data.token);
   const cookie = login.response.headers.get('set-cookie').split(';')[0];
