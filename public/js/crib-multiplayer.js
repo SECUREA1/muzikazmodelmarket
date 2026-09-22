@@ -58,19 +58,31 @@
     // another media session has been active. Resume it before queueing every
     // message; this is harmless on desktop and prevents a successful send from
     // appearing to have silently failed.
-    window.speechSynthesis.resume();
-    window.speechSynthesis.speak(utterance);
+    // Speech is an enhancement, never part of message delivery. Some mobile
+    // WebKit versions throw while resuming synthesis after the keyboard closes;
+    // do not let that turn an accepted message into a failed send.
+    try {
+      window.speechSynthesis.resume();
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.warn('[MUZIKAZ Chat] Spoken message playback was unavailable.', error);
+    }
   }
 
   function unlockMessageAudio() {
     if (!textToSpeechOn || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
     // Run inside the Send gesture. In particular, iOS requires speech audio to
     // be activated before the asynchronous chat request completes.
-    window.speechSynthesis.resume();
-    if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
-      const unlock = new SpeechSynthesisUtterance(' ');
-      unlock.volume = 0;
-      window.speechSynthesis.speak(unlock);
+    try {
+      window.speechSynthesis.resume();
+      if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+        const unlock = new SpeechSynthesisUtterance(' ');
+        unlock.volume = 0;
+        window.speechSynthesis.speak(unlock);
+      }
+    } catch (error) {
+      // Sending text must continue when optional mobile speech APIs fail.
+      console.warn('[MUZIKAZ Chat] Could not prepare spoken-message audio.', error);
     }
   }
 
@@ -197,7 +209,10 @@
     Object.assign(document.body.style, styles);
     lockedShell?.removeAttribute('data-chat-locked');
     lockedShell = null;
-    window.scrollTo({ top:gameScrollY, left:0, behavior:'instant' });
+    // Use the long-supported numeric signature. Mobile Safari can reject the
+    // newer options object (especially `behavior: "instant"`) after we have
+    // already hidden the panel, leaving the body fixed and appearing crashed.
+    window.scrollTo(0, gameScrollY);
   }
   function setPanel(open) {
     panel.hidden = !open;

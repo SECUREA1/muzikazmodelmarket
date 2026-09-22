@@ -171,6 +171,10 @@ test('the VibeVerse multiplayer client uses the simple login without a Loadout g
   assert.doesNotMatch(source, /input\.disabled = true/, 'sending must not dismiss the mobile keyboard by disabling its input');
   assert.match(source, /unlockMessageAudio\(\)/, 'Send must unlock spoken-message audio inside the user gesture');
   assert.match(source, /speechSynthesis\.resume\(\)/, 'spoken messages resume audio interrupted by mobile media or keyboard activity');
+  assert.match(source, /Spoken message playback was unavailable[\s\S]{0,160}error/, 'optional speech playback failures are isolated from message delivery');
+  assert.match(source, /Could not prepare spoken-message audio[\s\S]{0,160}error/, 'mobile speech activation cannot abort a send');
+  assert.match(source, /window\.scrollTo\(0, gameScrollY\)/, 'closing chat restores the mobile scroll position with the broadly supported API');
+  assert.doesNotMatch(source, /behavior:\s*['"]instant['"]/, 'closing chat must not use the unsupported Safari instant-scroll option');
   assert.match(source, /if \(input\.value\.trim\(\) === message\) input\.value = ''/, 'a completed request must preserve any new draft typed while sending');
   assert.match(source, /unlockMessageAudio\(\); await postMessage\(button\.textContent\.trim\(\)\)[\s\S]{0,180}closeChatAndResumeGame\(\)/, 'audio-backed quick reactions follow the same send-and-resume behavior');
   assert.match(page, /id="house-explorer-canvas"[^>]*tabindex="0"/, 'the game canvas remains keyboard focusable when chat is closed explicitly');
