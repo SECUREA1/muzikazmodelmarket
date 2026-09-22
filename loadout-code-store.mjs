@@ -236,6 +236,18 @@ export class MzkAccountStore {
     account.updatedAt = new Date().toISOString();
     return publicAccount(account);
   }); }
+  usernameLogin(username) { return this.serialized(async (data) => {
+    const name = String(username || '').trim();
+    if (!/^[a-zA-Z0-9_.-]{3,24}$/.test(name)) throw Object.assign(new Error('Enter a 3–24 character username using letters, numbers, dots, dashes, or underscores.'), { statusCode: 400 });
+    const normalizedName = name.toLowerCase();
+    let account = data.accounts.find((item) => String(item.username || '').trim().toLowerCase() === normalizedName);
+    if (account?.passwordHash || account?.accessCodeStatus || account?.primaryEthereumWallet) throw Object.assign(new Error('That username uses a protected sign-in method.'), { statusCode: 409 });
+    if (!account) { account = accountRecord('', '', name); account.usernameOnly = true; data.accounts.push(account); }
+    if (!account.usernameOnly) throw Object.assign(new Error('That username uses a protected sign-in method.'), { statusCode: 409 });
+    grantStandardLoadout(account);
+    account.updatedAt = new Date().toISOString();
+    return publicAccount(account);
+  }); }
   findByWallet(wallet) { return this.serialized(async (data) => { const address = normalizeWallet(wallet); if (!WALLET_PATTERN.test(address)) throw Object.assign(new Error('A valid Ethereum wallet is required.'), { statusCode: 400 }); let account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address)); if (!account) { account = accountRecord('', address); data.accounts.push(account); } account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
   adminBypass() { return this.serialized(async (data) => {
     // Keep one durable, wallet-free Backpack for the owner shortcut. The server
