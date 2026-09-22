@@ -18,6 +18,7 @@
   const input = $('#crib-chat-input'), status = $('#crib-chat-status'), reactions = $('#crib-reactions');
   const emojiToggle = $('#crib-emoji-toggle'), micToggle = $('#crib-mic-toggle'), speakerToggle = $('#crib-speaker-toggle'), ttsToggle = $('#crib-tts-toggle'), voiceStatus = $('#crib-voice-status');
   const roomName = $('#crib-room-name'), roomCount = $('#crib-room-count'), unreadCount = $('#crib-unread-count');
+  const media = window.MUZIKAZ_MEDIA;
   const requiredElements = [toggle, panel, count, players, messages, form, input, status, reactions, emojiToggle, micToggle, speakerToggle, ttsToggle, voiceStatus, roomName, roomCount, unreadCount];
   if (requiredElements.some((element) => !element)) {
     console.warn('[MUZIKAZ Chat] Chat markup is incomplete; multiplayer chat was not started.');
@@ -41,7 +42,7 @@
   const inActiveRoom = (item) => !item?.roomId || item.roomId === activeRoom();
 
   function setTextToSpeech(on, announce = false) {
-    textToSpeechOn = Boolean(on && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window);
+    textToSpeechOn = Boolean(on && (media?.speechSupported ?? ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window)));
     localStorage.setItem('muzikazChatTextToSpeech', String(textToSpeechOn));
     ttsToggle.classList.toggle('is-on', textToSpeechOn);
     ttsToggle.setAttribute('aria-pressed', String(textToSpeechOn));
@@ -51,7 +52,9 @@
   function speakMessage(item) {
     const activeRoom = window.MUZIKAZ_HOUSE_TRACKING?.roomId || localStorage.getItem('muzikazMultiplayerWorld') || 'rad-tox';
     if (!textToSpeechOn || !item?.message || (item.roomId && item.roomId !== activeRoom) || /^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)) return;
-    const utterance = new SpeechSynthesisUtterance(`${item.sessionId === sessionId ? 'You' : item.username || 'Player'} says: ${item.message}`);
+    const spokenMessage = `${item.sessionId === sessionId ? 'You' : item.username || 'Player'} says: ${item.message}`;
+    if (media) { media.speak(spokenMessage); return; }
+    const utterance = new SpeechSynthesisUtterance(spokenMessage);
     utterance.lang = document.documentElement.lang || navigator.language || 'en';
     utterance.rate = 1; utterance.volume = 1;
     // Mobile browsers can leave synthesis paused after the software keyboard or
@@ -71,6 +74,7 @@
 
   function unlockMessageAudio() {
     if (!textToSpeechOn || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
+    if (media) { media.unlockSpeech(); return; }
     // Run inside the Send gesture. In particular, iOS requires speech audio to
     // be activated before the asynchronous chat request completes.
     try {
@@ -178,8 +182,9 @@
     else if (data.kind === 'candidate') await peer.addIceCandidate(data.payload).catch(() => {});
   }
   async function enableMicrophone() {
-    if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) throw new Error('Voice chat is not supported by this browser.');
-    localStream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true }, video:false });
+    if (!window.RTCPeerConnection) throw new Error('Voice chat is not supported by this browser.');
+    const requestMedia = media?.getUserMedia || ((constraints) => navigator.mediaDevices.getUserMedia(constraints));
+    localStream = await requestMedia({ audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true }, video:false });
     micToggle.classList.add('is-on'); micToggle.setAttribute('aria-pressed', 'true'); micToggle.querySelector('b').textContent = 'Talk on'; voiceStatus.textContent = 'Microphone live · connecting…'; await heartbeat(); connectToRoom();
   }
   function disableMicrophone() { localStream?.getTracks().forEach((track) => track.stop()); localStream = null; for (const [id, peer] of peers) { signal(id, 'hangup').catch(() => {}); peer.close(); } peers.clear(); micToggle.classList.remove('is-on'); micToggle.setAttribute('aria-pressed', 'false'); micToggle.querySelector('b').textContent = 'Talk off'; voiceStatus.textContent = 'Listening to room'; if (joined) heartbeat().catch(() => {}); }
@@ -210,7 +215,7 @@
     lockedShell?.removeAttribute('data-chat-locked');
     lockedShell = null;
     // Use the long-supported numeric signature. Mobile Safari can reject the
-    // newer options object (especially `behavior: "instant"`) after we have
+    // newer options object with a nonstandard instant-scroll value after we have
     // already hidden the panel, leaving the body fixed and appearing crashed.
     window.scrollTo(0, gameScrollY);
   }
@@ -272,7 +277,7 @@
   });
   emojiToggle.addEventListener('click', () => { const open = reactions.classList.toggle('open'); emojiToggle.setAttribute('aria-expanded', String(open)); });
   reactions.querySelectorAll('button').forEach((button) => button.addEventListener('click', async () => { if (sendingMessage) return; try { unlockMessageAudio(); await postMessage(button.textContent.trim()); reactions.classList.remove('open'); emojiToggle.setAttribute('aria-expanded', 'false'); closeChatAndResumeGame(); } catch (error) { status.textContent = error.message || 'Reaction could not be sent.'; } }));
-  micToggle.addEventListener('click', async () => { try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); voiceStatus.textContent = error.name === 'NotAllowedError' ? 'Microphone permission denied' : error.message; } });
+  micToggle.addEventListener('click', async () => { try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); voiceStatus.textContent = media?.microphoneError(error) || (error.name === 'NotAllowedError' ? 'Microphone permission denied — listening still works' : error.message); } });
   speakerToggle.addEventListener('click', () => { speakerOn = !speakerOn; remoteAudio.forEach((audio) => { audio.muted = !speakerOn; if (speakerOn) audio.play().catch(() => {}); }); speakerToggle.classList.toggle('is-on', speakerOn); speakerToggle.setAttribute('aria-pressed', String(speakerOn)); speakerToggle.querySelector('b').textContent = speakerOn ? 'Speaker on' : 'Speaker off'; });
   const resumeLiveAudio = () => { if (!speakerOn) return; remoteAudio.forEach((audio) => { audio.muted = false; audio.play().catch(() => {}); }); };
   document.addEventListener('pointerdown', resumeLiveAudio, { passive:true });
