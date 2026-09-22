@@ -165,7 +165,9 @@ test('the VibeVerse multiplayer client uses the simple login without a Loadout g
   assert.match(source, /'X-User-Name': username/);
   assert.match(source, /document\.body\.style\.position = 'fixed'/, 'opening chat must lock the game page against scrolling');
   assert.match(source, /lockedShell\?\.setAttribute\('data-chat-locked', 'true'\)/, 'opening chat must lock the game into the same viewport workspace');
-  assert.match(source, /matchMedia\('\(max-width: 760px\)'\)\.matches[\s\S]{0,100}setPanel\(false\)/, 'sending on mobile closes the full-screen conversation');
+  assert.doesNotMatch(source, /input\.disabled\s*=\s*true/, 'sending must not dismiss the mobile keyboard and reset the game viewport');
+  assert.doesNotMatch(source, /matchMedia\('\(max-width: 760px\)'\)\.matches[\s\S]{0,100}setPanel\(false\)/, 'sending must keep the conversation open on mobile and desktop');
+  assert.match(source, /if \(input\.value\.trim\(\) === message\) input\.value = ''/, 'only the draft that was successfully sent is cleared');
   assert.match(source, /data\.kind !== 'offer'/, 'listeners must accept room audio without enabling their own microphone');
   assert.match(source, /voiceEnabled:Boolean\(localStream\)/, 'presence advertises talk state so every listener receives a stable offer');
   assert.doesNotMatch(page, /data-multiplayer-control disabled/);

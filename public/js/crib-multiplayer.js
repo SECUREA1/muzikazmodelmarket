@@ -209,7 +209,29 @@
   toggle.addEventListener('click', () => setPanel(panel.hidden));
   panel.querySelector('[data-close-chat]').addEventListener('click', () => { setPanel(false); toggle.focus(); });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !panel.hidden) { setPanel(false); toggle.focus(); } });
-  form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; const submit = form.querySelector('[type="submit"]'); input.disabled = true; submit.disabled = true; status.textContent = 'Sending…'; try { await postMessage(message); input.value = ''; status.textContent = ''; if (window.matchMedia('(max-width: 760px)').matches) { setPanel(false); toggle.focus({ preventScroll:true }); } } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; submit.disabled = false; if (!panel.hidden) input.focus({ preventScroll:true }); } });
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const message = input.value.trim();
+    if (!message || sendingMessage) return;
+    const submit = form.querySelector('[type="submit"]');
+    submit.disabled = true;
+    form.setAttribute('aria-busy', 'true');
+    status.textContent = 'Sending…';
+    try {
+      await postMessage(message);
+      // Keep text entered while the request was in flight. In particular, do
+      // not disable the input: doing so dismisses mobile keyboards and can
+      // resize or scroll the game viewport as if the experience had reset.
+      if (input.value.trim() === message) input.value = '';
+      status.textContent = '';
+    } catch (error) {
+      status.textContent = error.message || 'Message could not be sent.';
+    } finally {
+      submit.disabled = false;
+      form.removeAttribute('aria-busy');
+      if (!panel.hidden) input.focus({ preventScroll:true });
+    }
+  });
   emojiToggle.addEventListener('click', () => { const open = reactions.classList.toggle('open'); emojiToggle.setAttribute('aria-expanded', String(open)); });
   reactions.querySelectorAll('button').forEach((button) => button.addEventListener('click', async () => { if (sendingMessage) return; try { await postMessage(button.textContent.trim()); reactions.classList.remove('open'); emojiToggle.setAttribute('aria-expanded', 'false'); } catch (error) { status.textContent = error.message || 'Reaction could not be sent.'; } }));
   micToggle.addEventListener('click', async () => { try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); voiceStatus.textContent = error.name === 'NotAllowedError' ? 'Microphone permission denied' : error.message; } });
