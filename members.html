@@ -74,10 +74,10 @@
                     <div class="loadout-intro">
                         <p class="kicker">Member access · gameplay stays free</p>
                         <h1 id="bottle-login-title">Enter the Members Area</h1>
-                        <p>Create or reopen your player name with a username and password. Your login reconnects the same Drop Backpack, MZK token wallet, marketplace activity, and cart.</p>
+                        <p>Enter your email and password to open the entire members area immediately. Your Drop Backpack, MZK token wallet, marketplace activity, and cart stay connected on this device.</p>
                     </div>
                     <div class="free-play-fields">
-                        <label><span>Username</span><input id="free-play-username" name="username" autocomplete="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_.-]+" required placeholder="Choose your player name" /></label>
+                        <label><span>Email</span><input id="free-play-email" name="email" type="email" autocomplete="email" maxlength="254" required placeholder="you@example.com" /></label>
                         <label><span>Password</span><input id="free-play-password" name="password" type="password" autocomplete="current-password" minlength="6" maxlength="128" required placeholder="6+ characters" /></label>
                         <button type="submit" id="free-play-submit">Open Members Area <span aria-hidden="true">→</span></button>
                     </div>
@@ -85,7 +85,7 @@
                         <a class="btn" href="model-market.html#house-explorer">Play Game Without Signing In</a>
                     </div>
                 </form>
-                <p class="status-message" id="bottle-login-status" role="status" aria-live="polite">Enter a username and password. New names create an account; returning players reopen the same Backpack, token balance, marketplace, and cart.</p>
+                <p class="status-message" id="bottle-login-status" role="status" aria-live="polite">Enter your email and password to open all member sections. No API connection is required.</p>
             </div>
         </section>
         <div class="member-locked-content" id="member-locked-content" data-locked="true">
