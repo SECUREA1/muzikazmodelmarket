@@ -1727,6 +1727,7 @@ section,
   }
 }
 
+
 /* Keep mobile game controls locked directly below the viewable house canvas. */
 .mobile-move-pad span{
   display:block;
@@ -3594,5 +3595,39 @@ html.crib-chat-selected .crib-chat-panel{
     width:auto;
     height:auto;
     border-radius:0 0 12px 12px;
+  }
+}
+
+/* On phones chat is a dedicated screen, not a small overlay competing with the
+   game and the software keyboard. All voice, listening, TTS, player, reaction,
+   and message controls remain inside the visible Visual Viewport. */
+@media(max-width:760px){
+  html.crib-chat-selected .house-explorer-shell[data-chat-locked="true"]{
+    visibility:hidden;
+    pointer-events:none;
+  }
+  html.crib-chat-selected .crib-social{
+    visibility:visible;
+    z-index:1000;
+  }
+  html.crib-chat-selected .crib-chat-panel{
+    top:var(--crib-visual-top,0px);
+    right:0;
+    bottom:auto;
+    left:0;
+    width:100%;
+    height:var(--crib-visual-height,100dvh);
+    max-width:none;
+    max-height:none;
+    box-sizing:border-box;
+    border:0;
+    border-radius:0;
+    padding-top:env(safe-area-inset-top);
+    padding-right:env(safe-area-inset-right);
+    padding-bottom:env(safe-area-inset-bottom);
+    padding-left:env(safe-area-inset-left);
+  }
+  html.crib-chat-selected .crib-chat-messages{
+    min-height:0;
   }
 }
