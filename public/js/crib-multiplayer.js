@@ -26,6 +26,7 @@
   let joined = false, localStream = null, speakerOn = true, currentUsers = [], unread = 0, loadingChat = null, sendingMessage = false;
   let textToSpeechOn = localStorage.getItem('muzikazChatTextToSpeech') === 'true';
   let gameScrollY = 0;
+  let pageLockStyles = null;
   const payload = (response) => response?.data ?? response;
   async function jsonResponse(response) { const result = await response.json().catch(() => ({})); if (!response.ok || result.success === false) throw new Error(result.error || result.message || 'The crib server did not respond.'); return payload(result); }
   const text = (value) => document.createTextNode(String(value || ''));
@@ -129,24 +130,40 @@
     const viewportHeight = viewport?.height || window.innerHeight;
     document.documentElement.style.setProperty('--crib-visual-top', `${Math.round(viewportTop)}px`);
     document.documentElement.style.setProperty('--crib-visual-height', `${Math.round(viewportHeight)}px`);
-    if (document.documentElement.classList.contains('crib-chat-selected')) window.scrollTo(0, gameScrollY);
+  }
+  function lockGamePage() {
+    if (pageLockStyles) return;
+    gameScrollY = window.scrollY;
+    pageLockStyles = { position:document.body.style.position, top:document.body.style.top, width:document.body.style.width, overflow:document.body.style.overflow };
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${gameScrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+  }
+  function unlockGamePage() {
+    if (!pageLockStyles) return;
+    const styles = pageLockStyles;
+    pageLockStyles = null;
+    Object.assign(document.body.style, styles);
+    window.scrollTo({ top:gameScrollY, left:0, behavior:'instant' });
   }
   function setPanel(open) {
     panel.hidden = !open;
     toggle.setAttribute('aria-expanded', String(open));
     document.documentElement.classList.toggle('crib-chat-selected', open);
     if (open) {
-      gameScrollY = window.scrollY;
+      lockGamePage();
       const shell = document.querySelector('.house-explorer-shell');
       if (shell) shell.style.setProperty('--crib-locked-game-height', `${Math.round(shell.getBoundingClientRect().height)}px`);
       unread = 0; unreadCount.hidden = true; messages.scrollTop = messages.scrollHeight;
       syncChatViewport();
       input.focus({ preventScroll:true });
-      window.scrollTo(0, gameScrollY);
     } else {
+      document.documentElement.classList.remove('crib-chat-composing');
       document.querySelector('.house-explorer-shell')?.style.removeProperty('--crib-locked-game-height');
       document.documentElement.style.removeProperty('--crib-visual-top');
       document.documentElement.style.removeProperty('--crib-visual-height');
+      unlockGamePage();
     }
   }
   window.visualViewport?.addEventListener('resize', syncChatViewport);
@@ -156,7 +173,7 @@
   toggle.addEventListener('click', () => setPanel(panel.hidden));
   panel.querySelector('[data-close-chat]').addEventListener('click', () => { setPanel(false); toggle.focus(); });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !panel.hidden) { setPanel(false); toggle.focus(); } });
-  form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; const submit = form.querySelector('[type="submit"]'); input.disabled = true; submit.disabled = true; status.textContent = 'Sending…'; try { await postMessage(message); input.value = ''; status.textContent = ''; } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; submit.disabled = false; input.focus(); } });
+  form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; const submit = form.querySelector('[type="submit"]'); input.disabled = true; submit.disabled = true; status.textContent = 'Sending…'; let sent = false; try { await postMessage(message); sent = true; input.value = ''; status.textContent = ''; setPanel(false); toggle.focus({ preventScroll:true }); } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; submit.disabled = false; if (!sent) input.focus({ preventScroll:true }); } });
   emojiToggle.addEventListener('click', () => { const open = reactions.classList.toggle('open'); emojiToggle.setAttribute('aria-expanded', String(open)); });
   reactions.querySelectorAll('button').forEach((button) => button.addEventListener('click', async () => { if (sendingMessage) return; try { await postMessage(button.textContent.trim()); reactions.classList.remove('open'); emojiToggle.setAttribute('aria-expanded', 'false'); } catch (error) { status.textContent = error.message || 'Reaction could not be sent.'; } }));
   micToggle.addEventListener('click', async () => { try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); voiceStatus.textContent = error.name === 'NotAllowedError' ? 'Microphone permission denied' : error.message; } });
@@ -182,5 +199,5 @@
   window.addEventListener('muzikaz:multiplayer-world-change', () => { peers.forEach((peer) => peer.close()); peers.clear(); messages.replaceChildren(); unread = 0; unreadCount.hidden = true; Promise.all([heartbeat(), loadChat()]).catch((error) => { status.textContent = error.message; }); });
   if (window.MUZIKAZ_DESIGNATED_AVATAR || localStorage.getItem('muzikazDesignatedAvatar')) beginPresence(); else window.addEventListener('muzikaz-avatar-ready', beginPresence, { once:true });
   const timer = setInterval(() => { heartbeat().catch((error) => { status.textContent = error.message; }); loadChat().catch(() => {}); }, 5_000);
-  window.addEventListener('pagehide', () => { clearInterval(timer); window.speechSynthesis?.cancel(); disableMicrophone(); events?.close(); if (joined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
+  window.addEventListener('pagehide', () => { clearInterval(timer); unlockGamePage(); window.speechSynthesis?.cancel(); disableMicrophone(); events?.close(); if (joined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
 })();

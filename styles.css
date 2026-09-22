@@ -3529,12 +3529,15 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
    visible without allowing the browser to resize or scroll the game controls. */
 html.crib-chat-selected{scroll-behavior:auto}
 html.crib-chat-selected .house-explorer-shell{height:var(--crib-locked-game-height)!important;max-height:var(--crib-locked-game-height)!important}
+html.crib-chat-selected .crib-chat-panel{
+  position:fixed;
+  top:calc(var(--crib-visual-top,0px) + max(7px,env(safe-area-inset-top)));
+  right:max(7px,env(safe-area-inset-right));
+  bottom:auto;
+  max-height:calc(var(--crib-visual-height,100dvh) - max(14px,env(safe-area-inset-top)));
+}
 @media(max-width:620px){
-  html.crib-chat-composing .crib-chat-panel{
-    position:fixed;
-    top:calc(var(--crib-visual-top,0px) + max(7px,env(safe-area-inset-top)));
-    right:max(7px,env(safe-area-inset-right));
-    bottom:auto;
+  html.crib-chat-selected .crib-chat-panel{
     left:max(7px,env(safe-area-inset-left));
     height:calc(var(--crib-visual-height,100dvh) - max(14px,env(safe-area-inset-top)));
     max-height:none;
