@@ -78,6 +78,12 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   const avatarSelection = await json(`${base}/api/avatar-selection`, { method: 'PUT', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ avatarId: dax.id }) });
   assert.equal(avatarSelection.response.status, 200, 'an included repository avatar can be equipped from the Backpack');
   assert.equal(avatarSelection.body.data.selectedAvatarId, dax.id);
+  const cribPresence = await json(`${base}/api/houses/ioncore-house/presence`, { method: 'POST', headers: { Cookie: accountCookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ roomId: 'rad-tox' }) });
+  assert.equal(cribPresence.response.status, 200, 'a member with a designated avatar can join the shared room');
+  const spokenChat = await json(`${base}/api/houses/ioncore-house/chat`, { method: 'POST', headers: { Cookie: accountCookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: 'Hello shared room' }) });
+  assert.equal(spokenChat.response.status, 201, 'room text is sent through the shared server for text-to-speech clients');
+  assert.equal(spokenChat.body.message, 'Hello shared room');
+  assert.equal(spokenChat.body.roomId, 'rad-tox', 'the server identifies the room that should speak the message');
   const codeOnlyState = await json(`${base}/api/wallet/state`, { headers: { Cookie: accountCookie } });
   assert.equal(codeOnlyState.response.status, 200, 'an access-code session opens the new Backpack without an Ethereum address');
   assert.ok(codeOnlyState.body.data.items.some((item) => item.name === 'Starter Avatar'), 'the loadout is in durable game memory');
