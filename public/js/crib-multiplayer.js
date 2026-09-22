@@ -34,7 +34,6 @@
   let textToSpeechOn = savedTextToSpeech === null || savedTextToSpeech === 'true';
   let gameScrollY = 0;
   let pageLockStyles = null;
-  let lockedShell = null;
   const payload = (response) => response?.data ?? response;
   async function jsonResponse(response) { const result = await response.json().catch(() => ({})); if (!response.ok || result.success === false) throw new Error(result.error || result.message || 'The crib server did not respond.'); return payload(result); }
   const text = (value) => document.createTextNode(String(value || ''));
@@ -204,16 +203,12 @@
     document.body.style.top = `-${gameScrollY}px`;
     document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
-    lockedShell = document.querySelector('.house-explorer-shell');
-    lockedShell?.setAttribute('data-chat-locked', 'true');
   }
   function unlockGamePage() {
     if (!pageLockStyles) return;
     const styles = pageLockStyles;
     pageLockStyles = null;
     Object.assign(document.body.style, styles);
-    lockedShell?.removeAttribute('data-chat-locked');
-    lockedShell = null;
     // Use the long-supported numeric signature. Mobile Safari can reject the
     // newer options object with a nonstandard instant-scroll value after we have
     // already hidden the panel, leaving the body fixed and appearing crashed.
@@ -226,14 +221,11 @@
     panel.setAttribute('aria-modal', String(open));
     if (open) {
       lockGamePage();
-      const shell = document.querySelector('.house-explorer-shell');
-      if (shell) shell.style.setProperty('--crib-locked-game-height', `${Math.round(shell.getBoundingClientRect().height)}px`);
       unread = 0; unreadCount.hidden = true; messages.scrollTop = messages.scrollHeight;
       syncChatViewport();
       input.focus({ preventScroll:true });
     } else {
       document.documentElement.classList.remove('crib-chat-composing');
-      document.querySelector('.house-explorer-shell')?.style.removeProperty('--crib-locked-game-height');
       document.documentElement.style.removeProperty('--crib-visual-top');
       document.documentElement.style.removeProperty('--crib-visual-height');
       unlockGamePage();
@@ -261,15 +253,21 @@
     const submit = form.querySelector('[type="submit"]');
     submit.disabled = true;
     status.textContent = 'Sending…';
+    // Leave composition mode during the tap that submitted the form. Waiting
+    // for the network here lets the mobile keyboard resize the WebGL stage;
+    // the renderer can then look as if the game returned to its start state.
+    // The request continues without replacing or rebuilding the active world.
+    input.blur();
+    closeChatAndResumeGame();
     try {
       await postMessage(message);
       // Clear only the message that finished sending so a newer draft typed
       // while the request was in flight is never lost.
       if (input.value.trim() === message) input.value = '';
       status.textContent = '';
-      closeChatAndResumeGame();
     } catch (error) {
       status.textContent = error.message || 'Message could not be sent.';
+      setPanel(true);
     } finally {
       submit.disabled = false;
       if (!panel.hidden) input.focus({ preventScroll:true });
