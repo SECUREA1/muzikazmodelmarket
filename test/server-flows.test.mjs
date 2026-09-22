@@ -45,6 +45,15 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(usernameLogin.body.data.permissions.marketplace, true);
   assert.equal(usernameLogin.body.data.permissions.games, true);
 
+  const simpleLogin = await json(`${base}/api/access/username`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'BackpackPlayer' }) });
+  assert.equal(simpleLogin.response.status, 200, 'a username alone opens a persistent member session');
+  assert.equal(simpleLogin.body.data.account.username, 'BackpackPlayer');
+  assert.equal(simpleLogin.body.data.backpack.mzkBalance, 2000);
+  const restoredLogin = await json(`${base}/api/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'backpackplayer' }) });
+  assert.equal(restoredLogin.response.status, 200, 'the short login alias restores the same username profile');
+  assert.equal(restoredLogin.body.data.account.accountId, simpleLogin.body.data.account.accountId);
+  assert.equal(restoredLogin.body.data.account.backpackId, simpleLogin.body.data.account.backpackId);
+
   const login = await json(`${base}/api/admin/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'test-admin', password: 'test-password' }) });
   assert.equal(login.response.status, 200); assert.equal(login.body.data.persistent, true); assert.ok(login.body.data.token);
   const cookie = login.response.headers.get('set-cookie').split(';')[0];
@@ -130,12 +139,12 @@ test('member entry uses the persistent account API', async () => {
     readFile(new URL('../members.html', import.meta.url), 'utf8')
   ]);
   const login = source.slice(source.indexOf('function initBottleLogin'), source.indexOf('marketQualityToggle?.addEventListener'));
-  assert.match(page, /name="email"/);
-  assert.match(page, /name="passcode"/);
+  assert.match(page, /name="username"[^>]*autocomplete="username"/);
+  assert.doesNotMatch(page, /name="passcode"/);
   assert.match(page, /public\/js\/avatar-selection\.js/);
   assert.match(login, /localStorage\.setItem\('muzikazBottleMember', 'true'\)/);
   assert.match(login, /MUZIKAZ_AVATAR_GATE\.ensure/);
-  assert.match(login, /\/api\/access\/free-play/, 'member login must create or restore an authenticated account');
+  assert.match(login, /\/api\/access\/username/, 'member login must create or restore an authenticated account from a username');
   assert.match(login, /\/api\/account\/bootstrap/, 'returning sessions must restore the canonical profile');
 });
 

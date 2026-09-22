@@ -74,11 +74,10 @@
                 <h1 id="bottle-login-title">Member access unlocks the MUZIKAZ upgrade lab.</h1>
                 <p>Sign in to your persistent member profile to open the members area, choose your avatar, and restore the same Drop Backpack, MZK, points, and game memory on every visit.</p>
                 <form id="bottle-login-form" class="bottle-login-form">
-                    <label>Email <input type="email" name="email" placeholder="crew@muzikaz.example" required /></label>
-                    <label>Passcode <input type="password" name="passcode" placeholder="Bottle pass" required /></label>
+                    <label>Username <input type="text" name="username" autocomplete="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_.-]{3,24}" placeholder="Choose your player name" required /></label>
                     <button type="submit">Continue</button>
                 </form>
-                <p class="status-message" id="bottle-login-status" role="status">Enter your member email and passcode. New credentials create a persistent profile; returning credentials restore it from the account API.</p>
+                <p class="status-message" id="bottle-login-status" role="status">Enter your username to create or restore your persistent member profile.</p>
             </div>
         </section>
         <div class="member-locked-content" id="member-locked-content" data-locked="true">

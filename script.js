@@ -2109,12 +2109,18 @@ function initBottleLogin() {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(form);
-    const email = normalizeMemberEmail(data.get('email'));
+    const username = String(data.get('username') || '').trim();
     if (status) status.textContent = 'Opening your persistent member profile…';
-    const response = await apiFetch('/api/access/free-play', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ username: email, password: String(data.get('passcode') || '') }), retries: 0 });
-    const result = await response.json();
+    let response;
+    try {
+      response = await apiFetch('/api/access/username', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ username }), retries: 0 });
+    } catch (error) {
+      if (status) status.textContent = error?.message || 'The member service is unavailable. Please try again.';
+      return;
+    }
+    const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.success) { if (status) status.textContent = result.message || 'Member sign in failed.'; return; }
-    await applyAccount(result.data, email);
+    await applyAccount(result.data, username);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
