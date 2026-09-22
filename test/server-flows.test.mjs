@@ -133,19 +133,19 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['Starter Avatar']);
 });
 
-test('member entry uses the persistent account API', async () => {
+test('member entry opens the entire area locally with email and password', async () => {
   const [source, page] = await Promise.all([
     readFile(new URL('../script.js', import.meta.url), 'utf8'),
     readFile(new URL('../members.html', import.meta.url), 'utf8')
   ]);
   const login = source.slice(source.indexOf('function initBottleLogin'), source.indexOf('marketQualityToggle?.addEventListener'));
-  assert.match(page, /name="username"[^>]*autocomplete="username"/);
+  assert.match(page, /name="email"[^>]*type="email"[^>]*autocomplete="email"/);
   assert.match(page, /name="password"[^>]*autocomplete="current-password"/);
   assert.match(page, /public\/js\/avatar-selection\.js/);
   assert.match(login, /localStorage\.setItem\('muzikazBottleMember', 'true'\)/);
-  assert.match(login, /MUZIKAZ_AVATAR_GATE\.ensure/);
-  assert.match(login, /\/api\/access\/free-play/, 'member login must create or restore an authenticated account from the original username and password');
-  assert.match(login, /\/api\/account\/bootstrap/, 'returning sessions must restore the canonical profile');
+  assert.match(login, /lockedContent\.dataset\.locked = 'false'/);
+  assert.match(login, /muzikaz:member-authenticated/);
+  assert.doesNotMatch(login, /\/api\//, 'member login must open without waiting for an API request');
 });
 
 test('the VibeVerse multiplayer client uses the simple login without a Loadout gate', async () => {
