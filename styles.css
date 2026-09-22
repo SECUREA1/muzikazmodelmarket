@@ -3515,3 +3515,23 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 .crib-reactions{overflow-x:auto;padding:5px 8px}.crib-reactions span{display:none}.crib-reactions button{min-width:36px;min-height:34px;padding:3px}
 #crib-chat-form{padding:7px 8px}#crib-chat-form input{height:38px;padding:8px 10px;border-radius:10px}#crib-chat-form button{min-height:38px;padding:6px 10px;border-radius:10px}#crib-chat-form button[type="submit"] b{display:none}#crib-chat-status:empty{display:none}#crib-chat-status{min-height:0;padding:0 9px 6px}
 @media(max-width:620px){.crib-chat-panel{max-height:min(58svh,440px)}.crib-chat-messages{min-height:110px}.crib-voice-controls>span{max-width:110px}#crib-chat-form{grid-template-columns:minmax(0,1fr) 40px 44px}#crib-chat-form button[type="submit"] span{display:none}#crib-chat-form button[type="submit"] b{display:inline;font-size:19px}}
+
+/* Keep the game and its control dock stable while the mobile keyboard is open.
+   The chat script supplies Visual Viewport dimensions so the composer remains
+   visible without allowing the browser to resize or scroll the game controls. */
+html.crib-chat-selected{scroll-behavior:auto}
+html.crib-chat-selected .house-explorer-shell{height:var(--crib-locked-game-height)!important;max-height:var(--crib-locked-game-height)!important}
+@media(max-width:620px){
+  html.crib-chat-composing .crib-chat-panel{
+    position:fixed;
+    top:calc(var(--crib-visual-top,0px) + max(7px,env(safe-area-inset-top)));
+    right:max(7px,env(safe-area-inset-right));
+    bottom:auto;
+    left:max(7px,env(safe-area-inset-left));
+    height:calc(var(--crib-visual-height,100dvh) - max(14px,env(safe-area-inset-top)));
+    max-height:none;
+  }
+  html.crib-chat-composing .crib-chat-messages{min-height:56px}
+  html.crib-chat-composing .house-bottom-controls,
+  html.crib-chat-composing .mobile-move-pad{transform:none}
+}
