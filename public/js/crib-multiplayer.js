@@ -32,6 +32,7 @@
   // Room messages are audible by default on every client. A listener can still
   // opt out with the Read messages control and that preference is remembered.
   let textToSpeechOn = savedTextToSpeech === null || savedTextToSpeech === 'true';
+  let spokenSubmission = null;
   let gameScrollY = 0;
   let pageLockStyles = null;
   const payload = (response) => response?.data ?? response;
@@ -50,9 +51,10 @@
   }
   function speakMessage(item) {
     const activeRoom = window.MUZIKAZ_HOUSE_TRACKING?.roomId || localStorage.getItem('muzikazMultiplayerWorld') || 'rad-tox';
-    if (!textToSpeechOn || !item?.message || (item.roomId && item.roomId !== activeRoom) || /^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)) return;
+    if (!textToSpeechOn || !item?.message || (item.roomId && item.roomId !== activeRoom) || /^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)) return false;
+    if (item.sessionId === sessionId && spokenSubmission?.roomId === activeRoom && spokenSubmission.message === item.message) return false;
     const spokenMessage = `${item.sessionId === sessionId ? 'You' : item.username || 'Player'} says: ${item.message}`;
-    if (media) { media.speak(spokenMessage); return; }
+    if (media) return media.speak(spokenMessage);
     const utterance = new SpeechSynthesisUtterance(spokenMessage);
     utterance.lang = document.documentElement.lang || navigator.language || 'en';
     utterance.rate = 1; utterance.volume = 1;
@@ -66,9 +68,21 @@
     try {
       window.speechSynthesis.resume();
       window.speechSynthesis.speak(utterance);
+      return true;
     } catch (error) {
       console.warn('[MUZIKAZ Chat] Spoken message playback was unavailable.', error);
+      return false;
     }
+  }
+
+  function speakSubmittedMessage(message) {
+    // Queue the real phrase while the Send tap still owns mobile browser audio
+    // activation. A silent unlock followed by a network request is not enough
+    // on iOS: user activation can expire before the accepted message returns.
+    const roomId = activeRoom();
+    const spoken = speakMessage({ sessionId, roomId, message });
+    spokenSubmission = spoken ? { roomId, message } : null;
+    return spoken;
   }
 
   function unlockMessageAudio() {
@@ -130,7 +144,7 @@
     if (notify && panel.hidden && item.sessionId !== sessionId) { unread += 1; unreadCount.textContent = unread > 9 ? '9+' : String(unread); unreadCount.hidden = false; }
     if (notify) speakMessage(item);
   }
-  async function postMessage(message) {
+  async function postMessage(message, announce = true) {
     if (sendingMessage) return;
     sendingMessage = true;
     try {
@@ -138,7 +152,7 @@
       const data = await jsonResponse(response);
       window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), message:data.message };
       window.dispatchEvent(new CustomEvent('muzikaz-house-chat', { detail:data }));
-      addMessage(data);
+      addMessage(data, announce);
       return data;
     } finally { sendingMessage = false; }
   }
@@ -249,7 +263,7 @@
     event.preventDefault();
     const message = input.value.trim();
     if (!message || sendingMessage) return;
-    unlockMessageAudio();
+    const spokenOnTap = speakSubmittedMessage(message);
     const submit = form.querySelector('[type="submit"]');
     submit.disabled = true;
     status.textContent = 'Sending…';
@@ -260,7 +274,9 @@
     input.blur();
     closeChatAndResumeGame();
     try {
-      await postMessage(message);
+      // Avoid reading the same outgoing message twice. If speech could not be
+      // queued during the tap, retry once when the server accepts the message.
+      await postMessage(message, !spokenOnTap);
       // Clear only the message that finished sending so a newer draft typed
       // while the request was in flight is never lost.
       if (input.value.trim() === message) input.value = '';
@@ -269,6 +285,7 @@
       status.textContent = error.message || 'Message could not be sent.';
       setPanel(true);
     } finally {
+      spokenSubmission = null;
       submit.disabled = false;
       if (!panel.hidden) input.focus({ preventScroll:true });
     }
