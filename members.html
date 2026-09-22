@@ -70,25 +70,18 @@
     <main>
         <section class="member-hero" id="bottle-login" aria-labelledby="bottle-login-title">
             <div class="member-login-card">
-                <form id="bottle-login-form" class="bottle-login-form free-play-login">
-                    <div class="loadout-intro">
-                        <p class="kicker">Member access · gameplay stays free</p>
-                        <h1 id="bottle-login-title">Enter the Members Area</h1>
-                        <p>Create or reopen your player name with a username and password. Signing in protects your MZK balance, Backpack Loadout, land, models, products, markets, and multiplayer activity. The game itself remains free to play without signing in.</p>
-                    </div>
-                    <div class="free-play-fields">
-                        <label><span>Username</span><input id="free-play-username" name="username" autocomplete="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_.-]+" required placeholder="Choose your player name" /></label>
-                        <label><span>Password</span><input id="free-play-password" name="password" type="password" autocomplete="current-password" minlength="6" maxlength="128" required placeholder="6+ characters" /></label>
-                        <button type="submit" id="free-play-submit">Open Members Area <span aria-hidden="true">→</span></button>
-                    </div>
-                    <div class="free-play-launchers" aria-label="Public gameplay destination">
-                        <a class="btn" href="model-market.html#house-explorer">Play Game Without Signing In</a>
-                    </div>
+                <p class="kicker">Members only</p>
+                <h1 id="bottle-login-title">Member access unlocks the MUZIKAZ upgrade lab.</h1>
+                <p>Sign in with any email address and passcode to open the members area, choose your avatar, and keep your Drop Backpack across visits.</p>
+                <form id="bottle-login-form" class="bottle-login-form">
+                    <label>Email <input type="email" name="email" placeholder="crew@muzikaz.example" required /></label>
+                    <label>Passcode <input type="password" name="passcode" placeholder="Bottle pass" required /></label>
+                    <button type="submit">Continue</button>
                 </form>
-                <p class="status-message" id="bottle-login-status" role="status">Enter a username and password to access members-only multiplayer, models, markets, land, products, and MZK purchases. New names create an account; returning players reopen the same balance and Backpack.</p>
+                <p class="status-message" id="bottle-login-status" role="status">Preview access: enter any email address and passcode to open the members area. No account API or purchase is required.</p>
             </div>
         </section>
-        <div class="member-locked-content" id="member-locked-content" data-locked="true" hidden>
+        <div class="member-locked-content" id="member-locked-content" data-locked="true">
         <section class="section-block" aria-labelledby="manage-access-title"><div class="section-title"><span></span><h2 id="manage-access-title">Manage MZK Access Code</h2></div><p><strong>One account. One code. Any device.</strong> Rotation or revocation changes only your credential; your wallet bindings, Backpack, assets, MZK, land and Bottle claims stay with this account.</p><div class="post-payment-actions"><button type="button" id="mzk-access-rotate">Rotate Access Code</button><button type="button" class="ghost" id="mzk-access-revoke">Revoke Access Code</button></div><output id="mzk-access-manage-output" class="status-message" aria-live="polite">Your full code is shown only when it is created or rotated.</output></section>
         <section class="section-block member-benefits" aria-labelledby="member-benefits-title">
             <div class="section-title"><span></span><h2 id="member-benefits-title">What subscribers get</h2><span></span></div>
@@ -383,6 +376,7 @@
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script type="module" src="public/js/connected-models.js"></script>
     <script src="public/js/api-connection.js"></script>
+    <script src="public/js/avatar-selection.js"></script>
     <script src="mzk-wallet.js"></script>
     <script src="payment-config.js"></script><script src="wallet-payments.js"></script><script src="muzikaz-payment-checkout.js"></script>
   <script src="contract-ownership.js"></script>

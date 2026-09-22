@@ -1,38 +1,12 @@
 (() => {
   const root = document.querySelector('#crib-social');
-  if (!root) return;
+  if (!root || localStorage.getItem('muzikazBottleMember') !== 'true') return;
   const api = window.MUZIKAZ_SHARED_AVATAR_API || '';
   const apiUrl = (path) => window.MUZIKAZ_API ? window.MUZIKAZ_API.url(path) : `${api}${path}`;
   const apiFetch = (path, options) => window.MUZIKAZ_API ? window.MUZIKAZ_API.fetch(path, options) : fetch(apiUrl(path), options);
-  const controls = [...document.querySelectorAll('[data-multiplayer-control]')];
-  const paywall = document.querySelector('#multiplayer-paywall');
-  const showPaywall = () => { if (paywall) paywall.hidden = false; };
-  controls.forEach((control) => control.addEventListener('click', () => { if (control.disabled) showPaywall(); }));
-  paywall?.querySelector('[data-close-multiplayer-paywall]')?.addEventListener('click', () => { paywall.hidden = true; controls[0]?.focus(); });
-
-  async function authorizeMultiplayer() {
-    const response = await apiFetch('/api/account/bootstrap', { cache:'no-store' });
-    const result = await response.json().catch(() => ({}));
-    const data = result?.data ?? result;
-    if (!response.ok || data?.permissions?.games !== true || !data?.backpack?.backpackId) throw new Error(result.message || 'A game-enabled Loadout Pack is required.');
-    controls.forEach((control) => { control.disabled = false; const icon = control.querySelector('b'); if (icon) icon.textContent = control.id === 'house-world-button' ? '🌐' : '💬'; });
-    const worldLabel = document.querySelector('#house-world-button span'); if (worldLabel) worldLabel.textContent = 'Multiplayer Worlds';
-    const chatLabel = document.querySelector('#crib-chat-toggle span'); if (chatLabel) chatLabel.textContent = 'Chat';
-    const profileName = document.querySelector('#game-profile-name');
-    const profileBalance = document.querySelector('#game-profile-mzk');
-    if (profileName) { profileName.textContent = data.account.username; profileName.title = `Loadout Pack ${data.backpack.backpackId}`; }
-    if (profileBalance) profileBalance.textContent = `${Number(data.backpack.mzkBalance || 0).toLocaleString()} MZK`;
-    return data;
-  }
-
-  authorizeMultiplayer().then(startMultiplayer).catch(() => {
-    controls.forEach((control) => { control.disabled = false; control.setAttribute('aria-haspopup', 'dialog'); control.onclick = (event) => { event.preventDefault(); event.stopImmediatePropagation(); showPaywall(); }; });
-  });
-
-  function startMultiplayer(accountData) {
   let sessionId = localStorage.getItem('muzikazHouseSessionId');
   if (!sessionId) { sessionId = crypto.randomUUID?.() || `subscriber-${Date.now()}`; localStorage.setItem('muzikazHouseSessionId', sessionId); }
-  const email = accountData?.account?.username || localStorage.getItem('muzikazBottleMemberEmail') || 'Subscriber';
+  const email = localStorage.getItem('muzikazBottleMemberEmail') || 'Subscriber';
   const username = email.split('@')[0].slice(0, 28) || 'Subscriber';
   const color = `hsl(${[...sessionId].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 360} 85% 65%)`;
   const $ = (selector) => document.querySelector(selector);
@@ -40,7 +14,7 @@
   const players = $('#crib-player-list'), messages = $('#crib-chat-messages'), form = $('#crib-chat-form');
   const input = $('#crib-chat-input'), status = $('#crib-chat-status'), reactions = $('#crib-reactions');
   const emojiToggle = $('#crib-emoji-toggle'), micToggle = $('#crib-mic-toggle'), speakerToggle = $('#crib-speaker-toggle'), voiceStatus = $('#crib-voice-status');
-  const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId };
+  const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username };
   const peers = new Map(), remoteAudio = new Map();
   window.MUZIKAZ_HOUSE_TRACKING = { roomId:localStorage.getItem('muzikazMultiplayerWorld') || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', ...(window.MUZIKAZ_HOUSE_TRACKING || {}) };
   let joined = false, localStream = null, speakerOn = true, currentUsers = [];
@@ -66,7 +40,8 @@
   }
   async function postMessage(message) { const response = await apiFetch('/api/houses/ioncore-house/chat', { method:'POST', headers, body:JSON.stringify({ message }) }); const data = await jsonResponse(response); window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), message }; window.dispatchEvent(new CustomEvent('muzikaz-house-chat', { detail:data })); addMessage(data); }
   async function heartbeat() {
-    const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null') || { id:'starter-avatar', displayName:'Starter Avatar', modelUrl:'/public/models/avatars/DAX.glb', animation:'auto' };
+    const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null');
+    if (!avatar) throw new Error('Choose your designated avatar before joining the Crib.');
     const response = await apiFetch('/api/houses/ioncore-house/presence', { method:'POST', headers, body:JSON.stringify({ username, roomId:window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, avatarUrl: avatar.modelUrl, modelUrl: avatar.modelUrl, avatarName:avatar.displayName || avatar.name || 'Player avatar', position:window.MUZIKAZ_HOUSE_TRACKING?.position, rotation:window.MUZIKAZ_HOUSE_TRACKING?.rotation, movementState:window.MUZIKAZ_HOUSE_TRACKING?.movementState || 'idle', animationState:window.MUZIKAZ_HOUSE_TRACKING?.animationState || avatar.animation || 'auto', message:window.MUZIKAZ_HOUSE_TRACKING?.message }) });
     const data = await jsonResponse(response); joined = true; renderPresence(data); status.textContent = '';
   }
@@ -109,11 +84,10 @@
   async function loadChat() { const data = await jsonResponse(await apiFetch('/api/houses/ioncore-house/chat', { headers, cache:'no-store' })); (data.messages || []).forEach(addMessage); }
   loadChat().catch(() => {});
   let events;
-  if ('EventSource' in window) { events = new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`), { withCredentials:true }); events.addEventListener('house-presence-updated', (event) => renderPresence(JSON.parse(event.data))); events.addEventListener('house-chat-message', (event) => addMessage(JSON.parse(event.data))); events.addEventListener('house-voice-signal', (event) => handleVoiceSignal(JSON.parse(event.data)).catch(() => { voiceStatus.textContent = 'Voice connection interrupted'; })); }
+  if ('EventSource' in window) { events = new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`)); events.addEventListener('house-presence-updated', (event) => renderPresence(JSON.parse(event.data))); events.addEventListener('house-chat-message', (event) => addMessage(JSON.parse(event.data))); events.addEventListener('house-voice-signal', (event) => handleVoiceSignal(JSON.parse(event.data)).catch(() => { voiceStatus.textContent = 'Voice connection interrupted'; })); }
   const beginPresence = () => heartbeat().catch((error) => { status.textContent = error.message; toggle.disabled = true; });
   window.addEventListener('muzikaz:multiplayer-world-change', () => { peers.forEach((peer) => peer.close()); peers.clear(); heartbeat().catch((error) => { status.textContent = error.message; }); });
-  beginPresence();
+  if (window.MUZIKAZ_DESIGNATED_AVATAR || localStorage.getItem('muzikazDesignatedAvatar')) beginPresence(); else window.addEventListener('muzikaz-avatar-ready', beginPresence, { once:true });
   const timer = setInterval(() => { heartbeat().catch((error) => { status.textContent = error.message; }); loadChat().catch(() => {}); }, 5_000);
   window.addEventListener('pagehide', () => { clearInterval(timer); disableMicrophone(); events?.close(); if (joined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
-  }
 })();
