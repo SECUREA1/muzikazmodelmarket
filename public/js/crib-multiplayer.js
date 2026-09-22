@@ -24,7 +24,10 @@
   const peers = new Map(), remoteAudio = new Map();
   window.MUZIKAZ_HOUSE_TRACKING = { roomId:localStorage.getItem('muzikazMultiplayerWorld') || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', ...(window.MUZIKAZ_HOUSE_TRACKING || {}) };
   let joined = false, localStream = null, speakerOn = true, currentUsers = [], unread = 0, loadingChat = null, sendingMessage = false;
-  let textToSpeechOn = localStorage.getItem('muzikazChatTextToSpeech') === 'true';
+  const savedTextToSpeech = localStorage.getItem('muzikazChatTextToSpeech');
+  // Room messages are audible by default on every client. A listener can still
+  // opt out with the Read messages control and that preference is remembered.
+  let textToSpeechOn = savedTextToSpeech === null || savedTextToSpeech === 'true';
   let gameScrollY = 0;
   let pageLockStyles = null;
   const payload = (response) => response?.data ?? response;
@@ -38,8 +41,8 @@
     localStorage.setItem('muzikazChatTextToSpeech', String(textToSpeechOn));
     ttsToggle.classList.toggle('is-on', textToSpeechOn);
     ttsToggle.setAttribute('aria-pressed', String(textToSpeechOn));
-    ttsToggle.querySelector('b').textContent = textToSpeechOn ? 'Read text on' : 'Read text off';
-    if (announce) voiceStatus.textContent = textToSpeechOn ? 'Room messages will be read aloud' : 'Text to speech off';
+    ttsToggle.querySelector('b').textContent = textToSpeechOn ? 'Read messages on' : 'Read messages off';
+    if (announce) voiceStatus.textContent = textToSpeechOn ? 'Room messages will be read aloud for you' : 'Spoken messages off';
   }
   function speakMessage(item) {
     const activeRoom = window.MUZIKAZ_HOUSE_TRACKING?.roomId || localStorage.getItem('muzikazMultiplayerWorld') || 'rad-tox';
