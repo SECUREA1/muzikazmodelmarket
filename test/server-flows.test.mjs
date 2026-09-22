@@ -164,7 +164,7 @@ test('the VibeVerse multiplayer client uses the simple login without a Loadout g
   assert.match(source, /localStorage\.getItem\('muzikazBottleMember'\)/);
   assert.match(source, /'X-User-Name': username/);
   assert.match(source, /document\.body\.style\.position = 'fixed'/, 'opening chat must lock the game page against scrolling');
-  assert.match(source, /lockedShell\?\.setAttribute\('data-chat-locked', 'true'\)/, 'opening chat must lock the game into the same viewport workspace');
+  assert.doesNotMatch(source, /data-chat-locked/, 'chat must not resize or hide the live game stage');
   assert.match(source, /closeChatAndResumeGame\(\)/, 'sending a message must hide chat and return to the game on every screen size');
   assert.match(source, /gameCanvas\?\.focus\(\{ preventScroll:true \}\)/, 'closing chat returns focus to the existing game without restarting it');
   assert.doesNotMatch(source, /location\.(?:href|reload)/, 'resuming the game after chat must not navigate or reload the active world');
@@ -176,6 +176,7 @@ test('the VibeVerse multiplayer client uses the simple login without a Loadout g
   assert.match(source, /window\.scrollTo\(0, gameScrollY\)/, 'closing chat restores the mobile scroll position with the broadly supported API');
   assert.doesNotMatch(source, /behavior:\s*['"]instant['"]/, 'closing chat must not use the unsupported Safari instant-scroll option');
   assert.match(source, /if \(input\.value\.trim\(\) === message\) input\.value = ''/, 'a completed request must preserve any new draft typed while sending');
+  assert.match(source, /input\.blur\(\);\s*closeChatAndResumeGame\(\);\s*try \{\s*await postMessage\(message\)/, 'mobile Send closes composition before waiting on the network');
   assert.match(source, /unlockMessageAudio\(\); await postMessage\(button\.textContent\.trim\(\)\)[\s\S]{0,180}closeChatAndResumeGame\(\)/, 'audio-backed quick reactions follow the same send-and-resume behavior');
   assert.match(page, /id="house-explorer-canvas"[^>]*tabindex="0"/, 'the game canvas remains keyboard focusable when chat is closed explicitly');
   assert.match(source, /data\.kind !== 'offer'/, 'listeners must accept room audio without enabling their own microphone');

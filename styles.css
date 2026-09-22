@@ -3530,7 +3530,6 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
    The chat script supplies Visual Viewport dimensions so the composer remains
    visible without allowing the browser to resize or scroll the game controls. */
 html.crib-chat-selected{scroll-behavior:auto}
-html.crib-chat-selected .house-explorer-shell{height:var(--crib-locked-game-height)!important;max-height:var(--crib-locked-game-height)!important}
 html.crib-chat-selected .crib-chat-panel{
   position:fixed;
   top:calc(var(--crib-visual-top,0px) + max(7px,env(safe-area-inset-top)));
@@ -3549,26 +3548,11 @@ html.crib-chat-selected .crib-chat-panel{
   html.crib-chat-composing .mobile-move-pad{transform:none}
 }
 
-/* Chat focus mode: the game and conversation become one viewport-locked
-   workspace. They occupy separate regions, so the chat never floats over play. */
+/* Chat focus mode overlays the conversation without moving, hiding, or resizing
+   the live WebGL game. Changing the stage geometry while a phone keyboard opens
+   caused the renderer to appear to restart when Send was tapped. */
 html.crib-chat-selected,
 html.crib-chat-selected body{overscroll-behavior:none}
-html.crib-chat-selected .house-explorer-shell[data-chat-locked="true"]{
-  position:fixed!important;
-  z-index:900;
-  top:calc(var(--crib-visual-top,0px) + max(8px,env(safe-area-inset-top)));
-  right:368px;
-  bottom:max(8px,env(safe-area-inset-bottom));
-  left:max(8px,env(safe-area-inset-left));
-  width:auto!important;
-  height:auto!important;
-  max-width:none!important;
-  max-height:none!important;
-  margin:0!important;
-  border-radius:16px;
-  box-shadow:0 0 0 9999px rgba(0,0,0,.88),0 24px 80px #000;
-}
-html.crib-chat-selected .house-explorer-shell[data-chat-locked="true"] .house-stage{pointer-events:none}
 html.crib-chat-selected .crib-social{position:fixed;z-index:930;inset:0;pointer-events:none}
 html.crib-chat-selected .crib-chat-panel{
   top:calc(var(--crib-visual-top,0px) + max(8px,env(safe-area-inset-top)));
@@ -3580,15 +3564,8 @@ html.crib-chat-selected .crib-chat-panel{
   border-radius:16px;
 }
 @media(max-width:760px){
-  html.crib-chat-selected .house-explorer-shell[data-chat-locked="true"]{
-    right:max(7px,env(safe-area-inset-right));
-    bottom:calc(var(--crib-visual-height,100dvh) * .56);
-    border-radius:12px 12px 0 0;
-  }
-  html.crib-chat-selected .house-explorer-shell[data-chat-locked="true"]>.house-bottom-controls,
-  html.crib-chat-selected .house-explorer-shell[data-chat-locked="true"]>.mobile-move-pad{display:none!important}
   html.crib-chat-selected .crib-chat-panel{
-    top:calc(var(--crib-visual-top,0px) + var(--crib-visual-height,100dvh) * .45);
+    top:var(--crib-visual-top,0px);
     right:max(7px,env(safe-area-inset-right));
     bottom:max(7px,env(safe-area-inset-bottom));
     left:max(7px,env(safe-area-inset-left));
@@ -3602,10 +3579,6 @@ html.crib-chat-selected .crib-chat-panel{
    game and the software keyboard. All voice, listening, TTS, player, reaction,
    and message controls remain inside the visible Visual Viewport. */
 @media(max-width:760px){
-  html.crib-chat-selected .house-explorer-shell[data-chat-locked="true"]{
-    visibility:hidden;
-    pointer-events:none;
-  }
   html.crib-chat-selected .crib-social{
     visibility:visible;
     z-index:1000;
