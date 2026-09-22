@@ -164,7 +164,8 @@ test('the VibeVerse multiplayer client uses the simple login without a Loadout g
   assert.match(source, /localStorage\.getItem\('muzikazBottleMember'\)/);
   assert.match(source, /'X-User-Name': username/);
   assert.match(source, /document\.body\.style\.position = 'fixed'/, 'opening chat must lock the game page against scrolling');
-  assert.match(source, /await postMessage\(message\); sent = true;[\s\S]*setPanel\(false\)/, 'a successfully sent message must close chat');
+  assert.match(source, /lockedShell\?\.setAttribute\('data-chat-locked', 'true'\)/, 'opening chat must lock the game into the same viewport workspace');
+  assert.doesNotMatch(source, /await postMessage\(message\); sent = true;[\s\S]{0,100}setPanel\(false\)/, 'sending must keep the live conversation open');
   assert.doesNotMatch(page, /data-multiplayer-control disabled/);
   assert.doesNotMatch(page, /id="multiplayer-paywall"/);
   const routes = server.slice(server.indexOf("'/api/houses/ioncore-house/events'"), server.indexOf("url.pathname.startsWith('/api/')"));

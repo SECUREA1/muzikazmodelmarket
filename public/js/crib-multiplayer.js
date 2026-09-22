@@ -33,6 +33,7 @@
   let textToSpeechOn = savedTextToSpeech === null || savedTextToSpeech === 'true';
   let gameScrollY = 0;
   let pageLockStyles = null;
+  let lockedShell = null;
   const payload = (response) => response?.data ?? response;
   async function jsonResponse(response) { const result = await response.json().catch(() => ({})); if (!response.ok || result.success === false) throw new Error(result.error || result.message || 'The crib server did not respond.'); return payload(result); }
   const text = (value) => document.createTextNode(String(value || ''));
@@ -66,6 +67,22 @@
     const legacyCount = $('#house-presence-count'); if (legacyCount) legacyCount.textContent = `Live in ${window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'this world'}: ${currentUsers.length} / ${data.capacity || 15}`;
     for (const [id, peer] of peers) if (!currentUsers.some((user) => user.sessionId === id)) { peer.close(); peers.delete(id); remoteAudio.get(id)?.remove(); remoteAudio.delete(id); }
     if (localStream) connectToRoom();
+    updateSpatialAudio();
+  }
+
+  function updateSpatialAudio() {
+    const listener = window.MUZIKAZ_HOUSE_TRACKING?.position;
+    remoteAudio.forEach((audio, id) => {
+      const user = currentUsers.find((candidate) => candidate.sessionId === id);
+      const position = user?.position;
+      if (!listener || !position) { audio.volume = 1; return; }
+      const dx = (Number(position.x) || 0) - (Number(listener.x) || 0);
+      const dz = (Number(position.z) || 0) - (Number(listener.z) || 0);
+      const distance = Math.hypot(dx, dz);
+      // Conversation remains audible throughout the room, while nearby players
+      // sound naturally present instead of being abruptly gated by distance.
+      audio.volume = Math.max(.35, Math.min(1, 1 / (1 + Math.max(0, distance - 2) * .055)));
+    });
   }
   function addMessage(item, notify = true) {
     if (!item?.id || !inActiveRoom(item) || [...messages.children].some((message) => message.dataset.messageId === String(item.id))) return;
@@ -107,7 +124,7 @@
     const peer = new RTCPeerConnection({ iceServers:[{ urls:'stun:stun.l.google.com:19302' }, { urls:'stun:stun1.l.google.com:19302' }] });
     localStream?.getTracks().forEach((track) => peer.addTrack(track, localStream));
     peer.onicecandidate = (event) => { if (event.candidate) signal(remoteId, 'candidate', event.candidate).catch(() => {}); };
-    peer.ontrack = (event) => { let audio = remoteAudio.get(remoteId); if (!audio) { audio = document.createElement('audio'); audio.autoplay = true; audio.playsInline = true; audio.hidden = true; root.append(audio); remoteAudio.set(remoteId, audio); } audio.srcObject = event.streams[0]; audio.muted = !speakerOn; audio.play().catch(() => { voiceStatus.textContent = 'Tap Speaker on to hear voice'; }); };
+    peer.ontrack = (event) => { let audio = remoteAudio.get(remoteId); if (!audio) { audio = document.createElement('audio'); audio.autoplay = true; audio.playsInline = true; audio.hidden = true; root.append(audio); remoteAudio.set(remoteId, audio); } audio.srcObject = event.streams[0]; audio.muted = !speakerOn; updateSpatialAudio(); audio.play().catch(() => { voiceStatus.textContent = 'Tap Speaker on to hear voice'; }); };
     peer.onconnectionstatechange = () => { if (peer.connectionState === 'connected') voiceStatus.textContent = `Voice live · ${peers.size} connection${peers.size === 1 ? '' : 's'}`; if (['failed','closed'].includes(peer.connectionState)) { peer.close(); peers.delete(remoteId); } };
     peers.set(remoteId, peer); return peer;
   }
@@ -144,18 +161,23 @@
     document.body.style.top = `-${gameScrollY}px`;
     document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
+    lockedShell = document.querySelector('.house-explorer-shell');
+    lockedShell?.setAttribute('data-chat-locked', 'true');
   }
   function unlockGamePage() {
     if (!pageLockStyles) return;
     const styles = pageLockStyles;
     pageLockStyles = null;
     Object.assign(document.body.style, styles);
+    lockedShell?.removeAttribute('data-chat-locked');
+    lockedShell = null;
     window.scrollTo({ top:gameScrollY, left:0, behavior:'instant' });
   }
   function setPanel(open) {
     panel.hidden = !open;
     toggle.setAttribute('aria-expanded', String(open));
     document.documentElement.classList.toggle('crib-chat-selected', open);
+    panel.setAttribute('aria-modal', String(open));
     if (open) {
       lockGamePage();
       const shell = document.querySelector('.house-explorer-shell');
@@ -178,11 +200,14 @@
   toggle.addEventListener('click', () => setPanel(panel.hidden));
   panel.querySelector('[data-close-chat]').addEventListener('click', () => { setPanel(false); toggle.focus(); });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !panel.hidden) { setPanel(false); toggle.focus(); } });
-  form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; const submit = form.querySelector('[type="submit"]'); input.disabled = true; submit.disabled = true; status.textContent = 'Sending…'; let sent = false; try { await postMessage(message); sent = true; input.value = ''; status.textContent = ''; setPanel(false); toggle.focus({ preventScroll:true }); } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; submit.disabled = false; if (!sent) input.focus({ preventScroll:true }); } });
+  form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; const submit = form.querySelector('[type="submit"]'); input.disabled = true; submit.disabled = true; status.textContent = 'Sending…'; try { await postMessage(message); input.value = ''; status.textContent = ''; } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; submit.disabled = false; input.focus({ preventScroll:true }); } });
   emojiToggle.addEventListener('click', () => { const open = reactions.classList.toggle('open'); emojiToggle.setAttribute('aria-expanded', String(open)); });
   reactions.querySelectorAll('button').forEach((button) => button.addEventListener('click', async () => { if (sendingMessage) return; try { await postMessage(button.textContent.trim()); reactions.classList.remove('open'); emojiToggle.setAttribute('aria-expanded', 'false'); } catch (error) { status.textContent = error.message || 'Reaction could not be sent.'; } }));
   micToggle.addEventListener('click', async () => { try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); voiceStatus.textContent = error.name === 'NotAllowedError' ? 'Microphone permission denied' : error.message; } });
   speakerToggle.addEventListener('click', () => { speakerOn = !speakerOn; remoteAudio.forEach((audio) => { audio.muted = !speakerOn; if (speakerOn) audio.play().catch(() => {}); }); speakerToggle.classList.toggle('is-on', speakerOn); speakerToggle.setAttribute('aria-pressed', String(speakerOn)); speakerToggle.querySelector('b').textContent = speakerOn ? 'Speaker on' : 'Speaker off'; });
+  const resumeLiveAudio = () => { if (!speakerOn) return; remoteAudio.forEach((audio) => { audio.muted = false; audio.play().catch(() => {}); }); };
+  document.addEventListener('pointerdown', resumeLiveAudio, { passive:true });
+  document.addEventListener('keydown', resumeLiveAudio);
   if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) { ttsToggle.disabled = true; ttsToggle.title = 'Text to speech is not supported by this browser'; }
   setTextToSpeech(textToSpeechOn);
   ttsToggle.addEventListener('click', () => { if (!ttsToggle.disabled) { window.speechSynthesis.cancel(); setTextToSpeech(!textToSpeechOn, true); } });
@@ -205,6 +230,6 @@
   // Presence is public: guests use the starter avatar while signed-in members
   // keep their selected Backpack avatar. Do not wait for the 3D engine to load.
   beginPresence();
-  const timer = setInterval(() => { heartbeat().catch((error) => { status.textContent = error.message; }); loadChat().catch(() => {}); }, 5_000);
+  const timer = setInterval(() => { heartbeat().catch((error) => { status.textContent = error.message; }); loadChat().catch(() => {}); updateSpatialAudio(); }, 1_000);
   window.addEventListener('pagehide', () => { clearInterval(timer); unlockGamePage(); window.speechSynthesis?.cancel(); disableMicrophone(); events?.close(); if (joined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
 })();
