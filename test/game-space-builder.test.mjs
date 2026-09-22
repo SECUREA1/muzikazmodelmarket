@@ -15,3 +15,19 @@ test('member game-space builder exposes category controls and settlement actions
   assert.match(script, /coins -= 100/, 'publishing settles the disclosed Builder Coin price');
   assert.match(script, /muzikaz-game-space-v1/, 'exports use a versioned game manifest');
 });
+
+test('members workspace exposes a unified collapsible section navigator', async () => {
+  const [html, script, styles] = await Promise.all([
+    readFile('members.html', 'utf8'),
+    readFile('members-sections.js', 'utf8'),
+    readFile('styles.css', 'utf8')
+  ]);
+  assert.match(html, /id="member-section-menu"/);
+  assert.match(html, /data-member-sections="open"/);
+  assert.match(html, /data-member-sections="close"/);
+  assert.match(html, /src="members-sections\.js"/);
+  assert.match(script, /querySelectorAll\(':scope > section\.section-block'\)/);
+  assert.match(script, /scrollIntoView\(\{ behavior: 'smooth'/);
+  assert.match(script, /event\.key === 'Escape'/);
+  assert.match(styles, /\.section-block\.is-collapsed>:not\(\.section-title\)/);
+});

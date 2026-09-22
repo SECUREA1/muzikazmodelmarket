@@ -82,6 +82,17 @@
             </div>
         </section>
         <div class="member-locked-content" id="member-locked-content" data-locked="true">
+        <nav class="member-section-menu" id="member-section-menu" aria-label="Members area sections">
+            <button class="member-section-menu__toggle" type="button" aria-controls="member-section-menu-panel" aria-expanded="false">
+                <span aria-hidden="true">☰</span><span>Sections</span>
+            </button>
+            <div class="member-section-menu__panel" id="member-section-menu-panel" hidden>
+                <div class="member-section-menu__heading"><div><span class="kicker">Members area</span><strong>Jump to a section</strong></div><button type="button" class="member-section-menu__close" aria-label="Close sections menu">×</button></div>
+                <p>Choose a workspace. It will open automatically and scroll into view.</p>
+                <div class="member-section-menu__links" role="list"></div>
+                <div class="member-section-menu__actions"><button type="button" data-member-sections="open">Open all</button><button type="button" class="ghost" data-member-sections="close">Close all</button></div>
+            </div>
+        </nav>
         <section class="section-block" aria-labelledby="manage-access-title"><div class="section-title"><span></span><h2 id="manage-access-title">Manage MZK Access Code</h2></div><p><strong>One account. One code. Any device.</strong> Rotation or revocation changes only your credential; your wallet bindings, Backpack, assets, MZK, land and Bottle claims stay with this account.</p><div class="post-payment-actions"><button type="button" id="mzk-access-rotate">Rotate Access Code</button><button type="button" class="ghost" id="mzk-access-revoke">Revoke Access Code</button></div><output id="mzk-access-manage-output" class="status-message" aria-live="polite">Your full code is shown only when it is created or rotated.</output></section>
         <section class="section-block member-benefits" aria-labelledby="member-benefits-title">
             <div class="section-title"><span></span><h2 id="member-benefits-title">What subscribers get</h2><span></span></div>
@@ -385,6 +396,7 @@
   <script src="marketplace-listings.js"></script>
   <script src="battle-theme.js"></script>
     <script src="backpack-widget.js"></script>
+  <script src="members-sections.js"></script>
   <script src="global-header.js"></script>
 </body>
 </html>
