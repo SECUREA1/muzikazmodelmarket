@@ -111,29 +111,32 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(updatedAdminData.body.data.summary.gameplaySpentMzk, 50, 'admin pages receive the live gameplay-spend total');
   assert.equal(updatedAdminData.body.data.gameplaySpending[0].walletId, `account:${bypass.body.data.account.accountId}`);
 
-  await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100, POINTS: 25 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' }, games: { radTox: { level: 3 } } } }) });
+  const forgedState = await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 999999 }, items: [{ id: 'forged-pack', name: 'Forged Pack' }] }) });
+  assert.equal(forgedState.response.status, 405, 'clients cannot mint MZK or Backpack inventory through a generic state write');
+  assert.equal(forgedState.body.code, 'AUTHORITATIVE_STATE_REQUIRED');
+  await json(`${base}/api/profile/memory`, { method: 'PATCH', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ memory: { games: { radTox: { level: 3 } } } }) });
   const profile = await json(`${base}/api/profile`, { headers: { Cookie: accountCookie } });
-  assert.equal(profile.body.data.tokens.POINTS, 25, 'points share the canonical profile wallet with MZK');
+  assert.equal(profile.body.data.tokens.MZK, 2000, 'the market balance remains server-authoritative after a forged write');
   assert.equal(profile.body.data.memory.games.radTox.level, 3, 'game memory restores from the authenticated profile API');
   assert.ok(profile.body.data.connectedWallets.some((entry) => entry.address === wallet), 'the profile includes its bound blockchain wallet');
-  await json(`${base}/api/market/listings`, { method: 'PUT', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });
-  const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['New User Pack']);
+  const listedItem = codeOnlyState.body.data.items.find((item) => item.name === 'Starter Avatar');
+  await json(`${base}/api/market/listings`, { method: 'PUT', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: listedItem.id, priceMzk: 75 }) });
+  const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['Starter Avatar']);
 });
 
-test('member entry opens immediately with a local username and password', async () => {
+test('member entry uses the persistent account API', async () => {
   const [source, page] = await Promise.all([
     readFile(new URL('../script.js', import.meta.url), 'utf8'),
     readFile(new URL('../members.html', import.meta.url), 'utf8')
   ]);
   const login = source.slice(source.indexOf('function initBottleLogin'), source.indexOf('marketQualityToggle?.addEventListener'));
-  assert.match(page, /name="username"/);
-  assert.match(page, /name="password"/);
+  assert.match(page, /name="email"/);
+  assert.match(page, /name="passcode"/);
   assert.match(page, /public\/js\/avatar-selection\.js/);
   assert.match(login, /localStorage\.setItem\('muzikazBottleMember', 'true'\)/);
-  assert.match(login, /muzikazLocalMemberCredentialsV1/);
-  assert.match(login, /passwordDigest/);
-  assert.match(login, /MUZIKAZ_AVATAR_GATE\?\.ensure/);
-  assert.doesNotMatch(login, /\/api\//, 'member login must never wait for a missing API route');
+  assert.match(login, /MUZIKAZ_AVATAR_GATE\.ensure/);
+  assert.match(login, /\/api\/access\/free-play/, 'member login must create or restore an authenticated account');
+  assert.match(login, /\/api\/account\/bootstrap/, 'returning sessions must restore the canonical profile');
 });
 
 test('the VibeVerse multiplayer client uses the simple login without a Loadout gate', async () => {

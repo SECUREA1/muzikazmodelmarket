@@ -72,13 +72,13 @@
             <div class="member-login-card">
                 <p class="kicker">Members only</p>
                 <h1 id="bottle-login-title">Member access unlocks the MUZIKAZ upgrade lab.</h1>
-                <p>Sign in with your username and password to open the members area immediately. Your Drop Backpack, MZK, points, avatar, and game memory stay connected to the same profile on this device.</p>
+                <p>Sign in to your persistent member profile to open the members area, choose your avatar, and restore the same Drop Backpack, MZK, points, and game memory on every visit.</p>
                 <form id="bottle-login-form" class="bottle-login-form">
-                    <label>Username <input name="username" autocomplete="username" minlength="3" maxlength="24" placeholder="Your username" required /></label>
-                    <label>Password <input type="password" name="password" autocomplete="current-password" minlength="4" placeholder="Your password" required /></label>
-                    <button type="submit">Sign in now</button>
+                    <label>Email <input type="email" name="email" placeholder="crew@muzikaz.example" required /></label>
+                    <label>Passcode <input type="password" name="passcode" placeholder="Bottle pass" required /></label>
+                    <button type="submit">Continue</button>
                 </form>
-                <p class="status-message" id="bottle-login-status" role="status" aria-live="polite">Enter a username and password. Your first sign-in creates this device profile; use the same details to open it again instantly.</p>
+                <p class="status-message" id="bottle-login-status" role="status">Enter your member email and passcode. New credentials create a persistent profile; returning credentials restore it from the account API.</p>
             </div>
         </section>
         <div class="member-locked-content" id="member-locked-content" data-locked="true">
