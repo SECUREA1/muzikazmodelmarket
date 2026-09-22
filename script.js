@@ -2083,30 +2083,24 @@ function initBottleLogin() {
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   if (!form || !lockedContent) return;
-  const unlock = (message) => {
+  const unlock = async (message) => {
+    if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
     lockedContent.dataset.locked = 'false';
-    document.body.classList.add('is-member-authenticated');
     if (status) status.textContent = message;
   };
-  const applyMember = (email) => {
-    currentMemberEmail = normalizeMemberEmail(email);
+  if (hasBottleLogin()) {
+    currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
+    unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`);
+    renderOwnedCollection(currentMemberEmail);
+  }
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    currentMemberEmail = normalizeMemberEmail(data.get('email'));
     window.localStorage.setItem('muzikazBottleMember', 'true');
     window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-    const profiles = readOwnedProfiles();
-    profiles[currentMemberEmail] ||= [];
-    writeOwnedProfiles(profiles);
-    window.MZKWallet?.ensureWallet?.(currentMemberEmail);
     renderOwnedCollection(currentMemberEmail);
-    document.dispatchEvent(new CustomEvent('muzikaz:member-authenticated', { detail: { email: currentMemberEmail } }));
-    unlock(`${currentMemberEmail} is signed in. The entire members area is open.`);
-  };
-  const savedEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail'));
-  if (window.localStorage.getItem('muzikazBottleMember') === 'true' && savedEmail) applyMember(savedEmail);
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    if (!form.reportValidity()) return;
-    const data = new FormData(form);
-    applyMember(data.get('email'));
+    await unlock(`${currentMemberEmail} is logged in. Your designated avatar and Drop Backpack are retained across visits.`);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
