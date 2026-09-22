@@ -113,11 +113,11 @@ The Rust service serves the static MUZIKAZ site, `/uploads/*` model and avatar i
 All JSON responses use `{ "success": boolean, "data": ..., "message": string }`.
 
 - `GET /api/health` — service, storage, and model-count health.
-- `GET /api/wallet/state` — load the requesting wallet's durable items, token balances, and application memory using `X-Wallet-Address`.
+- `GET /api/backpack` and `GET /api/profile` — load the authenticated account's server-authoritative inventory, MZK balance, application memory, connected wallets, and transaction history.
 - `POST /api/game/spend` — atomically debit gameplay MZK from the wallet bound to an authenticated account and active game session. Every idempotent request is appended to the per-wallet gameplay ledger and included in the admin data center.
 - `POST /api/loadout-codes/redeem` — atomically burn an admin-issued $30 Loadout pass and bind its creator-tool, land, and Violet Wish Bottle claim to one Ethereum wallet.
 - `GET/POST /api/admin/loadout-codes` — list or generate hashed, expiring one-time Loadout passes; requires `x-admin-token`.
-- `PUT /api/wallet/state` — atomically replace that wallet's `items`, `tokens`, and `memory` in `MUZIKAZ_DATA_DIR/users.json`.
+- `PATCH /api/profile/memory` — merge application memory for the authenticated account with CSRF protection. Clients cannot replace Backpack items or token balances; those change only through verified purchases, marketplace trades, land claims, and gameplay transactions.
 - `GET /api/models` — published public models, newest first.
 - `GET /api/models/:id` — one published model.
 - `POST /api/models/upload` — multipart upload. Fields: `model` (`.glb`/`.gltf`, required), `iosModel` (`.usdz`, optional), `thumbnail` (`.png`/`.jpg`/`.jpeg`/`.webp`, optional).

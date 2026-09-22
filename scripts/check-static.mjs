@@ -86,7 +86,7 @@ for (const page of mobileHeaderPages) {
   if (!html.includes('class="menu-toggle"') || !html.includes('aria-controls="primary-navigation"')) throw new Error(`${page} must include a labelled, accessible mobile menu toggle.`);
 }
 
-for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', 'data-open-backpack', 'Game market', 'Buy / swap MZK']) {
+for (const feature of ['/api/backpack', '/api/profile', 'data-open-backpack', 'Game market', 'Buy / swap MZK']) {
   if (!backpackWidget.includes(feature)) throw new Error(`The global Ethereum Backpack is missing ${feature}.`);
 }
 for (const toggleFeature of ['data-backpack-view="game"', 'data-backpack-view="builder"', 'In-game Backpack', 'Builder Backpack', 'Enemies & NPCs', 'Environments']) {

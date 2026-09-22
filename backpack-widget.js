@@ -1,11 +1,6 @@
 (function () {
   'use strict';
 
-  const API_PATH = '/api/wallet/state';
-  const MARKET_KEY = 'muzikazBackpackMarket';
-  const TRANSACTIONS_KEY = 'muzikazBackpackTransactions';
-  const PROFILE_ASSETS_KEY = 'muzikazOwnedProfiles';
-  const MODEL_ASSETS_KEY = 'muzikazBackpackAssetsV1';
   const PANEL_WIDTH_KEY = 'muzikazBackpackPanelWidthV1';
   const previewSlots = ['Avatar', 'Companion', 'Head', 'Neck', 'Torso', 'Tool', 'Collectible', 'Land', 'Bottle', 'Environment'];
   const builderCategories = [
@@ -29,27 +24,6 @@
     return `<svg viewBox="0 0 48 48" aria-hidden="true">${paths[kind] || paths.item}</svg>`;
   };
   const short = (value) => value ? `${value.slice(0, 6)}…${value.slice(-4)}` : 'Not connected';
-  const safeJson = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch (_) { return fallback; } };
-  const escapeHtml = (value) => String(value || '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
-
-  function localItems(address) {
-    const profiles = safeJson(PROFILE_ASSETS_KEY, {});
-    const loadouts = safeJson('muzikazStarterLoadoutsV1', {});
-    const values = [];
-    const add = (value) => { if (value && !values.includes(value)) values.push(value); };
-    (profiles[address] || []).forEach(add);
-    const loadout = loadouts[address];
-    if (loadout) {
-      add(loadout.avatar && `${loadout.avatar} · Avatar`);
-      add(loadout.land && `${loadout.land} · Land deed`);
-      (loadout.assets || []).forEach(add);
-    }
-    return values;
-  }
-
-  function localModelAssets(address) {
-    return safeJson(MODEL_ASSETS_KEY, {})[String(address || '').toLowerCase()] || [];
-  }
 
   function inventoryLabel(name) {
     const value = String(name || '');
@@ -273,67 +247,46 @@
     }
 
     async function loadBackpack() {
-      const address = window.MZKWallet.connectedAddress();
-      if (!address) { renderGuestBackpack(); return false; }
-      const activeAddress = window.MZKWallet.connectedAddress();
       const status = drawer.querySelector('[data-backpack-status]');
-      status.textContent = 'Syncing this wallet’s Backpack…';
-      let remoteItems = [];
-      let remoteState = null;
-      let gameCatalog = [];
+      status.textContent = 'Syncing your authenticated Backpack…';
       try {
-        const accountRequest = window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API) || window.fetch.bind(window);
-        const accountResponse = await accountRequest('/api/backpack', { headers: { Accept: 'application/json' }, credentials: 'include' });
-        const accountPayload = await accountResponse.json().catch(() => ({}));
-        if (accountResponse.ok && accountPayload.success !== false) gameCatalog = accountPayload.data?.catalogAssets || [];
-      } catch (_) { /* Wallet inventory remains available without an account session. */ }
-      try {
-        const response = await fetch(API_PATH, { headers: { 'X-Wallet-Address': activeAddress, Accept: 'application/json' } });
-        const payload = await response.json();
-        if (!response.ok || !payload.success) throw new Error(payload.message || 'Backpack sync failed.');
-        remoteState = payload.data;
-        remoteItems = Array.isArray(remoteState?.items) ? remoteState.items : [];
-        status.textContent = gameCatalog.length ? `Backpack synced. ${gameCatalog.length} play-ready MUZIKAZ assets loaded from the game server.` : 'Backpack synced with the MUZIKAZ market network.';
-      } catch (_) {
-        status.textContent = 'Showing this device’s Backpack. Network sync is temporarily unavailable.';
+        const request = window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API) || window.fetch.bind(window);
+        const [backpackResponse, profileResponse] = await Promise.all([
+          request('/api/backpack', { headers: { Accept: 'application/json' }, credentials: 'include' }),
+          request('/api/profile', { headers: { Accept: 'application/json' }, credentials: 'include' })
+        ]);
+        const backpackPayload = await backpackResponse.json().catch(() => ({}));
+        const profilePayload = await profileResponse.json().catch(() => ({}));
+        if (!backpackResponse.ok || backpackPayload.success === false) throw new Error(backpackPayload.message || 'Backpack sync failed.');
+        if (!profileResponse.ok || profilePayload.success === false) throw new Error(profilePayload.message || 'Profile sync failed.');
+        const backpack = backpackPayload.data;
+        const profile = profilePayload.data;
+        const identity = profile.walletId || `account:${profile.accountId}`;
+        const items = Array.isArray(profile.items) ? profile.items : [];
+        const gameCatalog = Array.isArray(backpack.catalogAssets) ? backpack.catalogAssets : [];
+        status.textContent = `Backpack synced. ${items.length} owned item${items.length === 1 ? '' : 's'} and ${gameCatalog.length} play-ready assets loaded.`;
+        drawer.querySelector('[data-drawer-address]').textContent = `Authenticated account ${profile.username || profile.accountId}`;
+        drawer.querySelector('[data-account-address]').textContent = short(identity);
+        drawer.querySelector('[data-account-address]').title = identity;
+        drawer.querySelector('[data-account-network]').textContent = profile.connectedWallets?.length ? 'Account + Ethereum' : 'MUZIKAZ account';
+        drawer.querySelector('[data-account-balance]').textContent = `${Number(profile.tokens?.MZK || 0).toLocaleString()} MZK`;
+        const catalogLabel = (asset) => asset.assetType === 'environment' ? 'Environment' : asset.assetType === 'avatar' ? 'Avatar' : asset.assetType === 'vehicle' ? 'Vehicle' : 'Prop';
+        const catalogCards = gameCatalog.map((asset) => `<article class="mzk-backpack-catalog-item" data-asset-type="${escapeHtml(asset.assetType)}">${icon()}<div><span class="mzk-inventory-label">${catalogLabel(asset)}</span><strong>${escapeHtml(asset.name)}</strong><small>${escapeHtml(asset.category)} · Included in game</small></div></article>`);
+        const ownedNames = items.map((item) => String(item?.name || item?.title || item?.id || '')).filter(Boolean);
+        const occupiedSlots = new Set(ownedNames.map(inventoryLabel));
+        const itemCards = ownedNames.map((name) => `<article>${icon()}<div><span class="mzk-inventory-label">${inventoryLabel(name)}</span><strong>${escapeHtml(name)}</strong><small>Owned by ${short(identity)}</small></div></article>`);
+        const emptySlots = previewSlots.filter((slot) => !occupiedSlots.has(slot)).map((slot) => `<div class="mzk-backpack-slot is-empty">${icon()}<strong>${slot}</strong><small>Empty slot</small></div>`);
+        drawer.querySelector('[data-backpack-items]').innerHTML = `<div class="mzk-backpack-owned">${[...catalogCards, ...itemCards].join('') || `<div class="mzk-backpack-empty">${icon()}<strong>Your Backpack is ready</strong><p>Verified purchases, land deeds, and marketplace trades will appear here.</p></div>`}</div><div class="mzk-backpack-slot-grid" aria-label="Available Backpack slots">${emptySlots.join('') || '<p class="mzk-backpack-slots-full">Every Backpack slot contains an item.</p>'}</div>`;
+        const transactions = Array.isArray(profile.activity?.transactions) ? profile.activity.transactions.slice(-4).reverse() : [];
+        drawer.querySelector('[data-backpack-trades]').innerHTML = transactions.length ? transactions.map((tx) => {
+          const amount = Number(tx.amountMzk || 0);
+          return `<li class="mzk-activity-card">${activityIcon('item')}<div class="mzk-activity-copy"><span>${amount >= 0 ? 'Received' : 'Spent'} · Completed transaction</span><strong>${escapeHtml(String(tx.type || 'MZK transaction').replaceAll('_', ' '))}</strong><time datetime="${escapeHtml(tx.createdAt)}">${new Date(tx.createdAt).toLocaleDateString()}</time></div><span class="mzk-payment-badge is-mzk"><i aria-hidden="true">M</i><span><small>${amount >= 0 ? 'Received' : 'Paid'}</small><b>${Math.abs(amount).toLocaleString()} MZK</b></span></span></li>`;
+        }).join('') : `<li class="mzk-activity-card is-empty">${activityIcon('item')}<div class="mzk-activity-copy"><strong>No market activity yet</strong><span>Verified purchases, swaps, and sales will appear here.</span></div><a href="model-market.html">Explore market</a></li>`;
+        return true;
+      } catch (error) {
+        renderGuestBackpack(error.message || 'Sign in to load your Backpack.');
+        return false;
       }
-      const modelAssets = localModelAssets(activeAddress);
-      const items = [...new Set([...remoteItems.map((item) => typeof item === 'string' ? item : item?.name), ...localItems(activeAddress), ...modelAssets.map((asset) => asset.name)].filter(Boolean))];
-      if (remoteState && items.length !== remoteItems.length) {
-        try {
-          await fetch(API_PATH, { method: 'PUT', headers: { 'X-Wallet-Address': activeAddress, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ items, tokens: { ...(remoteState.tokens || {}), MZK: window.MZKWallet.balance(activeAddress) }, memory: remoteState.memory || {} }) });
-        } catch (_) { /* Local inventory is still available when durable sync cannot be written. */ }
-      }
-      let network = 'Ethereum';
-      try { const chain = await window.ethereum?.request?.({ method: 'eth_chainId' }); network = chain ? `Ethereum · ${chain}` : network; } catch (_) { /* The connected account remains usable if chain lookup is denied. */ }
-      drawer.querySelector('[data-drawer-address]').textContent = `Registered account ${activeAddress}`;
-      drawer.querySelector('[data-account-address]').textContent = short(activeAddress);
-      drawer.querySelector('[data-account-address]').title = activeAddress;
-      drawer.querySelector('[data-account-network]').textContent = network;
-      drawer.querySelector('[data-account-balance]').textContent = `${window.MZKWallet.balance(activeAddress).toLocaleString()} MZK`;
-      const modelCards = modelAssets.map((asset) => `<article class="mzk-backpack-model"><model-viewer src="${escapeHtml(asset.modelUrl)}" ${asset.iosModelUrl ? `ios-src="${escapeHtml(asset.iosModelUrl)}"` : ''} camera-controls auto-rotate shadow-intensity="1" alt="${escapeHtml(asset.name)} purchased 3D model"></model-viewer><div><span class="mzk-inventory-label">3D Model</span><strong>${escapeHtml(asset.name)}</strong><small>Purchased GLB · Connected to ${short(activeAddress)}</small></div></article>`);
-      const catalogLabel = (asset) => asset.assetType === 'environment' ? 'Environment' : asset.assetType === 'avatar' ? 'Avatar' : asset.assetType === 'vehicle' ? 'Vehicle' : 'Prop';
-      const catalogCards = gameCatalog.map((asset) => `<article class="mzk-backpack-catalog-item" data-asset-type="${escapeHtml(asset.assetType)}">${icon()}<div><span class="mzk-inventory-label">${catalogLabel(asset)}</span><strong>${escapeHtml(asset.name)}</strong><small>${escapeHtml(asset.category)} · Included in game</small></div></article>`);
-      const modelNames = new Set(modelAssets.map((asset) => asset.name));
-      const bottleArt = (item) => /Black Genie Bottle/i.test(item) ? 'public/assets/black-genie-bottle.svg' : /Golden Genie Bottle/i.test(item) ? 'public/assets/golden-genie-bottle.svg' : '';
-      const occupiedSlots = new Set(items.map(inventoryLabel));
-      const itemCards = items.filter((item) => !modelNames.has(item)).map((item) => `<article>${bottleArt(item) ? `<img src="${bottleArt(item)}" alt="${escapeHtml(item)} Backpack artwork" loading="lazy">` : icon()}<div><span class="mzk-inventory-label">${inventoryLabel(item)}</span><strong>${escapeHtml(item)}</strong><small>Connected to ${short(activeAddress)}</small></div></article>`);
-      const emptySlots = previewSlots.filter((slot) => !occupiedSlots.has(slot)).map((slot) => `<div class="mzk-backpack-slot is-empty">${icon()}<strong>${slot}</strong><small>Empty slot</small></div>`);
-      drawer.querySelector('[data-backpack-items]').innerHTML = `<div class="mzk-backpack-owned">${[...catalogCards, ...modelCards, ...itemCards].join('') || `<div class="mzk-backpack-empty">${icon()}<strong>Your Backpack is ready</strong><p>Collect a model, land deed, avatar, wearable, or market drop and it will appear under this Ethereum account.</p></div>`}</div><div class="mzk-backpack-slot-grid" aria-label="Available Backpack slots">${emptySlots.join('') || '<p class="mzk-backpack-slots-full">Every Backpack slot contains an item.</p>'}</div>`;
-      const transactions = safeJson(TRANSACTIONS_KEY, []).filter((tx) => [tx.buyer, tx.seller, tx.owner].map(String).map((value) => value.toLowerCase()).includes(activeAddress)).slice(-4).reverse();
-      drawer.querySelector('[data-backpack-trades]').innerHTML = transactions.length ? transactions.map((tx) => {
-        const rawAsset = tx.asset || tx.reason || 'Backpack trade';
-        const unrevealed = /unrevealed|mystery|sealed/i.test(rawAsset);
-        const asset = unrevealed ? 'Unrevealed drop' : rawAsset;
-        const category = unrevealed ? 'hidden' : /land|world|environment/i.test(rawAsset) ? 'land' : /avatar|character|companion/i.test(rawAsset) ? 'avatar' : 'item';
-        const isSeller = String(tx.seller || tx.owner || '').toLowerCase() === activeAddress;
-        const payment = tx.cryptoPayment;
-        const amount = Number(payment?.amount ?? tx.tokenValue ?? tx.amount ?? 0);
-        const currency = payment?.currency || 'MZK';
-        const validDate = tx.createdAt && !Number.isNaN(new Date(tx.createdAt).getTime());
-        return `<li class="mzk-activity-card${unrevealed ? ' is-unrevealed' : ''}">${activityIcon(category)}<div class="mzk-activity-copy"><span>${isSeller ? 'Sold' : 'Purchased'} · ${unrevealed ? 'Identity hidden until reveal' : 'Completed trade'}</span><strong>${escapeHtml(asset)}</strong>${validDate ? `<time datetime="${escapeHtml(tx.createdAt)}">${new Date(tx.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</time>` : ''}</div><span class="mzk-payment-badge${currency === 'MZK' ? ' is-mzk' : ''}">${currency === 'MZK' ? '<i aria-hidden="true">M</i>' : walletIcon()}<span><small>${isSeller ? 'Received' : 'Paid'}</small><b>${Number.isFinite(amount) ? amount.toLocaleString() : '0'} ${escapeHtml(currency)}</b></span></span></li>`;
-      }).join('') : `<li class="mzk-activity-card is-empty">${activityIcon('item')}<div class="mzk-activity-copy"><strong>No market activity yet</strong><span>Purchases, swaps, and sales will appear here with their payment method.</span></div><a href="model-market.html">Explore market</a></li>`;
-      return true;
     }
 
     async function open(view = 'game') {

@@ -72,13 +72,13 @@
             <div class="member-login-card">
                 <p class="kicker">Members only</p>
                 <h1 id="bottle-login-title">Member access unlocks the MUZIKAZ upgrade lab.</h1>
-                <p>Sign in with your username and password to open the members area immediately. Your Drop Backpack, MZK, points, avatar, and game memory stay connected to the same profile on this device.</p>
+                <p>Sign in with your username and password to open the members area immediately. Your Drop Backpack, MZK, points, avatar, and game memory stay connected to your persistent account on every device.</p>
                 <form id="bottle-login-form" class="bottle-login-form">
                     <label>Username <input name="username" autocomplete="username" minlength="3" maxlength="24" placeholder="Your username" required /></label>
                     <label>Password <input type="password" name="password" autocomplete="current-password" minlength="4" placeholder="Your password" required /></label>
                     <button type="submit">Sign in now</button>
                 </form>
-                <p class="status-message" id="bottle-login-status" role="status" aria-live="polite">Enter a username and password. Your first sign-in creates this device profile; use the same details to open it again instantly.</p>
+                <p class="status-message" id="bottle-login-status" role="status" aria-live="polite">Enter your username and password. Your session-backed account restores the same authoritative Backpack and MZK balance.</p>
             </div>
         </section>
         <div class="member-locked-content" id="member-locked-content" data-locked="true">
@@ -117,8 +117,8 @@
                     <div class="owned-assets-summary" id="owned-assets-summary"></div>
                     <section class="member-exchange" id="member-exchange" aria-labelledby="member-exchange-title">
                         <div><p class="kicker">Live member market</p><h3 id="member-exchange-title">Trade packs &amp; talk</h3><p>Select any registered member to see their shared Backpack, listed packs, trade history, and conversation.</p></div>
-                        <label>Member directory <select id="exchange-member-select"><option value="">Connect your member wallet</option></select></label>
-                        <p class="status-message" id="exchange-status" role="status">Connect your wallet to join the member directory.</p>
+                        <label>Member directory <select id="exchange-member-select"><option value="">Sign in to your account</option></select></label>
+                        <p class="status-message" id="exchange-status" role="status">Sign in to join the member directory.</p>
                         <div class="exchange-packs" id="exchange-packs"></div>
                         <div class="exchange-activity"><ol id="exchange-trades"><li>No shared trades yet.</li></ol><ol id="exchange-messages"><li>No messages yet.</li></ol></div>
                         <form id="exchange-message-form"><label>Message selected member <input name="message" maxlength="500" autocomplete="off" placeholder="Ask about a pack or propose a trade" required></label><button type="submit">Send message</button></form>

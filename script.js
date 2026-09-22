@@ -1199,7 +1199,9 @@ function initWorldPlot() {
     reserveButton.disabled = true; reserveButton.textContent = 'Recording deed…';
     let deed;
     try {
-      const response = await fetch('/api/land/claims', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Wallet-Address': walletId }, body: JSON.stringify({ worldId, requestId }) });
+      const csrfToken = window.MuzikazAccountSession?.csrfToken;
+      if (!csrfToken) throw new Error('Sign in to your member account before claiming land.');
+      const response = await window.MUZIKAZ_API.fetch('/api/land/claims', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': csrfToken }, body: JSON.stringify({ worldId, requestId }) });
       const result = await response.json(); if (!response.ok) throw new Error(result.message || 'The live deed database rejected this claim.');
       deed = result.data || result;
     } catch (error) {
@@ -1207,7 +1209,6 @@ function initWorldPlot() {
       selection.innerHTML = `<span class="world-plot__selection-number">!</span><span><strong>Claim not recorded.</strong> ${escapeHtml(error.message)}</span><small>Your MZK was not spent locally. Reconnect to the live service and retry.</small>`;
       return;
     }
-    window.MZKWallet?.spend(STARTER_PLOT_MZK, `Starter land deed · ${selectedSpace}`, requestId, { asset: selectedSpace, deedId: deed.id, type: 'starter-land' });
     claimOwnedAsset(`MUZIKAZ World · ${selectedSpace}`, 'Public-area plot claim');
     updateOwnedCount();
     updateCart(reserveButton, 'Plot claimed');
@@ -2082,64 +2083,51 @@ function initBottleLogin() {
   const form = document.querySelector('#bottle-login-form');
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
-  if (!form || !lockedContent) return;
-  const CREDENTIALS_KEY = 'muzikazLocalMemberCredentialsV1';
-  const readCredentials = () => {
-    try {
-      const credentials = JSON.parse(window.localStorage.getItem(CREDENTIALS_KEY) || '{}');
-      return credentials && typeof credentials === 'object' && !Array.isArray(credentials) ? credentials : {};
-    } catch (error) { return {}; }
+  if (!form || !lockedContent || !window.MUZIKAZ_API) return;
+  const api = async (path, options = {}) => {
+    const response = await window.MUZIKAZ_API.fetch(path, options);
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload.success === false) throw new Error(payload.message || 'The member account service is unavailable.');
+    return payload.data;
   };
-  const passwordDigest = async (username, password) => {
-    const value = new TextEncoder().encode(`MUZIKAZ:${username}:${password}`);
-    const digest = await window.crypto.subtle.digest('SHA-256', value);
-    return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
-  };
-  const unlock = (message) => {
-    lockedContent.dataset.locked = 'false';
-    document.body.classList.add('is-member-authenticated');
-    if (status) status.textContent = message;
-    window.MUZIKAZ_AVATAR_GATE?.ensure();
-  };
-  const applyAccount = (username) => {
-    currentMemberEmail = normalizeMemberEmail(username);
+  const unlock = (state, message) => {
+    const account = state.account;
+    window.MuzikazAccountSession = { csrfToken: state.csrfToken, account, backpack: state.backpack, permissions: state.permissions, expiresAt: state.expiresAt };
+    currentMemberEmail = normalizeMemberEmail(account.primaryEthereumWallet || `account:${account.accountId}`);
     window.localStorage.setItem('muzikazBottleMember', 'true');
     window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-    const profiles = readOwnedProfiles();
-    profiles[currentMemberEmail] ||= ['VibeVerse Starter Pack · Backpack starter asset'];
-    writeOwnedProfiles(profiles);
-    window.MZKWallet?.ensureWallet?.(currentMemberEmail);
+    lockedContent.dataset.locked = 'false';
+    document.body.classList.add('is-member-authenticated');
     renderOwnedCollection(currentMemberEmail);
-    document.dispatchEvent(new CustomEvent('muzikaz:member-authenticated', { detail: { username: currentMemberEmail } }));
-    unlock(`${currentMemberEmail} is signed in. Your saved Backpack, MZK, points, avatar, and game memory are ready.`);
+    if (status) status.textContent = message || `${account.username} is signed in. Your server-backed Backpack and MZK balance are ready.`;
+    document.dispatchEvent(new CustomEvent('muzikaz:member-authenticated', { detail: state }));
+    window.MUZIKAZ_AVATAR_GATE?.ensure();
   };
-  const savedUsername = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail'));
-  if (window.localStorage.getItem('muzikazBottleMember') === 'true' && savedUsername) applyAccount(savedUsername);
+  const restore = async () => {
+    if (!window.MUZIKAZ_API.getSessionToken()) return;
+    if (status) status.textContent = 'Restoring your member account…';
+    try { unlock(await api('/api/account/bootstrap'), 'Your member account and canonical Backpack were restored.'); }
+    catch (error) { if (status) status.textContent = error.message; }
+  };
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!form.reportValidity()) return;
-    const data = new FormData(form);
-    const username = normalizeMemberEmail(data.get('username'));
-    const password = String(data.get('password') || '');
-    if (!/^[a-z0-9][a-z0-9._-]{2,23}$/.test(username)) { if (status) status.textContent = 'Use 3–24 letters, numbers, dots, dashes, or underscores for your username.'; return; }
-    if (status) status.textContent = 'Opening your member profile…';
-    const credentials = readCredentials();
-    const digest = await passwordDigest(username, password);
-    if (credentials[username] && credentials[username].passwordDigest !== digest) { if (status) status.textContent = 'Username or password is incorrect.'; return; }
-    credentials[username] ||= { passwordDigest: digest, createdAt: new Date().toISOString() };
-    credentials[username].lastSignedInAt = new Date().toISOString();
-    window.localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
-    applyAccount(username);
-    const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
-    if (redirect) {
-      window.sessionStorage.removeItem('muzikazLoginRedirect');
-      window.location.href = redirect;
-      return;
-    }
-    scrollToSection('member-locked-content');
+    const data = Object.fromEntries(new FormData(form));
+    if (status) status.textContent = 'Signing in to your persistent member account…';
+    form.setAttribute('aria-busy', 'true');
+    try {
+      const signedIn = await api('/api/access/free-play', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ username: data.username, password: data.password }) });
+      window.MUZIKAZ_API.setSessionToken(signedIn.sessionToken);
+      unlock(signedIn);
+      form.reset();
+      const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
+      if (redirect) { window.sessionStorage.removeItem('muzikazLoginRedirect'); window.location.href = redirect; return; }
+      scrollToSection('member-locked-content');
+    } catch (error) { if (status) status.textContent = error.message || 'Sign-in failed.'; }
+    finally { form.removeAttribute('aria-busy'); }
   });
+  restore();
 }
-
 marketQualityToggle?.addEventListener('change', () => renderMarketplace());
 renderMarketplace();
 seedCharacterCheckout();

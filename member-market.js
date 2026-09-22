@@ -9,26 +9,20 @@
   if (!select || !packs || !window.MUZIKAZ_API) return;
 
   const escape = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
-  const owner = () => String(window.MZKWallet?.connectedAddress?.() || window.MZKWallet?.walletId?.() || '').trim().toLowerCase();
-  const headers = () => ({ Accept: 'application/json', 'Content-Type': 'application/json', 'X-Wallet-Address': owner() });
+  let member = null;
+  const owner = () => String(member?.walletId || '').toLowerCase();
+  const headers = (method = 'GET') => ({ Accept: 'application/json', 'Content-Type': 'application/json', ...(!/^(GET|HEAD)$/i.test(method) && member?.csrfToken ? { 'X-CSRF-Token': member.csrfToken } : {}) });
   const api = async (path, options = {}) => {
-    const response = await window.MUZIKAZ_API.fetch(path, { ...options, headers: { ...headers(), ...(options.headers || {}) } });
+    const response = await window.MUZIKAZ_API.fetch(path, { ...options, headers: { ...headers(options.method), ...(options.headers || {}) } });
     const payload = await response.json();
     if (!response.ok || payload.success === false) throw new Error(payload.message || payload.error || 'The member market request failed.');
     return payload.data;
   };
-  const itemId = (name, index) => `pack-${index}-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 80)}`;
-
-  async function registerExistingWallet() {
-    if (!owner() || owner().startsWith('guest-')) throw new Error('Connect a member wallet to join the market.');
-    const remote = await api('/api/wallet/state');
-    if (remote.createdAt) return remote;
-    let profiles = {}; try { profiles = JSON.parse(localStorage.getItem('muzikazOwnedProfiles') || '{}'); } catch (_) {}
-    const names = profiles[owner()] || ['VibeVerse Starter Pack · Backpack starter asset'];
-    const items = names.map((name, index) => ({ id: itemId(name, index), name, type: 'pack' }));
-    const tokens = { MZK: Math.max(0, Number(window.MZKWallet?.balance?.(owner()) || 0)) };
-    const profile = window.MZKWallet?.profile?.();
-    return api('/api/wallet/state', { method: 'PUT', body: JSON.stringify({ tokens, items, memory: { profile: { displayName: profile?.username || owner() } } }) });
+  async function restoreMember() {
+    const [bootstrap, profile] = await Promise.all([api('/api/account/bootstrap'), api('/api/profile')]);
+    member = { ...profile, csrfToken: bootstrap.csrfToken };
+    window.MuzikazAccountSession = { csrfToken: bootstrap.csrfToken, account: bootstrap.account, backpack: bootstrap.backpack, permissions: bootstrap.permissions, expiresAt: bootstrap.expiresAt };
+    return member;
   }
 
   async function loadMembers(preferred) {
@@ -80,6 +74,6 @@
     try { await api('/api/market/messages', { method: 'POST', body: JSON.stringify({ to: select.value, text: input.value }) }); input.value = ''; await loadProfile(select.value); status.textContent = 'Message delivered.'; } catch (error) { showError(error); }
   });
   function showError(error) { status.textContent = error.message || 'The member market is unavailable.'; }
-  registerExistingWallet().then(() => loadMembers()).catch(showError);
-  window.addEventListener('mzk:wallet-connection-changed', () => registerExistingWallet().then(() => loadMembers(owner())).catch(showError));
+  restoreMember().then(() => loadMembers(owner())).catch(showError);
+  window.addEventListener('muzikaz:member-authenticated', () => restoreMember().then(() => loadMembers(owner())).catch(showError));
 }());
