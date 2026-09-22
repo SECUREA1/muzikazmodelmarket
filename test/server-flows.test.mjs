@@ -110,35 +110,31 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['New User Pack']);
 });
 
-test('member loadout entry uses the shared canonical account API', async () => {
-  const source = await readFile(new URL('../script.js', import.meta.url), 'utf8');
-  assert.match(source, /const accountApiFetch = .*window\.MUZIKAZ_API\?\.fetch/s);
-  assert.match(source, /accountApiFetch\('\/api\/access\/wallet'/);
-  assert.match(source, /accountApiFetch\('\/api\/access\/activate'/);
-  assert.match(source, /accountApiFetch\('\/api\/account\/loadout\/paid'/);
-  assert.match(source, /accountApiFetch\('\/api\/account\/access-code'/);
-  assert.ok(source.includes('[A-Z0-9]{8}-[A-Z0-9]{8}'), 'legacy Rust pass format remains accepted by the member login');
-  assert.ok(source.includes("document.querySelector('#loadout-code-redeem')?.click()"), 'shared pass links automatically submit the member login');
-  assert.ok(source.includes("accountApiFetch('/api/account/bootstrap')"), 'account and Backpack state are loaded from authoritative bootstrap');
-  assert.ok(!source.includes('permissions.members'), 'a successful login opens the members area without a second API membership gate');
-  assert.ok(!source.slice(source.indexOf('const enterGame'), source.indexOf('const verifyAndUnlock')).includes("accountApiFetch('/api/game/session'"), 'members navigation does not create and discard a game session');
-  assert.ok(source.includes("window.sessionStorage.setItem('muzikazGameSessionToken'"), 'the destination persists its game token for protected requests');
-  assert.ok(source.includes("accountApiFetch('/api/access/admin-bypass'"), 'the Bottle page owner shortcut uses the server-validated bypass route');
-  assert.ok(!source.includes('window.MZKWallet?.provisionStandardLoadout(account)'), 'local storage is not an ownership authority');
-  assert.ok(source.includes('model-market.html?access=loadout#house-explorer'), 'successful code entry opens the game page');
+test('member entry uses a simple browser-only login', async () => {
+  const [source, page] = await Promise.all([
+    readFile(new URL('../script.js', import.meta.url), 'utf8'),
+    readFile(new URL('../members.html', import.meta.url), 'utf8')
+  ]);
+  const login = source.slice(source.indexOf('function initBottleLogin'), source.indexOf('marketQualityToggle?.addEventListener'));
+  assert.match(page, /name="email"/);
+  assert.match(page, /name="passcode"/);
+  assert.match(page, /public\/js\/avatar-selection\.js/);
+  assert.match(login, /localStorage\.setItem\('muzikazBottleMember', 'true'\)/);
+  assert.match(login, /MUZIKAZ_AVATAR_GATE\.ensure/);
+  assert.doesNotMatch(login, /\/api\/access\//, 'simple member login must not call the account API');
 });
 
-test('the VibeVerse multiplayer client binds live play to the signed-in Loadout Pack', async () => {
+test('the VibeVerse multiplayer client uses the simple login without a Loadout gate', async () => {
   const [source, page, server] = await Promise.all([
     readFile(new URL('../public/js/crib-multiplayer.js', import.meta.url), 'utf8'),
     readFile(new URL('../model-explorer.html', import.meta.url), 'utf8'),
     readFile(new URL('../server.mjs', import.meta.url), 'utf8')
   ]);
-  assert.match(source, /apiFetch\('\/api\/account\/bootstrap'/, 'the client restores its authoritative account and Backpack');
-  assert.match(source, /data\.account\.username/, 'the visible multiplayer identity comes from the account');
-  assert.match(source, /data\.backpack\.mzkBalance/, 'the visible token balance comes from the same Backpack');
-  assert.doesNotMatch(source, /X-MUZIKAZ-Demo/, 'clients cannot opt themselves into an anonymous server bypass');
-  assert.match(page, /data-multiplayer-control disabled/, 'multiplayer controls stay gated while account state loads');
-  assert.match(page, /Open Loadout Pack/, 'the gate sends players to their member Loadout');
-  assert.doesNotMatch(server, /publicDemo/, 'the multiplayer API has no caller-selected public bypass');
+  assert.doesNotMatch(source, /apiFetch\('\/api\/account\/bootstrap'/);
+  assert.match(source, /localStorage\.getItem\('muzikazBottleMember'\)/);
+  assert.match(source, /'X-User-Name': username/);
+  assert.doesNotMatch(page, /data-multiplayer-control disabled/);
+  assert.doesNotMatch(page, /id="multiplayer-paywall"/);
+  const routes = server.slice(server.indexOf("'/api/houses/ioncore-house/events'"), server.indexOf("url.pathname.startsWith('/api/')"));
+  assert.doesNotMatch(routes, /multiplayerContext/, 'multiplayer routes must not require an account entitlement');
 });

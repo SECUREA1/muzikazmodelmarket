@@ -320,8 +320,8 @@ for (const page of ['index.html', 'model-market.html']) {
   if (!html.includes('MZK purchases are optional')) throw new Error(`${page} must explain that token sales are optional.`);
 }
 const cribHtml = await readFile('dist/model-explorer.html', 'utf8');
-if (!cribHtml.includes('MZK balance and assets tied to your username and Loadout Pack') || !cribHtml.includes('data-multiplayer-control disabled')) throw new Error('Vibe Crib multiplayer must advertise and retain its Loadout Pack gate.');
-if (!cribMultiplayer.includes("apiFetch('/api/account/bootstrap'") || !cribMultiplayer.includes('data.backpack.mzkBalance') || cribMultiplayer.includes('X-MUZIKAZ-Demo')) throw new Error('Vibe Crib multiplayer must bind identity and MZK to the authenticated Backpack.');
+if (!cribHtml.includes('simple members-area login') || cribHtml.includes('data-multiplayer-control disabled') || cribHtml.includes('id="multiplayer-paywall"')) throw new Error('Vibe Crib multiplayer must remain available without a Loadout gate.');
+if (cribMultiplayer.includes("apiFetch('/api/account/bootstrap'") || !cribMultiplayer.includes("localStorage.getItem('muzikazBottleMember')") || !cribMultiplayer.includes("'X-User-Name'")) throw new Error('Vibe Crib multiplayer must use the simple browser login identity without the account API.');
 for (const page of ['model-market.html', 'buy-mzk.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
   if (!html.includes('4,000 MZK')) throw new Error(`${page} must display the 4,000 MZK starter-land price.`);
@@ -331,9 +331,9 @@ for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace
     throw new Error(`members.html is missing subscriber section #${id}`);
   }
 }
-for (const requiredFreePlayEntry of ['id="member-locked-content" data-locked="true" hidden', 'id="free-play-username"', 'id="free-play-password"', 'id="free-play-submit"', '>Play Game Without Signing In</a>']) {
+for (const requiredFreePlayEntry of ['id="member-locked-content" data-locked="true"', 'name="email"', 'name="passcode"', 'No account API or purchase is required']) {
   if (!membersHtml.includes(requiredFreePlayEntry)) {
-    throw new Error(`members.html is missing its free-play entry: ${requiredFreePlayEntry}`);
+    throw new Error(`members.html is missing its simple member entry: ${requiredFreePlayEntry}`);
   }
 }
 if (!membersHtml.includes('name="muzikaz-bottle-contract" content="0x0F1254772810EA4D06E5c61E3E4b54d740367Aa8"')) {
@@ -349,8 +349,8 @@ for (const walletConnectFeature of ['connectBrowserWallet', 'disconnectBrowserWa
 if (!membersHtml.includes('name="muzikaz-bottle-approved-contract" content="0xEf74118D5fB730E9B2729c7303DC29980b4771f0"')) {
   throw new Error('members.html must include the additional approved Bottle access-token contract.');
 }
-if (membersHtml.includes('public/js/avatar-selection.js')) {
-  throw new Error('members.html must not require avatar selection before Bottle login.');
+if (!membersHtml.includes('public/js/avatar-selection.js')) {
+  throw new Error('members.html must load avatar selection after the simple login.');
 }
 
 const checkoutHtml = await readFile('dist/checkout.html', 'utf8');
@@ -386,8 +386,8 @@ for (const requiredAdminMarkup of ['id="admin-login-form"', 'name="username"', '
 }
 const appScript = await readFile('dist/script.js', 'utf8');
 const bottleAccessSources = appScript + await readFile('dist/contract-ownership.js', 'utf8');
-if (!appScript.includes('initModelMarketGate') || !appScript.includes("sessionStorage.setItem('muzikazBottleMember', 'true')")) {
-  throw new Error('The Model Market cover must share the verified members-area Bottle login session.');
+if (!appScript.includes('initModelMarketGate') || !appScript.includes("localStorage.setItem('muzikazBottleMember', 'true')")) {
+  throw new Error('The Model Market cover must share the simple members-area browser login.');
 }
 for (const requiredBottleAccessFlow of ['eth_requestAccounts', 'eth_call', 'eth_sendTransaction', 'eth_getTransactionReceipt', 'validateBottleOwnership', 'BOTTLE_BALANCE_OF_SELECTOR']) {
   if (!bottleAccessSources.includes(requiredBottleAccessFlow)) {
@@ -406,11 +406,14 @@ for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelA
 for (const requiredMintReward of ['BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
-for (const requiredFreePlayCopy of ['Signing in protects your MZK balance', 'game itself remains free to play without signing in', 'Backpack Loadout', 'members-only multiplayer']) {
-  if (!membersHtml.includes(requiredFreePlayCopy)) throw new Error(`members.html is missing free-play guidance: ${requiredFreePlayCopy}`);
+for (const requiredSimpleLoginCopy of ['Sign in with any email address and passcode', 'choose your avatar', 'No account API or purchase is required']) {
+  if (!membersHtml.includes(requiredSimpleLoginCopy)) throw new Error(`members.html is missing simple-login guidance: ${requiredSimpleLoginCopy}`);
 }
-for (const requiredFreePlayAction of ["accountApiFetch('/api/access/free-play'", "renderOwnedCollection(currentMemberEmail)", "scrollToSection('member-locked-content')"]) {
-  if (!appScript.includes(requiredFreePlayAction)) throw new Error(`script.js is missing free-play account behavior: ${requiredFreePlayAction}`);
+for (const requiredSimpleLoginAction of ["localStorage.setItem('muzikazBottleMember', 'true')", "renderOwnedCollection(currentMemberEmail)", "scrollToSection('member-locked-content')"]) {
+  if (!appScript.includes(requiredSimpleLoginAction)) throw new Error(`script.js is missing simple member login behavior: ${requiredSimpleLoginAction}`);
+}
+if (appScript.slice(appScript.indexOf('function initBottleLogin'), appScript.indexOf('marketQualityToggle?.addEventListener')).includes("/api/access/free-play")) {
+  throw new Error('The member login must not call the account API.');
 }
 if (!appScript.includes('config.approvedContracts') || !appScript.includes('MUZIKAZ_BOTTLE_APPROVED_CONTRACTS')) {
   throw new Error('script.js must validate ownership across all approved Bottle contracts.');
