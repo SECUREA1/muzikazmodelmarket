@@ -165,11 +165,14 @@ test('the VibeVerse multiplayer client uses the simple login without a Loadout g
   assert.match(source, /'X-User-Name': username/);
   assert.match(source, /document\.body\.style\.position = 'fixed'/, 'opening chat must lock the game page against scrolling');
   assert.match(source, /lockedShell\?\.setAttribute\('data-chat-locked', 'true'\)/, 'opening chat must lock the game into the same viewport workspace');
-  assert.doesNotMatch(source, /closeChatAndResumeGame/, 'sending a message must keep the conversation open instead of resetting the game view');
+  assert.match(source, /closeChatAndResumeGame\(\)/, 'sending a message must hide chat and return to the game on every screen size');
+  assert.match(source, /gameCanvas\?\.focus\(\{ preventScroll:true \}\)/, 'closing chat returns focus to the existing game without restarting it');
+  assert.doesNotMatch(source, /location\.(?:href|reload)/, 'resuming the game after chat must not navigate or reload the active world');
   assert.doesNotMatch(source, /input\.disabled = true/, 'sending must not dismiss the mobile keyboard by disabling its input');
   assert.match(source, /unlockMessageAudio\(\)/, 'Send must unlock spoken-message audio inside the user gesture');
   assert.match(source, /speechSynthesis\.resume\(\)/, 'spoken messages resume audio interrupted by mobile media or keyboard activity');
   assert.match(source, /if \(input\.value\.trim\(\) === message\) input\.value = ''/, 'a completed request must preserve any new draft typed while sending');
+  assert.match(source, /unlockMessageAudio\(\); await postMessage\(button\.textContent\.trim\(\)\)[\s\S]{0,180}closeChatAndResumeGame\(\)/, 'audio-backed quick reactions follow the same send-and-resume behavior');
   assert.match(page, /id="house-explorer-canvas"[^>]*tabindex="0"/, 'the game canvas remains keyboard focusable when chat is closed explicitly');
   assert.match(source, /data\.kind !== 'offer'/, 'listeners must accept room audio without enabling their own microphone');
   assert.match(source, /voiceEnabled:Boolean\(localStream\)/, 'presence advertises talk state so every listener receives a stable offer');

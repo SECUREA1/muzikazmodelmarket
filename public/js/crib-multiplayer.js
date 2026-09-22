@@ -219,6 +219,13 @@
       unlockGamePage();
     }
   }
+  function closeChatAndResumeGame() {
+    // Closing the chat only restores the already-running game surface; it must
+    // never navigate, reload, or rebuild the current multiplayer world.
+    setPanel(false);
+    const gameCanvas = document.querySelector('#house-explorer-canvas');
+    window.requestAnimationFrame(() => gameCanvas?.focus({ preventScroll:true }));
+  }
   window.visualViewport?.addEventListener('resize', syncChatViewport);
   window.visualViewport?.addEventListener('scroll', syncChatViewport);
   input.addEventListener('focus', () => { document.documentElement.classList.add('crib-chat-composing'); syncChatViewport(); });
@@ -236,10 +243,11 @@
     status.textContent = 'Sending…';
     try {
       await postMessage(message);
-      // Keep the conversation and keyboard open so Send never tears down or
-      // refocuses the game. Do not erase text typed while the request ran.
+      // Clear only the message that finished sending so a newer draft typed
+      // while the request was in flight is never lost.
       if (input.value.trim() === message) input.value = '';
-      status.textContent = 'Sent';
+      status.textContent = '';
+      closeChatAndResumeGame();
     } catch (error) {
       status.textContent = error.message || 'Message could not be sent.';
     } finally {
@@ -248,7 +256,7 @@
     }
   });
   emojiToggle.addEventListener('click', () => { const open = reactions.classList.toggle('open'); emojiToggle.setAttribute('aria-expanded', String(open)); });
-  reactions.querySelectorAll('button').forEach((button) => button.addEventListener('click', async () => { if (sendingMessage) return; try { await postMessage(button.textContent.trim()); reactions.classList.remove('open'); emojiToggle.setAttribute('aria-expanded', 'false'); } catch (error) { status.textContent = error.message || 'Reaction could not be sent.'; } }));
+  reactions.querySelectorAll('button').forEach((button) => button.addEventListener('click', async () => { if (sendingMessage) return; try { unlockMessageAudio(); await postMessage(button.textContent.trim()); reactions.classList.remove('open'); emojiToggle.setAttribute('aria-expanded', 'false'); closeChatAndResumeGame(); } catch (error) { status.textContent = error.message || 'Reaction could not be sent.'; } }));
   micToggle.addEventListener('click', async () => { try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); voiceStatus.textContent = error.name === 'NotAllowedError' ? 'Microphone permission denied' : error.message; } });
   speakerToggle.addEventListener('click', () => { speakerOn = !speakerOn; remoteAudio.forEach((audio) => { audio.muted = !speakerOn; if (speakerOn) audio.play().catch(() => {}); }); speakerToggle.classList.toggle('is-on', speakerOn); speakerToggle.setAttribute('aria-pressed', String(speakerOn)); speakerToggle.querySelector('b').textContent = speakerOn ? 'Speaker on' : 'Speaker off'; });
   const resumeLiveAudio = () => { if (!speakerOn) return; remoteAudio.forEach((audio) => { audio.muted = false; audio.play().catch(() => {}); }); };
