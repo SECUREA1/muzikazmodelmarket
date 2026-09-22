@@ -14,10 +14,11 @@
   const players = $('#crib-player-list'), messages = $('#crib-chat-messages'), form = $('#crib-chat-form');
   const input = $('#crib-chat-input'), status = $('#crib-chat-status'), reactions = $('#crib-reactions');
   const emojiToggle = $('#crib-emoji-toggle'), micToggle = $('#crib-mic-toggle'), speakerToggle = $('#crib-speaker-toggle'), voiceStatus = $('#crib-voice-status');
+  const roomName = $('#crib-room-name'), roomCount = $('#crib-room-count'), unreadCount = $('#crib-unread-count');
   const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username };
   const peers = new Map(), remoteAudio = new Map();
   window.MUZIKAZ_HOUSE_TRACKING = { roomId:localStorage.getItem('muzikazMultiplayerWorld') || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', ...(window.MUZIKAZ_HOUSE_TRACKING || {}) };
-  let joined = false, localStream = null, speakerOn = true, currentUsers = [];
+  let joined = false, localStream = null, speakerOn = true, currentUsers = [], unread = 0;
   const payload = (response) => response?.data ?? response;
   async function jsonResponse(response) { const result = await response.json().catch(() => ({})); if (!response.ok || result.success === false) throw new Error(result.error || result.message || 'The crib server did not respond.'); return payload(result); }
   const text = (value) => document.createTextNode(String(value || ''));
@@ -26,17 +27,25 @@
     const roomId = window.MUZIKAZ_HOUSE_TRACKING?.roomId || localStorage.getItem('muzikazMultiplayerWorld') || 'rad-tox';
     currentUsers = (Array.isArray(data.users) ? data.users : []).filter((user) => (user.roomId || 'rad-tox') === roomId);
     count.textContent = `${currentUsers.length} / ${data.capacity || 15}`;
+    roomName.textContent = roomId.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+    roomCount.textContent = `${currentUsers.length} online`;
     players.replaceChildren(...currentUsers.map((user) => { const chip = document.createElement('span'); chip.style.setProperty('--player-color', user.color || '#9cff00'); chip.dataset.sessionId = user.sessionId; chip.append(text(user.sessionId === sessionId ? `${user.username} (you)` : user.username)); return chip; }));
     const legacyCount = $('#house-presence-count'); if (legacyCount) legacyCount.textContent = `Live in ${window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'this world'}: ${currentUsers.length} / ${data.capacity || 15}`;
     for (const [id, peer] of peers) if (!currentUsers.some((user) => user.sessionId === id)) { peer.close(); peers.delete(id); remoteAudio.get(id)?.remove(); remoteAudio.delete(id); }
     if (localStream) connectToRoom();
   }
-  function addMessage(item) {
+  function addMessage(item, notify = true) {
     if (!item?.id || [...messages.children].some((message) => message.dataset.messageId === String(item.id))) return;
+    const pinnedToBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 48;
+    messages.querySelector('.crib-chat-empty')?.remove();
     const li = document.createElement('li'); li.dataset.messageId = item.id; if (/^(🔥|👏|😂|💚|🎵|⚡)$/.test(item.message)) li.classList.add('is-reaction');
+    if (item.sessionId === sessionId) li.classList.add('is-mine');
     const name = document.createElement('strong'); name.append(text(item.sessionId === sessionId ? 'You' : item.username));
-    const body = document.createElement('span'); body.append(text(item.message)); li.append(name, body); messages.append(li);
-    while (messages.children.length > 50) messages.firstElementChild.remove(); messages.scrollTop = messages.scrollHeight;
+    const time = document.createElement('time'); time.dateTime = item.createdAt || ''; time.textContent = item.createdAt ? new Date(item.createdAt).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' }) : 'now';
+    const body = document.createElement('span'); body.append(text(item.message)); li.append(name, time, body); messages.append(li);
+    while (messages.children.length > 50) messages.firstElementChild.remove();
+    if (pinnedToBottom || item.sessionId === sessionId) messages.scrollTop = messages.scrollHeight;
+    if (notify && panel.hidden && item.sessionId !== sessionId) { unread += 1; unreadCount.textContent = unread > 9 ? '9+' : String(unread); unreadCount.hidden = false; }
   }
   async function postMessage(message) { const response = await apiFetch('/api/houses/ioncore-house/chat', { method:'POST', headers, body:JSON.stringify({ message }) }); const data = await jsonResponse(response); window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), message }; window.dispatchEvent(new CustomEvent('muzikaz-house-chat', { detail:data })); addMessage(data); }
   async function heartbeat() {
@@ -74,14 +83,16 @@
   }
   function disableMicrophone() { localStream?.getTracks().forEach((track) => track.stop()); localStream = null; for (const [id, peer] of peers) { signal(id, 'hangup').catch(() => {}); peer.close(); } peers.clear(); micToggle.classList.remove('is-on'); micToggle.setAttribute('aria-pressed', 'false'); micToggle.querySelector('b').textContent = 'Mic off'; voiceStatus.textContent = 'Voice disconnected'; }
 
-  toggle.addEventListener('click', () => { panel.hidden = !panel.hidden; toggle.setAttribute('aria-expanded', String(!panel.hidden)); if (!panel.hidden) input.focus(); });
-  panel.querySelector('[data-close-chat]').addEventListener('click', () => { panel.hidden = true; toggle.setAttribute('aria-expanded', 'false'); toggle.focus(); });
-  form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; input.disabled = true; try { await postMessage(message); input.value = ''; status.textContent = ''; } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; input.focus(); } });
+  function setPanel(open) { panel.hidden = !open; toggle.setAttribute('aria-expanded', String(open)); if (open) { unread = 0; unreadCount.hidden = true; messages.scrollTop = messages.scrollHeight; input.focus(); } }
+  toggle.addEventListener('click', () => setPanel(panel.hidden));
+  panel.querySelector('[data-close-chat]').addEventListener('click', () => { setPanel(false); toggle.focus(); });
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !panel.hidden) { setPanel(false); toggle.focus(); } });
+  form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; const submit = form.querySelector('[type="submit"]'); input.disabled = true; submit.disabled = true; status.textContent = 'Sending…'; try { await postMessage(message); input.value = ''; status.textContent = ''; } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; submit.disabled = false; input.focus(); } });
   emojiToggle.addEventListener('click', () => { const open = reactions.classList.toggle('open'); emojiToggle.setAttribute('aria-expanded', String(open)); });
   reactions.querySelectorAll('button').forEach((button) => button.addEventListener('click', async () => { try { await postMessage(button.textContent.trim()); reactions.classList.remove('open'); emojiToggle.setAttribute('aria-expanded', 'false'); } catch (error) { status.textContent = error.message; } }));
   micToggle.addEventListener('click', async () => { try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); voiceStatus.textContent = error.name === 'NotAllowedError' ? 'Microphone permission denied' : error.message; } });
   speakerToggle.addEventListener('click', () => { speakerOn = !speakerOn; remoteAudio.forEach((audio) => { audio.muted = !speakerOn; if (speakerOn) audio.play().catch(() => {}); }); speakerToggle.classList.toggle('is-on', speakerOn); speakerToggle.setAttribute('aria-pressed', String(speakerOn)); speakerToggle.querySelector('b').textContent = speakerOn ? 'Speaker on' : 'Speaker off'; });
-  async function loadChat() { const data = await jsonResponse(await apiFetch('/api/houses/ioncore-house/chat', { headers, cache:'no-store' })); (data.messages || []).forEach(addMessage); }
+  async function loadChat() { const data = await jsonResponse(await apiFetch('/api/houses/ioncore-house/chat', { headers, cache:'no-store' })); (data.messages || []).forEach((message) => addMessage(message, false)); }
   loadChat().catch(() => {});
   let events;
   if ('EventSource' in window) { events = new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`)); events.addEventListener('house-presence-updated', (event) => renderPresence(JSON.parse(event.data))); events.addEventListener('house-chat-message', (event) => addMessage(JSON.parse(event.data))); events.addEventListener('house-voice-signal', (event) => handleVoiceSignal(JSON.parse(event.data)).catch(() => { voiceStatus.textContent = 'Voice connection interrupted'; })); }
