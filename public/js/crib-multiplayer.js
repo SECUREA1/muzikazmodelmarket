@@ -19,6 +19,7 @@
   const peers = new Map(), remoteAudio = new Map();
   window.MUZIKAZ_HOUSE_TRACKING = { roomId:localStorage.getItem('muzikazMultiplayerWorld') || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', ...(window.MUZIKAZ_HOUSE_TRACKING || {}) };
   let joined = false, localStream = null, speakerOn = true, currentUsers = [], unread = 0;
+  let gameScrollY = 0;
   const payload = (response) => response?.data ?? response;
   async function jsonResponse(response) { const result = await response.json().catch(() => ({})); if (!response.ok || result.success === false) throw new Error(result.error || result.message || 'The crib server did not respond.'); return payload(result); }
   const text = (value) => document.createTextNode(String(value || ''));
@@ -83,7 +84,36 @@
   }
   function disableMicrophone() { localStream?.getTracks().forEach((track) => track.stop()); localStream = null; for (const [id, peer] of peers) { signal(id, 'hangup').catch(() => {}); peer.close(); } peers.clear(); micToggle.classList.remove('is-on'); micToggle.setAttribute('aria-pressed', 'false'); micToggle.querySelector('b').textContent = 'Mic off'; voiceStatus.textContent = 'Voice disconnected'; }
 
-  function setPanel(open) { panel.hidden = !open; toggle.setAttribute('aria-expanded', String(open)); if (open) { unread = 0; unreadCount.hidden = true; messages.scrollTop = messages.scrollHeight; input.focus(); } }
+  function syncChatViewport() {
+    const viewport = window.visualViewport;
+    const viewportTop = viewport?.offsetTop || 0;
+    const viewportHeight = viewport?.height || window.innerHeight;
+    document.documentElement.style.setProperty('--crib-visual-top', `${Math.round(viewportTop)}px`);
+    document.documentElement.style.setProperty('--crib-visual-height', `${Math.round(viewportHeight)}px`);
+    if (document.documentElement.classList.contains('crib-chat-selected')) window.scrollTo(0, gameScrollY);
+  }
+  function setPanel(open) {
+    panel.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+    document.documentElement.classList.toggle('crib-chat-selected', open);
+    if (open) {
+      gameScrollY = window.scrollY;
+      const shell = document.querySelector('.house-explorer-shell');
+      if (shell) shell.style.setProperty('--crib-locked-game-height', `${Math.round(shell.getBoundingClientRect().height)}px`);
+      unread = 0; unreadCount.hidden = true; messages.scrollTop = messages.scrollHeight;
+      syncChatViewport();
+      input.focus({ preventScroll:true });
+      window.scrollTo(0, gameScrollY);
+    } else {
+      document.querySelector('.house-explorer-shell')?.style.removeProperty('--crib-locked-game-height');
+      document.documentElement.style.removeProperty('--crib-visual-top');
+      document.documentElement.style.removeProperty('--crib-visual-height');
+    }
+  }
+  window.visualViewport?.addEventListener('resize', syncChatViewport);
+  window.visualViewport?.addEventListener('scroll', syncChatViewport);
+  input.addEventListener('focus', () => { document.documentElement.classList.add('crib-chat-composing'); syncChatViewport(); });
+  input.addEventListener('blur', () => document.documentElement.classList.remove('crib-chat-composing'));
   toggle.addEventListener('click', () => setPanel(panel.hidden));
   panel.querySelector('[data-close-chat]').addEventListener('click', () => { setPanel(false); toggle.focus(); });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !panel.hidden) { setPanel(false); toggle.focus(); } });
