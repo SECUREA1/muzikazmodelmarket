@@ -54,7 +54,24 @@
     const utterance = new SpeechSynthesisUtterance(`${item.sessionId === sessionId ? 'You' : item.username || 'Player'} says: ${item.message}`);
     utterance.lang = document.documentElement.lang || navigator.language || 'en';
     utterance.rate = 1; utterance.volume = 1;
+    // Mobile browsers can leave synthesis paused after the software keyboard or
+    // another media session has been active. Resume it before queueing every
+    // message; this is harmless on desktop and prevents a successful send from
+    // appearing to have silently failed.
+    window.speechSynthesis.resume();
     window.speechSynthesis.speak(utterance);
+  }
+
+  function unlockMessageAudio() {
+    if (!textToSpeechOn || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
+    // Run inside the Send gesture. In particular, iOS requires speech audio to
+    // be activated before the asynchronous chat request completes.
+    window.speechSynthesis.resume();
+    if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+      const unlock = new SpeechSynthesisUtterance(' ');
+      unlock.volume = 0;
+      window.speechSynthesis.speak(unlock);
+    }
   }
 
   function renderPresence(data = {}) {
@@ -202,11 +219,6 @@
       unlockGamePage();
     }
   }
-  function closeChatAndResumeGame() {
-    setPanel(false);
-    const gameCanvas = document.querySelector('#house-explorer-canvas');
-    window.requestAnimationFrame(() => gameCanvas?.focus({ preventScroll:true }));
-  }
   window.visualViewport?.addEventListener('resize', syncChatViewport);
   window.visualViewport?.addEventListener('scroll', syncChatViewport);
   input.addEventListener('focus', () => { document.documentElement.classList.add('crib-chat-composing'); syncChatViewport(); });
@@ -214,7 +226,27 @@
   toggle.addEventListener('click', () => setPanel(panel.hidden));
   panel.querySelector('[data-close-chat]').addEventListener('click', () => { setPanel(false); toggle.focus(); });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !panel.hidden) { setPanel(false); toggle.focus(); } });
-  form.addEventListener('submit', async (event) => { event.preventDefault(); const message = input.value.trim(); if (!message) return; const submit = form.querySelector('[type="submit"]'); input.disabled = true; submit.disabled = true; status.textContent = 'Sending…'; try { await postMessage(message); input.value = ''; status.textContent = ''; closeChatAndResumeGame(); } catch (error) { status.textContent = error.message || 'Message could not be sent.'; } finally { input.disabled = false; submit.disabled = false; if (!panel.hidden) input.focus({ preventScroll:true }); } });
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const message = input.value.trim();
+    if (!message || sendingMessage) return;
+    unlockMessageAudio();
+    const submit = form.querySelector('[type="submit"]');
+    submit.disabled = true;
+    status.textContent = 'Sending…';
+    try {
+      await postMessage(message);
+      // Keep the conversation and keyboard open so Send never tears down or
+      // refocuses the game. Do not erase text typed while the request ran.
+      if (input.value.trim() === message) input.value = '';
+      status.textContent = 'Sent';
+    } catch (error) {
+      status.textContent = error.message || 'Message could not be sent.';
+    } finally {
+      submit.disabled = false;
+      if (!panel.hidden) input.focus({ preventScroll:true });
+    }
+  });
   emojiToggle.addEventListener('click', () => { const open = reactions.classList.toggle('open'); emojiToggle.setAttribute('aria-expanded', String(open)); });
   reactions.querySelectorAll('button').forEach((button) => button.addEventListener('click', async () => { if (sendingMessage) return; try { await postMessage(button.textContent.trim()); reactions.classList.remove('open'); emojiToggle.setAttribute('aria-expanded', 'false'); } catch (error) { status.textContent = error.message || 'Reaction could not be sent.'; } }));
   micToggle.addEventListener('click', async () => { try { if (localStream) disableMicrophone(); else await enableMicrophone(); } catch (error) { disableMicrophone(); voiceStatus.textContent = error.name === 'NotAllowedError' ? 'Microphone permission denied' : error.message; } });
