@@ -74,7 +74,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
   const style = document.createElement('style');
   style.textContent = `
-    .house-explorer-shell{width:min(96%,1400px);max-width:100%;box-sizing:border-box;align-items:start}
+    .house-explorer-shell{width:calc(100% - 24px);max-width:none;box-sizing:border-box;align-items:start}
     .house-stage{grid-column:1;grid-row:1;height:clamp(420px,calc(100svh - 240px),720px);max-height:calc(100svh - 240px);overflow:hidden}
     .house-hud{grid-column:2;grid-row:1 / span 3}
     .house-stage #house-explorer-canvas{display:block;width:100%;height:100%;min-height:420px;background:#050807;touch-action:none;cursor:grab}
