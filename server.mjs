@@ -3,7 +3,7 @@ import { readFile, writeFile, mkdir, stat, unlink } from 'node:fs/promises';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
-import { UserJsonDatabase, cleanWallet } from './user-json-database.mjs';
+import { UserJsonDatabase } from './user-json-database.mjs';
 import { LoadoutCodeStore } from './loadout-code-store.mjs';
 import { PaymentOrderStore, MUZIKAZ_PAYMENT_NETWORKS } from './payment-order-store.mjs';
 import { verifyPaymentTransaction } from './payment-verifier.mjs';
@@ -130,11 +130,6 @@ function user(req) {
   const sessionWallet = active ? (active.wallet || `account:${active.accountId}`) : '';
   return { id: cleanText(req.headers['x-user-id'] || sessionWallet, 'demo-user'), role: 'user', name: cleanText(req.headers['x-user-name'], 'MUZIKAZ Creator') };
 }
-function requestWallet(req) {
-  const active = req.muzikazAuthentication?.session;
-  const sessionWallet = active ? (active.wallet || `account:${active.accountId}`) : '';
-  return cleanWallet(req.headers['x-wallet-address'] || req.headers['x-user-id'] || sessionWallet);
-}
 function matchesAdminToken(value) { const supplied = Buffer.from(String(value || '')); const expected = Buffer.from(persistentAdminToken); return supplied.length === expected.length && timingSafeEqual(supplied, expected); }
 function isAdmin(req) { const token = String(req.headers['x-admin-token'] || cookie(req, 'mzk_admin') || ''); return (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || matchesAdminToken(token); }
 function matchesSecret(candidate, expected) { const supplied = Buffer.from(String(candidate || '')); const configured = Buffer.from(expected); return supplied.length === configured.length && timingSafeEqual(supplied, configured); }
@@ -240,15 +235,17 @@ async function repositoryGameCatalog() {
 }
 async function backpackFor(account) {
   const stateAsset = (name, type) => ({ id: createHash('sha256').update(`${type}:${name}`).digest('hex').slice(0, 20), name, type, state: /^Unrevealed/i.test(name) ? 'unrevealed' : 'revealed' });
-  const assets = [...(account.gameAssets || []).map((name) => stateAsset(name, 'game')), ...(account.purchasedAssets || []).map((name) => stateAsset(name, 'purchase'))];
+  const state = await userDatabase.ensureAccount(account);
+  const assets = (state.items || []).map((asset) => ({ ...asset, state: asset.state || asset.revealStatus || 'revealed' }));
   const catalog = await repositoryGameCatalog();
   const catalogAvatars = catalog.filter((asset) => asset.assetType === 'avatar').map((asset) => ({ ...asset, eligible: true, state: 'revealed' }));
-  return { accountId: account.accountId, backpackId: account.backpackId, status: account.loadoutRedeemed ? 'ready' : 'empty', mzkBalance: Number(account.mzkBalance || 0), land: (account.landAssets || []).map((name) => stateAsset(name, 'land')), avatars: [STARTER_AVATAR, ...catalogAvatars, ...assets.filter((asset) => /avatar/i.test(asset.name) && asset.name !== 'Starter Avatar').map((asset) => ({ ...asset, eligible: asset.state === 'revealed' }))], assets, catalogAssets: catalog, environments: catalog.filter((asset) => asset.assetType === 'environment'), props: catalog.filter((asset) => asset.assetType === 'prop'), vehicles: catalog.filter((asset) => asset.assetType === 'vehicle'), bottleClaims: (account.bottleClaims || []).map((name) => stateAsset(name, 'bottle')), entitlements: [...(account.creatorVaultAccess ? ['creator-vault'] : []), ...(account.marketplaceAccess ? ['marketplace'] : []), ...(account.gameAccess ? ['members-game'] : [])], selectedAvatarId: account.selectedAvatarId || STARTER_AVATAR.id, updatedAt: account.updatedAt };
+  return { accountId: account.accountId, backpackId: account.backpackId, walletId: state.walletId, status: account.loadoutRedeemed ? 'ready' : 'empty', mzkBalance: Number(state.tokens?.MZK || 0), tokens: state.tokens || { MZK: 0 }, land: (account.landAssets || []).map((name) => stateAsset(name, 'land')), avatars: [STARTER_AVATAR, ...catalogAvatars, ...assets.filter((asset) => /avatar/i.test(asset.name) && asset.name !== 'Starter Avatar').map((asset) => ({ ...asset, eligible: asset.state === 'revealed' }))], assets, catalogAssets: catalog, environments: catalog.filter((asset) => asset.assetType === 'environment'), props: catalog.filter((asset) => asset.assetType === 'prop'), vehicles: catalog.filter((asset) => asset.assetType === 'vehicle'), bottleClaims: (account.bottleClaims || []).map((name) => stateAsset(name, 'bottle')), entitlements: [...(account.creatorVaultAccess ? ['creator-vault'] : []), ...(account.marketplaceAccess ? ['marketplace'] : []), ...(account.gameAccess ? ['members-game'] : [])], selectedAvatarId: account.selectedAvatarId || STARTER_AVATAR.id, updatedAt: state.updatedAt || account.updatedAt };
 }
 function throttleAccess(req) { const key = String(req.socket.remoteAddress || 'unknown'); const now = Date.now(); const attempt = accessAttempts.get(key) || { failures: 0, resetAt: now + 15 * 60_000 }; if (attempt.resetAt <= now) { attempt.failures = 0; attempt.resetAt = now + 15 * 60_000; } if (attempt.failures >= 8) throw Object.assign(new Error('Too many failed access attempts. Try again later.'), { statusCode: 429 }); accessAttempts.set(key, attempt); return { success: () => accessAttempts.delete(key), failure: () => { attempt.failures += 1; } }; }
 async function requireLandOwnership(req, res) {
-  let deeds = [];
-  try { deeds = await userDatabase.landDeeds(requestWallet(req)); } catch {}
+  const member = await canonicalMember(req, res);
+  if (!member) return null;
+  const deeds = await userDatabase.landDeeds(member.walletId);
   if (deeds.length) return deeds[0];
   sendJson(res, 403, { success: false, code: 'LAND_OWNERSHIP_REQUIRED', message: 'Land ownership required: add a MUZIKAZ World land deed to your Drop Backpack before uploading avatars, assets, or games.' });
   return null;
@@ -542,9 +539,9 @@ const server = createServer(async (req, res) => {
     if (builderPlacement && req.method === 'DELETE') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.world.edit')) return; return sendJson(res, 200, assetResponse(await userDatabase.updateBuilderPlacement(context.walletId, decodeURIComponent(builderPlacement[1]), {}, true))); }
 
     if (url.pathname === '/api/wallet/state' && req.method === 'GET') { const member = await canonicalMember(req, res); if (!member) return; return sendJson(res, 200, assetResponse(member.state)); }
-    if (url.pathname === '/api/wallet/state' && req.method === 'PUT') { const member = await canonicalMember(req, res, true); if (!member) return; return sendJson(res, 200, assetResponse(await userDatabase.put(member.walletId, await bodyJson(req)))); }
-    if (url.pathname === '/api/land/deeds' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.landDeeds(requestWallet(req))));
-    if (url.pathname === '/api/land/claims' && req.method === 'POST') { const body = await bodyJson(req); const allowed = new Map([['volt-city', 'Volt City'], ['skyline-deck', 'Skyline Deck'], ['echo-gardens', 'Echo Gardens'], ['crew-plaza', 'Crew Plaza'], ['studio-ridge', 'Studio Ridge'], ['neon-docks', 'Neon Docks'], ['bassline-badlands', 'Bassline Badlands'], ['pixel-peaks', 'Pixel Peaks']]); const worldId = cleanText(body.worldId).toLowerCase(); if (!allowed.has(worldId)) return sendJson(res, 400, { success: false, message: 'Unknown MUZIKAZ world.' }); return sendJson(res, 201, assetResponse(await userDatabase.claimLand({ walletId: requestWallet(req), worldId, name: allowed.get(worldId), priceMzk: 4000, requestId: body.requestId }))); }
+    if (url.pathname === '/api/wallet/state' && req.method === 'PUT') return sendJson(res, 405, { success: false, code: 'AUTHORITATIVE_STATE_REQUIRED', message: 'Backpack items and MZK balances can only change through verified purchase, market, land, or gameplay transactions.' });
+    if (url.pathname === '/api/land/deeds' && req.method === 'GET') { const member = await canonicalMember(req, res); if (!member) return; return sendJson(res, 200, assetResponse(await userDatabase.landDeeds(member.walletId))); }
+    if (url.pathname === '/api/land/claims' && req.method === 'POST') { const member = await canonicalMember(req, res, true); if (!member) return; const body = await bodyJson(req); const allowed = new Map([['volt-city', 'Volt City'], ['skyline-deck', 'Skyline Deck'], ['echo-gardens', 'Echo Gardens'], ['crew-plaza', 'Crew Plaza'], ['studio-ridge', 'Studio Ridge'], ['neon-docks', 'Neon Docks'], ['bassline-badlands', 'Bassline Badlands'], ['pixel-peaks', 'Pixel Peaks']]); const worldId = cleanText(body.worldId).toLowerCase(); if (!allowed.has(worldId)) return sendJson(res, 400, { success: false, message: 'Unknown MUZIKAZ world.' }); return sendJson(res, 201, assetResponse(await userDatabase.claimLand({ walletId: member.walletId, worldId, name: allowed.get(worldId), priceMzk: 4000, requestId: body.requestId }))); }
     if (url.pathname === '/api/market/members' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.members()));
     const marketProfile = url.pathname.match(/^\/api\/market\/members\/([^/]+)$/);
     if (marketProfile && req.method === 'GET') { const profile = await userDatabase.marketProfile(decodeURIComponent(marketProfile[1])); return profile ? sendJson(res, 200, assetResponse(profile)) : sendJson(res, 404, { success: false, message: 'Member not found' }); }

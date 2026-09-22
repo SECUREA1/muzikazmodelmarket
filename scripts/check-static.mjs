@@ -86,7 +86,7 @@ for (const page of mobileHeaderPages) {
   if (!html.includes('class="menu-toggle"') || !html.includes('aria-controls="primary-navigation"')) throw new Error(`${page} must include a labelled, accessible mobile menu toggle.`);
 }
 
-for (const feature of ['eth_chainId', 'X-Wallet-Address', '/api/wallet/state', 'data-open-backpack', 'Game market', 'Buy / swap MZK']) {
+for (const feature of ['/api/backpack', '/api/profile', 'mzkBalance', 'data-open-backpack', 'Game market', 'Buy / swap MZK']) {
   if (!backpackWidget.includes(feature)) throw new Error(`The global Ethereum Backpack is missing ${feature}.`);
 }
 for (const toggleFeature of ['data-backpack-view="game"', 'data-backpack-view="builder"', 'In-game Backpack', 'Builder Backpack', 'Enemies & NPCs', 'Environments']) {
@@ -331,7 +331,7 @@ for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace
     throw new Error(`members.html is missing subscriber section #${id}`);
   }
 }
-for (const requiredFreePlayEntry of ['id="member-locked-content" data-locked="true"', 'name="username"', 'name="password"', 'first sign-in creates this device profile', 'open it again instantly']) {
+for (const requiredFreePlayEntry of ['id="member-locked-content" data-locked="true"', 'name="email"', 'name="passcode"', 'persistent profile', 'returning credentials restore it from the account API']) {
   if (!membersHtml.includes(requiredFreePlayEntry)) {
     throw new Error(`members.html is missing its simple member entry: ${requiredFreePlayEntry}`);
   }
@@ -400,20 +400,20 @@ for (const requiredMarketPaymentFlow of ['MuzikazPaymentConfig', 'MARKET_ITEM_PR
 for (const requiredModelDeliveryFlow of ['muzikazBackpackAssetsV1', 'normalizeDeliverable', 'Exact GLB delivered to Backpack', 'item.deliverable?.modelUrl']) {
   if (!appScript.includes(requiredModelDeliveryFlow)) throw new Error(`script.js is missing exact purchased-model delivery behavior ${requiredModelDeliveryFlow}`);
 }
-for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelAssets', '<model-viewer']) {
+for (const requiredBackpackModelFlow of ['backpack.assets', 'asset?.modelUrl', '<model-viewer']) {
   if (!backpackWidget.includes(requiredBackpackModelFlow)) throw new Error(`Backpack widget is missing purchased GLB rendering behavior ${requiredBackpackModelFlow}`);
 }
 for (const requiredMintReward of ['BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
-for (const requiredSimpleLoginCopy of ['username and password', 'Your Drop Backpack', 'open it again instantly']) {
+for (const requiredSimpleLoginCopy of ['persistent member profile', 'choose your avatar', 'returning credentials restore it from the account API']) {
   if (!membersHtml.includes(requiredSimpleLoginCopy)) throw new Error(`members.html is missing simple-login guidance: ${requiredSimpleLoginCopy}`);
 }
 for (const requiredSimpleLoginAction of ["localStorage.setItem('muzikazBottleMember', 'true')", "renderOwnedCollection(currentMemberEmail)", "scrollToSection('member-locked-content')"]) {
   if (!appScript.includes(requiredSimpleLoginAction)) throw new Error(`script.js is missing simple member login behavior: ${requiredSimpleLoginAction}`);
 }
-if (appScript.slice(appScript.indexOf('function initBottleLogin'), appScript.indexOf('marketQualityToggle?.addEventListener')).includes('/api/')) {
-  throw new Error('The member login must open locally without a missing API route.');
+if (!appScript.slice(appScript.indexOf('function initBottleLogin'), appScript.indexOf('marketQualityToggle?.addEventListener')).includes("/api/access/free-play")) {
+  throw new Error('The member login must restore profiles through the account API.');
 }
 if (!appScript.includes('config.approvedContracts') || !appScript.includes('MUZIKAZ_BOTTLE_APPROVED_CONTRACTS')) {
   throw new Error('script.js must validate ownership across all approved Bottle contracts.');
