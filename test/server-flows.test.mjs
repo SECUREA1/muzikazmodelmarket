@@ -111,12 +111,16 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(updatedAdminData.body.data.summary.gameplaySpentMzk, 50, 'admin pages receive the live gameplay-spend total');
   assert.equal(updatedAdminData.body.data.gameplaySpending[0].walletId, `account:${bypass.body.data.account.accountId}`);
 
-  await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' } } }) });
-  await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });
+  await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100, POINTS: 25 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' }, games: { radTox: { level: 3 } } } }) });
+  const profile = await json(`${base}/api/profile`, { headers: { Cookie: accountCookie } });
+  assert.equal(profile.body.data.tokens.POINTS, 25, 'points share the canonical profile wallet with MZK');
+  assert.equal(profile.body.data.memory.games.radTox.level, 3, 'game memory restores from the authenticated profile API');
+  assert.ok(profile.body.data.connectedWallets.some((entry) => entry.address === wallet), 'the profile includes its bound blockchain wallet');
+  await json(`${base}/api/market/listings`, { method: 'PUT', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });
   const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['New User Pack']);
 });
 
-test('member entry uses a simple browser-only login', async () => {
+test('member entry uses the persistent account API', async () => {
   const [source, page] = await Promise.all([
     readFile(new URL('../script.js', import.meta.url), 'utf8'),
     readFile(new URL('../members.html', import.meta.url), 'utf8')
@@ -127,7 +131,8 @@ test('member entry uses a simple browser-only login', async () => {
   assert.match(page, /public\/js\/avatar-selection\.js/);
   assert.match(login, /localStorage\.setItem\('muzikazBottleMember', 'true'\)/);
   assert.match(login, /MUZIKAZ_AVATAR_GATE\.ensure/);
-  assert.doesNotMatch(login, /\/api\/access\//, 'simple member login must not call the account API');
+  assert.match(login, /\/api\/access\/free-play/, 'member login must create or restore an authenticated account');
+  assert.match(login, /\/api\/account\/bootstrap/, 'returning sessions must restore the canonical profile');
 });
 
 test('the VibeVerse multiplayer client uses the simple login without a Loadout gate', async () => {
