@@ -140,11 +140,11 @@ test('member entry uses the persistent account API', async () => {
   ]);
   const login = source.slice(source.indexOf('function initBottleLogin'), source.indexOf('marketQualityToggle?.addEventListener'));
   assert.match(page, /name="username"[^>]*autocomplete="username"/);
-  assert.doesNotMatch(page, /name="passcode"/);
+  assert.match(page, /name="password"[^>]*autocomplete="current-password"/);
   assert.match(page, /public\/js\/avatar-selection\.js/);
   assert.match(login, /localStorage\.setItem\('muzikazBottleMember', 'true'\)/);
   assert.match(login, /MUZIKAZ_AVATAR_GATE\.ensure/);
-  assert.match(login, /\/api\/access\/username/, 'member login must create or restore an authenticated account from a username');
+  assert.match(login, /\/api\/access\/free-play/, 'member login must create or restore an authenticated account from the original username and password');
   assert.match(login, /\/api\/account\/bootstrap/, 'returning sessions must restore the canonical profile');
 });
 
