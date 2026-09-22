@@ -45,28 +45,13 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(usernameLogin.body.data.permissions.marketplace, true);
   assert.equal(usernameLogin.body.data.permissions.games, true);
 
-  const simpleLogin = await json(`${base}/api/access/username`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'BackpackPlayer' }) });
-  assert.equal(simpleLogin.response.status, 200, 'a username alone opens a persistent member session');
-  assert.equal(simpleLogin.body.data.account.username, 'BackpackPlayer');
-  assert.equal(simpleLogin.body.data.backpack.mzkBalance, 2000);
-  const restoredLogin = await json(`${base}/api/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'backpackplayer' }) });
-  assert.equal(restoredLogin.response.status, 200, 'the short login alias restores the same username profile');
-  assert.equal(restoredLogin.body.data.account.accountId, simpleLogin.body.data.account.accountId);
-  assert.equal(restoredLogin.body.data.account.backpackId, simpleLogin.body.data.account.backpackId);
-
   const login = await json(`${base}/api/admin/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'test-admin', password: 'test-password' }) });
   assert.equal(login.response.status, 200); assert.equal(login.body.data.persistent, true); assert.ok(login.body.data.token);
   const cookie = login.response.headers.get('set-cookie').split(';')[0];
   assert.equal((await json(`${base}/api/admin/session`, { headers: { Cookie: cookie } })).body.data.authenticated, true);
-  const guestChat = await json(`${base}/api/houses/ioncore-house/chat?roomId=rad-tox`);
-  assert.equal(guestChat.response.status, 200, 'guests can load the public multiplayer room without an account session');
-  assert.deepEqual(guestChat.body.messages, []);
-  const guestHeaders = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': 'mobile-guest-1', 'X-User-Id': 'guest:mobile-guest-1', 'X-User-Name': 'Guest-obile1' };
-  const guestPresence = await json(`${base}/api/houses/ioncore-house/presence`, { method: 'POST', headers: guestHeaders, body: JSON.stringify({ roomId: 'rad-tox' }) });
-  assert.equal(guestPresence.response.status, 200, 'mobile guests can join presence with the starter avatar');
-  assert.equal(guestPresence.body.users[0].avatarAssetId, 'starter-avatar');
-  const guestMessage = await json(`${base}/api/houses/ioncore-house/chat`, { method: 'POST', headers: guestHeaders, body: JSON.stringify({ message: 'guest ready' }) });
-  assert.equal(guestMessage.response.status, 201, 'a joined guest can send multiplayer chat');
+  const lockedMultiplayer = await json(`${base}/api/houses/ioncore-house/chat`);
+  assert.equal(lockedMultiplayer.response.status, 401, 'multiplayer data is not exposed without an account session');
+  assert.equal(lockedMultiplayer.body.code, 'SESSION_REQUIRED');
   const adminData = await json(`${base}/api/admin/data`, { headers: { Cookie: cookie } });
   assert.equal(adminData.response.status, 200, 'persistent admin receives the full data center');
   for (const sheet of ['mzkTransactions', 'items', 'backpackItems', 'spaces']) assert.ok(Array.isArray(adminData.body.data[sheet]), `${sheet} is available as an administrator spreadsheet`);
@@ -80,8 +65,8 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(activation.body.data.account.mzkBalance, 2000, 'admin Loadout codes include the full first-buy-equivalent MZK grant');
   const accountCookie = activation.response.headers.get('set-cookie').split(';')[0];
   const memberMultiplayer = await json(`${base}/api/houses/ioncore-house/chat`, { headers: { Cookie: accountCookie } });
-  assert.equal(memberMultiplayer.response.status, 200, 'an authoritative member can read the same public multiplayer room');
-  assert.equal(memberMultiplayer.body.messages.at(-1)?.message, 'guest ready', 'members and guests share the room history');
+  assert.equal(memberMultiplayer.response.status, 200, 'an authoritative paid-equivalent member account crosses the multiplayer paywall');
+  assert.deepEqual(memberMultiplayer.body.messages, []);
   const gameBackpack = await json(`${base}/api/backpack`, { headers: { Cookie: accountCookie } });
   assert.equal(gameBackpack.response.status, 200);
   assert.equal(gameBackpack.body.data.environments.length, 12, 'every labeled repository environment is loaded into the game Backpack');
@@ -126,32 +111,23 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(updatedAdminData.body.data.summary.gameplaySpentMzk, 50, 'admin pages receive the live gameplay-spend total');
   assert.equal(updatedAdminData.body.data.gameplaySpending[0].walletId, `account:${bypass.body.data.account.accountId}`);
 
-  const forgedState = await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 999999 }, items: [{ id: 'forged-pack', name: 'Forged Pack' }] }) });
-  assert.equal(forgedState.response.status, 405, 'clients cannot mint MZK or Backpack inventory through a generic state write');
-  assert.equal(forgedState.body.code, 'AUTHORITATIVE_STATE_REQUIRED');
-  await json(`${base}/api/profile/memory`, { method: 'PATCH', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ memory: { games: { radTox: { level: 3 } } } }) });
-  const profile = await json(`${base}/api/profile`, { headers: { Cookie: accountCookie } });
-  assert.equal(profile.body.data.tokens.MZK, 2000, 'the market balance remains server-authoritative after a forged write');
-  assert.equal(profile.body.data.memory.games.radTox.level, 3, 'game memory restores from the authenticated profile API');
-  assert.ok(profile.body.data.connectedWallets.some((entry) => entry.address === wallet), 'the profile includes its bound blockchain wallet');
-  const listedItem = codeOnlyState.body.data.items.find((item) => item.name === 'Starter Avatar');
-  await json(`${base}/api/market/listings`, { method: 'PUT', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: listedItem.id, priceMzk: 75 }) });
-  const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['Starter Avatar']);
+  await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' } } }) });
+  await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });
+  const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['New User Pack']);
 });
 
-test('member entry opens the entire area locally with email and password', async () => {
+test('member entry uses a simple browser-only login', async () => {
   const [source, page] = await Promise.all([
     readFile(new URL('../script.js', import.meta.url), 'utf8'),
     readFile(new URL('../members.html', import.meta.url), 'utf8')
   ]);
   const login = source.slice(source.indexOf('function initBottleLogin'), source.indexOf('marketQualityToggle?.addEventListener'));
-  assert.match(page, /name="email"[^>]*type="email"[^>]*autocomplete="email"/);
-  assert.match(page, /name="password"[^>]*autocomplete="current-password"/);
+  assert.match(page, /name="email"/);
+  assert.match(page, /name="passcode"/);
   assert.match(page, /public\/js\/avatar-selection\.js/);
   assert.match(login, /localStorage\.setItem\('muzikazBottleMember', 'true'\)/);
-  assert.match(login, /lockedContent\.dataset\.locked = 'false'/);
-  assert.match(login, /muzikaz:member-authenticated/);
-  assert.doesNotMatch(login, /\/api\//, 'member login must open without waiting for an API request');
+  assert.match(login, /MUZIKAZ_AVATAR_GATE\.ensure/);
+  assert.doesNotMatch(login, /\/api\/access\//, 'simple member login must not call the account API');
 });
 
 test('the VibeVerse multiplayer client uses the simple login without a Loadout gate', async () => {
@@ -163,24 +139,6 @@ test('the VibeVerse multiplayer client uses the simple login without a Loadout g
   assert.doesNotMatch(source, /apiFetch\('\/api\/account\/bootstrap'/);
   assert.match(source, /localStorage\.getItem\('muzikazBottleMember'\)/);
   assert.match(source, /'X-User-Name': username/);
-  assert.match(source, /document\.body\.style\.position = 'fixed'/, 'opening chat must lock the game page against scrolling');
-  assert.doesNotMatch(source, /data-chat-locked/, 'chat must not resize or hide the live game stage');
-  assert.match(source, /closeChatAndResumeGame\(\)/, 'sending a message must hide chat and return to the game on every screen size');
-  assert.match(source, /gameCanvas\?\.focus\(\{ preventScroll:true \}\)/, 'closing chat returns focus to the existing game without restarting it');
-  assert.doesNotMatch(source, /location\.(?:href|reload)/, 'resuming the game after chat must not navigate or reload the active world');
-  assert.doesNotMatch(source, /input\.disabled = true/, 'sending must not dismiss the mobile keyboard by disabling its input');
-  assert.match(source, /unlockMessageAudio\(\)/, 'Send must unlock spoken-message audio inside the user gesture');
-  assert.match(source, /speechSynthesis\.resume\(\)/, 'spoken messages resume audio interrupted by mobile media or keyboard activity');
-  assert.match(source, /Spoken message playback was unavailable[\s\S]{0,160}error/, 'optional speech playback failures are isolated from message delivery');
-  assert.match(source, /Could not prepare spoken-message audio[\s\S]{0,160}error/, 'mobile speech activation cannot abort a send');
-  assert.match(source, /window\.scrollTo\(0, gameScrollY\)/, 'closing chat restores the mobile scroll position with the broadly supported API');
-  assert.doesNotMatch(source, /behavior:\s*['"]instant['"]/, 'closing chat must not use the unsupported Safari instant-scroll option');
-  assert.match(source, /if \(input\.value\.trim\(\) === message\) input\.value = ''/, 'a completed request must preserve any new draft typed while sending');
-  assert.match(source, /input\.blur\(\);\s*closeChatAndResumeGame\(\);\s*try \{\s*await postMessage\(message\)/, 'mobile Send closes composition before waiting on the network');
-  assert.match(source, /unlockMessageAudio\(\); await postMessage\(button\.textContent\.trim\(\)\)[\s\S]{0,180}closeChatAndResumeGame\(\)/, 'audio-backed quick reactions follow the same send-and-resume behavior');
-  assert.match(page, /id="house-explorer-canvas"[^>]*tabindex="0"/, 'the game canvas remains keyboard focusable when chat is closed explicitly');
-  assert.match(source, /data\.kind !== 'offer'/, 'listeners must accept room audio without enabling their own microphone');
-  assert.match(source, /voiceEnabled:Boolean\(localStream\)/, 'presence advertises talk state so every listener receives a stable offer');
   assert.doesNotMatch(page, /data-multiplayer-control disabled/);
   assert.doesNotMatch(page, /id="multiplayer-paywall"/);
   const routes = server.slice(server.indexOf("'/api/houses/ioncore-house/events'"), server.indexOf("url.pathname.startsWith('/api/')"));

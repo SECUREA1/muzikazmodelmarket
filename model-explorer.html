@@ -75,31 +75,25 @@
       <div class="section-title"><span></span><h2 id="house-explorer-title">🏠 Vibe Crib Explorer</h2><a href="#house-explorer-canvas">Enter the crib</a></div>
       <div class="house-explorer-shell">
         <div class="house-stage">
-          <canvas id="house-explorer-canvas" width="1280" height="720" tabindex="0" aria-label="Interactive inside-the-house canvas explorer"></canvas>
+          <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
           <div class="house-reticle" aria-hidden="true">+</div>
           <div class="house-status" id="house-status" role="status">Ready to begin.</div>
           <section class="house-game-start game-overlay" id="house-game-start" data-house-start-surface aria-labelledby="house-game-start-title">
             <div class="game-overlay__content">
             <h3 id="house-game-start-title">Ready to play?</h3>
-            <p id="house-game-load-status" role="status"><strong class="starter-price">RAD-TOX · desktop + mobile</strong> Play multiplayer instantly as a guest, or use the simple members-area login to keep the MZK balance and assets tied to your username and Loadout Pack.</p>
+            <p id="house-game-load-status" role="status"><strong class="starter-price">Vibe Crib gameplay</strong> Play solo or join multiplayer worlds after the simple members-area login. Your selected avatar follows you into shared rooms.</p>
             <section class="game-login-selection" id="game-login-selection" aria-label="Game account and avatar">
               <div class="game-login-selection__account">
                 <span class="game-login-selection__avatar" id="game-login-avatar" aria-hidden="true">🎒</span>
-                <span><small>RAD-TOX Backpack</small><strong id="game-login-name">Guest player</strong></span>
-                <button id="game-login-switch" class="game-login-switch" type="button" hidden>Switch</button>
+                <span><small>Backpack login</small><strong id="game-login-name">Checking account…</strong></span>
+                <a id="game-login-link" href="members.html#bottle-login" hidden>Sign in / switch</a>
               </div>
-              <form class="game-quick-login" id="game-quick-login">
-                <label>Email<input type="email" name="email" autocomplete="email" placeholder="you@example.com" required></label>
-                <label>Passcode<input type="password" name="passcode" autocomplete="current-password" placeholder="Bottle pass" required></label>
-                <button type="submit">Sign in &amp; play</button>
-              </form>
-              <p class="game-login-note" id="game-login-status">Use the same simple member login as the Bottle area.</p>
               <label id="game-avatar-field" hidden>Play as
                 <select id="game-avatar-select" aria-describedby="house-game-load-status"></select>
               </label>
             </section>
             <span class="game-loading-indicator" aria-hidden="true"></span>
-            <button class="btn house-start-button" type="button" data-house-start aria-describedby="house-game-load-status">Play as guest</button>
+            <button class="btn house-start-button" type="button" data-house-start aria-describedby="house-game-load-status">Begin Game</button>
             </div>
           </section>
         </div>
@@ -147,9 +141,9 @@
           <section class="crib-chat-panel" id="crib-chat-panel" aria-labelledby="crib-chat-title" hidden>
             <header><div><strong id="crib-chat-title">Multiplayer chat</strong><small><span class="crib-live-dot" aria-hidden="true"></span><span id="crib-room-name">RAD-TOX</span> · <span id="crib-room-count">0 online</span></small></div><button type="button" data-close-chat aria-label="Close chat">×</button></header>
             <div class="crib-voice-controls" aria-label="Voice chat controls">
-              <button type="button" id="crib-mic-toggle" class="crib-media-toggle" aria-pressed="false"><span aria-hidden="true">🎙️</span><b>Talk off</b></button>
+              <button type="button" id="crib-mic-toggle" class="crib-media-toggle" aria-pressed="false"><span aria-hidden="true">🎙️</span><b>Mic off</b></button>
               <button type="button" id="crib-speaker-toggle" class="crib-media-toggle is-on" aria-pressed="true"><span aria-hidden="true">🔊</span><b>Speaker on</b></button>
-              <button type="button" id="crib-tts-toggle" class="crib-media-toggle crib-tts-toggle is-on" aria-pressed="true"><span aria-hidden="true">🗣️</span><b>Read messages on</b></button>
+              <button type="button" id="crib-tts-toggle" class="crib-media-toggle crib-tts-toggle" aria-pressed="false"><span aria-hidden="true">🗣️</span><b>Read text off</b></button>
               <span id="crib-voice-status">Voice disconnected</span>
             </div>
             <div class="crib-player-list" id="crib-player-list" aria-label="Players online"></div>
@@ -253,7 +247,6 @@
     })();
   </script>
   <script src="script.js"></script>
-  <script src="public/js/browser-media.js"></script>
   <script src="public/js/crib-multiplayer.js"></script>
   <script src="battle-theme.js"></script>
     <script src="backpack-widget.js"></script>

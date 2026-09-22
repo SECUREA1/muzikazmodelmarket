@@ -118,7 +118,7 @@ export class UserJsonDatabase {
         backpack: { backpackId: account.backpackId, bottleClaims: clone(account.bottleClaims || []), bottlePurchases: clone(account.bottlePurchases || []), syncedAt: now },
         profile: account.username ? { username: account.username, displayName: account.username } : {}
       });
-      const tokens = { POINTS: 0, ...(previous.tokens || {}) };
+      const tokens = { ...(previous.tokens || {}) };
       const previouslyGrantedMzk = previous.memory?.account?.accountId === account.accountId
         ? Number(previous.memory.account.mzkGranted || 0) : 0;
       const canonicalGrantMzk = Math.max(0, Number(account.mzkBalance || 0));

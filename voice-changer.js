@@ -4,7 +4,6 @@
   const A = window.Voice3Audio;
   const $ = (selector) => document.querySelector(selector);
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
-  const media = window.MUZIKAZ_MEDIA;
   const state = {
     context: null, stream: null, recorder: null, source: null, nodes: [],
     monitor: null, capture: null, chunks: [], rawBlob: null, savedItem: null,
@@ -135,10 +134,9 @@
   }
 
   async function startRecording() {
-    if (!window.MediaRecorder || !AudioCtx) throw Error('This browser does not support live audio capture. You can still import audio in Token Mixer.');
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder || !AudioCtx) throw Error('This browser does not support live audio capture.');
     const deviceId = $('#input-device').value;
-    const requestMedia = media?.getUserMedia || ((constraints) => navigator.mediaDevices.getUserMedia(constraints));
-    state.stream = await requestMedia({ audio: { deviceId: deviceId ? { exact: deviceId } : undefined, echoCancellation: true, noiseSuppression: true, autoGainControl: false, channelCount: 1 }, video:false });
+    state.stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: deviceId ? { exact: deviceId } : undefined, echoCancellation: true, noiseSuppression: true, autoGainControl: false, channelCount: 1 } });
     state.context = state.context || new AudioCtx({ latencyHint: 'interactive' });
     await state.context.resume();
     createLiveChain(state.context, state.stream);
@@ -166,7 +164,7 @@
   }
 
   document.querySelectorAll('input[type=range]').forEach((input) => input.addEventListener('input', () => { syncReadouts(); updateLiveChain(); }));
-  $('#record').onclick = () => startRecording().catch((error) => { stopStream(); status(media?.microphoneError(error) || `Microphone error: ${error.message}`, 'error'); });
+  $('#record').onclick = () => startRecording().catch((error) => { stopStream(); status(`Microphone error: ${error.message}`, 'error'); });
   $('#stop-record').onclick = () => { if (state.recorder?.state === 'recording') state.recorder.stop(); };
   $('#preview').onclick = () => process().then((blob) => loadPlayer(blob, 'High-quality processed preview ready.')).catch((error) => status(error.message, 'error'));
   $('#save').onclick = () => save().catch((error) => status(error.message, 'error'));
