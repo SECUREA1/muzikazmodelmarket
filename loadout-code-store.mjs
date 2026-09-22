@@ -216,7 +216,9 @@ export class MzkAccountStore {
     const name = String(username || '').trim();
     const normalizedName = name.toLowerCase();
     const secret = String(password || '');
-    if (!/^[a-zA-Z0-9_.-]{3,24}$/.test(name)) throw Object.assign(new Error('Username must be 3–24 letters, numbers, dots, dashes, or underscores.'), { statusCode: 400 });
+    const validUsername = /^[a-zA-Z0-9_.-]{3,24}$/.test(name);
+    const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(name) && name.length <= 120;
+    if (!validUsername && !validEmail) throw Object.assign(new Error('Enter a valid email address or a 3–24 character username.'), { statusCode: 400 });
     if (secret.length < 6 || secret.length > 128) throw Object.assign(new Error('Password must be 6–128 characters.'), { statusCode: 400 });
     let account = data.accounts.find((item) => String(item.username || '').trim().toLowerCase() === normalizedName);
     if (account?.passwordHash) {
