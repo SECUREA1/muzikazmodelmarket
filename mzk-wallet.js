@@ -9,6 +9,7 @@
   const MZK_PER_USD = 100;
   const MINIMUM_PURCHASE_USD = 5;
   const GAME_ENTRY_MZK = 4000;
+  const GAME_START_MZK = 500;
   const LOADOUT_KEY = 'muzikazStarterLoadoutsV1';
   const STARTER_AVATARS = ['Sparky', 'Nexus', 'Fiona', 'Dax', 'Buzz', 'Luna', 'Muz Cat', 'Ion Wolf'];
   const STARTER_LANDS = ['Skyline Deck', 'Echo Gardens', 'Crew Plaza', 'Studio Ridge', 'Neon Docks'];
@@ -26,6 +27,12 @@
   const history = (owner = walletId()) => read().filter((entry) => entry.walletId === normalize(owner));
   function record({ id = uid(), owner = walletId(), amount, kind, reason = 'MZK activity', ...meta }) { const ledger = read(); const existing = ledger.find((entry) => entry.id === id); if (existing) return existing; const entry = { id, walletId: normalize(owner), currency: 'MZK', kind: kind || (amount < 0 ? 'spend' : 'earn'), amount: Number(amount) || 0, reason, createdAt: new Date().toISOString(), ...meta }; ledger.push(entry); write(ledger); return entry; }
   function ensureWallet(owner = walletId()) { owner = normalize(owner); if (!owner || owner.startsWith('guest-') || history(owner).length) return balance(owner); record({ id: `mzk:welcome:${owner}`, owner, amount: STARTING_MZK, kind: 'welcome', reason: 'MUZIKAZ member wallet welcome balance' }); return balance(owner); }
+  function grantGameStartMzk(owner = walletId()) {
+    owner = normalize(owner);
+    if (!owner || balance(owner) !== 0) return { granted: false, balance: balance(owner) };
+    const tx = record({ id: uid('mzk:game-start'), owner, amount: GAME_START_MZK, kind: 'game-start', reason: 'RAD-TOX single-player starting balance' });
+    return { granted: true, balance: balance(owner), tx };
+  }
   function purchaseTokens(usd, owner = walletId()) {
     usd = Number(usd);
     const firstPurchase = !history(owner).some((entry) => entry.kind === 'purchase');
@@ -122,7 +129,9 @@
   document.addEventListener('click', (event) => {
     const start = event.target.closest?.('[data-house-start]');
     if (!start) return;
+    const grant = grantGameStartMzk();
     start.dataset.mzkDemoAccess = 'public';
+    start.dataset.mzkStartGrant = grant.granted ? String(GAME_START_MZK) : '0';
   }, true);
-  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, purchaseTokens, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, provisionStandardLoadout, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
+  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, GAME_START_MZK, purchaseTokens, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, provisionStandardLoadout, grantGameStartMzk, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
 })();
