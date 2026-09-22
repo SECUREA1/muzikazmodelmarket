@@ -3547,3 +3547,52 @@ html.crib-chat-selected .crib-chat-panel{
   html.crib-chat-composing .house-bottom-controls,
   html.crib-chat-composing .mobile-move-pad{transform:none}
 }
+
+/* Chat focus mode: the game and conversation become one viewport-locked
+   workspace. They occupy separate regions, so the chat never floats over play. */
+html.crib-chat-selected,
+html.crib-chat-selected body{overscroll-behavior:none}
+html.crib-chat-selected .house-explorer-shell[data-chat-locked="true"]{
+  position:fixed!important;
+  z-index:900;
+  top:calc(var(--crib-visual-top,0px) + max(8px,env(safe-area-inset-top)));
+  right:368px;
+  bottom:max(8px,env(safe-area-inset-bottom));
+  left:max(8px,env(safe-area-inset-left));
+  width:auto!important;
+  height:auto!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  border-radius:16px;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.88),0 24px 80px #000;
+}
+html.crib-chat-selected .house-explorer-shell[data-chat-locked="true"] .house-stage{pointer-events:none}
+html.crib-chat-selected .crib-social{position:fixed;z-index:930;inset:0;pointer-events:none}
+html.crib-chat-selected .crib-chat-panel{
+  top:calc(var(--crib-visual-top,0px) + max(8px,env(safe-area-inset-top)));
+  right:max(8px,env(safe-area-inset-right));
+  bottom:max(8px,env(safe-area-inset-bottom));
+  width:344px;
+  max-height:none;
+  pointer-events:auto;
+  border-radius:16px;
+}
+@media(max-width:760px){
+  html.crib-chat-selected .house-explorer-shell[data-chat-locked="true"]{
+    right:max(7px,env(safe-area-inset-right));
+    bottom:calc(var(--crib-visual-height,100dvh) * .56);
+    border-radius:12px 12px 0 0;
+  }
+  html.crib-chat-selected .house-explorer-shell[data-chat-locked="true"]>.house-bottom-controls,
+  html.crib-chat-selected .house-explorer-shell[data-chat-locked="true"]>.mobile-move-pad{display:none!important}
+  html.crib-chat-selected .crib-chat-panel{
+    top:calc(var(--crib-visual-top,0px) + var(--crib-visual-height,100dvh) * .45);
+    right:max(7px,env(safe-area-inset-right));
+    bottom:max(7px,env(safe-area-inset-bottom));
+    left:max(7px,env(safe-area-inset-left));
+    width:auto;
+    height:auto;
+    border-radius:0 0 12px 12px;
+  }
+}

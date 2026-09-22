@@ -7,7 +7,7 @@ import {
   randomCompanionOffset,
 } from '../public/js/pet-companion-motion.js';
 
-test('random pet destinations stay in an arm-distance companion ring', () => {
+test('random pet destinations stay in a three-to-six-body-length companion ring', () => {
   const values = [0, 0, .25, .5, .75, 1];
   for (let index = 0; index < values.length; index += 2) {
     let call = index;
@@ -19,9 +19,9 @@ test('random pet destinations stay in an arm-distance companion ring', () => {
 });
 
 test('pet distance state identifies crowding and straying', () => {
-  assert.equal(companionDistanceState(1), 'too-close');
-  assert.equal(companionDistanceState(2), 'comfortable');
-  assert.equal(companionDistanceState(5), 'too-far');
+  assert.equal(companionDistanceState(5.9), 'too-close');
+  assert.equal(companionDistanceState(9), 'comfortable');
+  assert.equal(companionDistanceState(12.1), 'too-far');
 });
 
 test('pet looks at the nearest visible interest inside its awareness radius', () => {

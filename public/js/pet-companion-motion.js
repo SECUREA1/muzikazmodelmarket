@@ -1,8 +1,10 @@
 export const PET_COMPANION_DEFAULTS = Object.freeze({
-  minPlayerDistance: 1.25,
-  preferredPlayerDistance: 1.75,
-  maxPlayerDistance: 3.4,
-  lookRadius: 4.25,
+  // A normalized avatar is about two world units tall. Keep companions at
+  // least three body lengths away and let them roam near six on average.
+  minPlayerDistance: 6,
+  preferredPlayerDistance: 9,
+  maxPlayerDistance: 12,
+  lookRadius: 14,
 });
 
 export function randomCompanionOffset(random = Math.random, settings = PET_COMPANION_DEFAULTS) {
