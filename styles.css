@@ -3501,6 +3501,48 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
   #crib-chat-form button{min-width:0;min-height:44px;padding:7px 9px}
   #crib-chat-status{padding:0 10px 6px}
 }
+
+/* Open multiplayer chat is the primary game surface. Keep it above every site,
+   game, and utility layer, and dim the world so conversation remains dominant. */
+html.crib-chat-selected{overflow:hidden}
+html.crib-chat-selected .crib-social{
+  position:fixed!important;
+  z-index:30000;
+  inset:0!important;
+  display:grid!important;
+  width:auto!important;
+  padding:clamp(12px,3vw,36px)!important;
+  place-items:center;
+  box-sizing:border-box;
+  background:rgba(0,0,0,.86);
+  backdrop-filter:blur(14px) saturate(.55);
+  pointer-events:auto;
+}
+html.crib-chat-selected .crib-chat-panel{
+  position:relative!important;
+  inset:auto!important;
+  display:flex;
+  width:min(760px,100%)!important;
+  height:min(760px,calc(100dvh - clamp(24px,6vw,72px)))!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  flex-direction:column;
+  border-color:rgba(156,255,0,.78);
+  border-radius:22px;
+  background:linear-gradient(155deg,rgba(12,22,12,.99),rgba(2,7,4,.99));
+  box-shadow:0 30px 110px #000,0 0 0 1px rgba(156,255,0,.16),0 0 60px rgba(156,255,0,.18);
+}
+html.crib-chat-selected .crib-chat-messages{
+  min-height:0;
+  height:auto;
+  flex:1 1 auto;
+}
+@media(max-width:620px){
+  html.crib-chat-selected .crib-social{padding:max(7px,env(safe-area-inset-top)) max(7px,env(safe-area-inset-right)) max(7px,env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left))!important}
+  html.crib-chat-selected .crib-chat-panel{width:100%!important;height:100%!important;border-radius:16px}
+  html.crib-chat-composing .crib-chat-panel{height:var(--crib-visual-height,100dvh)!important}
+}
 @media(max-width:360px){
   #crib-chat-form{grid-template-columns:minmax(0,1fr) 40px 54px;gap:4px;padding:6px}
   #crib-chat-form button{padding-inline:5px;font-size:11px}
