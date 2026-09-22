@@ -2110,10 +2110,11 @@ function initBottleLogin() {
     event.preventDefault();
     const data = new FormData(form);
     const username = String(data.get('username') || '').trim();
+    const password = String(data.get('password') || '');
     if (status) status.textContent = 'Opening your persistent member profile…';
     let response;
     try {
-      response = await apiFetch('/api/access/username', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ username }), retries: 0 });
+      response = await apiFetch('/api/access/free-play', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ username, password }), retries: 0 });
     } catch (error) {
       if (status) status.textContent = error?.message || 'The member service is unavailable. Please try again.';
       return;
