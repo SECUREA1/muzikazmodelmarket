@@ -1,13 +1,16 @@
 (() => {
   const root = document.querySelector('#crib-social');
-  if (!root || localStorage.getItem('muzikazBottleMember') !== 'true') return;
+  if (!root) return;
   const api = window.MUZIKAZ_SHARED_AVATAR_API || '';
   const apiUrl = (path) => window.MUZIKAZ_API ? window.MUZIKAZ_API.url(path) : `${api}${path}`;
   const apiFetch = (path, options) => window.MUZIKAZ_API ? window.MUZIKAZ_API.fetch(path, options) : fetch(apiUrl(path), options);
   let sessionId = localStorage.getItem('muzikazHouseSessionId');
   if (!sessionId) { sessionId = crypto.randomUUID?.() || `subscriber-${Date.now()}`; localStorage.setItem('muzikazHouseSessionId', sessionId); }
-  const email = localStorage.getItem('muzikazBottleMemberEmail') || 'Subscriber';
-  const username = email.split('@')[0].slice(0, 28) || 'Subscriber';
+  const memberEmail = localStorage.getItem('muzikazBottleMember') === 'true' ? localStorage.getItem('muzikazBottleMemberEmail') || '' : '';
+  let guestName = localStorage.getItem('muzikazMultiplayerGuestName');
+  if (!guestName) { guestName = `Guest-${sessionId.slice(-6)}`; localStorage.setItem('muzikazMultiplayerGuestName', guestName); }
+  const email = memberEmail || `guest:${sessionId}`;
+  const username = (memberEmail ? memberEmail.split('@')[0] : guestName).slice(0, 28) || 'Guest';
   const color = `hsl(${[...sessionId].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 360} 85% 65%)`;
   const $ = (selector) => document.querySelector(selector);
   const toggle = $('#crib-chat-toggle'), panel = $('#crib-chat-panel'), count = $('#crib-online-count');
@@ -93,8 +96,7 @@
   async function heartbeat() {
     let storedAvatar = null;
     try { storedAvatar = JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null'); } catch { localStorage.removeItem('muzikazDesignatedAvatar'); }
-    const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || storedAvatar;
-    if (!avatar) throw new Error('Choose your designated avatar before joining the Crib.');
+    const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || storedAvatar || { id:'starter-avatar', displayName:'Starter Avatar', modelUrl:'/public/models/avatars/DAX.glb', animation:'auto' };
     const response = await apiFetch('/api/houses/ioncore-house/presence', { method:'POST', headers, body:JSON.stringify({ username, roomId:window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, avatarUrl: avatar.modelUrl, modelUrl: avatar.modelUrl, avatarName:avatar.displayName || avatar.name || 'Player avatar', position:window.MUZIKAZ_HOUSE_TRACKING?.position, rotation:window.MUZIKAZ_HOUSE_TRACKING?.rotation, movementState:window.MUZIKAZ_HOUSE_TRACKING?.movementState || 'idle', animationState:window.MUZIKAZ_HOUSE_TRACKING?.animationState || avatar.animation || 'auto', message:window.MUZIKAZ_HOUSE_TRACKING?.message }) });
     const data = await jsonResponse(response); joined = true; renderPresence(data); status.textContent = '';
   }
@@ -200,7 +202,9 @@
   if ('EventSource' in window) { events = new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`)); events.addEventListener('house-presence-updated', (event) => { const data = eventData(event); if (data) renderPresence(data); }); events.addEventListener('house-chat-message', (event) => addMessage(eventData(event))); events.addEventListener('house-voice-signal', (event) => { const data = eventData(event); if (data) handleVoiceSignal(data).catch(() => { voiceStatus.textContent = 'Voice connection interrupted'; }); }); }
   const beginPresence = () => heartbeat().catch((error) => { status.textContent = error.message; toggle.disabled = true; });
   window.addEventListener('muzikaz:multiplayer-world-change', () => { peers.forEach((peer) => peer.close()); peers.clear(); messages.replaceChildren(); unread = 0; unreadCount.hidden = true; Promise.all([heartbeat(), loadChat()]).catch((error) => { status.textContent = error.message; }); });
-  if (window.MUZIKAZ_DESIGNATED_AVATAR || localStorage.getItem('muzikazDesignatedAvatar')) beginPresence(); else window.addEventListener('muzikaz-avatar-ready', beginPresence, { once:true });
+  // Presence is public: guests use the starter avatar while signed-in members
+  // keep their selected Backpack avatar. Do not wait for the 3D engine to load.
+  beginPresence();
   const timer = setInterval(() => { heartbeat().catch((error) => { status.textContent = error.message; }); loadChat().catch(() => {}); }, 5_000);
   window.addEventListener('pagehide', () => { clearInterval(timer); unlockGamePage(); window.speechSynthesis?.cancel(); disableMicrophone(); events?.close(); if (joined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
 })();
