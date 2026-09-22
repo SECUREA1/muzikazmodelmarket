@@ -131,24 +131,24 @@
             <span class="game-profile-wallet__balance"><small>MZK tokens</small><strong id="game-profile-mzk">0 MZK</strong></span>
           </aside>
           <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel multiplayer-paywall" data-multiplayer-control><b aria-hidden="true">🌐</b><span>Multiplayer Worlds</span></button>
-          <button class="house-bottom-control" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel multiplayer-paywall" data-multiplayer-control><b aria-hidden="true">💬</b><span>Chat</span><b id="crib-online-count">0</b></button>
+          <button class="house-bottom-control" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel multiplayer-paywall" data-multiplayer-control><b aria-hidden="true">💬</b><span>Chat</span><b id="crib-online-count" aria-label="Players online">0</b><span class="crib-unread-count" id="crib-unread-count" aria-label="Unread messages" hidden>0</span></button>
           <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">🎒</b><span>Backpack</span></button>
           <button class="house-bottom-control house-bottom-control-begin" id="house-tools" type="button" data-house-tools aria-haspopup="dialog" aria-expanded="false" aria-controls="rad-tox-tools"><b aria-hidden="true">🛠</b><span>Tools</span></button>
           <small class="house-firefox-label">WebGL required</small>
           <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
         </div>
         <aside class="crib-social" id="crib-social" aria-label="Vibe Crib players and chat">
-          <section class="crib-chat-panel" id="crib-chat-panel" hidden>
-            <header><div><strong>Vibe Crib live</strong><small>Signed-in players · 15 max</small></div><button type="button" data-close-chat aria-label="Close chat">×</button></header>
+          <section class="crib-chat-panel" id="crib-chat-panel" aria-labelledby="crib-chat-title" hidden>
+            <header><div><strong id="crib-chat-title">Multiplayer chat</strong><small><span class="crib-live-dot" aria-hidden="true"></span><span id="crib-room-name">RAD-TOX</span> · <span id="crib-room-count">0 online</span></small></div><button type="button" data-close-chat aria-label="Close chat">×</button></header>
             <div class="crib-voice-controls" aria-label="Voice chat controls">
               <button type="button" id="crib-mic-toggle" class="crib-media-toggle" aria-pressed="false"><span aria-hidden="true">🎙️</span><b>Mic off</b></button>
               <button type="button" id="crib-speaker-toggle" class="crib-media-toggle is-on" aria-pressed="true"><span aria-hidden="true">🔊</span><b>Speaker on</b></button>
               <span id="crib-voice-status">Voice disconnected</span>
             </div>
             <div class="crib-player-list" id="crib-player-list" aria-label="Players online"></div>
-            <ol class="crib-chat-messages" id="crib-chat-messages" aria-live="polite"></ol>
+            <ol class="crib-chat-messages" id="crib-chat-messages" aria-live="polite"><li class="crib-chat-empty">No messages yet. Say hello to the room.</li></ol>
             <div class="crib-reactions" id="crib-reactions" aria-label="Quick emoji reactions"><span>React</span><button type="button" aria-label="React with fire">🔥</button><button type="button" aria-label="React with applause">👏</button><button type="button" aria-label="React with laugh">😂</button><button type="button" aria-label="React with heart">💚</button><button type="button" aria-label="React with music">🎵</button><button type="button" aria-label="React with lightning">⚡</button></div>
-            <form id="crib-chat-form"><label class="sr-only" for="crib-chat-input">Chat message</label><input id="crib-chat-input" maxlength="140" autocomplete="off" placeholder="Message the crib…" required><button type="button" id="crib-emoji-toggle" aria-expanded="false" aria-controls="crib-reactions" aria-label="Show emoji reactions">😊</button><button type="submit">Send</button></form>
+            <form id="crib-chat-form"><label class="sr-only" for="crib-chat-input">Chat message</label><input id="crib-chat-input" maxlength="140" autocomplete="off" placeholder="Message everyone…" aria-describedby="crib-chat-status" required><button type="button" id="crib-emoji-toggle" aria-expanded="false" aria-controls="crib-reactions" aria-label="Show emoji reactions">😊</button><button type="submit" aria-label="Send message"><span>Send</span><b aria-hidden="true">↑</b></button></form>
             <p id="crib-chat-status" role="status"></p>
           </section>
         </aside>
