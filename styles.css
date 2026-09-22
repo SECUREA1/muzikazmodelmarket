@@ -3468,3 +3468,39 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 .free-play-launchers{display:flex;flex-wrap:wrap;gap:10px}
 .free-play-launchers .btn{flex:1;min-width:170px;text-align:center}
 @media(max-width:760px){.free-play-fields{grid-template-columns:1fr}.free-play-fields button{width:100%}}
+
+/* Mobile multiplayer fit: keep the player summary and every RAD-TOX action in
+   one bottom dock row, then keep chat composition on one usable row. */
+@media(max-width:620px){
+  .crib-social{
+    left:max(7px,env(safe-area-inset-left));
+    right:max(7px,env(safe-area-inset-right));
+    bottom:max(74px,calc(66px + env(safe-area-inset-bottom)));
+    display:flex;
+    justify-content:flex-end;
+    pointer-events:none;
+  }
+  .crib-social>*{pointer-events:auto}
+  .crib-chat-panel{
+    max-height:min(62svh,480px);
+    border-radius:14px;
+  }
+  .crib-chat-panel header{padding:10px 12px}
+  .crib-voice-controls{grid-template-columns:1fr 1fr;padding:7px}
+  .crib-player-list{padding:7px 9px}
+  .crib-chat-messages{min-height:84px;padding:6px 10px}
+  #crib-chat-form{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 44px minmax(58px,auto);
+    align-items:stretch;
+    gap:5px;
+    padding:8px;
+  }
+  #crib-chat-form input{width:100%;min-width:0;padding:9px;font-size:16px}
+  #crib-chat-form button{min-width:0;min-height:44px;padding:7px 9px}
+  #crib-chat-status{padding:0 10px 6px}
+}
+@media(max-width:360px){
+  #crib-chat-form{grid-template-columns:minmax(0,1fr) 40px 54px;gap:4px;padding:6px}
+  #crib-chat-form button{padding-inline:5px;font-size:11px}
+}
