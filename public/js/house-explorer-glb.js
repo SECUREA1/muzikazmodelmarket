@@ -10,6 +10,7 @@ import { fetchGitHubGlbFiles, mergeGitHubAvatarFiles } from './github-glb-discov
 import { AirborneHoneyBee, BEE_CONFIG, AAPE_BOSS_CONFIG, BEEDUCK_BOSS_CONFIG } from './enemies/airborne-honey-bee.js';
 import { NeonBrainBug } from './enemies/neon-brain-bug.js';
 import { pinchScaleFactor, pointerDistance } from './pinch-scale.js';
+import { PET_COMPANION_DEFAULTS, companionDistanceState, nearestCompanionInterest, randomCompanionOffset } from './pet-companion-motion.js';
 
 const SPRAY_COLORS = Object.freeze([{name:'Neon pink',hex:0xff3d9a},{name:'Electric blue',hex:0x36bfff},{name:'Acid lime',hex:0xb9ff36},{name:'Sunset orange',hex:0xff762e},{name:'Royal violet',hex:0x9b5cff}]);
 const legacyCanvas = document.querySelector('#house-explorer-canvas');
@@ -535,10 +536,27 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function choosePetDestination(root) {
     const visitors = [...liveAvatarRoots.values()];
     const cycle = root.userData.petTravel.cycle++ % 4;
-    if (cycle === 0 || (cycle === 2 && !visitors.length)) return playerRig.position.clone();
-    if (cycle === 2 && visitors.length) return visitors[Math.floor(Math.random() * visitors.length)].position.clone();
-    const bounds = envLoader.bounds; const radius = Math.max(3, Math.min(12, Math.min(bounds.max.x - bounds.min.x, bounds.max.z - bounds.min.z) * .3));
-    return playerRig.position.clone().add(new THREE.Vector3((Math.random() - .5) * radius * 2, 0, (Math.random() - .5) * radius * 2));
+    const anchor = cycle === 2 && visitors.length
+      ? visitors[Math.floor(Math.random() * visitors.length)].position
+      : playerRig.position;
+    const offset = randomCompanionOffset();
+    return anchor.clone().add(new THREE.Vector3(offset.x, 0, offset.z));
+  }
+  function petLookTarget(root) {
+    const nearby = nearestCompanionInterest(root, [
+      { position:playerRig.position, visible:true },
+      ...liveAvatarRoots.values(),
+      ...placedAvatars.children,
+    ]);
+    return nearby?.position || null;
+  }
+  function turnPetToward(root, point, delta, responsiveness = 7) {
+    if (!point) return;
+    const direction = point.clone().sub(root.position); direction.y = 0;
+    if (direction.lengthSq() <= .0001) return;
+    const desiredYaw = Math.atan2(direction.x, direction.z);
+    const yawDelta = THREE.MathUtils.euclideanModulo(desiredYaw - root.rotation.y + Math.PI, Math.PI * 2) - Math.PI;
+    root.rotation.y += yawDelta * Math.min(1, delta * responsiveness);
   }
   function updateTravelingPet(root, delta, elapsed) {
     const travel = root.userData.petTravel; if (!travel) return;
@@ -553,14 +571,27 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       if(star.remaining<=0){travel.speed=star.baseSpeed;root.remove(star.thanks);star.thanks.material.map.dispose();star.thanks.material.dispose();star.materials.forEach(({material,color,emissive,emissiveIntensity})=>{if(color)material.color.copy(color);if(emissive)material.emissive.copy(emissive);if(Number.isFinite(emissiveIntensity))material.emissiveIntensity=emissiveIntensity;});delete root.userData.starPower;setStatus('Bee Duck’s carrot star power faded. What a speedy snack!');}
     }
     travel.wait -= delta;
+    const playerDistance = Math.hypot(root.position.x - playerRig.position.x, root.position.z - playerRig.position.z);
+    const distanceState = companionDistanceState(playerDistance);
+    if (!carrotQuest && distanceState === 'too-close') {
+      const away = root.position.clone().sub(playerRig.position); away.y = 0;
+      if (away.lengthSq() < .001) away.set(Math.sin(travel.phase), 0, Math.cos(travel.phase));
+      away.normalize().multiplyScalar(PET_COMPANION_DEFAULTS.preferredPlayerDistance);
+      travel.target.copy(floorPointAt(playerRig.position.clone().add(away))); travel.wait = 0;
+    } else if (!carrotQuest && distanceState === 'too-far') {
+      const offset = randomCompanionOffset();
+      const scale = PET_COMPANION_DEFAULTS.preferredPlayerDistance / offset.distance;
+      travel.target.copy(floorPointAt(playerRig.position.clone().add(new THREE.Vector3(offset.x * scale, 0, offset.z * scale)))); travel.wait = 0;
+    }
     const direction = travel.target.clone().sub(root.position); direction.y = 0;
     if (direction.lengthSq() < .3 || travel.wait < -10) { travel.target.copy(floorPointAt(choosePetDestination(root))); travel.wait = star?0:1.2 + Math.random() * 2.5; return; }
-    if (travel.wait > 0) { root.position.y = travel.floorY + Math.sin(elapsed * 4 + travel.phase) * .025; return; }
+    if (travel.wait > 0) { root.position.y = travel.floorY + Math.sin(elapsed * 4 + travel.phase) * .025; turnPetToward(root, petLookTarget(root), delta, 4.5); return; }
     direction.normalize(); root.position.addScaledVector(direction, travel.speed * delta);
     const floor = floorPointAt(root.position); travel.floorY = floor.y + root.userData.floorLiftOffset; root.position.y = travel.floorY + Math.sin(elapsed * 8 + travel.phase) * .045;
-    const desiredYaw = Math.atan2(direction.x, direction.z); const yawDelta = THREE.MathUtils.euclideanModulo(desiredYaw - root.rotation.y + Math.PI, Math.PI * 2) - Math.PI; root.rotation.y += yawDelta * Math.min(1, delta * 7);
+    const interest = petLookTarget(root);
+    turnPetToward(root, interest || root.position.clone().add(direction), delta, interest ? 4.5 : 7);
   }
-  async function addAvatarToScene(avatar, position = floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).multiplyScalar(2)))) { setStatus(`Adding ${avatar.name} to the GLB house…`); const floorPoint = floorPointAt(position.clone()); const gltf = await avatarLoader.loadAsync(avatar.modelUrl); const root = gltf.scene; root.name = `Avatar_${avatar.id}`; root.position.copy(floorPoint); root.scale.setScalar(avatar.scale); root.rotation.y = Number(avatar.rotation?.y ?? avatar.rotation ?? 0); root.userData.avatar = avatar; const size = avatarVisualBounds(root).getSize(new THREE.Vector3()); const maxAxis = Math.max(size.x, size.y, size.z) || 1; if (maxAxis > 2.2) root.scale.multiplyScalar(2.2 / maxAxis); liftObjectAboveFloor(root, floorPoint); root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); addAvatarCollider(root); placedAvatars.add(root); if (avatar.type === 'pets') { root.userData.petTravel = { target:playerRig.position.clone(), wait:.5, cycle:1, speed:.9 + Math.random() * .45, phase:Math.random() * Math.PI * 2, floorY:root.position.y }; if (gltf.animations?.length) { root.userData.petMixer = new THREE.AnimationMixer(root); gltf.animations.forEach((clip) => root.userData.petMixer.clipAction(clip).play()); } setStatus(`${avatar.name} is exploring, visiting players, and will keep coming back to you.`); } else setStatus(`${avatar.name} is in the house. Drag it on screen to reposition it above the floor.`); return root; }
+  async function addAvatarToScene(avatar, position = floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).multiplyScalar(2)))) { setStatus(`Adding ${avatar.name} to the GLB house…`); const floorPoint = floorPointAt(position.clone()); const gltf = await avatarLoader.loadAsync(avatar.modelUrl); const root = gltf.scene; root.name = `Avatar_${avatar.id}`; root.position.copy(floorPoint); root.scale.setScalar(avatar.scale); root.rotation.y = Number(avatar.rotation?.y ?? avatar.rotation ?? 0); root.userData.avatar = avatar; const size = avatarVisualBounds(root).getSize(new THREE.Vector3()); const maxAxis = Math.max(size.x, size.y, size.z) || 1; if (maxAxis > 2.2) root.scale.multiplyScalar(2.2 / maxAxis); liftObjectAboveFloor(root, floorPoint); root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); addAvatarCollider(root); placedAvatars.add(root); if (avatar.type === 'pets') { const offset = randomCompanionOffset(); root.userData.petTravel = { target:floorPointAt(playerRig.position.clone().add(new THREE.Vector3(offset.x, 0, offset.z))), wait:.35 + Math.random() * 1.2, cycle:Math.floor(Math.random() * 4), speed:.9 + Math.random() * .45, phase:Math.random() * Math.PI * 2, floorY:root.position.y }; if (gltf.animations?.length) { root.userData.petMixer = new THREE.AnimationMixer(root); gltf.animations.forEach((clip) => root.userData.petMixer.clipAction(clip).play()); } setStatus(`${avatar.name} is roaming nearby like a pet, keeping an arm’s distance and watching what comes close.`); } else setStatus(`${avatar.name} is in the house. Drag it on screen to reposition it above the floor.`); return root; }
   function liveLabel(root, user) { const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 128; const context = canvas.getContext('2d'); context.fillStyle = 'rgba(2,8,5,.88)'; context.fillRect(0, 0, canvas.width, canvas.height); context.strokeStyle = user.color || '#9cff00'; context.lineWidth = 7; context.strokeRect(4, 4, canvas.width - 8, canvas.height - 8); context.textAlign = 'center'; context.fillStyle = '#fff'; context.font = '700 34px system-ui'; context.fillText(String(user.username || 'Player').slice(0, 28), 256, 47); context.fillStyle = '#caff69'; context.font = '25px system-ui'; context.fillText(String(user.message || 'Live in the Crib').slice(0, 54), 256, 91); const material = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthTest: false }); const sprite = new THREE.Sprite(material); const bounds = avatarVisualBounds(root); const scale = root.getWorldScale(new THREE.Vector3()); const headY = root.worldToLocal(new THREE.Vector3(root.getWorldPosition(new THREE.Vector3()).x, bounds.max.y, root.getWorldPosition(new THREE.Vector3()).z)).y; sprite.name = 'Live_player_label'; sprite.position.set(0, headY + .34 / scale.y, 0); sprite.scale.set(2.4 / scale.x, .58 / scale.y, 1); sprite.renderOrder = 20; return sprite; }
   function liveAvatarIdentity(user) { return `${user.avatarAssetId || ''}|${new URL(user.modelUrl || user.avatarUrl || '', window.location.origin).href}`; }
   function disposeLiveRoot(root) { root.traverse((object) => { if (object.material?.map && object.name === 'Live_player_label') object.material.map.dispose(); if (object.name === 'Live_player_label') object.material?.dispose(); }); liveAvatars.remove(root); }
