@@ -2083,38 +2083,53 @@ function initBottleLogin() {
   const lockedContent = document.querySelector('#member-locked-content');
   const status = document.querySelector('#bottle-login-status');
   if (!form || !lockedContent) return;
-  const unlock = async (message) => {
-    if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
-    lockedContent.dataset.locked = 'false';
-    if (status) status.textContent = message;
+  const CREDENTIALS_KEY = 'muzikazLocalMemberCredentialsV1';
+  const readCredentials = () => {
+    try {
+      const credentials = JSON.parse(window.localStorage.getItem(CREDENTIALS_KEY) || '{}');
+      return credentials && typeof credentials === 'object' && !Array.isArray(credentials) ? credentials : {};
+    } catch (error) { return {}; }
   };
-  const apiFetch = (...args) => (window.MUZIKAZ_API?.fetch || window.fetch)(...args);
-  const applyAccount = async (data, identity) => {
-    window.MUZIKAZ_API?.setSessionToken?.(data.sessionToken || '');
-    window.MuzikazAccountSession = { csrfToken: data.csrfToken, account: data.account, backpack: data.backpack, permissions: data.permissions, expiresAt: data.expiresAt };
-    currentMemberEmail = normalizeMemberEmail(data.account?.username || identity);
+  const passwordDigest = async (username, password) => {
+    const value = new TextEncoder().encode(`MUZIKAZ:${username}:${password}`);
+    const digest = await window.crypto.subtle.digest('SHA-256', value);
+    return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  };
+  const unlock = (message) => {
+    lockedContent.dataset.locked = 'false';
+    document.body.classList.add('is-member-authenticated');
+    if (status) status.textContent = message;
+    window.MUZIKAZ_AVATAR_GATE?.ensure();
+  };
+  const applyAccount = (username) => {
+    currentMemberEmail = normalizeMemberEmail(username);
     window.localStorage.setItem('muzikazBottleMember', 'true');
     window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
     const profiles = readOwnedProfiles();
-    profiles[currentMemberEmail] = [...new Set([...(data.backpack?.assets || []), ...(data.backpack?.land || []), ...(data.backpack?.bottleClaims || [])].map((item) => item.name).filter(Boolean))];
+    profiles[currentMemberEmail] ||= ['VibeVerse Starter Pack · Backpack starter asset'];
     writeOwnedProfiles(profiles);
-    window.MZKWallet?.provisionStandardLoadout?.(data.account);
+    window.MZKWallet?.ensureWallet?.(currentMemberEmail);
     renderOwnedCollection(currentMemberEmail);
-    await unlock(`${currentMemberEmail} is logged in. Your server-backed profile, transactions, avatar and playable Backpack are restored.`);
+    document.dispatchEvent(new CustomEvent('muzikaz:member-authenticated', { detail: { username: currentMemberEmail } }));
+    unlock(`${currentMemberEmail} is signed in. Your saved Backpack, MZK, points, avatar, and game memory are ready.`);
   };
-  if (window.MUZIKAZ_API?.getSessionToken?.()) apiFetch('/api/account/bootstrap', { headers: { Accept: 'application/json' } }).then(async (response) => {
-    const result = await response.json();
-    if (response.ok && result.success) await applyAccount({ ...result.data, sessionToken: window.MUZIKAZ_API.getSessionToken() }, result.data.account?.username);
-  }).catch(() => { if (status) status.textContent = 'Your saved profile could not be restored. Sign in again.'; });
+  const savedUsername = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail'));
+  if (window.localStorage.getItem('muzikazBottleMember') === 'true' && savedUsername) applyAccount(savedUsername);
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (!form.reportValidity()) return;
     const data = new FormData(form);
-    const email = normalizeMemberEmail(data.get('email'));
-    if (status) status.textContent = 'Opening your persistent member profile…';
-    const response = await apiFetch('/api/access/free-play', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ username: email, password: String(data.get('passcode') || '') }), retries: 0 });
-    const result = await response.json();
-    if (!response.ok || !result.success) { if (status) status.textContent = result.message || 'Member sign in failed.'; return; }
-    await applyAccount(result.data, email);
+    const username = normalizeMemberEmail(data.get('username'));
+    const password = String(data.get('password') || '');
+    if (!/^[a-z0-9][a-z0-9._-]{2,23}$/.test(username)) { if (status) status.textContent = 'Use 3–24 letters, numbers, dots, dashes, or underscores for your username.'; return; }
+    if (status) status.textContent = 'Opening your member profile…';
+    const credentials = readCredentials();
+    const digest = await passwordDigest(username, password);
+    if (credentials[username] && credentials[username].passwordDigest !== digest) { if (status) status.textContent = 'Username or password is incorrect.'; return; }
+    credentials[username] ||= { passwordDigest: digest, createdAt: new Date().toISOString() };
+    credentials[username].lastSignedInAt = new Date().toISOString();
+    window.localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+    applyAccount(username);
     const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
     if (redirect) {
       window.sessionStorage.removeItem('muzikazLoginRedirect');
