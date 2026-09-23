@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="apple-touch-icon" href="logo_symbol_crop_2x_transparent.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#07100b">
+  <meta property="og:image" content="https://muzikaz.com/brand_name_tagline_panel_2x.png">
+  <meta property="og:image:width" content="816"><meta property="og:image:height" content="574">
+  <meta property="og:image:alt" content="MUZIKAZ WORLD — Create. Collect. Play.">
+  <meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://muzikaz.com/brand_name_tagline_panel_2x.png"><meta name="twitter:image:alt" content="MUZIKAZ WORLD — Create. Collect. Play.">
+  <script defer src="pwa.js"></script>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Arrange, scale and rotate MUZIKAZ Builder Pack objects on your land, then save the completed environment.">
+  <title>ENVIRONMENT BUILDER | MUZIKAZ</title>
+  <link rel="icon" href="muzikaz_bolt_logo_editable.svg"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="environment-builder.css">
+</head>
+<body class="environment-builder-page">
+  <header class="environment-topbar">
+    <a class="environment-brand" href="builder-market.html#backpack"><img src="muzikaz_bolt_logo_editable.svg" alt=""><span><small>MUZIKAZ WORLD</small><strong>ENVIRONMENT BUILDER</strong></span></a>
+    <label class="scene-name"><span>SCENE NAME</span><input id="scene-name" value="Untitled environment" maxlength="80"></label>
+    <div class="environment-actions"><span id="save-state">All changes saved locally</span><button type="button" id="clear-scene">NEW MAP</button><button type="button" id="save-scene" class="primary">SAVE SCENE</button></div>
+  </header>
+  <main class="environment-workspace">
+    <aside class="object-library" aria-labelledby="library-title">
+      <header><div><small>BUILDERS PACK</small><h1 id="library-title">Item library</h1></div><span id="library-count">20</span></header>
+      <p>Select an object or drag it onto the land.</p>
+      <nav class="library-filters" aria-label="Filter item library"><button class="active" data-library-filter="all">ALL</button><button data-library-filter="landscape">OUTDOOR</button><button data-library-filter="interior">INTERIOR</button></nav>
+      <div class="library-grid" id="library-grid"></div>
+    </aside>
+
+    <section class="build-stage" aria-labelledby="map-heading">
+      <header class="map-toolbar"><div><small>ACTIVE LAND · <span id="layout-label">GRAND BUILD FLOOR</span></small><h2 id="map-heading">Build your scene</h2></div><label>MAP LAYOUT<select id="layout-select"><option value="grand-floor">Grand Build Floor</option><option value="loft">Open Studio</option><option value="suite">Connected Suite</option><option value="courtyard">Garden Courtyard</option></select></label></header>
+      <div class="stage-help"><span><b>1</b> Pick an item</span><span><b>2</b> Drag to position</span><span><b>3</b> Rotate &amp; scale</span><span><b>4</b> Save your scene</span></div>
+      <div class="land-viewport" id="land-viewport">
+        <div class="land-canvas layout-grand-floor" id="land-canvas" tabindex="0" aria-label="Grand Build Floor. Drop objects here and use arrow keys to move the selected object.">
+          <div class="layout-walls" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div class="land-empty" id="land-empty"><span>＋</span><strong>Place your first object</strong><small>Select from the library or drag an item here</small></div>
+        </div>
+        <div class="map-compass" aria-hidden="true"><b>N</b><span>↑</span></div>
+        <div class="character-scale" aria-label="Character scale reference"><span class="character-figure">●<i></i></span><b>CHARACTER<br>1.8 M</b></div>
+      </div>
+      <footer class="map-footer"><span><i></i> 1 square = 1 metre</span><strong id="object-count">0 OBJECTS PLACED</strong><span>40 M × 40 M LAND</span></footer>
+    </section>
+
+    <aside class="object-inspector" aria-labelledby="inspector-title">
+      <header><small>SELECTION</small><h2 id="inspector-title">Object controls</h2></header>
+      <div class="inspector-empty" id="inspector-empty"><span>↖</span><p>Select a placed object to edit its size, direction and position.</p></div>
+      <div class="inspector-controls" id="inspector-controls" hidden>
+        <div class="selected-summary"><img id="selected-image" alt=""><div><small id="selected-type"></small><strong id="selected-name"></strong></div></div>
+        <fieldset><legend>ROTATION</legend><output id="rotation-output">0°</output><input id="rotation-control" type="range" min="0" max="359" value="0" aria-label="Object rotation"><div class="rotation-presets"><button data-rotate="-45" aria-label="Rotate left">↶ 45°</button><button data-rotate="45" aria-label="Rotate right">45° ↷</button></div></fieldset>
+        <fieldset><legend>SCALE <small>LOCKED PROPORTIONS</small></legend><output id="scale-output">100%</output><input id="scale-control" type="range" min="40" max="240" value="100" step="5" aria-label="Object scale"><div class="scale-labels"><span>SMALL</span><span>CHARACTER</span><span>LARGE</span></div><button id="reset-scale" class="wide-control">RESET TO SENSIBLE SIZE</button></fieldset>
+        <fieldset><legend>POSITION</legend><div class="position-grid"><label>X <input id="position-x" type="number" min="0" max="100" step="0.1"></label><label>Y <input id="position-y" type="number" min="0" max="100" step="0.1"></label></div></fieldset>
+        <div class="object-actions"><button id="duplicate-object">DUPLICATE</button><button id="remove-object" class="danger">REMOVE</button></div>
+      </div>
+      <section class="scene-list"><div><small>SCENE OBJECTS</small><b id="scene-list-count">0</b></div><div id="scene-list"></div></section>
+    </aside>
+  </main>
+  <div class="builder-toast" id="builder-toast" role="status" aria-live="polite"></div>
+  <script src="environment-builder.js"></script><script src="battle-theme.js"></script>
+</body>
+</html>
