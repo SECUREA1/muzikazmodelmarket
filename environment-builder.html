@@ -18,7 +18,7 @@
   <header class="environment-topbar">
     <a class="environment-brand" href="builder-market.html#backpack"><img src="muzikaz_bolt_logo_editable.svg" alt=""><span><small>MUZIKAZ WORLD</small><strong>ENVIRONMENT BUILDER</strong></span></a>
     <label class="scene-name"><span>SCENE NAME</span><input id="scene-name" value="Untitled environment" maxlength="80"></label>
-    <div class="environment-actions"><span id="save-state">All changes saved locally</span><button type="button" id="clear-scene">NEW MAP</button><button type="button" id="save-scene" class="primary">SAVE SCENE</button></div>
+    <div class="environment-actions"><span id="save-state">All changes saved locally</span><button type="button" id="clear-scene">NEW MAP</button><button type="button" id="save-scene">SAVE SCENE</button><button type="button" id="play-scene" class="primary">SAVE &amp; PLAY</button></div>
   </header>
   <main class="environment-workspace">
     <aside class="object-library" aria-labelledby="library-title">
@@ -30,7 +30,8 @@
 
     <section class="build-stage" aria-labelledby="map-heading">
       <header class="map-toolbar"><div><small>ACTIVE LAND · <span id="layout-label">GRAND BUILD FLOOR</span></small><h2 id="map-heading">Build your scene</h2></div><label>MAP LAYOUT<select id="layout-select"><option value="grand-floor">Grand Build Floor</option><option value="loft">Open Studio</option><option value="suite">Connected Suite</option><option value="courtyard">Garden Courtyard</option></select></label></header>
-      <div class="stage-help"><span><b>1</b> Pick an item</span><span><b>2</b> Drag to position</span><span><b>3</b> Rotate &amp; scale</span><span><b>4</b> Save your scene</span></div>
+      <div class="stage-help"><span><b>1</b> Pick an item</span><span><b>2</b> Drag to position</span><span><b>3</b> Rotate &amp; scale</span><span><b>4</b> Save &amp; play</span></div>
+      <div class="playable-map-banner" role="note"><strong>GAME SYSTEMS INCLUDED</strong><span>Multiplayer room · RAD-TOX enemies · weapons · pickups · player spawn</span></div>
       <div class="land-viewport" id="land-viewport">
         <div class="land-canvas layout-grand-floor" id="land-canvas" tabindex="0" aria-label="Grand Build Floor. Drop objects here and use arrow keys to move the selected object.">
           <div class="layout-walls" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
