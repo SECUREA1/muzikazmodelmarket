@@ -2,6 +2,8 @@
   'use strict';
   const categories = ['WORLD','BUILDINGS','PROPS','TERRAIN','NPC','AI','VEHICLES','GAME SYSTEMS','FUNCTIONS','AUDIO','EFFECTS','SCRIPTS','INTERACTIVE','UTILITIES'];
   const icons = { WORLD:'🌐', BUILDINGS:'🏢', PROPS:'📦', TERRAIN:'⛰️', NPC:'🧑', AI:'🧠', VEHICLES:'🏎️', 'GAME SYSTEMS':'🎮', FUNCTIONS:'⚙️', AUDIO:'🔊', EFFECTS:'✨', SCRIPTS:'⌨️', INTERACTIVE:'🚪', UTILITIES:'🧰' };
+  const roomStyles = [{ id:'loft', name:'Open Studio', label:'Flexible creative loft', color:'#ff5ba7', walls:'l' }, { id:'suite', name:'Connected Suite', label:'Three linked rooms', color:'#61e7ff', walls:'h' }, { id:'courtyard', name:'Garden Courtyard', label:'Indoor / outdoor flow', color:'#b5ff55', walls:'u' }];
+  const builderModels = [['canopy-tree','Canopy Tree','landscape'],['pine-tree','Pine Tree','landscape'],['flower-bed','Flower Bed','landscape'],['hedge-corner','Hedge Corner','landscape'],['garden-rocks','Garden Rocks','landscape'],['pond','Reflecting Pond','landscape'],['path-tile','Path Tile','landscape'],['hill','Soft Hill','landscape'],['lamp-post','Lamp Post','landscape'],['planter','Tall Planter','landscape'],['sofa','Cloud Sofa','interior'],['armchair','Accent Chair','interior'],['coffee-table','Coffee Table','interior'],['bookshelf','Bookshelf','interior'],['floor-lamp','Floor Lamp','interior'],['room-divider','Room Divider','interior'],['kitchen-island','Kitchen Island','interior'],['spiral-stairs','Spiral Stairs','interior'],['archway','Archway','interior'],['art-wall','Art Wall','interior']];
   const $ = (selector) => document.querySelector(selector); let state = { permissions:{}, land:[], assets:[], listings:[], placements:[], csrf:'' };
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' })[character]);
   const status = (message, error = false) => { $('#builder-status').textContent = message; $('#builder-status').classList.toggle('error', error); };
@@ -15,6 +17,11 @@
     return `<article class="builder-card"><div class="builder-card__visual">${icons[asset.builder_category] || '🧱'}</div><small>${escapeHtml(asset.builder_category)} · v${escapeHtml(asset.version)}</small><h3>${escapeHtml(asset.name)}</h3><p>${escapeHtml(asset.description || 'Reusable MUZIKAZ builder component.')}</p>${functional ? '<div class="builder-card__meta"><span>CONFIGURABLE FUNCTION</span></div>' : ''}${body}<div class="builder-actions">${actions}</div></article>`;
   }
   const button = (label, action, id, allowed = true) => allowed ? `<button type="button" data-action="${action}" data-id="${escapeHtml(id)}">${label}</button>` : '';
+  function renderBuilderPack(filter = 'all') {
+    $('#room-style-grid').innerHTML = roomStyles.map((room) => `<button type="button" class="room-style" data-room-style="${room.id}" style="--room-color:${room.color}"><span class="room-style__plan room-style__plan--${room.walls}" aria-hidden="true"><i></i><b></b></span><strong>${room.name}</strong><small>${room.label}</small></button>`).join('');
+    $('#builder-model-grid').innerHTML = builderModels.filter(([, , type]) => filter === 'all' || type === filter).map(([id, name, type], index) => `<button type="button" class="builder-model" data-builder-model="${id}" data-model-name="${name}"><span class="builder-model__number">${String(index + 1).padStart(2, '0')}</span><img src="public/images/builder-pack/${id}.svg" alt="" loading="lazy"><span><strong>${name}</strong><small>${type.toUpperCase()}</small></span><b aria-hidden="true">＋</b></button>`).join('');
+  }
+  function setPackStatus(message) { $('#builder-pack-status').textContent = message; }
   function render() {
     $('#builder-balance').textContent = `${Number(state.balance || 0).toLocaleString()} MZK`;
     $('#builder-listings').innerHTML = state.listings.length ? state.listings.map((listing) => card(listing.asset, `<strong class="builder-price">${listing.price_mzk.toLocaleString()} MZK</strong>`, button('BUY WITH MZK','buy',listing.listing_id,state.permissions['market.builder.buy']) + button('PREVIEW','preview',listing.asset_id))).join('') : '<p class="builder-empty">No active listings in this category yet.</p>';
@@ -44,6 +51,11 @@
   const requestedCategory = new URLSearchParams(location.search).get('category');
   if (categories.includes(requestedCategory)) $('#builder-category').value = requestedCategory;
   $('#builder-category').addEventListener('change', () => refresh().catch((error) => status(error.message, true))); $('#open-create-asset').addEventListener('click', createAsset);
+  renderBuilderPack();
+  document.querySelectorAll('[data-pack-filter]').forEach((control) => control.addEventListener('click', () => { document.querySelectorAll('[data-pack-filter]').forEach((item) => item.classList.toggle('active', item === control)); renderBuilderPack(control.dataset.packFilter); setPackStatus(`${control.textContent.trim()} shapes shown.`); }));
+  $('#room-style-grid').addEventListener('click', (event) => { const room = event.target.closest('[data-room-style]'); if (!room) return; document.querySelectorAll('[data-room-style]').forEach((item) => item.classList.toggle('selected', item === room)); setPackStatus(`${room.querySelector('strong').textContent} room starter selected. Ready to place on the Grand Build Floor.`); });
+  $('#builder-model-grid').addEventListener('click', (event) => { const model = event.target.closest('[data-builder-model]'); if (!model) return; model.classList.toggle('selected'); setPackStatus(`${model.dataset.modelName} ${model.classList.contains('selected') ? 'added to' : 'removed from'} your build tray.`); });
+  document.querySelector('[data-pack-template]').addEventListener('click', (event) => { event.currentTarget.classList.add('selected'); event.currentTarget.textContent = 'FLOOR READY ✓'; setPackStatus('Grand Build Floor loaded: 40 × 40 placement grid ready for rooms and shapes.'); });
   const requestedTab = location.hash.slice(1); if (['market','backpack','worlds'].includes(requestedTab)) document.querySelector(`[data-builder-tab="${requestedTab}"]`)?.click();
   api('/api/account/bootstrap').then((bootstrap) => { state.csrf = bootstrap.csrfToken || ''; return refresh(); }).catch((error) => { status(`${error.message} Sign in through Members to use the Builder Market.`, true); $('#builder-account').textContent = 'Authentication required'; });
 }());

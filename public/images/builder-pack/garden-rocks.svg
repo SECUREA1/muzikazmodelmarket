@@ -1,0 +1,1 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><filter id="s"><feDropShadow dx="4" dy="7" stdDeviation="4" flood-opacity=".35"/></filter></defs><ellipse cx="64" cy="108" rx="48" ry="10" fill="#000" opacity=".22"/><g filter="url(#s)"><g fill="#a38cff"><path d="m22 79 15-31 25 8 10 32Z"/><path d="m58 86 19-47 29 40-17 16Z" fill="#c8baff"/></g></g></svg>
