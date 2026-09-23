@@ -39,6 +39,16 @@
     </section>
     <section class="builder-panel" data-builder-panel="backpack" aria-labelledby="backpack-title">
       <header><div><p class="kicker">Owned development inventory</p><h2 id="backpack-title">BUILDER BACKPACK</h2></div><button id="open-create-asset" type="button">IMPORT / CREATE ASSET</button></header>
+      <section class="builder-pack" aria-labelledby="builder-pack-title">
+        <div class="builder-pack__intro"><p class="kicker">Included creator toolkit</p><h3 id="builder-pack-title">BUILDERS PACK</h3><p>Start with a wide-open floor, choose a room direction, then add colourful landscape and interior pieces. Every item is an editable SVG model made for rapid world blocking.</p></div>
+        <div class="map-template-card">
+          <div class="map-template-preview" aria-hidden="true"><span></span><i></i><b>40 × 40</b></div>
+          <div><small>NEW MAP TEMPLATE</small><h4>Grand Build Floor</h4><p>A large, clear 40 × 40 floor area with an even placement grid and open edges.</p><button type="button" data-pack-template="grand-floor">USE FLOOR TEMPLATE</button></div>
+        </div>
+        <div><div class="builder-pack__heading"><div><small>ROOM STARTERS</small><h4>Choose a development style</h4></div><span>3 layouts</span></div><div class="room-style-grid" id="room-style-grid"></div></div>
+        <div><div class="builder-pack__heading"><div><small>DRAG-READY SVG SHAPES</small><h4>Landscape + interior library</h4></div><span>20 models</span></div><div class="builder-library__filters" role="group" aria-label="Filter builder models"><button type="button" class="active" data-pack-filter="all">ALL 20</button><button type="button" data-pack-filter="landscape">LANDSCAPE</button><button type="button" data-pack-filter="interior">INTERIOR</button></div><div class="builder-model-grid" id="builder-model-grid"></div></div>
+        <p class="builder-pack__status" id="builder-pack-status" role="status" aria-live="polite">Select a piece to add it to your build tray.</p>
+      </section>
       <div class="builder-grid" id="builder-assets"></div>
     </section>
     <section class="builder-panel" data-builder-panel="worlds" aria-labelledby="worlds-title">
