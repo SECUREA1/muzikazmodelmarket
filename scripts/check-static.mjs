@@ -1,6 +1,6 @@
 import { access, readFile } from 'node:fs/promises';
 
-const htmlPages = ['index.html', 'model-market.html', 'builder-market.html', 'avatar-whitepaper.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html', 'checkout.html', 'model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
+const htmlPages = ['index.html', 'model-market.html', 'builder-market.html', 'environment-builder.html', 'avatar-whitepaper.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html', 'checkout.html', 'model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
 const requiredFiles = [
   ...htmlPages.map((page) => `dist/${page}`),
   'dist/styles.css',
@@ -13,6 +13,8 @@ const requiredFiles = [
   'dist/marketplace-listings.js',
   'dist/builder-market.js',
   'dist/builder-market.css',
+  'dist/environment-builder.js',
+  'dist/environment-builder.css',
   'dist/admin.html',
   'dist/admin.js',
   'dist/public/js/rad-tox-launcher.js',
@@ -50,7 +52,7 @@ for (const stackLayer of ['backpack-stack-backdrop', 'backpack-stack-art', 'back
 
 // The compact destination menu and four-button commerce masthead stay
 // consistent on every page that uses the shared mobile header.
-const unifiedHeaderPages = htmlPages;
+const unifiedHeaderPages = htmlPages.filter((page) => page !== 'environment-builder.html');
 for (const page of unifiedHeaderPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
   if (!html.includes('global-header.js')) throw new Error(`${page} must load the unified global header component.`);
@@ -147,7 +149,7 @@ for (const directory of excludedBuildDirectories) {
 
 for (const page of htmlPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
-  const requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js', 'battle-theme.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js', 'battle-theme.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js', 'battle-theme.js'] : page === 'builder-market.html' ? ['styles.css', 'builder-market.css', 'builder-market.js', 'battle-theme.js'] : ['styles.css', 'script.js', 'battle-theme.js'];
+  const requiredAssets = page === 'token-mixer.html' ? ['styles.css', 'audio-core.js', 'token-mixer.js', 'battle-theme.js'] : page === 'voice-changer.html' ? ['styles.css', 'audio-core.js', 'voice-changer.js', 'battle-theme.js'] : page === 'quest-board.html' ? ['styles.css', 'audio-core.js', 'quest-board.js', 'battle-theme.js'] : page === 'builder-market.html' ? ['styles.css', 'builder-market.css', 'builder-market.js', 'battle-theme.js'] : page === 'environment-builder.html' ? ['styles.css', 'environment-builder.css', 'environment-builder.js', 'battle-theme.js'] : ['styles.css', 'script.js', 'battle-theme.js'];
 
   for (const asset of requiredAssets) {
     if (!html.includes(asset)) {
