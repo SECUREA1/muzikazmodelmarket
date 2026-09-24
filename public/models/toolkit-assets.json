@@ -900,6 +900,126 @@
       "modelUrl": "public/models/vehicles/DRONE ENGINE.glb",
       "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
       "source": "asset manifest"
+    },
+    {
+      "id": "starter-energy-blade",
+      "name": "Neon Energy Blade",
+      "type": "weapon",
+      "format": "svg",
+      "modelUrl": "public/images/custom-item-models/neon-energy-blade.svg",
+      "thumbnailUrl": "public/images/custom-item-models/neon-energy-blade.svg",
+      "source": "SVG 3D starter",
+      "starter": true,
+      "tags": [
+        "weapon",
+        "sword",
+        "neon"
+      ]
+    },
+    {
+      "id": "starter-guardian-shield",
+      "name": "Arcade Guardian Shield",
+      "type": "defense",
+      "format": "svg",
+      "modelUrl": "public/images/custom-item-models/arcade-shield.svg",
+      "thumbnailUrl": "public/images/custom-item-models/arcade-shield.svg",
+      "source": "SVG 3D starter",
+      "starter": true,
+      "tags": [
+        "armor",
+        "shield",
+        "defense"
+      ]
+    },
+    {
+      "id": "starter-loot-crate",
+      "name": "Cyber Loot Crate",
+      "type": "container",
+      "format": "svg",
+      "modelUrl": "public/images/custom-item-models/loot-crate.svg",
+      "thumbnailUrl": "public/images/custom-item-models/loot-crate.svg",
+      "source": "SVG 3D starter",
+      "starter": true,
+      "tags": [
+        "crate",
+        "loot",
+        "storage"
+      ]
+    },
+    {
+      "id": "starter-health-potion",
+      "name": "Pulse Health Potion",
+      "type": "consumable",
+      "format": "svg",
+      "modelUrl": "public/images/custom-item-models/health-potion.svg",
+      "thumbnailUrl": "public/images/custom-item-models/health-potion.svg",
+      "source": "SVG 3D starter",
+      "starter": true,
+      "tags": [
+        "health",
+        "potion",
+        "pickup"
+      ]
+    },
+    {
+      "id": "starter-hover-board",
+      "name": "Street Hover Board",
+      "type": "vehicle",
+      "format": "svg",
+      "modelUrl": "public/images/custom-item-models/hover-board.svg",
+      "thumbnailUrl": "public/images/custom-item-models/hover-board.svg",
+      "source": "SVG 3D starter",
+      "starter": true,
+      "tags": [
+        "vehicle",
+        "board",
+        "street"
+      ]
+    },
+    {
+      "id": "starter-portal-beacon",
+      "name": "Pocket Portal Beacon",
+      "type": "interactive",
+      "format": "svg",
+      "modelUrl": "public/images/custom-item-models/portal-beacon.svg",
+      "thumbnailUrl": "public/images/custom-item-models/portal-beacon.svg",
+      "source": "SVG 3D starter",
+      "starter": true,
+      "tags": [
+        "portal",
+        "beacon",
+        "teleport"
+      ]
+    },
+    {
+      "id": "starter-quest-key",
+      "name": "Holo Quest Key",
+      "type": "quest item",
+      "format": "svg",
+      "modelUrl": "public/images/custom-item-models/quest-key.svg",
+      "thumbnailUrl": "public/images/custom-item-models/quest-key.svg",
+      "source": "SVG 3D starter",
+      "starter": true,
+      "tags": [
+        "key",
+        "quest",
+        "door"
+      ]
+    },
+    {
+      "id": "starter-scout-drone",
+      "name": "Scout Companion Drone",
+      "type": "companion",
+      "format": "svg",
+      "modelUrl": "public/images/custom-item-models/companion-drone.svg",
+      "thumbnailUrl": "public/images/custom-item-models/companion-drone.svg",
+      "source": "SVG 3D starter",
+      "starter": true,
+      "tags": [
+        "drone",
+        "pet",
+        "robot"
+      ]
     }
   ]
 }
