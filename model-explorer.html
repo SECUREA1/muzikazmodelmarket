@@ -75,7 +75,7 @@
   <nav class="explorer-options" aria-label="VibeVerse function shortcuts">
     <button class="explorer-options__toggle" id="explorer-options-toggle" type="button" aria-expanded="false" aria-controls="explorer-options-panel">
       <span class="explorer-options__hamburger" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span><strong>Explorer options</strong><small>Jump to a function</small></span>
+      <span><strong id="explorer-options-label">Explorer options</strong><small>Choose one workspace</small></span>
     </button>
     <div class="explorer-options__panel" id="explorer-options-panel" hidden>
       <header>
@@ -88,21 +88,21 @@
       </label>
       <p class="explorer-options__count" id="explorer-options-count" role="status" aria-live="polite">8 options</p>
       <ul id="explorer-options-list">
-        <li data-option-keywords="play game enter crib house"><a href="#house-explorer-canvas"><span aria-hidden="true">▶</span><b>Enter the crib</b><small>Start or return to gameplay</small></a></li>
-        <li data-option-keywords="map maps environment world select"><a href="#house-environment-select"><span aria-hidden="true">🌐</span><b>Choose a world</b><small>Open the environment list</small></a></li>
-        <li data-option-keywords="bag owned avatar inventory"><a href="#add-avatar"><span aria-hidden="true">🎒</span><b>Open Backpack</b><small>Use an owned avatar or asset</small></a></li>
-        <li data-option-keywords="settings controls tools build"><a href="#house-tools"><span aria-hidden="true">🛠</span><b>Game tools</b><small>Open gameplay functions</small></a></li>
-        <li data-option-keywords="create draw customize builder item"><a href="#custom-item-toolkit"><span aria-hidden="true">✎</span><b>Build an item</b><small>Draw and customize a 3D prop</small></a></li>
-        <li data-option-keywords="browse search assets glb svg library packs"><a href="#custom-item-library"><span aria-hidden="true">▦</span><b>Browse item library</b><small>Search existing GLB and SVG assets</small></a></li>
-        <li data-option-keywords="upload add share publish model"><a href="#publish-model"><span aria-hidden="true">↑</span><b>Publish a model</b><small>Upload to your land or loadout</small></a></li>
-        <li data-option-keywords="live marketplace list models packs"><a href="#live-published-models"><span aria-hidden="true">⚡</span><b>Live 3D packs</b><small>Browse published models</small></a></li>
+        <li data-option-keywords="play game enter crib house"><a href="#house-explorer-canvas" data-explorer-view="house-explorer"><span aria-hidden="true">▶</span><b>Enter the crib</b><small>Start or return to gameplay</small></a></li>
+        <li data-option-keywords="map maps environment world select"><a href="#house-environment-select" data-explorer-view="house-explorer"><span aria-hidden="true">🌐</span><b>Choose a world</b><small>Open the environment list</small></a></li>
+        <li data-option-keywords="bag owned avatar inventory"><a href="#add-avatar" data-explorer-view="house-explorer"><span aria-hidden="true">🎒</span><b>Open Backpack</b><small>Use an owned avatar or asset</small></a></li>
+        <li data-option-keywords="settings controls tools build"><a href="#house-tools" data-explorer-view="house-explorer"><span aria-hidden="true">🛠</span><b>Game tools</b><small>Open gameplay functions</small></a></li>
+        <li data-option-keywords="create draw customize builder item"><a href="#custom-item-toolkit" data-explorer-view="custom-item-toolkit"><span aria-hidden="true">✎</span><b>Build an item</b><small>Draw and customize a 3D prop</small></a></li>
+        <li data-option-keywords="browse search assets glb svg library packs"><a href="#custom-item-library" data-explorer-view="custom-item-toolkit"><span aria-hidden="true">▦</span><b>Browse item library</b><small>Search existing GLB and SVG assets</small></a></li>
+        <li data-option-keywords="upload add share publish model"><a href="#publish-model" data-explorer-view="publish-model"><span aria-hidden="true">↑</span><b>Publish a model</b><small>Upload to your land or loadout</small></a></li>
+        <li data-option-keywords="live marketplace list models packs"><a href="#live-published-models" data-explorer-view="live-published-models"><span aria-hidden="true">⚡</span><b>Live 3D packs</b><small>Browse published models</small></a></li>
       </ul>
       <p class="explorer-options__empty" id="explorer-options-empty" hidden>No matching function. Try “world”, “item”, or “model”.</p>
     </div>
   </nav>
 
   <main id="home">
-    <section class="section-block house-explorer" id="house-explorer" aria-labelledby="house-explorer-title">
+    <section class="section-block house-explorer" id="house-explorer" data-explorer-workspace aria-labelledby="house-explorer-title">
       <div class="section-title"><span></span><h2 id="house-explorer-title">🏠 Vibe Crib Explorer</h2><a href="#house-explorer-canvas">Enter the crib</a></div>
       <div class="house-explorer-shell">
         <div class="house-stage">
@@ -188,7 +188,7 @@
     </section>
 
 
-    <section class="section-block custom-item-toolkit" id="custom-item-toolkit" aria-labelledby="custom-item-title">
+    <section class="section-block custom-item-toolkit" id="custom-item-toolkit" data-explorer-workspace aria-labelledby="custom-item-title">
       <div class="section-title"><span></span><h2 id="custom-item-title">3D Customization Tool Kit</h2><a href="#custom-item-library">Browse items</a></div>
       <div class="custom-item-heading">
         <div><p class="kicker">Draw a custom game item</p><h3>Sketch it. Shape it. Play it.</h3><p>Draw a closed silhouette, tune its depth and bevel, then save it as a reusable object in your local Builder Backpack—or open any existing GLB or SVG as a starting point.</p></div>
@@ -271,7 +271,7 @@
     </section>
     <div class="custom-build-toast" id="custom-build-toast" role="status" aria-live="polite" hidden></div>
 
-    <section class="section-block model-publisher" id="publish-model" aria-labelledby="publish-model-title">
+    <section class="section-block model-publisher" id="publish-model" data-explorer-workspace aria-labelledby="publish-model-title">
       <div class="section-title"><span></span><h2 id="publish-model-title">Publish a Live Model</h2><a href="#live-published-models">View linked model space</a></div>
       <p class="status-message land-upload-notice" id="land-upload-notice"><strong>Land-owner upload gate:</strong> your signed-in profile must hold a MUZIKAZ World land deed in its Drop Backpack before you can add an avatar, asset, or game.</p>
       <aside class="land-upload-gate" id="land-upload-gate" aria-labelledby="land-upload-gate-title">
@@ -317,7 +317,7 @@
       <model-viewer id="publish-preview" class="publisher-preview" camera-controls touch-action="pan-y" auto-rotate ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1" hidden alt="Local model upload preview"><button slot="ar-button" type="button">Place preview in AR</button></model-viewer>
     </section>
 
-    <section class="section-block live-models-section explorer-live-space" id="live-published-models" aria-labelledby="explorer-live-models-title">
+    <section class="section-block live-models-section explorer-live-space" id="live-published-models" data-explorer-workspace aria-labelledby="explorer-live-models-title">
       <div class="section-title"><span></span><h2 id="explorer-live-models-title">Live Published Models</h2><button type="button" id="refresh-live-models">Refresh Models</button></div>
       <p class="section-subheading">Shared server-backed models are arranged here instead of on the main page. Open each category below to route avatars, pets, accessories, furniture, environments, and gameplay props into the right 3D Character Loadout space.</p>
       <div class="loadout-link-grid explorer-loadout-links" aria-label="3D Character Loadout marketplace categories">
