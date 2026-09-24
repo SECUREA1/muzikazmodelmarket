@@ -31,16 +31,19 @@
 
     <section class="build-stage" aria-labelledby="map-heading">
       <header class="map-toolbar"><div><small>ACTIVE LAND · <span id="layout-label">GRAND BUILD FLOOR</span></small><h2 id="map-heading">Build your scene</h2></div><label>MAP LAYOUT<select id="layout-select"><option value="grand-floor">Grand Build Floor</option><option value="loft">Open Studio</option><option value="suite">Connected Suite</option><option value="courtyard">Garden Courtyard</option></select></label></header>
-      <div class="stage-help"><span><b>1</b> Pick an item</span><span><b>2</b> Drag to position</span><span><b>3</b> Rotate &amp; scale</span><span><b>4</b> Save &amp; play</span></div>
+      <div class="stage-help"><span><b>1</b> Pick an item</span><span><b>2</b> Place on terrain</span><span><b>3</b> Move, rotate &amp; scale</span><span><b>4</b> Walk through</span></div>
+      <div class="view-toolbar" role="toolbar" aria-label="Scene view controls"><button class="active" type="button" data-view-mode="build">BUILD VIEW</button><button type="button" data-view-mode="walkthrough">3D WALKTHROUGH</button><span id="view-help">Select an item, then click the terrain to place it</span></div>
       <div class="playable-map-banner" role="note"><strong>GAME SYSTEMS INCLUDED</strong><span>Custom avatars · enemy encounters · doors, quests &amp; pickups · player spawn</span></div>
       <div class="land-viewport" id="land-viewport">
-        <div class="land-canvas layout-grand-floor" id="land-canvas" tabindex="0" aria-label="Grand Build Floor. Drop objects here and use arrow keys to move the selected object.">
+        <div class="land-canvas layout-grand-floor" id="land-canvas" tabindex="0" aria-label="Grand Build Floor 3D editor. Select an item then click the terrain to place it.">
+          <canvas id="scene-canvas" aria-label="Interactive three dimensional environment"></canvas>
           <div class="layout-walls" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
           <div class="land-empty" id="land-empty"><span>＋</span><strong>Place your first object</strong><small>Select from the library or drag an item here</small></div>
         </div>
         <div class="map-compass" aria-hidden="true"><b>N</b><span>↑</span></div>
         <div class="character-scale" aria-label="Character scale reference"><span class="character-figure">●<i></i></span><b>CHARACTER<br>1.8 M</b></div>
       </div>
+      <section class="side-view-panel" aria-labelledby="side-view-title"><header><div><small>SYNCHRONIZED ELEVATION</small><strong id="side-view-title">SIDE VIEW</strong></div><span><i></i> GROUND <i></i> OFFSET</span></header><canvas id="side-view-canvas" aria-label="Side view showing terrain, object height, and ground offset"></canvas></section>
       <footer class="map-footer"><span><i></i> 1 square = 1 metre</span><strong id="object-count">0 OBJECTS PLACED</strong><span>40 M × 40 M LAND</span></footer>
     </section>
 
@@ -51,8 +54,9 @@
         <div class="selected-summary"><img id="selected-image" alt=""><div><small id="selected-type"></small><strong id="selected-name"></strong></div></div>
         <fieldset><legend>ROTATION</legend><output id="rotation-output">0°</output><input id="rotation-control" type="range" min="0" max="359" value="0" aria-label="Object rotation"><div class="rotation-presets"><button data-rotate="-45" aria-label="Rotate left">↶ 45°</button><button data-rotate="45" aria-label="Rotate right">45° ↷</button></div></fieldset>
         <fieldset><legend>SCALE <small>LOCKED PROPORTIONS</small></legend><output id="scale-output">100%</output><input id="scale-control" type="range" min="40" max="240" value="100" step="5" aria-label="Object scale"><div class="scale-labels"><span>SMALL</span><span>CHARACTER</span><span>LARGE</span></div><button id="reset-scale" class="wide-control">RESET TO SENSIBLE SIZE</button></fieldset>
-        <fieldset><legend>POSITION</legend><div class="position-grid"><label>X <input id="position-x" type="number" min="0" max="100" step="0.1"></label><label>Y <input id="position-y" type="number" min="0" max="100" step="0.1"></label></div></fieldset>
-        <fieldset><legend>ITEM COLOR</legend><div class="color-swatches" id="color-swatches" aria-label="Item color"></div><label class="custom-color-label">CUSTOM <input id="object-color" type="color" value="#b9ff38"></label></fieldset>
+        <fieldset><legend>POSITION</legend><div class="position-grid"><label>X <input id="position-x" type="number" min="-20" max="20" step="0.1"></label><label>Z <input id="position-y" type="number" min="-20" max="20" step="0.1"></label></div><label class="elevation-label">HEIGHT ABOVE GROUND <output id="elevation-output">0.0 m</output><input id="elevation-control" type="range" min="0" max="10" step="0.1" value="0"></label><button id="snap-ground" class="wide-control" type="button">SNAP TO GROUND</button></fieldset>
+        <fieldset><legend>MATERIALS <small>PRESERVED FROM MODEL</small></legend><p class="material-note">Original RGB colors, textures, transparency and distinct material regions stay intact.</p><div class="color-swatches" id="color-swatches" aria-label="Optional material accent"></div><label class="custom-color-label">ACCENT OVERRIDE <input id="object-color" type="color" value="#b9ff38"></label></fieldset>
+        <fieldset><legend>ANIMATION &amp; FUNCTION</legend><label class="toggle-label"><input id="animation-enabled" type="checkbox" checked> Play animation clips</label><button id="interact-object" class="wide-control" type="button">INTERACT / TRIGGER</button></fieldset>
         <fieldset><legend>ROLE PLAY BEHAVIOR</legend><label class="behavior-label">WHEN A PLAYER GETS CLOSE<select id="object-behavior"><option value="decor">Decoration only</option><option value="talk">Start dialogue</option><option value="quest">Offer a quest</option><option value="hostile">Attack player</option><option value="patrol">Patrol area</option><option value="pickup">Collect item</option><option value="door">Open / close</option><option value="heal">Restore health</option></select></label></fieldset>
         <div class="object-actions"><button id="duplicate-object">DUPLICATE</button><button id="remove-object" class="danger">REMOVE</button></div>
       </div>
@@ -74,6 +78,7 @@
     </form>
   </dialog>
   <div class="builder-toast" id="builder-toast" role="status" aria-live="polite"></div>
-  <script src="environment-builder.js"></script><script src="battle-theme.js"></script>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/+esm"}}</script>
+  <script type="module" src="environment-builder.js"></script><script src="battle-theme.js"></script>
 </body>
 </html>

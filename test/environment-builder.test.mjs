@@ -33,6 +33,24 @@ test('environment builder supports custom role-play actors and interactions', as
   assert.ok((script.match(/type:'interactive'/g) || []).length >= 4, 'includes several interactive role-play objects');
 });
 
+test('environment builder places grounded 3D assets and persists complete runtime state', async () => {
+  const [html, script] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+  ]);
+  for (const control of ['scene-canvas', 'side-view-canvas', 'elevation-control', 'snap-ground', 'animation-enabled', 'interact-object']) {
+    assert.match(html, new RegExp(`id="${control}"`));
+  }
+  for (const feature of ['GLTFLoader', 'cloneSkeleton', 'Raycaster', 'groundAt', 'groundOffset', 'materialSettings', 'animationState', 'functionalSettings', 'OrbitControls']) {
+    assert.match(script, new RegExp(feature));
+  }
+  assert.match(script, /outputColorSpace=THREE\.SRGBColorSpace/);
+  assert.match(script, /castShadow=true/);
+  assert.match(script, /receiveShadow=true/);
+  assert.match(script, /mixer\?\.stopAllAction/);
+  assert.match(script, /model\.procedural\?template\.clone\(true\):cloneSkeleton/);
+});
+
 test('in-game Builder Map menu opens the environment builder and restores playable maps', async () => {
   const game = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
   assert.match(game, /class="rad-build-launch" href="environment-builder\.html\?from=game"/);
