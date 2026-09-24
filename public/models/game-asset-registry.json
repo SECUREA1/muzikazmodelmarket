@@ -1,0 +1,6406 @@
+{
+  "schemaVersion": 1,
+  "discoveryRoots": [
+    "/public/models",
+    "/public/images",
+    "/public/assets"
+  ],
+  "assets": [
+    {
+      "assetId": "318bb72e-99a3-4258-9684-8db3b35cc753-2",
+      "name": "IonCore Sentinel",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/318bb72e-99a3-4258-9684-8db3b35cc753 2.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "aape",
+      "name": "AAPE",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/AAPE.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-1",
+      "name": "Black Genie Bottle",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/assets/black-genie-bottle.svg",
+      "generator": "bottle",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-100",
+      "name": "Drone Engine",
+      "category": "vehicles",
+      "assetType": "vehicle",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/vehicles/DRONE ENGINE.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "enter",
+        "drive",
+        "exit"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": true,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-2",
+      "name": "Golden Genie Bottle",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/assets/golden-genie-bottle.svg",
+      "generator": "bottle",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-4",
+      "name": "Muzikaz World Map",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/toolkit-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/assets/muzikaz-world-map.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-5",
+      "name": "Muzikaz World Poster",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/toolkit-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/assets/muzikaz-world-poster.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-52",
+      "name": "Carrot Item",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/carrot-item.svg",
+      "generator": "carrot",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-53",
+      "name": "Dynamite Item",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/dynamite-item.svg",
+      "generator": "dynamite-bundle",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": true,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-54",
+      "name": "Explosion Burst",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/explosion-burst.svg",
+      "generator": "extruded-svg",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-55",
+      "name": "318Bb72E 99A3 4258 9684 8Db3B35Cc753 2",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/318bb72e-99a3-4258-9684-8db3b35cc753 2.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-56",
+      "name": "Aape",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/AAPE.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-57",
+      "name": "Beedeere",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/BEEDEERE.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-58",
+      "name": "Beeduck",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/BEEDUCK.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-59",
+      "name": "Buzzed",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/BUZZED.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-60",
+      "name": "Byte",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/BYTE.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-61",
+      "name": "Dax",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/DAX.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-62",
+      "name": "Donkley Kongley",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/DONKLEY_KONGLEY.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-63",
+      "name": "Flaminglow",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/FLAMINGLOW.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-64",
+      "name": "Houndette",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/HOUNDETTE.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-65",
+      "name": "Ioncduck",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/IONCDUCK.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-66",
+      "name": "Mousey",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/MOUSEY.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-67",
+      "name": "Muzikaz",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/MUZIKAZ.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-68",
+      "name": "Muzkat",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/MUZKAT.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-69",
+      "name": "Nervey The Nervous System",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/NERVEY_THE_NERVOUS_SYSTEM.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-70",
+      "name": "Robocop",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/ROBOCOP.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-71",
+      "name": "Shonda",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/SHONDA.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-72",
+      "name": "Terrorist 1",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/TERRORIST_1.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-73",
+      "name": "Tyla 1",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/TYLA_1.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-74",
+      "name": "Tyla 2",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/TYLA_2.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-75",
+      "name": "Tyson",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/TYSON.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-76",
+      "name": "Untitled Crew Character",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/UNTITLED_CREW_CHARACTER.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-77",
+      "name": "Voltwolf",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/VOLTWOLF.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-78",
+      "name": "Yucky Inmate",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/YUCKY_INMATE.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-79",
+      "name": "Pixella",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/pixella.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-80",
+      "name": "Rebel Black Sheep",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/rebel black sheep.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-81",
+      "name": "Remix",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/remix.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-82",
+      "name": "Ronaldo",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/ronaldo.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-83",
+      "name": "Sharko",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/sharko.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-84",
+      "name": "Wolfie",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/wolfie.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-85",
+      "name": "Crewplaza In",
+      "category": "environment",
+      "assetType": "environment",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/environments/CREWPLAZA_IN.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-86",
+      "name": "Crewplaza Inside",
+      "category": "environment",
+      "assetType": "environment",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/environments/CREWPLAZA_INSIDE.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-87",
+      "name": "Crewplaza Outdoors",
+      "category": "environment",
+      "assetType": "environment",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/environments/CREWPLAZA_OUTDOORS.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-88",
+      "name": "Jailcells",
+      "category": "environment",
+      "assetType": "environment",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/environments/JAILCELLS.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-89",
+      "name": "Kitchen 1",
+      "category": "environment",
+      "assetType": "environment",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/environments/KITCHEN_1.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-90",
+      "name": "Kitchner Upper Deck",
+      "category": "environment",
+      "assetType": "environment",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/environments/KITCHNER_UPPER_DECK.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-91",
+      "name": "Studioridge In",
+      "category": "environment",
+      "assetType": "environment",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/environments/STUDIORIDGE_IN.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-92",
+      "name": "Studioridge Out",
+      "category": "environment",
+      "assetType": "environment",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/environments/STUDIORIDGE_OUT.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-93",
+      "name": "Muzikazupper",
+      "category": "environment",
+      "assetType": "environment",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/environments/muzikazupper.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-94",
+      "name": "Muzimakzmain",
+      "category": "environment",
+      "assetType": "environment",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/environments/muzimakzmain.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-95",
+      "name": "Sheepbase",
+      "category": "environment",
+      "assetType": "environment",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/environments/sheepbase.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-96",
+      "name": "Bronze Couch",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/props/BRONZE_COUCH.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-97",
+      "name": "Gold Microphone",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/props/GOLD_MICROPHONE.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-98",
+      "name": "Holophone Gold",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/props/HOLOPHONE_GOLD.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "asset-99",
+      "name": "Holophone Silver",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/props/HOLOPHONE_SILVER.glb",
+      "thumbnail": "public/assets/muzikaz-world-logo.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "backpack-aape",
+      "name": "AAPE",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/AAPE.glb",
+      "thumbnail": "/public/images/backpack/aape-avatar.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "backpack-dax",
+      "name": "DAX",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/DAX.glb",
+      "thumbnail": "/public/images/backpack/dax-avatar.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "bee-duck-carrot",
+      "name": "Bee Duck Carrot",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/carrot-item.svg",
+      "generator": "carrot",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": "#ff762e",
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "hold",
+        "use",
+        "throw"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "beedeere",
+      "name": "BEEDEERE",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/BEEDEERE.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "beeduck",
+      "name": "BEEDUCK",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/BEEDUCK.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "beeduck-companion",
+      "name": "BEE Duck Companion",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/BEEDUCK.glb",
+      "thumbnail": "/public/images/backpack/bee-duck-companion.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          0.7,
+          0.7,
+          0.7
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "bronze-couch",
+      "name": "Bronze Couch",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/props/BRONZE_COUCH.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "buzzed",
+      "name": "Buzzed",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/BUZZED.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "byte",
+      "name": "BYTE",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/BYTE.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "dax",
+      "name": "DAX",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/DAX.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "donkley-kongley",
+      "name": "Donkley Kongley",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/DONKLEY_KONGLEY.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "drone-engine",
+      "name": "DRONE ENGINE",
+      "category": "vehicles",
+      "assetType": "vehicle",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/vehicles/DRONE ENGINE.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "enter",
+        "drive",
+        "exit"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": true,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "flaminglow",
+      "name": "FLAMINGLOW",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/FLAMINGLOW.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "gold-microphone",
+      "name": "Gold Microphone",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/props/GOLD_MICROPHONE.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "holophone-gold",
+      "name": "Holophone Gold",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/props/HOLOPHONE_GOLD.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "holophone-silver",
+      "name": "Holophone Silver",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/props/HOLOPHONE_SILVER.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "houndette",
+      "name": "Houndette",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/HOUNDETTE.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "houndette-bone",
+      "name": "Houndette Power Bone",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/houndette-bone.svg",
+      "generator": "bone",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": "#f5e2b8",
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "hold",
+        "use",
+        "throw"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "houndette-companion",
+      "name": "Houndette",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/HOUNDETTE.glb",
+      "thumbnail": "/public/images/backpack/houndette-companion.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          0.7,
+          0.7,
+          0.7
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "ion-core-prop",
+      "name": "IonCore Display Figure",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/IONCDUCK.glb",
+      "thumbnail": "/public/images/backpack/ioncore-display-figure.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          0.65,
+          0.65,
+          0.65
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "ioncduck",
+      "name": "IONCDUCK",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/IONCDUCK.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "mousey",
+      "name": "MOUSEY",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/MOUSEY.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "mousey-cheese",
+      "name": "Mousey Moon Cheese",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/mousey-cheese.svg",
+      "generator": "cheese",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": "#ffd84a",
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "hold",
+        "use",
+        "throw"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "mousey-companion",
+      "name": "Mousey",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/MOUSEY.glb",
+      "thumbnail": "/public/images/backpack/mousey-companion.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          0.55,
+          0.55,
+          0.55
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "muzikaz",
+      "name": "MUZIKAZ",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/MUZIKAZ.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "muzikaz-main",
+      "name": "MUZIKAZ Main Floor",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "muzkat",
+      "name": "MUZKAT",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/MUZKAT.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "muzkat-companion",
+      "name": "MuzKat",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/MUZKAT.glb",
+      "thumbnail": "/public/images/backpack/muzkat-companion.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          0.65,
+          0.65,
+          0.65
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "muzkat-fish",
+      "name": "MuzKat Beat Fish",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzkat-fish.svg",
+      "generator": "fish",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": "#51d9ff",
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "hold",
+        "use",
+        "throw"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "nervey-the-nervous-system",
+      "name": "Nervey The Nervous System",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/NERVEY_THE_NERVOUS_SYSTEM.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "pixella",
+      "name": "Pixella",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/pixella.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "rad-tox-dynamite",
+      "name": "RAD-TOX Dynamite",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/dynamite-item.svg",
+      "generator": "dynamite-bundle",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": true,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "hold",
+        "use",
+        "throw"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "rebel-black-sheep",
+      "name": "Rebel Black Sheep",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/rebel black sheep.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "remix",
+      "name": "Remix",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/remix.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "robocop",
+      "name": "Robocop",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/ROBOCOP.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "ronaldo",
+      "name": "Ronaldo",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/ronaldo.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "sharko",
+      "name": "Sharko",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/sharko.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "shonda",
+      "name": "Shonda",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/SHONDA.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "starter-boom-box",
+      "name": "Bass Reactor Boom Box",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/images/custom-item-models/boom-box.svg",
+      "thumbnail": "public/images/custom-item-models/boom-box.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "starter-crystal-pet",
+      "name": "Prism Crystal Pet",
+      "category": "creatures",
+      "assetType": "creature",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/images/custom-item-models/crystal-pet.svg",
+      "thumbnail": "public/images/custom-item-models/crystal-pet.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "starter-energy-blade",
+      "name": "Neon Energy Blade",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/images/custom-item-models/neon-energy-blade.svg",
+      "thumbnail": "public/images/custom-item-models/neon-energy-blade.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "starter-guardian-shield",
+      "name": "Arcade Guardian Shield",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/images/custom-item-models/arcade-shield.svg",
+      "thumbnail": "public/images/custom-item-models/arcade-shield.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "starter-health-potion",
+      "name": "Pulse Health Potion",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/images/custom-item-models/health-potion.svg",
+      "thumbnail": "public/images/custom-item-models/health-potion.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "starter-hover-board",
+      "name": "Street Hover Board",
+      "category": "vehicles",
+      "assetType": "vehicle",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/images/custom-item-models/hover-board.svg",
+      "thumbnail": "public/images/custom-item-models/hover-board.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "enter",
+        "drive",
+        "exit"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": true,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "starter-loot-crate",
+      "name": "Cyber Loot Crate",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/images/custom-item-models/loot-crate.svg",
+      "thumbnail": "public/images/custom-item-models/loot-crate.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "starter-portal-beacon",
+      "name": "Pocket Portal Beacon",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/images/custom-item-models/portal-beacon.svg",
+      "thumbnail": "public/images/custom-item-models/portal-beacon.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "starter-quest-key",
+      "name": "Holo Quest Key",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/images/custom-item-models/quest-key.svg",
+      "thumbnail": "public/images/custom-item-models/quest-key.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "starter-rocket-pack",
+      "name": "Nova Rocket Pack",
+      "category": "wearables",
+      "assetType": "wearable",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/images/custom-item-models/rocket-pack.svg",
+      "thumbnail": "public/images/custom-item-models/rocket-pack.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "equip",
+        "wear"
+      ],
+      "attachment": {
+        "socket": "torso",
+        "localPosition": [
+          0,
+          0,
+          0
+        ],
+        "localRotation": [
+          0,
+          0,
+          0
+        ],
+        "localScale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "inventoryCompatible": true,
+      "wearableCompatible": true,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "starter-scout-drone",
+      "name": "Scout Companion Drone",
+      "category": "creatures",
+      "assetType": "creature",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/images/custom-item-models/companion-drone.svg",
+      "thumbnail": "public/images/custom-item-models/companion-drone.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "starter-turbo-hammer",
+      "name": "Turbo Impact Hammer",
+      "category": "props",
+      "assetType": "prop",
+      "source": "public/models/toolkit-assets.json",
+      "generated": false,
+      "modelPath": "/public/images/custom-item-models/turbo-hammer.svg",
+      "thumbnail": "public/images/custom-item-models/turbo-hammer.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "terrorist-1",
+      "name": "Terrorist 1",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/TERRORIST_1.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "tyla-1",
+      "name": "Tyla 1",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/TYLA_1.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "tyla-2",
+      "name": "Tyla 2",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/TYLA_2.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "tyson",
+      "name": "Tyson",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/TYSON.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "untitled-crew-character",
+      "name": "Untitled Crew Character",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/UNTITLED_CREW_CHARACTER.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "volt-wolf-wearable",
+      "name": "Volt Wolf Armor",
+      "category": "wearables",
+      "assetType": "wearable",
+      "source": "public/models/backpack-assets.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/VOLTWOLF.glb",
+      "thumbnail": "/public/images/backpack/volt-wolf-armor.svg",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          0.8,
+          0.8,
+          0.8
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "equip",
+        "wear"
+      ],
+      "attachment": {
+        "socket": "torso",
+        "localPosition": [
+          0,
+          0,
+          0
+        ],
+        "localRotation": [
+          0,
+          0,
+          0
+        ],
+        "localScale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "inventoryCompatible": true,
+      "wearableCompatible": true,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "voltwolf",
+      "name": "VOLTWOLF",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/VOLTWOLF.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "wolfie",
+      "name": "Wolfie",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/wolfie.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "yucky-inmate",
+      "name": "Yucky Inmate",
+      "category": "characters",
+      "assetType": "avatar",
+      "source": "public/models/glb-models.json",
+      "generated": false,
+      "modelPath": "/public/models/avatars/YUCKY_INMATE.glb",
+      "thumbnail": "brand_name_tagline_panel_2x_transparent.png",
+      "generator": null,
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": false,
+        "color": null,
+        "preserveOriginal": true
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "bounds"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": true,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    }
+  ],
+  "audit": {
+    "assetCount": 114,
+    "generatedCount": 13,
+    "warnings": [
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "muzikaz-main",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "bee-duck-carrot",
+        "generator": "carrot"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "houndette-bone",
+        "generator": "bone"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "muzkat-fish",
+        "generator": "fish"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "mousey-cheese",
+        "generator": "cheese"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "rad-tox-dynamite",
+        "generator": "dynamite-bundle"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "asset-1",
+        "generator": "bottle"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "asset-2",
+        "generator": "bottle"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "asset-4",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "asset-5",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "asset-52",
+        "generator": "carrot"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "asset-53",
+        "generator": "dynamite-bundle"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "asset-54",
+        "generator": "extruded-svg"
+      }
+    ]
+  }
+}
