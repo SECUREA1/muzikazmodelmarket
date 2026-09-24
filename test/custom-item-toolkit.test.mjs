@@ -53,3 +53,21 @@ test('customized models expose transform controls and a saved-model popup', asyn
   assert.match(script, /showResult\(item\);setStep\(3\)/);
   assert.match(script, /mirrored:glb\?false/);
 });
+
+test('new SVG starters provide distinct accessible sandbox interactions', async () => {
+  const [script, styles] = await Promise.all([
+    readFile(new URL('../public/js/custom-item-toolkit.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/css/custom-item-toolkit.css', import.meta.url), 'utf8')
+  ]);
+
+  for (const effect of ['rocket', 'bass', 'hammer', 'prism']) {
+    assert.match(script, new RegExp(`effect:'${effect}'`));
+    assert.match(styles, new RegExp(`is-testing--${effect}`));
+  }
+  for (const action of ['Ignite thrusters', 'Drop the beat', 'Power smash', 'Call companion']) {
+    assert.match(script, new RegExp(`action:'${action}'`));
+  }
+  assert.match(script, /function playProfile\(item\)/);
+  assert.match(script, /testButton\.textContent=/);
+  assert.match(styles, /prefers-reduced-motion:reduce/);
+});
