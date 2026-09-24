@@ -1,4 +1,4 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
+import * as THREE from '../vendor/three/three.module.min.js';
 
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.

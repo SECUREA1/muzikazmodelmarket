@@ -245,9 +245,20 @@ test('premade assets stay clean while custom SVG clip-ons remain explicit', asyn
 });
 
 test('every library preview renders without aborting builder initialization', async () => {
-  const script = await readFile(new URL('../environment-builder.js', import.meta.url), 'utf8');
+  const [script, models] = await Promise.all([
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/builder-models-3d.js', import.meta.url), 'utf8')
+  ]);
   assert.match(script, /function itemSilhouette\(model,alt=model\.name\)/);
   assert.match(script, /itemSilhouette\(model,alt\)/);
   assert.equal((script.match(/function visual\(/g) || []).length, 1, 'preview renderer has one canonical implementation');
   assert.equal((script.match(/function libraryButton\(/g) || []).length, 1, 'library renderer has one canonical implementation');
+  assert.match(script, /from '\.\/public\/vendor\/three\/three\.module\.min\.js'/);
+  assert.doesNotMatch(script, /from 'https:\/\//, 'Firefox does not depend on cross-origin modules to populate the library');
+  assert.match(models, /from '\.\.\/vendor\/three\/three\.module\.min\.js'/);
+  assert.doesNotMatch(models, /from 'https:\/\//, 'the procedural model dependency is also same-origin');
+  assert.ok(
+    script.indexOf('renderLibrary();') < script.indexOf('new THREE.WebGLRenderer'),
+    'the Firefox library is populated before WebGL initialization can fail'
+  );
 });
