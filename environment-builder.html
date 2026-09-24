@@ -24,7 +24,7 @@
     <aside class="object-library" aria-labelledby="library-title">
       <header><div><small>BUILDERS PACK</small><h1 id="library-title">Item library</h1></div><span id="library-count">20</span></header>
       <p>Select an object or drag it onto the land. Add your own cast and props, too.</p>
-      <button type="button" class="create-item-button" id="open-item-maker"><span>＋</span><b>CREATE CUSTOM ITEM</b><small>Avatar · enemy · interactive prop</small></button>
+      <button type="button" class="create-item-button" id="open-item-maker"><span>＋</span><b>CREATE CUSTOM ITEM</b><small>Draw it · fit clip-ons · save 3 playable forms</small></button>
       <nav class="library-filters" aria-label="Filter item library"><button class="active" data-library-filter="all">ALL</button><button data-library-filter="avatar">AVATARS</button><button data-library-filter="enemy">ENEMIES</button><button data-library-filter="interactive">ROLE PLAY</button><button data-library-filter="landscape">OUTDOOR</button><button data-library-filter="interior">INTERIOR</button></nav>
       <div class="library-grid" id="library-grid"></div>
     </aside>
@@ -79,6 +79,11 @@
     <form method="dialog" id="item-maker-form">
       <header><div><small>3D CUSTOMIZATION TOOL KIT</small><h2 id="item-maker-title">Draw a custom game item</h2><p>Draw the model silhouette, tune its depth and bevel, then add it as a reusable, playable 3D object.</p></div><button value="cancel" class="dialog-close" aria-label="Close">×</button></header>
       <section class="model-sketch" aria-labelledby="model-sketch-title">
+        <nav class="custom-form-toggle" id="custom-form-toggle" aria-label="Custom item 3D form preview">
+          <button type="button" class="active" data-custom-form="solid" aria-pressed="true"><b>01</b><span>SOLID</span><small>Balanced game mesh</small></button>
+          <button type="button" data-custom-form="sculpted" aria-pressed="false"><b>02</b><span>SCULPTED</span><small>Deep beveled form</small></button>
+          <button type="button" data-custom-form="lightweight" aria-pressed="false"><b>03</b><span>LIGHTWEIGHT</span><small>Fast neon mesh</small></button>
+        </nav>
         <div class="sketch-toolbar" role="toolbar" aria-label="SVG drawing tools">
           <div><small id="model-sketch-title">DRAW TO SVG MODEL</small><strong>Shape studio</strong></div>
           <button type="button" class="active" data-draw-tool="pencil" aria-pressed="true">✎ <span>Pencil</span></button>
@@ -100,6 +105,18 @@
         </div>
         <div class="sketch-actions"><button type="button" id="download-model-svg">DOWNLOAD SVG</button><span id="drawing-status" role="status">Draw directly on the grid. Your paths become real 3D geometry.</span></div>
       </section>
+      <section class="clip-on-studio" aria-labelledby="clip-on-title">
+        <header><div><small>FIT BEFORE SAVING</small><h3 id="clip-on-title">3D clip-on kit</h3></div><output id="clip-on-count">0 fitted</output></header>
+        <p>Toggle clothing and useful attachments. Every selected piece is built as 3D geometry and bundled with all three forms.</p>
+        <div id="custom-clip-ons" class="custom-clip-ons" role="group" aria-label="Optional 3D clip-ons">
+          <button type="button" data-clip-on="cap" aria-pressed="false"><i>⌒</i><span>Street cap</span></button>
+          <button type="button" data-clip-on="hoodie" aria-pressed="false"><i>▰</i><span>Hoodie</span></button>
+          <button type="button" data-clip-on="armor" aria-pressed="false"><i>◇</i><span>Armor plate</span></button>
+          <button type="button" data-clip-on="backpack" aria-pressed="false"><i>▣</i><span>Backpack</span></button>
+          <button type="button" data-clip-on="wings" aria-pressed="false"><i>⋈</i><span>Wings</span></button>
+          <button type="button" data-clip-on="sign" aria-pressed="false"><i>!</i><span>Quest sign</span></button>
+        </div>
+      </section>
       <div class="maker-fields">
         <label>ITEM NAME<input id="custom-item-name" required maxlength="32" value="My character" placeholder="e.g. Forest guardian"></label>
         <label>TYPE<select id="custom-item-type"><option value="avatar">Avatar / NPC</option><option value="enemy">Enemy</option><option value="interactive">Interactive object</option><option value="landscape">Outdoor prop</option><option value="interior">Interior prop</option></select></label>
@@ -108,7 +125,7 @@
         <label>STARTING ANIMATION<select id="custom-item-animation"><option value="idle">Idle</option><option value="walk">Walk</option><option value="dance">Dance</option><option value="float">Float</option></select></label>
         <label>FUNCTION ON INTERACT<select id="custom-item-action"><option value="message">Show message</option><option value="score">Award score</option><option value="teleport">Teleport player</option><option value="damage">Deal damage</option><option value="none">None</option></select></label>
       </div>
-      <footer><button value="cancel">CANCEL</button><button value="default" id="create-custom-item" class="primary">ADD TO LIBRARY &amp; MAP</button></footer>
+      <footer><span class="three-form-promise"><b>3× 3D</b> All three game-ready forms will be saved.</span><button value="cancel">CANCEL</button><button value="default" id="create-custom-item" class="primary">SAVE 3 FORMS &amp; PLACE</button></footer>
     </form>
   </dialog>
   <div class="builder-toast" id="builder-toast" role="status" aria-live="polite"></div>

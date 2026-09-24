@@ -27,7 +27,7 @@ test('environment builder supports custom role-play actors and interactions', as
   for (const category of ['avatar', 'enemy', 'interactive']) assert.match(html, new RegExp(`data-library-filter="${category}"`));
   for (const behavior of ['talk', 'quest', 'hostile', 'patrol', 'pickup', 'door', 'heal']) assert.match(html, new RegExp(`value="${behavior}"`));
   assert.match(script, /muzikaz\.environmentBuilder\.customItems\.v1/);
-  assert.match(script, /data-delete-model/);
+  assert.match(script, /data-delete-group/);
   assert.match(script, /customRoles:true/);
   assert.ok((script.match(/type:'enemy'/g) || []).length >= 4, 'includes several ready-made enemies');
   assert.ok((script.match(/type:'interactive'/g) || []).length >= 4, 'includes several interactive role-play objects');
@@ -44,6 +44,21 @@ test('custom items use an SVG drawing and 3D extrusion toolkit instead of icon-o
   for (const tool of ['pencil', 'line', 'rectangle', 'circle']) assert.match(html, new RegExp(`data-draw-tool="${tool}"`));
   for (const feature of ['svgDocument', 'drawingStrokes', 'ExtrudeGeometry', 'TubeGeometry', 'drawingSettings', 'createDrawnModel']) assert.match(script, new RegExp(feature));
   assert.doesNotMatch(html, /CHOOSE AN ICON/);
+});
+
+test('every drawn custom item saves three toggleable 3D forms with fitted clip-ons', async () => {
+  const [html, script, css] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
+  ]);
+  for (const form of ['solid', 'sculpted', 'lightweight']) assert.match(html, new RegExp(`data-custom-form="${form}"`));
+  for (const clipOn of ['cap', 'hoodie', 'armor', 'backpack', 'wings', 'sign']) assert.match(html, new RegExp(`data-clip-on="${clipOn}"`));
+  for (const feature of ['customFormPresets', 'upgradeCustomModels', 'groupId', 'formLabel', 'clipOns', 'custom-library-versions']) assert.match(script, new RegExp(feature));
+  assert.match(script, /Object\.entries\(customFormPresets\)\.map/);
+  assert.match(script, /mesh\.name='custom-clip-on'/);
+  assert.match(css, /\.custom-form-toggle/);
+  assert.match(css, /\.custom-clip-ons/);
 });
 
 test('environment builder places grounded 3D assets and persists complete runtime state', async () => {
