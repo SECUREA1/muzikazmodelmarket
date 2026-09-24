@@ -23,3 +23,15 @@ test('adaptive WebGL quality keeps Firefox-compatible texture uploads current', 
   assert.match(quality, /renderer\?\.capabilities\?\.maxTextureSize/);
   assert.match(quality, /value\.needsUpdate = true/);
 });
+
+test('Firefox item and map population survives large or partially unavailable collections', async () => {
+  const game = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
+
+  assert.match(game, /const options = document\.createDocumentFragment\(\)/);
+  assert.doesNotMatch(game, /replaceChildren\(\.\.\.worlds\.map/);
+  assert.match(game, /function modelIdentity\(modelUrl\)/);
+  assert.match(game, /catch \{ return pathname\.toLowerCase\(\); \}/);
+  assert.match(game, /Promise\.allSettled\(\[/);
+  assert.match(game, /if \(packResult\.status === 'fulfilled'\)/);
+  assert.match(game, /return worldResult\.status === 'fulfilled' \? worldResult\.value : registry\.all\(\)/);
+});

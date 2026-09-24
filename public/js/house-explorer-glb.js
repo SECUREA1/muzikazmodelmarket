@@ -394,7 +394,23 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     return backpackAssetStack(asset, imageUrl);
   }
   function backpackPieSlice(index,total=BACKPACK_CATEGORIES.length) { const points=['50% 50%']; const start=-90+(index*360/total), end=-90+((index+1)*360/total); for(let angle=start;angle<=end;angle+=5){const radians=angle*Math.PI/180;points.push(`${50+50*Math.cos(radians)}% ${50+50*Math.sin(radians)}%`);} const radians=end*Math.PI/180;points.push(`${50+50*Math.cos(radians)}% ${50+50*Math.sin(radians)}%`); return `polygon(${points.join(',')})`; }
-  function syncEnvironmentSelect(worlds) { if (!environmentSelect) return; const selectedId = activeEnvironment?.id || environmentSelect.value || ''; environmentSelect.replaceChildren(...worlds.map((env) => new Option(env.name || env.id || 'House environment', env.id, false, env.id === selectedId))); environmentSelect.disabled = !worlds.length; }
+  function syncEnvironmentSelect(worlds) {
+    if (!environmentSelect) return;
+    const selectedId = activeEnvironment?.id || environmentSelect.value || '';
+    // Append through a fragment rather than spreading every option into
+    // replaceChildren(). Firefox has a lower argument limit than Chromium, so
+    // a large user-map registry could prevent both maps and items from rendering.
+    const options = document.createDocumentFragment();
+    worlds.forEach((env) => {
+      const option = document.createElement('option');
+      option.value = env.id;
+      option.textContent = env.name || env.id || 'House environment';
+      option.selected = env.id === selectedId;
+      options.appendChild(option);
+    });
+    environmentSelect.replaceChildren(options);
+    environmentSelect.disabled = !worlds.length;
+  }
   function designateAvatar(asset) { const avatar = normalizeAvatarRecord(asset); localStorage.setItem('muzikazDesignatedAvatar', JSON.stringify({ ...avatar, displayName:avatar.name })); window.MUZIKAZ_DESIGNATED_AVATAR = avatar; window.dispatchEvent(new CustomEvent('muzikaz-avatar-ready', { detail:avatar })); setStatus(`${avatar.name} is now your player avatar.`); renderPicker(); }
   function correlatedLandDrop(asset) {
     const profileId=(localStorage.getItem('muzikazBottleMemberEmail')||'').trim().toLowerCase();
@@ -502,6 +518,16 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (type === 'wearable' || type === 'clothing') return 'wearables';
     return 'props';
   }
+  function modelIdentity(modelUrl) {
+    if (!modelUrl) return '';
+    try {
+      const pathname = new URL(String(modelUrl), location.href).pathname;
+      // Asset names may legitimately contain a percent sign. A malformed
+      // escape must not abort the entire inventory render in Firefox.
+      try { return decodeURIComponent(pathname).toLowerCase(); }
+      catch { return pathname.toLowerCase(); }
+    } catch { return String(modelUrl).toLowerCase(); }
+  }
   function backpackRecords() {
     const worlds = registry.all().map(env => ({ ...env, environmentId:env.id, type:'lands', owner:env.owner || 'MUZIKAZ', modelUrl:env.modelUrl || env.modelUrls?.[0] || '', description:env.description || 'Public walkable map' }));
     const catalog = cachedCatalogModels.map(model => ({ ...model, type:backpackType(model), description:model.description || `Public ${backpackType(model).replace(/s$/, '')}` }));
@@ -509,7 +535,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     let customItems=[];try{customItems=JSON.parse(localStorage.getItem('muzikazCustomGameItemsV2')||'[]').filter(item=>item?.playable!==false).map(item=>({...item,customItem:true,type:'props',owner:'You',description:item.description||'Custom 3D-deployable game item'}));}catch{}
     const merged = [...customItems, ...backpackAssets, ...catalog, ...liveAvatars, ...worlds];
     const seen = new Set();
-    return merged.filter(item => { const modelKey=item.modelUrl ? decodeURIComponent(new URL(item.modelUrl,location.origin).pathname).toLowerCase() : ''; const key=modelKey ? `${item.type}:${modelKey}` : `${item.type}:${item.id}`; if(seen.has(key)) return false; seen.add(key); return true; });
+    return merged.filter(item => { const modelKey=modelIdentity(item.modelUrl); const key=modelKey ? `${item.type}:${modelKey}` : `${item.type}:${item.id}`; if(seen.has(key)) return false; seen.add(key); return true; });
   }
   // The toolkit and game can run on the same page. Refresh the open inventory
   // immediately rather than requiring a reload after a creator saves an item.
@@ -531,7 +557,26 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     library.querySelectorAll('[data-buy-treat]').forEach(button=>button.addEventListener('click',()=>{const asset=records.find(item=>item.id===button.dataset.buyTreat);if(asset)buyPetTreat(asset);}));
   }
   function renderLibrary() { renderPicker(); }
-  async function refreshLibrary() { try { const [worlds, pack] = await Promise.all([registry.refresh(), fetch('public/models/backpack-assets.json',{cache:'no-store'}).then(r=>r.ok?r.json():[]).catch(()=>[])]); addSavedBuilderWorld(); backpackAssets=Array.isArray(pack)?pack:(pack.assets||[]); renderPicker(); return worlds; } catch (error) { setStatus(error.message); library.innerHTML = `<div class="house-picker-title"><strong>Drop Backpack</strong></div><small>${escapeHtml(error.message)}</small>`; throw error; } }
+  async function refreshLibrary() {
+    const [worldResult, packResult] = await Promise.allSettled([
+      registry.refresh(),
+      fetch('public/models/backpack-assets.json', { cache:'no-store' }).then((response) => {
+        if (!response.ok) throw new Error(`Backpack manifest unavailable (${response.status})`);
+        return response.json();
+      })
+    ]);
+    // Populate each collection independently. Firefox privacy/network settings
+    // can block one request; the other collection must remain usable.
+    if (packResult.status === 'fulfilled') {
+      const pack = packResult.value;
+      backpackAssets = Array.isArray(pack) ? pack : (pack.assets || []);
+    }
+    addSavedBuilderWorld();
+    renderPicker();
+    if (worldResult.status === 'rejected') setStatus(`Maps are temporarily unavailable. ${worldResult.reason?.message || ''}`.trim());
+    else if (packResult.status === 'rejected') setStatus(`Items are temporarily unavailable. ${packResult.reason?.message || ''}`.trim());
+    return worldResult.status === 'fulfilled' ? worldResult.value : registry.all();
+  }
 
   let multiplayerPresence=[];
   function usersInWorld(id){return multiplayerPresence.filter(user=>(user.roomId||'rad-tox')===id).length;}
@@ -573,7 +618,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
   function normalizeAvatarRecord(raw = {}) { const modelUrl = raw.modelUrl || raw.model_url || raw.fileUrl || raw.file_url || raw.assetUrl || raw.asset_url || raw.avatarUrl || raw.publicUrl || ''; const id = raw.id || raw.avatarId || raw.modelId || btoa(unescape(encodeURIComponent(modelUrl || raw.name || Date.now()))).replace(/=+$/,''); return { id, name: raw.name || raw.avatarName || raw.title || 'GLB Avatar', owner: raw.owner || raw.creatorName || raw.creator || raw.username || 'MUZIKAZ', modelUrl: new URL(modelUrl, window.location.origin).href, format: String(raw.format || raw.fileType || raw.type || modelUrl.split('?')[0].split('.').pop() || '').toLowerCase(), type: raw.type || '', placementType: raw.placementType || raw.placement_type || '', category: raw.category || '', visibility: raw.visibility || 'public', status: raw.status || 'active', scale: Number(raw.scale) || 1, rotation: raw.rotation }; }
   function isActiveGlbAvatar(avatar) { const type=String(avatar.placementType).toLowerCase(); const category=String(avatar.category).toLowerCase(); return avatar.modelUrl && ['glb','gltf'].includes(avatar.format) && (!type || type === 'avatar') && !category.includes('map') && avatar.visibility !== 'private' && !['archived','rejected','disabled','inactive'].includes(String(avatar.status).toLowerCase()); }
-  async function fetchActiveAvatarModels() { const sources = [fetch(new URL('public/models/glb-models.json', window.location.origin), { cache:'no-store' }).then(r => r.ok ? r.json() : null).then(j => Array.isArray(j) ? j : (j?.models || [])), fetch('/api/models', { cache:'no-store' }).then(r => r.ok ? r.json() : null).then(j => Array.isArray(j) ? j : (j?.data || j?.models || [])).catch(() => [])]; const lists = await Promise.all(sources.map(p => p.catch(() => []))); let records = lists.flat(); try { records = mergeGitHubAvatarFiles(records, await fetchGitHubGlbFiles()); } catch (error) { console.info('[MUZIKAZ GitHub GLB] Avatar discovery unavailable; using catalog and API models.', error.message); } const allByModel = new Map(); records.filter(record=>record?.modelUrl).forEach(record=>allByModel.set(decodeURIComponent(new URL(record.modelUrl,location.origin).pathname).toLowerCase(),record)); cachedCatalogModels=[...allByModel.values()]; const byId = new Map(); records.filter(record=>backpackType(record)==='avatars').map(normalizeAvatarRecord).filter(isActiveGlbAvatar).forEach(a => byId.set(a.id, a)); return [...byId.values()]; }
+  async function fetchActiveAvatarModels() { const sources = [fetch(new URL('public/models/glb-models.json', window.location.origin), { cache:'no-store' }).then(r => r.ok ? r.json() : null).then(j => Array.isArray(j) ? j : (j?.models || [])), fetch('/api/models', { cache:'no-store' }).then(r => r.ok ? r.json() : null).then(j => Array.isArray(j) ? j : (j?.data || j?.models || [])).catch(() => [])]; const lists = await Promise.all(sources.map(p => p.catch(() => []))); let records = lists.flat(); try { records = mergeGitHubAvatarFiles(records, await fetchGitHubGlbFiles()); } catch (error) { console.info('[MUZIKAZ GitHub GLB] Avatar discovery unavailable; using catalog and API models.', error.message); } const allByModel = new Map(); records.filter(record=>record?.modelUrl).forEach(record=>allByModel.set(modelIdentity(record.modelUrl),record)); cachedCatalogModels=[...allByModel.values()]; const byId = new Map(); records.filter(record=>backpackType(record)==='avatars').map(normalizeAvatarRecord).filter(isActiveGlbAvatar).forEach(a => byId.set(a.id, a)); return [...byId.values()]; }
   function setAvatarPointerFromEvent(event) { const rect = canvas.getBoundingClientRect(); avatarPointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1; avatarPointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1; avatarRaycaster.setFromCamera(avatarPointer, camera); return avatarRaycaster.intersectObjects(envLoader.meshes, true)[0]?.point || playerRig.position.clone().add(forward.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).multiplyScalar(2)); }
   function floorPointAt(point) { const bounds = envLoader.bounds; const rayOriginY = Number.isFinite(bounds.max.y) ? bounds.max.y + player.height + 8 : point.y + player.height + 8; avatarRaycaster.set(new THREE.Vector3(point.x, rayOriginY, point.z), new THREE.Vector3(0, -1, 0)); return avatarRaycaster.intersectObjects(envLoader.meshes, true).find((item) => item.object.visible !== false)?.point || point; }
   function floorPointFromPointer(event) { return setAvatarPointerFromEvent(event).clone(); }
