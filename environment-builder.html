@@ -68,12 +68,32 @@
   </main>
   <dialog class="item-maker" id="item-maker" aria-labelledby="item-maker-title">
     <form method="dialog" id="item-maker-form">
-      <header><div><small>EXPAND YOUR WORLD</small><h2 id="item-maker-title">Create a custom item</h2><p>Add a reusable character, enemy, or interactive object to this map.</p></div><button value="cancel" class="dialog-close" aria-label="Close">×</button></header>
-      <div class="maker-preview" id="maker-preview"><span id="maker-preview-icon">🧙</span><b id="maker-preview-name">My character</b></div>
+      <header><div><small>3D CUSTOMIZATION TOOL KIT</small><h2 id="item-maker-title">Draw a custom game item</h2><p>Draw the model silhouette, tune its depth and bevel, then add it as a reusable, playable 3D object.</p></div><button value="cancel" class="dialog-close" aria-label="Close">×</button></header>
+      <section class="model-sketch" aria-labelledby="model-sketch-title">
+        <div class="sketch-toolbar" role="toolbar" aria-label="SVG drawing tools">
+          <div><small id="model-sketch-title">DRAW TO SVG MODEL</small><strong>Shape studio</strong></div>
+          <button type="button" class="active" data-draw-tool="pencil" aria-pressed="true">✎ <span>Pencil</span></button>
+          <button type="button" data-draw-tool="line" aria-pressed="false">╱ <span>Line</span></button>
+          <button type="button" data-draw-tool="rectangle" aria-pressed="false">□ <span>Box</span></button>
+          <button type="button" data-draw-tool="circle" aria-pressed="false">○ <span>Circle</span></button>
+          <button type="button" id="undo-model-stroke">↶ <span>Undo</span></button>
+          <button type="button" id="clear-model-drawing">× <span>Clear</span></button>
+        </div>
+        <div class="sketch-workbench">
+          <div class="drawing-board"><svg id="custom-model-drawing" viewBox="0 0 480 280" role="img" aria-label="Draw the front silhouette of your custom 3D item"><g id="custom-model-grid" aria-hidden="true"></g><g id="custom-model-strokes"></g><path id="custom-model-active-stroke"></path></svg><span>FRONT / SVG</span></div>
+          <div class="maker-preview" id="maker-preview"><div id="maker-preview-model" aria-label="Live extruded model preview"><svg viewBox="0 0 480 280" aria-hidden="true"><g id="maker-preview-strokes"></g></svg></div><b id="maker-preview-name">My character</b><small>LIVE 3D DEPTH PREVIEW</small></div>
+        </div>
+        <div class="sketch-settings">
+          <label>BRUSH SIZE <output id="brush-size-output">18 px</output><input id="custom-brush-size" type="range" min="4" max="48" value="18"></label>
+          <label>MODEL DEPTH <output id="model-depth-output">0.30 m</output><input id="custom-model-depth" type="range" min="0.05" max="1.2" value="0.3" step="0.05"></label>
+          <label>EDGE BEVEL <output id="model-bevel-output">0.04 m</output><input id="custom-model-bevel" type="range" min="0" max="0.2" value="0.04" step="0.01"></label>
+          <label>FINISH<select id="custom-model-material"><option value="standard">Painted</option><option value="metal">Metal</option><option value="glow">Neon glow</option><option value="glass">Glass</option></select></label>
+        </div>
+        <div class="sketch-actions"><button type="button" id="download-model-svg">DOWNLOAD SVG</button><span id="drawing-status" role="status">Draw directly on the grid. Your paths become real 3D geometry.</span></div>
+      </section>
       <div class="maker-fields">
         <label>ITEM NAME<input id="custom-item-name" required maxlength="32" value="My character" placeholder="e.g. Forest guardian"></label>
         <label>TYPE<select id="custom-item-type"><option value="avatar">Avatar / NPC</option><option value="enemy">Enemy</option><option value="interactive">Interactive object</option><option value="landscape">Outdoor prop</option><option value="interior">Interior prop</option></select></label>
-        <fieldset><legend>CHOOSE AN ICON</legend><div class="icon-picker" id="icon-picker"></div></fieldset>
         <label>COLOR<input id="custom-item-color" type="color" value="#b9ff38"></label>
         <label class="maker-wide">DEFAULT BEHAVIOR<select id="custom-item-behavior"><option value="talk">Start dialogue</option><option value="quest">Offer a quest</option><option value="hostile">Attack player</option><option value="patrol">Patrol area</option><option value="pickup">Collect item</option><option value="door">Open / close</option><option value="heal">Restore health</option><option value="decor">Decoration only</option></select></label>
         <label>STARTING ANIMATION<select id="custom-item-animation"><option value="idle">Idle</option><option value="walk">Walk</option><option value="dance">Dance</option><option value="float">Float</option></select></label>
