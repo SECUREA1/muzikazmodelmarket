@@ -73,6 +73,13 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.equal(gameBackpack.body.data.avatars.filter((item) => item.source === 'repository').length, 30, 'every labeled avatar is available to the game');
   assert.equal(gameBackpack.body.data.props.length, 4, 'prop-folder models stay in the prop inventory');
   assert.equal(gameBackpack.body.data.vehicles.length, 1, 'vehicle-folder models stay in the vehicle inventory');
+  const liveMap = await json(`${base}/api/custom-maps`, { method: 'POST', headers: { Cookie: accountCookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ scene: { id: 'integration-live-map', name: 'Integration Live Map', layout: 'grand-floor', objects: [{ id: 'spawn-1', modelId: 'hero-spawn', position: { x: 0, y: 0, z: 0 } }] } }) });
+  assert.equal(liveMap.response.status, 201, 'Save & Play Live publishes through the persistent API');
+  assert.equal(liveMap.body.data.ownerId, `account:${activation.body.data.account.accountId}`, 'the API binds a live map to the authenticated Backpack rather than a spoofable header');
+  const liveEnvironments = await json(`${base}/api/environments`);
+  assert.ok(liveEnvironments.body.data.some((environment) => environment.id === 'integration-live-map' && environment.builderScene.objects.length === 1), 'the multiplayer map registry exposes the complete playable scene');
+  const updatedBackpack = await json(`${base}/api/backpack`, { headers: { Cookie: accountCookie } });
+  assert.ok(updatedBackpack.body.data.environments.some((environment) => environment.id === 'environment-integration-live-map'), 'published maps flow back into the game Backpack');
   const dax = gameBackpack.body.data.avatars.find((item) => item.id === 'repository-dax');
   assert.equal((await fetch(`${base}${dax.modelUrl}`)).status, 200, 'catalog model URLs resolve through the backend');
   const avatarSelection = await json(`${base}/api/avatar-selection`, { method: 'PUT', headers: { Cookie: accountCookie, 'X-CSRF-Token': activation.body.data.csrfToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ avatarId: dax.id }) });

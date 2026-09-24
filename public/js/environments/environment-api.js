@@ -34,7 +34,10 @@ export async function uploadEnvironment(formData, onProgress = () => {}) {
   if (!landHeaders) throw new Error('Backpack access is still loading. Wait a moment and try again.');
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/environments/upload');
+    xhr.open('POST', apiUrl('/api/environments/upload'));
+    xhr.withCredentials = true;
+    const sessionToken = window.MUZIKAZ_API?.getSessionToken?.();
+    if (sessionToken) xhr.setRequestHeader('Authorization', `Bearer ${sessionToken}`);
     Object.entries(landHeaders).forEach(([name, value]) => xhr.setRequestHeader(name, value));
     xhr.responseType = 'json';
     xhr.upload.onprogress = (event) => {

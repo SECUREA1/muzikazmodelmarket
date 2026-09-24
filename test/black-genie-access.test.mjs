@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-test('Vibe Crib restores Loadout multiplayer while the other House launchers remain free demos', async () => {
+test('Vibe Crib and the other House launchers explain their current access modes', async () => {
   const wallet = await readFile(new URL('../mzk-wallet.js', import.meta.url), 'utf8');
   const [home, market, crib] = await Promise.all(['../index.html', '../model-market.html', '../model-explorer.html'].map((url) => readFile(new URL(url, import.meta.url), 'utf8')));
   assert.match(wallet, /mzkDemoAccess = 'public'/);
@@ -11,8 +11,8 @@ test('Vibe Crib restores Loadout multiplayer while the other House launchers rem
     assert.match(page, /Free public demo · single player \+ multiplayer/);
     assert.match(page, /MZK purchases are optional/);
   }
-  assert.match(crib, /MZK balance and assets tied to your username and Loadout Pack/);
-  assert.match(crib, /data-multiplayer-control disabled/);
+  assert.match(crib, /join multiplayer worlds after the simple members-area login/);
+  assert.match(crib, /data-multiplayer-control/);
   assert.match(await readFile(new URL('../buy-mzk.html', import.meta.url), 'utf8'), /MZK/);
 });
 
