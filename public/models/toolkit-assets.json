@@ -1,0 +1,905 @@
+{
+  "generatedCatalog": true,
+  "assets": [
+    {
+      "id": "asset-1",
+      "name": "Black Genie Bottle",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/assets/black-genie-bottle.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-2",
+      "name": "Golden Genie Bottle",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/assets/golden-genie-bottle.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-3",
+      "name": "Muzikaz World Logo",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-4",
+      "name": "Muzikaz World Map",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/assets/muzikaz-world-map.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-5",
+      "name": "Muzikaz World Poster",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/assets/muzikaz-world-poster.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-6",
+      "name": "Ui Icons",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/assets/ui-icons.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-7",
+      "name": "Aape Avatar",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/aape-avatar.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-8",
+      "name": "Bee Duck Companion",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/bee-duck-companion.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-9",
+      "name": "Dax Avatar",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/dax-avatar.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-10",
+      "name": "Drone Engine",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/drone-engine.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-11",
+      "name": "Houndette Bone",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/houndette-bone.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-12",
+      "name": "Houndette Companion",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/houndette-companion.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-13",
+      "name": "Ioncore Display Figure",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/ioncore-display-figure.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-14",
+      "name": "Mousey Cheese",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/mousey-cheese.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-15",
+      "name": "Mousey Companion",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/mousey-companion.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-16",
+      "name": "Muzikaz Main Floor",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/muzikaz-main-floor.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-17",
+      "name": "Muzkat Companion",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/muzkat-companion.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-18",
+      "name": "Muzkat Fish",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/muzkat-fish.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-19",
+      "name": "Volt Wolf Armor",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/backpack/volt-wolf-armor.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-20",
+      "name": "Archway",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/archway.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-21",
+      "name": "Armchair",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/armchair.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-22",
+      "name": "Art Wall",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/art-wall.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-23",
+      "name": "Bathroom Vanity",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/bathroom-vanity.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-24",
+      "name": "Bookshelf",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/bookshelf.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-25",
+      "name": "Canopy Tree",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/canopy-tree.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-26",
+      "name": "Coffee Table",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/coffee-table.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-27",
+      "name": "Corsair Aircraft",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/corsair-aircraft.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-28",
+      "name": "Dining Set",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/dining-set.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-29",
+      "name": "Dune Quad",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/dune-quad.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-30",
+      "name": "Elevator",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/elevator.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-31",
+      "name": "Fireplace",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/fireplace.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-32",
+      "name": "Floor Lamp",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/floor-lamp.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-33",
+      "name": "Flower Bed",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/flower-bed.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-34",
+      "name": "Garden Rocks",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/garden-rocks.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-35",
+      "name": "Glass Door",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/glass-door.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-36",
+      "name": "Hedge Corner",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/hedge-corner.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-37",
+      "name": "Hill",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/hill.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-38",
+      "name": "Kitchen Island",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/kitchen-island.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-39",
+      "name": "Lamp Post",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/lamp-post.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-40",
+      "name": "Loft Bed",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/loft-bed.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-41",
+      "name": "Modular Wall",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/modular-wall.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-42",
+      "name": "Path Tile",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/path-tile.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-43",
+      "name": "Pine Tree",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/pine-tree.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-44",
+      "name": "Planter",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/planter.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-45",
+      "name": "Pond",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/pond.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-46",
+      "name": "Recording Booth",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/recording-booth.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-47",
+      "name": "Room Divider",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/room-divider.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-48",
+      "name": "Sofa",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/sofa.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-49",
+      "name": "Spiral Stairs",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/spiral-stairs.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-50",
+      "name": "Studio Desk",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/studio-desk.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-51",
+      "name": "Wardrobe",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/builder-pack/wardrobe.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-52",
+      "name": "Carrot Item",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/carrot-item.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-53",
+      "name": "Dynamite Item",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/dynamite-item.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-54",
+      "name": "Explosion Burst",
+      "type": "SVG asset",
+      "format": "svg",
+      "modelUrl": "",
+      "thumbnailUrl": "public/images/explosion-burst.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-55",
+      "name": "318Bb72E 99A3 4258 9684 8Db3B35Cc753 2",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/318bb72e-99a3-4258-9684-8db3b35cc753 2.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-56",
+      "name": "Aape",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/AAPE.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-57",
+      "name": "Beedeere",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/BEEDEERE.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-58",
+      "name": "Beeduck",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/BEEDUCK.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-59",
+      "name": "Buzzed",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/BUZZED.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-60",
+      "name": "Byte",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/BYTE.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-61",
+      "name": "Dax",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/DAX.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-62",
+      "name": "Donkley Kongley",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/DONKLEY_KONGLEY.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-63",
+      "name": "Flaminglow",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/FLAMINGLOW.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-64",
+      "name": "Houndette",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/HOUNDETTE.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-65",
+      "name": "Ioncduck",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/IONCDUCK.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-66",
+      "name": "Mousey",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/MOUSEY.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-67",
+      "name": "Muzikaz",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/MUZIKAZ.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-68",
+      "name": "Muzkat",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/MUZKAT.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-69",
+      "name": "Nervey The Nervous System",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/NERVEY_THE_NERVOUS_SYSTEM.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-70",
+      "name": "Robocop",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/ROBOCOP.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-71",
+      "name": "Shonda",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/SHONDA.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-72",
+      "name": "Terrorist 1",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/TERRORIST_1.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-73",
+      "name": "Tyla 1",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/TYLA_1.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-74",
+      "name": "Tyla 2",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/TYLA_2.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-75",
+      "name": "Tyson",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/TYSON.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-76",
+      "name": "Untitled Crew Character",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/UNTITLED_CREW_CHARACTER.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-77",
+      "name": "Voltwolf",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/VOLTWOLF.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-78",
+      "name": "Yucky Inmate",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/YUCKY_INMATE.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-79",
+      "name": "Pixella",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/pixella.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-80",
+      "name": "Rebel Black Sheep",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/rebel black sheep.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-81",
+      "name": "Remix",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/remix.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-82",
+      "name": "Ronaldo",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/ronaldo.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-83",
+      "name": "Sharko",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/sharko.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-84",
+      "name": "Wolfie",
+      "type": "avatar",
+      "format": "glb",
+      "modelUrl": "public/models/avatars/wolfie.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-85",
+      "name": "Crewplaza In",
+      "type": "environment",
+      "format": "glb",
+      "modelUrl": "public/models/environments/CREWPLAZA_IN.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-86",
+      "name": "Crewplaza Inside",
+      "type": "environment",
+      "format": "glb",
+      "modelUrl": "public/models/environments/CREWPLAZA_INSIDE.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-87",
+      "name": "Crewplaza Outdoors",
+      "type": "environment",
+      "format": "glb",
+      "modelUrl": "public/models/environments/CREWPLAZA_OUTDOORS.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-88",
+      "name": "Jailcells",
+      "type": "environment",
+      "format": "glb",
+      "modelUrl": "public/models/environments/JAILCELLS.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-89",
+      "name": "Kitchen 1",
+      "type": "environment",
+      "format": "glb",
+      "modelUrl": "public/models/environments/KITCHEN_1.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-90",
+      "name": "Kitchner Upper Deck",
+      "type": "environment",
+      "format": "glb",
+      "modelUrl": "public/models/environments/KITCHNER_UPPER_DECK.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-91",
+      "name": "Studioridge In",
+      "type": "environment",
+      "format": "glb",
+      "modelUrl": "public/models/environments/STUDIORIDGE_IN.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-92",
+      "name": "Studioridge Out",
+      "type": "environment",
+      "format": "glb",
+      "modelUrl": "public/models/environments/STUDIORIDGE_OUT.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-93",
+      "name": "Muzikazupper",
+      "type": "environment",
+      "format": "glb",
+      "modelUrl": "public/models/environments/muzikazupper.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-94",
+      "name": "Muzimakzmain",
+      "type": "environment",
+      "format": "glb",
+      "modelUrl": "public/models/environments/muzimakzmain.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-95",
+      "name": "Sheepbase",
+      "type": "environment",
+      "format": "glb",
+      "modelUrl": "public/models/environments/sheepbase.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-96",
+      "name": "Bronze Couch",
+      "type": "prop",
+      "format": "glb",
+      "modelUrl": "public/models/props/BRONZE_COUCH.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-97",
+      "name": "Gold Microphone",
+      "type": "prop",
+      "format": "glb",
+      "modelUrl": "public/models/props/GOLD_MICROPHONE.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-98",
+      "name": "Holophone Gold",
+      "type": "prop",
+      "format": "glb",
+      "modelUrl": "public/models/props/HOLOPHONE_GOLD.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-99",
+      "name": "Holophone Silver",
+      "type": "prop",
+      "format": "glb",
+      "modelUrl": "public/models/props/HOLOPHONE_SILVER.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    },
+    {
+      "id": "asset-100",
+      "name": "Drone Engine",
+      "type": "vehicle",
+      "format": "glb",
+      "modelUrl": "public/models/vehicles/DRONE ENGINE.glb",
+      "thumbnailUrl": "public/assets/muzikaz-world-logo.svg",
+      "source": "asset manifest"
+    }
+  ]
+}

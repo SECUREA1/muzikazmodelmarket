@@ -1,197 +1,59 @@
 (function customItemToolkit() {
   'use strict';
-
-  const canvas = document.getElementById('custom-item-canvas');
+  const $ = (selector) => document.querySelector(selector);
+  const canvas = $('#custom-item-canvas');
   if (!canvas) return;
-
   const ctx = canvas.getContext('2d');
-  const preview = document.getElementById('custom-extruded-preview');
-  const glbPreview = document.getElementById('custom-glb-preview');
-  const libraryGrid = document.getElementById('custom-library-grid');
-  const libraryStatus = document.getElementById('custom-library-status');
-  const dialog = document.getElementById('custom-item-dialog');
-  const dialogModel = document.getElementById('custom-dialog-model');
-  const dialogImage = document.getElementById('custom-dialog-image');
-  const storageKey = 'muzikazCustomGameItems';
-  const state = { drawing: false, tool: 'draw', paths: [], current: null, items: [], selected: null, hasArtwork: false };
+  const preview = $('#custom-extruded-preview');
+  const glbPreview = $('#custom-glb-preview');
+  const dialog = $('#custom-item-dialog');
+  const storageKey = 'muzikazCustomGameItemsV2';
+  const state = { drawing:false, tool:'draw', paths:[], current:null, items:[], selected:null, working:null, hasArtwork:false, placed:null };
+  const escapeHtml = (value) => { const node=document.createElement('span'); node.textContent=value || ''; return node.innerHTML; };
+  const isGlb = (item) => item?.format === 'glb' || /\.(glb|gltf)(\?|$)/i.test(item?.modelUrl || '');
+  const savedItems = () => { try { return JSON.parse(localStorage.getItem(storageKey) || localStorage.getItem('muzikazCustomGameItems') || '[]'); } catch (_) { return []; } };
+  const saveItems = (items) => localStorage.setItem(storageKey, JSON.stringify(items.slice(0, 48)));
 
-  function resizeCanvas() {
-    const rect = canvas.getBoundingClientRect();
-    const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    const snapshot = state.hasArtwork ? canvas.toDataURL() : '';
-    canvas.width = Math.max(600, Math.round(rect.width * ratio));
-    canvas.height = Math.max(400, Math.round(rect.height * ratio));
-    if (snapshot) {
-      const image = new Image();
-      image.onload = () => ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-      image.src = snapshot;
-    } else drawGuide();
-  }
+  function drawGuide() { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.save(); ctx.strokeStyle='rgba(168,255,24,.13)'; const step=Math.max(36,canvas.width/15); for(let x=0;x<canvas.width;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke();} for(let y=0;y<canvas.height;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke();} ctx.restore(); }
+  function resizeCanvas(){ const rect=canvas.getBoundingClientRect(), ratio=Math.min(devicePixelRatio||1,2), snapshot=state.hasArtwork?canvas.toDataURL():''; canvas.width=Math.max(600,Math.round(rect.width*ratio)); canvas.height=Math.max(400,Math.round(rect.height*ratio)); if(snapshot){const image=new Image();image.onload=()=>ctx.drawImage(image,0,0,canvas.width,canvas.height);image.src=snapshot;}else drawGuide(); }
+  function point(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*canvas.width/rect.width,y:(event.clientY-rect.top)*canvas.height/rect.height};}
+  function updatePreview(){ const color=$('#custom-item-color').value, blend=Number($('#custom-color-blend').value)/100; preview.style.setProperty('--item-depth',`${Math.round($('#custom-depth').value/3)}px`);preview.style.setProperty('--item-bevel',`${$('#custom-bevel').value}px`);preview.style.setProperty('--item-color',color);preview.style.opacity=String(.65+blend*.35); if(state.hasArtwork){preview.style.setProperty('--item-art',`url(${canvas.toDataURL('image/png')})`);preview.classList.add('has-art');preview.querySelector('span').textContent='';}else{preview.style.removeProperty('--item-art');preview.classList.remove('has-art');preview.querySelector('span').innerHTML='Draw<br>here';} }
+  function renderPaths(){drawGuide();ctx.lineCap='round';ctx.lineJoin='round';state.paths.forEach(path=>{if(path.points.length<2)return;ctx.globalCompositeOperation=path.tool==='erase'?'destination-out':'source-over';ctx.strokeStyle=path.color;ctx.lineWidth=path.size;ctx.beginPath();ctx.moveTo(path.points[0].x,path.points[0].y);path.points.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.stroke();});ctx.globalCompositeOperation='source-over';state.hasArtwork=state.paths.some(path=>path.tool==='draw');updatePreview();}
+  canvas.addEventListener('pointerdown',e=>{state.drawing=true;canvas.setPointerCapture(e.pointerId);state.current={tool:state.tool,size:Number($('#custom-brush-size').value)*canvas.width/canvas.clientWidth,color:$('#custom-item-color').value,points:[point(e)]};state.paths.push(state.current);});
+  canvas.addEventListener('pointermove',e=>{if(state.drawing){state.current.points.push(point(e));renderPaths();}});canvas.addEventListener('pointerup',()=>{state.drawing=false;state.current=null;renderPaths();});canvas.addEventListener('pointercancel',()=>state.drawing=false);
+  document.querySelectorAll('[data-custom-tool]').forEach(button=>button.addEventListener('click',()=>{state.tool=button.dataset.customTool;document.querySelectorAll('[data-custom-tool]').forEach(item=>{const active=item===button;item.classList.toggle('is-active',active);item.setAttribute('aria-pressed',active);});}));
+  $('[data-custom-action="undo"]').onclick=()=>{state.paths.pop();renderPaths();}; $('[data-custom-action="clear"]').onclick=()=>startNew(); $('[data-custom-action="reset-view"]').onclick=()=>{if(isGlb(state.working)){glbPreview.cameraOrbit='0deg 75deg auto';glbPreview.resetTurntableRotation?.();}else{preview.classList.remove('is-spinning');void preview.offsetWidth;preview.classList.add('is-spinning');}};
+  ['depth','bevel'].forEach(name=>$(`#custom-${name}`).addEventListener('input',e=>{$(`#custom-${name}-output`).textContent=`${e.target.value} mm`;updatePreview();}));
+  $('#custom-scale').oninput=e=>{$('#custom-scale-output').textContent=`${(e.target.value/100).toFixed(2)}×`;glbPreview.style.transform=`scale(${e.target.value/100}) rotateY(${$('#custom-rotation').value}deg)`;};
+  $('#custom-rotation').oninput=e=>{$('#custom-rotation-output').textContent=`${e.target.value}°`;glbPreview.style.transform=`scale(${$('#custom-scale').value/100}) rotateY(${e.target.value}deg)`;};
+  $('#custom-color-blend').oninput=e=>{$('#custom-blend-output').textContent=`${e.target.value}%`;updatePreview();}; $('#custom-item-color').oninput=updatePreview; $('#custom-brush-size').oninput=e=>$('#custom-brush-output').textContent=`${e.target.value} px`;
 
-  function drawGuide() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.save();
-    ctx.strokeStyle = 'rgba(168,255,24,.13)';
-    ctx.lineWidth = 1;
-    const step = Math.max(36, canvas.width / 15);
-    for (let x = 0; x < canvas.width; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
-    for (let y = 0; y < canvas.height; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
-    ctx.restore();
-  }
+  function setFormat(item){const glb=isGlb(item);$('#custom-svg-controls').hidden=glb;$('#custom-glb-controls').hidden=!glb;$('.custom-draw-stage').classList.toggle('is-locked',glb);preview.hidden=glb;glbPreview.hidden=!glb;if(glb){glbPreview.src=item.modelUrl;glbPreview.alt=`${item.name} editable 3D preview`;populateAnimations(item);} }
+  function populateAnimations(item){const select=$('#custom-animation');select.innerHTML='<option value="">None / model default</option>';(item.animations || ['Auto-play embedded animation']).forEach(name=>select.add(new Option(name,name)));}
+  function copyItem(item, suffix=' Copy'){return {...item,id:`custom-${Date.now()}`,name:`${item.name}${suffix}`,source:'working copy',originalId:item.originalId||item.id,createdAt:new Date().toISOString()};}
+  function chooseItem(item, mode){state.selected=item;state.working=mode==='as-is'?item:copyItem(item,mode==='build'?' Extension':' Copy');$('#custom-item-name').value=state.working.name;$('#custom-source-label').textContent=mode==='as-is'?`Using ${item.name} as is`:`Editing an independent copy of ${item.name}`;setFormat(state.working);if(!isGlb(item)&&mode!=='as-is')importImage(item.thumbnailUrl||item.modelUrl);dialog.close();$('#custom-item-toolkit').scrollIntoView({behavior:'smooth'});setStep(1);}
+  function startNew(){state.paths=[];state.selected=null;state.working={format:'svg',name:'My neon prop',type:'custom prop',source:'drawing'};state.hasArtwork=false;$('#custom-item-name').value='My neon prop';$('#custom-source-label').textContent='New custom drawing';setFormat(state.working);renderPaths();setStep(1);}
+  $('[data-new-drawing]').onclick=startNew;
 
-  function canvasPoint(event) {
-    const rect = canvas.getBoundingClientRect();
-    return { x: (event.clientX - rect.left) * canvas.width / rect.width, y: (event.clientY - rect.top) * canvas.height / rect.height };
-  }
+  function configuration(){const glb=isGlb(state.working);return {material:$('#custom-material').value,color:$('#custom-item-color').value,colorBlend:Number($('#custom-color-blend').value),scale:glb?Number($('#custom-scale').value)/100:1,orientation:glb?Number($('#custom-rotation').value):0,animation:glb?$('#custom-animation').value:'',attachment:glb?$('#custom-attachment').value:'none',depth:glb?null:Number($('#custom-depth').value),bevel:glb?null:Number($('#custom-bevel').value),behavior:$('#custom-behavior').value,groundAligned:$('#custom-ground-align').checked};}
+  function buildObject(){if(!state.hasArtwork&&!state.working&&!state.selected){$('#custom-canvas-help').textContent='Draw a silhouette or choose an existing item first.';return;}const base=state.working||state.selected||{format:'svg',type:'custom prop'};const item={...base,id:`custom-${Date.now()}`,name:$('#custom-item-name').value.trim()||'Custom game item',format:isGlb(base)?'glb':'svg',thumbnailUrl:state.hasArtwork&&!isGlb(base)?canvas.toDataURL('image/png'):base.thumbnailUrl,modelUrl:base.modelUrl||'',configuration:configuration(),playable:true,createdAt:new Date().toISOString()};saveItems([item,...savedItems().filter(saved=>saved.id!==item.id&&saved.name!==item.name)]);state.working=item;state.placed=item;window.dispatchEvent(new CustomEvent('muzikaz:custom-item-built',{detail:item}));const toast=$('#custom-build-toast');toast.innerHTML=`<b>✓ ${escapeHtml(item.name)} saved</b><span>Materials, animation and interactions are preserved in My Builds.</span>`;toast.hidden=false;setTimeout(()=>toast.hidden=true,4200);renderLibrary();renderDialogResults();enablePlacement(item);setStep(3);}
+  $('[data-build-custom-item]').onclick=buildObject;
 
-  function renderPaths() {
-    drawGuide();
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    state.paths.forEach((path) => {
-      if (path.points.length < 2) return;
-      ctx.globalCompositeOperation = path.tool === 'erase' ? 'destination-out' : 'source-over';
-      ctx.strokeStyle = path.color; ctx.lineWidth = path.size;
-      ctx.beginPath(); ctx.moveTo(path.points[0].x, path.points[0].y);
-      path.points.slice(1).forEach((point) => ctx.lineTo(point.x, point.y)); ctx.stroke();
-    });
-    ctx.globalCompositeOperation = 'source-over';
-    state.hasArtwork = state.paths.some((path) => path.tool === 'draw');
-    updatePreview();
-  }
-
-  function updatePreview() {
-    const depth = document.getElementById('custom-depth').value;
-    const bevel = document.getElementById('custom-bevel').value;
-    const color = document.getElementById('custom-item-color').value;
-    preview.style.setProperty('--item-depth', `${Math.round(depth / 3)}px`);
-    preview.style.setProperty('--item-bevel', `${bevel}px`);
-    preview.style.setProperty('--item-color', color);
-    if (state.hasArtwork) {
-      preview.style.setProperty('--item-art', `url(${canvas.toDataURL('image/png')})`);
-      preview.classList.add('has-art'); preview.querySelector('span').textContent = '';
-    } else {
-      preview.style.removeProperty('--item-art'); preview.classList.remove('has-art'); preview.querySelector('span').innerHTML = 'Draw<br>here';
-    }
-  }
-
-  canvas.addEventListener('pointerdown', (event) => {
-    state.drawing = true; canvas.setPointerCapture(event.pointerId);
-    state.current = { tool: state.tool, size: Number(document.getElementById('custom-brush-size').value) * (canvas.width / canvas.clientWidth), color: document.getElementById('custom-item-color').value, points: [canvasPoint(event)] };
-    state.paths.push(state.current);
-  });
-  canvas.addEventListener('pointermove', (event) => { if (!state.drawing) return; state.current.points.push(canvasPoint(event)); renderPaths(); });
-  canvas.addEventListener('pointerup', () => { state.drawing = false; state.current = null; renderPaths(); });
-  canvas.addEventListener('pointercancel', () => { state.drawing = false; });
-
-  document.querySelectorAll('[data-custom-tool]').forEach((button) => button.addEventListener('click', () => {
-    state.tool = button.dataset.customTool;
-    document.querySelectorAll('[data-custom-tool]').forEach((item) => { const active = item === button; item.classList.toggle('is-active', active); item.setAttribute('aria-pressed', String(active)); });
-  }));
-  document.querySelector('[data-custom-action="undo"]').addEventListener('click', () => { state.paths.pop(); renderPaths(); });
-  document.querySelector('[data-custom-action="clear"]').addEventListener('click', () => { state.paths = []; state.hasArtwork = false; glbPreview.hidden = true; preview.hidden = false; renderPaths(); });
-  document.querySelector('[data-custom-action="reset-view"]').addEventListener('click', () => { preview.classList.remove('is-spinning'); void preview.offsetWidth; preview.classList.add('is-spinning'); });
-
-  ['depth', 'bevel'].forEach((name) => document.getElementById(`custom-${name}`).addEventListener('input', (event) => {
-    document.getElementById(`custom-${name}-output`).textContent = `${event.target.value} mm`; updatePreview();
-  }));
-  document.getElementById('custom-brush-size').addEventListener('input', (event) => { document.getElementById('custom-brush-output').textContent = `${event.target.value} px`; });
-  document.getElementById('custom-item-color').addEventListener('input', updatePreview);
-
-  function savedItems() { try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch (_) { return []; } }
-  function saveItems(items) { localStorage.setItem(storageKey, JSON.stringify(items.slice(0, 24))); }
-
-  function buildObject(useExisting) {
-    if (!state.hasArtwork && !state.selected) {
-      document.getElementById('custom-canvas-help').textContent = 'Draw a silhouette or choose an existing item first.'; canvas.focus(); return;
-    }
-    const title = document.getElementById('custom-item-name').value.trim() || 'Custom game item';
-    const item = {
-      id: `custom-${Date.now()}`, name: title, type: 'custom prop', format: state.selected?.format || 'svg',
-      modelUrl: state.selected?.modelUrl || '', thumbnailUrl: state.hasArtwork ? canvas.toDataURL('image/png') : state.selected?.thumbnailUrl,
-      depth: Number(document.getElementById('custom-depth').value), bevel: Number(document.getElementById('custom-bevel').value),
-      color: document.getElementById('custom-item-color').value, playable: true, createdAt: new Date().toISOString()
-    };
-    const items = [item, ...savedItems().filter((saved) => saved.name !== item.name)]; saveItems(items);
-    window.dispatchEvent(new CustomEvent('muzikaz:custom-item-built', { detail: item }));
-    const toast = document.getElementById('custom-build-toast');
-    toast.innerHTML = `<b>✓ ${escapeHtml(title)} added</b><span>Reusable object saved to My Builds and ready for the game.</span>`;
-    toast.hidden = false; setTimeout(() => { toast.hidden = true; }, 4200);
-    if (useExisting && dialog.open) dialog.close();
-    renderLibrary();
-  }
-  document.querySelector('[data-build-custom-item]').addEventListener('click', () => buildObject(false));
-
-  function escapeHtml(value) { const node = document.createElement('span'); node.textContent = value || ''; return node.innerHTML; }
-  function normaliseAsset(asset, source) {
-    const modelUrl = asset.modelUrl || '';
-    const thumbnailUrl = asset.thumbnailUrl || '';
-    return { id: `${source}-${asset.id}`, name: asset.name || 'Untitled item', type: asset.assetType || asset.type || asset.category || 'game item', format: modelUrl ? (asset.format || 'glb').toLowerCase() : 'svg', modelUrl, thumbnailUrl, description: asset.description || `A ready-to-use ${asset.type || 'game item'} from the MUZIKAZ library.`, source };
-  }
-
-  async function loadLibrary() {
-    const [modelsResult, backpackResult] = await Promise.allSettled([
-      fetch('public/models/glb-models.json').then((response) => response.json()),
-      fetch('public/models/backpack-assets.json').then((response) => response.json())
-    ]);
-    const models = modelsResult.status === 'fulfilled' ? (modelsResult.value.models || []) : [];
-    const backpack = backpackResult.status === 'fulfilled' ? (backpackResult.value.assets || []) : [];
-    const seen = new Set();
-    state.items = [...models.map((item) => normaliseAsset(item, 'model')), ...backpack.map((item) => normaliseAsset(item, 'backpack'))].filter((item) => {
-      const key = item.modelUrl || item.thumbnailUrl; if (!key || seen.has(key)) return false; seen.add(key); return true;
-    });
-    renderLibrary();
-  }
-
-  function itemArtwork(item) {
-    const source = item.thumbnailUrl || (item.format === 'svg' ? item.modelUrl : 'public/assets/muzikaz-world-logo.svg');
-    return `<img src="${escapeHtml(source)}" alt="" loading="lazy">`;
-  }
-  function renderLibrary() {
-    const query = document.getElementById('custom-library-search').value.trim().toLowerCase();
-    const filter = document.getElementById('custom-library-filter').value;
-    const mine = savedItems().map((item) => ({ ...item, source: 'mine' }));
-    const all = [...mine, ...state.items];
-    const visible = all.filter((item) => (!query || `${item.name} ${item.type}`.toLowerCase().includes(query)) && (filter === 'all' || (filter === 'mine' ? item.source === 'mine' : item.format.includes(filter))));
-    libraryStatus.textContent = `${visible.length} item${visible.length === 1 ? '' : 's'} ready to preview, use, or customize.`;
-    libraryGrid.innerHTML = visible.map((item, index) => `<button type="button" class="custom-library-card" data-library-index="${all.indexOf(item)}"><span class="custom-card-art">${itemArtwork(item)}<i>${escapeHtml(item.format.toUpperCase())}</i></span><span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.type)}</small></span><b aria-hidden="true">↗</b></button>`).join('') || '<p class="empty-state">No matching items. Import an SVG or start drawing above.</p>';
-    libraryGrid.querySelectorAll('[data-library-index]').forEach((button) => button.addEventListener('click', () => openItem(all[Number(button.dataset.libraryIndex)])));
-  }
-
-  function openItem(item) {
-    state.selected = item;
-    document.getElementById('custom-dialog-title').textContent = item.name;
-    document.getElementById('custom-dialog-copy').textContent = item.description || 'This reusable item is ready to run now or become the base of a new custom build.';
-    document.getElementById('custom-dialog-format').textContent = item.source === 'mine' ? 'Your saved build' : 'Existing library item';
-    document.getElementById('custom-dialog-format-value').textContent = item.format.toUpperCase();
-    document.getElementById('custom-dialog-type').textContent = item.type;
-    const isModel = Boolean(item.modelUrl && /\.(glb|gltf)(\?|$)/i.test(item.modelUrl));
-    dialogModel.hidden = !isModel; dialogImage.hidden = isModel;
-    if (isModel) { dialogModel.src = item.modelUrl; dialogModel.alt = `${item.name} interactive 3D preview`; }
-    else { dialogImage.src = item.thumbnailUrl || item.modelUrl; dialogImage.alt = `${item.name} preview`; }
-    dialog.showModal();
-  }
-  document.querySelector('[data-close-item-dialog]').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
-  document.querySelector('[data-use-item]').addEventListener('click', () => { document.getElementById('custom-item-name').value = state.selected.name; buildObject(true); });
-  document.querySelector('[data-edit-item]').addEventListener('click', () => {
-    const item = state.selected; document.getElementById('custom-item-name').value = `${item.name} Remix`;
-    document.getElementById('custom-source-label').textContent = `Building on ${item.name}`;
-    if (item.modelUrl && /\.(glb|gltf)(\?|$)/i.test(item.modelUrl)) { glbPreview.src = item.modelUrl; glbPreview.hidden = false; preview.hidden = true; }
-    else importImage(item.thumbnailUrl || item.modelUrl);
-    dialog.close(); document.getElementById('custom-item-toolkit').scrollIntoView({ behavior: 'smooth' });
-  });
-
-  function importImage(source) {
-    if (!source) return;
-    const image = new Image(); image.onload = () => { drawGuide(); const scale = Math.min(canvas.width * .72 / image.width, canvas.height * .72 / image.height); const width = image.width * scale; const height = image.height * scale; ctx.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height); state.hasArtwork = true; glbPreview.hidden = true; preview.hidden = false; updatePreview(); }; image.src = source;
-  }
-  const upload = document.getElementById('custom-svg-upload');
-  function beginUpload() { upload.click(); }
-  document.querySelector('[data-import-svg]').addEventListener('click', beginUpload);
-  document.querySelector('[data-open-item-library]').addEventListener('click', () => document.getElementById('custom-item-library').scrollIntoView({ behavior: 'smooth' }));
-  upload.addEventListener('change', () => { const file = upload.files[0]; if (!file) return; const url = URL.createObjectURL(file); state.selected = { id: `upload-${Date.now()}`, name: file.name.replace(/\.svg$/i, ''), type: 'imported silhouette', format: 'svg', modelUrl: '', thumbnailUrl: url, source: 'upload' }; document.getElementById('custom-item-name').value = state.selected.name; document.getElementById('custom-source-label').textContent = `Imported ${file.name}`; importImage(url); });
-  document.getElementById('custom-library-search').addEventListener('input', renderLibrary);
-  document.getElementById('custom-library-filter').addEventListener('change', renderLibrary);
-  window.addEventListener('resize', resizeCanvas, { passive: true });
-  resizeCanvas(); loadLibrary();
+  function normalise(asset,source){const modelUrl=asset.modelUrl||'',thumbnailUrl=asset.thumbnailUrl||'';return {...asset,id:`${source}-${asset.id}`,name:asset.name||'Untitled item',type:asset.assetType||asset.type||asset.category||'game item',format:(asset.format||(modelUrl?'glb':'svg')).toLowerCase(),modelUrl,thumbnailUrl,description:asset.description||`Ready-to-use ${asset.type||'game item'}.`,source};}
+  async function loadLibrary(){const urls=['public/models/glb-models.json','public/models/backpack-assets.json','public/models/toolkit-assets.json'];const results=await Promise.allSettled(urls.map(url=>fetch(url).then(r=>{if(!r.ok)throw Error(url);return r.json();})));const raw=[];results.forEach((result,index)=>{if(result.status==='fulfilled')raw.push(...(result.value.models||result.value.assets||[]).map(item=>normalise(item,['model','backpack','catalog'][index])));});const seen=new Set();state.items=raw.filter(item=>{const key=item.modelUrl||item.thumbnailUrl;if(!key||seen.has(key))return false;seen.add(key);return true;});renderLibrary();renderDialogResults();}
+  function artwork(item){if(isGlb(item))return `<model-viewer src="${escapeHtml(item.modelUrl)}" camera-controls auto-rotate interaction-prompt="none" loading="lazy" alt="${escapeHtml(item.name)} 3D preview"></model-viewer>`;return `<img src="${escapeHtml(item.thumbnailUrl||item.modelUrl)}" alt="" loading="lazy">`;}
+  function allItems(){return [...savedItems().map(item=>({...item,source:'mine'})),...state.items];}
+  function renderLibrary(){const q=$('#custom-library-search').value.trim().toLowerCase(),filter=$('#custom-library-filter').value;const visible=allItems().filter(item=>(!q||`${item.name} ${item.type}`.toLowerCase().includes(q))&&(filter==='all'||(filter==='mine'?item.source==='mine':item.format.includes(filter))));$('#custom-library-status').textContent=`${visible.length} items ready to preview, use, or customize.`;$('#custom-library-grid').innerHTML=visible.map(item=>`<button type="button" class="custom-library-card" data-item-id="${escapeHtml(item.id)}"><span class="custom-card-art">${artwork(item)}<i>${escapeHtml(item.format.toUpperCase())}</i></span><span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.type)}</small></span><b>↗</b></button>`).join('')||'<p class="empty-state">No matching items. Import an SVG or start drawing.</p>';document.querySelectorAll('#custom-library-grid [data-item-id]').forEach(button=>button.onclick=()=>openBrowser(allItems().find(item=>item.id===button.dataset.itemId)));}
+  function renderDialogResults(){const q=$('#custom-dialog-search').value.trim().toLowerCase();const items=allItems().filter(item=>!q||`${item.name} ${item.type} ${item.format}`.toLowerCase().includes(q));$('#custom-dialog-results').innerHTML=items.map(item=>`<button type="button" data-dialog-id="${escapeHtml(item.id)}" class="${state.selected?.id===item.id?'is-active':''}">${artwork(item)}<span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.type)} · ${escapeHtml(item.format.toUpperCase())}</small></span></button>`).join('');document.querySelectorAll('[data-dialog-id]').forEach(button=>button.onclick=()=>selectDialogItem(items.find(item=>item.id===button.dataset.dialogId)));}
+  function selectDialogItem(item){state.selected=item;renderDialogResults();$('#custom-dialog-title').textContent=item.name;$('#custom-dialog-copy').textContent=item.description;$('#custom-dialog-format').textContent=item.source==='mine'?'Your saved build':'Existing library item';$('#custom-dialog-format-value').textContent=item.format.toUpperCase();$('#custom-dialog-type').textContent=item.type;const model=$('#custom-dialog-model'),image=$('#custom-dialog-image');model.hidden=!isGlb(item);image.hidden=isGlb(item);if(isGlb(item)){model.src=item.modelUrl;model.alt=`${item.name} interactive 3D preview`;}else{image.src=item.thumbnailUrl||item.modelUrl;image.alt=`${item.name} preview`;}document.querySelectorAll('.custom-dialog-actions button').forEach(button=>button.disabled=false);}
+  function openBrowser(item){renderDialogResults();dialog.showModal();if(item)selectDialogItem(item);setStep(0);}
+  $('[data-open-item-library]').onclick=()=>openBrowser();$('[data-close-item-dialog]').onclick=()=>dialog.close();dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});$('#custom-dialog-search').oninput=renderDialogResults;$('[data-use-item]').onclick=()=>chooseItem(state.selected,'as-is');$('[data-edit-copy]').onclick=()=>chooseItem(state.selected,'copy');$('[data-build-on-item]').onclick=()=>chooseItem(state.selected,'build');
+  function importImage(source){if(!source)return;const image=new Image();image.onload=()=>{drawGuide();const scale=Math.min(canvas.width*.72/image.width,canvas.height*.72/image.height),w=image.width*scale,h=image.height*scale;ctx.drawImage(image,(canvas.width-w)/2,(canvas.height-h)/2,w,h);state.hasArtwork=true;preview.hidden=false;glbPreview.hidden=true;updatePreview();};image.src=source;}
+  const upload=$('#custom-svg-upload');const beginUpload=()=>upload.click();$('[data-import-svg]').onclick=beginUpload;upload.onchange=()=>{const file=upload.files[0];if(!file)return;const url=URL.createObjectURL(file);state.working={id:`upload-${Date.now()}`,name:file.name.replace(/\.svg$/i,''),type:'imported silhouette',format:'svg',thumbnailUrl:url,source:'upload'};$('#custom-item-name').value=state.working.name;$('#custom-source-label').textContent=`Imported ${file.name}`;setFormat(state.working);importImage(url);};
+  $('#custom-library-search').oninput=renderLibrary;$('#custom-library-filter').onchange=renderLibrary;
+  function setStep(index){document.querySelectorAll('.custom-step-strip span').forEach((step,i)=>step.classList.toggle('is-current',i===index));}
+  function enablePlacement(item){const placed=$('#custom-placed-item');placed.hidden=false;placed.innerHTML=isGlb(item)?'◈':`<img src="${escapeHtml(item.thumbnailUrl||'public/assets/muzikaz-world-logo.svg')}" alt="">`;placed.title=item.name;$('[data-test-item]').disabled=false;$('#custom-deploy-status').textContent=`${item.name} loaded. Drag it into position, then test ${item.configuration?.behavior||'pickup'}.`;}
+  const stage=$('#custom-placement-stage'),placed=$('#custom-placed-item');function movePlaced(clientX,clientY){const rect=stage.getBoundingClientRect();placed.style.left=`${Math.max(8,Math.min(rect.width-70,clientX-rect.left-30))}px`;placed.style.top=`${$('#custom-ground-align').checked?rect.height-82:Math.max(10,Math.min(rect.height-70,clientY-rect.top-30))}px`;}
+  placed.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain','item'));stage.addEventListener('dragover',e=>e.preventDefault());stage.addEventListener('drop',e=>{e.preventDefault();movePlaced(e.clientX,e.clientY);$('#custom-deploy-status').textContent=`Placed in ${$('#custom-environment').value}. Ready to test.`;setStep(4);});$('#custom-character-scale').oninput=e=>{const scale=e.target.value/100;$('#custom-character-scale-output').textContent=`${scale.toFixed(2)}×`;placed.style.transform=`scale(${scale})`;};$('[data-test-item]').onclick=()=>{placed.classList.remove('is-testing');void placed.offsetWidth;placed.classList.add('is-testing');const behavior=$('#custom-behavior').value;$('#custom-deploy-status').textContent=`✓ ${state.placed?.name||state.working?.name} passed the “${behavior}” interaction test in ${$('#custom-environment').value}.`;if(state.working){state.working.configuration={...(state.working.configuration||{}),behavior,groundAligned:$('#custom-ground-align').checked};}};
+  window.addEventListener('resize',resizeCanvas,{passive:true});resizeCanvas();startNew();loadLibrary().catch(()=>{$('#custom-library-status').textContent='Saved items are available; the shared catalog could not be loaded.';});
 }());
