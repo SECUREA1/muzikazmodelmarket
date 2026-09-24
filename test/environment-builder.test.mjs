@@ -83,6 +83,26 @@ test('custom items use an SVG drawing and 3D extrusion toolkit instead of icon-o
   assert.doesNotMatch(html, /CHOOSE AN ICON/);
 });
 
+test('custom item toolkit starts from editable models in every requested category', async () => {
+  const [html, script, css] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
+  ]);
+  for (const control of ['starter-category-tabs', 'starter-model-grid', 'starter-selection-status', 'start-blank-item']) {
+    assert.match(html, new RegExp(`id="${control}"`));
+  }
+  for (const category of ['avatar', 'enemy', 'interactive', 'landscape', 'interior']) {
+    assert.match(script, new RegExp(`${category}:'`), `${category} has an active starter category`);
+    assert.ok((script.match(new RegExp(`type:'${category}'`, 'g')) || []).length >= 3, `${category} provides at least three editable starters`);
+  }
+  for (const setting of ['talk', 'quest', 'hostile', 'patrol', 'pickup', 'door', 'heal', 'decor']) assert.match(script, new RegExp(`behavior:'${setting}'`));
+  for (const animation of ['idle', 'walk', 'dance', 'float']) assert.match(script, new RegExp(`animation:'${animation}'`));
+  for (const action of ['message', 'score', 'teleport', 'damage', 'none']) assert.match(script, new RegExp(`action:'${action}'`));
+  assert.match(script, /function loadCustomStarter\(model\)/);
+  assert.match(css, /\.starter-model-card\.active/);
+});
+
 test('every drawn custom item saves three toggleable 3D forms with fitted clip-ons', async () => {
   const [html, script, css] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),

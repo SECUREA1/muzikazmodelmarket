@@ -80,7 +80,13 @@
   <button type="button" class="mobile-selection-button" id="open-inspector" aria-controls="inspector-controls"><span>✦</span><b>SELECTION</b><small id="mobile-selection-name">Choose an object</small></button>
   <dialog class="item-maker" id="item-maker" aria-labelledby="item-maker-title">
     <form method="dialog" id="item-maker-form">
-      <header><div><small>3D CUSTOMIZATION TOOL KIT</small><h2 id="item-maker-title">Draw a custom game item</h2><p>Draw the model silhouette, tune its depth and bevel, then add it as a reusable, playable 3D object.</p></div><button value="cancel" class="dialog-close" aria-label="Close">×</button></header>
+      <header><div><small>3D CUSTOMIZATION TOOL KIT</small><h2 id="item-maker-title">Draw a custom game item</h2><p>Start with a game-ready item or draw your own. Tune its silhouette, depth, bevel and gameplay, then save it as a reusable 3D object.</p></div><button value="cancel" class="dialog-close" aria-label="Close">×</button></header>
+      <section class="starter-models" aria-labelledby="starter-models-title">
+        <header><div><small>START FROM A MODEL</small><h3 id="starter-models-title">Choose an item to customize</h3><p>Every type includes editable silhouettes and recommended gameplay settings—no blank canvas required.</p></div><button type="button" id="start-blank-item">＋ START BLANK</button></header>
+        <nav id="starter-category-tabs" aria-label="Starter item categories"></nav>
+        <div id="starter-model-grid" class="starter-model-grid" role="list" aria-live="polite"></div>
+        <p class="starter-selection-status" id="starter-selection-status">Choose a starter model, or start blank to draw from scratch.</p>
+      </section>
       <section class="model-sketch" aria-labelledby="model-sketch-title">
         <nav class="custom-form-toggle" id="custom-form-toggle" aria-label="Custom item 3D form preview">
           <button type="button" class="active" data-custom-form="solid" aria-pressed="true"><b>01</b><span>SOLID</span><small>Balanced game mesh</small></button>
