@@ -14,6 +14,8 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /muzikaz\.builder\.buildTray/);
   assert.match(script, /multiplayer:true, enemies:true, weapons:true, pickups:true/);
   assert.match(script, /model-explorer\.html\?environment=/);
+  assert.match(script, /fetch\('\/api\/custom-maps'/);
+  assert.match(script, /All players can join/);
 });
 
 test('expanded maps include detailed building interiors and large playable landscapes', async () => {
@@ -157,6 +159,8 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /class="rad-build-launch" href="environment-builder\.html\?from=game"/);
   assert.match(game, /addSavedBuilderWorld/);
   assert.match(game, /loadBuilderDecor/);
+  assert.match(game, /item\.position\.z/);
+  assert.match(game, /item\.functionalSettings/);
   assert.match(game, /roomId:env\.id/);
   assert.match(game, /toxicBubbleSystem\.handleEnvironmentReady\(env\)/);
 });

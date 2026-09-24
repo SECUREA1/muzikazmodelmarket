@@ -28,6 +28,7 @@ const paymentOrderStore = new PaymentOrderStore(process.env.MUZIKAZ_PAYMENT_ORDE
 const publicAvatarManifest = join(root, 'public', 'models', 'avatars.json');
 const repositoryModelManifest = join(root, 'public', 'models', 'glb-models.json');
 const environmentDataFile = process.env.MUZIKAZ_ENVIRONMENT_DATA_FILE || join(dataDir, 'environments.json');
+const customMapsFile = process.env.MUZIKAZ_CUSTOM_MAPS_FILE || join(dataDir, 'custom-maps.json');
 const repositoryEnvironmentManifest = join(root, 'public', 'models', 'environments', 'environments.json');
 const clients = new Set();
 const presence = new Map();
@@ -79,7 +80,7 @@ function activePresence() {
 }
 function presencePayload() { const users = activePresence(); return { count: users.length, capacity: maxHouseUsers, coordinateSystem: 'right-handed-y-up', users }; }
 
-async function ensureStorage() { await mkdir(dataDir, { recursive: true }); await mkdir(uploadDir, { recursive: true }); await mkdir(assetUploadDir, { recursive: true }); await mkdir(environmentUploadDir, { recursive: true }); for (const file of [dataFile, assetsFile, modelsFile, environmentDataFile, avatarProfilesFile]) { try { await stat(file); } catch { await writeFile(file, '[]'); } } }
+async function ensureStorage() { await mkdir(dataDir, { recursive: true }); await mkdir(uploadDir, { recursive: true }); await mkdir(assetUploadDir, { recursive: true }); await mkdir(environmentUploadDir, { recursive: true }); for (const file of [dataFile, assetsFile, modelsFile, environmentDataFile, avatarProfilesFile, customMapsFile]) { try { await stat(file); } catch { await writeFile(file, '[]'); } } }
 
 
 async function readRepositoryEnvironments() {
@@ -90,6 +91,15 @@ async function readRepositoryEnvironments() {
 }
 async function readUploadedEnvironments() { await ensureStorage(); return JSON.parse(await readFile(environmentDataFile, 'utf8')); }
 async function writeUploadedEnvironments(records) { await ensureStorage(); await writeFile(environmentDataFile, JSON.stringify(records, null, 2)); }
+async function readCustomMaps() { await ensureStorage(); return JSON.parse(await readFile(customMapsFile, 'utf8')); }
+async function writeCustomMaps(records) { await ensureStorage(); await writeFile(customMapsFile, JSON.stringify(records, null, 2)); }
+function customMapRecord(input = {}, ownerId = '') {
+  const scene = input.scene && typeof input.scene === 'object' ? input.scene : input;
+  const id = cleanText(scene.id, randomUUID()).replace(/[^a-zA-Z0-9._-]/g, '-');
+  const objects = Array.isArray(scene.objects) ? scene.objects.slice(0, 500) : [];
+  const now = new Date().toISOString();
+  return { id, name: cleanText(scene.name, 'Untitled custom map'), label: 'Live custom map', description: `Live creator map with ${objects.length} placed item${objects.length === 1 ? '' : 's'}.`, category: 'Live custom maps', visibility: 'public', playable: true, multiplayer: true, live: true, source: 'custom-builder', ownerId: cleanText(ownerId || input.ownerId, 'guest-builder'), builderScene: { ...scene, id, name: cleanText(scene.name, 'Untitled custom map'), version: 3, objects, gameplay: { ...(scene.gameplay || {}), multiplayer: true } }, createdAt: input.createdAt || now, updatedAt: now };
+}
 function publicEnvironment(record) { return record.visibility === 'public' || record.source === 'repository'; }
 function sanitizeFilename(value) { return String(value || 'environment.glb').split(/[\\/]/).pop().replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 90); }
 function validGlbBuffer(buffer) {
@@ -105,7 +115,12 @@ function environmentRecord(input = {}, extra = {}) {
   const now = new Date().toISOString();
   return { id: cleanText(input.id, randomUUID()), name: cleanText(input.name || input.title, 'Uploaded Environment'), description: cleanText(input.description, ''), modelUrl: String(extra.modelUrl || input.modelUrl || '').replace(/[<>]/g, ''), thumbnailUrl: String(extra.thumbnailUrl || input.thumbnailUrl || '').replace(/[<>]/g, ''), spawn: { x: clampNumber(input.spawnX ?? input.spawn?.x, -10000, 10000, 0), y: clampNumber(input.spawnY ?? input.spawn?.y, -10000, 10000, 1), z: clampNumber(input.spawnZ ?? input.spawn?.z, -10000, 10000, 2), rotationY: clampNumber(input.spawnRotationY ?? input.spawn?.rotationY, -Math.PI * 4, Math.PI * 4, 0) }, scale: clampNumber(input.scale, 0.001, 100, 1), rotation: { x: clampNumber(input.rotationX ?? input.rotation?.x, -Math.PI * 4, Math.PI * 4, 0), y: clampNumber(input.rotationY ?? input.rotation?.y, -Math.PI * 4, Math.PI * 4, 0), z: clampNumber(input.rotationZ ?? input.rotation?.z, -Math.PI * 4, Math.PI * 4, 0) }, collisionMode: ['auto', 'mesh', 'none'].includes(input.collisionMode) ? input.collisionMode : 'auto', visibility: input.visibility === 'private' ? 'private' : 'public', source: 'uploaded', canDelete: true, canEdit: true, originalFilename: cleanText(extra.originalFilename, ''), storedFilename: cleanText(extra.storedFilename, ''), fileSize: Number(extra.fileSize || input.fileSize || 0), mimeType: cleanText(extra.mimeType || input.mimeType, 'model/gltf-binary'), createdAt: input.createdAt || now, updatedAt: now };
 }
-async function combinedEnvironments() { const [repo, uploaded] = await Promise.all([readRepositoryEnvironments(), readUploadedEnvironments()]); return [...repo, ...uploaded.filter(publicEnvironment)]; }
+async function combinedEnvironments() {
+  const [repo, uploaded, customMaps] = await Promise.all([readRepositoryEnvironments(), readUploadedEnvironments(), readCustomMaps()]);
+  const base = repo.find((environment) => environment.id === 'studio-ridge-out') || repo.find((environment) => environment.id === 'muzikaz-main') || repo[0] || {};
+  const liveMaps = customMaps.map((map) => ({ ...base, ...map, modelUrl: base.modelUrl || base.modelUrls?.[0] || '', modelUrls: base.modelUrls, spawn: base.spawn, collisionMode: base.collisionMode || 'auto', canDelete: false, canEdit: false }));
+  return [...liveMaps, ...repo, ...uploaded.filter(publicEnvironment)];
+}
 async function saveEnvironmentUpload(req) {
   const parts = await multipartFields(req, maxEnvironmentBytes + 2_000_000); const fields = {}; parts.filter((p) => !p.filename).forEach((p) => { fields[p.name] = p.data.toString('utf8').trim(); });
   const glb = parts.find((p) => p.name === 'environment' && p.filename); if (!glb) throw new Error('Choose a .glb environment file to upload.');
@@ -529,6 +544,16 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/market/activity' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.activity(requestWallet(req), url.searchParams.get('peer') || '')));
 
     if (url.pathname === '/api/environments' && req.method === 'GET') return sendJson(res, 200, assetResponse(await combinedEnvironments()));
+    if (url.pathname === '/api/custom-maps' && req.method === 'GET') return sendJson(res, 200, assetResponse(await readCustomMaps()));
+    if (url.pathname === '/api/custom-maps' && req.method === 'POST') {
+      const input = await bodyJson(req); const serialized = JSON.stringify(input);
+      if (serialized.length > 2_000_000) return sendJson(res, 413, { success: false, code: 'MAP_TOO_LARGE', message: 'Custom maps must be smaller than 2 MB.' });
+      const ownerId = cleanText(req.headers['x-user-id'] || input.ownerId, 'guest-builder'); const record = customMapRecord(input, ownerId);
+      const records = await readCustomMaps(); const index = records.findIndex((map) => map.id === record.id);
+      if (index >= 0 && records[index].ownerId !== ownerId) return sendJson(res, 409, { success: false, code: 'MAP_ID_CONFLICT', message: 'That map id belongs to another creator.' });
+      if (index >= 0) records[index] = { ...record, createdAt: records[index].createdAt }; else records.unshift(record);
+      await writeCustomMaps(records.slice(0, 500)); broadcast('custom-map-live', record); return sendJson(res, index >= 0 ? 200 : 201, assetResponse(record));
+    }
     if (url.pathname === '/api/environments' && req.method === 'POST') { if (!requireAdmin(req, res)) return; const records = await readUploadedEnvironments(); const record = environmentRecord(await bodyJson(req)); if (!record.modelUrl.startsWith('/uploads/environments/')) throw new Error('Uploaded environment records must point to /uploads/environments/.'); records.unshift(record); await writeUploadedEnvironments(records); return sendJson(res, 201, assetResponse(record)); }
     if (url.pathname === '/api/environments/upload' && req.method === 'POST') { if (!await requireLandOwnership(req, res) || !requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await saveEnvironmentUpload(req))); }
     const environmentItem = url.pathname.match(/^\/api\/environments\/([^/]+)$/);
