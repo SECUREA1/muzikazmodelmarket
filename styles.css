@@ -394,6 +394,17 @@ width:48px;
 height:48px}
 }
 
+/* Shared mobile page guard: content-height pages must not be clipped to the
+   initial 100vh when the address bar or on-screen keyboard changes size. */
+html{min-height:-webkit-fill-available;min-height:100%}
+body{min-height:100%;min-height:100dvh}
+@media(max-width:760px){
+  html{overflow-x:hidden;overflow-y:auto;scroll-padding-top:76px;scroll-padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+  body{overflow-x:hidden;overflow-y:visible;padding-bottom:env(safe-area-inset-bottom);-webkit-overflow-scrolling:touch;overscroll-behavior-y:auto}
+  body>main,body>.page-shell,body>.market-shell{min-height:0;overflow:visible}
+  body>footer:last-child{position:relative;padding-bottom:max(32px,calc(20px + env(safe-area-inset-bottom)))}
+  input,select,textarea{font-size:max(16px,1em)}
+}
 /* Connected character art is upgraded to the owner GLB catalog by connected-models.js. */
 .connected-model-viewer{
   display:block;
