@@ -147,3 +147,18 @@ test('expanded asset library covers deployable worlds, weapons, ghosts, slime an
   assert.match(models, /vertexColors:true/);
   assert.match(script, /clip==='float'\|\|clip==='bounce'/);
 });
+
+test('premade assets stay clean while custom SVG clip-ons remain explicit', async () => {
+  const [html, script] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+  ]);
+  assert.match(script, /assetKind:'premade'/);
+  assert.match(script, /assetKind:'custom-svg'/);
+  assert.match(script, /model\.type==='avatar'&&object\.avatarSettings\?\.customized/);
+  assert.match(script, /o\.avatarSettings\.customized=true/);
+  for (const weather of ['clear', 'cloudy', 'rain', 'storm']) assert.match(html, new RegExp(`<option value="${weather}">`));
+  for (const world of ['skyport', 'desert-airfield', 'dune-sea']) assert.match(html, new RegExp(`value="${world}"`));
+  assert.match(script, /function applyWeather\(\)/);
+  assert.match(script, /groundAt\(o\.position\.x,o\.position\.z\)\+o\.groundOffset/);
+});
