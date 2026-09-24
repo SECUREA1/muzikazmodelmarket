@@ -3,6 +3,8 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  'corsair-aircraft': ['Blackwing Corsair', 'A flyable open-cockpit gull-wing aircraft with a working propeller and exposed black airframe.', [10.5, 2.7, 8.2]],
+  'dune-quad': ['Nightcrawler Dune Quad', 'A rideable bodyless dune buggy with an exposed black tube frame, engine and four off-road tyres.', [2.7, 1.35, 1.6]],
   'canopy-tree': ['Canopy Tree', 'A broad deciduous shade tree with a textured trunk and layered green crown.', [3.8, 5.2, 3.8]],
   'pine-tree': ['Pine Tree', 'A tall evergreen conifer with tiered needles and a natural timber trunk.', [2.8, 5.8, 2.8]],
   'flower-bed': ['Flower Bed', 'A low soil bed planted with colourful flowering stems.', [2.4, .35, 1.2]],
@@ -30,6 +32,20 @@ const material = (color, roughness=.65, metalness=.02, extra={}) => new THREE.Me
 const mesh = (geometry, mat, position=[0,0,0], rotation=[0,0,0]) => { const value=new THREE.Mesh(geometry,mat); value.position.set(...position); value.rotation.set(...rotation); return value; };
 const box = (size, mat, position) => mesh(new THREE.BoxGeometry(...size),mat,position);
 const cylinder = (r1,r2,h,mat,position,segments=16) => mesh(new THREE.CylinderGeometry(r1,r2,h,segments),mat,position);
+
+function vehicle(id){
+ const root=new THREE.Group(),black=material(0x090b0d,.28,.82),rubber=material(0x080808,.94,.02),steel=material(0x596169,.25,.88),engine=material(0x34393d,.38,.72),tube=(a,b,r=.055)=>{const d=new THREE.Vector3().subVectors(b,a),part=cylinder(r,r,d.length(),black,a.clone().add(b).multiplyScalar(.5),10);part.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());root.add(part);return part;};
+ if(id==='dune-quad'){
+  [[-1.05,.42,-.62],[-1.05,.42,.62],[1.05,.42,-.62],[1.05,.42,.62]].forEach(([x,y,z])=>{const tyre=mesh(new THREE.TorusGeometry(.34,.14,12,24),rubber,[x,y,z],[Math.PI/2,0,0]);tyre.userData.vehicleWheel=true;root.add(tyre,cylinder(.08,.08,.42,steel,[x,y,z],10));});
+  const p=[new THREE.Vector3(-.92,.42,-.48),new THREE.Vector3(-.92,.42,.48),new THREE.Vector3(.92,.42,-.48),new THREE.Vector3(.92,.42,.48),new THREE.Vector3(-.62,1.08,-.42),new THREE.Vector3(-.62,1.08,.42),new THREE.Vector3(.65,.88,-.42),new THREE.Vector3(.65,.88,.42)];[[0,2],[1,3],[0,1],[2,3],[0,4],[1,5],[4,5],[4,6],[5,7],[6,7],[2,6],[3,7]].forEach(([a,b])=>tube(p[a],p[b],.06));root.add(box([.58,.48,.62],engine,[.48,.58,0]),cylinder(.18,.18,.58,engine,[.75,.72,0],12),box([.55,.1,.48],material(0x202326,.8),[-.25,.69,0]));
+  root.userData.vehicle={mode:'drive',seat:[-.2,.82,0],speed:9,turnSpeed:1.75};
+ }else{
+  const nose=new THREE.Vector3(0,1.05,-3.55),cockpit=new THREE.Vector3(0,1.05,.25),tail=new THREE.Vector3(0,1.35,3.5);tube(nose,cockpit,.1);tube(cockpit,tail,.08);[[-.7,.55,-2.7],[.7,.55,-2.7],[-.72,.5,2.35],[.72,.5,2.35]].forEach(v=>tube(cockpit,new THREE.Vector3(...v),.055));
+  const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,.85,-.5),new THREE.Vector3(-5.25,.38,.55),new THREE.Vector3(-4.65,.72,1.25),new THREE.Vector3(0,1.05,.72)]);geo.setIndex([0,1,2,0,2,3]);geo.computeVertexNormals();const wing=mesh(geo,black);root.add(wing);const wing2=wing.clone();wing2.scale.x=-1;root.add(wing2,box([3.25,.08,.72],black,[0,1.18,3.05]),box([.09,1.3,1.15],black,[0,1.75,3.12]),cylinder(.55,.78,1.45,engine,[0,1.03,-3.2],18));
+  const prop=new THREE.Group();prop.position.set(0,1.03,-4);prop.rotation.x=Math.PI/2;prop.add(box([.16,.08,2.85],steel),box([2.85,.08,.16],steel));prop.userData.vehiclePropeller=true;root.add(prop);[[-1,.48,-.3],[1,.48,-.3],[0,.54,2.55]].forEach(([x,y,z])=>root.add(mesh(new THREE.TorusGeometry(.25,.09,10,20),rubber,[x,y,z],[0,Math.PI/2,0])));root.add(mesh(new THREE.TorusGeometry(.52,.055,10,26,Math.PI),black,[0,1.35,.15],[0,0,Math.PI]));root.userData.vehicle={mode:'fly',seat:[0,1.28,.2],speed:18,turnSpeed:1.15};
+ }
+ return root;
+}
 
 // Vertex RGB is blended over the height of each surface, with a small deterministic
 // variation per vertex. This keeps silhouettes readable without the flat, toy-like
@@ -102,12 +118,13 @@ function detailedInterior(id){
 
 export function createBuilderModel(id) {
   let root;
-  if(EXPANDED[id]) return expandedModel(id);
-  if(id==='canopy-tree'||id==='pine-tree') root=plant(id); else if(id==='flower-bed')root=flowerBed(); else if(id==='hedge-corner')root=hedge(); else if(id==='garden-rocks')root=rocks(); else if(id==='pond')root=pond(); else if(id==='path-tile')root=box([2.2,.12,1.2],material(0xa39b8c,.95),[0,.06,0]); else if(id==='hill'){root=mesh(new THREE.SphereGeometry(2.1,24,12,0,Math.PI*2,0,Math.PI/2),material(0x4f9a45,.95),[0,0,0]);root.scale.z=.86;} else if(id==='lamp-post')root=lamp(true); else if(id==='planter')root=planter(); else if(id==='sofa'||id==='armchair')root=seating(id==='armchair'); else if(id==='coffee-table')root=coffeeTable(); else if(id==='bookshelf')root=bookshelf(); else if(id==='floor-lamp')root=lamp(false); else if(id==='room-divider')root=divider(); else if(id==='kitchen-island')root=island(); else if(id==='spiral-stairs')root=stairs(); else if(id==='archway')root=arch(); else if(id==='art-wall')root=artWall(); else if(BUILDER_MODEL_INFO[id])root=detailedInterior(id); else return null;
+  if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);
+  else if(EXPANDED[id]) return expandedModel(id);
+  else if(id==='canopy-tree'||id==='pine-tree') root=plant(id); else if(id==='flower-bed')root=flowerBed(); else if(id==='hedge-corner')root=hedge(); else if(id==='garden-rocks')root=rocks(); else if(id==='pond')root=pond(); else if(id==='path-tile')root=box([2.2,.12,1.2],material(0xa39b8c,.95),[0,.06,0]); else if(id==='hill'){root=mesh(new THREE.SphereGeometry(2.1,24,12,0,Math.PI*2,0,Math.PI/2),material(0x4f9a45,.95),[0,0,0]);root.scale.z=.86;} else if(id==='lamp-post')root=lamp(true); else if(id==='planter')root=planter(); else if(id==='sofa'||id==='armchair')root=seating(id==='armchair'); else if(id==='coffee-table')root=coffeeTable(); else if(id==='bookshelf')root=bookshelf(); else if(id==='floor-lamp')root=lamp(false); else if(id==='room-divider')root=divider(); else if(id==='kitchen-island')root=island(); else if(id==='spiral-stairs')root=stairs(); else if(id==='archway')root=arch(); else if(id==='art-wall')root=artWall(); else if(BUILDER_MODEL_INFO[id])root=detailedInterior(id); else return null;
   const [name,description,dimensions]=BUILDER_MODEL_INFO[id];root.name=name;root.userData={...root.userData,builderObject:true,modelId:id,label:name,description,dimensions,animated:['canopy-tree','pine-tree','pond','lamp-post','floor-lamp'].includes(id)};
   root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return root;
 }
 
 export function updateBuilderModels(group, elapsed) {
-  group.children.forEach(root=>{root.traverse(child=>{if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  group.children.forEach(root=>{root.traverse(child=>{if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 }
