@@ -1,11 +1,13 @@
 import { fetchGitHubGlbFiles, mergeGitHubEnvironmentFiles } from '../github-glb-discovery.js';
 
 const PREFIX = '[MUZIKAZ Environment]';
+const apiFetch = (path, options) => window.MUZIKAZ_API ? window.MUZIKAZ_API.fetch(path, options) : fetch(path, options);
+const apiUrl = (path) => window.MUZIKAZ_API ? window.MUZIKAZ_API.url(path) : path;
 
 export async function fetchEnvironmentList() {
   let records = [];
   try {
-    const response = await fetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+    const response = await apiFetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
     if (!response.ok) throw new Error(`Environment registry unavailable (${response.status})`);
     const payload = await response.json();
     records = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
@@ -33,7 +35,10 @@ export async function uploadEnvironment(formData, onProgress = () => {}) {
   if (!landHeaders) throw new Error('Backpack access is still loading. Wait a moment and try again.');
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/environments/upload');
+    xhr.open('POST', apiUrl('/api/environments/upload'));
+    xhr.withCredentials = true;
+    const sessionToken = window.MUZIKAZ_API?.getSessionToken?.();
+    if (sessionToken) xhr.setRequestHeader('Authorization', `Bearer ${sessionToken}`);
     Object.entries(landHeaders).forEach(([name, value]) => xhr.setRequestHeader(name, value));
     xhr.responseType = 'json';
     xhr.upload.onprogress = (event) => {
@@ -50,7 +55,7 @@ export async function uploadEnvironment(formData, onProgress = () => {}) {
 }
 
 export async function deleteEnvironment(id) {
-  const response = await fetch(`/api/environments/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+  const response = await apiFetch(`/api/environments/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.message || payload.error || 'Unable to delete environment.');
   return payload.data || payload;

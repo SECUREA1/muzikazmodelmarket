@@ -16,7 +16,7 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /model-explorer\.html\?environment=/);
   assert.match(script, /fetch\('\/api\/custom-maps'/);
   assert.match(script, /All players can join/);
-  assert.match(script, /Opening your locally saved multiplayer map/);
+  assert.match(script, /Your local map is safe; try Save & Play Live again/);
 });
 
 

@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { readFile, writeFile, mkdir, stat, unlink } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, stat, unlink, rename } from 'node:fs/promises';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
@@ -40,6 +40,7 @@ const gameSessionTtl = Number(process.env.MUZIKAZ_GAME_SESSION_TTL_SECONDS || 30
 const accountSessionStore = new DurableSessionStore(accountSessionsFile, { ttlSeconds: accountSessionTtl, maxActivePerAccount: Number(process.env.MUZIKAZ_MAX_ACTIVE_SESSIONS || 8), kind: 'account' });
 const gameSessionStore = new DurableSessionStore(gameSessionsFile, { ttlSeconds: gameSessionTtl, maxActivePerAccount: Number(process.env.MUZIKAZ_MAX_ACTIVE_GAME_SESSIONS || 12), kind: 'game' });
 const accessAttempts = new Map();
+let customMapWriteQueue = Promise.resolve();
 const supportSockets = new Set();
 const supportMessages = [];
 const port = Number(process.env.PORT || 4173);
@@ -92,7 +93,12 @@ async function readRepositoryEnvironments() {
 async function readUploadedEnvironments() { await ensureStorage(); return JSON.parse(await readFile(environmentDataFile, 'utf8')); }
 async function writeUploadedEnvironments(records) { await ensureStorage(); await writeFile(environmentDataFile, JSON.stringify(records, null, 2)); }
 async function readCustomMaps() { await ensureStorage(); return JSON.parse(await readFile(customMapsFile, 'utf8')); }
-async function writeCustomMaps(records) { await ensureStorage(); await writeFile(customMapsFile, JSON.stringify(records, null, 2)); }
+async function writeCustomMaps(records) { await ensureStorage(); const temporary = `${customMapsFile}.${process.pid}.${randomUUID()}.tmp`; await writeFile(temporary, `${JSON.stringify(records, null, 2)}\n`); await rename(temporary, customMapsFile); }
+function updateCustomMaps(mutator) {
+  const operation = customMapWriteQueue.then(async () => { const records = await readCustomMaps(); const result = await mutator(records); await writeCustomMaps(records.slice(0, 500)); return result; });
+  customMapWriteQueue = operation.catch(() => {});
+  return operation;
+}
 function customMapRecord(input = {}, ownerId = '') {
   const scene = input.scene && typeof input.scene === 'object' ? input.scene : input;
   const id = cleanText(scene.id, randomUUID()).replace(/[^a-zA-Z0-9._-]/g, '-');
@@ -235,7 +241,7 @@ function publicModelUrl(value = '') { const url = String(value); return !url || 
 async function repositoryGameCatalog() {
   const [modelDocument, environments] = await Promise.all([
     readFile(repositoryModelManifest, 'utf8').then(JSON.parse).catch(() => ({ models: [] })),
-    readRepositoryEnvironments()
+    combinedEnvironments()
   ]);
   const models = (Array.isArray(modelDocument) ? modelDocument : modelDocument.models || []).filter((model) => model.visibility !== 'private' && model.modelUrl).map((model) => ({
     id: `repository-${model.id}`, name: model.name, assetType: model.assetType || 'prop', category: model.category || 'Game items', modelUrl: publicModelUrl(model.modelUrl), thumbnailUrl: publicModelUrl(model.thumbnailUrl), scale: Number(model.scale) || 1, rotation: model.rotation || 0, source: 'repository', accessType: 'included'
@@ -271,8 +277,20 @@ async function avatarCatalog(actor) {
   const shared = models.filter((m) => (m.status === 'published' || m.visibility === 'public') && /\.glb(?:$|[?#])/i.test(m.modelUrl || '') && !/environment|prop|vehicle|weapon/i.test(`${m.category || ''} ${m.description || ''}`)).map((m) => ({ id: m.id, name: m.name || m.title, creator: m.creatorName || m.owner, modelUrl: m.modelUrl, source: 'Shared', accessType: 'shared', scale: Number(m.scale) || 1, rotation: m.rotation || null }));
   return [...owned, ...shared, ...publicModels.map((m) => ({ ...m, source: 'Public', accessType: 'public' }))];
 }
-function approvedAvatarUrl(value) { return typeof value === 'string' && (/^\/uploads\/assets\/[a-zA-Z0-9._-]+\.glb$/i.test(value) || /^\/public\/models\/[a-zA-Z0-9 %._-]+\.glb$/i.test(value) || /^https:\/\//i.test(value)); }
-async function validatedAvatar(actor, assetId) { const asset = (await avatarCatalog(actor)).find((item) => item.id === assetId); if (!asset || !approvedAvatarUrl(asset.modelUrl)) return null; return asset; }
+function approvedAvatarUrl(value) { return typeof value === 'string' && (/^\/uploads\/assets\/[a-zA-Z0-9._-]+\.glb$/i.test(value) || /^\/public\/models\/(?:[a-zA-Z0-9 %._-]+\/)*[a-zA-Z0-9 %._-]+\.glb$/i.test(value) || /^https:\/\//i.test(value)); }
+async function validatedAvatar(actor, assetId) { const requested = cleanText(assetId, ''); const asset = (await avatarCatalog(actor)).find((item) => item.id === requested || `repository-${item.id}` === requested || item.id === requested.replace(/^repository-/, '')); if (!asset || !approvedAvatarUrl(asset.modelUrl)) return null; return { ...asset, id: requested || asset.id }; }
+async function designatedAvatar(req, actor) {
+  const profile = (await readAvatarProfiles()).find((item) => item.userId === actor.id);
+  const selected = profile && await validatedAvatar(actor, profile.assetId);
+  if (selected) return selected;
+  const active = req.muzikazAuthentication?.session;
+  if (!active) return null;
+  const account = await loadoutCodeStore.getAccount(active.accountId);
+  if (!account) return null;
+  const backpack = await backpackFor(account);
+  const item = backpack.avatars.find((avatar) => avatar.id === backpack.selectedAvatarId && avatar.eligible);
+  return item && approvedAvatarUrl(item.modelUrl) ? item : null;
+}
 function assetType(contentType, filename = '') { return /model|gltf|usdz|reality|octet-stream/.test(contentType) || /\.(glb|gltf|usdz|reality)$/i.test(filename) ? 'model' : 'image'; }
 async function multipartFields(req, limit = 25_000_000) {
   const type = String(req.headers['content-type'] || '');
@@ -317,7 +335,7 @@ async function saveAssetUpload(req, forceModel = false) {
 function assetResponse(data) { return { success: true, data }; }
 async function readAvatars() { await ensureStorage(); return JSON.parse(await readFile(dataFile, 'utf8')); }
 async function writeAvatars(records) { await ensureStorage(); await writeFile(dataFile, JSON.stringify(records, null, 2)); }
-function session(req) { return String(req.headers['x-muzikaz-session'] || new URL(req.url, 'http://x').searchParams.get('sessionId') || '').replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 120) || randomUUID(); }
+function session(req) { return String(req.headers['x-muzikaz-session'] || new URL(req.url, 'http://x').searchParams.get('sessionId') || (req.muzikazAuthentication?.accountId ? `account-${req.muzikazAuthentication.accountId}` : '')).replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 120) || randomUUID(); }
 function cleanText(value, fallback = '') { return String(value || fallback).replace(/[<>]/g, '').slice(0, 140); }
 function supportText(value) { return String(value || '').replace(/[<>]/g, '').trim().slice(0, 1000); }
 function websocketFrame(data) {
@@ -548,11 +566,9 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/custom-maps' && req.method === 'POST') {
       const input = await bodyJson(req); const serialized = JSON.stringify(input);
       if (serialized.length > 2_000_000) return sendJson(res, 413, { success: false, code: 'MAP_TOO_LARGE', message: 'Custom maps must be smaller than 2 MB.' });
-      const ownerId = cleanText(req.headers['x-user-id'] || input.ownerId, 'guest-builder'); const record = customMapRecord(input, ownerId);
-      const records = await readCustomMaps(); const index = records.findIndex((map) => map.id === record.id);
-      if (index >= 0 && records[index].ownerId !== ownerId) return sendJson(res, 409, { success: false, code: 'MAP_ID_CONFLICT', message: 'That map id belongs to another creator.' });
-      if (index >= 0) records[index] = { ...record, createdAt: records[index].createdAt }; else records.unshift(record);
-      await writeCustomMaps(records.slice(0, 500)); broadcast('custom-map-live', record); return sendJson(res, index >= 0 ? 200 : 201, assetResponse(record));
+      const active = await resolveAccountSession(req); const ownerId = active ? `account:${active.accountId}` : cleanText(req.headers['x-user-id'] || input.ownerId, 'guest-builder'); const record = customMapRecord(input, ownerId);
+      const result = await updateCustomMaps((records) => { const index = records.findIndex((map) => map.id === record.id); if (index >= 0 && records[index].ownerId !== ownerId) throw Object.assign(new Error('That map id belongs to another creator.'), { statusCode: 409, code: 'MAP_ID_CONFLICT' }); if (index >= 0) records[index] = { ...record, createdAt: records[index].createdAt }; else records.unshift(record); return { created: index < 0, record: index >= 0 ? records[index] : record }; });
+      broadcast('custom-map-live', result.record); return sendJson(res, result.created ? 201 : 200, assetResponse(result.record));
     }
     if (url.pathname === '/api/environments' && req.method === 'POST') { if (!requireAdmin(req, res)) return; const records = await readUploadedEnvironments(); const record = environmentRecord(await bodyJson(req)); if (!record.modelUrl.startsWith('/uploads/environments/')) throw new Error('Uploaded environment records must point to /uploads/environments/.'); records.unshift(record); await writeUploadedEnvironments(records); return sendJson(res, 201, assetResponse(record)); }
     if (url.pathname === '/api/environments/upload' && req.method === 'POST') { if (!await requireLandOwnership(req, res) || !requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await saveEnvironmentUpload(req))); }
@@ -612,11 +628,11 @@ const server = createServer(async (req, res) => {
     if (avatarDelete && req.method === 'DELETE') { const owner = session(req); const id = decodeURIComponent(avatarDelete[1]); const records = await readAvatars(); const record = records.find((item) => item.id === id); if (!record) return sendJson(res, 404, { error: 'Not found' }); if (record.ownerId !== owner && process.env.MUZIKAZ_ALLOW_MOD_DELETE !== 'true') return sendJson(res, 403, { error: 'Forbidden' }); await writeAvatars(records.filter((item) => item.id !== id)); broadcast('avatar-deleted', { id }); return sendJson(res, 200, { id }); }
     if (url.pathname === '/api/houses/ioncore-house/events' && req.method === 'GET') { res.writeHead(200, corsHeaders({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })); res.muzikazSessionId = session(req); res.write(`event: house-presence-updated\ndata: ${JSON.stringify(presencePayload())}\n\n`); clients.add(res); req.on('close', () => clients.delete(res)); return; }
     if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'GET') { if (!await accountSession(req, res)) return; activePresence(); return sendJson(res, 200, presencePayload()); }
-    if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'POST') { const id = session(req); const actor = user(req); const body = await bodyJson(req).catch(() => ({})); const profile = (await readAvatarProfiles()).find((item) => item.userId === actor.id); const asset = profile && await validatedAvatar(actor, profile.assetId); if (!asset) return sendJson(res, 403, { error: 'Choose a valid designated avatar before entering multiplayer.' }); activePresence(); if (!presence.has(id) && presence.size >= maxHouseUsers) return sendJson(res, 409, { error: 'This Vibe Crib server is full.', ...presencePayload() }); const now = new Date().toISOString(); const previous = presence.get(id) || {}; const position = { x: clampNumber(body.position?.x, -4.65, 4.65, previous.position?.x || 0), y: clampNumber(body.position?.y, 0, 2.4, previous.position?.y || 0), z: clampNumber(body.position?.z, .35, 8.65, previous.position?.z || 2.5) }; const rotation = { x: 0, y: clampNumber(body.rotation?.y, -Math.PI * 4, Math.PI * 4, previous.rotation?.y || 0), z: 0 }; presence.set(id, { sessionId: id, userId: actor.id, username: actor.name, joinedAt: previous.joinedAt || now, lastActiveAt: now, roomId: cleanText(body.roomId, roomId(position)), color: cleanText(body.color, previous.color || '#9cff00'), avatarAssetId: asset.id, modelUrl: asset.modelUrl, avatarName: asset.name, position, rotation, movementState: ['idle','walk','run','jump'].includes(body.movementState) ? body.movementState : 'idle', animationState: cleanText(body.animationState, 'auto'), message: cleanText(body.message, previous.message || '') }); const data = presencePayload(); broadcast('player-state', presence.get(id)); broadcast('house-presence-updated', data); return sendJson(res, 200, data); }
+    if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'POST') { if (!await accountSession(req, res)) return; const id = session(req); const actor = user(req); const body = await bodyJson(req).catch(() => ({})); const asset = await designatedAvatar(req, actor); if (!asset) return sendJson(res, 403, { error: 'Choose a valid designated avatar before entering multiplayer.' }); activePresence(); if (!presence.has(id) && presence.size >= maxHouseUsers) return sendJson(res, 409, { error: 'This Vibe Crib server is full.', ...presencePayload() }); const now = new Date().toISOString(); const previous = presence.get(id) || {}; const position = { x: clampNumber(body.position?.x, -4.65, 4.65, previous.position?.x || 0), y: clampNumber(body.position?.y, 0, 2.4, previous.position?.y || 0), z: clampNumber(body.position?.z, .35, 8.65, previous.position?.z || 2.5) }; const rotation = { x: 0, y: clampNumber(body.rotation?.y, -Math.PI * 4, Math.PI * 4, previous.rotation?.y || 0), z: 0 }; presence.set(id, { sessionId: id, userId: actor.id, username: actor.name, joinedAt: previous.joinedAt || now, lastActiveAt: now, roomId: cleanText(body.roomId, roomId(position)), color: cleanText(body.color, previous.color || '#9cff00'), avatarAssetId: asset.id, modelUrl: asset.modelUrl, avatarName: asset.name, position, rotation, movementState: ['idle','walk','run','jump'].includes(body.movementState) ? body.movementState : 'idle', animationState: cleanText(body.animationState, 'auto'), message: cleanText(body.message, previous.message || '') }); const data = presencePayload(); broadcast('player-state', presence.get(id)); broadcast('house-presence-updated', data); return sendJson(res, 200, data); }
     if (url.pathname === '/api/houses/ioncore-house/presence/leave' && req.method === 'POST') { presence.delete(session(req)); const data = presencePayload(); broadcast('house-presence-updated', data); return sendJson(res, 200, { ok: true, ...data }); }
     if (url.pathname === '/api/houses/ioncore-house/voice/signal' && req.method === 'POST') { const from = session(req); const sender = presence.get(from); if (!sender) return sendJson(res, 401, { error: 'Join the Vibe Crib before using voice.' }); const body = await bodyJson(req); const to = cleanText(body.to, ''); if (!to || to === from || !presence.has(to)) return sendJson(res, 400, { error: 'Voice recipient is unavailable.' }); const kind = ['offer','answer','candidate','hangup'].includes(body.kind) ? body.kind : ''; if (!kind) return sendJson(res, 400, { error: 'Unsupported voice signal.' }); broadcastTo(to, 'house-voice-signal', { from, to, kind, payload: body.payload || null }); return sendJson(res, 202, { ok: true }); }
-    if (url.pathname === '/api/houses/ioncore-house/chat' && req.method === 'GET') { const requestedRoom = cleanText(url.searchParams.get('roomId'), '').trim(); const roomMessages = requestedRoom ? chatMessages.filter((message) => message.roomId === requestedRoom) : chatMessages; return sendJson(res, 200, { messages: roomMessages.slice(-50) }); }
-    if (url.pathname === '/api/houses/ioncore-house/chat' && req.method === 'POST') { const id = session(req); const person = presence.get(id); if (!person) return sendJson(res, 401, { error: 'Join the Vibe Crib before chatting.' }); const body = await bodyJson(req); const message = cleanText(body.message, '').trim(); if (!message) return sendJson(res, 400, { error: 'Message cannot be empty.' }); const record = { id: randomUUID(), sessionId: id, username: person.username, roomId: person.roomId, message, createdAt: new Date().toISOString() }; person.message = message; person.lastActiveAt = record.createdAt; chatMessages.push(record); broadcast('house-presence-updated', presencePayload()); if (chatMessages.length > 100) chatMessages.splice(0, chatMessages.length - 100); broadcast('house-chat-message', record); return sendJson(res, 201, record); }
+    if (url.pathname === '/api/houses/ioncore-house/chat' && req.method === 'GET') { if (!await accountSession(req, res)) return; const requestedRoom = cleanText(url.searchParams.get('roomId'), '').trim(); const roomMessages = requestedRoom ? chatMessages.filter((message) => message.roomId === requestedRoom) : chatMessages; return sendJson(res, 200, { messages: roomMessages.slice(-50) }); }
+    if (url.pathname === '/api/houses/ioncore-house/chat' && req.method === 'POST') { if (!await accountSession(req, res)) return; const id = session(req); const person = presence.get(id); if (!person) return sendJson(res, 401, { error: 'Join the Vibe Crib before chatting.' }); const body = await bodyJson(req); const message = cleanText(body.message, '').trim(); if (!message) return sendJson(res, 400, { error: 'Message cannot be empty.' }); const record = { id: randomUUID(), sessionId: id, username: person.username, roomId: person.roomId, message, createdAt: new Date().toISOString() }; person.message = message; person.lastActiveAt = record.createdAt; chatMessages.push(record); broadcast('house-presence-updated', presencePayload()); if (chatMessages.length > 100) chatMessages.splice(0, chatMessages.length - 100); broadcast('house-chat-message', record); return sendJson(res, 201, record); }
     if (url.pathname.startsWith('/api/')) return sendJson(res, 404, { success: false, code: 'API_ROUTE_NOT_FOUND', message: 'API route not found.' });
     let path = normalize(decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)).replace(/^[/\\]+/, '');
     if (path.includes('..')) return sendJson(res, 400, { error: 'Bad path' });
