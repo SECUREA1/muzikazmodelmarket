@@ -1,3 +1,10 @@
+// Keep the builder's critical module graph same-origin. Firefox privacy and
+// tracking settings can reject CDN modules, which previously left every
+// JavaScript-populated list empty when Three.js failed before initialization.
+import * as THREE from './public/vendor/three/three.module.min.js';
+import { OrbitControls } from './public/vendor/three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from './public/vendor/three/addons/loaders/GLTFLoader.js';
+import { clone as cloneSkeleton } from './public/vendor/three/addons/utils/SkeletonUtils.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js/+esm';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
@@ -75,6 +82,11 @@ let customModels=upgradeCustomModels(readJson(CUSTOM_KEY,[])), activeFilter='all
 localStorage.setItem(CUSTOM_KEY,JSON.stringify(customModels));
 let sceneData={version:3,id:'active',name:'Untitled environment',layout:'grand-floor',weather:'clear',objects:[]};
 const models=()=>[...builtins,...gameplayModels,...expandedModels,...customModels], modelFor=id=>models().find(m=>m.id===id), selected=()=>sceneData.objects.find(o=>o.id===selectedId);
+
+// Populate the catalogue before WebGL starts. Besides making the controls feel
+// immediate, this keeps the list usable in Firefox installations where WebGL
+// is disabled or a graphics context is temporarily unavailable.
+renderLibrary();
 
 THREE.ColorManagement.enabled=true;
 const renderer=new THREE.WebGLRenderer({canvas:$('#scene-canvas'),antialias:true,alpha:false}); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
