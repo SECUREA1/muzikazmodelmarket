@@ -456,11 +456,27 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     consumedBackpackItems.add(quest.assetId);localStorage.setItem('muzikazConsumedBackpackItems',JSON.stringify([...consumedBackpackItems]));
     playBeeDuckEatingSound();const thanks=speechSprite('Thanks!');root.add(thanks);const materials=[];root.traverse(object=>{if(object.isMesh){for(const material of (Array.isArray(object.material)?object.material:[object.material]))materials.push({material,color:material.color?.clone(),emissive:material.emissive?.clone(),emissiveIntensity:material.emissiveIntensity});}});root.userData.starPower={remaining:Number(quest.asset?.boostSeconds)||7,baseSpeed:root.userData.petTravel.speed,thanks,materials};root.userData.petTravel.speed=7;root.userData.petTravel.wait=0;root.userData.petTravel.target.copy(choosePetDestination(root));const petName=root.userData.avatar?.name||'Your pet';setStatus(`${petName} gives a ${quest.asset?.reaction||'happy sound'}, says “Thanks!”, and has rainbow star speed!`);renderPicker();
   }
+  async function deployCustomItem(asset) {
+    const config=asset.configuration||{},isGlb=/\.(?:glb|gltf)(?:$|[?#])/i.test(asset.modelUrl||'')||/^(?:glb|gltf)$/i.test(asset.format||'');
+    if(isGlb){
+      if(!asset.modelUrl)throw new Error(`${asset.name} has no GLB source.`);
+      const root=await addAvatarToScene({...normalizeAvatarRecord(asset),scale:THREE.MathUtils.clamp(Number(config.scale)||1,.05,8)});
+      root.userData.customItem=asset;root.rotation.y=THREE.MathUtils.degToRad(Number(config.orientation)||0);
+      return root;
+    }
+    const imageUrl=asset.thumbnailUrl||asset.modelUrl;
+    if(!imageUrl)throw new Error(`${asset.name} has no SVG or preview artwork.`);
+    const texture=await new THREE.TextureLoader().loadAsync(imageUrl);texture.colorSpace=THREE.SRGBColorSpace;
+    const color=new THREE.Color(config.color||'#a8ff18'),depth=THREE.MathUtils.clamp((Number(config.depth)||18)/100,.06,1.2),bevel=THREE.MathUtils.clamp((Number(config.bevel)||4)/40,0,.25);
+    const root=new THREE.Group(),body=new THREE.Mesh(new THREE.BoxGeometry(1.25+bevel,1.25+bevel,depth),new THREE.MeshStandardMaterial({color,roughness:config.material==='metal'?.22:.58,metalness:config.material==='metal'?.72:.08,emissive:config.material==='emissive'?color.clone().multiplyScalar(.35):0x000000,emissiveIntensity:config.material==='emissive'?.75:0}));
+    const face=new THREE.Mesh(new THREE.PlaneGeometry(1.2,1.2),new THREE.MeshBasicMaterial({map:texture,transparent:true,alphaTest:.02,side:THREE.DoubleSide}));face.position.z=depth/2+.004;root.add(body,face);root.name=`Custom_Item_${asset.id}`;root.userData.customItem=asset;root.scale.x=config.mirrored?-1:1;root.rotation.set(THREE.MathUtils.degToRad(Number(config.tilt)||0),THREE.MathUtils.degToRad(Number(config.orientation)||0),0);root.position.copy(floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)).multiplyScalar(2))));root.position.y+=.66;root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});placedAvatars.add(root);addAvatarCollider(root);return root;
+  }
   async function deployBackpackAsset(asset) {
     if (asset.type === 'lands') { closeBackpack(); await loadById(asset.environmentId || asset.id); return; }
     if (asset.petId && asset.consumable) { feedTreatToPet(asset); return; }
     if (asset.id === 'rad-tox-dynamite') { closeBackpack(); toxicBubbleSystem.setTool('dynamite'); openTools(); setStatus('RAD-TOX Dynamite is open and visible in your hand — click, tap, or squeeze the trigger to toss it. Each throw costs 25 MZK.'); return; }
     if (asset.buildAssetId) { const tray=readBuildTray(); if(!tray.some(item=>item.id===asset.buildAssetId)) tray.push({id:asset.buildAssetId,name:asset.name,type:asset.builderCategory,thumbnailUrl:asset.thumbnailUrl,addedAt:new Date().toISOString()}); localStorage.setItem(buildTrayKey,JSON.stringify(tray)); closeBackpack(); openTools(); toggleBuildMenu(true); setStatus(`${asset.name} added to your build inventory and selected in Build Map.`); return; }
+    if (asset.customItem) { closeBackpack(); setStatus(`Deploying custom item ${asset.name}…`); try { await deployCustomItem(asset); const records=JSON.parse(localStorage.getItem('muzikazCustomGamePlacements')||'[]');records.push({itemId:asset.id,worldId:activeEnvironment?.id||'',placedAt:new Date().toISOString()});localStorage.setItem('muzikazCustomGamePlacements',JSON.stringify(records.slice(-512)));setStatus(`${asset.name} is now a configurable 3D object in ${activeEnvironment?.name||'the game'}.`); } catch(error) { setStatus(error.message||`Unable to deploy ${asset.name}.`); } return; }
     const model = normalizeAvatarRecord(asset);
     if (!model.modelUrl) { setStatus(`${model.name} cannot be used because its 3D model is unavailable.`); return; }
     if (asset.type === 'avatars') designateAvatar(asset);
@@ -490,10 +506,14 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const worlds = registry.all().map(env => ({ ...env, environmentId:env.id, type:'lands', owner:env.owner || 'MUZIKAZ', modelUrl:env.modelUrl || env.modelUrls?.[0] || '', description:env.description || 'Public walkable map' }));
     const catalog = cachedCatalogModels.map(model => ({ ...model, type:backpackType(model), description:model.description || `Public ${backpackType(model).replace(/s$/, '')}` }));
     const liveAvatars = cachedAvatars.map(avatar => ({ ...avatar, type:'avatars', description:avatar.description || 'Public avatar' }));
-    const merged = [...backpackAssets, ...catalog, ...liveAvatars, ...worlds];
+    let customItems=[];try{customItems=JSON.parse(localStorage.getItem('muzikazCustomGameItemsV2')||'[]').filter(item=>item?.playable!==false).map(item=>({...item,customItem:true,type:'props',owner:'You',description:item.description||'Custom 3D-deployable game item'}));}catch{}
+    const merged = [...customItems, ...backpackAssets, ...catalog, ...liveAvatars, ...worlds];
     const seen = new Set();
     return merged.filter(item => { const modelKey=item.modelUrl ? decodeURIComponent(new URL(item.modelUrl,location.origin).pathname).toLowerCase() : ''; const key=modelKey ? `${item.type}:${modelKey}` : `${item.type}:${item.id}`; if(seen.has(key)) return false; seen.add(key); return true; });
   }
+  // The toolkit and game can run on the same page. Refresh the open inventory
+  // immediately rather than requiring a reload after a creator saves an item.
+  window.addEventListener('muzikaz:game-assets-changed',()=>{renderPicker();toxicBubbleSystem.updateInventory();});
   function renderPicker() {
     const worlds = registry.all(); syncEnvironmentSelect(worlds);
     const records = backpackRecords(); const categories = BACKPACK_CATEGORIES.map(([id,label],index) => { const count=records.filter(item=>item.type===id).length, angle=(index+.5)*360/BACKPACK_CATEGORIES.length-90, active=id===backpackCategory; return `<button type="button" class="backpack-category backpack-category--${id} ${active?'is-active':''}" style="--label-angle:${angle}deg;clip-path:${backpackPieSlice(index)}" data-backpack-category="${id}" aria-label="${label}, ${count} items" aria-pressed="${active}" aria-expanded="${active&&backpackSelectionOpen}" aria-controls="backpack-selection" title="${label}: ${count}"><span class="backpack-category-label"><b class="backpack-category-graphic" aria-hidden="true">${backpackIcon(id)}</b><em>${label}</em><small>${count}</small></span></button>`; }).join('');
