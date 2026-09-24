@@ -9,11 +9,31 @@ test('environment builder exposes layout, placement and editing controls', async
   ]);
   for (const control of ['library-grid', 'land-canvas', 'layout-select', 'rotation-control', 'scale-control', 'position-x', 'position-y', 'duplicate-object', 'remove-object', 'save-scene', 'play-scene']) assert.match(html, new RegExp(`id="${control}"`));
   for (const layout of ['grand-floor', 'loft', 'suite', 'courtyard']) assert.match(html, new RegExp(`value="${layout}"`));
-  assert.equal((script.match(/\['[a-z-]+','[^']+','(?:landscape|interior)',\d+\]/g) || []).length, 20);
+  assert.equal((script.match(/\['[a-z-]+','[^']+','(?:landscape|interior)',\d+\]/g) || []).length, 30);
   for (const behavior of ['pointermove', 'dragstart', 'drop', 'localStorage.setItem', 'LOCKED PROPORTIONS']) assert.match(`${html}\n${script}`, new RegExp(behavior));
   assert.match(script, /muzikaz\.builder\.buildTray/);
   assert.match(script, /multiplayer:true, enemies:true, weapons:true, pickups:true/);
   assert.match(script, /model-explorer\.html\?environment=/);
+});
+
+test('expanded maps include detailed building interiors and large playable landscapes', async () => {
+  const [html, script, models] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/builder-models-3d.js', import.meta.url), 'utf8')
+  ]);
+  for (const item of ['studio-desk', 'recording-booth', 'modular-wall', 'glass-door', 'loft-bed', 'wardrobe', 'bathroom-vanity', 'dining-set', 'fireplace', 'elevator']) {
+    assert.match(script, new RegExp(`'${item}'`));
+    assert.match(models, new RegExp(`(?:'${item}'|${item}:)`));
+    await readFile(new URL(`../public/images/builder-pack/${item}.svg`, import.meta.url), 'utf8');
+  }
+  for (const landscape of ['coastal-cliffs', 'ancient-forest', 'neon-wetlands']) {
+    assert.match(html, new RegExp(`value="${landscape}"`));
+    assert.match(script, new RegExp(`'${landscape}'`));
+  }
+  for (const addOn of ['ghost', 'bubbles', 'enemy']) assert.match(html, new RegExp(`data-clip-on="${addOn}"`));
+  assert.match(script, /Friendly Ghost/);
+  assert.match(script, /Green Bubble Field/);
 });
 
 test('environment builder supports custom role-play actors and interactions', async () => {
