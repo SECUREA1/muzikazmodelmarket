@@ -5,10 +5,6 @@ import * as THREE from './public/vendor/three/three.module.min.js';
 import { OrbitControls } from './public/vendor/three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from './public/vendor/three/addons/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from './public/vendor/three/addons/utils/SkeletonUtils.js';
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js/+esm';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
-import { clone as cloneSkeleton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js/+esm';
 import { createBuilderModel, updateBuilderModels } from './public/js/builder-models-3d.js';
 
 const STORAGE_KEY='muzikaz.environmentBuilder.scenes.v2', LEGACY_KEY='muzikaz.environmentBuilder.scenes.v1', PLAY_KEY='muzikaz.environmentBuilder.playScene.v1', TRAY_KEY='muzikaz.builder.buildTray', CUSTOM_KEY='muzikaz.environmentBuilder.customItems.v1';
