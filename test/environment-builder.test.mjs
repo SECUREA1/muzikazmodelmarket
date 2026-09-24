@@ -16,6 +16,23 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /model-explorer\.html\?environment=/);
   assert.match(script, /fetch\('\/api\/custom-maps'/);
   assert.match(script, /All players can join/);
+  assert.match(script, /Opening your locally saved multiplayer map/);
+});
+
+
+test('multiplayer map list pins live user maps with a flashing status', async () => {
+  const [game, server, rust] = await Promise.all([
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
+    readFile(new URL('../server.mjs', import.meta.url), 'utf8'),
+    readFile(new URL('../src/main.rs', import.meta.url), 'utf8')
+  ]);
+  assert.match(game, /refreshMultiplayerPresence/);
+  assert.match(game, /b\.count-a\.count/);
+  assert.match(game, /multiplayer-live-count/);
+  assert.match(game, /Live \(\$\{count\} user/);
+  assert.match(game, /@keyframes multiplayerLiveFlash/);
+  assert.match(server, /presence' && req\.method === 'GET'/);
+  assert.match(rust, /method == "GET"/);
 });
 
 test('expanded maps include detailed building interiors and large playable landscapes', async () => {
