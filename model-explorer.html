@@ -163,7 +163,7 @@
       <div class="section-title"><span></span><h2 id="custom-item-title">3D Customization Tool Kit</h2><a href="#custom-item-library">Browse items</a></div>
       <div class="custom-item-heading">
         <div><p class="kicker">Draw a custom game item</p><h3>Sketch it. Shape it. Play it.</h3><p>Draw a closed silhouette, tune its depth and bevel, then save it as a reusable object in your local Builder Backpack—or open any existing GLB or SVG as a starting point.</p></div>
-        <div class="custom-step-strip" aria-label="Builder workflow"><span><b>01</b> Choose</span><span><b>02</b> Draw</span><span><b>03</b> Shape</span><span><b>04</b> Add to game</span></div>
+        <div class="custom-step-strip" aria-label="Builder workflow"><span class="is-current"><b>01</b> Select</span><span><b>02</b> Customize</span><span><b>03</b> Preview</span><span><b>04</b> Save</span><span><b>05</b> Place + test</span></div>
       </div>
       <div class="custom-item-workbench">
         <aside class="custom-tool-panel" aria-label="Drawing tools">
@@ -176,7 +176,7 @@
           </div>
           <label>Brush size <output id="custom-brush-output">18 px</output><input id="custom-brush-size" type="range" min="5" max="42" value="18"></label>
           <label>Item color <input id="custom-item-color" type="color" value="#a8ff18"></label>
-          <button class="custom-upload-button" type="button" data-open-item-library>＋ Use an existing item</button>
+          <button class="custom-upload-button" type="button" data-open-item-library>⌕ Existing Item</button><button class="custom-new-button" type="button" data-new-drawing>＋ New drawing</button>
           <input id="custom-svg-upload" type="file" accept="image/svg+xml,.svg" hidden>
           <small>Tip: make one continuous shape. Your stroke automatically closes when you build.</small>
         </aside>
@@ -191,10 +191,25 @@
             <model-viewer id="custom-glb-preview" camera-controls auto-rotate shadow-intensity="1" hidden alt="Selected existing 3D item"></model-viewer>
             <span class="preview-axis">LIVE 3D PREVIEW</span>
           </div>
-          <label>Depth <output id="custom-depth-output">28 mm</output><input id="custom-depth" type="range" min="4" max="80" value="28"></label>
-          <label>Bevel <output id="custom-bevel-output">6 mm</output><input id="custom-bevel" type="range" min="0" max="18" value="6"></label>
+          <div id="custom-svg-controls" class="format-controls">
+            <p class="control-heading">SVG shape</p>
+            <label>Depth <output id="custom-depth-output">28 mm</output><input id="custom-depth" type="range" min="4" max="80" value="28"></label>
+            <label>Bevel <output id="custom-bevel-output">6 mm</output><input id="custom-bevel" type="range" min="0" max="18" value="6"></label>
+          </div>
+          <div id="custom-glb-controls" class="format-controls" hidden>
+            <p class="control-heading">Finished GLB model · no geometry added</p>
+            <label>Scale <output id="custom-scale-output">1.00×</output><input id="custom-scale" type="range" min="10" max="300" value="100"></label>
+            <label>Orientation <output id="custom-rotation-output">0°</output><input id="custom-rotation" type="range" min="-180" max="180" value="0"></label>
+            <label>Animation<select id="custom-animation"><option value="">None / model default</option></select></label>
+            <label>Attachment<select id="custom-attachment"><option value="none">None</option><option value="hand">Hand socket</option><option value="back">Back socket</option><option value="head">Head socket</option></select></label>
+          </div>
+          <div class="material-controls">
+            <p class="control-heading">Material + color blend</p>
+            <label>Finish<select id="custom-material"><option value="original">Original</option><option value="matte">Matte</option><option value="metal">Metal</option><option value="emissive">Neon emissive</option></select></label>
+            <label>RGB blend <output id="custom-blend-output">35%</output><input id="custom-color-blend" type="range" min="0" max="100" value="35"></label>
+          </div>
           <label>Object name<input id="custom-item-name" type="text" maxlength="48" value="My neon prop"></label>
-          <div class="custom-build-actions"><button type="button" class="ghost" data-custom-action="reset-view">Reset</button><button type="button" data-build-custom-item>Build object</button></div>
+          <div class="custom-build-actions"><button type="button" class="ghost" data-custom-action="reset-view">Reset view</button><button type="button" data-build-custom-item>Save to library</button></div>
         </aside>
       </div>
       <section class="custom-item-library" id="custom-item-library" aria-labelledby="custom-library-title">
@@ -206,10 +221,17 @@
     </section>
 
     <dialog id="custom-item-dialog" class="custom-item-dialog" aria-labelledby="custom-dialog-title">
-      <button class="custom-dialog-close" type="button" data-close-item-dialog aria-label="Close item preview">×</button>
+      <button class="custom-dialog-close" type="button" data-close-item-dialog aria-label="Close item browser">×</button>
+      <aside class="custom-dialog-browser" aria-label="Available assets"><p class="kicker">Existing item</p><h2>Choose a starting point</h2><input id="custom-dialog-search" type="search" placeholder="Search every game item, GLB + SVG"><div id="custom-dialog-results" class="custom-dialog-results"></div></aside>
       <div class="custom-dialog-preview"><model-viewer id="custom-dialog-model" camera-controls auto-rotate shadow-intensity="1" hidden></model-viewer><img id="custom-dialog-image" alt=""></div>
-      <div><p class="kicker" id="custom-dialog-format">Existing item</p><h2 id="custom-dialog-title">Item preview</h2><p id="custom-dialog-copy">Choose how you want to use this item.</p><dl><div><dt>Format</dt><dd id="custom-dialog-format-value">—</dd></div><div><dt>Type</dt><dd id="custom-dialog-type">—</dd></div></dl><div class="custom-dialog-actions"><button type="button" data-use-item>Use as-is</button><button type="button" class="ghost" data-edit-item>Edit &amp; build on</button></div></div>
+      <div class="custom-dialog-details"><p class="kicker" id="custom-dialog-format">Existing item</p><h2 id="custom-dialog-title">Select an item</h2><p id="custom-dialog-copy">Search or browse the complete asset collection.</p><dl><div><dt>Format</dt><dd id="custom-dialog-format-value">—</dd></div><div><dt>Type</dt><dd id="custom-dialog-type">—</dd></div></dl><div class="custom-dialog-actions"><button type="button" data-use-item disabled>Use as is</button><button type="button" class="ghost" data-edit-copy disabled>Edit a copy</button><button type="button" class="ghost" data-build-on-item disabled>Build on it</button></div></div>
     </dialog>
+    <section class="custom-deploy-panel" aria-labelledby="custom-deploy-title">
+      <div><p class="kicker">Place + test</p><h3 id="custom-deploy-title">Deployment sandbox</h3><p>Drag the saved object around the floor, align it to ground, compare it with the character, then test its configured behavior.</p></div>
+      <div id="custom-placement-stage" class="custom-placement-stage" aria-label="Item placement preview"><span class="scale-character" aria-label="Character scale reference">♟</span><button id="custom-placed-item" type="button" draggable="true" hidden>⚡</button><small>Drag to place · character = 1.8 m</small></div>
+      <div class="deploy-controls"><label>Environment<select id="custom-environment"><option>Vibe Crib</option><option>Crew Plaza</option><option>Studio Ridge</option><option>RAD-TOX Arena</option></select></label><label><input id="custom-ground-align" type="checkbox" checked> Ground alignment</label><label>Relative scale<input id="custom-character-scale" type="range" min="10" max="250" value="75"><output id="custom-character-scale-output">0.75×</output></label><label>Gameplay behavior<select id="custom-behavior"><option value="pickup">Pick up</option><option value="static">Static prop</option><option value="bounce">Bounce on touch</option><option value="collect">Collectible</option><option value="trigger">Interaction trigger</option></select></label><button type="button" data-test-item disabled>▶ Test interaction</button></div>
+      <p id="custom-deploy-status" role="status">Save or select an item to begin placement testing.</p>
+    </section>
     <div class="custom-build-toast" id="custom-build-toast" role="status" aria-live="polite" hidden></div>
 
     <section class="section-block model-publisher" id="publish-model" aria-labelledby="publish-model-title">
