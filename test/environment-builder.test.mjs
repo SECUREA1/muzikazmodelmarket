@@ -203,14 +203,22 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /createSavedCustomModel/);
   assert.match(game, /built\.customModels/);
   assert.match(game, /center\.x\+x/);
-  assert.match(game, /object\.scale\.set\(scale,sy,sz\)/, 'preserves every authored scale axis');
+  assert.match(game, /object\.scale\.multiply\(new THREE\.Vector3\(scale,sy,sz\)\)/, 'preserves model normalization and every authored scale axis');
   assert.match(game, /object\.rotation\.set/, 'preserves the full authored rotation');
 });
 
 test('saved and published maps embed custom item definitions for exact game reconstruction', async () => {
-  const script = await readFile(new URL('../environment-builder.js', import.meta.url), 'utf8');
+  const [script, game] = await Promise.all([
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
+  ]);
   assert.match(script, /sceneData\.customModels=cloneData\(customModels\)/);
+  assert.match(script, /sceneData\.placedModels=cloneData/, 'every placed asset definition travels with the local and published scene');
   assert.match(script, /body:JSON\.stringify\(\{scene:sceneData,ownerId\}\)/);
+  assert.match(game, /built\.placedModels/);
+  assert.match(game, /prepareAuthoredBuilderModel/);
+  assert.match(game, /createGeneratedAsset\(definition\)/);
+  assert.match(game, /object\.scale\.multiply/, 'gameplay preserves the model normalization and the exact authored instance scale');
 });
 
 test('Builder Pack layouts open as new environment maps', async () => {
