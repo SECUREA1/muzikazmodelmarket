@@ -34,3 +34,20 @@ test('in-game Tools and Drop Backpack expose the complete map-building pack', as
   assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'interior').length, 10);
   assert.ok(buildAssets.every((asset) => asset.type === 'props' && asset.thumbnailUrl));
 });
+
+test('Drop Backpack pets each have a custom refillable treat', async () => {
+  const [game, manifest] = await Promise.all([
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/models/backpack-assets.json', import.meta.url), 'utf8').then(JSON.parse)
+  ]);
+  const pets = manifest.assets.filter((asset) => asset.type === 'pets');
+  const treats = manifest.assets.filter((asset) => asset.petId);
+
+  assert.equal(pets.length, 4);
+  assert.equal(treats.length, 4);
+  assert.ok(treats.every((treat) => pets.some((pet) => pet.id === treat.petId)));
+  assert.ok(treats.every((treat) => treat.consumable && treat.refillCostMzk > 0 && treat.treatShape));
+  assert.match(game, /function feedTreatToPet/);
+  assert.match(game, /function buyPetTreat/);
+  assert.match(game, /asset\.petId && asset\.consumable/);
+});
