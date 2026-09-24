@@ -14,7 +14,7 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /muzikaz\.builder\.buildTray/);
   assert.match(script, /multiplayer:true, enemies:true, weapons:true, pickups:true/);
   assert.match(script, /model-explorer\.html\?environment=/);
-  assert.match(script, /fetch\('\/api\/custom-maps'/);
+  assert.match(script, /apiFetch\('\/api\/custom-maps'/);
   assert.match(script, /All players can join/);
   assert.match(script, /Opening your locally saved multiplayer map/);
 });
@@ -201,7 +201,7 @@ test('in-game Builder Map menu opens the environment builder and restores playab
 
 test('saved and published maps embed custom item definitions for exact game reconstruction', async () => {
   const script = await readFile(new URL('../environment-builder.js', import.meta.url), 'utf8');
-  assert.match(script, /sceneData\.customModels=structuredClone\(customModels\)/);
+  assert.match(script, /sceneData\.customModels=cloneData\(customModels\)/);
   assert.match(script, /body:JSON\.stringify\(\{scene:sceneData,ownerId\}\)/);
 });
 

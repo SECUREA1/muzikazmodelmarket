@@ -1,11 +1,12 @@
 import { fetchGitHubGlbFiles, mergeGitHubEnvironmentFiles } from '../github-glb-discovery.js';
 
 const PREFIX = '[MUZIKAZ Environment]';
+const apiFetch = (path, options = {}) => window.MUZIKAZ_API?.fetch ? window.MUZIKAZ_API.fetch(path, options) : fetch(path, options);
 
 export async function fetchEnvironmentList() {
   let records = [];
   try {
-    const response = await fetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+    const response = await apiFetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
     if (!response.ok) throw new Error(`Environment registry unavailable (${response.status})`);
     const payload = await response.json();
     records = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
@@ -50,7 +51,7 @@ export async function uploadEnvironment(formData, onProgress = () => {}) {
 }
 
 export async function deleteEnvironment(id) {
-  const response = await fetch(`/api/environments/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+  const response = await apiFetch(`/api/environments/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { Accept:'application/json' }, retries:0 });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.message || payload.error || 'Unable to delete environment.');
   return payload.data || payload;
