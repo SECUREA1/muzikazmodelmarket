@@ -12,7 +12,9 @@
     "check:land-data": "python3 scripts/build-land-database.py --check",
     "static": "python3 -m http.server 4173 --directory dist",
     "optimize:environment": "node scripts/optimize-environment.mjs",
-    "check:environments": "node scripts/check-environments.mjs"
+    "check:environments": "node scripts/check-environments.mjs",
+    "build:asset-registry": "node scripts/build-game-asset-registry.mjs",
+    "check:asset-registry": "node scripts/build-game-asset-registry.mjs && git diff --exit-code -- public/models/game-asset-registry.json"
   },
   "engines": {
     "node": ">=20 <25"

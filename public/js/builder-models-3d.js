@@ -125,6 +125,30 @@ export function createBuilderModel(id) {
   root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return root;
 }
 
+// Persistent registry entries with no authored GLB receive a semantic procedural
+// model. These are deliberately shaped recipes, not missing-model cubes.
+export function createGeneratedAsset(model) {
+  const root=new THREE.Group(),recipe=model.generator,color=new THREE.Color(model.registry?.materials?.color||model.color||'#b9ff38'),primary=material(color,.5,.12),dark=material(0x24282b,.72,.35),add=(geometry,position=[0,0,0],rotation=[0,0,0],mat=primary)=>{const part=mesh(geometry,mat,position,rotation);root.add(part);return part};
+  if(recipe==='bottle'){
+    add(new THREE.SphereGeometry(.34,20,14),[0,.42,0]);add(new THREE.CylinderGeometry(.13,.2,.42,16),[0,.84,0]);add(new THREE.CylinderGeometry(.16,.16,.12,16),[0,1.08,0],undefined,dark);add(new THREE.TorusGeometry(.22,.045,8,20),[0,.38,0],[Math.PI/2,0,0],dark);
+  }else if(recipe==='dynamite-bundle'){
+    for(let x=-1;x<=1;x++)for(let z=-1;z<=1;z+=2)add(new THREE.CylinderGeometry(.095,.095,.82,12),[x*.2,.42,z*.1],undefined,material(0xc63228,.65));add(new THREE.TorusGeometry(.29,.035,8,24),[0,.42,0],[Math.PI/2,0,0],dark);const fuse=add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0,.83,0),new THREE.Vector3(.16,1.02,0),new THREE.Vector3(.24,1.12,.08)]),12,.018,6),[0,0,0],undefined,dark);fuse.userData.effect=true;
+  }else if(recipe==='carrot'){
+    add(new THREE.ConeGeometry(.2,.9,16),[0,.45,0],undefined,material(0xf47728,.72));for(let i=0;i<5;i++)add(new THREE.ConeGeometry(.08,.42,8),[(i-2)*.05,1.03,0],[0,0,(i-2)*.18],material(0x4b9b49,.82));
+  }else if(recipe==='bone'){
+    add(new THREE.CapsuleGeometry(.12,.64,6,12),[0,.28,0],[0,0,Math.PI/2],material(0xead9b0,.82));for(const x of [-.42,.42])for(const y of [-.1,.1])add(new THREE.SphereGeometry(.16,12,8),[x,.28+y,0],undefined,material(0xead9b0,.82));
+  }else if(recipe==='fish'){
+    const body=add(new THREE.SphereGeometry(.4,18,12),[0,.42,0]);body.scale.set(1,.55,.28);add(new THREE.ConeGeometry(.28,.42,3),[-.48,.42,0],[0,0,-Math.PI/2]);add(new THREE.SphereGeometry(.035,8,6),[.3,.49,-.1],undefined,dark);
+  }else if(recipe==='cheese'){
+    const shape=new THREE.Shape();shape.moveTo(-.42,0);shape.lineTo(.42,0);shape.lineTo(.42,.55);shape.lineTo(-.42,.18);shape.closePath();add(new THREE.ExtrudeGeometry(shape,{depth:.36,bevelEnabled:true,bevelSize:.035,bevelThickness:.035,bevelSegments:2}),[0,.05,-.18],undefined,material(0xf2c83b,.78));
+  }else if(recipe==='terrain-slab'){
+    const land=add(new THREE.CylinderGeometry(2.5,2.8,.45,24),[0,.225,0],undefined,material(0x477c43,.96));land.userData.placementSurface=true;root.userData.terrain=true;
+  }else if(recipe==='extruded-svg'){
+    const shape=new THREE.Shape();shape.moveTo(0,.95);shape.bezierCurveTo(.65,.72,.72,.05,0,0);shape.bezierCurveTo(-.72,.05,-.65,.72,0,.95);shape.closePath();add(new THREE.ExtrudeGeometry(shape,{depth:.24,bevelEnabled:true,bevelSize:.06,bevelThickness:.05,bevelSegments:3}),[0,0,-.12]);
+  }else throw new Error(`Unknown generated asset recipe: ${recipe}`);
+  root.name=model.name;root.userData={...root.userData,builderObject:true,generated:true,generator:recipe,assetId:model.sourceId,dimensions:new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).toArray()};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;}});return root;
+}
+
 export function updateBuilderModels(group, elapsed) {
   group.children.forEach(root=>{root.traverse(child=>{if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 }

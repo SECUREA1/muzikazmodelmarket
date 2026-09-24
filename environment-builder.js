@@ -5,7 +5,7 @@ import * as THREE from './public/vendor/three/three.module.min.js';
 import { OrbitControls } from './public/vendor/three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from './public/vendor/three/addons/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from './public/vendor/three/addons/utils/SkeletonUtils.js';
-import { createBuilderModel, updateBuilderModels } from './public/js/builder-models-3d.js';
+import { createBuilderModel, createGeneratedAsset, updateBuilderModels } from './public/js/builder-models-3d.js';
 
 const STORAGE_KEY='muzikaz.environmentBuilder.scenes.v2', LEGACY_KEY='muzikaz.environmentBuilder.scenes.v1', PLAY_KEY='muzikaz.environmentBuilder.playScene.v1', TRAY_KEY='muzikaz.builder.buildTray', CUSTOM_KEY='muzikaz.environmentBuilder.customItems.v1';
 const colors=['#b9ff38','#63eaff','#ff5ba7','#ffcc3d','#ff6847','#a78bfa','#f8fafc','#334155'];
@@ -82,17 +82,18 @@ const models=()=>[...builtins,...gameplayModels,...expandedModels,...catalogMode
 // Repository manifests are the source of truth for deposited items and maps.
 // Load every source independently so one unavailable API can never blank the
 // library, then de-duplicate against the hand-authored starter pack.
-const catalogSources=['public/models/glb-models.json','public/models/backpack-assets.json','public/models/toolkit-assets.json','/api/models'];
+const catalogSources=['public/models/game-asset-registry.json','public/models/glb-models.json','public/models/backpack-assets.json','public/models/toolkit-assets.json','/api/models'];
 const catalogId=value=>String(value||'catalog-item').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 function normalizeCatalogModel(raw,index){
- const modelUrl=raw.modelUrl||raw.model_url||raw.fileUrl||raw.file_url||raw.assetUrl||raw.asset_url||'', format=String(raw.format||modelUrl.split('?')[0].split('.').pop()||'').toLowerCase();
- if(!modelUrl||!['glb','gltf'].includes(format)||raw.visibility==='private'||raw.status==='inactive')return null;
- const sourceId=catalogId(raw.id||raw.modelId||raw.name||`item-${index}`),kind=String(raw.assetType||raw.type||raw.category||'props').toLowerCase(),type=/avatar|character/.test(kind)?'avatar':/enemy|creature/.test(kind)?'enemy':/vehicle/.test(kind)?'vehicle':'props';
- return{id:`catalog-${sourceId}`,sourceId,name:raw.name||raw.title||'Deposited 3D item',type,category:type==='avatar'?'characters':type==='enemy'?'creatures':'props',size:72,image:raw.thumbnailUrl||raw.thumbnail_url||'',modelUrl,behavior:type==='enemy'?'hostile':type==='vehicle'?'vehicle':type==='avatar'?'talk':'decor',scale:raw.scaleLabel||raw.dimensions||'game ready',targetHeight:type==='avatar'?1.8:null,assetKind:'catalog-glb',source:'repository'};
+ const modelUrl=raw.modelPath||raw.modelUrl||raw.model_url||raw.fileUrl||raw.file_url||raw.assetUrl||raw.asset_url||'', format=String(raw.format||modelUrl.split('?')[0].split('.').pop()||'').toLowerCase(),generated=Boolean(raw.generated&&raw.generator);
+ if((!generated&&(!modelUrl||!['glb','gltf'].includes(format)))||raw.visibility==='private'||raw.status==='inactive')return null;
+ const sourceId=catalogId(raw.assetId||raw.id||raw.modelId||raw.name||`item-${index}`),kind=String(raw.assetType||raw.type||raw.category||'props').toLowerCase(),type=/avatar|character/.test(kind)?'avatar':/enemy|creature/.test(kind)?'enemy':/vehicle/.test(kind)?'vehicle':/terrain|land/.test(kind)?'terrain':/wearable/.test(kind)?'wearable':'props';
+ return{id:`catalog-${sourceId}`,sourceId,name:raw.name||raw.title||'Deposited 3D item',type,category:type==='avatar'?'characters':type==='enemy'?'creatures':type==='vehicle'?'vehicles':type==='terrain'?'terrain':type==='wearable'?'wearables':'props',size:72,image:raw.thumbnail||raw.thumbnailUrl||raw.thumbnail_url||'',modelUrl,generated,generator:raw.generator,procedural:generated,behavior:type==='enemy'?'hostile':type==='vehicle'?'vehicle':type==='avatar'?'talk':raw.interactions?.includes('use')?'pickup':'decor',scale:raw.scaleLabel||raw.dimensions||'game ready',targetHeight:type==='avatar'?1.8:null,assetKind:generated?'generated-procedural':'catalog-glb',registry:raw,source:raw.source||'repository'};
 }
 async function populateCompleteCatalog(){
  const results=await Promise.allSettled(catalogSources.map(url=>fetch(url,{cache:'no-store'}).then(response=>response.ok?response.json():Promise.reject(new Error(`${url} ${response.status}`))))),known=new Set(models().map(model=>model.id));
- const records=results.flatMap(result=>{if(result.status!=='fulfilled')return[];const value=result.value;return Array.isArray(value)?value:value.models||value.assets||value.data||[]});
+ results.filter(result=>result.status==='rejected').forEach(result=>console.error('[asset-registry] Manifest load failure',result.reason));
+ const records=results.flatMap(result=>{if(result.status!=='fulfilled')return[];const value=result.value;if(value.audit?.warnings?.length)value.audit.warnings.forEach(issue=>(issue.level==='error'?console.error:console.info)(`[asset-registry] ${issue.code}`,issue));return Array.isArray(value)?value:value.models||value.assets||value.data||[]});
  catalogModels=records.map(normalizeCatalogModel).filter(Boolean).filter(model=>!known.has(model.id)&&(known.add(model.id),true));
  const environmentResult=await fetch('public/models/environments/environments.json',{cache:'no-store'}).then(response=>response.ok?response.json():[]).catch(()=>[]);
  const mapGroup=document.createElement('optgroup');mapGroup.label='REPOSITORY 3D MAPS';
@@ -168,7 +169,7 @@ function createFallback(model){if(model.strokes)return createDrawnModel(model);c
  else {const c=model.id==='treasure-crystal'?new THREE.OctahedronGeometry(.55):model.id==='healing-potion'?new THREE.CapsuleGeometry(.28,.55,6,12):model.id==='quest-scroll'?new THREE.CylinderGeometry(.12,.12,1.15,16):new THREE.CapsuleGeometry(.42,1.05,6,12);body=new THREE.Mesh(c,mat(model.color||0xb9ff38,{emissive:model.type==='interactive'?new THREE.Color(model.color||0xb9ff38):0x000000,emissiveIntensity:.25}));body.position.y=model.type==='interactive'?.65:1; if(model.id==='quest-scroll')body.rotation.z=Math.PI/2;root.add(body)}
  return root;}
 function prepareRoot(root,model,clips=[]){root.traverse(n=>{delete n.userData.builderRoot;if(n.isMesh){n.castShadow=true;n.receiveShadow=true;if(n.material){const mats=Array.isArray(n.material)?n.material:[n.material];mats.forEach(mat=>{if(mat.map)mat.map.colorSpace=THREE.SRGBColorSpace;mat.transparent=Boolean(mat.transparent||mat.opacity<1);mat.needsUpdate=true})}}});const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3());if(model.targetHeight&&size.y>0){const s=model.targetHeight/size.y;root.scale.setScalar(s);box.setFromObject(root)}const min=box.min;root.position.y-=min.y;root.userData.clips=clips;return root}
-async function templateFor(model){if(cache.has(model.id))return cache.get(model.id);const promise=(async()=>{if(model.procedural)return prepareRoot(createBuilderModel(model.id),model);if(model.modelUrl){try{const gltf=await loader.loadAsync(model.modelUrl);return prepareRoot(gltf.scene,model,gltf.animations)}catch(error){console.warn(`Could not load ${model.modelUrl}`,error)}}return prepareRoot(createFallback(model),model)})();cache.set(model.id,promise);return promise}
+async function templateFor(model){if(cache.has(model.id))return cache.get(model.id);const promise=(async()=>{if(model.generated)return prepareRoot(createGeneratedAsset(model),model);if(model.procedural)return prepareRoot(createBuilderModel(model.id),model);if(model.modelUrl){try{const gltf=await loader.loadAsync(model.modelUrl);return prepareRoot(gltf.scene,model,gltf.animations)}catch(error){console.error('[asset-registry] GLB_LOAD_FAILURE',{assetId:model.sourceId||model.id,path:model.modelUrl,error})}}return prepareRoot(createFallback(model),model)})();cache.set(model.id,promise);return promise}
 function disposeRuntime(id){const rt=runtime.get(id);if(!rt)return;rt.mixer?.stopAllAction();rt.root.traverse(n=>{if(n.userData.effectTimer)clearInterval(n.userData.effectTimer)});rt.root.removeFromParent();runtime.delete(id)}
 function addAvatarAccessory(root,object){
  const look={...defaultAvatarLook(),...(object.avatarSettings?.look||{})},box=new THREE.Box3().setFromObject(root),s=box.getSize(new THREE.Vector3()),cx=(box.min.x+box.max.x)/2,front=box.max.z+.035,group=new THREE.Group();
@@ -216,7 +217,7 @@ async function publishAndPlay(){
   if(live.builderScene.objects.length!==sceneData.objects.length)throw new Error('The live map did not contain every placed object.');
   playId=live.id;playScene=cloneData(live.builderScene);sceneData.id=playId;deployed=true;persist('Live map saved with its exact layout');$('#save-state').textContent='LIVE · All players can join';showToast(`“${live.name}” is deployed in the shared map list — opening RAD-TOX…`)
  }catch(error){
-  $('#save-state').textContent='LIVE PUBLISH FAILED · Local play only';showToast(`${error.message} Your local map is safe; try Save & Play Live again. Opening a local RAD-TOX level…`)
+  $('#save-state').textContent='LIVE PUBLISH FAILED · Local play only';showToast(`${error.message} Your local map is safe; try Save & Play Live again. Opening your locally saved multiplayer map…`)
  }
  // The successful path hands the game the server's authoritative scene. The
  // fallback remains explicit and browser-local, so it can never masquerade as
