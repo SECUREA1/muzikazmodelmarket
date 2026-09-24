@@ -34,4 +34,18 @@ test('Firefox item and map population survives large or partially unavailable co
   assert.match(game, /Promise\.allSettled\(\[/);
   assert.match(game, /if \(packResult\.status === 'fulfilled'\)/);
   assert.match(game, /return worldResult\.status === 'fulfilled' \? worldResult\.value : registry\.all\(\)/);
+test('builder uses self-contained ESM dependencies and the completed cross-origin API bridge', async () => {
+  const [html, builder, environments] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/environments/environment-api.js', import.meta.url), 'utf8')
+  ]);
+
+  assert.match(html, /public\/js\/api-connection\.js/);
+  assert.doesNotMatch(html, /type="importmap"/);
+  assert.equal((builder.match(/examples\/jsm\/[^'\"]+\/\+esm/g) || []).length, 3);
+  assert.match(builder, /window\.MUZIKAZ_API\?\.fetch/);
+  assert.match(builder, /apiFetch\('\/api\/custom-maps'/);
+  assert.match(builder, /typeof structuredClone==='function'/);
+  assert.match(environments, /apiFetch\('\/api\/environments'/);
 });
