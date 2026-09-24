@@ -6,6 +6,7 @@ import { OrbitControls } from './public/vendor/three/addons/controls/OrbitContro
 import { GLTFLoader } from './public/vendor/three/addons/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from './public/vendor/three/addons/utils/SkeletonUtils.js';
 import { createBuilderModel, createGeneratedAsset, updateBuilderModels } from './public/js/builder-models-3d.js';
+import { compileBuilderScene } from './public/js/builder-gameplay-pipeline.js';
 
 const STORAGE_KEY='muzikaz.environmentBuilder.scenes.v2', LEGACY_KEY='muzikaz.environmentBuilder.scenes.v1', PLAY_KEY='muzikaz.environmentBuilder.playScene.v1', TRAY_KEY='muzikaz.builder.buildTray', CUSTOM_KEY='muzikaz.environmentBuilder.customItems.v1';
 const colors=['#b9ff38','#63eaff','#ff5ba7','#ffcc3d','#ff6847','#a78bfa','#f8fafc','#334155'];
@@ -207,7 +208,8 @@ function updateUi(){const o=selected(),m=o&&modelFor(o.modelId),showInspector=Bo
 function persist(message='Progress saved locally'){sceneData.version=3;sceneData.customModels=cloneData(customModels);sceneData.catalogModels=cloneData(catalogModels.filter(model=>sceneData.objects.some(object=>object.modelId===model.id)));sceneData.layoutMeta=cloneData(layouts[sceneData.layout]||layouts['grand-floor']);for(const o of sceneData.objects){const rt=runtime.get(o.id);if(rt?.mixer)o.animationState.time=rt.mixer.time}localStorage.setItem(STORAGE_KEY,JSON.stringify(sceneData));localStorage.setItem(LEGACY_KEY,JSON.stringify(sceneData));$('#save-state').textContent=`Saved ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;showToast(message)}
 async function publishAndPlay(){
  if(!sceneData.id||sceneData.id==='active')sceneData.id=`custom-map-${uid()}`;
- sceneData.gameplay={multiplayer:true, enemies:true, weapons:true, pickups:true, customRoles:true};persist('Saving live multiplayer map…');
+ sceneData.gameplay={multiplayer:true, enemies:true, weapons:true, pickups:true, customRoles:true};
+ sceneData.runtimeManifest=compileBuilderScene(sceneData);persist('Saving live multiplayer map…');
  const ownerId=localStorage.getItem('muzikazBottleMemberEmail')||localStorage.getItem('muzikazUserId')||'guest-builder';
  const button=$('#play-scene');button.disabled=true;let playId=sceneData.id,playScene=cloneData(sceneData),deployed=false;
  try{

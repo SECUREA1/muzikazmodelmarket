@@ -17,6 +17,7 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(script, /&house=\$\{id\}&autoplay=1/);
   assert.match(script, /apiFetch\('\/api\/custom-maps'/);
+  assert.match(script, /compileBuilderScene\(sceneData\)/);
   assert.match(script, /All players can join/);
   assert.match(script, /Opening your locally saved multiplayer map/);
 });
