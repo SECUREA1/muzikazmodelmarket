@@ -130,3 +130,20 @@ test('Builder Pack layouts open as new environment maps', async () => {
   assert.match(script, /room\.dataset\.roomStyle/);
   assert.match(script, /dataset\.packTemplate/);
 });
+
+test('expanded asset library covers deployable worlds, weapons, ghosts, slime and graded materials', async () => {
+  const [html, script, models] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/builder-models-3d.js', import.meta.url), 'utf8')
+  ]);
+  for (const category of ['terrain','plants','buildings','props','weapons','characters','creatures','interactive']) assert.match(html, new RegExp(`data-library-filter="${category}"`));
+  for (const asset of ['terrain-cliff','ancient-oak','timber-cabin','supply-crate','plasma-sword','spectral-ghost','emerald-slime','teleport-pad']) {
+    assert.match(script, new RegExp(asset), `${asset} is selectable`);
+    assert.match(models, new RegExp(asset), `${asset} has complete procedural geometry`);
+  }
+  assert.match(script, /m tall|×/);
+  assert.match(models, /Float32BufferAttribute\(colors,3\)/);
+  assert.match(models, /vertexColors:true/);
+  assert.match(script, /clip==='float'\|\|clip==='bounce'/);
+});

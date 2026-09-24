@@ -31,6 +31,37 @@ const mesh = (geometry, mat, position=[0,0,0], rotation=[0,0,0]) => { const valu
 const box = (size, mat, position) => mesh(new THREE.BoxGeometry(...size),mat,position);
 const cylinder = (r1,r2,h,mat,position,segments=16) => mesh(new THREE.CylinderGeometry(r1,r2,h,segments),mat,position);
 
+// Vertex RGB is blended over the height of each surface, with a small deterministic
+// variation per vertex. This keeps silhouettes readable without the flat, toy-like
+// fill of a single base colour and still responds to every light in the scene.
+const gradedMaterial=(roughness=.72,metalness=.04,extra={})=>new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness,metalness,...extra});
+function graded(geometry,bottom,top,position=[0,0,0],options={}){
+ const g=geometry.clone(),p=g.attributes.position,lo=new THREE.Color(bottom),hi=new THREE.Color(top),colors=[];let min=Infinity,max=-Infinity;
+ for(let i=0;i<p.count;i++){min=Math.min(min,p.getY(i));max=Math.max(max,p.getY(i))}
+ for(let i=0;i<p.count;i++){const noise=(Math.sin(p.getX(i)*17.13+p.getZ(i)*31.7+i*.73)+1)*.035,t=THREE.MathUtils.clamp((p.getY(i)-min)/Math.max(.001,max-min)+noise,0,1),c=lo.clone().lerp(hi,t);colors.push(c.r,c.g,c.b)}
+ g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.computeVertexNormals();return mesh(g,gradedMaterial(options.roughness,options.metalness,options.extra),position,options.rotation||[0,0,0]);
+}
+const EXPANDED={
+ 'terrain-cliff':['terrain',4.8,3.2,3.5], 'terrain-river':['terrain',6,.2,3], 'terrain-crater':['terrain',5,.8,5], 'terrain-snowbank':['terrain',4,1.2,2.4],
+ 'ancient-oak':['plant',4.5,6,4.5], 'palm-cluster':['plant',3.5,5,3.5], 'giant-mushrooms':['plant',2.4,2.2,2], 'desert-cactus':['plant',1.5,3,1.2],
+ 'timber-cabin':['building',6,3.6,5], 'stone-tower':['building',4,7,4], 'market-stall':['building',3,2.8,2.2], 'sci-fi-bunker':['building',7,3,5],
+ 'supply-crate':['prop',1.1,1,1.1], 'wooden-cart':['prop',2.4,1.5,1.2], 'iron-anvil':['prop',.9,.8,.45], 'street-sign':['prop',1.2,2.4,.5],
+ 'plasma-sword':['weapon',.25,1.4,.12], 'battle-axe':['weapon',.8,1.5,.16], 'arc-bow':['weapon',.9,1.3,.12], 'crystal-staff':['weapon',.3,1.8,.3],
+ 'forest-ranger':['character',.75,1.8,.55], 'desert-merchant':['character',.8,1.75,.6], 'clockwork-knight':['character',.85,1.9,.65], 'spectral-ghost':['character',.85,1.7,.6],
+ 'emerald-slime':['creature',1,.8,.9], 'moss-golem':['creature',1.4,2.6,1], 'cave-spider':['creature',1.8,.65,1.6], 'sky-ray':['creature',3.2,.55,1.8],
+ 'lever-switch':['interactive',.8,1.1,.5], 'treasure-chest':['interactive',1.2,.8,.7], 'teleport-pad':['interactive',2.2,.2,2.2], windmill:['interactive',4,6,2.5]
+};
+function expandedModel(id){
+ const [kind,w,h,d]=EXPANDED[id],root=new THREE.Group(),wood=gradedMaterial(.86,.02),metal=gradedMaterial(.28,.75),add=value=>(root.add(value),value),rgb=(geo,a,b,pos,opt)=>add(graded(geo,a,b,pos,opt));
+ if(kind==='terrain'){const geo=id==='terrain-river'?new THREE.BoxGeometry(w,h,d,10,1,8):new THREE.IcosahedronGeometry(w*.5,2),part=rgb(geo,id==='terrain-snowbank'?0xaac5cf:id==='terrain-river'?0x176f94:0x393a35,id==='terrain-snowbank'?0xf8ffff:id==='terrain-river'?0x68d7e8:0x88806e,[0,h*.32,0],{roughness:id==='terrain-river'?.18:.96,extra:id==='terrain-river'?{transparent:true,opacity:.82}: {}});part.scale.set(1,h/w,d/w);if(id==='terrain-river')part.userData.water=true;}
+ else if(kind==='plant'){const trunk=rgb(new THREE.CylinderGeometry(.18,.32,h*.58,12),0x3c2115,0x8f5c30,[0,h*.29,0],{roughness:.94});if(id==='desert-cactus'){trunk.geometry=new THREE.CylinderGeometry(.3,.4,h,14);trunk.position.y=h/2;trunk.material=gradedMaterial(.9);['color'].forEach(()=>{});[-1,1].forEach(s=>{const arm=rgb(new THREE.CylinderGeometry(.14,.18,h*.34,10),0x28623e,0x68ad63,[s*.42,h*.52,0],{roughness:.9});arm.rotation.z=s*.75});}else if(id==='giant-mushrooms'){trunk.visible=false;for(let i=0;i<4;i++){const x=(i-1.5)*.55,y=.65+i%2*.25;rgb(new THREE.CylinderGeometry(.1,.16,y,10),0xd6c19f,0xffebcf,[x,y/2,0],{roughness:.85});const cap=rgb(new THREE.SphereGeometry(.42,18,10),0x6e204d,0xf680b3,[x,y,0],{roughness:.68});cap.scale.y=.36;cap.userData.swayPhase=i}}else{const leafColor=id==='palm-cluster'?[0x174f2e,0x67b84b]:[0x173c24,0x6ba44d];for(let i=0;i<(id==='palm-cluster'?9:7);i++){const a=i/7*Math.PI*2,crown=rgb(id==='palm-cluster'?new THREE.ConeGeometry(.55,2.2,8):new THREE.IcosahedronGeometry(1.2,2),...leafColor,[Math.cos(a)*.75,h*.67+Math.sin(i)*.25,Math.sin(a)*.6],{roughness:.9});crown.rotation.z=id==='palm-cluster'?a:0;crown.userData.swayPhase=i*.7}}}
+ else if(kind==='building'){rgb(new THREE.BoxGeometry(w,h*.72,d),id==='sci-fi-bunker'?0x26343b:id==='stone-tower'?0x494b48:0x59351f,id==='sci-fi-bunker'?0x6e8790:id==='stone-tower'?0x93958c:0xb47a49,[0,h*.36,0],{roughness:.82,metalness:id==='sci-fi-bunker'?.35:.03});rgb(new THREE.ConeGeometry(w*.68,h*.3,4),0x49251b,0xa34e32,[0,h*.86,0],{roughness:.8,rotation:[0,Math.PI/4,0]});rgb(new THREE.BoxGeometry(w*.22,h*.48,.12),0x171b1c,0x506b72,[0,h*.24,-d/2-.07],{roughness:.35,metalness:.3});}
+ else if(kind==='character'||kind==='creature'){const spectral=id==='spectral-ghost',body=rgb(kind==='creature'?new THREE.SphereGeometry(w*.45,20,14):new THREE.CapsuleGeometry(w*.28,h*.48,8,16),spectral?0x77bed0:id==='emerald-slime'?0x245d28:0x49382f,spectral?0xe5ffff:id==='emerald-slime'?0xa9f45d:0xc79568,[0,h*.45,0],{roughness:.6,extra:spectral?{transparent:true,opacity:.68,emissive:0x438da0,emissiveIntensity:.4}:{}});body.scale.y=kind==='creature'?h/w:1;body.userData.swayPhase=0;if(kind==='character'&&!spectral){rgb(new THREE.SphereGeometry(w*.25,18,12),0x8e5b3f,0xe2aa7c,[0,h*.86,0],{roughness:.72});[-1,1].forEach(s=>rgb(new THREE.CylinderGeometry(.07,.09,h*.42,8),0x293741,0x768c65,[s*w*.23,h*.23,0],{roughness:.7}))}if(id==='cave-spider')for(let i=0;i<8;i++){const leg=rgb(new THREE.CylinderGeometry(.025,.04,.9,6),0x1a1720,0x665873,[Math.cos(i)*.6,.22,Math.sin(i)*.5],{roughness:.8});leg.rotation.z=Math.cos(i)*1.15}}
+ else if(kind==='weapon'){const glow=id==='plasma-sword'||id==='crystal-staff';rgb(new THREE.CylinderGeometry(.045,.06,h*.82,10),0x263039,glow?0x8ff8ff:0xc9d0d2,[0,h*.45,0],{roughness:glow?.18:.35,metalness:.72,extra:glow?{emissive:0x36cde5,emissiveIntensity:1.1}:{}});rgb(new THREE.BoxGeometry(w,.1,.12),0x49301d,0xc9934f,[0,.15,0],{roughness:.7});}
+ else {rgb(new THREE.BoxGeometry(w,h,d),id==='treasure-chest'?0x553019:0x30383b,id==='treasure-chest'?0xb67b35:0xd7c36d,[0,h/2,0],{roughness:.55,metalness:.25});if(id==='teleport-pad'){const ring=rgb(new THREE.TorusGeometry(w*.38,.08,10,36),0x4b2684,0xc8a9ff,[0,h+.06,0],{roughness:.2,metalness:.3,extra:{emissive:0x7d46bd,emissiveIntensity:.9},rotation:[Math.PI/2,0,0]});ring.userData.water=true}else if(id==='windmill'){const hub=rgb(new THREE.CylinderGeometry(.18,.18,.35,14),0x4b5052,0xc8d0cf,[0,h*.72,-d*.52],{metalness:.7,rotation:[Math.PI/2,0,0]});for(let i=0;i<4;i++){const blade=rgb(new THREE.BoxGeometry(.22,h*.35,.06),0x6d4b2f,0xe0c695,[0,h*.72,-d*.63],{roughness:.74});blade.geometry.translate(0,h*.2,0);blade.rotation.z=i*Math.PI/2;blade.userData.spin=true}hub.userData.spin=true}}
+ root.userData={builderObject:true,modelId:id,dimensions:[w,h,d],animated:true};return root;
+}
+
 function plant(id) {
   const root=new THREE.Group(), trunk=material(0x6d3f20,.9), leaf=material(id==='pine-tree'?0x195f38:0x3e9b45,.88);
   root.add(cylinder(.18,.27,id==='pine-tree'?3.3:3.1,trunk,[0,1.65,0],12));
@@ -71,11 +102,12 @@ function detailedInterior(id){
 
 export function createBuilderModel(id) {
   let root;
+  if(EXPANDED[id]) return expandedModel(id);
   if(id==='canopy-tree'||id==='pine-tree') root=plant(id); else if(id==='flower-bed')root=flowerBed(); else if(id==='hedge-corner')root=hedge(); else if(id==='garden-rocks')root=rocks(); else if(id==='pond')root=pond(); else if(id==='path-tile')root=box([2.2,.12,1.2],material(0xa39b8c,.95),[0,.06,0]); else if(id==='hill'){root=mesh(new THREE.SphereGeometry(2.1,24,12,0,Math.PI*2,0,Math.PI/2),material(0x4f9a45,.95),[0,0,0]);root.scale.z=.86;} else if(id==='lamp-post')root=lamp(true); else if(id==='planter')root=planter(); else if(id==='sofa'||id==='armchair')root=seating(id==='armchair'); else if(id==='coffee-table')root=coffeeTable(); else if(id==='bookshelf')root=bookshelf(); else if(id==='floor-lamp')root=lamp(false); else if(id==='room-divider')root=divider(); else if(id==='kitchen-island')root=island(); else if(id==='spiral-stairs')root=stairs(); else if(id==='archway')root=arch(); else if(id==='art-wall')root=artWall(); else if(BUILDER_MODEL_INFO[id])root=detailedInterior(id); else return null;
   const [name,description,dimensions]=BUILDER_MODEL_INFO[id];root.name=name;root.userData={...root.userData,builderObject:true,modelId:id,label:name,description,dimensions,animated:['canopy-tree','pine-tree','pond','lamp-post','floor-lamp'].includes(id)};
   root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return root;
 }
 
 export function updateBuilderModels(group, elapsed) {
-  group.children.forEach(root=>{root.traverse(child=>{if(child.userData.water){child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.025;}if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  group.children.forEach(root=>{root.traverse(child=>{if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 }
