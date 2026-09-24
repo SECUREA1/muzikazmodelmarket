@@ -36,6 +36,23 @@ test('expanded maps include detailed building interiors and large playable lands
   assert.match(script, /Green Bubble Field/);
 });
 
+test('responsive customization sheet includes commercial FPS and training scenes', async () => {
+  const [html, script, css] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
+  ]);
+  for (const layout of ['blacksite', 'cargo-yard', 'neon-arena', 'desert-outpost', 'mega-mall', 'office-tower', 'firing-range', 'movie-studio']) {
+    assert.match(html, new RegExp(`value="${layout}"`));
+    assert.match(script, new RegExp(`'${layout}'`));
+  }
+  for (const panel of ['transform', 'look', 'play']) assert.match(html, new RegExp(`data-inspector-tab="${panel}"`));
+  assert.match(script, /function mapGlyph/);
+  assert.match(script, /<svg viewBox=/);
+  assert.match(css, /\.mobile-selection-button/);
+  assert.match(css, /\.inspector-open \.object-inspector/);
+});
+
 test('environment builder supports custom role-play actors and interactions', async () => {
   const [html, script] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
