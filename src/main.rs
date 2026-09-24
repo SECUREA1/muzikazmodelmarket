@@ -1167,6 +1167,18 @@ fn house_presence(
     headers: &HashMap<String, String>,
     body: &[u8],
 ) -> std::io::Result<()> {
+    if method == "GET" {
+        let mut users = st.house_users.write().unwrap();
+        prune_house_users(&mut users);
+        return json(
+            s,
+            200,
+            true,
+            &presence_json(&users),
+            "Presence loaded",
+            false,
+        );
+    }
     if method != "POST" {
         return json(s, 405, false, "{}", "Method not allowed", false);
     }
