@@ -14,7 +14,9 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /muzikaz\.builder\.buildTray/);
   assert.match(script, /multiplayer:true, enemies:true, weapons:true, pickups:true/);
   assert.match(script, /model-explorer\.html\?environment=/);
-  assert.match(script, /fetch\('\/api\/custom-maps'/);
+  assert.match(script, /muzikaz\.environmentBuilder\.playScene\.v1/);
+  assert.match(script, /&house=\$\{id\}&autoplay=1/);
+  assert.match(script, /apiFetch\('\/api\/custom-maps'/);
   assert.match(script, /All players can join/);
   assert.match(script, /Your local map is safe; try Save & Play Live again/);
 });
@@ -193,15 +195,20 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /item\.functionalSettings/);
   assert.match(game, /roomId:env\.id/);
   assert.match(game, /toxicBubbleSystem\.handleEnvironmentReady\(env\)/);
+  assert.match(game, /params\.get\('autoplay'\) === '1'/, 'Save & Play starts the published map immediately');
   assert.match(game, /muzikaz\.environmentBuilder\.scenes\.v2/);
+  assert.match(game, /muzikaz\.environmentBuilder\.playScene\.v1/);
+  assert.match(game, /key\.includes\('playScene'\)\?sessionStorage:localStorage/);
   assert.match(game, /createSavedCustomModel/);
   assert.match(game, /built\.customModels/);
   assert.match(game, /center\.x\+x/);
+  assert.match(game, /object\.scale\.set\(scale,sy,sz\)/, 'preserves every authored scale axis');
+  assert.match(game, /object\.rotation\.set/, 'preserves the full authored rotation');
 });
 
 test('saved and published maps embed custom item definitions for exact game reconstruction', async () => {
   const script = await readFile(new URL('../environment-builder.js', import.meta.url), 'utf8');
-  assert.match(script, /sceneData\.customModels=structuredClone\(customModels\)/);
+  assert.match(script, /sceneData\.customModels=cloneData\(customModels\)/);
   assert.match(script, /body:JSON\.stringify\(\{scene:sceneData,ownerId\}\)/);
 });
 
@@ -245,9 +252,20 @@ test('premade assets stay clean while custom SVG clip-ons remain explicit', asyn
 });
 
 test('every library preview renders without aborting builder initialization', async () => {
-  const script = await readFile(new URL('../environment-builder.js', import.meta.url), 'utf8');
+  const [script, models] = await Promise.all([
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/builder-models-3d.js', import.meta.url), 'utf8')
+  ]);
   assert.match(script, /function itemSilhouette\(model,alt=model\.name\)/);
   assert.match(script, /itemSilhouette\(model,alt\)/);
   assert.equal((script.match(/function visual\(/g) || []).length, 1, 'preview renderer has one canonical implementation');
   assert.equal((script.match(/function libraryButton\(/g) || []).length, 1, 'library renderer has one canonical implementation');
+  assert.match(script, /from '\.\/public\/vendor\/three\/three\.module\.min\.js'/);
+  assert.doesNotMatch(script, /from 'https:\/\//, 'Firefox does not depend on cross-origin modules to populate the library');
+  assert.match(models, /from '\.\.\/vendor\/three\/three\.module\.min\.js'/);
+  assert.doesNotMatch(models, /from 'https:\/\//, 'the procedural model dependency is also same-origin');
+  assert.ok(
+    script.indexOf('renderLibrary();') < script.indexOf('new THREE.WebGLRenderer'),
+    'the Firefox library is populated before WebGL initialization can fail'
+  );
 });

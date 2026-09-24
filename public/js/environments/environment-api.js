@@ -1,8 +1,7 @@
 import { fetchGitHubGlbFiles, mergeGitHubEnvironmentFiles } from '../github-glb-discovery.js';
 
 const PREFIX = '[MUZIKAZ Environment]';
-const apiFetch = (path, options) => window.MUZIKAZ_API ? window.MUZIKAZ_API.fetch(path, options) : fetch(path, options);
-const apiUrl = (path) => window.MUZIKAZ_API ? window.MUZIKAZ_API.url(path) : path;
+const apiFetch = (path, options = {}) => window.MUZIKAZ_API?.fetch ? window.MUZIKAZ_API.fetch(path, options) : fetch(path, options);
 
 export async function fetchEnvironmentList() {
   let records = [];
@@ -55,7 +54,7 @@ export async function uploadEnvironment(formData, onProgress = () => {}) {
 }
 
 export async function deleteEnvironment(id) {
-  const response = await apiFetch(`/api/environments/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+  const response = await apiFetch(`/api/environments/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { Accept:'application/json' }, retries:0 });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.message || payload.error || 'Unable to delete environment.');
   return payload.data || payload;
