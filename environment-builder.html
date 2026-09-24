@@ -50,9 +50,8 @@
         <div class="selected-summary"><img id="selected-image" alt=""><div><small id="selected-type"></small><strong id="selected-name"></strong></div></div>
         <fieldset><legend>ROTATION</legend><output id="rotation-output">0°</output><input id="rotation-control" type="range" min="0" max="359" value="0" aria-label="Object rotation"><div class="rotation-presets"><button data-rotate="-45" aria-label="Rotate left">↶ 45°</button><button data-rotate="45" aria-label="Rotate right">45° ↷</button></div></fieldset>
         <fieldset><legend>SCALE <small>LOCKED PROPORTIONS</small></legend><output id="scale-output">100%</output><input id="scale-control" type="range" min="40" max="240" value="100" step="5" aria-label="Object scale"><div class="scale-labels"><span>SMALL</span><span>CHARACTER</span><span>LARGE</span></div><button id="reset-scale" class="wide-control">RESET TO SENSIBLE SIZE</button></fieldset>
-        <fieldset><legend>3D POSITION <small>METRES</small></legend><div class="position-grid position-grid-3d"><label>X <input id="position-x" type="number" min="-20" max="20" step="0.1"></label><label>Y <input id="position-y" type="number" min="0" max="20" step="0.1"></label><label>Z <input id="position-z" type="number" min="-20" max="20" step="0.1"></label></div></fieldset>
-        <div class="placement-lock" id="placement-lock-state"><span aria-hidden="true">🔓</span><div><strong>PLACEMENT EDITABLE</strong><small>Lock the item when its 3D position is final.</small></div></div>
-        <div class="object-actions object-actions-3"><button id="lock-object" aria-pressed="false">LOCK ITEM</button><button id="duplicate-object">DUPLICATE</button><button id="remove-object" class="danger">REMOVE</button></div>
+        <fieldset><legend>POSITION</legend><div class="position-grid"><label>X <input id="position-x" type="number" min="0" max="100" step="0.1"></label><label>Y <input id="position-y" type="number" min="0" max="100" step="0.1"></label></div></fieldset>
+        <div class="object-actions"><button id="duplicate-object">DUPLICATE</button><button id="remove-object" class="danger">REMOVE</button></div>
       </div>
       <section class="scene-list"><div><small>SCENE OBJECTS</small><b id="scene-list-count">0</b></div><div id="scene-list"></div></section>
     </aside>
