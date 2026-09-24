@@ -23,15 +23,16 @@
   <main class="environment-workspace">
     <aside class="object-library" aria-labelledby="library-title">
       <header><div><small>BUILDERS PACK</small><h1 id="library-title">Item library</h1></div><span id="library-count">20</span></header>
-      <p>Select an object or drag it onto the land.</p>
-      <nav class="library-filters" aria-label="Filter item library"><button class="active" data-library-filter="all">ALL</button><button data-library-filter="landscape">OUTDOOR</button><button data-library-filter="interior">INTERIOR</button></nav>
+      <p>Select an object or drag it onto the land. Add your own cast and props, too.</p>
+      <button type="button" class="create-item-button" id="open-item-maker"><span>＋</span><b>CREATE CUSTOM ITEM</b><small>Avatar · enemy · interactive prop</small></button>
+      <nav class="library-filters" aria-label="Filter item library"><button class="active" data-library-filter="all">ALL</button><button data-library-filter="avatar">AVATARS</button><button data-library-filter="enemy">ENEMIES</button><button data-library-filter="interactive">ROLE PLAY</button><button data-library-filter="landscape">OUTDOOR</button><button data-library-filter="interior">INTERIOR</button></nav>
       <div class="library-grid" id="library-grid"></div>
     </aside>
 
     <section class="build-stage" aria-labelledby="map-heading">
       <header class="map-toolbar"><div><small>ACTIVE LAND · <span id="layout-label">GRAND BUILD FLOOR</span></small><h2 id="map-heading">Build your scene</h2></div><label>MAP LAYOUT<select id="layout-select"><option value="grand-floor">Grand Build Floor</option><option value="loft">Open Studio</option><option value="suite">Connected Suite</option><option value="courtyard">Garden Courtyard</option></select></label></header>
       <div class="stage-help"><span><b>1</b> Pick an item</span><span><b>2</b> Drag to position</span><span><b>3</b> Rotate &amp; scale</span><span><b>4</b> Save &amp; play</span></div>
-      <div class="playable-map-banner" role="note"><strong>GAME SYSTEMS INCLUDED</strong><span>Multiplayer room · RAD-TOX enemies · weapons · pickups · player spawn</span></div>
+      <div class="playable-map-banner" role="note"><strong>GAME SYSTEMS INCLUDED</strong><span>Custom avatars · enemy encounters · doors, quests &amp; pickups · player spawn</span></div>
       <div class="land-viewport" id="land-viewport">
         <div class="land-canvas layout-grand-floor" id="land-canvas" tabindex="0" aria-label="Grand Build Floor. Drop objects here and use arrow keys to move the selected object.">
           <div class="layout-walls" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -51,11 +52,27 @@
         <fieldset><legend>ROTATION</legend><output id="rotation-output">0°</output><input id="rotation-control" type="range" min="0" max="359" value="0" aria-label="Object rotation"><div class="rotation-presets"><button data-rotate="-45" aria-label="Rotate left">↶ 45°</button><button data-rotate="45" aria-label="Rotate right">45° ↷</button></div></fieldset>
         <fieldset><legend>SCALE <small>LOCKED PROPORTIONS</small></legend><output id="scale-output">100%</output><input id="scale-control" type="range" min="40" max="240" value="100" step="5" aria-label="Object scale"><div class="scale-labels"><span>SMALL</span><span>CHARACTER</span><span>LARGE</span></div><button id="reset-scale" class="wide-control">RESET TO SENSIBLE SIZE</button></fieldset>
         <fieldset><legend>POSITION</legend><div class="position-grid"><label>X <input id="position-x" type="number" min="0" max="100" step="0.1"></label><label>Y <input id="position-y" type="number" min="0" max="100" step="0.1"></label></div></fieldset>
+        <fieldset><legend>ITEM COLOR</legend><div class="color-swatches" id="color-swatches" aria-label="Item color"></div><label class="custom-color-label">CUSTOM <input id="object-color" type="color" value="#b9ff38"></label></fieldset>
+        <fieldset><legend>ROLE PLAY BEHAVIOR</legend><label class="behavior-label">WHEN A PLAYER GETS CLOSE<select id="object-behavior"><option value="decor">Decoration only</option><option value="talk">Start dialogue</option><option value="quest">Offer a quest</option><option value="hostile">Attack player</option><option value="patrol">Patrol area</option><option value="pickup">Collect item</option><option value="door">Open / close</option><option value="heal">Restore health</option></select></label></fieldset>
         <div class="object-actions"><button id="duplicate-object">DUPLICATE</button><button id="remove-object" class="danger">REMOVE</button></div>
       </div>
       <section class="scene-list"><div><small>SCENE OBJECTS</small><b id="scene-list-count">0</b></div><div id="scene-list"></div></section>
     </aside>
   </main>
+  <dialog class="item-maker" id="item-maker" aria-labelledby="item-maker-title">
+    <form method="dialog" id="item-maker-form">
+      <header><div><small>EXPAND YOUR WORLD</small><h2 id="item-maker-title">Create a custom item</h2><p>Add a reusable character, enemy, or interactive object to this map.</p></div><button value="cancel" class="dialog-close" aria-label="Close">×</button></header>
+      <div class="maker-preview" id="maker-preview"><span id="maker-preview-icon">🧙</span><b id="maker-preview-name">My character</b></div>
+      <div class="maker-fields">
+        <label>ITEM NAME<input id="custom-item-name" required maxlength="32" value="My character" placeholder="e.g. Forest guardian"></label>
+        <label>TYPE<select id="custom-item-type"><option value="avatar">Avatar / NPC</option><option value="enemy">Enemy</option><option value="interactive">Interactive object</option><option value="landscape">Outdoor prop</option><option value="interior">Interior prop</option></select></label>
+        <fieldset><legend>CHOOSE AN ICON</legend><div class="icon-picker" id="icon-picker"></div></fieldset>
+        <label>COLOR<input id="custom-item-color" type="color" value="#b9ff38"></label>
+        <label class="maker-wide">DEFAULT BEHAVIOR<select id="custom-item-behavior"><option value="talk">Start dialogue</option><option value="quest">Offer a quest</option><option value="hostile">Attack player</option><option value="patrol">Patrol area</option><option value="pickup">Collect item</option><option value="door">Open / close</option><option value="heal">Restore health</option><option value="decor">Decoration only</option></select></label>
+      </div>
+      <footer><button value="cancel">CANCEL</button><button value="default" id="create-custom-item" class="primary">ADD TO LIBRARY &amp; MAP</button></footer>
+    </form>
+  </dialog>
   <div class="builder-toast" id="builder-toast" role="status" aria-live="polite"></div>
   <script src="environment-builder.js"></script><script src="battle-theme.js"></script>
 </body>
