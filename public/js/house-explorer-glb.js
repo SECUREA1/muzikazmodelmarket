@@ -11,6 +11,7 @@ import { AirborneHoneyBee, BEE_CONFIG, AAPE_BOSS_CONFIG, BEEDUCK_BOSS_CONFIG } f
 import { NeonBrainBug } from './enemies/neon-brain-bug.js';
 import { pinchScaleFactor, pointerDistance } from './pinch-scale.js';
 import { BUILDER_MODEL_INFO, createBuilderModel, updateBuilderModels } from './builder-models-3d.js';
+import { BuilderVehicleController } from './builder-vehicle-controller.js';
 
 const SPRAY_COLORS = Object.freeze([{name:'Neon pink',hex:0xff3d9a},{name:'Electric blue',hex:0x36bfff},{name:'Acid lime',hex:0xb9ff36},{name:'Sunset orange',hex:0xff762e},{name:'Royal violet',hex:0x9b5cff}]);
 const legacyCanvas = document.querySelector('#house-explorer-canvas');
@@ -700,7 +701,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function updatePlayer(delta) { player.yaw -= thumbInput.rightX * delta * 2.5 * RIGHT_THUMBSTICK_SENSITIVITY; player.pitch = THREE.MathUtils.clamp(player.pitch - thumbInput.rightY * delta * 1.9 * RIGHT_THUMBSTICK_SENSITIVITY, -1.25, 1.15); const input = getInput(); forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)); right.set(Math.cos(player.yaw),0,-Math.sin(player.yaw)); move.copy(forward).multiplyScalar(input.y).addScaledVector(right,input.x); if (move.lengthSq()) move.normalize().multiplyScalar(player.speed * delta); playerCollider.translate(move); if (!player.onGround) player.velocity.y -= 18 * delta; playerCollider.translate(new THREE.Vector3(0, player.velocity.y * delta, 0)); const collision = envLoader.octree.capsuleIntersect(playerCollider); player.onGround = false; if (collision) { player.onGround = collision.normal.y > 0; if (player.onGround) player.velocity.y = 0; playerCollider.translate(collision.normal.multiplyScalar(collision.depth)); } resolveBrickCollisions(delta); const base = playerCollider.end.clone(); base.y -= player.height; playerRig.position.copy(base); playerRig.rotation.y = player.yaw; if (!renderer.xr.isPresenting) { camera.position.set(0, player.eyeHeight, 0); camera.rotation.order = 'YXZ'; camera.rotation.set(player.pitch,0,0); } if (playerRig.position.y < (envLoader.bounds.min.y || -30) - 20) resetPlayer(); }
 
   const isTypingTarget = (target) => target instanceof Element && Boolean(target.closest('input, textarea, select, [contenteditable="true"], [role="textbox"]'));
-  window.addEventListener('keydown', (e) => { if (isTypingTarget(e.target)) { keys.clear(); return; } const key = e.key.toLowerCase(); keys.add(key); if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) e.preventDefault(); if (key === ' ') { e.preventDefault(); if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } } if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08); if (key === 'e') player.eyeHeight = Math.min(2.25, player.eyeHeight + .08); if (key === 'r') resetPlayer(); if (key === 'i') { e.preventDefault(); toxicBubbleSystem.toggleInventory(); } }); window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase())); window.addEventListener('blur', () => keys.clear());
+  const vehicleController=new BuilderVehicleController({THREE,vehicles:builderDecor,playerRig,camera,keys,status:setStatus,onExit:(position)=>{playerCollider.start.copy(position);playerCollider.end.copy(position).add(new THREE.Vector3(0,player.height,0));player.velocity.set(0,0,0);}});
+  window.addEventListener('keydown', (e) => { if (isTypingTarget(e.target)) { keys.clear(); return; } const key = e.key.toLowerCase(); keys.add(key); if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) e.preventDefault(); if (key === 'f') { e.preventDefault(); vehicleController.toggle(); } if (key === ' ') { e.preventDefault(); if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } } if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08); if (key === 'e') player.eyeHeight = Math.min(2.25, player.eyeHeight + .08); if (key === 'r') resetPlayer(); if (key === 'i') { e.preventDefault(); toxicBubbleSystem.toggleInventory(); } }); window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase())); window.addEventListener('blur', () => keys.clear());
   const pointerLockSupported = Boolean(canvas.requestPointerLock);
   document.addEventListener('pointerlockchange', () => {
     const locked = document.pointerLockElement === canvas;
@@ -864,7 +866,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (targetFrameMs && !renderer.xr.isPresenting && time - lastFrameTime < targetFrameMs) return;
     lastFrameTime = time;
     const delta = Math.min(.05, clock.getDelta());
-    updatePlayer(delta);
+    if(!vehicleController.update(delta)) updatePlayer(delta);
     placedAvatars.children.forEach((root) => { if (root.userData.petTravel) updateTravelingPet(root, delta, clock.elapsedTime); root.userData.petMixer?.update(delta); });
     liveAvatarRoots.forEach((root) => { updateLiveAvatarFacing(root, delta); root.position.lerp(root.userData.targetPosition, Math.min(1, delta * 8)); });
     if (!performanceMode || renderer.xr.isPresenting) envLoader.mixers.forEach((m) => m.update(delta));
