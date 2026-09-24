@@ -14,6 +14,8 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /muzikaz\.builder\.buildTray/);
   assert.match(script, /multiplayer:true, enemies:true, weapons:true, pickups:true/);
   assert.match(script, /model-explorer\.html\?environment=/);
+  assert.match(script, /muzikaz\.environmentBuilder\.playScene\.v1/);
+  assert.match(script, /&house=\$\{id\}&autoplay=1/);
   assert.match(script, /apiFetch\('\/api\/custom-maps'/);
   assert.match(script, /All players can join/);
   assert.match(script, /Opening your locally saved multiplayer map/);
@@ -193,10 +195,15 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /item\.functionalSettings/);
   assert.match(game, /roomId:env\.id/);
   assert.match(game, /toxicBubbleSystem\.handleEnvironmentReady\(env\)/);
+  assert.match(game, /params\.get\('autoplay'\) === '1'/, 'Save & Play starts the published map immediately');
   assert.match(game, /muzikaz\.environmentBuilder\.scenes\.v2/);
+  assert.match(game, /muzikaz\.environmentBuilder\.playScene\.v1/);
+  assert.match(game, /key\.includes\('playScene'\)\?sessionStorage:localStorage/);
   assert.match(game, /createSavedCustomModel/);
   assert.match(game, /built\.customModels/);
   assert.match(game, /center\.x\+x/);
+  assert.match(game, /object\.scale\.set\(scale,sy,sz\)/, 'preserves every authored scale axis');
+  assert.match(game, /object\.rotation\.set/, 'preserves the full authored rotation');
 });
 
 test('saved and published maps embed custom item definitions for exact game reconstruction', async () => {
