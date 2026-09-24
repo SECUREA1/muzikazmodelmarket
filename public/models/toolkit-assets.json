@@ -1020,6 +1020,66 @@
         "pet",
         "robot"
       ]
+    },
+    {
+      "id": "starter-rocket-pack",
+      "name": "Nova Rocket Pack",
+      "type": "wearable",
+      "format": "svg",
+      "modelUrl": "public/images/custom-item-models/rocket-pack.svg",
+      "thumbnailUrl": "public/images/custom-item-models/rocket-pack.svg",
+      "source": "SVG 3D starter",
+      "starter": true,
+      "tags": [
+        "rocket",
+        "jetpack",
+        "wearable"
+      ]
+    },
+    {
+      "id": "starter-boom-box",
+      "name": "Bass Reactor Boom Box",
+      "type": "interactive",
+      "format": "svg",
+      "modelUrl": "public/images/custom-item-models/boom-box.svg",
+      "thumbnailUrl": "public/images/custom-item-models/boom-box.svg",
+      "source": "SVG 3D starter",
+      "starter": true,
+      "tags": [
+        "music",
+        "speaker",
+        "prop"
+      ]
+    },
+    {
+      "id": "starter-turbo-hammer",
+      "name": "Turbo Impact Hammer",
+      "type": "weapon",
+      "format": "svg",
+      "modelUrl": "public/images/custom-item-models/turbo-hammer.svg",
+      "thumbnailUrl": "public/images/custom-item-models/turbo-hammer.svg",
+      "source": "SVG 3D starter",
+      "starter": true,
+      "tags": [
+        "weapon",
+        "hammer",
+        "tool"
+      ]
+    },
+    {
+      "id": "starter-crystal-pet",
+      "name": "Prism Crystal Pet",
+      "type": "companion",
+      "format": "svg",
+      "modelUrl": "public/images/custom-item-models/crystal-pet.svg",
+      "thumbnailUrl": "public/images/custom-item-models/crystal-pet.svg",
+      "source": "SVG 3D starter",
+      "starter": true,
+      "tags": [
+        "pet",
+        "crystal",
+        "companion"
+      ]
     }
   ]
 }

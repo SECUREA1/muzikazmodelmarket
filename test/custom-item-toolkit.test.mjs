@@ -10,7 +10,11 @@ const starterNames = [
   'Street Hover Board',
   'Pocket Portal Beacon',
   'Holo Quest Key',
-  'Scout Companion Drone'
+  'Scout Companion Drone',
+  'Nova Rocket Pack',
+  'Bass Reactor Boom Box',
+  'Turbo Impact Hammer',
+  'Prism Crystal Pet'
 ];
 
 test('custom item toolkit exposes pre-developed SVG 3D starters', async () => {
@@ -33,4 +37,19 @@ test('custom item toolkit exposes pre-developed SVG 3D starters', async () => {
     assert.equal(asset.modelUrl, asset.thumbnailUrl);
     assert.match(asset.modelUrl, /^public\/images\/custom-item-models\/.+\.svg$/);
   }
+});
+
+
+test('customized models expose transform controls and a saved-model popup', async () => {
+  const [html, script] = await Promise.all([
+    readFile(new URL('../model-explorer.html', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/custom-item-toolkit.js', import.meta.url), 'utf8')
+  ]);
+
+  for (const control of ['custom-svg-rotation', 'custom-svg-tilt', 'custom-svg-flip', 'custom-result-dialog']) {
+    assert.match(html, new RegExp(`id=\"${control}\"`));
+  }
+  assert.match(script, /function showResult\(item\)/);
+  assert.match(script, /showResult\(item\);setStep\(3\)/);
+  assert.match(script, /mirrored:glb\?false/);
 });

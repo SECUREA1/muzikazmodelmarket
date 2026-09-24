@@ -195,6 +195,9 @@
             <p class="control-heading">SVG shape</p>
             <label>Depth <output id="custom-depth-output">28 mm</output><input id="custom-depth" type="range" min="4" max="80" value="28"></label>
             <label>Bevel <output id="custom-bevel-output">6 mm</output><input id="custom-bevel" type="range" min="0" max="18" value="6"></label>
+            <label>Turn <output id="custom-svg-rotation-output">-25°</output><input id="custom-svg-rotation" type="range" min="-180" max="180" value="-25"></label>
+            <label>Perspective <output id="custom-svg-tilt-output">58°</output><input id="custom-svg-tilt" type="range" min="0" max="75" value="58"></label>
+            <label class="custom-control-check"><input id="custom-svg-flip" type="checkbox"> Mirror artwork</label>
           </div>
           <div id="custom-glb-controls" class="format-controls" hidden>
             <p class="control-heading">Finished GLB model · no geometry added</p>
@@ -225,6 +228,11 @@
       <aside class="custom-dialog-browser" aria-label="Available assets"><p class="kicker">Existing item</p><h2>Choose a starting point</h2><input id="custom-dialog-search" type="search" placeholder="Search every game item, GLB + SVG"><div id="custom-dialog-results" class="custom-dialog-results"></div></aside>
       <div class="custom-dialog-preview"><model-viewer id="custom-dialog-model" camera-controls auto-rotate shadow-intensity="1" hidden></model-viewer><img id="custom-dialog-image" alt=""></div>
       <div class="custom-dialog-details"><p class="kicker" id="custom-dialog-format">Existing item</p><h2 id="custom-dialog-title">Select an item</h2><p id="custom-dialog-copy">Search or browse the complete asset collection.</p><dl><div><dt>Format</dt><dd id="custom-dialog-format-value">—</dd></div><div><dt>Type</dt><dd id="custom-dialog-type">—</dd></div></dl><div class="custom-dialog-actions"><button type="button" data-use-item disabled>Use as is</button><button type="button" class="ghost" data-edit-copy disabled>Edit a copy</button><button type="button" class="ghost" data-build-on-item disabled>Build on it</button></div></div>
+    </dialog>
+    <dialog id="custom-result-dialog" class="custom-result-dialog" aria-labelledby="custom-result-title">
+      <button class="custom-dialog-close" type="button" data-close-result-dialog aria-label="Close customized item preview">×</button>
+      <div class="custom-result-view" id="custom-result-view"></div>
+      <div class="custom-result-details"><p class="kicker">Customization complete</p><h2 id="custom-result-title">Your model is ready</h2><p id="custom-result-summary"></p><dl id="custom-result-settings"></dl><div class="custom-dialog-actions"><button type="button" class="ghost" data-result-edit>Keep editing</button><button type="button" data-result-place>Place + test</button></div></div>
     </dialog>
     <section class="custom-deploy-panel" aria-labelledby="custom-deploy-title">
       <div><p class="kicker">Place + test</p><h3 id="custom-deploy-title">Deployment sandbox</h3><p>Drag the saved object around the floor, align it to ground, compare it with the character, then test its configured behavior.</p></div>
