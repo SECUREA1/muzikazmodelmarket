@@ -39,6 +39,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="public/css/custom-item-toolkit.css" />
   <script src="public/js/api-connection.js"></script>
 </head>
 <body class="model-explorer-page">
@@ -58,6 +59,7 @@
       <a href="index.html#models">Models</a>
       <a class="active" href="model-explorer.html">⚡ VibeVerse</a>
       <a href="#live-published-models">Live Models</a>
+      <a href="#custom-item-toolkit">Item Builder</a>
       <a href="members.html">Bottle Login</a>
       <a href="index.html#contact">Contact</a>
     </nav>
@@ -157,6 +159,59 @@
     </section>
 
 
+    <section class="section-block custom-item-toolkit" id="custom-item-toolkit" aria-labelledby="custom-item-title">
+      <div class="section-title"><span></span><h2 id="custom-item-title">3D Customization Tool Kit</h2><a href="#custom-item-library">Browse items</a></div>
+      <div class="custom-item-heading">
+        <div><p class="kicker">Draw a custom game item</p><h3>Sketch it. Shape it. Play it.</h3><p>Draw a closed silhouette, tune its depth and bevel, then save it as a reusable object in your local Builder Backpack—or open any existing GLB or SVG as a starting point.</p></div>
+        <div class="custom-step-strip" aria-label="Builder workflow"><span><b>01</b> Choose</span><span><b>02</b> Draw</span><span><b>03</b> Shape</span><span><b>04</b> Add to game</span></div>
+      </div>
+      <div class="custom-item-workbench">
+        <aside class="custom-tool-panel" aria-label="Drawing tools">
+          <p class="tool-eyebrow">Silhouette tools</p>
+          <div class="custom-tool-buttons" role="group" aria-label="Canvas tools">
+            <button type="button" class="is-active" data-custom-tool="draw" aria-pressed="true">✎ Draw</button>
+            <button type="button" data-custom-tool="erase" aria-pressed="false">⌫ Erase</button>
+            <button type="button" data-custom-action="undo">↶ Undo</button>
+            <button type="button" data-custom-action="clear">Clear</button>
+          </div>
+          <label>Brush size <output id="custom-brush-output">18 px</output><input id="custom-brush-size" type="range" min="5" max="42" value="18"></label>
+          <label>Item color <input id="custom-item-color" type="color" value="#a8ff18"></label>
+          <button class="custom-upload-button" type="button" data-open-item-library>＋ Use an existing item</button>
+          <input id="custom-svg-upload" type="file" accept="image/svg+xml,.svg" hidden>
+          <small>Tip: make one continuous shape. Your stroke automatically closes when you build.</small>
+        </aside>
+        <div class="custom-draw-stage">
+          <header><span><i aria-hidden="true"></i> 2D silhouette</span><strong id="custom-source-label">New custom drawing</strong></header>
+          <canvas id="custom-item-canvas" width="900" height="600" aria-label="Draw the silhouette of a custom game item"></canvas>
+          <p id="custom-canvas-help">Drag to draw • touch and Apple Pencil supported</p>
+        </div>
+        <aside class="custom-preview-panel" aria-label="3D shape settings">
+          <div class="custom-preview-stage" id="custom-preview-stage">
+            <div class="custom-extruded-preview" id="custom-extruded-preview" aria-label="Extruded item preview"><span>Draw<br>here</span></div>
+            <model-viewer id="custom-glb-preview" camera-controls auto-rotate shadow-intensity="1" hidden alt="Selected existing 3D item"></model-viewer>
+            <span class="preview-axis">LIVE 3D PREVIEW</span>
+          </div>
+          <label>Depth <output id="custom-depth-output">28 mm</output><input id="custom-depth" type="range" min="4" max="80" value="28"></label>
+          <label>Bevel <output id="custom-bevel-output">6 mm</output><input id="custom-bevel" type="range" min="0" max="18" value="6"></label>
+          <label>Object name<input id="custom-item-name" type="text" maxlength="48" value="My neon prop"></label>
+          <div class="custom-build-actions"><button type="button" class="ghost" data-custom-action="reset-view">Reset</button><button type="button" data-build-custom-item>Build object</button></div>
+        </aside>
+      </div>
+      <section class="custom-item-library" id="custom-item-library" aria-labelledby="custom-library-title">
+        <div><p class="kicker">Ready-to-edit library</p><h3 id="custom-library-title">Use it as-is—or build on it.</h3></div>
+        <div class="custom-library-controls"><label class="visually-hidden" for="custom-library-search">Search items</label><input id="custom-library-search" type="search" placeholder="Search all GLB + SVG items"><select id="custom-library-filter" aria-label="Filter item format"><option value="all">All formats</option><option value="glb">GLB / 3D</option><option value="svg">SVG / editable</option><option value="mine">My builds</option></select><button type="button" data-import-svg>Import SVG</button></div>
+        <p id="custom-library-status" class="status-message" role="status">Loading existing items…</p>
+        <div id="custom-library-grid" class="custom-library-grid"></div>
+      </section>
+    </section>
+
+    <dialog id="custom-item-dialog" class="custom-item-dialog" aria-labelledby="custom-dialog-title">
+      <button class="custom-dialog-close" type="button" data-close-item-dialog aria-label="Close item preview">×</button>
+      <div class="custom-dialog-preview"><model-viewer id="custom-dialog-model" camera-controls auto-rotate shadow-intensity="1" hidden></model-viewer><img id="custom-dialog-image" alt=""></div>
+      <div><p class="kicker" id="custom-dialog-format">Existing item</p><h2 id="custom-dialog-title">Item preview</h2><p id="custom-dialog-copy">Choose how you want to use this item.</p><dl><div><dt>Format</dt><dd id="custom-dialog-format-value">—</dd></div><div><dt>Type</dt><dd id="custom-dialog-type">—</dd></div></dl><div class="custom-dialog-actions"><button type="button" data-use-item>Use as-is</button><button type="button" class="ghost" data-edit-item>Edit &amp; build on</button></div></div>
+    </dialog>
+    <div class="custom-build-toast" id="custom-build-toast" role="status" aria-live="polite" hidden></div>
+
     <section class="section-block model-publisher" id="publish-model" aria-labelledby="publish-model-title">
       <div class="section-title"><span></span><h2 id="publish-model-title">Publish a Live Model</h2><a href="#live-published-models">View linked model space</a></div>
       <p class="status-message land-upload-notice" id="land-upload-notice"><strong>Land-owner upload gate:</strong> your signed-in profile must hold a MUZIKAZ World land deed in its Drop Backpack before you can add an avatar, asset, or game.</p>
@@ -236,6 +291,7 @@
   <!-- rad-tox-launcher loads the 3D module after a Start/Begin action. Keeping
        it out of the initial document avoids competing with first paint. -->
   <script type="module" src="public/js/model-publisher.js"></script>
+  <script src="public/js/custom-item-toolkit.js"></script>
   <script src="mzk-wallet.js"></script>
   <script>
     window.MZKWallet.mount('#vibverse-mzk-balance');
