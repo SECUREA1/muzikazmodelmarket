@@ -61,6 +61,7 @@
         <fieldset><legend>ANIMATION &amp; FUNCTION</legend><label class="toggle-label"><input id="animation-enabled" type="checkbox" checked> Play animation clips</label><button id="interact-object" class="wide-control" type="button">INTERACT / TRIGGER</button></fieldset>
         <fieldset class="animation-studio"><legend>ANIMATION STUDIO</legend><label>CLIP<select id="animation-clip"><option value="">Default / idle</option></select></label><label>SPEED <output id="animation-speed-output">1.0×</output><input id="animation-speed" type="range" min="0.25" max="2" value="1" step="0.05"></label><label class="toggle-label"><input id="animation-loop" type="checkbox" checked> Loop animation</label></fieldset>
         <fieldset class="avatar-studio" id="avatar-studio"><legend>AVATAR CUSTOMIZATION <small>LIVE MESH</small></legend>
+          <button type="button" id="open-avatar-customizer" class="open-avatar-customizer"><span>✦</span><b>OPEN AVATAR LOOK LAB</b><small>Live front · side · back preview</small></button>
           <div class="avatar-studio-head"><span><b>LOOK LAB</b><small id="avatar-piece-count">10 fitted pieces</small></span><button type="button" id="randomize-avatar">SHUFFLE LOOK</button></div>
           <div class="avatar-colors"><label>SKIN TONE<input id="avatar-body-color" type="color" value="#c98f65"></label><label>LOOK COLOR<input id="avatar-outfit-color" type="color" value="#63eaff"></label></div>
           <div class="avatar-category-tabs" id="avatar-category-tabs" role="tablist" aria-label="Avatar item categories"></div>
@@ -131,6 +132,17 @@
       </div>
       <footer><span class="three-form-promise"><b>3× 3D</b> All three game-ready forms will be saved.</span><button value="cancel">CANCEL</button><button value="default" id="create-custom-item" class="primary">SAVE 3 FORMS &amp; PLACE</button></footer>
     </form>
+  </dialog>
+  <dialog class="avatar-customizer" id="avatar-customizer" aria-labelledby="avatar-customizer-title">
+    <div class="avatar-customizer-shell">
+      <header><div><small>LIVE SVG COMPONENT STUDIO</small><h2 id="avatar-customizer-title">Avatar customization</h2><p>Choose only the pieces you want. Every fitted component stays aligned in all views.</p></div><div class="avatar-history"><button type="button" id="avatar-undo" aria-label="Undo avatar change">↶ <span>UNDO</span></button><button type="button" id="avatar-redo" aria-label="Redo avatar change">↷ <span>REDO</span></button><button type="button" id="close-avatar-customizer" class="dialog-close" aria-label="Close avatar customization">×</button></div></header>
+      <div class="avatar-customizer-grid">
+        <aside><h3>Categories</h3><nav id="avatar-modal-categories" aria-label="Customization categories"></nav></aside>
+        <section class="avatar-options-panel"><div class="avatar-panel-title"><div><small>AVAILABLE OPTIONS</small><h3 id="avatar-modal-category-title">Face</h3></div><button type="button" id="avatar-remove-piece">REMOVE</button></div><div id="avatar-modal-options" class="avatar-modal-options" role="radiogroup"></div></section>
+        <section class="avatar-preview-panel"><header><div><small>LIVE PREVIEW</small><b id="avatar-preview-status">Front view · fitted</b></div><nav id="avatar-view-tabs" aria-label="Preview angle"><button type="button" data-avatar-view="front" class="active">FRONT</button><button type="button" data-avatar-view="side">SIDE</button><button type="button" data-avatar-view="back">BACK</button></nav></header><div class="avatar-live-preview" id="avatar-live-preview"></div><div class="avatar-fit-controls"><label>COLOR <input id="avatar-piece-color" type="color" value="#63eaff"></label><label>SIZE <output id="avatar-piece-scale-output">100%</output><input id="avatar-piece-scale" type="range" min="60" max="160" value="100"></label><label>ROTATION <output id="avatar-piece-rotation-output">0°</output><input id="avatar-piece-rotation" type="range" min="-45" max="45" value="0"></label><label>HORIZONTAL <output id="avatar-piece-x-output">0</output><input id="avatar-piece-x" type="range" min="-30" max="30" value="0"></label><label>VERTICAL <output id="avatar-piece-y-output">0</output><input id="avatar-piece-y" type="range" min="-30" max="30" value="0"></label></div></section>
+      </div>
+      <footer><span><i></i> Exact look is stored with this avatar and the game scene.</span><button type="button" id="avatar-reset-category">RESET CATEGORY</button><button type="button" id="avatar-reset-all">RESET ALL</button><button type="button" id="avatar-save-close" class="primary">SAVE AVATAR</button></footer>
+    </div>
   </dialog>
   <div class="builder-toast" id="builder-toast" role="status" aria-live="polite"></div>
   <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/+esm"}}</script>
