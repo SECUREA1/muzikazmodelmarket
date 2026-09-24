@@ -33,6 +33,19 @@ test('environment builder supports custom role-play actors and interactions', as
   assert.ok((script.match(/type:'interactive'/g) || []).length >= 4, 'includes several interactive role-play objects');
 });
 
+test('custom items use an SVG drawing and 3D extrusion toolkit instead of icon-only models', async () => {
+  const [html, script] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+  ]);
+  for (const control of ['custom-model-drawing', 'custom-model-strokes', 'custom-brush-size', 'custom-model-depth', 'custom-model-bevel', 'custom-model-material', 'download-model-svg', 'undo-model-stroke', 'clear-model-drawing']) {
+    assert.match(html, new RegExp(`id="${control}"`));
+  }
+  for (const tool of ['pencil', 'line', 'rectangle', 'circle']) assert.match(html, new RegExp(`data-draw-tool="${tool}"`));
+  for (const feature of ['svgDocument', 'drawingStrokes', 'ExtrudeGeometry', 'TubeGeometry', 'drawingSettings', 'createDrawnModel']) assert.match(script, new RegExp(feature));
+  assert.doesNotMatch(html, /CHOOSE AN ICON/);
+});
+
 test('environment builder places grounded 3D assets and persists complete runtime state', async () => {
   const [html, script] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
