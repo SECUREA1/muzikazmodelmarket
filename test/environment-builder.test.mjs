@@ -193,6 +193,16 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /item\.functionalSettings/);
   assert.match(game, /roomId:env\.id/);
   assert.match(game, /toxicBubbleSystem\.handleEnvironmentReady\(env\)/);
+  assert.match(game, /muzikaz\.environmentBuilder\.scenes\.v2/);
+  assert.match(game, /createSavedCustomModel/);
+  assert.match(game, /built\.customModels/);
+  assert.match(game, /center\.x\+x/);
+});
+
+test('saved and published maps embed custom item definitions for exact game reconstruction', async () => {
+  const script = await readFile(new URL('../environment-builder.js', import.meta.url), 'utf8');
+  assert.match(script, /sceneData\.customModels=structuredClone\(customModels\)/);
+  assert.match(script, /body:JSON\.stringify\(\{scene:sceneData,ownerId\}\)/);
 });
 
 test('Builder Pack layouts open as new environment maps', async () => {
