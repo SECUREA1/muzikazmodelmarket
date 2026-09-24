@@ -338,7 +338,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   let cachedCatalogModels = [];
   let backpackAssets = [];
   const consumedBackpackItems = new Set((()=>{try{return JSON.parse(localStorage.getItem('muzikazConsumedBackpackItems')||'[]');}catch{return [];}})());
-  const BEE_DUCK_CARROT_COST = 5;
+  const DEFAULT_PET_TREAT_COST = 5;
   let backpackCategory = 'avatars';
   let backpackSelectionOpen = false;
   const mobileBackpackQuery = window.matchMedia('(max-width: 760px)');
@@ -383,13 +383,23 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   function rememberPermanentLandObject(correlation) { let records=[]; try{records=JSON.parse(localStorage.getItem('muzikazPermanentLandObjects')||'[]')||[];}catch{} records.push(correlation); localStorage.setItem('muzikazPermanentLandObjects',JSON.stringify(records)); }
   function closeBackpack() { library.classList.add('is-collapsed'); avatarButton?.setAttribute('aria-expanded','false'); canvas.focus({ preventScroll:true }); }
-  function makeCarrot() {
-    const root = new THREE.Group(); root.name = 'Bee_Duck_Carrot';
-    const orange = new THREE.MeshStandardMaterial({ color:0xff762e, emissive:0x8a2100, emissiveIntensity:.24, roughness:.7 });
-    const green = new THREE.MeshStandardMaterial({ color:0x75db37, emissive:0x173d08, emissiveIntensity:.3 });
-    const body = new THREE.Mesh(new THREE.ConeGeometry(.18,.72,18),orange); body.rotation.z=Math.PI; body.position.y=.38;
-    for(let i=-1;i<=1;i++){const leaf=new THREE.Mesh(new THREE.CapsuleGeometry(.035,.28,4,7),green);leaf.position.set(i*.075,.84,0);leaf.rotation.z=i*.42;root.add(leaf);}
-    root.add(body); root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}}); return root;
+  function makePetTreat(asset) {
+    const root = new THREE.Group(); root.name = `Pet_Treat_${asset.id}`;
+    const color = new THREE.Color(asset.treatColor || '#ff762e');
+    const material = new THREE.MeshStandardMaterial({ color, emissive:color.clone().multiplyScalar(.28), emissiveIntensity:.3, roughness:.7 });
+    if(asset.treatShape==='bone'){
+      const bar=new THREE.Mesh(new THREE.CapsuleGeometry(.11,.48,5,10),material);bar.rotation.z=Math.PI/2;bar.position.y=.28;root.add(bar);
+      for(const x of [-.3,.3])for(const y of [.18,.38]){const end=new THREE.Mesh(new THREE.SphereGeometry(.13,14,10),material);end.position.set(x,y,0);root.add(end);}
+    }else if(asset.treatShape==='fish'){
+      const body=new THREE.Mesh(new THREE.SphereGeometry(.26,18,12),material);body.scale.set(1.45,.72,.55);body.position.y=.3;const tail=new THREE.Mesh(new THREE.ConeGeometry(.22,.35,3),material);tail.rotation.z=-Math.PI/2;tail.position.set(-.43,.3,0);root.add(body,tail);
+    }else if(asset.treatShape==='cheese'){
+      const wedge=new THREE.Mesh(new THREE.ConeGeometry(.34,.42,3),material);wedge.rotation.z=Math.PI;wedge.position.y=.24;root.add(wedge);
+    }else{
+      const orange = material, green = new THREE.MeshStandardMaterial({ color:0x75db37, emissive:0x173d08, emissiveIntensity:.3 });
+      const body = new THREE.Mesh(new THREE.ConeGeometry(.18,.72,18),orange); body.rotation.z=Math.PI; body.position.y=.38;
+      for(let i=-1;i<=1;i++){const leaf=new THREE.Mesh(new THREE.CapsuleGeometry(.035,.28,4,7),green);leaf.position.set(i*.075,.84,0);leaf.rotation.z=i*.42;root.add(leaf);} root.add(body);
+    }
+    root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}}); return root;
   }
   function speechSprite(message) {
     const label=document.createElement('canvas'); label.width=512; label.height=192; const context=label.getContext('2d');
@@ -405,26 +415,28 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       const length=Math.floor(audio.sampleRate*.28),buffer=audio.createBuffer(1,length,audio.sampleRate),samples=buffer.getChannelData(0);let held=0;for(let i=0;i<length;i++){if(i%18===0)held=Math.round((Math.random()*2-1)*7)/7;samples[i]=held*(1-i/length);}const cough=audio.createBufferSource(),filter=audio.createBiquadFilter(),gain=audio.createGain();cough.buffer=buffer;filter.type='bandpass';filter.frequency.value=310;filter.Q.value=1.8;gain.gain.setValueAtTime(.0001,now+.48);gain.gain.exponentialRampToValueAtTime(.18,now+.5);gain.gain.exponentialRampToValueAtTime(.0001,now+.73);cough.connect(filter).connect(gain).connect(master);cough.start(now+.48);window.setTimeout(()=>audio.close(),1100);};
     if(audio.state==='suspended')audio.resume().then(start).catch(()=>audio.close());else start();
   }
-  function buyBeeDuckCarrot(asset) {
-    const wallet=window.MZKWallet;if(!wallet){setStatus('MZK wallet unavailable — another carrot cannot be purchased.');return false;}
-    const payment=wallet.spend(BEE_DUCK_CARROT_COST,'Bee Duck carrot refill',undefined,{assetId:asset.id});
-    if(!payment.ok){setStatus(`You need ${BEE_DUCK_CARROT_COST} MZK to buy another carrot · balance ${payment.balance} MZK.`);return false;}
-    consumedBackpackItems.delete(asset.id);localStorage.setItem('muzikazConsumedBackpackItems',JSON.stringify([...consumedBackpackItems]));setStatus(`Fresh carrot added! ${payment.balance} MZK remaining. Feed Bee Duck when ready.`);renderPicker();return true;
+  function buyPetTreat(asset) {
+    const cost=Number(asset.refillCostMzk)||DEFAULT_PET_TREAT_COST;
+    const wallet=window.MZKWallet;if(!wallet){setStatus(`MZK wallet unavailable — ${asset.name} cannot be refilled.`);return false;}
+    const payment=wallet.spend(cost,`${asset.name} refill`,undefined,{assetId:asset.id,petId:asset.petId});
+    if(!payment.ok){setStatus(`You need ${cost} MZK to refill ${asset.name} · balance ${payment.balance} MZK.`);return false;}
+    consumedBackpackItems.delete(asset.id);localStorage.setItem('muzikazConsumedBackpackItems',JSON.stringify([...consumedBackpackItems]));setStatus(`Fresh ${asset.name} added! ${payment.balance} MZK remaining.`);renderPicker();return true;
   }
-  function feedCarrotToBeeDuck(asset) {
-    const duck=placedAvatars.children.find(root=>root.userData.avatar?.id==='beeduck-companion');
-    if(!duck){setStatus('Bee Duck must be active before you can use the carrot. Open Pets and use Bee Duck Companion first.');backpackCategory='pets';renderPicker();return false;}
-    closeBackpack();const floor=floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)).multiplyScalar(2)));const carrot=makeCarrot();carrot.position.copy(floor);placedAvatars.add(carrot);
-    duck.userData.petTravel.target.copy(carrot.position);duck.userData.petTravel.wait=0;duck.userData.carrotQuest={carrot,assetId:asset.id};setStatus('Carrot placed! Bee Duck is coming to collect it.');return true;
+  function feedTreatToPet(asset) {
+    const pet=placedAvatars.children.find(root=>root.userData.avatar?.id===asset.petId);
+    const petName=backpackAssets.find(item=>item.id===asset.petId)?.name||'Its pet';
+    if(!pet){setStatus(`${petName} must be active before you can use ${asset.name}. Open Pets and use the companion first.`);backpackCategory='pets';renderPicker();return false;}
+    closeBackpack();const floor=floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)).multiplyScalar(2)));const treat=makePetTreat(asset);treat.position.copy(floor);placedAvatars.add(treat);
+    pet.userData.petTravel.target.copy(treat.position);pet.userData.petTravel.wait=0;pet.userData.carrotQuest={carrot:treat,assetId:asset.id,asset};setStatus(`${asset.name} placed! ${petName} is coming to collect it.`);return true;
   }
   function finishBeeDuckCarrot(root) {
     const quest=root.userData.carrotQuest;if(!quest)return;placedAvatars.remove(quest.carrot);quest.carrot.traverse(object=>{object.geometry?.dispose();object.material?.dispose();});delete root.userData.carrotQuest;
     consumedBackpackItems.add(quest.assetId);localStorage.setItem('muzikazConsumedBackpackItems',JSON.stringify([...consumedBackpackItems]));
-    playBeeDuckEatingSound();const thanks=speechSprite('Thanks!');root.add(thanks);const materials=[];root.traverse(object=>{if(object.isMesh){for(const material of (Array.isArray(object.material)?object.material:[object.material]))materials.push({material,color:material.color?.clone(),emissive:material.emissive?.clone(),emissiveIntensity:material.emissiveIntensity});}});root.userData.starPower={remaining:7,baseSpeed:root.userData.petTravel.speed,thanks,materials};root.userData.petTravel.speed=7;root.userData.petTravel.wait=0;root.userData.petTravel.target.copy(choosePetDestination(root));setStatus('8-bit grunt-cough quack! Bee Duck says “Thanks!” and has rainbow star speed!');renderPicker();
+    playBeeDuckEatingSound();const thanks=speechSprite('Thanks!');root.add(thanks);const materials=[];root.traverse(object=>{if(object.isMesh){for(const material of (Array.isArray(object.material)?object.material:[object.material]))materials.push({material,color:material.color?.clone(),emissive:material.emissive?.clone(),emissiveIntensity:material.emissiveIntensity});}});root.userData.starPower={remaining:Number(quest.asset?.boostSeconds)||7,baseSpeed:root.userData.petTravel.speed,thanks,materials};root.userData.petTravel.speed=7;root.userData.petTravel.wait=0;root.userData.petTravel.target.copy(choosePetDestination(root));const petName=root.userData.avatar?.name||'Your pet';setStatus(`${petName} gives a ${quest.asset?.reaction||'happy sound'}, says “Thanks!”, and has rainbow star speed!`);renderPicker();
   }
   async function deployBackpackAsset(asset) {
     if (asset.type === 'lands') { closeBackpack(); await loadById(asset.environmentId || asset.id); return; }
-    if (asset.id === 'bee-duck-carrot') { feedCarrotToBeeDuck(asset); return; }
+    if (asset.petId && asset.consumable) { feedTreatToPet(asset); return; }
     if (asset.id === 'rad-tox-dynamite') { closeBackpack(); toxicBubbleSystem.setTool('dynamite'); openTools(); setStatus('RAD-TOX Dynamite is open and visible in your hand — click, tap, or squeeze the trigger to toss it. Each throw costs 25 MZK.'); return; }
     if (asset.buildAssetId) { const tray=readBuildTray(); if(!tray.some(item=>item.id===asset.buildAssetId)) tray.push({id:asset.buildAssetId,name:asset.name,type:asset.builderCategory,thumbnailUrl:asset.thumbnailUrl,addedAt:new Date().toISOString()}); localStorage.setItem(buildTrayKey,JSON.stringify(tray)); closeBackpack(); openTools(); toggleBuildMenu(true); setStatus(`${asset.name} added to your build inventory and selected in Build Map.`); return; }
     const model = normalizeAvatarRecord(asset);
@@ -465,7 +477,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const records = backpackRecords(); const categories = BACKPACK_CATEGORIES.map(([id,label],index) => { const count=records.filter(item=>item.type===id).length, angle=(index+.5)*360/BACKPACK_CATEGORIES.length-90, active=id===backpackCategory; return `<button type="button" class="backpack-category backpack-category--${id} ${active?'is-active':''}" style="--label-angle:${angle}deg;clip-path:${backpackPieSlice(index)}" data-backpack-category="${id}" aria-label="${label}, ${count} items" aria-pressed="${active}" aria-expanded="${active&&backpackSelectionOpen}" aria-controls="backpack-selection" title="${label}: ${count}"><span class="backpack-category-label"><b class="backpack-category-graphic" aria-hidden="true">${backpackIcon(id)}</b><em>${label}</em><small>${count}</small></span></button>`; }).join('');
     const selected = records.filter(item => item.type === backpackCategory);
     const designated = (() => { try { return JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null')?.id; } catch { return ''; } })();
-    const cards = selected.map((asset,index) => { const consumed=asset.consumable&&consumedBackpackItems.has(asset.id),canRefill=consumed&&asset.id==='bee-duck-carrot';const useLabel=canRefill?`Buy another · ${BEE_DUCK_CARROT_COST} MZK`:consumed?'Consumed':asset.id==='bee-duck-carrot'?'Feed Bee Duck':asset.type==='lands'?'Enter land':asset.type==='avatars'?(asset.id===designated?'Use avatar again':'Use avatar'):asset.type==='pets'?'Use pet':'Use item';const action=canRefill?`data-buy-carrot="${escapeHtml(asset.id)}"`:`data-use-asset="${escapeHtml(asset.id)}"`; return `<article class="backpack-orbit-card ${asset.id===designated?'is-equipped':''} ${consumed&&!canRefill?'is-consumed':''}" style="--orbit-index:${index}" data-backpack-id="${escapeHtml(asset.id)}"><div class="backpack-asset-preview">${backpackAssetVisual(asset)}</div><strong>${escapeHtml(asset.name)}</strong><small>${canRefill?`Snack eaten · refill costs ${BEE_DUCK_CARROT_COST} MZK`:consumed?'Used up':asset.id==='rad-tox-dynamite'?'Reusable item · 25 MZK per throw':asset.consumable?'1 snack · consumed on use':escapeHtml(asset.owner||'Public MUZIKAZ')}</small><div class="backpack-card-actions"><button type="button" ${action} ${consumed&&!canRefill?'disabled':''}>${useLabel}</button></div></article>`; }).join('');
+    const cards = selected.map((asset,index) => { const consumed=asset.consumable&&consumedBackpackItems.has(asset.id),canRefill=consumed&&Number.isFinite(Number(asset.refillCostMzk)),treatPet=asset.petId&&backpackAssets.find(item=>item.id===asset.petId),refillCost=Number(asset.refillCostMzk)||DEFAULT_PET_TREAT_COST;const useLabel=canRefill?`Buy another · ${refillCost} MZK`:consumed?'Consumed':treatPet?`Feed ${treatPet.name}`:asset.type==='lands'?'Enter land':asset.type==='avatars'?(asset.id===designated?'Use avatar again':'Use avatar'):asset.type==='pets'?'Use pet':'Use item';const action=canRefill?`data-buy-treat="${escapeHtml(asset.id)}"`:`data-use-asset="${escapeHtml(asset.id)}"`; return `<article class="backpack-orbit-card ${asset.id===designated?'is-equipped':''} ${consumed&&!canRefill?'is-consumed':''}" style="--orbit-index:${index}" data-backpack-id="${escapeHtml(asset.id)}"><div class="backpack-asset-preview">${backpackAssetVisual(asset)}</div><strong>${escapeHtml(asset.name)}</strong><small>${canRefill?`Snack eaten · refill costs ${refillCost} MZK`:consumed?'Used up':asset.id==='rad-tox-dynamite'?'Reusable item · 25 MZK per throw':asset.consumable?'1 snack · consumed on use':escapeHtml(asset.owner||'Public MUZIKAZ')}</small><div class="backpack-card-actions"><button type="button" ${action} ${consumed&&!canRefill?'disabled':''}>${useLabel}</button></div></article>`; }).join('');
     const activeCategory=BACKPACK_CATEGORIES.find(row=>row[0]===backpackCategory) || BACKPACK_CATEGORIES[0];
     const marketLabel = backpackCategory === 'lands' ? 'Buy land' : `Shop ${activeCategory[1]}`;
     const marketAction = `<a class="backpack-market-action" href="model-market.html?market=${encodeURIComponent(backpackCategory)}#marketplace-preview"><span aria-hidden="true">＋</span> ${marketLabel}</a>`;
@@ -474,7 +486,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     library.querySelector('[data-close-backpack]')?.addEventListener('click',()=>{ library.classList.add('is-collapsed'); document.querySelector('#add-avatar')?.setAttribute('aria-expanded','false'); });
     library.querySelectorAll('[data-backpack-category]').forEach((button,index)=>{ button.addEventListener('click',()=>{ const next=button.dataset.backpackCategory; backpackSelectionOpen=mobileBackpackQuery.matches ? next!==backpackCategory || !backpackSelectionOpen : true; backpackCategory=next; renderPicker(); if(mobileBackpackQuery.matches&&backpackSelectionOpen) library.querySelector('.backpack-selection')?.scrollIntoView({block:'nearest',behavior:'smooth'}); }); button.addEventListener('keydown',event=>{ if(!['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(event.key))return; event.preventDefault(); const step=['ArrowLeft','ArrowUp'].includes(event.key)?-1:1, next=(index+step+BACKPACK_CATEGORIES.length)%BACKPACK_CATEGORIES.length; backpackCategory=BACKPACK_CATEGORIES[next][0]; backpackSelectionOpen=true; renderPicker(); library.querySelectorAll('[data-backpack-category]')[next]?.focus(); }); });
     library.querySelectorAll('[data-use-asset]').forEach(button=>button.addEventListener('click',async()=>{ const asset=records.find(item=>item.id===button.dataset.useAsset&&item.type===backpackCategory); if(!asset)return; button.disabled=true; await popBackpackAsset(asset); if(button.isConnected)button.disabled=false; }));
-    library.querySelectorAll('[data-buy-carrot]').forEach(button=>button.addEventListener('click',()=>{const asset=records.find(item=>item.id===button.dataset.buyCarrot);if(asset)buyBeeDuckCarrot(asset);}));
+    library.querySelectorAll('[data-buy-treat]').forEach(button=>button.addEventListener('click',()=>{const asset=records.find(item=>item.id===button.dataset.buyTreat);if(asset)buyPetTreat(asset);}));
   }
   function renderLibrary() { renderPicker(); }
   async function refreshLibrary() { try { const [worlds, pack] = await Promise.all([registry.refresh(), fetch('public/models/backpack-assets.json',{cache:'no-store'}).then(r=>r.ok?r.json():[]).catch(()=>[])]); addSavedBuilderWorld(); backpackAssets=Array.isArray(pack)?pack:(pack.assets||[]); renderPicker(); return worlds; } catch (error) { setStatus(error.message); library.innerHTML = `<div class="house-picker-title"><strong>Drop Backpack</strong></div><small>${escapeHtml(error.message)}</small>`; throw error; } }
@@ -576,7 +588,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       const colors=[0xff3d9a,0xfff45c,0x5cffff,0x9cff00,0xb76cff];const color=colors[Math.floor(elapsed*12)%colors.length];
       root.traverse(object=>{if(object.isMesh&&object.material){const materials=Array.isArray(object.material)?object.material:[object.material];materials.forEach(material=>{if(material.color)material.color.setHex(color);if('emissive' in material){material.emissive.setHex(color);material.emissiveIntensity=.75;}});}});
       if(travel.target.distanceToSquared(root.position)<1.4){travel.target.copy(floorPointAt(choosePetDestination(root)));travel.wait=0;}
-      if(star.remaining<=0){travel.speed=star.baseSpeed;root.remove(star.thanks);star.thanks.material.map.dispose();star.thanks.material.dispose();star.materials.forEach(({material,color,emissive,emissiveIntensity})=>{if(color)material.color.copy(color);if(emissive)material.emissive.copy(emissive);if(Number.isFinite(emissiveIntensity))material.emissiveIntensity=emissiveIntensity;});delete root.userData.starPower;setStatus('Bee Duck’s carrot star power faded. What a speedy snack!');}
+      if(star.remaining<=0){travel.speed=star.baseSpeed;root.remove(star.thanks);star.thanks.material.map.dispose();star.thanks.material.dispose();star.materials.forEach(({material,color,emissive,emissiveIntensity})=>{if(color)material.color.copy(color);if(emissive)material.emissive.copy(emissive);if(Number.isFinite(emissiveIntensity))material.emissiveIntensity=emissiveIntensity;});delete root.userData.starPower;setStatus(`${root.userData.avatar?.name||'Your pet'}’s snack power faded. What a speedy treat!`);}
     }
     travel.wait -= delta;
     const direction = travel.target.clone().sub(root.position); direction.y = 0;
