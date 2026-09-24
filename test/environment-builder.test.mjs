@@ -18,6 +18,19 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /All players can join/);
 });
 
+test('canvas manipulation keeps object controls behind an intentional double tap', async () => {
+  const [html, script] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+  ]);
+  assert.match(html, /Drag to move · Shift-drag to rotate/);
+  assert.match(html, /Double-tap for controls/);
+  assert.match(script, /inspectorRequested=false/);
+  assert.match(script, /lastObjectTap\?\.id===finished\.id/);
+  assert.match(script, /selectObject\(finished\.id,\{openInspector:true\}\)/);
+  assert.match(script, /rotate:e\.shiftKey/);
+});
+
 test('expanded maps include detailed building interiors and large playable landscapes', async () => {
   const [html, script, models] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
