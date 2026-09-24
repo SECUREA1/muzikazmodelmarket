@@ -64,6 +64,22 @@ test('environment builder places grounded 3D assets and persists complete runtim
   assert.match(script, /model\.procedural\?template\.clone\(true\):cloneSkeleton/);
 });
 
+test('avatar look lab provides deep fitted customization for every wearable icon', async () => {
+  const [html, script] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+  ]);
+  for (const control of ['avatar-category-tabs', 'avatar-variants', 'randomize-avatar', 'save-avatar-look', 'clear-avatar-look']) {
+    assert.match(html, new RegExp(`id="${control}"`));
+  }
+  for (const category of ['face', 'hat', 'glasses', 'headphones', 'necklace', 'rings', 'top', 'bottom', 'accessory']) {
+    assert.match(script, new RegExp(`${category}:\\{icon:`), `${category} has a ready-to-use item collection`);
+  }
+  for (const mesh of ['TorusGeometry', 'ConeGeometry', 'BoxGeometry', 'OctahedronGeometry']) assert.match(script, new RegExp(mesh));
+  assert.match(script, /builder-avatar-wearables/);
+  assert.match(script, /muzikaz\.avatarLook\.v1/);
+});
+
 test('in-game Builder Map menu opens the environment builder and restores playable maps', async () => {
   const game = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
   assert.match(game, /class="rad-build-launch" href="environment-builder\.html\?from=game"/);
