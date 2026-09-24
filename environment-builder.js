@@ -4,7 +4,7 @@ import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/
 import { clone as cloneSkeleton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js/+esm';
 import { createBuilderModel, updateBuilderModels } from './public/js/builder-models-3d.js';
 
-const STORAGE_KEY='muzikaz.environmentBuilder.scenes.v2', LEGACY_KEY='muzikaz.environmentBuilder.scenes.v1', TRAY_KEY='muzikaz.builder.buildTray', CUSTOM_KEY='muzikaz.environmentBuilder.customItems.v1';
+const STORAGE_KEY='muzikaz.environmentBuilder.scenes.v2', LEGACY_KEY='muzikaz.environmentBuilder.scenes.v1', PLAY_KEY='muzikaz.environmentBuilder.playScene.v1', TRAY_KEY='muzikaz.builder.buildTray', CUSTOM_KEY='muzikaz.environmentBuilder.customItems.v1';
 const colors=['#b9ff38','#63eaff','#ff5ba7','#ffcc3d','#ff6847','#a78bfa','#f8fafc','#334155'];
 const avatarCatalog={
  face:{icon:'◉',label:'Face',items:[['classic','Classic'],['soft','Soft glam'],['sharp','Sharp'],['freckles','Freckles'],['cyber','Cyber'],['star','Star cheek'],['mask','Bandit mask']]},
@@ -171,8 +171,10 @@ async function publishAndPlay(){
  sceneData.gameplay={multiplayer:true, enemies:true, weapons:true, pickups:true, customRoles:true};persist('Saving live multiplayer map…');
  const ownerId=localStorage.getItem('muzikazBottleMemberEmail')||localStorage.getItem('muzikazUserId')||'guest-builder';
  let playId=sceneData.id;
- try{const response=await apiFetch('/api/custom-maps',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-User-Id':ownerId},body:JSON.stringify({scene:sceneData,ownerId}),retries:0});const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||'Unable to activate this map.');const live=payload.data||payload;playId=live.id||playId;$('#save-state').textContent='LIVE · All players can join';showToast(`“${live.name}” is live for all players — opening game…`)}catch(error){$('#save-state').textContent='Saved locally · Opening multiplayer game';showToast(`${error.message} Opening your locally saved multiplayer map…`)}
- window.setTimeout(()=>{location.href=`model-explorer.html?environment=${encodeURIComponent(playId)}&autoplay=1`},350)
+ try{const response=await apiFetch('/api/custom-maps',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-User-Id':ownerId},body:JSON.stringify({scene:sceneData,ownerId}),retries:0});const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||'Unable to activate this map.');const live=payload.data||payload;playId=live.id||playId;sceneData.id=playId;persist('Live map saved with its exact layout');$('#save-state').textContent='LIVE · All players can join';showToast(`“${live.name}” is live for all players — opening game…`)}catch(error){$('#save-state').textContent='Saved locally · Opening multiplayer game';showToast(`${error.message} Opening your locally saved multiplayer map…`)}
+ // Preserve an exact navigation handoff instead of depending on a registry refresh.
+ const playScene=cloneData(sceneData);playScene.id=playId;sessionStorage.setItem(PLAY_KEY,JSON.stringify(playScene));
+ window.setTimeout(()=>{const id=encodeURIComponent(playId);location.href=`model-explorer.html?environment=${id}&house=${id}&autoplay=1`},350)
 }
 function screenRay(event){const rect=renderer.domElement.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera)}
 function terrainPoint(event){screenRay(event);return raycaster.intersectObject(terrain,false)[0]?.point||null}
