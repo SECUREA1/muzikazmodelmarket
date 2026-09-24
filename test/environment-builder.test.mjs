@@ -16,6 +16,23 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /model-explorer\.html\?environment=/);
 });
 
+test('environment builder supports custom role-play actors and interactions', async () => {
+  const [html, script] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+  ]);
+  for (const control of ['open-item-maker', 'item-maker', 'custom-item-name', 'custom-item-type', 'custom-item-color', 'custom-item-behavior', 'object-color', 'object-behavior']) {
+    assert.match(html, new RegExp(`id="${control}"`));
+  }
+  for (const category of ['avatar', 'enemy', 'interactive']) assert.match(html, new RegExp(`data-library-filter="${category}"`));
+  for (const behavior of ['talk', 'quest', 'hostile', 'patrol', 'pickup', 'door', 'heal']) assert.match(html, new RegExp(`value="${behavior}"`));
+  assert.match(script, /muzikaz\.environmentBuilder\.customItems\.v1/);
+  assert.match(script, /data-delete-model/);
+  assert.match(script, /customRoles:true/);
+  assert.ok((script.match(/type:'enemy'/g) || []).length >= 4, 'includes several ready-made enemies');
+  assert.ok((script.match(/type:'interactive'/g) || []).length >= 4, 'includes several interactive role-play objects');
+});
+
 test('in-game Builder Map menu opens the environment builder and restores playable maps', async () => {
   const game = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
   assert.match(game, /class="rad-build-launch" href="environment-builder\.html\?from=game"/);
