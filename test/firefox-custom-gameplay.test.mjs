@@ -34,6 +34,8 @@ test('Firefox item and map population survives large or partially unavailable co
   assert.match(game, /Promise\.allSettled\(\[/);
   assert.match(game, /if \(packResult\.status === 'fulfilled'\)/);
   assert.match(game, /return worldResult\.status === 'fulfilled' \? worldResult\.value : registry\.all\(\)/);
+});
+
 test('builder uses self-contained ESM dependencies and the completed cross-origin API bridge', async () => {
   const [html, builder, environments] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
@@ -43,7 +45,9 @@ test('builder uses self-contained ESM dependencies and the completed cross-origi
 
   assert.match(html, /public\/js\/api-connection\.js/);
   assert.doesNotMatch(html, /type="importmap"/);
-  assert.equal((builder.match(/examples\/jsm\/[^'\"]+\/\+esm/g) || []).length, 3);
+  assert.match(builder, /from '\.\/public\/vendor\/three\/three\.module\.min\.js'/);
+  assert.equal((builder.match(/from 'https:\/\//g) || []).length, 0);
+  assert.equal((builder.match(/import \* as THREE/g) || []).length, 1);
   assert.match(builder, /window\.MUZIKAZ_API\?\.fetch/);
   assert.match(builder, /apiFetch\('\/api\/custom-maps'/);
   assert.match(builder, /typeof structuredClone==='function'/);
