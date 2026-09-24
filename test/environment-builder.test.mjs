@@ -179,3 +179,11 @@ test('premade assets stay clean while custom SVG clip-ons remain explicit', asyn
   assert.match(script, /function applyWeather\(\)/);
   assert.match(script, /groundAt\(o\.position\.x,o\.position\.z\)\+o\.groundOffset/);
 });
+
+test('every library preview renders without aborting builder initialization', async () => {
+  const script = await readFile(new URL('../environment-builder.js', import.meta.url), 'utf8');
+  assert.match(script, /function itemSilhouette\(model,alt=model\.name\)/);
+  assert.match(script, /itemSilhouette\(model,alt\)/);
+  assert.equal((script.match(/function visual\(/g) || []).length, 1, 'preview renderer has one canonical implementation');
+  assert.equal((script.match(/function libraryButton\(/g) || []).length, 1, 'library renderer has one canonical implementation');
+});
