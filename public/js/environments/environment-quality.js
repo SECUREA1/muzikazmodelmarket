@@ -9,7 +9,9 @@ export const QUALITY_PRESETS = {
 export function chooseQualityPreset(name = 'auto', renderer = null) {
   if (name !== 'auto') return QUALITY_PRESETS[name] || QUALITY_PRESETS.balanced;
   const mobile = matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  if (renderer?.xr?.isPresenting || mobile || (window.devicePixelRatio || 1) < 1.5) return QUALITY_PRESETS.performance;
+  const limitedCpu = Number(navigator.hardwareConcurrency || 8) <= 4;
+  const limitedGpu = Number(renderer?.capabilities?.maxTextureSize || 8192) < 4096;
+  if (renderer?.xr?.isPresenting || mobile || limitedCpu || limitedGpu) return QUALITY_PRESETS.performance;
   return QUALITY_PRESETS.balanced;
 }
 
@@ -35,7 +37,12 @@ export function applyWorldQuality(root, renderer) {
     object.receiveShadow = true;
     const materials = Array.isArray(object.material) ? object.material : [object.material].filter(Boolean);
     materials.forEach((material) => {
-      for (const value of Object.values(material)) if (value?.isTexture) value.anisotropy = Math.min(8, maxAnisotropy);
+      for (const value of Object.values(material)) if (value?.isTexture) {
+        value.anisotropy = Math.min(8, maxAnisotropy);
+        // Explicitly flag texture updates; Firefox otherwise may retain a stale
+        // upload after a GLB material is cloned or moved between worlds.
+        value.needsUpdate = true;
+      }
       if (material.transparent) material.depthWrite = false;
     });
   });
