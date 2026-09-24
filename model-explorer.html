@@ -176,8 +176,8 @@
           </div>
           <label>Brush size <output id="custom-brush-output">18 px</output><input id="custom-brush-size" type="range" min="5" max="42" value="18"></label>
           <label>Item color <input id="custom-item-color" type="color" value="#a8ff18"></label>
-          <button class="custom-upload-button" type="button" data-open-item-library>＋ Use an existing item</button>
-          <input id="custom-svg-upload" type="file" accept="image/svg+xml,.svg" hidden>
+          <button class="custom-upload-button" type="button" data-open-item-library aria-haspopup="dialog" aria-controls="custom-library-dialog">＋ Choose an existing item</button>
+          <input id="custom-svg-upload" type="file" accept="image/svg+xml,.svg,model/gltf-binary,model/gltf+json,.glb,.gltf" hidden>
           <small>Tip: make one continuous shape. Your stroke automatically closes when you build.</small>
         </aside>
         <div class="custom-draw-stage">
@@ -199,16 +199,23 @@
       </div>
       <section class="custom-item-library" id="custom-item-library" aria-labelledby="custom-library-title">
         <div><p class="kicker">Ready-to-edit library</p><h3 id="custom-library-title">Use it as-is—or build on it.</h3></div>
-        <div class="custom-library-controls"><label class="visually-hidden" for="custom-library-search">Search items</label><input id="custom-library-search" type="search" placeholder="Search all GLB + SVG items"><select id="custom-library-filter" aria-label="Filter item format"><option value="all">All formats</option><option value="glb">GLB / 3D</option><option value="svg">SVG / editable</option><option value="mine">My builds</option></select><button type="button" data-import-svg>Import SVG</button></div>
+        <div class="custom-library-controls"><label class="visually-hidden" for="custom-library-search">Search items</label><input id="custom-library-search" type="search" placeholder="Search all GLB + SVG items"><select id="custom-library-filter" aria-label="Filter item format"><option value="all">All formats</option><option value="glb">GLB / 3D</option><option value="svg">SVG / editable</option><option value="mine">My builds</option></select><button type="button" data-import-svg>Import GLB / SVG</button></div>
         <p id="custom-library-status" class="status-message" role="status">Loading existing items…</p>
         <div id="custom-library-grid" class="custom-library-grid"></div>
       </section>
     </section>
 
+    <dialog id="custom-library-dialog" class="custom-library-dialog" aria-labelledby="custom-library-dialog-title">
+      <header><div><p class="kicker">Premade + your builds</p><h2 id="custom-library-dialog-title">Choose an existing game item</h2><p>Select any available GLB or SVG, preview it, then use it unchanged or build your own version.</p></div><button type="button" data-close-library-dialog aria-label="Close item library">×</button></header>
+      <div class="custom-library-dialog-tools"><input id="custom-library-dialog-search" type="search" placeholder="Search models, props, avatars…" aria-label="Search existing game items"><select id="custom-library-dialog-filter" aria-label="Filter existing items"><option value="all">All items</option><option value="glb">GLB / 3D</option><option value="svg">SVG / editable</option><option value="mine">My builds</option></select><button type="button" data-import-svg>Upload GLB / SVG</button></div>
+      <p id="custom-library-dialog-status" class="status-message" role="status"></p>
+      <div id="custom-library-dialog-grid" class="custom-library-grid custom-library-dialog-grid"></div>
+    </dialog>
+
     <dialog id="custom-item-dialog" class="custom-item-dialog" aria-labelledby="custom-dialog-title">
       <button class="custom-dialog-close" type="button" data-close-item-dialog aria-label="Close item preview">×</button>
       <div class="custom-dialog-preview"><model-viewer id="custom-dialog-model" camera-controls auto-rotate shadow-intensity="1" hidden></model-viewer><img id="custom-dialog-image" alt=""></div>
-      <div><p class="kicker" id="custom-dialog-format">Existing item</p><h2 id="custom-dialog-title">Item preview</h2><p id="custom-dialog-copy">Choose how you want to use this item.</p><dl><div><dt>Format</dt><dd id="custom-dialog-format-value">—</dd></div><div><dt>Type</dt><dd id="custom-dialog-type">—</dd></div></dl><div class="custom-dialog-actions"><button type="button" data-use-item>Use as-is</button><button type="button" class="ghost" data-edit-item>Edit &amp; build on</button></div></div>
+      <div><p class="kicker" id="custom-dialog-format">Existing item</p><h2 id="custom-dialog-title">Item preview</h2><p id="custom-dialog-copy">Choose how you want to use this item.</p><dl><div><dt>Format</dt><dd id="custom-dialog-format-value">—</dd></div><div><dt>Type</dt><dd id="custom-dialog-type">—</dd></div></dl><div class="custom-dialog-actions"><button type="button" data-use-item>Use &amp; deploy</button><button type="button" class="ghost" data-edit-item>Edit &amp; build on</button><button type="button" class="ghost" data-run-item>Run in game</button></div></div>
     </dialog>
     <div class="custom-build-toast" id="custom-build-toast" role="status" aria-live="polite" hidden></div>
 

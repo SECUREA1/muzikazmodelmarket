@@ -9,6 +9,9 @@
   const glbPreview = document.getElementById('custom-glb-preview');
   const libraryGrid = document.getElementById('custom-library-grid');
   const libraryStatus = document.getElementById('custom-library-status');
+  const libraryDialog = document.getElementById('custom-library-dialog');
+  const libraryDialogGrid = document.getElementById('custom-library-dialog-grid');
+  const libraryDialogStatus = document.getElementById('custom-library-dialog-status');
   const dialog = document.getElementById('custom-item-dialog');
   const dialogModel = document.getElementById('custom-dialog-model');
   const dialogImage = document.getElementById('custom-dialog-image');
@@ -129,14 +132,25 @@
   }
 
   async function loadLibrary() {
-    const [modelsResult, backpackResult] = await Promise.allSettled([
-      fetch('public/models/glb-models.json').then((response) => response.json()),
-      fetch('public/models/backpack-assets.json').then((response) => response.json())
-    ]);
-    const models = modelsResult.status === 'fulfilled' ? (modelsResult.value.models || []) : [];
-    const backpack = backpackResult.status === 'fulfilled' ? (backpackResult.value.assets || []) : [];
+    const catalogUrls = [
+      'public/models/glb-models.json', 'public/models/backpack-assets.json',
+      'public/models/avatars.json', 'public/models/environments/environments.json',
+      'public/models/backpack/avatars.json', 'public/models/backpack/lands.json',
+      'public/models/backpack/pets.json', 'public/models/backpack/props.json',
+      'public/models/backpack/vehicles.json', 'public/models/backpack/wearables.json'
+    ];
+    const results = await Promise.allSettled(catalogUrls.map((url) => fetch(url).then((response) => {
+      if (!response.ok) throw new Error(`${url}: ${response.status}`);
+      return response.json();
+    })));
+    const catalogItems = results.flatMap((result) => {
+      if (result.status !== 'fulfilled') return [];
+      const catalog = result.value;
+      if (Array.isArray(catalog)) return catalog;
+      return catalog.models || catalog.assets || catalog.avatars || catalog.environments || catalog.items || [];
+    });
     const seen = new Set();
-    state.items = [...models.map((item) => normaliseAsset(item, 'model')), ...backpack.map((item) => normaliseAsset(item, 'backpack'))].filter((item) => {
+    state.items = catalogItems.map((item) => normaliseAsset(item, 'catalog')).filter((item) => {
       const key = item.modelUrl || item.thumbnailUrl; if (!key || seen.has(key)) return false; seen.add(key); return true;
     });
     renderLibrary();
@@ -146,19 +160,27 @@
     const source = item.thumbnailUrl || (item.format === 'svg' ? item.modelUrl : 'public/assets/muzikaz-world-logo.svg');
     return `<img src="${escapeHtml(source)}" alt="" loading="lazy">`;
   }
-  function renderLibrary() {
-    const query = document.getElementById('custom-library-search').value.trim().toLowerCase();
-    const filter = document.getElementById('custom-library-filter').value;
+  function matchingItems(queryValue, filter) {
+    const query = queryValue.trim().toLowerCase();
     const mine = savedItems().map((item) => ({ ...item, source: 'mine' }));
     const all = [...mine, ...state.items];
-    const visible = all.filter((item) => (!query || `${item.name} ${item.type}`.toLowerCase().includes(query)) && (filter === 'all' || (filter === 'mine' ? item.source === 'mine' : item.format.includes(filter))));
-    libraryStatus.textContent = `${visible.length} item${visible.length === 1 ? '' : 's'} ready to preview, use, or customize.`;
-    libraryGrid.innerHTML = visible.map((item, index) => `<button type="button" class="custom-library-card" data-library-index="${all.indexOf(item)}"><span class="custom-card-art">${itemArtwork(item)}<i>${escapeHtml(item.format.toUpperCase())}</i></span><span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.type)}</small></span><b aria-hidden="true">↗</b></button>`).join('') || '<p class="empty-state">No matching items. Import an SVG or start drawing above.</p>';
-    libraryGrid.querySelectorAll('[data-library-index]').forEach((button) => button.addEventListener('click', () => openItem(all[Number(button.dataset.libraryIndex)])));
+    const visible = all.filter((item) => (!query || `${item.name} ${item.type}`.toLowerCase().includes(query)) && (filter === 'all' || (filter === 'mine' ? item.source === 'mine' : filter === 'glb' ? /^(glb|gltf)$/.test(item.format) : item.format === filter)));
+    return { all, visible };
+  }
+  function renderCards(grid, status, query, filter) {
+    const { all, visible } = matchingItems(query, filter);
+    status.textContent = `${visible.length} item${visible.length === 1 ? '' : 's'} ready to preview, deploy, or customize.`;
+    grid.innerHTML = visible.map((item) => `<button type="button" class="custom-library-card" data-library-index="${all.indexOf(item)}"><span class="custom-card-art">${itemArtwork(item)}<i>${escapeHtml(item.format.toUpperCase())}</i></span><span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.type)}</small></span><b aria-hidden="true">↗</b></button>`).join('') || '<p class="empty-state">No matching items. Upload a GLB or SVG, or start drawing above.</p>';
+    grid.querySelectorAll('[data-library-index]').forEach((button) => button.addEventListener('click', () => openItem(all[Number(button.dataset.libraryIndex)])));
+  }
+  function renderLibrary() {
+    renderCards(libraryGrid, libraryStatus, document.getElementById('custom-library-search').value, document.getElementById('custom-library-filter').value);
+    renderCards(libraryDialogGrid, libraryDialogStatus, document.getElementById('custom-library-dialog-search').value, document.getElementById('custom-library-dialog-filter').value);
   }
 
   function openItem(item) {
     state.selected = item;
+    if (libraryDialog.open) libraryDialog.close();
     document.getElementById('custom-dialog-title').textContent = item.name;
     document.getElementById('custom-dialog-copy').textContent = item.description || 'This reusable item is ready to run now or become the base of a new custom build.';
     document.getElementById('custom-dialog-format').textContent = item.source === 'mine' ? 'Your saved build' : 'Existing library item';
@@ -173,6 +195,17 @@
   document.querySelector('[data-close-item-dialog]').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
   document.querySelector('[data-use-item]').addEventListener('click', () => { document.getElementById('custom-item-name').value = state.selected.name; buildObject(true); });
+  document.querySelector('[data-run-item]').addEventListener('click', () => {
+    const item = state.selected;
+    window.dispatchEvent(new CustomEvent('muzikaz:run-custom-item', { detail: item }));
+    localStorage.setItem('muzikazActiveGameItem', JSON.stringify(item));
+    dialog.close();
+    const game = document.getElementById('vibe-crib-game') || document.getElementById('house-explorer');
+    if (game) game.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const toast = document.getElementById('custom-build-toast');
+    toast.innerHTML = `<b>▶ ${escapeHtml(item.name)} ready to run</b><span>The item is now the active object for your next game session.</span>`;
+    toast.hidden = false; setTimeout(() => { toast.hidden = true; }, 4200);
+  });
   document.querySelector('[data-edit-item]').addEventListener('click', () => {
     const item = state.selected; document.getElementById('custom-item-name').value = `${item.name} Remix`;
     document.getElementById('custom-source-label').textContent = `Building on ${item.name}`;
@@ -187,11 +220,24 @@
   }
   const upload = document.getElementById('custom-svg-upload');
   function beginUpload() { upload.click(); }
-  document.querySelector('[data-import-svg]').addEventListener('click', beginUpload);
-  document.querySelector('[data-open-item-library]').addEventListener('click', () => document.getElementById('custom-item-library').scrollIntoView({ behavior: 'smooth' }));
-  upload.addEventListener('change', () => { const file = upload.files[0]; if (!file) return; const url = URL.createObjectURL(file); state.selected = { id: `upload-${Date.now()}`, name: file.name.replace(/\.svg$/i, ''), type: 'imported silhouette', format: 'svg', modelUrl: '', thumbnailUrl: url, source: 'upload' }; document.getElementById('custom-item-name').value = state.selected.name; document.getElementById('custom-source-label').textContent = `Imported ${file.name}`; importImage(url); });
+  document.querySelectorAll('[data-import-svg]').forEach((button) => button.addEventListener('click', beginUpload));
+  document.querySelector('[data-open-item-library]').addEventListener('click', () => libraryDialog.showModal());
+  document.querySelector('[data-close-library-dialog]').addEventListener('click', () => libraryDialog.close());
+  libraryDialog.addEventListener('click', (event) => { if (event.target === libraryDialog) libraryDialog.close(); });
+  upload.addEventListener('change', () => {
+    const file = upload.files[0]; if (!file) return;
+    const url = URL.createObjectURL(file); const isModel = /\.(glb|gltf)$/i.test(file.name);
+    state.selected = { id: `upload-${Date.now()}`, name: file.name.replace(/\.(svg|glb|gltf)$/i, ''), type: isModel ? 'imported 3D model' : 'imported silhouette', format: isModel ? file.name.split('.').pop().toLowerCase() : 'svg', modelUrl: isModel ? url : '', thumbnailUrl: isModel ? '' : url, source: 'upload' };
+    document.getElementById('custom-item-name').value = state.selected.name;
+    document.getElementById('custom-source-label').textContent = `Imported ${file.name}`;
+    if (libraryDialog.open) libraryDialog.close();
+    if (isModel) { glbPreview.src = url; glbPreview.hidden = false; preview.hidden = true; state.hasArtwork = false; }
+    else importImage(url);
+  });
   document.getElementById('custom-library-search').addEventListener('input', renderLibrary);
   document.getElementById('custom-library-filter').addEventListener('change', renderLibrary);
+  document.getElementById('custom-library-dialog-search').addEventListener('input', renderLibrary);
+  document.getElementById('custom-library-dialog-filter').addEventListener('change', renderLibrary);
   window.addEventListener('resize', resizeCanvas, { passive: true });
   resizeCanvas(); loadLibrary();
 }());
