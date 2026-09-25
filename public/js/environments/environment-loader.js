@@ -6,7 +6,6 @@ import { MeshoptDecoder } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examp
 import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Octree.js/+esm';
 import { applyWorldQuality } from './environment-quality.js';
 import { buildCollision, resolveSafeSpawn } from './environment-collision.js';
-import { createBuilderMapTemplate } from '../builder-map-template.js';
 
 export class EnvironmentLoader {
   constructor({ scene, renderer, onProgress = () => {} }) {
@@ -37,11 +36,7 @@ export class EnvironmentLoader {
     const nextWorld = new THREE.Group(); nextWorld.name = `WORLD_${environment.id}`; this.baseScale = Number(environment.scale) || 1; this.spaceScale = Number(environment.spaceScale) || 1; nextWorld.userData.baseScale = this.baseScale; nextWorld.scale.setScalar(this.baseScale * this.spaceScale); nextWorld.rotation.set(environment.rotation.x || 0, environment.rotation.y || 0, environment.rotation.z || 0);
     const nextMixers = [];
     try {
-      if (environment.builderScene) {
-        nextWorld.add(createBuilderMapTemplate(environment.builderScene));
-        this.onProgress(75);
-      }
-      for (let i = 0; !environment.builderScene && i < urls.length; i += 1) {
+      for (let i = 0; i < urls.length; i += 1) {
         const gltf = await this.loadOne(urls[i], i, urls.length); if (token !== this.token) return null;
         gltf.scene.name = `GLB_${environment.id}_${i + 1}`; nextWorld.add(gltf.scene);
         if (gltf.animations?.length) { const mixer = new THREE.AnimationMixer(gltf.scene); gltf.animations.forEach((clip) => mixer.clipAction(clip).play()); nextMixers.push(mixer); }

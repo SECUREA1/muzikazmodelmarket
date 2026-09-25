@@ -279,13 +279,10 @@ for (const requiredHudFeature of ['data-rad-row-toggle', 'data-rad-tools-toggle'
   }
 }
 
-for (const requiredUpdateCheck of ['checkForHouseUpdates', 'Promise.allSettled([refreshLibrary(), refreshAvatarLibrary()])', 'checkForHouseUpdates({ startup: true })', 'public/models/glb-models.json']) {
+for (const requiredUpdateCheck of ['checkForHouseUpdates', 'Promise.allSettled([refreshLibrary(), refreshAvatarLibrary()])', 'checkForHouseUpdates({ startup: true })', 'fetchGitHubGlbFiles', 'mergeGitHubAvatarFiles']) {
   if (!houseExplorer.includes(requiredUpdateCheck)) {
     throw new Error(`House Explorer must check for new maps and avatars on startup: missing ${requiredUpdateCheck}`);
   }
-}
-if (houseExplorer.includes('/api/models')) {
-  throw new Error('House Explorer model discovery must use repository manifests instead of /api/models.');
 }
 
 const githubDiscovery = await readFile('dist/public/js/github-glb-discovery.js', 'utf8');

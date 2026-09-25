@@ -1,32 +1,32 @@
+import { fetchGitHubGlbFiles, mergeGitHubEnvironmentFiles } from '../github-glb-discovery.js';
+
 const PREFIX = '[MUZIKAZ Environment]';
 const apiFetch = (path, options = {}) => window.MUZIKAZ_API?.fetch ? window.MUZIKAZ_API.fetch(path, options) : fetch(path, options);
 
 export async function fetchEnvironmentList() {
-  const options = { headers: { Accept: 'application/json' }, cache: 'no-store' };
-  const [repositoryResult, gamesResult] = await Promise.allSettled([
-    fetch('/public/models/environments/environments.json', options).then(async (response) => {
-      if (!response.ok) throw new Error(`Repository environment manifest unavailable (${response.status})`);
-      const payload = await response.json();
-      return Array.isArray(payload) ? payload : [];
-    }),
-    apiFetch('/api/custom-maps', { ...options, retries: 0 }).then(async (response) => {
-      if (!response.ok) throw new Error(`Published game list unavailable (${response.status})`);
-      const payload = await response.json();
-      const records = payload.data || payload;
-      return Array.isArray(records) ? records : [];
-    })
-  ]);
-  if (repositoryResult.status === 'rejected' && gamesResult.status === 'rejected') throw repositoryResult.reason;
-  if (repositoryResult.status === 'rejected') console.warn(PREFIX, repositoryResult.reason);
-  if (gamesResult.status === 'rejected') console.warn(PREFIX, gamesResult.reason);
-  const combined = [
-    ...(gamesResult.status === 'fulfilled' ? gamesResult.value : []),
-    ...(repositoryResult.status === 'fulfilled' ? repositoryResult.value : [])
-  ];
-  // A newly published game takes precedence over an older committed record.
-  const unique = new Map();
-  combined.forEach((record) => { if (record?.id && !unique.has(record.id)) unique.set(record.id, record); });
-  return [...unique.values()];
+  let records = [];
+  try {
+    const response = await apiFetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+    if (!response.ok) throw new Error(`Environment registry unavailable (${response.status})`);
+    const payload = await response.json();
+    records = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+  } catch (error) {
+    logEnvironment('API registry unavailable; loading repository environment manifest.', error.message);
+  }
+
+  if (!records.length) {
+    const fallback = await fetch('/public/models/environments/environments.json', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+    if (!fallback.ok) throw new Error(`Repository environment manifest unavailable (${fallback.status})`);
+    const payload = await fallback.json();
+    records = Array.isArray(payload) ? payload : [];
+  }
+
+  try {
+    return mergeGitHubEnvironmentFiles(records, await fetchGitHubGlbFiles());
+  } catch (error) {
+    logEnvironment('GitHub GLB discovery unavailable; using the current environment list.', error.message);
+    return records;
+  }
 }
 
 export async function uploadEnvironment(formData, onProgress = () => {}) {

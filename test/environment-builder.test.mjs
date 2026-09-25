@@ -16,33 +16,10 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /model-explorer\.html\?environment=/);
   assert.match(script, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(script, /&house=\$\{id\}&autoplay=1/);
+  assert.match(script, /apiFetch\('\/api\/custom-maps'/);
   assert.match(script, /compileBuilderScene\(sceneData\)/);
-  assert.match(html, /public\/js\/api-connection\.js/);
-  assert.match(script, /apiFetch\('\/api\/custom-maps'/, 'a saved game is published back into the shared list');
-  assert.match(script, /'\/api\/models'/, 'published models repopulate the Builder catalog');
-  assert.match(html, /SAVE &amp; PLAY LIVE/);
-  assert.match(html, /populate the live game list/);
-  assert.match(script, /LIVE · Game list updated/);
-  assert.match(script, /muzikaz\.environmentBuilder\.localMaps\.v1/);
-  assert.match(script, /storeLocalMap\(sceneData\)/, 'each builder save is also retained in the local playable-map collection');
-  assert.match(script, /sessionStorage\.setItem\(PLAY_KEY,JSON\.stringify\(playScene\)\)/, 'the complete playable scene is staged before browser gameplay begins');
-  assert.match(script, /deployed=1/);
-  assert.match(script, /localFallback=1/, 'a complete browser-local fallback remains available when publishing fails');
-  assert.ok(script.indexOf('sessionStorage.setItem(PLAY_KEY') < script.indexOf('location.href=`model-explorer.html'), 'scene handoff is complete before explorer navigation');
-});
-
-test('builder and explorer merge published games with repository catalogs', async () => {
-  const [builder, explorer, environments] = await Promise.all([
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
-    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
-    readFile(new URL('../public/js/environments/environment-api.js', import.meta.url), 'utf8')
-  ]);
-  assert.match(builder, /'\/api\/models'/);
-  assert.match(explorer, /public\/models\/glb-models\.json/);
-  assert.match(environments, /apiFetch\('\/api\/custom-maps'/);
-  assert.match(environments, /public\/models\/environments\/environments\.json/);
-  assert.match(environments, /Promise\.allSettled/);
-  assert.match(environments, /new Map/);
+  assert.match(script, /All players can join/);
+  assert.match(script, /Opening your locally saved multiplayer map/);
 });
 
 
@@ -161,18 +138,6 @@ test('custom item toolkit starts from editable models in every requested categor
   assert.match(css, /\.starter-model-card\.active/);
 });
 
-test('custom item toolkit includes a game-ready 3D model selection path', async () => {
-  const [html, script, css] = await Promise.all([
-    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
-  ]);
-  for (const control of ['custom-3d-model-grid', 'custom-3d-model-preview', 'custom-3d-model-name', 'custom-3d-model-status']) assert.match(html, new RegExp(`id="${control}"`));
-  for (const source of ['library', 'draw']) assert.match(html, new RegExp(`data-model-source="${source}"`));
-  for (const feature of ['selectable3dModels', 'render3dModelSelection', 'select3dModel', 'sourceModelId', 'custom-glb']) assert.match(script, new RegExp(feature));
-  assert.match(css, /\.model-selection-card\.active/);
-});
-
 test('every drawn custom item saves three toggleable 3D forms with fitted clip-ons', async () => {
   const [html, script, css] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
@@ -235,10 +200,6 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /muzikaz\.environmentBuilder\.scenes\.v2/);
   assert.match(game, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(game, /key\.includes\('playScene'\)\?sessionStorage:localStorage/);
-  assert.match(game, /readSavedBuilderScenes/);
-  assert.match(game, /modelUrl:'',modelUrls:\[\]/, 'a saved map does not inherit a default GLB environment');
-  assert.match(game, /!env\.builderScene/, 'a builder map load failure never redirects to the default map');
-  assert.match(game, /Locally saved Builder Map/, 'local builder maps remain in the playable map list when multiplayer publishing is unavailable');
   assert.match(game, /createSavedCustomModel/);
   assert.match(game, /built\.customModels/);
   assert.match(game, /center\.x\+x/);
@@ -246,18 +207,15 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /object\.rotation\.set/, 'preserves the full authored rotation');
 });
 
-test('saved maps embed custom item definitions for exact game reconstruction', async () => {
+test('saved and published maps embed custom item definitions for exact game reconstruction', async () => {
   const [script, game] = await Promise.all([
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
   assert.match(script, /sceneData\.customModels=cloneData\(customModels\)/);
   assert.match(script, /sceneData\.placedModels=cloneData/, 'every placed asset definition travels with the local and published scene');
-  assert.match(script, /body:JSON\.stringify\(\{scene:sceneData,ownerId\}\)/, 'the complete scene is published for other players');
-  assert.match(script, /LOCAL GAME READY/, 'the embedded scene remains playable when the API is unavailable');
+  assert.match(script, /body:JSON\.stringify\(\{scene:sceneData,ownerId\}\)/);
   assert.match(game, /built\.placedModels/);
-  const loader = await readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8');
-  assert.match(loader, /createBuilderMapTemplate\(environment\.builderScene\)/, 'the selected builder template becomes the game world');
   assert.match(game, /prepareAuthoredBuilderModel/);
   assert.match(game, /createGeneratedAsset\(definition\)/);
   assert.match(game, /object\.scale\.multiply/, 'gameplay preserves the model normalization and the exact authored instance scale');

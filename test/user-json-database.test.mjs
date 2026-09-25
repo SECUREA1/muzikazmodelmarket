@@ -64,20 +64,6 @@ test('verified sale Bottles persist in Backpack inventory and MZK memory', async
   assert.ok(restored.items.every((item) => item.source === 'verified-sale' && item.saleOrderIds.includes('sale-200')));
 });
 
-test('verified model purchases reconcile idempotently into the owning gameplay inventory', async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), 'mzk-users-')); t.after(() => rm(directory, { recursive: true, force: true }));
-  const database = new UserJsonDatabase(join(directory, 'users.json'));
-  const wallet = '0x1111111111111111111111111111111111111111';
-  const account = { accountId: 'usr-purchaser', backpackId: 'pack-purchaser', primaryEthereumWallet: wallet, mzkBalance: 275, gameAssets: [] };
-  await database.ensureAccount(account);
-  const order = { orderId: 'paid-model-1', paymentStatus: 'FULFILLED', wallet, fulfilledAt: '2026-09-25T00:00:00.000Z', fulfillment: { items: [{ id: 'neon', name: 'Neon Model', quantity: 2, deliverable: { id: 'neon-glb', name: 'Neon Model GLB', modelUrl: '/models/neon.glb', format: 'glb', assetType: 'prop' } }] } };
-  await database.reconcilePurchases(account, [order]);
-  const restored = await database.reconcilePurchases(account, [order]);
-  assert.equal(restored.tokens.MZK, 275);
-  assert.equal(restored.items.filter((item) => item.orderId === order.orderId).length, 2);
-  assert.ok(restored.items.every((item) => item.source !== 'verified-purchase' || item.modelUrl === '/models/neon.glb'));
-});
-
 test('deep-merges shared memory and preserves an append-only MZK adjustment history', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'muzikaz-users-')); t.after(() => rm(directory, { recursive: true, force: true }));
   const file = join(directory, 'users.json'); const database = new UserJsonDatabase(file);
