@@ -215,6 +215,20 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /center\.x\+x/);
   assert.match(game, /object\.scale\.multiply\(new THREE\.Vector3\(scale,sy,sz\)\)/, 'preserves model normalization and every authored scale axis');
   assert.match(game, /object\.rotation\.set/, 'preserves the full authored rotation');
+  assert.match(game, /proceduralLand:true,modelUrl:'',modelUrls:\[\]/, 'locally tested builder lands do not require a GLB base');
+});
+
+test('builder lands load as playable procedural terrain without GLB files', async () => {
+  const [loader, server] = await Promise.all([
+    readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),
+    readFile(new URL('../server.mjs', import.meta.url), 'utf8')
+  ]);
+  assert.match(loader, /createBuilderLand\(environment\)/);
+  assert.match(loader, /environment\.builderScene \|\| environment\.proceduralLand/);
+  assert.match(loader, /new THREE\.PlaneGeometry\(40, 40, 80, 80\)/);
+  assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode\)/, 'procedural terrain enters the normal collision pipeline');
+  assert.match(server, /proceduralLand:true/);
+  assert.match(server, /modelUrl:'', modelUrls:\[\]/, 'published builder maps no longer borrow a repository GLB');
 });
 
 test('saved sandbox maps embed custom item definitions for exact game reconstruction', async () => {

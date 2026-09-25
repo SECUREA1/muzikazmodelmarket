@@ -123,8 +123,7 @@ function environmentRecord(input = {}, extra = {}) {
 }
 async function combinedEnvironments() {
   const [repo, uploaded, customMaps] = await Promise.all([readRepositoryEnvironments(), readUploadedEnvironments(), readCustomMaps()]);
-  const base = repo.find((environment) => environment.id === 'studio-ridge-out') || repo.find((environment) => environment.id === 'muzikaz-main') || repo[0] || {};
-  const liveMaps = customMaps.map((map) => ({ ...base, ...map, modelUrl: base.modelUrl || base.modelUrls?.[0] || '', modelUrls: base.modelUrls, spawn: base.spawn, collisionMode: base.collisionMode || 'auto', canDelete: false, canEdit: false }));
+  const liveMaps = customMaps.map((map) => ({ ...map, modelUrl:'', modelUrls:[], proceduralLand:true, spawn:{x:0,y:1,z:2,rotationY:0}, scale:1, spaceScale:1, rotation:{x:0,y:0,z:0}, collisionMode:'auto', canDelete:false, canEdit:false }));
   return [...liveMaps, ...repo, ...uploaded.filter(publicEnvironment)];
 }
 async function saveEnvironmentUpload(req) {
