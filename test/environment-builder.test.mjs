@@ -16,15 +16,13 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /model-explorer\.html\?environment=/);
   assert.match(script, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(script, /&house=\$\{id\}&autoplay=1/);
-  assert.match(script, /apiFetch\('\/api\/custom-maps'/);
+  assert.doesNotMatch(script, /\/api\//);
   assert.match(script, /compileBuilderScene\(sceneData\)/);
-  assert.match(script, /All players can join/);
-  assert.match(script, /Opening your locally saved multiplayer map/);
+  assert.match(script, /Game deployed in this browser/);
+  assert.match(script, /localBuild=1/);
   assert.match(script, /muzikaz\.environmentBuilder\.localMaps\.v1/);
   assert.match(script, /storeLocalMap\(sceneData\)/, 'each builder save is also retained in the local playable-map collection');
-  const localPlaySave = script.indexOf('sessionStorage.setItem(PLAY_KEY,JSON.stringify(playScene))');
-  const multiplayerPublish = script.indexOf("apiFetch('/api/custom-maps", localPlaySave);
-  assert.ok(localPlaySave >= 0 && multiplayerPublish > localPlaySave, 'the complete playable scene is staged locally before multiplayer publication begins');
+  assert.match(script, /sessionStorage\.setItem\(PLAY_KEY,JSON\.stringify\(playScene\)\)/, 'the complete playable scene is staged in the browser before game navigation');
 });
 
 
@@ -214,14 +212,14 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /object\.rotation\.set/, 'preserves the full authored rotation');
 });
 
-test('saved and published maps embed custom item definitions for exact game reconstruction', async () => {
+test('saved and browser-deployed maps embed custom item definitions for exact game reconstruction', async () => {
   const [script, game] = await Promise.all([
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
   assert.match(script, /sceneData\.customModels=cloneData\(customModels\)/);
-  assert.match(script, /sceneData\.placedModels=cloneData/, 'every placed asset definition travels with the local and published scene');
-  assert.match(script, /body:JSON\.stringify\(\{scene:sceneData,ownerId\}\)/);
+  assert.match(script, /sceneData\.placedModels=cloneData/, 'every placed asset definition travels with the saved scene');
+  assert.match(script, /sessionStorage\.setItem\(PLAY_KEY,JSON\.stringify\(playScene\)\)/);
   assert.match(game, /built\.placedModels/);
   assert.match(game, /prepareAuthoredBuilderModel/);
   assert.match(game, /createGeneratedAsset\(definition\)/);

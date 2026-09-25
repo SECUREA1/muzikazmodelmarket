@@ -70,7 +70,6 @@ const layouts={
 };
 const $=s=>document.querySelector(s), escapeHtml=v=>String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const cloneData=value=>typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value));
-const apiFetch=(path,options={})=>window.MUZIKAZ_API?.fetch?window.MUZIKAZ_API.fetch(path,options):fetch(path,options);
 const readJson=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')||fallback}catch{return fallback}};
 const uid=()=>crypto.randomUUID?.()||`object-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const customFormPresets={solid:{label:'Solid',depthScale:1,bevelScale:1,material:null},sculpted:{label:'Sculpted',depthScale:1.65,bevelScale:1.8,material:'metal'},lightweight:{label:'Lightweight',depthScale:.55,bevelScale:.35,material:'glow'}};
@@ -81,9 +80,9 @@ let sceneData={version:3,id:'active',name:'Untitled environment',layout:'grand-f
 const models=()=>[...builtins,...gameplayModels,...expandedModels,...catalogModels,...customModels], modelFor=id=>models().find(m=>m.id===id), selected=()=>sceneData.objects.find(o=>o.id===selectedId);
 
 // Repository manifests are the source of truth for deposited items and maps.
-// Load every source independently so one unavailable API can never blank the
-// library, then de-duplicate against the hand-authored starter pack.
-const catalogSources=['public/models/game-asset-registry.json','public/models/glb-models.json','public/models/backpack-assets.json','public/models/toolkit-assets.json','/api/models'];
+// Load every static source independently so one missing manifest can never
+// blank the library, then de-duplicate against the hand-authored starter pack.
+const catalogSources=['public/models/game-asset-registry.json','public/models/glb-models.json','public/models/backpack-assets.json','public/models/toolkit-assets.json'];
 const catalogId=value=>String(value||'catalog-item').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 function normalizeCatalogModel(raw,index){
  const modelUrl=raw.modelPath||raw.modelUrl||raw.model_url||raw.fileUrl||raw.file_url||raw.assetUrl||raw.asset_url||'', format=String(raw.format||modelUrl.split('?')[0].split('.').pop()||'').toLowerCase(),generated=Boolean(raw.generated&&raw.generator);
@@ -213,30 +212,16 @@ function storeLocalMap(scene){
  localStorage.setItem(LOCAL_MAPS_KEY,JSON.stringify(maps.slice(0,20)));
 }
 function persist(message='Progress saved locally'){sceneData.version=3;sceneData.customModels=cloneData(customModels);sceneData.catalogModels=cloneData(catalogModels.filter(model=>sceneData.objects.some(object=>object.modelId===model.id)));sceneData.placedModels=cloneData([...new Set(sceneData.objects.map(object=>object.modelId))].map(modelFor).filter(Boolean));sceneData.layoutMeta=cloneData(layouts[sceneData.layout]||layouts['grand-floor']);for(const o of sceneData.objects){const rt=runtime.get(o.id);if(rt?.mixer)o.animationState.time=rt.mixer.time}localStorage.setItem(STORAGE_KEY,JSON.stringify(sceneData));localStorage.setItem(LEGACY_KEY,JSON.stringify(sceneData));storeLocalMap(sceneData);$('#save-state').textContent=`Saved ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;showToast(message)}
-async function publishAndPlay(){
+function deployAndPlay(){
  if(!sceneData.id||sceneData.id==='active')sceneData.id=`custom-map-${uid()}`;
  sceneData.gameplay={multiplayer:true, enemies:true, weapons:true, pickups:true, customRoles:true};
- sceneData.runtimeManifest=compileBuilderScene(sceneData);persist('Saving live multiplayer map…');
- const ownerId=localStorage.getItem('muzikazBottleMemberEmail')||localStorage.getItem('muzikazUserId')||'guest-builder';
- const button=$('#play-scene');button.disabled=true;let playId=sceneData.id,playScene=cloneData(sceneData),deployed=false;
- // Stage the complete compiled scene before contacting the multiplayer service.
- // This guarantees the explorer can open the authored map even when publishing
- // fails, times out, or returns an incomplete scene.
+ sceneData.runtimeManifest=compileBuilderScene(sceneData);
+ persist('Game deployed in this browser');
+ const playScene=cloneData(sceneData),id=encodeURIComponent(playScene.id);
  sessionStorage.setItem(PLAY_KEY,JSON.stringify(playScene));
- try{
-  const response=await apiFetch('/api/custom-maps',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-User-Id':ownerId},body:JSON.stringify({scene:sceneData,ownerId}),retries:0});
-  const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||'Unable to activate this map.');
-  const live=payload.data||payload;if(!live.id||!live.builderScene||!Array.isArray(live.builderScene.objects))throw new Error('The live map service did not return a playable map.');
-  if(live.builderScene.objects.length!==sceneData.objects.length)throw new Error('The live map did not contain every placed object.');
-  playId=live.id;playScene=cloneData(live.builderScene);sceneData.id=playId;deployed=true;persist('Live map saved with its exact layout');$('#save-state').textContent='LIVE · All players can join';showToast(`“${live.name}” is deployed in the shared map list — opening RAD-TOX…`)
- }catch(error){
-  $('#save-state').textContent='LIVE PUBLISH FAILED · Local play only';showToast(`${error.message} Your local map is safe; try Save & Play Live again. Opening your locally saved multiplayer map…`)
- }
- // The successful path hands the game the server's authoritative scene. The
- // fallback remains explicit and browser-local, so it can never masquerade as
- // a published multiplayer map.
- playScene.id=playId;sessionStorage.setItem(PLAY_KEY,JSON.stringify(playScene));
- window.setTimeout(()=>{const id=encodeURIComponent(playId),mode=deployed?'deployed=1':'localFallback=1';location.href=`model-explorer.html?environment=${id}&house=${id}&autoplay=1&${mode}`},deployed?500:1400)
+ $('#save-state').textContent='READY · Opening browser test';
+ showToast(`“${sceneData.name}” is ready — starting the game…`);
+ window.setTimeout(()=>{location.href=`model-explorer.html?environment=${id}&house=${id}&autoplay=1&localBuild=1`},250)
 }
 function screenRay(event){const rect=renderer.domElement.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera)}
 function terrainPoint(event){screenRay(event);return raycaster.intersectObject(terrain,false)[0]?.point||null}
@@ -282,7 +267,7 @@ $('#focus-selected').addEventListener('click',()=>{const o=selected();if(o)frame
 $('#remove-object').addEventListener('click',removeSelected);$('#duplicate-object').addEventListener('click',()=>{const o=selected();if(!o)return;const copy=cloneData(o);copy.id=uid();copy.position.x=Math.min(19,copy.position.x+1);copy.position.z=Math.min(19,copy.position.z+1);sceneData.objects.push(copy);selectedId=copy.id;buildRuntime(copy);markChanged();updateUi()});
 function mapGlyph(layout,index){const ridge=12+(index%4)*3;return `<svg viewBox="0 0 64 36" aria-hidden="true"><defs><linearGradient id="map-${index}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#63eaff"/><stop offset="1" stop-color="#b9ff38"/></linearGradient></defs><path d="M3 28L16 ${ridge} 27 22 39 8 61 25v7H3z" fill="url(#map-${index})" opacity=".22"/><path d="M3 28L16 ${ridge}l11 ${22-ridge}L39 8l22 17M4 32h56" fill="none" stroke="url(#map-${index})" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`}function renderAtlas(){const active=sceneData.layout;$('#world-atlas').innerHTML=Object.entries(layouts).slice(4).map(([id,layout],index)=>`<button type="button" data-layout="${id}"${id===active?' aria-current="true"':''}>${mapGlyph(layout,index)}<span>${layout.name}</span></button>`).join('')}
 function updateLayout(layout){sceneData.layout=layouts[layout]?layout:'grand-floor';const meta=layouts[sceneData.layout];$('#layout-select').value=sceneData.layout;$('#layout-label').textContent=meta.name.toUpperCase();$('#layout-description').textContent=meta.description;$('#land-canvas').className=`land-canvas layout-${sceneData.layout}`;$('#land-canvas').setAttribute('aria-label',`${meta.name} 3D editor. Select an item then click the terrain to place it.`);shapeTerrain();sceneData.objects.forEach(updateTransform);renderAtlas();markChanged()}
-$('#weather-select').addEventListener('change',e=>{sceneData.weather=e.target.value;applyWeather();markChanged()});$('#layout-select').addEventListener('change',e=>updateLayout(e.target.value));$('#world-atlas').addEventListener('click',e=>{const button=e.target.closest('[data-layout]');if(button)updateLayout(button.dataset.layout)});$('#scene-name').addEventListener('input',e=>{sceneData.name=e.target.value;markChanged()});$('#save-scene').addEventListener('click',()=>persist(`“${sceneData.name}” saved with complete 3D state`));$('#play-scene').addEventListener('click',publishAndPlay);$('#clear-scene').addEventListener('click',()=>{if(sceneData.objects.length&&!confirm('Start a new map?'))return;sceneData={version:3,id:uid(),name:'Untitled environment',layout:sceneData.layout,weather:sceneData.weather,objects:[]};selectedId=null;$('#scene-name').value=sceneData.name;rebuildAll()});
+$('#weather-select').addEventListener('change',e=>{sceneData.weather=e.target.value;applyWeather();markChanged()});$('#layout-select').addEventListener('change',e=>updateLayout(e.target.value));$('#world-atlas').addEventListener('click',e=>{const button=e.target.closest('[data-layout]');if(button)updateLayout(button.dataset.layout)});$('#scene-name').addEventListener('input',e=>{sceneData.name=e.target.value;markChanged()});$('#save-scene').addEventListener('click',()=>persist(`“${sceneData.name}” saved with complete 3D state`));$('#play-scene').addEventListener('click',deployAndPlay);$('#clear-scene').addEventListener('click',()=>{if(sceneData.objects.length&&!confirm('Start a new map?'))return;sceneData={version:3,id:uid(),name:'Untitled environment',layout:sceneData.layout,weather:sceneData.weather,objects:[]};selectedId=null;$('#scene-name').value=sceneData.name;rebuildAll()});
 // Saved scenes also remain compatible with the full game route:
 // model-explorer.html?environment=<scene id>&autoplay=1
 const drawingSvg=$('#custom-model-drawing'),strokeLayer=$('#custom-model-strokes'),activeStroke=$('#custom-model-active-stroke'),previewStrokes=$('#maker-preview-strokes');
