@@ -10,10 +10,24 @@ const copy = value => value == null ? value : JSON.parse(JSON.stringify(value));
 const vector = (value, fallback = 0) => ({
   x: finite(value?.x, fallback), y: finite(value?.y, fallback), z: finite(value?.z, fallback)
 });
+const DEFAULT_BEHAVIOR_BY_TYPE = {
+  avatar: 'talk', character: 'talk', npc: 'talk', enemy: 'hostile', creature: 'patrol',
+  vehicle: 'vehicle', weapon: 'pickup', weapons: 'pickup', wearable: 'hold',
+  consumable: 'heal', quest: 'quest', interactive: 'interact'
+};
+
+/** Give imported Builder assets a useful in-game role when they do not author one. */
+export function behaviorForBuilderObject(object = {}) {
+  const functional = object.functionalSettings || {};
+  const authored = functional.behavior || object.behavior;
+  if (authored) return String(authored);
+  const type = String(object.objectType || object.type || object.category || '').toLowerCase();
+  return DEFAULT_BEHAVIOR_BY_TYPE[type] || 'decor';
+}
 
 export function normalizeBuilderObject(object = {}, index = 0) {
   const functional = object.functionalSettings || {};
-  const behavior = String(functional.behavior || object.behavior || 'decor');
+  const behavior = behaviorForBuilderObject(object);
   const interactionKey = behavior === 'vehicle' ? 'f' : 'e';
   return {
     objectId: String(object.id || `object-${index}`),
@@ -113,6 +127,23 @@ export class BuilderGameplayRuntime {
   prompt(playerPosition) {
     for (const key of ['f', 'e']) { const hit = this.nearest(playerPosition, key); if (hit) return `${key.toUpperCase()} — ${hit.actor.gameplay.prompt || (key === 'f' ? 'Enter Vehicle' : DEFAULT_PROMPTS[hit.actor.gameplay.behavior] || 'Interact')}`; }
     return '';
+  }
+  heldActor() { return this.actor(this.player.heldObjectId); }
+  /** Drop the held Builder object back into the world so it can be picked up again. */
+  dropHeld(position = null) {
+    const objectId = this.player.heldObjectId;
+    if (!objectId) return null;
+    const actor = this.actor(objectId), instance = this.instances.get(objectId);
+    this.player.heldObjectId = null;
+    const inventoryIndex = this.player.inventory.indexOf(actor?.modelId);
+    if (inventoryIndex >= 0) this.player.inventory.splice(inventoryIndex, 1);
+    if (position && actor?.transform) actor.transform.position = vector(position);
+    if (instance?.setDropped) instance.setDropped(position, this.player);
+    else instance?.setHeld?.(false, this.player, position);
+    instance?.setActive?.(true);
+    const message = `${actor?.metadata?.name || actor?.modelId || 'Item'} dropped — it can be picked up again`;
+    this.feedback(message, actor);
+    return { actor, handled: true, message, position: position ? vector(position) : null };
   }
   interact(key, playerPosition) {
     const hit = this.nearest(playerPosition, String(key).toLowerCase());
