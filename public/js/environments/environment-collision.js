@@ -17,7 +17,7 @@ function isWalkableFloorHit(hit) {
 
 function isSpawnFloorObject(object) {
   const name = object?.name || '';
-  return !NON_SPAWN_FLOOR_RE.test(name);
+  return COLLISION_RE.test(name) || !NON_SPAWN_FLOOR_RE.test(name);
 }
 
 function isExplicitFloorCollider(object) {
@@ -35,7 +35,7 @@ function floorHitScore(hit) {
 function findWalkableFloorHit(meshes, point, bounds, playerHeight = 1.65) {
   const rayOriginY = Number.isFinite(bounds?.max?.y) ? bounds.max.y + playerHeight + 8 : point.y + playerHeight + 8;
   const raycaster = new THREE.Raycaster(new THREE.Vector3(point.x, rayOriginY, point.z), new THREE.Vector3(0, -1, 0));
-  return raycaster.intersectObjects(meshes, true).find((item) => item.object.visible !== false && isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
+  return raycaster.intersectObjects(meshes, true).find((item) => (item.object.visible !== false || COLLISION_RE.test(item.object.name || '')) && isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
 }
 
 export function alignPointAboveFloor(point, meshes, bounds, playerHeight = 1.65, floorGap = FLOOR_ENTRY_OFFSET) {
@@ -53,6 +53,21 @@ export function alignPointAboveFloor(point, meshes, bounds, playerHeight = 1.65,
   return aligned;
 }
 
+// Catch a floor crossed during a physics step. This supplements the octree
+// contact test for very thin authored colliders, where a low frame rate could
+// otherwise move the whole capsule from above the floor to below it.
+export function findCrossedFloor(meshes, point, previousY, currentY, padding = 0.05) {
+  if (!meshes?.length || !Number.isFinite(previousY) || !Number.isFinite(currentY) || currentY >= previousY) return null;
+  const originY = previousY + padding;
+  const raycaster = new THREE.Raycaster(
+    new THREE.Vector3(point.x, originY, point.z),
+    new THREE.Vector3(0, -1, 0),
+    0,
+    Math.max(padding * 2, originY - currentY + padding)
+  );
+  return raycaster.intersectObjects(meshes, true).find((item) => isSpawnFloorObject(item.object) && isWalkableFloorHit(item)) || null;
+}
+
 
 function chooseLargestSampledFloor(meshes, bounds, playerHeight = 1.65) {
   if (!meshes?.length || !Number.isFinite(bounds?.min?.x) || !Number.isFinite(bounds?.max?.x) || !Number.isFinite(bounds?.min?.z) || !Number.isFinite(bounds?.max?.z)) return null;
@@ -68,7 +83,7 @@ function chooseLargestSampledFloor(meshes, bounds, playerHeight = 1.65) {
     for (let zi = 0; zi < samplesPerAxis; zi += 1) {
       const z = THREE.MathUtils.lerp(bounds.min.z, bounds.max.z, (zi + 0.5) / samplesPerAxis);
       raycaster.ray.origin.set(x, rayOriginY, z);
-      const hit = raycaster.intersectObjects(meshes, true).find((item) => item.object.visible !== false && isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
+      const hit = raycaster.intersectObjects(meshes, true).find((item) => (item.object.visible !== false || COLLISION_RE.test(item.object.name || '')) && isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
       if (hit) samples[xi][zi] = hit.point.clone();
     }
   }
