@@ -226,6 +226,7 @@ test('builder lands load as playable procedural terrain without GLB files', asyn
   assert.match(loader, /createBuilderLand\(environment\)/);
   assert.match(loader, /environment\.builderScene \|\| environment\.proceduralLand/);
   assert.match(loader, /new THREE\.PlaneGeometry\(40, 40, 80, 80\)/);
+  assert.match(loader, /terrain\.userData\.colliderShape = 'mesh'/, 'builder map terrain keeps an explicit mesh collider');
   assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode\)/, 'procedural terrain enters the normal collision pipeline');
   assert.match(server, /proceduralLand:true/);
   assert.match(server, /modelUrl:'', modelUrls:\[\]/, 'published builder maps no longer borrow a repository GLB');
