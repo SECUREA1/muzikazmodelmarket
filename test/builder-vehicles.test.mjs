@@ -44,8 +44,8 @@ test('vehicles are categorized separately and expose a touch enter button', asyn
   ]);
   const assets=JSON.parse(catalog).assets;
   for (const id of ['builder-street-car','builder-corsair-aircraft','builder-sky-rescue-helicopter','builder-dune-quad','builder-flux-hoverboard']) assert.equal(assets.find(asset=>asset.id===id)?.type,'vehicles');
-  assert.match(game, /builder-nearby-action/);
-  assert.match(game, /ENTER VEHICLE/);
+  assert.doesNotMatch(game, /builder-nearby-action/, 'the explorer does not render the obsolete floating action control');
+  assert.match(game, /data-mobile-operation="interact"/);
   assert.match(page, /house-environment-scroll-list/);
 });
 
