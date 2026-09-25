@@ -18,12 +18,26 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /&house=\$\{id\}&autoplay=1/);
   assert.match(script, /compileBuilderScene\(sceneData\)/);
   assert.doesNotMatch(`${html}\n${script}`, /api-connection|\/api\/custom-maps|\/api\/models/, 'building and playing has no API dependency');
-  assert.match(html, /BUILD &amp; PLAY/);
-  assert.match(script, /Opening browser game/);
+  assert.match(html, /DEPLOY &amp; TEST GAME/);
+  assert.match(html, /Builds save and start in this browser/);
+  assert.match(script, /DEPLOYED LOCALLY · Opening browser game/);
   assert.match(script, /muzikaz\.environmentBuilder\.localMaps\.v1/);
   assert.match(script, /storeLocalMap\(sceneData\)/, 'each builder save is also retained in the local playable-map collection');
   assert.match(script, /sessionStorage\.setItem\(PLAY_KEY,JSON\.stringify\(playScene\)\)/, 'the complete playable scene is staged before browser gameplay begins');
   assert.match(script, /autoplay=1&local=1/, 'the built game starts immediately in local browser mode');
+  assert.ok(script.indexOf('sessionStorage.setItem(PLAY_KEY') < script.indexOf('location.href=`model-explorer.html'), 'scene handoff is complete before explorer navigation');
+});
+
+test('builder-facing model and environment catalogs are repository-only', async () => {
+  const [builder, explorer, environments] = await Promise.all([
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/environments/environment-api.js', import.meta.url), 'utf8')
+  ]);
+  assert.doesNotMatch(`${builder}\n${explorer}`, /\/api\/models/);
+  assert.match(explorer, /public\/models\/glb-models\.json/);
+  assert.doesNotMatch(environments, /\/api\/environments['"]/);
+  assert.match(environments, /public\/models\/environments\/environments\.json/);
 });
 
 
