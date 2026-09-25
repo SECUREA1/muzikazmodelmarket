@@ -217,6 +217,26 @@ export function createGeneratedAsset(model) {
   root.name=model.name;root.userData={...root.userData,builderObject:true,generated:true,generator:recipe,assetId:model.sourceId,dimensions:new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).toArray()};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;}});return root;
 }
 
+const animationTargets = new WeakMap();
+const isAnimatedPart = child => child.userData.vehiclePropeller || child.userData.vehicleRotor || child.userData.vehicleThruster || child.userData.vehicleWheel || child.userData.water || child.userData.spin || child.userData.swayPhase !== undefined;
+
+/** Animate only tagged parts. The cache avoids traversing every mesh in large maps every frame. */
 export function updateBuilderModels(group, elapsed) {
-  group.children.forEach(root=>{root.traverse(child=>{if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleRotor==='main')child.rotation.y=elapsed*15;if(child.userData.vehicleRotor==='tail')child.rotation.x=elapsed*22;if(child.userData.vehicleThruster){child.scale.setScalar(1+Math.sin(elapsed*9)*.08);child.material.emissiveIntensity=1.2+Math.sin(elapsed*9)*.25;}if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  let cached = animationTargets.get(group);
+  if (!cached || cached.childCount !== group.children.length) {
+    const targets = [];
+    group.traverse(child => { if (isAnimatedPart(child)) targets.push(child); });
+    cached = { childCount: group.children.length, targets };
+    animationTargets.set(group, cached);
+  }
+  for (const child of cached.targets) {
+    if (child.userData.vehiclePropeller) child.rotation.z=elapsed*18;
+    if (child.userData.vehicleRotor==='main') child.rotation.y=elapsed*15;
+    if (child.userData.vehicleRotor==='tail') child.rotation.x=elapsed*22;
+    if (child.userData.vehicleThruster) { child.scale.setScalar(1+Math.sin(elapsed*9)*.08); child.material.emissiveIntensity=1.2+Math.sin(elapsed*9)*.25; }
+    if (child.userData.vehicleWheel) child.rotation.z=elapsed*5;
+    if (child.userData.water) { if(child.material.transparent) child.material.opacity=.72+Math.sin(elapsed*1.4)*.06; child.rotation.z=elapsed*.25; }
+    if (child.userData.spin) child.rotation.z=elapsed*.8;
+    if (child.userData.swayPhase!==undefined) child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;
+  }
 }

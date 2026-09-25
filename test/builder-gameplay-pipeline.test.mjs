@@ -170,3 +170,16 @@ test('large item catalogs use indexed interaction and animation paths', () => {
   runtime.update(1/30,{x:0,y:0,z:0});
   assert.equal(mixerUpdates,1);
 });
+
+test('missing and duplicate object ids remain independently playable', () => {
+  const manifest=compileBuilderScene({objects:[
+    {modelId:'first',type:'prop'},
+    {modelId:'second',type:'prop'},
+    {id:'shared',modelId:'third',type:'prop'},
+    {id:'shared',modelId:'fourth',type:'prop'}
+  ]});
+  assert.deepEqual(manifest.objects.map(object=>object.objectId),['object-0','object-1','shared','shared-1']);
+  const runtime=new BuilderGameplayRuntime({manifest});
+  manifest.actors.forEach(actor=>runtime.register(actor.objectId,{}));
+  assert.equal(runtime.instances.size,4,'no rendered item overwrites another runtime adapter');
+});
