@@ -143,6 +143,18 @@ test('custom item toolkit starts from editable models in every requested categor
   assert.match(css, /\.starter-model-card\.active/);
 });
 
+test('custom item toolkit includes a game-ready 3D model selection path', async () => {
+  const [html, script, css] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
+  ]);
+  for (const control of ['custom-3d-model-grid', 'custom-3d-model-preview', 'custom-3d-model-name', 'custom-3d-model-status']) assert.match(html, new RegExp(`id="${control}"`));
+  for (const source of ['library', 'draw']) assert.match(html, new RegExp(`data-model-source="${source}"`));
+  for (const feature of ['selectable3dModels', 'render3dModelSelection', 'select3dModel', 'sourceModelId', 'custom-glb']) assert.match(script, new RegExp(feature));
+  assert.match(css, /\.model-selection-card\.active/);
+});
+
 test('every drawn custom item saves three toggleable 3D forms with fitted clip-ons', async () => {
   const [html, script, css] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),

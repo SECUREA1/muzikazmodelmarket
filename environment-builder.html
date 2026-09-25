@@ -82,6 +82,14 @@
   <dialog class="item-maker" id="item-maker" aria-labelledby="item-maker-title">
     <form method="dialog" id="item-maker-form">
       <header><div><small>3D CUSTOMIZATION TOOL KIT</small><h2 id="item-maker-title">Draw a custom game item</h2><p>Start with a game-ready item or draw your own. Tune its silhouette, depth, bevel and gameplay, then save it as a reusable 3D object.</p></div><button value="cancel" class="dialog-close" aria-label="Close">×</button></header>
+      <section class="model-source-picker" aria-labelledby="model-source-title">
+        <header><div><small>CHOOSE YOUR STARTING POINT</small><h3 id="model-source-title">Select a 3D model or draw one</h3><p>Use a game-ready GLB from the MUZIKAZ library, or switch to the drawing studio to build an original extruded model.</p></div><nav aria-label="Custom item source"><button type="button" class="active" data-model-source="library" aria-pressed="true">3D MODEL</button><button type="button" data-model-source="draw" aria-pressed="false">DRAW YOUR OWN</button></nav></header>
+        <div class="model-selection-layout" data-model-source-panel="library">
+          <div class="model-selection-grid" id="custom-3d-model-grid" role="list" aria-label="Available 3D models"></div>
+          <div class="selected-model-preview"><model-viewer id="custom-3d-model-preview" camera-controls auto-rotate shadow-intensity="1" alt="Selected 3D model preview"></model-viewer><div><small>SELECTED 3D MODEL</small><strong id="custom-3d-model-name">Choose a model</strong><span id="custom-3d-model-meta">Browse the game-ready library</span></div></div>
+        </div>
+        <p class="model-selection-status" id="custom-3d-model-status" role="status">Select a 3D model to customize its gameplay, color and saved forms.</p>
+      </section>
       <section class="starter-models" aria-labelledby="starter-models-title">
         <header><div><small>START FROM A MODEL</small><h3 id="starter-models-title">Choose an item to customize</h3><p>Every type includes editable silhouettes and recommended gameplay settings—no blank canvas required.</p></div><button type="button" id="start-blank-item">＋ START BLANK</button></header>
         <nav id="starter-category-tabs" aria-label="Starter item categories"></nav>
