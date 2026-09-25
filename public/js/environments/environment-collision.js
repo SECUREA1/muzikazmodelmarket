@@ -60,7 +60,9 @@ function chooseLargestSampledFloor(meshes, bounds, playerHeight = 1.65) {
   const width = bounds.max.x - bounds.min.x;
   const depth = bounds.max.z - bounds.min.z;
   if (!(width > 0) || !(depth > 0)) return null;
-  const samplesPerAxis = THREE.MathUtils.clamp(Math.ceil(Math.sqrt(meshes.length) * 4), 17, 45);
+  // This is only a last-resort spawn search. A dense grid multiplied by a
+  // detailed GLB's triangle count can otherwise lock the main thread.
+  const samplesPerAxis = THREE.MathUtils.clamp(Math.ceil(Math.sqrt(meshes.length)), 7, 15);
   const rayOriginY = (Number.isFinite(bounds.max.y) ? bounds.max.y : 0) + playerHeight + 8;
   const raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0));
   const samples = Array.from({ length: samplesPerAxis }, () => Array(samplesPerAxis).fill(null));
@@ -158,7 +160,6 @@ export function resolveSafeSpawn(root, floorMeshes, metadataSpawn = {}, playerHe
   const box = new THREE.Box3().setFromObject(root);
   const center = box.getCenter(new THREE.Vector3());
   const spawnNode = findSpawnNode(root);
-  const largestFloorPoint = findLargestWalkableFloorPoint(floorMeshes, box, playerHeight);
   const hasMetadataSpawn = ['x', 'y', 'z'].some((axis) => Number.isFinite(Number(metadataSpawn?.[axis])));
   // Authored entry points are intentional and must win over the floor sampler.
   // The sampler is a safe fallback for un-authored uploads, not a replacement
@@ -167,7 +168,7 @@ export function resolveSafeSpawn(root, floorMeshes, metadataSpawn = {}, playerHe
     Number.isFinite(Number(metadataSpawn.x)) ? Number(metadataSpawn.x) : center.x,
     Number.isFinite(Number(metadataSpawn.y)) ? Number(metadataSpawn.y) : center.y,
     Number.isFinite(Number(metadataSpawn.z)) ? Number(metadataSpawn.z) : center.z
-  ) : largestFloorPoint || center;
+  ) : findLargestWalkableFloorPoint(floorMeshes, box, playerHeight) || center;
   const margin = 0.35;
   const candidate = new THREE.Vector3(
     THREE.MathUtils.clamp(raw.x, box.min.x + margin, box.max.x - margin),
