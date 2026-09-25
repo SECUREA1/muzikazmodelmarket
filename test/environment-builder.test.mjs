@@ -259,6 +259,9 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
   assert.match(game, /alignPointAboveFloor\(spawn\.clone\(\), envLoader\.floorMeshes/, 'spawn and respawn align to collision floors');
   assert.match(game, /const previousFootY=playerCollider\.start\.y-player\.radius/);
   assert.match(game, /floorSweepRay\.intersectObjects\(envLoader\.floorMeshes,true\)/, 'a downward frame sweep catches thin floors crossed during a fall');
+  assert.match(game, /playerDropRecoveryActive = true/, 'a player drop arms one recovery cycle');
+  assert.match(game, /groundedRecoveryFrames >= 3/, 'recovery finishes only after the player remains grounded');
+  assert.match(game, /playerRig\.position\.y < minimumWorldY && !playerDropRecoveryActive/, 'an unfinished drop cannot continuously reset the player');
   for (const layout of ['blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio']) assert.match(loader, new RegExp(`'${layout}'`));
 });
 
