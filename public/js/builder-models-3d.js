@@ -3,6 +3,10 @@ import * as THREE from '../vendor/three/three.module.min.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  'grand-floor': ['Grand Build Floor', 'A playable foundation tile that expands the walkable world directly from the Backpack.', [8, .24, 8]],
+  'open-studio': ['Open Studio', 'An open-sided playable studio room with a floor, feature wall and neon columns.', [6, 2.8, 5]],
+  'connected-suite': ['Connected Suite', 'A playable connected room with two doorways and a raised floor.', [6, 2.8, 5]],
+  'garden-courtyard': ['Garden Courtyard', 'A playable garden room with a lawn, paths and low boundary walls.', [6, 1.2, 5]],
   'corsair-aircraft': ['Blackwing Corsair', 'A flyable open-cockpit gull-wing aircraft with a working propeller and exposed black airframe.', [10.5, 2.7, 8.2]],
   'dune-quad': ['Nightcrawler Dune Quad', 'A rideable bodyless dune buggy with an exposed black tube frame, engine and four off-road tyres.', [2.7, 1.35, 1.6]],
   'canopy-tree': ['Canopy Tree', 'A broad deciduous shade tree with a textured trunk and layered green crown.', [3.8, 5.2, 3.8]],
@@ -116,9 +120,35 @@ function detailedInterior(id){
  return root;
 }
 
+function playableRoom(id) {
+  const root = new THREE.Group();
+  const floor = material(id === 'garden-courtyard' ? 0x4f8d48 : 0x343b42, .86);
+  const wall = material(0x52616a, .72, .16);
+  const accent = material(0xb9ff38, .32, .08, { emissive: 0x294b0d, emissiveIntensity: .65 });
+  if (id === 'grand-floor') {
+    root.add(box([8, .24, 8], floor, [0, .12, 0]));
+    for (const value of [-4, 4]) root.add(box([8.2, .12, .12], accent, [0, .18, value]), box([.12, .12, 8.2], accent, [value, .18, 0]));
+    root.userData.placementSurface = true;
+    return root;
+  }
+  root.add(box([6, .18, 5], floor, [0, .09, 0]));
+  if (id === 'garden-courtyard') {
+    root.add(box([6, .55, .22], wall, [0, .275, 2.39]), box([6, .55, .22], wall, [0, .275, -2.39]), box([.22, .55, 5], wall, [-2.89, .275, 0]), box([.22, .55, 5], wall, [2.89, .275, 0]));
+    root.add(box([1.05, .05, 5], material(0xb9aa8a, .95), [0, .205, 0]));
+  } else {
+    root.add(box([6, 2.8, .2], wall, [0, 1.4, 2.4]));
+    for (const x of [-2.9, 2.9]) root.add(box([.2, 2.8, 5], wall, [x, 1.4, 0]));
+    const columnXs = id === 'connected-suite' ? [-1.8, 1.8] : [-2.65, 2.65];
+    columnXs.forEach((x) => root.add(box([.18, 2.55, .18], accent, [x, 1.275, -2.35])));
+  }
+  root.userData.placementSurface = true;
+  return root;
+}
+
 export function createBuilderModel(id) {
   let root;
-  if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);
+  if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
+  else if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);
   else if(EXPANDED[id]) return expandedModel(id);
   else if(id==='canopy-tree'||id==='pine-tree') root=plant(id); else if(id==='flower-bed')root=flowerBed(); else if(id==='hedge-corner')root=hedge(); else if(id==='garden-rocks')root=rocks(); else if(id==='pond')root=pond(); else if(id==='path-tile')root=box([2.2,.12,1.2],material(0xa39b8c,.95),[0,.06,0]); else if(id==='hill'){root=mesh(new THREE.SphereGeometry(2.1,24,12,0,Math.PI*2,0,Math.PI/2),material(0x4f9a45,.95),[0,0,0]);root.scale.z=.86;} else if(id==='lamp-post')root=lamp(true); else if(id==='planter')root=planter(); else if(id==='sofa'||id==='armchair')root=seating(id==='armchair'); else if(id==='coffee-table')root=coffeeTable(); else if(id==='bookshelf')root=bookshelf(); else if(id==='floor-lamp')root=lamp(false); else if(id==='room-divider')root=divider(); else if(id==='kitchen-island')root=island(); else if(id==='spiral-stairs')root=stairs(); else if(id==='archway')root=arch(); else if(id==='art-wall')root=artWall(); else if(BUILDER_MODEL_INFO[id])root=detailedInterior(id); else return null;
   const [name,description,dimensions]=BUILDER_MODEL_INFO[id];root.name=name;root.userData={...root.userData,builderObject:true,modelId:id,label:name,description,dimensions,animated:['canopy-tree','pine-tree','pond','lamp-post','floor-lamp'].includes(id)};

@@ -28,6 +28,7 @@ test('in-game Tools and Drop Backpack expose the complete map-building pack', as
   assert.match(game, /data-rad-build-toggle/);
   assert.match(game, /Build map & game/);
   assert.match(game, /muzikaz\.builder\.buildTray/);
+  assert.match(game, /deployPlayableBuilderAsset\(asset\)/);
   assert.match(game, /\.\.\.readBuildTray\(\)\.map\(item=>\['Build asset'/);
   assert.equal(buildAssets.length, 24);
   assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'landscape').length, 10);
