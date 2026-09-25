@@ -900,6 +900,18 @@
       "description": "Interior piece for the in-game map builder."
     },
     {
+      "id": "builder-street-car",
+      "name": "Neon Street Car",
+      "owner": "MUZIKAZ",
+      "type": "vehicles",
+      "thumbnailUrl": "/public/images/builder-pack/street-car.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "vehicles",
+      "buildAssetId": "street-car",
+      "description": "Boost-ready electric street car, playable in every Builder world."
+    },
+    {
       "id": "builder-corsair-aircraft",
       "name": "Blackwing Corsair",
       "owner": "MUZIKAZ",
@@ -912,6 +924,18 @@
       "description": "Blackwing Corsair from the Environment Builder, ready to drop into the running game."
     },
     {
+      "id": "builder-sky-rescue-helicopter",
+      "name": "Sky Rescue Helicopter",
+      "owner": "MUZIKAZ",
+      "type": "vehicles",
+      "thumbnailUrl": "/public/images/builder-pack/sky-rescue-helicopter.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "vehicles",
+      "buildAssetId": "sky-rescue-helicopter",
+      "description": "VTOL rescue helicopter with climb, descend, boost, and animated rotors."
+    },
+    {
       "id": "builder-dune-quad",
       "name": "Nightcrawler Dune Quad",
       "owner": "MUZIKAZ",
@@ -922,6 +946,18 @@
       "builderCategory": "vehicles",
       "buildAssetId": "dune-quad",
       "description": "Nightcrawler Dune Quad from the Environment Builder, ready to drop into the running game."
+    },
+    {
+      "id": "builder-flux-hoverboard",
+      "name": "Flux Hoverboard",
+      "owner": "MUZIKAZ",
+      "type": "vehicles",
+      "thumbnailUrl": "/public/images/builder-pack/flux-hoverboard.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "vehicles",
+      "buildAssetId": "flux-hoverboard",
+      "description": "Anti-gravity board with hover, boost, steering, and vertical controls."
     },
     {
       "id": "builder-hero-spawn",
