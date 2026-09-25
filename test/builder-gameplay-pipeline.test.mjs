@@ -113,6 +113,21 @@ test('unconfigured builder assets receive gameplay appropriate to their item typ
   assert.equal(behaviorForBuilderObject({type:'weapon',behavior:'quest'}),'quest','authored behavior wins');
 });
 
+test('authored gameplay from every build type survives without a behavior allow-list', () => {
+  const objects = [
+    { id:'terrain-event', objectType:'terrain', functionalSettings:{ behavior:'weather-zone', trigger:'proximity', action:'storm' } },
+    { id:'system-event', objectType:'game-system', functionalSettings:{ behavior:'rhythm-game', trigger:'interact', action:'score' } },
+    { id:'future-event', objectType:'future-builder-type', functionalSettings:{ behavior:'future-runtime-role' } },
+    { id:'scenery', objectType:'buildings', functionalSettings:{ behavior:'decor' } }
+  ];
+  const manifest = compileBuilderScene({ id:'unrestricted-map', objects });
+
+  assert.equal(manifest.objectCount, 4, 'every build type remains in the playable map');
+  assert.equal(manifest.actorCount, 3, 'every authored gameplay behavior is deployed');
+  assert.deepEqual(manifest.actors.map(actor => actor.gameplay.behavior), ['weather-zone', 'rhythm-game', 'future-runtime-role']);
+  assert.equal(manifest.objects.find(object => object.objectId === 'scenery').gameplay.behavior, 'decor', 'decor remains rendered without becoming an interaction target');
+});
+
 test('held items can be dropped into the world and picked up again', () => {
   const runtime=new BuilderGameplayRuntime({manifest:compileBuilderScene({objects:[
     {id:'blade',modelId:'plasma-sword',type:'weapon',position:{x:0,y:0,z:0}}
