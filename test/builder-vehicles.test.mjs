@@ -49,5 +49,7 @@ test('vehicles are categorized separately and expose a touch enter button', asyn
   assert.match(game, /ENTER VEHICLE/);
   assert.match(game, /EXIT VEHICLE/);
   assert.match(game, /data-vehicle-active/);
+  assert.match(game, /Tap or click to drive/);
+  assert.match(game, /Sticks drive and steer/);
   assert.match(page, /house-environment-scroll-list/);
 });
