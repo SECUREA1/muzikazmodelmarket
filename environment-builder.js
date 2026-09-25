@@ -7,6 +7,7 @@ import { GLTFLoader } from './public/vendor/three/addons/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from './public/vendor/three/addons/utils/SkeletonUtils.js';
 import { createBuilderModel, createGeneratedAsset, updateBuilderModels } from './public/js/builder-models-3d.js';
 import { compileBuilderScene } from './public/js/builder-gameplay-pipeline.js';
+import { categorizeAsset } from './public/js/asset-taxonomy.js';
 
 const STORAGE_KEY='muzikaz.environmentBuilder.scenes.v2', LEGACY_KEY='muzikaz.environmentBuilder.scenes.v1', LOCAL_MAPS_KEY='muzikaz.environmentBuilder.localMaps.v1', PLAY_KEY='muzikaz.environmentBuilder.playScene.v1', TRAY_KEY='muzikaz.builder.buildTray', CUSTOM_KEY='muzikaz.environmentBuilder.customItems.v1';
 const colors=['#b9ff38','#63eaff','#ff5ba7','#ffcc3d','#ff6847','#a78bfa','#f8fafc','#334155'];
@@ -89,8 +90,8 @@ const catalogId=value=>String(value||'catalog-item').trim().toLowerCase().replac
 function normalizeCatalogModel(raw,index){
  const modelUrl=raw.modelPath||raw.modelUrl||raw.model_url||raw.fileUrl||raw.file_url||raw.assetUrl||raw.asset_url||'', format=String(raw.format||modelUrl.split('?')[0].split('.').pop()||'').toLowerCase(),generated=Boolean(raw.generated&&raw.generator);
  if((!generated&&(!modelUrl||!['glb','gltf'].includes(format)))||raw.visibility==='private'||raw.status==='inactive')return null;
- const sourceId=catalogId(raw.assetId||raw.id||raw.modelId||raw.name||`item-${index}`),kind=String(raw.assetType||raw.type||raw.category||'props').toLowerCase(),type=/avatar|character/.test(kind)?'avatar':/enemy|creature/.test(kind)?'enemy':/vehicle/.test(kind)?'vehicle':/terrain|land/.test(kind)?'terrain':/wearable/.test(kind)?'wearable':'props';
- return{id:`catalog-${sourceId}`,sourceId,name:raw.name||raw.title||'Deposited 3D item',type,category:type==='avatar'?'characters':type==='enemy'?'creatures':type==='vehicle'?'vehicles':type==='terrain'?'terrain':type==='wearable'?'wearables':'props',size:72,image:raw.thumbnail||raw.thumbnailUrl||raw.thumbnail_url||'',modelUrl,generated,generator:raw.generator,procedural:generated,behavior:type==='enemy'?'hostile':type==='vehicle'?'vehicle':type==='avatar'?'talk':type==='terrain'?'decor':type==='wearable'?'hold':'pickup',scale:raw.scaleLabel||raw.dimensions||'game ready',targetHeight:type==='avatar'?1.8:null,assetKind:generated?'generated-procedural':'catalog-glb',registry:raw,source:raw.source||'repository'};
+ const sourceId=catalogId(raw.assetId||raw.id||raw.modelId||raw.name||`item-${index}`),{type,category}=categorizeAsset(raw);
+ return{id:`catalog-${sourceId}`,sourceId,name:raw.name||raw.title||'Deposited 3D item',type,category,size:72,image:raw.thumbnail||raw.thumbnailUrl||raw.thumbnail_url||'',modelUrl,generated,generator:raw.generator,procedural:generated,behavior:type==='enemy'?'hostile':type==='vehicle'?'vehicle':type==='avatar'?'talk':type==='terrain'||type==='landscape'?'decor':type==='wearable'?'hold':type==='interactive'?'interact':'pickup',scale:raw.scaleLabel||raw.dimensions||'game ready',targetHeight:type==='avatar'?1.8:null,assetKind:generated?'generated-procedural':'catalog-glb',registry:raw,source:raw.source||'repository'};
 }
 async function populateCompleteCatalog(){
  const results=await Promise.allSettled(catalogSources.map(url=>fetch(url,{cache:'no-store'}).then(response=>response.ok?response.json():Promise.reject(new Error(`${url} ${response.status}`))))),known=new Set(models().map(model=>model.id));
