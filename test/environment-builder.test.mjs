@@ -259,14 +259,26 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
   assert.match(game, /alignPointAboveFloor\(spawn\.clone\(\), envLoader\.floorMeshes/, 'spawn and respawn align to collision floors');
   assert.match(game, /const previousFootY=playerCollider\.start\.y-player\.radius/);
   assert.match(game, /floorSweepRay\.intersectObjects\(envLoader\.floorMeshes,true\)/, 'a downward frame sweep catches thin floors crossed during a fall');
-  assert.doesNotMatch(game, /PLAYER_ENTRY_DROP_HEIGHT|dropIntoMap/, 'map loading does not suspend the player above the resolved floor');
-  assert.doesNotMatch(game, /await openHouseMap\(\);\s*resetPlayer\(\)/, 'starting play does not reset a player who already landed');
+  assert.doesNotMatch(game, /PLAYER_ENTRY_DROP_HEIGHT|dropIntoMap/, 'normal map loading never requests an aerial placement');
+  assert.match(game, /let startupDropPerformed = false/, 'the startup entrance has a session-scoped guard');
+  assert.match(game, /if \(startupDropPerformed \|\| !envLoader\.world\) return false/, 'the entrance requires a loaded map and cannot repeat');
+  assert.match(game, /startupDropPerformed = true;[\s\S]*playerCollider\.translate\(dropOffset\)/, 'the guard is set before applying the one-time aerial offset');
   assert.doesNotMatch(game, /playerDropRecoveryActive|groundedRecoveryFrames/, 'the drop is not re-armed from the animation loop');
   assert.match(game, /const lastSafePlayerPosition = new THREE\.Vector3\(\)/, 'every map shares a last-known-good floor position');
   assert.match(game, /const floorLockY=Math\.max\(mapFloorLimit,safeFloorLimit\)/, 'the floor lock uses both the active map bounds and its last verified collider floor');
   assert.match(game, /playerCollider\.start\.set\(recovery\.x,recovery\.y\+player\.radius,recovery\.z\)/, 'a missed floor collider restores the capsule to safe ground');
   assert.match(game, /floorLockCooldown=\.35/, 'floor recovery is rate limited instead of repeatedly resetting each frame');
   for (const layout of ['blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio']) assert.match(loader, new RegExp(`'${layout}'`));
+});
+
+test('game startup loads the map, performs one entrance drop, then initializes gameplay', async () => {
+  const game = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
+  assert.match(
+    game,
+    /await openHouseMap\(\);\s*performStartupDropOnce\(\);\s*await toxicBubbleSystem\.begin\(\);/,
+    'startup preserves map load, one-time entrance, and gameplay initialization order'
+  );
+  assert.equal((game.match(/performStartupDropOnce\(\);/g) || []).length, 1, 'only the guarded startup path requests the entrance drop');
 });
 
 test('world ground and solid scenery always participate in gameplay collision', async () => {
