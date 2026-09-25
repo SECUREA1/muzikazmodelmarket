@@ -1,7 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Octree.js/+esm';
 
-const COLLISION_RE = /^(COLLIDER|COLLISION|NAVMESH)(_|$)/i;
+const COLLISION_RE = /(^|[_ .-])(COLLIDER|COLLISION|NAVMESH)([_ .-]|$)/i;
 // Only effects with no physical surface are excluded.  In particular, do not
 // exclude foliage, bushes, lamps, transparent fences, or glass: those are
 // visible world props and players expect both themselves and dropped objects
@@ -24,6 +24,10 @@ function isSpawnFloorObject(object) {
   return !NON_SPAWN_FLOOR_RE.test(name);
 }
 
+function isDedicatedCollider(object) {
+  return COLLISION_RE.test(object?.name || '') || object?.userData?.collider === true || object?.userData?.collision === true || object?.userData?.colliderShape === 'mesh';
+}
+
 function floorHitScore(hit) {
   const name = hit?.object?.name || '';
   return (FLOOR_NAME_RE.test(name) ? 2 : 1) * Math.max(0.1, hit.face?.normal?.y || 1);
@@ -32,7 +36,7 @@ function floorHitScore(hit) {
 function findWalkableFloorHit(meshes, point, bounds, playerHeight = 1.65) {
   const rayOriginY = Number.isFinite(bounds?.max?.y) ? bounds.max.y + playerHeight + 8 : point.y + playerHeight + 8;
   const raycaster = new THREE.Raycaster(new THREE.Vector3(point.x, rayOriginY, point.z), new THREE.Vector3(0, -1, 0));
-  return raycaster.intersectObjects(meshes, true).find((item) => item.object.visible !== false && isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
+  return raycaster.intersectObjects(meshes, true).find((item) => isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
 }
 
 export function alignPointAboveFloor(point, meshes, bounds, playerHeight = 1.65, floorGap = FLOOR_ENTRY_OFFSET) {
@@ -65,7 +69,7 @@ function chooseLargestSampledFloor(meshes, bounds, playerHeight = 1.65) {
     for (let zi = 0; zi < samplesPerAxis; zi += 1) {
       const z = THREE.MathUtils.lerp(bounds.min.z, bounds.max.z, (zi + 0.5) / samplesPerAxis);
       raycaster.ray.origin.set(x, rayOriginY, z);
-      const hit = raycaster.intersectObjects(meshes, true).find((item) => item.object.visible !== false && isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
+      const hit = raycaster.intersectObjects(meshes, true).find((item) => isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
       if (hit) samples[xi][zi] = hit.point.clone();
     }
   }
@@ -119,20 +123,22 @@ export function findSpawnNode(root) {
   return nodes.find((node) => SPAWN_PRIORITY.includes(node.name.toUpperCase())) || nodes[0] || null;
 }
 
-export function buildCollision(root, mode = 'auto') {
+export function buildCollision(root, mode = 'auto', supplementalRoots = []) {
   const visibleMeshes = [];
   const collisionMeshes = [];
-  root.traverse((object) => {
+  const collect = (object) => {
     if (!object.isMesh || !object.geometry) return;
     const name = object.name || '';
-    if (COLLISION_RE.test(name)) { object.visible = false; collisionMeshes.push(object); return; }
+    if (isDedicatedCollider(object)) { if (COLLISION_RE.test(name)) object.visible = false; collisionMeshes.push(object); return; }
     visibleMeshes.push(object);
     const material = Array.isArray(object.material) ? object.material[0] : object.material;
     // A playable world always needs physical geometry.  `none` is retained as
     // import metadata for backwards compatibility, but it must not be allowed
     // to turn off the ground (or other obvious solid scenery) at runtime.
     if (!EXCLUDE_RE.test(name) && object.visible !== false && material?.visible !== false) collisionMeshes.push(object);
-  });
+  };
+  root.traverse(collect);
+  supplementalRoots.filter(Boolean).forEach((supplementalRoot) => supplementalRoot.traverse(collect));
   const source = new THREE.Group();
   collisionMeshes.forEach((mesh) => {
     const clone = mesh.clone(false);
@@ -144,14 +150,15 @@ export function buildCollision(root, mode = 'auto') {
   });
   const octree = new Octree();
   octree.fromGraphNode(source);
-  return { octree, visibleMeshes, collisionMeshes, dedicatedCollisionCount: collisionMeshes.filter((m) => COLLISION_RE.test(m.name || '')).length };
+  const floorMeshes = collisionMeshes.filter((mesh) => isSpawnFloorObject(mesh));
+  return { octree, visibleMeshes, collisionMeshes, floorMeshes, dedicatedCollisionCount: collisionMeshes.filter(isDedicatedCollider).length };
 }
 
-export function resolveSafeSpawn(root, visibleMeshes, metadataSpawn = {}, playerHeight = 1.65) {
+export function resolveSafeSpawn(root, floorMeshes, metadataSpawn = {}, playerHeight = 1.65) {
   const box = new THREE.Box3().setFromObject(root);
   const center = box.getCenter(new THREE.Vector3());
   const spawnNode = findSpawnNode(root);
-  const largestFloorPoint = findLargestWalkableFloorPoint(visibleMeshes, box, playerHeight);
+  const largestFloorPoint = findLargestWalkableFloorPoint(floorMeshes, box, playerHeight);
   const raw = largestFloorPoint || (spawnNode ? spawnNode.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(
     Number.isFinite(metadataSpawn.x) ? metadataSpawn.x : center.x,
     Number.isFinite(metadataSpawn.y) ? metadataSpawn.y : center.y,
@@ -163,8 +170,8 @@ export function resolveSafeSpawn(root, visibleMeshes, metadataSpawn = {}, player
     raw.y,
     THREE.MathUtils.clamp(raw.z, box.min.z + margin, box.max.z - margin)
   );
-  const hit = findWalkableFloorHit(visibleMeshes, candidate, box, playerHeight) || findWalkableFloorHit(visibleMeshes, center, box, playerHeight);
+  const hit = findWalkableFloorHit(floorMeshes, candidate, box, playerHeight) || findWalkableFloorHit(floorMeshes, center, box, playerHeight);
   if (hit) { candidate.x = hit.point.x; candidate.y = hit.point.y + FLOOR_ENTRY_OFFSET; candidate.z = hit.point.z; }
-  else candidate.copy(alignPointAboveFloor(candidate, visibleMeshes, box, playerHeight));
+  else candidate.copy(alignPointAboveFloor(candidate, floorMeshes, box, playerHeight));
   return { position: candidate, rotationY: spawnNode ? spawnNode.rotation.y : Number(metadataSpawn.rotationY || 0), bounds: box };
 }
