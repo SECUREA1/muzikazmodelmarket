@@ -38,24 +38,22 @@ test('standard vehicle controller supports enter, movement, flight and exit', as
   assert.match(game, /vehicleController\.update\(delta\)/);
 });
 
-test('vehicles are categorized separately and expose a touch enter button', async () => {
+test('vehicles are categorized separately without a mobile action-button row', async () => {
   const [catalog, game, page] = await Promise.all([
     read('../public/models/backpack-assets.json'), read('../public/js/house-explorer-glb.js'), read('../model-explorer.html')
   ]);
   const assets=JSON.parse(catalog).assets;
   for (const id of ['builder-street-car','builder-corsair-aircraft','builder-sky-rescue-helicopter','builder-dune-quad','builder-flux-hoverboard']) assert.equal(assets.find(asset=>asset.id===id)?.type,'vehicles');
   assert.doesNotMatch(game, /builder-nearby-action/, 'the explorer does not render the obsolete floating action control');
-  assert.match(game, /data-mobile-operation="interact"/);
+  assert.doesNotMatch(game, /mobilePad\.innerHTML = `[^`]*data-mobile-operation/s);
   assert.match(page, /house-environment-scroll-list/);
 });
 
-test('mobile controls provide desktop-equivalent prop and vehicle operations', async () => {
+test('mobile controls stay focused on the two thumbsticks', async () => {
   const game = await read('../public/js/house-explorer-glb.js');
-  assert.match(game, /data-mobile-operation="interact"/);
-  assert.match(game, /PICKUP \/ USE/);
-  assert.match(game, /vehicleNearby\?\(vehicleController\.active\?'EXIT':'ENTER'\)/);
-  assert.match(game, /data-vehicle-control="brake"/);
-  assert.match(game, /data-vehicle-control="boost"/);
+  assert.doesNotMatch(game, /mobilePad\.innerHTML = `[^`]*(?:NO OBJECT|JUMP \/ CLIMB|BOOST)/s);
+  assert.match(game, /data-thumbstick="left"/);
+  assert.match(game, /data-thumbstick="right"/);
   assert.match(game, /thumbInput\.leftY<-/);
   assert.match(game, /thumbInput\.rightY<-/);
   assert.match(game, /thumbInput\.rightY>/);
