@@ -18,6 +18,22 @@ const copy = value => value == null ? value : JSON.parse(JSON.stringify(value));
 const vector = (value, fallback = 0) => ({
   x: finite(value?.x, fallback), y: finite(value?.y, fallback), z: finite(value?.z, fallback)
 });
+const scaleAxis = value => Math.min(100, Math.max(0.01, finite(value, 1) || 1));
+export const normalizeBuilderScale = value => {
+  const source = typeof value === 'number' ? { x:value, y:value, z:value } : value;
+  return { x:scaleAxis(source?.x), y:scaleAxis(source?.y), z:scaleAxis(source?.z) };
+};
+
+/** Every placed build has an explicit triangle-mesh collider unless its author disables it. */
+export function colliderForBuilderObject(object = {}) {
+  const authored = object.collisionSettings || object.collision || object.asset?.collision || object.metadata?.collision || {};
+  return {
+    enabled: authored.enabled !== false,
+    shape: 'mesh',
+    interaction: authored.interaction !== false,
+    source: authored.source || (object.asset?.generated ? 'generated-mesh' : 'render-mesh')
+  };
+}
 const DEFAULT_BEHAVIOR_BY_TYPE = {
   avatar: 'talk', character: 'talk', npc: 'talk', enemy: 'hostile', creature: 'patrol',
   vehicle: 'vehicle', weapon: 'pickup', weapons: 'pickup', wearable: 'hold',
@@ -44,9 +60,10 @@ export function normalizeBuilderObject(object = {}, index = 0) {
     asset: copy(object.asset || { modelUrl: object.modelUrl || null }),
     transform: {
       position: vector(object.position), rotation: vector(object.rotation),
-      scale: vector(object.scale, 1), groundOffset: finite(object.groundOffset)
+      scale: normalizeBuilderScale(object.scale), groundOffset: finite(object.groundOffset)
     },
     material: copy(object.materialSettings || {}),
+    collider: colliderForBuilderObject(object),
     animation: {
       enabled: object.animationState?.enabled !== false,
       clip: object.animationState?.clip || null,
