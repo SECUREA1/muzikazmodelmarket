@@ -48,3 +48,16 @@ test('vehicles are categorized separately and expose a touch enter button', asyn
   assert.match(game, /ENTER VEHICLE/);
   assert.match(page, /house-environment-scroll-list/);
 });
+
+test('mobile controls provide desktop-equivalent prop and vehicle operations', async () => {
+  const game = await read('../public/js/house-explorer-glb.js');
+  assert.match(game, /data-mobile-operation="interact"/);
+  assert.match(game, /PICKUP \/ USE/);
+  assert.match(game, /vehicleNearby\?\(vehicleController\.active\?'EXIT':'ENTER'\)/);
+  assert.match(game, /data-vehicle-control="brake"/);
+  assert.match(game, /data-vehicle-control="boost"/);
+  assert.match(game, /thumbInput\.leftY<-/);
+  assert.match(game, /thumbInput\.rightY<-/);
+  assert.match(game, /thumbInput\.rightY>/);
+  assert.match(game, /keys:vehicleInput/);
+});
