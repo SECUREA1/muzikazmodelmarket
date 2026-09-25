@@ -22,6 +22,19 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /Opening your locally saved multiplayer map/);
 });
 
+test('environment builder includes the complete RAD-TOX tool set and House Explorer inventory categories', async () => {
+  const [html, script, models] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/builder-models-3d.js', import.meta.url), 'utf8')
+  ]);
+  for (const item of ['Laser', 'Paint Gun', 'Baseball Bat', 'Taser', 'Toxins Thrower', 'Dynamite', 'Brick Layer']) assert.match(script, new RegExp(`RAD-TOX ${item}`));
+  for (const category of ['pets', 'vehicles', 'wearables']) assert.match(html, new RegExp(`data-library-filter="${category}"`));
+  assert.match(script, /svgItem=format==='svg'/);
+  assert.match(script, /public\/models\/backpack-assets\.json/);
+  assert.match(models, /recipe==='rad-tox-tool'/);
+});
+
 
 test('multiplayer map list pins live user maps with a flashing status', async () => {
   const [game, server, rust] = await Promise.all([
