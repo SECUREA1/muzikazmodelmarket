@@ -140,9 +140,10 @@
             <span>Click floor: set drop location</span>
           </div>
           <label class="house-environment-picker">All environment maps
-            <select id="house-environment-select" aria-label="Choose from all playable environment maps">
+            <span class="house-environment-select-row"><select id="house-environment-select" aria-label="Choose from all playable environment maps">
               <option value="">Loading all environment maps…</option>
-            </select>
+            </select><button type="button" id="house-environment-list-toggle" aria-controls="house-environment-scroll-list" aria-expanded="false">Browse maps</button></span>
+            <span class="house-environment-scroll-list" id="house-environment-scroll-list" role="listbox" aria-label="Scrollable list of all environment maps" hidden></span>
           </label>
           <div class="house-actions">
             <button type="button" id="house-reset">Reset view</button>

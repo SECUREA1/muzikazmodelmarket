@@ -20,6 +20,11 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /compileBuilderScene\(sceneData\)/);
   assert.match(script, /All players can join/);
   assert.match(script, /Opening your locally saved multiplayer map/);
+  assert.match(script, /muzikaz\.environmentBuilder\.localMaps\.v1/);
+  assert.match(script, /storeLocalMap\(sceneData\)/, 'each builder save is also retained in the local playable-map collection');
+  const localPlaySave = script.indexOf('sessionStorage.setItem(PLAY_KEY,JSON.stringify(playScene))');
+  const multiplayerPublish = script.indexOf("apiFetch('/api/custom-maps", localPlaySave);
+  assert.ok(localPlaySave >= 0 && multiplayerPublish > localPlaySave, 'the complete playable scene is staged locally before multiplayer publication begins');
 });
 
 
@@ -200,6 +205,8 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /muzikaz\.environmentBuilder\.scenes\.v2/);
   assert.match(game, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(game, /key\.includes\('playScene'\)\?sessionStorage:localStorage/);
+  assert.match(game, /readSavedBuilderScenes/);
+  assert.match(game, /Locally saved Builder Map/, 'local builder maps remain in the playable map list when multiplayer publishing is unavailable');
   assert.match(game, /createSavedCustomModel/);
   assert.match(game, /built\.customModels/);
   assert.match(game, /center\.x\+x/);
