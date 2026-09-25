@@ -232,7 +232,7 @@ test('builder lands and placed items retain verified collision floors', async ()
   assert.match(loader, /root\.add\(mesh\)/, 'template buildings and props join the world root and its collision pass');
   assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode\)/, 'procedural terrain enters the normal collision pipeline');
   assert.match(loader, /resolveSafeSpawn\(nextWorld, collision\.floorMeshes, environment\.spawn\)/, 'the initial player position is resolved against verified collision floors');
-  assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;resetPlayer\(spawn\.position,spawn\.rotationY\|\|0,\{dropIntoMap:true\}\)/, 'map loading drops the player once above an authored or safe resolved spawn');
+  assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;resetPlayer\(spawn\.position,spawn\.rotationY\|\|0\)/, 'map loading places the player directly at an authored or safe resolved spawn');
   assert.match(loader, /setSupplementalCollisionRoots\(roots = \[\]\)/, 'the loader can safely include placed Builder items in its collision octree');
   assert.match(game, /function refreshBuilderCollision\(\)/, 'placed Builder items batch their collision refresh instead of rebuilding once per asset');
   assert.match(game, /window\.setTimeout/, 'collision rebuilding yields to the browser so the map can open first');
@@ -259,8 +259,7 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
   assert.match(game, /alignPointAboveFloor\(spawn\.clone\(\), envLoader\.floorMeshes/, 'spawn and respawn align to collision floors');
   assert.match(game, /const previousFootY=playerCollider\.start\.y-player\.radius/);
   assert.match(game, /floorSweepRay\.intersectObjects\(envLoader\.floorMeshes,true\)/, 'a downward frame sweep catches thin floors crossed during a fall');
-  assert.match(game, /const PLAYER_ENTRY_DROP_HEIGHT = 12/, 'map entry uses a single fixed aerial drop height');
-  assert.match(game, /if \(dropIntoMap\) entryPosition\.y \+= PLAYER_ENTRY_DROP_HEIGHT/, 'only explicit map entry raises the player above the floor');
+  assert.doesNotMatch(game, /PLAYER_ENTRY_DROP_HEIGHT|dropIntoMap/, 'map entry never adds an aerial offset above the resolved floor');
   assert.doesNotMatch(game, /playerDropRecoveryActive|groundedRecoveryFrames/, 'the drop is not re-armed from the animation loop');
   assert.match(game, /const lastSafePlayerPosition = new THREE\.Vector3\(\)/, 'every map shares a last-known-good floor position');
   assert.match(game, /const floorLockY=Math\.max\(mapFloorLimit,safeFloorLimit\)/, 'the floor lock uses both the active map bounds and its last verified collider floor');
