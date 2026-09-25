@@ -13,6 +13,10 @@ const vector = (value, fallback = 0) => ({
 const DEFAULT_BEHAVIOR_BY_TYPE = {
   avatar: 'talk', character: 'talk', npc: 'talk', enemy: 'hostile', creature: 'patrol',
   vehicle: 'vehicle', weapon: 'pickup', weapons: 'pickup', wearable: 'hold',
+  // A prop that can only be looked at is not useful gameplay. Imported props
+  // therefore enter the carry/drop loop by default, while authors can still
+  // explicitly choose `decor` for scenery that should remain fixed in place.
+  prop: 'pickup', props: 'pickup', furniture: 'pickup', accessory: 'hold',
   consumable: 'heal', quest: 'quest', interactive: 'interact'
 };
 

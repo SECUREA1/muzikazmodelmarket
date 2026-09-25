@@ -105,11 +105,15 @@ test('holdable and switch objects run their complete gameplay functions', () => 
 });
 
 test('unconfigured builder assets receive gameplay appropriate to their item type', () => {
+  assert.equal(behaviorForBuilderObject({type:'prop'}),'pickup');
+  assert.equal(behaviorForBuilderObject({objectType:'props'}),'pickup');
+  assert.equal(behaviorForBuilderObject({category:'furniture'}),'pickup');
   assert.equal(behaviorForBuilderObject({type:'weapon'}),'pickup');
   assert.equal(behaviorForBuilderObject({type:'vehicle'}),'vehicle');
   assert.equal(behaviorForBuilderObject({type:'enemy'}),'hostile');
   assert.equal(behaviorForBuilderObject({type:'wearable'}),'hold');
   assert.equal(behaviorForBuilderObject({type:'terrain'}),'decor');
+  assert.equal(behaviorForBuilderObject({type:'prop',functionalSettings:{behavior:'decor'}}),'decor','authors can keep scenery fixed');
   assert.equal(behaviorForBuilderObject({type:'weapon',behavior:'quest'}),'quest','authored behavior wins');
 });
 
