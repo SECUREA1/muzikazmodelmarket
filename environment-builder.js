@@ -221,8 +221,8 @@ function buildAndPlay(){
  persist(`“${sceneData.name}” built and ready to play`);
  const playScene=cloneData(sceneData),playId=playScene.id;
  sessionStorage.setItem(PLAY_KEY,JSON.stringify(playScene));
- $('#save-state').textContent='BUILT · Opening browser game';
- showToast(`“${sceneData.name}” is built — starting the game…`);
+ $('#save-state').textContent='DEPLOYED LOCALLY · Opening browser game';
+ showToast(`“${sceneData.name}” was saved — starting the browser game…`);
  window.setTimeout(()=>{const id=encodeURIComponent(playId);location.href=`model-explorer.html?environment=${id}&house=${id}&autoplay=1&local=1`},350)
 }
 function screenRay(event){const rect=renderer.domElement.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera)}
