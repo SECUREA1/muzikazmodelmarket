@@ -1,7 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 import { Capsule } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Capsule.js/+esm';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
-import { EnvironmentRegistry, normalizeEnvironmentList } from './environments/environment-registry.js';
+import { EnvironmentRegistry } from './environments/environment-registry.js';
 import { EnvironmentLoader } from './environments/environment-loader.js';
 import { configureRenderer } from './environments/environment-quality.js';
 import { logEnvironment } from './environments/environment-api.js';
@@ -21,8 +21,6 @@ const hud = document.querySelector('.house-hud');
 
 if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const localSandbox = new URLSearchParams(location.search).get('sandbox') === '1';
-  const sandboxParams = new URLSearchParams(location.search);
-  const sandboxMapId = localSandbox ? (sandboxParams.get('house') || sandboxParams.get('environment') || '') : '';
   const oldStatus = document.querySelector('#house-status');
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
   const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
@@ -230,10 +228,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const localBuilderMapsKey='muzikaz.environmentBuilder.localMaps.v1';
   function readSavedBuilderScenes(){
     const query=new URLSearchParams(location.search),requested=query.get('house')||query.get('environment'),scenes=[];
-    if(localSandbox){
-      try{const built=JSON.parse(sessionStorage.getItem(builderSceneKeys[0])||'null');if(built?.id===sandboxMapId&&Array.isArray(built.objects))return[built];}catch{/* The strict sandbox rejects corrupt staged templates below. */}
-      return[];
-    }
     for(const key of builderSceneKeys){try{const storage=key.includes('playScene')?sessionStorage:localStorage,built=JSON.parse(storage.getItem(key)||'null');if(built?.id&&Array.isArray(built.objects)&&(!key.includes('playScene')||!requested||built.id===requested))scenes.push(built);}catch{/* A corrupt draft must not hide the other locally saved maps. */}}
     try{const maps=JSON.parse(localStorage.getItem(localBuilderMapsKey)||'[]');if(Array.isArray(maps))scenes.push(...maps.filter(map=>map?.id&&Array.isArray(map.objects)));}catch{/* Legacy single-map storage remains available. */}
     const unique=new Map();scenes.forEach(scene=>{if(!unique.has(scene.id))unique.set(scene.id,scene);});return [...unique.values()];
@@ -421,8 +415,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function alignSpawnToCurrentFloor(spawn) { return envLoader.meshes.length ? alignPointAboveFloor(spawn.clone(), envLoader.meshes, envLoader.bounds, player.height, FLOOR_ENTRY_OFFSET) : spawn.clone(); }
   function updateLandingFrame(spawn) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); landingFrame.clear(); const ring = new THREE.Mesh(new THREE.RingGeometry(.52, .72, 48), new THREE.MeshBasicMaterial({ color: 0x9cff00, side: THREE.DoubleSide, transparent: true, opacity: .88 })); ring.rotation.x = -Math.PI / 2; ring.position.set(alignedSpawn.x, alignedSpawn.y + .018, alignedSpawn.z); const grid = new THREE.GridHelper(1.55, 4, 0x9cff00, 0x477400); grid.position.set(alignedSpawn.x, alignedSpawn.y + .022, alignedSpawn.z); grid.material.transparent = true; grid.material.opacity = .62; landingFrame.add(ring, grid); }
   function resetPlayer(spawn = player.spawn, rotationY = player.yaw) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); player.spawn.copy(alignedSpawn); player.velocity.set(0,0,0); player.yaw = rotationY || 0; player.pitch = 0; player.eyeHeight = player.height; player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.radius, alignedSpawn.z), new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.height, alignedSpawn.z), player.radius); playerRig.position.copy(alignedSpawn); playerRig.rotation.set(0, player.yaw, 0); camera.position.set(0, renderer.xr.isPresenting ? 0 : player.eyeHeight, 0); camera.rotation.set(0,0,0); updateLandingFrame(alignedSpawn); }
-  async function loadNextEnvironment() { if(localSandbox){setStatus('Level clear — restarting this Builder template without changing maps.');await loadById(sandboxMapId,{fallback:false});return;}const worlds = registry.all(); if (!worlds.length) return; const scriptedWorld = registry.find(LEVEL_WORLD_IDS[toxicBubbleSystem.level]); const currentIndex = Math.max(0, worlds.findIndex((world) => world.id === activeEnvironment?.id)); const next = scriptedWorld || worlds[(currentIndex + 1) % worlds.length]; setStatus(`Environment clear — traveling to ${next.name}.`); await loadById(next.id); }
-  async function loadById(id, { fallback = true } = {}) { if(localSandbox&&id!==sandboxMapId)throw new Error('Sandbox map rejected: this play session is locked to the staged Builder template.');const env = registry.find(id) || (localSandbox?null:registry.all()[0]); if (!env) throw new Error(localSandbox?'Sandbox map rejected: the staged Builder template is missing or invalid.':'No playable environment is available.'); window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), roomId:env.id }; localStorage.setItem('muzikazMultiplayerWorld', env.id); const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); activeEnvironment = env; loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete GLB world…`); try { const result = await envLoader.load(env); if (!result) throw new Error(`${env.name} did not produce a playable world.`); const builderRuntime=loadBuilderDecor(env); if(localSandbox&&!builderRuntime)throw new Error('Sandbox map rejected: the staged Builder gameplay template could not be deployed.'); currentSpaceScale = result.scale; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; const spawn=builderRuntime?.worldSpawn||result.spawn;resetPlayer(spawn.position,spawn.rotationY||0); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. ${builderRuntime?`${builderRuntime.objectCount} builder objects and ${builderRuntime.actorCount} gameplay actors deployed. `:''}Press Start game or click the canvas to walk.`); const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source, builderRuntime }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = !localSandbox&&fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); await loadById(fallbackEnv.id, { fallback: false }); return; } if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); throw error; } }
+  async function loadNextEnvironment() { const worlds = registry.all(); if (!worlds.length) return; const scriptedWorld = registry.find(LEVEL_WORLD_IDS[toxicBubbleSystem.level]); const currentIndex = Math.max(0, worlds.findIndex((world) => world.id === activeEnvironment?.id)); const next = scriptedWorld || worlds[(currentIndex + 1) % worlds.length]; setStatus(`Environment clear — traveling to ${next.name}.`); await loadById(next.id); }
+  async function loadById(id, { fallback = true } = {}) { const env = registry.find(id) || registry.all()[0]; if (!env) return; window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), roomId:env.id }; localStorage.setItem('muzikazMultiplayerWorld', env.id); const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); activeEnvironment = env; loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete GLB world…`); try { const result = await envLoader.load(env); if (!result) return; const builderRuntime=loadBuilderDecor(env); currentSpaceScale = result.scale; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; const spawn=builderRuntime?.worldSpawn||result.spawn;resetPlayer(spawn.position,spawn.rotationY||0); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. ${builderRuntime?`${builderRuntime.objectCount} builder objects and ${builderRuntime.actorCount} gameplay actors deployed. `:''}Press Start game or click the canvas to walk.`); const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source, builderRuntime }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); await loadById(fallbackEnv.id, { fallback: false }); return; } if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); } }
   let cachedAvatars = [];
   let cachedCatalogModels = [];
   let backpackAssets = [];
@@ -696,9 +690,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function renderLibrary() { renderPicker(); }
   async function refreshLibrary() {
     const [worldResult, packResult] = await Promise.allSettled([
-      localSandbox
-        ? fetch('/public/models/environments/environments.json', { headers:{Accept:'application/json'}, cache:'no-store' }).then(async response=>{if(!response.ok)throw new Error(`Local environment manifest unavailable (${response.status})`);registry.environments=normalizeEnvironmentList(await response.json());return registry.all();})
-        : registry.refresh(),
+      registry.refresh(),
       fetch('public/models/backpack-assets.json', { cache:'no-store' }).then((response) => {
         if (!response.ok) throw new Error(`Backpack manifest unavailable (${response.status})`);
         return response.json();
@@ -721,7 +713,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function usersInWorld(id){return multiplayerPresence.filter(user=>(user.roomId||'rad-tox')===id).length;}
   async function refreshMultiplayerPresence(){if(localSandbox)return;try{const request={headers:{Accept:'application/json'},cache:'no-store'};const response=window.MUZIKAZ_API?await window.MUZIKAZ_API.fetch('/api/houses/ioncore-house/presence',request):await fetch('/api/houses/ioncore-house/presence',request);if(!response.ok)return;const payload=await response.json();const data=payload?.data??payload;multiplayerPresence=Array.isArray(data?.users)?data.users:[];if(!library.classList.contains('is-collapsed')&&!library.classList.contains('backpack-panel'))renderMultiplayerWorlds();}catch{/* The map list remains fully usable while live presence reconnects. */}}
   function renderMultiplayerWorlds() {
-    if(localSandbox){setStatus('This private test is locked to your Builder template. Other maps are unavailable.');return;}
     const worlds = registry.all().map((env,index)=>({env,index,count:usersInWorld(env.id)})).sort((a,b)=>b.count-a.count||a.index-b.index);
     library.classList.remove('backpack-panel');
     library.setAttribute('aria-label', 'Select a multiplayer game world');
@@ -959,8 +950,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   document.addEventListener('mousemove', (e) => { if (document.pointerLockElement !== canvas) return; player.yaw -= e.movementX * .0025; player.pitch = THREE.MathUtils.clamp(player.pitch - e.movementY * .002, -1.25, 1.15); });
   scaleControl.querySelector('input').addEventListener('input', (e) => applySpaceScale(e.target.value)); scaleControl.querySelectorAll('[data-space-scale]').forEach((button) => button.addEventListener('click', () => applySpaceScale(currentSpaceScale + (button.dataset.spaceScale === 'up' ? .1 : -.1)))); viewControls.querySelectorAll('[data-zoom]').forEach((button) => button.addEventListener('click', () => applyZoom(button.dataset.zoom === 'in' ? -1 : 1))); syncZoomControls();
-  if(localSandbox){environmentSelect?.setAttribute('disabled','');environmentListToggle?.setAttribute('hidden','');worldButton?.setAttribute('hidden','');}
-  environmentSelect?.addEventListener('change', (event) => { if (event.target.value) safelyInteract('Map selection',()=>loadById(event.target.value)); });
+  environmentSelect?.addEventListener('change', (event) => { if (event.target.value) loadById(event.target.value); });
   environmentListToggle?.addEventListener('click',()=>{const open=environmentList.hidden;environmentList.hidden=!open;environmentListToggle.setAttribute('aria-expanded',String(open));environmentListToggle.textContent=open?'Close maps':'Browse maps';if(open)environmentList.querySelector('[aria-selected="true"]')?.scrollIntoView({block:'center'});});
   environmentList?.addEventListener('click',(event)=>{const button=event.target instanceof Element?event.target.closest('[data-environment-id]'):null;if(!button)return;environmentSelect.value=button.dataset.environmentId;environmentList.hidden=true;environmentListToggle?.setAttribute('aria-expanded','false');if(environmentListToggle)environmentListToggle.textContent='Browse maps';safelyInteract('World interaction',()=>loadById(button.dataset.environmentId));});
   canvas.addEventListener('dragover', (e) => { if (!activeAvatar && !e.dataTransfer?.types?.includes('application/x-muzikaz-avatar')) return; e.preventDefault(); stage.classList.add('is-avatar-drop-target'); }); canvas.addEventListener('dragleave', () => stage.classList.remove('is-avatar-drop-target')); canvas.addEventListener('drop', async (e) => { e.preventDefault(); stage.classList.remove('is-avatar-drop-target'); const avatars = window.MuzikazActiveHouseAvatars || []; const avatar = avatars.find(a => a.id === e.dataTransfer.getData('application/x-muzikaz-avatar')) || activeAvatar; if (avatar) addAvatarToScene(avatar, setAvatarPointerFromEvent(e)).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); });
@@ -1145,14 +1135,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   const params = new URLSearchParams(location.search);
   const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
-  const startEnvironment = localSandbox ? (requestedEnvironment===sandboxMapId?requestedEnvironment:null) : (requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id);
-  if(localSandbox&&!startEnvironment){const message='Sandbox map rejected: your staged Builder template is missing or does not match this launch.';setStatus(message);if(gameLoadStatus)gameLoadStatus.textContent=message;if(gameStartButton)gameStartButton.disabled=true;walkButton.disabled=true;}
+  const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
   let houseMapPromise = null;
   async function openHouseMap() {
     canvas.focus({ preventScroll: true });
     if (!envLoader.world && startEnvironment) {
       setStatus('Opening and loading the MUZIKAZ house environment…');
-      houseMapPromise ||= loadById(startEnvironment,{fallback:!localSandbox}).finally(() => { houseMapPromise = null; });
+      houseMapPromise ||= loadById(startEnvironment).finally(() => { houseMapPromise = null; });
       await houseMapPromise;
     }
     walkButton.textContent = 'Game active';
