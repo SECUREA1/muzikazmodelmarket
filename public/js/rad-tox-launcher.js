@@ -19,6 +19,9 @@
     document.body.appendChild(module);
   }
   if (button) button.addEventListener('click', function (click) { click.preventDefault(); begin(); }, { once: true });
+  // A builder test link is an explicit request to play. Load the complete engine
+  // immediately instead of presenting a second Begin gate in the explorer.
+  if (new URLSearchParams(window.location.search).get('autoplay') === '1') begin();
   document.addEventListener('muzikaz:rad-tox-engine-ready', function () { document.dispatchEvent(event('muzikaz:rad-tox-request')); }, { once: true });
   document.addEventListener('muzikaz:rad-tox-stage', function (stage) { if (stage.detail && stage.detail.message && status) status.textContent = stage.detail.message; });
   document.addEventListener('muzikaz:rad-tox-native-error', function (failure) { showError((failure.detail && failure.detail.message) || 'The playable world could not be initialized.'); }, { once: true });
