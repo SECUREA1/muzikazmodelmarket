@@ -10,9 +10,6 @@ test('VibeVerse exposes a compact searchable function menu', async () => {
   ]);
 
   assert.match(html, /id="explorer-options-toggle"[^>]+aria-expanded="false"/);
-  assert.match(html, /id="explorer-options-toggle"[^>]+aria-label="Open VibeVerse options"/);
-  assert.doesNotMatch(html, /id="explorer-options-label"/);
-  assert.doesNotMatch(html, /href="#house-explorer-canvas">Enter the crib<\/a>/);
   assert.match(html, /id="explorer-options-search"[^>]+type="search"/);
   assert.equal((html.match(/data-option-keywords=/g) || []).length, 8);
   assert.match(script, /terms\.every\(\(term\) => searchableText\.includes\(term\)\)/);

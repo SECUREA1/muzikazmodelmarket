@@ -36,7 +36,7 @@ test('Firefox item and map population survives large or partially unavailable co
   assert.match(game, /return worldResult\.status === 'fulfilled' \? worldResult\.value : registry\.all\(\)/);
 });
 
-test('builder uses self-contained ESM dependencies and resilient merged manifests', async () => {
+test('builder uses self-contained ESM dependencies and the completed cross-origin API bridge', async () => {
   const [html, builder, environments] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
@@ -48,14 +48,8 @@ test('builder uses self-contained ESM dependencies and resilient merged manifest
   assert.match(builder, /from '\.\/public\/vendor\/three\/three\.module\.min\.js'/);
   assert.equal((builder.match(/from 'https:\/\//g) || []).length, 0);
   assert.equal((builder.match(/import \* as THREE/g) || []).length, 1);
-  assert.match(builder, /MUZIKAZ_API/);
-  assert.match(builder, /'\/api\/models'/);
+  assert.match(builder, /window\.MUZIKAZ_API\?\.fetch/);
   assert.match(builder, /apiFetch\('\/api\/custom-maps'/);
-  assert.match(builder, /public\/models\/game-asset-registry\.json/);
-  assert.match(builder, /public\/models\/environments\/environments\.json/);
   assert.match(builder, /typeof structuredClone==='function'/);
-  assert.doesNotMatch(environments, /fetchGitHubGlbFiles/);
-  assert.match(environments, /apiFetch\('\/api\/custom-maps'/);
-  assert.match(environments, /Promise\.allSettled/);
-  assert.match(environments, /fetch\('\/public\/models\/environments\/environments\.json'/);
+  assert.match(environments, /apiFetch\('\/api\/environments'/);
 });

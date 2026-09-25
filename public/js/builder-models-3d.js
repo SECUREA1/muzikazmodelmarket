@@ -7,11 +7,8 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   'open-studio': ['Open Studio', 'An open-sided playable studio room with a floor, feature wall and neon columns.', [6, 2.8, 5]],
   'connected-suite': ['Connected Suite', 'A playable connected room with two doorways and a raised floor.', [6, 2.8, 5]],
   'garden-courtyard': ['Garden Courtyard', 'A playable garden room with a lawn, paths and low boundary walls.', [6, 1.2, 5]],
-  'street-car': ['Neon Street Car', 'A boost-ready electric street car with four-wheel steering, luminous trim and a low cockpit.', [4.2, 1.35, 1.8]],
   'corsair-aircraft': ['Blackwing Corsair', 'A flyable open-cockpit gull-wing aircraft with a working propeller and exposed black airframe.', [10.5, 2.7, 8.2]],
-  'sky-rescue-helicopter': ['Sky Rescue Helicopter', 'A responsive flyable rescue helicopter with animated main and tail rotors.', [8.4, 2.9, 7.2]],
   'dune-quad': ['Nightcrawler Dune Quad', 'A rideable bodyless dune buggy with an exposed black tube frame, engine and four off-road tyres.', [2.7, 1.35, 1.6]],
-  'flux-hoverboard': ['Flux Hoverboard', 'A nimble anti-gravity board with animated twin thrusters and air-brake handling.', [1.9, .25, .55]],
   'canopy-tree': ['Canopy Tree', 'A broad deciduous shade tree with a textured trunk and layered green crown.', [3.8, 5.2, 3.8]],
   'pine-tree': ['Pine Tree', 'A tall evergreen conifer with tiered needles and a natural timber trunk.', [2.8, 5.8, 2.8]],
   'flower-bed': ['Flower Bed', 'A low soil bed planted with colourful flowering stems.', [2.4, .35, 1.2]],
@@ -35,41 +32,21 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   'studio-desk':['Producer Studio Desk','Production desk with displays, monitors and mixing surface.',[2.4,1.4,1]], 'recording-booth':['Recording Booth','Enclosed acoustic booth with glazed door and microphone.',[2.4,2.65,2.2]], 'modular-wall':['Modular Building Wall','Full-height framed wall bay for realistic room construction.',[3.2,2.8,.28]], 'glass-door':['Glass Entry Door','Human-scale glazed door with structural frame and handle.',[1.25,2.35,.18]], 'loft-bed':['Loft Bed','Raised bed, mattress, guard rail and ladder.',[2.15,2.05,1.25]], wardrobe:['Walk-in Wardrobe','Fitted wardrobe with shelves, rail and drawers.',[2.35,2.35,.62]], 'bathroom-vanity':['Bathroom Vanity','Vanity cabinet, basin, mirror and fixtures.',[1.55,2.15,.58]], 'dining-set':['Dining Set','Six-place dining table and correctly scaled chairs.',[2.8,1.05,2.25]], fireplace:['Modern Fireplace','Stone hearth, mantel and animated flame bed.',[2.2,2.05,.48]], elevator:['Working Elevator','Framed lift entrance, split doors and call control.',[2.5,3,.55]]
 });
 
-// Items that carry gameplay roles in the Environment Builder also need a
-// dependable mesh when they are dropped straight into a running game. The
-// authored avatar GLBs are used by saved scenes; these semantic stand-ins keep
-// direct Backpack drops instant and preserve the item's interaction metadata.
-const GAMEPLAY_ITEMS = Object.freeze({
-  'hero-spawn':['Hero Spawn','talk','#63eaff'], 'scout-avatar':['AAPE Scout','quest','#ffcc3d'], 'wolf-guardian':['Volt Guardian','patrol','#a78bfa'],
-  'rad-tox':['RAD-TOX Mutant','hostile','#b9ff38'], 'void-wolf':['Void Wolf','patrol','#a78bfa'], 'ember-dragon':['Ember Dragon','hostile','#ff6847'], 'rogue-bot':['Rogue Bot','hostile','#63eaff'],
-  'quest-scroll':['Quest Scroll','quest','#ffcc3d'], 'treasure-crystal':['Energy Crystal','pickup','#63eaff'], 'healing-potion':['Healing Potion','heal','#ff5ba7'],
-  'portal-door':['Portal Door','door','#a78bfa'], campfire:['Campfire','talk','#ff6847'], 'friendly-ghost':['Friendly Ghost','quest','#d9f7ff'], 'green-bubbles':['Green Bubble Field','heal','#b9ff38']
-});
-
-
 const material = (color, roughness=.65, metalness=.02, extra={}) => new THREE.MeshStandardMaterial({color, roughness, metalness, ...extra});
 const mesh = (geometry, mat, position=[0,0,0], rotation=[0,0,0]) => { const value=new THREE.Mesh(geometry,mat); value.position.set(...position); value.rotation.set(...rotation); return value; };
 const box = (size, mat, position) => mesh(new THREE.BoxGeometry(...size),mat,position);
 const cylinder = (r1,r2,h,mat,position,segments=16) => mesh(new THREE.CylinderGeometry(r1,r2,h,segments),mat,position);
 
 function vehicle(id){
- const root=new THREE.Group(),black=material(0x090b0d,.28,.82),rubber=material(0x080808,.94,.02),steel=material(0x596169,.25,.88),engine=material(0x34393d,.38,.72),neon=material(0x63eaff,.2,.45,{emissive:0x159bb8,emissiveIntensity:1.1}),gold=material(0xffcc3d,.42,.5),violet=material(0xa78bfa,.25,.45,{emissive:0x5635a8,emissiveIntensity:1.25}),tube=(a,b,r=.055,mat=black)=>{const d=new THREE.Vector3().subVectors(b,a),part=cylinder(r,r,d.length(),mat,a.clone().add(b).multiplyScalar(.5),10);part.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());root.add(part);return part;};
- const wheel=(x,y,z,r=.34)=>{const tyre=mesh(new THREE.TorusGeometry(r,r*.36,12,24),rubber,[x,y,z],[Math.PI/2,0,0]);tyre.userData.vehicleWheel=true;root.add(tyre,cylinder(r*.23,r*.23,.4,steel,[x,y,z],10));};
+ const root=new THREE.Group(),black=material(0x090b0d,.28,.82),rubber=material(0x080808,.94,.02),steel=material(0x596169,.25,.88),engine=material(0x34393d,.38,.72),tube=(a,b,r=.055)=>{const d=new THREE.Vector3().subVectors(b,a),part=cylinder(r,r,d.length(),black,a.clone().add(b).multiplyScalar(.5),10);part.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());root.add(part);return part;};
  if(id==='dune-quad'){
-  [[-1.05,.42,-.62],[-1.05,.42,.62],[1.05,.42,-.62],[1.05,.42,.62]].forEach(v=>wheel(...v));
-  const p=[new THREE.Vector3(-.92,.42,-.48),new THREE.Vector3(-.92,.42,.48),new THREE.Vector3(.92,.42,-.48),new THREE.Vector3(.92,.42,.48),new THREE.Vector3(-.62,1.08,-.42),new THREE.Vector3(-.62,1.08,.42),new THREE.Vector3(.65,.88,-.42),new THREE.Vector3(.65,.88,.42)];[[0,2],[1,3],[0,1],[2,3],[0,4],[1,5],[4,5],[4,6],[5,7],[6,7],[2,6],[3,7]].forEach(([a,b])=>tube(p[a],p[b],.06));root.add(box([.58,.48,.62],engine,[.48,.58,0]),box([.55,.1,.48],black,[-.25,.69,0]));
-  root.userData.vehicle={mode:'drive',seat:[-.2,.82,0],speed:11,boostSpeed:16,turnSpeed:1.9,acceleration:3.2,groundHeight:0};
- }else if(id==='street-car'){
-  [[-1.35,.43,-.76],[-1.35,.43,.76],[1.35,.43,-.76],[1.35,.43,.76]].forEach(v=>wheel(...v,.38));root.add(box([3.35,.42,1.55],neon,[0,.5,0]),box([1.65,.48,1.32],black,[.15,.92,0]),box([.9,.04,1.45],neon,[-1.72,.43,0]));const glass=material(0x122b38,.12,.55,{transparent:true,opacity:.78});root.add(box([.78,.36,1.2],glass,[-.36,1.02,0]),box([.08,.12,1.62],neon,[1.64,.63,0]));
-  root.userData.vehicle={mode:'drive',seat:[.32,1.13,0],speed:17,boostSpeed:27,turnSpeed:1.42,acceleration:4.5,groundHeight:0};
- }else if(id==='flux-hoverboard'){
-  const deck=box([1.9,.12,.55],violet,[0,.3,0]);deck.geometry.rotateY(Math.PI/2);root.add(deck);[-.68,.68].forEach(z=>{const thruster=cylinder(.16,.11,.22,neon,[0,.22,z],14);thruster.rotation.z=Math.PI/2;thruster.userData.vehicleThruster=true;root.add(thruster)});root.add(box([.14,.12,1.55],black,[0,.38,0]));
-  root.userData.vehicle={mode:'hover',seat:[0,1.18,0],speed:15,boostSpeed:23,turnSpeed:2.35,acceleration:5,groundHeight:.3,hoverAmplitude:.07};
- }else if(id==='sky-rescue-helicopter'){
-  root.add(mesh(new THREE.SphereGeometry(1,24,16),gold,[0,1.25,0]),box([1.45,.9,1.55],black,[0,1.15,.55]));root.children[0].scale.set(1.05,.78,1.42);tube(new THREE.Vector3(0,1.35,1.1),new THREE.Vector3(0,1.65,3.55),.15,black);root.add(box([.08,.7,1.1],gold,[0,1.83,3.28]));const rotor=new THREE.Group();rotor.position.set(0,2.22,0);rotor.add(box([8.4,.07,.16],black),box([.16,.07,8.4],black));rotor.userData.vehicleRotor='main';root.add(rotor);const tailRotor=new THREE.Group();tailRotor.position.set(.12,1.65,3.58);tailRotor.rotation.y=Math.PI/2;tailRotor.add(box([.08,1.55,.12],steel),box([.08,.12,1.55],steel));tailRotor.userData.vehicleRotor='tail';root.add(tailRotor);[-.65,.65].forEach(x=>{root.add(box([.08,.08,2.15],steel,[x,.28,.2]));tube(new THREE.Vector3(x,.3,-.45),new THREE.Vector3(x,.75,-.2),.035,steel)});
-  root.userData.vehicle={mode:'fly',seat:[0,1.38,-.18],speed:15,boostSpeed:22,turnSpeed:1.35,liftSpeed:9,acceleration:2.8,minAltitude:.35,maxAltitude:45};
+  [[-1.05,.42,-.62],[-1.05,.42,.62],[1.05,.42,-.62],[1.05,.42,.62]].forEach(([x,y,z])=>{const tyre=mesh(new THREE.TorusGeometry(.34,.14,12,24),rubber,[x,y,z],[Math.PI/2,0,0]);tyre.userData.vehicleWheel=true;root.add(tyre,cylinder(.08,.08,.42,steel,[x,y,z],10));});
+  const p=[new THREE.Vector3(-.92,.42,-.48),new THREE.Vector3(-.92,.42,.48),new THREE.Vector3(.92,.42,-.48),new THREE.Vector3(.92,.42,.48),new THREE.Vector3(-.62,1.08,-.42),new THREE.Vector3(-.62,1.08,.42),new THREE.Vector3(.65,.88,-.42),new THREE.Vector3(.65,.88,.42)];[[0,2],[1,3],[0,1],[2,3],[0,4],[1,5],[4,5],[4,6],[5,7],[6,7],[2,6],[3,7]].forEach(([a,b])=>tube(p[a],p[b],.06));root.add(box([.58,.48,.62],engine,[.48,.58,0]),cylinder(.18,.18,.58,engine,[.75,.72,0],12),box([.55,.1,.48],material(0x202326,.8),[-.25,.69,0]));
+  root.userData.vehicle={mode:'drive',seat:[-.2,.82,0],speed:9,turnSpeed:1.75};
  }else{
-  const nose=new THREE.Vector3(0,1.05,-3.55),cockpit=new THREE.Vector3(0,1.05,.25),tail=new THREE.Vector3(0,1.35,3.5);tube(nose,cockpit,.1);tube(cockpit,tail,.08);const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,.85,-.5),new THREE.Vector3(-5.25,.38,.55),new THREE.Vector3(-4.65,.72,1.25),new THREE.Vector3(0,1.05,.72)]);geo.setIndex([0,1,2,0,2,3]);geo.computeVertexNormals();const wing=mesh(geo,black);root.add(wing);const wing2=wing.clone();wing2.scale.x=-1;root.add(wing2,box([3.25,.08,.72],black,[0,1.18,3.05]),box([.09,1.3,1.15],black,[0,1.75,3.12]),cylinder(.55,.78,1.45,engine,[0,1.03,-3.2],18));const prop=new THREE.Group();prop.position.set(0,1.03,-4);prop.rotation.x=Math.PI/2;prop.add(box([.16,.08,2.85],steel),box([2.85,.08,.16],steel));prop.userData.vehiclePropeller=true;root.add(prop);root.userData.vehicle={mode:'fly',seat:[0,1.28,.2],speed:24,boostSpeed:34,turnSpeed:1.15,liftSpeed:10,acceleration:2.2,minAltitude:.35,maxAltitude:60};
+  const nose=new THREE.Vector3(0,1.05,-3.55),cockpit=new THREE.Vector3(0,1.05,.25),tail=new THREE.Vector3(0,1.35,3.5);tube(nose,cockpit,.1);tube(cockpit,tail,.08);[[-.7,.55,-2.7],[.7,.55,-2.7],[-.72,.5,2.35],[.72,.5,2.35]].forEach(v=>tube(cockpit,new THREE.Vector3(...v),.055));
+  const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,.85,-.5),new THREE.Vector3(-5.25,.38,.55),new THREE.Vector3(-4.65,.72,1.25),new THREE.Vector3(0,1.05,.72)]);geo.setIndex([0,1,2,0,2,3]);geo.computeVertexNormals();const wing=mesh(geo,black);root.add(wing);const wing2=wing.clone();wing2.scale.x=-1;root.add(wing2,box([3.25,.08,.72],black,[0,1.18,3.05]),box([.09,1.3,1.15],black,[0,1.75,3.12]),cylinder(.55,.78,1.45,engine,[0,1.03,-3.2],18));
+  const prop=new THREE.Group();prop.position.set(0,1.03,-4);prop.rotation.x=Math.PI/2;prop.add(box([.16,.08,2.85],steel),box([2.85,.08,.16],steel));prop.userData.vehiclePropeller=true;root.add(prop);[[-1,.48,-.3],[1,.48,-.3],[0,.54,2.55]].forEach(([x,y,z])=>root.add(mesh(new THREE.TorusGeometry(.25,.09,10,20),rubber,[x,y,z],[0,Math.PI/2,0])));root.add(mesh(new THREE.TorusGeometry(.52,.055,10,26,Math.PI),black,[0,1.35,.15],[0,0,Math.PI]));root.userData.vehicle={mode:'fly',seat:[0,1.28,.2],speed:18,turnSpeed:1.15};
  }
  return root;
 }
@@ -103,20 +80,6 @@ function expandedModel(id){
  else if(kind==='weapon'){const glow=id==='plasma-sword'||id==='crystal-staff';rgb(new THREE.CylinderGeometry(.045,.06,h*.82,10),0x263039,glow?0x8ff8ff:0xc9d0d2,[0,h*.45,0],{roughness:glow?.18:.35,metalness:.72,extra:glow?{emissive:0x36cde5,emissiveIntensity:1.1}:{}});rgb(new THREE.BoxGeometry(w,.1,.12),0x49301d,0xc9934f,[0,.15,0],{roughness:.7});}
  else {rgb(new THREE.BoxGeometry(w,h,d),id==='treasure-chest'?0x553019:0x30383b,id==='treasure-chest'?0xb67b35:0xd7c36d,[0,h/2,0],{roughness:.55,metalness:.25});if(id==='teleport-pad'){const ring=rgb(new THREE.TorusGeometry(w*.38,.08,10,36),0x4b2684,0xc8a9ff,[0,h+.06,0],{roughness:.2,metalness:.3,extra:{emissive:0x7d46bd,emissiveIntensity:.9},rotation:[Math.PI/2,0,0]});ring.userData.water=true}else if(id==='windmill'){const hub=rgb(new THREE.CylinderGeometry(.18,.18,.35,14),0x4b5052,0xc8d0cf,[0,h*.72,-d*.52],{metalness:.7,rotation:[Math.PI/2,0,0]});for(let i=0;i<4;i++){const blade=rgb(new THREE.BoxGeometry(.22,h*.35,.06),0x6d4b2f,0xe0c695,[0,h*.72,-d*.63],{roughness:.74});blade.geometry.translate(0,h*.2,0);blade.rotation.z=i*Math.PI/2;blade.userData.spin=true}hub.userData.spin=true}}
  root.userData={builderObject:true,modelId:id,dimensions:[w,h,d],animated:true};return root;
-}
-
-
-function gameplayItem(id){
- const [name,behavior,colorValue]=GAMEPLAY_ITEMS[id],root=new THREE.Group(),color=new THREE.Color(colorValue),glow=material(color,.38,.08,{emissive:color.clone().multiplyScalar(.28),emissiveIntensity:.65});
- const actor=['hero-spawn','scout-avatar','wolf-guardian','rad-tox','void-wolf','ember-dragon','rogue-bot','friendly-ghost'].includes(id);
- if(actor){const body=mesh(new THREE.CapsuleGeometry(.34,.92,7,14),glow,[0,.8,0]);root.add(body,mesh(new THREE.SphereGeometry(.3,16,12),glow,[0,1.62,0]));if(id==='void-wolf'||id==='ember-dragon'){body.rotation.z=Math.PI/2;body.position.y=.62;root.scale.setScalar(id==='ember-dragon'?1.45:.78);}}
- else if(id==='quest-scroll')root.add(mesh(new THREE.CylinderGeometry(.13,.13,1.05,16),glow,[0,.62,0],[0,0,Math.PI/2]));
- else if(id==='treasure-crystal')root.add(mesh(new THREE.OctahedronGeometry(.58),glow,[0,.62,0]));
- else if(id==='healing-potion')root.add(mesh(new THREE.SphereGeometry(.34,18,12),glow,[0,.38,0]),mesh(new THREE.CylinderGeometry(.13,.18,.42,14),glow,[0,.76,0]));
- else if(id==='portal-door')root.add(box([1.5,2.5,.24],glow,[0,1.25,0]));
- else if(id==='campfire')root.add(mesh(new THREE.ConeGeometry(.5,1.1,12),glow,[0,.55,0]));
- else for(let i=0;i<9;i++){const bubble=mesh(new THREE.SphereGeometry(.1+i%3*.045,12,8),glow,[Math.sin(i*2.3)*.65,.2+(i%4)*.38,Math.cos(i*1.7)*.55]);bubble.userData.water=true;root.add(bubble);}
- root.name=name;root.userData={builderObject:true,modelId:id,label:name,behavior,interactive:true,animated:true};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return root;
 }
 
 function plant(id) {
@@ -185,8 +148,7 @@ function playableRoom(id) {
 export function createBuilderModel(id) {
   let root;
   if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
-  else if(['street-car','corsair-aircraft','sky-rescue-helicopter','dune-quad','flux-hoverboard'].includes(id)) root=vehicle(id);
-  else if(GAMEPLAY_ITEMS[id]) return gameplayItem(id);
+  else if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);
   else if(EXPANDED[id]) return expandedModel(id);
   else if(id==='canopy-tree'||id==='pine-tree') root=plant(id); else if(id==='flower-bed')root=flowerBed(); else if(id==='hedge-corner')root=hedge(); else if(id==='garden-rocks')root=rocks(); else if(id==='pond')root=pond(); else if(id==='path-tile')root=box([2.2,.12,1.2],material(0xa39b8c,.95),[0,.06,0]); else if(id==='hill'){root=mesh(new THREE.SphereGeometry(2.1,24,12,0,Math.PI*2,0,Math.PI/2),material(0x4f9a45,.95),[0,0,0]);root.scale.z=.86;} else if(id==='lamp-post')root=lamp(true); else if(id==='planter')root=planter(); else if(id==='sofa'||id==='armchair')root=seating(id==='armchair'); else if(id==='coffee-table')root=coffeeTable(); else if(id==='bookshelf')root=bookshelf(); else if(id==='floor-lamp')root=lamp(false); else if(id==='room-divider')root=divider(); else if(id==='kitchen-island')root=island(); else if(id==='spiral-stairs')root=stairs(); else if(id==='archway')root=arch(); else if(id==='art-wall')root=artWall(); else if(BUILDER_MODEL_INFO[id])root=detailedInterior(id); else return null;
   const [name,description,dimensions]=BUILDER_MODEL_INFO[id];root.name=name;root.userData={...root.userData,builderObject:true,modelId:id,label:name,description,dimensions,animated:['canopy-tree','pine-tree','pond','lamp-post','floor-lamp'].includes(id)};
@@ -217,26 +179,6 @@ export function createGeneratedAsset(model) {
   root.name=model.name;root.userData={...root.userData,builderObject:true,generated:true,generator:recipe,assetId:model.sourceId,dimensions:new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).toArray()};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;}});return root;
 }
 
-const animationTargets = new WeakMap();
-const isAnimatedPart = child => child.userData.vehiclePropeller || child.userData.vehicleRotor || child.userData.vehicleThruster || child.userData.vehicleWheel || child.userData.water || child.userData.spin || child.userData.swayPhase !== undefined;
-
-/** Animate only tagged parts. The cache avoids traversing every mesh in large maps every frame. */
 export function updateBuilderModels(group, elapsed) {
-  let cached = animationTargets.get(group);
-  if (!cached || cached.childCount !== group.children.length) {
-    const targets = [];
-    group.traverse(child => { if (isAnimatedPart(child)) targets.push(child); });
-    cached = { childCount: group.children.length, targets };
-    animationTargets.set(group, cached);
-  }
-  for (const child of cached.targets) {
-    if (child.userData.vehiclePropeller) child.rotation.z=elapsed*18;
-    if (child.userData.vehicleRotor==='main') child.rotation.y=elapsed*15;
-    if (child.userData.vehicleRotor==='tail') child.rotation.x=elapsed*22;
-    if (child.userData.vehicleThruster) { child.scale.setScalar(1+Math.sin(elapsed*9)*.08); child.material.emissiveIntensity=1.2+Math.sin(elapsed*9)*.25; }
-    if (child.userData.vehicleWheel) child.rotation.z=elapsed*5;
-    if (child.userData.water) { if(child.material.transparent) child.material.opacity=.72+Math.sin(elapsed*1.4)*.06; child.rotation.z=elapsed*.25; }
-    if (child.userData.spin) child.rotation.z=elapsed*.8;
-    if (child.userData.swayPhase!==undefined) child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;
-  }
+  group.children.forEach(root=>{root.traverse(child=>{if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 }
