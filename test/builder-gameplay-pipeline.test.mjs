@@ -23,3 +23,16 @@ test('invalid transform values cannot poison gameplay coordinates', () => {
   const manifest = compileBuilderScene({ objects: [{ id: 'start', modelId: 'hero-spawn', position: { x: 'bad', y: Infinity, z: null } }] });
   assert.deepEqual(manifest.spawn.position, { x: 0, y: 0, z: 0 });
 });
+
+test('builder gameplay manifest preserves complete interaction and animation settings', () => {
+  const manifest = compileBuilderScene({ objects: [{
+    id: 'door-1', modelId: 'glass-door', position: { x: 2, y: 0, z: 4 }, rotation: { y: .5 },
+    functionalSettings: { behavior: 'door', trigger: 'use', action: 'message', value: 'Unlocked', cooldown: 2 },
+    animationState: { enabled: true, clip: 'Open', speed: 1.25, loop: false }
+  }] });
+  assert.deepEqual(manifest.actors[0], {
+    objectId: 'door-1', modelId: 'glass-door', behavior: 'door', position: { x: 2, y: 0, z: 4 }, rotationY: .5,
+    trigger: 'use', action: 'message', value: 'Unlocked', cooldown: 2,
+    animation: { enabled: true, clip: 'Open', speed: 1.25, loop: false }
+  });
+});

@@ -32,3 +32,18 @@ test('standard vehicle controller supports enter, movement, flight and exit', as
   assert.match(game, /key === 'f'/);
   assert.match(game, /vehicleController\.update\(delta\)/);
 });
+
+test('regular RAD-TOX gameplay activates authored objects, avatars, and animations', async () => {
+  const [runtime, game] = await Promise.all([
+    read('../public/js/builder-gameplay-controller.js'), read('../public/js/house-explorer-glb.js')
+  ]);
+  for (const behavior of ['pickup', 'heal', 'door', 'hostile', 'quest', 'talk', 'patrol']) {
+    assert.match(runtime, new RegExp(`behavior === '${behavior}'`));
+  }
+  assert.match(game, /new BuilderGameplayController/);
+  assert.match(game, /builderGameplay\.interact\(\)/);
+  assert.match(game, /builderGameplay\.update\(delta\)/);
+  assert.match(game, /new THREE\.AnimationMixer\(object\)/);
+  assert.match(game, /prepareAuthoredBuilderModel\(gltf\.scene,definition\)/);
+  assert.match(game, /object\.userData\.vehicle=\{mode:/);
+});
