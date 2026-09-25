@@ -7,7 +7,7 @@ test('environment builder exposes layout, placement and editing controls', async
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
   ]);
-  for (const control of ['library-grid', 'land-canvas', 'layout-select', 'rotation-control', 'scale-control', 'position-x', 'position-y', 'duplicate-object', 'remove-object', 'save-scene', 'play-scene']) assert.match(html, new RegExp(`id="${control}"`));
+  for (const control of ['library-grid', 'land-canvas', 'layout-select', 'rotation-control', 'scale-control', 'position-x', 'position-y', 'duplicate-object', 'remove-object', 'save-scene', 'play-built-game', 'play-scene']) assert.match(html, new RegExp(`id="${control}"`));
   for (const layout of ['grand-floor', 'loft', 'suite', 'courtyard']) assert.match(html, new RegExp(`value="${layout}"`));
   assert.equal((script.match(/\['[a-z-]+','[^']+','(?:landscape|interior)',\d+\]/g) || []).length, 30);
   for (const behavior of ['pointermove', 'dragstart', 'drop', 'localStorage.setItem', 'LOCKED PROPORTIONS']) assert.match(`${html}\n${script}`, new RegExp(behavior));
@@ -25,8 +25,17 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /storeLocalMap\(sceneData\)/, 'each builder save is also retained in the local playable-map collection');
   assert.match(script, /sessionStorage\.setItem\(PLAY_KEY,JSON\.stringify\(playScene\)\)/, 'the complete playable scene is staged before browser gameplay begins');
   assert.match(script, /autoplay=1&local=1/, 'the built game starts immediately in local browser mode');
-  assert.ok(script.indexOf('sessionStorage.setItem(PLAY_KEY') < script.indexOf('location.href=`model-explorer.html'), 'scene handoff is complete before explorer navigation');
+  assert.match(script, /function gameUrlFor\(sceneId\)/, 'builder provides one canonical path to the local game');
+  assert.match(script, /exposeBuiltGame\(playScene\)/, 'deployment reveals a reusable link to the developed game');
+  assert.ok(script.indexOf('sessionStorage.setItem(PLAY_KEY') < script.indexOf('location.href=gameUrlFor'), 'scene handoff is complete before explorer navigation');
 });
+
+test('builder autoplay link loads the playable engine without a second begin click', async () => {
+  const launcher = await readFile(new URL('../public/js/rad-tox-launcher.js', import.meta.url), 'utf8');
+  assert.match(launcher, /URLSearchParams\(window\.location\.search\)\.get\('autoplay'\) === '1'/);
+  assert.match(launcher, /get\('autoplay'\) === '1'\) begin\(\)/);
+});
+
 
 test('builder-facing model and environment catalogs are repository-only', async () => {
   const [builder, explorer, environments] = await Promise.all([
