@@ -20,13 +20,6 @@ function isSpawnFloorObject(object) {
   return !NON_SPAWN_FLOOR_RE.test(name);
 }
 
-function isExplicitFloorCollider(object) {
-  const name = object?.name || '';
-  return object?.userData?.colliderShape === 'mesh'
-    || object?.userData?.placementSurface === true
-    || (FLOOR_NAME_RE.test(name) && !NON_SPAWN_FLOOR_RE.test(name));
-}
-
 function floorHitScore(hit) {
   const name = hit?.object?.name || '';
   return (FLOOR_NAME_RE.test(name) ? 2 : 1) * Math.max(0.1, hit.face?.normal?.y || 1);
@@ -125,21 +118,14 @@ export function findSpawnNode(root) {
 export function buildCollision(root, mode = 'auto') {
   const visibleMeshes = [];
   const collisionMeshes = [];
-  const roots = Array.isArray(root) ? root.filter(Boolean) : [root].filter(Boolean);
-  roots.forEach((collisionRoot) => collisionRoot.traverse((object) => {
+  root.traverse((object) => {
     if (!object.isMesh || !object.geometry) return;
     const name = object.name || '';
     if (COLLISION_RE.test(name)) { object.visible = false; collisionMeshes.push(object); return; }
     visibleMeshes.push(object);
     const material = Array.isArray(object.material) ? object.material[0] : object.material;
-    // Floors are gameplay-critical. Builder land, imported GLB floors, and
-    // placement surfaces must remain solid even when their material is
-    // transparent (glass paths, decals) or their authored name contains a
-    // normally decorative token. An explicit collider also wins over the
-    // automatic exclusions so every kind of Builder land can be stood on.
-    const explicitFloor = isExplicitFloorCollider(object);
-    if (mode !== 'none' && object.visible !== false && (explicitFloor || (!EXCLUDE_RE.test(name) && !material?.transparent))) collisionMeshes.push(object);
-  }));
+    if (mode !== 'none' && !EXCLUDE_RE.test(name) && !material?.transparent && object.visible !== false) collisionMeshes.push(object);
+  });
   const source = new THREE.Group();
   collisionMeshes.forEach((mesh) => {
     const clone = mesh.clone(false);
