@@ -17,27 +17,32 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(script, /&house=\$\{id\}&autoplay=1/);
   assert.match(script, /compileBuilderScene\(sceneData\)/);
-  assert.doesNotMatch(`${html}\n${script}`, /api-connection|\/api\/custom-maps|\/api\/models/, 'building and playing has no API dependency');
-  assert.match(html, /DEPLOY &amp; TEST GAME/);
-  assert.match(html, /Builds save and start in this browser/);
-  assert.match(script, /DEPLOYED LOCALLY · Opening browser game/);
+  assert.match(html, /public\/js\/api-connection\.js/);
+  assert.match(script, /apiFetch\('\/api\/custom-maps'/, 'a saved game is published back into the shared list');
+  assert.match(script, /'\/api\/models'/, 'published models repopulate the Builder catalog');
+  assert.match(html, /SAVE &amp; PLAY LIVE/);
+  assert.match(html, /populate the live game list/);
+  assert.match(script, /LIVE · Game list updated/);
   assert.match(script, /muzikaz\.environmentBuilder\.localMaps\.v1/);
   assert.match(script, /storeLocalMap\(sceneData\)/, 'each builder save is also retained in the local playable-map collection');
   assert.match(script, /sessionStorage\.setItem\(PLAY_KEY,JSON\.stringify\(playScene\)\)/, 'the complete playable scene is staged before browser gameplay begins');
-  assert.match(script, /autoplay=1&local=1/, 'the built game starts immediately in local browser mode');
+  assert.match(script, /deployed=1/);
+  assert.match(script, /localFallback=1/, 'a complete browser-local fallback remains available when publishing fails');
   assert.ok(script.indexOf('sessionStorage.setItem(PLAY_KEY') < script.indexOf('location.href=`model-explorer.html'), 'scene handoff is complete before explorer navigation');
 });
 
-test('builder-facing model and environment catalogs are repository-only', async () => {
+test('builder and explorer merge published games with repository catalogs', async () => {
   const [builder, explorer, environments] = await Promise.all([
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/js/environments/environment-api.js', import.meta.url), 'utf8')
   ]);
-  assert.doesNotMatch(`${builder}\n${explorer}`, /\/api\/models/);
+  assert.match(builder, /'\/api\/models'/);
   assert.match(explorer, /public\/models\/glb-models\.json/);
-  assert.doesNotMatch(environments, /\/api\/environments['"]/);
+  assert.match(environments, /apiFetch\('\/api\/custom-maps'/);
   assert.match(environments, /public\/models\/environments\/environments\.json/);
+  assert.match(environments, /Promise\.allSettled/);
+  assert.match(environments, /new Map/);
 });
 
 
@@ -248,7 +253,8 @@ test('saved maps embed custom item definitions for exact game reconstruction', a
   ]);
   assert.match(script, /sceneData\.customModels=cloneData\(customModels\)/);
   assert.match(script, /sceneData\.placedModels=cloneData/, 'every placed asset definition travels with the local and published scene');
-  assert.doesNotMatch(script, /ownerId|apiFetch/, 'local game builds do not require account or API state');
+  assert.match(script, /body:JSON\.stringify\(\{scene:sceneData,ownerId\}\)/, 'the complete scene is published for other players');
+  assert.match(script, /LOCAL GAME READY/, 'the embedded scene remains playable when the API is unavailable');
   assert.match(game, /built\.placedModels/);
   const loader = await readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8');
   assert.match(loader, /createBuilderMapTemplate\(environment\.builderScene\)/, 'the selected builder template becomes the game world');
