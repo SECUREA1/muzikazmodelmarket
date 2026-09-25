@@ -525,10 +525,31 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     addAvatarCollider(root);
     return root;
   }
+  function deployPlayableLandLayout(asset) {
+    const layoutAliases={loft:'open-studio',suite:'connected-suite',courtyard:'garden-courtyard'};
+    const modelId=layoutAliases[asset.builderLayoutId]||asset.builderLayoutId;
+    let root=createBuilderModel(modelId);
+    // The editor has more map templates than the small-room procedural pack.
+    // Keep those lands usable in this running game by creating a substantial,
+    // walkable 3D plot instead of navigating the player out to the editor.
+    if(!root){
+      root=new THREE.Group();
+      const hue=[...String(modelId)].reduce((total,char)=>total+char.charCodeAt(0),0)%360;
+      const groundMaterial=new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(hue/360,.34,.28),roughness:.88,metalness:.04});
+      const accentMaterial=new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(((hue+78)%360)/360,.72,.55),emissive:new THREE.Color().setHSL(((hue+78)%360)/360,.5,.12),emissiveIntensity:.35,roughness:.52});
+      const ground=new THREE.Mesh(new THREE.BoxGeometry(18,.35,18),groundMaterial);ground.position.y=.175;root.add(ground);
+      for(let index=0;index<8;index++){const angle=index/8*Math.PI*2,radius=index%2?6.7:7.7,height=1.4+(index%3)*.7;const marker=new THREE.Mesh(new THREE.CylinderGeometry(.32+.08*(index%2),.55,height,6),accentMaterial);marker.position.set(Math.cos(angle)*radius,height/2+.35,Math.sin(angle)*radius);marker.rotation.y=-angle;root.add(marker);}
+      const hub=new THREE.Mesh(new THREE.CylinderGeometry(2.4,2.8,.55,12),accentMaterial);hub.position.y=.62;root.add(hub);
+    }
+    root.name=`Backpack_Land_${modelId}`;root.userData.backpackAsset=asset;root.userData.avatar={id:asset.id,name:asset.name,type:'lands'};
+    const dropPoint=floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)).multiplyScalar(10)));
+    root.position.copy(dropPoint);root.rotation.y=player.yaw;root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});
+    placedAvatars.add(root);addAvatarCollider(root);return root;
+  }
   async function deployBackpackAsset(asset) {
     if (!asset?.id) { setStatus('This Backpack item is missing its game identity and could not be used.'); return false; }
     if(asset.container?.requiresShot&&!unlockedAttachmentLoot.has(asset.id)){closeBackpack();if(toxicBubbleSystem.state!==RAD_TOX_STATES.ACTIVE)await toxicBubbleSystem.begin();toxicBubbleSystem.setTool('laser');toxicBubbleSystem.spawnAttachmentBlock(asset);return true;}
-    if (asset.type === 'lands') { closeBackpack(); rememberActiveBackpackItem(asset); if (asset.builderLayoutId) { window.location.assign(asset.builderUrl || `environment-builder.html?layout=${encodeURIComponent(asset.builderLayoutId)}`); return true; } await loadById(asset.environmentId || asset.id); return true; }
+    if (asset.type === 'lands') { closeBackpack(); rememberActiveBackpackItem(asset); if (asset.builderLayoutId) { deployPlayableLandLayout(asset); setStatus(`${asset.name} opened inside ${activeEnvironment?.name||'the current environment'} as a walkable 3D map.`); return true; } await loadById(asset.environmentId || asset.id); return true; }
     if (asset.petId && asset.consumable) { feedTreatToPet(asset); return; }
     if (asset.id === 'rad-tox-dynamite') { closeBackpack(); toxicBubbleSystem.setTool('dynamite'); openTools(); rememberActiveBackpackItem(asset); setStatus('RAD-TOX Dynamite is open and visible in your hand — click, tap, or squeeze the trigger to toss it. Each throw costs 25 MZK.'); return true; }
     if (asset.buildAssetId) { closeBackpack(); deployPlayableBuilderAsset(asset); rememberActiveBackpackItem(asset); setStatus(`${asset.name} popped out of your Backpack and is now playable in ${activeEnvironment?.name||'the game'}.`); return true; }

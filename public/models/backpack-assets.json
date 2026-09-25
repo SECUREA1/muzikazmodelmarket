@@ -364,6 +364,73 @@
       "scale": 1
     },
     {
+      "id": "backpack-canopy-tree",
+      "name": "Canopy Tree",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "canopy-tree",
+      "builderCategory": "landscape",
+      "thumbnailUrl": "/public/images/builder-pack/canopy-tree.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "A dimensional tree that pops directly into the current environment."
+    },
+    {
+      "id": "backpack-lamp-post",
+      "name": "Neon Lamp Post",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "lamp-post",
+      "builderCategory": "landscape",
+      "thumbnailUrl": "/public/images/builder-pack/lamp-post.svg",
+      "format": "procedural-3d",
+      "visibility": "public"
+    },
+    {
+      "id": "backpack-cloud-sofa",
+      "name": "Cloud Sofa",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "sofa",
+      "builderCategory": "interior",
+      "thumbnailUrl": "/public/images/builder-pack/sofa.svg",
+      "format": "procedural-3d",
+      "visibility": "public"
+    },
+    {
+      "id": "backpack-recording-booth",
+      "name": "Recording Booth",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "recording-booth",
+      "builderCategory": "interior",
+      "thumbnailUrl": "/public/images/builder-pack/recording-booth.svg",
+      "format": "procedural-3d",
+      "visibility": "public"
+    },
+    {
+      "id": "backpack-spiral-stairs",
+      "name": "Spiral Stairs",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "spiral-stairs",
+      "builderCategory": "interior",
+      "thumbnailUrl": "/public/images/builder-pack/spiral-stairs.svg",
+      "format": "procedural-3d",
+      "visibility": "public"
+    },
+    {
+      "id": "backpack-reflecting-pond",
+      "name": "Reflecting Pond",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "pond",
+      "builderCategory": "landscape",
+      "thumbnailUrl": "/public/images/builder-pack/pond.svg",
+      "format": "procedural-3d",
+      "visibility": "public"
+    },
+    {
       "id": "beeduck-companion",
       "name": "BEE Duck Companion",
       "owner": "MUZIKAZ",
