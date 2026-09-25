@@ -261,8 +261,10 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
   assert.match(game, /floorSweepRay\.intersectObjects\(envLoader\.floorMeshes,true\)/, 'a downward frame sweep catches thin floors crossed during a fall');
   assert.doesNotMatch(game, /PLAYER_ENTRY_DROP_HEIGHT|dropIntoMap/, 'map entry never adds an aerial offset above the resolved floor');
   assert.doesNotMatch(game, /playerDropRecoveryActive|groundedRecoveryFrames/, 'the drop is not re-armed from the animation loop');
-  assert.doesNotMatch(game, /lastSafePlayerPosition|floorLockCooldown|floorLockY/, 'ordinary ground contact never arms a player redeployment loop');
-  assert.match(game, /playerRig\.position\.y < minimumWorldY\) resetPlayer\(\)/, 'only leaving the world bounds triggers automatic respawn');
+  assert.match(game, /const lastSafePlayerPosition = new THREE\.Vector3\(\)/, 'every map shares a last-known-good floor position');
+  assert.match(game, /const floorLockY=Math\.max\(mapFloorLimit,safeFloorLimit\)/, 'the floor lock uses both the active map bounds and its last verified collider floor');
+  assert.match(game, /playerCollider\.start\.set\(recovery\.x,recovery\.y\+player\.radius,recovery\.z\)/, 'a missed floor collider restores the capsule to safe ground');
+  assert.match(game, /floorLockCooldown=\.35/, 'floor recovery is rate limited instead of repeatedly resetting each frame');
   for (const layout of ['blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio']) assert.match(loader, new RegExp(`'${layout}'`));
 });
 
