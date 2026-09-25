@@ -262,7 +262,9 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
   assert.doesNotMatch(game, /PLAYER_ENTRY_DROP_HEIGHT|dropIntoMap/, 'map entry never adds an aerial offset above the resolved floor');
   assert.doesNotMatch(game, /playerDropRecoveryActive|groundedRecoveryFrames/, 'the drop is not re-armed from the animation loop');
   assert.doesNotMatch(game, /lastSafePlayerPosition|floorLockCooldown|floorLockY/, 'ordinary ground contact never arms a player redeployment loop');
-  assert.match(game, /playerRig\.position\.y < minimumWorldY\) resetPlayer\(\)/, 'only leaving the world bounds triggers automatic respawn');
+  assert.match(game, /if\(player\.onGround\)outOfBoundsRecoveryArmed=true/, 'out-of-bounds recovery is armed only after verified ground contact');
+  assert.match(game, /if \(outOfBoundsRecoveryArmed && playerRig\.position\.y < minimumWorldY\) resetPlayer\(\)/, 'leaving the world bounds triggers at most one automatic respawn');
+  assert.match(game, /outOfBoundsRecoveryArmed = false/, 'respawning disarms recovery so a malformed spawn cannot reset every frame');
   for (const layout of ['blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio']) assert.match(loader, new RegExp(`'${layout}'`));
 });
 
