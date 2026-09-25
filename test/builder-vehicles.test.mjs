@@ -64,3 +64,14 @@ test('nearby item actions are stable and rate-limited for touch devices', async 
   assert.doesNotMatch(game, /builderActionButton\.querySelector\('strong'\)\.textContent/);
   assert.doesNotMatch(game, /builderActionButton\.querySelector\('small'\)\.textContent/);
 });
+
+test('interaction failures stay isolated from the WebGL render loop', async () => {
+  const game = await read('../public/js/house-explorer-glb.js');
+  assert.match(game, /function safelyInteract\(context, action\)/);
+  assert.match(game, /function safelyCapturePointer\(element, pointerId\)/);
+  assert.match(game, /reportInteractionError\('Nearby interaction',error\)/);
+  assert.match(game, /safelyInteract\('Vehicle interaction'/);
+  assert.match(game, /safelyInteract\('World interaction'/);
+  assert.doesNotMatch(game, /canvas\.setPointerCapture\?\.\(e\.pointerId\)/);
+  assert.doesNotMatch(game, /stick\.setPointerCapture\?\.\(pointerId\)/);
+});

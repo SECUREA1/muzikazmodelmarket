@@ -145,6 +145,29 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const builderActionHint=builderActionButton.querySelector('small');
 
   const setStatus = (message) => { if (status) status.textContent = message; };
+  // User input must never be allowed to tear down the render loop. WebGL actors
+  // can disappear between a proximity check and a click (for example when a
+  // world is changed or an inventory item is removed), and pointer-capture
+  // methods may throw when mobile browsers cancel a gesture mid-frame.
+  function reportInteractionError(context, error) {
+    console.error(`[MUZIKAZ Interaction] ${context}`, error);
+    setStatus(`${context} could not finish. The game is still running; try again.`);
+  }
+  function safelyInteract(context, action) {
+    try {
+      const result = action();
+      if (result?.catch) result.catch((error) => reportInteractionError(context, error));
+      return result;
+    } catch (error) {
+      reportInteractionError(context, error);
+      return undefined;
+    }
+  }
+  function safelyCapturePointer(element, pointerId) {
+    if (!element?.setPointerCapture || !Number.isInteger(pointerId)) return;
+    try { element.setPointerCapture(pointerId); }
+    catch (error) { console.info('[MUZIKAZ Interaction] Pointer capture was cancelled.', error?.message || error); }
+  }
   const environmentSelect = document.querySelector('#house-environment-select');
   const environmentList = document.querySelector('#house-environment-scroll-list');
   const environmentListToggle = document.querySelector('#house-environment-list-toggle');
@@ -903,20 +926,22 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     builderActionButton.setAttribute('aria-label',next.label);
     builderActionTitle.textContent=next.title;builderActionHint.textContent=next.hint;
   }
-  function refreshNearbyAction(now=performance.now(),force=false){if(!force&&now-nearbyActionCheckedAt<100)return;nearbyActionCheckedAt=now;renderNearbyAction(resolveNearbyAction());}
+  function refreshNearbyAction(now=performance.now(),force=false){if(!force&&now-nearbyActionCheckedAt<100)return;nearbyActionCheckedAt=now;try{renderNearbyAction(resolveNearbyAction());}catch(error){renderNearbyAction({kind:'none',prompt:'',label:'',title:'',hint:'',vehicleActive:false});reportInteractionError('Nearby interaction',error);}}
   builderActionButton.addEventListener('click',()=>{
     if(nearbyActionLocked)return;
     nearbyActionLocked=true;
     try{
-      if(nearbyAction.kind==='drop')dropHeldBuilderItem();
-      else if(nearbyAction.kind==='vehicle')vehicleController.toggle();
-      else if(nearbyAction.kind==='item'){const result=builderGameplay.interact('e',playerRig.position);if(!result)setStatus('No usable object is close enough.');}
+      safelyInteract('Item interaction',()=>{
+        if(nearbyAction.kind==='drop')return dropHeldBuilderItem();
+        if(nearbyAction.kind==='vehicle')return vehicleController.toggle();
+        if(nearbyAction.kind==='item'){const result=builderGameplay.interact('e',playerRig.position);if(!result)setStatus('No usable object is close enough.');return result;}
+      });
     }finally{
       refreshNearbyAction(performance.now(),true);
       window.setTimeout(()=>{nearbyActionLocked=false;},180);
     }
   });
-  window.addEventListener('keydown', (e) => { if (isTypingTarget(e.target)) { keys.clear(); return; } const key = e.key.toLowerCase(); keys.add(key); if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) e.preventDefault(); if (key === 'f' && !e.repeat) { e.preventDefault(); vehicleController.toggle(); } if (key === 'e' && !e.repeat) { e.preventDefault(); const result=builderGameplay.interact('e',playerRig.position); if(!result)setStatus('No Builder object is close enough to interact with.'); } if (key === 'g' && !e.repeat) { e.preventDefault(); if(!dropHeldBuilderItem())setStatus('Pick up a Builder item before dropping it.'); } if (key === ' ') { e.preventDefault(); if (!vehicleController.active && player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } } if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08); if (key === 'r') resetPlayer(); if (key === 'i') { e.preventDefault(); toxicBubbleSystem.toggleInventory(); } }); window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase())); window.addEventListener('blur', () => keys.clear());
+  window.addEventListener('keydown', (e) => { if (isTypingTarget(e.target)) { keys.clear(); return; } const key = e.key.toLowerCase(); keys.add(key); if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) e.preventDefault(); if (key === 'f' && !e.repeat) { e.preventDefault(); safelyInteract('Vehicle interaction',()=>vehicleController.toggle()); } if (key === 'e' && !e.repeat) { e.preventDefault(); safelyInteract('Item interaction',()=>{const result=builderGameplay.interact('e',playerRig.position);if(!result)setStatus('No Builder object is close enough to interact with.');return result;}); } if (key === 'g' && !e.repeat) { e.preventDefault(); safelyInteract('Drop interaction',()=>{if(!dropHeldBuilderItem())setStatus('Pick up a Builder item before dropping it.');}); } if (key === ' ') { e.preventDefault(); if (!vehicleController.active && player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } } if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08); if (key === 'r') safelyInteract('Reset interaction',resetPlayer); if (key === 'i') { e.preventDefault(); safelyInteract('Inventory interaction',()=>toxicBubbleSystem.toggleInventory()); } }); window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase())); window.addEventListener('blur', () => keys.clear());
   const pointerLockSupported = Boolean(canvas.requestPointerLock);
   document.addEventListener('pointerlockchange', () => {
     const locked = document.pointerLockElement === canvas;
@@ -927,7 +952,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   scaleControl.querySelector('input').addEventListener('input', (e) => applySpaceScale(e.target.value)); scaleControl.querySelectorAll('[data-space-scale]').forEach((button) => button.addEventListener('click', () => applySpaceScale(currentSpaceScale + (button.dataset.spaceScale === 'up' ? .1 : -.1)))); viewControls.querySelectorAll('[data-zoom]').forEach((button) => button.addEventListener('click', () => applyZoom(button.dataset.zoom === 'in' ? -1 : 1))); syncZoomControls();
   environmentSelect?.addEventListener('change', (event) => { if (event.target.value) loadById(event.target.value); });
   environmentListToggle?.addEventListener('click',()=>{const open=environmentList.hidden;environmentList.hidden=!open;environmentListToggle.setAttribute('aria-expanded',String(open));environmentListToggle.textContent=open?'Close maps':'Browse maps';if(open)environmentList.querySelector('[aria-selected="true"]')?.scrollIntoView({block:'center'});});
-  environmentList?.addEventListener('click',(event)=>{const button=event.target.closest('[data-environment-id]');if(!button)return;environmentSelect.value=button.dataset.environmentId;environmentList.hidden=true;environmentListToggle.setAttribute('aria-expanded','false');environmentListToggle.textContent='Browse maps';loadById(button.dataset.environmentId);});
+  environmentList?.addEventListener('click',(event)=>{const button=event.target instanceof Element?event.target.closest('[data-environment-id]'):null;if(!button)return;environmentSelect.value=button.dataset.environmentId;environmentList.hidden=true;environmentListToggle?.setAttribute('aria-expanded','false');if(environmentListToggle)environmentListToggle.textContent='Browse maps';safelyInteract('World interaction',()=>loadById(button.dataset.environmentId));});
   canvas.addEventListener('dragover', (e) => { if (!activeAvatar && !e.dataTransfer?.types?.includes('application/x-muzikaz-avatar')) return; e.preventDefault(); stage.classList.add('is-avatar-drop-target'); }); canvas.addEventListener('dragleave', () => stage.classList.remove('is-avatar-drop-target')); canvas.addEventListener('drop', async (e) => { e.preventDefault(); stage.classList.remove('is-avatar-drop-target'); const avatars = window.MuzikazActiveHouseAvatars || []; const avatar = avatars.find(a => a.id === e.dataTransfer.getData('application/x-muzikaz-avatar')) || activeAvatar; if (avatar) addAvatarToScene(avatar, setAvatarPointerFromEvent(e)).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); });
   let toxicTap = null; let toxicConsumedClick = false;
   canvas.addEventListener('click', (event) => { if (!toxicConsumedClick) return; toxicConsumedClick=false; event.preventDefault(); event.stopImmediatePropagation(); }, true);
@@ -959,7 +984,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       toxicTap = null;
       setStatus(`Pinch ${avatarDisplayName(root)} with two fingers to stretch or shrink it.`);
     }
-    canvas.setPointerCapture?.(e.pointerId);
+    safelyCapturePointer(canvas,e.pointerId);
   });
   canvas.addEventListener('pointermove', (e) => {
     if (document.pointerLockElement === canvas) return;
@@ -1000,7 +1025,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function setFullscreen() { if (document.fullscreenElement) { document.exitFullscreen?.(); return; } const request = stage.requestFullscreen?.(); if (request?.catch) request.catch(() => setStatus('Fullscreen is unavailable in this browser.')); else setStatus('Fullscreen is unavailable in this browser.'); }
   function setupThumbstick(name) { const stick = document.querySelector(`[data-thumbstick="${name}"] .thumbstick-base`); const knob = stick?.querySelector('.thumbstick-knob'); if (!stick || !knob) return; let pointerId = null; let startX = 0; let startY = 0; let moved = false; const write = (event) => { const rect = stick.getBoundingClientRect(); const radius = rect.width * .29; let x = THREE.MathUtils.clamp(event.clientX - (rect.left + rect.width / 2), -radius, radius); let y = THREE.MathUtils.clamp(event.clientY - (rect.top + rect.height / 2), -radius, radius); const length = Math.hypot(x, y); if (length > radius) { x = x / length * radius; y = y / length * radius; } knob.style.transform = `translate(${x}px, ${y}px)`; thumbInput[`${name}X`] = x / radius; thumbInput[`${name}Y`] = y / radius; moved ||= Math.hypot(event.clientX - startX, event.clientY - startY) > 8; };
     const release = (event) => { if (pointerId !== event.pointerId) return; if (!moved) { if (name === 'left') shootAtReticle(); else jump(); } pointerId = null; thumbInput[`${name}X`] = 0; thumbInput[`${name}Y`] = 0; knob.style.transform = 'translate(0, 0)'; stick.classList.remove('is-active'); };
-    stick.addEventListener('pointerdown', (event) => { event.preventDefault(); pointerId = event.pointerId; startX = event.clientX; startY = event.clientY; moved = false; stick.setPointerCapture?.(pointerId); stick.classList.add('is-active'); write(event); }); stick.addEventListener('pointermove', (event) => { if (pointerId === event.pointerId) { event.preventDefault(); write(event); } }); stick.addEventListener('pointerup', release); stick.addEventListener('pointercancel', release);
+    stick.addEventListener('pointerdown', (event) => { event.preventDefault(); pointerId = event.pointerId; startX = event.clientX; startY = event.clientY; moved = false; safelyCapturePointer(stick,pointerId); stick.classList.add('is-active'); safelyInteract(`${name} controller interaction`,()=>write(event)); }); stick.addEventListener('pointermove', (event) => { if (pointerId === event.pointerId) { event.preventDefault(); safelyInteract(`${name} controller interaction`,()=>write(event)); } }); stick.addEventListener('pointerup', release); stick.addEventListener('pointercancel', release);
   }
   setupThumbstick('left'); setupThumbstick('right');
   fullscreenButton?.addEventListener('click', setFullscreen);
