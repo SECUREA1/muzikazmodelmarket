@@ -36,6 +36,24 @@ test('in-game Tools and Drop Backpack expose the complete map-building pack', as
   assert.ok(buildAssets.every((asset) => asset.type === 'props' && asset.thumbnailUrl));
 });
 
+test('every Environment Builder layout is a land in the in-game Backpack', async () => {
+  const [builder, game, manifest] = await Promise.all([
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/models/backpack-assets.json', import.meta.url), 'utf8').then(JSON.parse)
+  ]);
+  const layoutBlock = builder.match(/const layouts=\{([\s\S]+?)\n\};/)?.[1] || '';
+  const layoutIds = [...layoutBlock.matchAll(/(?:'([^']+)'|\b([a-z][a-z-]*)):\{name:/g)].map((match) => match[1] || match[2]);
+  const builderLands = manifest.assets.filter((asset) => asset.type === 'lands' && asset.builderLayoutId);
+
+  assert.equal(builderLands.length, layoutIds.length);
+  assert.deepEqual(new Set(builderLands.map((asset) => asset.builderLayoutId)), new Set(layoutIds));
+  assert.ok(builderLands.every((asset) => asset.builderUrl === `/environment-builder.html?layout=${asset.builderLayoutId}`));
+  assert.ok(builderLands.every((asset) => !asset.buildAssetId), 'lands must not be represented as placeable props');
+  assert.match(game, /asset\.builderLayoutId/);
+  assert.match(game, /environment-builder\.html\?layout=/);
+});
+
 test('Drop Backpack pets each have a custom refillable treat', async () => {
   const [game, manifest] = await Promise.all([
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
