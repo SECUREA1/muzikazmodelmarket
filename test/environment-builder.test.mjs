@@ -229,6 +229,13 @@ test('saved sandbox maps embed custom item definitions for exact game reconstruc
   assert.match(game, /prepareAuthoredBuilderModel/);
   assert.match(game, /createGeneratedAsset\(definition\)/);
   assert.match(game, /object\.scale\.multiply/, 'gameplay preserves the model normalization and the exact authored instance scale');
+  assert.match(game, /built\?\.id===sandboxMapId/, 'a sandbox accepts only the exact scene staged by the Builder launch');
+  assert.match(game, /localSandbox&&id!==sandboxMapId/, 'sandbox play rejects every attempt to switch to another map');
+  assert.match(game, /const fallbackEnv = !localSandbox&&fallback/, 'a failed Builder template never falls through to the main map');
+  assert.match(game, /if\(localSandbox\)\{setStatus\('Level clear — restarting this Builder template without changing maps\.'/,
+    'shared game level progression stays on the authored Builder map');
+  assert.match(game, /localSandbox\s*\? fetch\('\/public\/models\/environments\/environments\.json'/,
+    'private template play loads its base geometry from the repository manifest without calling the environments API');
 });
 
 test('Builder Pack layouts open as new environment maps', async () => {
