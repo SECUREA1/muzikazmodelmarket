@@ -232,7 +232,9 @@ test('builder lands and placed items retain verified collision floors', async ()
   assert.match(loader, /root\.add\(mesh\)/, 'template buildings and props join the world root and its collision pass');
   assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode\)/, 'procedural terrain enters the normal collision pipeline');
   assert.match(loader, /resolveSafeSpawn\(nextWorld, collision\.floorMeshes, environment\.spawn\)/, 'the initial player position is resolved against verified collision floors');
-  assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;resetPlayer\(spawn\.position,spawn\.rotationY\|\|0,\{dropIntoMap:true\}\)/, 'map loading drops the player once above an authored or safe resolved spawn');
+  assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;resetPlayer\(spawn\.position,spawn\.rotationY\|\|0\)/, 'map loading places the player at an authored or safe resolved spawn');
+  assert.match(game, /if \(startupDropComplete \|\| !envLoader\.world\) return;/, 'startup drop is guarded so it can happen only once');
+  assert.match(game, /await openHouseMap\(\);\s*performStartupDrop\(\);\s*await toxicBubbleSystem\.begin\(\)/, 'the one-time drop occurs in the traditional load, spawn, then begin startup flow');
   assert.match(loader, /setSupplementalCollisionRoots\(roots = \[\]\)/, 'the loader can safely include placed Builder items in its collision octree');
   assert.match(game, /function refreshBuilderCollision\(\)/, 'placed Builder items batch their collision refresh instead of rebuilding once per asset');
   assert.match(game, /window\.setTimeout/, 'collision rebuilding yields to the browser so the map can open first');
