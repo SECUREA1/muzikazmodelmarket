@@ -19,6 +19,25 @@ export class EnvironmentLoader {
   unload() { this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
   loadOne(url, index, count) { return new Promise((resolve, reject) => this.loader.load(url, resolve, (e) => this.onProgress(((index + (e.total ? e.loaded / e.total : 0.35)) / count) * 100), reject)); }
 
+  createBuilderWorld(environment) {
+    const scene = environment.builderScene;
+    if (!scene || !Array.isArray(scene.objects)) throw new Error('This environment has no GLB or coded Builder scene to play.');
+    const size = THREE.MathUtils.clamp(Number(scene.layoutMeta?.size || scene.size) || 40, 10, 200);
+    const color = new THREE.Color(scene.layoutMeta?.groundColor || '#315b32');
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(size, size, Math.max(1, Math.round(size / 2)), Math.max(1, Math.round(size / 2))),
+      new THREE.MeshStandardMaterial({ color, roughness: .92, metalness: .02, side: THREE.DoubleSide })
+    );
+    floor.name = 'GROUND_BUILDER_SVG';
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    const root = new THREE.Group();
+    root.name = `CODED_BUILDER_WORLD_${environment.id}`;
+    root.userData.codedBuilderScene = true;
+    root.add(floor);
+    return root;
+  }
+
   setSpaceScale(scale) {
     if (!this.world) return null;
     const nextScale = THREE.MathUtils.clamp(Number(scale) || 1, 0.1, 100);
@@ -32,10 +51,11 @@ export class EnvironmentLoader {
     return { scale: this.spaceScale, collision, bounds: this.bounds };
   }
   async load(environment) {
-    const token = ++this.token; const urls = environment.modelUrls?.length ? environment.modelUrls : [environment.modelUrl];
+    const token = ++this.token; const urls = (environment.modelUrls?.length ? environment.modelUrls : [environment.modelUrl]).filter(Boolean);
     const nextWorld = new THREE.Group(); nextWorld.name = `WORLD_${environment.id}`; this.baseScale = Number(environment.scale) || 1; this.spaceScale = Number(environment.spaceScale) || 1; nextWorld.userData.baseScale = this.baseScale; nextWorld.scale.setScalar(this.baseScale * this.spaceScale); nextWorld.rotation.set(environment.rotation.x || 0, environment.rotation.y || 0, environment.rotation.z || 0);
     const nextMixers = [];
     try {
+      if (!urls.length) nextWorld.add(this.createBuilderWorld(environment));
       for (let i = 0; i < urls.length; i += 1) {
         const gltf = await this.loadOne(urls[i], i, urls.length); if (token !== this.token) return null;
         gltf.scene.name = `GLB_${environment.id}_${i + 1}`; nextWorld.add(gltf.scene);

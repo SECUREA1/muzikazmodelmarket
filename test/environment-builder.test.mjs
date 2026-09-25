@@ -295,3 +295,16 @@ test('every library preview renders without aborting builder initialization', as
     'the Firefox library is populated before WebGL initialization can fail'
   );
 });
+
+
+test('coded SVG Builder maps can play without a GLB environment file', async () => {
+  const [loader, game] = await Promise.all([
+    readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
+  ]);
+  assert.match(loader, /createBuilderWorld\(environment\)/);
+  assert.match(loader, /environment\.builderScene/);
+  assert.match(loader, /GROUND_BUILDER_SVG/);
+  assert.match(loader, /if \(!urls\.length\) nextWorld\.add\(this\.createBuilderWorld\(environment\)\)/);
+  assert.match(game, /coded SVG Builder/);
+});
