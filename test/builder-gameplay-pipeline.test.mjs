@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BuilderGameplayRuntime, compileBuilderScene, upgradeBuilderManifest } from '../public/js/builder-gameplay-pipeline.js';
+import { BuilderGameplayRuntime, behaviorForBuilderObject, compileBuilderScene, upgradeBuilderManifest } from '../public/js/builder-gameplay-pipeline.js';
 
 test('builder scenes compile into a gameplay manifest with an authored player spawn', () => {
   const manifest = compileBuilderScene({
@@ -102,4 +102,30 @@ test('holdable and switch objects run their complete gameplay functions', () => 
   assert.deepEqual(held,[true]); assert.deepEqual(used,[true]);
   assert.equal(runtime.interact('e',{x:4,y:0,z:0}).handled,true);
   assert.deepEqual(switched,[true]);
+});
+
+test('unconfigured builder assets receive gameplay appropriate to their item type', () => {
+  assert.equal(behaviorForBuilderObject({type:'weapon'}),'pickup');
+  assert.equal(behaviorForBuilderObject({type:'vehicle'}),'vehicle');
+  assert.equal(behaviorForBuilderObject({type:'enemy'}),'hostile');
+  assert.equal(behaviorForBuilderObject({type:'wearable'}),'hold');
+  assert.equal(behaviorForBuilderObject({type:'terrain'}),'decor');
+  assert.equal(behaviorForBuilderObject({type:'weapon',behavior:'quest'}),'quest','authored behavior wins');
+});
+
+test('held items can be dropped into the world and picked up again', () => {
+  const runtime=new BuilderGameplayRuntime({manifest:compileBuilderScene({objects:[
+    {id:'blade',modelId:'plasma-sword',type:'weapon',position:{x:0,y:0,z:0}}
+  ]})});
+  const events=[];
+  runtime.register('blade',{setHeld:value=>events.push(['held',value]),setDropped:position=>events.push(['dropped',position]),setActive:value=>events.push(['active',value])});
+  assert.equal(runtime.interact('e',{x:0,y:0,z:0}).handled,true);
+  assert.equal(runtime.heldActor().objectId,'blade');
+  const dropped=runtime.dropHeld({x:3,y:0,z:-2});
+  assert.equal(dropped.handled,true);
+  assert.equal(runtime.heldActor(),undefined);
+  assert.deepEqual(runtime.player.inventory,[]);
+  assert.deepEqual(runtime.actor('blade').transform.position,{x:3,y:0,z:-2});
+  assert.deepEqual(events,[['held',true],['dropped',{x:3,y:0,z:-2}],['active',true]]);
+  assert.equal(runtime.interact('e',{x:3,y:0,z:-2}).handled,true);
 });
