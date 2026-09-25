@@ -159,11 +159,15 @@ export function resolveSafeSpawn(root, floorMeshes, metadataSpawn = {}, playerHe
   const center = box.getCenter(new THREE.Vector3());
   const spawnNode = findSpawnNode(root);
   const largestFloorPoint = findLargestWalkableFloorPoint(floorMeshes, box, playerHeight);
-  const raw = largestFloorPoint || (spawnNode ? spawnNode.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(
-    Number.isFinite(metadataSpawn.x) ? metadataSpawn.x : center.x,
-    Number.isFinite(metadataSpawn.y) ? metadataSpawn.y : center.y,
-    Number.isFinite(metadataSpawn.z) ? metadataSpawn.z : center.z
-  ));
+  const hasMetadataSpawn = ['x', 'y', 'z'].some((axis) => Number.isFinite(Number(metadataSpawn?.[axis])));
+  // Authored entry points are intentional and must win over the floor sampler.
+  // The sampler is a safe fallback for un-authored uploads, not a replacement
+  // for the location selected by the map creator.
+  const raw = spawnNode ? spawnNode.getWorldPosition(new THREE.Vector3()) : hasMetadataSpawn ? new THREE.Vector3(
+    Number.isFinite(Number(metadataSpawn.x)) ? Number(metadataSpawn.x) : center.x,
+    Number.isFinite(Number(metadataSpawn.y)) ? Number(metadataSpawn.y) : center.y,
+    Number.isFinite(Number(metadataSpawn.z)) ? Number(metadataSpawn.z) : center.z
+  ) : largestFloorPoint || center;
   const margin = 0.35;
   const candidate = new THREE.Vector3(
     THREE.MathUtils.clamp(raw.x, box.min.x + margin, box.max.x - margin),
