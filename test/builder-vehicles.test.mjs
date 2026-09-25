@@ -4,12 +4,12 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
-test('builder provides illustrated rideable quad and Corsair aircraft assets', async () => {
-  const [builder, models, quad, corsair] = await Promise.all([
+test('builder provides five illustrated playable driving, flying and hovering vehicles', async () => {
+  const [builder, models, ...art] = await Promise.all([
     read('../environment-builder.js'), read('../public/js/builder-models-3d.js'),
-    read('../public/images/builder-pack/dune-quad.svg'), read('../public/images/builder-pack/corsair-aircraft.svg')
+    ...['street-car','dune-quad','sky-rescue-helicopter','corsair-aircraft','flux-hoverboard'].map(id=>read(`../public/images/builder-pack/${id}.svg`))
   ]);
-  for (const id of ['dune-quad', 'corsair-aircraft']) {
+  for (const id of ['street-car','dune-quad','sky-rescue-helicopter','corsair-aircraft','flux-hoverboard']) {
     assert.match(builder, new RegExp(`id:'${id}'`));
     assert.match(models, new RegExp(`'${id}'`));
   }
@@ -17,8 +17,11 @@ test('builder provides illustrated rideable quad and Corsair aircraft assets', a
   assert.match(models, /vehiclePropeller/);
   assert.match(models, /mode:'drive'/);
   assert.match(models, /mode:'fly'/);
-  assert.match(quad, /NO BODY/);
-  assert.match(corsair, /BLACKWING CORSAIR/);
+  assert.equal(art.length, 5);
+  assert.ok(art.every(svg=>/<title/.test(svg) && /<desc/.test(svg)));
+  assert.match(models, /vehicleRotor/);
+  assert.match(models, /vehicleThruster/);
+  assert.match(models, /mode:'hover'/);
 });
 
 test('standard vehicle controller supports enter, movement, flight and exit', async () => {
@@ -27,6 +30,8 @@ test('standard vehicle controller supports enter, movement, flight and exit', as
   ]);
   for (const behavior of ['nearest', 'toggle', 'exit', 'update']) assert.match(controller, new RegExp(`${behavior}\\(`));
   assert.match(controller, /config\.mode === 'fly'/);
+  assert.match(controller, /config\.mode === 'hover'/);
+  assert.match(controller, /boostSpeed/);
   assert.match(controller, /keys\.has\('shift'\)/);
   assert.match(game, /new BuilderVehicleController/);
   assert.match(game, /key === 'f'/);
@@ -38,7 +43,7 @@ test('vehicles are categorized separately and expose a touch enter button', asyn
     read('../public/models/backpack-assets.json'), read('../public/js/house-explorer-glb.js'), read('../model-explorer.html')
   ]);
   const assets=JSON.parse(catalog).assets;
-  for (const id of ['builder-corsair-aircraft','builder-dune-quad']) assert.equal(assets.find(asset=>asset.id===id)?.type,'vehicles');
+  for (const id of ['builder-street-car','builder-corsair-aircraft','builder-sky-rescue-helicopter','builder-dune-quad','builder-flux-hoverboard']) assert.equal(assets.find(asset=>asset.id===id)?.type,'vehicles');
   assert.match(game, /builder-nearby-action/);
   assert.match(game, /ENTER VEHICLE/);
   assert.match(page, /house-environment-scroll-list/);
