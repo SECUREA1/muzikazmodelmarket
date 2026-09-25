@@ -35,7 +35,7 @@ test('in-game Tools and Drop Backpack expose the complete map-building pack', as
   assert.equal(buildAssets.length, 78);
   assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'landscape').length, 13);
   assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'interior').length, 13);
-  assert.ok(buildAssets.every((asset) => asset.type === 'props' && asset.thumbnailUrl));
+  assert.ok(buildAssets.every((asset) => ['props','vehicles'].includes(asset.type) && asset.thumbnailUrl));
   for (const category of ['terrain','plants','buildings','props','weapons','characters','creatures','avatar','enemy','interactive','vehicles']) {
     assert.ok(buildAssets.some((asset) => asset.builderCategory === category), `${category} items are available in game`);
     assert.match(game, new RegExp(`'${category}'`), `${category} has an in-game filter`);
