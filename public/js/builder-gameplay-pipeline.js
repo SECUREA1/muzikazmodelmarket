@@ -5,6 +5,14 @@ export const PLAYABLE_BEHAVIORS = new Set([
   'interact', 'hazard', 'trigger', 'hold', 'switch'
 ]);
 
+// This set documents the behaviors with dedicated runtime handling; it is not
+// an allow-list. Builder content is extensible, so an authored behavior that a
+// newer asset or map introduces must still reach gameplay instead of being
+// silently discarded by an older client.
+export function isBuilderGameplayObject(object = {}) {
+  return String(object.gameplay?.behavior || behaviorForBuilderObject(object)) !== 'decor';
+}
+
 const finite = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const copy = value => value == null ? value : JSON.parse(JSON.stringify(value));
 const vector = (value, fallback = 0) => ({
@@ -76,7 +84,7 @@ export function normalizeBuilderObject(object = {}, index = 0) {
 export function compileBuilderScene(scene = {}) {
   const source = Array.isArray(scene.objects) ? scene.objects : [];
   const objects = source.filter(value => value && typeof value === 'object').map(normalizeBuilderObject);
-  const actors = objects.filter(object => PLAYABLE_BEHAVIORS.has(object.gameplay.behavior)).map(object => ({
+  const actors = objects.filter(isBuilderGameplayObject).map(object => ({
     ...object, behavior: object.gameplay.behavior, position: copy(object.transform.position)
   }));
   const spawnObject = objects.find((object, index) => source[index]?.modelId === 'hero-spawn' || object.gameplay.isPlayerSpawn === true);
@@ -98,8 +106,8 @@ export function upgradeBuilderManifest(manifest = {}) {
     : normalizeBuilderObject({ ...item, id: item.objectId, functionalSettings: { ...(item.functionalSettings || {}), behavior: item.behavior } }, index));
   return {
     ...copy(manifest), version: BUILDER_MANIFEST_VERSION,
-    objectCount: objects.length, actorCount: objects.filter(item => PLAYABLE_BEHAVIORS.has(item.gameplay?.behavior)).length,
-    objects, actors: objects.filter(item => PLAYABLE_BEHAVIORS.has(item.gameplay?.behavior))
+    objectCount: objects.length, actorCount: objects.filter(isBuilderGameplayObject).length,
+    objects, actors: objects.filter(isBuilderGameplayObject)
   };
 }
 
