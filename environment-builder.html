@@ -13,13 +13,14 @@
   <meta name="description" content="Arrange, scale and rotate MUZIKAZ Builder Pack objects on your land, then save the completed environment.">
   <title>ENVIRONMENT BUILDER | MUZIKAZ</title>
   <link rel="icon" href="muzikaz_bolt_logo_editable.svg"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="environment-builder.css">
+  <script src="public/js/api-connection.js"></script>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
 <body class="environment-builder-page">
   <header class="environment-topbar">
     <a class="environment-brand" href="builder-market.html#backpack"><img src="muzikaz_bolt_logo_editable.svg" alt=""><span><small>MUZIKAZ WORLD</small><strong>ENVIRONMENT BUILDER</strong></span></a>
     <label class="scene-name"><span>SCENE NAME</span><input id="scene-name" value="Untitled environment" maxlength="80"></label>
-    <div class="environment-actions"><span id="save-state">Builds save and start in this browser</span><button type="button" id="clear-scene">NEW MAP</button><button type="button" id="save-scene">SAVE SCENE</button><button type="button" id="play-scene" class="primary" title="Save this build locally, then open and test the 3D game in your browser">DEPLOY &amp; TEST GAME</button></div>
+    <div class="environment-actions"><span id="save-state">Builds save locally and populate the live game list</span><button type="button" id="clear-scene">NEW MAP</button><button type="button" id="save-scene">SAVE SCENE</button><button type="button" id="play-scene" class="primary" title="Save this build, publish it to the playable game list, and start it">SAVE &amp; PLAY LIVE</button></div>
   </header>
   <main class="environment-workspace">
     <aside class="object-library" aria-labelledby="library-title">
