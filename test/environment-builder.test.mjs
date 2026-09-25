@@ -236,6 +236,22 @@ test('builder lands load on a playable spawn without supplemental collision rebu
   assert.match(server, /modelUrl:'', modelUrls:\[\]/, 'published builder maps no longer borrow a repository GLB');
 });
 
+test('world ground and solid scenery always participate in gameplay collision', async () => {
+  const [collision, game] = await Promise.all([
+    readFile(new URL('../public/js/environments/environment-collision.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
+  ]);
+  const excluded = collision.match(/const EXCLUDE_RE = \/\(([^\n]+)\)\/i/)?.[1] || '';
+  assert.doesNotMatch(excluded, /FOLIAGE|LEAF|LEAVES/);
+  assert.doesNotMatch(excluded, /LIGHT|LAMP/);
+  assert.doesNotMatch(collision, /mode !== 'none'/, 'legacy none metadata cannot disable playable map collision');
+  assert.match(collision, /material\?\.visible !== false/);
+  assert.match(game, /function resolveBuilderPropCollisions\(delta\)/);
+  assert.match(game, /resolveBuilderPropCollisions\(delta\); resolveBrickCollisions/, 'players collide with placed bushes, lamps, and other builder props');
+  assert.match(game, /!object\.userData\.collisionDisabled && !object\.userData\.water/);
+  assert.match(game, /ground=floorPointAt\(/, 'dropped items settle against the active map ground');
+});
+
 test('saved sandbox maps embed custom item definitions for exact game reconstruction', async () => {
   const [script, game] = await Promise.all([
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),

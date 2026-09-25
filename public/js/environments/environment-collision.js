@@ -2,7 +2,11 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Octree.js/+esm';
 
 const COLLISION_RE = /^(COLLIDER|COLLISION|NAVMESH)(_|$)/i;
-const EXCLUDE_RE = /(SKY|PARTICLE|VFX|FOLIAGE|LEAF|LEAVES|GRASS|WATER|GLASS|LIGHT|HELPER|DECOR|AVATAR)/i;
+// Only effects with no physical surface are excluded.  In particular, do not
+// exclude foliage, bushes, lamps, transparent fences, or glass: those are
+// visible world props and players expect both themselves and dropped objects
+// to stop against them.
+const EXCLUDE_RE = /(SKY|PARTICLE|VFX|GRASS_BLADE|WATER|HELPER|AVATAR)/i;
 const NON_SPAWN_FLOOR_RE = /(CEILING|ROOF|CANOPY|AWNING|SKY|WALL|WINDOW|DOOR|RAIL|FENCE|LIGHT|LAMP)/i;
 const FLOOR_NAME_RE = /(FLOOR|GROUND|TERRAIN|PLATFORM|NAVMESH|WALK|STAGE|ROAD|PATH)/i;
 const SPAWN_PRIORITY = ['SPAWN_PLAYER', 'SPAWN_DEFAULT'];
@@ -124,7 +128,10 @@ export function buildCollision(root, mode = 'auto') {
     if (COLLISION_RE.test(name)) { object.visible = false; collisionMeshes.push(object); return; }
     visibleMeshes.push(object);
     const material = Array.isArray(object.material) ? object.material[0] : object.material;
-    if (mode !== 'none' && !EXCLUDE_RE.test(name) && !material?.transparent && object.visible !== false) collisionMeshes.push(object);
+    // A playable world always needs physical geometry.  `none` is retained as
+    // import metadata for backwards compatibility, but it must not be allowed
+    // to turn off the ground (or other obvious solid scenery) at runtime.
+    if (!EXCLUDE_RE.test(name) && object.visible !== false && material?.visible !== false) collisionMeshes.push(object);
   });
   const source = new THREE.Group();
   collisionMeshes.forEach((mesh) => {
