@@ -210,7 +210,19 @@
       "thumbnailUrl": "/public/images/backpack/volt-wolf-armor.svg",
       "format": "glb",
       "visibility": "public",
-      "scale": 0.8
+      "scale": 0.8,
+      "attachment": {
+        "socket": "torso",
+        "offset": [0, 0.12, 0],
+        "rotation": [0, 0, 0],
+        "scale": 0.8
+      },
+      "container": {
+        "type": "breakable-block",
+        "hits": 3,
+        "requiresShot": true
+      },
+      "description": "Shoot the armor block three times to release it, add it to your active Backpack loadout, and pin it to the torso socket."
     },
     {
       "id": "builder-grand-floor",
