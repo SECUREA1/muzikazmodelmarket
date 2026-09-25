@@ -234,7 +234,8 @@ test('builder lands and placed items retain verified collision floors', async ()
   assert.match(loader, /resolveSafeSpawn\(nextWorld, collision\.floorMeshes, environment\.spawn\)/, 'the initial player position is resolved against verified collision floors');
   assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;resetPlayer\(spawn\.position,spawn\.rotationY\|\|0\)/, 'map loading places the player at an authored or safe resolved spawn');
   assert.match(loader, /setSupplementalCollisionRoots\(roots = \[\]\)/, 'the loader can safely include placed Builder items in its collision octree');
-  assert.match(game, /setSupplementalCollisionRoots\(\[builderDecor\]\)/, 'placed Builder items refresh collision after synchronous and GLB-backed placement');
+  assert.match(game, /function refreshBuilderCollision\(\)/, 'placed Builder items batch their collision refresh instead of rebuilding once per asset');
+  assert.match(game, /window\.setTimeout/, 'collision rebuilding yields to the browser so the map can open first');
   assert.match(game, /worldX=center\.x\+x,worldZ=center\.z\+z,ground=floorPointAt/, 'every placed object is grounded at its authored horizontal position');
   assert.match(game, /spawnFloor\.y\+FLOOR_ENTRY_OFFSET/, 'the player spawn begins just above the verified floor with the full body capsule above it');
   assert.match(server, /proceduralLand:true/);
@@ -251,6 +252,8 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
   assert.match(collision, /colliderShape === 'mesh'/, 'explicit mesh colliders are recognized');
   assert.match(collision, /const floorMeshes = collisionMeshes\.filter/, 'floor references come from physical collision meshes, including hidden dedicated colliders');
   assert.match(collision, /const raw = spawnNode \?/, 'authored player spawn nodes take precedence over automatic floor sampling');
+  assert.doesNotMatch(collision, /const largestFloorPoint = findLargestWalkableFloorPoint/, 'authored spawns do not trigger the expensive fallback floor scan');
+  assert.match(collision, /Math\.ceil\(Math\.sqrt\(meshes\.length\)\), 7, 15/, 'fallback floor sampling remains bounded on detailed maps');
   assert.match(loader, /this\.floorMeshes = collision\.floorMeshes/g, 'floor references survive loading and world scaling');
   assert.match(game, /teleportRay\.intersectObjects\(envLoader\.floorMeshes/, 'teleporting verifies a collision floor');
   assert.match(game, /alignPointAboveFloor\(spawn\.clone\(\), envLoader\.floorMeshes/, 'spawn and respawn align to collision floors');
@@ -269,9 +272,8 @@ test('world ground and solid scenery always participate in gameplay collision', 
   assert.doesNotMatch(excluded, /LIGHT|LAMP/);
   assert.doesNotMatch(collision, /mode !== 'none'/, 'legacy none metadata cannot disable playable map collision');
   assert.match(collision, /material\?\.visible !== false/);
-  assert.match(game, /function resolveBuilderPropCollisions\(delta\)/);
-  assert.match(game, /resolveBuilderPropCollisions\(delta\); resolveBrickCollisions/, 'players collide with placed bushes, lamps, and other builder props');
-  assert.match(game, /!object\.userData\.collisionDisabled && !object\.userData\.water/);
+  assert.doesNotMatch(game, /function resolveBuilderPropCollisions\(delta\)/, 'walking does not rebuild every Builder mesh bound on every frame');
+  assert.match(game, /envLoader\.setSupplementalCollisionRoots\(builderDecor\.children\.length/, 'placed bushes, lamps, and other props join the shared collision octree');
   assert.match(game, /ground=floorPointAt\(/, 'dropped items settle against the active map ground');
 });
 
