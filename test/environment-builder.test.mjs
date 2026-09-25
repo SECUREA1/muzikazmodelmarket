@@ -238,6 +238,20 @@ test('saved sandbox maps embed custom item definitions for exact game reconstruc
     'private template play loads its base geometry from the repository manifest without calling the environments API');
 });
 
+test('custom Builder maps play without requiring a GLB environment', async () => {
+  const [game, loader, server] = await Promise.all([
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),
+    readFile(new URL('../server.mjs', import.meta.url), 'utf8')
+  ]);
+  assert.match(loader, /createBuilderFoundation\(environment\)/);
+  assert.match(loader, /environment\.builderScene/);
+  assert.match(loader, /if \(!urls\.length\)/);
+  assert.match(game, /modelUrl:'',modelUrls:\[\],builderScene:built/);
+  assert.match(game, /if\(!built\|\|!Array\.isArray\(built\.objects\)\)return null/, 'an empty but valid custom scene is still playable');
+  assert.match(server, /modelUrl: '', modelUrls: \[\]/, 'published custom maps are not disguised as GLB maps');
+});
+
 test('Builder Pack layouts open as new environment maps', async () => {
   const script = await readFile(new URL('../builder-market.js', import.meta.url), 'utf8');
   assert.match(script, /environment-builder\.html\?layout=/);

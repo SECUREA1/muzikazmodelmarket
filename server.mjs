@@ -124,7 +124,9 @@ function environmentRecord(input = {}, extra = {}) {
 async function combinedEnvironments() {
   const [repo, uploaded, customMaps] = await Promise.all([readRepositoryEnvironments(), readUploadedEnvironments(), readCustomMaps()]);
   const base = repo.find((environment) => environment.id === 'studio-ridge-out') || repo.find((environment) => environment.id === 'muzikaz-main') || repo[0] || {};
-  const liveMaps = customMaps.map((map) => ({ ...base, ...map, modelUrl: base.modelUrl || base.modelUrls?.[0] || '', modelUrls: base.modelUrls, spawn: base.spawn, collisionMode: base.collisionMode || 'auto', canDelete: false, canEdit: false }));
+  // Builder maps carry their own geometry and gameplay description. Keeping an
+  // inherited GLB here made the client treat them as ordinary uploaded worlds.
+  const liveMaps = customMaps.map((map) => ({ ...base, ...map, modelUrl: '', modelUrls: [], spawn: map.builderScene?.runtimeManifest?.spawn || base.spawn, collisionMode: 'auto', canDelete: false, canEdit: false }));
   return [...liveMaps, ...repo, ...uploaded.filter(publicEnvironment)];
 }
 async function saveEnvironmentUpload(req) {
