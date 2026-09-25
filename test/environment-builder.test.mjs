@@ -22,6 +22,9 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /Opening your locally saved multiplayer map/);
   assert.match(script, /muzikaz\.environmentBuilder\.localMaps\.v1/);
   assert.match(script, /storeLocalMap\(sceneData\)/, 'each builder save is also retained in the local playable-map collection');
+  const localPlaySave = script.indexOf('sessionStorage.setItem(PLAY_KEY,JSON.stringify(playScene))');
+  const multiplayerPublish = script.indexOf("apiFetch('/api/custom-maps", localPlaySave);
+  assert.ok(localPlaySave >= 0 && multiplayerPublish > localPlaySave, 'the complete playable scene is staged locally before multiplayer publication begins');
 });
 
 

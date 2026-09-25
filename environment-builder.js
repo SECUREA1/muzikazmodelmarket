@@ -219,6 +219,10 @@ async function publishAndPlay(){
  sceneData.runtimeManifest=compileBuilderScene(sceneData);persist('Saving live multiplayer map…');
  const ownerId=localStorage.getItem('muzikazBottleMemberEmail')||localStorage.getItem('muzikazUserId')||'guest-builder';
  const button=$('#play-scene');button.disabled=true;let playId=sceneData.id,playScene=cloneData(sceneData),deployed=false;
+ // Stage the complete compiled scene before contacting the multiplayer service.
+ // This guarantees the explorer can open the authored map even when publishing
+ // fails, times out, or returns an incomplete scene.
+ sessionStorage.setItem(PLAY_KEY,JSON.stringify(playScene));
  try{
   const response=await apiFetch('/api/custom-maps',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-User-Id':ownerId},body:JSON.stringify({scene:sceneData,ownerId}),retries:0});
   const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||'Unable to activate this map.');
