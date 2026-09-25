@@ -134,6 +134,45 @@ export class UserJsonDatabase {
     });
   }
 
+  /** Add server-verified digital purchases to the account's authoritative Backpack. */
+  reconcilePurchases(account, orders = []) {
+    const accountKey = cleanWallet(`account:${account?.accountId}`);
+    const wallet = cleanWallet(account?.primaryEthereumWallet || accountKey);
+    const owners = new Set([accountKey, wallet, String(account?.accountId || '').toLowerCase()]);
+    const paid = (Array.isArray(orders) ? orders : []).filter((order) => {
+      if (!['PAID', 'FULFILLED'].includes(order?.paymentStatus)) return false;
+      return [order.wallet, order.userId, order.metadata?.mzkOwner]
+        .some((value) => owners.has(String(value || '').trim().toLowerCase()));
+    });
+    return this.transaction((data) => {
+      const user = data.users[wallet] || data.users[accountKey];
+      if (!user) throw new Error('Account must be materialized before purchases are reconciled.');
+      user.items ||= [];
+      const known = new Set(user.items.map((item) => item.id));
+      let added = 0;
+      for (const order of paid) {
+        const items = order.fulfillment?.items || order.metadata?.items || [];
+        for (const item of items) {
+          const deliverable = plainObject(item?.deliverable);
+          if (!deliverable.id && !deliverable.modelUrl) continue;
+          const quantity = Math.max(1, Math.min(100, Math.trunc(Number(item.quantity) || 1)));
+          for (let index = 0; index < quantity; index += 1) {
+            const id = `purchase:${order.orderId}:${String(deliverable.id || item.id)}:${index + 1}`;
+            if (known.has(id)) continue;
+            user.items.push({ ...clone(deliverable), id, catalogId: String(deliverable.id || item.id), name: String(deliverable.name || item.name || 'Purchased model'), type: 'purchased-model', source: 'verified-purchase', orderId: order.orderId, acquiredAt: order.fulfilledAt || order.confirmedAt || order.createdAt });
+            known.add(id);
+            added += 1;
+          }
+        }
+      }
+      if (added) {
+        user.updatedAt = new Date().toISOString();
+        user.revision = Number(user.revision || 0) + 1;
+      }
+      return user;
+    });
+  }
+
   async members() {
     await this.initialize();
     const data = await this.read();
