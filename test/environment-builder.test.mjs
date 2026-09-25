@@ -231,6 +231,8 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(game, /key\.includes\('playScene'\)\?sessionStorage:localStorage/);
   assert.match(game, /readSavedBuilderScenes/);
+  assert.match(game, /modelUrl:'',modelUrls:\[\]/, 'a saved map does not inherit a default GLB environment');
+  assert.match(game, /!env\.builderScene/, 'a builder map load failure never redirects to the default map');
   assert.match(game, /Locally saved Builder Map/, 'local builder maps remain in the playable map list when multiplayer publishing is unavailable');
   assert.match(game, /createSavedCustomModel/);
   assert.match(game, /built\.customModels/);
@@ -248,6 +250,8 @@ test('saved maps embed custom item definitions for exact game reconstruction', a
   assert.match(script, /sceneData\.placedModels=cloneData/, 'every placed asset definition travels with the local and published scene');
   assert.doesNotMatch(script, /ownerId|apiFetch/, 'local game builds do not require account or API state');
   assert.match(game, /built\.placedModels/);
+  const loader = await readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8');
+  assert.match(loader, /createBuilderMapTemplate\(environment\.builderScene\)/, 'the selected builder template becomes the game world');
   assert.match(game, /prepareAuthoredBuilderModel/);
   assert.match(game, /createGeneratedAsset\(definition\)/);
   assert.match(game, /object\.scale\.multiply/, 'gameplay preserves the model normalization and the exact authored instance scale');
