@@ -32,6 +32,18 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   'studio-desk':['Producer Studio Desk','Production desk with displays, monitors and mixing surface.',[2.4,1.4,1]], 'recording-booth':['Recording Booth','Enclosed acoustic booth with glazed door and microphone.',[2.4,2.65,2.2]], 'modular-wall':['Modular Building Wall','Full-height framed wall bay for realistic room construction.',[3.2,2.8,.28]], 'glass-door':['Glass Entry Door','Human-scale glazed door with structural frame and handle.',[1.25,2.35,.18]], 'loft-bed':['Loft Bed','Raised bed, mattress, guard rail and ladder.',[2.15,2.05,1.25]], wardrobe:['Walk-in Wardrobe','Fitted wardrobe with shelves, rail and drawers.',[2.35,2.35,.62]], 'bathroom-vanity':['Bathroom Vanity','Vanity cabinet, basin, mirror and fixtures.',[1.55,2.15,.58]], 'dining-set':['Dining Set','Six-place dining table and correctly scaled chairs.',[2.8,1.05,2.25]], fireplace:['Modern Fireplace','Stone hearth, mantel and animated flame bed.',[2.2,2.05,.48]], elevator:['Working Elevator','Framed lift entrance, split doors and call control.',[2.5,3,.55]]
 });
 
+// Items that carry gameplay roles in the Environment Builder also need a
+// dependable mesh when they are dropped straight into a running game. The
+// authored avatar GLBs are used by saved scenes; these semantic stand-ins keep
+// direct Backpack drops instant and preserve the item's interaction metadata.
+const GAMEPLAY_ITEMS = Object.freeze({
+  'hero-spawn':['Hero Spawn','talk','#63eaff'], 'scout-avatar':['AAPE Scout','quest','#ffcc3d'], 'wolf-guardian':['Volt Guardian','patrol','#a78bfa'],
+  'rad-tox':['RAD-TOX Mutant','hostile','#b9ff38'], 'void-wolf':['Void Wolf','patrol','#a78bfa'], 'ember-dragon':['Ember Dragon','hostile','#ff6847'], 'rogue-bot':['Rogue Bot','hostile','#63eaff'],
+  'quest-scroll':['Quest Scroll','quest','#ffcc3d'], 'treasure-crystal':['Energy Crystal','pickup','#63eaff'], 'healing-potion':['Healing Potion','heal','#ff5ba7'],
+  'portal-door':['Portal Door','door','#a78bfa'], campfire:['Campfire','talk','#ff6847'], 'friendly-ghost':['Friendly Ghost','quest','#d9f7ff'], 'green-bubbles':['Green Bubble Field','heal','#b9ff38']
+});
+
+
 const material = (color, roughness=.65, metalness=.02, extra={}) => new THREE.MeshStandardMaterial({color, roughness, metalness, ...extra});
 const mesh = (geometry, mat, position=[0,0,0], rotation=[0,0,0]) => { const value=new THREE.Mesh(geometry,mat); value.position.set(...position); value.rotation.set(...rotation); return value; };
 const box = (size, mat, position) => mesh(new THREE.BoxGeometry(...size),mat,position);
@@ -80,6 +92,20 @@ function expandedModel(id){
  else if(kind==='weapon'){const glow=id==='plasma-sword'||id==='crystal-staff';rgb(new THREE.CylinderGeometry(.045,.06,h*.82,10),0x263039,glow?0x8ff8ff:0xc9d0d2,[0,h*.45,0],{roughness:glow?.18:.35,metalness:.72,extra:glow?{emissive:0x36cde5,emissiveIntensity:1.1}:{}});rgb(new THREE.BoxGeometry(w,.1,.12),0x49301d,0xc9934f,[0,.15,0],{roughness:.7});}
  else {rgb(new THREE.BoxGeometry(w,h,d),id==='treasure-chest'?0x553019:0x30383b,id==='treasure-chest'?0xb67b35:0xd7c36d,[0,h/2,0],{roughness:.55,metalness:.25});if(id==='teleport-pad'){const ring=rgb(new THREE.TorusGeometry(w*.38,.08,10,36),0x4b2684,0xc8a9ff,[0,h+.06,0],{roughness:.2,metalness:.3,extra:{emissive:0x7d46bd,emissiveIntensity:.9},rotation:[Math.PI/2,0,0]});ring.userData.water=true}else if(id==='windmill'){const hub=rgb(new THREE.CylinderGeometry(.18,.18,.35,14),0x4b5052,0xc8d0cf,[0,h*.72,-d*.52],{metalness:.7,rotation:[Math.PI/2,0,0]});for(let i=0;i<4;i++){const blade=rgb(new THREE.BoxGeometry(.22,h*.35,.06),0x6d4b2f,0xe0c695,[0,h*.72,-d*.63],{roughness:.74});blade.geometry.translate(0,h*.2,0);blade.rotation.z=i*Math.PI/2;blade.userData.spin=true}hub.userData.spin=true}}
  root.userData={builderObject:true,modelId:id,dimensions:[w,h,d],animated:true};return root;
+}
+
+
+function gameplayItem(id){
+ const [name,behavior,colorValue]=GAMEPLAY_ITEMS[id],root=new THREE.Group(),color=new THREE.Color(colorValue),glow=material(color,.38,.08,{emissive:color.clone().multiplyScalar(.28),emissiveIntensity:.65});
+ const actor=['hero-spawn','scout-avatar','wolf-guardian','rad-tox','void-wolf','ember-dragon','rogue-bot','friendly-ghost'].includes(id);
+ if(actor){const body=mesh(new THREE.CapsuleGeometry(.34,.92,7,14),glow,[0,.8,0]);root.add(body,mesh(new THREE.SphereGeometry(.3,16,12),glow,[0,1.62,0]));if(id==='void-wolf'||id==='ember-dragon'){body.rotation.z=Math.PI/2;body.position.y=.62;root.scale.setScalar(id==='ember-dragon'?1.45:.78);}}
+ else if(id==='quest-scroll')root.add(mesh(new THREE.CylinderGeometry(.13,.13,1.05,16),glow,[0,.62,0],[0,0,Math.PI/2]));
+ else if(id==='treasure-crystal')root.add(mesh(new THREE.OctahedronGeometry(.58),glow,[0,.62,0]));
+ else if(id==='healing-potion')root.add(mesh(new THREE.SphereGeometry(.34,18,12),glow,[0,.38,0]),mesh(new THREE.CylinderGeometry(.13,.18,.42,14),glow,[0,.76,0]));
+ else if(id==='portal-door')root.add(box([1.5,2.5,.24],glow,[0,1.25,0]));
+ else if(id==='campfire')root.add(mesh(new THREE.ConeGeometry(.5,1.1,12),glow,[0,.55,0]));
+ else for(let i=0;i<9;i++){const bubble=mesh(new THREE.SphereGeometry(.1+i%3*.045,12,8),glow,[Math.sin(i*2.3)*.65,.2+(i%4)*.38,Math.cos(i*1.7)*.55]);bubble.userData.water=true;root.add(bubble);}
+ root.name=name;root.userData={builderObject:true,modelId:id,label:name,behavior,interactive:true,animated:true};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return root;
 }
 
 function plant(id) {
@@ -149,6 +175,7 @@ export function createBuilderModel(id) {
   let root;
   if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
   else if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);
+  else if(GAMEPLAY_ITEMS[id]) return gameplayItem(id);
   else if(EXPANDED[id]) return expandedModel(id);
   else if(id==='canopy-tree'||id==='pine-tree') root=plant(id); else if(id==='flower-bed')root=flowerBed(); else if(id==='hedge-corner')root=hedge(); else if(id==='garden-rocks')root=rocks(); else if(id==='pond')root=pond(); else if(id==='path-tile')root=box([2.2,.12,1.2],material(0xa39b8c,.95),[0,.06,0]); else if(id==='hill'){root=mesh(new THREE.SphereGeometry(2.1,24,12,0,Math.PI*2,0,Math.PI/2),material(0x4f9a45,.95),[0,0,0]);root.scale.z=.86;} else if(id==='lamp-post')root=lamp(true); else if(id==='planter')root=planter(); else if(id==='sofa'||id==='armchair')root=seating(id==='armchair'); else if(id==='coffee-table')root=coffeeTable(); else if(id==='bookshelf')root=bookshelf(); else if(id==='floor-lamp')root=lamp(false); else if(id==='room-divider')root=divider(); else if(id==='kitchen-island')root=island(); else if(id==='spiral-stairs')root=stairs(); else if(id==='archway')root=arch(); else if(id==='art-wall')root=artWall(); else if(BUILDER_MODEL_INFO[id])root=detailedInterior(id); else return null;
   const [name,description,dimensions]=BUILDER_MODEL_INFO[id];root.name=name;root.userData={...root.userData,builderObject:true,modelId:id,label:name,description,dimensions,animated:['canopy-tree','pine-tree','pond','lamp-post','floor-lamp'].includes(id)};
