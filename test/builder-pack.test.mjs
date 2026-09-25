@@ -29,11 +29,21 @@ test('in-game Tools and Drop Backpack expose the complete map-building pack', as
   assert.match(game, /Build map & game/);
   assert.match(game, /muzikaz\.builder\.buildTray/);
   assert.match(game, /deployPlayableBuilderAsset\(asset\)/);
-  assert.match(game, /\.\.\.readBuildTray\(\)\.map\(item=>\['Build asset'/);
-  assert.equal(buildAssets.length, 24);
-  assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'landscape').length, 10);
-  assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'interior').length, 10);
+  assert.match(game, /BUILD_ASSETS\.length}\/\$\{BUILD_ASSETS\.length} Builder items available/);
+  assert.match(game, /data-rad-pack-builder/);
+  assert.match(game, /\.\.\.tray\.map\(item=>\['Build asset'/);
+  assert.equal(buildAssets.length, 78);
+  assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'landscape').length, 13);
+  assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'interior').length, 13);
   assert.ok(buildAssets.every((asset) => asset.type === 'props' && asset.thumbnailUrl));
+  for (const category of ['terrain','plants','buildings','props','weapons','characters','creatures','avatar','enemy','interactive','vehicles']) {
+    assert.ok(buildAssets.some((asset) => asset.builderCategory === category), `${category} items are available in game`);
+    assert.match(game, new RegExp(`'${category}'`), `${category} has an in-game filter`);
+  }
+  for (const id of ['corsair-aircraft','hero-spawn','rad-tox','terrain-cliff','plasma-sword','forest-ranger','emerald-slime','teleport-pad']) {
+    assert.ok(buildAssets.some((asset) => asset.buildAssetId === id), `${id} is included in the Drop Backpack`);
+    assert.match(game, new RegExp(`${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\|`), `${id} is included in the Tools picker`);
+  }
 });
 
 test('every Environment Builder layout is a land in the in-game Backpack', async () => {
@@ -51,7 +61,8 @@ test('every Environment Builder layout is a land in the in-game Backpack', async
   assert.ok(builderLands.every((asset) => asset.builderUrl === `/environment-builder.html?layout=${asset.builderLayoutId}`));
   assert.ok(builderLands.every((asset) => !asset.buildAssetId), 'lands must not be represented as placeable props');
   assert.match(game, /asset\.builderLayoutId/);
-  assert.match(game, /environment-builder\.html\?layout=/);
+  assert.match(game, /deployPlayableLandLayout\(asset\)/);
+  assert.doesNotMatch(game, /window\.location\.assign\(asset\.builderUrl/);
 });
 
 test('Drop Backpack pets each have a custom refillable treat', async () => {
