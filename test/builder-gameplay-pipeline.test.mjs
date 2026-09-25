@@ -153,3 +153,20 @@ test('item interactions stay focused: held items are ignored and consumables do 
   assert.equal(runtime.nearest({x:1,y:0,z:0}),null);
   assert.equal(runtime.interact('e',{x:1,y:0,z:0}),null);
 });
+
+test('large item catalogs use indexed interaction and animation paths', () => {
+  const objects=Array.from({length:5000},(_,index)=>({
+    id:`item-${index}`,modelId:`item-${index}`,type:'prop',
+    position:{x:index+10,y:0,z:0},functionalSettings:{behavior:'pickup'}
+  }));
+  objects.push({id:'nearby',modelId:'nearby',position:{x:1,y:0,z:0},functionalSettings:{behavior:'pickup'}});
+  const runtime=new BuilderGameplayRuntime({manifest:compileBuilderScene({objects})});
+  let mixerUpdates=0;
+  runtime.register('nearby',{getPosition:()=>({x:1,y:0,z:0}),updateMixer:()=>mixerUpdates++});
+  assert.equal(runtime.actor('nearby').modelId,'nearby');
+  assert.equal(runtime.nearest({x:0,y:0,z:0},'e').actor.objectId,'nearby');
+  runtime.update(1/30,{x:0,y:0,z:0},{animate:false});
+  assert.equal(mixerUpdates,0,'mobile frames can skip cosmetic mixer work');
+  runtime.update(1/30,{x:0,y:0,z:0});
+  assert.equal(mixerUpdates,1);
+});
