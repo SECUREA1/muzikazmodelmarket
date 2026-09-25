@@ -53,3 +53,14 @@ test('vehicles are categorized separately and expose a touch enter button', asyn
   assert.match(game, /Sticks drive and steer/);
   assert.match(page, /house-environment-scroll-list/);
 });
+
+test('nearby item actions are stable and rate-limited for touch devices', async () => {
+  const game = await read('../public/js/house-explorer-glb.js');
+  assert.match(game, /function resolveNearbyAction\(\)/);
+  assert.match(game, /function renderNearbyAction\(next\)/);
+  assert.match(game, /now-nearbyActionCheckedAt<100/);
+  assert.match(game, /if\(nearbyActionLocked\)return/);
+  assert.match(game, /setTimeout\(\(\)=>\{nearbyActionLocked=false;\},180\)/);
+  assert.doesNotMatch(game, /builderActionButton\.querySelector\('strong'\)\.textContent/);
+  assert.doesNotMatch(game, /builderActionButton\.querySelector\('small'\)\.textContent/);
+});

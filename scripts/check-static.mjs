@@ -115,7 +115,7 @@ for (const mobileExplorerControl of [
   if (!globalStyles.includes(mobileExplorerControl)) throw new Error(`The mobile explorer toggle is missing ${mobileExplorerControl}.`);
 }
 const houseExplorerControls = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
-for (const vehicleControl of ['.builder-nearby-action[data-vehicle-active=true]', "const actionTitle=heldBuilderItem?'DROP ITEM':vehicleNearby?(vehicleController.active?'EXIT VEHICLE':'ENTER VEHICLE')", "builderActionButton.querySelector('strong').textContent=actionTitle"]) {
+for (const vehicleControl of ['.builder-nearby-action[data-vehicle-active=true]', "kind:'vehicle'", "title:active?'EXIT VEHICLE':'ENTER VEHICLE'", 'builderActionTitle.textContent=next.title']) {
   if (!houseExplorerControls.includes(vehicleControl)) throw new Error(`The on-screen vehicle enter/exit control is missing ${vehicleControl}.`);
 }
 for (const utilityFeature of ['Support', 'data-open-support-chat', 'Admin login', 'data-global-admin-form', '/api/admin/login']) {
