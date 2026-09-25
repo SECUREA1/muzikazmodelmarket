@@ -12,19 +12,20 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.equal((script.match(/\['[a-z-]+','[^']+','(?:landscape|interior)',\d+\]/g) || []).length, 30);
   for (const behavior of ['pointermove', 'dragstart', 'drop', 'localStorage.setItem', 'LOCKED PROPORTIONS']) assert.match(`${html}\n${script}`, new RegExp(behavior));
   assert.match(script, /muzikaz\.builder\.buildTray/);
-  assert.match(script, /multiplayer:true, enemies:true, weapons:true, pickups:true/);
+  assert.match(script, /multiplayer:false, enemies:true, weapons:true, pickups:true/, 'template tests run with complete game logic but no multiplayer connection');
   assert.match(script, /model-explorer\.html\?environment=/);
   assert.match(script, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(script, /&house=\$\{id\}&autoplay=1/);
-  assert.match(script, /apiFetch\('\/api\/custom-maps'/);
   assert.match(script, /compileBuilderScene\(sceneData\)/);
-  assert.match(script, /All players can join/);
-  assert.match(script, /Opening your locally saved multiplayer map/);
+  assert.match(script, /function testGameLocally\(\)/);
+  assert.match(script, /LOCAL · Sandbox ready/);
+  assert.match(script, /localFallback=1&sandbox=1/);
+  assert.doesNotMatch(script, /apiFetch\('\/api\/custom-maps'/, 'testing a template never contacts the publishing API');
   assert.match(script, /muzikaz\.environmentBuilder\.localMaps\.v1/);
   assert.match(script, /storeLocalMap\(sceneData\)/, 'each builder save is also retained in the local playable-map collection');
   const localPlaySave = script.indexOf('sessionStorage.setItem(PLAY_KEY,JSON.stringify(playScene))');
-  const multiplayerPublish = script.indexOf("apiFetch('/api/custom-maps", localPlaySave);
-  assert.ok(localPlaySave >= 0 && multiplayerPublish > localPlaySave, 'the complete playable scene is staged locally before multiplayer publication begins');
+  const localSandboxLaunch = script.indexOf('localFallback=1', localPlaySave);
+  assert.ok(localPlaySave >= 0 && localSandboxLaunch > localPlaySave, 'the complete playable scene is staged locally before its private sandbox opens');
 });
 
 
@@ -206,6 +207,8 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(game, /key\.includes\('playScene'\)\?sessionStorage:localStorage/);
   assert.match(game, /readSavedBuilderScenes/);
+  assert.match(game, /if\(localSandbox\)return/, 'the local sandbox never polls multiplayer presence');
+  assert.match(game, /worldOptions=document\.createDocumentFragment/, 'large map lists are appended without a Firefox argument-limit failure');
   assert.match(game, /Locally saved Builder Map/, 'local builder maps remain in the playable map list when multiplayer publishing is unavailable');
   assert.match(game, /createSavedCustomModel/);
   assert.match(game, /built\.customModels/);
@@ -214,14 +217,14 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /object\.rotation\.set/, 'preserves the full authored rotation');
 });
 
-test('saved and published maps embed custom item definitions for exact game reconstruction', async () => {
+test('saved sandbox maps embed custom item definitions for exact game reconstruction', async () => {
   const [script, game] = await Promise.all([
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
   assert.match(script, /sceneData\.customModels=cloneData\(customModels\)/);
-  assert.match(script, /sceneData\.placedModels=cloneData/, 'every placed asset definition travels with the local and published scene');
-  assert.match(script, /body:JSON\.stringify\(\{scene:sceneData,ownerId\}\)/);
+  assert.match(script, /sceneData\.placedModels=cloneData/, 'every placed asset definition travels with the local sandbox scene');
+  assert.match(script, /sessionStorage\.setItem\(PLAY_KEY,JSON\.stringify\(playScene\)\)/);
   assert.match(game, /built\.placedModels/);
   assert.match(game, /prepareAuthoredBuilderModel/);
   assert.match(game, /createGeneratedAsset\(definition\)/);

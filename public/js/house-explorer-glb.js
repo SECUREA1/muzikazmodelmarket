@@ -20,6 +20,7 @@ const stage = legacyCanvas?.closest('.house-stage');
 const hud = document.querySelector('.house-hud');
 
 if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
+  const localSandbox = new URLSearchParams(location.search).get('sandbox') === '1';
   const oldStatus = document.querySelector('#house-status');
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
   const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
@@ -448,13 +449,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     environmentSelect.replaceChildren(options);
     environmentSelect.disabled = !worlds.length;
     if (environmentList) {
-      environmentList.replaceChildren(...worlds.map((env) => {
+      const worldOptions=document.createDocumentFragment();worlds.forEach((env) => {
         const button=document.createElement('button'); button.type='button'; button.dataset.environmentId=env.id;
         button.setAttribute('role','option'); button.setAttribute('aria-selected',String(env.id===selectedId));
         const name=document.createElement('strong'); name.textContent=env.name||env.id||'House environment';
         const detail=document.createElement('small'); detail.textContent=env.category||env.label||'Playable environment';
-        button.append(name,detail); return button;
-      }));
+        button.append(name,detail);worldOptions.appendChild(button);
+      });environmentList.replaceChildren(worldOptions);
     }
   }
   function designateAvatar(asset) { const avatar = normalizeAvatarRecord(asset); localStorage.setItem('muzikazDesignatedAvatar', JSON.stringify({ ...avatar, displayName:avatar.name })); window.MUZIKAZ_DESIGNATED_AVATAR = avatar; window.dispatchEvent(new CustomEvent('muzikaz-avatar-ready', { detail:avatar })); setStatus(`${avatar.name} is now your player avatar.`); renderPicker(); }
@@ -684,7 +685,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
   let multiplayerPresence=[];
   function usersInWorld(id){return multiplayerPresence.filter(user=>(user.roomId||'rad-tox')===id).length;}
-  async function refreshMultiplayerPresence(){try{const request={headers:{Accept:'application/json'},cache:'no-store'};const response=window.MUZIKAZ_API?await window.MUZIKAZ_API.fetch('/api/houses/ioncore-house/presence',request):await fetch('/api/houses/ioncore-house/presence',request);if(!response.ok)return;const payload=await response.json();const data=payload?.data??payload;multiplayerPresence=Array.isArray(data?.users)?data.users:[];if(!library.classList.contains('is-collapsed')&&!library.classList.contains('backpack-panel'))renderMultiplayerWorlds();}catch{/* The map list remains fully usable while live presence reconnects. */}}
+  async function refreshMultiplayerPresence(){if(localSandbox)return;try{const request={headers:{Accept:'application/json'},cache:'no-store'};const response=window.MUZIKAZ_API?await window.MUZIKAZ_API.fetch('/api/houses/ioncore-house/presence',request):await fetch('/api/houses/ioncore-house/presence',request);if(!response.ok)return;const payload=await response.json();const data=payload?.data??payload;multiplayerPresence=Array.isArray(data?.users)?data.users:[];if(!library.classList.contains('is-collapsed')&&!library.classList.contains('backpack-panel'))renderMultiplayerWorlds();}catch{/* The map list remains fully usable while live presence reconnects. */}}
   function renderMultiplayerWorlds() {
     const worlds = registry.all().map((env,index)=>({env,index,count:usersInWorld(env.id)})).sort((a,b)=>b.count-a.count||a.index-b.index);
     library.classList.remove('backpack-panel');
@@ -812,7 +813,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     root.rotation.y += yawDelta * Math.min(1, delta * 10);
   }
   function syncLiveAvatars(data = {}) { const allUsers=Array.isArray(data.users)?data.users:[];const presenceChanged=JSON.stringify(allUsers.map(user=>[user.sessionId,user.roomId]).sort())!==JSON.stringify(multiplayerPresence.map(user=>[user.sessionId,user.roomId]).sort());multiplayerPresence=allUsers;if(presenceChanged&&!library.classList.contains('is-collapsed')&&!library.classList.contains('backpack-panel'))renderMultiplayerWorlds();const roomId = activeEnvironment?.id || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox'; const users = allUsers.filter((user) => (user.roomId || 'rad-tox') === roomId); const active = new Set(users.map((user) => user.sessionId)); liveAvatarRoots.forEach((root, id) => { if (!active.has(id)) { disposeLiveRoot(root); liveAvatarRoots.delete(id); } }); users.forEach(updateLiveAvatar); const count = document.querySelector('#crib-online-count'); if (count) count.textContent = `${users.length} / ${data.capacity || 15}`; }
-  async function pollLiveAvatars() { const designated = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null'); const memberEmail = localStorage.getItem('muzikazBottleMemberEmail') || ''; const sessionId = localStorage.getItem('muzikazHouseSessionId'); if (!designated || !memberEmail || !sessionId) return; const tracking = window.MUZIKAZ_HOUSE_TRACKING || {}; const position = { x: playerRig.position.x, y: playerRig.position.y, z: playerRig.position.z }; window.MUZIKAZ_HOUSE_TRACKING = { ...tracking, position, rotation: { y: player.yaw }, roomId: activeEnvironment?.id || 'rad-tox' }; const path = '/api/houses/ioncore-house/presence'; const options = { method:'POST', cache:'no-store', headers:{ 'Content-Type':'application/json', 'X-MUZIKAZ-Session':sessionId, 'X-User-Id':memberEmail.toLowerCase(), 'X-User-Name':memberEmail.split('@')[0] }, body:JSON.stringify({ ...window.MUZIKAZ_HOUSE_TRACKING, username:memberEmail.split('@')[0], avatarUrl:designated.modelUrl, modelUrl:designated.modelUrl, avatarName:designated.displayName || 'Player avatar', animationState:designated.animation || 'auto' }) }; const response = window.MUZIKAZ_API ? await window.MUZIKAZ_API.fetch(path, options) : await fetch(`${window.MUZIKAZ_SHARED_AVATAR_API || ''}${path}`, options); if (!response.ok) return; const result = await response.json(); syncLiveAvatars(result?.data ?? result); }
+  async function pollLiveAvatars() { if(localSandbox)return; const designated = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null'); const memberEmail = localStorage.getItem('muzikazBottleMemberEmail') || ''; const sessionId = localStorage.getItem('muzikazHouseSessionId'); if (!designated || !memberEmail || !sessionId) return; const tracking = window.MUZIKAZ_HOUSE_TRACKING || {}; const position = { x: playerRig.position.x, y: playerRig.position.y, z: playerRig.position.z }; window.MUZIKAZ_HOUSE_TRACKING = { ...tracking, position, rotation: { y: player.yaw }, roomId: activeEnvironment?.id || 'rad-tox' }; const path = '/api/houses/ioncore-house/presence'; const options = { method:'POST', cache:'no-store', headers:{ 'Content-Type':'application/json', 'X-MUZIKAZ-Session':sessionId, 'X-User-Id':memberEmail.toLowerCase(), 'X-User-Name':memberEmail.split('@')[0] }, body:JSON.stringify({ ...window.MUZIKAZ_HOUSE_TRACKING, username:memberEmail.split('@')[0], avatarUrl:designated.modelUrl, modelUrl:designated.modelUrl, avatarName:designated.displayName || 'Player avatar', animationState:designated.animation || 'auto' }) }; const response = window.MUZIKAZ_API ? await window.MUZIKAZ_API.fetch(path, options) : await fetch(`${window.MUZIKAZ_SHARED_AVATAR_API || ''}${path}`, options); if (!response.ok) return; const result = await response.json(); syncLiveAvatars(result?.data ?? result); }
   window.addEventListener('muzikaz-house-chat', (event) => { const root = liveAvatarRoots.get(event.detail?.sessionId); if (root) { const position = root.userData.targetPosition.clone(); position.y -= root.userData.floorOffset; updateLiveAvatar({ sessionId:event.detail.sessionId, username:event.detail.username, message:event.detail.message, position }); } });
   window.addEventListener('muzikaz-avatar-ready', () => pollLiveAvatars().catch(() => {}));
   const livePollTimer = window.setInterval(() => pollLiveAvatars().catch(() => {}), 3000);
