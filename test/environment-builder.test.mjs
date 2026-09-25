@@ -233,6 +233,8 @@ test('builder lands load as playable procedural terrain without GLB files', asyn
   assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode\)/, 'procedural terrain enters the normal collision pipeline');
   assert.match(collision, /explicitFloor \|\|/, 'explicit and named floor meshes bypass decorative material exclusions');
   assert.match(collision, /userData\?\.placementSurface === true/, 'placement surfaces are always recognized by collision generation');
+  assert.match(loader, /resolveSafeSpawn\(nextWorld, collision\.collisionMeshes/, 'spawns are aligned above authored collider floors, including invisible dedicated colliders');
+  assert.match(game, /findCrossedFloor\(envLoader\.floorMeshes/, 'falling players cannot tunnel through thin land colliders between frames');
   assert.match(game, /child\.userData\.colliderShape='mesh'/, 'placed Builder terrain and floor objects carry gameplay colliders');
   assert.match(loader, /setSupplementalCollisionRoots\(roots = \[\]\)/, 'the environment collision octree accepts placed Builder designs');
   assert.match(game, /setSupplementalCollisionRoots\(\[builderDecor\]\)/, 'placed Builder designs are registered against the player collider');
