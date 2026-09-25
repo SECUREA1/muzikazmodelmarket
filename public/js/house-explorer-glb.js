@@ -508,13 +508,28 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const root=new THREE.Group(),body=new THREE.Mesh(new THREE.BoxGeometry(1.25+bevel,1.25+bevel,depth),new THREE.MeshStandardMaterial({color,roughness:config.material==='metal'?.22:.58,metalness:config.material==='metal'?.72:.08,emissive:config.material==='emissive'?color.clone().multiplyScalar(.35):0x000000,emissiveIntensity:config.material==='emissive'?.75:0}));
     const face=new THREE.Mesh(new THREE.PlaneGeometry(1.2,1.2),new THREE.MeshBasicMaterial({map:texture,transparent:true,alphaTest:.02,side:THREE.DoubleSide}));face.position.z=depth/2+.004;root.add(body,face);root.name=`Custom_Item_${asset.id}`;root.userData.customItem=asset;root.scale.x=config.mirrored?-1:1;root.rotation.set(THREE.MathUtils.degToRad(Number(config.tilt)||0),THREE.MathUtils.degToRad(Number(config.orientation)||0),0);root.position.copy(floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)).multiplyScalar(2))));root.position.y+=.66;root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});placedAvatars.add(root);addAvatarCollider(root);return root;
   }
+  function deployPlayableBuilderAsset(asset) {
+    const root=createBuilderModel(asset.buildAssetId);
+    if(!root)throw new Error(`${asset.name} does not have a playable 3D model yet.`);
+    const distance=asset.builderCategory==='map'||asset.builderCategory==='room'?5:2.4;
+    const dropPoint=floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)).multiplyScalar(distance)));
+    root.name=`Backpack_${asset.buildAssetId}`;
+    root.userData.backpackAsset=asset;
+    root.userData.avatar={id:asset.id,name:asset.name,type:'props'};
+    root.position.copy(dropPoint);
+    root.rotation.y=player.yaw;
+    root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});
+    placedAvatars.add(root);
+    addAvatarCollider(root);
+    return root;
+  }
   async function deployBackpackAsset(asset) {
     if (!asset?.id) { setStatus('This Backpack item is missing its game identity and could not be used.'); return false; }
     if(asset.container?.requiresShot&&!unlockedAttachmentLoot.has(asset.id)){closeBackpack();if(toxicBubbleSystem.state!==RAD_TOX_STATES.ACTIVE)await toxicBubbleSystem.begin();toxicBubbleSystem.setTool('laser');toxicBubbleSystem.spawnAttachmentBlock(asset);return true;}
     if (asset.type === 'lands') { closeBackpack(); await loadById(asset.environmentId || asset.id); rememberActiveBackpackItem(asset); return true; }
     if (asset.petId && asset.consumable) { feedTreatToPet(asset); return; }
     if (asset.id === 'rad-tox-dynamite') { closeBackpack(); toxicBubbleSystem.setTool('dynamite'); openTools(); rememberActiveBackpackItem(asset); setStatus('RAD-TOX Dynamite is open and visible in your hand — click, tap, or squeeze the trigger to toss it. Each throw costs 25 MZK.'); return true; }
-    if (asset.buildAssetId) { const tray=readBuildTray(); if(!tray.some(item=>item.id===asset.buildAssetId)) tray.push({id:asset.buildAssetId,name:asset.name,type:asset.builderCategory,thumbnailUrl:asset.thumbnailUrl,addedAt:new Date().toISOString()}); localStorage.setItem(buildTrayKey,JSON.stringify(tray)); closeBackpack(); openTools(); toggleBuildMenu(true); rememberActiveBackpackItem(asset); setStatus(`${asset.name} added to your build inventory and selected in Build Map.`); return true; }
+    if (asset.buildAssetId) { closeBackpack(); deployPlayableBuilderAsset(asset); rememberActiveBackpackItem(asset); setStatus(`${asset.name} popped out of your Backpack and is now playable in ${activeEnvironment?.name||'the game'}.`); return true; }
     if (asset.customItem) { closeBackpack(); setStatus(`Deploying custom item ${asset.name}…`); await deployCustomItem(asset); const records=JSON.parse(localStorage.getItem('muzikazCustomGamePlacements')||'[]');records.push({itemId:asset.id,worldId:activeEnvironment?.id||'',placedAt:new Date().toISOString()});localStorage.setItem('muzikazCustomGamePlacements',JSON.stringify(records.slice(-512)));rememberActiveBackpackItem(asset);setStatus(`${asset.name} is now a configurable 3D object in ${activeEnvironment?.name||'the game'}.`); return true; }
     const model = normalizeAvatarRecord(asset);
     if (!model.modelUrl) {
@@ -973,6 +988,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     toxicBubbleSystem.updateBrickPreview();
     toxicBubbleSystem.update(delta, clock.elapsedTime);
     updateBuilderModels(builderDecor, clock.elapsedTime);
+    updateBuilderModels(placedAvatars, clock.elapsedTime);
     renderer.render(scene, camera);
   });
   // This is the launch-critical half of checkForHouseUpdates({ startup: true }).

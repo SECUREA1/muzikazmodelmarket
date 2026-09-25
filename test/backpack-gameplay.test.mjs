@@ -11,3 +11,14 @@ test('every Backpack category has a safe, animated gameplay action', async () =>
   assert.match(game, /finally\{if\(button\.isConnected\)/);
   assert.match(game, /modelUrl:modelUrl\?new URL\(modelUrl/);
 });
+
+test('Builder Backpack cards pop playable models into the current game', async () => {
+  const [game, models] = await Promise.all([
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/builder-models-3d.js', import.meta.url), 'utf8')
+  ]);
+  assert.match(game, /function deployPlayableBuilderAsset\(asset\)/);
+  assert.match(game, /asset\.buildAssetId\) \{ closeBackpack\(\); deployPlayableBuilderAsset\(asset\)/);
+  assert.doesNotMatch(game, /asset\.buildAssetId\).*toggleBuildMenu\(true\)/);
+  for (const id of ['grand-floor','open-studio','connected-suite','garden-courtyard']) assert.match(models, new RegExp(`'${id}'`));
+});
