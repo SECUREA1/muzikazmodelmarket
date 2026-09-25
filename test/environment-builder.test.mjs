@@ -219,15 +219,23 @@ test('in-game Builder Map menu opens the environment builder and restores playab
 });
 
 test('builder lands load as playable procedural terrain without GLB files', async () => {
-  const [loader, server] = await Promise.all([
+  const [loader, collision, game, server] = await Promise.all([
     readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/environments/environment-collision.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
     readFile(new URL('../server.mjs', import.meta.url), 'utf8')
   ]);
   assert.match(loader, /createBuilderLand\(environment\)/);
   assert.match(loader, /environment\.builderScene \|\| environment\.proceduralLand/);
   assert.match(loader, /new THREE\.PlaneGeometry\(40, 40, 80, 80\)/);
   assert.match(loader, /terrain\.userData\.colliderShape = 'mesh'/, 'builder map terrain keeps an explicit mesh collider');
+  assert.match(loader, /terrain\.userData\.placementSurface = true/, 'every procedural land type identifies its terrain as a walkable placement surface');
   assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode\)/, 'procedural terrain enters the normal collision pipeline');
+  assert.match(collision, /explicitFloor \|\|/, 'explicit and named floor meshes bypass decorative material exclusions');
+  assert.match(collision, /userData\?\.placementSurface === true/, 'placement surfaces are always recognized by collision generation');
+  assert.match(game, /child\.userData\.colliderShape='mesh'/, 'placed Builder terrain and floor objects carry gameplay colliders');
+  assert.match(loader, /setSupplementalCollisionRoots\(roots = \[\]\)/, 'the environment collision octree accepts placed Builder designs');
+  assert.match(game, /setSupplementalCollisionRoots\(\[builderDecor\]\)/, 'placed Builder designs are registered against the player collider');
   assert.match(server, /proceduralLand:true/);
   assert.match(server, /modelUrl:'', modelUrls:\[\]/, 'published builder maps no longer borrow a repository GLB');
 });

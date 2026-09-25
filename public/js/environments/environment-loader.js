@@ -9,14 +9,14 @@ import { buildCollision, resolveSafeSpawn } from './environment-collision.js';
 
 export class EnvironmentLoader {
   constructor({ scene, renderer, onProgress = () => {} }) {
-    this.scene = scene; this.renderer = renderer; this.onProgress = onProgress; this.token = 0; this.world = null; this.mixers = []; this.meshes = []; this.octree = new Octree(); this.bounds = new THREE.Box3(); this.activeEnvironment = null; this.baseScale = 1; this.spaceScale = 1;
+    this.scene = scene; this.renderer = renderer; this.onProgress = onProgress; this.token = 0; this.world = null; this.mixers = []; this.meshes = []; this.supplementalCollisionRoots = []; this.octree = new Octree(); this.bounds = new THREE.Box3(); this.activeEnvironment = null; this.baseScale = 1; this.spaceScale = 1;
     this.loader = new GLTFLoader();
     const draco = new DRACOLoader(); draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/'); this.loader.setDRACOLoader(draco);
     const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/basis/'); ktx2.detectSupport(renderer); this.loader.setKTX2Loader(ktx2);
     this.loader.setMeshoptDecoder(MeshoptDecoder);
   }
   disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture) value.dispose(); material.dispose?.(); }
-  unload() { this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
+  unload() { this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; this.supplementalCollisionRoots = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
   loadOne(url, index, count) { return new Promise((resolve, reject) => this.loader.load(url, resolve, (e) => this.onProgress(((index + (e.total ? e.loaded / e.total : 0.35)) / count) * 100), reject)); }
 
   createBuilderLand(environment) {
@@ -43,7 +43,7 @@ export class EnvironmentLoader {
     for (let i = 0; i < positions.count; i += 1) positions.setZ(i, heightAt(positions.getX(i), -positions.getY(i)));
     positions.needsUpdate = true; geometry.computeVertexNormals();
     const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: Number(meta.color) || 0x315b32, roughness:.95, metalness:0 }));
-    terrain.name = `BUILDER_LAND_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; terrain.userData.colliderShape = 'mesh';
+    terrain.name = `BUILDER_LAND_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; terrain.userData.colliderShape = 'mesh'; terrain.userData.placementSurface = true;
     const root = new THREE.Group(); root.name = `PROCEDURAL_${environment.id}`; root.add(terrain); root.userData.proceduralLand = true; root.userData.layout = layout;
     return root;
   }
@@ -54,11 +54,21 @@ export class EnvironmentLoader {
     this.spaceScale = nextScale;
     this.world.scale.setScalar(this.baseScale * this.spaceScale);
     this.world.updateMatrixWorld(true);
-    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode);
+    const collision = buildCollision([this.world, ...this.supplementalCollisionRoots], this.activeEnvironment?.collisionMode);
     this.meshes = collision.visibleMeshes;
     this.octree = collision.octree;
     this.bounds = new THREE.Box3().setFromObject(this.world);
     return { scale: this.spaceScale, collision, bounds: this.bounds };
+  }
+  setSupplementalCollisionRoots(roots = []) {
+    this.supplementalCollisionRoots = roots.filter(Boolean);
+    if (!this.world) return null;
+    this.world.updateMatrixWorld(true);
+    this.supplementalCollisionRoots.forEach((root) => root.updateMatrixWorld(true));
+    const collision = buildCollision([this.world, ...this.supplementalCollisionRoots], this.activeEnvironment?.collisionMode);
+    this.meshes = collision.visibleMeshes;
+    this.octree = collision.octree;
+    return collision;
   }
   async load(environment) {
     const token = ++this.token; const builderLand = Boolean(environment.builderScene || environment.proceduralLand); const urls = builderLand ? [] : (environment.modelUrls?.length ? environment.modelUrls : [environment.modelUrl].filter(Boolean));
