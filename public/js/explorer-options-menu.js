@@ -7,7 +7,6 @@
   const search = root.querySelector('#explorer-options-search');
   const count = root.querySelector('#explorer-options-count');
   const empty = root.querySelector('#explorer-options-empty');
-  const selectedLabel = root.querySelector('#explorer-options-label');
   const items = [...root.querySelectorAll('#explorer-options-list li')];
   const workspaces = [...document.querySelectorAll('[data-explorer-workspace]')];
 
@@ -50,8 +49,8 @@
       const itemLink = item.querySelector('a');
       itemLink.toggleAttribute('aria-current', itemLink === link);
     });
-    selectedLabel.textContent = link.querySelector('b')?.textContent || 'Explorer options';
-    document.title = `${selectedLabel.textContent} | MUZIKAZ VibeVerse`;
+    const selectedLabel = link.querySelector('b')?.textContent || 'Explorer options';
+    document.title = `${selectedLabel} | MUZIKAZ VibeVerse`;
 
     requestAnimationFrame(() => {
       target.scrollIntoView({ behavior: moveFocus ? 'smooth' : 'auto', block: 'center' });
