@@ -175,6 +175,12 @@ export function createGeneratedAsset(model) {
     const land=add(new THREE.CylinderGeometry(2.5,2.8,.45,24),[0,.225,0],undefined,material(0x477c43,.96));land.userData.placementSurface=true;root.userData.terrain=true;
   }else if(recipe==='extruded-svg'){
     const shape=new THREE.Shape();shape.moveTo(0,.95);shape.bezierCurveTo(.65,.72,.72,.05,0,0);shape.bezierCurveTo(-.72,.05,-.65,.72,0,.95);shape.closePath();add(new THREE.ExtrudeGeometry(shape,{depth:.24,bevelEnabled:true,bevelSize:.06,bevelThickness:.05,bevelSegments:3}),[0,0,-.12]);
+  }else if(recipe==='rad-tox-tool'){
+    const variant=model.gameItem,neon=material(color,.28,.55,{emissive:color,emissiveIntensity:.55});
+    if(variant==='bat')add(new THREE.CylinderGeometry(.08,.13,1.15,14),[0,.58,0],undefined,material(0xd7a84b,.56));
+    else if(variant==='dynamite'){for(let x=-1;x<=1;x++)add(new THREE.CylinderGeometry(.08,.08,.72,12),[x*.17,.36,0],undefined,material(0xc63228,.65));add(new THREE.TorusGeometry(.23,.025,8,20),[0,.36,0],[Math.PI/2,0,0],dark);}
+    else if(variant==='brick')add(new THREE.BoxGeometry(.85,.38,.42),[0,.19,0],undefined,material(0xd94b32,.72));
+    else {add(new THREE.BoxGeometry(.18,.62,.18),[0,.31,0],[-.18,0,0],dark);add(new THREE.BoxGeometry(.72,.24,.22),[.24,.7,0],undefined,neon);add(new THREE.CylinderGeometry(.08,.08,.5,12),[.68,.7,0],[0,0,Math.PI/2],neon);if(variant==='toxin')add(new THREE.SphereGeometry(.18,14,10),[-.15,.8,0],undefined,material(0xb9ff38,.32,.1,{emissive:0x58a70d,emissiveIntensity:.8}));}
   }else throw new Error(`Unknown generated asset recipe: ${recipe}`);
   root.name=model.name;root.userData={...root.userData,builderObject:true,generated:true,generator:recipe,assetId:model.sourceId,dimensions:new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).toArray()};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;}});return root;
 }

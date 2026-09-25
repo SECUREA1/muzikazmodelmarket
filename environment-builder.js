@@ -45,6 +45,17 @@ const gameplayModels=[
  {id:'friendly-ghost',name:'Friendly Ghost',type:'interactive',size:62,icon:'👻',behavior:'quest',color:'#d9f7ff'},
  {id:'green-bubbles',name:'Green Bubble Field',type:'interactive',size:66,icon:'🟢',behavior:'heal',color:'#b9ff38'}
 ].map(model=>({...model,assetKind:'premade'}));
+// Every equippable RAD-TOX tool is also a placeable game object. Keeping the
+// gameplay key on the model lets the compiled scene retain the exact tool role.
+const radToxItems=[
+ ['rad-laser','RAD-TOX Laser','⚡','#39e8ff','laser'],
+ ['rad-paint-gun','RAD-TOX Paint Gun','🎨','#ff4fb3','spray'],
+ ['rad-baseball-bat','RAD-TOX Baseball Bat','🏏','#ffdf45','bat'],
+ ['rad-taser','RAD-TOX Taser','ϟ','#a78bfa','taser'],
+ ['rad-toxins-thrower','RAD-TOX Toxins Thrower','☣','#b9ff38','toxin'],
+ ['rad-tox-dynamite','RAD-TOX Dynamite','🧨','#ff6847','dynamite'],
+ ['rad-brick-layer','RAD-TOX Brick Layer','▤','#ff714b','brick']
+].map(([id,name,icon,color,gameItem])=>({id,name,type:'props',category:'weapons',size:62,icon,color,behavior:'pickup',action:'equip',generated:true,generator:'rad-tox-tool',gameItem,scale:'hand-held',assetKind:'rad-tox-game'}));
 // A broad, metre-scaled deployment library. `type` keeps gameplay behavior while
 // `category` gives builders the vocabulary they expect when browsing assets.
 const expandedModels=[
@@ -78,24 +89,26 @@ function upgradeCustomModels(items){return items.flatMap(model=>{if(model.form&&
 let customModels=upgradeCustomModels(readJson(CUSTOM_KEY,[])), catalogModels=[], activeFilter='all', selectedId=null, pendingModelId=null, dragging=null, toastTimer, viewMode='build', inspectorRequested=false, lastObjectTap=null;
 localStorage.setItem(CUSTOM_KEY,JSON.stringify(customModels));
 let sceneData={version:3,id:'active',name:'Untitled environment',layout:'grand-floor',weather:'clear',objects:[]};
-const models=()=>[...builtins,...gameplayModels,...expandedModels,...catalogModels,...customModels], modelFor=id=>models().find(m=>m.id===id), selected=()=>sceneData.objects.find(o=>o.id===selectedId);
+const models=()=>[...builtins,...gameplayModels,...radToxItems,...expandedModels,...catalogModels,...customModels], modelFor=id=>models().find(m=>m.id===id), selected=()=>sceneData.objects.find(o=>o.id===selectedId);
 
 // Repository manifests are the source of truth for deposited items and maps.
 // Load every source independently so one unavailable API can never blank the
 // library, then de-duplicate against the hand-authored starter pack.
-const catalogSources=['public/models/game-asset-registry.json','public/models/glb-models.json','public/models/backpack-assets.json','public/models/toolkit-assets.json','/api/models'];
+// Prefer the House Explorer Backpack when two manifests describe the same file;
+// it carries the game's richer pet, wearable, consumable and vehicle taxonomy.
+const catalogSources=['public/models/backpack-assets.json','public/models/game-asset-registry.json','public/models/glb-models.json','public/models/toolkit-assets.json','/api/models'];
 const catalogId=value=>String(value||'catalog-item').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 function normalizeCatalogModel(raw,index){
- const modelUrl=raw.modelPath||raw.modelUrl||raw.model_url||raw.fileUrl||raw.file_url||raw.assetUrl||raw.asset_url||'', format=String(raw.format||modelUrl.split('?')[0].split('.').pop()||'').toLowerCase(),generated=Boolean(raw.generated&&raw.generator);
- if((!generated&&(!modelUrl||!['glb','gltf'].includes(format)))||raw.visibility==='private'||raw.status==='inactive')return null;
- const sourceId=catalogId(raw.assetId||raw.id||raw.modelId||raw.name||`item-${index}`),kind=String(raw.assetType||raw.type||raw.category||'props').toLowerCase(),type=/avatar|character/.test(kind)?'avatar':/enemy|creature/.test(kind)?'enemy':/vehicle/.test(kind)?'vehicle':/terrain|land/.test(kind)?'terrain':/wearable/.test(kind)?'wearable':'props';
- return{id:`catalog-${sourceId}`,sourceId,name:raw.name||raw.title||'Deposited 3D item',type,category:type==='avatar'?'characters':type==='enemy'?'creatures':type==='vehicle'?'vehicles':type==='terrain'?'terrain':type==='wearable'?'wearables':'props',size:72,image:raw.thumbnail||raw.thumbnailUrl||raw.thumbnail_url||'',modelUrl,generated,generator:raw.generator,procedural:generated,behavior:type==='enemy'?'hostile':type==='vehicle'?'vehicle':type==='avatar'?'talk':raw.interactions?.includes('use')?'pickup':'decor',scale:raw.scaleLabel||raw.dimensions||'game ready',targetHeight:type==='avatar'?1.8:null,assetKind:generated?'generated-procedural':'catalog-glb',registry:raw,source:raw.source||'repository'};
+ const modelUrl=raw.modelPath||raw.modelUrl||raw.model_url||raw.fileUrl||raw.file_url||raw.assetUrl||raw.asset_url||'', format=String(raw.format||modelUrl.split('?')[0].split('.').pop()||'').toLowerCase(),image=raw.thumbnail||raw.thumbnailUrl||raw.thumbnail_url||'',generated=Boolean(raw.generated&&raw.generator),svgItem=format==='svg'&&Boolean(image||modelUrl);
+ if((!generated&&!svgItem&&(!modelUrl||!['glb','gltf'].includes(format)))||raw.visibility==='private'||raw.status==='inactive'||raw.builderCategory==='map'||raw.builderLayoutId)return null;
+ const sourceId=catalogId(raw.assetId||raw.id||raw.modelId||raw.name||`item-${index}`),kind=String(raw.assetType||raw.type||raw.category||'props').toLowerCase(),type=/avatar|character/.test(kind)?'avatar':/enemy/.test(kind)?'enemy':/pet|companion|creature/.test(kind)?'creature':/vehicle/.test(kind)?'vehicle':/terrain|land|environment/.test(kind)?'terrain':/wearable/.test(kind)?'wearable':'props',category=type==='avatar'?'characters':type==='enemy'||type==='creature'?'creatures':type==='vehicle'?'vehicles':type==='terrain'?'terrain':type==='wearable'?'wearables':/weapon/.test(kind)?'weapons':'props',generator=raw.generator||(svgItem?'extruded-svg':null);
+ return{id:`catalog-${sourceId}`,sourceId,name:raw.name||raw.title||'Deposited 3D item',type,category,size:72,image,modelUrl:['glb','gltf'].includes(format)?modelUrl:'',generated:Boolean(generator),generator,procedural:Boolean(generator),behavior:type==='enemy'?'hostile':type==='creature'?'patrol':type==='vehicle'?'vehicle':type==='avatar'?'talk':raw.consumable||raw.interactions?.includes('use')?'pickup':'decor',scale:raw.scaleLabel||raw.dimensions||raw.scale||'game ready',targetHeight:type==='avatar'?1.8:null,assetKind:generator?'generated-procedural':'catalog-glb',registry:raw,source:raw.source||'repository'};
 }
 async function populateCompleteCatalog(){
- const results=await Promise.allSettled(catalogSources.map(url=>fetch(url,{cache:'no-store'}).then(response=>response.ok?response.json():Promise.reject(new Error(`${url} ${response.status}`))))),known=new Set(models().map(model=>model.id));
+ const results=await Promise.allSettled(catalogSources.map(url=>fetch(url,{cache:'no-store'}).then(response=>response.ok?response.json():Promise.reject(new Error(`${url} ${response.status}`))))),known=new Set(models().map(model=>model.id)),identities=new Set(models().map(model=>model.modelUrl?`url:${model.modelUrl}`:`name:${catalogId(model.name)}:${model.category||model.type}`));
  results.filter(result=>result.status==='rejected').forEach(result=>console.error('[asset-registry] Manifest load failure',result.reason));
  const records=results.flatMap(result=>{if(result.status!=='fulfilled')return[];const value=result.value;if(value.audit?.warnings?.length)value.audit.warnings.forEach(issue=>(issue.level==='error'?console.error:console.info)(`[asset-registry] ${issue.code}`,issue));return Array.isArray(value)?value:value.models||value.assets||value.data||[]});
- catalogModels=records.map(normalizeCatalogModel).filter(Boolean).filter(model=>!known.has(model.id)&&(known.add(model.id),true));
+ catalogModels=records.map(normalizeCatalogModel).filter(Boolean).filter(model=>{const identity=model.modelUrl?`url:${model.modelUrl}`:`name:${catalogId(model.name)}:${model.category||model.type}`;if(known.has(model.id)||identities.has(identity))return false;known.add(model.id);identities.add(identity);return true});
  const environmentResult=await fetch('public/models/environments/environments.json',{cache:'no-store'}).then(response=>response.ok?response.json():[]).catch(()=>[]);
  const mapGroup=document.createElement('optgroup');mapGroup.label='REPOSITORY 3D MAPS';
  environmentResult.filter(map=>map.playable!==false&&map.visibility!=='private').forEach((map,index)=>{const id=`repository-${catalogId(map.id||map.name||index)}`;layouts[id]={name:map.name||'Playable map',icon:'▣',description:map.description||'Repository 3D environment.',color:0x40594b,sky:0x0b1710,environmentId:map.id,modelUrl:map.modelUrl||'',modelUrls:map.modelUrls||[]};const option=document.createElement('option');option.value=id;option.textContent=map.name||id;mapGroup.append(option)});
