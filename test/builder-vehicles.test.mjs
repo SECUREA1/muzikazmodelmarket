@@ -28,9 +28,15 @@ test('standard vehicle controller supports enter, movement, flight and exit', as
   for (const behavior of ['nearest', 'toggle', 'exit', 'update']) assert.match(controller, new RegExp(`${behavior}\\(`));
   assert.match(controller, /config\.mode === 'fly'/);
   assert.match(controller, /keys\.has\('shift'\)/);
+  assert.match(controller, /this\.onEnter\(vehicle\)/);
+  assert.match(controller, /input\.throttle/);
+  assert.match(controller, /input\.steering/);
+  assert.match(controller, /input\.lift/);
   assert.match(game, /new BuilderVehicleController/);
   assert.match(game, /key === 'f'/);
   assert.match(game, /vehicleController\.update\(delta\)/);
+  assert.match(game, /setPlayerAvatarVisible\(false\)/);
+  assert.match(game, /setPlayerAvatarVisible\(true\)/);
 });
 
 test('vehicles are categorized separately and expose a touch enter button', async () => {
@@ -41,5 +47,7 @@ test('vehicles are categorized separately and expose a touch enter button', asyn
   for (const id of ['builder-corsair-aircraft','builder-dune-quad']) assert.equal(assets.find(asset=>asset.id===id)?.type,'vehicles');
   assert.match(game, /builder-nearby-action/);
   assert.match(game, /ENTER VEHICLE/);
+  assert.match(game, /EXIT VEHICLE/);
+  assert.match(game, /data-vehicle-active/);
   assert.match(page, /house-environment-scroll-list/);
 });

@@ -1,7 +1,7 @@
 // Standard enter / drive-or-fly / exit controller for procedural Builder vehicles.
 export class BuilderVehicleController {
-  constructor({ THREE, vehicles, playerRig, camera, keys, status = () => {}, onExit = () => {} }) {
-    Object.assign(this, { THREE, vehicles, playerRig, camera, keys, status, onExit });
+  constructor({ THREE, vehicles, playerRig, camera, keys, input = () => ({}), status = () => {}, onEnter = () => {}, onExit = () => {} }) {
+    Object.assign(this, { THREE, vehicles, playerRig, camera, keys, input, status, onEnter, onExit });
     this.active = null;
     this.velocity = 0;
   }
@@ -20,7 +20,9 @@ export class BuilderVehicleController {
     if (!vehicle) { this.status('Move closer to a ride, then press F to enter.'); return false; }
     this.active = vehicle;
     this.velocity = 0;
-    this.status(`${vehicle.userData.label || vehicle.name}: controls active — WASD / arrows move, Space climbs, Shift descends, F exits.`);
+    this.onEnter(vehicle);
+    const controls = vehicle.userData.vehicle.mode === 'fly' ? 'WASD / arrows steer, Space climbs, Shift descends' : 'WASD / arrows drive and steer';
+    this.status(`${vehicle.userData.label || vehicle.name}: controls active — ${controls}. Use the Exit Vehicle button or F to leave.`);
     return true;
   }
   exit() {
@@ -37,16 +39,15 @@ export class BuilderVehicleController {
     const vehicle = this.active;
     if (!vehicle) return false;
     const config = vehicle.userData.vehicle;
-    const forward = this.keys.has('w') || this.keys.has('arrowup');
-    const reverse = this.keys.has('s') || this.keys.has('arrowdown');
-    const throttle = Number(forward) - Number(reverse);
+    const input = this.input();
+    const throttle = this.THREE.MathUtils.clamp(Number(this.keys.has('w') || this.keys.has('arrowup')) - Number(this.keys.has('s') || this.keys.has('arrowdown')) + (Number(input.throttle) || 0), -1, 1);
     this.velocity = this.THREE.MathUtils.lerp(this.velocity, throttle * config.speed, Math.min(1, delta * 2.5));
-    const steering = Number(this.keys.has('a') || this.keys.has('arrowleft')) - Number(this.keys.has('d') || this.keys.has('arrowright'));
+    const steering = this.THREE.MathUtils.clamp(Number(this.keys.has('a') || this.keys.has('arrowleft')) - Number(this.keys.has('d') || this.keys.has('arrowright')) + (Number(input.steering) || 0), -1, 1);
     vehicle.rotation.y += steering * config.turnSpeed * delta * (this.velocity >= 0 ? 1 : -1);
     const direction = new this.THREE.Vector3(0, 0, -1).applyQuaternion(vehicle.quaternion);
     vehicle.position.addScaledVector(direction, this.velocity * delta);
     if (config.mode === 'fly') {
-      const lift = Number(this.keys.has(' ')) - Number(this.keys.has('shift'));
+      const lift = this.THREE.MathUtils.clamp(Number(this.keys.has(' ')) - Number(this.keys.has('shift')) + (Number(input.lift) || 0), -1, 1);
       vehicle.position.y = Math.max(.35, vehicle.position.y + lift * config.speed * .55 * delta);
       vehicle.rotation.z = this.THREE.MathUtils.lerp(vehicle.rotation.z, steering * -.28, delta * 3);
       vehicle.rotation.x = this.THREE.MathUtils.lerp(vehicle.rotation.x, throttle * -.08 + lift * -.12, delta * 2);
