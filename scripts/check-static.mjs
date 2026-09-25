@@ -103,14 +103,19 @@ for (const marketFeature of ['header-market-buttons', 'header-market-button', 'G
 }
 const globalStyles = await readFile('dist/styles.css', 'utf8');
 for (const mobileHeaderLayout of [
-  '.global-site-header .icons{display:none}',
-  'display:inline-flex!important;grid-column:2;grid-row:1',
+  '.global-site-header .icons{grid-column:1;grid-row:2;display:grid;width:100%;min-width:0;grid-template-columns:repeat(4,minmax(0,1fr))',
   '.global-site-header .header-market-buttons{display:grid;grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr))'
 ]) {
-  if (!globalStyles.includes(mobileHeaderLayout)) throw new Error(`The compact mobile header layout is missing ${mobileHeaderLayout}.`);
+  if (!globalStyles.includes(mobileHeaderLayout)) throw new Error(`The evenly distributed mobile header layout is missing ${mobileHeaderLayout}.`);
 }
-const houseExplorerHeaderCheck = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
-if (!houseExplorerHeaderCheck.includes('.builder-nearby-action{display:none!important}')) throw new Error('The on-screen Use / Action button must remain hidden.');
+for (const mobileExplorerControl of [
+  'right:max(10px,env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom))',
+  '.explorer-options__toggle>span:last-child{position:absolute;width:1px;height:1px;overflow:hidden'
+]) {
+  if (!globalStyles.includes(mobileExplorerControl)) throw new Error(`The mobile explorer toggle is missing ${mobileExplorerControl}.`);
+}
+const houseExplorerControls = await readFile('dist/public/js/house-explorer-glb.js', 'utf8');
+if (!houseExplorerControls.includes('.builder-nearby-action{display:none!important}')) throw new Error('The on-screen Use / Action button must remain hidden.');
 for (const utilityFeature of ['Support', 'data-open-support-chat', 'Admin login', 'data-global-admin-form', '/api/admin/login']) {
   if (!backpackWidget.includes(utilityFeature)) throw new Error(`The global page utility bar is missing ${utilityFeature}.`);
 }
