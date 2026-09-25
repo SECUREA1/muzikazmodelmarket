@@ -141,6 +141,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.head.append(style);
   const builderPrompt=document.createElement('output');builderPrompt.setAttribute('aria-live','polite');builderPrompt.hidden=true;builderPrompt.style.cssText='position:absolute;z-index:12;left:50%;bottom:18px;transform:translateX(-50%);padding:8px 13px;border:1px solid #b9ff38;border-radius:999px;background:rgba(3,12,5,.9);color:#efffd7;font:900 12px/1 Inter,sans-serif;pointer-events:none';stage.append(builderPrompt);
   const builderActionButton=document.createElement('button');builderActionButton.type='button';builderActionButton.className='builder-nearby-action';builderActionButton.hidden=true;builderActionButton.setAttribute('aria-label','Use nearby gameplay item');builderActionButton.innerHTML='<span class="builder-nearby-action__icon" aria-hidden="true">✦</span><strong>USE / ACTION</strong><small>Tap or click to interact</small>';stage.append(builderActionButton);
+  const builderActionTitle=builderActionButton.querySelector('strong');
+  const builderActionHint=builderActionButton.querySelector('small');
 
   const setStatus = (message) => { if (status) status.textContent = message; };
   const environmentSelect = document.querySelector('#house-environment-select');
@@ -879,7 +881,41 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const setPlayerAvatarVisible=(visible)=>placedAvatars.children.forEach(root=>{if(root.userData.localPlayerAvatar)root.visible=visible;});
   const vehicleController=new BuilderVehicleController({THREE,vehicles:builderDecor,playerRig,camera,keys,input:()=>({throttle:(mobile.has('forward')?1:0)-(mobile.has('back')?1:0)-thumbInput.leftY,steering:(mobile.has('left')?1:0)-(mobile.has('right')?1:0)-thumbInput.leftX,lift:mobile.has('jump')?1:0}),status:setStatus,onEnter:()=>setPlayerAvatarVisible(false),onExit:(position)=>{setPlayerAvatarVisible(true);playerCollider.start.copy(position);playerCollider.end.copy(position).add(new THREE.Vector3(0,player.height,0));player.velocity.set(0,0,0);}});
   function dropHeldBuilderItem(){const forward=camera.getWorldDirection(new THREE.Vector3());forward.y=0;forward.normalize();return builderGameplay.dropHeld(playerRig.position.clone().addScaledVector(forward,1.5));}
-  builderActionButton.addEventListener('click',()=>{if(builderGameplay.heldActor()){dropHeldBuilderItem();return;}if(vehicleController.active||vehicleController.nearest()){vehicleController.toggle();return;}const result=builderGameplay.interact('e',playerRig.position);if(!result)setStatus('No usable object is close enough.');});
+  let nearbyAction={kind:'none',prompt:'',label:'',title:'',hint:'',vehicleActive:false};
+  let nearbyActionCheckedAt=-Infinity;
+  let nearbyActionLocked=false;
+  function resolveNearbyAction(){
+    const held=builderGameplay.heldActor();
+    if(held)return{kind:'drop',prompt:'G — Drop held item',label:'Drop held item',title:'DROP ITEM',hint:'Tap or click to drop',vehicleActive:false};
+    const vehicle=vehicleController.active||vehicleController.nearest();
+    if(vehicle){const active=Boolean(vehicleController.active),flying=(vehicleController.active||vehicle).userData.vehicle?.mode==='fly';return{kind:'vehicle',prompt:active?'F — Exit Vehicle':'F — Enter Vehicle',label:active?'Exit current vehicle':'Enter nearby vehicle',title:active?'EXIT VEHICLE':'ENTER VEHICLE',hint:active?(flying?'Sticks steer · jump climbs':'Sticks drive and steer'):'Tap or click to drive',vehicleActive:active};}
+    const prompt=builderGameplay.prompt(playerRig.position);
+    return prompt?{kind:'item',prompt,label:'Use nearby gameplay item',title:'USE / ACTION',hint:'Tap or click to interact',vehicleActive:false}:{kind:'none',prompt:'',label:'',title:'',hint:'',vehicleActive:false};
+  }
+  function renderNearbyAction(next){
+    if(JSON.stringify(next)===JSON.stringify(nearbyAction))return;
+    nearbyAction=next;
+    const hidden=next.kind==='none';
+    builderPrompt.hidden=hidden;builderActionButton.hidden=hidden;
+    if(hidden)return;
+    builderPrompt.textContent=next.prompt;
+    builderActionButton.dataset.vehicleActive=String(next.vehicleActive);
+    builderActionButton.setAttribute('aria-label',next.label);
+    builderActionTitle.textContent=next.title;builderActionHint.textContent=next.hint;
+  }
+  function refreshNearbyAction(now=performance.now(),force=false){if(!force&&now-nearbyActionCheckedAt<100)return;nearbyActionCheckedAt=now;renderNearbyAction(resolveNearbyAction());}
+  builderActionButton.addEventListener('click',()=>{
+    if(nearbyActionLocked)return;
+    nearbyActionLocked=true;
+    try{
+      if(nearbyAction.kind==='drop')dropHeldBuilderItem();
+      else if(nearbyAction.kind==='vehicle')vehicleController.toggle();
+      else if(nearbyAction.kind==='item'){const result=builderGameplay.interact('e',playerRig.position);if(!result)setStatus('No usable object is close enough.');}
+    }finally{
+      refreshNearbyAction(performance.now(),true);
+      window.setTimeout(()=>{nearbyActionLocked=false;},180);
+    }
+  });
   window.addEventListener('keydown', (e) => { if (isTypingTarget(e.target)) { keys.clear(); return; } const key = e.key.toLowerCase(); keys.add(key); if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) e.preventDefault(); if (key === 'f' && !e.repeat) { e.preventDefault(); vehicleController.toggle(); } if (key === 'e' && !e.repeat) { e.preventDefault(); const result=builderGameplay.interact('e',playerRig.position); if(!result)setStatus('No Builder object is close enough to interact with.'); } if (key === 'g' && !e.repeat) { e.preventDefault(); if(!dropHeldBuilderItem())setStatus('Pick up a Builder item before dropping it.'); } if (key === ' ') { e.preventDefault(); if (!vehicleController.active && player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } } if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08); if (key === 'r') resetPlayer(); if (key === 'i') { e.preventDefault(); toxicBubbleSystem.toggleInventory(); } }); window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase())); window.addEventListener('blur', () => keys.clear());
   const pointerLockSupported = Boolean(canvas.requestPointerLock);
   document.addEventListener('pointerlockchange', () => {
@@ -1053,7 +1089,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     toxicBubbleSystem.updateBrickPreview();
     toxicBubbleSystem.update(delta, clock.elapsedTime);
     builderGameplay.update(delta,playerRig.position);
-    const heldBuilderItem=builderGameplay.heldActor(),vehicleNearby=vehicleController.active||vehicleController.nearest();const interactionPrompt=heldBuilderItem?'G — Drop held item':vehicleNearby?(vehicleController.active?'F — Exit Vehicle':'F — Enter Vehicle'):builderGameplay.prompt(playerRig.position);builderPrompt.hidden=!interactionPrompt;builderPrompt.textContent=interactionPrompt;builderActionButton.hidden=!interactionPrompt;builderActionButton.dataset.vehicleActive=String(Boolean(vehicleController.active));const actionLabel=heldBuilderItem?'Drop held item':vehicleController.active?'Exit current vehicle':vehicleNearby?'Enter nearby vehicle':'Use nearby gameplay item';builderActionButton.setAttribute('aria-label',actionLabel);const actionTitle=heldBuilderItem?'DROP ITEM':vehicleNearby?(vehicleController.active?'EXIT VEHICLE':'ENTER VEHICLE'):'USE / ACTION';const actionHint=vehicleController.active?(vehicleController.active.userData.vehicle.mode==='fly'?'Sticks steer · jump climbs':'Sticks drive and steer'):vehicleNearby?'Tap or click to drive':'Tap or click to interact';builderActionButton.querySelector('strong').textContent=actionTitle;builderActionButton.querySelector('small').textContent=actionHint;
+    refreshNearbyAction();
     updateBuilderModels(builderDecor, clock.elapsedTime);
     updateBuilderModels(placedAvatars, clock.elapsedTime);
     renderer.render(scene, camera);
