@@ -59,6 +59,8 @@ test('interaction priority chooses one closest target and enforces cooldown', ()
   assert.match(runtime.prompt({x:0,y:0,z:0}),/^E/);
   assert.equal(runtime.interact('e',{x:0,y:0,z:0}).actor.objectId,'near');
   assert.deepEqual(runtime.player.inventory,['near']); assert.deepEqual(visibility,[false]); assert.equal(messages,1);
+  assert.equal(runtime.interact('e',{x:0,y:0,z:0}).reason,'hands-full','the held item is no longer targeted every frame');
+  runtime.dropHeld({x:1,y:0,z:0});
   assert.equal(runtime.interact('e',{x:0,y:0,z:0}).reason,'cooldown');
   now=7000; assert.equal(runtime.interact('e',{x:0,y:0,z:0}).handled,true);
 });
@@ -132,4 +134,22 @@ test('held items can be dropped into the world and picked up again', () => {
   assert.deepEqual(runtime.actor('blade').transform.position,{x:3,y:0,z:-2});
   assert.deepEqual(events,[['held',true],['dropped',{x:3,y:0,z:-2}],['active',true]]);
   assert.equal(runtime.interact('e',{x:3,y:0,z:-2}).handled,true);
+});
+
+test('item interactions stay focused: held items are ignored and consumables do not fire incessantly', () => {
+  const runtime=new BuilderGameplayRuntime({manifest:compileBuilderScene({objects:[
+    {id:'blade',modelId:'blade',type:'weapon',position:{x:0,y:0,z:0}},
+    {id:'potion',modelId:'potion',type:'consumable',position:{x:1,y:0,z:0},functionalSettings:{behavior:'heal',value:25}}
+  ]}),player:{health:50,maxHealth:100,inventory:[],quests:{}}});
+  const active=[];
+  runtime.register('blade',{setHeld:()=>{}});
+  runtime.register('potion',{setActive:value=>active.push(value)});
+
+  assert.equal(runtime.interact('e',{x:0,y:0,z:0}).actor.objectId,'blade');
+  assert.equal(runtime.nearest({x:0,y:0,z:0}).actor.objectId,'potion');
+  assert.equal(runtime.interact('e',{x:1,y:0,z:0}).handled,true);
+  assert.equal(runtime.player.health,75);
+  assert.deepEqual(active,[false]);
+  assert.equal(runtime.nearest({x:1,y:0,z:0}),null);
+  assert.equal(runtime.interact('e',{x:1,y:0,z:0}),null);
 });
