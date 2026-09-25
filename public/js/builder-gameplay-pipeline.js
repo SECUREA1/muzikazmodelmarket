@@ -2,7 +2,7 @@
 export const BUILDER_MANIFEST_VERSION = 2;
 export const PLAYABLE_BEHAVIORS = new Set([
   'vehicle', 'talk', 'quest', 'hostile', 'patrol', 'pickup', 'door', 'heal',
-  'interact', 'hazard', 'trigger'
+  'interact', 'hazard', 'trigger', 'hold', 'switch'
 ]);
 
 const finite = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -90,13 +90,13 @@ export function upgradeBuilderManifest(manifest = {}) {
 }
 
 const distance = (a, b) => Math.hypot(finite(a.x) - finite(b.x), finite(a.y) - finite(b.y), finite(a.z) - finite(b.z));
-const DEFAULT_PROMPTS = { door:'Open / close', pickup:'Pick up', heal:'Use health', talk:'Talk', quest:'View quest', interact:'Interact', trigger:'Activate', hazard:'Disarm' };
+const DEFAULT_PROMPTS = { door:'Open / close', pickup:'Pick up & hold', hold:'Hold / put away', switch:'Switch', heal:'Use health', talk:'Talk', quest:'View quest', interact:'Interact', trigger:'Activate', hazard:'Disarm' };
 
 /** One shared manager updates all dynamic Builder actors and resolves one input target. */
 export class BuilderGameplayRuntime {
   constructor({ manifest, player = {}, now = () => Date.now(), feedback = () => {}, effects = {} } = {}) {
     this.manifest = upgradeBuilderManifest(manifest);
-    this.player = Object.assign({ health: 100, maxHealth: 100, score: 0, inventory: [], quests: {} }, player);
+    this.player = Object.assign({ health: 100, maxHealth: 100, score: 0, inventory: [], quests: {}, heldObjectId: null, switches: {} }, player);
     this.now = now; this.feedback = feedback; this.effects = effects;
     this.instances = new Map(); this.cooldowns = new Map(); this.elapsed = 0;
   }
@@ -122,13 +122,26 @@ export class BuilderGameplayRuntime {
     this.cooldowns.set(actor.objectId, current + config.cooldown * 1000);
     const instance = this.instances.get(actor.objectId), value = finite(config.value, config.behavior === 'heal' ? 25 : 1);
     let message = config.prompt || DEFAULT_PROMPTS[config.behavior] || 'Activated';
-    if (config.behavior === 'pickup') { if (!this.player.inventory.includes(actor.modelId)) this.player.inventory.push(actor.modelId); instance?.setActive?.(false); if (config.respawn) instance?.respawnAfter?.(config.respawn); }
+    if (config.behavior === 'pickup' || config.behavior === 'hold') {
+      if (!this.player.inventory.includes(actor.modelId)) this.player.inventory.push(actor.modelId);
+      const puttingAway = this.player.heldObjectId === actor.objectId;
+      const previousHeld = !puttingAway && this.player.heldObjectId;
+      if (previousHeld) this.instances.get(previousHeld)?.setHeld?.(false, this.player);
+      this.player.heldObjectId = puttingAway ? null : actor.objectId;
+      instance?.setHeld?.(!puttingAway, this.player);
+      if (!instance?.setHeld) instance?.setActive?.(puttingAway);
+      message = puttingAway ? 'Put away' : 'Held — press E to use or put away';
+      if (config.respawn && !puttingAway) instance?.respawnAfter?.(config.respawn);
+    }
+    else if (config.behavior === 'switch') { const on=!this.player.switches[actor.objectId]; this.player.switches[actor.objectId]=on; instance?.setSwitched?.(on); message=on?'Switched on':'Switched off'; }
     else if (config.behavior === 'heal') this.player.health = Math.min(this.player.maxHealth, this.player.health + value);
     else if (config.behavior === 'door') { instance.open = !instance.open; instance?.setDoorOpen?.(instance.open); }
     else if (config.behavior === 'talk') { message = actor.dialogue?.text || config.value || message; this.effects.dialogue?.(actor.dialogue, actor); }
     else if (config.behavior === 'quest') { const id = actor.quest?.id || actor.objectId; this.player.quests[id] = this.player.quests[id] === 'active' ? 'complete' : 'active'; this.effects.quest?.(actor.quest, this.player.quests[id], actor); }
     if (config.action === 'score') this.player.score += value;
     if (config.action === 'damage') this.player.health = Math.max(0, this.player.health - value);
+    if (config.action === 'toggle' && instance) { instance.toggled = !instance.toggled; instance.setSwitched?.(instance.toggled); }
+    if (config.action === 'use') instance?.use?.(config.value, actor, this.player);
     instance?.playClip?.(actor.animation.interactionClip, false);
     this.effects.action?.(config.action, config.value, actor); this.feedback(message, actor);
     return { actor, handled: true, message };

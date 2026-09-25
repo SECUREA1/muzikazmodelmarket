@@ -32,3 +32,14 @@ test('standard vehicle controller supports enter, movement, flight and exit', as
   assert.match(game, /key === 'f'/);
   assert.match(game, /vehicleController\.update\(delta\)/);
 });
+
+test('vehicles are categorized separately and expose a touch enter button', async () => {
+  const [catalog, game, page] = await Promise.all([
+    read('../public/models/backpack-assets.json'), read('../public/js/house-explorer-glb.js'), read('../model-explorer.html')
+  ]);
+  const assets=JSON.parse(catalog).assets;
+  for (const id of ['builder-corsair-aircraft','builder-dune-quad']) assert.equal(assets.find(asset=>asset.id===id)?.type,'vehicles');
+  assert.match(game, /builder-nearby-action/);
+  assert.match(game, /ENTER VEHICLE/);
+  assert.match(page, /house-environment-scroll-list/);
+});

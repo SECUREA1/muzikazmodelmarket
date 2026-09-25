@@ -87,3 +87,19 @@ test('shared AI update pursues nearby players and patrols otherwise', () => {
   runtime.update(.5,{x:2,y:0,z:0});
   assert.deepEqual(moved[0],['enemy',{x:2,y:0,z:0}]); assert.notEqual(moved[1][1].x,20);
 });
+
+test('holdable and switch objects run their complete gameplay functions', () => {
+  const objects=[
+    {id:'foldable',modelId:'foldable-tool',position:{x:0,y:0,z:0},functionalSettings:{behavior:'hold',action:'use'}},
+    {id:'switch',modelId:'lever',position:{x:4,y:0,z:0},functionalSettings:{behavior:'switch'}}
+  ];
+  const runtime=new BuilderGameplayRuntime({manifest:compileBuilderScene({objects})});
+  const held=[],used=[],switched=[];
+  runtime.register('foldable',{setHeld:value=>held.push(value),use:()=>used.push(true)});
+  runtime.register('switch',{setSwitched:value=>switched.push(value)});
+  assert.equal(runtime.interact('e',{x:0,y:0,z:0}).handled,true);
+  assert.equal(runtime.player.heldObjectId,'foldable');
+  assert.deepEqual(held,[true]); assert.deepEqual(used,[true]);
+  assert.equal(runtime.interact('e',{x:4,y:0,z:0}).handled,true);
+  assert.deepEqual(switched,[true]);
+});
