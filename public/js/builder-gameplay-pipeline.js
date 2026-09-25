@@ -119,13 +119,25 @@ export class BuilderGameplayRuntime {
     this.player = Object.assign({ health: 100, maxHealth: 100, score: 0, inventory: [], quests: {}, heldObjectId: null, switches: {} }, player);
     this.now = now; this.schedule = schedule; this.feedback = feedback; this.effects = effects;
     this.instances = new Map(); this.cooldowns = new Map(); this.consumed = new Set(); this.elapsed = 0;
+    // Maps avoid repeatedly walking a potentially large imported asset catalog.
+    // Keep the immutable manifest for serialization, but use these compact lists
+    // in the frame loop and interaction hot path.
+    this.actorsById = new Map(this.manifest.actors.map(actor => [actor.objectId, actor]));
+    this.interactiveByKey = new Map();
+    this.movingActors = [];
+    for (const actor of this.manifest.actors) {
+      const key = actor.gameplay.interactionKey;
+      if (!this.interactiveByKey.has(key)) this.interactiveByKey.set(key, []);
+      this.interactiveByKey.get(key).push(actor);
+      if (MOVING_BEHAVIORS.has(actor.gameplay.behavior)) this.movingActors.push(actor);
+    }
   }
   register(objectId, adapter) { this.instances.set(String(objectId), adapter); return adapter; }
-  actor(id) { return this.manifest.actors.find(item => item.objectId === String(id)); }
+  actor(id) { return this.actorsById.get(String(id)); }
   position(actor) { return this.instances.get(actor.objectId)?.getPosition?.() || actor.transform.position; }
   nearest(playerPosition, key = 'e') {
-    return this.manifest.actors.reduce((best, actor) => {
-      if (actor.gameplay.interactionKey !== key || actor.objectId === this.player.heldObjectId || this.consumed.has(actor.objectId) || this.instances.get(actor.objectId)?.active === false) return best;
+    return (this.interactiveByKey.get(key) || []).reduce((best, actor) => {
+      if (!this.instances.has(actor.objectId) || actor.gameplay.interactionKey !== key || actor.objectId === this.player.heldObjectId || this.consumed.has(actor.objectId) || this.instances.get(actor.objectId)?.active === false) return best;
       const next = distance(playerPosition, this.position(actor));
       return next <= actor.gameplay.interactionDistance && (!best || next < best.distance) ? { actor, distance: next } : best;
     }, null);
@@ -195,17 +207,20 @@ export class BuilderGameplayRuntime {
     this.effects.action?.(config.action, config.value, actor); this.feedback(message, actor);
     return { actor, handled: true, message };
   }
-  update(delta, playerPosition) {
-    this.elapsed += Math.max(0, finite(delta));
-    for (const actor of this.manifest.actors) {
+  update(delta, playerPosition, { animate = true } = {}) {
+    const safeDelta = Math.max(0, finite(delta));
+    this.elapsed += safeDelta;
+    // Mixers are optional and animation can be skipped by the mobile frame
+    // budget without stopping interactions or AI state entirely.
+    if (animate) for (const instance of this.instances.values()) instance?.updateMixer?.(safeDelta);
+    for (const actor of this.movingActors) {
       const instance = this.instances.get(actor.objectId), behavior = actor.gameplay.behavior;
-      instance?.updateMixer?.(delta);
-      if (!instance || !MOVING_BEHAVIORS.has(behavior)) continue;
+      if (!instance) continue;
       const origin = actor.transform.position, current = this.position(actor), detection = finite(actor.ai?.detectionRange, 9);
       let target;
       if (behavior === 'hostile' && playerPosition && distance(current, playerPosition) <= detection) target = playerPosition;
       else { const radius = finite(actor.movement?.patrolRadius, 3), speed = finite(actor.movement?.speed, 1); target = { x:origin.x+Math.sin(this.elapsed*speed)*radius, y:origin.y, z:origin.z+Math.cos(this.elapsed*speed)*radius }; }
-      instance.moveToward?.(target, finite(actor.movement?.speed, behavior === 'hostile' ? 2 : 1), delta);
+      instance.moveToward?.(target, finite(actor.movement?.speed, behavior === 'hostile' ? 2 : 1), safeDelta);
       instance.playState?.(target === playerPosition ? 'movement' : 'idle', actor.animation);
     }
   }
