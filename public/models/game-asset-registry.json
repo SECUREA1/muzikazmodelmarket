@@ -3419,6 +3419,1326 @@
       "multiplayerCompatible": true
     },
     {
+      "assetId": "builder-land-ancient-forest",
+      "name": "Ancient Forest",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-blacksite",
+      "name": "Blacksite Compound",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-cargo-yard",
+      "name": "Cargo Yard",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-coastal-cliffs",
+      "name": "Coastal Cliffs",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-courtyard",
+      "name": "Garden Courtyard",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-creator-studios",
+      "name": "Creator Studios",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-crystal-cavern",
+      "name": "Crystal Cavern",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-deep-mine",
+      "name": "Deep Mine",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-desert-airfield",
+      "name": "Desert Airfield",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-desert-outpost",
+      "name": "Desert Outpost",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-dune-sea",
+      "name": "Dune Sea",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-firing-range",
+      "name": "Firing Range",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-loft",
+      "name": "Open Studio",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-market-square",
+      "name": "Market Square",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-mega-mall",
+      "name": "Mega Mall",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-mountain-pass",
+      "name": "Mountain Terrain",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-movie-studio",
+      "name": "Movie Studio",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-neon-arena",
+      "name": "Neon Arena",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-neon-wetlands",
+      "name": "Neon Wetlands",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-office-tower",
+      "name": "Office Tower",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-railroad-world",
+      "name": "Railroad Track World",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-skyport",
+      "name": "Skyport Airport",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-sunrise-farm",
+      "name": "Sunrise Farm",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
+      "assetId": "builder-land-vendor-street",
+      "name": "Small Vendor Street",
+      "category": "terrain",
+      "assetType": "terrain",
+      "source": "public/models/backpack-assets.json",
+      "generated": true,
+      "modelPath": "",
+      "thumbnail": "/public/images/backpack/muzikaz-main-floor.svg",
+      "generator": "terrain-slab",
+      "defaultTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "materials": {
+        "editable": true,
+        "color": null,
+        "preserveOriginal": false
+      },
+      "collision": {
+        "enabled": true,
+        "shape": "mesh"
+      },
+      "physics": {
+        "enabled": false,
+        "mass": 1
+      },
+      "animations": [],
+      "interactions": [
+        "place",
+        "interact"
+      ],
+      "attachment": null,
+      "inventoryCompatible": false,
+      "wearableCompatible": false,
+      "vehicleCompatible": false,
+      "mapCompatible": true,
+      "environmentCompatible": true,
+      "runtimeCompatible": true,
+      "singlePlayerCompatible": true,
+      "multiplayerCompatible": true
+    },
+    {
       "assetId": "buzzed",
       "name": "Buzzed",
       "category": "characters",
@@ -6320,13 +7640,157 @@
     }
   ],
   "audit": {
-    "assetCount": 114,
-    "generatedCount": 13,
+    "assetCount": 138,
+    "generatedCount": 37,
     "warnings": [
       {
         "level": "info",
         "code": "GENERATED_REPLACEMENT",
         "asset": "muzikaz-main",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-loft",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-courtyard",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-vendor-street",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-creator-studios",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-market-square",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-mountain-pass",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-crystal-cavern",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-railroad-world",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-skyport",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-deep-mine",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-sunrise-farm",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-coastal-cliffs",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-ancient-forest",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-neon-wetlands",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-desert-airfield",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-dune-sea",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-blacksite",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-cargo-yard",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-neon-arena",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-desert-outpost",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-mega-mall",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-office-tower",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-firing-range",
+        "generator": "terrain-slab"
+      },
+      {
+        "level": "info",
+        "code": "GENERATED_REPLACEMENT",
+        "asset": "builder-land-movie-studio",
         "generator": "terrain-slab"
       },
       {

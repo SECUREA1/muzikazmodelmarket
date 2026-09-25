@@ -497,7 +497,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   async function deployBackpackAsset(asset) {
     if (!asset?.id) { setStatus('This Backpack item is missing its game identity and could not be used.'); return false; }
-    if (asset.type === 'lands') { closeBackpack(); await loadById(asset.environmentId || asset.id); rememberActiveBackpackItem(asset); return true; }
+    if (asset.type === 'lands') { closeBackpack(); rememberActiveBackpackItem(asset); if (asset.builderLayoutId) { window.location.assign(asset.builderUrl || `environment-builder.html?layout=${encodeURIComponent(asset.builderLayoutId)}`); return true; } await loadById(asset.environmentId || asset.id); return true; }
     if (asset.petId && asset.consumable) { feedTreatToPet(asset); return; }
     if (asset.id === 'rad-tox-dynamite') { closeBackpack(); toxicBubbleSystem.setTool('dynamite'); openTools(); rememberActiveBackpackItem(asset); setStatus('RAD-TOX Dynamite is open and visible in your hand — click, tap, or squeeze the trigger to toss it. Each throw costs 25 MZK.'); return true; }
     if (asset.buildAssetId) { const tray=readBuildTray(); if(!tray.some(item=>item.id===asset.buildAssetId)) tray.push({id:asset.buildAssetId,name:asset.name,type:asset.builderCategory,thumbnailUrl:asset.thumbnailUrl,addedAt:new Date().toISOString()}); localStorage.setItem(buildTrayKey,JSON.stringify(tray)); closeBackpack(); openTools(); toggleBuildMenu(true); rememberActiveBackpackItem(asset); setStatus(`${asset.name} added to your build inventory and selected in Build Map.`); return true; }
