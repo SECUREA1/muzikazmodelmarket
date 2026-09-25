@@ -108,22 +108,24 @@ export function upgradeBuilderManifest(manifest = {}) {
 }
 
 const distance = (a, b) => Math.hypot(finite(a.x) - finite(b.x), finite(a.y) - finite(b.y), finite(a.z) - finite(b.z));
-const DEFAULT_PROMPTS = { door:'Open / close', pickup:'Pick up & hold', hold:'Hold / put away', switch:'Switch', heal:'Use health', talk:'Talk', quest:'View quest', interact:'Interact', trigger:'Activate', hazard:'Disarm' };
+const DEFAULT_PROMPTS = { door:'Open / close', pickup:'Pick up & hold', hold:'Pick up & hold', switch:'Switch', heal:'Use health', talk:'Talk', quest:'View quest', interact:'Interact', trigger:'Activate', hazard:'Disarm' };
+const ITEM_BEHAVIORS = new Set(['pickup', 'hold']);
+const MOVING_BEHAVIORS = new Set(['hostile', 'patrol']);
 
 /** One shared manager updates all dynamic Builder actors and resolves one input target. */
 export class BuilderGameplayRuntime {
-  constructor({ manifest, player = {}, now = () => Date.now(), feedback = () => {}, effects = {} } = {}) {
+  constructor({ manifest, player = {}, now = () => Date.now(), schedule = (callback, delay) => setTimeout(callback, delay), feedback = () => {}, effects = {} } = {}) {
     this.manifest = upgradeBuilderManifest(manifest);
     this.player = Object.assign({ health: 100, maxHealth: 100, score: 0, inventory: [], quests: {}, heldObjectId: null, switches: {} }, player);
-    this.now = now; this.feedback = feedback; this.effects = effects;
-    this.instances = new Map(); this.cooldowns = new Map(); this.elapsed = 0;
+    this.now = now; this.schedule = schedule; this.feedback = feedback; this.effects = effects;
+    this.instances = new Map(); this.cooldowns = new Map(); this.consumed = new Set(); this.elapsed = 0;
   }
   register(objectId, adapter) { this.instances.set(String(objectId), adapter); return adapter; }
   actor(id) { return this.manifest.actors.find(item => item.objectId === String(id)); }
   position(actor) { return this.instances.get(actor.objectId)?.getPosition?.() || actor.transform.position; }
   nearest(playerPosition, key = 'e') {
     return this.manifest.actors.reduce((best, actor) => {
-      if (actor.gameplay.interactionKey !== key || this.instances.get(actor.objectId)?.active === false) return best;
+      if (actor.gameplay.interactionKey !== key || actor.objectId === this.player.heldObjectId || this.consumed.has(actor.objectId) || this.instances.get(actor.objectId)?.active === false) return best;
       const next = distance(playerPosition, this.position(actor));
       return next <= actor.gameplay.interactionDistance && (!best || next < best.distance) ? { actor, distance: next } : best;
     }, null);
@@ -133,14 +135,25 @@ export class BuilderGameplayRuntime {
     return '';
   }
   heldActor() { return this.actor(this.player.heldObjectId); }
+  removeFromInventory(actor) {
+    const index = this.player.inventory.indexOf(actor?.modelId);
+    if (index >= 0) this.player.inventory.splice(index, 1);
+  }
+  consume(actor, instance) {
+    this.consumed.add(actor.objectId);
+    instance?.setActive?.(false);
+    if (actor.gameplay.respawn > 0) {
+      instance?.respawnAfter?.(actor.gameplay.respawn);
+      this.schedule(() => { this.consumed.delete(actor.objectId); instance?.setActive?.(true); }, actor.gameplay.respawn * 1000);
+    }
+  }
   /** Drop the held Builder object back into the world so it can be picked up again. */
   dropHeld(position = null) {
     const objectId = this.player.heldObjectId;
     if (!objectId) return null;
     const actor = this.actor(objectId), instance = this.instances.get(objectId);
     this.player.heldObjectId = null;
-    const inventoryIndex = this.player.inventory.indexOf(actor?.modelId);
-    if (inventoryIndex >= 0) this.player.inventory.splice(inventoryIndex, 1);
+    this.removeFromInventory(actor);
     if (position && actor?.transform) actor.transform.position = vector(position);
     if (instance?.setDropped) instance.setDropped(position, this.player);
     else instance?.setHeld?.(false, this.player, position);
@@ -153,23 +166,24 @@ export class BuilderGameplayRuntime {
     const hit = this.nearest(playerPosition, String(key).toLowerCase());
     if (!hit) return null;
     const actor = hit.actor, config = actor.gameplay, current = this.now(), ready = this.cooldowns.get(actor.objectId) || 0;
+    if (ITEM_BEHAVIORS.has(config.behavior) && this.player.heldObjectId) return { actor, handled: false, reason: 'hands-full', message: 'Drop the held item first' };
+    if (config.behavior === 'heal' && this.player.health >= this.player.maxHealth) return { actor, handled: false, reason: 'health-full', message: 'Health is already full' };
     if (current < ready) return { actor, handled: false, reason: 'cooldown', remaining: (ready-current)/1000 };
     this.cooldowns.set(actor.objectId, current + config.cooldown * 1000);
     const instance = this.instances.get(actor.objectId), value = finite(config.value, config.behavior === 'heal' ? 25 : 1);
     let message = config.prompt || DEFAULT_PROMPTS[config.behavior] || 'Activated';
-    if (config.behavior === 'pickup' || config.behavior === 'hold') {
+    if (ITEM_BEHAVIORS.has(config.behavior)) {
       if (!this.player.inventory.includes(actor.modelId)) this.player.inventory.push(actor.modelId);
-      const puttingAway = this.player.heldObjectId === actor.objectId;
-      const previousHeld = !puttingAway && this.player.heldObjectId;
-      if (previousHeld) this.instances.get(previousHeld)?.setHeld?.(false, this.player);
-      this.player.heldObjectId = puttingAway ? null : actor.objectId;
-      instance?.setHeld?.(!puttingAway, this.player);
-      if (!instance?.setHeld) instance?.setActive?.(puttingAway);
-      message = puttingAway ? 'Put away' : 'Held — press E to use or put away';
-      if (config.respawn && !puttingAway) instance?.respawnAfter?.(config.respawn);
+      this.player.heldObjectId = actor.objectId;
+      instance?.setHeld?.(true, this.player);
+      if (!instance?.setHeld) instance?.setActive?.(false);
+      message = 'Held — press G to drop';
     }
     else if (config.behavior === 'switch') { const on=!this.player.switches[actor.objectId]; this.player.switches[actor.objectId]=on; instance?.setSwitched?.(on); message=on?'Switched on':'Switched off'; }
-    else if (config.behavior === 'heal') this.player.health = Math.min(this.player.maxHealth, this.player.health + value);
+    else if (config.behavior === 'heal') {
+      this.player.health = Math.min(this.player.maxHealth, this.player.health + value);
+      this.consume(actor, instance);
+    }
     else if (config.behavior === 'door') { instance.open = !instance.open; instance?.setDoorOpen?.(instance.open); }
     else if (config.behavior === 'talk') { message = actor.dialogue?.text || config.value || message; this.effects.dialogue?.(actor.dialogue, actor); }
     else if (config.behavior === 'quest') { const id = actor.quest?.id || actor.objectId; this.player.quests[id] = this.player.quests[id] === 'active' ? 'complete' : 'active'; this.effects.quest?.(actor.quest, this.player.quests[id], actor); }
@@ -186,7 +200,7 @@ export class BuilderGameplayRuntime {
     for (const actor of this.manifest.actors) {
       const instance = this.instances.get(actor.objectId), behavior = actor.gameplay.behavior;
       instance?.updateMixer?.(delta);
-      if (!instance || !['hostile','patrol'].includes(behavior)) continue;
+      if (!instance || !MOVING_BEHAVIORS.has(behavior)) continue;
       const origin = actor.transform.position, current = this.position(actor), detection = finite(actor.ai?.detectionRange, 9);
       let target;
       if (behavior === 'hostile' && playerPosition && distance(current, playerPosition) <= detection) target = playerPosition;
