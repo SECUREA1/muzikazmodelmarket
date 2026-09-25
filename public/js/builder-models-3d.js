@@ -71,6 +71,24 @@ const EXPANDED={
  'emerald-slime':['creature',1,.8,.9], 'moss-golem':['creature',1.4,2.6,1], 'cave-spider':['creature',1.8,.65,1.6], 'sky-ray':['creature',3.2,.55,1.8],
  'lever-switch':['interactive',.8,1.1,.5], 'treasure-chest':['interactive',1.2,.8,.7], 'teleport-pad':['interactive',2.2,.2,2.2], windmill:['interactive',4,6,2.5]
 };
+const GAMEPLAY_OBJECTS={
+ 'hero-spawn':['avatar',0x39c6ef], 'scout-avatar':['avatar',0xf0c43d], 'wolf-guardian':['avatar',0x8b67d5],
+ 'rad-tox':['enemy',0x8fd52d], 'void-wolf':['enemy',0x7252a8], 'ember-dragon':['enemy',0xe05435], 'rogue-bot':['enemy',0x38a8ba],
+ 'quest-scroll':['interactive',0xe6bd3d], 'treasure-crystal':['interactive',0x43cde8], 'healing-potion':['interactive',0xe44d91], 'portal-door':['interactive',0x8b67d5], 'campfire':['interactive',0xe4633b], 'friendly-ghost':['interactive',0xc8eff5], 'green-bubbles':['interactive',0x8fd52d]
+};
+function gameplayObject(id){
+ const [kind,color]=GAMEPLAY_OBJECTS[id],root=new THREE.Group(),paint=material(color,.48,.12),shadow=material(0x20262a,.68,.28);
+ if(kind==='avatar'||kind==='enemy'){
+  const body=mesh(new THREE.CapsuleGeometry(.32,.92,7,12),paint,[0,.85,0]),head=mesh(new THREE.SphereGeometry(.3,16,12),paint,[0,1.65,0]);root.add(body,head);
+  if(kind==='enemy')for(const x of [-.24,0,.24])root.add(mesh(new THREE.ConeGeometry(.09,.32,7),shadow,[x,1.98,0]));
+ }else if(id==='portal-door')root.add(box([1.3,2.2,.22],paint,[0,1.1,0]),box([.82,1.72,.25],shadow,[0,.9,0]));
+ else if(id==='campfire'){for(let i=0;i<3;i++){const log=box([.9,.14,.16],shadow,[0,.12,0]);log.rotation.y=i*Math.PI/3;root.add(log)}root.add(mesh(new THREE.ConeGeometry(.34,1,12),paint,[0,.68,0]));}
+ else if(id==='treasure-crystal')root.add(mesh(new THREE.OctahedronGeometry(.58,0),paint,[0,.72,0]));
+ else if(id==='green-bubbles'||id==='friendly-ghost'){for(let i=0;i<5;i++)root.add(mesh(new THREE.SphereGeometry(.18+i*.035,12,8),paint,[(i%2?1:-1)*i*.13,.3+i*.3,0]));}
+ else {root.add(mesh(new THREE.CylinderGeometry(.3,.38,.85,12),paint,[0,.48,0]),mesh(new THREE.TorusGeometry(.32,.07,8,18),shadow,[0,.32,0],[Math.PI/2,0,0]));}
+ root.name=id;root.userData={builderObject:true,modelId:id,animated:true,dimensions:[1.4,2.2,1.1]};return root;
+}
+
 function expandedModel(id){
  const [kind,w,h,d]=EXPANDED[id],root=new THREE.Group(),wood=gradedMaterial(.86,.02),metal=gradedMaterial(.28,.75),add=value=>(root.add(value),value),rgb=(geo,a,b,pos,opt)=>add(graded(geo,a,b,pos,opt));
  if(kind==='terrain'){const geo=id==='terrain-river'?new THREE.BoxGeometry(w,h,d,10,1,8):new THREE.IcosahedronGeometry(w*.5,2),part=rgb(geo,id==='terrain-snowbank'?0xaac5cf:id==='terrain-river'?0x176f94:0x393a35,id==='terrain-snowbank'?0xf8ffff:id==='terrain-river'?0x68d7e8:0x88806e,[0,h*.32,0],{roughness:id==='terrain-river'?.18:.96,extra:id==='terrain-river'?{transparent:true,opacity:.82}: {}});part.scale.set(1,h/w,d/w);if(id==='terrain-river')part.userData.water=true;}
@@ -150,8 +168,9 @@ export function createBuilderModel(id) {
   if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
   else if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);
   else if(EXPANDED[id]) return expandedModel(id);
+  else if(GAMEPLAY_OBJECTS[id]) root=gameplayObject(id);
   else if(id==='canopy-tree'||id==='pine-tree') root=plant(id); else if(id==='flower-bed')root=flowerBed(); else if(id==='hedge-corner')root=hedge(); else if(id==='garden-rocks')root=rocks(); else if(id==='pond')root=pond(); else if(id==='path-tile')root=box([2.2,.12,1.2],material(0xa39b8c,.95),[0,.06,0]); else if(id==='hill'){root=mesh(new THREE.SphereGeometry(2.1,24,12,0,Math.PI*2,0,Math.PI/2),material(0x4f9a45,.95),[0,0,0]);root.scale.z=.86;} else if(id==='lamp-post')root=lamp(true); else if(id==='planter')root=planter(); else if(id==='sofa'||id==='armchair')root=seating(id==='armchair'); else if(id==='coffee-table')root=coffeeTable(); else if(id==='bookshelf')root=bookshelf(); else if(id==='floor-lamp')root=lamp(false); else if(id==='room-divider')root=divider(); else if(id==='kitchen-island')root=island(); else if(id==='spiral-stairs')root=stairs(); else if(id==='archway')root=arch(); else if(id==='art-wall')root=artWall(); else if(BUILDER_MODEL_INFO[id])root=detailedInterior(id); else return null;
-  const [name,description,dimensions]=BUILDER_MODEL_INFO[id];root.name=name;root.userData={...root.userData,builderObject:true,modelId:id,label:name,description,dimensions,animated:['canopy-tree','pine-tree','pond','lamp-post','floor-lamp'].includes(id)};
+  const [name,description,dimensions]=BUILDER_MODEL_INFO[id]||[root.name||id,`${root.name||id} playable builder object.`,root.userData.dimensions||[1,1,1]];root.name=name;root.userData={...root.userData,builderObject:true,modelId:id,label:name,description,dimensions,animated:['canopy-tree','pine-tree','pond','lamp-post','floor-lamp'].includes(id)};
   root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return root;
 }
 

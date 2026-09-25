@@ -30,9 +30,9 @@ test('in-game Tools and Drop Backpack expose the complete map-building pack', as
   assert.match(game, /muzikaz\.builder\.buildTray/);
   assert.match(game, /deployPlayableBuilderAsset\(asset\)/);
   assert.match(game, /\.\.\.readBuildTray\(\)\.map\(item=>\['Build asset'/);
-  assert.equal(buildAssets.length, 30);
-  assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'landscape').length, 13);
-  assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'interior').length, 13);
+  assert.equal(buildAssets.length, 78);
+  assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'landscape').length, 10);
+  assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'interior').length, 20);
   assert.ok(buildAssets.every((asset) => asset.type === 'props' && asset.thumbnailUrl));
 });
 
@@ -70,4 +70,34 @@ test('Drop Backpack pets each have a custom refillable treat', async () => {
   assert.match(game, /function feedTreatToPet/);
   assert.match(game, /function buyPetTreat/);
   assert.match(game, /asset\.petId && asset\.consumable/);
+});
+
+test('RAD-TOX Build Map and Drop Backpack expose every Environment Builder item', async () => {
+  const [builder, html, game, manifest] = await Promise.all([
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/models/backpack-assets.json', import.meta.url), 'utf8').then(JSON.parse)
+  ]);
+  const builtinBlock = builder.match(/const builtins=\[([\s\S]+?)\n\]\.map/)?.[1] || '';
+  const gameplayBlock = builder.match(/const gameplayModels=\[([\s\S]+?)\n\]\.map/)?.[1] || '';
+  const expandedBlock = builder.match(/const expandedModels=\[([\s\S]+?)\n\]\.map/)?.[1] || '';
+  const editorIds = new Set([
+    ...[...builtinBlock.matchAll(/\['([a-z][a-z-]+)',/g)].map((match) => match[1]),
+    ...[...gameplayBlock.matchAll(/\{id:'([a-z][a-z-]+)'/g)].map((match) => match[1]),
+    ...[...expandedBlock.matchAll(/\['([a-z][a-z-]+)',/g)].map((match) => match[1])
+  ]);
+  const buildBlock = game.match(/const BUILD_ASSETS = Object\.freeze\(\[([\s\S]+?)\n  \]\);/)?.[1] || '';
+  const buildIds = [...buildBlock.matchAll(/\['([a-z][a-z-]+)',/g)].map((match) => match[1]);
+  const backpackIds = manifest.assets.filter((asset) => asset.buildAssetId).map((asset) => asset.buildAssetId);
+
+  assert.equal(editorIds.size, 78);
+  assert.equal(buildIds.length, 78);
+  assert.deepEqual(new Set(buildIds), editorIds);
+  assert.equal(backpackIds.length, 78);
+  assert.deepEqual(new Set(backpackIds), editorIds);
+  for (const category of ['terrain','plants','buildings','props','weapons','characters','creatures','avatar','enemy','interactive','vehicles','landscape','interior']) {
+    assert.match(game, new RegExp(`'${category}'`));
+    assert.match(html, new RegExp(`data-library-filter="${category}"`));
+  }
 });
