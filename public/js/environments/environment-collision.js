@@ -7,6 +7,11 @@ const NON_SPAWN_FLOOR_RE = /(CEILING|ROOF|CANOPY|AWNING|SKY|WALL|WINDOW|DOOR|RAI
 const FLOOR_NAME_RE = /(FLOOR|GROUND|TERRAIN|PLATFORM|NAVMESH|WALK|STAGE|ROAD|PATH)/i;
 const SPAWN_PRIORITY = ['SPAWN_PLAYER', 'SPAWN_DEFAULT'];
 export const FLOOR_ENTRY_OFFSET = 0.125;
+// Keep the player's capsule comfortably clear of the collider on its first
+// physics frame. This is intentionally larger than the visual/object offset:
+// starting exactly on a triangle can make a freshly loaded player tunnel
+// through thin or sloped Builder terrain before collision resolution runs.
+export const PLAYER_SPAWN_FLOOR_GAP = 0.25;
 const WALKABLE_FLOOR_NORMAL_Y = 0.55;
 
 function isWalkableFloorHit(hit) {
@@ -36,7 +41,10 @@ export function alignPointAboveFloor(point, meshes, bounds, playerHeight = 1.65,
   const hit = findWalkableFloorHit(meshes, aligned, bounds, playerHeight);
   if (hit) {
     aligned.x = hit.point.x;
-    aligned.y = hit.point.y + floorGap;
+    // Preserve a deliberately elevated authored spawn, but never preserve one
+    // below the collider. Builder creators can therefore customize spawn
+    // height without allowing a map to load the player through its floor.
+    aligned.y = Math.max(aligned.y, hit.point.y + floorGap);
     aligned.z = hit.point.z;
   } else if (Number.isFinite(bounds?.min?.y)) {
     aligned.y = Math.max(aligned.y, bounds.min.y + floorGap);
@@ -144,20 +152,29 @@ export function resolveSafeSpawn(root, visibleMeshes, metadataSpawn = {}, player
   const box = new THREE.Box3().setFromObject(root);
   const center = box.getCenter(new THREE.Vector3());
   const spawnNode = findSpawnNode(root);
-  const largestFloorPoint = findLargestWalkableFloorPoint(visibleMeshes, box, playerHeight);
-  const raw = largestFloorPoint || (spawnNode ? spawnNode.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(
+  const authored = spawnNode ? spawnNode.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(
     Number.isFinite(metadataSpawn.x) ? metadataSpawn.x : center.x,
     Number.isFinite(metadataSpawn.y) ? metadataSpawn.y : center.y,
     Number.isFinite(metadataSpawn.z) ? metadataSpawn.z : center.z
-  ));
+  );
   const margin = 0.35;
   const candidate = new THREE.Vector3(
-    THREE.MathUtils.clamp(raw.x, box.min.x + margin, box.max.x - margin),
-    raw.y,
-    THREE.MathUtils.clamp(raw.z, box.min.z + margin, box.max.z - margin)
+    THREE.MathUtils.clamp(authored.x, box.min.x + margin, box.max.x - margin),
+    authored.y,
+    THREE.MathUtils.clamp(authored.z, box.min.z + margin, box.max.z - margin)
   );
-  const hit = findWalkableFloorHit(visibleMeshes, candidate, box, playerHeight) || findWalkableFloorHit(visibleMeshes, center, box, playerHeight);
-  if (hit) { candidate.x = hit.point.x; candidate.y = hit.point.y + FLOOR_ENTRY_OFFSET; candidate.z = hit.point.z; }
-  else candidate.copy(alignPointAboveFloor(candidate, visibleMeshes, box, playerHeight));
+  // Respect each map's customized marker/metadata when it is over a walkable
+  // collider. Only substitute the largest safe floor when that authored X/Z
+  // has no floor at all (for example, an old map saved a spawn over the void).
+  const authoredFloor = findWalkableFloorHit(visibleMeshes, candidate, box, playerHeight);
+  if (authoredFloor) {
+    candidate.x = authoredFloor.point.x;
+    candidate.y = Math.max(candidate.y, authoredFloor.point.y + PLAYER_SPAWN_FLOOR_GAP);
+    candidate.z = authoredFloor.point.z;
+  } else {
+    const fallback = findLargestWalkableFloorPoint(visibleMeshes, box, playerHeight, PLAYER_SPAWN_FLOOR_GAP);
+    if (fallback) candidate.copy(fallback);
+    else candidate.copy(alignPointAboveFloor(candidate, visibleMeshes, box, playerHeight, PLAYER_SPAWN_FLOOR_GAP));
+  }
   return { position: candidate, rotationY: spawnNode ? spawnNode.rotation.y : Number(metadataSpawn.rotationY || 0), bounds: box };
 }

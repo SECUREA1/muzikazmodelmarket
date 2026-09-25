@@ -219,8 +219,9 @@ test('in-game Builder Map menu opens the environment builder and restores playab
 });
 
 test('builder lands load on a playable spawn without supplemental collision rebuilding', async () => {
-  const [loader, game, server] = await Promise.all([
+  const [loader, collision, game, server] = await Promise.all([
     readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/environments/environment-collision.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
     readFile(new URL('../server.mjs', import.meta.url), 'utf8')
   ]);
@@ -230,6 +231,9 @@ test('builder lands load on a playable spawn without supplemental collision rebu
   assert.match(loader, /terrain\.userData\.colliderShape = 'mesh'/, 'builder map terrain keeps an explicit mesh collider');
   assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode\)/, 'procedural terrain enters the normal collision pipeline');
   assert.match(loader, /resolveSafeSpawn\(nextWorld, collision\.visibleMeshes, environment\.spawn\)/, 'the initial player position is resolved against visible map geometry');
+  assert.match(collision, /Math\.max\(candidate\.y, authoredFloor\.point\.y \+ PLAYER_SPAWN_FLOOR_GAP\)/, 'customized map spawns are always raised above their collider floor');
+  assert.match(collision, /findLargestWalkableFloorPoint\(visibleMeshes, box, playerHeight, PLAYER_SPAWN_FLOOR_GAP\)/, 'a spawn authored over the void falls back to a playable floor');
+  assert.match(game, /alignPointAboveFloor\(spawn\.clone\(\), envLoader\.meshes, envLoader\.bounds, player\.height, PLAYER_SPAWN_FLOOR_GAP\)/, 'every player reset retains a safe gap over the active map collider');
   assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;resetPlayer\(spawn\.position,spawn\.rotationY\|\|0\)/, 'map loading places the player at an authored or safe resolved spawn');
   assert.doesNotMatch(loader, /setSupplementalCollisionRoots/, 'loading builder decorations does not rebuild the live collision octree and crash map startup');
   assert.match(server, /proceduralLand:true/);
