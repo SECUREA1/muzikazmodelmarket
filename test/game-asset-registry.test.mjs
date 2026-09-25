@@ -10,7 +10,6 @@ test('unified registry exposes complete runtime metadata and valid authored mode
   const required = ['assetId','name','category','assetType','source','generated','modelPath','thumbnail','defaultTransform','materials','collision','physics','animations','interactions','inventoryCompatible','wearableCompatible','vehicleCompatible','mapCompatible','environmentCompatible','runtimeCompatible','singlePlayerCompatible','multiplayerCompatible'];
   for (const asset of registry.assets) {
     required.forEach(key => assert.ok(Object.hasOwn(asset, key), `${asset.assetId} has ${key}`));
-    assert.deepEqual(asset.collision, { enabled:true, shape:'mesh', interaction:true }, `${asset.assetId} is mesh-collidable`);
     if (asset.modelPath) await access(new URL(asset.modelPath.replace(/^\//, ''), root));
     if (asset.generated) assert.match(asset.generator, /^(bottle|dynamite-bundle|carrot|bone|fish|cheese|terrain-slab|extruded-svg)$/);
   }

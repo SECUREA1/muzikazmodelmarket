@@ -54,7 +54,7 @@ const metadata = (raw, source, modelPath, thumbnail, generated = false) => {
     generator: generated ? recipeFor(`${raw.name || ''} ${thumbnail}`) : null,
     defaultTransform: { position: [0, 0, 0], rotation: [0, 0, 0], scale: [Number(raw.scale) || 1, Number(raw.scale) || 1, Number(raw.scale) || 1] },
     materials: { editable: generated, color: raw.treatColor || null, preserveOriginal: !generated },
-    collision: { enabled: true, shape: 'mesh', interaction: true }, physics: { enabled: /throw|dynamite/i.test(`${raw.name} ${raw.description}`), mass: 1 },
+    collision: { enabled: true, shape: assetType === 'terrain' ? 'mesh' : 'bounds' }, physics: { enabled: /throw|dynamite/i.test(`${raw.name} ${raw.description}`), mass: 1 },
     animations: [], interactions: raw.consumable ? ['hold', 'use', 'throw'] : assetType === 'vehicle' ? ['enter', 'drive', 'exit'] : wearable ? ['equip', 'wear'] : ['place', 'interact'],
     attachment: wearable ? { socket: 'torso', localPosition: [0, 0, 0], localRotation: [0, 0, 0], localScale: [1, 1, 1] } : null,
     ...compatibility(assetType)

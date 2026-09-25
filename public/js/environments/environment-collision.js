@@ -111,26 +111,21 @@ export function findLargestWalkableFloorPoint(meshes, bounds, playerHeight = 1.6
 
 export function findSpawnNode(root) {
   const nodes = [];
-  const roots = Array.isArray(root) ? root : [root];
-  roots.filter(Boolean).forEach((entry) => entry.traverse((object) => {
-    if (/^SPAWN(_|$)/i.test(object.name || '')) nodes.push(object);
-  }));
+  root.traverse((object) => { if (/^SPAWN(_|$)/i.test(object.name || '')) nodes.push(object); });
   return nodes.find((node) => SPAWN_PRIORITY.includes(node.name.toUpperCase())) || nodes[0] || null;
 }
 
 export function buildCollision(root, mode = 'auto') {
   const visibleMeshes = [];
   const collisionMeshes = [];
-  const roots = Array.isArray(root) ? root : [root];
-  roots.filter(Boolean).forEach((entry) => entry.traverse((object) => {
+  root.traverse((object) => {
     if (!object.isMesh || !object.geometry) return;
     const name = object.name || '';
     if (COLLISION_RE.test(name)) { object.visible = false; collisionMeshes.push(object); return; }
     visibleMeshes.push(object);
     const material = Array.isArray(object.material) ? object.material[0] : object.material;
-    const forcedMeshCollider = object.userData?.meshCollider === true;
-    if (mode !== 'none' && object.userData?.collisionDisabled !== true && object.visible !== false && (forcedMeshCollider || (!EXCLUDE_RE.test(name) && !material?.transparent))) collisionMeshes.push(object);
-  }));
+    if (mode !== 'none' && !EXCLUDE_RE.test(name) && !material?.transparent && object.visible !== false) collisionMeshes.push(object);
+  });
   const source = new THREE.Group();
   collisionMeshes.forEach((mesh) => {
     const clone = mesh.clone(false);

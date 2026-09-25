@@ -40,8 +40,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -96,8 +95,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -152,8 +150,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -208,8 +205,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -265,8 +261,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -321,8 +316,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -377,8 +371,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -433,8 +426,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -489,8 +481,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": true,
@@ -545,8 +536,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -601,8 +591,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -657,8 +646,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -713,8 +701,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -769,8 +756,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -825,8 +811,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -881,8 +866,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -937,8 +921,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -993,8 +976,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1049,8 +1031,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1105,8 +1086,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1161,8 +1141,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1217,8 +1196,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1273,8 +1251,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1329,8 +1306,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1385,8 +1361,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1441,8 +1416,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1497,8 +1471,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1553,8 +1526,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1609,8 +1581,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1665,8 +1636,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1721,8 +1691,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1777,8 +1746,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1833,8 +1801,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1889,8 +1856,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -1945,8 +1911,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2001,8 +1966,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2057,8 +2021,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2113,8 +2076,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2169,8 +2131,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2225,8 +2186,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2281,8 +2241,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2337,8 +2296,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2393,8 +2351,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2449,8 +2406,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2505,8 +2461,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2561,8 +2516,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2617,8 +2571,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2673,8 +2626,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2729,8 +2681,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2785,8 +2736,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2841,8 +2791,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2897,8 +2846,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -2953,8 +2901,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -3009,8 +2956,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -3065,8 +3011,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -3121,8 +3066,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -3177,8 +3121,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -3233,8 +3176,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -3290,8 +3232,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -3346,8 +3287,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -3402,8 +3342,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -3458,8 +3397,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -3514,8 +3452,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -3570,8 +3507,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -3626,8 +3562,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -3682,8 +3617,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -3738,8 +3672,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -3794,8 +3727,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -3850,8 +3782,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -3906,8 +3837,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -3962,8 +3892,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4018,8 +3947,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4074,8 +4002,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4130,8 +4057,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4186,8 +4112,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4242,8 +4167,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4298,8 +4222,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4354,8 +4277,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4410,8 +4332,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4466,8 +4387,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4522,8 +4442,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4578,8 +4497,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4634,8 +4552,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4690,8 +4607,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4746,8 +4662,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4802,8 +4717,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -4858,8 +4772,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -4914,8 +4827,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -4970,8 +4882,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5026,8 +4937,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5082,8 +4992,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5139,8 +5048,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5195,8 +5103,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5251,8 +5158,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5307,8 +5213,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5363,8 +5268,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5419,8 +5323,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5476,8 +5379,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5532,8 +5434,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5588,8 +5489,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5644,8 +5544,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5700,8 +5599,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5757,8 +5655,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5813,8 +5710,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5869,8 +5765,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "mesh"
       },
       "physics": {
         "enabled": false,
@@ -5925,8 +5820,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -5981,8 +5875,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6037,8 +5930,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6094,8 +5986,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6150,8 +6041,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6206,8 +6096,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": true,
@@ -6263,8 +6152,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6319,8 +6207,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6375,8 +6262,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6431,8 +6317,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6487,8 +6372,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6543,8 +6427,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6599,8 +6482,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6655,8 +6537,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6711,8 +6592,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6767,8 +6647,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6823,8 +6702,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6879,8 +6757,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6936,8 +6813,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -6992,8 +6868,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7048,8 +6923,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7104,8 +6978,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7177,8 +7050,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7233,8 +7105,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7289,8 +7160,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7345,8 +7215,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7401,8 +7270,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7457,8 +7325,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7513,8 +7380,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7569,8 +7435,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7642,8 +7507,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7698,8 +7562,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,
@@ -7754,8 +7617,7 @@
       },
       "collision": {
         "enabled": true,
-        "shape": "mesh",
-        "interaction": true
+        "shape": "bounds"
       },
       "physics": {
         "enabled": false,

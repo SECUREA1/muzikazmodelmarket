@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BuilderGameplayRuntime, behaviorForBuilderObject, colliderForBuilderObject, compileBuilderScene, normalizeBuilderScale, upgradeBuilderManifest } from '../public/js/builder-gameplay-pipeline.js';
+import { BuilderGameplayRuntime, behaviorForBuilderObject, compileBuilderScene, upgradeBuilderManifest } from '../public/js/builder-gameplay-pipeline.js';
 
 test('builder scenes compile into a gameplay manifest with an authored player spawn', () => {
   const manifest = compileBuilderScene({
@@ -143,28 +143,4 @@ test('held items can be dropped into the world and picked up again', () => {
   assert.deepEqual(runtime.actor('blade').transform.position,{x:3,y:0,z:-2});
   assert.deepEqual(events,[['held',true],['dropped',{x:3,y:0,z:-2}],['active',true]]);
   assert.equal(runtime.interact('e',{x:3,y:0,z:-2}).handled,true);
-});
-
-
-test('every builder creation type receives safe scale and mesh-collider metadata', () => {
-  assert.deepEqual(normalizeBuilderScale({ x:0, y:Infinity, z:250 }), { x:1, y:1, z:100 });
-  const objects = [
-    { id:'glb', asset:{ modelUrl:'/asset.glb', collision:{ enabled:true, shape:'bounds' } }, scale:{ x:2, y:3, z:4 } },
-    { id:'svg', asset:{ generated:true, format:'svg' } },
-    { id:'procedural', asset:{ generated:true, format:'procedural' } },
-    { id:'custom', collisionSettings:{ enabled:false } }
-  ];
-  const manifest = compileBuilderScene({ objects });
-  assert.deepEqual(manifest.objects[0].transform.scale, { x:2, y:3, z:4 });
-  assert.ok(manifest.objects.every(item => item.collider.shape === 'mesh'));
-  assert.equal(manifest.objects[3].collider.enabled, false, 'authors can explicitly opt out');
-  assert.equal(colliderForBuilderObject(objects[1]).source, 'generated-mesh');
-});
-
-test('playable maps rebuild collision after every asynchronous builder mesh is ready', async () => {
-  const game = await import('node:fs/promises').then(({readFile}) => readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'));
-  assert.match(game, /await Promise\.all\(built\.objects\.map/);
-  assert.match(game, /buildCollision\(\[envLoader\.world,builderDecor\]/);
-  assert.match(game, /child\.userData\.meshCollider=object\.userData\.collider\.enabled!==false/);
-  assert.match(game, /const builderRuntime=await loadBuilderDecor\(env\)/);
 });

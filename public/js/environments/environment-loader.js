@@ -43,7 +43,7 @@ export class EnvironmentLoader {
     for (let i = 0; i < positions.count; i += 1) positions.setZ(i, heightAt(positions.getX(i), -positions.getY(i)));
     positions.needsUpdate = true; geometry.computeVertexNormals();
     const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: Number(meta.color) || 0x315b32, roughness:.95, metalness:0 }));
-    terrain.name = `BUILDER_LAND_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true;
+    terrain.name = `BUILDER_LAND_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; terrain.userData.colliderShape = 'mesh';
     const root = new THREE.Group(); root.name = `PROCEDURAL_${environment.id}`; root.add(terrain); root.userData.proceduralLand = true; root.userData.layout = layout;
     return root;
   }
