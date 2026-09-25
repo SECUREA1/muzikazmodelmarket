@@ -79,7 +79,15 @@ export function normalizeBuilderObject(object = {}, index = 0) {
 /** Compile a complete, serializable manifest. The editor document remains untouched. */
 export function compileBuilderScene(scene = {}) {
   const source = Array.isArray(scene.objects) ? scene.objects : [];
-  const objects = source.filter(value => value && typeof value === 'object').map(normalizeBuilderObject);
+  const usedIds = new Set();
+  const objects = source.filter(value => value && typeof value === 'object').map((value, index) => {
+    const object = normalizeBuilderObject(value, index);
+    const baseId = object.objectId;
+    let suffix = 1;
+    while (usedIds.has(object.objectId)) object.objectId = `${baseId}-${suffix++}`;
+    usedIds.add(object.objectId);
+    return object;
+  });
   const actors = objects.filter(object => PLAYABLE_BEHAVIORS.has(object.gameplay.behavior)).map(object => ({
     ...object, behavior: object.gameplay.behavior, position: copy(object.transform.position)
   }));
