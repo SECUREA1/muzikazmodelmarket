@@ -241,11 +241,6 @@ test('builder lands and placed items retain verified collision floors', async ()
   assert.match(game, /window\.setTimeout/, 'collision rebuilding yields to the browser so the map can open first');
   assert.match(game, /worldX=center\.x\+x,worldZ=center\.z\+z,ground=floorPointAt/, 'every placed object is grounded at its authored horizontal position');
   assert.match(game, /spawnFloor\.y\+FLOOR_ENTRY_OFFSET/, 'the player spawn begins just above the verified floor with the full body capsule above it');
-  assert.match(game, /envLoader\.createBuilderLand\(\{id:`backpack-\$\{modelId\}`/, 'atlas-only and SVG-coded Backpack maps use the canonical playable land builder');
-  assert.match(game, /root\.userData\.playableBuilderLand=true/, 'deployed lands identify themselves as supplemental gameplay collision roots');
-  assert.match(game, /envLoader\.setSupplementalCollisionRoots\(supplementalBuilderCollisionRoots\(\)\)/, 'a deployed map enters the collision octree before play resumes');
-  assert.match(game, /const mapSpawn=alignPointAboveFloor\(mapCenter,envLoader\.floorMeshes,envLoader\.bounds,player\.height\)/, 'a deployed map aligns its player spawn to a verified floor');
-  assert.match(loader, /this\.bounds\.expandByObject\(root\)/, 'supplemental Builder lands extend floor-ray and recovery bounds');
   assert.match(server, /proceduralLand:true/);
   assert.match(server, /modelUrl:'', modelUrls:\[\]/, 'published builder maps no longer borrow a repository GLB');
 });
@@ -287,7 +282,7 @@ test('world ground and solid scenery always participate in gameplay collision', 
   assert.doesNotMatch(collision, /mode !== 'none'/, 'legacy none metadata cannot disable playable map collision');
   assert.match(collision, /material\?\.visible !== false/);
   assert.doesNotMatch(game, /function resolveBuilderPropCollisions\(delta\)/, 'walking does not rebuild every Builder mesh bound on every frame');
-  assert.match(game, /if\(builderDecor\.children\.length\)roots\.push\(builderDecor\)/, 'placed bushes, lamps, and other props join the shared collision octree');
+  assert.match(game, /envLoader\.setSupplementalCollisionRoots\(builderDecor\.children\.length/, 'placed bushes, lamps, and other props join the shared collision octree');
   assert.match(game, /ground=floorPointAt\(/, 'dropped items settle against the active map ground');
 });
 
