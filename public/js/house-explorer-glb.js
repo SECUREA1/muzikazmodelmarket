@@ -1160,6 +1160,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     await settleWithin(startupCatalogPromise, 5000, 'Startup catalog refresh');
   } catch (error) {
     console.warn('[MUZIKAZ Environment]', 'Map refresh failed', error);
+    // Multiplayer discovery is optional. If its API or GitHub request stalls,
+    // seed the game from the packaged manifest so Begin Game can still deploy
+    // a player while the shared catalog continues resolving in the background.
+    if (!registry.all().length) {
+      try { await settleWithin(registry.refreshLocal(), 5000, 'Packaged map manifest'); }
+      catch (fallbackError) { console.warn('[MUZIKAZ Environment]', 'Packaged map fallback failed', fallbackError); }
+    }
   }
   renderPicker();
   refreshAvatarLibrary().then(renderPicker).catch((error) => {
@@ -1176,9 +1183,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     // rather than permanently capturing an empty registry and starting no world.
     if (!envLoader.world && !resolveStartEnvironment()) {
       setStatus('Finishing the Vibe Crib map list…');
-      await startupCatalogPromise;
+      await settleWithin(startupCatalogPromise, 5000, 'Multiplayer map list');
     }
     const startEnvironment = resolveStartEnvironment();
+    if (!envLoader.world && !startEnvironment) throw new Error('No playable house map is available. Check your connection and try again.');
     if (!envLoader.world && startEnvironment) {
       setStatus('Opening and loading the MUZIKAZ house environment…');
       houseMapPromise ||= loadById(startEnvironment).finally(() => { houseMapPromise = null; });
