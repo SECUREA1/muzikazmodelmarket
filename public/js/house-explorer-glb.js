@@ -1136,8 +1136,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // include a remote GitHub lookup); refresh that optional picker in the
   // background instead.
   setStatus('Finding the fastest available house world…');
+  const startupCatalogPromise = refreshLibrary();
   try {
-    await settleWithin(refreshLibrary(), 5000, 'Startup catalog refresh');
+    await settleWithin(startupCatalogPromise, 5000, 'Startup catalog refresh');
   } catch (error) {
     console.warn('[MUZIKAZ Environment]', 'Map refresh failed', error);
   }
@@ -1146,11 +1147,19 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     console.warn('[MUZIKAZ Environment]', 'Avatar refresh failed', error);
   });
   const params = new URLSearchParams(location.search);
-  const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
-  const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
+  const requestedEnvironmentId = params.get('house') || params.get('environment');
+  const resolveStartEnvironment = () => registry.find(requestedEnvironmentId)?.id || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
   let houseMapPromise = null;
   async function openHouseMap() {
     canvas.focus({ preventScroll: true });
+    // A slow API/GitHub catalog refresh may outlive the bounded engine bootstrap.
+    // Resolve the destination at interaction time, just like the Maps menu does,
+    // rather than permanently capturing an empty registry and starting no world.
+    if (!envLoader.world && !resolveStartEnvironment()) {
+      setStatus('Finishing the Vibe Crib map list…');
+      await startupCatalogPromise;
+    }
+    const startEnvironment = resolveStartEnvironment();
     if (!envLoader.world && startEnvironment) {
       setStatus('Opening and loading the MUZIKAZ house environment…');
       houseMapPromise ||= loadById(startEnvironment).finally(() => { houseMapPromise = null; });
@@ -1217,12 +1226,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     event.preventDefault();
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
-  if (startEnvironment && !mobileQualityMode) {
+  if (resolveStartEnvironment() && !mobileQualityMode) {
     // Do not decode a large GLB while the visitor is browsing the page. On
     // desktop that competes with first paint and can look like a frozen game.
     // The Begin button now owns loading and always starts from the player spawn.
     setStatus('Desktop game ready. Select Begin RAD-TOX to start at the house entrance.');
-  } else if (startEnvironment) {
+  } else if (resolveStartEnvironment()) {
     setStatus('Mobile game is ready. Tap Start RAD-TOX to deploy immediately.');
     // Keep decoding on the player's Begin action. Background GLB decoding can
     // monopolize memory on mobile browsers before the visitor is ready to play.
