@@ -23,7 +23,7 @@
   const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username };
   const peers = new Map(), remoteAudio = new Map();
   window.MUZIKAZ_HOUSE_TRACKING = { roomId:localStorage.getItem('muzikazMultiplayerWorld') || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', ...(window.MUZIKAZ_HOUSE_TRACKING || {}) };
-  let joined = false, localStream = null, speakerOn = true, currentUsers = [], unread = 0, loadingChat = null, sendingMessage = false;
+  let joined = false, localStream = null, speakerOn = true, currentUsers = [], unread = 0, loadingChat = null, sendingMessage = false, heartbeatInFlight = null;
   let textToSpeechOn = localStorage.getItem('muzikazChatTextToSpeech') === 'true';
   let gameScrollY = 0;
   const payload = (response) => response?.data ?? response;
@@ -87,12 +87,17 @@
     } finally { sendingMessage = false; }
   }
   async function heartbeat() {
+    if (heartbeatInFlight) return heartbeatInFlight;
+    heartbeatInFlight = (async () => {
     let storedAvatar = null;
     try { storedAvatar = JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null'); } catch { localStorage.removeItem('muzikazDesignatedAvatar'); }
     const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || storedAvatar;
     if (!avatar) throw new Error('Choose your designated avatar before joining the Crib.');
     const response = await apiFetch('/api/houses/ioncore-house/presence', { method:'POST', headers, body:JSON.stringify({ username, roomId:window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, avatarUrl: avatar.modelUrl, modelUrl: avatar.modelUrl, avatarName:avatar.displayName || avatar.name || 'Player avatar', position:window.MUZIKAZ_HOUSE_TRACKING?.position, rotation:window.MUZIKAZ_HOUSE_TRACKING?.rotation, movementState:window.MUZIKAZ_HOUSE_TRACKING?.movementState || 'idle', animationState:window.MUZIKAZ_HOUSE_TRACKING?.animationState || avatar.animation || 'auto', message:window.MUZIKAZ_HOUSE_TRACKING?.message }) });
     const data = await jsonResponse(response); joined = true; renderPresence(data); status.textContent = '';
+    return data;
+    })();
+    try { return await heartbeatInFlight; } finally { heartbeatInFlight = null; }
   }
 
   async function signal(to, kind, signalPayload = null) { const response = await apiFetch('/api/houses/ioncore-house/voice/signal', { method:'POST', headers, body:JSON.stringify({ to, kind, payload:signalPayload }) }); await jsonResponse(response); }
@@ -179,8 +184,12 @@
   const eventData = (event) => { try { return JSON.parse(event.data); } catch { return null; } };
   if ('EventSource' in window) { events = new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`)); events.addEventListener('house-presence-updated', (event) => { const data = eventData(event); if (data) renderPresence(data); }); events.addEventListener('house-chat-message', (event) => addMessage(eventData(event))); events.addEventListener('house-voice-signal', (event) => { const data = eventData(event); if (data) handleVoiceSignal(data).catch(() => { voiceStatus.textContent = 'Voice connection interrupted'; }); }); }
   const beginPresence = () => heartbeat().catch((error) => { status.textContent = error.message; toggle.disabled = true; });
+  window.addEventListener('muzikaz:presence-synced', (event) => { if (event.detail) renderPresence(event.detail); });
   window.addEventListener('muzikaz:multiplayer-world-change', () => { peers.forEach((peer) => peer.close()); peers.clear(); messages.replaceChildren(); unread = 0; unreadCount.hidden = true; Promise.all([heartbeat(), loadChat()]).catch((error) => { status.textContent = error.message; }); });
   if (window.MUZIKAZ_DESIGNATED_AVATAR || localStorage.getItem('muzikazDesignatedAvatar')) beginPresence(); else window.addEventListener('muzikaz-avatar-ready', beginPresence, { once:true });
-  const timer = setInterval(() => { heartbeat().catch((error) => { status.textContent = error.message; }); loadChat().catch(() => {}); }, 5_000);
-  window.addEventListener('pagehide', () => { clearInterval(timer); window.speechSynthesis?.cancel(); disableMicrophone(); events?.close(); if (joined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
+  let timer = 0, stopped = false;
+  const scheduleSync = (delay=10_000) => { clearTimeout(timer); if (!stopped) timer=setTimeout(async()=>{ if(!document.hidden){await heartbeat().catch((error)=>{status.textContent=error.message;});await loadChat().catch(()=>{});} scheduleSync(document.hidden?20_000:10_000);},delay); };
+  scheduleSync();
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleSync(0);});
+  window.addEventListener('pagehide', () => { stopped=true; clearTimeout(timer); window.speechSynthesis?.cancel(); disableMicrophone(); events?.close(); if (joined) navigator.sendBeacon?.(apiUrl(`/api/houses/ioncore-house/presence/leave?sessionId=${encodeURIComponent(sessionId)}`)); });
 })();

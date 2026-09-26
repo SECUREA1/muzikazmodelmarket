@@ -18,10 +18,19 @@ test('custom SVG and GLB builds bridge into the playable 3D backpack', async () 
 });
 
 test('adaptive WebGL quality keeps Firefox-compatible texture uploads current', async () => {
-  const quality = await readFile(new URL('../public/js/environments/environment-quality.js', import.meta.url), 'utf8');
+  const [quality, game, multiplayer] = await Promise.all([
+    readFile(new URL('../public/js/environments/environment-quality.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/crib-multiplayer.js', import.meta.url), 'utf8')
+  ]);
   assert.match(quality, /navigator\.hardwareConcurrency/);
   assert.match(quality, /renderer\?\.capabilities\?\.maxTextureSize/);
   assert.match(quality, /value\.needsUpdate = true/);
+  assert.match(game, /viewActive = pageVisible && stageIntersecting/, 'returning to a visible Firefox tab must not render an off-screen game');
+  assert.match(game, /if \(!resizeFrame\) resizeFrame=window\.requestAnimationFrame/, 'bursty mobile viewport resizes are coalesced into one frame');
+  assert.match(game, /livePollInFlight/, 'slow presence requests cannot stack and compete with rendering');
+  assert.match(multiplayer, /heartbeatInFlight/, 'the chat layer shares one in-flight multiplayer heartbeat');
+  assert.match(multiplayer, /muzikaz:presence-synced/, 'chat consumes the game layer presence response instead of waiting for another poll');
 });
 
 test('Firefox item and map population survives large or partially unavailable collections', async () => {
