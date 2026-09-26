@@ -92,6 +92,10 @@ export class EnvironmentLoader {
     if (!this.world) return null;
     const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots);
     this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree;
+    // Backpack lands and Builder objects can extend beyond the original GLB.
+    // Keep floor rays and out-of-bounds recovery aware of their complete area.
+    this.bounds = new THREE.Box3().setFromObject(this.world);
+    this.supplementalCollisionRoots.forEach((root) => this.bounds.expandByObject(root));
     return collision;
   }
   async load(environment) {
