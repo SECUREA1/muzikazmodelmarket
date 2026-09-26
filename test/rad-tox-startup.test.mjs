@@ -28,6 +28,10 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   assert.match(game, /webglcontextlost[\s\S]*event\.preventDefault\(\)/, 'temporary mobile GPU loss is recoverable instead of resetting the page');
   assert.match(game, /webglcontextrestored/, 'rendering resumes after the mobile browser restores WebGL');
   assert.match(game, /await afterNextPaint\(\)/, 'the game loading state paints before synchronous GLB processing');
+  assert.match(game, /const readStoredJson = \(key, fallback\) =>/, 'corrupt or unavailable browser storage is bypassed during boot');
+  assert.match(game, /this\.backpackRewards=readStoredArray\('muzikazRadToxBackpack'\)/, 'invalid saved rewards cannot fault the game constructor');
+  assert.match(game, /this\.sheepCoins=Number\(readStoredJson\('muzikazSheepCoinWallet',0\)\)\|\|0/, 'denied wallet storage cannot fault the game constructor');
+  assert.match(game, /new Set\(readStoredArray\(rowStorageKey\)\)/, 'invalid HUD preferences cannot fault startup');
   assert.doesNotMatch(game, /params\.get\('autoplay'\) === '1'\) startRadToxGame/, 'the loaded module does not issue a duplicate autoplay start');
   assert.match(members, /model-explorer\.html\?environment=muzikaz-main&amp;house=muzikaz-main#house-explorer/, 'the member Vibe Crib launcher uses the main map route explicitly');
 });
