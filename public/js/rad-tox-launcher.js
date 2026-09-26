@@ -4,6 +4,7 @@
   var requested = false;
   var engineReady = false;
   var loadTimer = 0;
+  var moduleElement = null;
   var button = document.querySelector('[data-house-start]');
   var overlay = document.getElementById('house-game-start');
   var status = document.getElementById('house-game-load-status');
@@ -30,10 +31,17 @@
       document.dispatchEvent(event('muzikaz:rad-tox-request'));
       return;
     }
-    var module = document.createElement('script');
-    module.type = 'module'; module.src = 'public/js/house-explorer-glb.js';
-    module.onerror = function () { showError('The game engine could not be loaded.'); };
-    document.body.appendChild(module);
+    // Let the browser paint the loading surface before it parses Three.js or
+    // decodes a world. This avoids an unpainted white canvas on mobile. Reuse
+    // the module element so a double tap can never create two WebGL renderers.
+    moduleElement = moduleElement || document.createElement('script');
+    moduleElement.type = 'module'; moduleElement.src = 'public/js/house-explorer-glb.js';
+    moduleElement.onerror = function () { moduleElement = null; showError('The game engine could not be loaded.'); };
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        if (!moduleElement.isConnected) document.body.appendChild(moduleElement);
+      });
+    });
     loadTimer = window.setTimeout(showStall, 30000);
   }
   if (button) button.addEventListener('click', function (click) { click.preventDefault(); begin(); });

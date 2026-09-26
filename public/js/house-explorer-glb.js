@@ -281,6 +281,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050807); scene.fog = new THREE.Fog(0x050807, 36, performanceMode ? 95 : 180);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !performanceMode, alpha: false, powerPreference: performanceMode ? 'low-power' : 'high-performance' }); renderer.xr.enabled = webXrAvailable; let quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');
+  let webglContextAvailable = true;
   const camera = new THREE.PerspectiveCamera(68, 16 / 9, 0.05, 700); const playerRig = new THREE.Group(); playerRig.name = 'MUZIKAZ_PLAYER_RIG'; playerRig.add(camera); scene.add(playerRig);
   const hemi = new THREE.HemisphereLight(0xe6f7ff, 0x26321b, 1.75); scene.add(hemi); const fill = new THREE.DirectionalLight(0xbfe7ff, mobileQualityMode ? .55 : .8); fill.position.set(-10, 9, -12); scene.add(fill); const sun = new THREE.DirectionalLight(0xfff4dc, mobileQualityMode ? 1.75 : 2.45); sun.position.set(12, 18, 8); sun.castShadow = quality.shadows; sun.shadow.mapSize.set(quality.shadowSize, quality.shadowSize); sun.shadow.camera.near = .5; sun.shadow.camera.far = 120; sun.shadow.camera.left = -45; sun.shadow.camera.right = 45; sun.shadow.camera.top = 45; sun.shadow.camera.bottom = -45; scene.add(sun);
   // PMREM generation is an expensive GPU pass with no gameplay benefit on the
@@ -401,6 +402,21 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
   let stageIntersecting = true; let pageVisible = !document.hidden; let viewActive = pageVisible; let lastFrameTime = 0; const targetFrameMs = performanceMode || reducedMotion ? 1000 / 30 : 0;
   const syncRenderActivity = () => { viewActive = pageVisible && stageIntersecting; if (viewActive) clock.getDelta(); };
+  // Mobile browsers may temporarily reclaim the GPU while a GLB is decoded.
+  // Keep the current game state and allow Three.js to restore its resources;
+  // reloading here would put the player back at the start of the game.
+  canvas.addEventListener('webglcontextlost', (event) => {
+    event.preventDefault();
+    webglContextAvailable = false;
+    setStatus('Graphics paused while your device recovers memory. Your game is still here.');
+  });
+  canvas.addEventListener('webglcontextrestored', () => {
+    webglContextAvailable = true;
+    quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');
+    scheduleGameResize();
+    clock.getDelta();
+    setStatus(activeEnvironment ? `Back in ${activeEnvironment.name}. Game progress restored.` : 'Graphics restored. Ready to play.');
+  });
   let playerCollider = new Capsule(new THREE.Vector3(0, player.radius, 2), new THREE.Vector3(0, player.height, 2), player.radius); let dragPointer = null; let avatarDrag = null; let avatarPinch = null; const activeTouchPointers = new Map(); let turnReady = true; let activeEnvironment = null;
   // Every environment uses the same last-known-good floor lock.  This is kept
   // outside map metadata so repository GLBs, uploaded spaces, Builder lands
@@ -1118,7 +1134,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.addEventListener('muzikaz:rad-tox-stage', scheduleGameResize);
   scheduleGameResize();
   renderer.setAnimationLoop((time = 0) => {
-    if (!viewActive && !renderer.xr.isPresenting) { clock.getDelta(); return; }
+    if ((!viewActive || !webglContextAvailable) && !renderer.xr.isPresenting) { clock.getDelta(); return; }
     if (targetFrameMs && !renderer.xr.isPresenting && time - lastFrameTime < targetFrameMs) return;
     lastFrameTime = time;
     const delta = Math.min(.05, clock.getDelta());
@@ -1172,6 +1188,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     walkButton.setAttribute('aria-pressed', 'true');
   }
   let gameInitializationPromise = null;
+  const afterNextPaint = () => new Promise((resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
   function startRadToxGame() {
     if (gameInitializationPromise) return gameInitializationPromise;
     if (gameStartButton) gameStartButton.disabled = true;
@@ -1181,11 +1198,15 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
     gameInitializationPromise = (async () => {
       try {
-        stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        stage.scrollIntoView({ behavior: mobileQualityMode || reducedMotion ? 'auto' : 'smooth', block: 'start' });
+        // Make the dark loading UI visible before GLB parsing performs its
+        // unavoidable synchronous work on the browser's main thread.
+        await afterNextPaint();
         // The map, player spawn, controls, and core game systems share this one
         // initialization promise so no listener can start a second deployment.
         await openHouseMap();
         await toxicBubbleSystem.begin();
+        gameStartScreen?.classList.remove('is-loading', 'has-error');
         gameStartScreen?.classList.add('is-hidden');
         scheduleGameResize();
         setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
@@ -1209,7 +1230,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.addEventListener('muzikaz:rad-tox-request', startRadToxGame);
   publishGameStage('engine-ready', 'RAD-TOX game engine ready. Starting the first level…');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
-  if (params.get('autoplay') === '1') startRadToxGame();
+  // The launcher already dispatched the one start request that loaded this
+  // module. Calling start again for autoplay links can reset an active round
+  // when browsers resume the page from their back/forward cache.
+  if (params.get('autoplay') === '1' && !gameInitializationPromise) startRadToxGame();
   // The launcher deliberately loads this module only after the player chooses
   // Begin. Never auto-load a large GLB world at page start: decoding it on a
   // mobile main thread can freeze scrolling and make the browser kill the tab.
