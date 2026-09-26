@@ -19,15 +19,15 @@ const starterNames = [
 
 test('custom item toolkit exposes pre-developed SVG 3D starters', async () => {
   const [html, script, manifest] = await Promise.all([
-    readFile(new URL('../model-explorer.html', import.meta.url), 'utf8'),
-    readFile(new URL('../public/js/custom-item-toolkit.js', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/models/toolkit-assets.json', import.meta.url), 'utf8').then(JSON.parse)
   ]);
 
-  assert.match(html, /<option value="starter">SVG 3D starters<\/option>/);
-  assert.match(script, /const starterModels = \[/);
-  assert.match(script, /function applyDefaults\(item\)/);
-  assert.match(script, /function sanitiseSvg\(source\)/);
+  assert.match(html, /data-builder-page="addons"/);
+  assert.match(html, /id="starter-model-grid"/);
+  assert.match(script, /const catalogSources=.*toolkit-assets\.json/);
+  assert.match(script, /const customStarterModels=\[/);
 
   const starters = manifest.assets.filter((asset) => asset.starter);
   assert.equal(starters.length, starterNames.length);
@@ -42,16 +42,17 @@ test('custom item toolkit exposes pre-developed SVG 3D starters', async () => {
 
 test('customized models expose transform controls and a saved-model popup', async () => {
   const [html, script] = await Promise.all([
-    readFile(new URL('../model-explorer.html', import.meta.url), 'utf8'),
-    readFile(new URL('../public/js/custom-item-toolkit.js', import.meta.url), 'utf8')
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
   ]);
 
-  for (const control of ['custom-svg-rotation', 'custom-svg-tilt', 'custom-svg-flip', 'custom-result-dialog']) {
+  for (const control of ['custom-model-depth', 'custom-model-bevel', 'custom-form-toggle', 'item-maker']) {
     assert.match(html, new RegExp(`id=\"${control}\"`));
   }
-  assert.match(script, /function showResult\(item\)/);
-  assert.match(script, /showResult\(item\);setStep\(3\)/);
-  assert.match(script, /mirrored:glb\?false/);
+  assert.match(html, /data-device-preview="desktop"/);
+  assert.match(html, /data-device-preview="mobile"/);
+  assert.match(script, /preview-mobile/);
+  assert.match(script, /showModal\(\)/);
 });
 
 test('new SVG starters provide distinct accessible sandbox interactions', async () => {

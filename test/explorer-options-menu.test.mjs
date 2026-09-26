@@ -13,9 +13,11 @@ test('VibeVerse exposes a compact searchable function menu', async () => {
   assert.match(html, /id="explorer-options-search"[^>]+type="search"/);
   assert.equal((html.match(/data-option-keywords=/g) || []).length, 9);
   assert.match(script, /terms\.every\(\(term\) => searchableText\.includes\(term\)\)/);
-  assert.equal((html.match(/data-explorer-workspace(?=[ >])/g) || []).length, 4);
-  assert.equal((html.match(/data-explorer-view=/g) || []).length, 8);
+  assert.equal((html.match(/data-explorer-workspace(?=[ >])/g) || []).length, 3);
+  assert.equal((html.match(/data-explorer-view=/g) || []).length, 6);
   assert.match(html, /href="environment-builder\.html"[^>]*>.*Build game template/s);
+  assert.match(html, /href="members\.html#marketplace"[^>]*>.*Open the store/s);
+  assert.match(html, /href="members\.html#ar-viewer"[^>]*>.*Open AR viewer/s);
   assert.match(script, /workspace\.hidden = !selected/);
   assert.match(script, /window\.addEventListener\('popstate'/);
   assert.match(styles, /\.explorer-options__panel\[hidden\]\{display:none\}/);

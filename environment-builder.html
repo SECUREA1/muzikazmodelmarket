@@ -21,6 +21,11 @@
     <label class="scene-name"><span>SCENE NAME</span><input id="scene-name" value="Untitled environment" maxlength="80"></label>
     <div class="environment-actions"><span id="save-state">All changes saved locally</span><button type="button" id="clear-scene">NEW MAP</button><button type="button" id="save-scene">SAVE SCENE</button><button type="button" id="play-scene" class="primary" title="Open the complete template in a private local sandbox with no API or multiplayer connection">TEST GAME</button></div>
   </header>
+  <nav class="builder-page-switch" aria-label="Game builder pages">
+    <button type="button" class="active" data-builder-page="world" aria-pressed="true"><b>01</b><span>WORLD BUILDER<small>Maps, designs &amp; gameplay</small></span></button>
+    <button type="button" data-builder-page="addons" aria-pressed="false"><b>02</b><span>3D ADD-ONS<small>Customization toolkit &amp; clip-ons</small></span></button>
+    <span class="builder-device-tests" role="group" aria-label="Preview workspace size"><button type="button" class="active" data-device-preview="desktop">DESKTOP</button><button type="button" data-device-preview="mobile">MOBILE</button></span>
+  </nav>
   <main class="environment-workspace">
     <aside class="object-library" aria-labelledby="library-title">
       <header><div><small>BUILDERS PACK</small><h1 id="library-title">Item library</h1></div><span id="library-count">76</span></header>
