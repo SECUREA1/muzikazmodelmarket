@@ -88,6 +88,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     .environment-upload-grid textarea,.environment-upload-grid input,.environment-upload-grid select{width:100%;border-radius:.5rem;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.35);color:#fff;padding:.45rem}
     .environment-upload-grid textarea,.environment-upload-grid progress,.environment-upload-grid button,.environment-upload-grid p{grid-column:1/-1}.environment-upload-grid .check{display:flex;align-items:center;gap:.4rem}
     .rad-tox-demo-balance{position:absolute;z-index:11;top:72px;right:14px;display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid rgba(156,255,0,.58);border-radius:10px;background:rgba(5,12,3,.88);box-shadow:0 0 18px rgba(156,255,0,.18);color:#efffd4;pointer-events:none}.rad-tox-demo-balance[hidden]{display:none}.rad-tox-demo-balance small{font-size:8px;font-weight:900;letter-spacing:.1em;color:#a8c98a}.rad-tox-demo-balance strong{font-size:13px;color:#b7ff32;white-space:nowrap}@media(max-width:760px){.rad-tox-demo-balance{top:auto;right:10px;bottom:10px;padding:6px 9px}}
+    .sandbox-publish-bar{position:absolute;z-index:12;top:12px;left:50%;display:flex;align-items:center;gap:10px;width:min(610px,calc(100% - 24px));box-sizing:border-box;padding:9px 10px;border:1px solid #caff49;border-radius:12px;background:rgba(3,13,5,.94);box-shadow:0 10px 32px rgba(0,0,0,.52),0 0 18px rgba(156,255,0,.2);color:#efffd7;transform:translateX(-50%)}.sandbox-publish-bar[hidden]{display:none}.sandbox-publish-bar__copy{display:grid;min-width:0;line-height:1.15}.sandbox-publish-bar__copy strong{color:#caff49;font-size:11px;letter-spacing:.08em;text-transform:uppercase}.sandbox-publish-bar__copy small{margin-top:3px;color:rgba(239,255,215,.74);font-size:9px}.sandbox-publish-bar button{margin-left:auto;flex:none;border:0;border-radius:999px;padding:9px 14px;background:linear-gradient(120deg,#caff49,#78cf0a);color:#071007;font:1000 10px/1 Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}.sandbox-publish-bar button:disabled{opacity:.62;cursor:wait}.sandbox-publish-bar.is-error{border-color:#ff6d7d}.sandbox-publish-bar.is-error .sandbox-publish-bar__copy strong{color:#ff9ca7}@media(max-width:620px){.sandbox-publish-bar{align-items:stretch;top:7px;gap:7px;padding:7px}.sandbox-publish-bar__copy small{display:none}.sandbox-publish-bar button{padding:8px 10px;font-size:9px}}
     .house-loading-meter{position:absolute;left:12px;right:12px;bottom:12px;height:5px;z-index:7;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.15)}.house-loading-meter>span{display:block;width:0;height:100%;background:#9cff00;transition:width .18s ease}
     .house-control-dock{grid-column:1;grid-row:2;width:100%;margin:.7rem 0 0}.house-control-dock .house-bottom-controls{grid-template-columns:minmax(155px,.85fr) minmax(190px,1.15fr) repeat(4,minmax(82px,.62fr)) minmax(168px,1fr) auto;align-items:stretch;width:100%;margin:0;border:1px solid rgba(156,255,0,.42);border-radius:.85rem}.house-control-dock .game-profile-wallet{grid-column:auto}.house-space-scale,.house-view-controls{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:.38rem;min-width:0;padding:.55rem;border:1px solid rgba(156,255,0,.25);border-radius:.75rem;background:rgba(0,0,0,.28)}
     .house-space-scale strong,.house-space-scale output,.house-view-controls strong,.house-view-controls output{color:#fff}.house-space-scale strong,.house-view-controls strong{grid-column:1/-1;font-size:.72rem;white-space:nowrap}.house-space-scale input{width:100%;min-width:36px;accent-color:#9cff00}
@@ -180,6 +181,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const walletBalance = window.MZKWallet?.balance?.();
   demoBalance.querySelector('[data-demo-mzk-balance]').textContent = Number(walletBalance || 0).toLocaleString();
   const toxicHud = document.createElement('section'); toxicHud.className = 'rad-tox-hud'; toxicHud.setAttribute('aria-label', 'RAD-TOX game status'); toxicHud.innerHTML = '<button class="rad-tox-hud-row" type="button" data-rad-row="mission" data-rad-row-label="Mission" data-rad-row-toggle aria-label="Show mission details" aria-expanded="false"><span class="rad-tox-hud-row__content"><strong>☢ RAD-TOX <span data-rad-tox-state>STANDBY</span></strong><span data-rad-tox-environment>Environment: waiting</span></span><span class="rad-tox-row-toggle" aria-hidden="true">▾</span></button><button class="rad-tox-hud-row" type="button" data-rad-row="targets" data-rad-row-label="Targets & levels" data-rad-row-toggle aria-label="Show targets and levels details" aria-expanded="false"><span class="rad-tox-hud-row__content"><span data-rad-tox-count>Level 1 · Toxics: 0 · Score: 0 · 00:00</span></span><span class="rad-tox-row-toggle" aria-hidden="true">▾</span></button><button class="rad-tox-hud-row" type="button" data-rad-row="supplies" data-rad-row-label="Supplies" data-rad-row-toggle aria-label="Show supplies details" aria-expanded="false"><span class="rad-tox-hud-row__content"><span class="rad-tox-health">HP <i data-rad-tox-health-fill></i><b data-rad-tox-health>100</b></span><span data-rad-tox-ammo>Ammo: ∞</span><span data-rad-tox-spray>Spray: 24</span><span data-rad-tox-backpack>Pack: 0</span><span data-rad-tox-wallet>◉ MZK: 0</span><span class="rad-tox-spend" data-rad-tox-spend aria-live="polite"></span></span><span class="rad-tox-row-toggle" aria-hidden="true">▾</span></button>'; stage.append(toxicHud);
+  const sandboxPublishBar = document.createElement('aside'); sandboxPublishBar.className = 'sandbox-publish-bar'; sandboxPublishBar.hidden = !localSandbox; sandboxPublishBar.setAttribute('aria-label', 'Sandbox publishing controls'); sandboxPublishBar.innerHTML = '<span class="sandbox-publish-bar__copy"><strong>Private RAD-TOX sandbox</strong><small data-sandbox-publish-status>Test safely here, then convert this build into a live multiplayer map.</small></span><button type="button" data-publish-sandbox>Publish map live</button>'; stage.append(sandboxPublishBar);
   const rowStorageKey = 'muzikazRadToxHiddenRows'; const hiddenRows = new Set(JSON.parse(localStorage.getItem(rowStorageKey) || '[]')); const compactHud = () => matchMedia('(max-width:760px)').matches; const setHudRowVisibility = (row, hidden) => { row.classList.toggle('is-collapsed',hidden); const label=row.dataset.radRowLabel.toLowerCase(); row.setAttribute('aria-expanded',String(!hidden)); row.setAttribute('aria-label',`${hidden ? 'Show' : 'Hide'} ${label} details`); row.querySelector('.rad-tox-row-toggle').textContent=hidden?'▸':'▾'; }; const openHudList = (row) => { toxicHud.querySelectorAll('[data-rad-row]').forEach(item => { const open=item === row; if(open) setHudRowVisibility(item,false); item.classList.toggle('is-mobile-open',open); item.setAttribute('aria-expanded',String(open)); item.setAttribute('aria-label',`${open ? 'Hide' : 'Show'} ${item.dataset.radRowLabel.toLowerCase()} details`); }); }; toxicHud.querySelectorAll('[data-rad-row]').forEach(row=>setHudRowVisibility(row,hiddenRows.has(row.dataset.radRow))); toxicHud.addEventListener('click',event=>{const row=event.target.closest('[data-rad-row-toggle]'); if(!row)return; if(compactHud()){openHudList(row);return;} const hidden=!row.classList.contains('is-collapsed'); setHudRowVisibility(row,hidden); hidden ? hiddenRows.add(row.dataset.radRow) : hiddenRows.delete(row.dataset.radRow); localStorage.setItem(rowStorageKey,JSON.stringify([...hiddenRows]));});
   const toolIcons = {
     laser: '<svg class="rad-tool-icon" viewBox="0 0 64 64" aria-hidden="true"><path fill="#17231b" stroke="#eaffcf" stroke-width="3" d="m8 48 27-28 9 9-28 27H8Z"/><path fill="#a9ff24" stroke="#081006" stroke-width="2" d="m31 19 11-11 14 14-11 11Z"/><path fill="#39e8ff" d="m49 8 4-7 2 8 8 2-8 3-3 8-2-8-8-3Z"/><path fill="#fff" d="m11 43 5 5 15-16-5-5Z"/></svg>',
@@ -419,6 +421,45 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
   let viewActive = true; let lastFrameTime = 0; const targetFrameMs = performanceMode || reducedMotion ? 1000 / 30 : 0;
   let playerCollider = new Capsule(new THREE.Vector3(0, player.radius, 2), new THREE.Vector3(0, player.height, 2), player.radius); let dragPointer = null; let avatarDrag = null; let avatarPinch = null; const activeTouchPointers = new Map(); let turnReady = true; let activeEnvironment = null;
+  const publishSandboxButton = sandboxPublishBar.querySelector('[data-publish-sandbox]');
+  const sandboxPublishStatus = sandboxPublishBar.querySelector('[data-sandbox-publish-status]');
+  async function publishSandboxMap() {
+    const source = activeEnvironment?.builderScene;
+    if (!source) {
+      sandboxPublishBar.classList.add('is-error');
+      sandboxPublishStatus.textContent = 'This sandbox is still loading. Wait for the map to appear, then publish again.';
+      return;
+    }
+    publishSandboxButton.disabled = true;
+    publishSandboxButton.textContent = 'Publishing…';
+    sandboxPublishBar.classList.remove('is-error');
+    sandboxPublishStatus.textContent = 'Converting the complete build into a public RAD-TOX multiplayer room…';
+    const scene = typeof structuredClone === 'function' ? structuredClone(source) : JSON.parse(JSON.stringify(source));
+    scene.gameplay = { ...(scene.gameplay || {}), multiplayer: true, enemies: true, weapons: true, pickups: true, customRoles: true, gameMode: 'rad-tox' };
+    scene.runtimeManifest = compileBuilderScene(scene);
+    try {
+      const request = { method:'POST', headers:{ 'Content-Type':'application/json', Accept:'application/json' }, body:JSON.stringify({ scene }), retries:0 };
+      const response = window.MUZIKAZ_API?.fetch ? await window.MUZIKAZ_API.fetch('/api/custom-maps', request) : await fetch('/api/custom-maps', request);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.message || payload.error || `Publishing failed (${response.status}).`);
+      const published = payload.data || payload;
+      sandboxPublishStatus.textContent = 'Map is live. Connecting this game to its multiplayer room…';
+      publishSandboxButton.textContent = 'Going live…';
+      const liveUrl = new URL(location.href);
+      liveUrl.searchParams.set('environment', published.id || scene.id);
+      liveUrl.searchParams.set('house', published.id || scene.id);
+      liveUrl.searchParams.set('autoplay', '1');
+      liveUrl.searchParams.delete('sandbox');
+      liveUrl.searchParams.delete('localFallback');
+      window.setTimeout(() => location.assign(liveUrl.href), 450);
+    } catch (error) {
+      sandboxPublishBar.classList.add('is-error');
+      sandboxPublishStatus.textContent = error.message || 'The map could not be published. Your private sandbox is unchanged.';
+      publishSandboxButton.disabled = false;
+      publishSandboxButton.textContent = 'Try publish again';
+    }
+  }
+  publishSandboxButton.addEventListener('click', publishSandboxMap);
   // Falling out of a map may recover once. Do not let a malformed spawn or
   // incomplete collision mesh turn recovery into resetPlayer() every frame.
   let outOfBoundsRecoveryArmed = false;
