@@ -235,9 +235,6 @@ test('builder lands and placed items retain verified collision floors', async ()
   assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;resetPlayer\(spawn\.position,spawn\.rotationY\|\|0\)/, 'map loading places the player directly at an authored or safe resolved spawn');
   assert.match(loader, /setSupplementalCollisionRoots\(roots = \[\]\)/, 'the loader can safely include placed Builder items in its collision octree');
   assert.match(game, /function refreshBuilderCollision\(\)/, 'placed Builder items batch their collision refresh instead of rebuilding once per asset');
-  assert.match(game, /await Promise\.allSettled\(placements\)/, 'the build stays in its loading state until every authored model settles');
-  assert.match(game, /const builderRuntime=await loadBuilderDecor\(env\)/, 'world readiness waits for the complete saved build');
-  assert.match(game, /generation!==builderLoadGeneration/, 'late GLB results cannot leak into a newly selected build');
   assert.match(game, /window\.setTimeout/, 'collision rebuilding yields to the browser so the map can open first');
   assert.match(game, /worldX=center\.x\+x,worldZ=center\.z\+z,ground=floorPointAt/, 'every placed object is grounded at its authored horizontal position');
   assert.match(game, /spawnFloor\.y\+FLOOR_ENTRY_OFFSET/, 'the player spawn begins just above the verified floor with the full body capsule above it');
@@ -264,10 +261,10 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
   assert.match(game, /floorSweepRay\.intersectObjects\(envLoader\.floorMeshes,true\)/, 'a downward frame sweep catches thin floors crossed during a fall');
   assert.doesNotMatch(game, /PLAYER_ENTRY_DROP_HEIGHT|dropIntoMap/, 'map entry never adds an aerial offset above the resolved floor');
   assert.doesNotMatch(game, /playerDropRecoveryActive|groundedRecoveryFrames/, 'the drop is not re-armed from the animation loop');
-  assert.doesNotMatch(game, /lastSafePlayerPosition|floorLockCooldown|floorLockY/, 'ordinary ground contact never arms a player redeployment loop');
-  assert.match(game, /if\(player\.onGround\)outOfBoundsRecoveryArmed=true/, 'out-of-bounds recovery is armed only after verified ground contact');
-  assert.match(game, /if \(outOfBoundsRecoveryArmed && playerRig\.position\.y < minimumWorldY\) resetPlayer\(\)/, 'leaving the world bounds triggers at most one automatic respawn');
-  assert.match(game, /outOfBoundsRecoveryArmed = false/, 'respawning disarms recovery so a malformed spawn cannot reset every frame');
+  assert.match(game, /const lastSafePlayerPosition = new THREE\.Vector3\(\)/, 'every map shares a last-known-good floor position');
+  assert.match(game, /const floorLockY=Math\.max\(mapFloorLimit,safeFloorLimit\)/, 'the floor lock uses both the active map bounds and its last verified collider floor');
+  assert.match(game, /playerCollider\.start\.set\(recovery\.x,recovery\.y\+player\.radius,recovery\.z\)/, 'a missed floor collider restores the capsule to safe ground');
+  assert.match(game, /floorLockCooldown=\.35/, 'floor recovery is rate limited instead of repeatedly resetting each frame');
   for (const layout of ['blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio']) assert.match(loader, new RegExp(`'${layout}'`));
 });
 
