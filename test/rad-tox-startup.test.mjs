@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+
+test('RAD-TOX startup is bounded and can be retried after a failure', async () => {
+  const [launcher, game] = await Promise.all([
+    readFile(new URL('../public/js/rad-tox-launcher.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
+  ]);
+
+  assert.match(launcher, /engineReady/, 'retries reuse an engine that has already loaded');
+  assert.match(launcher, /button\.disabled = false/, 'a failed start restores the launch control');
+  assert.doesNotMatch(launcher, /addEventListener\('click',[\s\S]{0,100}\{ once: true \}/, 'the launch control remains usable for retries');
+  assert.match(launcher, /setTimeout\(showStall, 30000\)/, 'a stalled module load reports its state without starting a duplicate engine');
+  assert.match(game, /settleWithin\(refreshLibrary\(\), 5000/, 'optional startup catalog work cannot hold the engine indefinitely');
+  assert.match(game, /gameInitializationPromise = null/, 'a failed game initialization can be started again');
+  assert.match(game, /addEventListener\('muzikaz:rad-tox-request', startRadToxGame\);/, 'the loaded engine accepts a retry request');
+});

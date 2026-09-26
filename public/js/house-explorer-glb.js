@@ -39,6 +39,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const levelLoaderPercent = levelLoader?.querySelector('[data-level-loader-percent]');
   const levelLoaderScale = levelLoader?.querySelector('.house-level-loader__scale');
   const publishGameStage = (stageName, message) => document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-stage', { detail: { stage: stageName, message } }));
+  const settleWithin = (promise, milliseconds, label) => Promise.race([
+    promise,
+    new Promise((_, reject) => window.setTimeout(() => reject(new Error(`${label} timed out.`)), milliseconds))
+  ]);
   let levelLoaderProgress = 0;
   function updateLevelLoader(progress, message) {
     levelLoaderProgress = Math.max(levelLoaderProgress, Math.min(100, Math.round(progress)));
@@ -1133,7 +1137,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // background instead.
   setStatus('Finding the fastest available house world…');
   try {
-    await refreshLibrary();
+    await settleWithin(refreshLibrary(), 5000, 'Startup catalog refresh');
   } catch (error) {
     console.warn('[MUZIKAZ Environment]', 'Map refresh failed', error);
   }
@@ -1181,6 +1185,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         if (gameLoadStatus) gameLoadStatus.textContent = message;
         setStatus(message);
         document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { stage: 'RAD-TOX', message } }));
+        gameInitializationPromise = null;
       }
     })();
     return gameInitializationPromise;
@@ -1189,7 +1194,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (document.pointerLockElement === canvas) { document.exitPointerLock?.(); return; }
     startRadToxGame();
   });
-  document.addEventListener('muzikaz:rad-tox-request', startRadToxGame, { once: true });
+  document.addEventListener('muzikaz:rad-tox-request', startRadToxGame);
   publishGameStage('engine-ready', 'RAD-TOX game engine ready. Starting the first level…');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
   if (params.get('autoplay') === '1') startRadToxGame();
