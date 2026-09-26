@@ -353,3 +353,17 @@ $('#avatar-reset-all').addEventListener('click',()=>setAvatarPieceValue(o=>{o.av
 for(const [id,key,convert] of [['avatar-piece-color','color',String],['avatar-piece-scale','scale',v=>Number(v)/100],['avatar-piece-rotation','rotation',Number],['avatar-piece-x','x',Number],['avatar-piece-y','y',Number]]){const control=$(`#${id}`);let captured=false;const capture=()=>{const o=selected();if(o&&!captured){pushAvatarHistory(o);captured=true}};control.addEventListener('pointerdown',capture);control.addEventListener('focus',capture);control.addEventListener('input',()=>{const o=selected();if(!o)return;capture();pieceTransform(o,activeAvatarCategory)[key]=convert(control.value);o.avatarSettings.customized=true;renderAvatarModal()});control.addEventListener('change',()=>{const o=selected();if(!o)return;captured=false;rebuildAvatar(o,`${avatarCatalog[activeAvatarCategory].label} fit updated`);renderAvatarModal()})}
 $('#avatar-undo').addEventListener('click',()=>{const o=selected();if(!o||!avatarUndo.length)return;avatarRedo.push(avatarSnapshot(o));applyAvatarSnapshot(o,avatarUndo.pop());renderAvatarModal()});
 $('#avatar-redo').addEventListener('click',()=>{const o=selected();if(!o||!avatarRedo.length)return;avatarUndo.push(avatarSnapshot(o));applyAvatarSnapshot(o,avatarRedo.pop());renderAvatarModal()});
+
+// The player route stays focused on play; creator-only add-ons live here. The
+// page switch opens the complete toolkit and the viewport switch makes its
+// touch-sized layout testable without leaving the builder.
+document.querySelectorAll('[data-builder-page]').forEach(button=>button.addEventListener('click',()=>{
+ document.querySelectorAll('[data-builder-page]').forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))});
+ if(button.dataset.builderPage==='addons'){$('#item-maker').showModal();setTimeout(()=>$('#starter-model-grid')?.focus(),0)}else if($('#item-maker').open)$('#item-maker').close();
+}));
+$('#item-maker').addEventListener('close',()=>{document.querySelectorAll('[data-builder-page]').forEach(item=>{const active=item.dataset.builderPage==='world';item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))})});
+document.querySelectorAll('[data-device-preview]').forEach(button=>button.addEventListener('click',()=>{
+ const mobile=button.dataset.devicePreview==='mobile';document.body.classList.toggle('preview-mobile',mobile);
+ document.querySelectorAll('[data-device-preview]').forEach(item=>item.classList.toggle('active',item===button));
+ showToast(`${mobile?'Mobile':'Desktop'} builder preview active — TEST GAME remains available above.`);
+}));
