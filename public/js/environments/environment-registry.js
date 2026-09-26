@@ -3,6 +3,13 @@ import { fetchEnvironmentList, deleteEnvironment } from './environment-api.js';
 export class EnvironmentRegistry {
   constructor() { this.environments = []; }
   async refresh() { this.environments = normalizeEnvironmentList(await fetchEnvironmentList()); return this.environments; }
+  async refreshLocal() {
+    const response = await fetch('/public/models/environments/environments.json', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+    if (!response.ok) throw new Error(`Repository environment manifest unavailable (${response.status})`);
+    const payload = await response.json();
+    this.environments = normalizeEnvironmentList(Array.isArray(payload) ? payload : []);
+    return this.environments;
+  }
   all() { return this.environments; }
   find(id) { return this.environments.find((env) => env.id === id || env.aliases?.includes(id)); }
   async delete(id) { await deleteEnvironment(id); return this.refresh(); }

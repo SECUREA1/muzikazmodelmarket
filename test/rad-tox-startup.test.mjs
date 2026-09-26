@@ -16,7 +16,9 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   assert.match(launcher, /moduleElement = moduleElement \|\| document\.createElement\('script'\)/, 'repeat taps reuse one game-engine module and one WebGL renderer');
   assert.match(launcher, /requestAnimationFrame[\s\S]*requestAnimationFrame/, 'the loading surface receives a paint before the engine starts heavy work');
   assert.match(game, /settleWithin\(startupCatalogPromise, 5000/, 'optional startup catalog work cannot hold the engine bootstrap indefinitely');
-  assert.match(game, /await startupCatalogPromise/, 'the first direct start waits for a slow catalog instead of capturing an empty map list');
+  assert.match(game, /registry\.refreshLocal\(\)/, 'a stalled multiplayer catalog falls back to packaged maps without removing Builder support');
+  assert.match(game, /settleWithin\(startupCatalogPromise, 5000, 'Multiplayer map list'\)/, 'the Begin action cannot hang forever on multiplayer discovery');
+  assert.match(game, /No playable house map is available/, 'an empty catalog produces a retryable launch error instead of starting without a player world');
   assert.match(game, /const startEnvironment = resolveStartEnvironment\(\)/, 'direct starts resolve their world at interaction time like map-list entries');
   assert.match(game, /gameInitializationPromise = null/, 'a failed game initialization can be started again');
   assert.match(game, /addEventListener\('muzikaz:rad-tox-request', startRadToxGame\);/, 'the loaded engine accepts a retry request');
