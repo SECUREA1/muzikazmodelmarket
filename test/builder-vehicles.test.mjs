@@ -61,6 +61,9 @@ test('nearby item actions are stable and rate-limited for touch devices', async 
   assert.match(game, /now-nearbyActionCheckedAt<100/);
   assert.match(game, /if\(nearbyActionLocked\)return/);
   assert.match(game, /setTimeout\(\(\)=>\{nearbyActionLocked=false;\},180\)/);
+  assert.match(game, /builderActionButton\.addEventListener\('pointerup'/);
+  assert.match(game, /event\.pointerType==='touch'/);
+  assert.match(game, /touch-action:manipulation/);
   assert.doesNotMatch(game, /builderActionButton\.querySelector\('strong'\)\.textContent/);
   assert.doesNotMatch(game, /builderActionButton\.querySelector\('small'\)\.textContent/);
 });
