@@ -135,6 +135,22 @@ test('environment builder supports custom role-play actors and interactions', as
   assert.ok((script.match(/type:'interactive'/g) || []).length >= 4, 'includes several interactive role-play objects');
 });
 
+test('portal assets expose a locked tuner for local and cross-map destinations', async () => {
+  const [html, builder, pipeline, game] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/builder-gameplay-pipeline.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
+  ]);
+  for (const control of ['portal-tuner', 'portal-enabled', 'portal-destination-type', 'portal-target-location', 'portal-target-map']) assert.match(html, new RegExp(`id="${control}"`));
+  assert.match(builder, /portal:\{enabled:false,destinationType:'location'/, 'new portal routes are safe and disabled by default');
+  assert.match(builder, /renderPortalTuner/);
+  assert.match(pipeline, /Portal path is locked in the Portal Tuner/);
+  assert.match(pipeline, /this\.effects\.teleport/);
+  assert.match(game, /destinationType==='map'/);
+  assert.match(game, /resetPlayer\(new THREE\.Vector3/);
+});
+
 test('custom items use an SVG drawing and 3D extrusion toolkit instead of icon-only models', async () => {
   const [html, script] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
