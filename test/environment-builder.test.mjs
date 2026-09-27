@@ -194,7 +194,13 @@ test('avatar look lab provides deep fitted customization for every wearable icon
 });
 
 test('in-game Builder Map menu opens the environment builder and restores playable maps', async () => {
-  const game = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
+  const [game, explorer, loader] = await Promise.all([
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
+    readFile(new URL('../model-explorer.html', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8')
+  ]);
+  assert.match(explorer, /id="primary-navigation"[\s\S]*href="environment-builder\.html">Environment Builder</, 'the game hamburger navigation exposes the Environment Builder');
+  for (const layout of ['loft', 'suite', 'courtyard']) assert.match(loader, new RegExp(`layout==='${layout}'`), `${layout} starter dressing is reconstructed in game`);
   assert.match(game, /class="rad-build-launch" href="environment-builder\.html\?from=game"/);
   assert.match(game, /addSavedBuilderWorld/);
   assert.match(game, /loadBuilderDecor/);
