@@ -181,6 +181,12 @@ export class BuilderGameplayRuntime {
     if (config.action === 'damage') this.player.health = Math.max(0, this.player.health - value);
     if (config.action === 'toggle' && instance) { instance.toggled = !instance.toggled; instance.setSwitched?.(instance.toggled); }
     if (config.action === 'use') instance?.use?.(config.value, actor, this.player);
+    if (config.action === 'teleport') {
+      const portal = config.portal || {};
+      if (!portal.enabled) { message = 'Portal path is locked in the Portal Tuner'; }
+      else if (!portal.targetObjectId && !portal.targetMapId) { message = 'Portal needs a destination'; }
+      else { this.effects.teleport?.(portal, actor, this.player); message = portal.destinationType === 'map' ? 'Opening destination map…' : 'Portal jump complete'; }
+    }
     instance?.playClip?.(actor.animation.interactionClip, false);
     this.effects.action?.(config.action, config.value, actor); this.feedback(message, actor);
     return { actor, handled: true, message };
