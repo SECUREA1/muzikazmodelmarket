@@ -17,7 +17,9 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   assert.match(game, /addEventListener\('muzikaz:rad-tox-request', startRadToxGame\);/, 'the loaded engine accepts a retry request');
   assert.match(
     game,
-    /await openHouseMap\(\);[\s\S]{0,500}resetPlayer\(\);[\s\S]{0,100}await toxicBubbleSystem\.begin\(\);/,
-    'a launch resets to the loaded world spawn before gameplay and multiplayer presence start'
+    /await openHouseMap\(\);[\s\S]{0,700}resetPlayer\(activeWorldSpawn\.position, activeWorldSpawn\.rotationY\);[\s\S]{0,100}await toxicBubbleSystem\.begin\(\);/,
+    'a launch passes the loaded world spawn to the player reset before gameplay and multiplayer presence start'
   );
+  assert.match(game, /activeWorldSpawn=\{position:spawn\.position\.clone\(\),rotationY:Number\(spawn\.rotationY\)\|\|0\};resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\)/, 'map loading preserves the resolved GLB or Builder spawn for game start');
+  assert.doesNotMatch(game, /await openHouseMap\(\);[\s\S]{0,700}resetPlayer\(\);/, 'game start never resets the spawn without an explicit map argument');
 });

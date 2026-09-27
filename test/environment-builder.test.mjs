@@ -232,7 +232,7 @@ test('builder lands and placed items retain verified collision floors', async ()
   assert.match(loader, /root\.add\(mesh\)/, 'template buildings and props join the world root and its collision pass');
   assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode\)/, 'procedural terrain enters the normal collision pipeline');
   assert.match(loader, /resolveSafeSpawn\(nextWorld, collision\.floorMeshes, environment\.spawn\)/, 'the initial player position is resolved against verified collision floors');
-  assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;resetPlayer\(spawn\.position,spawn\.rotationY\|\|0\)/, 'map loading places the player directly at an authored or safe resolved spawn');
+  assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;activeWorldSpawn=\{position:spawn\.position\.clone\(\),rotationY:Number\(spawn\.rotationY\)\|\|0\};resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\)/, 'map loading places the player directly at an authored or safe resolved spawn');
   assert.match(loader, /setSupplementalCollisionRoots\(roots = \[\]\)/, 'the loader can safely include placed Builder items in its collision octree');
   assert.match(game, /function refreshBuilderCollision\(\)/, 'placed Builder items batch their collision refresh instead of rebuilding once per asset');
   assert.match(game, /window\.setTimeout/, 'collision rebuilding yields to the browser so the map can open first');
