@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 
-test('Builders Pack provides a floor, three rooms, twenty core models, and its expanded SVG assets', async () => {
+test('Builders Pack provides a floor, three rooms, twenty-one core models, and its expanded SVG assets', async () => {
   const [html, script, modelFiles] = await Promise.all([
     readFile(new URL('../builder-market.html', import.meta.url), 'utf8'),
     readFile(new URL('../builder-market.js', import.meta.url), 'utf8'),
@@ -10,12 +10,13 @@ test('Builders Pack provides a floor, three rooms, twenty core models, and its e
   ]);
 
   assert.match(html, /Grand Build Floor/);
+  assert.match(script, /Pillow Ring Seat/);
   assert.match(html, /40 × 40/);
   assert.match(html, /3 layouts/);
-  assert.match(html, /20 models/);
+  assert.match(html, /21 models/);
   assert.equal((script.match(/name:'(?:Open Studio|Connected Suite|Garden Courtyard)'/g) || []).length, 3);
-  assert.equal((script.match(/\['[a-z-]+','[^']+','(?:landscape|interior)'\]/g) || []).length, 20);
-  assert.equal(modelFiles.filter((file) => file.endsWith('.svg')).length, 32);
+  assert.equal((script.match(/\['[a-z-]+','[^']+','(?:landscape|interior)'\]/g) || []).length, 21);
+  assert.equal(modelFiles.filter((file) => file.endsWith('.svg')).length, 33);
 });
 
 test('in-game Tools and Drop Backpack expose the complete map-building pack', async () => {
