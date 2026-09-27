@@ -41,4 +41,8 @@
   document.addEventListener('muzikaz:gameplay-ready', clearLoadTimer);
   document.addEventListener('muzikaz:rad-tox-stage', function (stage) { if (stage.detail && stage.detail.message && status) status.textContent = stage.detail.message; });
   document.addEventListener('muzikaz:rad-tox-native-error', function (failure) { showError((failure.detail && failure.detail.message) || 'The playable world could not be initialized.'); });
+  // Builder TEST GAME links have always used autoplay=1. The engine is loaded
+  // on demand now, so consume that launch contract here; waiting for its own
+  // autoplay check would deadlock behind the Begin Game overlay.
+  if (new URLSearchParams(window.location.search).get('autoplay') === '1') begin();
 }());
