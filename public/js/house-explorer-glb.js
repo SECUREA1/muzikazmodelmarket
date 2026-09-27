@@ -20,27 +20,6 @@ const stage = legacyCanvas?.closest('.house-stage');
 const hud = document.querySelector('.house-hud');
 
 if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
-  // Browser storage is optional game state, never a boot dependency. A partially
-  // written value (or storage denied by an embedded/private browser) previously
-  // threw here before the engine-ready event, leaving the launcher frozen.
-  const readStoredJson = (key, fallback) => {
-    try {
-      const value = JSON.parse(window.localStorage.getItem(key) || 'null');
-      return value === null ? fallback : value;
-    } catch (error) {
-      console.warn('[RAD-TOX Storage]', `Ignoring invalid ${key} data.`, error);
-      return fallback;
-    }
-  };
-  const readStoredArray = (key) => {
-    const value = readStoredJson(key, []);
-    return Array.isArray(value) ? value : [];
-  };
-  const writeStoredValue = (key, value) => {
-    try { window.localStorage.setItem(key, value); }
-    catch (error) { console.warn('[RAD-TOX Storage]', `Could not save ${key}.`, error); }
-  };
-  const writeStoredJson = (key, value) => writeStoredValue(key, JSON.stringify(value));
   const localSandbox = new URLSearchParams(location.search).get('sandbox') === '1';
   const oldStatus = document.querySelector('#house-status');
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
@@ -205,7 +184,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const walletBalance = window.MZKWallet?.balance?.();
   demoBalance.querySelector('[data-demo-mzk-balance]').textContent = Number(walletBalance || 0).toLocaleString();
   const toxicHud = document.createElement('section'); toxicHud.className = 'rad-tox-hud'; toxicHud.setAttribute('aria-label', 'RAD-TOX game status'); toxicHud.innerHTML = '<button class="rad-tox-hud-row" type="button" data-rad-row="mission" data-rad-row-label="Mission" data-rad-row-toggle aria-label="Show mission details" aria-expanded="false"><span class="rad-tox-hud-row__content"><strong>☢ RAD-TOX <span data-rad-tox-state>STANDBY</span></strong><span data-rad-tox-environment>Environment: waiting</span></span><span class="rad-tox-row-toggle" aria-hidden="true">▾</span></button><button class="rad-tox-hud-row" type="button" data-rad-row="targets" data-rad-row-label="Targets & levels" data-rad-row-toggle aria-label="Show targets and levels details" aria-expanded="false"><span class="rad-tox-hud-row__content"><span data-rad-tox-count>Level 1 · Toxics: 0 · Score: 0 · 00:00</span></span><span class="rad-tox-row-toggle" aria-hidden="true">▾</span></button><button class="rad-tox-hud-row" type="button" data-rad-row="supplies" data-rad-row-label="Supplies" data-rad-row-toggle aria-label="Show supplies details" aria-expanded="false"><span class="rad-tox-hud-row__content"><span class="rad-tox-health">HP <i data-rad-tox-health-fill></i><b data-rad-tox-health>100</b></span><span data-rad-tox-ammo>Ammo: ∞</span><span data-rad-tox-spray>Spray: 24</span><span data-rad-tox-backpack>Pack: 0</span><span data-rad-tox-wallet>◉ MZK: 0</span><span class="rad-tox-spend" data-rad-tox-spend aria-live="polite"></span></span><span class="rad-tox-row-toggle" aria-hidden="true">▾</span></button>'; stage.append(toxicHud);
-  const rowStorageKey = 'muzikazRadToxHiddenRows'; const hiddenRows = new Set(readStoredArray(rowStorageKey)); const compactHud = () => matchMedia('(max-width:760px)').matches; const setHudRowVisibility = (row, hidden) => { row.classList.toggle('is-collapsed',hidden); const label=row.dataset.radRowLabel.toLowerCase(); row.setAttribute('aria-expanded',String(!hidden)); row.setAttribute('aria-label',`${hidden ? 'Show' : 'Hide'} ${label} details`); row.querySelector('.rad-tox-row-toggle').textContent=hidden?'▸':'▾'; }; const openHudList = (row) => { toxicHud.querySelectorAll('[data-rad-row]').forEach(item => { const open=item === row; if(open) setHudRowVisibility(item,false); item.classList.toggle('is-mobile-open',open); item.setAttribute('aria-expanded',String(open)); item.setAttribute('aria-label',`${open ? 'Hide' : 'Show'} ${item.dataset.radRowLabel.toLowerCase()} details`); }); }; toxicHud.querySelectorAll('[data-rad-row]').forEach(row=>setHudRowVisibility(row,hiddenRows.has(row.dataset.radRow))); toxicHud.addEventListener('click',event=>{const row=event.target.closest('[data-rad-row-toggle]'); if(!row)return; if(compactHud()){openHudList(row);return;} const hidden=!row.classList.contains('is-collapsed'); setHudRowVisibility(row,hidden); hidden ? hiddenRows.add(row.dataset.radRow) : hiddenRows.delete(row.dataset.radRow); writeStoredJson(rowStorageKey,[...hiddenRows]);});
+  const rowStorageKey = 'muzikazRadToxHiddenRows'; const hiddenRows = new Set(JSON.parse(localStorage.getItem(rowStorageKey) || '[]')); const compactHud = () => matchMedia('(max-width:760px)').matches; const setHudRowVisibility = (row, hidden) => { row.classList.toggle('is-collapsed',hidden); const label=row.dataset.radRowLabel.toLowerCase(); row.setAttribute('aria-expanded',String(!hidden)); row.setAttribute('aria-label',`${hidden ? 'Show' : 'Hide'} ${label} details`); row.querySelector('.rad-tox-row-toggle').textContent=hidden?'▸':'▾'; }; const openHudList = (row) => { toxicHud.querySelectorAll('[data-rad-row]').forEach(item => { const open=item === row; if(open) setHudRowVisibility(item,false); item.classList.toggle('is-mobile-open',open); item.setAttribute('aria-expanded',String(open)); item.setAttribute('aria-label',`${open ? 'Hide' : 'Show'} ${item.dataset.radRowLabel.toLowerCase()} details`); }); }; toxicHud.querySelectorAll('[data-rad-row]').forEach(row=>setHudRowVisibility(row,hiddenRows.has(row.dataset.radRow))); toxicHud.addEventListener('click',event=>{const row=event.target.closest('[data-rad-row-toggle]'); if(!row)return; if(compactHud()){openHudList(row);return;} const hidden=!row.classList.contains('is-collapsed'); setHudRowVisibility(row,hidden); hidden ? hiddenRows.add(row.dataset.radRow) : hiddenRows.delete(row.dataset.radRow); localStorage.setItem(rowStorageKey,JSON.stringify([...hiddenRows]));});
   const toolIcons = {
     laser: '<svg class="rad-tool-icon" viewBox="0 0 64 64" aria-hidden="true"><path fill="#17231b" stroke="#eaffcf" stroke-width="3" d="m8 48 27-28 9 9-28 27H8Z"/><path fill="#a9ff24" stroke="#081006" stroke-width="2" d="m31 19 11-11 14 14-11 11Z"/><path fill="#39e8ff" d="m49 8 4-7 2 8 8 2-8 3-3 8-2-8-8-3Z"/><path fill="#fff" d="m11 43 5 5 15-16-5-5Z"/></svg>',
     spray: '<svg class="rad-tool-icon" viewBox="0 0 64 64" aria-hidden="true"><path fill="#b8ff35" stroke="#081006" stroke-width="3" d="M10 27h29l10 10v17H20V38H10Z"/><path fill="#efffd7" stroke="#081006" stroke-width="3" d="M24 27v-9h14l7 9Z"/><path fill="#ff4fb3" stroke="#081006" stroke-width="3" d="M25 37h12v20H25Z"/><circle cx="17" cy="18" r="4" fill="#ff4fb3"/><circle cx="7" cy="15" r="2.5" fill="#39e8ff"/><circle cx="8" cy="24" r="2" fill="#ffdf45"/></svg>',
@@ -302,7 +281,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050807); scene.fog = new THREE.Fog(0x050807, 36, performanceMode ? 95 : 180);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !performanceMode, alpha: false, powerPreference: performanceMode ? 'low-power' : 'high-performance' }); renderer.xr.enabled = webXrAvailable; let quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');
-  let webglContextAvailable = true;
   const camera = new THREE.PerspectiveCamera(68, 16 / 9, 0.05, 700); const playerRig = new THREE.Group(); playerRig.name = 'MUZIKAZ_PLAYER_RIG'; playerRig.add(camera); scene.add(playerRig);
   const hemi = new THREE.HemisphereLight(0xe6f7ff, 0x26321b, 1.75); scene.add(hemi); const fill = new THREE.DirectionalLight(0xbfe7ff, mobileQualityMode ? .55 : .8); fill.position.set(-10, 9, -12); scene.add(fill); const sun = new THREE.DirectionalLight(0xfff4dc, mobileQualityMode ? 1.75 : 2.45); sun.position.set(12, 18, 8); sun.castShadow = quality.shadows; sun.shadow.mapSize.set(quality.shadowSize, quality.shadowSize); sun.shadow.camera.near = .5; sun.shadow.camera.far = 120; sun.shadow.camera.left = -45; sun.shadow.camera.right = 45; sun.shadow.camera.top = 45; sun.shadow.camera.bottom = -45; scene.add(sun);
   // PMREM generation is an expensive GPU pass with no gameplay benefit on the
@@ -339,7 +317,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const TOXIC_FLOOR_GAS_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><defs><radialGradient id="toxic-floor" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#efff69" stop-opacity=".72"/><stop offset=".24" stop-color="#9cff24" stop-opacity=".5"/><stop offset=".48" stop-color="#d8e52e" stop-opacity=".3"/><stop offset=".69" stop-color="#f04736" stop-opacity=".24"/><stop offset="1" stop-color="#8d1723" stop-opacity="0"/></radialGradient></defs><circle cx="128" cy="128" r="122" fill="url(#toxic-floor)"/></svg>';
 
   class ToxicBubbleSystem {
-    constructor({ scene, camera, canvas, loader, getEnvironment, getPlayerPosition, advanceEnvironment }) { this.scene=scene; this.camera=camera; this.canvas=canvas; this.loader=loader; this.getEnvironment=getEnvironment; this.getPlayerPosition=getPlayerPosition; this.advanceEnvironment=advanceEnvironment; this.state=RAD_TOX_STATES.STANDBY; this.active=false; this.activationPromise=null; this.activationGeneration=0; this.environmentGeneration=0; this.totalPopped=0; this.score=0; this.shotStreak=0; this.enemyRepopulations=0; this.enemyRepopulationLimit=3; this.baseEnemyTarget=TOXIC_BUBBLE_CONFIG.initialCount; this.sheepCoins=Number(readStoredJson('muzikazSheepCoinWallet',0))||0; this.level=1; this.levelPopped=0; this.levelTarget=TOXIC_BUBBLE_CONFIG.initialCount; this.health=TOXIC_BUBBLE_CONFIG.maxHealth; this.ammo=TOXIC_BUBBLE_CONFIG.maxAmmo; this.sprayFuel=24; this.tool='laser'; this.sprayColorIndex=0; this.ownsBat=true; this.batPickup=null; this.batSwing=0; this.batSwingQueue=0; this.batHitIds=new Set(); this.batModel=this.createBatModel(); this.taserModel=this.createTaserModel(); this.toxinModel=this.createToxinModel(); this.dynamiteModel=this.createDynamiteMesh(); this.brickModel=this.createBrickMesh({held:true}); this.brickModel.name='MUZIKAZ_FIRST_PERSON_BRICK_LAYER'; this.brickModel.visible=false; this.bricks=[]; this.brickGroup=new THREE.Group(); this.brickGroup.name='MUZIKAZ_PLAYER_BRICKS'; this.brickPreview=this.createBrickPreview(); this.brickGroup.add(this.brickPreview); this.scene.add(this.brickGroup); this.lootBlocks=[]; this.lootBlockGroup=new THREE.Group(); this.lootBlockGroup.name='MUZIKAZ_ATTACHMENT_LOOT_BLOCKS'; this.scene.add(this.lootBlockGroup); this.dynamiteModel.name='MUZIKAZ_FIRST_PERSON_DYNAMITE'; this.dynamiteModel.visible=false; this.dynamiteModel.traverse(o=>{if(o.isMesh){o.material.depthTest=false;o.renderOrder=20;}}); this.taserCooldown=0; this.toxinCooldown=0; this.dynamiteCooldown=0; this.toxinGlobs=[]; this.dynamites=[]; this.explosions=[]; this.electricShocks=[]; this.decals=[]; this.backpackRewards=readStoredArray('muzikazRadToxBackpack'); this.roundStartedAt=0; this.bubbles=[]; this.ghostGas=[]; this.brainSpray=[]; this.brainBugsSpawned=0; this.shieldUntil=0; this.pickups=[]; this.floorGas=[]; this.particleBursts=[]; this.lasers=[]; this.audioContext=null; this.audioAvailable=true; this.pointer=new THREE.Vector2(); this.raycaster=new THREE.Raycaster(); this.surfaceRaycaster=new THREE.Raycaster(); this.group=new THREE.Group(); this.group.name='MUZIKAZ_TOXIC_BUBBLES'; this.pickupGroup=new THREE.Group(); this.pickupGroup.name='MUZIKAZ_RAD_TOX_PICKUPS'; this.floorGasGroup=new THREE.Group(); this.floorGasGroup.name='MUZIKAZ_TOXIC_FLOOR_GAS'; this.decalGroup=new THREE.Group(); this.decalGroup.name='MUZIKAZ_SPRAY_PAINT'; scene.add(this.floorGasGroup,this.group,this.pickupGroup,this.decalGroup); this.shieldShell=new THREE.Mesh(new THREE.SphereGeometry(.82,16,12),new THREE.MeshBasicMaterial({color:0xff42a7,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide})); this.shieldShell.visible=false; this.camera.add(this.shieldShell); this.camera.add(this.batModel,this.taserModel,this.toxinModel,this.dynamiteModel,this.brickModel); this.resources={}; this.motionReduced=reducedMotion; this.hoverTimer=0; this.hovered=null; this.lastGasSoundAt=0; this.lastPopAt=0; this.combo=0; this.endBoss=null; this.endBossDefeated=false; this.levelCompletionScheduled=false; this.syncBatTool(); this.updateHud('Ready to activate RAD-TOX.'); }
+    constructor({ scene, camera, canvas, loader, getEnvironment, getPlayerPosition, advanceEnvironment }) { this.scene=scene; this.camera=camera; this.canvas=canvas; this.loader=loader; this.getEnvironment=getEnvironment; this.getPlayerPosition=getPlayerPosition; this.advanceEnvironment=advanceEnvironment; this.state=RAD_TOX_STATES.STANDBY; this.active=false; this.activationPromise=null; this.environmentGeneration=0; this.totalPopped=0; this.score=0; this.shotStreak=0; this.enemyRepopulations=0; this.enemyRepopulationLimit=3; this.baseEnemyTarget=TOXIC_BUBBLE_CONFIG.initialCount; this.sheepCoins=Number(localStorage.getItem('muzikazSheepCoinWallet')||0); this.level=1; this.levelPopped=0; this.levelTarget=TOXIC_BUBBLE_CONFIG.initialCount; this.health=TOXIC_BUBBLE_CONFIG.maxHealth; this.ammo=TOXIC_BUBBLE_CONFIG.maxAmmo; this.sprayFuel=24; this.tool='laser'; this.sprayColorIndex=0; this.ownsBat=true; this.batPickup=null; this.batSwing=0; this.batSwingQueue=0; this.batHitIds=new Set(); this.batModel=this.createBatModel(); this.taserModel=this.createTaserModel(); this.toxinModel=this.createToxinModel(); this.dynamiteModel=this.createDynamiteMesh(); this.brickModel=this.createBrickMesh({held:true}); this.brickModel.name='MUZIKAZ_FIRST_PERSON_BRICK_LAYER'; this.brickModel.visible=false; this.bricks=[]; this.brickGroup=new THREE.Group(); this.brickGroup.name='MUZIKAZ_PLAYER_BRICKS'; this.brickPreview=this.createBrickPreview(); this.brickGroup.add(this.brickPreview); this.scene.add(this.brickGroup); this.lootBlocks=[]; this.lootBlockGroup=new THREE.Group(); this.lootBlockGroup.name='MUZIKAZ_ATTACHMENT_LOOT_BLOCKS'; this.scene.add(this.lootBlockGroup); this.dynamiteModel.name='MUZIKAZ_FIRST_PERSON_DYNAMITE'; this.dynamiteModel.visible=false; this.dynamiteModel.traverse(o=>{if(o.isMesh){o.material.depthTest=false;o.renderOrder=20;}}); this.taserCooldown=0; this.toxinCooldown=0; this.dynamiteCooldown=0; this.toxinGlobs=[]; this.dynamites=[]; this.explosions=[]; this.electricShocks=[]; this.decals=[]; this.backpackRewards=JSON.parse(localStorage.getItem('muzikazRadToxBackpack')||'[]'); this.roundStartedAt=0; this.bubbles=[]; this.ghostGas=[]; this.brainSpray=[]; this.brainBugsSpawned=0; this.shieldUntil=0; this.pickups=[]; this.floorGas=[]; this.particleBursts=[]; this.lasers=[]; this.audioContext=null; this.audioAvailable=true; this.pointer=new THREE.Vector2(); this.raycaster=new THREE.Raycaster(); this.surfaceRaycaster=new THREE.Raycaster(); this.group=new THREE.Group(); this.group.name='MUZIKAZ_TOXIC_BUBBLES'; this.pickupGroup=new THREE.Group(); this.pickupGroup.name='MUZIKAZ_RAD_TOX_PICKUPS'; this.floorGasGroup=new THREE.Group(); this.floorGasGroup.name='MUZIKAZ_TOXIC_FLOOR_GAS'; this.decalGroup=new THREE.Group(); this.decalGroup.name='MUZIKAZ_SPRAY_PAINT'; scene.add(this.floorGasGroup,this.group,this.pickupGroup,this.decalGroup); this.shieldShell=new THREE.Mesh(new THREE.SphereGeometry(.82,16,12),new THREE.MeshBasicMaterial({color:0xff42a7,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide})); this.shieldShell.visible=false; this.camera.add(this.shieldShell); this.camera.add(this.batModel,this.taserModel,this.toxinModel,this.dynamiteModel,this.brickModel); this.resources={}; this.motionReduced=reducedMotion; this.hoverTimer=0; this.hovered=null; this.lastGasSoundAt=0; this.lastPopAt=0; this.combo=0; this.endBoss=null; this.endBossDefeated=false; this.levelCompletionScheduled=false; this.syncBatTool(); this.updateHud('Ready to activate RAD-TOX.'); }
     syncBatTool(){const button=sprayTools.querySelector('[data-rad-tool=bat]');if(button){button.disabled=false;button.title='Baseball bat ready — swing at close targets.';}}
     createBatMesh(){const bat=new THREE.Group(),wood=new THREE.MeshStandardMaterial({color:0xb66a2d,roughness:.38,metalness:.02}),grip=new THREE.MeshStandardMaterial({color:0x1b120e,roughness:.76}),cap=new THREE.MeshStandardMaterial({color:0xd6a35b,roughness:.32});const profile=[[0,-1.02],[.105,-.98],[.075,-.88],[.062,-.5],[.07,-.1],[.12,.14],[.16,.5],[.17,.87],[.145,1.05],[.055,1.11]].map(([x,y])=>new THREE.Vector2(x,y));const body=new THREE.Mesh(new THREE.LatheGeometry(profile,24),wood),tape=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,.36,16),grip),knob=new THREE.Mesh(new THREE.SphereGeometry(.11,16,10),cap);tape.position.y=-.73;knob.position.y=-1.01;for(const y of [.18,.52,.83]){const ring=new THREE.Mesh(new THREE.TorusGeometry(.14,.008,6,20),cap);ring.rotation.x=Math.PI/2;ring.position.y=y;bat.add(ring);}bat.add(body,tape,knob);bat.rotation.z=-.22;return bat;}
     createBatModel(){const model=this.createBatMesh();model.name='MUZIKAZ_FIRST_PERSON_BASEBALL_BAT';model.visible=false;model.renderOrder=20;model.traverse(o=>{if(o.isMesh){o.material.depthTest=false;o.renderOrder=20;}});return model;}
@@ -378,8 +356,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     rapidPopSound(){const c=this.audioContext;if(!c||c.state!=='running')return;const now=c.currentTime,combo=Math.min(this.combo,8);for(const [offset,frequency] of [[0,340+combo*34],[.045,520+combo*42]]){const o=c.createOscillator(),g=c.createGain();o.type='square';o.frequency.setValueAtTime(frequency,now+offset);o.frequency.exponentialRampToValueAtTime(frequency*1.65,now+offset+.07);g.gain.setValueAtTime(.0001,now+offset);g.gain.exponentialRampToValueAtTime(.045,now+offset+.008);g.gain.exponentialRampToValueAtTime(.0001,now+offset+.09);o.connect(g).connect(c.destination);o.start(now+offset);o.stop(now+offset+.1);}}
     gasSound(volume=.022){const c=this.audioContext;if(!c||c.state!=='running'||c.currentTime-this.lastGasSoundAt<.09)return;this.lastGasSoundAt=c.currentTime;const buffer=c.createBuffer(1,Math.floor(c.sampleRate*.18),c.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*(1-i/data.length);const source=c.createBufferSource(),filter=c.createBiquadFilter(),gain=c.createGain();filter.type='bandpass';filter.frequency.value=420+Math.random()*340;filter.Q.value=.65;gain.gain.setValueAtTime(.0001,c.currentTime);gain.gain.exponentialRampToValueAtTime(volume,c.currentTime+.025);gain.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.2);source.buffer=buffer;source.connect(filter).connect(gain).connect(c.destination);source.start();}
     begin(){if([RAD_TOX_STATES.ACTIVE,RAD_TOX_STATES.CLEARED].includes(this.state))return this.resetRun();return this.activate();}
-    async activate(){if(this.activationPromise)return this.activationPromise;const generation=++this.activationGeneration;this.activationPromise=(async()=>{this.initAudio();this.active=true;this.setState(RAD_TOX_STATES.LOADING,'Waiting for the active GLB and collision meshes…');try{if(!this.loader.world)await openHouseMap();if(!this.validEnvironment())throw new Error('The selected environment has no valid walkable geometry.');await this.ensureResources();if(generation!==this.activationGeneration)throw new Error('RAD-TOX startup was cancelled.');this.totalPopped=0;this.score=0;this.shotStreak=0;this.enemyRepopulations=0;this.brainBugsSpawned=0;this.baseEnemyTarget=TOXIC_BUBBLE_CONFIG.initialCount;this.roundStartedAt=Date.now();this.setState(RAD_TOX_STATES.ACTIVE,'Toxic bubbles, blue ghosts, and ground-crawling snakes are active in every level.');this.spawnInitial();this.spawnFloorGas();this.updateHud();this.tone(620,.12,'triangle');}catch(e){console.error('[RAD-TOX]',e);if(generation===this.activationGeneration)this.setState(RAD_TOX_STATES.ERROR,e.message||'RAD-TOX could not start.');throw e;}finally{if(generation===this.activationGeneration)this.activationPromise=null;}})();return this.activationPromise;}
-    cancelActivation(){this.activationGeneration++;this.activationPromise=null;this.active=false;}
+    async activate(){if(this.activationPromise)return this.activationPromise;this.activationPromise=(async()=>{this.initAudio();this.active=true;this.setState(RAD_TOX_STATES.LOADING,'Waiting for the active GLB and collision meshes…');try{if(!this.loader.world)await openHouseMap();if(!this.validEnvironment())throw new Error('The selected environment has no valid walkable geometry.');await this.ensureResources();this.totalPopped=0;this.score=0;this.shotStreak=0;this.enemyRepopulations=0;this.brainBugsSpawned=0;this.baseEnemyTarget=TOXIC_BUBBLE_CONFIG.initialCount;this.roundStartedAt=Date.now();this.setState(RAD_TOX_STATES.ACTIVE,'Toxic bubbles, blue ghosts, and ground-crawling snakes are active in every level.');this.spawnInitial();this.spawnFloorGas();this.updateHud();this.tone(620,.12,'triangle');}catch(e){console.error('[RAD-TOX]',e);this.setState(RAD_TOX_STATES.ERROR,e.message||'RAD-TOX could not start.');throw e;}finally{this.activationPromise=null;}})();return this.activationPromise;}
     handleEnvironmentWillChange(){this.clearBricks();this.environmentGeneration++;this.levelCompletionScheduled=false;this.endBoss?.dispose();this.endBoss=null;this.clearBubbles();this.clearGhostGas();this.clearBrainSpray();this.clearPickups();this.clearFloorGas();this.clearParticles();if(this.active)this.setState(RAD_TOX_STATES.LOADING,'Changing environment; removing previous RAD-TOX targets…');}
     async handleEnvironmentReady(){if(!this.active)return;await this.ensureResources();this.baseEnemyTarget=this.level === 2 ? TOXIC_BUBBLE_CONFIG.levelTwoGhostCount : Math.min(TOXIC_BUBBLE_CONFIG.maxLevelBubbles,TOXIC_BUBBLE_CONFIG.initialCount+(this.level-1)*TOXIC_BUBBLE_CONFIG.levelGrowth);this.levelTarget=this.baseEnemyTarget;this.enemyRepopulations=0;this.brainBugsSpawned=0;stage.classList.toggle('is-ghost-level',true);this.setState(RAD_TOX_STATES.ACTIVE,`Environment ready — level ${this.level} toxic bubbles, blue ghosts, and snakes deployed.`);this.spawnInitial();this.spawnBatPickup();this.spawnFloorGas();}
     handleSpaceScaleChanged(){if(this.state!==RAD_TOX_STATES.ACTIVE)return;this.spawnInitial();this.spawnBatPickup();this.spawnFloorGas();}
@@ -422,23 +399,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     clearDecals(){this.decals.forEach(d=>{d.geometry.dispose();d.material.map?.dispose();d.material.dispose();this.decalGroup.remove(d);});this.decals=[];}clearPickups(){this.pickups.forEach(p=>{p.traverse?.(o=>{o.geometry?.dispose?.();o.material?.dispose?.();});p.material?.dispose?.();this.pickupGroup.remove(p);});this.batPickup=null;this.pickups=[];}clearBubbles(){this.bubbles.forEach(b=>{this.disposeBubble(b);this.group.remove(b);});this.bubbles=[];this.hovered=null;this.updateHud();}clearFloorGas(){this.floorGas.forEach(cluster=>{cluster.children.forEach(puff=>puff.material.dispose());this.floorGasGroup.remove(cluster);});this.floorGas=[];}clearParticles(){this.particleBursts.forEach(b=>{b.children?.forEach(s=>s.material.dispose());b.material?.dispose?.();this.scene.remove(b);});this.particleBursts=[];}clearLasers(){this.lasers.forEach(laser=>{laser.geometry.dispose();laser.material.dispose();this.scene.remove(laser);});this.lasers=[];}resetRun(){this.totalPopped=0;this.score=0;this.shotStreak=0;this.enemyRepopulations=0;this.brainBugsSpawned=0;this.baseEnemyTarget=TOXIC_BUBBLE_CONFIG.initialCount;this.level=1;this.endBoss?.dispose();this.endBoss=null;this.endBossDefeated=false;this.levelCompletionScheduled=false;stage.classList.remove('is-ghost-level');this.levelTarget=TOXIC_BUBBLE_CONFIG.initialCount;this.health=TOXIC_BUBBLE_CONFIG.maxHealth;this.ammo=TOXIC_BUBBLE_CONFIG.maxAmmo;this.sprayFuel=24;this.clearPickups();if(this.validEnvironment()){this.roundStartedAt=Date.now();this.setState(RAD_TOX_STATES.ACTIVE,'RAD-TOX round reset.');this.spawnInitial();this.spawnBatPickup();this.spawnFloorGas();}else this.setState(RAD_TOX_STATES.STANDBY,'Load an environment before starting RAD-TOX.');}dispose(){this.endBoss?.dispose();this.endBoss=null;this.clearBubbles();this.clearGhostGas();this.clearBrainSpray();this.clearPickups();this.clearFloorGas();this.clearParticles();this.clearLasers();this.clearElectricShocks();this.clearDecals();this.toxinGlobs.forEach(g=>{g.geometry.dispose();g.material.dispose();this.scene.remove(g);});this.toxinGlobs=[];this.dynamites.forEach(d=>{d.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});this.scene.remove(d);});this.dynamites=[];this.explosions.forEach(e=>{e.material.dispose();this.scene.remove(e);});this.explosions=[];this.clearBricks();this.clearLootBlocks();this.camera.remove(this.batModel,this.taserModel,this.toxinModel,this.dynamiteModel,this.brickModel);this.scene.remove(this.floorGasGroup,this.group,this.pickupGroup,this.decalGroup,this.brickGroup,this.lootBlockGroup);Object.values(this.resources).forEach(r=>r?.dispose?.());this.audioContext?.close?.().catch(()=>{});}}
 
 
-  let stageIntersecting = true; let pageVisible = !document.hidden; let viewActive = pageVisible; let lastFrameTime = 0; const targetFrameMs = performanceMode || reducedMotion ? 1000 / 30 : 0;
-  const syncRenderActivity = () => { viewActive = pageVisible && stageIntersecting; if (viewActive) clock.getDelta(); };
-  // Mobile browsers may temporarily reclaim the GPU while a GLB is decoded.
-  // Keep the current game state and allow Three.js to restore its resources;
-  // reloading here would put the player back at the start of the game.
-  canvas.addEventListener('webglcontextlost', (event) => {
-    event.preventDefault();
-    webglContextAvailable = false;
-    setStatus('Graphics paused while your device recovers memory. Your game is still here.');
-  });
-  canvas.addEventListener('webglcontextrestored', () => {
-    webglContextAvailable = true;
-    quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');
-    scheduleGameResize();
-    clock.getDelta();
-    setStatus(activeEnvironment ? `Back in ${activeEnvironment.name}. Game progress restored.` : 'Graphics restored. Ready to play.');
-  });
+  let viewActive = true; let lastFrameTime = 0; const targetFrameMs = performanceMode || reducedMotion ? 1000 / 30 : 0;
   let playerCollider = new Capsule(new THREE.Vector3(0, player.radius, 2), new THREE.Vector3(0, player.height, 2), player.radius); let dragPointer = null; let avatarDrag = null; let avatarPinch = null; const activeTouchPointers = new Map(); let turnReady = true; let activeEnvironment = null;
   // Every environment uses the same last-known-good floor lock.  This is kept
   // outside map metadata so repository GLBs, uploaded spaces, Builder lands
@@ -467,7 +428,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function updateLandingFrame(spawn) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); landingFrame.clear(); const ring = new THREE.Mesh(new THREE.RingGeometry(.52, .72, 48), new THREE.MeshBasicMaterial({ color: 0x9cff00, side: THREE.DoubleSide, transparent: true, opacity: .88 })); ring.rotation.x = -Math.PI / 2; ring.position.set(alignedSpawn.x, alignedSpawn.y + .018, alignedSpawn.z); const grid = new THREE.GridHelper(1.55, 4, 0x9cff00, 0x477400); grid.position.set(alignedSpawn.x, alignedSpawn.y + .022, alignedSpawn.z); grid.material.transparent = true; grid.material.opacity = .62; landingFrame.add(ring, grid); }
   function resetPlayer(spawn = player.spawn, rotationY = player.yaw) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); player.spawn.copy(alignedSpawn); lastSafePlayerPosition.copy(alignedSpawn); hasSafePlayerPosition = true; floorLockCooldown = .35; player.velocity.set(0,0,0); player.yaw = rotationY || 0; player.pitch = 0; player.eyeHeight = player.height; player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.radius, alignedSpawn.z), new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.height, alignedSpawn.z), player.radius); playerRig.position.copy(alignedSpawn); playerRig.rotation.set(0, player.yaw, 0); camera.position.set(0, renderer.xr.isPresenting ? 0 : player.eyeHeight, 0); camera.rotation.set(0,0,0); updateLandingFrame(alignedSpawn); }
   async function loadNextEnvironment() { const worlds = registry.all(); if (!worlds.length) return; const scriptedWorld = registry.find(LEVEL_WORLD_IDS[toxicBubbleSystem.level]); const currentIndex = Math.max(0, worlds.findIndex((world) => world.id === activeEnvironment?.id)); const next = scriptedWorld || worlds[(currentIndex + 1) % worlds.length]; setStatus(`Environment clear — traveling to ${next.name}.`); await loadById(next.id); }
-  async function loadById(id, { fallback = true } = {}) { const env = registry.find(id) || registry.all()[0]; if (!env) throw new Error('No playable environment is available. Check the connection and try again.'); window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), roomId:env.id }; writeStoredValue('muzikazMultiplayerWorld', env.id); const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); activeEnvironment = env; loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete ${env.builderScene||env.proceduralLand?'builder land':'GLB world'}…`); try { const result = await settleWithin(envLoader.load(env), 30000, `${env.name} world load`); if (!result) throw new Error(`${env.name} was replaced before it finished loading.`); const builderRuntime=loadBuilderDecor(env); currentSpaceScale = result.scale; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; const spawn=builderRuntime?.worldSpawn||result.spawn;resetPlayer(spawn.position,spawn.rotationY||0); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. ${builderRuntime?`${builderRuntime.objectCount} builder objects and ${builderRuntime.actorCount} gameplay actors deployed. `:''}Press Start game or click the canvas to walk.`); const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source, builderRuntime }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); return result; } catch (error) { envLoader.cancelPendingLoad(); console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); return loadById(fallbackEnv.id, { fallback: false }); } if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); throw error; } }
+  async function loadById(id, { fallback = true } = {}) { const env = registry.find(id) || registry.all()[0]; if (!env) return; window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), roomId:env.id }; localStorage.setItem('muzikazMultiplayerWorld', env.id); const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); activeEnvironment = env; loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete ${env.builderScene||env.proceduralLand?'builder land':'GLB world'}…`); try { const result = await envLoader.load(env); if (!result) return; const builderRuntime=loadBuilderDecor(env); currentSpaceScale = result.scale; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; const spawn=builderRuntime?.worldSpawn||result.spawn;resetPlayer(spawn.position,spawn.rotationY||0); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. ${builderRuntime?`${builderRuntime.objectCount} builder objects and ${builderRuntime.actorCount} gameplay actors deployed. `:''}Press Start game or click the canvas to walk.`); const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source, builderRuntime }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); await loadById(fallbackEnv.id, { fallback: false }); return; } if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); } }
   let cachedAvatars = [];
   let cachedCatalogModels = [];
   let backpackAssets = [];
@@ -890,14 +851,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     root.rotation.y += yawDelta * Math.min(1, delta * 10);
   }
   function syncLiveAvatars(data = {}) { const allUsers=Array.isArray(data.users)?data.users:[];const presenceChanged=JSON.stringify(allUsers.map(user=>[user.sessionId,user.roomId]).sort())!==JSON.stringify(multiplayerPresence.map(user=>[user.sessionId,user.roomId]).sort());multiplayerPresence=allUsers;if(presenceChanged&&!library.classList.contains('is-collapsed')&&!library.classList.contains('backpack-panel'))renderMultiplayerWorlds();const roomId = activeEnvironment?.id || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox'; const users = allUsers.filter((user) => (user.roomId || 'rad-tox') === roomId); const active = new Set(users.map((user) => user.sessionId)); liveAvatarRoots.forEach((root, id) => { if (!active.has(id)) { disposeLiveRoot(root); liveAvatarRoots.delete(id); } }); users.forEach(updateLiveAvatar); const count = document.querySelector('#crib-online-count'); if (count) count.textContent = `${users.length} / ${data.capacity || 15}`; }
-  let livePollInFlight = false;
-  async function pollLiveAvatars() { if(localSandbox || livePollInFlight || document.hidden)return; const designated = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null'); const memberEmail = localStorage.getItem('muzikazBottleMemberEmail') || ''; const sessionId = localStorage.getItem('muzikazHouseSessionId'); if (!designated || !memberEmail || !sessionId) return; livePollInFlight = true; try { const tracking = window.MUZIKAZ_HOUSE_TRACKING || {}; const position = { x: playerRig.position.x, y: playerRig.position.y, z: playerRig.position.z }; window.MUZIKAZ_HOUSE_TRACKING = { ...tracking, position, rotation: { y: player.yaw }, roomId: activeEnvironment?.id || 'rad-tox' }; const path = '/api/houses/ioncore-house/presence'; const options = { method:'POST', cache:'no-store', headers:{ 'Content-Type':'application/json', 'X-MUZIKAZ-Session':sessionId, 'X-User-Id':memberEmail.toLowerCase(), 'X-User-Name':memberEmail.split('@')[0] }, body:JSON.stringify({ ...window.MUZIKAZ_HOUSE_TRACKING, username:memberEmail.split('@')[0], avatarUrl:designated.modelUrl, modelUrl:designated.modelUrl, avatarName:designated.displayName || 'Player avatar', animationState:designated.animation || 'auto' }) }; const response = window.MUZIKAZ_API ? await window.MUZIKAZ_API.fetch(path, options) : await fetch(`${window.MUZIKAZ_SHARED_AVATAR_API || ''}${path}`, options); if (!response.ok) return; const result = await response.json(); const data=result?.data ?? result; syncLiveAvatars(data); window.dispatchEvent(new CustomEvent('muzikaz:presence-synced',{detail:data})); } finally { livePollInFlight=false; } }
+  async function pollLiveAvatars() { if(localSandbox)return; const designated = window.MUZIKAZ_DESIGNATED_AVATAR || JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null'); const memberEmail = localStorage.getItem('muzikazBottleMemberEmail') || ''; const sessionId = localStorage.getItem('muzikazHouseSessionId'); if (!designated || !memberEmail || !sessionId) return; const tracking = window.MUZIKAZ_HOUSE_TRACKING || {}; const position = { x: playerRig.position.x, y: playerRig.position.y, z: playerRig.position.z }; window.MUZIKAZ_HOUSE_TRACKING = { ...tracking, position, rotation: { y: player.yaw }, roomId: activeEnvironment?.id || 'rad-tox' }; const path = '/api/houses/ioncore-house/presence'; const options = { method:'POST', cache:'no-store', headers:{ 'Content-Type':'application/json', 'X-MUZIKAZ-Session':sessionId, 'X-User-Id':memberEmail.toLowerCase(), 'X-User-Name':memberEmail.split('@')[0] }, body:JSON.stringify({ ...window.MUZIKAZ_HOUSE_TRACKING, username:memberEmail.split('@')[0], avatarUrl:designated.modelUrl, modelUrl:designated.modelUrl, avatarName:designated.displayName || 'Player avatar', animationState:designated.animation || 'auto' }) }; const response = window.MUZIKAZ_API ? await window.MUZIKAZ_API.fetch(path, options) : await fetch(`${window.MUZIKAZ_SHARED_AVATAR_API || ''}${path}`, options); if (!response.ok) return; const result = await response.json(); syncLiveAvatars(result?.data ?? result); }
   window.addEventListener('muzikaz-house-chat', (event) => { const root = liveAvatarRoots.get(event.detail?.sessionId); if (root) { const position = root.userData.targetPosition.clone(); position.y -= root.userData.floorOffset; updateLiveAvatar({ sessionId:event.detail.sessionId, username:event.detail.username, message:event.detail.message, position }); } });
   window.addEventListener('muzikaz-avatar-ready', () => pollLiveAvatars().catch(() => {}));
-  let livePollTimer = 0; let livePollingStopped = false;
-  const scheduleLivePoll = (delay=3000) => { window.clearTimeout(livePollTimer); if (!livePollingStopped) livePollTimer=window.setTimeout(async()=>{ await pollLiveAvatars().catch(()=>{}); scheduleLivePoll(document.hidden?12000:3000); },delay); };
-  scheduleLivePoll();
-  window.addEventListener('pagehide', () => { livePollingStopped=true; window.clearTimeout(livePollTimer); liveAvatarRoots.forEach(disposeLiveRoot); liveAvatarRoots.clear(); });
+  const livePollTimer = window.setInterval(() => pollLiveAvatars().catch(() => {}), 3000);
+  window.addEventListener('pagehide', () => { window.clearInterval(livePollTimer); liveAvatarRoots.forEach(disposeLiveRoot); liveAvatarRoots.clear(); });
   function renderAvatarLibrary(avatars) { cachedAvatars = avatars; renderPicker(); }
   async function refreshAvatarLibrary() { const avatars = await fetchActiveAvatarModels(); window.MuzikazActiveHouseAvatars = avatars; renderAvatarLibrary(avatars); return avatars; }
   async function checkForHouseUpdates({ startup = false } = {}) {
@@ -1004,7 +962,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   document.addEventListener('mousemove', (e) => { if (document.pointerLockElement !== canvas) return; player.yaw -= e.movementX * .0025; player.pitch = THREE.MathUtils.clamp(player.pitch - e.movementY * .002, -1.25, 1.15); });
   scaleControl.querySelector('input').addEventListener('input', (e) => applySpaceScale(e.target.value)); scaleControl.querySelectorAll('[data-space-scale]').forEach((button) => button.addEventListener('click', () => applySpaceScale(currentSpaceScale + (button.dataset.spaceScale === 'up' ? .1 : -.1)))); viewControls.querySelectorAll('[data-zoom]').forEach((button) => button.addEventListener('click', () => applyZoom(button.dataset.zoom === 'in' ? -1 : 1))); syncZoomControls();
-  environmentSelect?.addEventListener('change', (event) => { if (event.target.value) safelyInteract('World interaction',()=>loadById(event.target.value)); });
+  environmentSelect?.addEventListener('change', (event) => { if (event.target.value) loadById(event.target.value); });
   environmentListToggle?.addEventListener('click',()=>{const open=environmentList.hidden;environmentList.hidden=!open;environmentListToggle.setAttribute('aria-expanded',String(open));environmentListToggle.textContent=open?'Close maps':'Browse maps';if(open)environmentList.querySelector('[aria-selected="true"]')?.scrollIntoView({block:'center'});});
   environmentList?.addEventListener('click',(event)=>{const button=event.target instanceof Element?event.target.closest('[data-environment-id]'):null;if(!button)return;environmentSelect.value=button.dataset.environmentId;environmentList.hidden=true;environmentListToggle?.setAttribute('aria-expanded','false');if(environmentListToggle)environmentListToggle.textContent='Browse maps';safelyInteract('World interaction',()=>loadById(button.dataset.environmentId));});
   canvas.addEventListener('dragover', (e) => { if (!activeAvatar && !e.dataTransfer?.types?.includes('application/x-muzikaz-avatar')) return; e.preventDefault(); stage.classList.add('is-avatar-drop-target'); }); canvas.addEventListener('dragleave', () => stage.classList.remove('is-avatar-drop-target')); canvas.addEventListener('drop', async (e) => { e.preventDefault(); stage.classList.remove('is-avatar-drop-target'); const avatars = window.MuzikazActiveHouseAvatars || []; const avatar = avatars.find(a => a.id === e.dataTransfer.getData('application/x-muzikaz-avatar')) || activeAvatar; if (avatar) addAvatarToScene(avatar, setAvatarPointerFromEvent(e)).catch(error => setStatus(error.message || `Unable to add ${avatar.name}.`)); });
@@ -1090,7 +1048,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       e.preventDefault();
       if (button.dataset.mobileAction === 'library') { library.classList.toggle('is-collapsed'); const firstControl = library.querySelector('select, button'); firstControl?.focus(); setStatus(library.classList.contains('is-collapsed') ? 'Avatar and environment list hidden.' : 'Avatar and environment list open.'); }
       if (button.dataset.mobileAction === 'fullscreen') setFullscreen();
-      if (button.dataset.mobileAction === 'begin-reset') { resetPlayer(); safelyInteract('RAD-TOX interaction',()=>toxicBubbleSystem.begin()); setStatus('RAD-TOX begin or reset requested.'); }
+      if (button.dataset.mobileAction === 'begin-reset') { resetPlayer(); toxicBubbleSystem.begin(); setStatus('RAD-TOX begin or reset requested.'); }
     });
   });
   async function setupVRControls() {
@@ -1134,7 +1092,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     renderer.xr.addEventListener('sessionend', () => { camera.position.set(0, player.eyeHeight, 0); quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto'); setStatus(activeEnvironment ? `Ready: ${activeEnvironment.name}. WebXR session ended.` : 'WebXR session ended.'); });
   }
   setupVRControls().catch((error) => console.warn('[MUZIKAZ VR]', error));
-  const visibilityObserver = window.IntersectionObserver ? new IntersectionObserver(([entry]) => { stageIntersecting = Boolean(entry?.isIntersecting); syncRenderActivity(); }, { threshold: 0.05 }) : null; visibilityObserver?.observe(stage); document.addEventListener('visibilitychange', () => { pageVisible = !document.hidden; syncRenderActivity(); if(pageVisible)scheduleLivePoll(0); });
+  const visibilityObserver = window.IntersectionObserver ? new IntersectionObserver(([entry]) => { viewActive = Boolean(entry?.isIntersecting); }, { threshold: 0.05 }) : null; visibilityObserver?.observe(stage); document.addEventListener('visibilitychange', () => { viewActive = !document.hidden; });
   function resize() {
     const width = Math.max(1, Math.floor(stage.clientWidth || stage.offsetWidth || document.documentElement.clientWidth || window.innerWidth || 320));
     const height = Math.max(1, Math.floor(stage.clientHeight || stage.offsetHeight || document.documentElement.clientHeight || window.innerHeight || 480));
@@ -1143,11 +1101,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
   }
-  let resizeTimer = 0; let resizeFrame = 0;
+  let resizeTimer = 0;
   function scheduleGameResize() {
     window.clearTimeout(resizeTimer);
-    if (!resizeFrame) resizeFrame=window.requestAnimationFrame(()=>{ resizeFrame=0; resize(); });
+    resize();
     resizeTimer = window.setTimeout(resize, 120);
+    window.setTimeout(resize, 360);
   }
   if (window.ResizeObserver) new ResizeObserver(scheduleGameResize).observe(stage);
   window.addEventListener('resize', scheduleGameResize);
@@ -1156,7 +1115,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.addEventListener('muzikaz:rad-tox-stage', scheduleGameResize);
   scheduleGameResize();
   renderer.setAnimationLoop((time = 0) => {
-    if ((!viewActive || !webglContextAvailable) && !renderer.xr.isPresenting) { clock.getDelta(); return; }
+    if (!viewActive && !renderer.xr.isPresenting) { clock.getDelta(); return; }
     if (targetFrameMs && !renderer.xr.isPresenting && time - lastFrameTime < targetFrameMs) return;
     lastFrameTime = time;
     const delta = Math.min(.05, clock.getDelta());
@@ -1177,9 +1136,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // include a remote GitHub lookup); refresh that optional picker in the
   // background instead.
   setStatus('Finding the fastest available house world…');
-  const startupCatalogPromise = refreshLibrary();
   try {
-    await settleWithin(startupCatalogPromise, 5000, 'Startup catalog refresh');
+    await settleWithin(refreshLibrary(), 5000, 'Startup catalog refresh');
   } catch (error) {
     console.warn('[MUZIKAZ Environment]', 'Map refresh failed', error);
   }
@@ -1188,19 +1146,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     console.warn('[MUZIKAZ Environment]', 'Avatar refresh failed', error);
   });
   const params = new URLSearchParams(location.search);
-  const requestedEnvironmentId = params.get('house') || params.get('environment');
-  const resolveStartEnvironment = () => registry.find(requestedEnvironmentId)?.id || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
+  const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
+  const startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
   let houseMapPromise = null;
   async function openHouseMap() {
     canvas.focus({ preventScroll: true });
-    // A slow API/GitHub catalog refresh may outlive the bounded engine bootstrap.
-    // Resolve the destination at interaction time, just like the Maps menu does,
-    // rather than permanently capturing an empty registry and starting no world.
-    if (!envLoader.world && !resolveStartEnvironment()) {
-      setStatus('Finishing the Vibe Crib map list…');
-      await settleWithin(startupCatalogPromise, 5000, 'Map catalog refresh');
-    }
-    const startEnvironment = resolveStartEnvironment();
     if (!envLoader.world && startEnvironment) {
       setStatus('Opening and loading the MUZIKAZ house environment…');
       houseMapPromise ||= loadById(startEnvironment).finally(() => { houseMapPromise = null; });
@@ -1210,7 +1160,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     walkButton.setAttribute('aria-pressed', 'true');
   }
   let gameInitializationPromise = null;
-  const afterNextPaint = () => new Promise((resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
   function startRadToxGame() {
     if (gameInitializationPromise) return gameInitializationPromise;
     if (gameStartButton) gameStartButton.disabled = true;
@@ -1220,26 +1169,19 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
     gameInitializationPromise = (async () => {
       try {
-        stage.scrollIntoView({ behavior: mobileQualityMode || reducedMotion ? 'auto' : 'smooth', block: 'start' });
-        // Make the dark loading UI visible before GLB parsing performs its
-        // unavoidable synchronous work on the browser's main thread.
-        await afterNextPaint();
+        stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
         // The map, player spawn, controls, and core game systems share this one
         // initialization promise so no listener can start a second deployment.
         await openHouseMap();
-        await settleWithin(toxicBubbleSystem.begin(), 15000, 'RAD-TOX encounter startup');
-        gameStartScreen?.classList.remove('is-loading', 'has-error');
+        await toxicBubbleSystem.begin();
         gameStartScreen?.classList.add('is-hidden');
         scheduleGameResize();
         setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
         publishGameStage('game-active', 'Game ready.');
         document.dispatchEvent(new CustomEvent('muzikaz:gameplay-ready'));
       } catch (error) {
-        toxicBubbleSystem.cancelActivation();
         const message = error?.message || 'Unable to load the MUZIKAZ house game.';
         gameStartScreen?.classList.remove('is-loading');
-        gameStartScreen?.classList.add('has-error');
-        if (gameStartButton) gameStartButton.disabled = false;
         if (gameLoadStatus) gameLoadStatus.textContent = message;
         setStatus(message);
         document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { stage: 'RAD-TOX', message } }));
@@ -1255,10 +1197,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.addEventListener('muzikaz:rad-tox-request', startRadToxGame);
   publishGameStage('engine-ready', 'RAD-TOX game engine ready. Starting the first level…');
   document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-engine-ready'));
-  // The launcher already dispatched the one start request that loaded this
-  // module. Calling start again for autoplay links can reset an active round
-  // when browsers resume the page from their back/forward cache.
-  if (params.get('autoplay') === '1' && !gameInitializationPromise) startRadToxGame();
+  if (params.get('autoplay') === '1') startRadToxGame();
   // The launcher deliberately loads this module only after the player chooses
   // Begin. Never auto-load a large GLB world at page start: decoding it on a
   // mobile main thread can freeze scrolling and make the browser kill the tab.
@@ -1278,12 +1217,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     event.preventDefault();
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to enter the MUZIKAZ map.'));
   });
-  if (resolveStartEnvironment() && !mobileQualityMode) {
+  if (startEnvironment && !mobileQualityMode) {
     // Do not decode a large GLB while the visitor is browsing the page. On
     // desktop that competes with first paint and can look like a frozen game.
     // The Begin button now owns loading and always starts from the player spawn.
     setStatus('Desktop game ready. Select Begin RAD-TOX to start at the house entrance.');
-  } else if (resolveStartEnvironment()) {
+  } else if (startEnvironment) {
     setStatus('Mobile game is ready. Tap Start RAD-TOX to deploy immediately.');
     // Keep decoding on the player's Begin action. Background GLB decoding can
     // monopolize memory on mobile browsers before the visitor is ready to play.

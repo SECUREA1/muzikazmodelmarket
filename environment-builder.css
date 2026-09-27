@@ -116,13 +116,3 @@
   .scene-name input,.map-toolbar select{min-height:44px;font-size:16px}
   .library-item{min-height:144px}
 }
-
-/* Builder pages keep customization out of the player experience and make both
-   desktop and mobile workflows directly testable from the creator workspace. */
-.builder-page-switch{display:flex;align-items:stretch;gap:8px;padding:10px 14px;border-bottom:1px solid #263b2f;background:#07100b}
-.builder-page-switch>button{display:flex;align-items:center;gap:10px;padding:9px 14px;border:1px solid #34533e;border-radius:8px;background:#0d1711;color:#fff;text-align:left;cursor:pointer}
-.builder-page-switch>button>b{color:#63eaff}.builder-page-switch>button span{display:grid;font-size:10px;font-weight:900;letter-spacing:.08em}.builder-page-switch>button small{color:#829589;font-size:7px;letter-spacing:.04em}
-.builder-page-switch>button.active{border-color:var(--acid);background:#18271b}.builder-page-switch>button.active>b{color:var(--acid)}
-.builder-device-tests{display:flex;gap:5px;margin-left:auto;align-items:center}.builder-device-tests button{padding:8px 10px;border:1px solid #34533e;border-radius:6px;background:#0a120d;color:#829589;font-size:8px;font-weight:900;cursor:pointer}.builder-device-tests button.active{border-color:var(--cyan);color:var(--cyan)}
-body.preview-mobile .environment-workspace{width:min(430px,100%);margin-inline:auto;border-inline:1px solid #34533e;box-shadow:0 0 50px #000}body.preview-mobile .environment-workspace{grid-template-columns:1fr}body.preview-mobile .object-library,body.preview-mobile .object-inspector{position:relative;inset:auto;width:auto;max-height:none}
-@media(max-width:680px){.builder-page-switch{position:sticky;top:0;z-index:30;display:grid;grid-template-columns:1fr 1fr;padding:7px}.builder-page-switch>button{padding:8px}.builder-page-switch>button small{display:none}.builder-device-tests{grid-column:1/-1;margin:0}.builder-device-tests button{flex:1}.environment-actions #play-scene{display:block}}

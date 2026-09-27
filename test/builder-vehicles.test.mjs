@@ -72,8 +72,6 @@ test('interaction failures stay isolated from the WebGL render loop', async () =
   assert.match(game, /reportInteractionError\('Nearby interaction',error\)/);
   assert.match(game, /safelyInteract\('Vehicle interaction'/);
   assert.match(game, /safelyInteract\('World interaction'/);
-  assert.match(game, /safelyInteract\('RAD-TOX interaction'/);
-  assert.doesNotMatch(game, /environmentSelect\?\.addEventListener\('change',[^\n]+\) loadById\(/);
   assert.doesNotMatch(game, /canvas\.setPointerCapture\?\.\(e\.pointerId\)/);
   assert.doesNotMatch(game, /stick\.setPointerCapture\?\.\(pointerId\)/);
 });
