@@ -1125,20 +1125,32 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   setupVRControls().catch((error) => console.warn('[MUZIKAZ VR]', error));
   const visibilityObserver = window.IntersectionObserver ? new IntersectionObserver(([entry]) => { viewActive = Boolean(entry?.isIntersecting); }, { threshold: 0.05 }) : null; visibilityObserver?.observe(stage); document.addEventListener('visibilitychange', () => { viewActive = !document.hidden; });
+  let renderedWidth = 0;
+  let renderedHeight = 0;
+  let renderedPixelRatio = 0;
   function resize() {
     const width = Math.max(1, Math.floor(stage.clientWidth || stage.offsetWidth || document.documentElement.clientWidth || window.innerWidth || 320));
     const height = Math.max(1, Math.floor(stage.clientHeight || stage.offsetHeight || document.documentElement.clientHeight || window.innerHeight || 480));
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, performanceMode ? 1 : quality.pixelRatio));
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, performanceMode ? 1 : quality.pixelRatio);
+    // A browser-level two-finger pinch emits a burst of visualViewport resize
+    // events even though the stage's CSS size normally stays unchanged. Avoid
+    // reallocating the WebGL drawing buffer for every event: on mobile that can
+    // exhaust the graphics context and make the whole game appear to crash.
+    if (width === renderedWidth && height === renderedHeight && pixelRatio === renderedPixelRatio) return;
+    renderedWidth = width;
+    renderedHeight = height;
+    renderedPixelRatio = pixelRatio;
+    renderer.setPixelRatio(pixelRatio);
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
   }
   let resizeTimer = 0;
+  let resizeFrame = 0;
   function scheduleGameResize() {
     window.clearTimeout(resizeTimer);
-    resize();
-    resizeTimer = window.setTimeout(resize, 120);
-    window.setTimeout(resize, 360);
+    if (!resizeFrame) resizeFrame = window.requestAnimationFrame(() => { resizeFrame = 0; resize(); });
+    resizeTimer = window.setTimeout(resize, 180);
   }
   if (window.ResizeObserver) new ResizeObserver(scheduleGameResize).observe(stage);
   window.addEventListener('resize', scheduleGameResize);
