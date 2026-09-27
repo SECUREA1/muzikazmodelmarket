@@ -230,11 +230,16 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const BUILDER_IMAGE_CATEGORIES=new Set(['landscape','interior']);
   const builderAssetThumbnail=(id,type)=>BUILDER_IMAGE_CATEGORIES.has(type)?`public/images/builder-pack/${id}.svg`:'public/assets/muzikaz-world-map.svg';
   const buildTrayKey='muzikaz.builder.buildTray'; const readBuildTray=()=>{try{return JSON.parse(localStorage.getItem(buildTrayKey)||'[]');}catch{return[];}};
-  const builderSceneKeys=['muzikaz.environmentBuilder.playScene.v1','muzikaz.environmentBuilder.scenes.v2','muzikaz.environmentBuilder.scenes.v1'];
+  const builderSceneSources=[
+    ['muzikaz.environmentBuilder.playScene.v1',sessionStorage],
+    ['muzikaz.environmentBuilder.playSceneBackup.v1',localStorage],
+    ['muzikaz.environmentBuilder.scenes.v2',localStorage],
+    ['muzikaz.environmentBuilder.scenes.v1',localStorage]
+  ];
   const localBuilderMapsKey='muzikaz.environmentBuilder.localMaps.v1';
   function readSavedBuilderScenes(){
     const query=new URLSearchParams(location.search),requested=query.get('house')||query.get('environment'),scenes=[];
-    for(const key of builderSceneKeys){try{const storage=key.includes('playScene')?sessionStorage:localStorage,built=JSON.parse(storage.getItem(key)||'null');if(built?.id&&Array.isArray(built.objects)&&(!key.includes('playScene')||!requested||built.id===requested))scenes.push(built);}catch{/* A corrupt draft must not hide the other locally saved maps. */}}
+    for(const [key,storage] of builderSceneSources){try{const built=JSON.parse(storage.getItem(key)||'null');if(built?.id&&Array.isArray(built.objects)&&(!key.includes('playScene')||!requested||built.id===requested))scenes.push(built);}catch{/* A corrupt draft must not hide the other locally saved maps. */}}
     try{const maps=JSON.parse(localStorage.getItem(localBuilderMapsKey)||'[]');if(Array.isArray(maps))scenes.push(...maps.filter(map=>map?.id&&Array.isArray(map.objects)));}catch{/* Legacy single-map storage remains available. */}
     const unique=new Map();scenes.forEach(scene=>{if(!unique.has(scene.id))unique.set(scene.id,scene);});return [...unique.values()];
   }

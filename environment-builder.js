@@ -8,7 +8,7 @@ import { clone as cloneSkeleton } from './public/vendor/three/addons/utils/Skele
 import { createBuilderModel, createGeneratedAsset, updateBuilderModels } from './public/js/builder-models-3d.js';
 import { compileBuilderScene } from './public/js/builder-gameplay-pipeline.js';
 
-const STORAGE_KEY='muzikaz.environmentBuilder.scenes.v2', LEGACY_KEY='muzikaz.environmentBuilder.scenes.v1', LOCAL_MAPS_KEY='muzikaz.environmentBuilder.localMaps.v1', PLAY_KEY='muzikaz.environmentBuilder.playScene.v1', TRAY_KEY='muzikaz.builder.buildTray', CUSTOM_KEY='muzikaz.environmentBuilder.customItems.v1';
+const STORAGE_KEY='muzikaz.environmentBuilder.scenes.v2', LEGACY_KEY='muzikaz.environmentBuilder.scenes.v1', LOCAL_MAPS_KEY='muzikaz.environmentBuilder.localMaps.v1', PLAY_KEY='muzikaz.environmentBuilder.playScene.v1', PLAY_BACKUP_KEY='muzikaz.environmentBuilder.playSceneBackup.v1', TRAY_KEY='muzikaz.builder.buildTray', CUSTOM_KEY='muzikaz.environmentBuilder.customItems.v1';
 const colors=['#b9ff38','#63eaff','#ff5ba7','#ffcc3d','#ff6847','#a78bfa','#f8fafc','#334155'];
 const avatarCatalog={
  face:{icon:'◉',label:'Face',items:[['classic','Classic'],['soft','Soft glam'],['sharp','Sharp'],['freckles','Freckles'],['cyber','Cyber'],['star','Star cheek'],['mask','Bandit mask']]},
@@ -232,9 +232,15 @@ function testGameLocally(){
  const button=$('#play-scene'),playId=sceneData.id,playScene=cloneData(sceneData);button.disabled=true;
  // Testing is intentionally browser-local: preserve the full authored template
  // without contacting the publishing API or joining a multiplayer world.
- sessionStorage.setItem(PLAY_KEY,JSON.stringify(playScene));
+ const serializedPlayScene=JSON.stringify(playScene);
+ // sessionStorage is the preferred one-test handoff. Keep an exact local
+ // fallback as well: privacy modes and embedded browsers can clear session
+ // storage during a same-origin navigation even though local storage survives.
+ sessionStorage.setItem(PLAY_KEY,serializedPlayScene);
+ localStorage.setItem(PLAY_BACKUP_KEY,serializedPlayScene);
  $('#save-state').textContent='LOCAL · Sandbox ready';showToast(`Testing “${sceneData.name}” privately with its complete template and gameplay…`);
- window.setTimeout(()=>{const id=encodeURIComponent(playId);location.href=`model-explorer.html?environment=${id}&house=${id}&autoplay=1&localFallback=1&sandbox=1`},350)
+ const id=encodeURIComponent(playId);
+ window.location.assign(`model-explorer.html?environment=${id}&house=${id}&autoplay=1&localFallback=1&sandbox=1`);
 }
 function screenRay(event){const rect=renderer.domElement.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera)}
 function terrainPoint(event){screenRay(event);return raycaster.intersectObject(terrain,false)[0]?.point||null}

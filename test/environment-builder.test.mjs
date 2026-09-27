@@ -18,6 +18,8 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /model-explorer\.html\?environment=/);
   assert.match(script, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(script, /&house=\$\{id\}&autoplay=1/);
+  assert.match(script, /window\.location\.assign\(`/, 'the test action navigates during the originating click instead of relying on a delayed callback');
+  assert.match(script, /playSceneBackup\.v1/, 'the exact test scene has a navigation-safe local fallback');
   assert.match(launcher, /get\('autoplay'\) === '1'\) begin\(\)/, 'the game launcher consumes the Builder test autoplay contract immediately');
   assert.match(script, /compileBuilderScene\(sceneData\)/);
   assert.match(script, /function testGameLocally\(\)/);
@@ -26,7 +28,7 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.doesNotMatch(script, /apiFetch\('\/api\/custom-maps'/, 'testing a template never contacts the publishing API');
   assert.match(script, /muzikaz\.environmentBuilder\.localMaps\.v1/);
   assert.match(script, /storeLocalMap\(sceneData\)/, 'each builder save is also retained in the local playable-map collection');
-  const localPlaySave = script.indexOf('sessionStorage.setItem(PLAY_KEY,JSON.stringify(playScene))');
+  const localPlaySave = script.indexOf('sessionStorage.setItem(PLAY_KEY,serializedPlayScene)');
   const localSandboxLaunch = script.indexOf('localFallback=1', localPlaySave);
   assert.ok(localPlaySave >= 0 && localSandboxLaunch > localPlaySave, 'the complete playable scene is staged locally before its private sandbox opens');
 });
@@ -145,7 +147,7 @@ test('portal assets expose a locked tuner for local and cross-map destinations',
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
   for (const control of ['portal-tuner', 'portal-enabled', 'portal-destination-type', 'portal-target-location', 'portal-target-map']) assert.match(html, new RegExp(`id="${control}"`));
-  assert.match(builder, /portal:\{enabled:false,destinationType:'location'/, 'new portal routes are safe and disabled by default');
+  assert.match(builder, /portal=\{enabled:false,destinationType:'location'/, 'new portal routes are safe and disabled by default');
   assert.match(builder, /renderPortalTuner/);
   assert.match(pipeline, /Portal path is locked in the Portal Tuner/);
   assert.match(pipeline, /this\.effects\.teleport/);
@@ -247,7 +249,8 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /params\.get\('autoplay'\) === '1'/, 'Save & Play starts the published map immediately');
   assert.match(game, /muzikaz\.environmentBuilder\.scenes\.v2/);
   assert.match(game, /muzikaz\.environmentBuilder\.playScene\.v1/);
-  assert.match(game, /key\.includes\('playScene'\)\?sessionStorage:localStorage/);
+  assert.match(game, /muzikaz\.environmentBuilder\.playSceneBackup\.v1/);
+  assert.match(game, /builderSceneSources/, 'the game reads the session handoff and its persistent fallback explicitly');
   assert.match(game, /readSavedBuilderScenes/);
   const refreshStart = game.indexOf('async function refreshLibrary()');
   const refreshNetwork = game.indexOf('Promise.allSettled', refreshStart);
@@ -338,7 +341,8 @@ test('saved sandbox maps embed custom item definitions for exact game reconstruc
   ]);
   assert.match(script, /sceneData\.customModels=cloneData\(customModels\)/);
   assert.match(script, /sceneData\.placedModels=cloneData/, 'every placed asset definition travels with the local sandbox scene');
-  assert.match(script, /sessionStorage\.setItem\(PLAY_KEY,JSON\.stringify\(playScene\)\)/);
+  assert.match(script, /sessionStorage\.setItem\(PLAY_KEY,serializedPlayScene\)/);
+  assert.match(script, /localStorage\.setItem\(PLAY_BACKUP_KEY,serializedPlayScene\)/);
   assert.match(game, /built\.placedModels/);
   assert.match(game, /prepareAuthoredBuilderModel/);
   assert.match(game, /createGeneratedAsset\(definition\)/);
