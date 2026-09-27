@@ -1228,6 +1228,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         scheduleGameResize();
         setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
         publishGameStage('game-active', 'Game ready.');
+        // Presence clients wait for this flag so the first state they publish
+        // contains the resolved room and spawn, rather than a pre-load default.
+        window.MUZIKAZ_GAMEPLAY_READY = true;
         document.dispatchEvent(new CustomEvent('muzikaz:gameplay-ready'));
       } catch (error) {
         const message = error?.message || 'Unable to load the MUZIKAZ house game.';
