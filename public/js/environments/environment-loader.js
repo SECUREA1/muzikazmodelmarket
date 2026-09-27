@@ -25,7 +25,7 @@ export class EnvironmentLoader {
     const meta = built.layoutMeta || environment.layoutMeta || {};
     const heightAt = (x, z) => {
       const ripple = .28 * Math.sin(x * .31) * Math.cos(z * .27);
-      if (['grand-floor','vendor-street','creator-studios','market-square','railroad-world','skyport','desert-airfield','blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio'].includes(layout)) return layout === 'grand-floor' ? 0 : ripple * .18;
+      if (['grand-floor','hedge-maze','neon-maze','dungeon-maze','vendor-street','creator-studios','market-square','railroad-world','skyport','desert-airfield','blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio'].includes(layout)) return layout === 'grand-floor' ? 0 : ripple * .18;
       if (layout === 'loft') return ripple;
       if (layout === 'suite') return .16 * Math.sin(x * .45) + .1 * Math.cos(z * .35);
       if (layout === 'mountain-pass') return 1.2 + Math.sin(x * .18) * 1.5 + Math.cos(z * .22) * 1.1 - 2.2 * Math.exp(-(x * x) / 18);
@@ -43,13 +43,15 @@ export class EnvironmentLoader {
     for (let i = 0; i < positions.count; i += 1) positions.setZ(i, heightAt(positions.getX(i), -positions.getY(i)));
     positions.needsUpdate = true; geometry.computeVertexNormals();
     const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: Number(meta.color) || 0x315b32, roughness:.95, metalness:0 }));
-    terrain.name = `BUILDER_LAND_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; terrain.userData.colliderShape = 'mesh';
+    terrain.name = `BUILDER_WALKABLE_FLOOR_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; terrain.userData.colliderShape = 'mesh';
     const root = new THREE.Group(); root.name = `PROCEDURAL_${environment.id}`; root.add(terrain); root.userData.proceduralLand = true; root.userData.layout = layout;
     // Recreate the complete template, not merely its terrain plane. Every mesh
     // is part of the world root, so the standard collision pass automatically
     // makes buildings, trees, rails, cover and set dressing solid in Test Map.
-    const add = (size, x, z, color, y = size[1] / 2, rotation = 0) => { const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), new THREE.MeshStandardMaterial({ color, roughness:.82, metalness:.08 })); mesh.name = `BUILDER_TEMPLATE_${layout}`; mesh.position.set(x, heightAt(x, z) + y, z); mesh.rotation.y = rotation; mesh.castShadow = mesh.receiveShadow = true; root.add(mesh); return mesh; };
-    if(layout==='vendor-street')[-12,-6,0,6,12].forEach((z,i)=>{add([5,3.2,4],-15,z,i%2?0x9e5845:0x477786);add([5,3.2,4],15,z,i%2?0x7650a1:0xa97a3b)});
+    const mazeSegments=[[-18,-18,36,0],[-18,18,36,0],[-18,0,36,1],[18,0,36,1],[-12,-12,12,0],[6,-12,18,0],[-6,-6,18,0],[12,-3,12,1],[-12,0,12,1],[0,0,12,0],[6,6,24,0],[-6,9,12,1],[-12,14,12,0],[12,14,12,0],[0,15,6,1]];
+    const add = (size, x, z, color, y = size[1] / 2, rotation = 0) => { const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), new THREE.MeshStandardMaterial({ color, roughness:.82, metalness:.08 })); mesh.name = `BUILDER_TEMPLATE_${layout}`; mesh.position.set(x, heightAt(x, z) + y, z); mesh.rotation.y = rotation; mesh.castShadow = mesh.receiveShadow = true; mesh.userData.feetLockedToFloor = true; root.add(mesh); return mesh; };
+    if(['hedge-maze','neon-maze','dungeon-maze'].includes(layout)){const color=layout==='hedge-maze'?0x285f32:layout==='neon-maze'?0x316b88:0x625e55,height=layout==='dungeon-maze'?3.2:2.6;mazeSegments.forEach(([x,z,length,vertical])=>add(vertical?[1,height,length]:[length,height,1],x,z,color));}
+    else if(layout==='vendor-street')[-12,-6,0,6,12].forEach((z,i)=>{add([5,3.2,4],-15,z,i%2?0x9e5845:0x477786);add([5,3.2,4],15,z,i%2?0x7650a1:0xa97a3b)});
     else if(layout==='creator-studios')[-12,-4,4,12].forEach((x,i)=>add([6,3.8,7],x,8,i%2?0x476779:0x6c4e79));
     else if(layout==='market-square')for(let i=0;i<10;i++){const a=i/10*Math.PI*2;add([3,2.1,2.2],Math.cos(a)*13,Math.sin(a)*13,i%2?0xc0783e:0x4c8c69,.95,-a)}
     else if(layout==='mountain-pass')[-16,-12,12,16].forEach((x,i)=>add([3,5+i%2*2,9],x,i%2?8:-8,0x485044,2));

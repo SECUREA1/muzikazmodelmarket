@@ -89,6 +89,42 @@
       "description": "A sheltered green exterior with a central gathering mound."
     },
     {
+      "id": "builder-land-hedge-maze",
+      "name": "Hedge Maze",
+      "owner": "MUZIKAZ",
+      "type": "lands",
+      "builderLayoutId": "hedge-maze",
+      "builderUrl": "/environment-builder.html?layout=hedge-maze",
+      "thumbnailUrl": "/public/images/backpack/muzikaz-main-floor.svg",
+      "format": "builder-layout",
+      "visibility": "public",
+      "description": "A garden maze with broad walkable lanes, hidden corners and a central goal."
+    },
+    {
+      "id": "builder-land-neon-maze",
+      "name": "Neon Labyrinth",
+      "owner": "MUZIKAZ",
+      "type": "lands",
+      "builderLayoutId": "neon-maze",
+      "builderUrl": "/environment-builder.html?layout=neon-maze",
+      "thumbnailUrl": "/public/images/backpack/muzikaz-main-floor.svg",
+      "format": "builder-layout",
+      "visibility": "public",
+      "description": "A competitive glowing labyrinth with looping routes and mirrored shortcuts."
+    },
+    {
+      "id": "builder-land-dungeon-maze",
+      "name": "Dungeon Maze",
+      "owner": "MUZIKAZ",
+      "type": "lands",
+      "builderLayoutId": "dungeon-maze",
+      "builderUrl": "/environment-builder.html?layout=dungeon-maze",
+      "thumbnailUrl": "/public/images/backpack/muzikaz-main-floor.svg",
+      "format": "builder-layout",
+      "visibility": "public",
+      "description": "A stone maze of chambers, junctions and quest-ready dead ends."
+    },
+    {
       "id": "builder-land-vendor-street",
       "name": "Small Vendor Street",
       "owner": "MUZIKAZ",
