@@ -12,7 +12,9 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   assert.match(launcher, /engineReady/, 'retries reuse an engine that has already loaded');
   assert.match(launcher, /button\.disabled = false/, 'a failed start restores the launch control');
   assert.doesNotMatch(launcher, /addEventListener\('click',[\s\S]{0,100}\{ once: true \}/, 'the launch control remains usable for retries');
-  assert.match(launcher, /setTimeout\(showStall, 30000\)/, 'a stalled module load reports its state without starting a duplicate engine');
+  assert.match(launcher, /setTimeout\(showStall, 30000\)/, 'a stalled module load is bounded');
+  assert.match(launcher, /moduleElement\.remove\(\)[\s\S]*showError/, 'a stalled module releases its launch lock and offers a clean retry');
+  assert.doesNotMatch(launcher, /get\('autoplay'\) === '1'/, 'the game waits for the visible Begin Game interaction');
   assert.match(launcher, /moduleElement = moduleElement \|\| document\.createElement\('script'\)/, 'repeat taps reuse one game-engine module and one WebGL renderer');
   assert.match(launcher, /requestAnimationFrame[\s\S]*requestAnimationFrame/, 'the loading surface receives a paint before the engine starts heavy work');
   assert.match(game, /settleWithin\(startupCatalogPromise, 5000/, 'optional startup catalog work cannot hold the engine bootstrap indefinitely');
@@ -34,5 +36,6 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   assert.match(game, /this\.sheepCoins=Number\(readStoredJson\('muzikazSheepCoinWallet',0\)\)\|\|0/, 'denied wallet storage cannot fault the game constructor');
   assert.match(game, /new Set\(readStoredArray\(rowStorageKey\)\)/, 'invalid HUD preferences cannot fault startup');
   assert.doesNotMatch(game, /params\.get\('autoplay'\) === '1'\) startRadToxGame/, 'the loaded module does not issue a duplicate autoplay start');
-  assert.match(members, /model-explorer\.html\?environment=muzikaz-main&amp;house=muzikaz-main#house-explorer/, 'the member Vibe Crib launcher uses the main map route explicitly');
+  assert.match(members, /href="model-explorer\.html\?environment=muzikaz-main&amp;house=muzikaz-main"/, 'the member Vibe Crib link opens the requested main map without bypassing Begin Game');
+  assert.doesNotMatch(members, /Play Multiplayer Now/, 'the members area does not add a competing play-now control');
 });

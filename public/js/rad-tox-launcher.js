@@ -18,7 +18,12 @@
     if (button) { button.disabled = false; button.textContent = 'Try again'; }
   }
   function showStall() {
-    if (status) status.textContent = 'The game engine is still loading. Check your connection; this screen will continue automatically.';
+    // A module request can remain pending forever on captive portals and after
+    // mobile network changes. Release the launch lock so the player can retry
+    // rather than leaving the members-area game on an endless loading screen.
+    if (moduleElement && !engineReady) moduleElement.remove();
+    moduleElement = null;
+    showError('The game engine took too long to load. Check your connection.');
   }
   function begin() {
     if (requested) return;
