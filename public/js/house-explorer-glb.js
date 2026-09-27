@@ -413,33 +413,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   let hasSafePlayerPosition = false;
   let floorLockCooldown = 0;
   const toxicBubbleSystem = new ToxicBubbleSystem({ scene, camera, canvas, loader: envLoader, getEnvironment: () => activeEnvironment, getPlayerPosition: () => playerRig.position.clone(), advanceEnvironment: () => loadNextEnvironment() });
-  const recoveryStateKey = 'muzikaz.radTox.recovery.v1';
-  function readRecoveryState() { try { return JSON.parse(sessionStorage.getItem(recoveryStateKey) || 'null'); } catch { return null; } }
-  function saveRecoveryState() {
-    if (!toxicBubbleSystem.active || !activeEnvironment) return;
-    try { sessionStorage.setItem(recoveryStateKey, JSON.stringify({
-      environmentId: activeEnvironment.id,
-      player: { x: playerRig.position.x, y: playerRig.position.y, z: playerRig.position.z, yaw: player.yaw, pitch: player.pitch },
-      game: { level: toxicBubbleSystem.level, score: toxicBubbleSystem.score, totalPopped: toxicBubbleSystem.totalPopped, levelPopped: toxicBubbleSystem.levelPopped, health: toxicBubbleSystem.health, ammo: toxicBubbleSystem.ammo, sprayFuel: toxicBubbleSystem.sprayFuel, tool: toxicBubbleSystem.tool, enemyRepopulations: toxicBubbleSystem.enemyRepopulations },
-      savedAt: Date.now()
-    })); } catch { /* Recovery storage must never interrupt live gameplay. */ }
-  }
-  function restoreRecoveryState() {
-    const saved = readRecoveryState();
-    if (!saved || saved.environmentId !== activeEnvironment?.id) return false;
-    const position = saved.player && new THREE.Vector3(Number(saved.player.x), Number(saved.player.y), Number(saved.player.z));
-    if (position && [position.x, position.y, position.z].every(Number.isFinite)) {
-      resetPlayer(position, Number(saved.player.yaw) || 0);
-      player.pitch = Number(saved.player.pitch) || 0;
-    }
-    const game = saved.game || {};
-    for (const key of ['level','score','totalPopped','levelPopped','health','ammo','sprayFuel','enemyRepopulations']) if (Number.isFinite(Number(game[key]))) toxicBubbleSystem[key] = Number(game[key]);
-    if (typeof game.tool === 'string') toxicBubbleSystem.setTool(game.tool);
-    toxicBubbleSystem.updateHud('Recovered your game after the previous interruption.');
-    return true;
-  }
-  let lastRecoverySave = 0;
-  window.addEventListener('pagehide', saveRecoveryState);
   // Opening or closing the pack never changes the game state.
   const toolsButton = document.querySelector('[data-house-tools]'); const closeTools = () => { toxicBubbleSystem.closeInventory(); toggleBuildMenu(false); toggleGameQuests(false); sprayTools.hidden=true; toolsToggle.setAttribute('aria-expanded','false'); toolsButton?.setAttribute('aria-expanded','false'); toolsButton?.focus(); }; const openTools = () => { syncToolsPortal(); sprayTools.hidden=false; toolsToggle.setAttribute('aria-expanded','true'); toolsButton?.setAttribute('aria-expanded','true'); sprayTools.querySelector('[data-rad-tool]')?.focus(); }; const toggleTools = () => sprayTools.hidden ? openTools() : closeTools(); sprayTools.addEventListener('click',(event)=>{if(event.target.closest('[data-rad-tools-toggle]')){closeTools();return;}const tool=event.target.closest('[data-rad-tool]')?.dataset.radTool,color=event.target.closest('[data-spray-color]')?.dataset.sprayColor;if(event.target.closest('[data-rad-pack-toggle]'))toxicBubbleSystem.toggleInventory();if(event.target.closest('[data-rad-quests-toggle]'))toggleGameQuests();if(event.target.closest('[data-rad-build-toggle]'))toggleBuildMenu();if(tool)toxicBubbleSystem.setTool(tool);if(color!==undefined)toxicBubbleSystem.setSprayColor(Number(color));}); inventoryPack.addEventListener('click',(event)=>{if(event.target.closest('[data-rad-pack-close]'))toxicBubbleSystem.closeInventory();if(event.target.closest('[data-rad-pack-builder]')){toxicBubbleSystem.toggleInventory(false);toggleBuildMenu(true);}}); buildMenu.addEventListener('click',(event)=>{if(event.target.closest('[data-rad-build-close]')){toggleBuildMenu(false);return;}const filter=event.target.closest('[data-build-filter]')?.dataset.buildFilter;if(filter){renderBuildMenu(filter);return;}const id=event.target.closest('[data-build-asset]')?.dataset.buildAsset;if(!id)return;const [assetId,name,type]=BUILD_ASSETS.find(item=>item[0]===id)||[];if(!assetId)return;const tray=readBuildTray(),index=tray.findIndex(item=>item.id===assetId);if(index>=0)tray.splice(index,1);else tray.push({id:assetId,name,type,thumbnailUrl:builderAssetThumbnail(assetId,type),addedAt:new Date().toISOString()});localStorage.setItem(buildTrayKey,JSON.stringify(tray));renderBuildMenu();setStatus(`${name} ${index>=0?'removed from':'added to'} your build inventory. Open Pack to review it.`);}); document.addEventListener('keydown',(event)=>{if(event.key!=='Escape')return;if(!questPanel.hidden){toggleGameQuests(false);return;}if(!buildMenu.hidden){toggleBuildMenu(false);return;}if(!inventoryPack.hidden){toxicBubbleSystem.closeInventory();return;}if(!sprayTools.hidden)closeTools();}); document.addEventListener('muzikaz:rad-tox-tools-request',openTools);
   const keys = new Set(); const mobile = new Set(); const thumbInput = { leftX: 0, leftY: 0, rightX: 0, rightY: 0 }; const forward = new THREE.Vector3(); const right = new THREE.Vector3(); const move = new THREE.Vector3(); const teleportRay = new THREE.Raycaster(); const floorSweepRay = new THREE.Raycaster();
@@ -1185,7 +1158,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (!performanceMode || renderer.xr.isPresenting) envLoader.mixers.forEach((m) => m.update(delta));
     toxicBubbleSystem.updateBrickPreview();
     toxicBubbleSystem.update(delta, clock.elapsedTime);
-    if (toxicBubbleSystem.active && time - lastRecoverySave > 1000) { lastRecoverySave = time; saveRecoveryState(); }
     builderGameplay.update(delta,playerRig.position);
     refreshNearbyAction();
     updateBuilderModels(builderDecor, clock.elapsedTime);
@@ -1241,7 +1213,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         // published to the room or used by the encounter.
         resetPlayer(activeWorldSpawn.position, activeWorldSpawn.rotationY);
         await toxicBubbleSystem.begin();
-        restoreRecoveryState();
         gameStartScreen?.classList.add('is-hidden');
         scheduleGameResize();
         setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
