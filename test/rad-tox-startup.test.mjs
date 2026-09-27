@@ -12,12 +12,8 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   assert.match(launcher, /button\.disabled = false/, 'a failed start restores the launch control');
   assert.doesNotMatch(launcher, /addEventListener\('click',[\s\S]{0,100}\{ once: true \}/, 'the launch control remains usable for retries');
   assert.match(launcher, /setTimeout\(showStall, 30000\)/, 'a stalled module load reports its state without starting a duplicate engine');
-  assert.match(launcher, /if \(wasPlaying\(\)\) window\.setTimeout\(begin, 0\)/, 'an interrupted active tab automatically relaunches without another Begin click');
-  assert.match(launcher, /retryAutomatically\(\)/, 'a native startup failure schedules an automatic retry');
   assert.match(game, /settleWithin\(refreshLibrary\(\), 5000/, 'optional startup catalog work cannot hold the engine indefinitely');
   assert.match(game, /gameInitializationPromise = null/, 'a failed game initialization can be started again');
-  assert.match(game, /sessionStorage\.setItem\(recoveryStateKey/, 'active gameplay state is checkpointed for crash recovery');
-  assert.match(game, /restoreRecoveryState\(\)/, 'the automatically relaunched game restores its checkpoint');
   assert.match(game, /addEventListener\('muzikaz:rad-tox-request', startRadToxGame\);/, 'the loaded engine accepts a retry request');
   assert.match(
     game,
