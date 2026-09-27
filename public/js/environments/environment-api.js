@@ -2,11 +2,26 @@ import { fetchGitHubGlbFiles, mergeGitHubEnvironmentFiles } from '../github-glb-
 
 const PREFIX = '[MUZIKAZ Environment]';
 const apiFetch = (path, options = {}) => window.MUZIKAZ_API?.fetch ? window.MUZIKAZ_API.fetch(path, options) : fetch(path, options);
+const settleWithin = (promise, milliseconds, label) => Promise.race([
+  promise,
+  new Promise((_, reject) => window.setTimeout(() => reject(new Error(`${label} timed out.`)), milliseconds))
+]);
 
 export async function fetchEnvironmentList() {
   let records = [];
+  // Start the static manifest alongside the API request. A cold API or GitHub
+  // discovery used to leave the registry empty until the launcher's five-second
+  // timeout expired. The first Begin then had no world to open, while a second
+  // click worked only because those background requests had finally completed.
+  const repositoryRecords = fetch('/public/models/environments/environments.json', { headers: { Accept:'application/json' }, cache:'no-store' })
+    .then(async (response) => {
+      if (!response.ok) throw new Error(`Repository environment manifest unavailable (${response.status})`);
+      const payload = await response.json();
+      return Array.isArray(payload) ? payload : [];
+    })
+    .catch((error) => ({ error }));
   try {
-    const response = await apiFetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+    const response = await settleWithin(apiFetch('/api/environments', { headers: { Accept: 'application/json' }, cache: 'no-store' }), 2000, 'Environment API');
     if (!response.ok) throw new Error(`Environment registry unavailable (${response.status})`);
     const payload = await response.json();
     records = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
@@ -15,14 +30,17 @@ export async function fetchEnvironmentList() {
   }
 
   if (!records.length) {
-    const fallback = await fetch('/public/models/environments/environments.json', { headers: { Accept: 'application/json' }, cache: 'no-store' });
-    if (!fallback.ok) throw new Error(`Repository environment manifest unavailable (${fallback.status})`);
-    const payload = await fallback.json();
-    records = Array.isArray(payload) ? payload : [];
+    const fallback = await repositoryRecords;
+    if (fallback?.error) throw fallback.error;
+    records = fallback;
   }
 
   try {
-    return mergeGitHubEnvironmentFiles(records, await fetchGitHubGlbFiles());
+    // Remote discovery enriches the picker, but it is not launch-critical.
+    // Bound it so the known repository/API worlds are always ready on the
+    // player's first Begin action.
+    const githubFiles = await settleWithin(fetchGitHubGlbFiles(), 1500, 'GitHub environment discovery');
+    return mergeGitHubEnvironmentFiles(records, githubFiles);
   } catch (error) {
     logEnvironment('GitHub GLB discovery unavailable; using the current environment list.', error.message);
     return records;
