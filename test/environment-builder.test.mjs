@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 test('environment builder exposes layout, placement and editing controls', async () => {
-  const [html, script] = await Promise.all([
+  const [html, script, launcher] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
-    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/rad-tox-launcher.js', import.meta.url), 'utf8')
   ]);
   for (const control of ['library-grid', 'land-canvas', 'layout-select', 'rotation-control', 'scale-control', 'position-x', 'position-y', 'duplicate-object', 'remove-object', 'save-scene', 'play-scene']) assert.match(html, new RegExp(`id="${control}"`));
   for (const layout of ['grand-floor', 'loft', 'suite', 'courtyard']) assert.match(html, new RegExp(`value="${layout}"`));
@@ -17,6 +18,7 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script, /model-explorer\.html\?environment=/);
   assert.match(script, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(script, /&house=\$\{id\}&autoplay=1/);
+  assert.match(launcher, /get\('autoplay'\) === '1'\) begin\(\)/, 'the game launcher consumes the Builder test autoplay contract immediately');
   assert.match(script, /compileBuilderScene\(sceneData\)/);
   assert.match(script, /function testGameLocally\(\)/);
   assert.match(script, /LOCAL · Sandbox ready/);
