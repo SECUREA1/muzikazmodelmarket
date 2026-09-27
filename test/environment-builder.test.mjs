@@ -94,6 +94,29 @@ test('responsive customization sheet includes commercial FPS and training scenes
   assert.match(css, /\.inspector-open \.object-inspector/);
 });
 
+test('builder maze group is playable, grounded, and only recovers true world falls', async () => {
+  const [html, builder, loader, game] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
+  ]);
+  assert.match(html, /optgroup label="MAZE WORLDS"/);
+  for (const maze of ['hedge-maze', 'neon-maze', 'dungeon-maze']) {
+    assert.match(html, new RegExp(`value="${maze}"`));
+    assert.match(builder, new RegExp(`'${maze}'`));
+    assert.match(loader, new RegExp(`'${maze}'`));
+  }
+  assert.match(builder, /mazeSegments/);
+  assert.match(loader, /BUILDER_WALKABLE_FLOOR_/);
+  assert.match(loader, /terrain\.userData\.colliderShape = 'mesh'/);
+  assert.match(builder, /feetLockedToFloor=true/);
+  assert.match(game, /visualFeet/);
+  assert.match(game, /droppedFeet/);
+  assert.match(game, /fellThroughWorld=base\.y<mapFloorLimit/);
+  assert.doesNotMatch(game, /safeFloorLimit/, 'ordinary jumps and terrain steps must not trigger a respawn');
+});
+
 test('environment builder supports custom role-play actors and interactions', async () => {
   const [html, script] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
@@ -262,7 +285,8 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
   assert.doesNotMatch(game, /PLAYER_ENTRY_DROP_HEIGHT|dropIntoMap/, 'map entry never adds an aerial offset above the resolved floor');
   assert.doesNotMatch(game, /playerDropRecoveryActive|groundedRecoveryFrames/, 'the drop is not re-armed from the animation loop');
   assert.match(game, /const lastSafePlayerPosition = new THREE\.Vector3\(\)/, 'every map shares a last-known-good floor position');
-  assert.match(game, /const floorLockY=Math\.max\(mapFloorLimit,safeFloorLimit\)/, 'the floor lock uses both the active map bounds and its last verified collider floor');
+  assert.match(game, /const fellThroughWorld=base\.y<mapFloorLimit/, 'recovery only begins after the player has fallen below the complete world bounds');
+  assert.doesNotMatch(game, /safeFloorLimit/, 'jumping or walking down to a lower valid floor cannot be mistaken for falling through the world');
   assert.match(game, /playerCollider\.start\.set\(recovery\.x,recovery\.y\+player\.radius,recovery\.z\)/, 'a missed floor collider restores the capsule to safe ground');
   assert.match(game, /floorLockCooldown=\.35/, 'floor recovery is rate limited instead of repeatedly resetting each frame');
   for (const layout of ['blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio']) assert.match(loader, new RegExp(`'${layout}'`));
