@@ -9,7 +9,7 @@ import { FLOOR_ENTRY_OFFSET, alignPointAboveFloor } from './environments/environ
 import { fetchGitHubGlbFiles, mergeGitHubAvatarFiles } from './github-glb-discovery.js';
 import { AirborneHoneyBee, BEE_CONFIG, AAPE_BOSS_CONFIG, BEEDUCK_BOSS_CONFIG } from './enemies/airborne-honey-bee.js';
 import { NeonBrainBug } from './enemies/neon-brain-bug.js';
-import { pinchScaleFactor, pointerDistance } from './pinch-scale.js';
+import { pinchScaleFactor, pinchZoomFov, pointerAngle, pointerDistance, shortestAngleDelta } from './pinch-scale.js';
 import { BUILDER_MODEL_INFO, createBuilderModel, createGeneratedAsset, updateBuilderModels } from './builder-models-3d.js';
 import { BuilderVehicleController } from './builder-vehicle-controller.js';
 import { BuilderGameplayRuntime, compileBuilderScene } from './builder-gameplay-pipeline.js';
@@ -65,7 +65,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     scheduleGameResize();
   }
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
-  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Main controls: mouse-look</span><span>Drag/touch: look</span><span>Two fingers on a dropped model: resize</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
+  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: 1.8x jump / climb</span><span>Main controls: mouse-look</span><span>Drag/touch: look</span><span>Pinch screen: zoom · twist: turn</span><span>Two fingers on a dropped model: resize</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
 
   const controllerIcon = (path) => `<svg class="controller-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
 
@@ -404,7 +404,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
 
   let viewActive = true; let lastFrameTime = 0; const targetFrameMs = performanceMode || reducedMotion ? 1000 / 30 : 0;
-  let playerCollider = new Capsule(new THREE.Vector3(0, player.radius, 2), new THREE.Vector3(0, player.height, 2), player.radius); let dragPointer = null; let avatarDrag = null; let avatarPinch = null; const activeTouchPointers = new Map(); let turnReady = true; let activeEnvironment = null;
+  let playerCollider = new Capsule(new THREE.Vector3(0, player.radius, 2), new THREE.Vector3(0, player.height, 2), player.radius); let dragPointer = null; let avatarDrag = null; let avatarPinch = null; let cameraGesture = null; const activeTouchPointers = new Map(); let turnReady = true; let activeEnvironment = null;
   // Every environment uses the same last-known-good floor lock.  This is kept
   // outside map metadata so repository GLBs, uploaded spaces, Builder lands
   // and combat arenas all get identical protection from thin/missing floor
@@ -426,7 +426,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
   function zoomPercent() { return Math.round(((92 - player.zoom) / 60) * 100); }
   function syncZoomControls() { viewControls.querySelector('output').textContent = `Zoom ${zoomPercent()}%`; }
-  function applyZoom(deltaY) { player.zoom = THREE.MathUtils.clamp(player.zoom + Math.sign(deltaY) * 2, 32, 92); camera.fov = player.zoom; camera.updateProjectionMatrix(); syncZoomControls(); setStatus(`Zoom ${zoomPercent()}% · ${scrollZoomEnabled ? 'scroll wheel zooms' : 'scroll wheel passes through'} the GLB house view.`); }
+  function setZoom(fov, announce = true) { player.zoom = THREE.MathUtils.clamp(Number(fov) || player.zoom, 32, 92); camera.fov = player.zoom; camera.updateProjectionMatrix(); syncZoomControls(); if (announce) setStatus(`Zoom ${zoomPercent()}% · ${scrollZoomEnabled ? 'scroll wheel zooms' : 'scroll wheel passes through'} the GLB house view.`); }
+  function applyZoom(deltaY) { setZoom(player.zoom + Math.sign(deltaY) * 2); }
   function applySpaceScale(scale, { keepPlayer = true } = {}) { const next = THREE.MathUtils.clamp(Math.round((Number(scale) || 1) * 10) / 10, 0.1, 100); if (!envLoader.world) return; const previous = currentSpaceScale || 1; const ratio = next / previous; const base = playerCollider.end.clone(); base.y -= player.height; const result = envLoader.setSpaceScale(next); if (!result) return; currentSpaceScale = result.scale; if (activeEnvironment) activeEnvironment.spaceScale = currentSpaceScale; if (keepPlayer) { const nextBase = base.multiplyScalar(ratio); playerCollider.translate(nextBase.sub(playerRig.position)); playerRig.position.copy(nextBase.add(new THREE.Vector3(0, 0, 0))); } scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; setStatus(`Space size set to ${currentSpaceScale.toFixed(1)}x. Use +/− for 0.1x steps, up to 100x.`); toxicBubbleSystem.handleSpaceScaleChanged(); }
   function alignSpawnToCurrentFloor(spawn) { return envLoader.floorMeshes.length ? alignPointAboveFloor(spawn.clone(), envLoader.floorMeshes, envLoader.bounds, player.height, FLOOR_ENTRY_OFFSET) : spawn.clone(); }
   function updateLandingFrame(spawn) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); landingFrame.clear(); const ring = new THREE.Mesh(new THREE.RingGeometry(.52, .72, 48), new THREE.MeshBasicMaterial({ color: 0x9cff00, side: THREE.DoubleSide, transparent: true, opacity: .88 })); ring.rotation.x = -Math.PI / 2; ring.position.set(alignedSpawn.x, alignedSpawn.y + .018, alignedSpawn.z); const grid = new THREE.GridHelper(1.55, 4, 0x9cff00, 0x477400); grid.position.set(alignedSpawn.x, alignedSpawn.y + .022, alignedSpawn.z); grid.material.transparent = true; grid.material.opacity = .62; landingFrame.add(ring, grid); }
@@ -999,12 +1000,32 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       dragPointer = null;
       toxicTap = null;
       setStatus(`Pinch ${avatarDisplayName(root)} with two fingers to stretch or shrink it.`);
+    } else if (e.pointerType === 'touch' && !avatarDrag && activeTouchPointers.size >= 2) {
+      const points = [...activeTouchPointers.entries()].slice(-2);
+      cameraGesture = {
+        ids:points.map(([id]) => id),
+        startDistance:pointerDistance(points[0][1], points[1][1]),
+        startAngle:pointerAngle(points[0][1], points[1][1]),
+        startFov:player.zoom,
+        startYaw:player.yaw,
+      };
+      dragPointer = null;
+      toxicTap = null;
+      setStatus('Pinch to zoom in or out. Twist two fingers to turn the game view.');
     }
     safelyCapturePointer(canvas,e.pointerId);
   });
   canvas.addEventListener('pointermove', (e) => {
     if (document.pointerLockElement === canvas) return;
     if (e.pointerType === 'touch' && activeTouchPointers.has(e.pointerId)) activeTouchPointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if (cameraGesture?.ids.includes(e.pointerId)) {
+      e.preventDefault();
+      const [first, second] = cameraGesture.ids.map((id) => activeTouchPointers.get(id));
+      if (!first || !second) return;
+      setZoom(pinchZoomFov({ startDistance:cameraGesture.startDistance, currentDistance:pointerDistance(first, second), startFov:cameraGesture.startFov }), false);
+      player.yaw = cameraGesture.startYaw - shortestAngleDelta(cameraGesture.startAngle, pointerAngle(first, second));
+      return;
+    }
     if (avatarPinch?.ids.includes(e.pointerId)) {
       e.preventDefault();
       const [first, second] = avatarPinch.ids.map((id) => activeTouchPointers.get(id));
@@ -1021,6 +1042,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   const release = (e) => {
     activeTouchPointers.delete(e.pointerId);
+    if (cameraGesture?.ids.includes(e.pointerId)) {
+      cameraGesture = null;
+      const remaining = [...activeTouchPointers.entries()].at(-1);
+      dragPointer = remaining ? { id:remaining[0], x:remaining[1].x, y:remaining[1].y } : null;
+      setStatus(`View set to zoom ${zoomPercent()}%. Pinch or twist again to adjust it.`);
+      return;
+    }
     if (avatarPinch?.ids.includes(e.pointerId)) {
       liftObjectAboveFloor(avatarPinch.root, avatarPinch.floorPoint);
       addAvatarCollider(avatarPinch.root);
