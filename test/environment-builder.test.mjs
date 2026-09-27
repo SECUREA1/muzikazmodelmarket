@@ -9,7 +9,8 @@ test('environment builder exposes layout, placement and editing controls', async
   ]);
   for (const control of ['library-grid', 'land-canvas', 'layout-select', 'rotation-control', 'scale-control', 'position-x', 'position-y', 'duplicate-object', 'remove-object', 'save-scene', 'play-scene']) assert.match(html, new RegExp(`id="${control}"`));
   for (const layout of ['grand-floor', 'loft', 'suite', 'courtyard']) assert.match(html, new RegExp(`value="${layout}"`));
-  assert.equal((script.match(/\['[a-z-]+','[^']+','(?:landscape|interior)',\d+\]/g) || []).length, 30);
+  assert.equal((script.match(/\['[a-z-]+','[^']+','(?:landscape|interior)',\d+\]/g) || []).length, 31);
+  assert.match(html, /value="seat"/);
   for (const behavior of ['pointermove', 'dragstart', 'drop', 'localStorage.setItem', 'LOCKED PROPORTIONS']) assert.match(`${html}\n${script}`, new RegExp(behavior));
   assert.match(script, /muzikaz\.builder\.buildTray/);
   assert.match(script, /multiplayer:false, enemies:true, weapons:true, pickups:true/, 'template tests run with complete game logic but no multiplayer connection');

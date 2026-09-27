@@ -2,7 +2,7 @@
 export const BUILDER_MANIFEST_VERSION = 2;
 export const PLAYABLE_BEHAVIORS = new Set([
   'vehicle', 'talk', 'quest', 'hostile', 'patrol', 'pickup', 'door', 'heal',
-  'interact', 'hazard', 'trigger', 'hold', 'switch'
+  'interact', 'hazard', 'trigger', 'hold', 'switch', 'seat'
 ]);
 
 // This set documents the behaviors with dedicated runtime handling; it is not
@@ -21,7 +21,7 @@ const vector = (value, fallback = 0) => ({
 const DEFAULT_BEHAVIOR_BY_TYPE = {
   avatar: 'talk', character: 'talk', npc: 'talk', enemy: 'hostile', creature: 'patrol',
   vehicle: 'vehicle', weapon: 'pickup', weapons: 'pickup', wearable: 'hold',
-  consumable: 'heal', quest: 'quest', interactive: 'interact'
+  consumable: 'heal', quest: 'quest', interactive: 'interact', seat: 'seat', seating: 'seat'
 };
 
 /** Give imported Builder assets a useful in-game role when they do not author one. */
@@ -112,13 +112,13 @@ export function upgradeBuilderManifest(manifest = {}) {
 }
 
 const distance = (a, b) => Math.hypot(finite(a.x) - finite(b.x), finite(a.y) - finite(b.y), finite(a.z) - finite(b.z));
-const DEFAULT_PROMPTS = { door:'Open / close', pickup:'Pick up & hold', hold:'Hold / put away', switch:'Switch', heal:'Use health', talk:'Talk', quest:'View quest', interact:'Interact', trigger:'Activate', hazard:'Disarm' };
+const DEFAULT_PROMPTS = { door:'Open / close', pickup:'Pick up & hold', hold:'Hold / put away', switch:'Switch', heal:'Use health', talk:'Talk', quest:'View quest', interact:'Interact', trigger:'Activate', hazard:'Disarm', seat:'Sit down' };
 
 /** One shared manager updates all dynamic Builder actors and resolves one input target. */
 export class BuilderGameplayRuntime {
   constructor({ manifest, player = {}, now = () => Date.now(), feedback = () => {}, effects = {} } = {}) {
     this.manifest = upgradeBuilderManifest(manifest);
-    this.player = Object.assign({ health: 100, maxHealth: 100, score: 0, inventory: [], quests: {}, heldObjectId: null, switches: {} }, player);
+    this.player = Object.assign({ health: 100, maxHealth: 100, score: 0, inventory: [], quests: {}, heldObjectId: null, seatedObjectId: null, switches: {} }, player);
     this.now = now; this.feedback = feedback; this.effects = effects;
     this.instances = new Map(); this.cooldowns = new Map(); this.elapsed = 0;
   }
@@ -154,6 +154,13 @@ export class BuilderGameplayRuntime {
     return { actor, handled: true, message, position: position ? vector(position) : null };
   }
   interact(key, playerPosition) {
+    if (this.player.seatedObjectId && String(key).toLowerCase() === 'e') {
+      const actor = this.actor(this.player.seatedObjectId), instance = this.instances.get(this.player.seatedObjectId);
+      this.player.seatedObjectId = null;
+      instance?.setSeated?.(false, this.player, actor);
+      const message = 'Stood up'; this.feedback(message, actor);
+      return { actor, handled: true, message, seated: false };
+    }
     const hit = this.nearest(playerPosition, String(key).toLowerCase());
     if (!hit) return null;
     const actor = hit.actor, config = actor.gameplay, current = this.now(), ready = this.cooldowns.get(actor.objectId) || 0;
@@ -172,6 +179,7 @@ export class BuilderGameplayRuntime {
       message = puttingAway ? 'Put away' : 'Held — press E to use or put away';
       if (config.respawn && !puttingAway) instance?.respawnAfter?.(config.respawn);
     }
+    else if (config.behavior === 'seat') { this.player.seatedObjectId=actor.objectId; instance?.setSeated?.(true,this.player,actor); message='Seated — press E or tap STAND UP'; }
     else if (config.behavior === 'switch') { const on=!this.player.switches[actor.objectId]; this.player.switches[actor.objectId]=on; instance?.setSwitched?.(on); message=on?'Switched on':'Switched off'; }
     else if (config.behavior === 'heal') this.player.health = Math.min(this.player.maxHealth, this.player.health + value);
     else if (config.behavior === 'door') { instance.open = !instance.open; instance?.setDoorOpen?.(instance.open); }

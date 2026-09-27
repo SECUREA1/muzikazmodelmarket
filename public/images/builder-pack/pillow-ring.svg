@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-labelledby="title desc">
+  <title id="title">Pillow ring seat</title><desc id="desc">A soft lime and teal circular floor cushion with a clear sitting centre.</desc>
+  <defs><radialGradient id="fabric" cx="38%" cy="25%"><stop stop-color="#e9ffad"/><stop offset=".45" stop-color="#9cff00"/><stop offset="1" stop-color="#327500"/></radialGradient><filter id="shadow"><feGaussianBlur stdDeviation="8"/></filter></defs>
+  <ellipse cx="160" cy="180" rx="122" ry="23" fill="#001b19" opacity=".65" filter="url(#shadow)"/>
+  <path d="M37 137c0-58 55-104 123-104s123 46 123 104c0 34-52 61-123 61S37 171 37 137Z" fill="url(#fabric)" stroke="#eaffc3" stroke-width="5"/>
+  <ellipse cx="160" cy="123" rx="61" ry="43" fill="#075b59" stroke="#bffff9" stroke-width="5"/>
+  <ellipse cx="160" cy="120" rx="42" ry="27" fill="#032f31"/>
+  <g fill="none" stroke="#ecffc8" stroke-width="3" opacity=".7"><path d="M59 105c20 8 34 12 49 13M212 118c18-2 32-7 49-15M84 166c18-9 27-14 39-26M196 140c12 12 22 18 40 25"/></g>
+  <circle cx="67" cy="137" r="5" fill="#63eaff"/><circle cx="253" cy="137" r="5" fill="#63eaff"/>
+</svg>
