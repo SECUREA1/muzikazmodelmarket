@@ -816,6 +816,29 @@
       "description": "Landscape piece for the in-game map builder."
     },
     {
+      "id": "builder-pillow-ring",
+      "name": "Pillow Ring Seat",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/builder-pack/pillow-ring.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "interior",
+      "buildAssetId": "pillow-ring",
+      "behavior": "seat",
+      "seatOffset": [
+        0,
+        0.65,
+        0
+      ],
+      "exitOffset": [
+        1.15,
+        0,
+        0
+      ],
+      "description": "A gameplay-ready floor seat. Walk close and press E, or use the mobile action, to sit and stand."
+    },
+    {
       "id": "builder-sofa",
       "name": "Cloud Sofa",
       "owner": "MUZIKAZ",

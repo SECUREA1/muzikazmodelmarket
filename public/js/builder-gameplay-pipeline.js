@@ -68,7 +68,17 @@ export function normalizeBuilderObject(object = {}, index = 0) {
       prompt: functional.prompt || null,
       respawn: Math.max(0, finite(functional.respawn)),
       health: Math.max(1, finite(functional.health, 100)),
-      damage: Math.max(0, finite(functional.damage, 10))
+      damage: Math.max(0, finite(functional.damage, 10)),
+      seatOffset: behavior === 'seat' ? [
+        finite(functional.seatOffset?.[0] ?? functional.seatOffset?.x),
+        finite(functional.seatOffset?.[1] ?? functional.seatOffset?.y, .65),
+        finite(functional.seatOffset?.[2] ?? functional.seatOffset?.z)
+      ] : null,
+      exitOffset: behavior === 'seat' ? [
+        finite(functional.exitOffset?.[0] ?? functional.exitOffset?.x, 1.15),
+        finite(functional.exitOffset?.[1] ?? functional.exitOffset?.y),
+        finite(functional.exitOffset?.[2] ?? functional.exitOffset?.z)
+      ] : null
     },
     movement: copy(object.movementSettings || functional.movement || {}),
     vehicle: copy(object.vehicleSettings || functional.vehicle || null),
@@ -133,6 +143,7 @@ export class BuilderGameplayRuntime {
     }, null);
   }
   prompt(playerPosition) {
+    if (this.player.seatedObjectId) return 'E — Stand up';
     for (const key of ['f', 'e']) { const hit = this.nearest(playerPosition, key); if (hit) return `${key.toUpperCase()} — ${hit.actor.gameplay.prompt || (key === 'f' ? 'Enter Vehicle' : DEFAULT_PROMPTS[hit.actor.gameplay.behavior] || 'Interact')}`; }
     return '';
   }
@@ -158,6 +169,7 @@ export class BuilderGameplayRuntime {
       const actor = this.actor(this.player.seatedObjectId), instance = this.instances.get(this.player.seatedObjectId);
       this.player.seatedObjectId = null;
       instance?.setSeated?.(false, this.player, actor);
+      this.effects.seat?.(false, actor, this.player);
       const message = 'Stood up'; this.feedback(message, actor);
       return { actor, handled: true, message, seated: false };
     }
@@ -179,7 +191,12 @@ export class BuilderGameplayRuntime {
       message = puttingAway ? 'Put away' : 'Held — press E to use or put away';
       if (config.respawn && !puttingAway) instance?.respawnAfter?.(config.respawn);
     }
-    else if (config.behavior === 'seat') { this.player.seatedObjectId=actor.objectId; instance?.setSeated?.(true,this.player,actor); message='Seated — press E or tap STAND UP'; }
+    else if (config.behavior === 'seat') {
+      const previousSeat = this.player.seatedObjectId;
+      if (previousSeat && previousSeat !== actor.objectId) this.instances.get(previousSeat)?.setSeated?.(false, this.player, this.actor(previousSeat));
+      this.player.seatedObjectId=actor.objectId; instance?.setSeated?.(true,this.player,actor); message='Seated — press E or tap STAND UP';
+      this.effects.seat?.(true, actor, this.player);
+    }
     else if (config.behavior === 'switch') { const on=!this.player.switches[actor.objectId]; this.player.switches[actor.objectId]=on; instance?.setSwitched?.(on); message=on?'Switched on':'Switched off'; }
     else if (config.behavior === 'heal') this.player.health = Math.min(this.player.maxHealth, this.player.health + value);
     else if (config.behavior === 'door') { instance.open = !instance.open; instance?.setDoorOpen?.(instance.open); }
@@ -197,7 +214,7 @@ export class BuilderGameplayRuntime {
     }
     instance?.playClip?.(actor.animation.interactionClip, false);
     this.effects.action?.(config.action, config.value, actor); this.feedback(message, actor);
-    return { actor, handled: true, message };
+    return { actor, handled: true, message, ...(config.behavior === 'seat' ? { seated: true } : {}) };
   }
   update(delta, playerPosition) {
     this.elapsed += Math.max(0, finite(delta));

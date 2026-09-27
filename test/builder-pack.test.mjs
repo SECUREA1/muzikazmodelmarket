@@ -27,21 +27,23 @@ test('in-game Tools and Drop Backpack expose the complete map-building pack', as
   const buildAssets = manifest.assets.filter((asset) => asset.buildAssetId);
 
   assert.match(game, /data-rad-build-toggle/);
+  assert.match(game, /data-rad-seats-toggle/);
+  assert.match(game, /SEAT_ASSET_IDS/);
   assert.match(game, /Build map & game/);
   assert.match(game, /muzikaz\.builder\.buildTray/);
   assert.match(game, /deployPlayableBuilderAsset\(asset\)/);
   assert.match(game, /BUILD_ASSETS\.length}\/\$\{BUILD_ASSETS\.length} Builder items available/);
   assert.match(game, /data-rad-pack-builder/);
   assert.match(game, /\.\.\.tray\.map\(item=>\['Build asset'/);
-  assert.equal(buildAssets.length, 78);
+  assert.equal(buildAssets.length, 79);
   assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'landscape').length, 13);
-  assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'interior').length, 13);
+  assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'interior').length, 14);
   assert.ok(buildAssets.every((asset) => ['props','vehicles'].includes(asset.type) && asset.thumbnailUrl));
   for (const category of ['terrain','plants','buildings','props','weapons','characters','creatures','avatar','enemy','interactive','vehicles']) {
     assert.ok(buildAssets.some((asset) => asset.builderCategory === category), `${category} items are available in game`);
     assert.match(game, new RegExp(`'${category}'`), `${category} has an in-game filter`);
   }
-  for (const id of ['corsair-aircraft','hero-spawn','rad-tox','terrain-cliff','plasma-sword','forest-ranger','emerald-slime','teleport-pad']) {
+  for (const id of ['pillow-ring','sofa','armchair','corsair-aircraft','hero-spawn','rad-tox','terrain-cliff','plasma-sword','forest-ranger','emerald-slime','teleport-pad']) {
     assert.ok(buildAssets.some((asset) => asset.buildAssetId === id), `${id} is included in the Drop Backpack`);
     assert.match(game, new RegExp(`${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\|`), `${id} is included in the Tools picker`);
   }
