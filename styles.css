@@ -2837,6 +2837,7 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 .members-page .benefit-grid h3{margin:0;font-size:clamp(28px,3vw,38px)}
 .members-page .benefit-grid p{margin:0 0 8px;color:var(--member-muted)}
 .members-page .benefit-grid .btn{width:100%;margin-top:auto}
+.model-explorer-page .house-start-button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}.model-explorer-page .house-start-button:active{transform:scale(.98)}
 .members-page :where(.designer-layout,.owned-assets-layout,.checkout-layout,.ar-viewer-layout,.admin-layout){
   width:96%;
   min-width:0;
