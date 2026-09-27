@@ -50,7 +50,10 @@ export class EnvironmentLoader {
     // is part of the world root, so the standard collision pass automatically
     // makes buildings, trees, rails, cover and set dressing solid in Test Map.
     const add = (size, x, z, color, y = size[1] / 2, rotation = 0) => { const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), new THREE.MeshStandardMaterial({ color, roughness:.82, metalness:.08 })); mesh.name = `BUILDER_TEMPLATE_${layout}`; mesh.position.set(x, heightAt(x, z) + y, z); mesh.rotation.y = rotation; mesh.castShadow = mesh.receiveShadow = true; root.add(mesh); return mesh; };
-    if(layout==='vendor-street')[-12,-6,0,6,12].forEach((z,i)=>{add([5,3.2,4],-15,z,i%2?0x9e5845:0x477786);add([5,3.2,4],15,z,i%2?0x7650a1:0xa97a3b)});
+    if(layout==='loft'){add([30,.25,24],0,0,0x66736b,.12);add([30,4,.35],0,-12,0x39443f,2);add([.35,4,24],-15,0,0x39443f,2);add([10,.3,8],8,5,0x7c876f,.15)}
+    else if(layout==='suite'){add([32,.2,28],0,0,0x6a7063,.1);[-8,8].forEach(x=>add([.3,3.2,20],x,2,0x41483e,1.6));add([16,3.2,.3],0,-5,0x41483e,1.6)}
+    else if(layout==='courtyard'){[-18,18].forEach(x=>add([.45,2.6,36],x,0,0x58664d,1.3));[-18,18].forEach(z=>add([36,2.6,.45],0,z,0x58664d,1.3));for(let i=0;i<8;i++){const a=i/8*Math.PI*2;add([2.4,.55,2.4],Math.cos(a)*11,Math.sin(a)*11,0x476f3c,.28)}}
+    else if(layout==='vendor-street')[-12,-6,0,6,12].forEach((z,i)=>{add([5,3.2,4],-15,z,i%2?0x9e5845:0x477786);add([5,3.2,4],15,z,i%2?0x7650a1:0xa97a3b)});
     else if(layout==='creator-studios')[-12,-4,4,12].forEach((x,i)=>add([6,3.8,7],x,8,i%2?0x476779:0x6c4e79));
     else if(layout==='market-square')for(let i=0;i<10;i++){const a=i/10*Math.PI*2;add([3,2.1,2.2],Math.cos(a)*13,Math.sin(a)*13,i%2?0xc0783e:0x4c8c69,.95,-a)}
     else if(layout==='mountain-pass')[-16,-12,12,16].forEach((x,i)=>add([3,5+i%2*2,9],x,i%2?8:-8,0x485044,2));
