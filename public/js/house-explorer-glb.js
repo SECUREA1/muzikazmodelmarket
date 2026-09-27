@@ -20,7 +20,11 @@ const stage = legacyCanvas?.closest('.house-stage');
 const hud = document.querySelector('.house-hud');
 
 if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
-  const localSandbox = new URLSearchParams(location.search).get('sandbox') === '1';
+  const launchParams = new URLSearchParams(location.search);
+  // A test handoff is deliberately a separate launch lane. Requiring both
+  // markers prevents a stale or user-supplied `sandbox` flag from disconnecting
+  // an ordinary multiplayer game.
+  const localSandbox = launchParams.get('sandbox') === '1' && launchParams.get('localFallback') === '1';
   const oldStatus = document.querySelector('#house-status');
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
   const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
@@ -230,21 +234,27 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const BUILDER_IMAGE_CATEGORIES=new Set(['landscape','interior']);
   const builderAssetThumbnail=(id,type)=>BUILDER_IMAGE_CATEGORIES.has(type)?`public/images/builder-pack/${id}.svg`:'public/assets/muzikaz-world-map.svg';
   const buildTrayKey='muzikaz.builder.buildTray'; const readBuildTray=()=>{try{return JSON.parse(localStorage.getItem(buildTrayKey)||'[]');}catch{return[];}};
-  const builderSceneSources=[
+  const builderTestSceneSources=[
     ['muzikaz.environmentBuilder.playScene.v1',sessionStorage],
-    ['muzikaz.environmentBuilder.playSceneBackup.v1',localStorage],
+    ['muzikaz.environmentBuilder.playSceneBackup.v1',localStorage]
+  ];
+  const builderSavedSceneSources=[
     ['muzikaz.environmentBuilder.scenes.v2',localStorage],
     ['muzikaz.environmentBuilder.scenes.v1',localStorage]
   ];
   const localBuilderMapsKey='muzikaz.environmentBuilder.localMaps.v1';
   function readSavedBuilderScenes(){
     const query=new URLSearchParams(location.search),requested=query.get('house')||query.get('environment'),scenes=[];
-    for(const [key,storage] of builderSceneSources){try{const built=JSON.parse(storage.getItem(key)||'null');if(built?.id&&Array.isArray(built.objects)&&(!key.includes('playScene')||!requested||built.id===requested))scenes.push(built);}catch{/* A corrupt draft must not hide the other locally saved maps. */}}
+    // Test payloads never enter the normal multiplayer registry. In sandbox
+    // mode consume only the specifically requested payload, then clear both
+    // copies so it cannot shadow a later shared-world launch.
+    if(localSandbox){for(const [key,storage] of builderTestSceneSources){try{const built=JSON.parse(storage.getItem(key)||'null');if(built?.id&&Array.isArray(built.objects)&&built.id===requested){scenes.push(built);builderTestSceneSources.forEach(([testKey,testStorage])=>testStorage.removeItem(testKey));break;}}catch{/* A corrupt test copy falls through to the backup or saved map. */}}}
+    for(const [key,storage] of builderSavedSceneSources){try{const built=JSON.parse(storage.getItem(key)||'null');if(built?.id&&Array.isArray(built.objects))scenes.push(built);}catch{/* A corrupt draft must not hide the other locally saved maps. */}}
     try{const maps=JSON.parse(localStorage.getItem(localBuilderMapsKey)||'[]');if(Array.isArray(maps))scenes.push(...maps.filter(map=>map?.id&&Array.isArray(map.objects)));}catch{/* Legacy single-map storage remains available. */}
     const unique=new Map();scenes.forEach(scene=>{if(!unique.has(scene.id))unique.set(scene.id,scene);});return [...unique.values()];
   }
   function addSavedBuilderWorld(){
-    const query=new URLSearchParams(location.search),requested=query.get('house')||query.get('environment'),localFallback=query.has('localFallback');let requestedWorld=null;
+    const query=new URLSearchParams(location.search),requested=query.get('house')||query.get('environment'),localFallback=localSandbox&&query.get('localFallback')==='1';let requestedWorld=null;
     for(const built of readSavedBuilderScenes()){
       const serverWorld=registry.find(built.id);
       if(serverWorld?.builderScene&&!(localFallback&&built.id===requested)){if(built.id===requested)requestedWorld=serverWorld;continue;}
