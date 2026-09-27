@@ -249,6 +249,11 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(game, /key\.includes\('playScene'\)\?sessionStorage:localStorage/);
   assert.match(game, /readSavedBuilderScenes/);
+  const refreshStart = game.indexOf('async function refreshLibrary()');
+  const refreshNetwork = game.indexOf('Promise.allSettled', refreshStart);
+  const eagerLocalRestore = game.indexOf('addSavedBuilderWorld();', refreshStart);
+  assert.ok(refreshStart >= 0 && eagerLocalRestore > refreshStart && eagerLocalRestore < refreshNetwork, 'the requested local test map is registered before remote catalog requests can delay startup');
+  assert.match(game, /registry\.all\(\)\[0\]\|\|\{\}/, 'a test map can start without any remote environment as its base');
   assert.match(game, /if\(localSandbox\)return/, 'the local sandbox never polls multiplayer presence');
   assert.match(game, /worldOptions=document\.createDocumentFragment/, 'large map lists are appended without a Firefox argument-limit failure');
   assert.match(game, /Locally saved Builder Map/, 'local builder maps remain in the playable map list when multiplayer publishing is unavailable');

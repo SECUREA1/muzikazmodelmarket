@@ -243,8 +243,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     for(const built of readSavedBuilderScenes()){
       const serverWorld=registry.find(built.id);
       if(serverWorld?.builderScene&&!(localFallback&&built.id===requested)){if(built.id===requested)requestedWorld=serverWorld;continue;}
-      const mappedBase=built.layoutMeta?.environmentId&&registry.find(built.layoutMeta.environmentId),base=serverWorld||mappedBase||registry.find('studio-ridge-out')||registry.find('muzikaz-main')||registry.all()[0];
-      if(!base)continue;
+      const mappedBase=built.layoutMeta?.environmentId&&registry.find(built.layoutMeta.environmentId),base=serverWorld||mappedBase||registry.find('studio-ridge-out')||registry.find('muzikaz-main')||registry.all()[0]||{};
       const isRequestedFallback=localFallback&&built.id===requested,world={...base,id:built.id,name:built.name||'My Builder Map',label:isRequestedFallback?'Local playable fallback':'Locally saved Builder Map',category:'Builder maps',description:`${built.name||'Creator map'} · ${built.objects.length} placed items · exact locally saved layout and gameplay.`,source:'local-builder',builderScene:built,proceduralLand:true,modelUrl:'',modelUrls:[],playableSize:0,scale:1,spaceScale:1,rotation:{x:0,y:0,z:0},collisionMode:'auto',levelOrder:0};
       const existing=registry.all().findIndex(item=>item.id===world.id);if(existing>=0)registry.all()[existing]=world;else registry.all().unshift(world);if(built.id===requested)requestedWorld=world;
     }
@@ -708,6 +707,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   function renderLibrary() { renderPicker(); }
   async function refreshLibrary() {
+    // Test Map is browser-local and must not depend on either remote catalog.
+    // Register it before awaiting network work so startup can resolve the exact
+    // requested scene even when refreshLibrary reaches its timeout. Re-register
+    // after refresh as well because EnvironmentRegistry.refresh replaces its list.
+    addSavedBuilderWorld();
     const [worldResult, packResult] = await Promise.allSettled([
       registry.refresh(),
       fetch('public/models/backpack-assets.json', { cache:'no-store' }).then((response) => {
