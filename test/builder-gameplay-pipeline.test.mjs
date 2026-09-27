@@ -144,3 +144,19 @@ test('held items can be dropped into the world and picked up again', () => {
   assert.deepEqual(events,[['held',true],['dropped',{x:3,y:0,z:-2}],['active',true]]);
   assert.equal(runtime.interact('e',{x:3,y:0,z:-2}).handled,true);
 });
+
+test('seat behavior supports sitting and standing with one desktop or mobile action', () => {
+  const changes = [];
+  const runtime = new BuilderGameplayRuntime({
+    manifest: compileBuilderScene({ objects: [{ id:'pillow', modelId:'pillow-ring', objectType:'seat', position:{x:0,y:0,z:0}, functionalSettings:{behavior:'seat',seatOffset:[0,.65,0],interactionKey:'e'} }] })
+  });
+  runtime.register('pillow', { setSeated: value => changes.push(value) });
+  const sitting = runtime.interact('e', {x:0,y:0,z:0});
+  assert.equal(sitting.seated, undefined);
+  assert.equal(runtime.player.seatedObjectId, 'pillow');
+  assert.match(runtime.prompt({x:0,y:0,z:0}), /Sit down/);
+  const standing = runtime.interact('e', {x:100,y:0,z:100});
+  assert.equal(standing.seated, false);
+  assert.equal(runtime.player.seatedObjectId, null);
+  assert.deepEqual(changes, [true, false]);
+});
