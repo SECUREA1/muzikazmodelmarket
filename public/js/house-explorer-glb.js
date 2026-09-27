@@ -1173,6 +1173,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         // The map, player spawn, controls, and core game systems share this one
         // initialization promise so no listener can start a second deployment.
         await openHouseMap();
+        // Re-apply the world's resolved spawn immediately before gameplay starts.
+        // This was part of the known-good multiplayer launch flow at 9edd0a3.
+        // Loading can yield while the world and live-room state are prepared, so
+        // never let a stale pre-load player transform become the first position
+        // published to the room or used by the encounter.
+        resetPlayer();
         await toxicBubbleSystem.begin();
         gameStartScreen?.classList.add('is-hidden');
         scheduleGameResize();

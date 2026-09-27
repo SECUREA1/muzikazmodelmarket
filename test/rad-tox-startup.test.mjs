@@ -15,4 +15,9 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   assert.match(game, /settleWithin\(refreshLibrary\(\), 5000/, 'optional startup catalog work cannot hold the engine indefinitely');
   assert.match(game, /gameInitializationPromise = null/, 'a failed game initialization can be started again');
   assert.match(game, /addEventListener\('muzikaz:rad-tox-request', startRadToxGame\);/, 'the loaded engine accepts a retry request');
+  assert.match(
+    game,
+    /await openHouseMap\(\);[\s\S]{0,500}resetPlayer\(\);[\s\S]{0,100}await toxicBubbleSystem\.begin\(\);/,
+    'a launch resets to the loaded world spawn before gameplay and multiplayer presence start'
+  );
 });
