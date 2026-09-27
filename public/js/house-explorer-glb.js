@@ -433,7 +433,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function updateLandingFrame(spawn) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); landingFrame.clear(); const ring = new THREE.Mesh(new THREE.RingGeometry(.52, .72, 48), new THREE.MeshBasicMaterial({ color: 0x9cff00, side: THREE.DoubleSide, transparent: true, opacity: .88 })); ring.rotation.x = -Math.PI / 2; ring.position.set(alignedSpawn.x, alignedSpawn.y + .018, alignedSpawn.z); const grid = new THREE.GridHelper(1.55, 4, 0x9cff00, 0x477400); grid.position.set(alignedSpawn.x, alignedSpawn.y + .022, alignedSpawn.z); grid.material.transparent = true; grid.material.opacity = .62; landingFrame.add(ring, grid); }
   function resetPlayer(spawn = player.spawn, rotationY = player.yaw) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); player.spawn.copy(alignedSpawn); lastSafePlayerPosition.copy(alignedSpawn); hasSafePlayerPosition = true; floorLockCooldown = .35; player.velocity.set(0,0,0); player.yaw = rotationY || 0; player.pitch = 0; player.eyeHeight = player.height; player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.radius, alignedSpawn.z), new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.height, alignedSpawn.z), player.radius); playerRig.position.copy(alignedSpawn); playerRig.rotation.set(0, player.yaw, 0); camera.position.set(0, renderer.xr.isPresenting ? 0 : player.eyeHeight, 0); camera.rotation.set(0,0,0); updateLandingFrame(alignedSpawn); }
   async function loadNextEnvironment() { const worlds = registry.all(); if (!worlds.length) return; const scriptedWorld = registry.find(LEVEL_WORLD_IDS[toxicBubbleSystem.level]); const currentIndex = Math.max(0, worlds.findIndex((world) => world.id === activeEnvironment?.id)); const next = scriptedWorld || worlds[(currentIndex + 1) % worlds.length]; setStatus(`Environment clear — traveling to ${next.name}.`); await loadById(next.id); }
-  async function loadById(id, { fallback = true } = {}) { const env = registry.find(id) || registry.all()[0]; if (!env) throw new Error('No playable environment is available yet. Please try again.'); window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), roomId:env.id }; localStorage.setItem('muzikazMultiplayerWorld', env.id); const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); activeEnvironment = env; loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete ${env.builderScene||env.proceduralLand?'builder land':'GLB world'}…`); try { const result = await envLoader.load(env); if (!result) throw new Error(`${env.name} loading was interrupted.`); const builderRuntime=loadBuilderDecor(env); currentSpaceScale = result.scale; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; const spawn=builderRuntime?.worldSpawn||result.spawn;activeWorldSpawn={position:spawn.position.clone(),rotationY:Number(spawn.rotationY)||0};resetPlayer(activeWorldSpawn.position,activeWorldSpawn.rotationY); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. ${builderRuntime?`${builderRuntime.objectCount} builder objects and ${builderRuntime.actorCount} gameplay actors deployed. `:''}Press Start game or click the canvas to walk.`); const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source, builderRuntime }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); return result; } catch (error) { console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); return loadById(fallbackEnv.id, { fallback: false }); } if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); throw error; } }
+  async function loadById(id, { fallback = true } = {}) { const env = registry.find(id) || registry.all()[0]; if (!env) return; window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), roomId:env.id }; localStorage.setItem('muzikazMultiplayerWorld', env.id); const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); activeEnvironment = env; loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete ${env.builderScene||env.proceduralLand?'builder land':'GLB world'}…`); try { const result = await envLoader.load(env); if (!result) return; const builderRuntime=loadBuilderDecor(env); currentSpaceScale = result.scale; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; const spawn=builderRuntime?.worldSpawn||result.spawn;activeWorldSpawn={position:spawn.position.clone(),rotationY:Number(spawn.rotationY)||0};resetPlayer(activeWorldSpawn.position,activeWorldSpawn.rotationY); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. ${builderRuntime?`${builderRuntime.objectCount} builder objects and ${builderRuntime.actorCount} gameplay actors deployed. `:''}Press Start game or click the canvas to walk.`); const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source, builderRuntime }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); await loadById(fallbackEnv.id, { fallback: false }); return; } if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); } }
   let cachedAvatars = [];
   let cachedCatalogModels = [];
   let backpackAssets = [];
@@ -1125,32 +1125,20 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   setupVRControls().catch((error) => console.warn('[MUZIKAZ VR]', error));
   const visibilityObserver = window.IntersectionObserver ? new IntersectionObserver(([entry]) => { viewActive = Boolean(entry?.isIntersecting); }, { threshold: 0.05 }) : null; visibilityObserver?.observe(stage); document.addEventListener('visibilitychange', () => { viewActive = !document.hidden; });
-  let renderedWidth = 0;
-  let renderedHeight = 0;
-  let renderedPixelRatio = 0;
   function resize() {
     const width = Math.max(1, Math.floor(stage.clientWidth || stage.offsetWidth || document.documentElement.clientWidth || window.innerWidth || 320));
     const height = Math.max(1, Math.floor(stage.clientHeight || stage.offsetHeight || document.documentElement.clientHeight || window.innerHeight || 480));
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, performanceMode ? 1 : quality.pixelRatio);
-    // A browser-level two-finger pinch emits a burst of visualViewport resize
-    // events even though the stage's CSS size normally stays unchanged. Avoid
-    // reallocating the WebGL drawing buffer for every event: on mobile that can
-    // exhaust the graphics context and make the whole game appear to crash.
-    if (width === renderedWidth && height === renderedHeight && pixelRatio === renderedPixelRatio) return;
-    renderedWidth = width;
-    renderedHeight = height;
-    renderedPixelRatio = pixelRatio;
-    renderer.setPixelRatio(pixelRatio);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, performanceMode ? 1 : quality.pixelRatio));
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
   }
   let resizeTimer = 0;
-  let resizeFrame = 0;
   function scheduleGameResize() {
     window.clearTimeout(resizeTimer);
-    if (!resizeFrame) resizeFrame = window.requestAnimationFrame(() => { resizeFrame = 0; resize(); });
-    resizeTimer = window.setTimeout(resize, 180);
+    resize();
+    resizeTimer = window.setTimeout(resize, 120);
+    window.setTimeout(resize, 360);
   }
   if (window.ResizeObserver) new ResizeObserver(scheduleGameResize).observe(stage);
   window.addEventListener('resize', scheduleGameResize);
@@ -1228,9 +1216,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         scheduleGameResize();
         setStatus('RAD-TOX level 1 is active with toxic bubbles, blue ghosts, and snakes.');
         publishGameStage('game-active', 'Game ready.');
-        // Presence clients wait for this flag so the first state they publish
-        // contains the resolved room and spawn, rather than a pre-load default.
-        window.MUZIKAZ_GAMEPLAY_READY = true;
         document.dispatchEvent(new CustomEvent('muzikaz:gameplay-ready'));
       } catch (error) {
         const message = error?.message || 'Unable to load the MUZIKAZ house game.';
