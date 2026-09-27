@@ -4,7 +4,6 @@
   var requested = false;
   var engineReady = false;
   var loadTimer = 0;
-  var moduleElement = null;
   var button = document.querySelector('[data-house-start]');
   var overlay = document.getElementById('house-game-start');
   var status = document.getElementById('house-game-load-status');
@@ -18,12 +17,7 @@
     if (button) { button.disabled = false; button.textContent = 'Try again'; }
   }
   function showStall() {
-    // A module request can remain pending forever on captive portals and after
-    // mobile network changes. Release the launch lock so the player can retry
-    // rather than leaving the members-area game on an endless loading screen.
-    if (moduleElement && !engineReady) moduleElement.remove();
-    moduleElement = null;
-    showError('The game engine took too long to load. Check your connection.');
+    if (status) status.textContent = 'The game engine is still loading. Check your connection; this screen will continue automatically.';
   }
   function begin() {
     if (requested) return;
@@ -36,17 +30,10 @@
       document.dispatchEvent(event('muzikaz:rad-tox-request'));
       return;
     }
-    // Let the browser paint the loading surface before it parses Three.js or
-    // decodes a world. This avoids an unpainted white canvas on mobile. Reuse
-    // the module element so a double tap can never create two WebGL renderers.
-    moduleElement = moduleElement || document.createElement('script');
-    moduleElement.type = 'module'; moduleElement.src = 'public/js/house-explorer-glb.js';
-    moduleElement.onerror = function () { moduleElement = null; showError('The game engine could not be loaded.'); };
-    window.requestAnimationFrame(function () {
-      window.requestAnimationFrame(function () {
-        if (!moduleElement.isConnected) document.body.appendChild(moduleElement);
-      });
-    });
+    var module = document.createElement('script');
+    module.type = 'module'; module.src = 'public/js/house-explorer-glb.js';
+    module.onerror = function () { showError('The game engine could not be loaded.'); };
+    document.body.appendChild(module);
     loadTimer = window.setTimeout(showStall, 30000);
   }
   if (button) button.addEventListener('click', function (click) { click.preventDefault(); begin(); });
