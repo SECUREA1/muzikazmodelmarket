@@ -152,11 +152,13 @@ test('seat behavior supports sitting and standing with one desktop or mobile act
   });
   runtime.register('pillow', { setSeated: value => changes.push(value) });
   const sitting = runtime.interact('e', {x:0,y:0,z:0});
-  assert.equal(sitting.seated, undefined);
+  assert.equal(sitting.seated, true);
   assert.equal(runtime.player.seatedObjectId, 'pillow');
-  assert.match(runtime.prompt({x:0,y:0,z:0}), /Sit down/);
+  assert.match(runtime.prompt({x:0,y:0,z:0}), /Stand up/);
   const standing = runtime.interact('e', {x:100,y:0,z:100});
   assert.equal(standing.seated, false);
   assert.equal(runtime.player.seatedObjectId, null);
   assert.deepEqual(changes, [true, false]);
+  assert.deepEqual(runtime.actor('pillow').gameplay.seatOffset, [0,.65,0]);
+  assert.deepEqual(runtime.actor('pillow').gameplay.exitOffset, [1.15,0,0]);
 });
