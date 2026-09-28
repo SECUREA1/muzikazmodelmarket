@@ -23,4 +23,8 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   );
   assert.match(game, /activeWorldSpawn=\{position:spawn\.position\.clone\(\),rotationY:Number\(spawn\.rotationY\)\|\|0\};resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\)/, 'map loading preserves the resolved GLB or Builder spawn for game start');
   assert.doesNotMatch(game, /await openHouseMap\(\);[\s\S]{0,700}resetPlayer\(\);/, 'game start never resets the spawn without an explicit map argument');
+  assert.match(game, /if\(localSandbox\|\|multiplayerWorldLoading\)return/, 'presence polling pauses while a replacement multiplayer world is loading');
+  assert.match(game, /resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\);[\s\S]{0,500}roomId:env\.id,position:/, 'the new room is announced only after its spawn is loaded and applied');
+  assert.match(game, /if\(previousRoom!==env\.id\)window\.dispatchEvent/, 'multiplayer reconnects only after a successful world transition');
+  assert.match(game, /seatedBuilderObject=null;builderGameplay\.player\.seatedObjectId=null/, 'a seat from the previous world cannot pin the player during loading');
 });
