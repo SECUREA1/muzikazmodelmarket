@@ -1,0 +1,19 @@
+{
+  "catalog": "IonCore RPG Supplies",
+  "currency": "MZK",
+  "source": "SECUREA1/ioncorestore",
+  "items": [
+    {"id":"ion-health-vial","name":"Ion Health Vial","category":"health","price":25,"rarity":"common","icon":"✚","color":"#ff4967","effect":{"stat":"health","amount":35},"description":"Restores 35 health instantly."},
+    {"id":"core-medkit","name":"Core Medkit","category":"health","price":70,"rarity":"rare","icon":"▣","color":"#ff6b78","effect":{"stat":"health","amount":100},"description":"Fully restores health in the field."},
+    {"id":"nano-repair-gel","name":"Nano Repair Gel","category":"health","price":45,"rarity":"uncommon","icon":"⬡","color":"#ff8f70","effect":{"stat":"health","amount":60},"description":"Repairs wounds with regenerative nanites."},
+    {"id":"plasma-water","name":"Plasma Water","category":"hydration","price":15,"rarity":"common","icon":"◒","color":"#42dcff","effect":{"stat":"hydration","amount":40},"description":"Replenishes 40 hydration."},
+    {"id":"cryo-canteen","name":"Cryo Canteen","category":"hydration","price":38,"rarity":"uncommon","icon":"❄","color":"#64f4ff","effect":{"stat":"hydration","amount":80},"description":"Restores 80 hydration with a cooling boost."},
+    {"id":"reactor-ration","name":"Reactor Ration","category":"nutrition","price":20,"rarity":"common","icon":"◆","color":"#ffd34e","effect":{"stat":"nutrition","amount":45},"description":"A compact meal restoring 45 nutrition."},
+    {"id":"protein-circuit","name":"Protein Circuit","category":"nutrition","price":42,"rarity":"uncommon","icon":"▰","color":"#ffad32","effect":{"stat":"nutrition","amount":85},"description":"High-density fuel restoring 85 nutrition."},
+    {"id":"volt-cell","name":"Volt Energy Cell","category":"energy","price":25,"rarity":"common","icon":"ϟ","color":"#caff49","effect":{"stat":"energy","amount":40},"description":"Recharges 40 energy for sprinting and tools."},
+    {"id":"overdrive-canister","name":"Overdrive Canister","category":"energy","price":60,"rarity":"rare","icon":"⚡","color":"#baff39","effect":{"stat":"energy","amount":100},"description":"Fully recharges energy and gets you moving."},
+    {"id":"antidote-ampoule","name":"RAD Antidote","category":"recovery","price":55,"rarity":"rare","icon":"☣","color":"#9cff57","effect":{"stat":"toxicity","amount":-65},"description":"Purges 65 toxicity from the body."},
+    {"id":"focus-stim","name":"Focus Stim","category":"recovery","price":48,"rarity":"uncommon","icon":"◎","color":"#b48cff","effect":{"stat":"focus","amount":55},"description":"Restores 55 focus for abilities and aim."},
+    {"id":"ioncore-survival-pack","name":"IonCore Survival Pack","category":"bundle","price":180,"rarity":"legendary","icon":"⬢","color":"#ff3df2","effect":{"stat":"all","amount":100},"description":"Fully replenishes every body system and clears toxicity."}
+  ]
+}
