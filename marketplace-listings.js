@@ -9,7 +9,11 @@
   const api = async (path, options = {}) => {
     const headers = { Accept: 'application/json', ...(options.headers || {}) };
     if (owner()) headers['X-Wallet-Address'] = owner();
-    const response = await fetch(path, { ...options, headers, cache: 'no-store' });
+    // Use the shared API connection when the storefront is hosted separately
+    // from the persistent marketplace service. The public listing request does
+    // not require a wallet, so visitors can browse every seller before login.
+    const request = window.MUZIKAZ_API?.fetch || window.fetch.bind(window);
+    const response = await request(path, { ...options, headers, cache: 'no-store' });
     const result = await response.json();
     if (!response.ok || result.success === false) throw new Error(result.message || 'The user marketplace is unavailable.');
     return result.data;
@@ -23,7 +27,8 @@
     setStatus('Loading every active user listing…');
     const listings = await api('/api/market/listings');
     shelves.forEach((shelf) => { shelf.innerHTML = listings.length ? listings.map(card).join('') : '<p class="user-market-empty">No user items are listed yet. Active Backpack listings will appear here automatically.</p>'; });
-    setStatus(`${listings.length} active user listing${listings.length === 1 ? '' : 's'} shown from the shared MUZIKAZ market.`);
+    const sellers = new Set(listings.map((listing) => listing.sellerId)).size;
+    setStatus(`${listings.length} active user listing${listings.length === 1 ? '' : 's'} shown from ${sellers} seller${sellers === 1 ? '' : 's'} in the shared MUZIKAZ market.`);
   }
   async function buy(button) {
     if (!owner() || owner().startsWith('guest-')) throw new Error('Connect your member wallet before buying a user listing.');
