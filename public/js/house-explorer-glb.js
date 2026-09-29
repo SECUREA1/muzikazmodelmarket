@@ -592,7 +592,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const texture=await new THREE.TextureLoader().loadAsync(imageUrl);texture.colorSpace=THREE.SRGBColorSpace;
     const color=new THREE.Color(config.color||'#a8ff18'),depth=THREE.MathUtils.clamp((Number(config.depth)||18)/100,.06,1.2),bevel=THREE.MathUtils.clamp((Number(config.bevel)||4)/40,0,.25);
     const root=new THREE.Group(),body=new THREE.Mesh(new THREE.BoxGeometry(1.25+bevel,1.25+bevel,depth),new THREE.MeshStandardMaterial({color,roughness:config.material==='metal'?.22:.58,metalness:config.material==='metal'?.72:.08,emissive:config.material==='emissive'?color.clone().multiplyScalar(.35):0x000000,emissiveIntensity:config.material==='emissive'?.75:0}));
-    const face=new THREE.Mesh(new THREE.PlaneGeometry(1.2,1.2),new THREE.MeshBasicMaterial({map:texture,transparent:true,alphaTest:.02,side:THREE.DoubleSide}));face.position.z=depth/2+.004;root.add(body,face);root.name=`Custom_Item_${asset.id}`;root.userData.customItem=asset;root.scale.x=config.mirrored?-1:1;root.rotation.set(THREE.MathUtils.degToRad(Number(config.tilt)||0),THREE.MathUtils.degToRad(Number(config.orientation)||0),0);root.position.copy(floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)).multiplyScalar(2))));root.position.y+=.66;root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});placedAvatars.add(root);addAvatarCollider(root);return root;
+    const face=new THREE.Mesh(new THREE.PlaneGeometry(1.2,1.2),new THREE.MeshBasicMaterial({map:texture,transparent:true,alphaTest:.02,side:THREE.DoubleSide,toneMapped:false}));face.position.z=depth/2+.004;face.renderOrder=2;root.add(body,face);root.name=`Custom_Item_${asset.id}`;root.userData.customItem=asset;root.scale.x=config.mirrored?-1:1;root.rotation.set(THREE.MathUtils.degToRad(Number(config.tilt)||0),THREE.MathUtils.degToRad(Number(config.orientation)||0),0);const floorPoint=floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)).multiplyScalar(2)));root.position.copy(floorPoint);liftObjectAboveFloor(root,floorPoint);root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});placedAvatars.add(root);addAvatarCollider(root);return root;
   }
   function deployPlayableBuilderAsset(asset) {
     const root=createBuilderModel(asset.buildAssetId);
@@ -604,6 +604,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     root.userData.avatar={id:asset.id,name:asset.name,type:'props'};
     root.position.copy(dropPoint);
     root.rotation.y=player.yaw;
+    liftObjectAboveFloor(root,dropPoint);
     root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});
     placedAvatars.add(root);
     addAvatarCollider(root);
@@ -627,7 +628,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     }
     root.name=`Backpack_Land_${modelId}`;root.userData.backpackAsset=asset;root.userData.avatar={id:asset.id,name:asset.name,type:'lands'};
     const dropPoint=floorPointAt(playerRig.position.clone().add(forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)).multiplyScalar(10)));
-    root.position.copy(dropPoint);root.rotation.y=player.yaw;root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});
+    root.position.copy(dropPoint);root.rotation.y=player.yaw;liftObjectAboveFloor(root,dropPoint);root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});
     placedAvatars.add(root);addAvatarCollider(root);return root;
   }
   async function deployBackpackAsset(asset) {

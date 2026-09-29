@@ -10,7 +10,10 @@ const EXCLUDE_RE = /(SKY|PARTICLE|VFX|GRASS_BLADE|WATER|HELPER|AVATAR)/i;
 const NON_SPAWN_FLOOR_RE = /(CEILING|ROOF|CANOPY|AWNING|SKY|WALL|WINDOW|DOOR|RAIL|FENCE|LIGHT|LAMP)/i;
 const FLOOR_NAME_RE = /(FLOOR|GROUND|TERRAIN|PLATFORM|NAVMESH|WALK|STAGE|ROAD|PATH)/i;
 const SPAWN_PRIORITY = ['SPAWN_PLAYER', 'SPAWN_DEFAULT'];
-export const FLOOR_ENTRY_OFFSET = 0.125;
+// The player capsule and placed-object boxes sit two centimetres above the
+// surface. This is enough separation to avoid starting interpenetrated without
+// making avatars or photo-backed props visibly float.
+export const FLOOR_ENTRY_OFFSET = 0.02;
 const WALKABLE_FLOOR_NORMAL_Y = 0.55;
 const CONTAINMENT_THICKNESS = 0.2;
 
@@ -184,8 +187,10 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = []) {
     if (!EXCLUDE_RE.test(name) && object.visible !== false && material?.visible !== false) collisionMeshes.push(object);
   };
   root.traverse(collect);
-  supplementalRoots.filter(Boolean).forEach((supplementalRoot) => supplementalRoot.traverse(collect));
+  // Map guides must be based on the authored world, never a movable item. A
+  // dropped prop outside the boundary must not silently enlarge the world.
   const containment = createMapContainment(collisionMeshes);
+  supplementalRoots.filter(Boolean).forEach((supplementalRoot) => supplementalRoot.traverse(collect));
   const source = new THREE.Group();
   collisionMeshes.forEach((mesh) => {
     const clone = mesh.clone(false);
