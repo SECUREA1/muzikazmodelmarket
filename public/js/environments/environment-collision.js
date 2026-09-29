@@ -12,6 +12,7 @@ const FLOOR_NAME_RE = /(FLOOR|GROUND|TERRAIN|PLATFORM|NAVMESH|WALK|STAGE|ROAD|PA
 const SPAWN_PRIORITY = ['SPAWN_PLAYER', 'SPAWN_DEFAULT'];
 export const FLOOR_ENTRY_OFFSET = 0.125;
 const WALKABLE_FLOOR_NORMAL_Y = 0.55;
+const CONTAINMENT_THICKNESS = 0.2;
 
 function isWalkableFloorHit(hit) {
   if (!hit?.face) return true;
@@ -26,6 +27,48 @@ function isSpawnFloorObject(object) {
 
 function isDedicatedCollider(object) {
   return COLLISION_RE.test(object?.name || '') || object?.userData?.collider === true || object?.userData?.collision === true || object?.userData?.colliderShape === 'mesh';
+}
+
+function collisionIsDisabled(object) {
+  for (let current = object; current; current = current.parent) {
+    if (current.userData?.collisionDisabled === true || current.userData?.collider === false || current.userData?.collision === false) return true;
+  }
+  return false;
+}
+
+function createMapContainment(meshes) {
+  const bounds = new THREE.Box3();
+  meshes.forEach((mesh) => bounds.expandByObject(mesh));
+  if (bounds.isEmpty()) return { root: null, floor: null, bounds };
+  const size = bounds.getSize(new THREE.Vector3());
+  if (!(size.x > 0) || !(size.z > 0)) return { root: null, floor: null, bounds };
+
+  // Older and creator-authored GLBs do not always include a named collision
+  // floor. This invisible shell is a last line of defence beneath the authored
+  // geometry and around its footprint, so every map/layout holds the player.
+  const root = new THREE.Group();
+  root.name = 'MUZIKAZ_MAP_CONTAINMENT';
+  const material = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(size.x, CONTAINMENT_THICKNESS, size.z), material);
+  floor.name = 'COLLIDER_MAP_SAFETY_FLOOR';
+  floor.position.set((bounds.min.x + bounds.max.x) / 2, bounds.min.y - CONTAINMENT_THICKNESS / 2, (bounds.min.z + bounds.max.z) / 2);
+  floor.userData.collider = true;
+  root.add(floor);
+  const wallHeight = Math.max(size.y + 4, 8);
+  const wallY = bounds.min.y + wallHeight / 2;
+  const addWall = (width, depth, x, z) => {
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(width, wallHeight, depth), material);
+    wall.name = 'COLLIDER_MAP_BOUNDARY';
+    wall.position.set(x, wallY, z);
+    wall.userData.collider = true;
+    root.add(wall);
+  };
+  addWall(size.x + CONTAINMENT_THICKNESS * 2, CONTAINMENT_THICKNESS, floor.position.x, bounds.min.z - CONTAINMENT_THICKNESS / 2);
+  addWall(size.x + CONTAINMENT_THICKNESS * 2, CONTAINMENT_THICKNESS, floor.position.x, bounds.max.z + CONTAINMENT_THICKNESS / 2);
+  addWall(CONTAINMENT_THICKNESS, size.z, bounds.min.x - CONTAINMENT_THICKNESS / 2, floor.position.z);
+  addWall(CONTAINMENT_THICKNESS, size.z, bounds.max.x + CONTAINMENT_THICKNESS / 2, floor.position.z);
+  root.updateMatrixWorld(true);
+  return { root, floor, bounds };
 }
 
 function floorHitScore(hit) {
@@ -130,6 +173,7 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = []) {
   const collisionMeshes = [];
   const collect = (object) => {
     if (!object.isMesh || !object.geometry) return;
+    if (collisionIsDisabled(object)) return;
     const name = object.name || '';
     if (isDedicatedCollider(object)) { if (COLLISION_RE.test(name)) object.visible = false; collisionMeshes.push(object); return; }
     visibleMeshes.push(object);
@@ -141,6 +185,7 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = []) {
   };
   root.traverse(collect);
   supplementalRoots.filter(Boolean).forEach((supplementalRoot) => supplementalRoot.traverse(collect));
+  const containment = createMapContainment(collisionMeshes);
   const source = new THREE.Group();
   collisionMeshes.forEach((mesh) => {
     const clone = mesh.clone(false);
@@ -150,10 +195,12 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = []) {
     clone.applyMatrix4(mesh.matrixWorld);
     source.add(clone);
   });
+  if (containment.root) source.add(containment.root);
   const octree = new Octree();
   octree.fromGraphNode(source);
   const floorMeshes = collisionMeshes.filter((mesh) => isSpawnFloorObject(mesh));
-  return { octree, visibleMeshes, collisionMeshes, floorMeshes, dedicatedCollisionCount: collisionMeshes.filter(isDedicatedCollider).length };
+  if (containment.floor) floorMeshes.push(containment.floor);
+  return { octree, visibleMeshes, collisionMeshes, floorMeshes, containment, dedicatedCollisionCount: collisionMeshes.filter(isDedicatedCollider).length };
 }
 
 export function resolveSafeSpawn(root, floorMeshes, metadataSpawn = {}, playerHeight = 1.65) {
