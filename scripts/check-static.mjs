@@ -140,8 +140,10 @@ for (const adminSessionFeature of ["'/api/admin/session'", "'/api/admin/logout'"
 const contractOwnership = await readFile('dist/contract-ownership.js', 'utf8');
 for (const contractFeature of ['eth_getCode', '80ac58cd', 'd9b67a26', '0x70a08231', '0x00fdd58e']) if (!contractOwnership.includes(contractFeature)) throw new Error(`The contract ownership checker is missing ${contractFeature}.`);
 const memberMarket = await readFile('dist/marketplace-listings.js', 'utf8');
-for (const listingFeature of ["api('/api/market/listings')", 'data-buy-user-listing', 'Buy with MZK']) if (!memberMarket.includes(listingFeature)) throw new Error(`The aggregate user marketplace is missing ${listingFeature}.`);
+for (const listingFeature of ["api('/api/market/listings')", 'window.MUZIKAZ_API?.fetch', 'data-buy-user-listing', 'Buy with MZK']) if (!memberMarket.includes(listingFeature)) throw new Error(`The aggregate user marketplace is missing ${listingFeature}.`);
 if (!serverSource.includes("url.pathname === '/api/market/listings' && req.method === 'GET'")) throw new Error('The server must expose every active user marketplace listing.');
+const modelMarket = await readFile('dist/model-market.html', 'utf8');
+if (!modelMarket.includes('public/js/api-connection.js')) throw new Error('The public model market must connect its aggregate listings to the persistent marketplace API.');
 const supportScript = await readFile('dist/script.js', 'utf8');
 for (const supportFeature of ['https://muzikazmodelmarket.onrender.com', "new URL('/ws/support', supportServiceUrl)", "root.id = 'muzikaz-support-chat'"]) {
   if (!supportScript.includes(supportFeature)) throw new Error(`The support chat is missing its Render service connection: ${supportFeature}`);

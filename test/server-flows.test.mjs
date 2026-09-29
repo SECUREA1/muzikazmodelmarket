@@ -120,7 +120,12 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
 
   await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 100 }, items: [{ id: 'new-user-pack', name: 'New User Pack' }], memory: { profile: { displayName: 'New User' } } }) });
   await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': wallet, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'new-user-pack', priceMzk: 75 }) });
-  const listings = await json(`${base}/api/market/listings`); assert.equal(listings.response.status, 200); assert.deepEqual(listings.body.data.map((item) => item.itemName), ['New User Pack']);
+  const secondSeller = '0x6666666666666666666666666666666666666666';
+  await json(`${base}/api/wallet/state`, { method: 'PUT', headers: { 'X-Wallet-Address': secondSeller, 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens: { MZK: 10 }, items: [{ id: 'second-pack', name: 'Second Seller Pack' }], memory: { profile: { displayName: 'Second Seller' } } }) });
+  await json(`${base}/api/market/listings`, { method: 'PUT', headers: { 'X-Wallet-Address': secondSeller, 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: 'second-pack', priceMzk: 25 }) });
+  const listings = await json(`${base}/api/market/listings`);
+  assert.equal(listings.response.status, 200, 'the aggregate listing feed is public');
+  assert.deepEqual(new Set(listings.body.data.map((item) => item.sellerName)), new Set(['New User', 'Second Seller']), 'an anonymous visitor sees active listings from every seller');
 });
 
 test('member entry uses a simple browser-only login', async () => {
