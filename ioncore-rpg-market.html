@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#071009">
+  <meta name="description" content="IonCore in-game RPG marketplace for health, energy, hydration, nutrition and recovery supplies.">
+  <title>IonCore Supply Deck · MUZIKAZ WORLD</title>
+  <link rel="icon" href="muzikaz_bolt_logo_editable.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ioncore-rpg-market.css">
+</head>
+<body>
+  <header class="topbar"><a href="model-market.html">← MUZIKAZ WORLD</a><span>IONCORE // FIELD SUPPLY NETWORK</span><button id="sound-toggle" type="button" aria-pressed="true">SFX ON</button></header>
+  <main>
+    <section class="hero">
+      <div class="hero-copy"><p class="eyebrow">PLAYER-SAFE CONSUMABLES // LIVE CATALOG</p><h1>KEEP YOUR<br><em>CORE ONLINE.</em></h1><p>Stock your in-game pack with tactical health, hydration, nutrition, energy, and recovery supplies. Buy with MZK, then use every item directly from your field inventory.</p><a class="cta" href="#supply-grid">OPEN SUPPLY DECK <span>↓</span></a></div>
+      <div class="reactor" aria-hidden="true"><div class="reactor-ring"><div class="reactor-core">ϟ</div></div><span>IONCORE<br>STABLE</span></div>
+    </section>
+
+    <section class="player-console" aria-labelledby="console-title">
+      <div class="console-heading"><div><p class="eyebrow">LIVE BODY TELEMETRY</p><h2 id="console-title">FIELD STATUS</h2></div><div class="wallet"><small>AVAILABLE BALANCE</small><strong><span id="mzk-balance">500</span> MZK</strong></div></div>
+      <div class="stat-grid" id="stat-grid"></div>
+    </section>
+
+    <section class="market" aria-labelledby="market-title">
+      <div class="market-heading"><div><p class="eyebrow">AUTHORIZED IONCORE PRODUCTS</p><h2 id="market-title">SUPPLY DECK</h2></div><p id="catalog-status" role="status">Loading field supplies…</p></div>
+      <div class="filters" aria-label="Filter supplies">
+        <button class="active" data-filter="all">ALL</button><button data-filter="health">HEALTH</button><button data-filter="hydration">HYDRATION</button><button data-filter="nutrition">NUTRITION</button><button data-filter="energy">ENERGY</button><button data-filter="recovery">RECOVERY</button><button data-filter="bundle">BUNDLES</button>
+      </div>
+      <div class="supply-grid" id="supply-grid"></div>
+    </section>
+
+    <aside class="inventory" aria-labelledby="inventory-title">
+      <div><p class="eyebrow">QUICK-USE BACKPACK</p><h2 id="inventory-title">FIELD INVENTORY</h2></div>
+      <div id="inventory-list" class="inventory-list"></div>
+      <button id="reset-demo" class="reset" type="button">RESET PLAYER DEMO</button>
+    </aside>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <footer><strong>IONCORE × MUZIKAZ</strong><span>Digital gameplay items only · Effects apply to this player profile</span></footer>
+  <script src="ioncore-rpg-market.js"></script>
+</body>
+</html>
