@@ -13,7 +13,7 @@ test('Brick Layer snaps, highlights, collides, and breaks after five hits', asyn
   assert.match(script, /brickMaxHits: 5/, 'bricks require exactly five hits to destroy');
   assert.match(script, /this\.damageBrick\(brickHit\.root\)/, 'laser hits damage a targeted brick');
   assert.match(script, /Brick destroyed after 5 hits/, 'the player receives destruction feedback');
-  assert.match(script, /\['laser', 'spray', 'bat', 'taser', 'toxin', 'dynamite', 'brick'\]/, 'VR tool cycling includes the Brick Layer');
+  assert.match(script, /\['laser', 'pulse-rifle', 'scatter-blaster', 'rail-cannon', 'spray', 'bat', 'taser', 'toxin', 'dynamite', 'brick'\]/, 'VR tool cycling includes the Brick Layer');
   assert.match(script, /if\(this\.tool==='brick'\)return this\.placeBrick\(null,origin,direction\)/, 'VR triggers can place bricks');
   assert.match(script, /data-color-label="Brick colors"/, 'the tools panel offers a dedicated brick paint palette');
   assert.match(script, /data-brick-color=/, 'brick color swatches expose an interactive color value');
