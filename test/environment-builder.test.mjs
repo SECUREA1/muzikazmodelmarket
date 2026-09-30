@@ -126,6 +126,13 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   assert.match(game, /\[data-mobile-fire\][\s\S]{0,180}shootAtReticle\(\)/, 'the dedicated mobile fire button shoots the range reticle');
   assert.match(game, /data-mobile-jump/, 'mobile players retain a separate jump action');
   assert.match(game, /handleRangeShot\(\{origin,direction\}\)/, 'WebXR triggers use each controller aim ray');
+  assert.match(game, /pulse-rifle/);
+  assert.match(game, /scatter-blaster/);
+  assert.match(game, /rail-cannon/);
+  assert.match(game, /RANGE_WEAPONS/);
+  assert.match(game, /muzikaz:range-session-complete/, 'qualification results connect to the wider game event system');
+  assert.match(game, /localStorage\.setItem\(RANGE_BEST_KEY/, 'qualification personal bests persist across game worlds');
+  assert.match(game, /the range and the regular game/, 'range weapons explicitly remain equipped in regular gameplay');
   assert.match(loader, /mesh\.userData\.rangeTarget=true/);
   for (const zone of ['outer','body','bullseye']) assert.match(loader, new RegExp(`'${zone}'`));
 });
