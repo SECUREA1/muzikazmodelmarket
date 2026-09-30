@@ -56,6 +56,25 @@ test('only explicit API_ROUTE_NOT_FOUND permits an activation alias', async () =
   assert.deepEqual(requests.slice(1), ['https://muzikazmodelmarket.onrender.com/api/access/activate', 'https://muzikazmodelmarket.onrender.com/api/access-codes/redeem']);
 });
 
+test('missing member-market routes on a custom domain retry against the hosted API', async () => {
+  const requests = [];
+  const { window, attributes } = loadConnection(async (url) => {
+    requests.push(url);
+    if (url.endsWith('/api/health')) return health();
+    if (url === 'https://static.example/api/market/members') return new Response(JSON.stringify({ success: false, code: 'API_ROUTE_NOT_FOUND', message: 'API route not found.' }), { status: 404, headers: { 'content-type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true, data: [] }), { status: 200, headers: { 'content-type': 'application/json' } });
+  });
+  const response = await window.MUZIKAZ_API.fetch('/api/market/members');
+  assert.equal(response.status, 200);
+  assert.deepEqual(requests, [
+    'https://static.example/api/health',
+    'https://static.example/api/market/members',
+    'https://muzikazmodelmarket.onrender.com/api/market/members'
+  ]);
+  assert.equal(attributes['data-api-base'], 'https://muzikazmodelmarket.onrender.com');
+  assert.equal(attributes['data-api-fallback'], 'hosted');
+});
+
 test('invalid access and ambiguous static responses never replay a one-time activation', async () => {
   for (const response of [new Response(JSON.stringify({ code: 'ACCESS_CODE_INVALID' }), { status: 404, headers: { 'content-type': 'application/json' } }), new Response('<html>missing</html>', { status: 404, headers: { 'content-type': 'text/html' } })]) {
     let posts = 0; const { window } = loadConnection(async url => url.endsWith('/api/health') ? health() : (posts++, response.clone()), 'https://muzikazmodelmarket.onrender.com');

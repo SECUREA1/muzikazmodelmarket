@@ -102,6 +102,12 @@
            * in the same request so a valid code never strands the member on
            * members.html or asks them to submit the credential again. */
           if (missing && aliases.length) return attempt(remaining, aliases.shift(), aliases);
+          /* A custom domain may expose a compatible health route while its
+           * static deployment has no application routes. Route discovery is
+           * therefore authoritative too: move the original request to the
+           * persistent service once, rather than showing API_ROUTE_NOT_FOUND
+           * in otherwise functional member-market panels. */
+          if (missing && useHostedApi()) return attempt(remaining, path, (compatibleRoutes[path] || []).slice());
           return response;
         });
       }, function (error) {
