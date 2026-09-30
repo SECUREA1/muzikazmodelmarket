@@ -73,7 +73,12 @@ export class EnvironmentLoader {
     else if(layout==='firing-range'){
       const lanes=[-14,-7,0,7,14];
       add([39,3.5,.5],0,-19,0x272d30,1.75);[-19,19].forEach(x=>add([.5,3.5,38],x,0,0x252b2e,1.75));
-      lanes.forEach((x,index)=>{if(index<lanes.length-1)add([.18,2.35,15],x+3.5,5,0x343d40,1.175);add([4.6,.85,1.05],x,12.5,0x20282b,.425);add([.85,1.25,.16],x,-15.45,index===2?0xff334f:0x202629,1.35);add([1.4,.28,.16],x,-15.45,index===2?0xff334f:0x202629,1.72);add([.58,.72,.3],x,11.55,0x304438,1.2);add([.66,.42,.34],x,11.52,0x151b19,1.32);add([.58,.1,.5],x,11.25,0x22292d,1.34)});
+      // A layered qualification course reads much more clearly from the player
+      // camera than the old row of boxes: overhead baffles frame each distance,
+      // circular scoring plates sit behind reactive silhouettes, and lit rails
+      // lead the eye from every protected booth to its target.
+      for(let z=-14;z<=10;z+=6)add([38,.28,1.1],0,z,0x171c1e,3.3);
+      lanes.forEach((x,index)=>{if(index<lanes.length-1)add([.18,2.35,15],x+3.5,5,0x343d40,1.175);add([4.6,.85,1.05],x,12.5,0x20282b,.425);add([1.55,1.55,.08],x,-13.7,0xe5dec9,1.55);add([1.05,1.05,.1],x,-13.62,0x20262a,1.55);add([.48,.48,.12],x,-13.54,index===2?0xff334f:0xe1bc43,1.55);add([.85,1.25,.16],x,-15.45,index===2?0xff334f:0x202629,1.35);add([1.4,.28,.16],x,-15.45,index===2?0xff334f:0x202629,1.72);add([.58,.72,.3],x,11.55,0x304438,1.2);add([.66,.42,.34],x,11.52,0x151b19,1.32);add([.58,.1,.5],x,11.25,0x22292d,1.34);add([.08,.08,27],x,-.7,index===2?0x52ecff:0x566468,3.18)});
       [-8,-2,4].forEach((z,index)=>add([38,.04,.09],0,z,index===1?0xe4bd43:0x748084,.025));add([38,.12,.5],0,10.95,0xe2b84b,.06);add([18,3.3,4],0,16.4,0x20282b,1.65);add([5.5,2.8,2.6],15.7,16.2,0x273134,1.4);
     }
     else if(layout==='movie-studio'){[[-11,-10],[10,-10],[-11,10],[10,10]].forEach(([x,z],i)=>add([8,4,7],x,z,i%2?0x52475a:0x45535b));add([3,.3,16],0,0,0xb65b48,.15)}
