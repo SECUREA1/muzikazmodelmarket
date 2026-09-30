@@ -71,3 +71,21 @@ test('new SVG starters provide distinct accessible sandbox interactions', async 
   assert.match(script, /testButton\.textContent=/);
   assert.match(styles, /prefers-reduced-motion:reduce/);
 });
+
+test('ready-to-edit library supports categories, sorting, clear search, and one-click play', async () => {
+  const [html, script, styles] = await Promise.all([
+    readFile(new URL('../model-explorer.html', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/custom-item-toolkit.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/css/custom-item-toolkit.css', import.meta.url), 'utf8')
+  ]);
+
+  for (const control of ['custom-library-search', 'custom-library-filter', 'custom-library-sort', 'custom-library-categories']) {
+    assert.match(html, new RegExp(`id="${control}"`));
+  }
+  assert.match(script, /const categoryRules = \[/);
+  assert.match(script, /function quickPlay\(item\)/);
+  assert.match(script, /data-play-library-item/);
+  assert.match(script, /muzikaz:game-assets-changed/);
+  assert.match(styles, /\.custom-library-categories/);
+  assert.match(styles, /\.custom-card-actions/);
+});
