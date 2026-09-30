@@ -70,7 +70,12 @@ export class EnvironmentLoader {
     else if(layout==='desert-outpost'){[[-12,-10],[11,-9],[-10,10],[12,9]].forEach(([x,z],i)=>add([6,2.8,5],x,z,i%2?0x8d7654:0x71624c));add([3,5,3],0,0,0x5a5549)}
     else if(layout==='mega-mall'){[-13,-6,6,13].forEach((x,i)=>add([5,3.2,8],x,10,i%2?0x54707a:0x79566d));add([9,.5,9],0,0,0x8ba8a1,.25)}
     else if(layout==='office-tower'){add([7,5,7],0,0,0x566a73);[-13,13].forEach(x=>add([5,3,10],x,4,0x40525a));add([18,.15,2],0,-10,0x83a0a7)}
-    else if(layout==='firing-range'){[-12,-6,0,6,12].forEach(x=>{add([.18,2.2,22],x,3,0x525d50);add([1.4,1.8,.3],x,-11,0xc8a74c,.9)});add([16,2.5,4],0,14,0x3d4940)}
+    else if(layout==='firing-range'){
+      const lanes=[-14,-7,0,7,14];
+      add([39,3.5,.5],0,-19,0x272d30,1.75);[-19,19].forEach(x=>add([.5,3.5,38],x,0,0x252b2e,1.75));
+      lanes.forEach((x,index)=>{if(index<lanes.length-1)add([.18,2.35,15],x+3.5,5,0x343d40,1.175);add([4.6,.85,1.05],x,12.5,0x20282b,.425);add([.85,1.25,.16],x,-15.45,index===2?0xff334f:0x202629,1.35);add([1.4,.28,.16],x,-15.45,index===2?0xff334f:0x202629,1.72);add([.58,.72,.3],x,11.55,0x304438,1.2);add([.66,.42,.34],x,11.52,0x151b19,1.32);add([.58,.1,.5],x,11.25,0x22292d,1.34)});
+      [-8,-2,4].forEach((z,index)=>add([38,.04,.09],0,z,index===1?0xe4bd43:0x748084,.025));add([38,.12,.5],0,10.95,0xe2b84b,.06);add([18,3.3,4],0,16.4,0x20282b,1.65);add([5.5,2.8,2.6],15.7,16.2,0x273134,1.4);
+    }
     else if(layout==='movie-studio'){[[-11,-10],[10,-10],[-11,10],[10,10]].forEach(([x,z],i)=>add([8,4,7],x,z,i%2?0x52475a:0x45535b));add([3,.3,16],0,0,0xb65b48,.15)}
     return root;
   }
