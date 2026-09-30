@@ -82,8 +82,26 @@
             </div>
         </section>
         <div class="member-locked-content" id="member-locked-content" data-locked="true">
-        <section class="section-block" aria-labelledby="manage-access-title"><div class="section-title"><span></span><h2 id="manage-access-title">Manage MZK Access Code</h2></div><p><strong>One account. One code. Any device.</strong> Rotation or revocation changes only your credential; your wallet bindings, Backpack, assets, MZK, land and Bottle claims stay with this account.</p><div class="post-payment-actions"><button type="button" id="mzk-access-rotate">Rotate Access Code</button><button type="button" class="ghost" id="mzk-access-revoke">Revoke Access Code</button></div><output id="mzk-access-manage-output" class="status-message" aria-live="polite">Your full code is shown only when it is created or rotated.</output></section>
-        <section class="section-block member-benefits" aria-labelledby="member-benefits-title">
+        <nav class="member-section-menu" aria-label="Members area sections">
+            <button class="member-section-menu__toggle" type="button" aria-expanded="false" aria-controls="member-section-menu-list">
+                <span><small>Members area</small><strong id="member-section-current">Overview</strong></span><span aria-hidden="true">☰</span>
+            </button>
+            <div class="member-section-menu__list" id="member-section-menu-list" hidden>
+                <a href="#member-overview" data-member-panel-link>Overview</a>
+                <a href="#owned-collection" data-member-panel-link>My Backpack</a>
+                <a href="#member-creator-tools" data-member-panel-link>Creator Tools</a>
+                <a href="#subscriber-models" data-member-panel-link>3D Model Library</a>
+                <a href="#designer" data-member-panel-link>Merch Designer</a>
+                <a href="#character-shop" data-member-panel-link>Character Shop</a>
+                <a href="#ar-viewer" data-member-panel-link>AR Viewer</a>
+                <a href="#space-builder" data-member-panel-link>Space Builder</a>
+                <a href="#marketplace" data-member-panel-link>Marketplace</a>
+                <a href="#manage-access" data-member-panel-link>Access Code</a>
+                <a href="#admin" data-member-panel-link>Admin &amp; Uploads</a>
+            </div>
+        </nav>
+        <section class="section-block" id="manage-access" aria-labelledby="manage-access-title"><div class="section-title"><span></span><h2 id="manage-access-title">Manage MZK Access Code</h2></div><p><strong>One account. One code. Any device.</strong> Rotation or revocation changes only your credential; your wallet bindings, Backpack, assets, MZK, land and Bottle claims stay with this account.</p><div class="post-payment-actions"><button type="button" id="mzk-access-rotate">Rotate Access Code</button><button type="button" class="ghost" id="mzk-access-revoke">Revoke Access Code</button></div><output id="mzk-access-manage-output" class="status-message" aria-live="polite">Your full code is shown only when it is created or rotated.</output></section>
+        <section class="section-block member-benefits" id="member-overview" aria-labelledby="member-benefits-title">
             <div class="section-title"><span></span><h2 id="member-benefits-title">What subscribers get</h2><span></span></div>
             <div class="benefit-grid">
                 <article><h3>Product upgrades</h3><p>Early colorways, sleeve-text presets, logo placements, character bundles, and priority custom product slots.</p></article>
@@ -386,5 +404,6 @@
   <script src="battle-theme.js"></script>
     <script src="backpack-widget.js"></script>
   <script src="global-header.js"></script>
+  <script src="members-sections.js"></script>
 </body>
 </html>
