@@ -188,6 +188,25 @@ test('custom item toolkit starts from editable models in every requested categor
   assert.match(css, /\.starter-model-card\.active/);
 });
 
+test('item forge includes editable weapons, loot, tools and vehicles', async () => {
+  const [html, script] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8')
+  ]);
+  assert.match(html, /ITEM \+ WEAPON FORGE/);
+  for (const category of ['weapon', 'interactive', 'vehicle']) {
+    assert.match(script, new RegExp(`${category}:'`));
+    assert.ok((script.match(new RegExp(`type:'${category}'`, 'g')) || []).length >= 3, `${category} has at least three editable forge starters`);
+  }
+  for (const starter of ['Pulse Rifle', 'Plasma Blade', 'Arc Hammer', 'Guardian Shield', 'Field Med Kit', 'Loot Crate', 'Shock Trap', 'Hover Bike', 'Dune Buggy', 'Cargo Drone']) {
+    assert.match(script, new RegExp(starter));
+  }
+  assert.match(script, /category=type==='weapon'\?'weapons'/, 'custom weapons are routed back into the Weapons library filter');
+  assert.match(script, /renderLibrary\(category\)/, 'the forge reveals the newly saved asset in its matching library category');
+  assert.match(html, /option value="vehicle">Enter \/ drive \/ fly/);
+  assert.match(html, /option value="pulse">Energy pulse/);
+});
+
 test('every drawn custom item saves three toggleable 3D forms with fitted clip-ons', async () => {
   const [html, script, css] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
