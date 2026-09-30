@@ -101,6 +101,12 @@ test('responsive customization sheet includes commercial FPS and training scenes
   assert.match(script, /reactiveTarget=true/);
   assert.match(script, /rangeTrainee=true/);
   assert.match(html, /ACTIVE TARGETS ONLINE/);
+  assert.match(html, /Tournament · 3 rounds/);
+  assert.match(html, /id="range-result"/);
+  assert.match(script, /function startRangeCourse/);
+  assert.match(script, /function fireRangeShot/);
+  assert.match(script, /RANGE_BEST_KEY/);
+  assert.match(css, /\.range-game-panel/);
 });
 
 test('builder maze group is playable, grounded, and only recovers true world falls', async () => {
