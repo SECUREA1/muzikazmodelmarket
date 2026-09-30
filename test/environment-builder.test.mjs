@@ -23,6 +23,8 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(launcher, /get\('autoplay'\) === '1'\) begin\(\)/, 'the game launcher consumes the Builder test autoplay contract immediately');
   assert.match(script, /compileBuilderScene\(sceneData\)/);
   assert.match(script, /function testGameLocally\(\)/);
+  const testGameBody = script.slice(script.indexOf('function testGameLocally()'), script.indexOf('function screenRay'));
+  assert.doesNotMatch(testGameBody, /layout==='firing-range'/, 'the shooting range follows the same full game-page launch path as every other map');
   assert.match(script, /LOCAL · Sandbox ready/);
   assert.match(script, /localFallback=1&sandbox=1/);
   assert.doesNotMatch(script, /apiFetch\('\/api\/custom-maps'/, 'testing a template never contacts the publishing API');
