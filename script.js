@@ -1111,7 +1111,7 @@ function initFlexLabCategories() {
     }));
   }
   function selectCategory(requestedCategory, { focus = false } = {}) {
-    const category = categories.includes(requestedCategory) ? requestedCategory : 'All';
+    const category = categories.includes(requestedCategory) && requestedCategory !== 'All' ? requestedCategory : categories.find((item) => item !== 'All') || 'All';
     if (select) select.value = category;
     buttons.forEach((button) => {
       const active = button.dataset.flexCategory === category;

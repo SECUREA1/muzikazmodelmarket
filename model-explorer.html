@@ -322,13 +322,18 @@
     <section class="section-block live-models-section explorer-live-space" id="live-published-models" data-explorer-workspace aria-labelledby="explorer-live-models-title">
       <div class="section-title"><span></span><h2 id="explorer-live-models-title">Live Published Models</h2><button type="button" id="refresh-live-models">Refresh Models</button></div>
       <p class="section-subheading">Shared server-backed models are arranged here instead of on the main page. Open each category below to route avatars, pets, accessories, furniture, environments, and gameplay props into the right 3D Character Loadout space.</p>
-      <div class="loadout-link-grid explorer-loadout-links" aria-label="3D Character Loadout marketplace categories">
-        <a href="#live-published-models"><strong>Avatars</strong><span>Character bodies and skins</span></a>
-        <a href="members.html#marketplace"><strong>Pets</strong><span>Companions and sidekicks</span></a>
-        <a href="members.html#marketplace"><strong>Accessories</strong><span>Wearables, props, and flex</span></a>
-        <a href="#house-explorer"><strong>Furniture</strong><span>Placeable room loot</span></a>
-        <a href="#house-explorer"><strong>Vibe Cribs</strong><span>Rooms, stages, and branded house scenes</span></a>
-        <a href="members.html#character-shop"><strong>Gaming Studio</strong><span>Hooks, vehicles, and play kits</span></a>
+      <div class="product-category-picker" data-product-category-picker>
+        <button class="product-category-picker__toggle" type="button" aria-expanded="false" aria-controls="explorer-product-categories">
+          <span><small>Product panel</small><strong data-category-current>Avatars</strong></span><span aria-hidden="true">▦</span>
+        </button>
+        <div class="loadout-link-grid explorer-loadout-links product-category-picker__panel" id="explorer-product-categories" role="tablist" aria-label="3D Character Loadout marketplace categories" hidden>
+          <button type="button" role="tab" data-product-category="avatars" aria-selected="true"><strong>Avatars</strong><span>Character bodies and skins</span></button>
+          <button type="button" role="tab" data-product-category="pets" aria-selected="false" tabindex="-1"><strong>Pets</strong><span>Companions and sidekicks</span></button>
+          <button type="button" role="tab" data-product-category="accessories" aria-selected="false" tabindex="-1"><strong>Accessories</strong><span>Wearables, props, and flex</span></button>
+          <button type="button" role="tab" data-product-category="furniture" aria-selected="false" tabindex="-1"><strong>Furniture</strong><span>Placeable room loot</span></button>
+          <button type="button" role="tab" data-product-category="environments" aria-selected="false" tabindex="-1"><strong>Vibe Cribs</strong><span>Rooms, stages, and branded house scenes</span></button>
+          <button type="button" role="tab" data-product-category="gaming" aria-selected="false" tabindex="-1"><strong>Gaming Studio</strong><span>Hooks, vehicles, and play kits</span></button>
+        </div>
       </div>
       <p class="status-message" id="explorer-live-models-status" role="status" aria-live="polite">Loading shared model space…</p>
       <div class="published-model-grid explorer-live-grid" id="explorer-live-models-grid" aria-live="polite"></div>
