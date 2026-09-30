@@ -55,11 +55,23 @@
           <canvas id="scene-canvas" aria-label="Interactive three dimensional environment"></canvas>
           <div class="texture-credit" id="texture-credit" role="status"><i></i><span>Loading linked tabletop texture…</span></div>
           <aside class="range-scoreboard" aria-label="Firing range session scoreboard">
-            <header><span>LIVE</span><strong>FORCE RANGE CONTROL</strong><small>LANES 01–05</small></header>
-            <div class="range-score-main"><div><small>SCORE</small><b>0840</b></div><div><small>ACCURACY</small><b>92<sup>%</sup></b></div></div>
-            <dl><div><dt>SHOTS</dt><dd>24</dd></div><div><dt>HITS</dt><dd>22</dd></div><div><dt>BULLSEYES</dt><dd>08</dd></div><div><dt>TIME</dt><dd>01:42</dd></div></dl>
-            <footer><i></i> ACTIVE TARGETS ONLINE <span>QUALIFICATION +120</span></footer>
+            <header><span id="range-live-label">READY</span><strong>FORCE RANGE CONTROL</strong><small id="range-lane-label">LANES 01–05</small></header>
+            <div class="range-score-main"><div><small>SCORE</small><b id="range-score">0000</b></div><div><small>ACCURACY</small><b><span id="range-accuracy">0</span><sup>%</sup></b></div></div>
+            <dl><div><dt>SHOTS</dt><dd id="range-shots">0</dd></div><div><dt>HITS</dt><dd id="range-hits">0</dd></div><div><dt>BULLSEYES</dt><dd id="range-bullseyes">0</dd></div><div><dt>TIME</dt><dd id="range-time">01:00</dd></div></dl>
+            <footer><i></i><span id="range-status">ACTIVE TARGETS ONLINE · SELECT TEST GAME</span><strong id="range-rank">UNRANKED</strong></footer>
           </aside>
+          <section class="range-game-panel" id="range-game-panel" hidden aria-label="Qualification controls">
+            <div class="range-game-panel__intro" id="range-game-intro">
+              <small>INTERACTIVE RANGE // LOCAL SESSION</small><h3>Qualification ready</h3>
+              <p>Choose a course, then hit the illuminated silhouettes before time expires. Bullseyes score 100; body hits score 60.</p>
+              <label>COURSE<select id="range-course"><option value="qualification">60s Qualification</option><option value="rapid">30s Rapid Response</option><option value="tournament">Tournament · 3 rounds</option></select></label>
+              <div class="range-best"><span>LOCAL BEST</span><b id="range-best-score">0000</b><small id="range-best-rank">No result yet</small></div>
+              <button type="button" id="range-start">START COURSE</button>
+            </div>
+            <div class="range-game-panel__active" id="range-game-active" hidden><span id="range-round">ROUND 1 / 1</span><b id="range-callout">STANDBY</b><small>Click / tap targets · Space to fire centre · Esc to end</small><button type="button" id="range-stop">END SESSION</button></div>
+          </section>
+          <div class="range-reticle" id="range-reticle" hidden aria-hidden="true"><i></i></div>
+          <div class="range-result" id="range-result" hidden role="dialog" aria-modal="true" aria-labelledby="range-result-title"><div><small>COURSE COMPLETE</small><h3 id="range-result-title">Qualified</h3><b id="range-result-score">0000 PTS</b><p id="range-result-detail"></p><button type="button" id="range-again">RUN AGAIN</button><button type="button" id="range-exit">RETURN TO BUILD</button></div></div>
           <div class="layout-walls" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
           <div class="land-empty" id="land-empty"><span>＋</span><strong>Place your first object</strong><small>Select from the library or drag an item here</small></div>
         </div>
