@@ -221,6 +221,19 @@ test('environment builder places grounded 3D assets and persists complete runtim
   assert.match(script, /model\.procedural\?template\.clone\(true\):cloneSkeleton/);
 });
 
+test('builder maps use resilient linked textures and a tabletop presentation', async () => {
+  const [html, script, css] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
+  ]);
+  assert.match(html, /id="texture-credit"/);
+  assert.match(script, /cdn\.jsdelivr\.net\/gh\/mrdoob\/three\.js@r180\/examples\/textures/);
+  for (const feature of ['terrainTextureSets', 'applyTerrainTexture', 'RepeatWrapping', 'TABLETOP_MAP_BASE', 'TABLETOP_BRASS_RIM']) assert.match(script, new RegExp(feature));
+  assert.match(script, /Procedural texture fallback/);
+  assert.match(css, /\.texture-credit\.ready/);
+});
+
 test('avatar look lab provides deep fitted customization for every wearable icon', async () => {
   const [html, script] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
