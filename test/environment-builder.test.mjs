@@ -120,6 +120,9 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   assert.match(game, /rangeRaycaster\.intersectObject\(envLoader\.world,true\)/, 'range scoring raycasts the actual loaded world');
   assert.match(game, /handleRangeShot\(\{event\}\)/, 'touch and unlocked-pointer shots use their screen position');
   assert.match(game, /handleRangeShot\(\{centre:true\}\)/, 'pointer-lock and mobile shoot controls use the reticle');
+  assert.match(game, /data-mobile-fire/, 'mobile players have a dedicated fire button while walking and aiming');
+  assert.match(game, /\[data-mobile-fire\][\s\S]{0,180}shootAtReticle\(\)/, 'the dedicated mobile fire button shoots the range reticle');
+  assert.match(game, /data-mobile-jump/, 'mobile players retain a separate jump action');
   assert.match(game, /handleRangeShot\(\{origin,direction\}\)/, 'WebXR triggers use each controller aim ray');
   assert.match(loader, /mesh\.userData\.rangeTarget=true/);
   for (const zone of ['outer','body','bullseye']) assert.match(loader, new RegExp(`'${zone}'`));
