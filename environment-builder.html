@@ -26,6 +26,13 @@
       <header><div><small>BUILDERS PACK</small><h1 id="library-title">Item library</h1></div><span id="library-count">76</span></header>
       <p>Select an object or drag it onto the land. Add your own cast and props, too.</p>
       <button type="button" class="create-item-button" id="open-item-maker"><span>＋</span><b>CREATE CUSTOM ITEM</b><small>Draw it · fit clip-ons · save 3 playable forms</small></button>
+      <section class="world-generator" aria-labelledby="world-generator-title">
+        <header><span>✦</span><div><small>QUICK WORLD GENERATOR</small><h2 id="world-generator-title">Build a large space</h2></div></header>
+        <p>Start with a complete indoor or exterior layout, then fill it with repository and online 3D models.</p>
+        <div class="generator-fields"><label>SPACE<select id="generator-theme"><option value="festival">Outdoor festival</option><option value="shopping-street">Store street</option><option value="nature-trail">Adventure trail</option><option value="indoor-market">Indoor market hall</option><option value="mixed-district">Indoor + exterior district</option></select></label><label>MAP SIZE<select id="generator-size"><option value="40">40 m · compact</option><option value="80" selected>80 m · large</option><option value="120">120 m · massive</option></select></label></div>
+        <button type="button" id="generate-world">GENERATE PLAYABLE MAP</button>
+        <details class="online-model-import"><summary>＋ LOAD ONLINE 3D MODEL</summary><form id="online-model-form"><label>MODEL NAME<input id="online-model-name" maxlength="60" placeholder="Festival stage"></label><label>GLB / GLTF URL<input id="online-model-url" type="url" required placeholder="https://…/model.glb"></label><label>USE AS<select id="online-model-type"><option value="props">Prop</option><option value="buildings">Building</option><option value="interior">Interior</option><option value="landscape">Exterior / landscape</option><option value="avatar">Character</option><option value="vehicle">Vehicle</option></select></label><button type="submit">ADD TO LIBRARY</button><output id="online-model-status" role="status"></output></form></details>
+      </section>
       <nav class="library-filters" aria-label="Filter item library"><button class="active" data-library-filter="all">ALL</button><button data-library-filter="terrain">TERRAIN</button><button data-library-filter="plants">PLANTS</button><button data-library-filter="buildings">BUILDINGS</button><button data-library-filter="props">PROPS</button><button data-library-filter="vehicles">VEHICLES</button><button data-library-filter="weapons">WEAPONS</button><button data-library-filter="characters">CHARACTERS</button><button data-library-filter="creatures">CREATURES</button><button data-library-filter="avatar">AVATARS</button><button data-library-filter="enemy">ENEMIES</button><button data-library-filter="interactive">INTERACTIVE</button><button data-library-filter="landscape">OUTDOOR</button><button data-library-filter="interior">INTERIOR</button></nav>
       <div class="library-grid" id="library-grid"></div>
     </aside>
@@ -47,7 +54,7 @@
         <div class="character-scale" aria-label="Character scale reference"><span class="character-figure">●<i></i></span><b>CHARACTER<br>1.8 M</b></div>
       </div>
       <section class="side-view-panel" aria-labelledby="side-view-title"><header><div><small>SYNCHRONIZED ELEVATION</small><strong id="side-view-title">SIDE VIEW</strong></div><span><i></i> GROUND <i></i> OFFSET</span></header><canvas id="side-view-canvas" aria-label="Side view showing terrain, object height, and ground offset"></canvas></section>
-      <footer class="map-footer"><span><i></i> 1 square = 1 metre</span><strong id="object-count">0 OBJECTS PLACED</strong><span>40 M × 40 M LAND</span></footer>
+      <footer class="map-footer"><span><i></i> 1 square = 1 metre</span><strong id="object-count">0 OBJECTS PLACED</strong><span id="map-size-label">40 M × 40 M LAND</span></footer>
     </section>
 
     <aside class="object-inspector" aria-labelledby="inspector-title">
