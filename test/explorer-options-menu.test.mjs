@@ -21,3 +21,20 @@ test('VibeVerse exposes a compact searchable function menu', async () => {
   assert.match(styles, /\.explorer-options__panel\[hidden\]\{display:none\}/);
   assert.match(styles, /\[data-explorer-workspace\]\[hidden\]\{display:none!important\}/);
 });
+
+test('live products use a single-category tile panel', async () => {
+  const [html, menuScript, galleryScript, styles] = await Promise.all([
+    readFile(new URL('../model-explorer.html', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/explorer-options-menu.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/model-gallery-core.js', import.meta.url), 'utf8'),
+    readFile(new URL('../styles.css', import.meta.url), 'utf8')
+  ]);
+
+  assert.match(html, /data-product-category-picker/);
+  assert.equal((html.match(/data-product-category="/g) || []).length, 6);
+  assert.match(html, /aria-controls="explorer-product-categories"/);
+  assert.match(menuScript, /card\.hidden = card\.dataset\.productCategoryCard !== selectedCategory/);
+  assert.match(menuScript, /muzikaz:models-rendered/);
+  assert.match(galleryScript, /data-product-category-card/);
+  assert.match(styles, /\.explorer-live-grid \[data-product-category-card\]\[hidden\]/);
+});

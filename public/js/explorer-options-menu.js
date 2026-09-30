@@ -89,4 +89,38 @@
   const linkForHash = () => items.map((item) => item.querySelector('a')).find((link) => link.hash === window.location.hash);
   showWorkspace(linkForHash() || items[0].querySelector('a'), { moveFocus: false });
   window.addEventListener('popstate', () => showWorkspace(linkForHash() || items[0].querySelector('a'), { moveFocus: false }));
+
+  document.querySelectorAll('[data-product-category-picker]').forEach((picker) => {
+    const categoryToggle = picker.querySelector('.product-category-picker__toggle');
+    const categoryPanel = picker.querySelector('.product-category-picker__panel');
+    const categoryLabel = picker.querySelector('[data-category-current]');
+    const categoryButtons = [...picker.querySelectorAll('[data-product-category]')];
+    const modelGrid = document.querySelector('#explorer-live-models-grid');
+    let selectedCategory = categoryButtons[0]?.dataset.productCategory || 'avatars';
+    const closeCategories = () => { categoryPanel.hidden = true; categoryToggle.setAttribute('aria-expanded', 'false'); };
+    const selectCategory = (button, focus = false) => {
+      selectedCategory = button.dataset.productCategory;
+      categoryButtons.forEach((candidate) => {
+        const active = candidate === button;
+        candidate.setAttribute('aria-selected', String(active));
+        candidate.tabIndex = active ? 0 : -1;
+      });
+      categoryLabel.textContent = button.querySelector('strong').textContent;
+      modelGrid?.querySelectorAll('[data-product-category-card]').forEach((card) => { card.hidden = card.dataset.productCategoryCard !== selectedCategory; });
+      const visibleCount = modelGrid?.querySelectorAll(`[data-product-category-card="${selectedCategory}"]:not([hidden])`).length || 0;
+      const status = document.querySelector('#explorer-live-models-status');
+      if (status && modelGrid?.children.length) status.textContent = `${visibleCount} ${categoryLabel.textContent.toLowerCase()} product${visibleCount === 1 ? '' : 's'} shown.`;
+      closeCategories();
+      if (focus) modelGrid?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    categoryToggle?.addEventListener('click', () => {
+      const opening = categoryPanel.hidden;
+      categoryPanel.hidden = !opening;
+      categoryToggle.setAttribute('aria-expanded', String(opening));
+    });
+    categoryButtons.forEach((button) => button.addEventListener('click', () => selectCategory(button, true)));
+    modelGrid?.addEventListener('muzikaz:models-rendered', () => selectCategory(categoryButtons.find((button) => button.dataset.productCategory === selectedCategory) || categoryButtons[0]));
+    document.addEventListener('click', (event) => { if (!picker.contains(event.target)) closeCategories(); });
+    picker.addEventListener('keydown', (event) => { if (event.key === 'Escape') { closeCategories(); categoryToggle.focus(); } });
+  });
 }());
