@@ -52,10 +52,10 @@
   <main>
     <section class="whitepaper-hero">
       <div>
-        <p class="whitepaper-kicker"><span>Platform whitepaper</span> Version 2.1.0 · September 2026</p>
+        <p class="whitepaper-kicker"><span>Platform whitepaper</span> Version 2.2.0 · September 2026</p>
         <h1>One world.<br>Every asset <em>works.</em></h1>
         <p class="whitepaper-lede">MUZIKAZ World connects playable characters, mapped land, creator tools, reusable Builder packs, 3D and AR collectibles, toys, streetwear, retail drops, audio, games, and MZK in one asset system. This paper documents what has been built, how marketplace assets move into maps and Backpacks, and how value enters, moves through, and leaves the MZK economy.</p>
-        <div class="spec-status"><b>Living public reference</b><span>Platform: world@2.1.0</span><span>Avatar: avatar@1.0.0</span><span>Last revised: 2026-09-10</span></div>
+        <div class="spec-status"><b>Living public reference</b><span>Platform: world@2.2.0</span><span>Avatar: avatar@1.1.0</span><span>Last revised: 2026-09-29</span></div>
         <div class="whitepaper-actions"><a href="#platform-map">Explore the ecosystem</a><a href="model-market.html#character-world-assets">Open Model Market</a></div>
       </div>
       <aside class="identity-stack" aria-label="Avatar architecture summary">
@@ -76,7 +76,7 @@
       <article><b>Verifiable</b><p>Content hashes, approval status, and server-side authorization protect the path from catalog to session.</p></article>
     </section>
 
-    <nav class="whitepaper-toc" aria-label="Whitepaper contents"><b>Contents</b><a href="#platform-map">Platform</a><a href="#land">Mapping</a><a href="#builder-system">Builder Market</a><a href="#products">Packs + retail</a><a href="#economy">MZK economy</a><a href="#asset-functions">Asset functions</a><a href="#identity-model">Avatar standard</a><a href="#reference-contract">Reference</a></nav>
+    <nav class="whitepaper-toc" aria-label="Whitepaper contents"><b>Contents</b><a href="#platform-map">Platform</a><a href="#land">Mapping</a><a href="#builder-system">Builder area</a><a href="#products">Packs + retail</a><a href="#economy">MZK economy</a><a href="#asset-functions">Asset functions</a><a href="#identity-model">Avatar standard</a><a href="#reference-contract">Reference</a></nav>
 
     <section class="whitepaper-section" id="platform-map">
       <header><p>01 · The connected platform</p><h2>From character file to living creative economy.</h2></header>
@@ -109,21 +109,43 @@
     </section>
 
     <section class="whitepaper-section builder-system-section" id="builder-system">
-      <header><p>03 · Builder Market, Backpack &amp; maps</p><h2>Buy once. Configure instances. Publish a version.</h2></header>
-      <p class="section-intro">The Builder stack turns marketplace inventory into reusable world components. Authenticated members, qualifying builders, land owners, and supported MZK accounts can enter without a Genie Bottle gate; individual actions remain controlled by server-issued permissions.</p>
+      <header><p>03 · Builder Market, Backpack &amp; Environment Builder</p><h2>Acquire, draw, configure, test, then publish.</h2></header>
+      <p class="section-intro">The Builder area turns marketplace inventory and original drawings into reusable world components. The Builder Market and Backpack manage acquired assets; the Environment Builder is the visual scene-and-gameplay editor. Authenticated members, qualifying builders, land owners, and supported MZK accounts can enter without a Genie Bottle gate; individual account actions remain controlled by server-issued permissions.</p>
       <div class="builder-loop">
         <article><span>01</span><h3>Find</h3><p>Filter listings by category and <code>asset_usage = game_builder</code>. A listing identifies the source asset, creator, price, license context, and availability.</p></article>
         <article><span>02</span><h3>Acquire</h3><p>An idempotent purchase debits the buyer, credits the seller, closes the listing when required, and adds the asset reference to the buyer’s Builder Backpack.</p></article>
         <article><span>03</span><h3>Place</h3><p>Authorized land and world roles create placement instances with their own position, rotation, scale, and configuration while preserving source provenance.</p></article>
-        <article><span>04</span><h3>Map</h3><p>The Game Space Builder assembles avatars, enemies, rewards, props, vehicles, pets, weapons, buildings, and land into a spawn manifest.</p></article>
-        <article><span>05</span><h3>Publish</h3><p>Drafts can be saved and exported; publishing spends the displayed Builder Coin cost and freezes a versioned gameplay manifest.</p></article>
+        <article><span>04</span><h3>Build + test</h3><p>The Environment Builder assembles avatars, enemies, props, vehicles, weapons, buildings, terrain, triggers, portals, weather, and a player spawn. A private local sandbox runs the complete scene without joining a multiplayer world.</p></article>
+        <article><span>05</span><h3>Save + publish</h3><p>Environment scenes and custom assets save locally as editable drafts. The separate Game Space flow can export and publish a versioned gameplay manifest after showing its applicable charge.</p></article>
+      </div>
+      <h3 class="subsection-title">Environment Builder workspace</h3>
+      <div class="mapping-layers" aria-label="Environment Builder areas">
+        <article><b>Library + layouts</b><p>A filterable library combines built-in, gameplay, repository, catalog, and creator-drawn models. Starter rooms, mazes, districts, natural biomes, FPS arenas, commercial spaces, and training maps provide editable starting expanses rather than fixed finished games.</p></article>
+        <article><b>Scene + terrain</b><p>Creators place on terrain, drag to move, rotate, scale, recolor, elevate, duplicate, focus, and frame objects. Ground height and walkable-floor collider metadata keep placed objects and players aligned across flat, stepped, and procedural terrain.</p></article>
+        <article><b>Look + motion</b><p>Each instance can retain material accents and animation state, including selected clip, speed, loop, autoplay, and current time. Clear, cloudy, rain, and storm weather settings travel with the scene.</p></article>
+        <article><b>Gameplay + routing</b><p>Behaviors cover decoration, seating, vehicles, conversation, quests, enemies, patrols, pickups, held items, switches, doors, and healing. Triggers invoke messages, teleports, scores, damage, spawns, sounds, toggles, or item use with a configured value and cooldown; portals remain locked until their local or cross-map destination is enabled.</p></article>
+      </div>
+      <h3 class="subsection-title">Drawing avatars and game items</h3>
+      <div class="whitepaper-columns builder-details">
+        <article class="layer-card layer-card--accent"><span>Custom item pipeline</span><h3>Stroke data becomes a reusable object set.</h3><p>A creator starts from an editable model or a blank 480 × 280 drawing plane, then uses pencil, line, rectangle, and circle strokes. The saved source preserves points, brush width, color, depth, bevel, material, fitted clip-ons, type, default behavior, starting animation, and interaction action. One save creates three linked forms—extruded, outlined, and sculpted—and places the selected form in the scene. The source SVG may also be downloaded with behavior and clip-on metadata.</p></article>
+        <article class="layer-card"><span>Avatar Look Lab</span><h3>Components remain attached to the avatar.</h3><p>Face, hat, glasses, headphones, necklace, rings, top, bottom, and accessory choices are fitted to named avatar anchors. Each component stores its own color, scale, rotation, horizontal offset, and vertical offset. Front, side, and back previews, category reset, full reset, and a 40-step undo/redo history support editing; saving writes the exact look into both the avatar settings and scene draft.</p></article>
+      </div>
+      <p class="design-note"><b>Drawing implementation rule:</b> a browser drawing is an authored vector profile, not automatically a production-ready rigged GLB. Runtime geometry may extrude or outline that profile for the three playable forms. A separately uploaded model must still pass format, scale, animation, collider, safety, rights, and compatibility validation before public distribution.</p>
+      <h3 class="subsection-title">Builder costs and other expenses</h3>
+      <div class="economy-table" role="table" aria-label="Builder area costs and settlement">
+        <div class="economy-row economy-head" role="row"><b>Builder action</b><b>Current charge</b><b>Record / settlement</b><b>Current status</b></div>
+        <div class="economy-row" role="row"><span>Draw an item or customize an avatar</span><span>No charge displayed</span><span>Local editable creator data</span><strong>Built</strong></div>
+        <div class="economy-row" role="row"><span>Arrange, save, or privately test an environment</span><span>No charge displayed</span><span>Local scene/map snapshot; sandbox test only</span><strong>Built</strong></div>
+        <div class="economy-row" role="row"><span>Buy a Builder Market asset</span><span>Listing price in MZK</span><span>Buyer debit + seller credit + Backpack grant</span><strong>Built</strong></div>
+        <div class="economy-row" role="row"><span>Publish through Game Space Builder</span><span>Displayed Builder Coin cost and any item spends</span><span>Versioned manifest receipt; not an on-chain burn</span><strong>Built</strong></div>
+        <div class="economy-row" role="row"><span>Public hosting, storage, moderation, minting, royalties, or gas</span><span>Only when quoted before confirmation</span><span>Separate receipt and disclosed payee/disposition required</span><em>Offer-dependent</em></div>
       </div>
       <div class="whitepaper-columns builder-details">
         <article class="layer-card layer-card--accent"><span>Builder Backpack</span><h3>Development inventory</h3><p>Builder assets live beside land/world records and placed instances. Creators can import or create an asset, list it for MZK, cancel their listing, and retain a durable transaction trail.</p></article>
         <article class="layer-card"><span>Spawn control</span><h3>Enemy and reward roles</h3><p>Map authors explicitly classify spawnable avatars as player, enemy, or reward content. A model does not become hostile, collectible, or valuable merely because it exists in a pack.</p></article>
       </div>
-      <div class="accuracy-callout"><b>Two builders, two settlement layers.</b><p>The server-backed Builder Market, purchases, Backpack, and placement records are canonical account data. The current Game Space Builder composes, saves, exports, and publishes manifests in the member experience; its displayed MZK and Builder Coin charges describe that builder flow and must not be represented as an on-chain burn.</p></div>
-      <div class="whitepaper-actions"><a href="builder-market.html">Open Builder Market</a><a href="members.html#space-builder">Build a game map</a></div>
+      <div class="accuracy-callout"><b>Three surfaces, distinct persistence and settlement.</b><p>The server-backed Builder Market, purchases, Backpack, and placement records are canonical account data. Environment Builder drafts, custom drawings, saved looks, and private test scenes currently persist in browser storage and are not proof of public hosting or ownership. The Game Space Builder composes, exports, and publishes manifests in the member experience; its displayed MZK and Builder Coin charges describe that builder flow and must not be represented as an on-chain burn.</p></div>
+      <div class="whitepaper-actions"><a href="builder-market.html">Open Builder Market</a><a href="environment-builder.html">Open Environment Builder</a><a href="members.html#space-builder">Build a game map</a></div>
     </section>
 
     <section class="whitepaper-section" id="products">
