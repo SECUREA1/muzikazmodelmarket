@@ -419,3 +419,21 @@ test('every library preview renders without aborting builder initialization', as
     'the Firefox library is populated before WebGL initialization can fail'
   );
 });
+
+test('workspace panels toggle and custom drawing accepts any model type with quality certification', async () => {
+  const [html, script, css] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
+  ]);
+  for (const panel of ['library', 'details', 'inspector', 'quality']) assert.match(html, new RegExp(`data-workspace-panel="${panel}"`));
+  assert.match(html, /id="model-type-options"/);
+  assert.match(html, /id="custom-item-type" list="model-type-options"/);
+  assert.match(html, /id="online-model-type" list="model-type-options"/);
+  for (const control of ['quality-panel', 'quality-score', 'quality-checks', 'certify-scene']) assert.match(html, new RegExp(`id="${control}"`));
+  assert.match(script, /function setWorkspacePanel/);
+  assert.match(script, /function qualityResults/);
+  assert.match(script, /sceneData\.certification=/);
+  assert.match(css, /\.environment-workspace\.details-collapsed/);
+  assert.match(css, /\.quality-panel/);
+});

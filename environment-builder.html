@@ -21,8 +21,15 @@
     <label class="scene-name"><span>SCENE NAME</span><input id="scene-name" value="Untitled environment" maxlength="80"></label>
     <div class="environment-actions"><span id="save-state">All changes saved locally</span><button type="button" id="clear-scene">NEW MAP</button><button type="button" id="save-scene">SAVE SCENE</button><button type="button" id="play-scene" class="primary" title="Open the complete template in a private local sandbox with no API or multiplayer connection">TEST GAME</button></div>
   </header>
+  <nav class="workspace-panel-bar" aria-label="Workspace panels">
+    <span>WORKSPACE</span>
+    <button type="button" class="active" data-workspace-panel="library" aria-pressed="true" aria-controls="library-panel">ITEMS</button>
+    <button type="button" class="active" data-workspace-panel="details" aria-pressed="true" aria-controls="world-atlas side-view-panel">MAP DETAILS</button>
+    <button type="button" class="active" data-workspace-panel="inspector" aria-pressed="true" aria-controls="inspector-panel">CONTROLS</button>
+    <button type="button" data-workspace-panel="quality" aria-pressed="false" aria-controls="quality-panel"><i></i> QUALITY</button>
+  </nav>
   <main class="environment-workspace">
-    <aside class="object-library" aria-labelledby="library-title">
+    <aside class="object-library" id="library-panel" aria-labelledby="library-title">
       <header><div><small>BUILDERS PACK</small><h1 id="library-title">Item library</h1></div><span id="library-count">76</span></header>
       <p>Select an object or drag it onto the land. Add your own cast and props, too.</p>
       <button type="button" class="create-item-button" id="open-item-maker"><span>＋</span><b>CREATE CUSTOM ITEM</b><small>Draw it · fit clip-ons · save 3 playable forms</small></button>
@@ -31,7 +38,7 @@
         <p>Start with a complete indoor or exterior layout, then fill it with repository and online 3D models.</p>
         <div class="generator-fields"><label>SPACE<select id="generator-theme"><option value="festival">Outdoor festival</option><option value="shopping-street">Store street</option><option value="nature-trail">Adventure trail</option><option value="indoor-market">Indoor market hall</option><option value="mixed-district">Indoor + exterior district</option></select></label><label>MAP SIZE<select id="generator-size"><option value="40">40 m · compact</option><option value="80" selected>80 m · large</option><option value="120">120 m · massive</option></select></label></div>
         <button type="button" id="generate-world">GENERATE PLAYABLE MAP</button>
-        <details class="online-model-import"><summary>＋ LOAD ONLINE 3D MODEL</summary><form id="online-model-form"><label>MODEL NAME<input id="online-model-name" maxlength="60" placeholder="Festival stage"></label><label>GLB / GLTF URL<input id="online-model-url" type="url" required placeholder="https://…/model.glb"></label><label>USE AS<select id="online-model-type"><option value="props">Prop</option><option value="buildings">Building</option><option value="interior">Interior</option><option value="landscape">Exterior / landscape</option><option value="avatar">Character</option><option value="vehicle">Vehicle</option></select></label><button type="submit">ADD TO LIBRARY</button><output id="online-model-status" role="status"></output></form></details>
+        <details class="online-model-import"><summary>＋ LOAD ONLINE 3D MODEL</summary><form id="online-model-form"><label>MODEL NAME<input id="online-model-name" maxlength="60" placeholder="Festival stage"></label><label>GLB / GLTF URL<input id="online-model-url" type="url" required placeholder="https://…/model.glb"></label><label>MODEL TYPE<input id="online-model-type" list="model-type-options" maxlength="32" value="prop" placeholder="Any model type"></label><button type="submit">ADD TO LIBRARY</button><output id="online-model-status" role="status"></output></form></details>
       </section>
       <nav class="library-filters" aria-label="Filter item library"><button class="active" data-library-filter="all">ALL</button><button data-library-filter="terrain">TERRAIN</button><button data-library-filter="plants">PLANTS</button><button data-library-filter="buildings">BUILDINGS</button><button data-library-filter="props">PROPS</button><button data-library-filter="vehicles">VEHICLES</button><button data-library-filter="weapons">WEAPONS</button><button data-library-filter="characters">CHARACTERS</button><button data-library-filter="creatures">CREATURES</button><button data-library-filter="avatar">AVATARS</button><button data-library-filter="enemy">ENEMIES</button><button data-library-filter="interactive">INTERACTIVE</button><button data-library-filter="landscape">OUTDOOR</button><button data-library-filter="interior">INTERIOR</button></nav>
       <div class="library-grid" id="library-grid"></div>
@@ -53,11 +60,11 @@
         <div class="map-compass" aria-hidden="true"><b>N</b><span>↑</span></div>
         <div class="character-scale" aria-label="Character scale reference"><span class="character-figure">●<i></i></span><b>CHARACTER<br>1.8 M</b></div>
       </div>
-      <section class="side-view-panel" aria-labelledby="side-view-title"><header><div><small>SYNCHRONIZED ELEVATION</small><strong id="side-view-title">SIDE VIEW</strong></div><span><i></i> GROUND <i></i> OFFSET</span></header><canvas id="side-view-canvas" aria-label="Side view showing terrain, object height, and ground offset"></canvas></section>
+      <section class="side-view-panel" id="side-view-panel" aria-labelledby="side-view-title"><header><div><small>SYNCHRONIZED ELEVATION</small><strong id="side-view-title">SIDE VIEW</strong></div><span><i></i> GROUND <i></i> OFFSET</span></header><canvas id="side-view-canvas" aria-label="Side view showing terrain, object height, and ground offset"></canvas></section>
       <footer class="map-footer"><span><i></i> 1 square = 1 metre</span><strong id="object-count">0 OBJECTS PLACED</strong><span id="map-size-label">40 M × 40 M LAND</span></footer>
     </section>
 
-    <aside class="object-inspector" aria-labelledby="inspector-title">
+    <aside class="object-inspector" id="inspector-panel" aria-labelledby="inspector-title">
       <header class="inspector-heading"><div><small>SCENE OBJECTS · SELECTION</small><h2 id="inspector-title">Object controls</h2></div><button type="button" class="inspector-close" id="close-inspector" aria-label="Close object controls">×</button></header><nav class="inspector-tabs" id="inspector-tabs" aria-label="Object customization sections"><button type="button" class="active" data-inspector-tab="transform">TRANSFORM</button><button type="button" data-inspector-tab="look">LOOK</button><button type="button" data-inspector-tab="play">GAMEPLAY</button></nav>
       <div class="inspector-empty" id="inspector-empty"><span>↖</span><p id="inspector-empty-message">Select a placed object to move it. Double-tap or double-click it for object controls.</p></div>
       <div class="inspector-controls" id="inspector-controls" hidden>
@@ -87,6 +94,15 @@
     </aside>
   </main>
   <button type="button" class="mobile-selection-button" id="open-inspector" aria-controls="inspector-controls"><span>✦</span><b>SELECTION</b><small id="mobile-selection-name">Choose an object</small></button>
+  <datalist id="model-type-options"><option value="character"><option value="avatar"><option value="creature"><option value="enemy"><option value="vehicle"><option value="weapon"><option value="building"><option value="terrain"><option value="plant"><option value="furniture"><option value="prop"><option value="interactive"><option value="interior"><option value="landscape"></datalist>
+  <aside class="quality-panel" id="quality-panel" aria-labelledby="quality-title" hidden>
+    <header><div><small>RELEASE CHECK</small><h2 id="quality-title">Certify quality</h2></div><button type="button" id="close-quality" aria-label="Close quality panel">×</button></header>
+    <p>Run a quick, transparent check before sharing your world. Certification is stored with this scene.</p>
+    <div class="quality-score"><strong id="quality-score">0%</strong><span>READY SCORE</span></div>
+    <ul id="quality-checks" aria-live="polite"></ul>
+    <button type="button" id="certify-scene" class="quality-certify">CERTIFY THIS BUILD</button>
+    <output id="quality-status" role="status">Open this panel anytime to review build quality.</output>
+  </aside>
   <dialog class="item-maker" id="item-maker" aria-labelledby="item-maker-title">
     <form method="dialog" id="item-maker-form">
       <header><div><small>3D CUSTOMIZATION TOOL KIT</small><h2 id="item-maker-title">Draw a custom game item</h2><p>Start with a game-ready item or draw your own. Tune its silhouette, depth, bevel and gameplay, then save it as a reusable 3D object.</p></div><button value="cancel" class="dialog-close" aria-label="Close">×</button></header>
@@ -140,7 +156,7 @@
       </section>
       <div class="maker-fields">
         <label>ITEM NAME<input id="custom-item-name" required maxlength="32" value="My character" placeholder="e.g. Forest guardian"></label>
-        <label>TYPE<select id="custom-item-type"><option value="avatar">Avatar / NPC</option><option value="enemy">Enemy</option><option value="interactive">Interactive object</option><option value="landscape">Outdoor prop</option><option value="interior">Interior prop</option></select></label>
+        <label>MODEL TYPE<input id="custom-item-type" list="model-type-options" required maxlength="32" value="character" placeholder="e.g. creature, vehicle, furniture"></label>
         <label>COLOR<input id="custom-item-color" type="color" value="#b9ff38"></label>
         <label class="maker-wide">DEFAULT BEHAVIOR<select id="custom-item-behavior"><option value="talk">Start dialogue</option><option value="quest">Offer a quest</option><option value="hostile">Attack player</option><option value="patrol">Patrol area</option><option value="pickup">Pick up &amp; hold</option><option value="hold">Hold / equip item</option><option value="switch">Switch / toggle</option><option value="door">Open / close</option><option value="heal">Restore health</option><option value="decor">Decoration only</option></select></label>
         <label>STARTING ANIMATION<select id="custom-item-animation"><option value="idle">Idle</option><option value="walk">Walk</option><option value="dance">Dance</option><option value="float">Float</option></select></label>
