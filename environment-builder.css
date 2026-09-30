@@ -118,3 +118,7 @@
 }
 
 .portal-tuner{border-color:#55417b!important;background:linear-gradient(145deg,rgba(167,139,250,.09),rgba(99,234,255,.03))}.portal-tuner[hidden]{display:none}.portal-tuner p{margin:7px 0;color:#87978d;font-size:9px;line-height:1.45}.portal-tuner label:not(.toggle-label){display:grid;gap:6px;margin-top:9px;color:#a89bc9;font-size:8px;font-weight:800;letter-spacing:.07em}.portal-tuner select{box-sizing:border-box;width:100%;padding:8px;border:1px solid #59477e;border-radius:4px;background:#0c0912;color:#fff}.portal-enable{padding:8px;border:1px solid #59477e;border-radius:5px;background:#130d20;color:#e6ddff}.portal-enable input{accent-color:#a78bfa}
+
+/* Surface provenance stays visible without obscuring the build grid. */
+.texture-credit{position:absolute;z-index:4;top:11px;left:11px;display:flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(5,10,7,.76);color:#b9c8bd;font-size:8px;font-weight:800;letter-spacing:.06em;pointer-events:none;backdrop-filter:blur(8px);box-shadow:0 5px 18px rgba(0,0,0,.25)}
+.texture-credit i{width:7px;height:7px;border-radius:50%;background:#ffcc3d;box-shadow:0 0 9px currentColor}.texture-credit.ready i{background:var(--acid)}.texture-credit.offline i{background:#84958a}.texture-credit.ready span{color:#eef8ef}
