@@ -15,4 +15,9 @@ test('Brick Layer snaps, highlights, collides, and breaks after five hits', asyn
   assert.match(script, /Brick destroyed after 5 hits/, 'the player receives destruction feedback');
   assert.match(script, /\['laser', 'spray', 'bat', 'taser', 'toxin', 'dynamite', 'brick'\]/, 'VR tool cycling includes the Brick Layer');
   assert.match(script, /if\(this\.tool==='brick'\)return this\.placeBrick\(null,origin,direction\)/, 'VR triggers can place bricks');
+  assert.match(script, /data-color-label="Brick colors"/, 'the tools panel offers a dedicated brick paint palette');
+  assert.match(script, /data-brick-color=/, 'brick color swatches expose an interactive color value');
+  assert.match(script, /setBrickColor\(index\)/, 'selecting a swatch updates the active brick color');
+  assert.match(script, /createBrickMesh\(\{color:SPRAY_COLORS\[this\.brickColorIndex\]\.hex\}\)/, 'new bricks use the selected paint color');
+  assert.match(script, /this\.applyBrickColor\(this\.brickPreview/, 'the placement preview immediately reflects the selected paint color');
 });
