@@ -111,9 +111,9 @@
   </aside>
   <dialog class="item-maker" id="item-maker" aria-labelledby="item-maker-title">
     <form method="dialog" id="item-maker-form">
-      <header><div><small>3D CUSTOMIZATION TOOL KIT</small><h2 id="item-maker-title">Draw a custom game item</h2><p>Start with a game-ready item or draw your own. Tune its silhouette, depth, bevel and gameplay, then save it as a reusable 3D object.</p></div><button value="cancel" class="dialog-close" aria-label="Close">×</button></header>
+      <header><div><small>ITEM + WEAPON FORGE</small><h2 id="item-maker-title">Forge a custom game asset</h2><p>Start with an editable item, weapon, vehicle or character—or draw your own. Tune its silhouette, depth, bevel and gameplay, then save it as a reusable 3D object.</p></div><button value="cancel" class="dialog-close" aria-label="Close">×</button></header>
       <section class="starter-models" aria-labelledby="starter-models-title">
-        <header><div><small>START FROM A MODEL</small><h3 id="starter-models-title">Choose an item to customize</h3><p>Every type includes editable silhouettes and recommended gameplay settings—no blank canvas required.</p></div><button type="button" id="start-blank-item">＋ START BLANK</button></header>
+        <header><div><small>START FROM A MODEL</small><h3 id="starter-models-title">Choose an asset to forge</h3><p>Browse purpose-built starters for combat, traversal, characters and world building. Every silhouette and gameplay setting remains editable.</p></div><button type="button" id="start-blank-item">＋ START BLANK</button></header>
         <nav id="starter-category-tabs" aria-label="Starter item categories"></nav>
         <div id="starter-model-grid" class="starter-model-grid" role="list" aria-live="polite"></div>
         <p class="starter-selection-status" id="starter-selection-status">Choose a starter model, or start blank to draw from scratch.</p>
@@ -164,8 +164,8 @@
         <label>ITEM NAME<input id="custom-item-name" required maxlength="32" value="My character" placeholder="e.g. Forest guardian"></label>
         <label>MODEL TYPE<input id="custom-item-type" list="model-type-options" required maxlength="32" value="character" placeholder="e.g. creature, vehicle, furniture"></label>
         <label>COLOR<input id="custom-item-color" type="color" value="#b9ff38"></label>
-        <label class="maker-wide">DEFAULT BEHAVIOR<select id="custom-item-behavior"><option value="talk">Start dialogue</option><option value="quest">Offer a quest</option><option value="hostile">Attack player</option><option value="patrol">Patrol area</option><option value="pickup">Pick up &amp; hold</option><option value="hold">Hold / equip item</option><option value="switch">Switch / toggle</option><option value="door">Open / close</option><option value="heal">Restore health</option><option value="decor">Decoration only</option></select></label>
-        <label>STARTING ANIMATION<select id="custom-item-animation"><option value="idle">Idle</option><option value="walk">Walk</option><option value="dance">Dance</option><option value="float">Float</option></select></label>
+        <label class="maker-wide">DEFAULT BEHAVIOR<select id="custom-item-behavior"><option value="talk">Start dialogue</option><option value="quest">Offer a quest</option><option value="hostile">Attack player</option><option value="patrol">Patrol area</option><option value="pickup">Pick up &amp; hold</option><option value="hold">Hold / equip item</option><option value="vehicle">Enter / drive / fly</option><option value="switch">Switch / toggle</option><option value="door">Open / close</option><option value="heal">Restore health</option><option value="decor">Decoration only</option></select></label>
+        <label>STARTING ANIMATION<select id="custom-item-animation"><option value="idle">Idle</option><option value="walk">Walk</option><option value="dance">Dance</option><option value="float">Float</option><option value="pulse">Energy pulse</option></select></label>
         <label>FUNCTION ON INTERACT<select id="custom-item-action"><option value="message">Show message</option><option value="score">Award score</option><option value="teleport">Teleport player</option><option value="damage">Deal damage</option><option value="none">None</option></select></label>
       </div>
       <footer><span class="three-form-promise"><b>3× 3D</b> All three game-ready forms will be saved.</span><button value="cancel">CANCEL</button><button value="default" id="create-custom-item" class="primary">SAVE 3 FORMS &amp; PLACE</button></footer>
