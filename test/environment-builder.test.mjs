@@ -109,6 +109,22 @@ test('responsive customization sheet includes commercial FPS and training scenes
   assert.match(css, /\.range-game-panel/);
 });
 
+test('playable firing range supports unlimited free play and real desktop, mobile, and VR target hits', async () => {
+  const [game, loader] = await Promise.all([
+    readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8')
+  ]);
+  assert.match(game, /data-range-mode="freeplay"/);
+  assert.match(game, /Unlimited time · unlimited shots/);
+  assert.match(game, /function handleRangeShot/);
+  assert.match(game, /rangeRaycaster\.intersectObject\(envLoader\.world,true\)/, 'range scoring raycasts the actual loaded world');
+  assert.match(game, /handleRangeShot\(\{event\}\)/, 'touch and unlocked-pointer shots use their screen position');
+  assert.match(game, /handleRangeShot\(\{centre:true\}\)/, 'pointer-lock and mobile shoot controls use the reticle');
+  assert.match(game, /handleRangeShot\(\{origin,direction\}\)/, 'WebXR triggers use each controller aim ray');
+  assert.match(loader, /mesh\.userData\.rangeTarget=true/);
+  for (const zone of ['outer','body','bullseye']) assert.match(loader, new RegExp(`'${zone}'`));
+});
+
 test('builder maze group is playable, grounded, and only recovers true world falls', async () => {
   const [html, builder, loader, game] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
