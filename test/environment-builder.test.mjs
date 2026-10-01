@@ -124,7 +124,8 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   assert.match(game, /handleRangeShot\(\{centre:true\}\)/, 'pointer-lock and mobile shoot controls use the reticle');
   assert.match(game, /Move \/ shoot/, 'the original mobile controller keeps tap-to-shoot on the movement stick');
   assert.match(game, /if \(name === 'left'\) shootAtReticle\(\)/, 'tapping the movement stick shoots the range reticle');
-  for (const action of ['library','fullscreen','begin-reset']) assert.match(game, new RegExp(`data-mobile-action="${action}"`), 'the original frame action buttons remain available');
+  assert.doesNotMatch(game, /data-mobile-(?:fire|jump)/, 'the replacement Fire and Jump buttons stay removed');
+  for (const action of ['library','fullscreen','begin-reset']) assert.match(game, new RegExp(`data-mobile-action="${action}"`), 'the established mobile action buttons remain available');
   assert.match(game, /handleRangeShot\(\{origin,direction\}\)/, 'WebXR triggers use each controller aim ray');
   assert.match(game, /pulse-rifle/);
   assert.match(game, /scatter-blaster/);
@@ -132,7 +133,7 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   assert.match(game, /RANGE_WEAPONS/);
   assert.match(game, /muzikaz:range-session-complete/, 'qualification results connect to the wider game event system');
   assert.match(game, /localStorage\.setItem\(RANGE_BEST_KEY/, 'qualification personal bests persist across game worlds');
-  assert.match(game, /rangeScore\.toLocaleString\(\).*PTS/, 'the score remains visible on the in-frame Range ops button');
+  assert.match(game, /rangeScore\.toLocaleString\(\).*PTS.*accuracy/, 'points and accuracy remain visible on the in-frame Range ops button');
   assert.match(game, /RANGE_WEAPONS\[toxicBubbleSystem\.tool\]\|\|RANGE_WEAPONS\.laser/, 'non-range tools cannot disable firing-range scoring');
   assert.match(game, /the range and the regular game/, 'range weapons explicitly remain equipped in regular gameplay');
   assert.match(loader, /mesh\.userData\.rangeTarget=true/);
