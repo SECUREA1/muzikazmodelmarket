@@ -112,9 +112,10 @@ test('responsive customization sheet includes commercial FPS and training scenes
 });
 
 test('playable firing range supports unlimited free play and real desktop, mobile, and VR target hits', async () => {
-  const [game, loader] = await Promise.all([
+  const [game, loader, index] = await Promise.all([
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
-    readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8')
+    readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),
+    readFile(new URL('../index.html', import.meta.url), 'utf8')
   ]);
   assert.match(game, /data-range-mode="freeplay"/);
   assert.match(game, /Unlimited time · unlimited shots/);
@@ -125,7 +126,8 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   assert.match(game, /Move \/ shoot/, 'the original mobile controller keeps tap-to-shoot on the movement stick');
   assert.match(game, /if \(name === 'left'\) shootAtReticle\(\)/, 'tapping the movement stick shoots the range reticle');
   assert.doesNotMatch(game, /data-mobile-(?:fire|jump)/, 'the replacement Fire and Jump buttons stay removed');
-  for (const action of ['library','fullscreen','begin-reset']) assert.match(game, new RegExp(`data-mobile-action="${action}"`), 'the established mobile action buttons remain available');
+  assert.doesNotMatch(game, /data-mobile-action=/, 'duplicate action buttons are not rendered beneath the thumbsticks');
+  for (const control of ['house-world-button','house-fullscreen','house-begin-reset']) assert.match(index, new RegExp(`id="${control}"`), 'library, fullscreen, and begin/reset remain available in the main controls');
   assert.match(game, /handleRangeShot\(\{origin,direction\}\)/, 'WebXR triggers use each controller aim ray');
   assert.match(game, /pulse-rifle/);
   assert.match(game, /scatter-blaster/);
