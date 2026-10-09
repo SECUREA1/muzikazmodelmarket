@@ -13,7 +13,7 @@ test('Brick Layer snaps, highlights, collides, and breaks after five hits', asyn
   assert.match(script, /brickMaxHits: 5/, 'bricks require exactly five hits to destroy');
   assert.match(script, /this\.damageBrick\(brickHit\.root\)/, 'laser hits damage a targeted brick');
   assert.match(script, /Brick destroyed after 5 hits/, 'the player receives destruction feedback');
-  assert.match(script, /\['laser', 'pulse-rifle', 'scatter-blaster', 'rail-cannon', 'spray', 'bat', 'taser', 'toxin', 'dynamite', 'brick'\]/, 'VR tool cycling includes the Brick Layer');
+  assert.match(script, /\['laser', 'pulse-rifle', 'flamethrower', 'rail-cannon', 'spray', 'bat', 'taser', 'toxin', 'dynamite', 'brick'\]/, 'VR tool cycling includes the Brick Layer');
   assert.match(script, /if\(this\.tool==='brick'\)return this\.placeBrick\(null,origin,direction\)/, 'VR triggers can place bricks');
   assert.match(script, /data-color-label="Brick colors"/, 'the tools panel offers a dedicated brick paint palette');
   assert.match(script, /data-brick-color=/, 'brick color swatches expose an interactive color value');
@@ -34,7 +34,7 @@ test('Brick Layer falls back to a simple click-to-drop position', async () => {
 test('ranged weapons always render distinct shot feedback, including misses', async () => {
   const script = await readFile('public/js/house-explorer-glb.js', 'utf8');
 
-  assert.match(script, /'scatter-blaster':\{[^}]*rays:7/, 'the Scatter Blaster renders a visible pellet spread');
+  assert.match(script, /if\(this\.tool==='flamethrower'\)return this\.fireFlame\(origin,direction\)/, 'the converted Scatter Blaster uses physical flames rather than beam feedback');
   assert.match(script, /'pulse-rifle':\{[^}]*color:0x43d8ff/, 'the Pulse Rifle has a distinct cyan shot');
   assert.match(script, /'rail-cannon':\{[^}]*color:0xc66bff/, 'the Rail Cannon has a distinct purple shot');
   assert.match(script, /showWeaponShot\(tool,origin,direction,target=null\)/, 'one shared smooth feedback path renders every ranged weapon');

@@ -152,3 +152,22 @@ Wallet records use the same storage rule: configure `MUZIKAZ_DATA_DIR=/var/data`
 ### Database migration instructions
 
 For a PostgreSQL-backed deployment, create a Render PostgreSQL database, set `DATABASE_URL`, and run the SQL in `migrations/001_published_models.sql` before enabling a PostgreSQL repository implementation. The current committed implementation uses durable JSON metadata on the Render disk.
+
+## RAD-TOX flamethrower
+
+The Flamethrower replaces the Scatter Blaster in the tools and range armory.
+Hold the mouse trigger while pointer-locked, hold **HOLD FIRE** in the tools
+panel on touch devices, or hold either VR trigger. Tapping the existing shoot
+control fires one burst. A full 100-unit tank reaches up to 12 metres; range
+falls with pressure and the last 20 units drip down nearby. Pink spray-can
+pickups replenish 24 units of both paint and flame fuel; resetting a round
+restores the flame tank.
+
+Each physical flame connection burns for 10 seconds, fading during its final
+second, and applies 1 HP per second of continuous contact. Separate connections
+stack. Ground fire hurts the local player; direct hits attach fire to moving
+characters, items, or environment surfaces. Bricks, loot blocks, enemies, and
+bosses use their existing damage paths. Other surfaces track local health.
+Burn effects and avatar damage follow the existing client-side gameplay model;
+they are not authoritative multiplayer PvP or persistent land damage. Flame
+settings live in `public/js/flamethrower.js` under `FLAME_CONFIG`.

@@ -130,7 +130,7 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   for (const control of ['house-world-button','house-fullscreen','house-begin-reset']) assert.match(index, new RegExp(`id="${control}"`), 'library, fullscreen, and begin/reset remain available in the main controls');
   assert.match(game, /handleRangeShot\(\{origin,direction\}\)/, 'WebXR triggers use each controller aim ray');
   assert.match(game, /pulse-rifle/);
-  assert.match(game, /scatter-blaster/);
+  assert.match(game, /flamethrower/);
   assert.match(game, /rail-cannon/);
   assert.match(game, /RANGE_WEAPONS/);
   assert.match(game, /muzikaz:range-session-complete/, 'qualification results connect to the wider game event system');
