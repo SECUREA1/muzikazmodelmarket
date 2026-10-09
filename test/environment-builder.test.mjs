@@ -182,6 +182,19 @@ test('environment builder supports custom role-play actors and interactions', as
   assert.ok((script.match(/type:'interactive'/g) || []).length >= 4, 'includes several interactive role-play objects');
 });
 
+test('custom item game mechanics use accessible option toggles for every function group', async () => {
+  const [html, script, css] = await Promise.all([
+    readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
+    readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
+  ]);
+  for (const group of ['behavior', 'animation', 'action']) assert.match(html, new RegExp(`data-mechanic-group="${group}"`));
+  assert.equal((html.match(/role="radiogroup"/g) || []).length >= 3, true);
+  assert.match(script, /function setMechanicOption\(group,value\)/);
+  assert.match(script, /setMechanicOption\('behavior',model\.behavior\)/, 'starter mechanics update the visible toggle state');
+  assert.match(css, /\.mechanic-toggle-group button\[aria-pressed=true\]/);
+});
+
 test('portal assets expose a locked tuner for local and cross-map destinations', async () => {
   const [html, builder, pipeline, game] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
@@ -246,8 +259,8 @@ test('item forge includes editable weapons, loot, tools and vehicles', async () 
   }
   assert.match(script, /category=type==='weapon'\?'weapons'/, 'custom weapons are routed back into the Weapons library filter');
   assert.match(script, /renderLibrary\(category\)/, 'the forge reveals the newly saved asset in its matching library category');
-  assert.match(html, /option value="vehicle">Enter \/ drive \/ fly/);
-  assert.match(html, /option value="pulse">Energy pulse/);
+  assert.match(html, /button type="button" value="vehicle"[^>]*>Drive \/ fly/);
+  assert.match(html, /button type="button" value="pulse"[^>]*>Energy pulse/);
 });
 
 test('every drawn custom item saves three toggleable 3D forms with fitted clip-ons', async () => {
