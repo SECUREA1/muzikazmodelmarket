@@ -309,9 +309,13 @@ function startRangeCourse(){const course=$('#range-course').value,durations={qua
 function fireRangeShot(event){if(!rangeState.playing)return;if(event){screenRay(event)}else{raycaster.setFromCamera(new THREE.Vector2(0,0),camera)}rangeState.shots++;const hit=raycaster.intersectObjects(rangeTargets(),true).find(item=>item.object.userData.rangeTarget),target=hit?.object.userData.rangeTarget;if(target&&target===rangeState.activeTarget){const bullseye=hit.object.userData.hitZone==='bullseye';rangeState.hits++;rangeState.score+=bullseye?100:60;if(bullseye)rangeState.bullseyes++;$('#range-callout').textContent=bullseye?'BULLSEYE +100':'HIT +60';scheduleRangeTarget(rangeState.course==='rapid'?140:260)}else{$('#range-callout').textContent='MISS';rangeState.score=Math.max(0,rangeState.score-10)}updateRangeHud()}
 function testGameLocally(){
  if(!sceneData.id||sceneData.id==='active')sceneData.id=`custom-map-${uid()}`;
- sceneData.gameplay={multiplayer:false, enemies:true, weapons:true, pickups:true, customRoles:true};
- sceneData.runtimeManifest=compileBuilderScene(sceneData);persist('Preparing private game sandbox…');
+ // Save the authored map without changing its multiplayer contract. The private
+ // flags belong only to the disposable test copy; otherwise one test run can
+ // silently turn the subsequently saved/published game into a single-player map.
+ persist('Preparing private game sandbox…');
  const button=$('#play-scene'),playId=sceneData.id,playScene=cloneData(sceneData);button.disabled=true;
+ playScene.gameplay={...(playScene.gameplay||{}),multiplayer:false, enemies:true, weapons:true, pickups:true, customRoles:true};
+ playScene.runtimeManifest=compileBuilderScene(playScene);
  // Testing is intentionally browser-local: preserve the full authored template
  // without contacting the publishing API or joining a multiplayer world.
  const serializedPlayScene=JSON.stringify(playScene);

@@ -15,13 +15,15 @@ test('environment builder exposes layout, placement and editing controls', async
   for (const behavior of ['pointermove', 'dragstart', 'drop', 'localStorage.setItem', 'LOCKED PROPORTIONS']) assert.match(`${html}\n${script}`, new RegExp(behavior));
   assert.match(script, /muzikaz\.builder\.buildTray/);
   assert.match(script, /multiplayer:false, enemies:true, weapons:true, pickups:true/, 'template tests run with complete game logic but no multiplayer connection');
+  assert.doesNotMatch(script, /sceneData\.gameplay=\{multiplayer:false/, 'testing must not disable multiplayer on the authored map');
+  assert.match(script, /playScene\.gameplay=\{\.\.\.\(playScene\.gameplay\|\|\{\}\),multiplayer:false/, 'single-player flags are scoped to the disposable test copy');
   assert.match(script, /model-explorer\.html\?environment=/);
   assert.match(script, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(script, /&house=\$\{id\}&autoplay=1/);
   assert.match(script, /window\.location\.assign\(`/, 'the test action navigates during the originating click instead of relying on a delayed callback');
   assert.match(script, /playSceneBackup\.v1/, 'the exact test scene has a navigation-safe local fallback');
   assert.match(launcher, /get\('autoplay'\) === '1'\) begin\(\)/, 'the game launcher consumes the Builder test autoplay contract immediately');
-  assert.match(script, /compileBuilderScene\(sceneData\)/);
+  assert.match(script, /compileBuilderScene\(playScene\)/, 'the test manifest compiles from the isolated play copy');
   assert.match(script, /function testGameLocally\(\)/);
   const testGameBody = script.slice(script.indexOf('function testGameLocally()'), script.indexOf('function screenRay'));
   assert.doesNotMatch(testGameBody, /layout==='firing-range'/, 'the shooting range follows the same full game-page launch path as every other map');
@@ -338,7 +340,9 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /muzikaz\.environmentBuilder\.scenes\.v2/);
   assert.match(game, /muzikaz\.environmentBuilder\.playScene\.v1/);
   assert.match(game, /muzikaz\.environmentBuilder\.playSceneBackup\.v1/);
-  assert.match(game, /builderSceneSources/, 'the game reads the session handoff and its persistent fallback explicitly');
+  assert.match(game, /builderTestSceneSources/, 'the game keeps test handoffs in an explicit launch-only source list');
+  assert.match(game, /if\(localSandbox\).*builderTestSceneSources/, 'normal multiplayer launches never import stale test handoffs');
+  assert.match(game, /testStorage\.removeItem\(testKey\)/, 'a consumed test handoff cannot shadow a later multiplayer world');
   assert.match(game, /readSavedBuilderScenes/);
   const refreshStart = game.indexOf('async function refreshLibrary()');
   const refreshNetwork = game.indexOf('Promise.allSettled', refreshStart);
