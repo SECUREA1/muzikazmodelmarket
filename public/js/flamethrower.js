@@ -1,7 +1,7 @@
 export const FLAME_CONFIG = Object.freeze({
-  tank: 100, fuelPerBurst: 1, interval: .12, range: 12, speed: 24, spread: .045,
-  flightFadeSeconds: .15,
-  burnSeconds: 10, fadeSeconds: 1, radius: .42, maxFlames: 120,
+  tank: 100, fuelPerBurst: 1, interval: .08, range: 12, speed: 8.5, spread: .065,
+  flightFadeSeconds: .15, flightSeconds: 1.2, gravity: 18, flightStep: 1 / 60,
+  burnSeconds: 10, fadeSeconds: 1, radius: .42, maxFlames: 160,
 });
 
 export const FLAME_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128"><path fill="#ff481d" d="M48 2C68 35 88 44 87 78c0 28-18 48-39 48S9 106 9 78c0-20 12-34 24-47-2 20 5 24 9 30C56 43 59 28 48 2Z"/><path fill="#ffbd32" d="M48 39c8 20 25 27 25 46 0 18-11 33-25 33S23 103 23 85c0-13 11-23 15-30 0 12 4 18 8 23 6-13 10-23 2-39Z"/><path fill="#fff5a3" d="M48 78c9 12 14 18 14 26 0 10-6 17-14 17s-14-7-14-17c0-8 8-15 14-26Z"/></svg>';
@@ -119,8 +119,17 @@ export class Flamethrower {
     const root = new T.Group();
     root.name = 'MUZIKAZ_FLAME_CONNECTION';
     const mesh = new T.Mesh(this.geometry, material);
-    mesh.scale.set(1, 1.7, 1);
+    mesh.scale.set(1, 2.8, 1);
     root.add(mesh);
+    for (let i = 0; i < 2; i++) {
+      const tongue = new T.Mesh(this.geometry, new T.MeshBasicMaterial({
+        color: i ? 0xffd65b : 0xff481d, transparent: true, opacity: .8,
+        depthWrite: false, toneMapped: false, blending: T.AdditiveBlending,
+      }));
+      tongue.position.y = -.22 * (i + 1);
+      tongue.scale.set(.8 - i * .2, 2.2 - i * .4, .8 - i * .2);
+      root.add(tongue);
+    }
     if (this.texture) {
       const sprite = new T.Sprite(new T.SpriteMaterial({ map: this.texture, transparent: true,
         depthWrite: false, toneMapped: false }));
@@ -251,26 +260,55 @@ export class Flamethrower {
       const { root } = flame;
       let burnDelta = delta;
       if (!flame.landed) {
-        const flightDelta = Math.min(delta, (flame.range - flame.distance) / flame.velocity.length());
-        flame.flightAge += flightDelta;
-        const next = root.position.clone().addScaledVector(flame.velocity, flightDelta);
-        const hit = this.sweep(root.position, next, targets);
-        if (hit) {
-          const distance = root.position.distanceTo(next);
-          burnDelta = distance ? delta - flightDelta * hit.distance / distance : delta;
-          root.position.copy(hit.point).addScaledVector(hit.normal, .025);
-          flame.landed = true;
-          this.createBurnGraphics(root);
-          flame.anchor = hit.target.root;
-          flame.localPoint = flame.anchor.worldToLocal(root.position.clone());
-          this.impact?.(hit.target.root, flame);
-        } else {
-          flame.distance += next.distanceTo(root.position);
-          root.position.copy(next);
-          const remaining = Math.max(0, flame.range - flame.distance);
-          const opacity = Math.min(1, remaining / (FLAME_CONFIG.speed * FLAME_CONFIG.flightFadeSeconds));
-          for (const child of root.children) child.material.opacity = opacity;
-          if (remaining <= 1e-6) { this.remove(flame); continue; }
+        // Sweep short segments of the ballistic arc, even after a slow frame.
+        // Constant acceleration keeps landing distance independent of frame rate.
+        let flightTime = 0;
+        while (flightTime < delta && !flame.landed) {
+          const step = Math.min(FLAME_CONFIG.flightStep, delta - flightTime,
+            FLAME_CONFIG.flightSeconds - flame.flightAge);
+          if (step <= 1e-9) {
+            if (FLAME_CONFIG.flightSeconds - flame.flightAge <= 1e-9) this.remove(flame);
+            break;
+          }
+          const travel = flame.velocity.clone().multiplyScalar(step);
+          travel.y -= .5 * FLAME_CONFIG.gravity * step * step;
+          const length = travel.length();
+          const fraction = length ? Math.min(1, (flame.range - flame.distance) / length) : 1;
+          travel.multiplyScalar(fraction);
+          const next = root.position.clone().add(travel);
+          const hit = this.sweep(root.position, next, targets);
+          if (hit) {
+            const contactTime = step * fraction * (travel.length() ? hit.distance / travel.length() : 0);
+            burnDelta = Math.max(0, delta - flightTime - contactTime);
+            root.position.copy(hit.point).addScaledVector(hit.normal, .025);
+            flame.landed = true;
+            // Ground patches stand upright after the airborne jet lands.
+            root.quaternion.identity();
+            this.createBurnGraphics(root);
+            flame.anchor = hit.target.root;
+            flame.localPoint = flame.anchor.worldToLocal(root.position.clone());
+            this.impact?.(hit.target.root, flame);
+          } else {
+            root.position.copy(next);
+            flame.distance += travel.length();
+            flame.velocity.y -= FLAME_CONFIG.gravity * step * fraction;
+            flame.flightAge += step * fraction;
+            flightTime += step;
+            if (fraction < 1 || flame.range - flame.distance <= 1e-6 ||
+                FLAME_CONFIG.flightSeconds - flame.flightAge <= 1e-9) {
+              this.remove(flame); break;
+            }
+          }
+        }
+        if (!flame.landed) {
+          if (!root.parent) continue;
+          const remainingTime = FLAME_CONFIG.flightSeconds - flame.flightAge;
+          const remainingRange = (flame.range - flame.distance) / flame.velocity.length();
+          const opacity = Math.min(1, Math.min(remainingTime, remainingRange) / FLAME_CONFIG.flightFadeSeconds);
+          root.quaternion.setFromUnitVectors(new this.THREE.Vector3(0, 1, 0), flame.velocity.clone().normalize());
+          const flicker = this.reducedMotion ? 1 : 1 + Math.sin(elapsed * 24 + root.id) * .08;
+          root.scale.setScalar((1 + Math.min(flame.flightAge, .5) * .8) * flicker);
+          for (const child of root.children) child.material.opacity = opacity * .85;
         }
       }
       if (flame.landed) {

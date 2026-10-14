@@ -158,9 +158,12 @@ For a PostgreSQL-backed deployment, create a Render PostgreSQL database, set `DA
 The Flamethrower replaces the Scatter Blaster in the tools and range armory.
 Hold the mouse trigger while pointer-locked, hold **HOLD FIRE** in the tools
 panel on touch devices, or hold either VR trigger. Tapping the existing shoot
-control fires one burst. Flames spray in a narrow cone toward the aim direction
-up to 12 metres, even with low fuel, and fade away in flight at their range limit.
-They do not lose forward speed and drop at the player's feet. Pink spray-can
+control fires one burst. Flames form a flickering jet in a narrow cone toward
+the aim direction, then arc downward into burning patches. With a level aim
+from normal standing height, fire lands roughly 3–4 metres ahead; aiming up or
+down and hitting nearby objects changes the landing point. Low fuel keeps the
+same throw speed. Missed flames fade after 1.2 seconds or 12 metres of travel.
+Pink spray-can
 pickups replenish 24 units of both paint and flame fuel; resetting a round
 restores the flame tank.
 

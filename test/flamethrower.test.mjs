@@ -17,20 +17,20 @@ function setup(colliders = () => [], damage = () => {}) {
   return { scene, system };
 }
 
-test('spray travels toward horizontal, upward and downward aim without dropping, then fades', () => {
+test('airborne spray starts along the aim, arcs under gravity, and fades without a surface', () => {
   for (const direction of [new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0)]) {
     const { system } = setup();
     system.fuel = 1;
-    assert.equal(system.fire(new THREE.Vector3(0, 2, 0), direction), true);
-    const flame = system.flames[0], velocity = flame.velocity.clone();
-    assert.ok(velocity.clone().normalize().dot(direction) > .998);
+    assert.equal(system.fire(new THREE.Vector3(0, 1.7, 0), direction), true);
+    const flame = system.flames[0], initialVelocity = flame.velocity.clone();
+    assert.ok(initialVelocity.clone().normalize().dot(direction) > .997);
     system.update(.25, .25);
-    assert.ok(flame.root.position.distanceTo(new THREE.Vector3(0, 2, 0)) > 5.9);
-    assert.deepEqual(flame.velocity, velocity);
-    system.update(.2, .45);
+    assert.ok(Math.abs(flame.velocity.y - initialVelocity.y + FLAME_CONFIG.gravity * .25) < 1e-9);
+    assert.ok(flame.root.position.distanceTo(new THREE.Vector3(0, 1.7, 0)) > 1.4);
+    system.update(.85, 1.1);
     assert.ok(flame.root.children[0].material.opacity > 0);
     assert.ok(flame.root.children[0].material.opacity < 1);
-    system.update(1, 1.45);
+    system.update(1, 2.1);
     assert.equal(system.flames.length, 0);
     assert.equal(flame.root.parent, null);
     assert.equal(system.fire(new THREE.Vector3(), direction), false);
@@ -38,21 +38,46 @@ test('spray travels toward horizontal, upward and downward aim without dropping,
   }
 });
 
-test('a distant item ignites on a swept hit and continues burning before expiring', () => {
+test('level spray lands 3–4 metres ahead across fuel levels, spread and frame rates', () => {
+  for (const step of [1 / 120, 1 / 30, .25, 1]) {
+    for (const fuel of [100, 1]) {
+      for (let shot = 0; shot < 8; shot++) {
+        const floor = new THREE.Mesh(new THREE.BoxGeometry(30, .2, 30), new THREE.MeshBasicMaterial());
+        floor.position.y = -.1;
+        const { scene, system } = setup(() => [{ root: floor }]);
+        scene.add(floor);
+        system.fuel = fuel;
+        system.fire(new THREE.Vector3(0, 1.7, 0), new THREE.Vector3(0, 0, -1));
+        const flame = system.flames[0];
+        for (let time = 0; time < 1.2 && !flame.landed; time += step) system.update(step, time + step);
+        assert.equal(flame.landed, true);
+        assert.ok(-flame.root.position.z >= 3 && -flame.root.position.z <= 4, `landing ${-flame.root.position.z}`);
+        assert.ok(flame.root.position.y < .2);
+        assert.equal(flame.anchor, floor);
+        assert.ok(flame.root.quaternion.angleTo(new THREE.Quaternion()) < 1e-9);
+        system.dispose();
+        floor.geometry.dispose();
+        floor.material.dispose();
+      }
+    }
+  }
+});
+
+test('an item in front ignites on a swept hit and continues burning before expiring', () => {
   const target = new THREE.Mesh(new THREE.BoxGeometry(3, 3, .5), new THREE.MeshBasicMaterial());
-  target.position.set(0, 2, -8);
+  target.position.set(0, 1.5, -3.5);
   let hits = 0;
   const { scene, system } = setup(() => [{ root: target }], (object, amount) => {
     assert.equal(object, target);
     hits += amount;
   });
   scene.add(target);
-  system.fire(new THREE.Vector3(0, 2, 0), new THREE.Vector3(0, 0, -1));
+  system.fire(new THREE.Vector3(0, 1.7, 0), new THREE.Vector3(0, 0, -1));
   system.update(.5, .5);
   const flame = system.flames[0];
   assert.equal(flame.landed, true);
   assert.equal(flame.anchor, target);
-  assert.ok(flame.root.position.z < -7);
+  assert.ok(flame.root.position.z < -3);
   for (let i = 0; i < 11; i++) system.update(1, i + 1.5);
   assert.equal(hits, 10);
   assert.equal(system.flames.length, 0);
@@ -61,14 +86,14 @@ test('a distant item ignites on a swept hit and continues burning before expirin
   target.material.dispose();
 });
 
-test('a long frame cannot ignite an object beyond maximum spray range', () => {
+test('long frames expire missed spray without hitting objects beyond its lifetime', () => {
   const { scene, system } = setup();
-  const target = new THREE.Mesh(new THREE.BoxGeometry(3, 3, .5), new THREE.MeshBasicMaterial());
-  target.position.set(0, 2, -15);
+  const target = new THREE.Mesh(new THREE.BoxGeometry(3, 20, .5), new THREE.MeshBasicMaterial());
+  target.position.set(0, 0, -15);
   scene.add(target);
   system.colliders = () => [{ root: target }];
   system.impact = () => assert.fail('hit beyond range');
-  system.fire(new THREE.Vector3(0, 2, 0), new THREE.Vector3(0, 0, -1));
+  system.fire(new THREE.Vector3(0, 1.7, 0), new THREE.Vector3(0, 0, -1));
   system.update(2, 2);
   assert.equal(system.flames.length, 0);
   system.dispose();
