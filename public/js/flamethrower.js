@@ -1,5 +1,6 @@
 export const FLAME_CONFIG = Object.freeze({
-  tank: 100, fuelPerBurst: 1, interval: .12, range: 12, lowFuel: .2,
+  tank: 100, fuelPerBurst: 1, interval: .12, range: 12, speed: 24, spread: .045,
+  flightFadeSeconds: .15,
   burnSeconds: 10, fadeSeconds: 1, radius: .42, maxFlames: 120,
 });
 
@@ -7,9 +8,8 @@ export const FLAME_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9
 
 export function flamePressure(fuel) {
   const ratio = Math.max(0, Math.min(1, fuel / FLAME_CONFIG.tank));
-  return { ratio, dripping: ratio <= FLAME_CONFIG.lowFuel,
-    range: .7 + (FLAME_CONFIG.range - .7) * ratio,
-    speed: 1.8 + 22.2 * ratio };
+  return { ratio, range: ratio > 0 ? FLAME_CONFIG.range : 0,
+    speed: ratio > 0 ? FLAME_CONFIG.speed : 0 };
 }
 
 // Each independent flame connection has its own contact clock. Leaving a flame
@@ -129,8 +129,15 @@ export class Flamethrower {
     }
     root.position.copy(origin);
     this.scene.add(root);
-    this.flames.push({ root, velocity: direction.clone().normalize().multiplyScalar(pressure.speed),
-      distance: 0, range: pressure.range, dripping: pressure.dripping, landed: false,
+    const aim = direction.clone().normalize();
+    const side = new T.Vector3().crossVectors(aim, new T.Vector3(0, 1, 0));
+    if (side.lengthSq() < 1e-6) side.crossVectors(aim, new T.Vector3(1, 0, 0));
+    side.normalize();
+    const up = new T.Vector3().crossVectors(side, aim).normalize();
+    const angle = Math.random() * Math.PI * 2, spread = Math.sqrt(Math.random()) * FLAME_CONFIG.spread;
+    aim.addScaledVector(side, Math.cos(angle) * spread).addScaledVector(up, Math.sin(angle) * spread).normalize();
+    this.flames.push({ root, velocity: aim.multiplyScalar(pressure.speed),
+      distance: 0, range: pressure.range, landed: false,
       clock: new FlameContactClock(), flightAge: 0 });
     return true;
   }
@@ -244,12 +251,13 @@ export class Flamethrower {
       const { root } = flame;
       let burnDelta = delta;
       if (!flame.landed) {
-        flame.flightAge += delta;
-        const next = root.position.clone().addScaledVector(flame.velocity, delta);
+        const flightDelta = Math.min(delta, (flame.range - flame.distance) / flame.velocity.length());
+        flame.flightAge += flightDelta;
+        const next = root.position.clone().addScaledVector(flame.velocity, flightDelta);
         const hit = this.sweep(root.position, next, targets);
         if (hit) {
           const distance = root.position.distanceTo(next);
-          burnDelta = distance ? delta * Math.max(0, 1 - hit.distance / distance) : delta;
+          burnDelta = distance ? delta - flightDelta * hit.distance / distance : delta;
           root.position.copy(hit.point).addScaledVector(hit.normal, .025);
           flame.landed = true;
           this.createBurnGraphics(root);
@@ -259,13 +267,10 @@ export class Flamethrower {
         } else {
           flame.distance += next.distanceTo(root.position);
           root.position.copy(next);
-          if (flame.distance >= flame.range) {
-            // At the pressure limit the fuel loses forward velocity and drips.
-            flame.velocity.x *= Math.exp(-delta * 16);
-            flame.velocity.z *= Math.exp(-delta * 16);
-          }
-          flame.velocity.y -= (flame.dripping ? 12 : 4) * delta;
-          if (flame.flightAge > 4) { this.remove(flame); continue; }
+          const remaining = Math.max(0, flame.range - flame.distance);
+          const opacity = Math.min(1, remaining / (FLAME_CONFIG.speed * FLAME_CONFIG.flightFadeSeconds));
+          for (const child of root.children) child.material.opacity = opacity;
+          if (remaining <= 1e-6) { this.remove(flame); continue; }
         }
       }
       if (flame.landed) {

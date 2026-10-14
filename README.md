@@ -158,8 +158,9 @@ For a PostgreSQL-backed deployment, create a Render PostgreSQL database, set `DA
 The Flamethrower replaces the Scatter Blaster in the tools and range armory.
 Hold the mouse trigger while pointer-locked, hold **HOLD FIRE** in the tools
 panel on touch devices, or hold either VR trigger. Tapping the existing shoot
-control fires one burst. A full 100-unit tank reaches up to 12 metres; range
-falls with pressure and the last 20 units drip down nearby. Pink spray-can
+control fires one burst. Flames spray in a narrow cone toward the aim direction
+up to 12 metres, even with low fuel, and fade away in flight at their range limit.
+They do not lose forward speed and drop at the player's feet. Pink spray-can
 pickups replenish 24 units of both paint and flame fuel; resetting a round
 restores the flame tank.
 
