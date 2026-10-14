@@ -62,12 +62,24 @@ for (const page of unifiedHeaderPages) {
 // card. SVG previews are not consistently rendered by sharing crawlers.
 for (const page of htmlPages) {
   const html = await readFile(`dist/${page}`, 'utf8');
-  for (const brandMarker of ['site.webmanifest', 'logo_symbol_crop_2x_transparent.png', 'brand_name_tagline_panel_2x.png', 'og:image:width', 'twitter:image:alt', 'pwa.js']) {
+  for (const brandMarker of ['site.webmanifest', 'public/assets/app-icons/apple-touch-icon.png', 'brand_name_tagline_panel_2x.png', 'og:image:width', 'twitter:image:alt', 'pwa.js']) {
     if (!html.includes(brandMarker)) throw new Error(`${page} is missing required app/share branding: ${brandMarker}`);
   }
 }
+const serviceWorkerBrandPaths = await readFile('dist/service-worker.js', 'utf8');
+for (const page of htmlPages) {
+  const html = await readFile(`dist/${page}`, 'utf8');
+  if (!html.includes('public/assets/app-icons/apple-touch-icon.png') || !html.includes('sizes="180x180"')) throw new Error(`${page} is missing the Apple app logo.`);
+  if (!html.includes('public/assets/app-icons/favicon-32.png')) throw new Error(`${page} is missing the browser logo.`);
+}
 const webManifest = JSON.parse(await readFile('dist/site.webmanifest', 'utf8'));
-if (!webManifest.icons?.some((icon) => icon.src.endsWith('.svg') && icon.sizes === 'any' && icon.purpose.includes('maskable'))) throw new Error('The installed app manifest is missing its scalable maskable MUZIKAZ icon.');
+for (const [size, purpose] of [['192x192', 'any'], ['512x512', 'any'], ['512x512', 'maskable']]) {
+  const icon = webManifest.icons?.find(icon => icon.sizes === size && icon.type === 'image/png' && icon.purpose === purpose);
+  if (!icon) throw new Error(`Installed app is missing ${size} ${purpose} PNG logo.`);
+  const png = await readFile(`dist${icon.src}`);
+  if (png.readUInt32BE(16) !== Number(size.split('x')[0]) || png.readUInt32BE(20) !== Number(size.split('x')[1])) throw new Error(`Wrong icon dimensions: ${icon.src}`);
+  if (!serviceWorkerBrandPaths.includes(icon.src)) throw new Error(`Icon is missing from offline cache: ${icon.src}`);
+}
 if (!webManifest.screenshots?.some((shot) => shot.src.includes('brand_name_tagline_panel_2x.png'))) throw new Error('The installed app manifest is missing branded store artwork.');
 const serviceWorker = await readFile('dist/service-worker.js', 'utf8');
 for (const offlineBrandAsset of ['muzikaz-world-logo.svg', 'muzikaz_bolt_logo_editable.svg', 'brand_name_tagline_panel_2x.png', 'logo_symbol_crop_2x_transparent.png']) {

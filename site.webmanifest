@@ -16,10 +16,22 @@
   "theme_color": "#b7ff35",
   "icons": [
     {
-      "src": "/muzikaz_bolt_logo_editable.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "/public/assets/app-icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/public/assets/app-icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/public/assets/app-icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [
@@ -41,18 +53,42 @@
     {
       "name": "Model Explorer",
       "url": "/model-explorer.html",
-      "description": "Publish and explore live MUZIKAZ 3D models."
+      "description": "Publish and explore live MUZIKAZ 3D models.",
+      "icons": [
+        {
+          "src": "/public/assets/app-icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        }
+      ]
     },
     {
       "name": "Brand Kit",
       "url": "/brand-kit.html",
-      "description": "View official MUZIKAZ logos, descriptions, and profile assets."
+      "description": "View official MUZIKAZ logos, descriptions, and profile assets.",
+      "icons": [
+        {
+          "src": "/public/assets/app-icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        }
+      ]
     },
     {
       "name": "Wallet Quest Board",
       "url": "/quest-board.html",
-      "description": "Open wallet rewards and activity feeds."
+      "description": "Open wallet rewards and activity feeds.",
+      "icons": [
+        {
+          "src": "/public/assets/app-icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        }
+      ]
     }
   ],
-  "version": "2.2.0"
+  "version": "2.3.0"
 }
