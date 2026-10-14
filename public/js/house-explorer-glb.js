@@ -443,7 +443,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       const roots=new Set([...this.bubbles,...this.avatarTargets(),...this.bricks,...this.lootBlocks,...this.drawingStrokes,...builderDecor.children]);
       if(this.endBoss&&!this.endBoss.isDisposed&&this.endBoss.state!=='DEFEATED')roots.add(this.endBoss.root);
       for(const mesh of this.environmentSurfaces()){let covered=false;for(let node=mesh;node;node=node.parent)if(roots.has(node)){covered=true;break;}if(!covered)roots.add(mesh);}
-      const colliders=[...roots].map(root=>({root,includeInvisible:(this.loader.collisionMeshes||[]).includes(root)}));
+      const surfaces=new Set(this.environmentSurfaces());
+      const colliders=[...roots].map(root=>{let carried=false;for(let node=root;node;node=node.parent)if(node===playerRig||node.userData?.pinnedToPlayer)carried=true;return {root,surfaceOnly:surfaces.has(root),projectiles:!carried,includeInvisible:(this.loader.collisionMeshes||[]).includes(root)};});
       colliders.push({root:playerRig,projectiles:false,touches:point=>{const axis=playerCollider.end.clone().sub(playerCollider.start),length=axis.lengthSq(),t=length?THREE.MathUtils.clamp(point.clone().sub(playerCollider.start).dot(axis)/length,0,1):0;return point.distanceTo(playerCollider.start.clone().addScaledVector(axis,t))<=playerCollider.radius+FLAME_CONFIG.radius;}});
       return colliders;
     }

@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { FlameContactClock, Flamethrower, flamePressure, FLAME_CONFIG } from '../public/js/flamethrower.js';
 import * as THREE from '../public/vendor/three/three.module.min.js';
@@ -99,6 +100,54 @@ test('long frames expire missed spray without hitting objects beyond its lifetim
   system.dispose();
   target.geometry.dispose();
   target.material.dispose();
+});
+
+test('a room enclosing the player does not ignite at launch; its floor catches the arc', () => {
+  const room = new THREE.Mesh(new THREE.BoxGeometry(20, 6, 20), new THREE.MeshBasicMaterial());
+  room.position.y = 3;
+  const { scene, system } = setup(() => [{ root: room, surfaceOnly: true }]);
+  scene.add(room);
+  system.fire(new THREE.Vector3(0, 1.7, 0), new THREE.Vector3(0, 0, -1));
+  const flame = system.flames[0];
+  assert.ok(Math.abs(flame.root.position.z + FLAME_CONFIG.muzzleOffset) < 1e-9);
+  system.update(1 / 60, 1 / 60);
+  assert.equal(flame.landed, false, 'room interior must not count as a solid impact');
+  for (let i = 1; i < 60 && !flame.landed; i++) system.update(1 / 60, i / 60);
+  assert.equal(flame.landed, true);
+  assert.ok(-flame.root.position.z >= 3 && -flame.root.position.z <= 4);
+  system.dispose(); room.geometry.dispose(); room.material.dispose();
+});
+
+test('the nozzle offset cannot shoot through a wall immediately in front of the player', () => {
+  const wall = new THREE.Mesh(new THREE.BoxGeometry(5, 5, .08), new THREE.MeshBasicMaterial());
+  wall.position.set(0, 1.7, -.3);
+  const { scene, system } = setup(() => [{ root: wall, surfaceOnly: true }]);
+  scene.add(wall);
+  system.fire(new THREE.Vector3(0, 1.7, 0), new THREE.Vector3(0, 0, -1));
+  system.update(1 / 60, 1 / 60);
+  assert.equal(system.flames[0].landed, true);
+  assert.equal(system.flames[0].anchor, wall);
+  assert.ok(system.flames[0].root.position.z > -.35);
+  system.dispose(); wall.geometry.dispose(); wall.material.dispose();
+});
+
+test('game colliders exclude carried gear from spray hits and mark room meshes as surfaces', () => {
+  const source = readFileSync(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
+  const body = source.slice(source.indexOf('    flameColliders(){') + '    flameColliders(){'.length,
+    source.indexOf('    damageFlameTarget('));
+  const playerRig = new THREE.Group(), builderDecor = new THREE.Group(), surface = new THREE.Mesh();
+  const gear = new THREE.Group(), enemy = new THREE.Group();
+  gear.userData.pinnedToPlayer = { socket: 'hand' };
+  builderDecor.add(gear);
+  const colliders = new Function('playerRig', 'builderDecor', 'playerCollider', 'THREE', 'FLAME_CONFIG',
+    'return function(){' + body)(playerRig, builderDecor, {}, THREE, FLAME_CONFIG).call({
+      bubbles: [enemy], avatarTargets: () => [], bricks: [], lootBlocks: [], drawingStrokes: [],
+      environmentSurfaces: () => [surface], loader: { collisionMeshes: [surface] },
+    });
+  assert.equal(colliders.find(t => t.root === gear).projectiles, false);
+  assert.equal(colliders.find(t => t.root === playerRig).projectiles, false);
+  assert.equal(colliders.find(t => t.root === enemy).projectiles, true);
+  assert.equal(colliders.find(t => t.root === surface).surfaceOnly, true);
 });
 
 test('a flame applies exactly ten damage ticks then expires, independent of frame rate', () => {

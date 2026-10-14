@@ -1,5 +1,6 @@
 export const FLAME_CONFIG = Object.freeze({
-  tank: 100, fuelPerBurst: 1, interval: .08, range: 12, speed: 8.5, spread: .065,
+  tank: 100, fuelPerBurst: 1, interval: .08, range: 12, speed: 7.6, spread: .065,
+  muzzleOffset: .55,
   flightFadeSeconds: .15, flightSeconds: 1.2, gravity: 18, flightStep: 1 / 60,
   burnSeconds: 10, fadeSeconds: 1, radius: .42, maxFlames: 160,
 });
@@ -136,7 +137,7 @@ export class Flamethrower {
       sprite.scale.set(.42, .65, 1);
       root.add(sprite);
     }
-    root.position.copy(origin);
+    root.position.copy(origin).addScaledVector(direction.clone().normalize(), FLAME_CONFIG.muzzleOffset);
     this.scene.add(root);
     const aim = direction.clone().normalize();
     const side = new T.Vector3().crossVectors(aim, new T.Vector3(0, 1, 0));
@@ -145,7 +146,9 @@ export class Flamethrower {
     const up = new T.Vector3().crossVectors(side, aim).normalize();
     const angle = Math.random() * Math.PI * 2, spread = Math.sqrt(Math.random()) * FLAME_CONFIG.spread;
     aim.addScaledVector(side, Math.cos(angle) * spread).addScaledVector(up, Math.sin(angle) * spread).normalize();
+    root.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), aim);
     this.flames.push({ root, velocity: aim.multiplyScalar(pressure.speed),
+      launchOrigin: origin.clone(),
       distance: 0, range: pressure.range, landed: false,
       clock: new FlameContactClock(), flightAge: 0 });
     return true;
@@ -173,7 +176,7 @@ export class Flamethrower {
       mesh.updateWorldMatrix(true, false);
       this.box.copy(this.bounds?.get(mesh) || new this.THREE.Box3().setFromObject(mesh));
       if (!this.box.intersectsSphere(this.sphere)) continue;
-      const insideRay = this.box.containsPoint(point)
+      const insideRay = !target.surfaceOnly && this.box.containsPoint(point)
         ? new this.THREE.Ray(point, new this.THREE.Vector3(1, .371, .217).normalize()) : null;
       const crossings = new Set();
       const positions = mesh.geometry.attributes.position, index = mesh.geometry.index;
@@ -260,6 +263,12 @@ export class Flamethrower {
       const { root } = flame;
       let burnDelta = delta;
       if (!flame.landed) {
+        // Check the camera-to-nozzle gap too, so a close wall cannot be skipped.
+        if (flame.launchOrigin) {
+          const obstruction = this.sweep(flame.launchOrigin, root.position, targets);
+          if (obstruction) root.position.copy(obstruction.point);
+          flame.launchOrigin = null;
+        }
         // Sweep short segments of the ballistic arc, even after a slow frame.
         // Constant acceleration keeps landing distance independent of frame rate.
         let flightTime = 0;
