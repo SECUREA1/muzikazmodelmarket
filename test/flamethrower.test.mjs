@@ -130,3 +130,44 @@ test('separate flame connections stack, while duplicate meshes of one target do 
   assert.equal(damage.get(target), 2);
   assert.equal(damage.get(other), 1);
 });
+
+test('recycled fire graphics start a fresh damage clock and disposal releases pooled materials', () => {
+  const target = new THREE.Mesh(new THREE.BoxGeometry(2, 2, .5), new THREE.MeshBasicMaterial());
+  target.position.set(0, 0, -4);
+  let damage = 0;
+  const { scene, system } = setup(() => [{ root: target }], (_, amount) => damage += amount);
+  scene.add(target);
+  const aim = new THREE.Vector3(0, 0, -1), origin = new THREE.Vector3();
+  system.fire(origin, aim);
+  const first = system.flames[0], flash = system.flash.root;
+  system.update(10, 10);
+  assert.equal(damage, 10);
+  assert.equal(system.flames.length, 0);
+  system.fire(origin, aim);
+  assert.equal(system.flames[0].root, first.root);
+  assert.equal(system.flash.root, flash);
+  assert.equal(system.flames[0].clock.age, 0);
+  system.update(.5, 10.5);
+  assert.equal(damage, 10, 'reusing graphics must not carry old damage ticks');
+  system.clear();
+  system.update(5, 15.5);
+  assert.equal(damage, 10, 'cleared fire must not damage targets');
+  let disposed = 0;
+  first.root.children.forEach(child => child.material.addEventListener('dispose', () => disposed++));
+  flash.material.addEventListener('dispose', () => disposed++);
+  system.dispose();
+  assert.equal(disposed, first.root.children.length + 1);
+  assert.equal(system.burnPool.length, 0);
+  target.geometry.dispose(); target.material.dispose();
+});
+
+test('direct ignition misses off-aim targets without running droplet contact scans', () => {
+  const target = new THREE.Mesh(new THREE.BoxGeometry(.1, .1, .1), new THREE.MeshBasicMaterial());
+  target.position.set(.12, 0, -4);
+  const { scene, system } = setup(() => [{ root: target }]);
+  scene.add(target);
+  system.touching = () => assert.fail('instant ignition should not sample projectile contacts');
+  system.fire(new THREE.Vector3(), new THREE.Vector3(0, 0, -1));
+  assert.equal(system.flames.length, 0);
+  system.dispose(); target.geometry.dispose(); target.material.dispose();
+});

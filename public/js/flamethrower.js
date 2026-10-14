@@ -39,6 +39,8 @@ export class Flamethrower {
     this.fuel = FLAME_CONFIG.tank;
     this.cooldown = 0;
     this.flames = [];
+    this.burnPool = [];
+    this.flashMesh = null;
     this.ray = new THREE.Raycaster();
     this.geometry = new THREE.IcosahedronGeometry(.16, 1);
     this.sphere = new THREE.Sphere();
@@ -113,10 +115,12 @@ export class Flamethrower {
     this.fuel -= FLAME_CONFIG.fuelPerBurst;
     this.cooldown = FLAME_CONFIG.interval;
     if (this.flash) this.removeFlash();
-    const flash = new T.Mesh(this.geometry, new T.MeshBasicMaterial({
+    const flash = this.flashMesh || new T.Mesh(this.geometry, new T.MeshBasicMaterial({
       color: 0xffe29a, transparent: true, opacity: .9, depthWrite: false,
       toneMapped: false, blending: T.AdditiveBlending,
     }));
+    this.flashMesh = flash;
+    flash.material.opacity = .9;
     flash.name = 'MUZIKAZ_FLASH_IGNITER_MUZZLE_FLASH';
     flash.position.copy(origin).addScaledVector(aim, FLAME_CONFIG.muzzleOffset);
     flash.scale.set(.6, .6, .6);
@@ -135,10 +139,11 @@ export class Flamethrower {
     }
     const hit = this.sweep(origin, origin.clone().addScaledVector(aim, FLAME_CONFIG.range), targets);
     if (!hit || this.flames.length >= FLAME_CONFIG.maxFlames) return true;
-    const root = new T.Group();
+    const root = this.burnPool.pop() || new T.Group();
+    root.scale.setScalar(1);
     root.name = 'MUZIKAZ_FLASH_IGNITER_TARGET_FIRE';
     root.position.copy(hit.point).addScaledVector(hit.normal, .025);
-    this.createBurnGraphics(root);
+    if (!root.children.length) this.createBurnGraphics(root);
     this.scene.add(root);
     const flame = { root, landed: true, anchor: hit.target.root,
       localPoint: hit.target.root.worldToLocal(root.position.clone()), clock: new FlameContactClock() };
@@ -149,7 +154,6 @@ export class Flamethrower {
   }
 
   removeFlash() {
-    this.flash.root.material.dispose();
     this.flash.root.removeFromParent();
     this.flash = null;
   }
@@ -173,7 +177,7 @@ export class Flamethrower {
     if (target.touches) return target.touches(point);
     this.sphere.set(point, radius);
     for (const mesh of this.meshes(target)) {
-      mesh.updateWorldMatrix(true, false);
+      if (!this.bounds?.has(mesh)) mesh.updateWorldMatrix(true, false);
       this.box.copy(this.bounds?.get(mesh) || new this.THREE.Box3().setFromObject(mesh));
       if (!this.box.intersectsSphere(this.sphere)) continue;
       const insideRay = !target.surfaceOnly && this.box.containsPoint(point)
@@ -207,7 +211,7 @@ export class Flamethrower {
     for (const target of targets) {
       if (target.projectiles === false) continue;
       for (const mesh of this.meshes(target)) {
-        mesh.updateWorldMatrix(true, false);
+        if (!this.bounds?.has(mesh)) mesh.updateWorldMatrix(true, false);
         this.box.copy(this.bounds?.get(mesh) || new T.Box3().setFromObject(mesh)).expandByScalar(.16);
         this.ray.set(start, direction);
         const entry = this.ray.ray.intersectBox(this.box, this.closest);
@@ -222,26 +226,15 @@ export class Flamethrower {
             mesh.getVertexPosition(index ? index.getX(i + j) : i + j, vertex);
             vertex.applyMatrix4(mesh.matrixWorld);
           }
-          const point = this.ray.ray.intersectTriangle(this.triangle.a, this.triangle.b, this.triangle.c, false, new T.Vector3());
+          const point = this.ray.ray.intersectTriangle(this.triangle.a, this.triangle.b, this.triangle.c, false, this.closest);
           if (!point) continue;
           const hitDistance = point.distanceTo(start);
           if (hitDistance <= distance && (!nearest || hitDistance < nearest.distance)) {
-            nearest = { point, distance: hitDistance, target, normal: this.triangle.getNormal(new T.Vector3()) };
+            nearest = { point: point.clone(), distance: hitDistance, target, normal: this.triangle.getNormal(new T.Vector3()) };
           }
         }
       }
-      // Radius contact catches edge grazes that a center ray would miss. Sampling
-      // at less than the droplet diameter prevents tunneling around thin edges.
-      const steps = Math.max(1, Math.ceil(distance / .16));
-      for (let i = 0; i <= steps; i++) {
-        const traveled = distance * i / steps;
-        if (nearest && traveled >= nearest.distance) break;
-        const center = start.clone().addScaledVector(direction, traveled);
-        if (this.touching(target, center, .16)) {
-          nearest = { point: center, distance: traveled, target, normal: direction.clone().negate() };
-          break;
-        }
-      }
+
     }
     return nearest;
   }
@@ -266,7 +259,7 @@ export class Flamethrower {
     }
     for (const flame of [...this.flames]) {
       const { root } = flame;
-      let burnDelta = delta;
+      const burnDelta = delta;
 
       if (flame.landed) {
         if (!flame.anchor.parent) { this.remove(flame); continue; }
@@ -282,10 +275,20 @@ export class Flamethrower {
   }
 
   remove(flame) {
-    flame.root.children.forEach(child => child.material.dispose());
+    const index = this.flames.indexOf(flame);
+    if (index < 0) return;
     flame.root.removeFromParent();
-    this.flames.splice(this.flames.indexOf(flame), 1);
+    this.flames.splice(index, 1);
+    this.burnPool.push(flame.root);
   }
   clear() { for (const flame of [...this.flames]) this.remove(flame); this.cooldown = 0; if (this.flash) this.removeFlash(); }
-  dispose() { this.clear(); this.geometry.dispose(); }
+  dispose() {
+    this.clear();
+    for (const root of this.burnPool) root.children.forEach(child => child.material.dispose());
+    this.burnPool.length = 0;
+    this.flashMesh?.material.dispose();
+    this.flashMesh = null;
+    this.bounds?.clear();
+    this.geometry.dispose();
+  }
 }
