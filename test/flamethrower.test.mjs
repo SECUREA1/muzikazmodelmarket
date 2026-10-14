@@ -4,131 +4,80 @@ import assert from 'node:assert/strict';
 import { FlameContactClock, Flamethrower, flamePressure, FLAME_CONFIG } from '../public/js/flamethrower.js';
 import * as THREE from '../public/vendor/three/three.module.min.js';
 
-test('low fuel keeps full throw distance and speed; empty fuel cannot launch', () => {
-  for (const fuel of [100, 20, 10, 1]) {
-    assert.equal(flamePressure(fuel).range, FLAME_CONFIG.range);
-    assert.equal(flamePressure(fuel).speed, FLAME_CONFIG.speed);
-  }
-  assert.equal(flamePressure(-10).range, flamePressure(0).range);
-});
-
 function setup(colliders = () => [], damage = () => {}) {
   const scene = new THREE.Scene();
   const system = new Flamethrower({ THREE, scene, colliders, damage });
   return { scene, system };
 }
 
-test('airborne spray starts along the aim, arcs under gravity, and fades without a surface', () => {
-  for (const direction of [new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0)]) {
-    const { system } = setup();
-    system.fuel = 1;
-    assert.equal(system.fire(new THREE.Vector3(0, 1.7, 0), direction), true);
-    const flame = system.flames[0], initialVelocity = flame.velocity.clone();
-    assert.ok(initialVelocity.clone().normalize().dot(direction) > .997);
-    system.update(.25, .25);
-    assert.ok(Math.abs(flame.velocity.y - initialVelocity.y + FLAME_CONFIG.gravity * .25) < 1e-9);
-    assert.ok(flame.root.position.distanceTo(new THREE.Vector3(0, 1.7, 0)) > 1.4);
-    system.update(.85, 1.1);
-    assert.ok(flame.root.children[0].material.opacity > 0);
-    assert.ok(flame.root.children[0].material.opacity < 1);
-    system.update(1, 2.1);
-    assert.equal(system.flames.length, 0);
-    assert.equal(flame.root.parent, null);
-    assert.equal(system.fire(new THREE.Vector3(), direction), false);
-    system.dispose();
-  }
-});
-
-test('level spray lands 3–4 metres ahead across fuel levels, spread and frame rates', () => {
-  for (const step of [1 / 120, 1 / 30, .25, 1]) {
-    for (const fuel of [100, 1]) {
-      for (let shot = 0; shot < 8; shot++) {
-        const floor = new THREE.Mesh(new THREE.BoxGeometry(30, .2, 30), new THREE.MeshBasicMaterial());
-        floor.position.y = -.1;
-        const { scene, system } = setup(() => [{ root: floor }]);
-        scene.add(floor);
-        system.fuel = fuel;
-        system.fire(new THREE.Vector3(0, 1.7, 0), new THREE.Vector3(0, 0, -1));
-        const flame = system.flames[0];
-        for (let time = 0; time < 1.2 && !flame.landed; time += step) system.update(step, time + step);
-        assert.equal(flame.landed, true);
-        assert.ok(-flame.root.position.z >= 3 && -flame.root.position.z <= 4, `landing ${-flame.root.position.z}`);
-        assert.ok(flame.root.position.y < .2);
-        assert.equal(flame.anchor, floor);
-        assert.ok(flame.root.quaternion.angleTo(new THREE.Quaternion()) < 1e-9);
-        system.dispose();
-        floor.geometry.dispose();
-        floor.material.dispose();
-      }
-    }
-  }
-});
-
-test('an item in front ignites on a swept hit and continues burning before expiring', () => {
-  const target = new THREE.Mesh(new THREE.BoxGeometry(3, 3, .5), new THREE.MeshBasicMaterial());
-  target.position.set(0, 1.5, -3.5);
-  let hits = 0;
-  const { scene, system } = setup(() => [{ root: target }], (object, amount) => {
-    assert.equal(object, target);
-    hits += amount;
-  });
+test('a click immediately ignites the aimed item and creates only a short muzzle flash', () => {
+  const target = new THREE.Mesh(new THREE.BoxGeometry(2, 2, .5), new THREE.MeshBasicMaterial());
+  target.position.set(0, 1.7, -8);
+  let hits = 0, impacts = 0;
+  const { scene, system } = setup(() => [{ root: target }], (_, amount) => hits += amount);
+  system.impact = () => impacts++;
   scene.add(target);
   system.fire(new THREE.Vector3(0, 1.7, 0), new THREE.Vector3(0, 0, -1));
-  system.update(.5, .5);
   const flame = system.flames[0];
   assert.equal(flame.landed, true);
   assert.equal(flame.anchor, target);
-  assert.ok(flame.root.position.z < -3);
-  for (let i = 0; i < 11; i++) system.update(1, i + 1.5);
+  assert.ok(flame.root.position.z < -7);
+  assert.equal(flame.velocity, undefined);
+  assert.equal(impacts, 1);
+  assert.ok(system.flash);
+  system.update(FLAME_CONFIG.flashSeconds, 1);
+  assert.equal(system.flash, null);
+  target.position.x = 2;
+  target.updateWorldMatrix(true, false);
+  system.update(.1, 1.1);
+  assert.ok(flame.root.position.x > 1.9, 'fire follows a moving target');
+  for (let i = 0; i < 11; i++) system.update(1, i + 2);
   assert.equal(hits, 10);
   assert.equal(system.flames.length, 0);
-  system.dispose();
-  target.geometry.dispose();
-  target.material.dispose();
+  system.dispose(); target.geometry.dispose(); target.material.dispose();
 });
 
-test('long frames expire missed spray without hitting objects beyond its lifetime', () => {
-  const { scene, system } = setup();
-  const target = new THREE.Mesh(new THREE.BoxGeometry(3, 20, .5), new THREE.MeshBasicMaterial());
-  target.position.set(0, 0, -15);
+test('misses and out-of-range targets produce only a flash, even at low fuel', () => {
+  const target = new THREE.Mesh(new THREE.BoxGeometry(2, 2, .5), new THREE.MeshBasicMaterial());
+  target.position.set(0, 1.7, -15);
+  const { scene, system } = setup(() => [{ root: target }]);
   scene.add(target);
-  system.colliders = () => [{ root: target }];
-  system.impact = () => assert.fail('hit beyond range');
-  system.fire(new THREE.Vector3(0, 1.7, 0), new THREE.Vector3(0, 0, -1));
-  system.update(2, 2);
+  system.fuel = 1;
+  assert.equal(flamePressure(1).range, FLAME_CONFIG.range);
+  assert.equal(system.fire(new THREE.Vector3(0, 1.7, 0), new THREE.Vector3(0, 0, -1)), true);
   assert.equal(system.flames.length, 0);
-  system.dispose();
-  target.geometry.dispose();
-  target.material.dispose();
+  assert.ok(system.flash);
+  system.update(.1, .1);
+  assert.equal(system.flash, null);
+  assert.equal(system.fire(new THREE.Vector3(), new THREE.Vector3(0, 0, -1)), false);
+  system.dispose(); target.geometry.dispose(); target.material.dispose();
 });
 
-test('a room enclosing the player does not ignite at launch; its floor catches the arc', () => {
+test('enclosing room interiors do not ignite; the first wall blocks targets behind it', () => {
   const room = new THREE.Mesh(new THREE.BoxGeometry(20, 6, 20), new THREE.MeshBasicMaterial());
   room.position.y = 3;
-  const { scene, system } = setup(() => [{ root: room, surfaceOnly: true }]);
-  scene.add(room);
+  const target = new THREE.Mesh(new THREE.BoxGeometry(2, 2, .5), new THREE.MeshBasicMaterial());
+  target.position.set(0, 1.7, -11);
+  const { scene, system } = setup(() => [{ root: room, surfaceOnly: true }, { root: target }]);
+  scene.add(room, target);
   system.fire(new THREE.Vector3(0, 1.7, 0), new THREE.Vector3(0, 0, -1));
-  const flame = system.flames[0];
-  assert.ok(Math.abs(flame.root.position.z + FLAME_CONFIG.muzzleOffset) < 1e-9);
-  system.update(1 / 60, 1 / 60);
-  assert.equal(flame.landed, false, 'room interior must not count as a solid impact');
-  for (let i = 1; i < 60 && !flame.landed; i++) system.update(1 / 60, i / 60);
-  assert.equal(flame.landed, true);
-  assert.ok(-flame.root.position.z >= 3 && -flame.root.position.z <= 4);
-  system.dispose(); room.geometry.dispose(); room.material.dispose();
+  assert.equal(system.flames[0].anchor, room);
+  assert.ok(system.flames[0].root.position.z < -9.7);
+  system.dispose(); room.geometry.dispose(); room.material.dispose(); target.geometry.dispose(); target.material.dispose();
 });
 
-test('the nozzle offset cannot shoot through a wall immediately in front of the player', () => {
-  const wall = new THREE.Mesh(new THREE.BoxGeometry(5, 5, .08), new THREE.MeshBasicMaterial());
-  wall.position.set(0, 1.7, -.3);
-  const { scene, system } = setup(() => [{ root: wall, surfaceOnly: true }]);
-  scene.add(wall);
-  system.fire(new THREE.Vector3(0, 1.7, 0), new THREE.Vector3(0, 0, -1));
-  system.update(1 / 60, 1 / 60);
-  assert.equal(system.flames[0].landed, true);
-  assert.equal(system.flames[0].anchor, wall);
-  assert.ok(system.flames[0].root.position.z > -.35);
-  system.dispose(); wall.geometry.dispose(); wall.material.dispose();
+test('reset removes the flash and target fires, while cooldown prevents repeated clicks', () => {
+  const { system } = setup();
+  const origin = new THREE.Vector3(), aim = new THREE.Vector3(0, 0, -1);
+  assert.equal(system.fire(origin, aim), true);
+  assert.equal(system.fire(origin, aim), false);
+  assert.equal(system.fuel, 99);
+  const flash = system.flash.root;
+  system.clear();
+  assert.equal(flash.parent, null);
+  assert.equal(system.flash, null);
+  assert.equal(system.fire(origin, aim), true);
+  system.dispose();
 });
 
 test('game colliders exclude carried gear from spray hits and mark room meshes as surfaces', () => {

@@ -1,7 +1,7 @@
 export const FLAME_CONFIG = Object.freeze({
-  tank: 100, fuelPerBurst: 1, interval: .08, range: 12, speed: 7.6, spread: .065,
+  tank: 100, fuelPerBurst: 1, interval: .08, range: 12,
   muzzleOffset: .55,
-  flightFadeSeconds: .15, flightSeconds: 1.2, gravity: 18, flightStep: 1 / 60,
+  flashSeconds: .06,
   burnSeconds: 10, fadeSeconds: 1, radius: .42, maxFlames: 160,
 });
 
@@ -9,8 +9,7 @@ export const FLAME_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9
 
 export function flamePressure(fuel) {
   const ratio = Math.max(0, Math.min(1, fuel / FLAME_CONFIG.tank));
-  return { ratio, range: ratio > 0 ? FLAME_CONFIG.range : 0,
-    speed: ratio > 0 ? FLAME_CONFIG.speed : 0 };
+  return { ratio, range: ratio > 0 ? FLAME_CONFIG.range : 0 };
 }
 
 // Each independent flame connection has its own contact clock. Leaving a flame
@@ -50,7 +49,7 @@ export class Flamethrower {
 
   createHeldModel() {
     const T = this.THREE, root = new T.Group();
-    root.name = 'MUZIKAZ_FIRST_PERSON_FLAMETHROWER';
+    root.name = 'MUZIKAZ_FIRST_PERSON_FLASH_IGNITER';
     const steel = new T.MeshStandardMaterial({ color: 0x363e46, metalness: .7, roughness: .4 });
     const tankMaterial = new T.MeshStandardMaterial({ color: 0xff681b, metalness: .3, roughness: .5 });
     const nozzle = new T.Mesh(new T.CylinderGeometry(.045, .065, .65, 10), steel);
@@ -109,49 +108,50 @@ export class Flamethrower {
   }
 
   fire(origin, direction) {
-    if (this.cooldown > 0 || this.fuel < FLAME_CONFIG.fuelPerBurst) return false;
-    const T = this.THREE, pressure = flamePressure(this.fuel);
+    if (this.cooldown > 0 || this.fuel < FLAME_CONFIG.fuelPerBurst || direction.lengthSq() === 0) return false;
+    const T = this.THREE, aim = direction.clone().normalize();
     this.fuel -= FLAME_CONFIG.fuelPerBurst;
     this.cooldown = FLAME_CONFIG.interval;
-    // Bound GPU work without evicting live ground fires or resetting their clocks.
-    if (this.flames.length >= FLAME_CONFIG.maxFlames) return true;
-    const material = new T.MeshBasicMaterial({ color: 0xff751f, transparent: true,
-      opacity: .95, depthWrite: false, toneMapped: false });
+    if (this.flash) this.removeFlash();
+    const flash = new T.Mesh(this.geometry, new T.MeshBasicMaterial({
+      color: 0xffe29a, transparent: true, opacity: .9, depthWrite: false,
+      toneMapped: false, blending: T.AdditiveBlending,
+    }));
+    flash.name = 'MUZIKAZ_FLASH_IGNITER_MUZZLE_FLASH';
+    flash.position.copy(origin).addScaledVector(aim, FLAME_CONFIG.muzzleOffset);
+    flash.scale.set(.6, .6, .6);
+    this.scene.add(flash);
+    this.flash = { root: flash, age: 0 };
+    // Resolve the first real surface immediately, without a travelling fire effect.
+    const targets = this.colliders().filter(t => t.root?.parent);
+    this.bounds = new Map();
+    for (const target of targets) {
+      target.meshes = this.meshes(target);
+      for (const mesh of target.meshes) {
+        mesh.updateWorldMatrix(true, false);
+        if (mesh.isSkinnedMesh) mesh.computeBoundingBox();
+        this.bounds.set(mesh, new T.Box3().setFromObject(mesh));
+      }
+    }
+    const hit = this.sweep(origin, origin.clone().addScaledVector(aim, FLAME_CONFIG.range), targets);
+    if (!hit || this.flames.length >= FLAME_CONFIG.maxFlames) return true;
     const root = new T.Group();
-    root.name = 'MUZIKAZ_FLAME_CONNECTION';
-    const mesh = new T.Mesh(this.geometry, material);
-    mesh.scale.set(1, 2.8, 1);
-    root.add(mesh);
-    for (let i = 0; i < 2; i++) {
-      const tongue = new T.Mesh(this.geometry, new T.MeshBasicMaterial({
-        color: i ? 0xffd65b : 0xff481d, transparent: true, opacity: .8,
-        depthWrite: false, toneMapped: false, blending: T.AdditiveBlending,
-      }));
-      tongue.position.y = -.22 * (i + 1);
-      tongue.scale.set(.8 - i * .2, 2.2 - i * .4, .8 - i * .2);
-      root.add(tongue);
-    }
-    if (this.texture) {
-      const sprite = new T.Sprite(new T.SpriteMaterial({ map: this.texture, transparent: true,
-        depthWrite: false, toneMapped: false }));
-      sprite.scale.set(.42, .65, 1);
-      root.add(sprite);
-    }
-    root.position.copy(origin).addScaledVector(direction.clone().normalize(), FLAME_CONFIG.muzzleOffset);
+    root.name = 'MUZIKAZ_FLASH_IGNITER_TARGET_FIRE';
+    root.position.copy(hit.point).addScaledVector(hit.normal, .025);
+    this.createBurnGraphics(root);
     this.scene.add(root);
-    const aim = direction.clone().normalize();
-    const side = new T.Vector3().crossVectors(aim, new T.Vector3(0, 1, 0));
-    if (side.lengthSq() < 1e-6) side.crossVectors(aim, new T.Vector3(1, 0, 0));
-    side.normalize();
-    const up = new T.Vector3().crossVectors(side, aim).normalize();
-    const angle = Math.random() * Math.PI * 2, spread = Math.sqrt(Math.random()) * FLAME_CONFIG.spread;
-    aim.addScaledVector(side, Math.cos(angle) * spread).addScaledVector(up, Math.sin(angle) * spread).normalize();
-    root.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), aim);
-    this.flames.push({ root, velocity: aim.multiplyScalar(pressure.speed),
-      launchOrigin: origin.clone(),
-      distance: 0, range: pressure.range, landed: false,
-      clock: new FlameContactClock(), flightAge: 0 });
+    const flame = { root, landed: true, anchor: hit.target.root,
+      localPoint: hit.target.root.worldToLocal(root.position.clone()), clock: new FlameContactClock() };
+    this.flames.push(flame);
+    this.animateBurnGraphics(root, 0, 1);
+    this.impact?.(hit.target.root, flame);
     return true;
+  }
+
+  removeFlash() {
+    this.flash.root.material.dispose();
+    this.flash.root.removeFromParent();
+    this.flash = null;
   }
 
   meshes(target) {
@@ -248,6 +248,11 @@ export class Flamethrower {
 
   update(delta, elapsed) {
     this.cooldown = Math.max(0, this.cooldown - delta);
+    if (this.flash) {
+      this.flash.age += Math.max(0, delta);
+      this.flash.root.material.opacity = .9 * Math.max(0, 1 - this.flash.age / FLAME_CONFIG.flashSeconds);
+      if (this.flash.age >= FLAME_CONFIG.flashSeconds) this.removeFlash();
+    }
     if (!this.flames.length) return;
     const targets = this.colliders().filter(t => t.root?.parent);
     this.bounds = new Map();
@@ -262,64 +267,7 @@ export class Flamethrower {
     for (const flame of [...this.flames]) {
       const { root } = flame;
       let burnDelta = delta;
-      if (!flame.landed) {
-        // Check the camera-to-nozzle gap too, so a close wall cannot be skipped.
-        if (flame.launchOrigin) {
-          const obstruction = this.sweep(flame.launchOrigin, root.position, targets);
-          if (obstruction) root.position.copy(obstruction.point);
-          flame.launchOrigin = null;
-        }
-        // Sweep short segments of the ballistic arc, even after a slow frame.
-        // Constant acceleration keeps landing distance independent of frame rate.
-        let flightTime = 0;
-        while (flightTime < delta && !flame.landed) {
-          const step = Math.min(FLAME_CONFIG.flightStep, delta - flightTime,
-            FLAME_CONFIG.flightSeconds - flame.flightAge);
-          if (step <= 1e-9) {
-            if (FLAME_CONFIG.flightSeconds - flame.flightAge <= 1e-9) this.remove(flame);
-            break;
-          }
-          const travel = flame.velocity.clone().multiplyScalar(step);
-          travel.y -= .5 * FLAME_CONFIG.gravity * step * step;
-          const length = travel.length();
-          const fraction = length ? Math.min(1, (flame.range - flame.distance) / length) : 1;
-          travel.multiplyScalar(fraction);
-          const next = root.position.clone().add(travel);
-          const hit = this.sweep(root.position, next, targets);
-          if (hit) {
-            const contactTime = step * fraction * (travel.length() ? hit.distance / travel.length() : 0);
-            burnDelta = Math.max(0, delta - flightTime - contactTime);
-            root.position.copy(hit.point).addScaledVector(hit.normal, .025);
-            flame.landed = true;
-            // Ground patches stand upright after the airborne jet lands.
-            root.quaternion.identity();
-            this.createBurnGraphics(root);
-            flame.anchor = hit.target.root;
-            flame.localPoint = flame.anchor.worldToLocal(root.position.clone());
-            this.impact?.(hit.target.root, flame);
-          } else {
-            root.position.copy(next);
-            flame.distance += travel.length();
-            flame.velocity.y -= FLAME_CONFIG.gravity * step * fraction;
-            flame.flightAge += step * fraction;
-            flightTime += step;
-            if (fraction < 1 || flame.range - flame.distance <= 1e-6 ||
-                FLAME_CONFIG.flightSeconds - flame.flightAge <= 1e-9) {
-              this.remove(flame); break;
-            }
-          }
-        }
-        if (!flame.landed) {
-          if (!root.parent) continue;
-          const remainingTime = FLAME_CONFIG.flightSeconds - flame.flightAge;
-          const remainingRange = (flame.range - flame.distance) / flame.velocity.length();
-          const opacity = Math.min(1, Math.min(remainingTime, remainingRange) / FLAME_CONFIG.flightFadeSeconds);
-          root.quaternion.setFromUnitVectors(new this.THREE.Vector3(0, 1, 0), flame.velocity.clone().normalize());
-          const flicker = this.reducedMotion ? 1 : 1 + Math.sin(elapsed * 24 + root.id) * .08;
-          root.scale.setScalar((1 + Math.min(flame.flightAge, .5) * .8) * flicker);
-          for (const child of root.children) child.material.opacity = opacity * .85;
-        }
-      }
+
       if (flame.landed) {
         if (!flame.anchor.parent) { this.remove(flame); continue; }
         root.position.copy(flame.anchor.localToWorld(flame.localPoint.clone()));
@@ -338,6 +286,6 @@ export class Flamethrower {
     flame.root.removeFromParent();
     this.flames.splice(this.flames.indexOf(flame), 1);
   }
-  clear() { for (const flame of [...this.flames]) this.remove(flame); this.cooldown = 0; }
+  clear() { for (const flame of [...this.flames]) this.remove(flame); this.cooldown = 0; if (this.flash) this.removeFlash(); }
   dispose() { this.clear(); this.geometry.dispose(); }
 }
