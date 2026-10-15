@@ -27,3 +27,25 @@ test('public destinations, generated roads and coordinate meeting IDs are durabl
  const geometry=createServerStreets(environment.streets);assert.equal(geometry.children.filter(item=>item.isMesh).length,2,'roads and lane markings are merged into two draw calls');
  }finally{await rm(dir,{recursive:true,force:true});}
 });
+
+test('new published destinations become physical portal buildings and connect back to the public hub',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'atlas-gateways-'));
+ try{
+  const atlas=new WorldAtlas(join(dir,'atlas.json'));let data=await atlas.synchronize([{id:'house',name:'Main House',visibility:'public',modelUrl:'/house.glb'},{id:'tower',name:'Tower',visibility:'public',modelUrl:'/tower.glb'}]);
+  const commons=Object.values(data.cells).find(cell=>cell.mapId==='public-commons');const portals=commons.environment.builderScene.objects.filter(object=>object.atlasDestination);
+  assert.deepEqual(new Set(portals.map(object=>object.atlasDestination)),new Set(['house','tower']));assert.ok(portals.every(object=>object.functionalSettings.portal.targetMapId===object.atlasDestination));
+  const revision=data.revision;assert.equal((await atlas.synchronize([{id:'house',name:'Main House',visibility:'public',modelUrl:'/house.glb'},{id:'tower',name:'Tower',visibility:'public',modelUrl:'/tower.glb'}])).revision,revision,'unchanged directory does not rebuild portal geometry');
+  const district=await atlas.resolve(2000,2000,{accountId:'a',username:'Alice'});data=await atlas.synchronize([{id:'house',name:'Main House',visibility:'public',modelUrl:'/house.glb'}]);const generated=Object.values(data.cells).find(cell=>cell.mapId===district.cell.mapId);assert.ok(generated.environment.builderScene.objects.some(object=>object.atlasDestination==='public-commons'),'generated districts have a portal back to the shared hub');
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
+
+test('a public-hub portal enters the canonical shared destination through an authoritative interaction',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'atlas-live-gateway-'));let now=100000;
+ try{const atlas=new WorldAtlas(join(dir,'atlas.json')),data=await atlas.synchronize([{id:'main-house',name:'Main House',visibility:'public'}]);
+ const commons=Object.values(data.cells).find(cell=>cell.mapId==='public-commons'),environment=attachAtlas(commons.environment,data),gateway=environment.builderScene.objects.find(object=>object.atlasDestination==='main-house');
+ const store=new SharedRoomStore(join(dir,'rooms.json')),runtime=new AuthoritativeRooms({store,now:()=>now}),alice={accountId:'alice',username:'Alice',stats:{health:100}};
+ await runtime.command(environment.id,environment,alice,{action:'join',requestId:'join-hub'});
+ await store.update(environment.id,room=>{room.simulation.players['account:alice'].position={x:gateway.position.x,y:0,z:gateway.position.z-4.5};});
+ const state=await runtime.command(environment.id,environment,alice,{action:'interact',requestId:'enter-house'});assert.equal(state.result.destination,'main-house');
+ }finally{await rm(dir,{recursive:true,force:true});}
+});

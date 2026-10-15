@@ -14,12 +14,12 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
  // Refresh only a rejected CSRF proof, and reuse the command request ID so an
  // ambiguous response cannot apply a gameplay action twice.
  async function post(path,body) {
-  session ||= await api.session();
+  session ||= await api.roomSession();
   const request=()=>{if(stopped)throw failure || Error('Room closed.');return api.api(path,{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify(body)});};
   try { return await request(); }
   catch (error) {
    if (error.code!=='CSRF_INVALID') throw error;
-   session=await api.session();
+   session=await api.roomSession();
    return request();
   }
  }
@@ -85,7 +85,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    }
   } finally { busy=false; }
  }
- const timer=setInterval(tick,150);
+ const timer=setInterval(tick,200);
  tick();
  return client;
 }
@@ -103,4 +103,3 @@ export function projectSharedBuildings({THREE,system,records,create}){
  for(const root of [...system.bricks])if(root.userData.sharedId&&!active.has(root.userData.sharedId)&&system.buildEditor.pending?.root!==root){root.removeFromParent();system.bricks=system.bricks.filter(item=>item!==root);}
 }
 export function buildingCommand(root){const paint=[];root.traverse(mesh=>{if(mesh.isMesh&&mesh.material?.color)paint.push(mesh.material.color.getHex());});return {id:root.userData.sharedId||crypto.randomUUID(),revision:root.userData.sharedRevision||0,object:{materialId:root.userData.materialId,position:root.position.toArray(),rotation:[root.rotation.x,root.rotation.y,root.rotation.z],scale:root.scale.toArray(),paint,open:!!root.userData.open}};}
-

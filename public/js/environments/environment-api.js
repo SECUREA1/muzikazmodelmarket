@@ -1,4 +1,3 @@
-import { fetchGitHubGlbFiles, mergeGitHubEnvironmentFiles } from '../github-glb-discovery.js';
 
 const PREFIX = '[MUZIKAZ Environment]';
 const apiFetch = (path, options = {}) => window.MUZIKAZ_API?.fetch ? window.MUZIKAZ_API.fetch(path, options) : fetch(path, options);
@@ -21,12 +20,9 @@ export async function fetchEnvironmentList() {
     records = Array.isArray(payload) ? payload : [];
   }
 
-  try {
-    return mergeGitHubEnvironmentFiles(records, await fetchGitHubGlbFiles());
-  } catch (error) {
-    logEnvironment('GitHub GLB discovery unavailable; using the current environment list.', error.message);
-    return records;
-  }
+  // Only advertise worlds the persistent server knows about. Remote GLB
+  // discovery is not a hosted multiplayer destination and must not block travel.
+  return records;
 }
 
 export async function uploadEnvironment(formData, onProgress = () => {}) {

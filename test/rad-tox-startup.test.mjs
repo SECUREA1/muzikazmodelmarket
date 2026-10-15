@@ -26,7 +26,7 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   );
   assert.match(game, /activeWorldSpawn=\{position:spawn\.position\.clone\(\),rotationY:Number\(spawn\.rotationY\)\|\|0\};resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\)/, 'map loading preserves the resolved GLB or Builder spawn for game start');
   assert.doesNotMatch(game, /await openHouseMap\(\);[\s\S]{0,700}resetPlayer\(\);/, 'game start never resets the spawn without an explicit map argument');
-  assert.match(game, /if\(localSandbox\|\|multiplayerWorldLoading\|\|!serverHostedRoom\|\|!authoritativeClient\?\.ready\)return/, 'presence polling pauses while a replacement multiplayer world is loading');
+  assert.match(game, /if\(localSandbox\|\|multiplayerWorldLoading\|\|serverHostedRoom\)return/, 'legacy avatar polling stays off in authoritative multiplayer to avoid duplicate bodies');
   assert.match(game, /resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\);[\s\S]{0,500}roomId:env\.id,position:/, 'the new room is announced only after its spawn is loaded and applied');
   assert.match(game, /if\(previousRoom!==env\.id\)window\.dispatchEvent/, 'multiplayer reconnects only after a successful world transition');
   assert.match(game, /seatedBuilderObject=null;builderGameplay\.player\.seatedObjectId=null/, 'a seat from the previous world cannot pin the player during loading');
@@ -35,7 +35,7 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
 
 test('shared gameplay is confirmed before dismissing startup, with solo play for guests', async () => {
   const game = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
-  assert.match(game, /await authoritativeClient\.whenReady\(\)/);
+  assert.match(game, /await connectingClient\.whenReady\(\)/);
   assert.match(game, /await startRoomGameplay\(\);\s+await toxicBubbleSystem\.begin\(\);\s+gameplayStarted=true;\s+gameStartScreen\?\.classList\.add\('is-hidden'\)/);
   assert.match(game, /error\.status!==401.*memberDestination/);
   assert.match(game, /guestSolo=true; serverHostedRoom=false/);

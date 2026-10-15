@@ -1,3 +1,4 @@
+import {resolveAccountProof,recoverRoomSession} from './room-session.mjs';
 import {readJsonInput,memberWalletPatch} from './request-validation.mjs';
 import {backpackPackage,ownedPackageItem} from './backpack-files.mjs';
 import { resolveStoreCart } from './store-catalog.mjs';
@@ -60,7 +61,7 @@ const supportSockets = new Set();
 const supportMessages = [];
 const port = Number(process.env.PORT || 4173);
 const adminUsername = process.env.MUZIKAZ_ADMIN_USERNAME || 'admin';
-const adminPassword = process.env.MUZIKAZ_ADMIN_PASSWORD || 'boots';
+const adminPassword = process.env.MUZIKAZ_ADMIN_PASSWORD || randomBytes(32).toString('base64url');
 const adminSessionSecret = process.env.MUZIKAZ_ADMIN_SESSION_SECRET || `${adminUsername}\0${adminPassword}\0muzikaz-admin-session`;
 const persistentAdminToken = createHmac('sha256', adminSessionSecret).update(`admin:${adminUsername}`).digest('base64url');
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
@@ -221,12 +222,9 @@ function loadoutPermissions(account) {
 }
 function authorizationError(res, status, code, message, stage) { return sendJson(res, status, { success: false, code, message, stage }); }
 async function resolveAccountSession(req) {
-  const explicit = bearer(req); const token = explicit || cookie(req, 'mzk_session');
-  if (!token) return null;
-  const session = await accountSessionStore.authenticateSession(token);
-  if (!session) return null;
-  const authentication = { ...session, token, session, mechanism: explicit ? 'bearer' : 'cookie' };
-  req.muzikazAuthentication = authentication; return authentication;
+  if(req.muzikazAuthentication)return req.muzikazAuthentication;
+  const authentication=await resolveAccountProof(accountSessionStore,bearer(req),cookie(req,'mzk_session'));
+  if(authentication)req.muzikazAuthentication=authentication;return authentication;
 }
 async function accountSession(req, res, csrf = false) {
   const authentication = await resolveAccountSession(req);
@@ -246,12 +244,21 @@ async function memberContext(req, res, csrf = false) {
   return {session,account,state,walletId:state.walletId};
 }
 
+async function roomAuthentication(req,res,csrf=false){
+ const account=await resolveAccountSession(req);
+ if(account){if(csrf&&account.mechanism==='cookie'&&!await accountSessionStore.validCsrf(account.session,String(req.headers['x-csrf-token']||''))){authorizationError(res,401,'CSRF_INVALID','Refresh the game session proof.','csrf');return null;}return account;}
+ // An explicit game proof is scoped to gameplay. It never authenticates wallet,
+ // account administration or purchases, and remains bound to its active parent.
+ const proof=String(req.headers['x-game-session']||'');
+ if(proof){const recovered=await recoverRoomSession(accountSessionStore,gameSessionStore,proof);if(recovered)return recovered;}
+ authorizationError(res,401,'SESSION_REQUIRED','Sign in through Members to join the live game server.','authentication');return null;
+}
 const roomIdentityCache=new Map();
 async function roomIdentity(req,res,join=false){
- const authentication=await accountSession(req,res,true);if(!authentication)return null;
+ const authentication=await roomAuthentication(req,res,true);if(!authentication)return null;
  const key=authentication.accountId,cached=roomIdentityCache.get(key);if(!join&&cached&&Date.now()-cached.at<5000)return cached.identity;
- const context=await memberContext(req,res,true);if(!context)return null;
- const identity={accountId:context.account.accountId,walletId:context.walletId,username:context.account.username||'Member',avatar:await designatedAvatar(req,{id:context.walletId}),stats:(await userDatabase.rpgState(context.walletId)).stats};
+ const account=await loadoutCodeStore.getAccount(authentication.accountId);if(!account){authorizationError(res,401,'ACCOUNT_NOT_FOUND','The game account no longer exists.','account');return null;}const state=await userDatabase.ensureAccount(account);const context={account,walletId:state.walletId};
+ const identity={accountId:context.account.accountId,walletId:context.walletId,username:context.account.username||'Member',avatar:await designatedAvatar(req,{id:context.walletId},authentication),stats:(await userDatabase.rpgState(context.walletId)).stats};
  roomIdentityCache.set(key,{at:Date.now(),identity});if(roomIdentityCache.size>1000)roomIdentityCache.delete(roomIdentityCache.keys().next().value);return identity;
 }
 async function builderContext(req, res, csrf = false) {
@@ -354,11 +361,11 @@ async function avatarCatalog(actor) {
 }
 function approvedAvatarUrl(value) { return typeof value === 'string' && (/^\/uploads\/assets\/[a-zA-Z0-9._-]+\.glb$/i.test(value) || /^\/public\/models\/(?:[a-zA-Z0-9 %._-]+\/)*[a-zA-Z0-9 %._-]+\.glb$/i.test(value) || /^https:\/\//i.test(value)); }
 async function validatedAvatar(actor, assetId) { const requested = cleanText(assetId, ''); const asset = (await avatarCatalog(actor)).find((item) => item.id === requested || `repository-${item.id}` === requested || item.id === requested.replace(/^repository-/, '')); if (!asset || !approvedAvatarUrl(asset.modelUrl)) return null; return { ...asset, id: requested || asset.id }; }
-async function designatedAvatar(req, actor) {
+async function designatedAvatar(req, actor, authentication=req.muzikazAuthentication) {
   const profile = (await readAvatarProfiles()).find((item) => item.userId === actor.id);
   const selected = profile && await validatedAvatar(actor, profile.assetId);
   if (selected) return selected;
-  const active = req.muzikazAuthentication?.session;
+  const active = authentication?.session;
   if (!active) return null;
   const account = await loadoutCodeStore.getAccount(active.accountId);
   if (!account) return null;
@@ -509,6 +516,11 @@ const server = createServer(async (req, res) => {
       const settings=req.method==='PUT'?normalizePlayerPreferences((await bodyJson(req)).settings):normalizePlayerPreferences(context.state.memory?.playerSettings);
       if(req.method==='PUT')await userDatabase.put(context.walletId,{memory:{playerSettings:settings}});
       return sendJson(res,200,assetResponse({owner_id:context.walletId,settings}));
+    }
+    if(url.pathname==='/api/game/room-session'&&req.method==='GET'){
+      const authentication=await roomAuthentication(req,res);if(!authentication)return;
+      const csrfToken=authentication.mechanism==='cookie'?await accountSessionStore.issueCsrf(authentication.token):'';
+      return sendJson(res,200,assetResponse({authenticated:true,account:{accountId:authentication.accountId},csrfToken,mechanism:authentication.mechanism}));
     }
     if(url.pathname==='/api/market/session'&&req.method==='GET'){
       const context=await memberContext(req,res);if(!context)return;
@@ -792,7 +804,7 @@ const server = createServer(async (req, res) => {
 
     if (url.pathname === '/api/environments' && req.method === 'GET') return sendJson(res, 200, assetResponse(await combinedEnvironments()));
     if(url.pathname==='/api/world-atlas'&&req.method==='GET'){const environments=await combinedEnvironments(),atlas=await worldAtlas.read(),rooms=await sharedRooms.read();const locations=Object.values(atlas.cells).map(cell=>{const environment=environments.find(map=>map.id===cell.mapId);if(!environment)return null;const room=rooms[cell.mapId],event=[room?.simulation?.events?.at(-1),room?.lastBuild].filter(Boolean).sort((a,b)=>b.at-a.at)[0],player=event&&room?.simulation?.players[event.actorId];return {mapId:cell.mapId,name:environment.name,ownerName:environment.ownerName||cell.ownerName,ownerId:cell.ownerId,column:cell.column,row:cell.row,size:cell.size,publicDestination:cell.publicDestination,roomId:cell.mapId,streets:cell.streets,meetingPoints:cell.meetings,playerCount:environment.playerCount,playUrl:environment.playUrl,updatedAt:cell.updatedAt,activity:event?{action:event.action,username:player?.username||'Member',at:event.at}:null,occupants:Object.values(room?.simulation?.players||{}).filter(player=>Date.now()-player.lastSeen<15000).map(player=>({username:player.username,locationName:player.locationName,x:player.position.x,z:player.position.z})),buildingCount:Object.values(room?.objects||{}).filter(object=>!object.deleted).length};}).filter(Boolean).sort((a,b)=>b.playerCount-a.playerCount);return sendJson(res,200,assetResponse({revision:atlas.revision,cellSize:256,commonsId:'public-commons',locations}));}
-    if(url.pathname==='/api/world-atlas/resolve'&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;await combinedEnvironments();const body=await bodyJson(req,4000),result=await worldAtlas.resolve(body.x,body.z,{accountId:context.account.accountId,username:context.account.username||'Member'});roomEnvironmentCache=null;broadcast('world-atlas-updated',{revision:result.revision,mapId:result.cell.mapId});return sendJson(res,result.created?201:200,assetResponse(result));}
+    if(url.pathname==='/api/world-atlas/resolve'&&req.method==='POST'){const authentication=await roomAuthentication(req,res,true);if(!authentication)return;const account=await loadoutCodeStore.getAccount(authentication.accountId);if(!account)return authorizationError(res,401,'ACCOUNT_NOT_FOUND','The game account no longer exists.','account');const context={account};await combinedEnvironments();const body=await bodyJson(req,4000),result=await worldAtlas.resolve(body.x,body.z,{accountId:context.account.accountId,username:context.account.username||'Member'});roomEnvironmentCache=null;broadcast('world-atlas-updated',{revision:result.revision,mapId:result.cell.mapId});return sendJson(res,result.created?201:200,assetResponse(result));}
     if(url.pathname==='/api/world-atlas/streets'&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;await combinedEnvironments();const body=await bodyJson(req,4000),result=await worldAtlas.addStreet(String(body.mapId||''),body,{accountId:context.account.accountId,walletId:context.walletId,username:context.account.username||'Member'});roomEnvironmentCache=null;broadcast('world-atlas-updated',result);return sendJson(res,201,assetResponse(result));}
     const roomGameplay=url.pathname.match(/^\/api\/rooms\/([^/]+)\/gameplay$/);
     if(roomGameplay&&['GET','POST'].includes(req.method)){const id=decodeURIComponent(roomGameplay[1]),environment=await roomEnvironment(id);if(!environment)return sendJson(res,404,{message:'Room not found.'});if(req.method==='GET')return sendJson(res,200,assetResponse(await authoritativeRooms.snapshot(id,environment)));const command=await bodyJson(req,16000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;const snapshot=await authoritativeRooms.command(id,environment,identity,command);broadcast('room-gameplay-updated',{roomId:id,sequence:snapshot.sequence});return sendJson(res,200,assetResponse(snapshot));}
@@ -947,3 +959,4 @@ const storeDeliveryTimer=setInterval(()=>reconcileStorePayments().catch(error=>c
 const backupTimer = setInterval(() => snapshotServer().catch(error=>console.error('[Backups]', error.message)), 6 * 60 * 60 * 1000); backupTimer.unref();
 snapshotServer().catch(error=>console.error('[Backups]', error.message));
 server.listen(port, () => console.log(`MUZIKAZ shared house server running on http://localhost:${port}`));
+

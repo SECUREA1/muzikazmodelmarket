@@ -1,4 +1,4 @@
-import { pbkdf2Sync, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, pbkdf2Sync, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
@@ -30,6 +30,31 @@ export class DurableSessionStore {
     this.kind = kind;
     this.clock = clock;
     this.queue = Promise.resolve();
+    this.verifiedSecrets = new Map();
+    this.tokenIndex=new Map();
+  }
+
+  verifies(token, hash, salt) {
+    if(!token||!hash||!salt)return false;
+    const key=createHash('sha256').update(String(token)).update(hash).update(salt).digest('hex');
+    if(this.verifiedSecrets.has(key))return true;
+    if(!verifies(token,hash,salt))return false;
+    this.verifiedSecrets.set(key,true);
+    if(this.verifiedSecrets.size>2048)this.verifiedSecrets.delete(this.verifiedSecrets.keys().next().value);
+    return true;
+  }
+
+  findToken(data,token){
+    if(!token)return null;
+    const fingerprint=createHash('sha256').update(String(token)).digest('hex'),cached=this.tokenIndex.get(fingerprint);
+    if(cached){const record=data.sessions.find(item=>item.id===cached.id);if(record&&record.tokenHash===cached.hash&&record.tokenSalt===cached.salt)return record;}
+    const record=data.sessions.find(item=>(!item.tokenFingerprint||item.tokenFingerprint===fingerprint)&&this.verifies(token,item.tokenHash,item.tokenSalt));
+    if(record){this.tokenIndex.set(fingerprint,{id:record.id,hash:record.tokenHash,salt:record.tokenSalt});if(this.tokenIndex.size>2048)this.tokenIndex.delete(this.tokenIndex.keys().next().value);}
+    return record;
+  }
+
+  async authenticateById(id) {
+    return this.serialized(async()=>{const data=await this.read();const record=data.sessions.find(item=>item.id===id);return record&&!this.expired(record)?clone(record):null;});
   }
 
   serialized(operation) {
@@ -74,7 +99,7 @@ export class DurableSessionStore {
       const csrfToken = this.kind === 'account' ? randomBytes(24).toString('base64url') : '';
       const csrfSecret = csrfToken ? secret(csrfToken) : { hash: null, salt: null };
       const record = {
-        id: randomUUID(), tokenHash: tokenSecret.hash, tokenSalt: tokenSecret.salt,
+        id: randomUUID(), tokenFingerprint:createHash('sha256').update(token).digest('hex'), tokenHash: tokenSecret.hash, tokenSalt: tokenSecret.salt,
         accountId: account.accountId, wallet: account.primaryEthereumWallet || null,
         csrfTokenHash: csrfSecret.hash, csrfTokenSalt: csrfSecret.salt,
         accountSessionId: extra.accountSessionId || null, avatarId: extra.avatarId || null,
@@ -89,10 +114,10 @@ export class DurableSessionStore {
     });
   }
 
-  async authenticateSession(token, { touch = true } = {}) {
+  async authenticateSession(token, { touch = true, extend = false } = {}) {
     return this.serialized(async () => {
       const data = await this.read(); const nowMs = this.clock(); let changed = false;
-      const record = data.sessions.find((item) => verifies(token, item.tokenHash, item.tokenSalt));
+      const record = this.findToken(data,token);
       if (!record) return null;
       if (this.expired(record, nowMs)) {
         if (!record.revokedAt && record.status === 'active') { record.status = 'expired'; changed = true; }
@@ -100,8 +125,8 @@ export class DurableSessionStore {
         return null;
       }
       if (this.persistent && record.expiresAt) { record.expiresAt = null; changed = true; }
-      if (changed && !touch) await this.write(data);
-      if (touch) { record.lastUsedAt = new Date(nowMs).toISOString(); await this.write(data); }
+      if(extend&&this.kind==='game'&&Date.parse(record.expiresAt)-nowMs<this.ttlMs/2){record.expiresAt=new Date(nowMs+this.ttlMs).toISOString();changed=true;}
+      if (touch&&(changed||nowMs-Date.parse(record.lastUsedAt)>=30000)) { record.lastUsedAt = new Date(nowMs).toISOString(); await this.write(data); } else if(changed)await this.write(data);
       return clone(record);
     });
   }
@@ -109,13 +134,13 @@ export class DurableSessionStore {
   touchSession(token) { return this.authenticateSession(token, { touch: true }); }
 
   async validCsrf(session, token) {
-    return Boolean(session && (verifies(token, session.csrfTokenHash, session.csrfTokenSalt)
-      || (session.previousCsrfSecrets || []).some((value) => verifies(token, value.hash, value.salt))));
+    return Boolean(session && (this.verifies(token, session.csrfTokenHash, session.csrfTokenSalt)
+      || (session.previousCsrfSecrets || []).some((value) => this.verifies(token, value.hash, value.salt))));
   }
 
   async issueCsrf(token) {
     return this.serialized(async () => {
-      const data = await this.read(); const record = data.sessions.find((item) => verifies(token, item.tokenHash, item.tokenSalt));
+      const data = await this.read(); const record = this.findToken(data,token);
       if (!record || this.expired(record)) return '';
       const csrfToken = randomBytes(24).toString('base64url'); const value = secret(csrfToken);
       record.previousCsrfSecrets = [{ hash: record.csrfTokenHash, salt: record.csrfTokenSalt }, ...(record.previousCsrfSecrets || [])].filter((item) => item.hash).slice(0, 2);
@@ -125,7 +150,7 @@ export class DurableSessionStore {
 
   async revokeSession(token) {
     return this.serialized(async () => {
-      const data = await this.read(); const record = data.sessions.find((item) => verifies(token, item.tokenHash, item.tokenSalt));
+      const data = await this.read(); const record = this.findToken(data,token);
       if (!record) return null;
       record.status = 'revoked'; record.revokedAt ||= new Date(this.clock()).toISOString(); await this.write(data); return clone(record);
     });

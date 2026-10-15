@@ -9,7 +9,7 @@ import {Readable,Writable} from 'node:stream';
 
 test('cookie and bearer member sessions own market and care actions without a browser wallet',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'market-session-'));const oldEnv={...process.env};
- Object.assign(process.env,{MUZIKAZ_DATA_DIR:dir,MUZIKAZ_USER_DATABASE_FILE:join(dir,'users.json'),MUZIKAZ_ACCOUNTS_FILE:join(dir,'accounts.json'),MUZIKAZ_PAYMENT_ORDERS_FILE:join(dir,'orders.json'),MUZIKAZ_AVATAR_UPLOAD_DIR:join(dir,'avatar-uploads'),MUZIKAZ_ASSET_UPLOAD_DIR:join(dir,'asset-uploads'),MUZIKAZ_ENVIRONMENT_UPLOAD_DIR:join(dir,'environment-uploads')});
+ Object.assign(process.env,{MUZIKAZ_ADMIN_PASSWORD:'boots',MUZIKAZ_DATA_DIR:dir,MUZIKAZ_USER_DATABASE_FILE:join(dir,'users.json'),MUZIKAZ_ACCOUNTS_FILE:join(dir,'accounts.json'),MUZIKAZ_PAYMENT_ORDERS_FILE:join(dir,'orders.json'),MUZIKAZ_AVATAR_UPLOAD_DIR:join(dir,'avatar-uploads'),MUZIKAZ_ASSET_UPLOAD_DIR:join(dir,'asset-uploads'),MUZIKAZ_ENVIRONMENT_UPLOAD_DIR:join(dir,'environment-uploads')});
  try{
   // Exercise the real HTTP handler without binding a TCP port in the sandbox.
   const original=await readFile(new URL('../server.mjs',import.meta.url),'utf8');
@@ -194,6 +194,15 @@ test('cookie and bearer member sessions own market and care actions without a br
   const walletLogin=await call('/api/access/wallet',{},walletProof);assert.equal(walletLogin.status,200);assert.equal(walletLogin.body.data.account.accountId,login.body.data.account.accountId);assert.equal(walletLogin.body.data.account.backpackId,login.body.data.account.backpackId);assert.equal(walletLogin.body.data.expiresAt,null);
   assert.equal((await call('/api/access/wallet',{},walletProof)).status,401);
   assert.equal((await call('/api/store/purchases',paymentHeaders,{items:cart,expectedAmountMzk:cost,requestId:'buy-model'})).body.data.id,bought.body.data.id);
+  const staleHeader=await call('/api/game/room-session',{cookie,authorization:'Bearer stale-saved-token'});assert.equal(staleHeader.status,200,'a valid cookie survives stale browser storage');
+  const gameProof=await call('/api/game/session',paymentHeaders,{});assert.equal(gameProof.status,201);
+  const liveHeaders={'x-game-session':gameProof.body.data.gameSessionToken};
+  assert.equal((await call('/api/game/room-session',liveHeaders)).status,200,'a signed-in game recovers its valid parent for room use');
+  assert.equal((await call('/api/market/session',liveHeaders)).status,401,'the same game proof does not authorize wallet or market access');
+  const joinedLive=await call('/api/rooms/public-commons/gameplay',liveHeaders,{action:'join',requestId:'live-game-join'});assert.equal(joinedLive.status,200);assert.ok(joinedLive.body.data.players[joinedLive.body.data.selfId]);
+  const secondLive=await call('/api/access/free-play',{}, {username:'SecondLivePlayer',password:'second-live-test'});assert.equal(secondLive.status,200);
+  const peerLive=await call('/api/rooms/public-commons/gameplay',{authorization:'Bearer '+secondLive.body.data.sessionToken},{action:'join',requestId:'second-live-join'});assert.equal(peerLive.status,200);assert.equal(Object.keys(peerLive.body.data.players).length,2,'both users share one authoritative room');
+  const travelLive=await call('/api/world-atlas/resolve',liveHeaders,{x:4000,z:4000});assert.ok([200,201].includes(travelLive.status),'game proof can travel through the atlas without another login');
   assert.equal((await call('/api/admin/members')).status,403);
   const adminLogin=await call('/api/admin/login',{}, {username:'admin',password:'boots'});assert.equal(adminLogin.status,200);
   const adminHeaders={'x-admin-token':adminLogin.body.data.token};
@@ -209,6 +218,8 @@ test('cookie and bearer member sessions own market and care actions without a br
   assert.equal((await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'member-session-test'})).status,401);
   assert.equal((await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'replacement-secret'})).status,200);
   await call('/api/session',headers,undefined,'DELETE');
+  assert.equal((await call('/api/game/room-session',liveHeaders)).status,401,'logging out revokes linked gameplay access too');
   const expired=await call('/api/market/session',bearer);assert.equal(expired.status,401);
  }finally{process.env=oldEnv;await rm(dir,{recursive:true,force:true});}
 });
+

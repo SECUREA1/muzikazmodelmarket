@@ -11,7 +11,7 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
  try {
   const file=join(dir,'rooms.json'),store=new SharedRoomStore(file),rewards=[];
   const runtime=new AuthoritativeRooms({store,now:()=>now,reward:async(...args)=>rewards.push(args)});
-  runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.blocksShot=()=>false;
+  runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.blocksShot=()=>false;runtime.collision.resolve=(_,previous,next)=>next;
   const environment={id:'muzikaz-main',name:'House',modelUrl:'/house.glb',playable:true,spawn:{x:0,y:1,z:2}};
   const alice={accountId:'alice',walletId:'alice',username:'Alice',stats:{health:100}};
   const bob={...alice,accountId:'bob',walletId:'bob',username:'Bob'};
@@ -49,7 +49,7 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
   const reloaded=new AuthoritativeRooms({store:new SharedRoomStore(file),now:()=>now});
   // Input snapshots are intentionally transient; persist the current encounter with a start command.
   await send('start-rad-tox');
-  const restored=await reloaded.snapshot(environment.id,environment);
+  reloaded.collision.resolve=(_,previous,next)=>next;const restored=await reloaded.snapshot(environment.id,environment);
   assert.equal(restored.radTox.level,2);assert.equal(restored.radTox.targetCount,state.radTox.targetCount);
  } finally {await rm(dir,{recursive:true,force:true});}
 });

@@ -11,7 +11,7 @@ import {healthAfterHit} from '../public/js/rpg-combat-rules.js';
 async function arena(run){
  const dir=await mkdtemp(join(tmpdir(),'rpg-match-'));let now=100000,number=0;
  const store=new SharedRoomStore(join(dir,'rooms.json')),map={id:'arena',playable:true,modelUrl:'/fixture.glb',spawn:{x:0,y:0,z:0}};
- const runtime=new AuthoritativeRooms({store,now:()=>now});runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.blocksShot=()=>false;
+ const runtime=new AuthoritativeRooms({store,now:()=>now});runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.blocksShot=()=>false;runtime.collision.resolve=(_,previous,next)=>next;
  const identity=name=>({accountId:name,username:name,walletId:name,stats:{health:100}});
  const send=(name,action,fields={},requestId='rpg-'+ ++number)=>runtime.command(map.id,map,identity(name),{action,requestId,...fields});
  const refresh=()=>runtime.snapshot(map.id,map);
@@ -61,7 +61,7 @@ test('level results include disconnected participants, remain frozen, survive re
  const bob=state.match.results.find(row=>row.id==='account:bob');assert.equal(bob.connected,false);const alice=state.match.results.find(row=>row.id==='account:alice');assert.equal(alice.shots,1);assert.equal(alice.misses,1);
  const frozen=JSON.stringify(state.match.results);await assert.rejects(send('alice','fire',{tool:'laser',direction:[1,0,0]}),{statusCode:409});
  await send('bob','join');state=await send('alice','input',{input:{}});assert.equal(JSON.stringify(state.match.results),frozen,'joining after completion cannot rewrite results');
- await store.flush();const restored=new AuthoritativeRooms({store:new SharedRoomStore(store.file),now});const snapshot=await restored.snapshot(map.id,map);assert.equal(JSON.stringify(snapshot.match.results),frozen);
+ await store.flush();const restored=new AuthoritativeRooms({store:new SharedRoomStore(store.file),now});restored.collision.resolve=(_,previous,next)=>next;const snapshot=await restored.snapshot(map.id,map);assert.equal(JSON.stringify(snapshot.match.results),frozen);
  state=await send('alice','next-rad-tox',{matchId:id});const nextId=state.match.id;assert.notEqual(nextId,id);assert.equal(state.match.level,2);assert.equal(state.players['account:alice'].combat.shots,0);
  state=await send('bob','next-rad-tox',{matchId:id});assert.equal(state.match.id,nextId);assert.equal(state.match.level,2,'simultaneous next requests cannot skip a level');
 }));

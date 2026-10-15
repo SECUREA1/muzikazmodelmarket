@@ -13,14 +13,14 @@ const copy=value=>JSON.parse(JSON.stringify(value));
 const fail=(message,statusCode=400,code)=>{throw Object.assign(new Error(message),{statusCode,code});};
 const damageByTool={laser:20,bat:25,taser:8,toxin:12,dynamite:60,flamethrower:15,'pulse-rifle':18,shotgun:35,marksman:45};
 export class AuthoritativeRooms {
- constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,capacity});this.collision=new ServerBuilderCollision();}
+ constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();}
  initialize(room,environment){
-  const manifest=compileBuilderScene(environment.builderScene||{});
+  const manifestKey=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'');let base=this.manifestCache.get(manifestKey);if(!base){base=compileBuilderScene(environment.builderScene||{});this.manifestCache.set(manifestKey,base);if(this.manifestCache.size>32)this.manifestCache.delete(this.manifestCache.keys().next().value);}const manifest={...base,actors:[...base.actors]};
   room.simulation ||= {version:1,players:{},actors:{},events:[],time:this.now(),sequence:0};
   const sim=room.simulation,contentUpdatedAt=environment.contentUpdatedAt||environment.updatedAt;
   if(!sim.initialized||sim.environmentUpdatedAt!==contentUpdatedAt){
    const authored=new Set(manifest.objects.map(actor=>actor.objectId));for(const [id,actor]of Object.entries(sim.actors))if(!actor.spawned&&!actor.radTox&&!authored.has(id))delete sim.actors[id];
-   for(const actor of manifest.objects){if(sim.actors[actor.objectId]){sim.actors[actor.objectId].position=copy(actor.transform.position);sim.actors[actor.objectId].rotation=copy(actor.transform.rotation);}if(!sim.actors[actor.objectId])sim.actors[actor.objectId]={id:actor.objectId,modelId:actor.modelId,position:copy(actor.transform.position),rotation:copy(actor.transform.rotation),health:actor.gameplay.health,active:true,open:false,switched:false};}
+   for(const actor of manifest.objects){if(sim.actors[actor.objectId]){sim.actors[actor.objectId].position=copy(actor.transform.position);sim.actors[actor.objectId].rotation=copy(actor.transform.rotation);}if(!sim.actors[actor.objectId])sim.actors[actor.objectId]={id:actor.objectId,modelId:actor.modelId,worldGateway:actor.gameplay.action==='teleport'&&actor.gameplay.portal?.destinationType==='map'?{destination:actor.gameplay.portal.targetMapId,name:actor.gameplay.prompt||actor.gameplay.portal.targetMapId}:null,position:copy(actor.transform.position),rotation:copy(actor.transform.rotation),health:actor.gameplay.health,active:true,open:false,switched:false};}
    sim.initialized=true;sim.environmentUpdatedAt=contentUpdatedAt;
   }
   manifest.actors.push(...Object.values(sim.actors).filter(actor=>actor.definition).map(actor=>actor.definition));
@@ -28,7 +28,7 @@ export class AuthoritativeRooms {
   return {sim,manifest};
  }
  step(room,environment){
-  const {sim,manifest}=this.initialize(room,environment),now=this.now(),dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;
+  const {sim,manifest}=this.initialize(room,environment),now=this.now();if(now-sim.time<33){checkTeamDefeat(sim,now);advanceRadTox(sim,now);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;
   const half=clamp(environment.builderScene?.mapSize||200,20,2000)/2;
   for(const player of Object.values(sim.players)){
    if(now-player.lastSeen>15000){for(const key of ['heldId','seatedId','vehicleId']){const actor=sim.actors[player[key]];if(actor?.holderId)actor.holderId=null;player[key]=null;}player.input={};}if(now-player.lastSeen>1000||player.health<=0)continue;
@@ -49,7 +49,7 @@ export class AuthoritativeRooms {
      if(player.position.y>=y+size[1]/2-.35){next.y=y+size[1]/2;player.velocityY=0;player.grounded=true;}else blocked=true;
     }
    }
-   if(!blocked)player.position=this.collision.resolve(environment,player.position,next,sim.actors);
+   if(!blocked){player.position=this.collision.resolve(environment,player.position,next,sim.actors);if(Number.isFinite(player.position.floorY)){player.floor=player.position.floorY;delete player.position.floorY;if(player.position.y<=player.floor+.03){player.grounded=true;player.velocityY=0;}}}
    const street=(environment.streets||[]).map(street=>{const dx=street.to.x-street.from.x,dz=street.to.z-street.from.z,t=Math.max(0,Math.min(1,((player.position.x-street.from.x)*dx+(player.position.z-street.from.z)*dz)/Math.max(.01,dx*dx+dz*dz)));return {street,distance:Math.hypot(player.position.x-street.from.x-dx*t,player.position.z-street.from.z-dz*t)};}).filter(hit=>hit.distance<=hit.street.width/2+2).sort((a,b)=>a.distance-b.distance)[0];player.locationName=street?.street.name||player.meetingName||environment.name;
    if(player.position.y>next.y){player.velocityY=0;player.grounded=true;}
    if(player.vehicleId){const vehicle=sim.actors[player.vehicleId];if(vehicle){vehicle.position={...player.position};vehicle.rotation.y=player.yaw;}}
@@ -80,8 +80,9 @@ export class AuthoritativeRooms {
   if(command.action==='join'){
    const active=Object.entries(sim.players).filter(([id,p])=>id!==actorId&&now-p.lastSeen<15000);if(active.length>=(environment.publicDestination?128:this.capacity))fail('This multiplayer room is full.',409);
    const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);let spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects):this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2});
+   if(player&&player.floorVersion!==2&&!meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.floorVersion=2;}
    if(!player&&!meeting){const count=active.length;spawn=this.collision.safeSpawn(environment,{...spawn,x:spawn.x+(count%4)*1.2,z:spawn.z+Math.floor(count/4)*1.2});}
-   if(!player)player=sim.players[actorId]={username:identity.username,position:{x:Number(spawn.x)||0,y:Number(spawn.y)||0,z:Number(spawn.z)||0},floor:Number(spawn.y)||0,yaw:0,velocityY:0,grounded:true,ammo:120,fuel:100,health:clamp(identity.stats?.health??100,0,100),stats:identity.stats||{},score:0,inventory:[],quests:{},cooldowns:{},lastSeen:now};
+   if(!player)player=sim.players[actorId]={username:identity.username,position:{x:Number(spawn.x)||0,y:Number(spawn.y)||0,z:Number(spawn.z)||0},floor:Number(spawn.y)||0,floorVersion:2,yaw:0,velocityY:0,grounded:true,ammo:120,fuel:100,health:clamp(identity.stats?.health??100,0,100),stats:identity.stats||{},score:0,inventory:[],quests:{},cooldowns:{},lastSeen:now};
    for(const [otherId,otherRoom]of Object.entries(allRooms)){if(otherId===id)continue;const previous=otherRoom.simulation?.players[actorId];if(!previous)continue;previous.lastSeen=0;previous.replacedByRoom=id;previous.input={};for(const key of ['heldId','seatedId','vehicleId']){const held=otherRoom.simulation.actors[previous[key]];if(held)held.holderId=null;previous[key]=null;}}
    if(meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;player.actorId=actorId;
    startRadTox(sim,environment,now,player.position);registerParticipant(sim,actorId,player,now);

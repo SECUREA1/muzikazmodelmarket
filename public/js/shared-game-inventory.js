@@ -9,6 +9,7 @@ export class SharedGameInventory {
  async useBackpack(itemId){const session=await this.session();return this.api('/api/backpack/use',{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify({itemId})});}
  economy(){return this.api('/api/economy');}
  async economyAction(action,sku,requestId=crypto.randomUUID()){const session=await this.session();const receipt=await this.api('/api/economy/'+action,{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify({sku,requestId})});if(action==='buy')signalInventoryChange();window.MZKWallet?.refreshShared?.().catch(()=>{});return receipt;}
+ roomSession(){return this.api('/api/game/room-session');}
  session(){return this.api('/api/market/session');}
  state(){return this.api('/api/rpg/state');}
  builderPack(){return this.api('/api/builder/backpack');}

@@ -8,7 +8,7 @@ test('room client projects confirmed snapshots and stops actions after connectio
  globalThis.window={fetch:async(path,options)=>{
   requests.push({path,body:options.body&&JSON.parse(options.body)});
   if(unavailable)throw Error('offline');
-  if(path==='/api/market/session')return {ok:true,json:async()=>({data:{csrfToken:'proof',account:{accountId:'test'}}})};
+  if(path==='/api/game/room-session')return {ok:true,json:async()=>({data:{csrfToken:'proof',account:{accountId:'test'}}})};
   return {ok:true,json:async()=>({data:{authoritative:true,selfId:'account:test',sequence:++sequence,players:{'account:test':{position:{x:0,y:0,z:0}}},objects:{},actors:{}}})};
  }};
  const client=connectAuthoritativeRoom({roomId:'shared',input:()=>({forward:1}),render:state=>rendered.push(state),onStatus:message=>statuses.push(message)});
@@ -27,7 +27,7 @@ async function withRoom(fetch,run,options={}) {
 }
 test('readiness waits for a confirmed player rather than a loaded map',async()=>{
  let release;
- await withRoom(async path=>path==='/api/market/session'?response({csrfToken:'proof'}):new Promise(resolve=>{release=resolve;}),async client=>{
+ await withRoom(async path=>path==='/api/game/room-session'?response({csrfToken:'proof'}):new Promise(resolve=>{release=resolve;}),async client=>{
   let ready=false;const pending=client.whenReady().then(()=>{ready=true;});
   await pause(10);assert.equal(ready,false);assert.equal(client.ready,false);
   release(response(confirmed()));await pending;assert.equal(client.ready,true);
@@ -43,7 +43,7 @@ test('expired account sessions reject the join and stop the retry loop',async()=
 test('a stale CSRF proof is refreshed once without changing the action request ID',async()=>{
  let sessions=0;const commands=[];
  await withRoom(async(path,options)=>{
-  if(path==='/api/market/session')return response({csrfToken:'proof'+ ++sessions});
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'+ ++sessions});
   commands.push({body:JSON.parse(options.body),proof:options.headers['X-CSRF-Token']});
   if(commands.length===1)return response({message:'Old CSRF proof',code:'CSRF_INVALID'},401);
   return response(confirmed());
@@ -56,7 +56,7 @@ test('a stale CSRF proof is refreshed once without changing the action request I
 test('repeated CSRF rejection exits startup instead of looping forever',async()=>{
  let requests=0;
  await withRoom(async path=>{
-  if(path==='/api/market/session')return response({csrfToken:'proof'});
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
   requests++;return response({message:'Invalid CSRF proof',code:'CSRF_INVALID'},401);
  },async client=>{
   await assert.rejects(client.whenReady(),error=>error.code==='CSRF_INVALID');
@@ -65,14 +65,14 @@ test('repeated CSRF rejection exits startup instead of looping forever',async()=
 });
 test('a timed out join cannot become ready when its late response arrives',async()=>{
  let release;
- await withRoom(async path=>path==='/api/market/session'?response({csrfToken:'proof'}):new Promise(resolve=>{release=resolve;}),async client=>{
+ await withRoom(async path=>path==='/api/game/room-session'?response({csrfToken:'proof'}):new Promise(resolve=>{release=resolve;}),async client=>{
   await assert.rejects(client.whenReady(25),/did not accept/);
   release(response(confirmed()));await pause(10);assert.equal(client.ready,false);
  });
 });
 test('stopping during session lookup prevents a late gameplay join',async()=>{
  let release,joins=0;
- await withRoom(async path=>path==='/api/market/session'?new Promise(resolve=>{release=resolve;}):(joins++,response(confirmed())),async client=>{
+ await withRoom(async path=>path==='/api/game/room-session'?new Promise(resolve=>{release=resolve;}):(joins++,response(confirmed())),async client=>{
   client.stop();release(response({csrfToken:'proof'}));await pause(10);assert.equal(joins,0);assert.equal(client.ready,false);
  });
 });
