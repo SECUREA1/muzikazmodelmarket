@@ -236,3 +236,12 @@
 @media(max-width:380px){.builder-dashboard .builder-access-panel{grid-template-columns:1fr;}.builder-dashboard .builder-access-panel>#builder-session-status{justify-self:start;}}
 
 .builder-dashboard #builder-session-status{box-sizing:border-box;max-width:100%;min-width:0;overflow-wrap:anywhere;justify-self:end;}
+/* One launch bar with session state alongside the selected map's actions. */
+.builder-dashboard .builder-session-launch{gap:0;border:1px solid #36533f;border-radius:12px;background:#102016;overflow:hidden;}
+.builder-dashboard .builder-session-launch>section{border:0;border-radius:0;background:transparent;}
+.builder-dashboard .builder-session-launch>.builder-access-panel{border-left:1px solid #36533f;}
+.builder-dashboard #builder-guest-pass[hidden]{display:none!important;}
+.builder-dashboard .builder-access-panel>div{display:flex;flex-wrap:wrap;align-items:center;}
+.builder-dashboard #builder-session-status[data-state=active]{border-color:#56714a;color:#d7f7bd;}
+@media(max-width:760px){.builder-dashboard .builder-session-launch>.builder-access-panel{border-left:0;border-top:1px solid #36533f;}.builder-dashboard .builder-access-panel>div>a{margin-left:auto;}}
+.builder-dashboard #builder-map-summary{display:block;grid-column:1/-1;margin:0 0 6px;color:#bdd4b9;font:12px/1.4 system-ui;overflow-wrap:anywhere;}

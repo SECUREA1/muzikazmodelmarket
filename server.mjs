@@ -526,7 +526,7 @@ const server = createServer(async (req, res) => {
     if(url.pathname==='/api/market/session'&&req.method==='GET'){
       const context=await memberContext(req,res);if(!context)return;
       const csrfToken=await accountSessionStore.issueCsrf(context.session.token);
-      return sendJson(res,200,assetResponse({authenticated:true,owner_id:context.walletId,account:{accountId:context.account.accountId,primaryEthereumWallet:context.account.primaryEthereumWallet||null},hasTokenPurchase:Boolean(context.account.tokenPurchases?.length||context.account.bottlePurchases?.length),ledger:await userDatabase.walletLedger(context.walletId),balance:Number(context.state.tokens.MZK||0),csrfToken,expiresAt:context.session.expiresAt}));
+      return sendJson(res,200,assetResponse({authenticated:true,owner_id:context.walletId,account:{accountId:context.account.accountId,username:context.account.username||context.account.displayName||'Player',primaryEthereumWallet:context.account.primaryEthereumWallet||null},hasTokenPurchase:Boolean(context.account.tokenPurchases?.length||context.account.bottlePurchases?.length),ledger:await userDatabase.walletLedger(context.walletId),balance:Number(context.state.tokens.MZK||0),csrfToken,expiresAt:context.session.expiresAt}));
     }
     if((url.pathname.startsWith('/api/market/')||url.pathname==='/api/land/claims')&&['POST','PUT','DELETE'].includes(req.method)){const context=await memberContext(req,res,true);if(!context)return;}
     if((url.pathname.startsWith('/api/market/')||url.pathname==='/api/wallet/state')&&accountSessionToken(req)){

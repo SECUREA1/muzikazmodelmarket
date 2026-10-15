@@ -193,7 +193,7 @@ const placedGroup=new THREE.Group();world.add(placedGroup);world.add(worldDressi
 let preview=null, clock=new THREE.Clock();
 
 function showToast(message){const t=$('#builder-toast');t.textContent=message;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200)}
-function markChanged(){$('#save-state').textContent='Unsaved changes'}
+function markChanged(){$('#save-state').textContent='Unsaved changes';updateBuilderLaunchSummary();}
 function itemSilhouette(model,alt=model.name){
  const color=escapeHtml(model.color||'#b9ff38'),id=model.id;
  // Prefer static thumbnails in the scrolling catalogue. Instantiating dozens of
@@ -507,7 +507,7 @@ async function publishAndPlay({launch=true}={}){
    if(!result&&error.code==='MAP_ID_CONFLICT'){sceneData.id=`custom-map-${uid()}`;persist('Saved a new copy for this player.');result=await publish();}
    if(!result)throw error;
   }
-  const playLink=$('#published-map-link');playLink.href=result.playUrl;playLink.hidden=false;$('#builder-publish-status').textContent=`Published ${result.name||sceneData.name} · ${sceneData.gameplay.multiplayer?'Multiplayer':'Solo'} ready`;await refreshBuilderAccess();
+  const playLink=$('#published-map-link');playLink.href=result.playUrl;playLink.dataset.sceneId=sceneData.id;playLink.hidden=false;$('#builder-publish-status').textContent=`Published ${result.name||sceneData.name} · ${sceneData.gameplay.multiplayer?'Multiplayer':'Solo'} ready`;await refreshBuilderAccess();
   if(launch)window.location.assign(result.playUrl);
  }catch(error){showToast(error.message);$('#save-state').textContent='Draft saved locally';$('#builder-publish-status').textContent=error.message;}
  finally{publishing=false;buttons.forEach(button=>button.disabled=false);}
@@ -516,8 +516,8 @@ $('#play-mode').addEventListener('change',()=>{sceneData.gameplay={...sceneData.
 $('#publish-scene').addEventListener('click',()=>publishAndPlay({launch:false}));
 const builderAccessInventory=new SharedGameInventory();let accessBusy=false;
 async function refreshBuilderAccess(){
- try{await builderAccessInventory.session();$('#builder-session-status').textContent='Session active';$('#builder-session-status').dataset.state='active';$('#builder-guest-pass').disabled=true;}
- catch(error){$('#builder-session-status').dataset.state='inactive';$('#builder-session-status').textContent=error.status===401?'Choose a guest pass or sign in to test and publish.':'Access service unavailable. Your local draft is safe. Try again.';$('#builder-guest-pass').disabled=false;}
+ try{const session=await builderAccessInventory.session(),username=session.account?.username||'Player';$('#builder-session-status').textContent='Session active · '+(username.startsWith('Guest-')?'Guest pass':username);$('#builder-session-status').dataset.state='active';$('#builder-guest-pass').disabled=true;$('#builder-guest-pass').hidden=true;}
+ catch(error){$('#builder-session-status').dataset.state='inactive';$('#builder-session-status').textContent=error.status===401?'Choose a guest pass or sign in to test and publish.':'Access service unavailable. Your local draft is safe. Try again.';$('#builder-guest-pass').disabled=false;$('#builder-guest-pass').hidden=false;}
 }
 async function openBuilderAccess(guest){
  if(accessBusy)return;accessBusy=true;$('#builder-guest-pass').disabled=true;$('#builder-login').disabled=true;
@@ -528,3 +528,6 @@ async function openBuilderAccess(guest){
 $('#builder-guest-pass').addEventListener('click',()=>openBuilderAccess(true));
 $('#builder-login').addEventListener('click',()=>openBuilderAccess(false));
 window.addEventListener('focus',()=>{if(!accessBusy)refreshBuilderAccess();});refreshBuilderAccess();
+
+function updateBuilderLaunchSummary(){const summary=$('#builder-map-summary');if(summary)summary.textContent=(sceneData.name||'Untitled environment')+' · '+($('#play-mode').value==='solo'?'Solo':'Multiplayer')+' · Selected design only';const link=$('#published-map-link');if(link?.dataset.sceneId&&link.dataset.sceneId!==sceneData.id){link.hidden=true;$('#builder-publish-status').textContent='';}}
+updateBuilderLaunchSummary();
