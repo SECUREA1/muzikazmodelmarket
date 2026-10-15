@@ -1,4 +1,4 @@
-import {stepEnemyCombat} from './server-enemy-combat.mjs';
+import {ENEMY_BEHAVIORS,stepEnemyCombat} from './server-enemy-combat.mjs';
 import {combatStats,damagePlayer,registerParticipant,checkTeamDefeat,matchView,SPAWN_PROTECTION_MS,PLAYER_HIT_CAPACITY} from './rpg-match.mjs';
 import {startRadTox,advanceRadTox,nextRadToxLevel,stepRadToxEnemy} from './rad-tox-campaign.mjs';
 import {rayBoxDistance} from './server-combat-ray.mjs';
@@ -22,6 +22,18 @@ export class AuthoritativeRooms {
    this.step(room,environment);
   },{persist:false});}finally{this.ticking=false;}
  }
+ prepareEncounter(sim,environment){
+  if(!sim.radTox)return;
+  const player=Object.values(sim.players).find(player=>!player.replacedByRoom&&this.now()-player.lastSeen<15000);
+  if(!player)return;
+  const occupied=Object.values(sim.actors).filter(actor=>actor.radTox&&actor.spawnVersion===1).map(actor=>actor.position);
+  for(const actor of Object.values(sim.actors))if(actor.radTox&&actor.active&&actor.spawnVersion!==1){
+   actor.position=this.collision.encounterSpawn(environment,actor.position,player.position,occupied);
+   actor.definition ||= {objectId:actor.id,gameplay:{behavior:'hostile',health:actor.maxHealth||actor.health,damage:6},ai:{detectionRange:40}};
+   actor.definition.movement ||= {};actor.definition.position={...actor.position};actor.definition.movement.speed=ENEMY_BEHAVIORS[actor.kind]?.moveSpeed||.9;
+   actor.spawnVersion=1;occupied.push(actor.position);
+  }
+ }
  initialize(room,environment){
   const manifestKey=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'');let base=this.manifestCache.get(manifestKey);if(!base){base=compileBuilderScene(environment.builderScene||{});this.manifestCache.set(manifestKey,base);if(this.manifestCache.size>32)this.manifestCache.delete(this.manifestCache.keys().next().value);}const manifest={...base,actors:[...base.actors]};
   room.simulation ||= {version:1,players:{},actors:{},events:[],time:this.now(),sequence:0};
@@ -31,6 +43,7 @@ export class AuthoritativeRooms {
    for(const actor of manifest.objects){if(sim.actors[actor.objectId]){sim.actors[actor.objectId].position=copy(actor.transform.position);sim.actors[actor.objectId].rotation=copy(actor.transform.rotation);sim.actors[actor.objectId].scale=copy(actor.transform.scale);}if(!sim.actors[actor.objectId])sim.actors[actor.objectId]={id:actor.objectId,modelId:actor.modelId,worldGateway:actor.gameplay.action==='teleport'&&actor.gameplay.portal?.destinationType==='map'?{destination:actor.gameplay.portal.targetMapId,name:actor.gameplay.prompt||actor.gameplay.portal.targetMapId}:null,position:copy(actor.transform.position),rotation:copy(actor.transform.rotation),scale:copy(actor.transform.scale),health:actor.gameplay.health,active:true,open:false,switched:false};}
    sim.initialized=true;sim.environmentUpdatedAt=contentUpdatedAt;
   }
+  this.prepareEncounter(sim,environment);
   manifest.actors.push(...Object.values(sim.actors).filter(actor=>actor.definition).map(actor=>actor.definition));
   sim.streets=environment.streets||[];sim.mapRevision=environment.atlas?.revision||0;
   return {sim,manifest};
@@ -78,6 +91,7 @@ export class AuthoritativeRooms {
   }
   stepEnemyCombat(sim,{now,dt,environment,collision:this.collision});
   checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);
+  this.prepareEncounter(sim,environment);
   sim.sequence++;return {sim,manifest};
  }
  view(room){const sim=room.simulation,now=this.now();return {authoritative:true,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
@@ -184,6 +198,7 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
     result={...result,tool,origin,end,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:hit?.playerId?'player':hit?'enemy':null};
    }else fail('This action has no server handler. It was not run locally.',422);
   }
+  this.prepareEncounter(sim,environment);
   checkTeamDefeat(sim,now);
   if(now-(player.lastTelemetry||0)>5000){await this.telemetry(identity.walletId,{health:player.health,world:id});player.lastTelemetry=now;}
   if(command.action!=='input'){sim.events.push({id:requestId,actorId,action:command.action,...result,at:now});sim.events=sim.events.slice(-100);}

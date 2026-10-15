@@ -63,3 +63,14 @@ test('in-game care panel loads the member inventory and records current arena he
   const pack=calls.find(call=>call.path==='/api/wallet/state');assert.equal(pack.options.headers['X-Wallet-Address'],'account:care-member');
  }finally{Object.assign(globalThis,previous);}
 });
+
+test('builder purchases keep the same request ID after an ambiguous response',async()=>{
+ const requests=[];let attempt=0;
+ const client=new GameMarketClient({owner:()=> 'buyer',id:()=> 'builder-request',request:async(path,options)=>{
+  requests.push({path,body:JSON.parse(options.body)});attempt++;
+  return {ok:attempt>1,json:async()=>attempt===1?{success:false,message:'Connection lost'}:{success:true,data:{id:'owned-builder-item'}}};
+ }});
+ await assert.rejects(client.builderBuy('listing-1'),/Connection lost/);
+ await client.builderBuy('listing-1');assert.equal(requests[0].body.request_id,requests[1].body.request_id);
+ assert.equal(requests[0].path,'/api/builder/listings/listing-1/purchase');
+});

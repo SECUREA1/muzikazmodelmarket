@@ -42,6 +42,21 @@ export class ServerBuilderCollision {
   for(const candidate of candidates){const floor=this.groundAt(environment,candidate,{entry:true});if(floor)return floor;}
   throw Object.assign(Error('This map has no safe ground-floor entry.'),{statusCode:409});
  }
+ encounterSpawn(environment,point,center,occupied=[]) {
+  if(!environment.modelUrl&&!environment.modelUrls?.length)return point;
+  const candidates=[point];
+  for(const radius of [3,4,2,5,1.6,6])for(let index=0;index<24;index++){
+   const angle=index*Math.PI/12;candidates.push({x:center.x+Math.sin(angle)*radius,y:center.y,z:center.z+Math.cos(angle)*radius});
+  }
+  for(const candidate of candidates){
+   const floor=this.groundAt(environment,{...candidate,y:center.y});if(!floor)continue;
+   if(occupied.some(other=>Math.hypot(other.x-floor.x,other.z-floor.z)<.65))continue;
+   const origin={x:floor.x,y:floor.y+.9,z:floor.z},delta=[center.x-origin.x,center.y+.9-origin.y,center.z-origin.z],length=Math.hypot(...delta);
+   if(length<1||this.blocksShot(environment,origin,delta.map(value=>value/length),length))continue;
+   return floor;
+  }
+  return {...center};
+ }
  meetingPosition(environment,point,actors={},objects={}){
   if(!environment.builderScene&&!environment.proceduralLand)return this.safeSpawn(environment,point);
   const world=this.world(environment),terrain=world.floors.filter(mesh=>mesh.name.startsWith('BUILDER_WALKABLE_FLOOR'));

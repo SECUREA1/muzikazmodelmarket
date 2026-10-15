@@ -4,7 +4,7 @@ export class GameEconomy {
  get(sku){return this.items.find(item=>item.sku===sku);}
  owns(sku){return BASIC.has(sku)||Boolean(this.get(sku)?.owned);}
  async refresh(){try{const state=await this.inventory.economy();this.items=state.items;this.assets=state.ownedAssets||[];this.onChange();this.decorate();}catch{this.items=[];this.assets=[];this.decorate();}}
- require(sku){if(this.owns(sku))return true;const item=this.get(sku);this.announce(`${item?.name||'Upgrade'} is locked${item?` · ${item.priceMzk} MZK to buy · ${item.useCostMzk} MZK per use`:'. Sign in to see upgrades.'}. Open Marketplace → Game upgrades.`);this.shop();return false;}
+ require(sku){if(this.owns(sku))return true;const item=this.get(sku);this.announce(`${item?.name||'Upgrade'} is locked${item?` · ${item.priceMzk} MZK to buy · ${item.useCostMzk} MZK per use`:'. Sign in to see upgrades.'}. Open Marketplace → Game upgrades.`);this.shop(sku);return false;}
  async use(sku){if(BASIC.has(sku))return {ok:true};if(!this.require(sku)||this.pending.has(sku))return {ok:false};this.pending.add(sku);try{const receipt=await this.inventory.economyAction('use',sku);return {ok:true,balance:receipt.balanceAfterMzk};}catch(error){this.announce(error.message);await this.refresh();return {ok:false};}finally{this.pending.delete(sku);}}
  skuForAsset(asset){if(asset.economySku)return asset.economySku;const item=this.items.find(item=>item.kind==='asset'&&(item.id===asset.id||item.buildAssetId&&item.buildAssetId===asset.buildAssetId||item.modelUrl&&asset.modelUrl&&this.path(item.modelUrl)===this.path(asset.modelUrl)));return item?.sku;}
  path(url){try{return decodeURIComponent(new URL(url,location.href).pathname);}catch{return String(url);}}

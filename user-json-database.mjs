@@ -1,6 +1,6 @@
 import { cleanCustomItem } from './custom-item-rules.mjs';
 import { plotSpaceId, plotPlayUrl } from './member-plots.mjs';
-import { economyItem, ownsEconomyItem, economyInventory } from './game-economy.mjs';
+import { economyItem, ownsEconomyItem, economyInventory, GAME_BUNDLES, economyBundleQuote, economyBundles } from './game-economy.mjs';
 import { MEMBER_REWARDS } from './public/js/member-reward-rules.js';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
@@ -288,8 +288,32 @@ export class UserJsonDatabase {
     return { trades: (data.trades || []).filter((entry) => touches(entry.buyerId, entry.sellerId)).slice(-100), messages: (data.messages || []).filter((entry) => touches(entry.from, entry.to)).slice(-100), transactions: (data.transactions || []).filter((entry) => entry.walletId === wallet || entry.counterpartyId === wallet).slice(-100) };
   }
 
-  async economy(walletId){const state=await this.get(walletId);return {balance:Number(state.tokens.MZK||0),items:economyInventory(state),ownedAssets:state.items.map(item=>item.type==='land-entitlement'?{...item,assetType:'lands',requiresReveal:true}:item.type==='land-deed'?{...item,memberPlot:true,assetType:'lands',environmentId:plotSpaceId(item),playUrl:plotPlayUrl(item)}:item)};}
+  async economy(walletId){const state=await this.get(walletId);return {balance:Number(state.tokens.MZK||0),items:economyInventory(state),bundles:economyBundles(state),ownedAssets:state.items.map(item=>item.type==='land-entitlement'?{...item,assetType:'lands',requiresReveal:true}:item.type==='land-deed'?{...item,memberPlot:true,assetType:'lands',environmentId:plotSpaceId(item),playUrl:plotPlayUrl(item)}:item)};}
   economyAction(walletId,action,sku,requestId){const wallet=cleanWallet(walletId),item=economyItem(sku);if(!item)throw Object.assign(new Error('Unknown game upgrade.'),{statusCode:400});if(!requestId||String(requestId).length>140)throw new Error('A purchase or use request id is required.');return this.transaction(data=>{const type=action==='buy'?'GAME_ITEM_PURCHASE':'GAME_ITEM_USE';const duplicate=data.transactions.find(row=>row.walletId===wallet&&row.type===type&&row.requestId===requestId);if(duplicate){if(duplicate.sku!==sku)throw new Error('This request was used for another item.');return duplicate;}const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');const owned=ownsEconomyItem(user,item);if(action==='buy'&&owned)throw Object.assign(new Error('This upgrade is already owned.'),{statusCode:409});if(action==='use'&&!owned)throw Object.assign(new Error('Purchase this upgrade before using it.'),{statusCode:403});const cost=action==='buy'?item.priceMzk:item.useCostMzk;if(Number(user.tokens.MZK||0)<cost)throw Object.assign(new Error('Not enough MZK. Play with the free basic kit or earn quest rewards.'),{statusCode:409});user.tokens.MZK-=cost;if(action==='buy')user.items.push({...item,id:'economy:'+sku,economySku:sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt:new Date().toISOString()});user.updatedAt=new Date().toISOString();user.revision=Number(user.revision||0)+1;return appendTransaction(data,{type,walletId:wallet,amountMzk:-cost,balanceAfterMzk:user.tokens.MZK,requestId,sku,reason:item.name});});}
+
+  buyEconomyBundle(walletId,bundleId,expectedPriceMzk,requestId){
+    const wallet=cleanWallet(walletId),bundle=GAME_BUNDLES.find(bundle=>bundle.id===bundleId);
+    if(!bundle)throw Object.assign(Error('This bundle is no longer available. Refresh the marketplace.'),{statusCode:404});
+    if(!/^[\w-]{1,140}$/.test(String(requestId||'')))throw Object.assign(Error('A purchase request ID is required.'),{statusCode:400});
+    return this.transaction(data=>{
+      const duplicate=data.transactions.find(row=>row.walletId===wallet&&row.type==='GAME_BUNDLE_PURCHASE'&&row.requestId===requestId);
+      if(duplicate){if(duplicate.bundleId!==bundleId)throw Object.assign(Error('Request ID already used for another bundle.'),{statusCode:409});return duplicate;}
+      const user=data.users[wallet];if(!user)throw Error('Member wallet not found.');
+      const quote=economyBundleQuote(user,bundle);
+      if(quote.owned)throw Object.assign(Error('Every upgrade in this bundle is already owned.'),{statusCode:409});
+      if(!Number.isSafeInteger(expectedPriceMzk)||expectedPriceMzk!==quote.priceMzk)throw Object.assign(Error('Bundle price changed. Refresh to review your current price.'),{statusCode:409});
+      if(Number(user.tokens.MZK||0)<quote.priceMzk)throw Object.assign(Error('Not enough MZK for this bundle.'),{statusCode:409});
+      const count=quote.entries.reduce((sum,entry)=>sum+entry.quantity,0);
+      if(user.items.length+count>10000)throw Object.assign(Error('Backpack is full.'),{statusCode:409});
+      const acquiredAt=new Date().toISOString();
+      for(const entry of quote.entries)for(let index=0;index<entry.quantity;index++){
+        if(entry.kind==='care')user.items.push({id:'ioncore-'+randomUUID(),catalogId:entry.catalogId,name:entry.name,type:'rpg-consumable',source:'ioncore-market',acquiredAt});
+        else {const item=economyItem(entry.sku);user.items.push({...item,id:'economy:'+item.sku,economySku:item.sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt});}
+      }
+      user.tokens.MZK-=quote.priceMzk;user.updatedAt=acquiredAt;user.revision=Number(user.revision||0)+1;
+      return appendTransaction(data,{type:'GAME_BUNDLE_PURCHASE',walletId:wallet,amountMzk:-quote.priceMzk,balanceAfterMzk:user.tokens.MZK,requestId,bundleId,items:quote.entries,discountPercent:quote.discountPercent,savingsMzk:quote.savingsMzk,reason:bundle.name});
+    });
+  }
 
   purchaseStoreModels(walletId,items,amountMzk,requestId){
     const wallet=cleanWallet(walletId);if(!requestId||String(requestId).length>140)throw new Error('A checkout request id is required.');
@@ -380,14 +404,14 @@ export class UserJsonDatabase {
     const data = await this.read();
     const rows = new Map();
     for (const entry of data.transactions || []) {
-      if (!['GAMEPLAY_SPEND','GAME_ITEM_PURCHASE','GAME_ITEM_USE'].includes(entry.type)) continue;
+      if (!['GAMEPLAY_SPEND','GAME_ITEM_PURCHASE','GAME_ITEM_USE','GAME_BUNDLE_PURCHASE'].includes(entry.type)) continue;
       const row = rows.get(entry.walletId) || { walletId: entry.walletId, spentMzk: 0, transactionCount: 0, lastSpentAt: null };
       row.spentMzk += Math.abs(Number(entry.amountMzk || 0));
       row.transactionCount += 1;
       if (!row.lastSpentAt || String(entry.createdAt) > row.lastSpentAt) row.lastSpentAt = entry.createdAt;
       rows.set(entry.walletId, row);
     }
-    return { wallets: [...rows.values()].sort((a, b) => b.spentMzk - a.spentMzk), transactions: (data.transactions || []).filter((entry) => ['GAMEPLAY_SPEND','GAME_ITEM_PURCHASE','GAME_ITEM_USE'].includes(entry.type)).slice().reverse() };
+    return { wallets: [...rows.values()].sort((a, b) => b.spentMzk - a.spentMzk), transactions: (data.transactions || []).filter((entry) => ['GAMEPLAY_SPEND','GAME_ITEM_PURCHASE','GAME_ITEM_USE','GAME_BUNDLE_PURCHASE'].includes(entry.type)).slice().reverse() };
   }
 
   async landDeeds(walletId) {

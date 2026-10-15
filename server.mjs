@@ -8,7 +8,7 @@ import {WorldAtlas,attachAtlas} from './world-atlas.mjs';
 import { AuthoritativeRooms } from './authoritative-room.mjs';
 import { memberPlotEnvironment, plotSpaceId, plotPlayUrl } from './member-plots.mjs';
 import { SharedRoomStore } from './shared-room-store.mjs';
-import { GAME_ECONOMY, economyItem, ownsEconomyItem, economyInventory } from './game-economy.mjs';
+import { GAME_ECONOMY, economyItem, ownsEconomyItem, economyInventory, economyBundles } from './game-economy.mjs';
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, stat, lstat, unlink, rename } from 'node:fs/promises';
 import { createReadStream, createWriteStream } from 'node:fs';
@@ -578,7 +578,7 @@ const server = createServer(async (req, res) => {
       const deeds=(await userDatabase.read()).landDeeds||{};
       const land=LAND_PRODUCTS.map(([id,name])=>({id:'land:'+id,worldId:id,name,category:'Land and deeds',source:'land',priceMzk:4000,claimed:deeds[id]?.status==='active',playUrl:deeds[id]?.status==='active'?plotPlayUrl(deeds[id]):null}));
       const care=(JSON.parse(await readFile(join(root,'public/models/ioncore-rpg-items.json'),'utf8')).items||[]).map(item=>({id:'care:'+item.id,name:item.name,category:'Care supplies',source:'care',priceMzk:item.price}));
-      return sendJson(res,200,assetResponse([...player,...builder,...upgrades,...models,...land,...care]));
+      return sendJson(res,200,assetResponse([...player,...builder,...upgrades,...models,...land,...care,...economyBundles({items:[]}).map(bundle=>({id:bundle.id,name:bundle.name,category:'Discount bundles · '+bundle.category,source:'bundle',priceMzk:bundle.priceMzk,discountPercent:bundle.discountPercent}))]));
     }
     if(url.pathname==='/api/backpack/use'&&req.method==='POST'){
       const context=await memberContext(req,res,true);if(!context)return;
@@ -718,7 +718,8 @@ const server = createServer(async (req, res) => {
     }
 
     if(['/api/wallet/rewards/progress','/api/wallet/rewards/claim'].includes(url.pathname)&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;const input=await bodyJson(req);if(url.pathname.endsWith('/progress')&&input.scope==='field')return authorizationError(res,403,'SERVER_EVENT_REQUIRED','Gameplay quest progress is recorded by the room server.','rewards');return sendJson(res,200,assetResponse(await userDatabase.memberReward(context.walletId,url.pathname.endsWith('/progress')?'progress':'claim',input)));}
-    if(url.pathname==='/api/economy'&&req.method==='GET'){const active=await resolveAccountSession(req);if(!active)return sendJson(res,200,assetResponse({balance:0,items:economyInventory({items:[]}),ownedAssets:[]}));const context=await memberContext(req,res);if(!context)return;return sendJson(res,200,assetResponse(await userDatabase.economy(context.walletId)));}
+    if(url.pathname==='/api/economy'&&req.method==='GET'){const active=await resolveAccountSession(req);if(!active)return sendJson(res,200,assetResponse({balance:0,items:economyInventory({items:[]}),bundles:economyBundles({items:[]}),ownedAssets:[]}));const context=await memberContext(req,res);if(!context)return;return sendJson(res,200,assetResponse(await userDatabase.economy(context.walletId)));}
+    if(url.pathname==='/api/economy/bundles/buy'&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;const body=await bodyJson(req);return sendJson(res,200,assetResponse(await userDatabase.buyEconomyBundle(context.walletId,body.bundleId,body.expectedPriceMzk,body.requestId)));}
     if(['/api/economy/buy','/api/economy/use'].includes(url.pathname)&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;const body=await bodyJson(req);return sendJson(res,200,assetResponse(await userDatabase.economyAction(context.walletId,url.pathname.endsWith('/buy')?'buy':'use',body.sku,body.requestId)));}
     if(url.pathname==='/api/store/purchases'&&req.method==='POST'){
       const context=await memberContext(req,res,true);if(!context)return;
