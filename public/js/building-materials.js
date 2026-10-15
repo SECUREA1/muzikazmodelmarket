@@ -28,6 +28,16 @@ export const BUILDING_MATERIALS = Object.freeze([
   { id: 'counter', name: 'Shop counter', color: 0x8b633f, roughness: .8, shape: 'counter', dimensions: [2.4, .9, .6] },
   { id: 'bench', name: 'Park bench', color: 0x956132, roughness: .85, shape: 'bench', dimensions: [1.8, 1.2, .6] },
   { id: 'planter', name: 'Planter', color: 0xb55f3d, roughness: .9, shape: 'planter', dimensions: [1.2, .6, .6] },
+  { id: 'granite', name: 'Granite', color: 0x8c8581, roughness: .9 },
+  { id: 'basalt', name: 'Basalt', color: 0x45464c, roughness: 1 },
+  { id: 'mud', name: 'Mud', color: 0x574032, roughness: .9 },
+  { id: 'rubber', name: 'Rubber', color: 0x23282a, roughness: .95 },
+  { id: 'gold', name: 'Gold', color: 0xe2bb44, roughness: .22, metalness: .95 },
+  { id: 'roof', name: 'Roof canopy', color: 0x784d36, roughness: .8, shape: 'roof', dimensions: [2.4, .6, 2.4] },
+  { id: 'arch', name: 'Archway', color: 0xc4b89e, roughness: .9, shape: 'arch', dimensions: [2.4, 2.4, .3] },
+  { id: 'crate', name: 'Storage crate', color: 0x936b40, roughness: .9, shape: 'crate', dimensions: [1.2, 1.2, 1.2] },
+  { id: 'shelf', name: 'Market shelves', color: 0x9d7247, roughness: .8, shape: 'shelf', dimensions: [1.8, 1.8, .5] },
+  { id: 'table', name: 'Market table', color: 0xb28757, roughness: .8, shape: 'table', dimensions: [1.8, .9, 1.2] },
 ].map(material => Object.freeze({ solid: true, metalness: 0, ...material })));
 
 export function buildingMaterial(id) {
@@ -85,6 +95,16 @@ function createStructure(T, profile, tint) {
     root.add(mesh); return mesh;
   };
   switch(profile.shape) {
+    case 'roof':
+      for(let i=0;i<6;i++)part(w/6,.15,d,-w/2+w*(i+.5)/6,.45-Math.abs(i-2.5)*.12);break;
+    case 'arch':
+      part(.35,h,d,-w/2+.175);part(.35,h,d,w/2-.175);part(w,.4,d,0,h-.4);break;
+    case 'shelf':
+      part(.12,h,d,-w/2+.06);part(.12,h,d,w/2-.06);
+      for(const y of [0,.55,1.1,1.7])part(w,.1,d,0,y);break;
+    case 'table':
+      part(w,.12,d,0,h-.12);
+      for(const x of [-w/2+.1,w/2-.1])for(const z of [-d/2+.1,d/2-.1])part(.12,h-.12,.12,x,0,z);break;
     case 'steps': case 'ramp': {
       // Small treads keep capsule stepping reliable without a bounding-box slope.
       const count = profile.shape === 'ramp' ? 8 : 4;

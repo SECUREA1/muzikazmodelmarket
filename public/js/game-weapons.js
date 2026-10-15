@@ -1,4 +1,7 @@
 export const EXTRA_WEAPONS = Object.freeze({
+  'pulse-pistol': Object.freeze({label:'Pulse Pistol',description:'Light, fast short-range pulse',damage:20,pellets:1,range:20,spread:0,interval:.22,color:0xf3eb69,rays:1,score:1}),
+  'twin-blaster': Object.freeze({label:'Twin Blaster',description:'Two energy bolts per shot',damage:24,pellets:2,range:22,spread:.018,interval:.4,color:0xff7adf,rays:2,score:1}),
+  'heavy-bolt': Object.freeze({label:'Heavy Bolt',description:'High damage with a long recovery',damage:85,pellets:1,range:30,spread:0,interval:1.1,color:0xff8654,rays:1,score:1.2}),
   'scatter-shot': Object.freeze({label:'Scatter Shot',description:'Five pellets for close targets',damage:18,pellets:5,range:16,spread:.09,interval:.6,color:0xffb743,rays:5,score:1}),
   'marksman': Object.freeze({label:'Marksman',description:'Precise long-range shot, slower fire',damage:65,pellets:1,range:40,spread:0,interval:.75,color:0x7affac,rays:1,score:1.3}),
   'arc-carbine': Object.freeze({label:'Arc Carbine',description:'Quick electric shots with moderate damage',damage:28,pellets:1,range:24,spread:0,interval:.18,color:0x65a4ff,rays:1,score:1}),
