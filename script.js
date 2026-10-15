@@ -1246,11 +1246,14 @@ function renderMerchOptions() {
     ? assetCatalog.retail
     : assetCatalog.retail.filter((product) => !gatedProductIds.has(product.id));
   productGrid.innerHTML = visibleProducts.map((product, index) => `
-    <article>
+    <article data-retail-id="${product.id}">
       ${index < 3 ? `<i>${index === 0 ? 'Hot' : index === 1 ? 'New' : 'Drop'}</i>` : ''}
       <div class="product-img" style="--product-art:url('${product.asset}')" role="img" aria-label="${product.name} graphic"></div>
       <strong>${product.name}</strong><p>${product.price}</p><button type="button" data-product="${product.name}">Add</button>
     </article>`).join('');
+  const fitLastProduct=()=>{const print=productGrid.querySelector('[data-retail-id="wordmark-print"]');if(!print)return;print.hidden=false;const top=print.getBoundingClientRect().top;const sharesRow=[...productGrid.children].some(card=>card!==print&&!card.hidden&&Math.abs(card.getBoundingClientRect().top-top)<3);print.hidden=!sharesRow;};
+  requestAnimationFrame(fitLastProduct);
+  if(window.ResizeObserver)new ResizeObserver(()=>requestAnimationFrame(fitLastProduct)).observe(productGrid);
 }
 
 function selectModel(modelName) {

@@ -31,6 +31,7 @@
     </div>
     <button class="menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Open menu">${icon('M4 6h16M4 12h16M4 18h16')}<span>Menu</span></button>`;
 
+  header.querySelectorAll('a,button').forEach(control=>{const label=control.textContent.trim();if(!control.hasAttribute('aria-label'))control.setAttribute('aria-label',label);if(!control.title)control.title=control.getAttribute('aria-label');});
   const menu = header.querySelector('.menu-toggle');
   const nav = header.querySelector('.global-nav');
   const mobileHeader = window.matchMedia('(max-width: 720px)');
@@ -62,7 +63,13 @@
   };
   document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(true); });
   document.addEventListener('click', event => { if (!header.contains(event.target)) closeMenu(); });
-  const measureHeader = () => document.documentElement.style.setProperty('--global-header-height', `${header.getBoundingClientRect().height}px`);
+  const measureHeader = () => {
+    header.querySelectorAll('a,button').forEach(control=>{if(!control.title)control.title=control.getAttribute('aria-label')||control.textContent.trim();});
+    header.classList.remove('header-icons-only');
+    if(window.innerWidth>1000&&(nav.scrollWidth>nav.clientWidth+1||header.scrollWidth>header.clientWidth+1))header.classList.add('header-icons-only');
+    document.documentElement.style.setProperty('--global-header-height', `${header.getBoundingClientRect().height}px`);
+  };
+  if(window.MutationObserver)new MutationObserver(()=>requestAnimationFrame(measureHeader)).observe(header,{childList:true,subtree:true,characterData:true});
   if (window.ResizeObserver) new ResizeObserver(measureHeader).observe(header);
   window.addEventListener('resize', measureHeader, { passive: true }); measureHeader();
 
@@ -135,6 +142,7 @@
     renderWallet();
   };
   mobileHeader.addEventListener?.('change', syncWalletButtonPurpose);
+  window.matchMedia('(max-width: 1000px)').addEventListener?.('change',()=>{closeMenu();measureHeader();});
   renderCartCount();
   renderWallet();
   syncWalletButtonPurpose();

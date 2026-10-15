@@ -1,3 +1,4 @@
+import {backpackPackage,ownedPackageItem} from './backpack-files.mjs';
 import { resolveStoreCart } from './store-catalog.mjs';
 import { EthereumMemberAuth } from './ethereum-member-auth.mjs';
 import { ServerBackups } from './server-backups.mjs';
@@ -19,6 +20,7 @@ import { verifyPaymentTransaction } from './payment-verifier.mjs';
 import { DurableSessionStore } from './session-store.mjs';
 
 const root = process.cwd();
+const LAND_PRODUCTS=[['volt-city','Volt City'],['skyline-deck','Skyline Deck'],['echo-gardens','Echo Gardens'],['crew-plaza','Crew Plaza'],['studio-ridge','Studio Ridge'],['neon-docks','Neon Docks'],['bassline-badlands','Bassline Badlands'],['pixel-peaks','Pixel Peaks']];
 const serviceStartedAt = new Date().toISOString();
 const serviceVersion = process.env.npm_package_version || '1.0.0';
 const deploymentCommit = process.env.RENDER_GIT_COMMIT || process.env.MUZIKAZ_DEPLOY_COMMIT || process.env.GIT_COMMIT || 'development';
@@ -531,6 +533,38 @@ const server = createServer(async (req, res) => {
       res.setHeader('Set-Cookie', [sessionCookie('mzk_session', '', 0), sessionCookie('mzk_game', '', 0)]); return sendJson(res, 200, assetResponse({ authenticated: false }));
     }
     if (url.pathname === '/api/backpack' && req.method === 'GET') { const active = await accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return account ? sendJson(res, 200, assetResponse(await backpackFor(account))) : authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'Account not found.', 'account'); }
+    const backpackExport=url.pathname.match(/^\/api\/backpack\/items\/([^/]+)\/export$/);
+    if(backpackExport&&req.method==='GET'){
+      const context=await memberContext(req,res);if(!context)return;
+      const id=decodeURIComponent(backpackExport[1]);
+      let item=context.state.items.find(item=>item.id===id);
+      if(!item){const pack=await userDatabase.builderBackpack(context.walletId);const asset=pack.assets.find(item=>item.id===id);if(asset)item={...asset,type:'builder',modelUrl:asset.glb_url||''};}
+      if(!item){const map=(await readCustomMaps()).find(map=>map.id===id&&map.ownerId==='account:'+context.account.accountId);if(map)item={id:map.id,name:map.name,type:'published-map',environmentId:map.id,playUrl:map.playUrl};}
+      if(!item)return authorizationError(res,403,'ITEM_NOT_OWNED','This item is not in your server Backpack.','inventory');
+      let world=null,objects={};if(item.type==='land-deed'){world=(await combinedEnvironments()).find(world=>world.id===plotSpaceId(item));objects=(await sharedRooms.read())[plotSpaceId(item)]?.objects||{};}else if(item.type==='published-map'){world=(await combinedEnvironments()).find(world=>world.id===item.id);objects=(await sharedRooms.read())[item.id]?.objects||{};}
+      const liveRoom=world?(await sharedRooms.read())[world.id]:null;const entities=Object.values(liveRoom?.simulation?.actors||{}).filter(actor=>actor.spawned).map(actor=>({id:actor.id,position:actor.position,rotation:actor.rotation,active:actor.active,asset:{id:actor.asset?.id,name:actor.asset?.name,modelUrl:actor.asset?.modelUrl,buildAssetId:actor.asset?.buildAssetId,renderKind:actor.asset?.renderKind,configuration:actor.asset?.configuration}}));
+      res.setHeader('Content-Disposition','attachment; filename="muzikaz-'+item.id.replace(/[^a-z0-9-]/gi,'-')+'.json"');
+      return sendJson(res,200,assetResponse(backpackPackage({item,world,objects,entities})));
+    }
+    if(url.pathname==='/api/backpack/import'&&req.method==='POST'){
+      const context=await memberContext(req,res,true);if(!context)return;
+      const input=await bodyJson(req,8500000),pack=await userDatabase.builderBackpack(context.walletId);
+      const maps=(await readCustomMaps()).filter(map=>map.ownerId==='account:'+context.account.accountId).map(map=>({id:map.id,name:map.name,type:'published-map',playUrl:map.playUrl}));
+      let item;
+      try{item=ownedPackageItem(input,[...context.state.items,...pack.assets,...maps]);}
+      catch(error){if(error.statusCode!==403)throw error;const file=input.schema?input:input.data;const destination=(await combinedEnvironments()).find(world=>world.visibility!=='private'&&(world.id===file.itemId||world.deedId===file.itemId));if(!destination)throw error;return sendJson(res,200,assetResponse({action:'visit',ownershipGranted:false,item:{id:destination.id,name:destination.name,type:'public-map-reference'},playUrl:destination.playUrl||'model-explorer.html?environment='+encodeURIComponent(destination.id)+'&autoplay=1'}));}
+      return sendJson(res,200,assetResponse({item,action:item.asset_usage==='game_builder'?'builder':'backpack',playUrl:item.type==='published-map'?item.playUrl:item.type==='land-deed'?plotPlayUrl(item):item.asset_usage==='game_builder'?'builder-market.html#backpack':'model-explorer.html?environment=public-commons&autoplay=1&useItem='+encodeURIComponent(item.id)}));
+    }
+    if(url.pathname==='/api/market/catalog'&&req.method==='GET'){
+      const player=(await userDatabase.marketListings()).map(item=>({id:'player:'+item.sellerId+':'+item.itemId,name:item.itemName,category:/land/.test(item.itemType)?'Land and deeds':item.itemType==='custom-item'?'Custom items':'Player items',source:'player',priceMzk:item.priceMzk,seller:item.sellerName}));
+      const builder=(await userDatabase.builderMarket()).map(item=>({id:'builder:'+item.listing_id,name:item.asset.name,category:'Builder assets',source:'builder',priceMzk:item.price_mzk,description:item.asset.builder_category}));
+      const upgrades=economyInventory({items:[]}).map(item=>({id:'upgrade:'+item.sku,name:item.name,category:item.category||'Game upgrades',source:'upgrade',priceMzk:item.priceMzk,basic:item.basic}));
+      const models=(await repositoryGameCatalog()).filter(item=>item.assetType!=='environment'&&/\.(?:glb|gltf)(?:[?#]|$)/i.test(item.modelUrl)).map(item=>{const quote=resolveStoreCart([{quantity:1,deliverable:{id:item.id}}],[item]);return {id:'model:'+item.id,name:quote.items[0].name,category:'Models',source:'model',priceUsd:quote.items[0].priceUsd,model:item};});
+      const deeds=(await userDatabase.read()).landDeeds||{};
+      const land=LAND_PRODUCTS.map(([id,name])=>({id:'land:'+id,worldId:id,name,category:'Land and deeds',source:'land',priceMzk:4000,claimed:deeds[id]?.status==='active',playUrl:deeds[id]?.status==='active'?plotPlayUrl(deeds[id]):null}));
+      const care=(JSON.parse(await readFile(join(root,'public/models/ioncore-rpg-items.json'),'utf8')).items||[]).map(item=>({id:'care:'+item.id,name:item.name,category:'Care supplies',source:'care',priceMzk:item.price}));
+      return sendJson(res,200,assetResponse([...player,...builder,...upgrades,...models,...land,...care]));
+    }
     if(url.pathname==='/api/backpack/use'&&req.method==='POST'){
       const context=await memberContext(req,res,true);if(!context)return;
       const {itemId}=await bodyJson(req,4096),item=itemId==='starter-avatar'?STARTER_AVATAR:context.state.items.find(item=>item.id===itemId);
@@ -722,7 +756,7 @@ const server = createServer(async (req, res) => {
     if(url.pathname==='/api/member-maps'&&req.method==='GET')return sendJson(res,200,assetResponse((await combinedEnvironments()).filter(env=>env.memberPlot||env.source==='custom-builder'||env.community)));
     const plotConfig=url.pathname.match(/^\/api\/land\/deeds\/([^/]+)\/space$/);
     if(plotConfig&&req.method==='PUT'){const context=await memberContext(req,res,true);if(!context)return;const body=await bodyJson(req),bases=(await combinedEnvironments()).filter(env=>!env.memberPlot);if(!bases.some(env=>env.id===body.environmentId&&env.playable!==false&&env.visibility!=='private'))return authorizationError(res,400,'PLOT_ENVIRONMENT_INVALID','Choose an available public environment.','plot');const deed=await userDatabase.configurePlot(context.walletId,decodeURIComponent(plotConfig[1]),body);roomEnvironmentCache=null;broadcast('member-plot-updated',{spaceId:deed.spaceId});return sendJson(res,200,assetResponse(deed));}
-    if (url.pathname === '/api/land/claims' && req.method === 'POST') { const body = await bodyJson(req); const allowed = new Map([['volt-city', 'Volt City'], ['skyline-deck', 'Skyline Deck'], ['echo-gardens', 'Echo Gardens'], ['crew-plaza', 'Crew Plaza'], ['studio-ridge', 'Studio Ridge'], ['neon-docks', 'Neon Docks'], ['bassline-badlands', 'Bassline Badlands'], ['pixel-peaks', 'Pixel Peaks']]); const worldId = cleanText(body.worldId).toLowerCase(); if (!allowed.has(worldId)) return sendJson(res, 400, { success: false, message: 'Unknown MUZIKAZ world.' }); return sendJson(res, 201, assetResponse(await userDatabase.claimLand({ walletId: requestWallet(req), worldId, name: allowed.get(worldId), priceMzk: 4000, requestId: body.requestId }))); }
+    if (url.pathname === '/api/land/claims' && req.method === 'POST') { const body = await bodyJson(req); const allowed = new Map(LAND_PRODUCTS); const worldId = cleanText(body.worldId).toLowerCase(); if (!allowed.has(worldId)) return sendJson(res, 400, { success: false, message: 'Unknown MUZIKAZ world.' }); return sendJson(res, 201, assetResponse(await userDatabase.claimLand({ walletId: requestWallet(req), worldId, name: allowed.get(worldId), priceMzk: 4000, requestId: body.requestId }))); }
     if (url.pathname === '/api/market/members' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.members()));
     const marketProfile = url.pathname.match(/^\/api\/market\/members\/([^/]+)$/);
     if (marketProfile && req.method === 'GET') { const profile = await userDatabase.marketProfile(decodeURIComponent(marketProfile[1])); return profile ? sendJson(res, 200, assetResponse(profile)) : sendJson(res, 404, { success: false, message: 'Member not found' }); }

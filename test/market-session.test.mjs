@@ -64,6 +64,17 @@ test('cookie and bearer member sessions own market and care actions without a br
   assert.equal((await paymentOrderStore.get(pending.orderId)).paymentStatus,'FULFILLED');assert.equal((await call('/api/wallet/state',paymentHeaders)).body.data.items.filter(item=>item.orderId===pending.orderId).length,1);
   const ownedPurchase=(await call('/api/wallet/state',paymentHeaders)).body.data.items.find(item=>item.catalogId===model.id);
   assert.equal((await call('/api/backpack/use',{}, {itemId:ownedPurchase.id})).status,401);
+  const modelFile=await call('/api/backpack/items/'+ownedPurchase.id+'/export',paymentHeaders);assert.equal(modelFile.status,200);assert.equal(modelFile.body.data.itemId,ownedPurchase.id);assert.match(modelFile.headers['content-disposition'],/attachment/);
+  assert.equal((await call('/api/backpack/items/'+ownedPurchase.id+'/export')).status,401);
+  const reused=await call('/api/backpack/import',paymentHeaders,{...modelFile.body.data,content:{item:{id:ownedPurchase.id,modelUrl:'/forged.glb'}}});assert.equal(reused.status,200);assert.equal(reused.body.data.item.modelUrl,ownedPurchase.modelUrl);
+  assert.equal((await call('/api/backpack/import',paymentHeaders,{...modelFile.body.data,itemId:'not-owned'})).status,403);
+  const publicCatalog=await call('/api/market/catalog');assert.equal(publicCatalog.status,200);assert.ok(publicCatalog.body.data.some(item=>item.source==='model'));assert.ok(publicCatalog.body.data.some(item=>item.source==='upgrade'));assert.ok(publicCatalog.body.data.some(item=>item.source==='land'&&item.worldId==='volt-city'&&!item.claimed));assert.ok(publicCatalog.body.data.some(item=>item.source==='care'));
+  const builderAsset=await call('/api/builder/assets',paymentHeaders,{name:'Shared market sign',asset_type:'prop',builder_category:'PROPS',glb_url:ownedPurchase.modelUrl});assert.equal(builderAsset.status,201);
+  const builderId=builderAsset.body.data.asset.id;
+  assert.equal((await call('/api/backpack/items/'+builderId+'/export',paymentHeaders)).body.data.content.item.id,builderId);
+  const builderPackage=(await call('/api/backpack/items/'+builderId+'/export',paymentHeaders)).body.data;assert.equal((await call('/api/backpack/import',paymentHeaders,builderPackage)).body.data.action,'builder');
+  const builderListing=await call('/api/builder/listings',paymentHeaders,{asset_id:builderId,price_mzk:25});assert.equal(builderListing.status,201);
+  assert.ok((await call('/api/market/catalog')).body.data.some(item=>item.source==='builder'&&item.name==='Shared market sign'));
   const useAvatar=await call('/api/backpack/use',paymentHeaders,{itemId:ownedPurchase.id});assert.equal(useAvatar.status,200);assert.equal(useAvatar.body.data.action,'avatar');
   assert.equal((await call('/api/backpack',paymentHeaders)).body.data.selectedAvatarId,ownedPurchase.id);
   const shop=await call('/api/economy',paymentHeaders);assert.equal(shop.status,200);
@@ -108,6 +119,10 @@ test('cookie and bearer member sessions own market and care actions without a br
   assert.ok(Object.values(deployed.body.data.actors).some(actor=>actor.asset?.id===saved.body.data.id&&actor.asset.renderKind==='image'));
   assert.equal((await call('/data/users.json')).status,404);assert.equal((await call('/data/backups/manifest.json')).status,404);
   assert.equal((await call('/api/admin/backups')).status,403);
+  assert.equal((await call('/api/market/catalog')).body.data.find(item=>item.source==='land'&&item.worldId==='volt-city').claimed,true);
+  const deedFile=(await call('/api/backpack/items/'+plot.body.data.id+'/export',paymentHeaders)).body.data;assert.equal(deedFile.content.world.id,plot.body.data.spaceId);assert.equal(deedFile.content.world.players,undefined);
+  const mapFile=(await call('/api/backpack/items/room-test/export',paymentHeaders)).body.data;assert.equal(mapFile.content.world.id,'room-test');assert.equal((await call('/api/backpack/import',paymentHeaders,mapFile)).body.data.playUrl,published.body.data.playUrl);
+  await call('/api/market/listings',paymentHeaders,{itemId:saved.body.data.id,priceMzk:20},'PUT');assert.ok((await call('/api/market/catalog')).body.data.some(item=>item.category==='Custom items'&&item.name==='Public sign'));
   const publicPlots=await call('/api/member-maps');assert.equal(publicPlots.body.data.some(map=>map.id==='plot-deed-volt-city'),true);
   assert.equal((await call('/api/environments')).body.data.some(map=>map.id==='plot-deed-volt-city'),true);
   const environments=(await call('/api/environments')).body.data.filter(env=>!env.memberPlot&&env.playable!==false&&env.visibility!=='private');const template=environments.find(env=>env.id!=='muzikaz-main')||environments[0];
@@ -136,6 +151,9 @@ test('cookie and bearer member sessions own market and care actions without a br
   const second=await call('/api/access/free-play',{}, {username:'OtherCarePlayer',password:'other-session-test'});assert.equal(second.status,200);
   assert.equal((await call('/api/land/deeds/deed-volt-city/space',{authorization:'Bearer '+second.body.data.sessionToken},{environmentId:template.id,name:'Stolen plot'},'PUT')).status,403);
   const secondHeaders={cookie:second.headers['set-cookie'].split(';')[0]};const secondSession=await call('/api/market/session',secondHeaders);secondHeaders['x-csrf-token']=secondSession.body.data.csrfToken;
+  const publicFileVisit=await call('/api/backpack/import',secondHeaders,mapFile);assert.equal(publicFileVisit.status,200);assert.equal(publicFileVisit.body.data.action,'visit');assert.equal(publicFileVisit.body.data.ownershipGranted,false);assert.equal(publicFileVisit.body.data.playUrl,published.body.data.playUrl);
+  assert.equal((await call('/api/backpack/items/'+ownedPurchase.id+'/export',secondHeaders)).status,403);
+  assert.equal((await call('/api/backpack/import',secondHeaders,modelFile.body.data)).status,403);
   assert.equal((await call('/api/player/settings',secondHeaders)).body.data.settings.mouseSensitivity,1);
   // Real voice handlers: authenticated, room-scoped, queued delivery and mic opt-in.
   const voiceA={...bearer,'x-muzikaz-session':'voice-a'},voiceB={authorization:'Bearer '+second.body.data.sessionToken,'x-muzikaz-session':'voice-b'};

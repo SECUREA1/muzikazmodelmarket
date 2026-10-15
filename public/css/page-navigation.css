@@ -5,3 +5,11 @@
 .masthead,.topbar,.environment-topbar { flex-wrap:wrap; max-width:100%; box-sizing:border-box; gap:.5rem; }
 .environment-actions { min-width:0; flex-wrap:wrap; }
 @media(max-width:720px){ .environment-actions { flex:1 1 100%; } .environment-actions button { flex:1 1 8rem; min-width:0; } .environment-topbar .scene-name { flex:1 1 9rem; min-width:0; } .scene-name input { min-width:0; width:100%; box-sizing:border-box; } }
+/* Specialist pages keep the same one-row control rhythm. */
+.environment-topbar,.topbar,.masthead{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;min-width:0;}
+.environment-topbar .environment-actions{display:flex;flex-flow:row nowrap;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:thin;}
+.environment-topbar .environment-actions button{flex:0 0 auto;min-height:44px;white-space:nowrap;}
+.environment-topbar .scene-name{flex:0 1 180px;min-width:70px;}.page-navigation-toggle{flex:0 0 44px;}
+@media(max-width:1000px){.environment-topbar .environment-brand span,.environment-topbar #save-state{display:none;}.environment-topbar .scene-name{flex:0 1 100px;}.page-navigation-toggle>span{display:none;}.environment-topbar .environment-actions button{font-size:11px;padding:7px;}.topbar>span{display:none;}.topbar button{flex:0 0 auto;}}
+.environment-actions button,.topbar button{display:inline-flex;align-items:center;justify-content:center;gap:6px;}.environment-actions button svg,.topbar button svg{flex-shrink:0;}
+@media(max-width:1000px){.environment-actions .page-action-label,.topbar .page-action-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}.environment-topbar .environment-brand{flex:0 0 44px;min-width:44px;}.environment-topbar .environment-actions button{min-width:44px;}.environment-topbar .environment-brand img{width:36px;height:36px;object-fit:contain;}}

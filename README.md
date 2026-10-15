@@ -208,3 +208,14 @@ MZK checkout debits the server balance and delivers once per request. Crypto mar
 Members and Bottle login accept an Ethereum address through the wallet sign-in controls. `/api/access/wallet/challenge` issues a five-minute, single-use signing message bound to the server domain and login/linking purpose. `/api/access/wallet` verifies the signature before opening the persistent member session. Linking a wallet to an existing signed-in account additionally binds the proof to that account and preserves its Backpack, deeds, MZK and transaction history. An address alone cannot authenticate or link a wallet.
 
 Member identities and inventory are durable server records, not on-chain storage. Account sessions have no server expiry and remain revocable through logout. Browsers can clear credentials; signing again with the same linked Ethereum wallet reopens the same account. No private keys or seed phrases are collected.
+
+
+## Portable gameplay files and shared market catalog
+
+Backpack, the custom library, member inventory, Builder Backpack and owned-map listings offer gameplay JSON downloads. `/api/backpack/items/:id/export` requires current ownership and exports item configuration, model file URLs, and, for maps or deeds, the scene, saved building transforms/paint, placed-entity references and stable room ID. It excludes live player/session telemetry. Drawn custom items retain their embedded artwork; GLB binaries remain available through the included asset URLs rather than being embedded in JSON.
+
+`POST /api/backpack/import` reopens the canonical live server record for its current owner, including the buyer after a marketplace transfer. It does not duplicate inventory or apply ownership claims or edited settings from a downloaded file. Both direct API envelopes and files saved by the UI are accepted. Another signed-in player can open a public map/deed package to visit its live room without receiving ownership; private inventory files still require ownership. These packages support reuse and sharing of asset references; the server snapshots remain the recovery mechanism for deleted server data.
+
+Game Market and Builder Market use the same public `/api/market/catalog` to list member sales, custom items, deeds, builder listings, upgrades, care supplies, initial land purchases and repository models. Category/search controls lead to each existing authoritative purchasing flow. Private inventory is not published automatically.
+
+The shared header stays one row, switches to labeled icons when width is constrained, and places navigation in the hamburger menu on narrow screens. Wordmark Print remains in the product catalog/designer and appears in the retail grid only when it shares a row with another product.
