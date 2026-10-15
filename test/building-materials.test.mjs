@@ -73,3 +73,23 @@ test('opening and closing a door updates visible and collision geometry', () => 
   assert.equal(toggleBuildingObject(cement),false);dispose(cement);
   dispose(door);
 });
+
+test('expanded catalog adds 35 items and type filtering combines with search', async () => {
+  const { BUILDING_TYPES, buildingType, matchesBuildingItem } = await import('../public/js/building-materials.js');
+  assert.equal(BUILDING_MATERIALS.length,74);
+  for(const material of BUILDING_MATERIALS){
+    assert.ok(BUILDING_TYPES.some(type=>type.id===buildingType(material)),material.id);
+    const root=createBuildingBlock(THREE,material.id);
+    assert.ok(root.children.length>0);
+    assert.equal(root.userData.materialId,material.id);
+    if(material.shape){
+      const size=new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3());
+      for(let axis=0;axis<3;axis++)assert.ok(size.getComponent(axis)<=material.dimensions[axis]+.001,material.id+' dimensions');
+    }
+    dispose(root);
+  }
+  assert.equal(matchesBuildingItem(buildingMaterial('bridge'),'access','BRIDGE'),true);
+  assert.equal(matchesBuildingItem(buildingMaterial('bridge'),'market','bridge'),false);
+  assert.equal(matchesBuildingItem(buildingMaterial('kiosk'),'market','kiosk'),true);
+  assert.equal(matchesBuildingItem(buildingMaterial('steel'),'blocks','stone'),false);
+});

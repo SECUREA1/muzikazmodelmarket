@@ -38,6 +38,41 @@ export const BUILDING_MATERIALS = Object.freeze([
   { id: 'crate', name: 'Storage crate', color: 0x936b40, roughness: .9, shape: 'crate', dimensions: [1.2, 1.2, 1.2] },
   { id: 'shelf', name: 'Market shelves', color: 0x9d7247, roughness: .8, shape: 'shelf', dimensions: [1.8, 1.8, .5] },
   { id: 'table', name: 'Market table', color: 0xb28757, roughness: .8, shape: 'table', dimensions: [1.8, .9, 1.2] },
+  {"id": "gravel", "name": "Gravel", "color": 10393478, "roughness": 0.8, "metalness": 0, "type": "blocks"},
+  {"id": "cobble", "name": "Cobblestone", "color": 8750722, "roughness": 0.8, "metalness": 0, "type": "blocks"},
+  {"id": "terracotta", "name": "Terracotta", "color": 12413002, "roughness": 0.8, "metalness": 0, "type": "blocks"},
+  {"id": "plaster", "name": "Plaster", "color": 15065043, "roughness": 0.8, "metalness": 0, "type": "blocks"},
+  {"id": "ceramic", "name": "Ceramic tile", "color": 12570067, "roughness": 0.8, "metalness": 0, "type": "blocks"},
+  {"id": "slate", "name": "Slate", "color": 5464427, "roughness": 0.8, "metalness": 0, "type": "blocks"},
+  {"id": "steel", "name": "Steel plate", "color": 8885925, "roughness": 0.8, "metalness": 0.8, "type": "blocks"},
+  {"id": "aluminum", "name": "Aluminum", "color": 13095126, "roughness": 0.8, "metalness": 0.8, "type": "blocks"},
+  {"id": "moss", "name": "Mossy stone", "color": 6518361, "roughness": 0.8, "metalness": 0, "type": "blocks"},
+  {"id": "limestone", "name": "Limestone", "color": 14010530, "roughness": 0.8, "metalness": 0, "type": "blocks"},
+  {"id": "half-wall", "name": "Half wall", "color": 10254676, "roughness": 0.85, "shape": "wall", "dimensions": [2.4, 1.2, 0.2], "type": "fort"},
+  {"id": "low-wall", "name": "Low cover wall", "color": 10254676, "roughness": 0.85, "shape": "wall", "dimensions": [2.4, 0.6, 0.3], "type": "fort"},
+  {"id": "double-window", "name": "Wide window wall", "color": 10254676, "roughness": 0.85, "shape": "window", "dimensions": [3.6, 2.4, 0.2], "type": "access"},
+  {"id": "narrow-door", "name": "Narrow opening door", "color": 10254676, "roughness": 0.85, "shape": "door", "dimensions": [1.2, 2.4, 0.2], "type": "access"},
+  {"id": "gate", "name": "Opening garden gate", "color": 10254676, "roughness": 0.85, "shape": "door", "dimensions": [2.4, 1.2, 0.2], "type": "access"},
+  {"id": "railing", "name": "Safety railing", "color": 10254676, "roughness": 0.85, "shape": "fence", "dimensions": [2.4, 0.9, 0.15], "type": "access"},
+  {"id": "bridge", "name": "Footbridge", "color": 10254676, "roughness": 0.85, "shape": "bridge", "dimensions": [2.4, 0.5, 3.6], "type": "access"},
+  {"id": "balcony", "name": "Balcony platform", "color": 10254676, "roughness": 0.85, "shape": "balcony", "dimensions": [2.4, 1.2, 2.4], "type": "fort"},
+  {"id": "watchtower", "name": "Watchtower frame", "color": 10254676, "roughness": 0.85, "shape": "tower", "dimensions": [2.4, 3.6, 2.4], "type": "fort"},
+  {"id": "bunker", "name": "Cover bunker", "color": 10254676, "roughness": 0.85, "shape": "bunker", "dimensions": [2.4, 1.8, 2.4], "type": "fort"},
+  {"id": "frame", "name": "Building frame", "color": 10254676, "roughness": 0.85, "shape": "frame", "dimensions": [2.4, 2.4, 2.4], "type": "fort"},
+  {"id": "wide-ramp", "name": "Wide assault ramp", "color": 10254676, "roughness": 0.85, "shape": "ramp", "dimensions": [3.6, 1.2, 2.4], "type": "fort"},
+  {"id": "narrow-steps", "name": "Narrow steps", "color": 10254676, "roughness": 0.85, "shape": "steps", "dimensions": [1.2, 1.2, 2.4], "type": "access"},
+  {"id": "long-steps", "name": "Long stair run", "color": 10254676, "roughness": 0.85, "shape": "ramp", "dimensions": [1.8, 1.8, 3.6], "type": "access"},
+  {"id": "small-platform", "name": "Small platform", "color": 10254676, "roughness": 0.85, "shape": "floor", "dimensions": [1.2, 0.2, 1.2], "type": "fort"},
+  {"id": "corner-wall", "name": "Corner wall", "color": 10254676, "roughness": 0.85, "shape": "corner", "dimensions": [2.4, 2.4, 2.4], "type": "fort"},
+  {"id": "door-frame", "name": "Open doorway", "color": 10254676, "roughness": 0.85, "shape": "arch", "dimensions": [1.8, 2.4, 0.2], "type": "access"},
+  {"id": "sign", "name": "Market signboard", "color": 10254676, "roughness": 0.85, "shape": "sign", "dimensions": [1.2, 1.8, 0.2], "type": "market"},
+  {"id": "lamp-post", "name": "Lamp post", "color": 10254676, "roughness": 0.85, "shape": "lamp", "dimensions": [0.6, 2.4, 0.6], "type": "props"},
+  {"id": "street-lamp", "name": "Street lamp", "color": 10254676, "roughness": 0.85, "shape": "lamp", "dimensions": [0.6, 3.6, 0.6], "type": "props"},
+  {"id": "barrel", "name": "Storage barrel", "color": 10254676, "roughness": 0.85, "shape": "barrel", "dimensions": [0.8, 1.2, 0.8], "type": "props"},
+  {"id": "cabinet", "name": "Open storage cabinet", "color": 10254676, "roughness": 0.85, "shape": "cabinet", "dimensions": [1.2, 1.8, 0.6], "type": "market"},
+  {"id": "canopy", "name": "Shade canopy", "color": 10254676, "roughness": 0.85, "shape": "canopy", "dimensions": [2.4, 2.4, 2.4], "type": "market"},
+  {"id": "kiosk", "name": "Market kiosk", "color": 10254676, "roughness": 0.85, "shape": "kiosk", "dimensions": [2.4, 2.4, 1.8], "type": "market"},
+  {"id": "barrier", "name": "Road barrier", "color": 10254676, "roughness": 0.85, "shape": "barrier", "dimensions": [2.4, 0.9, 0.6], "type": "fort"},
 ].map(material => Object.freeze({ solid: true, metalness: 0, ...material })));
 
 export function buildingMaterial(id) {
@@ -95,6 +130,32 @@ function createStructure(T, profile, tint) {
     root.add(mesh); return mesh;
   };
   switch(profile.shape) {
+    case 'bridge':
+      part(w,.2,d);for(const x of [-w/2+.1,w/2-.1])part(.12,.3,d,x,.2);break;
+    case 'balcony':
+      part(w,.2,d);for(const x of [-w/2+.08,w/2-.08])part(.16,h-.2,d,x,.2);part(w,h-.2,.16,0,.2,d/2-.08);break;
+    case 'frame': case 'tower':
+      for(const x of [-w/2+.1,w/2-.1])for(const z of [-d/2+.1,d/2-.1])part(.2,h,.2,x,0,z);
+      part(w,.15,d,0,h-.15);if(profile.shape==='tower')part(w,.15,d,0,h*.5);break;
+    case 'bunker':
+      part(.2,h,d,-w/2+.1);part(.2,h,d,w/2-.1);part(w,h,.2,0,0,d/2-.1);part(w,.2,d,0,h-.2);break;
+    case 'corner':
+      part(w,h,.2,0,0,d/2-.1);part(.2,h,d,-w/2+.1);break;
+    case 'sign':
+      part(.12,h*.6,d);part(w,h*.4,d,0,h*.6,0,0x283f38);break;
+    case 'lamp': {
+      part(w*.3,h-.4,d*.3);part(w,.15,d);const head=part(w,.4,d,0,h-.4,0,0xffe8a2);head.material.emissive.setHex(0xffbd4c);head.material.emissiveIntensity=.8;break;
+    }
+    case 'barrel': {
+      const barrel=new T.Mesh(new T.CylinderGeometry(w*.45,w*.45,h,16),new T.MeshStandardMaterial({color:tint??profile.color,roughness:.8}));barrel.userData.brickPaintPart='body';root.add(barrel);break;
+    }
+    case 'cabinet':
+      part(.1,h,d,-w/2+.05);part(.1,h,d,w/2-.05);part(w,h,.08,0,0,d/2-.04);for(const y of [0,h*.5,h-.1])part(w,.1,d,0,y);break;
+    case 'canopy': case 'kiosk':
+      for(const x of [-w/2+.08,w/2-.08])for(const z of [-d/2+.08,d/2-.08])part(.16,h,.16,x,0,z);
+      part(w,.15,d,0,h-.15,0,0x6e9e75);if(profile.shape==='kiosk'){part(w,.8,.5,0,0,d/2-.25);part(w,.3,.1,0,h-.45,-d/2+.05,0xe9d4a0);}break;
+    case 'barrier':
+      part(w,.45,.25,0,.35,0,0xe3a447);for(const x of [-w/2+.3,w/2-.3])part(.3,.35,d,x);break;
     case 'wall':
       part(w,h,d);for(let i=0;i<6;i++)part(.06,h,.03,-w/2+.2+i*.4,0,d/2-.03);break;
     case 'crate':
@@ -131,7 +192,7 @@ function createStructure(T, profile, tint) {
     }
     case 'fence':
       for(const x of [-w/2+.08,0,w/2-.08])part(.16,h,d,x);
-      for(const y of [.3,.85])part(w,.14,d,0,y);break;
+      for(const y of [h*.25,h*.7])part(w,.14,d,0,y);break;
     case 'market':
       for(const x of [-w/2+.1,w/2-.1])for(const z of [-d/2+.1,d/2-.1])part(.12,h,.12,x,0,z);
       part(w,.65,.5,0,0,d/2-.25);
@@ -180,4 +241,21 @@ export function buildingIcon(T,id) {
   });
   root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose();});
   return `<svg viewBox="0 0 128 128" class="building-item-art" aria-hidden="true"><ellipse cx="64" cy="106" rx="42" ry="8" fill="#000" opacity=".25"/>${faces.sort((a,b)=>b.z-a.z).map(f=>`<path d="${f.path}" fill="#${f.color}" opacity="${f.opacity}"/>`).join('')}</svg>`;
+}
+
+export const BUILDING_TYPES = Object.freeze([
+  {id:'all',name:'All items'}, {id:'blocks',name:'Materials & blocks'},
+  {id:'fort',name:'Fort walls & platforms'}, {id:'access',name:'Steps, doors & windows'},
+  {id:'market',name:'Markets & storage'}, {id:'props',name:'Furniture & scenery'},
+]);
+export function buildingType(material) {
+  if(material.type)return material.type;
+  if(!material.shape)return 'blocks';
+  if(['wall','floor','ramp','roof','pillar'].includes(material.shape))return 'fort';
+  if(['steps','door','window','arch','fence'].includes(material.shape))return 'access';
+  if(['market','counter','shelf','table','crate'].includes(material.shape))return 'market';
+  return 'props';
+}
+export function matchesBuildingItem(material,type='all',query='') {
+  return (type==='all'||buildingType(material)===type) && material.name.toLowerCase().includes(query.trim().toLowerCase());
 }
