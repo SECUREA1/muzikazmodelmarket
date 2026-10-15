@@ -176,9 +176,21 @@
         <label>ITEM NAME<input id="custom-item-name" required maxlength="32" value="My character" placeholder="e.g. Forest guardian"></label>
         <label>MODEL TYPE<input id="custom-item-type" list="model-type-options" required maxlength="32" value="character" placeholder="e.g. creature, vehicle, furniture"></label>
         <label>COLOR<input id="custom-item-color" type="color" value="#b9ff38"></label>
-        <label class="maker-wide">DEFAULT BEHAVIOR<select id="custom-item-behavior"><option value="talk">Start dialogue</option><option value="quest">Offer a quest</option><option value="hostile">Attack player</option><option value="patrol">Patrol area</option><option value="pickup">Pick up &amp; hold</option><option value="hold">Hold / equip item</option><option value="vehicle">Enter / drive / fly</option><option value="switch">Switch / toggle</option><option value="door">Open / close</option><option value="heal">Restore health</option><option value="decor">Decoration only</option></select></label>
-        <label>STARTING ANIMATION<select id="custom-item-animation"><option value="idle">Idle</option><option value="walk">Walk</option><option value="dance">Dance</option><option value="float">Float</option><option value="pulse">Energy pulse</option></select></label>
-        <label>FUNCTION ON INTERACT<select id="custom-item-action"><option value="message">Show message</option><option value="score">Award score</option><option value="teleport">Teleport player</option><option value="damage">Deal damage</option><option value="none">None</option></select></label>
+        <section class="maker-mechanics maker-wide" aria-labelledby="custom-game-mechanics-title">
+          <header><small>GAME MECHANICS</small><h3 id="custom-game-mechanics-title">Toggle the options this item uses</h3><p>Choose one option in every function group. Your choices are saved with all three forms.</p></header>
+          <input id="custom-item-behavior" type="hidden" value="talk">
+          <fieldset class="mechanic-toggle-group" data-mechanic-group="behavior"><legend>DEFAULT BEHAVIOR</legend><div role="radiogroup" aria-label="Default behavior">
+            <button type="button" value="talk" aria-pressed="true">Dialogue</button><button type="button" value="quest" aria-pressed="false">Quest</button><button type="button" value="hostile" aria-pressed="false">Attack</button><button type="button" value="patrol" aria-pressed="false">Patrol</button><button type="button" value="pickup" aria-pressed="false">Pick up</button><button type="button" value="hold" aria-pressed="false">Equip</button><button type="button" value="vehicle" aria-pressed="false">Drive / fly</button><button type="button" value="switch" aria-pressed="false">Switch</button><button type="button" value="door" aria-pressed="false">Door</button><button type="button" value="heal" aria-pressed="false">Heal</button><button type="button" value="decor" aria-pressed="false">Decoration</button>
+          </div></fieldset>
+          <input id="custom-item-animation" type="hidden" value="idle">
+          <fieldset class="mechanic-toggle-group" data-mechanic-group="animation"><legend>STARTING ANIMATION</legend><div role="radiogroup" aria-label="Starting animation">
+            <button type="button" value="idle" aria-pressed="true">Idle</button><button type="button" value="walk" aria-pressed="false">Walk</button><button type="button" value="dance" aria-pressed="false">Dance</button><button type="button" value="float" aria-pressed="false">Float</button><button type="button" value="pulse" aria-pressed="false">Energy pulse</button>
+          </div></fieldset>
+          <input id="custom-item-action" type="hidden" value="message">
+          <fieldset class="mechanic-toggle-group" data-mechanic-group="action"><legend>FUNCTION ON INTERACT</legend><div role="radiogroup" aria-label="Function on interact">
+            <button type="button" value="message" aria-pressed="true">Show message</button><button type="button" value="score" aria-pressed="false">Award score</button><button type="button" value="teleport" aria-pressed="false">Teleport</button><button type="button" value="damage" aria-pressed="false">Deal damage</button><button type="button" value="none" aria-pressed="false">None</button>
+          </div></fieldset>
+        </section>
       </div>
       <footer><span class="three-form-promise"><b>3× 3D</b> All three game-ready forms will be saved.</span><button value="cancel">CANCEL</button><button value="default" id="create-custom-item" class="primary">SAVE 3 FORMS &amp; PLACE</button></footer>
     </form>
