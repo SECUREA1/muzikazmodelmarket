@@ -19,7 +19,7 @@ import { BuildingEditor, BuildingPreview, applyDropSettings } from './building-e
 import { BUILDING_MATERIALS, buildingMaterial, buildingDimensions, createBuildingBlock, toggleBuildingObject, buildingIcon, BUILDING_TYPES, matchesBuildingItem } from './building-materials.js';
 import { Capsule } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Capsule.js/+esm';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
-import { EnvironmentRegistry } from './environments/environment-registry.js';
+import { normalizeEnvironmentList, EnvironmentRegistry } from './environments/environment-registry.js';
 import { EnvironmentLoader } from './environments/environment-loader.js';
 import { configureRenderer } from './environments/environment-quality.js';
 import { logEnvironment } from './environments/environment-api.js';
@@ -711,7 +711,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function resetPlayer(spawn = player.spawn, rotationY = player.yaw) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); player.spawn.copy(alignedSpawn); lastSafePlayerPosition.copy(alignedSpawn); hasSafePlayerPosition = true; floorLockCooldown = .35; player.velocity.set(0,0,0); player.yaw = rotationY || 0; player.pitch = 0; player.eyeHeight = player.height; player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.radius, alignedSpawn.z), new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.height, alignedSpawn.z), player.radius); playerRig.position.copy(alignedSpawn); playerRig.rotation.set(0, player.yaw, 0); camera.position.set(0, renderer.xr.isPresenting ? 0 : player.eyeHeight, 0); camera.rotation.set(0,0,0); updateLandingFrame(alignedSpawn); }
   async function loadNextEnvironment() { if(activeEnvironment?.memberPlot)return loadById(activeEnvironment.id);const worlds = registry.all(); if (!worlds.length) return; const scriptedWorld = registry.find(LEVEL_WORLD_IDS[toxicBubbleSystem.level]); const currentIndex = Math.max(0, worlds.findIndex((world) => world.id === activeEnvironment?.id)); const next = scriptedWorld || worlds[(currentIndex + 1) % worlds.length]; setStatus(`Environment clear — traveling to ${next.name}.`); await loadById(next.id); }
 
-  async function loadById(id, { fallback = true } = {}) { const env = registry.find(id) || registry.all()[0]; if (!env) return;authoritativeClient?.stop();authoritativeClient=null;if(activeEnvironment&&activeEnvironment.id!==env.id){const nextUrl=new URL(location.href);nextUrl.searchParams.delete('meet');history.replaceState({},'',nextUrl);}for(const root of serverPlayerRoots.values())root.removeFromParent();serverPlayerRoots.clear();serverPlayerInitialized=false;renderedStreetRevision=-1;serverAssetLoads.clear();serverHostedRoom=true; const loadGeneration=++worldLoadGeneration; multiplayerWorldLoading=true; seatedBuilderObject=null; builderGameplay.player.seatedObjectId=null; stopRangeCourse();rangeOpsButton.hidden=true;showRangeOps(false); const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete ${env.builderScene||env.proceduralLand?'builder land':'GLB world'}…`); try { const result = await envLoader.load(env); if (!result || loadGeneration !== worldLoadGeneration) return; activeEnvironment=env;const builderRuntime=loadBuilderDecor(env);if(serverHostedRoom){toxicBubbleSystem.clearBricks();toxicBubbleSystem.toggleSharedDoor=root=>toggleBuildingObject(root);authoritativeClient=connectAuthoritativeRoom({roomId:env.id,meetingId:new URL(location.href).searchParams.get('meet'),input:serverInput,render:renderServerRoom,onStatus:setStatus});} currentSpaceScale = result.scale; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; const spawn=builderRuntime?.worldSpawn||result.spawn;activeWorldSpawn={position:spawn.position.clone(),rotationY:Number(spawn.rotationY)||0};resetPlayer(activeWorldSpawn.position,activeWorldSpawn.rotationY); const previousRoom=window.MUZIKAZ_HOUSE_TRACKING?.roomId; window.MUZIKAZ_HOUSE_TRACKING={...(window.MUZIKAZ_HOUSE_TRACKING||{}),roomId:env.id,position:{x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z},rotation:{y:player.yaw}}; localStorage.setItem('muzikazMultiplayerWorld',env.id); if(previousRoom!==env.id)window.dispatchEvent(new CustomEvent('muzikaz:multiplayer-world-change',{detail:{roomId:env.id,name:env.name}})); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. ${builderRuntime?`${builderRuntime.objectCount} builder objects and ${builderRuntime.actorCount} gameplay actors deployed. `:''}Press Start game or click the canvas to walk.`); const isFiringRange=(env.builderScene?.layout||env.layout)==='firing-range'||env.id==='firing-range';rangeOpsButton.hidden=!isFiringRange;if(isFiringRange){resetRangeReadout();showRangeOps(true);} const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source, builderRuntime }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); await loadById(fallbackEnv.id, { fallback: false }); return; } if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); } finally { if(loadGeneration===worldLoadGeneration)multiplayerWorldLoading=false; } }
+  async function loadById(id, { fallback = true } = {}) { const env = registry.find(id) || registry.all()[0]; if (!env) throw new Error('No playable map is available.');authoritativeClient?.stop();authoritativeClient=null;if(activeEnvironment&&activeEnvironment.id!==env.id){const nextUrl=new URL(location.href);nextUrl.searchParams.delete('meet');history.replaceState({},'',nextUrl);}for(const root of serverPlayerRoots.values())root.removeFromParent();serverPlayerRoots.clear();serverPlayerInitialized=false;renderedStreetRevision=-1;serverAssetLoads.clear();serverHostedRoom=true; const loadGeneration=++worldLoadGeneration; multiplayerWorldLoading=true; seatedBuilderObject=null; builderGameplay.player.seatedObjectId=null; stopRangeCourse();rangeOpsButton.hidden=true;showRangeOps(false); const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete ${env.builderScene||env.proceduralLand?'builder land':'GLB world'}…`); try { const result = await envLoader.load(env); if (!result || loadGeneration !== worldLoadGeneration) return; activeEnvironment=env;const builderRuntime=loadBuilderDecor(env);if(serverHostedRoom){toxicBubbleSystem.clearBricks();toxicBubbleSystem.toggleSharedDoor=root=>toggleBuildingObject(root);authoritativeClient=connectAuthoritativeRoom({roomId:env.id,meetingId:new URL(location.href).searchParams.get('meet'),input:serverInput,render:renderServerRoom,onStatus:setStatus});} currentSpaceScale = result.scale; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; const spawn=builderRuntime?.worldSpawn||result.spawn;activeWorldSpawn={position:spawn.position.clone(),rotationY:Number(spawn.rotationY)||0};resetPlayer(activeWorldSpawn.position,activeWorldSpawn.rotationY); const previousRoom=window.MUZIKAZ_HOUSE_TRACKING?.roomId; window.MUZIKAZ_HOUSE_TRACKING={...(window.MUZIKAZ_HOUSE_TRACKING||{}),roomId:env.id,position:{x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z},rotation:{y:player.yaw}}; localStorage.setItem('muzikazMultiplayerWorld',env.id); if(previousRoom!==env.id)window.dispatchEvent(new CustomEvent('muzikaz:multiplayer-world-change',{detail:{roomId:env.id,name:env.name}})); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. ${builderRuntime?`${builderRuntime.objectCount} builder objects and ${builderRuntime.actorCount} gameplay actors deployed. `:''}Press Start game or click the canvas to walk.`); const isFiringRange=(env.builderScene?.layout||env.layout)==='firing-range'||env.id==='firing-range';rangeOpsButton.hidden=!isFiringRange;if(isFiringRange){resetRangeReadout();showRangeOps(true);} const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source, builderRuntime }); await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; const fallbackEnv = fallback && env.id !== 'muzikaz-main' ? registry.find('muzikaz-main') : null; if (fallbackEnv) { setStatus(`${env.name} could not load; opening the main floor fallback…`); await loadById(fallbackEnv.id, { fallback: false }); return; } if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); throw error; } finally { if(loadGeneration===worldLoadGeneration)multiplayerWorldLoading=false; } }
   let cachedAvatars = [];
   let cachedCatalogModels = [];
   let backpackAssets = [];
@@ -1488,29 +1488,49 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // include a remote GitHub lookup); refresh that optional picker in the
   // background instead.
   setStatus('Finding the fastest available house world…');
-  try {
-    await settleWithin(refreshLibrary(), 5000, 'Startup catalog refresh');
-  } catch (error) {
+  async function loadStartupMaps() {
+    const response = await fetch('/public/models/environments/environments.json', { signal: AbortSignal.timeout(5000) });
+    if (!response.ok) throw new Error('Bundled house maps unavailable.');
+    registry.environments = normalizeEnvironmentList(await response.json());
+  }
+  try { await loadStartupMaps(); } catch (error) {
     console.warn('[MUZIKAZ Environment]', 'Map refresh failed', error);
   }
   renderPicker();
-  refreshAvatarLibrary().then(renderPicker).catch((error) => {
-    console.warn('[MUZIKAZ Environment]', 'Avatar refresh failed', error);
-  });
   const params = new URLSearchParams(location.search);
+  if (params.get('house') || params.get('environment')) {
+    try { await settleWithin(registry.refresh(), 5000, 'Requested world lookup'); } catch (error) { console.warn('[MUZIKAZ Environment]', error); }
+  }
   const requestedEnvironment = registry.find(params.get('house'))?.id || registry.find(params.get('environment'))?.id;
-  const startEnvironment = requestedEnvironment || registry.find('public-commons')?.id || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
+  // Explicit world links keep their destination; ordinary launches start indoors.
+  let startEnvironment = requestedEnvironment || registry.find('muzikaz-main')?.id || registry.all()[0]?.id;
   let houseMapPromise = null;
   async function openHouseMap() {
     canvas.focus({ preventScroll: true });
+    if (!startEnvironment) {
+      await loadStartupMaps();
+      startEnvironment = registry.find('muzikaz-main')?.id;
+    }
     if (!envLoader.world && startEnvironment) {
       setStatus('Opening and loading the MUZIKAZ house environment…');
       houseMapPromise ||= loadById(startEnvironment).finally(() => { houseMapPromise = null; });
       await houseMapPromise;
     }
+    if (!envLoader.world) throw new Error('The house could not be loaded. Select Try again.');
     walkButton.textContent = 'Game active';
     walkButton.setAttribute('aria-pressed', 'true');
   }
+  const outsideButton = document.querySelector('#house-outside-button');
+  outsideButton?.addEventListener('click', async () => {
+    if (outsideButton.disabled) return;
+    outsideButton.disabled = true;
+    try {
+      const destination = activeEnvironment?.id === 'studio-ridge-out' ? 'muzikaz-main' : 'studio-ridge-out';
+      await loadById(destination, { fallback: false });
+      outsideButton.querySelector('span').textContent = activeEnvironment?.id === 'studio-ridge-out' ? 'Return to house' : 'Go outside';
+    } catch (error) { setStatus(error.message || 'Unable to change maps. Try again.'); }
+    finally { outsideButton.disabled = false; }
+  });
   let gameInitializationPromise = null;
   function startRadToxGame() {
     if (gameInitializationPromise) return gameInitializationPromise;
@@ -1537,6 +1557,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         setStatus('Shared room loaded. Connecting to authoritative gameplay and live telemetry…');
         publishGameStage('game-active', 'Game ready.');
         document.dispatchEvent(new CustomEvent('muzikaz:gameplay-ready'));
+        // Inventory and remote discovery are optional once the house is playable.
+        refreshLibrary().catch(error => console.warn('[MUZIKAZ Library]', error));
+        refreshAvatarLibrary().then(renderPicker).catch(error => console.warn('[MUZIKAZ Avatars]', error));
       } catch (error) {
         const message = error?.message || 'Unable to load the MUZIKAZ house game.';
         gameStartScreen?.classList.remove('is-loading');
@@ -1586,3 +1609,4 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     // monopolize memory on mobile browsers before the visitor is ready to play.
   }
 }
+
