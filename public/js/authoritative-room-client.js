@@ -1,9 +1,9 @@
-import {SharedGameInventory} from './shared-game-inventory.js';
+import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory.js';
 
 export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,onError}) {
  const api = new SharedGameInventory();
  let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0;
- const waiters=new Set();
+ const waiters=new Set(),collected=new Set();
  function settle(error) {
   for (const waiter of waiters) { clearTimeout(waiter.timer); error ? waiter.reject(error) : waiter.resolve(client); }
   waiters.clear();
@@ -43,6 +43,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    const selfId=state?.selfId || client.selfId;
    if (!selfId || !state?.players?.[selfId]) throw Error('The server has not confirmed your player in this room.');
    client.selfId=selfId;
+   if(state.result?.loot&&!collected.has(state.result.loot.id)){collected.add(state.result.loot.id);signalInventoryChange();onStatus?.(state.result.message);}
    if (state.sequence>=sequence) { render(state,selfId); sequence=state.sequence; }
    client.ready=true; settle(); return state;
   },
@@ -88,7 +89,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    }
   } finally { busy=false; }
  }
- const timer=setInterval(tick,200);
+ const timer=setInterval(tick,100);
  tick();
  return client;
 }

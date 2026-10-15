@@ -1,3 +1,4 @@
+import {refreshRpgLoot,dropRpgLoot} from './server-rpg-loot.mjs';
 import {validateOwnedPlacement} from './owned-item-placement.mjs';
 import {ENEMY_BEHAVIORS,stepEnemyCombat} from './server-enemy-combat.mjs';
 import {combatStats,damagePlayer,registerParticipant,checkTeamDefeat,matchView,SPAWN_PROTECTION_MS,PLAYER_HIT_CAPACITY} from './rpg-match.mjs';
@@ -15,7 +16,7 @@ const copy=value=>JSON.parse(JSON.stringify(value));
 const fail=(message,statusCode=400,code)=>{throw Object.assign(new Error(message),{statusCode,code});};
 const damageByTool={laser:20,bat:25,taser:8,toxin:12,dynamite:60,flamethrower:15,'pulse-rifle':18,shotgun:35,marksman:45};
 export class AuthoritativeRooms {
- constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;}
+ constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,collectLoot,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();}
  async tickActive(){
   if(this.ticking)return;this.ticking=true;
   try{for(const [id,environment]of this.activeWorlds)await this.store.update(id,room=>{
@@ -45,6 +46,7 @@ export class AuthoritativeRooms {
    sim.initialized=true;sim.environmentUpdatedAt=contentUpdatedAt;
   }
   this.prepareEncounter(sim,environment);
+  refreshRpgLoot(sim,environment,this.now(),position=>this.collision.safeSpawn(environment,position));
   manifest.actors.push(...Object.values(sim.actors).filter(actor=>actor.definition).map(actor=>actor.definition));
   sim.streets=environment.streets||[];sim.mapRevision=environment.atlas?.revision||0;
   return {sim,manifest};
@@ -122,6 +124,7 @@ export class AuthoritativeRooms {
    else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
    else if(player.health<=0)fail('Respawn before acting.',409);
    else if(command.action==='drop'){const held=sim.actors[player.heldId];if(held){held.holderId=null;held.position={...player.position};player.heldId=null;}}
+   else if(command.action==='collect'){await this.collectNearbyLoot(sim,player,identity,id,now,command.entityId,result);}
    else if(command.action==='interact'){
     if(player.vehicleId){sim.actors[player.vehicleId].holderId=null;player.vehicleId=null;}
     else if(player.seatedId){sim.actors[player.seatedId].holderId=null;player.seatedId=null;}
@@ -175,7 +178,7 @@ export class AuthoritativeRooms {
     const direction=command.direction;if(!Array.isArray(direction)||direction.length!==3||!direction.every(Number.isFinite))fail('Invalid aim direction.');const length=Math.hypot(...direction);if(length<.1)fail('Invalid aim direction.');const ray=direction.map(n=>n/length);
     await this.charge(identity,'tool:'+tool,createHash('sha256').update(id+actorId+sim.sequence).digest('hex'));if(tool==='flamethrower')player.fuel=(player.fuel??100)-5;if(profile)player.ammo=(player.ammo??120)-1;player.lastShot=now;player.toolReady[tool]=now+cooldown;player.toolUses ||= {};player.toolUses[tool]=(player.toolUses[tool]||0)+1;
     const origin={...player.position,y:player.position.y+1.5},targets=[];
-    for(const entity of Object.values(sim.actors)){if(!entity.active||entity.health<=0)continue;const offset=[entity.position.x-origin.x,entity.position.y+1-origin.y,entity.position.z-origin.z],along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along));if(along>0&&along<(tool==='bat'?3:40)&&perpendicular<1)targets.push({entity,along});}
+    for(const entity of Object.values(sim.actors)){if(entity.loot||!entity.active||entity.health<=0)continue;const offset=[entity.position.x-origin.x,entity.position.y+1-origin.y,entity.position.z-origin.z],along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along));if(along>0&&along<(tool==='bat'?3:40)&&perpendicular<1)targets.push({entity,along});}
     const range=tool==='bat'?3:tool==='taser'?4:tool==='toxin'?9:tool==='flamethrower'?12:Math.min(40,profile?.range||40);
     for(const [targetId,target]of Object.entries(sim.players)){
      if(targetId===actorId||target.health<=0||target.replacedByRoom||now-target.lastSeen>15000)continue;
@@ -194,7 +197,7 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
      else {
       hit.entity.health=Math.max(0,before-(profile?.damage||damageByTool[tool]||20));
       combatStats(player).damageDealt+=before-hit.entity.health;
-      if(hit.entity.health===0){hit.entity.active=false;player.score+=10;const stats=combatStats(player);stats.enemyKills++;stats.score+=10;await this.reward(identity,'defeat',requestId+'-defeat');player.progress ||= {};player.progress.defeat=(player.progress.defeat||0)+1;}
+      if(hit.entity.health===0){hit.entity.active=false;if(hit.entity.radTox||['hostile','patrol'].includes(manifest.actors.find(actor=>actor.objectId===hit.entity.id)?.gameplay.behavior))dropRpgLoot(sim,hit.entity,now);player.score+=10;const stats=combatStats(player);stats.enemyKills++;stats.score+=10;await this.reward(identity,'defeat',requestId+'-defeat');player.progress ||= {};player.progress.defeat=(player.progress.defeat||0)+1;}
      }
      if(hit.entity.health<before){
       hit.entity.contributors ||= {};hit.entity.contributors[actorId]=true;
@@ -210,13 +213,24 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
     result={...result,tool,origin,end,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:hit?.playerId?'player':hit?'enemy':null};
    }else fail('This action has no server handler. It was not run locally.',422);
   }
+  if(command.action==='input'&&player.health>0)await this.collectNearbyLoot(sim,player,identity,id,now,null,result);
   this.prepareEncounter(sim,environment);
   checkTeamDefeat(sim,now);
-  if(now-(player.lastTelemetry||0)>5000){await this.telemetry(identity.walletId,{health:player.health,world:id});player.lastTelemetry=now;}
+  if(now-(player.lastTelemetry||0)>5000&&!this.telemetryPending.has(identity.walletId)){const sample={health:player.health,world:id};player.lastTelemetry=now;this.telemetryPending.add(identity.walletId);Promise.resolve().then(()=>this.telemetry(identity.walletId,sample)).catch(error=>console.error('Gameplay telemetry failed:',error.message)).finally(()=>this.telemetryPending.delete(identity.walletId));}
   if(command.action!=='input'){sim.events.push({id:requestId,actorId,action:command.action,...result,at:now});sim.events=sim.events.slice(-100);}
   sim.receipts[receiptKey]={action:command.action,result};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
   return {...this.view(room),selfId:actorId,result};
  },{persist:command.action!=='input'});}
+ async collectNearbyLoot(sim,player,identity,roomId,now,entityId,result){
+  if(!entityId&&now<(player.lootRetryAt||0))return;
+  const loot=Object.values(sim.actors).find(actor=>actor.loot&&actor.active&&(!entityId||actor.id===entityId)&&distance(actor.position,player.position)<=1.8);
+  if(!loot){if(entityId)fail('Supply is unavailable or out of reach.',409);return;}
+  let receipt;try{receipt=await this.collectLoot(identity,loot.loot.catalogId,'loot:'+loot.loot.token);}catch(error){if(entityId)throw error;player.lootRetryAt=now+5000;result.message=error.message;return;}
+  loot.active=false;loot.loot.collectedAt=now;loot.loot.collectedBy=player.actorId;
+  if(receipt?.claimedByOther)return;
+  const stats=combatStats(player);stats.itemsCollected ||= [];if(!stats.itemsCollected.includes(loot.loot.catalogId))stats.itemsCollected.push(loot.loot.catalogId);
+  result.loot={id:loot.id,catalogId:loot.loot.catalogId,receiptId:receipt?.id};result.message=loot.loot.name+' added to Backpack · Care supplies';
+ }
  async player(id,actorId){return (await this.store.get(id)).simulation?.players[actorId];}
  async care(actorId,receipt){const rooms=await this.store.read();for(const [id,room] of Object.entries(rooms)){if(!room.simulation?.players[actorId])continue;await this.store.update(id,current=>{const player=current.simulation.players[actorId];player.careReceipts ||= [];if(player.careReceipts.includes(receipt.id))return;const effect=receipt.effect;player.stats ||= {};if(effect?.stat==='all')for(const key of Object.keys(player.stats))player.stats[key]=key==='toxicity'?0:100;else if(effect?.stat&&effect.stat!=='health')player.stats[effect.stat]=Math.max(0,Math.min(100,(player.stats[effect.stat]||0)+Number(effect.amount||0)));if(effect?.stat==='health'||effect?.stat==='all')player.health=effect.stat==='all'?100:Math.min(100,player.health+Number(effect.amount||0));player.careReceipts.push(receipt.id);player.careReceipts=player.careReceipts.slice(-100);});}}
 }

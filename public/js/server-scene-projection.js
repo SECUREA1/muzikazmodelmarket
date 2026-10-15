@@ -3,7 +3,7 @@ export function disposeProjection(root) {
  root.userData.serverMixer?.stopAllAction();
  root.userData.serverMixer?.uncacheRoot(root.userData.serverMixerRoot||root);
  root.removeFromParent();
- root.traverse(object=>{object.geometry?.dispose();for(const material of [].concat(object.material||[]))material.dispose();});
+ root.traverse(object=>{object.geometry?.dispose();for(const material of [].concat(object.material||[])){if(root.userData.serverLoot)material.map?.dispose();material.dispose();}});
 }
 
 export function syncServerAvatar({THREE,root,peer,loader,prepare,isCurrent,now=Date.now()}) {

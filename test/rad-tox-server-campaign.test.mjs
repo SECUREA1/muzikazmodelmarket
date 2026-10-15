@@ -25,7 +25,7 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
   assert.equal(enemies.length,8);assert.ok(enemies.every(actor=>actor.active&&actor.health>0));
   assert.deepEqual(new Set(enemies.map(actor=>actor.kind)),new Set(['toxic','ghost','snake','brain']));
   await send('join',{},bob);state=await send('start-rad-tox',{},bob);
-  assert.equal(Object.keys(state.actors).length,8,'a second player shares the existing wave');
+  assert.equal(Object.values(state.actors).filter(actor=>actor.radTox).length,8,'a second player shares the existing wave');
   const first=state.actors[enemies[0].id],before=first.position.z;
   now+=250;state=await runtime.snapshot(environment.id,environment);
   assert.ok(state.actors[first.id].position.z>before,'enemies actively chase the player');
@@ -35,9 +35,9 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
   for(let wave=1;wave<=4;wave++) {
    state=await runtime.snapshot(environment.id,environment);
    assert.equal(state.radTox.wave,wave);
-   if(wave===4)assert.equal(Object.values(state.actors).find(actor=>actor.active).kind,'boss');
+   if(wave===4)assert.equal(Object.values(state.actors).find(actor=>actor.radTox&&actor.active).kind,'boss');
    // Fire actual authoritative laser commands; never submit a client hit ID or damage.
-   for(const id of Object.keys(state.actors))while(state.actors[id]?.active) {
+   for(const id of Object.values(state.actors).filter(actor=>actor.radTox).map(actor=>actor.id))while(state.actors[id]?.active) {
     if(state.players['account:alice'].health<=0)state=await send('respawn');
     const target=state.actors[id],player=state.players['account:alice'];
     const direction=[target.position.x-player.position.x,target.position.y+1-(player.position.y+1.5),target.position.z-player.position.z];

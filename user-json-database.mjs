@@ -550,6 +550,20 @@ export class UserJsonDatabase {
     return this.transaction(data=>{const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');const previous=user.memory.ioncoreRpg||{};user.memory.ioncoreRpg={stats:{...RPG_DEFAULT_STATS,...previous.stats,health},history:[...(previous.history||[]),{health,stats:{...RPG_DEFAULT_STATS,...previous.stats,health},reason:'gameplay',world:String(input.world||'').slice(0,140),recordedAt:new Date().toISOString()}].slice(-100)};user.updatedAt=new Date().toISOString();user.revision++;return user.memory.ioncoreRpg;});
   }
 
+  grantRpgLoot(walletId,itemId,requestId){
+    const wallet=cleanWallet(walletId),item=RPG_CATALOG.find(entry=>entry.id===itemId);
+    if(!item||!/^loot:[\w-]{1,100}$/.test(requestId))throw new Error('Invalid server loot.');
+    return this.transaction(data=>{
+      const duplicate=data.transactions.find(entry=>entry.type==='RPG_LOOT'&&entry.requestId===requestId);
+      if(duplicate){if(duplicate.walletId!==wallet||duplicate.itemId!==itemId)return {claimedByOther:true};return duplicate;}
+      const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');
+      if(user.items.length>=10000)throw new Error('Backpack is full.');
+      user.items.push({id:'ioncore-'+randomUUID(),catalogId:item.id,name:item.name,type:'rpg-consumable',source:'gameplay-loot'});
+      user.revision++;user.updatedAt=new Date().toISOString();
+      return appendTransaction(data,{type:'RPG_LOOT',walletId:wallet,requestId,itemId,amountMzk:0,balanceAfterMzk:user.tokens.MZK});
+    });
+  }
+
   rpgAction(walletId, action, itemId, requestId) {
     const wallet=cleanWallet(walletId),request=String(requestId||'').trim();
     if(!request||request.length>140) throw new Error('A request ID is required.');
