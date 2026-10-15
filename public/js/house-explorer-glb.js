@@ -5,6 +5,7 @@ import { UTILITY_TOOLS, UtilityKit } from './game-utilities.js';
 import { validTool, canActivateTool } from './game-tool-rules.js';
 import { SharedGameInventory, ownedBuilderModel, watchInventoryChange } from './shared-game-inventory.js';
 import { PLAYER_DEFAULTS } from './player-preferences.js';
+import { mountSettingsExplorerMenu } from './settings-explorer-menu.js';
 import { mountPlayerSettings } from './player-settings.js';
 import { CareEffects } from './care-effects.js';
 import { createGameMarketplace } from './in-game-market.js';
@@ -610,8 +611,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     canUse:item=>Boolean(backpackAssets.find(asset=>asset.id===item.id||asset.name===item.name)||item.modelUrl||item.glb_url||item.buildAssetId),
     onUse:async item=>{const asset=backpackAssets.find(asset=>asset.id===item.id||asset.name===item.name)||{...item,type:item.type||'props',modelUrl:item.modelUrl||item.glb_url};gameMarketplace.close();closeTools();await deployBackpackAsset(asset);}
   });
-  const explorerNavigation=document.querySelector('.explorer-options');
-  if(explorerNavigation){explorerNavigation.classList.add('is-unified');explorerNavigation.querySelector('#explorer-options-panel').hidden=false;explorerOptions.prepend(explorerNavigation);}
+  const settingsNavigation=mountSettingsExplorerMenu(explorerOptions,{worlds:()=>openPicker('world'),backpack:()=>openPicker('backpack'),tools:()=>openTools(),market:()=>gameMarketplace.open(),care:()=>gameMarketplace.open('care')});
   const settingsShortcut=document.createElement('button');settingsShortcut.type='button';settingsShortcut.className='icon-button game-settings-shortcut';settingsShortcut.setAttribute('aria-label','Settings and Explorer options');settingsShortcut.title='Settings';settingsShortcut.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="currentColor"/><circle cx="15" cy="12" r="2" fill="currentColor"/><circle cx="9" cy="18" r="2" fill="currentColor"/></svg>';settingsShortcut.addEventListener('click',()=>optionsButton.click());const siteIcons=document.querySelector('.site-header .icons'),oldExplorerShortcut=siteIcons?.querySelector('.explorer-icon');if(oldExplorerShortcut)oldExplorerShortcut.replaceWith(settingsShortcut);else siteIcons?.prepend(settingsShortcut);
   const settingsUI=mountPlayerSettings({panel:explorerOptions,inventory:sharedInventory,
     onChange:preferences=>{playerPreferences=preferences;setZoom(preferences.fov,false);scrollZoomEnabled=preferences.scrollZoom;toxicBubbleSystem.motionReduced=preferences.reducedMotion||matchMedia('(prefers-reduced-motion: reduce)').matches;if(toxicBubbleSystem.soundGain)toxicBubbleSystem.soundGain.gain.value=preferences.effectsVolume/100;stage.style.setProperty('--player-reticle-color',preferences.reticleColor);stage.style.setProperty('--player-reticle-size',preferences.reticleSize+'px');stage.style.setProperty('--player-hud-size',(12*preferences.hudScale)+'px');stage.classList.toggle('player-reduced-motion',preferences.reducedMotion);},
@@ -620,7 +620,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     onCare:()=>{fullscreenMenus[0].close();fullscreenMenus[0].sync();gameMarketplace.open('care');}
   });
   settingsUI.restore();
-  optionsButton.addEventListener('click',()=>settingsUI.open());
+  optionsButton.addEventListener('click',()=>{settingsNavigation.reset();settingsUI.open();});
   const fullscreenMenus=[explorerOptions,sprayTools,buildingPopup,inventoryPack,questPanel,buildMenu,rangeOpsPanel,avatarMenu].map(panel=>fullscreenPanel(panel,{onOpen:lockMenuInput,onClose:()=>{if(panel===sprayTools){toolsToggle.setAttribute('aria-expanded','false');toolsButton?.setAttribute('aria-expanded','false');}}}));
   fullscreenMenus[0].dialog.addEventListener('close',()=>{if(fullscreenMenus[0].dialog.open)return;settingsUI.close();optionsButton.setAttribute('aria-expanded','false');});
   const pickerPanel=fullscreenPanel(library,{onOpen:lockMenuInput,collapsed:true});fullscreenMenus.push(pickerPanel);

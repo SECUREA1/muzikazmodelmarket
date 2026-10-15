@@ -218,3 +218,14 @@ body.model-explorer-page .game-view-options .explorer-options.is-unified .explor
  .building-adjust-dialog{box-sizing:border-box;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:12px;overflow-y:auto;}
  .building-adjust-dialog button{min-height:44px;touch-action:manipulation;}
 }
+
+.game-view-options .settings-explorer-navigation{position:static!important;inset:auto!important;width:100%!important;max-width:none!important;margin:0 0 18px!important;padding:12px;border:1px solid #496442;border-radius:10px;background:#101d14;box-sizing:border-box;}
+.settings-explorer-navigation h3{font-size:19px!important;margin:0 0 8px!important;}.settings-explorer-navigation h4{margin:14px 0 8px!important;}
+.settings-explorer-navigation>label{display:grid;gap:6px;}
+.settings-explorer-navigation input[type=search]{width:100%;min-height:44px;box-sizing:border-box;}
+.settings-explorer-navigation .settings-nav-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:8px;list-style:none;margin:0;padding:0;}
+.settings-explorer-navigation .settings-nav-list li{min-width:0;}
+.settings-explorer-navigation .settings-nav-list li[hidden]{display:none!important;}
+.settings-explorer-navigation .settings-nav-list a,.settings-explorer-navigation .settings-nav-list button{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;width:100%;min-height:48px;height:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #496442;border-radius:8px;background:#213423;color:#eefadd;font:600 13px/1.4 system-ui;text-decoration:none;text-align:left;white-space:normal;}
+.settings-explorer-navigation .settings-nav-list small{color:#b7c9ac;font-size:11px;font-weight:400;}
+@media(max-width:600px){.settings-explorer-navigation .settings-nav-list{grid-template-columns:minmax(0,1fr);}.game-view-options .settings-explorer-navigation{padding:10px;}}
