@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-test('selecting an item closes the catalog and dropping registers it without opening the editor',()=>{
+test('explicit selection closes the catalog after preview and painting; dropping stays repeatable',()=>{
  const source=readFileSync('public/js/house-explorer-glb.js','utf8');
- assert.ok(source.includes('if(material){toxicBubbleSystem.setBrickMaterial(material);buildingPopup.hidden=true;closeTools()'));
+ assert.ok(source.includes('if(material){toxicBubbleSystem.setBrickMaterial(material);buildingPopup.querySelector'));
+ assert.ok(source.includes("if(event.target.closest('[data-building-equip]')){buildingPopup.hidden=true;closeTools()"));
  const drop=source.slice(source.indexOf('    placeBrick('),source.indexOf('    brickAtRay('));
  assert.ok(drop.includes('this.bricks.push(brick)'));assert.ok(drop.includes('applyDropSettings(THREE,brick,this.dropSettings)'));
  assert.ok(!drop.includes('beginBuildingEdit'));assert.ok(!drop.includes('showModal'));

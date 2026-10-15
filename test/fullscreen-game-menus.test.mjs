@@ -20,7 +20,9 @@ test('building paint remains editable before equip and menus block background ga
  const source=readFileSync('public/js/house-explorer-glb.js','utf8');
  assert.ok(source.includes('data-building-paint-label'));
  assert.ok(source.includes('data-building-natural'));
- assert.ok(source.includes('data-building-equip'));
+ assert.ok(source.includes('data-building-equip>Select item'));
+  const catalog=source.slice(source.indexOf('<aside class="building-design-controls">'),source.indexOf('<section class="building-catalog-functions"'));
+  assert.ok(catalog.includes('building-paint-options'));assert.ok(!catalog.includes('data-build-transform'));assert.ok(!catalog.includes('New piece staged'));
  assert.ok(source.includes("buildingPopup.hidden=true;closeTools()"));
  assert.ok(!source.includes("this.setTool('brick');buildingPopup.hidden=true"));
  assert.ok(source.includes('keys.clear();mobile.clear()'));
