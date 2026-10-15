@@ -12,8 +12,8 @@ test('cookie and bearer member sessions own market and care actions without a br
  try{
   // Exercise the real HTTP handler without binding a TCP port in the sandbox.
   const original=await readFile(new URL('../server.mjs',import.meta.url),'utf8');
-  const source=original.replace(/from '(\.\/[^']+)'/g,(_,path)=>`from '${new URL('../'+path,import.meta.url).href}'`).replace(/server\.listen\(port,[^\n]+\);/,'export { server };');
-  const modulePath=join(dir,'handler.mjs');await writeFile(modulePath,source);const {server}=await import(pathToFileURL(modulePath).href);const handler=server.listeners('request')[0];
+  const source=original.replace(/from '(\.\/[^']+)'/g,(_,path)=>`from '${new URL('../'+path,import.meta.url).href}'`).replace(/server\.listen\(port,[^\n]+\);/,'export { server, presence };');
+  const modulePath=join(dir,'handler.mjs');await writeFile(modulePath,source);const {server,presence}=await import(pathToFileURL(modulePath).href);const handler=server.listeners('request')[0];
   async function call(url,headers={},body,method=body?'POST':'GET'){
    const req=Readable.from(body?[Buffer.from(JSON.stringify(body))]:[]);Object.assign(req,{url,method,headers:{host:'localhost','content-type':'application/json',...headers},socket:{remoteAddress:'127.0.0.1'}});
    const result={headers:{}};const res={setHeader(key,value){result.headers[key.toLowerCase()]=value;},getHeader(key){return result.headers[key.toLowerCase()];},writeHead(status,headers){result.status=status;for(const[key,value]of Object.entries(headers))this.setHeader(key,value);this.headersSent=true;},end(data){result.body=JSON.parse(data);}};
@@ -44,6 +44,21 @@ test('cookie and bearer member sessions own market and care actions without a br
   const second=await call('/api/access/free-play',{}, {username:'OtherCarePlayer',password:'other-session-test'});assert.equal(second.status,200);
   const secondHeaders={cookie:second.headers['set-cookie'].split(';')[0]};const secondSession=await call('/api/market/session',secondHeaders);secondHeaders['x-csrf-token']=secondSession.body.data.csrfToken;
   assert.equal((await call('/api/player/settings',secondHeaders)).body.data.settings.mouseSensitivity,1);
+  // Real voice handlers: authenticated, room-scoped, queued delivery and mic opt-in.
+  const voiceA={...bearer,'x-muzikaz-session':'voice-a'},voiceB={authorization:'Bearer '+second.body.data.sessionToken,'x-muzikaz-session':'voice-b'};
+  const voicePerson=(accountId,roomId)=>({accountId,roomId,voiceEnabled:true,lastActiveAt:new Date().toISOString()});
+  presence.set('voice-a',voicePerson(login.body.data.account.accountId,'arena'));
+  presence.set('voice-b',voicePerson(second.body.data.account.accountId,'arena'));
+  assert.equal((await call('/api/houses/ioncore-house/voice/signal',{}, {to:'voice-b',kind:'offer'})).status,401);
+  assert.equal((await call('/api/houses/ioncore-house/voice/signal',{...voiceA,'x-muzikaz-session':'voice-b'}, {to:'voice-a',kind:'offer'})).status,403);
+  assert.equal((await call('/api/houses/ioncore-house/voice/signal',voiceA, {to:'voice-b',kind:'offer',payload:{sdp:'test'}})).status,202);
+  const delivered=await call('/api/houses/ioncore-house/voice/signal',voiceB);assert.equal(delivered.body.signals[0].from,'voice-a');assert.equal(delivered.body.signals[0].payload.sdp,'test');
+  assert.equal((await call('/api/houses/ioncore-house/voice/signal',voiceB)).body.signals.length,0);
+  presence.get('voice-b').roomId='other';
+  assert.equal((await call('/api/houses/ioncore-house/voice/signal',voiceA, {to:'voice-b',kind:'offer'})).status,400);
+  presence.get('voice-b').roomId='arena';presence.get('voice-b').voiceEnabled=false;
+  assert.equal((await call('/api/houses/ioncore-house/voice/signal',voiceA, {to:'voice-b',kind:'offer'})).status,400);
+
   assert.equal((await call('/api/designer/drafts/'+draftId,secondHeaders)).status,404);
   assert.equal((await call('/api/designer/drafts',secondHeaders)).body.data.length,0);
   const extra=await call('/api/rpg/purchases',headers,{itemId:'ion-health-vial',requestId:'buy-trade'});const tradedItem=extra.body.data.items[0];
