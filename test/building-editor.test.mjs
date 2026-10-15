@@ -35,3 +35,14 @@ test('every building item has finite model-derived SVG artwork and structures di
  assert.notEqual(buildingIcon(THREE,'window'),buildingIcon(THREE,'wall'));
  assert.notEqual(buildingIcon(THREE,'market'),buildingIcon(THREE,'steps'));
 });
+
+test('repeat drops reuse settings without changing the previous item', async()=>{
+ const {applyDropSettings}=await import('../public/js/building-editor.js');
+ const values={x:1,y:.5,z:-1,rx:0,ry:90,rz:0,scale:1.5};
+ const first=createBuildingBlock(THREE,'cement'),second=createBuildingBlock(THREE,'cement');
+ first.position.set(0,0,0);second.position.set(4,0,0);
+ applyDropSettings(THREE,first,values);const before=first.position.clone();applyDropSettings(THREE,second,values);
+ assert.deepEqual(first.position,before);assert.deepEqual(second.position.toArray(),[5,.5,-1]);
+ assert.equal(first.scale.x,1.5);assert.ok(Math.abs(first.rotation.y-Math.PI/2)<1e-9);
+ for(const root of [first,second])root.traverse(m=>{m.geometry?.dispose();m.material?.dispose();});
+});

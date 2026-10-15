@@ -54,3 +54,10 @@ export class BuildingPreview {
   clear(){if(this.root){this.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose();});this.root.removeFromParent();this.root=null;}}
   dispose(){this.clear();this.renderer.dispose();}
 }
+
+export function applyDropSettings(THREE,root,values) {
+  root.position.add(new THREE.Vector3(values.x,values.y,values.z));
+  root.rotation.x+=values.rx*Math.PI/180;root.rotation.y+=values.ry*Math.PI/180;root.rotation.z+=values.rz*Math.PI/180;
+  root.scale.multiplyScalar(values.scale);root.updateMatrixWorld(true);
+  return root;
+}
