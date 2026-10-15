@@ -39,7 +39,8 @@
 
   function showWorkspace(link, { moveFocus = true } = {}) {
     const workspaceId = link.dataset.explorerView;
-    const target = document.querySelector(link.hash);
+    let target;
+    try { target = document.getElementById(decodeURIComponent(link.hash.slice(1))); } catch { return false; }
     if (!workspaceId || !target) return false;
 
     workspaces.forEach((workspace) => {
@@ -49,11 +50,12 @@
     });
     items.forEach((item) => {
       const itemLink = item.querySelector('a');
-      itemLink.toggleAttribute('aria-current', itemLink === link);
+      itemLink.toggleAttribute('aria-current', itemLink.hash === link.hash);
     });
     selectedLabel.textContent = link.querySelector('b')?.textContent || 'Explorer options';
     document.title = `${selectedLabel.textContent} | MUZIKAZ VibeVerse`;
 
+    window.dispatchEvent(new CustomEvent('muzikaz:workspace-shown', { detail: { workspaceId } }));
     requestAnimationFrame(() => {
       target.scrollIntoView({ behavior: moveFocus ? 'smooth' : 'auto', block: 'center' });
       if(moveFocus&&target.matches('button#add-avatar,button#house-world-button,button[data-house-tools]'))target.click();
@@ -89,9 +91,19 @@
     if (event.key === 'Escape' && !panel.hidden) setOpen(false, true);
   });
 
-  const linkForHash = () => items.map((item) => item.querySelector('a')).find((link) => link.hash === window.location.hash);
-  showWorkspace(linkForHash() || items[0].querySelector('a'), { moveFocus: false });
-  window.addEventListener('popstate', () => showWorkspace(linkForHash() || items[0].querySelector('a'), { moveFocus: false }));
+  const links = items.map(item => item.querySelector('a')).filter(Boolean);
+  const routeHash = () => {
+    let target;
+    try { target = document.getElementById(decodeURIComponent(window.location.hash.slice(1))); } catch { return; }
+    const workspace = target?.closest('[data-explorer-workspace]');
+    const link = links.find(link => link.hash === window.location.hash) || links.find(link => link.dataset.explorerView === workspace?.id);
+    if (link) showWorkspace({ dataset: link.dataset, hash: window.location.hash, querySelector: selector => link.querySelector(selector) }, { moveFocus: false });
+    else if (!window.location.hash) showWorkspace(links[0], { moveFocus: false });
+  };
+  if (window.location.hash) routeHash();
+  else showWorkspace(links[0], { moveFocus: false });
+  window.addEventListener('popstate', routeHash);
+  window.addEventListener('hashchange', routeHash);
 
   document.querySelectorAll('[data-product-category-picker]').forEach((picker) => {
     const categoryToggle = picker.querySelector('.product-category-picker__toggle');

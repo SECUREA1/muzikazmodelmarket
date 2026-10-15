@@ -15,7 +15,7 @@
         <a class="nav-link header-market-button${active('model-market.html')}" href="model-market.html">${icon('M4 9h16l-1-5H5zM6 9v11h12V9M9 20v-6h6v6')}<span>Game Market</span></a>
         <a class="nav-link header-market-button${active('builder-market.html')}" href="builder-market.html">${icon('M4 5h16v14H4zM8 9h8M8 13h5')}<span>Builder Market</span></a>
       </div>
-      <a class="nav-link${active('model-explorer.html')}" href="model-explorer.html?environment=muzikaz-main&amp;house=muzikaz-main&amp;autoplay=1&amp;localFallback=1&amp;sandbox=1">${icon('M3 6l5-2 8 3 5-2v13l-5 2-8-3-5 2zM8 4v13M16 7v13')}<span>World Map</span></a>
+      <a class="nav-link${active('model-explorer.html')}" href="model-explorer.html?environment=muzikaz-main&amp;house=muzikaz-main&amp;autoplay=1">${icon('M3 6l5-2 8 3 5-2v13l-5 2-8-3-5 2zM8 4v13M16 7v13')}<span>World Map</span></a>
       <a class="nav-link${active('index.html')}" href="index.html#models">${icon('M4 5h16v14H4zM8 9h8M8 13h5')}<span>Models</span></a>
       <a class="nav-link${active('crew-market.html')}" href="crew-market.html">${icon('M12 3a5 5 0 015 5c0 3-2 4-5 4S7 11 7 8a5 5 0 015-5zM4 21c.5-5 3-7 8-7s7.5 2 8 7')}<span>Characters &amp; Worlds</span></a>
       <a class="nav-link" href="index.html#merch">${icon('M8 4l4 2 4-2 5 3-3 5-2-1v9H8v-9l-2 1-3-5z')}<span>Merch</span></a>
@@ -45,12 +45,26 @@
   };
   menu.addEventListener('click', toggleMenu);
   nav.addEventListener('click', (event) => {
+    if (!event.target.closest('a')) return;
     nav.classList.remove('is-open');
     menu.setAttribute('aria-expanded', 'false');
     menu.setAttribute('aria-label', 'Open menu');
     walletButton.setAttribute('aria-expanded', 'false');
     if (mobileHeader.matches) walletButton.setAttribute('aria-label', 'Open menu');
   });
+
+  const closeMenu = (restore = false) => {
+    if (!nav.classList.contains('is-open')) return;
+    nav.classList.remove('is-open');
+    menu.setAttribute('aria-expanded', 'false'); menu.setAttribute('aria-label', 'Open menu');
+    if (mobileHeader.matches) { walletButton.setAttribute('aria-expanded', 'false'); walletButton.setAttribute('aria-label', 'Open menu'); }
+    if (restore) (mobileHeader.matches ? walletButton : menu).focus();
+  };
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(true); });
+  document.addEventListener('click', event => { if (!header.contains(event.target)) closeMenu(); });
+  const measureHeader = () => document.documentElement.style.setProperty('--global-header-height', `${header.getBoundingClientRect().height}px`);
+  if (window.ResizeObserver) new ResizeObserver(measureHeader).observe(header);
+  window.addEventListener('resize', measureHeader, { passive: true }); measureHeader();
 
   const checkoutLink = header.querySelector('[href="checkout.html"]');
   const cartCount = header.querySelector('.header-cart-count');

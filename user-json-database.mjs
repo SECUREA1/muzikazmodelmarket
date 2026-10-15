@@ -1,3 +1,4 @@
+import { cleanCustomItem } from './custom-item-rules.mjs';
 import { plotSpaceId, plotPlayUrl } from './member-plots.mjs';
 import { economyItem, ownsEconomyItem, economyInventory } from './game-economy.mjs';
 import { MEMBER_REWARDS } from './public/js/member-reward-rules.js';
@@ -117,11 +118,13 @@ export class UserJsonDatabase {
       const previous = data.users[wallet] || data.users[accountKey] || {};
       const now = new Date().toISOString();
       const entitlementById = new Map(entitlementItems.map((item) => [item.id, item]));
-      const items = (previous.items || []).map((item) => entitlementById.has(item.id) ? { ...item, ...entitlementById.get(item.id) } : item);
-      const knownIds = new Set(items.map((item) => item.id));
-      items.push(...entitlementItems.filter((item) => !knownIds.has(item.id)));
+      const items = (previous.items || []).map((item) => entitlementById.has(item.id) && item.type !== 'land-deed' ? { ...item, ...entitlementById.get(item.id) } : item);
+      const knownIds = new Set(items.flatMap(item => [item.id, item.entitlementId].filter(Boolean)));
+      const issued = new Set(previous.memory?.account?.issuedEntitlements || []);
+      items.push(...entitlementItems.filter((item) => !knownIds.has(item.id) && !issued.has(item.id)));
+      entitlementItems.forEach(item => issued.add(item.id));
       const memory = mergeMemory(previous.memory, {
-        account: { accountId: account.accountId, backpackId: account.backpackId, accessCodeStatus: account.accessCodeStatus, gameAccess: Boolean(account.gameAccess), creatorVaultAccess: Boolean(account.creatorVaultAccess), selectedAvatarId: account.selectedAvatarId || 'starter-avatar', bottleClaims: clone(account.bottleClaims || []), bottlePurchases: clone(account.bottlePurchases || []), purchaseTierUsd: Number(account.purchaseTierUsd || 0), paymentMzkValue: Number(account.paymentMzkValue || 0) },
+        account: { issuedEntitlements: [...issued], accountId: account.accountId, backpackId: account.backpackId, accessCodeStatus: account.accessCodeStatus, gameAccess: Boolean(account.gameAccess), creatorVaultAccess: Boolean(account.creatorVaultAccess), selectedAvatarId: account.selectedAvatarId || 'starter-avatar', bottleClaims: clone(account.bottleClaims || []), bottlePurchases: clone(account.bottlePurchases || []), purchaseTierUsd: Number(account.purchaseTierUsd || 0), paymentMzkValue: Number(account.paymentMzkValue || 0) },
         backpack: { backpackId: account.backpackId, bottleClaims: clone(account.bottleClaims || []), bottlePurchases: clone(account.bottlePurchases || []), syncedAt: now },
         profile: account.username ? { username: account.username, displayName: account.username } : {}
       });
@@ -250,7 +253,7 @@ export class UserJsonDatabase {
     return { trades: (data.trades || []).filter((entry) => touches(entry.buyerId, entry.sellerId)).slice(-100), messages: (data.messages || []).filter((entry) => touches(entry.from, entry.to)).slice(-100), transactions: (data.transactions || []).filter((entry) => entry.walletId === wallet || entry.counterpartyId === wallet).slice(-100) };
   }
 
-  async economy(walletId){const state=await this.get(walletId);return {balance:Number(state.tokens.MZK||0),items:economyInventory(state),ownedAssets:state.items.map(item=>item.type==='land-deed'?{...item,memberPlot:true,assetType:'lands',environmentId:plotSpaceId(item),playUrl:plotPlayUrl(item)}:item)};}
+  async economy(walletId){const state=await this.get(walletId);return {balance:Number(state.tokens.MZK||0),items:economyInventory(state),ownedAssets:state.items.map(item=>item.type==='land-entitlement'?{...item,assetType:'lands',requiresReveal:true}:item.type==='land-deed'?{...item,memberPlot:true,assetType:'lands',environmentId:plotSpaceId(item),playUrl:plotPlayUrl(item)}:item)};}
   economyAction(walletId,action,sku,requestId){const wallet=cleanWallet(walletId),item=economyItem(sku);if(!item)throw Object.assign(new Error('Unknown game upgrade.'),{statusCode:400});if(!requestId||String(requestId).length>140)throw new Error('A purchase or use request id is required.');return this.transaction(data=>{const type=action==='buy'?'GAME_ITEM_PURCHASE':'GAME_ITEM_USE';const duplicate=data.transactions.find(row=>row.walletId===wallet&&row.type===type&&row.requestId===requestId);if(duplicate){if(duplicate.sku!==sku)throw new Error('This request was used for another item.');return duplicate;}const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');const owned=ownsEconomyItem(user,item);if(action==='buy'&&owned)throw Object.assign(new Error('This upgrade is already owned.'),{statusCode:409});if(action==='use'&&!owned)throw Object.assign(new Error('Purchase this upgrade before using it.'),{statusCode:403});const cost=action==='buy'?item.priceMzk:item.useCostMzk;if(Number(user.tokens.MZK||0)<cost)throw Object.assign(new Error('Not enough MZK. Play with the free basic kit or earn quest rewards.'),{statusCode:409});user.tokens.MZK-=cost;if(action==='buy')user.items.push({...item,id:'economy:'+sku,economySku:sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt:new Date().toISOString()});user.updatedAt=new Date().toISOString();user.revision=Number(user.revision||0)+1;return appendTransaction(data,{type,walletId:wallet,amountMzk:-cost,balanceAfterMzk:user.tokens.MZK,requestId,sku,reason:item.name});});}
 
   purchaseStoreModels(walletId,items,amountMzk,requestId){const wallet=cleanWallet(walletId);if(!requestId||String(requestId).length>140)throw new Error('A checkout request id is required.');return this.transaction(data=>{const duplicate=data.transactions.find(item=>item.walletId===wallet&&item.type==='STORE_PURCHASE'&&item.requestId===requestId);if(duplicate)return duplicate;const user=data.users[wallet];if(!user||Number(user.tokens.MZK)<amountMzk)throw new Error('Not enough MZK for this purchase.');user.tokens.MZK-=amountMzk;for(const item of items){if(!user.items.some(owned=>owned.id===item.id))user.items.push({...item,source:'mzk-store',acquiredAt:new Date().toISOString()});}user.updatedAt=new Date().toISOString();return appendTransaction(data,{type:'STORE_PURCHASE',walletId:wallet,amountMzk:-amountMzk,balanceAfterMzk:user.tokens.MZK,requestId,items});});}
@@ -332,6 +335,46 @@ export class UserJsonDatabase {
 
   async memberPlots(){await this.initialize();const data=await this.read();return Object.values(data.landDeeds||{}).filter(deed=>deed.status==='active').map(deed=>({...clone(deed),spaceId:plotSpaceId(deed),playUrl:plotPlayUrl(deed),ownerName:data.users[deed.ownerId]?.memory?.profile?.displayName||data.users[deed.ownerId]?.memory?.profile?.username||'MUZIKAZ member'}));}
   configurePlot(walletId,deedId,{environmentId,name}){const owner=cleanWallet(walletId);return this.transaction(data=>{const deed=Object.values(data.landDeeds||{}).find(item=>item.id===deedId&&item.status==='active');if(!deed)throw Object.assign(new Error('Plot deed not found.'),{statusCode:404});if(deed.ownerId!==owner)throw Object.assign(new Error('Only the current deed holder can configure this space.'),{statusCode:403});deed.hostedSpace={id:plotSpaceId(deed),environmentId:String(environmentId),name:String(name||deed.hostedSpace?.name||deed.name+' · Member plot').trim().slice(0,100)};deed.updatedAt=new Date().toISOString();const item=data.users[owner].items.find(item=>item.id===deed.id);if(item){item.spaceId=plotSpaceId(deed);item.playUrl=plotPlayUrl(deed);item.hostedSpace=clone(deed.hostedSpace);}return {...clone(deed),spaceId:plotSpaceId(deed),playUrl:plotPlayUrl(deed)};});}
+
+  saveCustomItem(walletId, input) {
+    const owner = cleanWallet(walletId);
+    return this.transaction(data => {
+      const user = data.users[owner]; if (!user) throw Object.assign(new Error('Sign in before saving a build.'), { statusCode: 401 });
+      const prior = user.items.find(item => item.type === 'custom-item' && item.saveRequestId === input.requestId);
+      if (prior) return prior;
+      if (user.items.filter(item => item.type === 'custom-item').length >= 256) throw Object.assign(new Error('Your custom library is full (256 builds).'), { statusCode: 409 });
+      const clean = cleanCustomItem(input, user.items);
+      const item = { ...clean, id: 'custom-' + randomUUID(), saveRequestId: clean.requestId, type: 'custom-item', assetType: 'props', creatorId: owner, source: 'server-custom-library', createdAt: new Date().toISOString() };
+      delete item.requestId;
+      user.items.push(item); user.updatedAt = item.createdAt; user.revision = Number(user.revision || 0) + 1;
+      return item;
+    });
+  }
+
+  revealLand(walletId, itemId) {
+    const owner = cleanWallet(walletId);
+    return this.transaction(data => {
+      const user = data.users[owner];
+      const item = user?.items.find(item => (item.id === itemId || item.entitlementId === itemId) && ['land-deed', 'land-entitlement'].includes(item.type));
+      if (!item) throw Object.assign(new Error('This land is not in your Backpack.'), { statusCode: 403 });
+      data.landDeeds ||= {};
+      if (item.type === 'land-deed') {
+        const deed = data.landDeeds[item.worldId];
+        if (!deed || deed.ownerId !== owner || deed.status !== 'active') throw Object.assign(new Error('This deed is not active.'), { statusCode: 409 });
+        return { ...deed, spaceId: plotSpaceId(deed), playUrl: plotPlayUrl(deed) };
+      }
+      const worldId = `member-${randomUUID()}`, now = new Date().toISOString();
+      const name = String(item.name || 'Member land').replace(/^unrevealed\s*/i, '').trim() || 'Member land';
+      const entitlementId = item.id, deedId = 'deed-' + worldId;
+      const deed = { id: deedId, worldId, name, ownerId: owner, priceMzk: 0, status: 'active', acquiredAt: now, updatedAt: now,
+        hostedSpace: { id: 'plot-' + deedId, environmentId: 'public-commons', name: name + ' · Member plot' } };
+      deed.spaceId = plotSpaceId(deed); deed.playUrl = plotPlayUrl(deed);
+      data.landDeeds[worldId] = deed;
+      Object.assign(item, { id: deedId, entitlementId, source: 'revealed-entitlement', type: 'land-deed', revealStatus: 'revealed', name, worldId, spaceId: deed.spaceId, playUrl: deed.playUrl, hostedSpace: deed.hostedSpace });
+      user.updatedAt = now; user.revision = Number(user.revision || 0) + 1;
+      return deed;
+    });
+  }
 
   claimLand({ walletId, worldId, name, priceMzk, requestId }) {
     const wallet = cleanWallet(walletId); const world = String(worldId || '').trim().toLowerCase(); const request = String(requestId || '').trim(); const price = Math.trunc(Number(priceMzk));

@@ -282,11 +282,12 @@
       let remoteItems = [];
       let remoteState = null;
       let gameCatalog = [];
+      let serverLand = [];
       try {
         const accountRequest = window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API) || window.fetch.bind(window);
         const accountResponse = await accountRequest('/api/backpack', { headers: { Accept: 'application/json' }, credentials: 'include' });
         const accountPayload = await accountResponse.json().catch(() => ({}));
-        if (accountResponse.ok && accountPayload.success !== false) gameCatalog = accountPayload.data?.catalogAssets || [];
+        if (accountResponse.ok && accountPayload.success !== false) { gameCatalog = accountPayload.data?.catalogAssets || []; serverLand = accountPayload.data?.land || []; }
       } catch (_) { /* Wallet inventory remains available without an account session. */ }
       try {
         const response = await walletRequest(API_PATH, { headers: { 'X-Wallet-Address': activeAddress, Accept: 'application/json' } });
@@ -296,10 +297,10 @@
         remoteItems = Array.isArray(remoteState?.items) ? remoteState.items : [];
         status.textContent = gameCatalog.length ? `Backpack synced. ${gameCatalog.length} play-ready MUZIKAZ assets loaded from the game server.` : 'Backpack synced with the MUZIKAZ market network.';
       } catch (_) {
-        status.textContent = 'Showing this device’s Backpack. Network sync is temporarily unavailable.';
+        status.textContent = memberSession ? 'Server Backpack unavailable. Reconnect to refresh owned items.' : 'Showing this device’s Backpack. Network sync is temporarily unavailable.';
       }
-      const modelAssets = localModelAssets(activeAddress);
-      const items = [...new Set([...remoteItems.map((item) => typeof item === 'string' ? item : item?.name), ...localItems(activeAddress), ...modelAssets.map((asset) => asset.name)].filter(Boolean))];
+      const modelAssets = memberSession ? [] : localModelAssets(activeAddress);
+      const items = [...new Set([...remoteItems.map((item) => typeof item === 'string' ? item : item?.name), ...(memberSession ? [] : localItems(activeAddress)), ...modelAssets.map((asset) => asset.name)].filter(Boolean))];
       if (remoteState && !memberSession && !remoteState.memory?.account?.accountId && items.length !== remoteItems.length) {
         try {
           await fetch(API_PATH, { method: 'PUT', headers: { 'X-Wallet-Address': activeAddress, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ items, tokens: { ...(remoteState.tokens || {}), MZK: window.MZKWallet.balance(activeAddress) }, memory: remoteState.memory || {} }) });
@@ -318,9 +319,10 @@
       const modelNames = new Set(modelAssets.map((asset) => asset.name));
       const bottleArt = (item) => /Black Genie Bottle/i.test(item) ? 'public/assets/black-genie-bottle.svg' : /Golden Genie Bottle/i.test(item) ? 'public/assets/golden-genie-bottle.svg' : '';
       const occupiedSlots = new Set(items.map(inventoryLabel));
-      const itemCards = items.filter((item) => !modelNames.has(item)).map((item) => `<article>${bottleArt(item) ? `<img src="${bottleArt(item)}" alt="${escapeHtml(item)} Backpack artwork" loading="lazy">` : icon()}<div><span class="mzk-inventory-label">${inventoryLabel(item)}</span><strong>${escapeHtml(item)}</strong><small>Connected to ${short(activeAddress)}</small></div></article>`);
+      const itemCards = items.filter((item) => !modelNames.has(item) && !serverLand.some(land=>land.name===item)).map((item) => `<article>${bottleArt(item) ? `<img src="${bottleArt(item)}" alt="${escapeHtml(item)} Backpack artwork" loading="lazy">` : icon()}<div><span class="mzk-inventory-label">${inventoryLabel(item)}</span><strong>${escapeHtml(item)}</strong><small>Connected to ${short(activeAddress)}</small></div></article>`);
+      const landCards = serverLand.map(item => `<article class="mzk-backpack-land">${icon()}<div><span class="mzk-inventory-label">${item.requiresReveal?'Unrevealed land':'Hosted multiplayer plot'}</span><strong>${escapeHtml(item.name)}</strong><button type="button" data-reveal-land="${escapeHtml(item.id)}">${item.requiresReveal?'Reveal and host land':'Enter hosted plot'}</button></div></article>`);
       const emptySlots = previewSlots.filter((slot) => !occupiedSlots.has(slot)).map((slot) => `<div class="mzk-backpack-slot is-empty">${icon()}<strong>${slot}</strong><small>Empty slot</small></div>`);
-      drawer.querySelector('[data-backpack-items]').innerHTML = `<div class="mzk-backpack-owned">${[...catalogCards, ...modelCards, ...itemCards].join('') || `<div class="mzk-backpack-empty">${icon()}<strong>Your Backpack is ready</strong><p>Collect a model, land deed, avatar, wearable, or market drop and it will appear under this Ethereum account.</p></div>`}</div><div class="mzk-backpack-slot-grid" aria-label="Available Backpack slots">${emptySlots.join('') || '<p class="mzk-backpack-slots-full">Every Backpack slot contains an item.</p>'}</div>`;
+      drawer.querySelector('[data-backpack-items]').innerHTML = `<div class="mzk-backpack-owned">${[...landCards, ...catalogCards, ...modelCards, ...itemCards].join('') || `<div class="mzk-backpack-empty">${icon()}<strong>Your Backpack is ready</strong><p>Collect a model, land deed, avatar, wearable, or market drop and it will appear under this Ethereum account.</p></div>`}</div><div class="mzk-backpack-slot-grid" aria-label="Available Backpack slots">${emptySlots.join('') || '<p class="mzk-backpack-slots-full">Every Backpack slot contains an item.</p>'}</div>`;
       const transactions = safeJson(TRANSACTIONS_KEY, []).filter((tx) => [tx.buyer, tx.seller, tx.owner].map(String).map((value) => value.toLowerCase()).includes(activeAddress)).slice(-4).reverse();
       drawer.querySelector('[data-backpack-trades]').innerHTML = transactions.length ? transactions.map((tx) => {
         const rawAsset = tx.asset || tx.reason || 'Backpack trade';
@@ -357,7 +359,19 @@
       });
     });
     connectButton?.addEventListener('click', connect);
-    drawer.addEventListener('click', (event) => { if (event.target.closest('[data-close-backpack]')) close(); });
+    drawer.addEventListener('click', async (event) => {
+      if (event.target.closest('[data-close-backpack]')) close();
+      const reveal = event.target.closest('[data-reveal-land]'); if (!reveal || reveal.disabled) return;
+      reveal.disabled = true;
+      try {
+        const request = window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API) || window.fetch.bind(window);
+        const sessionResponse = await request('/api/market/session', { credentials: 'include' });
+        const session = await sessionResponse.json(); if (!sessionResponse.ok) throw Error(session.message || 'Sign in to open your land.');
+        const response = await request('/api/land/reveal', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': session.data.csrfToken }, body: JSON.stringify({ itemId: reveal.dataset.revealLand }) });
+        const payload = await response.json(); if (!response.ok) throw Error(payload.message || 'Unable to reveal land.');
+        location.href = payload.data.playUrl;
+      } catch (error) { drawer.querySelector('[data-backpack-status]').textContent = error.message; reveal.disabled = false; }
+    });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !drawer.hidden) close(); else if (event.key === 'Escape' && !adminDialog.hidden) closeAdmin(); });
     window.addEventListener('mzk:wallet-connection-changed', renderButton);
     window.addEventListener('mzk:balance-changed', renderButton);

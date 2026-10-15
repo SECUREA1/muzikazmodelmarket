@@ -150,3 +150,8 @@
 .environment-workspace,.environment-topbar,.environment-actions,.build-stage,.object-library,.object-inspector{min-width:0;max-width:100%;box-sizing:border-box;}
 .environment-workspace input,.environment-workspace select,.environment-workspace textarea{min-width:0;max-width:100%;box-sizing:border-box;}
 @media(min-width:1051px){body .environment-workspace{grid-template-columns:minmax(180px,230px) minmax(0,1fr) minmax(200px,250px);}body .environment-workspace.library-collapsed{grid-template-columns:minmax(0,1fr) minmax(200px,250px);}body .environment-workspace.inspector-collapsed{grid-template-columns:minmax(180px,230px) minmax(0,1fr);}body .environment-workspace.library-collapsed.inspector-collapsed{grid-template-columns:minmax(0,1fr);}}
+/* Keep publishing and navigation actions available without clipping. */
+.environment-topbar { flex-wrap:wrap; gap:.5rem; box-sizing:border-box; max-width:100%; }
+.environment-topbar > * { min-width:0; }
+.environment-topbar a, .environment-topbar button { white-space:normal; overflow-wrap:anywhere; }
+@media(max-width:720px){ .environment-topbar { align-items:center; } .environment-topbar button, .environment-topbar a { min-height:44px; } }

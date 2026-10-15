@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile,writeFile,mkdtemp,rm} from 'node:fs/promises';
+import {readFile,writeFile,mkdtemp,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {Readable} from 'node:stream';
+import {Readable,Writable} from 'node:stream';
 
 test('cookie and bearer member sessions own market and care actions without a browser wallet',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'market-session-'));const oldEnv={...process.env};
- Object.assign(process.env,{MUZIKAZ_DATA_DIR:dir,MUZIKAZ_USER_DATABASE_FILE:join(dir,'users.json'),MUZIKAZ_ACCOUNTS_FILE:join(dir,'accounts.json'),MUZIKAZ_PAYMENT_ORDERS_FILE:join(dir,'orders.json')});
+ Object.assign(process.env,{MUZIKAZ_DATA_DIR:dir,MUZIKAZ_USER_DATABASE_FILE:join(dir,'users.json'),MUZIKAZ_ACCOUNTS_FILE:join(dir,'accounts.json'),MUZIKAZ_PAYMENT_ORDERS_FILE:join(dir,'orders.json'),MUZIKAZ_AVATAR_UPLOAD_DIR:join(dir,'avatar-uploads'),MUZIKAZ_ASSET_UPLOAD_DIR:join(dir,'asset-uploads'),MUZIKAZ_ENVIRONMENT_UPLOAD_DIR:join(dir,'environment-uploads')});
  try{
   // Exercise the real HTTP handler without binding a TCP port in the sandbox.
   const original=await readFile(new URL('../server.mjs',import.meta.url),'utf8');
@@ -19,6 +19,13 @@ test('cookie and bearer member sessions own market and care actions without a br
    const result={headers:{}};const res={setHeader(key,value){result.headers[key.toLowerCase()]=value;},getHeader(key){return result.headers[key.toLowerCase()];},writeHead(status,headers){result.status=status;for(const[key,value]of Object.entries(headers))this.setHeader(key,value);this.headersSent=true;},end(data){result.body=JSON.parse(data);}};
    await handler(req,res);return result;
   }
+  await mkdir(join(dir,'avatar-uploads'),{recursive:true});
+  const image=Buffer.from('persistent-avatar');await writeFile(join(dir,'avatar-uploads','test-avatar.png'),image);
+  const chunks=[],raw= new Writable({write(chunk,encoding,done){chunks.push(Buffer.from(chunk));done();}});raw.setHeader=()=>{};raw.writeHead=(status,headers)=>{raw.status=status;raw.contentType=headers['Content-Type'];};
+  const finished=new Promise((resolve,reject)=>{raw.on('finish',resolve);raw.on('error',reject);});
+  const imageRequest=Readable.from([]);Object.assign(imageRequest,{url:'/uploads/avatars/test-avatar.png',method:'GET',headers:{host:'localhost'},socket:{remoteAddress:'127.0.0.1'}});
+  await handler(imageRequest,raw);await finished;assert.equal(raw.status,200);assert.equal(raw.contentType,'image/png');assert.deepEqual(Buffer.concat(chunks),image);
+  assert.equal((await call('/uploads/avatars/backups/manifest.json')).status,404);
   const login=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'member-session-test'});assert.equal(login.status,200);
   const wrong=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'incorrect-password'});assert.equal(wrong.status,401);
   const restored=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'member-session-test'});assert.equal(restored.status,200);assert.equal(restored.body.data.account.accountId,login.body.data.account.accountId);
@@ -67,6 +74,19 @@ test('cookie and bearer member sessions own market and care actions without a br
   assert.equal((await call('/api/rooms/missing/objects')).status,404);
   assert.equal((await call('/api/rooms/room-test/objects',paymentHeaders,{id:'unowned',revision:0,object:{...object,materialId:'glass'}})).status,403);
   const plot=await call('/api/land/claims',paymentHeaders,{worldId:'volt-city',requestId:'api-plot'});assert.equal(plot.status,201);assert.match(plot.body.data.playUrl,/environment=plot-deed-volt-city/);
+  const ownedLand=(await call('/api/backpack',paymentHeaders)).body.data.land;
+  assert.ok(ownedLand.some(item=>item.id===plot.body.data.id&&item.playUrl===plot.body.data.playUrl));
+  assert.equal((await call('/api/land/reveal',paymentHeaders,{itemId:plot.body.data.id})).body.data.spaceId,plot.body.data.spaceId);
+  assert.equal((await call('/api/land/reveal',{}, {itemId:plot.body.data.id})).status,401);
+  assert.equal((await call('/api/custom-items')).status,401);
+  const customInput={requestId:'api-drawing-123',name:'Public sign',format:'svg',thumbnailUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1sAAAAASUVORK5CYII=',configuration:{behavior:'damage'}};
+  const saved=await call('/api/custom-items',paymentHeaders,customInput);assert.equal(saved.status,201);assert.equal(saved.body.data.configuration.behavior,'decor');
+  assert.equal((await call('/api/custom-items',paymentHeaders,customInput)).body.data.id,saved.body.data.id);
+  assert.equal((await call('/api/custom-items',paymentHeaders)).body.data[0].id,saved.body.data.id);
+  const deployed=await call('/api/rooms/room-test/gameplay',paymentHeaders,{action:'spawn',requestId:'spawn-sign',itemId:saved.body.data.id});assert.equal(deployed.status,200);
+  assert.ok(Object.values(deployed.body.data.actors).some(actor=>actor.asset?.id===saved.body.data.id&&actor.asset.renderKind==='image'));
+  assert.equal((await call('/data/users.json')).status,404);assert.equal((await call('/data/backups/manifest.json')).status,404);
+  assert.equal((await call('/api/admin/backups')).status,403);
   const publicPlots=await call('/api/member-maps');assert.equal(publicPlots.body.data.some(map=>map.id==='plot-deed-volt-city'),true);
   assert.equal((await call('/api/environments')).body.data.some(map=>map.id==='plot-deed-volt-city'),true);
   const environments=(await call('/api/environments')).body.data.filter(env=>!env.memberPlot&&env.playable!==false&&env.visibility!=='private');const template=environments.find(env=>env.id!=='muzikaz-main')||environments[0];

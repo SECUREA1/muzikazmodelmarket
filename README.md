@@ -174,3 +174,26 @@ bosses use their existing damage paths. Other surfaces track local health.
 Burn effects and avatar damage follow the existing client-side gameplay model;
 they are not authoritative multiplayer PvP or persistent land damage. Flame
 settings live in `public/js/flamethrower.js` under `FLAME_CONFIG`.
+
+
+## Persistent sessions, library and hosted deeds
+
+Account sessions persist until explicit logout/revocation. The HttpOnly account cookie is renewed with a browser-compatible 400-day lifetime, with a persistent bearer fallback for cross-origin pages. Short-lived game sessions still expire normally. Previously expired or revoked credentials are never restored. Logout revokes the server session and clears browser credentials.
+
+`GET/POST /api/custom-items` stores signed-in custom library items in the same server inventory used by Backpack and member marketplace sales. PNG drawings are decorative shared-room items; GLB customization requires an owned model. Previews do not grant ownership or gameplay upgrades. Existing browser-only drafts are not imported as paid assets.
+
+`POST /api/land/reveal` accepts an owned Backpack `itemId`, reveals a land entitlement once, and returns a permanent `spaceId` and `playUrl`. Existing deeds return the same destination. Each entitlement receives a unique room even when members have identical land labels. Deed sales transfer ownership while preserving the room and its saved contents. The original account is never granted the sold entitlement again on login.
+
+## Server backup and recovery
+
+The server snapshots its data and configured upload directories at startup and every six hours. Three snapshots are retained in `MUZIKAZ_BACKUP_DIR` (default: the private `backups` directory under `MUZIKAZ_DATA_DIR`). Backups use private file permissions, SHA-256 manifests, JSON validation and atomic snapshot completion. The shared-room queue is flushed before capture. Files are captured individually; snapshots are not a transaction across all stores while the server is active. An authenticated administrator can inspect `GET /api/admin/backups` or request `POST /api/admin/backups`; neither endpoint exposes backup contents. Incomplete captures do not replace valid snapshots. Capture errors are logged and reported in the admin status, including the 256 MB snapshot limit.
+
+The default snapshots share the Render persistent disk. They protect against application mistakes but **are not offsite disaster recovery**. Configure an independently backed-up mounted destination using `MUZIKAZ_BACKUP_DIR` for protection against disk loss. No external backup service is provisioned by this change.
+
+For recovery, stop the server and restore into an empty directory:
+
+```sh
+node scripts/restore-server-backup.mjs /path/to/snapshot /path/to/empty-restore
+```
+
+The restore command verifies every checksum before writing. The `data/` subtree contains the original data directory; separately configured files and upload roots use the labels recorded in `manifest.json`. Review these paths and configure the stopped server to use the restored files before restarting. Do not restore revoked account sessions to an older state without revoking them again.

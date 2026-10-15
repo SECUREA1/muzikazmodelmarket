@@ -22,8 +22,9 @@ function verifies(token, hash, salt) {
 
 /** Atomic, serialized JSON storage for opaque account and game sessions. */
 export class DurableSessionStore {
-  constructor(file, { ttlSeconds, maxActivePerAccount = 8, kind = 'account', clock = Date.now } = {}) {
+  constructor(file, { ttlSeconds, maxActivePerAccount = 8, kind = 'account', persistent = false, clock = Date.now } = {}) {
     this.file = file;
+    this.persistent = kind === 'account' && persistent;
     this.ttlMs = Math.max(1, Number(ttlSeconds || (kind === 'game' ? 300 : 28_800))) * 1000;
     this.maxActivePerAccount = Math.max(1, Number(maxActivePerAccount || 8));
     this.kind = kind;
@@ -77,12 +78,12 @@ export class DurableSessionStore {
         accountId: account.accountId, wallet: account.primaryEthereumWallet || null,
         csrfTokenHash: csrfSecret.hash, csrfTokenSalt: csrfSecret.salt,
         accountSessionId: extra.accountSessionId || null, avatarId: extra.avatarId || null,
-        createdAt: now, expiresAt: new Date(nowMs + this.ttlMs).toISOString(), lastUsedAt: now,
+        createdAt: now, expiresAt: this.persistent ? null : new Date(nowMs + this.ttlMs).toISOString(), lastUsedAt: now,
         revokedAt: null, status: 'active'
       };
       data.sessions.push(record);
       const active = data.sessions.filter((item) => item.accountId === record.accountId && item.status === 'active').sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-      for (const old of active.slice(this.maxActivePerAccount)) { old.status = 'revoked'; old.revokedAt = now; }
+      for (const old of active.slice(this.persistent ? Infinity : this.maxActivePerAccount)) { old.status = 'revoked'; old.revokedAt = now; }
       await this.write(data);
       return { token, csrfToken, session: clone(record) };
     });
@@ -98,6 +99,8 @@ export class DurableSessionStore {
         if (changed) await this.write(data);
         return null;
       }
+      if (this.persistent && record.expiresAt) { record.expiresAt = null; changed = true; }
+      if (changed && !touch) await this.write(data);
       if (touch) { record.lastUsedAt = new Date(nowMs).toISOString(); await this.write(data); }
       return clone(record);
     });

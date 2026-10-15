@@ -256,3 +256,9 @@ body.model-explorer-page .game-view-options .explorer-options.is-unified .explor
 .game-market-tabs{flex-wrap:wrap;}.game-market-row button{min-height:44px;}
 
 .world-map-sector.has-players small{color:#ff6868}.world-map-sector.has-players small::before{content:"● ";animation:room-live-pulse 1.4s ease-in-out infinite}@keyframes room-live-pulse{50%{opacity:.25}}@media(prefers-reduced-motion:reduce){.world-map-sector.has-players small::before{animation:none}}
+/* Marketplace also opens from the public library without loading the 3D game. */
+dialog.game-market-popup { position:fixed!important; inset:0!important; margin:0!important; width:100vw!important; height:100dvh!important; max-width:none!important; max-height:none!important; box-sizing:border-box; overflow-y:scroll!important; overscroll-behavior:contain; scrollbar-gutter:stable; border:0; border-radius:0; padding:clamp(12px,3vw,28px); background:#101a13; color:#f4ffe9; }
+dialog.game-market-popup::backdrop { background:#000b; }
+html.game-menu-open { overflow:hidden; }
+.game-market-popup .game-market-actions { min-width:0; flex-shrink:1; }
+@media(max-width:650px){ .game-market-popup .game-market-actions,.game-market-popup .game-market-actions form { width:100%; flex-wrap:wrap; } .game-market-popup .game-market-actions form label { flex:1 1 8rem; } .game-market-popup .game-menu-header { gap:.5rem; } }

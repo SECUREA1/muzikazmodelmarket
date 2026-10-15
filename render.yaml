@@ -24,8 +24,6 @@ services:
         value: /var/data/muzikaz/account-sessions.json
       - key: MUZIKAZ_GAME_SESSIONS_FILE
         value: /var/data/muzikaz/game-sessions.json
-      - key: MUZIKAZ_SESSION_TTL_SECONDS
-        value: 28800
       - key: MUZIKAZ_GAME_SESSION_TTL_SECONDS
         value: 300
       - key: MUZIKAZ_CORS_ORIGINS
@@ -39,7 +37,7 @@ services:
       - key: MUZIKAZ_ENVIRONMENT_DATA_FILE
         value: /var/data/muzikaz/environments.json
       - key: UPLOAD_STORAGE_PATH
-        value: data/uploads/models
+        value: /var/data/muzikaz/uploads/models
       - key: MAX_MODEL_UPLOAD_MB
         value: 50
     disk:

@@ -44,6 +44,7 @@
     <meta name="msapplication-TileImage" content="public/assets/app-icons/tile-150.png">
     <meta name="msapplication-TileColor" content="#05070a">
   <link rel="stylesheet" href="public/assets/game-control-dock.css">
+  <link rel="stylesheet" href="public/assets/game-menus.css">
 </head>
 <body class="model-explorer-page">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata.","sameAs":["https://muzikaz.com/"]}</script>
@@ -196,7 +197,7 @@
     <section class="section-block custom-item-toolkit" id="custom-item-toolkit" data-explorer-workspace aria-labelledby="custom-item-title">
       <div class="section-title"><span></span><h2 id="custom-item-title">3D Customization Tool Kit</h2><a href="#custom-item-library">Browse items</a></div>
       <div class="custom-item-heading">
-        <div><p class="kicker">Draw a custom game item</p><h3>Sketch it. Shape it. Play it.</h3><p>Draw a closed silhouette, tune its depth and bevel, then save it as a reusable object in your local Builder Backpack—or open any existing GLB or SVG as a starting point.</p></div>
+        <div><p class="kicker">Draw a custom game item</p><h3>Sketch it. Shape it. Play it.</h3><p>Draw a closed silhouette, tune its depth and bevel, then save it as a reusable object in your server Backpack—or open any existing GLB or SVG as a starting point.</p></div>
         <div class="custom-step-strip" aria-label="Builder workflow"><span class="is-current"><b>01</b> Select</span><span><b>02</b> Customize</span><span><b>03</b> Preview</span><span><b>04</b> Save</span><span><b>05</b> Place + test</span></div>
       </div>
       <div class="custom-item-workbench">
@@ -250,8 +251,9 @@
         </aside>
       </div>
       <section class="custom-item-library" id="custom-item-library" aria-labelledby="custom-library-title">
-        <div><p class="kicker">Ready-to-edit library</p><h3 id="custom-library-title">Use it as-is—or build on it.</h3><p class="custom-library-intro">Start quickly with the pre-developed SVG 3D collection. Every template includes editable color, depth, bevel, material, and gameplay defaults.</p></div>
+        <div><p class="kicker">Ready-to-edit library</p><h3 id="custom-library-title">Use it as-is—or build on it.</h3><p class="custom-library-intro">Start quickly with the pre-developed SVG 3D collection. Preview templates, customize a drawing or an owned model, and save it to your server Backpack. Custom drawings are decorative items; gameplay upgrades are purchased in the marketplace.</p></div>
         <div class="custom-library-controls"><label class="custom-library-search" for="custom-library-search"><span>Search items</span><input id="custom-library-search" type="search" placeholder="Try “weapon”, “pet”, or “pickup”" autocomplete="off"><button type="button" data-clear-library-search aria-label="Clear item search" hidden>×</button></label><select id="custom-library-filter" aria-label="Filter item format"><option value="all">All formats</option><option value="starter">SVG 3D starters</option><option value="glb">GLB / 3D</option><option value="svg">SVG / editable</option><option value="mine">My builds</option></select><select id="custom-library-sort" aria-label="Sort items"><option value="featured">Featured first</option><option value="name">Name A–Z</option><option value="category">Category</option></select><button type="button" data-import-svg>Import SVG</button></div>
+        <button type="button" data-library-market>Open Marketplace · Buy and sell with MZK</button>
         <nav id="custom-library-categories" class="custom-library-categories" aria-label="Item categories"></nav>
         <p id="custom-library-status" class="status-message" role="status">Loading existing items…</p>
         <div id="custom-library-grid" class="custom-library-grid"></div>
@@ -362,6 +364,7 @@
        it out of the initial document avoids competing with first paint. -->
   <script type="module" src="public/js/model-publisher.js"></script>
   <script src="public/js/custom-item-toolkit.js"></script>
+  <script type="module" src="public/js/library-market.js"></script>
   <script src="mzk-wallet.js"></script>
   <script>
     window.MZKWallet.mount('#vibverse-mzk-balance');

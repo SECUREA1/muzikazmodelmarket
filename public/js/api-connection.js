@@ -162,17 +162,18 @@
 
   function getSessionToken() {
     try {
-      var token = window.sessionStorage.getItem('muzikazAccountSessionToken') || '';
-      window.localStorage.removeItem('muzikazAccountSessionToken');
+      var token = window.localStorage.getItem('muzikazAccountSessionToken') || window.sessionStorage.getItem('muzikazAccountSessionToken') || '';
+      if (token) window.localStorage.setItem('muzikazAccountSessionToken', token);
+      window.sessionStorage.removeItem('muzikazAccountSessionToken');
       return token;
     } catch (ignore) { return ''; }
   }
 
   function setSessionToken(token) {
     try {
-      if (token) window.sessionStorage.setItem('muzikazAccountSessionToken', token);
-      else window.sessionStorage.removeItem('muzikazAccountSessionToken');
-      window.localStorage.removeItem('muzikazAccountSessionToken');
+      if (token) window.localStorage.setItem('muzikazAccountSessionToken', token);
+      else window.localStorage.removeItem('muzikazAccountSessionToken');
+      window.sessionStorage.removeItem('muzikazAccountSessionToken');
     } catch (ignore) {}
   }
 

@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
+test('direct and changed nested library hashes reveal the containing workspace',async()=>{
+ const listeners={}, workspace=id=>({id,hidden:false,setAttribute(){}}),workspaces=[workspace('house-explorer'),workspace('custom-item-toolkit')];
+ const node=()=>({value:'',textContent:'',hidden:true,addEventListener(){},setAttribute(){},getAttribute(){return 'false';},focus(){}});
+ const link=(hash,id)=>({hash,dataset:{explorerView:id},querySelector:()=>({textContent:id}),toggleAttribute(){}});
+ const links=[link('#house-explorer','house-explorer'),link('#custom-item-library','custom-item-toolkit')];
+ const items=links.map(link=>({querySelector:()=>link}));
+ const controls=new Map();const root={classList:{contains:()=>false},querySelector:selector=>{if(!controls.has(selector))controls.set(selector,node());return controls.get(selector);},querySelectorAll:()=>items,addEventListener(){}};
+ const targets={'custom-item-library':{closest:()=>workspaces[1],scrollIntoView(){},matches:()=>false},'house-explorer':{closest:()=>workspaces[0],scrollIntoView(){},matches:()=>false}};
+ const window={location:{hash:'#custom-item-library'},addEventListener:(key,fn)=>listeners[key]=fn,dispatchEvent(){}};
+ const document={querySelector:()=>root,querySelectorAll:selector=>selector==='[data-explorer-workspace]'?workspaces:[],getElementById:id=>targets[id],addEventListener(){}};
+ vm.runInNewContext(await readFile(new URL('../public/js/explorer-options-menu.js',import.meta.url),'utf8'),{window,document,requestAnimationFrame:fn=>fn(),CustomEvent:class{}});
+ assert.equal(workspaces[0].hidden,true);assert.equal(workspaces[1].hidden,false);
+ window.location.hash='#house-explorer';listeners.hashchange();assert.equal(workspaces[0].hidden,false);assert.equal(workspaces[1].hidden,true);
+ window.location.hash='#custom-item-library';listeners.popstate();assert.equal(workspaces[1].hidden,false);
+ window.location.hash='#invalid%';assert.doesNotThrow(()=>listeners.hashchange());
+});

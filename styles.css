@@ -3696,3 +3696,22 @@ body.model-explorer-page .explorer-options:not(.is-unified){display:none!importa
   .model-explorer-page .global-site-header .global-nav{order:3;flex-basis:100%;justify-content:center;}
   .global-site-header .icons{flex:1 1 300px;}
 }
+
+/* Shared navigation: content-sized controls, scrollable mobile destinations. */
+.site-header.global-site-header { box-sizing: border-box; max-width: 100%; gap: clamp(.35rem, 1vw, 1rem); }
+.global-site-header > *, .global-site-header .global-nav { min-width: 0; }
+.global-site-header .global-nav a { white-space: normal; overflow-wrap: anywhere; }
+.custom-library-card, .custom-card-copy, .custom-card-actions { min-width: 0; }
+.custom-card-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+.custom-card-actions > * { flex: 1 1 6rem; min-height: 44px; }
+.custom-library-card strong { overflow-wrap: anywhere; }
+.mzk-backpack-land button { min-height: 44px; max-width: 100%; white-space: normal; }
+@media (max-width: 720px) {
+  .site-header.global-site-header { width: 100%; padding: .5rem; flex-wrap: wrap; }
+  .global-site-header .global-nav { position: fixed; inset: var(--global-header-height, 72px) 0 auto; width: auto; max-height: calc(100dvh - var(--global-header-height, 72px)); overflow-y: auto; overscroll-behavior: contain; padding: .75rem; box-sizing: border-box; z-index: 1100; }
+  .global-site-header .global-nav.is-open { display: flex; flex-direction: column; align-items: stretch; }
+  .global-site-header .global-nav a { min-height: 44px; box-sizing: border-box; display: flex; align-items: center; }
+  .custom-library-controls { display: flex; flex-wrap: wrap; }
+  .custom-library-controls > * { flex: 1 1 9rem; min-width: 0; max-width: 100%; }
+  .custom-item-dialog, #custom-item-dialog, #custom-result-dialog { box-sizing: border-box; max-width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); overflow-y: auto; }
+}

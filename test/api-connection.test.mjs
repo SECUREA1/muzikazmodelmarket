@@ -4,9 +4,8 @@ import vm from 'node:vm';
 import test from 'node:test';
 
 const source = await readFile(new URL('../public/js/api-connection.js', import.meta.url), 'utf8');
-function loadConnection(fetch, configured = '') {
+function loadConnection(fetch, configured = '', storage = new Map()) {
   const attributes = configured ? { 'data-api-base': configured } : {};
-  const storage = new Map();
   const window = { URL, Promise, fetch, setTimeout, clearTimeout,
     localStorage: { getItem: k => storage.get('l:' + k) || null, setItem: (k,v) => storage.set('l:' + k,String(v)), removeItem: k => storage.delete('l:' + k) },
     sessionStorage: { getItem: k => storage.get('s:' + k) || null, setItem: (k,v) => storage.set('s:' + k,String(v)), removeItem: k => storage.delete('s:' + k) },
@@ -144,4 +143,16 @@ test('service worker leaves authenticated API requests entirely on the network',
   });
   listeners.fetch({request:{url:'https://muzikazmodelmarket.onrender.com/api/market/session',method:'GET'},respondWith(){intercepted=true;}});
   assert.equal(intercepted, false);
+});
+
+
+test('account credentials survive a new page and logout clears the shared browser session', async () => {
+  const storage = new Map();
+  const fetch = async url => url.endsWith('/api/health') ? health() : new Response('{}');
+  const first = loadConnection(fetch, 'https://muzikazmodelmarket.onrender.com', storage);
+  first.window.MUZIKAZ_API.setSessionToken('persistent-account');
+  const nextPage = loadConnection(fetch, 'https://muzikazmodelmarket.onrender.com', storage);
+  assert.equal(nextPage.window.MUZIKAZ_API.getSessionToken(), 'persistent-account');
+  await nextPage.window.MUZIKAZ_API.logout('csrf');
+  assert.equal(first.window.MUZIKAZ_API.getSessionToken(), '');
 });

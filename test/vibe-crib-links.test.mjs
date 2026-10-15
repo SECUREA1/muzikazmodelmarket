@@ -22,7 +22,7 @@ test('Vibe Crib entry links launch the stable muzikaz-main game environment', as
   for (const html of entryPages) assert.match(html, new RegExp(gameUrl.replace(/[?&]/g, '\\$&')));
 
   const header = await source('global-header.js');
-  assert.ok(header.includes(gameUrl), 'the shared World Map navigation should launch the game environment');
+  assert.ok(header.includes('model-explorer.html?environment=muzikaz-main&amp;house=muzikaz-main&amp;autoplay=1'), 'the shared World Map navigation should launch the game environment');
 
   const gallery = await source('public/js/model-gallery-core.js');
   assert.match(gallery, /model-explorer\.html\?environment=muzikaz-main&house=muzikaz-main&autoplay=1&localFallback=1&sandbox=1/);
