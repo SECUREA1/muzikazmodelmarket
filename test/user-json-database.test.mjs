@@ -181,3 +181,17 @@ test('builder operations reject forged ownership, balances, categories, and worl
   await assert.rejects(database.placeBuilderAsset('attacker-two', { asset_id:asset.id, world_id:'stolen-land' }), /ownership is required/);
   assert.throws(() => database.createBuilderAsset('owner-one', { name:'Bad', asset_type:'prop', builder_category:'NOT REAL' }), /Unsupported builder category/);
 });
+
+test('market trades reject a changed displayed price without transferring funds or ownership', async(t)=>{
+ const directory=await mkdtemp(join(tmpdir(),'muzikaz-price-check-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+ const database=new UserJsonDatabase(join(directory,'users.json'));
+ await database.put('buyer',{tokens:{MZK:100},items:[]});
+ await database.put('seller',{tokens:{MZK:0},items:[{id:'piece',name:'Building piece'}]});
+ await database.listItem('seller','piece',40);
+ await assert.rejects(database.trade({buyerId:'buyer',sellerId:'seller',itemId:'piece',requestId:'price-request',expectedPriceMzk:30}),/price changed/);
+ assert.equal((await database.get('buyer')).tokens.MZK,100);
+ assert.equal((await database.get('seller')).items.length,1);
+ const trade=await database.trade({buyerId:'buyer',sellerId:'seller',itemId:'piece',requestId:'price-request',expectedPriceMzk:40});
+ assert.equal(trade.priceMzk,40);assert.equal((await database.get('buyer')).tokens.MZK,60);
+ assert.equal((await database.get('buyer')).items[0].id,'piece');
+});

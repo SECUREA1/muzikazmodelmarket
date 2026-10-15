@@ -184,7 +184,7 @@ export class UserJsonDatabase {
     });
   }
 
-  trade({ buyerId, sellerId, itemId, requestId }) {
+  trade({ buyerId, sellerId, itemId, requestId, expectedPriceMzk }) {
     const buyer = cleanWallet(buyerId); const seller = cleanWallet(sellerId); const id = String(requestId || '').trim();
     if (buyer === seller) throw new Error('Choose another member to trade with.');
     if (!id || id.length > 140) throw new Error('A trade request id is required.');
@@ -197,6 +197,7 @@ export class UserJsonDatabase {
       const index = sellerUser.items.findIndex((item) => item.id === itemId);
       const item = sellerUser.items[index]; const price = Number(item?.listing?.priceMzk);
       if (!item?.listing?.active || !Number.isSafeInteger(price) || price < 1) throw new Error('This pack is no longer listed.');
+      if (expectedPriceMzk !== undefined && Number(expectedPriceMzk) !== price) throw new Error('The listing price changed. Refresh the market before buying.');
       const balance = Number(buyerUser.tokens?.MZK || 0);
       if (balance < price) throw new Error('The buyer does not have enough MZK.');
       buyerUser.tokens.MZK = balance - price;
