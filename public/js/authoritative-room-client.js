@@ -36,9 +36,9 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     waiters.add(waiter);
    });
   },
-  async send(action,fields={}) {
+  async send(action,fields={},requestId=crypto.randomUUID()) {
    if (stopped) throw failure || Error('Room closed.');
-   const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,action,requestId:crypto.randomUUID()});
+   const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,action,requestId});
    if (stopped) return;
    const selfId=state?.selfId || client.selfId;
    if (!selfId || !state?.players?.[selfId]) throw Error('The server has not confirmed your player in this room.');

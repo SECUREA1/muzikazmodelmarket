@@ -1,7 +1,7 @@
 // Scene objects display confirmed state; they never decide gameplay outcomes.
 export function disposeProjection(root) {
  root.userData.serverMixer?.stopAllAction();
- root.userData.serverMixer?.uncacheRoot(root);
+ root.userData.serverMixer?.uncacheRoot(root.userData.serverMixerRoot||root);
  root.removeFromParent();
  root.traverse(object=>{object.geometry?.dispose();for(const material of [].concat(object.material||[]))material.dispose();});
 }
@@ -71,4 +71,13 @@ export function disposeServerEnemyProjection(root) {
  root.removeFromParent();
  if(root.userData.serverController)root.userData.serverController.dispose();
  else disposeProjection(root);
+}
+
+// Keep authored model size and floor offsets inside a transformable anchor.
+export function anchorServerAsset(THREE,content){
+ content.updateMatrixWorld(true);const bottom=new THREE.Box3().setFromObject(content).min.y;
+ if(Number.isFinite(bottom))content.position.y-=bottom;
+ const root=new THREE.Group();root.add(content);
+ if(content.userData.serverMixer){root.userData.serverMixer=content.userData.serverMixer;root.userData.serverMixerRoot=content;delete content.userData.serverMixer;}
+ return root;
 }

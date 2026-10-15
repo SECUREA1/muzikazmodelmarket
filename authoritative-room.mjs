@@ -1,3 +1,4 @@
+import {validateOwnedPlacement} from './owned-item-placement.mjs';
 import {ENEMY_BEHAVIORS,stepEnemyCombat} from './server-enemy-combat.mjs';
 import {combatStats,damagePlayer,registerParticipant,checkTeamDefeat,matchView,SPAWN_PROTECTION_MS,PLAYER_HIT_CAPACITY} from './rpg-match.mjs';
 import {startRadTox,advanceRadTox,nextRadToxLevel,stepRadToxEnemy} from './rad-tox-campaign.mjs';
@@ -144,16 +145,27 @@ export class AuthoritativeRooms {
      if(config.action==='teleport'){const portal=config.portal;if(!portal?.enabled)fail('Portal is locked.',409);if(portal.destinationType==='map')result.destination=portal.targetMapId;else{const destination=sim.actors[portal.targetObjectId];if(!destination)fail('Destination is unavailable.');player.position={...destination.position};}}
     }
    }
+   else if(command.action==='place-item'){
+    const entity=sim.actors[command.entityId];
+    if(!entity?.spawned||entity.ownerId!==actorId)fail('Only the owner can reposition this item.',403);
+    if(entity.active===false||entity.holderId)fail('Release this item before repositioning it.',409);
+    if(command.revision!==(entity.placementRevision||1))fail('This item changed. Select it again before editing.',409);
+    const placement=validateOwnedPlacement(command.placement,player);
+    Object.assign(entity,placement);entity.placementRevision=(entity.placementRevision||1)+1;
+    entity.definition.position={...placement.position};entity.definition.transform=copy(placement);
+    result={spawnedId:entity.id,placementRevision:entity.placementRevision,message:'Item locked in place for everyone in this room.'};
+   }
    else if(command.action==='spawn'){
     const asset=await this.resolveAsset(identity,command);if(!asset)fail('Purchase and publish this asset before deploying it.',403);
     if(Object.values(sim.actors).filter(actor=>actor.spawned).length>=250)fail('Room item limit reached.',409);
+    const chosenPlacement=command.placement?validateOwnedPlacement(command.placement,player):null;
     if(asset.consumable&&asset.petId&&!Object.values(sim.actors).some(actor=>actor.asset?.id===asset.petId&&actor.active))fail('Deploy your pet in this room before feeding it.',409);if(asset.sku)await this.charge(identity,asset.sku,createHash('sha256').update(id+actorId+sim.sequence).digest('hex'));
     if(asset.consumable&&asset.petId){const pet=Object.values(sim.actors).find(actor=>actor.asset?.id===asset.petId&&actor.active);if(!pet)fail('Deploy your pet in this room before feeding it.',409);pet.boostUntil=now+10000;result.message=pet.asset.name+' received a treat.';}else{
-    const entityId='spawn-'+requestId,position={x:player.position.x-Math.sin(player.yaw)*2,y:player.position.y,z:player.position.z-Math.cos(player.yaw)*2};
+    const entityId='spawn-'+requestId,position=chosenPlacement?.position||{x:player.position.x-Math.sin(player.yaw)*2,y:player.position.y,z:player.position.z-Math.cos(player.yaw)*2},rotation=chosenPlacement?.rotation||{x:0,y:player.yaw,z:0},scale=chosenPlacement?.scale||{x:1,y:1,z:1};
     const behavior=asset.behavior||(asset.assetType==='vehicles'?'vehicle':asset.assetType==='pets'?'patrol':'interact');
-    const definition={objectId:entityId,modelId:asset.id,position:{...position},transform:{position:{...position},rotation:{x:0,y:player.yaw,z:0},scale:{x:1,y:1,z:1}},gameplay:{behavior,health:100,damage:0,interactionDistance:3,cooldown:1,action:'none'},movement:{speed:1},asset};
-    sim.actors[entityId]={id:entityId,position,rotation:{y:player.yaw},active:true,health:100,spawned:true,ownerId:actorId,asset,definition};
-    result.message=asset.name+' deployed to the shared room.';}
+    const definition={objectId:entityId,modelId:asset.id,position:{...position},transform:{position:{...position},rotation:{...rotation},scale:{...scale}},gameplay:{behavior,health:100,damage:0,interactionDistance:3,cooldown:1,action:'none'},movement:{speed:1},asset};
+    sim.actors[entityId]={id:entityId,position,rotation,scale,placementRevision:1,active:true,health:100,spawned:true,ownerId:actorId,asset,definition};
+    result.message=asset.name+' deployed to the shared room.';result.spawnedId=entityId;result.placementRevision=1;}
    }
    else if(command.action==='fire'){
     const tool=String(command.tool||'laser'),utility=UTILITY_TOOLS[tool],profile=RANGED_WEAPONS[tool],cooldown=utility?utility.cooldown*1000:profile?profile.interval*1000:tool==='dynamite'?1200:250;if(!utility&&!profile&&!['bat','taser','toxin','flamethrower','spray','jetpack'].includes(tool))fail('This tool has no server action.',422);
