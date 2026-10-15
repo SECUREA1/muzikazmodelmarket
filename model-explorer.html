@@ -196,7 +196,13 @@
 
 
     <section class="section-block custom-item-toolkit" id="custom-item-toolkit" data-explorer-workspace aria-labelledby="custom-item-title">
-      <div class="section-title"><span></span><h2 id="custom-item-title">3D Customization Tool Kit</h2><a href="#custom-item-library">Browse items</a></div>
+      <div class="section-title custom-toolkit-header"><h2 id="custom-item-title">3D Customization Tool Kit</h2><details class="custom-toolkit-menu"><summary aria-label="Toolkit navigation"><span aria-hidden="true">☰</span> Toolkit menu</summary><nav aria-label="Customization toolkit"><a href="#custom-item-library">Browse items</a><button type="button" data-kit-action="draw">Draw a new item</button><a href="#custom-preview-stage">Shape + customize</a><button type="button" data-library-market data-market-tab="upgrades">Buy game items</button><button type="button" data-library-market data-market-tab="pack">My Backpack / sell</button><button type="button" data-kit-action="import">Import SVG</button><a href="#custom-deploy-title">Place + test</a></nav></details></div>
+      <nav class="custom-toolkit-tiles" aria-label="Choose a toolkit action">
+        <a href="#custom-item-library"><span aria-hidden="true">▦</span><strong>Browse items</strong><small>GLB models + SVG starters</small></a>
+        <button type="button" data-kit-action="draw"><span aria-hidden="true">✎</span><strong>Draw a custom item</strong><small>Sketch a new silhouette</small></button>
+        <button type="button" data-library-market data-market-tab="upgrades"><span aria-hidden="true">＋</span><strong>Buy game items</strong><small>Shop with MZK</small></button>
+        <button type="button" data-library-market data-market-tab="pack"><span aria-hidden="true">▣</span><strong>My Backpack</strong><small>Owned items + member sales</small></button>
+      </nav>
       <div class="custom-item-heading">
         <div><p class="kicker">Draw a custom game item</p><h3>Sketch it. Shape it. Play it.</h3><p>Draw a closed silhouette, tune its depth and bevel, then save it as a reusable object in your server Backpack—or open any existing GLB or SVG as a starting point.</p></div>
         <div class="custom-step-strip" aria-label="Builder workflow"><span class="is-current"><b>01</b> Select</span><span><b>02</b> Customize</span><span><b>03</b> Preview</span><span><b>04</b> Save</span><span><b>05</b> Place + test</span></div>
@@ -218,7 +224,7 @@
         </aside>
         <div class="custom-draw-stage">
           <header><span><i aria-hidden="true"></i> 2D silhouette</span><strong id="custom-source-label">New custom drawing</strong></header>
-          <canvas id="custom-item-canvas" width="900" height="600" aria-label="Draw the silhouette of a custom game item"></canvas>
+          <canvas id="custom-item-canvas" tabindex="0" width="900" height="600" aria-label="Draw the silhouette of a custom game item"></canvas>
           <p id="custom-canvas-help">Drag to draw • touch and Apple Pencil supported</p>
         </div>
         <aside class="custom-preview-panel" aria-label="3D shape settings">
@@ -254,7 +260,7 @@
       <section class="custom-item-library" id="custom-item-library" aria-labelledby="custom-library-title">
         <div><p class="kicker">Ready-to-edit library</p><h3 id="custom-library-title">Use it as-is—or build on it.</h3><p class="custom-library-intro">Start quickly with the pre-developed SVG 3D collection. Preview templates, customize a drawing or an owned model, and save it to your server Backpack. Custom drawings are decorative items; gameplay upgrades are purchased in the marketplace.</p></div>
         <div class="custom-library-controls"><label class="custom-library-search" for="custom-library-search"><span>Search items</span><input id="custom-library-search" type="search" placeholder="Try “weapon”, “pet”, or “pickup”" autocomplete="off"><button type="button" data-clear-library-search aria-label="Clear item search" hidden>×</button></label><select id="custom-library-filter" aria-label="Filter item format"><option value="all">All formats</option><option value="starter">SVG 3D starters</option><option value="glb">GLB / 3D</option><option value="svg">SVG / editable</option><option value="mine">My builds</option></select><select id="custom-library-sort" aria-label="Sort items"><option value="featured">Featured first</option><option value="name">Name A–Z</option><option value="category">Category</option></select><button type="button" data-import-svg>Import SVG</button></div>
-        <button type="button" data-library-market>Open Marketplace · Buy and sell with MZK</button>
+        <button type="button" data-library-market data-market-tab="upgrades">Buy game items · Open marketplace</button>
         <nav id="custom-library-categories" class="custom-library-categories" aria-label="Item categories"></nav>
         <p id="custom-library-status" class="status-message" role="status">Loading existing items…</p>
         <div id="custom-library-grid" class="custom-library-grid"></div>
@@ -265,7 +271,7 @@
       <button class="custom-dialog-close" type="button" data-close-item-dialog aria-label="Close item browser">×</button>
       <aside class="custom-dialog-browser" aria-label="Available assets"><p class="kicker">Existing item</p><h2>Choose a starting point</h2><input id="custom-dialog-search" type="search" placeholder="Search every game item, GLB + SVG"><div id="custom-dialog-results" class="custom-dialog-results"></div></aside>
       <div class="custom-dialog-preview"><model-viewer id="custom-dialog-model" camera-controls auto-rotate shadow-intensity="1" hidden></model-viewer><img id="custom-dialog-image" alt=""></div>
-      <div class="custom-dialog-details"><p class="kicker" id="custom-dialog-format">Existing item</p><h2 id="custom-dialog-title">Select an item</h2><p id="custom-dialog-copy">Search or browse the complete asset collection.</p><dl><div><dt>Format</dt><dd id="custom-dialog-format-value">—</dd></div><div><dt>Type</dt><dd id="custom-dialog-type">—</dd></div></dl><div class="custom-dialog-actions"><button type="button" data-use-item disabled>Use as is</button><button type="button" class="ghost" data-edit-copy disabled>Edit a copy</button><button type="button" class="ghost" data-build-on-item disabled>Build on it</button></div></div>
+      <div class="custom-dialog-details"><p class="kicker" id="custom-dialog-format">Existing item</p><h2 id="custom-dialog-title">Select an item</h2><p id="custom-dialog-copy">Search or browse the complete asset collection.</p><dl><div><dt>Format</dt><dd id="custom-dialog-format-value">—</dd></div><div><dt>Type</dt><dd id="custom-dialog-type">—</dd></div></dl><div class="custom-dialog-actions"><button type="button" data-buy-custom-item data-library-market data-market-tab="browse" disabled>Find in member sales</button><button type="button" data-use-item disabled>Use as is</button><button type="button" class="ghost" data-edit-copy disabled>Edit a copy</button><button type="button" class="ghost" data-build-on-item disabled>Build on it</button></div></div>
     </dialog>
     <dialog id="custom-result-dialog" class="custom-result-dialog" aria-labelledby="custom-result-title">
       <button class="custom-dialog-close" type="button" data-close-result-dialog aria-label="Close customized item preview">×</button>
