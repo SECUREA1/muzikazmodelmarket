@@ -21,6 +21,7 @@ const requiredFiles = [
   'dist/brand_name_tagline_panel_2x.png',
   'dist/logo_symbol_crop_2x_transparent.png',
   'dist/site.webmanifest',
+  'dist/public/assets/game-menus.css',
   'dist/pwa.js',
   'dist/service-worker.js',
   'dist/reference.png',
@@ -270,7 +271,7 @@ if (!server.includes('avatarAssetId: asset.id, modelUrl: asset.modelUrl')) {
 if (houseExplorer.includes('await this.initAudio()')) {
   throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');
 }
-for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarget]", 'this.spawnSnakes()', "controller.userData.handedness === 'left'", "Weapons','Laser · Paint gun · Baseball bat · Taser · Toxins Thrower (5 MZK/burst)", 'webXrAvailable', "isSessionSupported('immersive-vr')", 'createXRAimRay()', 'teleportFromController(controller)', 'camera.position.set(0, 0, 0)']) {
+for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarget]", 'this.spawnSnakes()', "controller.userData.handedness === 'left'", "['Weapons',Object.values(RANGED_WEAPONS)", 'webXrAvailable', "isSessionSupported('immersive-vr')", 'createXRAimRay()', 'teleportFromController(controller)', 'camera.position.set(0, 0, 0)']) {
   if (!houseExplorer.includes(requiredGameFeature)) {
     throw new Error(`RAD-TOX is missing its required mixed-level or always-on controls feature: ${requiredGameFeature}`);
   }

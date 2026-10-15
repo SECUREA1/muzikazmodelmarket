@@ -10,7 +10,9 @@ export function fullscreenPanel(panel, { onOpen = () => {}, collapsed = false } 
   const close = document.createElement('button');
   close.type='button';close.className='game-fullscreen-close';close.textContent='Close ×';
   close.setAttribute('aria-label','Close '+dialog.getAttribute('aria-label'));
-  dialog.prepend(close);
+  const header=document.createElement('header');header.className='game-menu-header';
+  const title=document.createElement('h2');title.textContent=panel.id==='rad-tox-tools'?'Tools':dialog.getAttribute('aria-label');
+  header.append(title,close);dialog.prepend(header);
   const isVisible = () => !panel.hidden && (!collapsed || !panel.classList.contains('is-collapsed'));
   const hide = () => { if(collapsed)panel.classList.add('is-collapsed');else panel.hidden=true; };
   const sync = () => {
@@ -31,4 +33,13 @@ export function fullscreenPanel(panel, { onOpen = () => {}, collapsed = false } 
   observer.observe(panel,{attributes:true,attributeFilter:['hidden','class']});
   sync();
   return { dialog, sync, close:hide, disconnect:()=>observer.disconnect() };
+}
+
+export function organizeToolPicker(dialog) {
+  const original=dialog.querySelector('h2'),close=dialog.querySelector('[data-weapons-close],[data-utility-close]');
+  const header=document.createElement('header');header.className='game-menu-header';
+  const title=document.createElement('h2');title.textContent=original?.textContent||dialog.getAttribute('aria-label');
+  original?.classList.add('game-menu-original-title');
+  if(close){close.classList.add('game-menu-close');close.textContent='Close ×';header.append(title,close);}else header.append(title);
+  dialog.prepend(header);
 }
