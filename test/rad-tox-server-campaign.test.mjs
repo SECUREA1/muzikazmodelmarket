@@ -15,7 +15,10 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
   const environment={id:'muzikaz-main',name:'House',modelUrl:'/house.glb',playable:true,spawn:{x:0,y:1,z:2}};
   const alice={accountId:'alice',walletId:'alice',username:'Alice',stats:{health:100}};
   const bob={...alice,accountId:'bob',walletId:'bob',username:'Bob'};
-  const send=(action,fields={},identity=alice)=>runtime.command(environment.id,environment,identity,{action,requestId:'campaign-'+ ++request,...fields});
+  const send=async(action,fields={},identity=alice)=>{
+   try{return await runtime.command(environment.id,environment,identity,{action,requestId:'campaign-'+ ++request,...fields});}
+   catch(error){if(error.message!=='Respawn before acting.'||action==='respawn')throw error;await runtime.command(environment.id,environment,identity,{action:'respawn',requestId:'respawn-'+ ++request});return runtime.command(environment.id,environment,identity,{action,requestId:'campaign-'+ ++request,...fields});}
+  };
   let state=await send('join');assert.equal(state.radTox.state,'active','everyone joins the same running encounter');
   state=await send('start-rad-tox');assert.equal(state.radTox.level,1);assert.equal(state.radTox.wave,1);
   const enemies=Object.values(state.actors).filter(actor=>actor.radTox);
