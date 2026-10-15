@@ -52,6 +52,7 @@ test('cookie and bearer member sessions own market and care actions without a br
   const published=await call('/api/custom-maps',paymentHeaders,{scene:{id:'room-test',name:'Shared test',objects:[]}});assert.equal(published.status,201);assert.equal(published.body.data.ownerName,'SessionCarePlayer');assert.equal(published.body.data.roomId,'room-test');assert.match(published.body.data.playUrl,/environment=room-test/);
   presence.set('room-count-fixture',{sessionId:'room-count-fixture',accountId:'test-builder',roomId:'room-test',lastActiveAt:new Date().toISOString()});
   const liveMaps=(await call('/api/environments')).body.data;assert.equal(liveMaps[0].id,'room-test');assert.equal(liveMaps[0].playerCount,1);assert.equal(liveMaps[0].live,true);assert.equal((await call('/api/member-maps')).body.data.some(map=>map.id==='room-test'),true);presence.delete('room-count-fixture');
+  const joined=await call('/api/rooms/room-test/gameplay',paymentHeaders,{action:'join',requestId:'join-room'});assert.equal(joined.status,200);assert.equal(joined.body.data.authoritative,true);
   const object={materialId:'wood',position:[1,0,1],rotation:[0,0,0],scale:[1,1,1],paint:[],open:false};
   assert.equal((await call('/api/rooms/room-test/objects',paymentHeaders,{id:'wood-1',revision:0,object})).status,200);
   assert.equal((await call('/api/rooms/room-test/objects')).body.data.objects['wood-1'].materialId,'wood');
@@ -77,11 +78,11 @@ test('cookie and bearer member sessions own market and care actions without a br
   const purchase=await call('/api/rpg/purchases',headers,{itemId:'ion-health-vial',requestId:'buy-care'});assert.equal(purchase.status,200);assert.equal(purchase.body.data.balance,balance-25);
   const item=purchase.body.data.items[0];assert.ok(item);
   const listed=await call('/api/market/listings',headers,{itemId:item.id,priceMzk:10},'PUT');assert.equal(listed.status,200);
-  const telemetry=await call('/api/rpg/telemetry',headers,{health:20,world:'session-arena'});assert.equal(telemetry.status,200);
-  const use=await call('/api/rpg/use',headers,{itemId:item.id,requestId:'use-care'});assert.equal(use.status,200);assert.equal(use.body.data.stats.health,55);
+  assert.equal((await call('/api/rpg/telemetry',headers,{health:20,world:'session-arena'})).status,409);const telemetry=await call('/api/rpg/telemetry',headers,{health:20,world:'room-test'});assert.equal(telemetry.status,200);assert.equal(telemetry.body.data.stats.health,joined.body.data.players[joined.body.data.selfId].health);
+  const use=await call('/api/rpg/use',headers,{itemId:item.id,requestId:'use-care'});assert.equal(use.status,200);assert.equal(use.body.data.stats.health,Math.min(100,joined.body.data.players[joined.body.data.selfId].health+35));
   const denied=await call('/api/rpg/telemetry',cookieHeaders,{health:100});assert.equal(denied.body.code,'CSRF_INVALID');
   const bearer={authorization:'Bearer '+login.body.data.sessionToken,'x-wallet-address':'someone-else'};
-  const state=await call('/api/rpg/state',bearer);assert.equal(state.status,200);assert.equal(state.body.data.owner_id,owner);assert.equal(state.body.data.stats.health,55);
+  const state=await call('/api/rpg/state',bearer);assert.equal(state.status,200);assert.equal(state.body.data.owner_id,owner);assert.equal(state.body.data.stats.health,use.body.data.stats.health);
   const history=await call('/api/market/activity',cookieHeaders);assert.equal(history.status,200);
   const second=await call('/api/access/free-play',{}, {username:'OtherCarePlayer',password:'other-session-test'});assert.equal(second.status,200);
   assert.equal((await call('/api/land/deeds/deed-volt-city/space',{authorization:'Bearer '+second.body.data.sessionToken},{environmentId:template.id,name:'Stolen plot'},'PUT')).status,403);

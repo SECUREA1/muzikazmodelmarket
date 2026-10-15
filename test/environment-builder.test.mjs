@@ -14,25 +14,14 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(html, /value="seat"/);
   for (const behavior of ['pointermove', 'dragstart', 'drop', 'localStorage.setItem', 'LOCKED PROPORTIONS']) assert.match(`${html}\n${script}`, new RegExp(behavior));
   assert.match(script, /muzikaz\.builder\.buildTray/);
-  assert.match(script, /multiplayer:false, enemies:true, weapons:true, pickups:true/, 'template tests run with complete game logic but no multiplayer connection');
-  assert.match(script, /model-explorer\.html\?environment=/);
-  assert.match(script, /muzikaz\.environmentBuilder\.playScene\.v1/);
-  assert.match(script, /&house=\$\{id\}&autoplay=1/);
-  assert.match(script, /window\.location\.assign\(`/, 'the test action navigates during the originating click instead of relying on a delayed callback');
-  assert.match(script, /playSceneBackup\.v1/, 'the exact test scene has a navigation-safe local fallback');
-  assert.match(launcher, /get\('autoplay'\) === '1'\) begin\(\)/, 'the game launcher consumes the Builder test autoplay contract immediately');
-  assert.match(script, /compileBuilderScene\(sceneData\)/);
-  assert.match(script, /function testGameLocally\(\)/);
-  const testGameBody = script.slice(script.indexOf('function testGameLocally()'), script.indexOf('function screenRay'));
-  assert.doesNotMatch(testGameBody, /layout==='firing-range'/, 'the shooting range follows the same full game-page launch path as every other map');
-  assert.match(script, /LOCAL · Sandbox ready/);
-  assert.match(script, /localFallback=1&sandbox=1/);
-  assert.doesNotMatch(script, /apiFetch\('\/api\/custom-maps'/, 'testing a template never contacts the publishing API');
-  assert.match(script, /muzikaz\.environmentBuilder\.localMaps\.v1/);
-  assert.match(script, /storeLocalMap\(sceneData\)/, 'each builder save is also retained in the local playable-map collection');
-  const localPlaySave = script.indexOf('sessionStorage.setItem(PLAY_KEY,serializedPlayScene)');
-  const localSandboxLaunch = script.indexOf('localFallback=1', localPlaySave);
-  assert.ok(localPlaySave >= 0 && localSandboxLaunch > localPlaySave, 'the complete playable scene is staged locally before its private sandbox opens');
+  assert.match(html,/id="publish-scene"/);
+  assert.match(script,/inventory.api\('\/api\/custom-maps'/);
+  assert.match(script,/window.location.assign\(result.playUrl\)/);
+  const launch=script.slice(script.indexOf('function testGameLocally()'),script.indexOf('function screenRay'));
+  assert.match(launch,/publish-scene/);
+  assert.doesNotMatch(launch,/sessionStorage|sandbox|localFallback/);
+  assert.match(launcher,/get\('autoplay'\) === '1'\) begin\(\)/);
+
 });
 
 
@@ -115,7 +104,7 @@ test('responsive customization sheet includes commercial FPS and training scenes
 test('playable firing range supports unlimited free play and real desktop, mobile, and VR target hits', async () => {
   const [game, loader, index] = await Promise.all([
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
-    readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),
+    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
     readFile(new URL('../index.html', import.meta.url), 'utf8')
   ]);
   assert.match(game, /data-range-mode="freeplay"/);
@@ -147,7 +136,7 @@ test('builder maze group is playable, grounded, and only recovers true world fal
   const [html, builder, loader, game] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
-    readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),
+    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
   assert.match(html, /optgroup label="MAZE WORLDS"/);
@@ -178,7 +167,7 @@ test('environment builder supports custom role-play actors and interactions', as
   for (const behavior of ['talk', 'quest', 'hostile', 'patrol', 'pickup', 'door', 'heal']) assert.match(html, new RegExp(`value="${behavior}"`));
   assert.match(script, /muzikaz\.environmentBuilder\.customItems\.v1/);
   assert.match(script, /data-delete-group/);
-  assert.match(script, /customRoles:true/);
+  assert.match(script, /multiplayer:true/);
   assert.ok((script.match(/type:'enemy'/g) || []).length >= 4, 'includes several ready-made enemies');
   assert.ok((script.match(/type:'interactive'/g) || []).length >= 4, 'includes several interactive role-play objects');
 });
@@ -336,30 +325,18 @@ test('in-game Builder Map menu opens the environment builder and restores playab
   assert.match(game, /roomId:env\.id/);
   assert.match(game, /toxicBubbleSystem\.handleEnvironmentReady\(env\)/);
   assert.match(game, /params\.get\('autoplay'\) === '1'/, 'Save & Play starts the published map immediately');
-  assert.match(game, /muzikaz\.environmentBuilder\.scenes\.v2/);
-  assert.match(game, /muzikaz\.environmentBuilder\.playScene\.v1/);
-  assert.match(game, /muzikaz\.environmentBuilder\.playSceneBackup\.v1/);
-  assert.match(game, /builderSceneSources/, 'the game reads the session handoff and its persistent fallback explicitly');
-  assert.match(game, /readSavedBuilderScenes/);
-  const refreshStart = game.indexOf('async function refreshLibrary()');
-  const refreshNetwork = game.indexOf('Promise.allSettled', refreshStart);
-  const eagerLocalRestore = game.indexOf('addSavedBuilderWorld();', refreshStart);
-  assert.ok(refreshStart >= 0 && eagerLocalRestore > refreshStart && eagerLocalRestore < refreshNetwork, 'the requested local test map is registered before remote catalog requests can delay startup');
-  assert.match(game, /registry\.all\(\)\[0\]\|\|\{\}/, 'a test map can start without any remote environment as its base');
-  assert.match(game, /if\(localSandbox\)return/, 'the local sandbox never polls multiplayer presence');
-  assert.match(game, /worldOptions=document\.createDocumentFragment/, 'large map lists are appended without a Firefox argument-limit failure');
-  assert.match(game, /Locally saved Builder Map/, 'local builder maps remain in the playable map list when multiplayer publishing is unavailable');
-  assert.match(game, /createSavedCustomModel/);
-  assert.match(game, /built\.customModels/);
-  assert.match(game, /center\.x\+x/);
-  assert.match(game, /object\.scale\.multiply\(new THREE\.Vector3\(scale,sy,sz\)\)/, 'preserves model normalization and every authored scale axis');
-  assert.match(game, /object\.rotation\.set/, 'preserves the full authored rotation');
-  assert.match(game, /proceduralLand:true,modelUrl:'',modelUrls:\[\]/, 'locally tested builder lands do not require a GLB base');
+  assert.match(game,/connectAuthoritativeRoom/);
+  assert.match(game,/const localSandbox = false/);
+  assert.match(game,/function addSavedBuilderWorld\(\)\{return null;/);
+  assert.doesNotMatch(game,/Locally saved Builder Map/);
+  assert.match(game,/built\.customModels/);
+  assert.match(game,/object\.scale\.multiply\(new THREE\.Vector3\(scale,sy,sz\)\)/);
+
 });
 
 test('builder lands and placed items retain verified collision floors', async () => {
   const [loader, game, server] = await Promise.all([
-    readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),
+    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
     readFile(new URL('../server.mjs', import.meta.url), 'utf8')
   ]);
@@ -384,7 +361,7 @@ test('builder lands and placed items retain verified collision floors', async ()
 test('collision floors protect spawn, teleport and low-frame-rate falls', async () => {
   const [collision, loader, game] = await Promise.all([
     readFile(new URL('../public/js/environments/environment-collision.js', import.meta.url), 'utf8'),
-    readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),
+    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
   assert.match(collision, /\(COLLIDER\|COLLISION\|NAVMESH\)/, 'standard collider names are recognized anywhere in exported node names');
@@ -430,8 +407,8 @@ test('saved sandbox maps embed custom item definitions for exact game reconstruc
   ]);
   assert.match(script, /sceneData\.customModels=cloneData\(customModels\)/);
   assert.match(script, /sceneData\.placedModels=cloneData/, 'every placed asset definition travels with the local sandbox scene');
-  assert.match(script, /sessionStorage\.setItem\(PLAY_KEY,serializedPlayScene\)/);
-  assert.match(script, /localStorage\.setItem\(PLAY_BACKUP_KEY,serializedPlayScene\)/);
+  assert.match(script,/inventory.api\('\/api\/custom-maps'/);
+  assert.match(script,/scene:\{...cloneData\(sceneData\)/);
   assert.match(game, /built\.placedModels/);
   assert.match(game, /prepareAuthoredBuilderModel/);
   assert.match(game, /createGeneratedAsset\(definition\)/);

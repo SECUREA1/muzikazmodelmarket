@@ -310,23 +310,7 @@ function renderRangeBest(){const best=readJson(RANGE_BEST_KEY,{score:0,rank:'No 
 function openRangeGame(){rangeState.camera={position:camera.position.clone(),target:controls.target.clone()};camera.position.set(0,4.2,17.5);controls.target.set(0,1.35,-14);controls.update();controls.enabled=false;$('#range-game-panel').hidden=false;$('#range-game-intro').hidden=false;$('#range-game-active').hidden=true;renderRangeBest();updateRangeHud();$('#range-game-panel').scrollIntoView({block:'nearest',behavior:'smooth'})}
 function startRangeCourse(){const course=$('#range-course').value,durations={qualification:60,rapid:30,tournament:20};Object.assign(rangeState,{playing:true,score:0,shots:0,hits:0,bullseyes:0,remaining:durations[course],round:1,rounds:course==='tournament'?3:1,course});$('#range-game-intro').hidden=true;$('#range-game-active').hidden=false;$('#range-reticle').hidden=false;$('#range-result').hidden=true;$('#range-live-label').textContent='LIVE';$('#range-status').textContent=course==='tournament'?'TOURNAMENT ROUND 1':'QUALIFICATION ACTIVE';updateRangeHud();scheduleRangeTarget(500);clearInterval(rangeState.timer);rangeState.timer=setInterval(advanceRangeClock,1000)}
 function fireRangeShot(event){if(!rangeState.playing)return;if(event){screenRay(event)}else{raycaster.setFromCamera(new THREE.Vector2(0,0),camera)}rangeState.shots++;const hit=raycaster.intersectObjects(rangeTargets(),true).find(item=>item.object.userData.rangeTarget),target=hit?.object.userData.rangeTarget;if(target&&target===rangeState.activeTarget){const bullseye=hit.object.userData.hitZone==='bullseye';rangeState.hits++;rangeState.score+=bullseye?100:60;if(bullseye)rangeState.bullseyes++;$('#range-callout').textContent=bullseye?'BULLSEYE +100':'HIT +60';scheduleRangeTarget(rangeState.course==='rapid'?140:260)}else{$('#range-callout').textContent='MISS';rangeState.score=Math.max(0,rangeState.score-10)}updateRangeHud()}
-function testGameLocally(){
- if(!sceneData.id||sceneData.id==='active')sceneData.id=`custom-map-${uid()}`;
- sceneData.gameplay={multiplayer:false, enemies:true, weapons:true, pickups:true, customRoles:true};
- sceneData.runtimeManifest=compileBuilderScene(sceneData);persist('Preparing private game sandbox…');
- const button=$('#play-scene'),playId=sceneData.id,playScene=cloneData(sceneData);button.disabled=true;
- // Testing is intentionally browser-local: preserve the full authored template
- // without contacting the publishing API or joining a multiplayer world.
- const serializedPlayScene=JSON.stringify(playScene);
- // sessionStorage is the preferred one-test handoff. Keep an exact local
- // fallback as well: privacy modes and embedded browsers can clear session
- // storage during a same-origin navigation even though local storage survives.
- sessionStorage.setItem(PLAY_KEY,serializedPlayScene);
- localStorage.setItem(PLAY_BACKUP_KEY,serializedPlayScene);
- $('#save-state').textContent='LOCAL · Sandbox ready';showToast(`Testing “${sceneData.name}” privately with its complete template and gameplay…`);
- const id=encodeURIComponent(playId);
- window.location.assign(`model-explorer.html?environment=${id}&house=${id}&autoplay=1&localFallback=1&sandbox=1`);
-}
+function testGameLocally(){$('#publish-scene').click();}
 function screenRay(event){const rect=renderer.domElement.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera)}
 function terrainPoint(event){screenRay(event);return raycaster.intersectObject(terrain,false)[0]?.point||null}
 async function beginPlacement(modelId){pendingModelId=modelId;renderLibrary();$('#view-help').textContent='Move over the terrain for a grounded preview · click to place · Esc to cancel';if(preview){preview.removeFromParent();preview=null}const model=modelFor(modelId),template=await templateFor(model);if(pendingModelId!==modelId)return;preview=model.procedural?template.clone(true):cloneSkeleton(template);preview.traverse(n=>{if(n.isMesh){n.material=n.material.clone();n.material.transparent=true;n.material.opacity=Math.min(n.material.opacity,.55);n.material.depthWrite=false}});world.add(preview)}
