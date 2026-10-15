@@ -58,16 +58,17 @@
             <div class="member-bottle" role="img" aria-label="MUZIKAZ Beat Bottle member access"></div>
             <div class="member-login-card">
                 <p class="kicker">Verified member access</p>
-                <h1 id="model-market-login-title">Connect your Bottle wallet.</h1>
-                <p>Use the same Ethereum wallet login as the members area. We verify Bottle ownership on-chain—no email, password, or passcode is requested.</p>
+                <h1 id="model-market-login-title">Open your member Backpack.</h1>
+                <p>Sign in with your member account or verify your Ethereum wallet. Purchased models, land, and MZK follow the same account.</p>
                 <form id="model-market-login-form" class="bottle-login-form">
-                    <button type="submit" id="model-market-wallet-connect">Connect Ethereum wallet</button>
+                    <button type="submit" id="model-market-wallet-connect">Open username sign-in</button>
                     <button type="button" class="ghost" id="model-market-wallet-disconnect" hidden>Disconnect</button>
                 </form>
                 <p class="wallet-address" id="model-market-wallet-address" hidden></p>
-                <p class="status-message" id="model-market-login-status" role="status" aria-live="polite">Connect a wallet that owns an approved MUZIKAZ Bottle token.</p>
+                <div class="ethereum-member-login"><label>Ethereum address (optional)<input type="text" data-ethereum-member-address autocomplete="off" spellcheck="false" placeholder="0x…" maxlength="42"></label><button type="button" data-ethereum-member-login>Sign in with Ethereum wallet</button><button type="button" data-ethereum-member-link hidden>Link wallet to this member account</button><small>Confirm wallet ownership with a signature. No payment is required.</small></div>
+                <p class="status-message" id="model-market-login-status" role="status" aria-live="polite">Sign in to load your saved member Backpack.</p>
                 <div class="model-market-login-help">
-                    <span>Ethereum mainnet</span><span>Read-only ownership check</span><span>No signature fee</span>
+                    <span>Ethereum mainnet</span><span>Signed wallet ownership proof</span><span>No signature fee</span>
                 </div>
                 <a class="btn ghost" href="members.html#bottle-login">Open full member hub</a>
             </div>
@@ -392,5 +393,6 @@
     <script src="backpack-widget.js"></script>
   <script src="global-header.js"></script>
 <script type="module" src="public/js/library-market.js"></script>
+<script src="public/js/ethereum-member-login.js"></script>
 </body>
 </html>

@@ -3715,3 +3715,5 @@ body.model-explorer-page .explorer-options:not(.is-unified){display:none!importa
   .custom-library-controls > * { flex: 1 1 9rem; min-width: 0; max-width: 100%; }
   .custom-item-dialog, #custom-item-dialog, #custom-result-dialog { box-sizing: border-box; max-width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); overflow-y: auto; }
 }
+
+.ethereum-member-login{display:flex;flex-wrap:wrap;align-items:end;gap:.65rem;margin:.8rem 0}.ethereum-member-login label{display:grid;gap:.4rem;flex:1 1 15rem;min-width:0}.ethereum-member-login input{box-sizing:border-box;max-width:100%;width:100%;min-height:44px}.ethereum-member-login button{min-height:44px;white-space:normal}.ethereum-member-login small{flex:1 1 100%;line-height:1.4}

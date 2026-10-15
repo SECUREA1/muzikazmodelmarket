@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import paymentConfig from './payment-config.js';
@@ -15,6 +15,9 @@ function cleanItems(metadata) {
     price: Math.max(0, Number(item?.price) || 0),
     deliverable: item?.deliverable && typeof item.deliverable === 'object' ? {
       id: String(item.deliverable.id || '').slice(0, 140),
+      assetType: String(item.deliverable.assetType || item.deliverable.type || 'prop').slice(0,40),
+      thumbnailUrl: String(item.deliverable.thumbnailUrl || '').slice(0,500),
+      catalogId: String(item.deliverable.catalogId || item.deliverable.id || '').slice(0,140),
       name: String(item.deliverable.name || item?.name || 'Digital item').slice(0, 180),
       format: String(item.deliverable.format || '').slice(0, 30),
       modelUrl: String(item.deliverable.modelUrl || '').slice(0, 500)
@@ -25,7 +28,7 @@ function cleanItems(metadata) {
 export class PaymentOrderStore {
   constructor(file, { verifyTransaction = async () => ({ verified: false, confirmations: 0 }) } = {}) { this.file = file; this.verifyTransaction = verifyTransaction; this.queue = Promise.resolve(); }
   async records() { try { return JSON.parse(await readFile(this.file, 'utf8')); } catch (error) { if (error.code === 'ENOENT') return []; throw error; } }
-  async save(records) { await mkdir(dirname(this.file), { recursive: true }); await writeFile(this.file, JSON.stringify(records, null, 2)); }
+  async save(records) { await mkdir(dirname(this.file), { recursive: true }); const temp=this.file+'.'+randomUUID()+'.tmp';await writeFile(temp, JSON.stringify(records, null, 2),{mode:0o600});await rename(temp,this.file); }
   locked(task) { const next = this.queue.then(task, task); this.queue = next.catch(() => {}); return next; }
   async create(input) { return this.locked(async () => {
     const network = MUZIKAZ_PAYMENT_NETWORKS[String(input.paymentAsset || '').toUpperCase()];
@@ -45,9 +48,10 @@ export class PaymentOrderStore {
     const records = await this.records(); const order = records.find((item) => item.orderId === id); if (!order) throw new Error('Payment order not found.');
     const reused = records.find((item) => item.transactionHash === hash && item.orderId !== id); if (reused) { const error = new Error('This transaction has already been assigned to another order.'); error.statusCode = 409; throw error; }
     if (terminal.has(order.paymentStatus) || order.paymentStatus === 'PAID') return order;
-    order.transactionHash = hash; order.wallet = String(wallet || order.wallet || '').slice(0, 140); order.paymentStatus = 'TRANSACTION_SUBMITTED'; await this.save(records); return this.verify(id);
+    order.transactionHash = hash; order.wallet = String(wallet || order.wallet || '').slice(0, 140); order.paymentStatus = 'TRANSACTION_SUBMITTED'; await this.save(records); return this.verifyUnlocked(id);
   }); }
-  async verify(id) {
+  verify(id){return this.locked(()=>this.verifyUnlocked(id));}
+  async verifyUnlocked(id) {
     const records = await this.records(); const order = records.find((item) => item.orderId === id); if (!order) throw new Error('Payment order not found.');
     if (terminal.has(order.paymentStatus) || order.paymentStatus === 'PAID') return order;
     const result = await this.verifyTransaction({ ...order });

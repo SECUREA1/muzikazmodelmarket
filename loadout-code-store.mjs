@@ -234,6 +234,10 @@ export class MzkAccountStore {
     account.updatedAt = new Date().toISOString();
     return publicAccount(account);
   }); }
+  async walletMemberLogin(wallet){
+    const found=await this.findByWallet(wallet);
+    return this.serialized(async data=>{const account=data.accounts.find(item=>item.accountId===found.accountId);grantStandardLoadout(account);account.updatedAt=new Date().toISOString();return publicAccount(account);});
+  }
   findByWallet(wallet) { return this.serialized(async (data) => { const address = normalizeWallet(wallet); if (!WALLET_PATTERN.test(address)) throw Object.assign(new Error('A valid Ethereum wallet is required.'), { statusCode: 400 }); let account = data.accounts.find((a) => a.connectedWallets.some((w) => w.address === address)); if (!account) { account = accountRecord('', address); data.accounts.push(account); } account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
   adminBypass() { return this.serialized(async (data) => {
     // Keep one durable, wallet-free Backpack for the owner shortcut. The server
@@ -292,7 +296,7 @@ export class MzkAccountStore {
     account.tokenPurchases.push({orderId:order.orderId,transactionHash:order.transactionHash,tokens,priceUsd:usd,purchasedAt:order.confirmedAt});
     account.updatedAt=new Date().toISOString();return publicAccount(account);
   }); }
-  selectAvatar(accountId, avatarId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const id = String(avatarId || ''); if (id !== 'starter-avatar' && !/^repository-[a-z0-9-]{1,100}$/.test(id)) throw Object.assign(new Error('That avatar is unavailable or Unrevealed. Choose an included MUZIKAZ avatar.'), { statusCode: 409 }); account.selectedAvatarId = id; account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
+  selectAvatar(accountId, avatarId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const id = String(avatarId || ''); if (id !== 'starter-avatar' && !/^(?:repository|owned|store-model)-[a-z0-9-]{1,100}$/.test(id)) throw Object.assign(new Error('That avatar is unavailable or Unrevealed. Choose an included MUZIKAZ avatar.'), { statusCode: 409 }); account.selectedAvatarId = id; account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
   async getAccount(accountId) { const account = (await this.records()).accounts.find((a) => a.accountId === accountId); return account ? publicAccount(account) : null; }
   repairEntitledAccount(accountId) { return this.serialized(async (data) => {
     const account = data.accounts.find((item) => item.accountId === accountId);

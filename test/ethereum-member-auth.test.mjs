@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {Wallet} from 'ethers';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {EthereumMemberAuth} from '../ethereum-member-auth.mjs';
+test('wallet proof is signed, one-time, account-bound, expiring, and durable across restart',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'ethereum-member-'));t.after(()=>rm(dir,{recursive:true,force:true}));let now=Date.now();const file=join(dir,'challenges.json'),options={clock:()=>now};
+ const auth=new EthereumMemberAuth(file,options),wallet=Wallet.createRandom(),other=Wallet.createRandom();
+ const request=await auth.issue(wallet.address);assert.match(request.message,/muzikazmodelmarket.onrender.com/);
+ await assert.rejects(auth.verify({challengeId:request.challengeId,wallet:wallet.address,signature:await other.signMessage(request.message)}),/does not match/);
+ const signature=await wallet.signMessage(request.message),restarted=new EthereumMemberAuth(file,options);
+ assert.equal(await restarted.verify({wallet:wallet.address,signature,challengeId:request.challengeId}),wallet.address.toLowerCase());
+ await assert.rejects(auth.verify({wallet:wallet.address,signature,challengeId:request.challengeId}),/new wallet signature/);
+ const link=await auth.issue(wallet.address,'attach','member-one'),proof={wallet:wallet.address,signature:await wallet.signMessage(link.message),challengeId:link.challengeId};
+ await assert.rejects(auth.verify(proof,'attach','member-two'),/this account/);await assert.rejects(auth.verify(proof),/this account/);
+ assert.equal(await auth.verify(proof,'attach','member-one'),wallet.address.toLowerCase());
+ const expired=await auth.issue(wallet.address);now+=300001;
+ await assert.rejects(auth.verify({wallet:wallet.address,signature:await wallet.signMessage(expired.message),challengeId:expired.challengeId}),/new wallet signature/);
+});

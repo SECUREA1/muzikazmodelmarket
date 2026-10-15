@@ -1,3 +1,4 @@
+import { Wallet } from 'ethers';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdtemp,mkdir,rm} from 'node:fs/promises';
@@ -12,8 +13,8 @@ test('cookie and bearer member sessions own market and care actions without a br
  try{
   // Exercise the real HTTP handler without binding a TCP port in the sandbox.
   const original=await readFile(new URL('../server.mjs',import.meta.url),'utf8');
-  const source=original.replace(/from '(\.\/[^']+)'/g,(_,path)=>`from '${new URL('../'+path,import.meta.url).href}'`).replace(/server\.listen\(port,[^\n]+\);/,'export { server, presence, paymentOrderStore };');
-  const modulePath=join(dir,'handler.mjs');await writeFile(modulePath,source);const {server,presence,paymentOrderStore}=await import(pathToFileURL(modulePath).href);const handler=server.listeners('request')[0];
+  const source=original.replace(/from '(\.\/[^']+)'/g,(_,path)=>`from '${new URL('../'+path,import.meta.url).href}'`).replace(/server\.listen\(port,[^\n]+\);/,'export { server, presence, paymentOrderStore, reconcileStorePayments };');
+  const modulePath=join(dir,'handler.mjs');await writeFile(modulePath,source);const {server,presence,paymentOrderStore,reconcileStorePayments}=await import(pathToFileURL(modulePath).href);const handler=server.listeners('request')[0];
   async function call(url,headers={},body,method=body?'POST':'GET'){
    const req=Readable.from(body?[Buffer.from(JSON.stringify(body))]:[]);Object.assign(req,{url,method,headers:{host:'localhost','content-type':'application/json',...headers},socket:{remoteAddress:'127.0.0.1'}});
    const result={headers:{}};const res={setHeader(key,value){result.headers[key.toLowerCase()]=value;},getHeader(key){return result.headers[key.toLowerCase()];},writeHead(status,headers){result.status=status;for(const[key,value]of Object.entries(headers))this.setHeader(key,value);this.headersSent=true;},end(data){result.body=JSON.parse(data);}};
@@ -45,7 +46,26 @@ test('cookie and bearer member sessions own market and care actions without a br
   assert.equal((await call('/api/store/purchases',paymentHeaders,{items:cart,expectedAmountMzk:1,requestId:'bad-price'})).status,409);
   const bought=await call('/api/store/purchases',paymentHeaders,{items:cart,expectedAmountMzk:cost,requestId:'buy-model'});assert.equal(bought.status,201);
   assert.equal((await call('/api/store/purchases',paymentHeaders,{items:cart,expectedAmountMzk:cost,requestId:'buy-model'})).body.data.balanceAfterMzk,bought.body.data.balanceAfterMzk);
-  assert.ok((await call('/api/wallet/state',paymentHeaders)).body.data.items.some(item=>item.id==='store-model-'+model.id));
+  assert.ok((await call('/api/wallet/state',paymentHeaders)).body.data.items.some(item=>item.catalogId===model.id));
+  assert.equal((await call('/api/payments/orders',{}, {purchaseType:'MARKETPLACE'})).status,401);
+  const verifiedCartOrder=await paymentOrderStore.create({memberAccountId:login.body.data.account.accountId,purchaseType:'MARKETPLACE',itemId:'marketplace-cart',basePrice:cost/100,paymentAsset:'SOL',expectedAmount:1,metadata:{items:cart}});
+  const beforeCrypto=(await call('/api/wallet/state',paymentHeaders)).body.data;
+  assert.equal((await call('/api/payments/orders/'+verifiedCartOrder.orderId)).body.data.paymentStatus,'AWAITING_PAYMENT');
+  paymentOrderStore.verifyTransaction=async()=>({verified:true,amountReceived:1,confirmations:20});
+  const confirmed=await call('/api/payments/orders/'+verifiedCartOrder.orderId+'/submit',{}, {transactionHash:'fixture-model-payment',wallet:'verified-sol-payer'});assert.equal(confirmed.status,200);assert.equal(confirmed.body.data.paymentStatus,'FULFILLED');
+  await call('/api/payments/orders/'+verifiedCartOrder.orderId+'/verify',{},{});
+  const afterCrypto=(await call('/api/wallet/state',paymentHeaders)).body.data;assert.equal(afterCrypto.tokens.MZK,beforeCrypto.tokens.MZK);assert.equal(afterCrypto.items.length,beforeCrypto.items.length+1);assert.equal(afterCrypto.items.filter(item=>item.orderId===verifiedCartOrder.orderId).length,1);
+  const pending=await paymentOrderStore.create({memberAccountId:login.body.data.account.accountId,purchaseType:'MARKETPLACE',itemId:'marketplace-cart',basePrice:cost/100,paymentAsset:'SOL',expectedAmount:1,metadata:{items:cart}});
+  paymentOrderStore.verifyTransaction=async()=>({verified:false,amountReceived:0,confirmations:0});
+  await call('/api/payments/orders/'+pending.orderId+'/submit',{}, {transactionHash:'fixture-pending-model-payment',wallet:'verified-sol-payer'});
+  assert.equal((await paymentOrderStore.get(pending.orderId)).paymentStatus,'CONFIRMING');
+  paymentOrderStore.verifyTransaction=async()=>({verified:true,amountReceived:1,confirmations:20});
+  await reconcileStorePayments();await reconcileStorePayments();
+  assert.equal((await paymentOrderStore.get(pending.orderId)).paymentStatus,'FULFILLED');assert.equal((await call('/api/wallet/state',paymentHeaders)).body.data.items.filter(item=>item.orderId===pending.orderId).length,1);
+  const ownedPurchase=(await call('/api/wallet/state',paymentHeaders)).body.data.items.find(item=>item.catalogId===model.id);
+  assert.equal((await call('/api/backpack/use',{}, {itemId:ownedPurchase.id})).status,401);
+  const useAvatar=await call('/api/backpack/use',paymentHeaders,{itemId:ownedPurchase.id});assert.equal(useAvatar.status,200);assert.equal(useAvatar.body.data.action,'avatar');
+  assert.equal((await call('/api/backpack',paymentHeaders)).body.data.selectedAvatarId,ownedPurchase.id);
   const shop=await call('/api/economy',paymentHeaders);assert.equal(shop.status,200);
   assert.equal(shop.body.data.items.find(item=>item.sku==='tool:laser').owned,true);
   assert.equal(shop.body.data.items.find(item=>item.sku==='tool:scanner').owned,false);
@@ -68,6 +88,7 @@ test('cookie and bearer member sessions own market and care actions without a br
   const liveMaps=(await call('/api/environments')).body.data;assert.ok(liveMaps.every((map,index)=>index===0||liveMaps[index-1].playerCount>=map.playerCount));assert.equal(liveMaps.find(map=>map.id==='room-test').playerCount,1);assert.equal(liveMaps.find(map=>map.id==='room-test').live,true);assert.equal((await call('/api/member-maps')).body.data.some(map=>map.id==='room-test'),true);presence.delete('room-count-fixture');
   const joined=await call('/api/rooms/room-test/gameplay',paymentHeaders,{action:'join',requestId:'join-room'});assert.equal(joined.status,200);assert.equal(joined.body.data.authoritative,true);
   assert.ok((await call('/api/world-atlas')).body.data.locations.some(place=>place.mapId==='room-test'&&place.ownerName==='SessionCarePlayer'));
+  const placedModel=await call('/api/rooms/room-test/gameplay',paymentHeaders,{action:'spawn',requestId:'spawn-owned-model',itemId:ownedPurchase.id});assert.equal(placedModel.status,200);assert.ok(Object.values(placedModel.body.data.actors).some(actor=>actor.asset?.id===ownedPurchase.id));
   const object={materialId:'wood',position:[1,0,1],rotation:[0,0,0],scale:[1,1,1],paint:[],open:false};
   assert.equal((await call('/api/rooms/room-test/objects',paymentHeaders,{id:'wood-1',revision:0,object})).status,200);
   assert.equal((await call('/api/rooms/room-test/objects')).body.data.objects['wood-1'].materialId,'wood');
@@ -137,6 +158,18 @@ test('cookie and bearer member sessions own market and care actions without a br
   assert.equal((await call('/api/market/listings',headers,{itemId:tradedItem.id,priceMzk:10},'PUT')).status,200);
   const trade=await call('/api/market/trades',secondHeaders,{sellerId:owner,itemId:tradedItem.id,requestId:'trade-care',expectedPriceMzk:10});assert.equal(trade.status,201);assert.equal(trade.body.data.buyerId,secondSession.body.data.owner_id);
   const messages=await call('/api/market/messages',headers,{to:secondSession.body.data.owner_id,text:'Care item question'});assert.equal(messages.status,201);
+  const ethereum=Wallet.createRandom(),ethAddress=ethereum.address.toLowerCase();
+  assert.equal((await call('/api/access/wallet',{}, {wallet:ethAddress})).status,401);
+  assert.equal((await call('/api/account/wallet',headers,{wallet:ethAddress})).status,401);
+  const challenge=(await call('/api/access/wallet/challenge',headers,{wallet:ethAddress,purpose:'attach'})).body.data;
+  const signature=await ethereum.signMessage(challenge.message);
+  const linked=await call('/api/account/wallet',headers,{wallet:ethAddress,challengeId:challenge.challengeId,signature});assert.equal(linked.status,200);assert.equal(linked.body.data.accountId,login.body.data.account.accountId);
+  const linkedPack=(await call('/api/wallet/state',paymentHeaders)).body.data;assert.equal(linkedPack.walletId,ethAddress);assert.ok(linkedPack.items.some(item=>item.id===ownedPurchase.id));
+  const challengeLogin=(await call('/api/access/wallet/challenge',{}, {wallet:ethAddress})).body.data;
+  const walletProof={wallet:ethAddress,challengeId:challengeLogin.challengeId,signature:await ethereum.signMessage(challengeLogin.message)};
+  const walletLogin=await call('/api/access/wallet',{},walletProof);assert.equal(walletLogin.status,200);assert.equal(walletLogin.body.data.account.accountId,login.body.data.account.accountId);assert.equal(walletLogin.body.data.account.backpackId,login.body.data.account.backpackId);assert.equal(walletLogin.body.data.expiresAt,null);
+  assert.equal((await call('/api/access/wallet',{},walletProof)).status,401);
+  assert.equal((await call('/api/store/purchases',paymentHeaders,{items:cart,expectedAmountMzk:cost,requestId:'buy-model'})).body.data.id,bought.body.data.id);
   await call('/api/session',headers,undefined,'DELETE');
   const expired=await call('/api/market/session',bearer);assert.equal(expired.status,401);
  }finally{process.env=oldEnv;await rm(dir,{recursive:true,force:true});}

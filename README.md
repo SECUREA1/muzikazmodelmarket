@@ -197,3 +197,14 @@ node scripts/restore-server-backup.mjs /path/to/snapshot /path/to/empty-restore
 ```
 
 The restore command verifies every checksum before writing. The `data/` subtree contains the original data directory; separately configured files and upload roots use the labels recorded in `manifest.json`. Review these paths and configure the stopped server to use the restored files before restarting. Do not restore revoked account sessions to an older state without revoking them again.
+
+
+## Collection purchases and Ethereum member access
+
+Originals/Ape, Legends/Cyber Wolf, Beasts/Red Beast, Crew/Crew Penguin and Chaos/Chaos Ape resolve to the server catalog for checkout. Each purchased copy has its own inventory ID, can be equipped as an avatar or placed in a shared room, and can be listed and transferred through the member marketplace. Backpack and account inventory provide game actions; land deeds keep their stable hosted destinations.
+
+MZK checkout debits the server balance and delivers once per request. Crypto marketplace checkout requires a member session, prices the cart on the server, and delivers only after independent payment verification. Repeated verification and subsequent login do not reissue traded assets. Browser-only receipts are not proof of ownership. Existing verified member orders are reconciled when Backpack loads. A server worker retries pending marketplace confirmations every 30 seconds, including after the buyer closes the page. Physical fulfillment remains separate from the included digital model.
+
+Members and Bottle login accept an Ethereum address through the wallet sign-in controls. `/api/access/wallet/challenge` issues a five-minute, single-use signing message bound to the server domain and login/linking purpose. `/api/access/wallet` verifies the signature before opening the persistent member session. Linking a wallet to an existing signed-in account additionally binds the proof to that account and preserves its Backpack, deeds, MZK and transaction history. An address alone cannot authenticate or link a wallet.
+
+Member identities and inventory are durable server records, not on-chain storage. Account sessions have no server expiry and remain revocable through logout. Browsers can clear credentials; signing again with the same linked Ethereum wallet reopens the same account. No private keys or seed phrases are collected.

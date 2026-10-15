@@ -143,8 +143,12 @@ export class UserJsonDatabase {
       memory.account.mzkGranted = Math.max(previouslyGrantedMzk, canonicalGrantMzk);
       const record = { walletId: wallet, tokens, items, memory, createdAt: previous.createdAt || account.createdAt || now, updatedAt: now, revision: Number(previous.revision || 0) + 1 };
       data.users[wallet] = record;
-      if (wallet !== accountKey) {
+      if (wallet !== accountKey && data.users[accountKey]) {
         for(const deed of Object.values(data.landDeeds||{}))if(deed.ownerId===accountKey){deed.ownerId=wallet;deed.updatedAt=now;}
+        const fields=['walletId','counterpartyId','buyerId','sellerId','from','to','owner_id','ownerId','seller_id','buyer_id','creator','user_id','creatorId'];
+        const migrate=entry=>{for(const field of fields)if(entry[field]===accountKey)entry[field]=wallet;};
+        for(const collection of ['transactions','trades','messages','builderAssets','builderOwnership','builderListings','builderPlacements','designerDrafts'])for(const entry of Object.values(data[collection]||{}))migrate(entry);
+        for(const item of record.items)migrate(item);
         delete data.users[accountKey];
       }
       return record;
@@ -256,7 +260,34 @@ export class UserJsonDatabase {
   async economy(walletId){const state=await this.get(walletId);return {balance:Number(state.tokens.MZK||0),items:economyInventory(state),ownedAssets:state.items.map(item=>item.type==='land-entitlement'?{...item,assetType:'lands',requiresReveal:true}:item.type==='land-deed'?{...item,memberPlot:true,assetType:'lands',environmentId:plotSpaceId(item),playUrl:plotPlayUrl(item)}:item)};}
   economyAction(walletId,action,sku,requestId){const wallet=cleanWallet(walletId),item=economyItem(sku);if(!item)throw Object.assign(new Error('Unknown game upgrade.'),{statusCode:400});if(!requestId||String(requestId).length>140)throw new Error('A purchase or use request id is required.');return this.transaction(data=>{const type=action==='buy'?'GAME_ITEM_PURCHASE':'GAME_ITEM_USE';const duplicate=data.transactions.find(row=>row.walletId===wallet&&row.type===type&&row.requestId===requestId);if(duplicate){if(duplicate.sku!==sku)throw new Error('This request was used for another item.');return duplicate;}const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');const owned=ownsEconomyItem(user,item);if(action==='buy'&&owned)throw Object.assign(new Error('This upgrade is already owned.'),{statusCode:409});if(action==='use'&&!owned)throw Object.assign(new Error('Purchase this upgrade before using it.'),{statusCode:403});const cost=action==='buy'?item.priceMzk:item.useCostMzk;if(Number(user.tokens.MZK||0)<cost)throw Object.assign(new Error('Not enough MZK. Play with the free basic kit or earn quest rewards.'),{statusCode:409});user.tokens.MZK-=cost;if(action==='buy')user.items.push({...item,id:'economy:'+sku,economySku:sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt:new Date().toISOString()});user.updatedAt=new Date().toISOString();user.revision=Number(user.revision||0)+1;return appendTransaction(data,{type,walletId:wallet,amountMzk:-cost,balanceAfterMzk:user.tokens.MZK,requestId,sku,reason:item.name});});}
 
-  purchaseStoreModels(walletId,items,amountMzk,requestId){const wallet=cleanWallet(walletId);if(!requestId||String(requestId).length>140)throw new Error('A checkout request id is required.');return this.transaction(data=>{const duplicate=data.transactions.find(item=>item.walletId===wallet&&item.type==='STORE_PURCHASE'&&item.requestId===requestId);if(duplicate)return duplicate;const user=data.users[wallet];if(!user||Number(user.tokens.MZK)<amountMzk)throw new Error('Not enough MZK for this purchase.');user.tokens.MZK-=amountMzk;for(const item of items){if(!user.items.some(owned=>owned.id===item.id))user.items.push({...item,source:'mzk-store',acquiredAt:new Date().toISOString()});}user.updatedAt=new Date().toISOString();return appendTransaction(data,{type:'STORE_PURCHASE',walletId:wallet,amountMzk:-amountMzk,balanceAfterMzk:user.tokens.MZK,requestId,items});});}
+  purchaseStoreModels(walletId,items,amountMzk,requestId){
+    const wallet=cleanWallet(walletId);if(!requestId||String(requestId).length>140)throw new Error('A checkout request id is required.');
+    if(!Number.isSafeInteger(amountMzk)||amountMzk<0)throw new Error('Invalid checkout amount.');
+    return this.transaction(data=>{
+      const duplicate=data.transactions.find(item=>item.walletId===wallet&&item.type==='STORE_PURCHASE'&&item.requestId===requestId);if(duplicate)return duplicate;
+      const user=data.users[wallet];if(!user||Number(user.tokens.MZK)<amountMzk)throw new Error('Not enough MZK for this purchase.');
+      const acquiredAt=new Date().toISOString(),granted=[];
+      for(const item of items)for(let index=0;index<item.quantity;index++)granted.push({...item,id:'owned-'+randomUUID(),catalogId:item.catalogId||item.id,quantity:1,source:'mzk-store',acquiredAt});
+      user.tokens.MZK-=amountMzk;user.items.push(...granted);user.updatedAt=acquiredAt;user.revision=Number(user.revision||0)+1;
+      return appendTransaction(data,{type:'STORE_PURCHASE',walletId:wallet,amountMzk:-amountMzk,balanceAfterMzk:user.tokens.MZK,requestId,items:granted});
+    });
+  }
+  fulfillStoreOrder(walletId,order){
+    const wallet=cleanWallet(walletId);
+    if(order.purchaseType!=='MARKETPLACE'||!['PAID','FULFILLED'].includes(order.paymentStatus)||!order.memberAccountId)throw Object.assign(new Error('A verified member marketplace payment is required.'),{statusCode:409});
+    const lines=order.metadata?.items||[];
+    if(!lines.length||lines.some(item=>!item.deliverable?.modelUrl||!item.deliverable?.id))throw new Error('The verified order has no deliverable models.');
+    const items=lines.map(line=>({...line.deliverable,assetType:line.deliverable.assetType||line.deliverable.type||'prop',type:line.deliverable.assetType||line.deliverable.type||'prop',quantity:line.quantity,priceUsd:line.price}));
+    return this.transaction(data=>{
+      const prior=data.transactions.find(item=>item.type==='VERIFIED_STORE_PURCHASE'&&item.requestId===order.orderId);if(prior){if(prior.accountId!==order.memberAccountId&&prior.walletId!==wallet)throw Object.assign(new Error('This order belongs to another member.'),{statusCode:403});return prior;}
+      const user=data.users[wallet];if(!user||user.memory?.account?.accountId!==order.memberAccountId)throw Object.assign(new Error('The payment belongs to another member account.'),{statusCode:403});
+      const now=new Date().toISOString(),granted=[];
+      for(const item of items)for(let index=0;index<item.quantity;index++)granted.push({...item,id:'owned-'+randomUUID(),quantity:1,source:'verified-store',orderId:order.orderId,acquiredAt:now});
+      user.items.push(...granted);user.updatedAt=now;user.revision=Number(user.revision||0)+1;
+      return appendTransaction(data,{type:'VERIFIED_STORE_PURCHASE',accountId:order.memberAccountId,walletId:wallet,amountMzk:0,balanceAfterMzk:user.tokens.MZK,requestId:order.orderId,items:granted});
+    });
+  }
+
 
   async walletLedger(walletId){await this.initialize();const wallet=cleanWallet(walletId);return (await this.read()).transactions.filter(item=>item.walletId===wallet).slice(-200).map(item=>({...item,id:item.requestId||item.id,amount:item.amountMzk,kind:Number(item.amountMzk)<0?'spend':item.type==='AUDIO_REFUND'?'reverse':item.type==='MEMBER_GRANT'?'purchase':'earn'}));}
   refundAudioSpend(walletId,requestId){const wallet=cleanWallet(walletId);return this.transaction(data=>{const original=data.transactions.find(item=>item.walletId===wallet&&item.type==='GAMEPLAY_SPEND'&&item.gameId==='audio-mixer'&&item.requestId===requestId);if(!original)throw new Error('Mixer spend not found.');const duplicate=data.transactions.find(item=>item.walletId===wallet&&item.type==='AUDIO_REFUND'&&item.requestId===requestId+':reverse');if(duplicate)return duplicate;const user=data.users[wallet];user.tokens.MZK-=original.amountMzk;return appendTransaction(data,{type:'AUDIO_REFUND',walletId:wallet,amountMzk:-original.amountMzk,balanceAfterMzk:user.tokens.MZK,requestId:requestId+':reverse',reason:'Mixer insert undone'});});}

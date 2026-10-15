@@ -1,3 +1,5 @@
+import { resolveStoreCart } from './store-catalog.mjs';
+import { EthereumMemberAuth } from './ethereum-member-auth.mjs';
 import { ServerBackups } from './server-backups.mjs';
 import {WorldAtlas,attachAtlas} from './world-atlas.mjs';
 import { AuthoritativeRooms } from './authoritative-room.mjs';
@@ -47,6 +49,8 @@ const accountSessionTtl = 34_560_000;
 const gameSessionTtl = Number(process.env.MUZIKAZ_GAME_SESSION_TTL_SECONDS || 300);
 const accountSessionStore = new DurableSessionStore(accountSessionsFile, { ttlSeconds: accountSessionTtl, maxActivePerAccount: Number(process.env.MUZIKAZ_MAX_ACTIVE_SESSIONS || 8), kind: 'account', persistent: true });
 const gameSessionStore = new DurableSessionStore(gameSessionsFile, { ttlSeconds: gameSessionTtl, maxActivePerAccount: Number(process.env.MUZIKAZ_MAX_ACTIVE_GAME_SESSIONS || 12), kind: 'game' });
+const ethereumAuth = new EthereumMemberAuth(join(dataDir,'wallet-challenges.json'),{origin:process.env.PUBLIC_BASE_URL||'https://muzikazmodelmarket.onrender.com'});
+const walletChallengeAttempts = new Map();
 const accessAttempts = new Map();
 let customMapWriteQueue = Promise.resolve();
 const supportSockets = new Set();
@@ -65,15 +69,17 @@ const presenceTtlMs = 30_000;
 let paymentRatesCache = null;
 async function trustedPurchaseOrder(input) {
   const purchaseType = String(input.purchaseType || '').toUpperCase();
-  if (!['LOADOUT', 'LAND_TIER', 'MZK_PURCHASE'].includes(purchaseType)) return input;
+  if (!['LOADOUT', 'LAND_TIER', 'MZK_PURCHASE', 'MARKETPLACE'].includes(purchaseType)) return input;
+  const marketplace = purchaseType === 'MARKETPLACE';
+  const store = marketplace ? resolveStoreCart(input.metadata?.items,[...(await repositoryGameCatalog()),...(await readModels()).filter(item=>item.status==='published')]) : null;
   const tokenPurchase = purchaseType === 'MZK_PURCHASE';
   const landTier = purchaseType === 'LAND_TIER';
-  if (!tokenPurchase && (landTier ? !/^land-tier-[a-z0-9-]+$/.test(String(input.itemId || '')) : String(input.itemId || '') !== 'standard-loadout')) throw Object.assign(new Error(`Unknown ${landTier ? 'land tier' : 'Loadout'} product.`), { statusCode: 400 });
+  if (!marketplace && !tokenPurchase && (landTier ? !/^land-tier-[a-z0-9-]+$/.test(String(input.itemId || '')) : String(input.itemId || '') !== 'standard-loadout')) throw Object.assign(new Error(`Unknown ${landTier ? 'land tier' : 'Loadout'} product.`), { statusCode: 400 });
   const asset = String(input.paymentAsset || '').toUpperCase(); const network = MUZIKAZ_PAYMENT_NETWORKS[asset];
   if (!network) throw Object.assign(new Error('Unsupported Loadout payment asset.'), { statusCode: 400 });
   const requestedPrice = Number(input.basePrice);
   if(tokenPurchase&&(!Number.isFinite(requestedPrice)||requestedPrice<5||requestedPrice>10000))throw Object.assign(new Error('Choose a token purchase from $5 to $10,000.'),{statusCode:400});
-  const tierPrice = tokenPurchase ? requestedPrice : landTier ? 40 : ([5, 30, 100, 200].includes(requestedPrice) ? requestedPrice : 30);
+  const tierPrice = marketplace ? store.totalUsd : tokenPurchase ? requestedPrice : landTier ? 40 : ([5, 30, 100, 200].includes(requestedPrice) ? requestedPrice : 30);
   if (!paymentRatesCache || Date.now() - paymentRatesCache.savedAt > 60_000) {
     const ids = [...new Set(Object.values(MUZIKAZ_PAYMENT_NETWORKS).map((item) => item.rateId))].join(',');
     const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`, { headers: { Accept: 'application/json' } });
@@ -81,7 +87,7 @@ async function trustedPurchaseOrder(input) {
     paymentRatesCache = { savedAt: Date.now(), values: await response.json() };
   }
   const usdRate = Number(paymentRatesCache.values[network.rateId]?.usd); if (!(usdRate > 0)) throw Object.assign(new Error('Independent payment quote is unavailable. No order was created.'), { statusCode: 503 });
-  const factor = 10 ** network.decimals; return { ...input, purchaseType: tokenPurchase ? 'MZK_PURCHASE' : landTier ? 'LAND_TIER' : 'LOADOUT', itemId: tokenPurchase ? 'mzk-land-presale' : landTier ? input.itemId : 'standard-loadout', basePrice: tierPrice, quantity: 1, expectedAmount: Math.ceil((tierPrice / usdRate) * factor) / factor };
+  const factor = 10 ** network.decimals; return { ...input, purchaseType: marketplace ? 'MARKETPLACE' : tokenPurchase ? 'MZK_PURCHASE' : landTier ? 'LAND_TIER' : 'LOADOUT', ...(marketplace?{metadata:{...input.metadata,items:store.items.map(item=>({id:item.catalogId,name:item.name,quantity:item.quantity,price:item.priceUsd,deliverable:item}))}}:{}), itemId: marketplace ? 'marketplace-cart' : tokenPurchase ? 'mzk-land-presale' : landTier ? input.itemId : 'standard-loadout', basePrice: tierPrice, quantity: 1, expectedAmount: Math.ceil((tierPrice / usdRate) * factor) / factor };
 }
 
 function activePresence() {
@@ -141,10 +147,10 @@ const serverBackups = new ServerBackups(process.env.MUZIKAZ_BACKUP_DIR || join(d
   modelUploads: process.env.UPLOAD_STORAGE_PATH || join(dataDir, 'uploads', 'models')
 });
 async function snapshotServer() {
-  await Promise.all([sharedRooms.flush(), userDatabase.queue, loadoutCodeStore.queue, paymentOrderStore.queue, accountSessionStore.queue, gameSessionStore.queue, customMapWriteQueue]);
+  await Promise.all([sharedRooms.flush(), userDatabase.queue, loadoutCodeStore.queue, paymentOrderStore.queue, accountSessionStore.queue, gameSessionStore.queue, ethereumAuth.queue, customMapWriteQueue]);
   return serverBackups.snapshot();
 }
-const authoritativeRooms=new AuthoritativeRooms({store:sharedRooms,capacity:maxHouseUsers,reward:(identity,event,requestId)=>userDatabase.memberReward(identity.walletId,'progress',{scope:'field',event,requestId}),resolveAsset:async(identity,command)=>{const state=await userDatabase.get(identity.walletId),catalog=economyItem(command.sku);if(catalog&&ownsEconomyItem(state,catalog)&&catalog.kind==='asset')return catalog;const custom=state.items.find(item=>item.id===command.itemId&&item.type==='custom-item');if(custom)return {...custom,behavior:'decor'};const item=state.items.find(item=>item.id===command.itemId&&(item.modelUrl||item.buildAssetId));if(!item)return null;const canonical=GAME_ECONOMY.find(asset=>asset.kind==='asset'&&(asset.modelUrl&&asset.modelUrl===item.modelUrl||asset.buildAssetId&&asset.buildAssetId===item.buildAssetId));return canonical&&ownsEconomyItem(state,canonical)?canonical:null;},charge:(identity,sku,requestId)=>userDatabase.economyAction(identity.walletId,'use',sku,'room:'+requestId),telemetry:(walletId,sample)=>userDatabase.recordRpgTelemetry(walletId,sample)});
+const authoritativeRooms=new AuthoritativeRooms({store:sharedRooms,capacity:maxHouseUsers,reward:(identity,event,requestId)=>userDatabase.memberReward(identity.walletId,'progress',{scope:'field',event,requestId}),resolveAsset:async(identity,command)=>{const state=await userDatabase.get(identity.walletId),catalog=economyItem(command.sku);if(catalog&&ownsEconomyItem(state,catalog)&&catalog.kind==='asset')return catalog;const purchased=state.items.find(item=>item.id===command.itemId&&['mzk-store','verified-store'].includes(item.source)&&item.modelUrl);if(purchased)return {...purchased,behavior:'decor',targetHeight:['avatar','avatars'].includes(purchased.assetType||purchased.type)?1.8:undefined};const custom=state.items.find(item=>item.id===command.itemId&&item.type==='custom-item');if(custom)return {...custom,behavior:'decor'};const item=state.items.find(item=>item.id===command.itemId&&(item.modelUrl||item.buildAssetId));if(!item)return null;const canonical=GAME_ECONOMY.find(asset=>asset.kind==='asset'&&(asset.modelUrl&&asset.modelUrl===item.modelUrl||asset.buildAssetId&&asset.buildAssetId===item.buildAssetId));return canonical&&ownsEconomyItem(state,canonical)?canonical:null;},charge:(identity,sku,requestId)=>userDatabase.economyAction(identity.walletId,'use',sku,'room:'+requestId),telemetry:(walletId,sample)=>userDatabase.recordRpgTelemetry(walletId,sample)});
 setInterval(()=>sharedRooms.flush().catch(error=>console.error('Room checkpoint failed',error)),1000).unref();
 let roomEnvironmentCache=null,roomEnvironmentCachedAt=0;
 async function roomEnvironment(id){if(!roomEnvironmentCache||Date.now()-roomEnvironmentCachedAt>3000){roomEnvironmentCache=await combinedEnvironments();roomEnvironmentCachedAt=Date.now();}return roomEnvironmentCache.find(env=>env.id===id);}
@@ -288,20 +294,39 @@ async function repositoryGameCatalog() {
     combinedEnvironments()
   ]);
   const models = (Array.isArray(modelDocument) ? modelDocument : modelDocument.models || []).filter((model) => model.visibility !== 'private' && model.modelUrl).map((model) => ({
-    id: `repository-${model.id}`, name: model.name, assetType: model.assetType || 'prop', category: model.category || 'Game items', modelUrl: publicModelUrl(model.modelUrl), thumbnailUrl: publicModelUrl(model.thumbnailUrl), scale: Number(model.scale) || 1, rotation: model.rotation || 0, source: 'repository', accessType: 'included'
+    id: `repository-${model.id}`, name: model.name, assetType: model.assetType || 'prop', category: model.category || 'Game items', priceUsd:Number(model.priceUsd||model.price)||0, modelUrl: publicModelUrl(model.modelUrl), thumbnailUrl: publicModelUrl(model.thumbnailUrl), scale: Number(model.scale) || 1, rotation: model.rotation || 0, source: 'repository', accessType: 'included'
   }));
   const worlds = environments.filter(environment=>!environment.memberPlot).map((environment) => ({
     id: `environment-${environment.id}`, name: environment.name, assetType: 'environment', category: environment.category || environment.label || 'Environments', modelUrl: environment.modelUrl || environment.modelUrls?.[0] || '', modelUrls: environment.modelUrls, thumbnailUrl: environment.thumbnailUrl || '', playable: environment.playable !== false, levelOrder: environment.levelOrder, source: 'repository', accessType: 'included'
   }));
   return [...models, ...worlds];
 }
+async function deliverVerifiedStoreOrder(order){
+  if(order.purchaseType!=='MARKETPLACE'||!order.memberAccountId||!['PAID','FULFILLED'].includes(order.paymentStatus))return null;
+  const resolved=resolveStoreCart(order.metadata?.items,[...(await repositoryGameCatalog()),...(await readModels()).filter(item=>item.status==='published')]);
+  if(Number(order.basePrice)+.01<resolved.totalUsd)return null;
+  order={...order,metadata:{...order.metadata,items:resolved.items.map(item=>({quantity:item.quantity,price:item.priceUsd,deliverable:item}))}};
+  const account=await loadoutCodeStore.getAccount(order.memberAccountId);if(!account)throw new Error('Purchasing member account was not found.');
+  const state=await userDatabase.ensureAccount(account);return userDatabase.fulfillStoreOrder(state.walletId,order);
+}
+let reconcilingStorePayments=false,storeDeliveryCursor=0;
+async function reconcileStorePayments(){
+  if(reconcilingStorePayments)return;reconcilingStorePayments=true;
+  try{await userDatabase.initialize();const delivered=new Set(((await userDatabase.read()).transactions||[]).filter(entry=>entry.type==='VERIFIED_STORE_PURCHASE').map(entry=>entry.requestId));
+    const orders=(await paymentOrderStore.records()).filter(order=>!delivered.has(order.orderId)&&order.purchaseType==='MARKETPLACE'&&order.memberAccountId&&order.transactionHash&&['TRANSACTION_SUBMITTED','CONFIRMING','PAID','FULFILLED'].includes(order.paymentStatus));
+    const start=orders.length?storeDeliveryCursor%orders.length:0,batch=[...orders.slice(start),...orders.slice(0,start)].slice(0,25);storeDeliveryCursor=start+batch.length;
+    for(const order of batch){try{const verified=['PAID','FULFILLED'].includes(order.paymentStatus)?order:await paymentOrderStore.verify(order.orderId);await deliverVerifiedStoreOrder(verified);}catch(error){console.error('[Store delivery]',order.orderId,error.message);}}
+  }finally{reconcilingStorePayments=false;}
+}
 async function backpackFor(account) {
   const stateAsset = (name, type) => ({ id: createHash('sha256').update(`${type}:${name}`).digest('hex').slice(0, 20), name, type, state: /^Unrevealed/i.test(name) ? 'unrevealed' : 'revealed' });
   const assets = [...(account.gameAssets || []).map((name) => stateAsset(name, 'game')), ...(account.purchasedAssets || []).map((name) => stateAsset(name, 'purchase'))];
+  for(const order of await paymentOrderStore.records())if(order.memberAccountId===account.accountId&&order.purchaseType==='MARKETPLACE'&&['PAID','FULFILLED'].includes(order.paymentStatus))await deliverVerifiedStoreOrder(order);
   const walletState=await userDatabase.ensureAccount(account);
   const catalog = (await repositoryGameCatalog()).filter(asset=>walletState.items.some(item=>item.modelUrl&&publicModelUrl(item.modelUrl)===publicModelUrl(asset.modelUrl)));
+  const inventoryAvatars=walletState.items.filter(item=>item.modelUrl&&(['avatar','avatars'].includes(item.assetType||item.type))).map(item=>({...item,eligible:true,state:'revealed'}));
   const catalogAvatars = catalog.filter((asset) => asset.assetType === 'avatar').map((asset) => ({ ...asset, eligible: true, state: 'revealed' }));
-  return { accountId: account.accountId, backpackId: account.backpackId, status: account.loadoutRedeemed ? 'ready' : 'empty', mzkBalance: Number(walletState.tokens.MZK || 0), land: walletState.items.filter(item=>['land-deed','land-entitlement'].includes(item.type)).map(item=>({...item,state:item.type==='land-deed'?'revealed':'unrevealed',requiresReveal:item.type==='land-entitlement',...(item.type==='land-deed'?{spaceId:plotSpaceId(item),playUrl:plotPlayUrl(item)}:{})})), avatars: [STARTER_AVATAR, ...catalogAvatars, ...assets.filter((asset) => /avatar/i.test(asset.name) && asset.name !== 'Starter Avatar').map((asset) => ({ ...asset, eligible: asset.state === 'revealed' }))], assets, catalogAssets: catalog, environments: catalog.filter((asset) => asset.assetType === 'environment'), props: catalog.filter((asset) => asset.assetType === 'prop'), vehicles: catalog.filter((asset) => asset.assetType === 'vehicle'), bottleClaims: (account.bottleClaims || []).map((name) => stateAsset(name, 'bottle')), entitlements: [...(account.creatorVaultAccess ? ['creator-vault'] : []), ...(account.marketplaceAccess ? ['marketplace'] : []), ...(account.gameAccess ? ['members-game'] : [])], selectedAvatarId: [STARTER_AVATAR,...catalogAvatars].some(item=>item.id===account.selectedAvatarId)?account.selectedAvatarId:STARTER_AVATAR.id, updatedAt: account.updatedAt };
+  return { accountId: account.accountId, backpackId: account.backpackId, status: account.loadoutRedeemed ? 'ready' : 'empty', mzkBalance: Number(walletState.tokens.MZK || 0), land: walletState.items.filter(item=>['land-deed','land-entitlement'].includes(item.type)).map(item=>({...item,state:item.type==='land-deed'?'revealed':'unrevealed',requiresReveal:item.type==='land-entitlement',...(item.type==='land-deed'?{spaceId:plotSpaceId(item),playUrl:plotPlayUrl(item)}:{})})), avatars: [STARTER_AVATAR, ...inventoryAvatars, ...catalogAvatars, ...assets.filter((asset) => /avatar/i.test(asset.name) && asset.name !== 'Starter Avatar').map((asset) => ({ ...asset, eligible: asset.state === 'revealed' }))], assets, catalogAssets: catalog, environments: catalog.filter((asset) => asset.assetType === 'environment'), props: catalog.filter((asset) => asset.assetType === 'prop'), vehicles: catalog.filter((asset) => asset.assetType === 'vehicle'), bottleClaims: (account.bottleClaims || []).map((name) => stateAsset(name, 'bottle')), entitlements: [...(account.creatorVaultAccess ? ['creator-vault'] : []), ...(account.marketplaceAccess ? ['marketplace'] : []), ...(account.gameAccess ? ['members-game'] : [])], selectedAvatarId: [STARTER_AVATAR,...inventoryAvatars,...catalogAvatars].some(item=>item.id===account.selectedAvatarId)?account.selectedAvatarId:STARTER_AVATAR.id, updatedAt: account.updatedAt };
 }
 function throttleAccess(req) { const key = String(req.socket.remoteAddress || 'unknown'); const now = Date.now(); const attempt = accessAttempts.get(key) || { failures: 0, resetAt: now + 15 * 60_000 }; if (attempt.resetAt <= now) { attempt.failures = 0; attempt.resetAt = now + 15 * 60_000; } if (attempt.failures >= 8) throw Object.assign(new Error('Too many failed access attempts. Try again later.'), { statusCode: 429 }); accessAttempts.set(key, attempt); return { success: () => accessAttempts.delete(key), failure: () => { attempt.failures += 1; } }; }
 async function requireLandOwnership(req, res) {
@@ -506,6 +531,16 @@ const server = createServer(async (req, res) => {
       res.setHeader('Set-Cookie', [sessionCookie('mzk_session', '', 0), sessionCookie('mzk_game', '', 0)]); return sendJson(res, 200, assetResponse({ authenticated: false }));
     }
     if (url.pathname === '/api/backpack' && req.method === 'GET') { const active = await accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return account ? sendJson(res, 200, assetResponse(await backpackFor(account))) : authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'Account not found.', 'account'); }
+    if(url.pathname==='/api/backpack/use'&&req.method==='POST'){
+      const context=await memberContext(req,res,true);if(!context)return;
+      const {itemId}=await bodyJson(req,4096),item=itemId==='starter-avatar'?STARTER_AVATAR:context.state.items.find(item=>item.id===itemId);
+      if(!item)return authorizationError(res,403,'ITEM_NOT_OWNED','This item is not in your server Backpack.','inventory');
+      if(['land-deed','land-entitlement'].includes(item.type)){const deed=await userDatabase.revealLand(context.walletId,item.id);roomEnvironmentCache=null;await combinedEnvironments();return sendJson(res,200,assetResponse({action:'travel',playUrl:deed.playUrl}));}
+      const avatar=(await backpackFor(context.account)).avatars.find(avatar=>avatar.id===item.id&&avatar.eligible);
+      if(avatar){await loadoutCodeStore.selectAvatar(context.account.accountId,item.id);return sendJson(res,200,assetResponse({action:'avatar',itemId:item.id,playUrl:'model-explorer.html?environment=public-commons&autoplay=1'}));}
+      if(item.modelUrl||item.renderKind||item.buildAssetId)return sendJson(res,200,assetResponse({action:'place',itemId:item.id,playUrl:'model-explorer.html?environment=public-commons&autoplay=1&useItem='+encodeURIComponent(item.id)}));
+      return authorizationError(res,409,'ITEM_ACTION_REQUIRED','Open this item in its Marketplace or care tools to use it.','inventory');
+    }
     if (url.pathname === '/api/avatars' && req.method === 'GET') { const active = await accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return sendJson(res, 200, assetResponse((await backpackFor(account)).avatars)); }
     if (url.pathname === '/api/avatar-selection' && req.method === 'PUT') { const active = await accountSession(req, res, true); if (!active) return; const requested = (await bodyJson(req)).avatarId; const current = await loadoutCodeStore.getAccount(active.accountId); if (!(await backpackFor(current)).avatars.some((avatar) => avatar.id === requested && avatar.eligible)) return authorizationError(res, 409, 'AVATAR_UNAVAILABLE', 'That avatar is not available in this game Backpack.', 'inventory'); const account = await loadoutCodeStore.selectAvatar(active.accountId, requested); return sendJson(res, 200, assetResponse({ selectedAvatarId: account.selectedAvatarId, updatedAt: account.updatedAt })); }
     if (url.pathname === '/api/game/session' && req.method === 'POST') {
@@ -570,14 +605,31 @@ const server = createServer(async (req, res) => {
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.list())); }
     const adminAccessRevoke = url.pathname.match(/^\/api\/admin\/(?:access-codes|loadout-codes)\/([^/]+)\/revoke$/);
     if (adminAccessRevoke && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.adminRevoke(decodeURIComponent(adminAccessRevoke[1])))); }
-    if ((url.pathname === '/api/access-codes/redeem' || url.pathname === '/api/access/activate' || url.pathname === '/api/loadout-codes/redeem') && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); const current = await resolveAccountSession(req); const result = await loadoutCodeStore.activate(body.code, body.wallet, body.username, current?.accountId || ''); await userDatabase.ensureAccount(result.account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, result.account))); } catch (error) { attempt.failure(); throw error; } }
+    if ((url.pathname === '/api/access-codes/redeem' || url.pathname === '/api/access/activate' || url.pathname === '/api/loadout-codes/redeem') && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); const current = await resolveAccountSession(req); const verifiedWallet=body.wallet?await ethereumAuth.verify(body):''; const result = await loadoutCodeStore.activate(body.code, verifiedWallet, body.username, current?.accountId || ''); await userDatabase.ensureAccount(result.account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, result.account))); } catch (error) { attempt.failure(); throw error; } }
     if (url.pathname === '/api/access/admin-bypass' && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); if (!matchesSecret(body.password, adminPassword)) throw Object.assign(new Error('The admin bypass word is incorrect.'), { statusCode: 401 }); const account = await loadoutCodeStore.adminBypass(); await userDatabase.ensureAccount(account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
     if (url.pathname === '/api/access/login' && req.method === 'POST') { const attempt = throttleAccess(req); try { const account = await loadoutCodeStore.authenticate((await bodyJson(req)).code); await userDatabase.ensureAccount(account); attempt.success(); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); } catch (error) { attempt.failure(); throw error; } }
     if (url.pathname === '/api/access/free-play' && req.method === 'POST') { const attempt = throttleAccess(req); try { const body = await bodyJson(req); const account = await loadoutCodeStore.freePlayLogin(body.username, body.password); await userDatabase.ensureAccount(account); const opened = await openAccountSession(res, account); attempt.success(); return sendJson(res, 200, assetResponse({ ...opened, backpack: await backpackFor(account), permissions: loadoutPermissions(account) })); } catch (error) { attempt.failure(); throw error; } }
-    if (url.pathname === '/api/access/wallet' && req.method === 'POST') { const wallet = (await bodyJson(req)).wallet; const active = await resolveAccountSession(req); const current = active ? await loadoutCodeStore.getAccount(active.accountId) : null; const account = current && !current.primaryEthereumWallet ? await loadoutCodeStore.connectWallet(current.accountId, wallet) : await loadoutCodeStore.findByWallet(wallet); await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(await openAccountSession(res, account))); }
+    if (url.pathname === '/api/access/wallet/challenge' && req.method === 'POST') {
+      const key=String(req.socket.remoteAddress||'unknown'),now=Date.now();
+      for(const [ip,attempt] of walletChallengeAttempts)if(attempt.until<now)walletChallengeAttempts.delete(ip);
+      const attempt=walletChallengeAttempts.get(key)||{count:0,until:now+60000};if(++attempt.count>20)return authorizationError(res,429,'WALLET_RATE_LIMIT','Wait a minute before requesting another wallet signature.','wallet');walletChallengeAttempts.set(key,attempt);
+      const body=await bodyJson(req,4096),purpose=body.purpose==='attach'?'attach':'login';
+      const active=purpose==='attach'?await accountSession(req,res,true):null;if(purpose==='attach'&&!active)return;
+      return sendJson(res,200,assetResponse(await ethereumAuth.issue(body.wallet,purpose,active?.accountId||'')));
+    }
+    if (url.pathname === '/api/access/wallet' && req.method === 'POST') {
+      const wallet=await ethereumAuth.verify(await bodyJson(req,4096));
+      const account=await loadoutCodeStore.walletMemberLogin(wallet);await userDatabase.ensureAccount(account);
+      return sendJson(res,200,assetResponse(await openAccountSession(res,account)));
+    }
     if (url.pathname === '/api/account/loadout/paid' && req.method === 'POST') { const body = await bodyJson(req); const order = await paymentOrderStore.get(body.orderId); if (!order || !paymentOrderStore.authorize(order, body.claimToken)) return sendJson(res, 401, { success: false, code: 'PURCHASE_CLAIM_INVALID', message: 'The purchase claim is invalid.' }); const verified = ['PAID', 'FULFILLED'].includes(order.paymentStatus) ? order : await paymentOrderStore.verify(order.orderId); if (!['PAID', 'FULFILLED'].includes(verified.paymentStatus)) return sendJson(res, 202, { success: false, code: 'PURCHASE_PENDING', message: 'The payment is still awaiting independent confirmation.' }); const active = await resolveAccountSession(req); const granted = await loadoutCodeStore.fulfillPaidLoadout(verified, active?.accountId || ''); await userDatabase.ensureAccount(granted); return sendJson(res, 200, assetResponse(await openAccountSession(res, granted))); }
     if (url.pathname === '/api/account' && req.method === 'GET') { const active = await accountSession(req, res); if (!active) return; const account = await loadoutCodeStore.getAccount(active.accountId); return account ? sendJson(res, 200, assetResponse(account)) : sendJson(res, 404, { success: false, message: 'Account not found.' }); }
-    if ((url.pathname === '/api/wallets/attach' || url.pathname === '/api/account/wallet') && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; const account = await loadoutCodeStore.connectWallet(active.accountId, (await bodyJson(req)).wallet); active.wallet = account.primaryEthereumWallet; await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(account)); }
+    if ((url.pathname === '/api/wallets/attach' || url.pathname === '/api/account/wallet') && req.method === 'POST') {
+      const active=await accountSession(req,res,true);if(!active)return;
+      const wallet=await ethereumAuth.verify(await bodyJson(req,4096),'attach',active.accountId);
+      const account=await loadoutCodeStore.connectWallet(active.accountId,wallet);await userDatabase.ensureAccount(account);
+      return sendJson(res,200,assetResponse(account));
+    }
     if (url.pathname === '/api/account/avatar' && req.method === 'PUT') { const active = await accountSession(req, res, true); if (!active) return; const requested = (await bodyJson(req)).avatarId; const current = await loadoutCodeStore.getAccount(active.accountId); if (!(await backpackFor(current)).avatars.some((avatar) => avatar.id === requested && avatar.eligible)) return authorizationError(res, 409, 'AVATAR_UNAVAILABLE', 'That avatar is not available in this game Backpack.', 'inventory'); const account = await loadoutCodeStore.selectAvatar(active.accountId, requested); await userDatabase.ensureAccount(account); return sendJson(res, 200, assetResponse(account)); }
     if (url.pathname === '/api/account/access-code' && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.ensureAccountCode(active.accountId))); }
     if (url.pathname === '/api/account/access-code/rotate' && req.method === 'POST') { const active = await accountSession(req, res, true); if (!active) return; return sendJson(res, 200, assetResponse(await loadoutCodeStore.rotate(active.accountId))); }
@@ -601,10 +653,7 @@ const server = createServer(async (req, res) => {
       const context=await memberContext(req,res,true);if(!context)return;
       const body=await bodyJson(req),items=body.items;
       if(!Array.isArray(items)||!items.length||items.length>50)throw Object.assign(new Error('Choose up to 50 digital models.'),{statusCode:400});
-      const catalog=[...(await repositoryGameCatalog()),...(await readModels()).filter(item=>item.status==='published')];
-      const collections={aape:['Originals',39],voltwolf:['Legends',64],sharko:['Beasts',58],flaminglow:['Chaos',69],muzikaz:['New Legends',52],pixella:['Trait Avatars',46],beedeere:['Online Events',55]};
-      const resolved=items.map(line=>{const id=String(line.deliverable?.id||'').replace(/^repository-/,''),asset=catalog.find(item=>String(item.id).replace(/^repository-/,'')===id);if(!asset?.modelUrl)throw Object.assign(new Error('MZK checkout supports catalog models. Remove merchandise or use crypto checkout for those items.'),{statusCode:400});const quantity=Number(line.quantity);if(!Number.isSafeInteger(quantity)||quantity<1||quantity>100)throw new Error('Invalid model quantity.');const collection=collections[id];const usd=collection&&String(line.name).startsWith(collection[0]+' ·')?collection[1]:Number(asset.price||asset.priceUsd)||25;return {id:'store-model-'+id,name:asset.name||asset.title,modelUrl:asset.modelUrl,thumbnailUrl:asset.thumbnailUrl||'',type:asset.assetType||'prop',quantity,priceUsd:usd};});
-      const subtotal=resolved.reduce((sum,item)=>sum+item.priceUsd*item.quantity,0),amountMzk=Math.round((subtotal+(subtotal<75?8.95:0)+subtotal*.0825)*100);
+      const {items:resolved,amountMzk}=resolveStoreCart(items,[...(await repositoryGameCatalog()),...(await readModels()).filter(item=>item.status==='published')]);
       if(Number(body.expectedAmountMzk)!==amountMzk)return authorizationError(res,409,'STORE_PRICE_CHANGED','The catalog price changed. Refresh the cart before paying.','checkout');
       return sendJson(res,201,assetResponse(await userDatabase.purchaseStoreModels(context.walletId,resolved,amountMzk,body.requestId)));
     }
@@ -624,14 +673,14 @@ const server = createServer(async (req, res) => {
     }
     if (url.pathname === '/api/payments/orders' && req.method === 'POST') {
       const body=await bodyJson(req);delete body.memberAccountId;
-      if(['MZK_PURCHASE','LAND_TIER'].includes(String(body.purchaseType||'').toUpperCase())){const active=await accountSession(req,res,true);if(!active)return;body.memberAccountId=active.accountId;}
+      if(['MZK_PURCHASE','LAND_TIER','MARKETPLACE'].includes(String(body.purchaseType||'').toUpperCase())){const active=await accountSession(req,res,true);if(!active)return;body.memberAccountId=active.accountId;}
       return sendJson(res,201,assetResponse(await paymentOrderStore.create(await trustedPurchaseOrder(body))));
     }
     if (url.pathname === '/api/admin/sales' && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await paymentOrderStore.list())); }
     const paymentOrder = url.pathname.match(/^\/api\/payments\/orders\/([^/]+)$/);
-    if (paymentOrder && req.method === 'GET') { const order = await paymentOrderStore.get(paymentOrder[1]); return order ? sendJson(res, 200, assetResponse(order)) : sendJson(res, 404, { success: false, message: 'Payment order not found.' }); }
+    if (paymentOrder && req.method === 'GET') { const order = await paymentOrderStore.get(paymentOrder[1]); if(order)await deliverVerifiedStoreOrder(order); return order ? sendJson(res, 200, assetResponse(order)) : sendJson(res, 404, { success: false, message: 'Payment order not found.' }); }
     const paymentAction = url.pathname.match(/^\/api\/payments\/orders\/([^/]+)\/(submit|verify|fulfill)$/);
-    if (paymentAction && req.method === 'POST') { const body = await bodyJson(req).catch(() => ({})); const [, id, action] = paymentAction; if (action === 'fulfill' && !requireAdmin(req, res)) return; const result = action === 'submit' ? await paymentOrderStore.submit(id, body.transactionHash, body.wallet) : action === 'verify' ? await paymentOrderStore.verify(id) : await paymentOrderStore.fulfill(id, body.fulfillment); if(['PAID','FULFILLED'].includes(result.paymentStatus)&&result.memberAccountId&&['MZK_PURCHASE','LAND_TIER'].includes(result.purchaseType)){const account=await loadoutCodeStore.fulfillTokenPurchase(result,result.memberAccountId);await userDatabase.ensureAccount(account);} return sendJson(res, 200, assetResponse(result)); }
+    if (paymentAction && req.method === 'POST') { const body = await bodyJson(req).catch(() => ({})); const [, id, action] = paymentAction; if (action === 'fulfill' && !requireAdmin(req, res)) return; const result = action === 'submit' ? await paymentOrderStore.submit(id, body.transactionHash, body.wallet) : action === 'verify' ? await paymentOrderStore.verify(id) : await paymentOrderStore.fulfill(id, body.fulfillment); if(['PAID','FULFILLED'].includes(result.paymentStatus)&&result.memberAccountId&&['MZK_PURCHASE','LAND_TIER'].includes(result.purchaseType)){const account=await loadoutCodeStore.fulfillTokenPurchase(result,result.memberAccountId);await userDatabase.ensureAccount(account);} await deliverVerifiedStoreOrder(result); return sendJson(res, 200, assetResponse(result)); }
 
     if(url.pathname==='/api/rpg/telemetry'&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;const body=await bodyJson(req),player=await authoritativeRooms.player(String(body.world||''),'account:'+context.account.accountId);if(!player||Date.now()-player.lastSeen>15000)return authorizationError(res,409,'ROOM_REQUIRED','Join a server room before recording gameplay telemetry.','telemetry');return sendJson(res,200,assetResponse(await userDatabase.recordRpgTelemetry(context.walletId,{health:player.health,world:body.world})));}
     if (url.pathname === '/api/rpg/state' && req.method === 'GET') { const context=await memberContext(req,res);if(!context)return;return sendJson(res,200,assetResponse(await userDatabase.rpgState(context.walletId))); }
@@ -652,7 +701,7 @@ const server = createServer(async (req, res) => {
     if (builderPlacement && req.method === 'PATCH') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.asset.configure')) return; return sendJson(res, 200, assetResponse(await userDatabase.updateBuilderPlacement(context.walletId, decodeURIComponent(builderPlacement[1]), await bodyJson(req)))); }
     if (builderPlacement && req.method === 'DELETE') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.world.edit')) return; return sendJson(res, 200, assetResponse(await userDatabase.updateBuilderPlacement(context.walletId, decodeURIComponent(builderPlacement[1]), {}, true))); }
 
-    if (url.pathname === '/api/wallet/state' && req.method === 'GET') { await resolveAccountSession(req); return sendJson(res, 200, assetResponse(await userDatabase.get(requestWallet(req)))); }
+    if (url.pathname === '/api/wallet/state' && req.method === 'GET') { const active=await resolveAccountSession(req);if(active){const context=await memberContext(req,res);if(!context)return;} return sendJson(res, 200, assetResponse(await userDatabase.get(requestWallet(req)))); }
     if (url.pathname === '/api/wallet/state' && req.method === 'PUT') {const context=await memberContext(req,res,true);if(!context)return;const body=await bodyJson(req);if('items' in body||'tokens' in body||Object.hasOwn(body.memory||{},'account')||Object.hasOwn(body.memory||{},'memberRewards'))return authorizationError(res,403,'SERVER_BALANCE_REQUIRED','Balances, ownership and reward progress are maintained by server transactions.','wallet');return sendJson(res,200,assetResponse(await userDatabase.put(context.walletId,body)));}
     if (url.pathname === '/api/custom-items' && ['GET', 'POST'].includes(req.method)) {
       const context = await memberContext(req, res, req.method === 'POST'); if (!context) return;
@@ -836,6 +885,7 @@ server.on('upgrade', (req, socket) => {
   socket.on('close', () => supportSockets.delete(socket)); socket.on('error', () => supportSockets.delete(socket));
 });
 await loadoutCodeStore.migrate();
+const storeDeliveryTimer=setInterval(()=>reconcileStorePayments().catch(error=>console.error('[Store delivery]',error.message)),30000);storeDeliveryTimer.unref();
 const backupTimer = setInterval(() => snapshotServer().catch(error=>console.error('[Backups]', error.message)), 6 * 60 * 60 * 1000); backupTimer.unref();
 snapshotServer().catch(error=>console.error('[Backups]', error.message));
 server.listen(port, () => console.log(`MUZIKAZ shared house server running on http://localhost:${port}`));

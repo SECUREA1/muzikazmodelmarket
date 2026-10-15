@@ -2141,26 +2141,6 @@ function checkoutOwner(method, paymentOwner = '') {
   return normalizeMemberEmail(paymentOwner);
 }
 
-function claimCheckoutItems(items, owner, source) {
-  const normalizedOwner = normalizeMemberEmail(owner);
-  if (!normalizedOwner) throw new Error('Connect a wallet before claiming this order.');
-  items.forEach((item) => {
-    for (let quantity = 0; quantity < (Number(item.quantity) || 1); quantity += 1) claimOwnedAsset(item.name, source, normalizedOwner);
-  });
-  const backpacks = readBackpackData(BACKPACK_ASSETS_KEY, {});
-  backpacks[normalizedOwner] ||= [];
-  items.forEach((item) => {
-    const deliverable = normalizeDeliverable(item.deliverable);
-    if (!deliverable) return;
-    const entitlement = { ...deliverable, orderItem: item.name, source, acquiredAt: new Date().toISOString() };
-    if (!backpacks[normalizedOwner].some((asset) => asset.id === entitlement.id && asset.modelUrl === entitlement.modelUrl)) backpacks[normalizedOwner].push(entitlement);
-  });
-  window.localStorage.setItem(BACKPACK_ASSETS_KEY, JSON.stringify(backpacks));
-  currentMemberEmail = normalizedOwner;
-  window.localStorage.setItem('muzikazBottleMemberEmail', normalizedOwner);
-  renderCheckoutIdentity();
-  return normalizedOwner;
-}
 
 function validateWalletCheckout() {
   if (!readCart().length) { document.querySelector('#payment-status').textContent = 'Your cart is empty.'; return false; }
@@ -2215,18 +2195,6 @@ async function waitForMarketTransaction(wallet, transactionHash) {
   throw new Error('Payment is still pending. Keep your cart and return after the transaction confirms.');
 }
 
-function completeEthereumOrder({ items, from, transactionHash, totalWei }) {
-  const orderId = `MZ-ETH-${transactionHash.slice(2, 10).toUpperCase()}`;
-  const owner = normalizeMemberEmail(from);
-  const receipt = { orderId, total: formatEth(totalWei), from, to: marketPaymentConfig().address, transactionHash, items, paidAt: new Date().toISOString(), method: 'Ethereum' };
-  window.localStorage.setItem('muzikazLastReceipt', JSON.stringify(receipt));
-  claimCheckoutItems(items, owner, `Ethereum order ${orderId}`);
-  writeCart([]);
-  renderCheckoutPage();
-  document.querySelector('#confirmation-copy').textContent = `Receipt ${orderId} is confirmed on-chain for ${formatEth(totalWei)}. ${items.length} cart line${items.length === 1 ? '' : 's'} now belong to ${from}. Transaction: ${transactionHash}`;
-  document.querySelector('#confirmation-panel').hidden = false;
-  document.querySelector('#confirmation-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
 
 function checkoutUsdTotal() {
   const items = readCart();
@@ -2234,16 +2202,19 @@ function checkoutUsdTotal() {
   return subtotal + (subtotal > 0 && subtotal < 75 ? 8.95 : 0) + (subtotal * 0.0825);
 }
 
-function completeCryptoOrder(items, payment) {
-  const orderId = `MZ-${payment.currency}-${payment.transactionHash.slice(0, 8).toUpperCase()}`;
-  const receipt = { orderId, total: `$${payment.usd.toFixed(2)}`, from: payment.address, to: payment.recipient, transactionHash: payment.transactionHash, items, paidAt: new Date().toISOString(), method: payment.currency };
-  window.localStorage.setItem('muzikazLastReceipt', JSON.stringify(receipt));
-  claimCheckoutItems(items, checkoutOwner(payment.currency, payment.address), `${payment.currency} order ${orderId}`);
-  writeCart([]);
-  renderCheckoutPage();
-  document.querySelector('#confirmation-copy').textContent = `Receipt ${orderId} is submitted on-chain for ${payment.amount} ${payment.currency} ($${payment.usd.toFixed(2)} quoted value). Transaction: ${payment.transactionHash}`;
-  document.querySelector('#confirmation-panel').hidden = false;
-  document.querySelector('#confirmation-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+async function completeCryptoOrder(items, payment) {
+  if (!payment.orderId) throw new Error('A verified server order is required before delivery.');
+  const response=await window.MUZIKAZ_API.fetch('/api/payments/orders/'+encodeURIComponent(payment.orderId));
+  const payload=await response.json(),order=payload.data;
+  if(!response.ok||!['PAID','FULFILLED'].includes(order?.paymentStatus)||order.purchaseType!=='MARKETPLACE'||!order.memberAccountId)throw new Error('Payment is still awaiting server verification. Your cart is unchanged.');
+  const orderId=order.orderId;
+  window.localStorage.setItem('muzikazLastReceipt', JSON.stringify({orderId,items:order.metadata.items,paidAt:order.confirmedAt,method:order.paymentAsset,transactionHash:order.transactionHash}));
+  await window.MZKWallet?.refreshShared?.();
+  window.dispatchEvent(new Event('muzikaz:inventory-changed'));window.dispatchEvent(new Event('muzikaz:game-assets-changed'));
+  writeCart([]);renderCheckoutPage();
+  document.querySelector('#confirmation-copy').textContent=`Order ${orderId} is verified. Purchased digital models are stored in your member Backpack for gameplay and trading.`;
+  document.querySelector('#confirmation-panel').hidden=false;
+  document.querySelector('#confirmation-panel').scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 function initMzkCheckout() {
@@ -2264,7 +2235,7 @@ function initMzkCheckout() {
     button.disabled=false;
     if (!result.ok) { status.textContent=result.error||'The token purchase could not be completed.'; return; }
     const orderId = `MZ-MZK-${Date.now().toString().slice(-6)}`;
-    claimCheckoutItems(items, owner, `MZK order ${orderId}`);
+    window.dispatchEvent(new Event('muzikaz:inventory-changed'));window.dispatchEvent(new Event('muzikaz:game-assets-changed'));
     window.localStorage.setItem('muzikazLastReceipt', JSON.stringify({ orderId, total: `${amount} MZK`, items, paidAt: new Date().toISOString(), method: 'MZK' }));
     writeCart([]); renderCheckoutPage(); status.textContent = `${amount.toLocaleString()} MZK paid. Receipt ${orderId} is ready.`;
     document.querySelector('#confirmation-copy').textContent = `Receipt ${orderId} is confirmed for ${amount.toLocaleString()} MZK. Every purchased asset is now in your Backpack.`;
@@ -2277,14 +2248,13 @@ function initMultiChainCheckout() {
   const refreshButton = document.querySelector('#refresh-crypto-quotes');
   const status = document.querySelector('#payment-status');
   const unifiedCheckout = document.querySelector('muzikaz-payment-checkout');
-  unifiedCheckout?.addEventListener('muzikaz-payment-status', (event) => {
+  unifiedCheckout?.addEventListener('muzikaz-payment-status', async (event) => {
     if (!['PAID', 'FULFILLED'].includes(event.detail.paymentStatus)) return;
     const receiptKey = `muzikazDeliveredPayment:${event.detail.orderId}`;
     if (localStorage.getItem(receiptKey)) return;
     const items = event.detail.fulfillment?.items || event.detail.metadata?.items || [];
     if (!items.length) return;
-    localStorage.setItem(receiptKey, 'true');
-    completeCryptoOrder(items, event.detail);
+    try{await completeCryptoOrder(items,event.detail);localStorage.setItem(receiptKey,'true');}catch(error){if(status)status.textContent=error.message;return;}
     if (status) status.textContent = `${event.detail.currency} payment verified. Your receipt is ready and purchased products were delivered to your Backpack.`;
   });
   if (!buttons.length || !window.MuzikazWalletPayments) return;
@@ -2306,8 +2276,8 @@ function initMultiChainCheckout() {
     buttons.forEach((item) => { item.disabled = true; });
     try {
       status.textContent = `Connect ${button.dataset.cryptoPay === 'SOL' ? 'Phantom' : 'Lace'} and approve the exact recipient and value…`;
-      const payment = await window.MuzikazWalletPayments.pay(checkoutUsdTotal(), button.dataset.cryptoPay);
-      completeCryptoOrder(items, payment);
+      const payment = await window.MuzikazWalletPayments.pay(checkoutUsdTotal(), button.dataset.cryptoPay,{productType:'MARKETPLACE',productId:'marketplace-cart',metadata:{items}});
+      await completeCryptoOrder(items, payment);
       status.textContent = `${payment.currency} payment submitted successfully. Your receipt and Backpack assets are ready.`;
     } catch (error) { status.textContent = error.message || 'Wallet payment was not completed. Your cart is unchanged.'; }
     finally { refresh(); }
@@ -2328,7 +2298,7 @@ function initEthereumCheckout() {
   recipientLabel.textContent = config.address;
   const refresh = () => {
     const quantity = readCart().reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
-    totalLabel.textContent = formatEth(config.itemPriceWei * BigInt(quantity));
+    totalLabel.textContent = `${formatCheckoutMoney(checkoutUsdTotal())} USD · live ETH quote at payment`;
     payButton.disabled = !connectedAddress || !quantity;
   };
   const connect = async ({ switchWallet = false } = {}) => {
@@ -2358,15 +2328,11 @@ function initEthereumCheckout() {
     payButton.disabled = true;
     connectButton.disabled = true;
     try {
-      const wallet = await connect();
-      const quantity = items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
-      const totalWei = config.itemPriceWei * BigInt(quantity);
-      status.textContent = `Confirm ${formatEth(totalWei)} to ${config.address} in your wallet…`;
-      const transactionHash = await wallet.request({ method: 'eth_sendTransaction', params: [{ from: connectedAddress, to: config.address, value: `0x${totalWei.toString(16)}` }] });
-      status.textContent = `Payment submitted (${transactionHash.slice(0, 10)}…). Waiting for on-chain confirmation before granting assets.`;
-      await waitForMarketTransaction(wallet, transactionHash);
-      completeEthereumOrder({ items, from: connectedAddress, transactionHash, totalWei });
-      status.textContent = `Ethereum payment confirmed. Receipt ${transactionHash.slice(0, 10)}… saved and every purchased asset was added to your Backpack.`;
+      await connect();
+      status.textContent='Creating your member order and requesting the exact verified ETH payment…';
+      const payment=await window.MuzikazWalletPayments.pay(checkoutUsdTotal(),'ETH',{productType:'MARKETPLACE',productId:'marketplace-cart',metadata:{items}});
+      await completeCryptoOrder(items,payment);
+      status.textContent='Ethereum payment verified. Purchased models are in your server Backpack.';
     } catch (error) { status.textContent = error.message || 'Ethereum payment was not completed. Your cart is unchanged.'; } finally { connectButton.disabled = false; refresh(); }
   });
   window.ethereum?.on?.('accountsChanged', (accounts) => { connectedAddress = String(accounts?.[0] || ''); addressLabel.textContent = connectedAddress ? `Connected wallet: ${connectedAddress}` : 'No Ethereum wallet connected.'; connectButton.textContent = connectedAddress ? 'Disconnect & choose wallet' : 'Connect Ethereum wallet'; refresh(); });

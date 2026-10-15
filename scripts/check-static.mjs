@@ -412,7 +412,7 @@ for (const requiredAdminMarkup of ['id="admin-login-form"', 'name="username"', '
   }
 }
 const appScript = await readFile('dist/script.js', 'utf8');
-const bottleAccessSources = appScript + await readFile('dist/contract-ownership.js', 'utf8');
+const bottleAccessSources = appScript + await readFile('dist/contract-ownership.js', 'utf8') + await readFile('dist/wallet-payments.js', 'utf8');
 if (!appScript.includes('initModelMarketGate') || !appScript.includes("window.MUZIKAZ_API.setSessionToken(session.sessionToken)")) {
   throw new Error('The Model Market cover must share the simple members-area browser login.');
 }
