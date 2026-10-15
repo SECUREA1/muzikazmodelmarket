@@ -1,3 +1,4 @@
+import {ENEMY_BEHAVIORS} from './server-enemy-combat.mjs';
 import {damagePlayer,openMatch,finishMatch,healPlayer,matchRows} from './rpg-match.mjs';
 export const ROUND_COUNTDOWN_MS=10000;
 // Shared encounters are owned by the room, never by a client's local enemy list.
@@ -6,6 +7,7 @@ export function supportsRadTox(environment) {
 }
 export function spawnRadToxWave(sim, now, center) {
  for (const [id,actor] of Object.entries(sim.actors)) if (actor.radTox) delete sim.actors[id];
+ sim.projectiles={};
  const campaign=sim.radTox;
  campaign.state='active';campaign.nextWaveAt=null;campaign.transition=null;
  const boss=campaign.wave===4;
@@ -18,7 +20,7 @@ export function spawnRadToxWave(sim, now, center) {
   const position={x:center.x+Math.sin(angle)*radius,y:center.y,z:center.z-Math.cos(angle)*radius};
   const id=`rad-tox-${campaign.level}-${campaign.wave}-${index}`;
   const health=boss?160+campaign.level*20:kind==='snake'?20:40;
-  const definition={objectId:id,position:{...position},movement:{speed:kind==='snake'?1.4:.65},ai:{detectionRange:40},gameplay:{behavior:'hostile',health,damage:boss?12:kind==='snake'?4:6}};
+  const definition={objectId:id,position:{...position},movement:{speed:ENEMY_BEHAVIORS[kind].moveSpeed},ai:{detectionRange:40},gameplay:{behavior:'hostile',health,damage:boss?12:kind==='snake'?4:6}};
   sim.actors[id]={id,radTox:true,kind,position,rotation:{y:0},health,maxHealth:health,active:true,definition};
  }
  campaign.targetCount=count;campaign.remaining=count;campaign.startedAt=now;
@@ -66,18 +68,33 @@ export function stepRadToxEnemy(sim,actor,players,now,dt,blocksShot=()=>false,re
  const target=players.slice().sort((a,b)=>Math.hypot(a.position.x-actor.position.x,a.position.z-actor.position.z)-Math.hypot(b.position.x-actor.position.x,b.position.z-actor.position.z))[0];
  if(!target){actor.attack=null;return;}
  const dx=target.position.x-actor.position.x,dz=target.position.z-actor.position.z,span=Math.hypot(dx,dz);
- const range=actor.kind==='brain'?7.4:actor.kind==='ghost'?5:actor.kind==='boss'?7:1.5;
- const cooldown=actor.kind==='brain'?1450:actor.kind==='boss'?1250:1000;
+ const config=ENEMY_BEHAVIORS[actor.kind]||ENEMY_BEHAVIORS.toxic;
+ const {range,cooldown}=config;
  actor.rotation.y=Math.atan2(dx,dz);
- const step=Math.min(span,dt*actor.definition.movement.speed);
- if(span>range*.65&&span>.001){
-  const next=resolveMovement(actor.position,{...actor.position,x:actor.position.x+dx/span*step,z:actor.position.z+dz/span*step});
-  actor.position={x:next.x,y:next.y,z:next.z};
+ // Ranged enemies keep circling and retreat after firing instead of freezing
+ // as soon as their initial spawn happens to be inside attack range.
+ const speed=actor.definition.movement.speed;
+ let mx=0,mz=0;
+ if(span>.001){
+  const dxn=dx/span,dzn=dz/span,ranged=Boolean(config.speed);
+  const retreat=ranged&&(span<2.15||(now-(actor.lastAttack||0)<900&&span<4.6));
+  const approach=!ranged||span>4.5;
+  if(retreat){mx=-dxn;mz=-dzn;}
+  else if(approach){mx=dxn;mz=dzn;}
+  else {const side=actor.id.charCodeAt(actor.id.length-1)%2?1:-1;mx=-dzn*side;mz=dxn*side;}
+  if(!ranged&&span<config.range*.7){mx=0;mz=0;}
  }
- if(actor.lastAttack===undefined)actor.lastAttack=now;
- const readyAt=actor.lastAttack+cooldown;
+ const previous={...actor.position},amount=speed*dt;
+ const proposals=[{x:mx,z:mz},{x:mx,z:0},{x:0,z:mz}];
+ for(const direction of proposals){
+  if(!direction.x&&!direction.z)continue;
+  const next=resolveMovement(previous,{...previous,x:previous.x+direction.x*amount,z:previous.z+direction.z*amount});
+  if(Math.hypot(next.x-previous.x,next.z-previous.z)>1e-6){actor.position={x:next.x,y:next.y,z:next.z};break;}
+ }
+ actor.attackStartedAt ??= now;
+ const readyAt=(actor.lastAttack??actor.attackStartedAt)+cooldown;
  const inRange=span<range;
- actor.attack={phase:inRange&&now>=readyAt-480?'tell':'idle',targetId:target.actorId||target.id,readyAt};
+ actor.attack={phase:inRange&&now>=readyAt-Math.min(480,cooldown*.35)?'tell':'idle',targetId:target.actorId||target.id,readyAt};
  if(!applyAttack||!inRange||now<readyAt)return;
  const origin={...actor.position,y:actor.position.y+(actor.kind==='snake'?.2:1)},aim={x:target.position.x-origin.x,y:target.position.y+1-origin.y,z:target.position.z-origin.z},length=Math.hypot(aim.x,aim.y,aim.z);
  if(blocksShot(origin,[aim.x/length,aim.y/length,aim.z/length],length))return;

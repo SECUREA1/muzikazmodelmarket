@@ -9,7 +9,7 @@ test('server ticks chase and attack without client commands and retire empty roo
  const dir=await mkdtemp(join(tmpdir(),'simulation-timer-'));let now=100000;
  try{
   const store=new SharedRoomStore(join(dir,'rooms.json')),runtime=new AuthoritativeRooms({store,now:()=>now});
-  runtime.collision.blocksShot=()=>false;runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.resolve=(_,previous,next)=>next;
+  runtime.collision.blocksShot=()=>false;runtime.collision.encounterSpawn=(_,point)=>point;runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.resolve=(_,previous,next)=>next;
   const map={id:'house',modelUrl:'/fixture.glb',spawn:{x:0,y:-3.5,z:0}},identity={accountId:'alice',username:'Alice',stats:{health:100}};
   await runtime.command(map.id,map,identity,{action:'join',requestId:'join'});
   const before=await store.get(map.id),first=Object.values(before.simulation.actors)[0],start=first.position.z;

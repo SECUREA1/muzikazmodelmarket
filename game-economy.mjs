@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {BUILDING_MATERIALS} from './public/js/building-materials.js';
 import {EXTRA_WEAPONS, RANGED_WEAPONS} from './public/js/game-weapons.js';
@@ -23,3 +24,33 @@ export function economyItem(sku){return GAME_ECONOMY.find(item=>item.sku===sku);
 const modelPath=value=>{try{return decodeURIComponent(String(value||'')).replace(/^\//,'');}catch{return String(value||'').replace(/^\//,'');}};
 export function ownsEconomyItem(state,item){return Boolean(item&&(item.basic||state.items?.some(owned=>owned.economySku===item.sku||item.kind==='asset'&&owned.modelUrl&&modelPath(owned.modelUrl)===modelPath(item.modelUrl))));}
 export function economyInventory(state){return GAME_ECONOMY.map(item=>({...item,owned:ownsEconomyItem(state,item)}));}
+
+export const CARE_SUPPLIES=(await json('./public/models/ioncore-rpg-items.json')).items;
+export const BUNDLE_DISCOUNT_PERCENT=20;
+const bundleGroups=new Map();
+for(const item of GAME_ECONOMY.filter(item=>!item.basic)){
+ const category=item.category==='Models'?`Models · ${item.assetType||'props'}`:item.category;
+ if(!bundleGroups.has(category))bundleGroups.set(category,[]);
+ bundleGroups.get(category).push({kind:'upgrade',sku:item.sku,name:item.name,priceMzk:item.priceMzk});
+}
+for(const item of CARE_SUPPLIES){
+ const category=`Care supplies · ${item.category}`;
+ if(!bundleGroups.has(category))bundleGroups.set(category,[]);
+ bundleGroups.get(category).push({kind:'care',catalogId:item.id,name:item.name,priceMzk:item.price});
+}
+export const GAME_BUNDLES=[...bundleGroups].flatMap(([category,items])=>{
+ const packs=[];
+ for(let index=0;index<items.length;index+=6){
+  const entries=items.slice(index,index+6).map(item=>({...item,quantity:item.kind==='care'&&items.length===1?3:1}));
+  const id='bundle-'+createHash('sha256').update(entries.map(item=>item.sku||item.catalogId).join('|')).digest('hex').slice(0,20);
+  packs.push({id,category,name:`${category} bundle${items.length>6?' '+(index/6+1):''}`,discountPercent:BUNDLE_DISCOUNT_PERCENT,entries});
+ }
+ return packs;
+});
+export function economyBundleQuote(state,bundle){
+ const entries=bundle.entries.filter(entry=>entry.kind==='care'||!ownsEconomyItem(state,economyItem(entry.sku)));
+ const subtotalMzk=entries.reduce((sum,item)=>sum+item.priceMzk*item.quantity,0);
+ const priceMzk=Math.floor(subtotalMzk*(100-bundle.discountPercent)/100);
+ return {...bundle,entries,subtotalMzk,priceMzk,savingsMzk:subtotalMzk-priceMzk,owned:entries.length===0,ownedCount:bundle.entries.length-entries.length};
+}
+export function economyBundles(state){return GAME_BUNDLES.map(bundle=>economyBundleQuote(state,bundle));}

@@ -11,7 +11,7 @@ import {healthAfterHit} from '../public/js/rpg-combat-rules.js';
 async function arena(run){
  const dir=await mkdtemp(join(tmpdir(),'rpg-match-'));let now=100000,number=0;
  const store=new SharedRoomStore(join(dir,'rooms.json')),map={id:'arena',playable:true,modelUrl:'/fixture.glb',spawn:{x:0,y:0,z:0}};
- const runtime=new AuthoritativeRooms({store,now:()=>now});runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.blocksShot=()=>false;runtime.collision.resolve=(_,previous,next)=>next;
+ const runtime=new AuthoritativeRooms({store,now:()=>now});runtime.collision.encounterSpawn=(_,point)=>point;runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.blocksShot=()=>false;runtime.collision.resolve=(_,previous,next)=>next;
  const identity=name=>({accountId:name,username:name,walletId:name,stats:{health:100}});
  const send=(name,action,fields={},requestId='rpg-'+ ++number)=>runtime.command(map.id,map,identity(name),{action,requestId,...fields});
  const refresh=()=>runtime.snapshot(map.id,map);

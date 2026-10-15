@@ -1,5 +1,11 @@
 import {damagePlayer} from './rpg-match.mjs';
-const attacks={toxic:{range:1.5,cooldown:1200},snake:{range:1.2,cooldown:1000},ghost:{range:9,cooldown:1800,speed:6},brain:{range:7,cooldown:1600,speed:7},boss:{range:12,cooldown:1400,speed:8}};
+export const ENEMY_BEHAVIORS=Object.freeze({
+ toxic:{range:1.5,cooldown:1200,moveSpeed:.9,height:1},
+ snake:{range:1.2,cooldown:1000,moveSpeed:1.8,height:.2},
+ ghost:{range:9,cooldown:1800,speed:6,moveSpeed:1.4,height:1},
+ brain:{range:7,cooldown:1600,speed:7,moveSpeed:2.65,height:.74},
+ boss:{range:12,cooldown:1400,speed:8,moveSpeed:2.15,height:1.8}
+});
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 const event=(sim,value)=>{sim.events.push(value);sim.events=sim.events.slice(-100);};
 export function stepEnemyCombat(sim,{now,dt,environment,collision}){
@@ -10,13 +16,13 @@ export function stepEnemyCombat(sim,{now,dt,environment,collision}){
  const hit=(actor,id,player,origin)=>{if(damagePlayer(player,now))event(sim,{id:'enemy-hit-'+ ++sim.enemySequence,action:'enemy-hit',actorId:actor,targetId:id,origin,at:now});};
  sim.enemySequence ||= 0;
  for(const actor of Object.values(sim.actors)){
-  const config=attacks[actor.kind];if(!actor.radTox||!actor.active||actor.health<=0||!config)continue;
+  const config=ENEMY_BEHAVIORS[actor.kind];if(!actor.radTox||!actor.active||actor.health<=0||!config)continue;
   const target=players.reduce((best,row)=>!best||distance(actor.position,row[1].position)<distance(actor.position,best[1].position)?row:best,null);
   if(!target)continue;const [targetId,player]=target,span=distance(actor.position,player.position);
-  const origin={x:actor.position.x,y:actor.position.y+1,z:actor.position.z},aim={x:player.position.x,y:player.position.y+.9,z:player.position.z};
+  const origin={x:actor.position.x,y:actor.position.y+config.height,z:actor.position.z},aim={x:player.position.x,y:player.position.y+.9,z:player.position.z};
   const length=distance(origin,aim),direction=[(aim.x-origin.x)/Math.max(.001,length),(aim.y-origin.y)/Math.max(.001,length),(aim.z-origin.z)/Math.max(.001,length)];
-  if(span>config.range||now-(actor.lastAttack||0)<config.cooldown||blocked(origin,direction,length))continue;
-  actor.lastAttack=now;actor.attackTargetId=targetId;
+  if(span>config.range||now-(actor.lastAttack??actor.attackStartedAt??0)<config.cooldown||blocked(origin,direction,length))continue;
+  actor.lastAttack=now;actor.attackTargetId=targetId;actor.attack={phase:'attack',targetId,readyAt:now+config.cooldown};
   event(sim,{id:'enemy-attack-'+ ++sim.enemySequence,action:'enemy-attack',kind:actor.kind,actorId:actor.id,targetId,origin,direction,at:now});
   if(!config.speed){hit(actor.id,targetId,player,origin);continue;}
   if(Object.keys(sim.projectiles).length>=48)continue;
