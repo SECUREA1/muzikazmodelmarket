@@ -10,7 +10,8 @@ import { applyWorldQuality } from './environment-quality.js';
 import { buildCollision, resolveSafeSpawn } from './environment-collision.js';
 
 export class EnvironmentLoader {
-  constructor({ scene, renderer, onProgress = () => {} }) {
+  constructor({ scene, renderer, onProgress = () => {}, serverAuthoritative = () => false }) {
+    this.serverAuthoritative=serverAuthoritative;
     this.scene = scene; this.renderer = renderer; this.onProgress = onProgress; this.token = 0; this.world = null; this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; this.octree = new Octree(); this.bounds = new THREE.Box3(); this.activeEnvironment = null; this.baseScale = 1; this.spaceScale = 1;
     this.loader = new GLTFLoader();
     const draco = new DRACOLoader(); draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/'); this.loader.setDRACOLoader(draco);
@@ -29,7 +30,7 @@ export class EnvironmentLoader {
     this.spaceScale = nextScale;
     this.world.scale.setScalar(this.baseScale * this.spaceScale);
     this.world.updateMatrixWorld(true);
-    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots);
+    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:!this.serverAuthoritative()});
     this.meshes = collision.visibleMeshes;
     this.collisionMeshes = collision.collisionMeshes;
     this.floorMeshes = collision.floorMeshes;
@@ -40,7 +41,7 @@ export class EnvironmentLoader {
   setSupplementalCollisionRoots(roots = []) {
     this.supplementalCollisionRoots = roots.filter(Boolean);
     if (!this.world) return null;
-    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots);
+    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:!this.serverAuthoritative()});
     this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree;
     return collision;
   }
@@ -70,7 +71,7 @@ export class EnvironmentLoader {
         nextWorld.updateMatrixWorld(true);
       }
       const quality = applyWorldQuality(nextWorld, this.renderer);
-      const collision = buildCollision(nextWorld, environment.collisionMode);
+      const collision = buildCollision(nextWorld, environment.collisionMode,[],{buildOctree:!this.serverAuthoritative()});
       if (!collision.visibleMeshes.length) throw new Error('Missing meshes: the environment loaded, but no renderable world meshes were found.');
       const spawn = resolveSafeSpawn(nextWorld, collision.floorMeshes, environment.spawn);
       this.unload(); this.world = nextWorld; this.activeEnvironment = environment; this.mixers = nextMixers; this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree; this.bounds = spawn.bounds; this.scene.add(nextWorld); this.onProgress(100);
@@ -78,3 +79,4 @@ export class EnvironmentLoader {
     } catch (error) { nextMixers.forEach((m) => m.stopAllAction()); nextWorld.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); throw error; }
   }
 }
+

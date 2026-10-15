@@ -171,7 +171,7 @@ export function findSpawnNode(root) {
   return nodes.find((node) => SPAWN_PRIORITY.includes(node.name.toUpperCase())) || nodes[0] || null;
 }
 
-export function buildCollision(root, mode = 'auto', supplementalRoots = []) {
+export function buildCollision(root, mode = 'auto', supplementalRoots = [], {buildOctree=true} = {}) {
   const visibleMeshes = [];
   const collisionMeshes = [];
   const collect = (object) => {
@@ -192,7 +192,7 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = []) {
   const containment = createMapContainment(collisionMeshes);
   supplementalRoots.filter(Boolean).forEach((supplementalRoot) => supplementalRoot.traverse(collect));
   const source = new THREE.Group();
-  collisionMeshes.forEach((mesh) => {
+  if(buildOctree)collisionMeshes.forEach((mesh) => {
     const clone = mesh.clone(false);
     clone.geometry = mesh.geometry;
     clone.material = mesh.material;
@@ -202,7 +202,7 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = []) {
   });
   if (containment.root) source.add(containment.root);
   const octree = new Octree();
-  octree.fromGraphNode(source);
+  if(buildOctree)octree.fromGraphNode(source);
   const floorMeshes = collisionMeshes.filter((mesh) => isSpawnFloorObject(mesh));
   if (containment.floor) floorMeshes.push(containment.floor);
   return { octree, visibleMeshes, collisionMeshes, floorMeshes, containment, dedicatedCollisionCount: collisionMeshes.filter(isDedicatedCollider).length };
@@ -232,3 +232,4 @@ export function resolveSafeSpawn(root, floorMeshes, metadataSpawn = {}, playerHe
   else candidate.copy(alignPointAboveFloor(candidate, floorMeshes, box, playerHeight));
   return { position: candidate, rotationY: spawnNode ? spawnNode.rotation.y : Number(metadataSpawn.rotationY || 0), bounds: box };
 }
+
