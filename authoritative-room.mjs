@@ -1,3 +1,4 @@
+import {startRadTox,advanceRadTox} from './rad-tox-campaign.mjs';
 import {createHash} from 'node:crypto';
 import {ServerBuilderCollision} from './server-builder-collision.mjs';
 import {RANGED_WEAPONS} from './public/js/game-weapons.js';
@@ -16,7 +17,7 @@ export class AuthoritativeRooms {
   room.simulation ||= {version:1,players:{},actors:{},events:[],time:this.now(),sequence:0};
   const sim=room.simulation,contentUpdatedAt=environment.contentUpdatedAt||environment.updatedAt;
   if(!sim.initialized||sim.environmentUpdatedAt!==contentUpdatedAt){
-   const authored=new Set(manifest.objects.map(actor=>actor.objectId));for(const [id,actor]of Object.entries(sim.actors))if(!actor.spawned&&!authored.has(id))delete sim.actors[id];
+   const authored=new Set(manifest.objects.map(actor=>actor.objectId));for(const [id,actor]of Object.entries(sim.actors))if(!actor.spawned&&!actor.radTox&&!authored.has(id))delete sim.actors[id];
    for(const actor of manifest.objects){if(sim.actors[actor.objectId]){sim.actors[actor.objectId].position=copy(actor.transform.position);sim.actors[actor.objectId].rotation=copy(actor.transform.rotation);}if(!sim.actors[actor.objectId])sim.actors[actor.objectId]={id:actor.objectId,modelId:actor.modelId,position:copy(actor.transform.position),rotation:copy(actor.transform.rotation),health:actor.gameplay.health,active:true,open:false,switched:false};}
    sim.initialized=true;sim.environmentUpdatedAt=contentUpdatedAt;
   }
@@ -64,9 +65,10 @@ export class AuthoritativeRooms {
    }
    if(kind==='hazard')for(const target of active)if(distance(target.position,actor.position)<1.5&&now-(actor.lastAttack||0)>1000){if(now>=(target.shieldUntil||0))target.health=Math.max(0,target.health-clamp(definition.gameplay.damage,0,50));actor.lastAttack=now;}
   }
+  advanceRadTox(sim,now);
   sim.sequence++;return {sim,manifest};
  }
- view(room){const sim=room.simulation,now=this.now();return {authoritative:true,streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,yaw:p.yaw,health:p.health,ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
+ view(room){const sim=room.simulation,now=this.now();return {authoritative:true,radTox:sim.radTox?copy(sim.radTox):null,streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,yaw:p.yaw,health:p.health,ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
  snapshot(id,environment){return this.store.update(id,room=>{this.step(room,environment);return this.view(room);},{persist:false});}
  command(id,environment,identity,command){return this.store.update(id,async (room,allRooms)=>{
   const {sim,manifest}=this.step(room,environment),now=this.now(),actorId='account:'+identity.accountId;
@@ -83,6 +85,7 @@ export class AuthoritativeRooms {
    if(player?.replacedByRoom)fail('This account joined another destination. Reload to rejoin this room.',409,'ROOM_SWITCHED');if(!player||now-player.lastSeen>15000)fail('Join this room before sending gameplay commands.',409);
    player.lastSeen=now;
    if(command.action==='input'){const input=command.input||{};player.input={forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}
+   else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position))result.message='RAD-TOX encounter active.';else result.message='Builder gameplay active.';}
    else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...(manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2})};player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolUses={};}
    else if(player.health<=0)fail('Respawn before acting.',409);
    else if(command.action==='drop'){const held=sim.actors[player.heldId];if(held){held.holderId=null;held.position={...player.position};player.heldId=null;}}
@@ -147,3 +150,4 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
  async player(id,actorId){return (await this.store.get(id)).simulation?.players[actorId];}
  async care(actorId,receipt){const rooms=await this.store.read();for(const [id,room] of Object.entries(rooms)){if(!room.simulation?.players[actorId])continue;await this.store.update(id,current=>{const player=current.simulation.players[actorId];player.careReceipts ||= [];if(player.careReceipts.includes(receipt.id))return;const effect=receipt.effect;player.stats ||= {};if(effect?.stat==='all')for(const key of Object.keys(player.stats))player.stats[key]=key==='toxicity'?0:100;else if(effect?.stat&&effect.stat!=='health')player.stats[effect.stat]=Math.max(0,Math.min(100,(player.stats[effect.stat]||0)+Number(effect.amount||0)));if(effect?.stat==='health'||effect?.stat==='all')player.health=effect.stat==='all'?100:Math.min(100,player.health+Number(effect.amount||0));player.careReceipts.push(receipt.id);player.careReceipts=player.careReceipts.slice(-100);});}}
 }
+

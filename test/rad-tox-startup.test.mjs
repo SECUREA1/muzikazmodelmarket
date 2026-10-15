@@ -41,3 +41,12 @@ test('shared gameplay is confirmed before dismissing startup, with solo play for
   assert.match(game, /guestSolo=true; serverHostedRoom=false/);
   assert.doesNotMatch(game, /Shared room loaded\. Connecting to authoritative gameplay/);
 });
+
+test('multiplayer Begin starts a rendered RAD-TOX encounter instead of stopping at a loaded map',async()=>{
+ const game=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
+ const blocked=game.match(/const legacyGameplayMethods=\[([^\]]+)\]/)?.[1]||'';
+ assert.doesNotMatch(blocked,/'begin'/,'the multiplayer Begin action must not be replaced with a no-op');
+ assert.match(game,/authoritativeClient\.send\('start-rad-tox'\)/);
+ assert.match(game,/renderServerRadTox\(snapshot\);/);
+ assert.match(game,/!snapshot\.radTox\)throw new Error/,'an old server cannot be mistaken for an active encounter');
+});

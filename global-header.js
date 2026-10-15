@@ -1,3 +1,36 @@
+// Resolve labels on demand so icons added by game menus get the same hover
+// labels as navigation icons, without scanning or observing the whole page.
+(function () {
+  function labelSvg(event) {
+    const target = event.target;
+    if (!target?.closest) return;
+    const control = target.closest('button, a, [role="button"]');
+    const graphic = target.closest('svg, img') || control?.querySelector('svg, img');
+    if (!graphic) return;
+    const inline = graphic.localName === 'svg';
+    if (!inline && !/\.svg(?:[?#]|$)|^data:image\/svg\+xml/i.test(graphic.getAttribute('src') || '')) return;
+    const labelled = graphic.getAttribute('aria-labelledby') || control?.getAttribute('aria-labelledby');
+    const labelledText = labelled?.split(/\s+/).map(id => document.getElementById(id)?.textContent || '').join(' ');
+    const label = (graphic.getAttribute('data-label') || graphic.getAttribute('aria-label') || labelledText ||
+      control?.getAttribute('data-label') || control?.getAttribute('aria-label') ||
+      control?.querySelector('span, strong, em')?.textContent || graphic.getAttribute('alt') ||
+      control?.getAttribute('title') || '').trim();
+    if (!label) return;
+    if (inline) {
+      let title = graphic.querySelector('title');
+      if (!title) {
+        title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.dataset.hoverLabel = 'true';
+        graphic.prepend(title);
+      }
+      if (title.dataset.hoverLabel === 'true') title.textContent = label;
+    } else graphic.setAttribute('title', label);
+    if (control && !control.hasAttribute('title')) control.setAttribute('title', label);
+  }
+  document.addEventListener('pointerover', labelSvg);
+  document.addEventListener('focusin', labelSvg);
+})();
+
 (function () {
   const header = document.querySelector('.site-header');
   if (!header || header.dataset.globalHeaderReady === 'true') return;
@@ -157,3 +190,4 @@
   renderWallet();
   syncWalletButtonPurpose();
 })();
+
