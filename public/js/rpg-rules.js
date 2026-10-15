@@ -1,0 +1,2 @@
+export const RPG_DEFAULT_STATS=Object.freeze({health:62,hydration:48,nutrition:55,energy:38,focus:70,toxicity:42});
+export function applyRpgEffect(stats,effect){const next={...RPG_DEFAULT_STATS,...stats};if(effect.stat==='all'){for(const key of Object.keys(RPG_DEFAULT_STATS))next[key]=key==='toxicity'?0:100;}else if(Object.hasOwn(RPG_DEFAULT_STATS,effect.stat)){next[effect.stat]=Math.max(0,Math.min(100,Number(next[effect.stat])+effect.amount));}return next;}

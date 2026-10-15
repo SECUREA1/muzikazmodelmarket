@@ -25,7 +25,7 @@
     </section>
 
     <section class="player-console" aria-labelledby="console-title">
-      <div class="console-heading"><div><p class="eyebrow">LIVE BODY TELEMETRY</p><h2 id="console-title">FIELD STATUS</h2></div><div class="wallet"><small>AVAILABLE BALANCE</small><strong><span id="mzk-balance">500</span> MZK</strong></div></div>
+      <div class="console-heading"><div><p class="eyebrow">LIVE BODY TELEMETRY</p><h2 id="console-title">FIELD STATUS</h2></div><div class="wallet"><small>AVAILABLE BALANCE</small><strong><span id="mzk-balance">0</span> MZK</strong></div></div>
       <div class="stat-grid" id="stat-grid"></div>
     </section>
 
@@ -39,12 +39,13 @@
 
     <aside class="inventory" aria-labelledby="inventory-title">
       <div><p class="eyebrow">QUICK-USE BACKPACK</p><h2 id="inventory-title">FIELD INVENTORY</h2></div>
-      <div id="inventory-list" class="inventory-list"></div>
-      <button id="reset-demo" class="reset" type="button">RESET PLAYER DEMO</button>
+      <div id="inventory-list" class="inventory-list"></div><details><summary>Recorded body telemetry</summary><div id="telemetry-history"></div></details><p><a href="members.html">Member account</a> · <a href="builder-market.html#backpack">Builder Backpack</a> · <a href="environment-builder.html">Environment Builder</a></p>
+      <button id="reset-demo" class="reset" type="button">REFRESH SHARED BACKPACK</button>
     </aside>
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <footer><strong>IONCORE × MUZIKAZ</strong><span>Digital gameplay items only · Effects apply to this player profile</span></footer>
-  <script src="ioncore-rpg-market.js"></script>
+  <script src="public/js/api-connection.js"></script>
+  <script type="module" src="ioncore-rpg-market.js"></script>
 </body>
 </html>

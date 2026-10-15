@@ -13,5 +13,5 @@ test('IonCore RPG catalog exposes playable replenishment products',async()=>{
 test('IonCore market supports purchase, backpack use, filters, and persistent state',async()=>{
   const [html,script]=await Promise.all([readFile(new URL('../ioncore-rpg-market.html',import.meta.url),'utf8'),readFile(new URL('../ioncore-rpg-market.js',import.meta.url),'utf8')]);
   assert.match(html,/id="supply-grid"/);assert.match(html,/id="stat-grid"/);assert.match(html,/data-filter="health"/);
-  assert.match(script,/function buy\(id\)/);assert.match(script,/function use\(id\)/);assert.match(script,/localStorage\.setItem/);assert.match(script,/state\.stats\[stat\]/);
+  assert.match(script,/function buy\(id\)/);assert.match(script,/function use\(id\)/);assert.match(script,/inventory.action/);assert.match(script,/watchInventoryChange/);assert.doesNotMatch(script,/balance:500|localStorage.setItem/);
 });

@@ -10,7 +10,7 @@
   async function api(path, options = {}) {
     const headers = { Accept:'application/json', ...(options.body ? { 'Content-Type':'application/json' } : {}), ...(state.csrf ? { 'X-CSRF-Token':state.csrf } : {}), ...(options.headers || {}) };
     const response = await window.MUZIKAZ_API.fetch(path, { ...options, headers, retries:0 }); const payload = await response.json().catch(() => ({}));
-    if (!response.ok || payload.success === false) throw new Error(payload.message || 'Builder service request failed.'); return payload.data;
+    if (!response.ok || payload.success === false) throw new Error(payload.message || 'Builder service request failed.'); if(options.method&&options.method!=='GET') window.MuzikazInventorySync?.signalInventoryChange(); return payload.data;
   }
   function card(asset, body, actions = '') {
     const functional = asset.function_data || asset.interaction_data || asset.ai_profile;
@@ -57,5 +57,6 @@
   $('#builder-model-grid').addEventListener('click', (event) => { const model = event.target.closest('[data-builder-model]'); if (!model) return; model.classList.toggle('selected'); setPackStatus(`${model.dataset.modelName} ${model.classList.contains('selected') ? 'added to' : 'removed from'} your build tray.`); });
   document.querySelector('[data-pack-template]').addEventListener('click', (event) => { location.href = `environment-builder.html?layout=${encodeURIComponent(event.currentTarget.dataset.packTemplate)}`; });
   const requestedTab = location.hash.slice(1); if (['market','backpack','worlds'].includes(requestedTab)) document.querySelector(`[data-builder-tab="${requestedTab}"]`)?.click();
+  import('./public/js/shared-game-inventory.js').then(sync=>{window.MuzikazInventorySync=sync;sync.watchInventoryChange(()=>refresh().catch(error=>status(error.message,true)));});
   api('/api/account/bootstrap').then((bootstrap) => { state.csrf = bootstrap.csrfToken || ''; return refresh(); }).catch((error) => { status(`${error.message} Sign in through Members to use the Builder Market.`, true); $('#builder-account').textContent = 'Authentication required'; });
 }());
