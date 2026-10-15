@@ -1,3 +1,4 @@
+import { MEMBER_REWARDS } from './public/js/member-reward-rules.js';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { cleanDesignerDraft } from './public/js/designer-draft-rules.js';
@@ -129,7 +130,11 @@ export class UserJsonDatabase {
       if (tokens.MZK === undefined) tokens.MZK = 0;
       // Preserve market spending while adding only newly purchased tier value.
       // Repeated login/sync calls therefore cannot duplicate the balance.
-      if (canonicalGrantMzk > previouslyGrantedMzk) tokens.MZK = Number(tokens.MZK || 0) + canonicalGrantMzk - previouslyGrantedMzk;
+      if (canonicalGrantMzk > previouslyGrantedMzk) {
+        const amountMzk=canonicalGrantMzk-previouslyGrantedMzk;
+        tokens.MZK = Number(tokens.MZK || 0) + amountMzk;
+        appendTransaction(data,{type:'MEMBER_GRANT',walletId:wallet,amountMzk,balanceAfterMzk:tokens.MZK,requestId:`member-grant:${account.accountId}:${canonicalGrantMzk}`,reason:'Verified member entitlement or token purchase'});
+      }
       memory.account.mzkGranted = Math.max(previouslyGrantedMzk, canonicalGrantMzk);
       const record = { walletId: wallet, tokens, items, memory, createdAt: previous.createdAt || account.createdAt || now, updatedAt: now, revision: Number(previous.revision || 0) + 1 };
       data.users[wallet] = record;
@@ -234,6 +239,39 @@ export class UserJsonDatabase {
     await this.initialize(); const data = await this.read();
     const touches = (a, b) => (a === wallet || b === wallet) && (!peer || a === peer || b === peer);
     return { trades: (data.trades || []).filter((entry) => touches(entry.buyerId, entry.sellerId)).slice(-100), messages: (data.messages || []).filter((entry) => touches(entry.from, entry.to)).slice(-100), transactions: (data.transactions || []).filter((entry) => entry.walletId === wallet || entry.counterpartyId === wallet).slice(-100) };
+  }
+
+  purchaseStoreModels(walletId,items,amountMzk,requestId){const wallet=cleanWallet(walletId);if(!requestId||String(requestId).length>140)throw new Error('A checkout request id is required.');return this.transaction(data=>{const duplicate=data.transactions.find(item=>item.walletId===wallet&&item.type==='STORE_PURCHASE'&&item.requestId===requestId);if(duplicate)return duplicate;const user=data.users[wallet];if(!user||Number(user.tokens.MZK)<amountMzk)throw new Error('Not enough MZK for this purchase.');user.tokens.MZK-=amountMzk;for(const item of items){if(!user.items.some(owned=>owned.id===item.id))user.items.push({...item,source:'mzk-store',acquiredAt:new Date().toISOString()});}user.updatedAt=new Date().toISOString();return appendTransaction(data,{type:'STORE_PURCHASE',walletId:wallet,amountMzk:-amountMzk,balanceAfterMzk:user.tokens.MZK,requestId,items});});}
+
+  async walletLedger(walletId){await this.initialize();const wallet=cleanWallet(walletId);return (await this.read()).transactions.filter(item=>item.walletId===wallet).slice(-200).map(item=>({...item,id:item.requestId||item.id,amount:item.amountMzk,kind:item.type==='GAMEPLAY_SPEND'?'spend':item.type==='AUDIO_REFUND'?'reverse':item.type==='MEMBER_GRANT'?'purchase':'earn'}));}
+  refundAudioSpend(walletId,requestId){const wallet=cleanWallet(walletId);return this.transaction(data=>{const original=data.transactions.find(item=>item.walletId===wallet&&item.type==='GAMEPLAY_SPEND'&&item.gameId==='audio-mixer'&&item.requestId===requestId);if(!original)throw new Error('Mixer spend not found.');const duplicate=data.transactions.find(item=>item.walletId===wallet&&item.type==='AUDIO_REFUND'&&item.requestId===requestId+':reverse');if(duplicate)return duplicate;const user=data.users[wallet];user.tokens.MZK-=original.amountMzk;return appendTransaction(data,{type:'AUDIO_REFUND',walletId:wallet,amountMzk:-original.amountMzk,balanceAfterMzk:user.tokens.MZK,requestId:requestId+':reverse',reason:'Mixer insert undone'});});}
+
+  memberReward(walletId, action, input={}) {
+    const wallet=cleanWallet(walletId),day=new Date().toISOString().slice(0,10);
+    return this.transaction(data=>{
+      const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');
+      user.memory ||= {}; user.memory.memberRewards ||= {};
+      const rewards=user.memory.memberRewards;
+      if(action==='progress'){
+        const event=String(input.event||''),scope=String(input.scope||'');
+        const rules=Object.entries(MEMBER_REWARDS).filter(([id,rule])=>id.startsWith(scope+':')&&rule.event===event);
+        if(!rules.length)throw new Error('Unknown reward event.');
+        const requestId=String(input.requestId||'').slice(0,140);if(!requestId)throw new Error('A reward event id is required.');
+        const state=rewards[scope] ||= {day,events:{},seen:[]};
+        if(state.day!==day){state.day=day;state.events={};state.seen=[];}
+        if(!state.seen.includes(requestId)){state.seen.push(requestId);state.seen=state.seen.slice(-500);const cap=Math.max(...rules.map(([,rule])=>rule.goal));state.events[event]=Math.min(cap,(state.events[event]||0)+1);}
+        return {progress:state.events};
+      }
+      const id=String(input.rewardId||''),rule=MEMBER_REWARDS[id];if(!rule)throw new Error('Unknown member reward.');
+      const scope=id.split(':')[0],state=rewards[scope],key=id.startsWith('field:')?id:`${id}:${day}`;
+      rewards.claims ||= {};
+      if(rewards.claims[key])return rewards.claims[key];
+      if(rule.goal&&(!state||state.day!==day||Number(state.events[rule.event]||0)<rule.goal))throw new Error('Complete this quest before claiming its reward.');
+      user.tokens.MZK=Number(user.tokens.MZK||0)+rule.tokens;
+      user.updatedAt=new Date().toISOString();user.revision=Number(user.revision||0)+1;
+      const receipt=appendTransaction(data,{type:'MEMBER_REWARD',walletId:wallet,amountMzk:rule.tokens,balanceAfterMzk:user.tokens.MZK,requestId:key,reason:id});
+      rewards.claims[key]=receipt;return receipt;
+    });
   }
 
   spendGameplay(walletId, input) {

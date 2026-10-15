@@ -12,8 +12,8 @@ test('cookie and bearer member sessions own market and care actions without a br
  try{
   // Exercise the real HTTP handler without binding a TCP port in the sandbox.
   const original=await readFile(new URL('../server.mjs',import.meta.url),'utf8');
-  const source=original.replace(/from '(\.\/[^']+)'/g,(_,path)=>`from '${new URL('../'+path,import.meta.url).href}'`).replace(/server\.listen\(port,[^\n]+\);/,'export { server, presence };');
-  const modulePath=join(dir,'handler.mjs');await writeFile(modulePath,source);const {server,presence}=await import(pathToFileURL(modulePath).href);const handler=server.listeners('request')[0];
+  const source=original.replace(/from '(\.\/[^']+)'/g,(_,path)=>`from '${new URL('../'+path,import.meta.url).href}'`).replace(/server\.listen\(port,[^\n]+\);/,'export { server, presence, paymentOrderStore };');
+  const modulePath=join(dir,'handler.mjs');await writeFile(modulePath,source);const {server,presence,paymentOrderStore}=await import(pathToFileURL(modulePath).href);const handler=server.listeners('request')[0];
   async function call(url,headers={},body,method=body?'POST':'GET'){
    const req=Readable.from(body?[Buffer.from(JSON.stringify(body))]:[]);Object.assign(req,{url,method,headers:{host:'localhost','content-type':'application/json',...headers},socket:{remoteAddress:'127.0.0.1'}});
    const result={headers:{}};const res={setHeader(key,value){result.headers[key.toLowerCase()]=value;},getHeader(key){return result.headers[key.toLowerCase()];},writeHead(status,headers){result.status=status;for(const[key,value]of Object.entries(headers))this.setHeader(key,value);this.headersSent=true;},end(data){result.body=JSON.parse(data);}};
@@ -22,6 +22,23 @@ test('cookie and bearer member sessions own market and care actions without a br
   const login=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'member-session-test'});assert.equal(login.status,200);
   const wrong=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'incorrect-password'});assert.equal(wrong.status,401);
   const restored=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'member-session-test'});assert.equal(restored.status,200);assert.equal(restored.body.data.account.accountId,login.body.data.account.accountId);
+  const paymentHeaders={authorization:'Bearer '+login.body.data.sessionToken};
+  const topup=await paymentOrderStore.create({memberAccountId:login.body.data.account.accountId,purchaseType:'MZK_PURCHASE',itemId:'mzk-land-presale',basePrice:30,paymentAsset:'SOL',expectedAmount:1});
+  assert.equal((await call('/api/account/tokens/claim',paymentHeaders,{orderId:topup.orderId,claimToken:topup.claimToken})).status,409);
+  // Simulate the independent verifier's PAID result, without submitting real crypto.
+  const orders=await paymentOrderStore.records();Object.assign(orders[0],{paymentStatus:'PAID',transactionHash:'fixture-chain-confirmation',confirmedAt:new Date().toISOString()});await paymentOrderStore.save(orders);
+  const credited=await call('/api/account/tokens/claim',paymentHeaders,{orderId:topup.orderId,claimToken:topup.claimToken});assert.equal(credited.status,200);assert.equal(credited.body.data.creditedMzk,5000);
+  assert.equal((await call('/api/account/tokens/claim',paymentHeaders,{orderId:topup.orderId,claimToken:topup.claimToken})).body.data.balance,credited.body.data.balance);
+  assert.equal((await call('/api/wallet/state',paymentHeaders,{tokens:{MZK:999999}},'PUT')).status,403);
+  assert.equal((await call('/api/wallet/state',paymentHeaders,{memory:{account:null}},'PUT')).status,403);
+  assert.equal((await call('/api/wallet/state',{}, {tokens:{MZK:999999}},'PUT')).status,401);
+  const models=JSON.parse(await readFile(new URL('../public/models/glb-models.json',import.meta.url),'utf8')).models;
+  const model=models.find(item=>item.id&&item.modelUrl);const cart=[{name:model.name,quantity:1,deliverable:{id:model.id}}];
+  const cost=Math.round((25+8.95+25*.0825)*100);
+  assert.equal((await call('/api/store/purchases',paymentHeaders,{items:cart,expectedAmountMzk:1,requestId:'bad-price'})).status,409);
+  const bought=await call('/api/store/purchases',paymentHeaders,{items:cart,expectedAmountMzk:cost,requestId:'buy-model'});assert.equal(bought.status,201);
+  assert.equal((await call('/api/store/purchases',paymentHeaders,{items:cart,expectedAmountMzk:cost,requestId:'buy-model'})).body.data.balanceAfterMzk,bought.body.data.balanceAfterMzk);
+  assert.ok((await call('/api/wallet/state',paymentHeaders)).body.data.items.some(item=>item.id==='store-model-'+model.id));
   const cookie=login.headers['set-cookie'].split(';')[0],cookieHeaders={cookie};
   const session=await call('/api/market/session',cookieHeaders);assert.equal(session.status,200);const owner=session.body.data.owner_id;assert.match(owner,/^account:/);
   const csrf=session.body.data.csrfToken,headers={cookie,'x-csrf-token':csrf,'x-wallet-address':'someone-else'};
@@ -64,7 +81,7 @@ test('cookie and bearer member sessions own market and care actions without a br
   const extra=await call('/api/rpg/purchases',headers,{itemId:'ion-health-vial',requestId:'buy-trade'});const tradedItem=extra.body.data.items[0];
   assert.equal((await call('/api/market/listings',headers,{itemId:tradedItem.id,priceMzk:10},'PUT')).status,200);
   const trade=await call('/api/market/trades',secondHeaders,{sellerId:owner,itemId:tradedItem.id,requestId:'trade-care',expectedPriceMzk:10});assert.equal(trade.status,201);assert.equal(trade.body.data.buyerId,secondSession.body.data.owner_id);
-  const messages=await call('/api/market/messages',cookieHeaders,{to:secondSession.body.data.owner_id,text:'Care item question'});assert.equal(messages.status,201);
+  const messages=await call('/api/market/messages',headers,{to:secondSession.body.data.owner_id,text:'Care item question'});assert.equal(messages.status,201);
   await call('/api/session',headers,undefined,'DELETE');
   const expired=await call('/api/market/session',bearer);assert.equal(expired.status,401);
  }finally{process.env=oldEnv;await rm(dir,{recursive:true,force:true});}

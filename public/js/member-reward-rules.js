@@ -1,0 +1,5 @@
+// Fixed reward amounts and goals are shared by the server and client.
+export const MEMBER_REWARDS = {
+ 'field:first-contact':{event:'defeat',goal:3,tokens:30},'field:trigger-happy':{event:'laser-hit',goal:5,tokens:25},'field:leave-a-mark':{event:'spray',goal:4,tokens:20},'field:shock-wave':{event:'taser-hit',goal:1,tokens:35},'field:master-builder':{event:'brick',goal:3,tokens:30},'field:big-bang':{event:'blast-hit',goal:1,tokens:50},
+ 'audio:record':{event:'voice-recorded',goal:1,tokens:1},'audio:crop':{event:'voice-cropped',goal:1,tokens:2},'audio:upload':{event:'audio-uploaded',goal:1,tokens:1},'audio:clips3':{event:'clip-added',goal:3,tokens:2},'audio:bass':{event:'bass-added',goal:1,tokens:1},'audio:timing':{event:'clip-moved',goal:1,tokens:1},'audio:trim':{event:'clip-trimmed',goal:1,tokens:1},'audio:fade':{event:'effect-applied',goal:1,tokens:1},'audio:save':{event:'mix-saved',goal:1,tokens:2},'audio:export':{event:'mix-exported',goal:1,tokens:3},'audio:mint':{event:'audio-nft-minted',goal:1,tokens:4},'audio:daily-reward':{event:null,goal:0,tokens:2}
+};

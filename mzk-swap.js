@@ -37,8 +37,9 @@
   }
   function schedule() { clearTimeout(quoteTimer); quoteTimer = setTimeout(refresh, 250); }
   const readPending = () => { try { return JSON.parse(sessionStorage.getItem(PENDING_KEY) || 'null'); } catch (_) { return null; } };
-  function creditVerified(pending, payment) {
-    const entry = window.MZKWallet.creditPurchase(pending.usd, { ...payment, owner: pending.owner, currency: pending.currency, purchaseType: landPurchase ? 'LAND_TIER' : 'MZK_PURCHASE' });
+  async function creditVerified(pending, payment) {
+    const receipt=await window.MZKWallet.claimPurchase(pending.orderId,pending.claimToken);
+    const entry={amount:receipt.creditedMzk};
     sessionStorage.removeItem(PENDING_KEY);
     status.textContent = landPurchase
       ? `${entry.amount.toLocaleString()} MZK added. Returning you to claim your selected one-time land deed…`
@@ -55,18 +56,20 @@
   form.addEventListener('submit', async (event) => {
     event.preventDefault(); const usd = Number(usdInput.value); const minimum = bottleBonus ? BOTTLE_BONUS_MINIMUM_USD : PRESALE_MINIMUM_USD; if (usd < minimum) return; buy.disabled = true;
     try {
+      await window.MZKWallet.refreshShared();
+      if(!window.MZKWallet.sharedSession())throw new Error('Sign in through Members before purchasing tokens.');
       const owner = window.MZKWallet.walletId();
       if (!owner || owner.startsWith('guest-')) throw new Error('Connect or sign in to Member access before purchasing MZK so the tokens reach the correct user.');
       status.textContent = `Opening ${walletSelect.querySelector('input:checked').closest('label').querySelector('small').textContent}. Approve the exact transfer to submit it…`;
       const quote = await window.MuzikazWalletPayments.quote(usd, selectedCurrency());
       const order = await window.MuzikazWalletPayments.createOrder(quote, { productId: landPurchase ? `land-tier-${selectedLand}` : 'mzk-land-presale', productType: landPurchase ? 'LAND_TIER' : 'MZK_PURCHASE', quantity: landPurchase ? 1 : tokens(), userId: owner, wallet: window.MZKWallet.connectedAddress() || owner, metadata: { mzkOwner: owner, tokens: tokens(), worldId: landPurchase ? selectedLand : undefined, oneTime: landPurchase || undefined } });
-      const pending = { orderId: order.orderId, owner, usd, tokens: tokens(), currency: quote.currency, amount: quote.amount };
+      const pending = { orderId: order.orderId, owner, usd, claimToken:order.claimToken, tokens: tokens(), currency: quote.currency, amount: quote.amount };
       sessionStorage.setItem(PENDING_KEY, JSON.stringify(pending));
-      const sent = await window.MuzikazWalletPayments.initiate(quote, selectedWallet());
+      const sent = await window.MuzikazWalletPayments.initiate({...quote,amount:order.expectedAmount,expectedAmount:order.expectedAmount,uri:window.MuzikazWalletPayments.paymentUri(quote.currency,order.expectedAmount)}, selectedWallet());
       if (!sent.transactionHash) throw new Error(`${sent.walletName} opened with the prepared payment. Complete it in the wallet; automatic return detection is required to credit MZK.`);
       status.textContent = `Transaction submitted. Waiting for ${quote.paymentNetwork} confirmations…`;
       const payment = await window.MuzikazWalletPayments.confirmOrder(order.orderId, sent.transactionHash, sent.address, (current) => { status.textContent = `${current.paymentStatus}: ${current.confirmations || 0} confirmation(s). MZK stays locked until verified.`; });
-      creditVerified(pending, { ...payment, transactionHash: sent.transactionHash });
+      await creditVerified(pending, { ...payment, transactionHash: sent.transactionHash });
       const destination = new URLSearchParams(location.search).get('return'); if (destination) setTimeout(() => { location.href = destination; }, 900);
     } catch (error) { status.textContent = error.message || 'The swap was not completed. No MZK was added.'; }
     finally { buy.disabled = false; refresh(); }
@@ -90,5 +93,9 @@
     document.querySelector('.mzk-form-heading h2').textContent = 'Claim 10% more MZK';
   }
   else if (Number(params.get('amount')) >= PRESALE_MINIMUM_USD) usdInput.value = String(Number(params.get('amount')));
+  let resuming=false;
+  async function resumePending(){const pending=readPending();if(!pending?.claimToken||resuming)return;resuming=true;try{await window.MZKWallet.refreshShared();const order=await window.MuzikazWalletPayments.verifyOrder(pending.orderId);if(['PAID','FULFILLED'].includes(order.paymentStatus))await creditVerified(pending,order);}catch(error){status.textContent=error.message;}finally{resuming=false;}}
+  window.addEventListener('focus',resumePending);resumePending();
+  window.addEventListener('mzk:balance-changed',schedule);
   window.MZKWallet.mount('#mzk-balance', { compact: true }); renderWallets(); refresh();
 }());

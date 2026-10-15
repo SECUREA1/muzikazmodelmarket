@@ -59,13 +59,15 @@ const presenceTtlMs = 30_000;
 let paymentRatesCache = null;
 async function trustedPurchaseOrder(input) {
   const purchaseType = String(input.purchaseType || '').toUpperCase();
-  if (!['LOADOUT', 'LAND_TIER'].includes(purchaseType)) return input;
+  if (!['LOADOUT', 'LAND_TIER', 'MZK_PURCHASE'].includes(purchaseType)) return input;
+  const tokenPurchase = purchaseType === 'MZK_PURCHASE';
   const landTier = purchaseType === 'LAND_TIER';
-  if (landTier ? !/^land-tier-[a-z0-9-]+$/.test(String(input.itemId || '')) : String(input.itemId || '') !== 'standard-loadout') throw Object.assign(new Error(`Unknown ${landTier ? 'land tier' : 'Loadout'} product.`), { statusCode: 400 });
+  if (!tokenPurchase && (landTier ? !/^land-tier-[a-z0-9-]+$/.test(String(input.itemId || '')) : String(input.itemId || '') !== 'standard-loadout')) throw Object.assign(new Error(`Unknown ${landTier ? 'land tier' : 'Loadout'} product.`), { statusCode: 400 });
   const asset = String(input.paymentAsset || '').toUpperCase(); const network = MUZIKAZ_PAYMENT_NETWORKS[asset];
   if (!network) throw Object.assign(new Error('Unsupported Loadout payment asset.'), { statusCode: 400 });
   const requestedPrice = Number(input.basePrice);
-  const tierPrice = landTier ? 40 : ([5, 30, 100, 200].includes(requestedPrice) ? requestedPrice : 30);
+  if(tokenPurchase&&(!Number.isFinite(requestedPrice)||requestedPrice<5||requestedPrice>10000))throw Object.assign(new Error('Choose a token purchase from $5 to $10,000.'),{statusCode:400});
+  const tierPrice = tokenPurchase ? requestedPrice : landTier ? 40 : ([5, 30, 100, 200].includes(requestedPrice) ? requestedPrice : 30);
   if (!paymentRatesCache || Date.now() - paymentRatesCache.savedAt > 60_000) {
     const ids = [...new Set(Object.values(MUZIKAZ_PAYMENT_NETWORKS).map((item) => item.rateId))].join(',');
     const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`, { headers: { Accept: 'application/json' } });
@@ -73,7 +75,7 @@ async function trustedPurchaseOrder(input) {
     paymentRatesCache = { savedAt: Date.now(), values: await response.json() };
   }
   const usdRate = Number(paymentRatesCache.values[network.rateId]?.usd); if (!(usdRate > 0)) throw Object.assign(new Error('Independent payment quote is unavailable. No order was created.'), { statusCode: 503 });
-  const factor = 10 ** network.decimals; return { ...input, purchaseType: landTier ? 'LAND_TIER' : 'LOADOUT', itemId: landTier ? input.itemId : 'standard-loadout', basePrice: tierPrice, quantity: 1, expectedAmount: Math.ceil((tierPrice / usdRate) * factor) / factor };
+  const factor = 10 ** network.decimals; return { ...input, purchaseType: tokenPurchase ? 'MZK_PURCHASE' : landTier ? 'LAND_TIER' : 'LOADOUT', itemId: tokenPurchase ? 'mzk-land-presale' : landTier ? input.itemId : 'standard-loadout', basePrice: tierPrice, quantity: 1, expectedAmount: Math.ceil((tierPrice / usdRate) * factor) / factor };
 }
 
 function activePresence() {
@@ -261,8 +263,9 @@ async function backpackFor(account) {
   const stateAsset = (name, type) => ({ id: createHash('sha256').update(`${type}:${name}`).digest('hex').slice(0, 20), name, type, state: /^Unrevealed/i.test(name) ? 'unrevealed' : 'revealed' });
   const assets = [...(account.gameAssets || []).map((name) => stateAsset(name, 'game')), ...(account.purchasedAssets || []).map((name) => stateAsset(name, 'purchase'))];
   const catalog = await repositoryGameCatalog();
+  const walletState=await userDatabase.ensureAccount(account);
   const catalogAvatars = catalog.filter((asset) => asset.assetType === 'avatar').map((asset) => ({ ...asset, eligible: true, state: 'revealed' }));
-  return { accountId: account.accountId, backpackId: account.backpackId, status: account.loadoutRedeemed ? 'ready' : 'empty', mzkBalance: Number(account.mzkBalance || 0), land: (account.landAssets || []).map((name) => stateAsset(name, 'land')), avatars: [STARTER_AVATAR, ...catalogAvatars, ...assets.filter((asset) => /avatar/i.test(asset.name) && asset.name !== 'Starter Avatar').map((asset) => ({ ...asset, eligible: asset.state === 'revealed' }))], assets, catalogAssets: catalog, environments: catalog.filter((asset) => asset.assetType === 'environment'), props: catalog.filter((asset) => asset.assetType === 'prop'), vehicles: catalog.filter((asset) => asset.assetType === 'vehicle'), bottleClaims: (account.bottleClaims || []).map((name) => stateAsset(name, 'bottle')), entitlements: [...(account.creatorVaultAccess ? ['creator-vault'] : []), ...(account.marketplaceAccess ? ['marketplace'] : []), ...(account.gameAccess ? ['members-game'] : [])], selectedAvatarId: account.selectedAvatarId || STARTER_AVATAR.id, updatedAt: account.updatedAt };
+  return { accountId: account.accountId, backpackId: account.backpackId, status: account.loadoutRedeemed ? 'ready' : 'empty', mzkBalance: Number(walletState.tokens.MZK || 0), land: (account.landAssets || []).map((name) => stateAsset(name, 'land')), avatars: [STARTER_AVATAR, ...catalogAvatars, ...assets.filter((asset) => /avatar/i.test(asset.name) && asset.name !== 'Starter Avatar').map((asset) => ({ ...asset, eligible: asset.state === 'revealed' }))], assets, catalogAssets: catalog, environments: catalog.filter((asset) => asset.assetType === 'environment'), props: catalog.filter((asset) => asset.assetType === 'prop'), vehicles: catalog.filter((asset) => asset.assetType === 'vehicle'), bottleClaims: (account.bottleClaims || []).map((name) => stateAsset(name, 'bottle')), entitlements: [...(account.creatorVaultAccess ? ['creator-vault'] : []), ...(account.marketplaceAccess ? ['marketplace'] : []), ...(account.gameAccess ? ['members-game'] : [])], selectedAvatarId: account.selectedAvatarId || STARTER_AVATAR.id, updatedAt: account.updatedAt };
 }
 function throttleAccess(req) { const key = String(req.socket.remoteAddress || 'unknown'); const now = Date.now(); const attempt = accessAttempts.get(key) || { failures: 0, resetAt: now + 15 * 60_000 }; if (attempt.resetAt <= now) { attempt.failures = 0; attempt.resetAt = now + 15 * 60_000; } if (attempt.failures >= 8) throw Object.assign(new Error('Too many failed access attempts. Try again later.'), { statusCode: 429 }); accessAttempts.set(key, attempt); return { success: () => accessAttempts.delete(key), failure: () => { attempt.failures += 1; } }; }
 async function requireLandOwnership(req, res) {
@@ -440,8 +443,9 @@ const server = createServer(async (req, res) => {
     if(url.pathname==='/api/market/session'&&req.method==='GET'){
       const context=await memberContext(req,res);if(!context)return;
       const csrfToken=await accountSessionStore.issueCsrf(context.session.token);
-      return sendJson(res,200,assetResponse({authenticated:true,owner_id:context.walletId,account:{accountId:context.account.accountId,primaryEthereumWallet:context.account.primaryEthereumWallet||null},balance:Number(context.state.tokens.MZK||0),csrfToken,expiresAt:context.session.expiresAt}));
+      return sendJson(res,200,assetResponse({authenticated:true,owner_id:context.walletId,account:{accountId:context.account.accountId,primaryEthereumWallet:context.account.primaryEthereumWallet||null},hasTokenPurchase:Boolean(context.account.tokenPurchases?.length||context.account.bottlePurchases?.length),ledger:await userDatabase.walletLedger(context.walletId),balance:Number(context.state.tokens.MZK||0),csrfToken,expiresAt:context.session.expiresAt}));
     }
+    if((url.pathname.startsWith('/api/market/')||url.pathname==='/api/land/claims')&&['POST','PUT','DELETE'].includes(req.method)){const context=await memberContext(req,res,true);if(!context)return;}
     if((url.pathname.startsWith('/api/market/')||url.pathname==='/api/wallet/state')&&accountSessionToken(req)){
       const context=await memberContext(req,res);if(!context)return;
     }
@@ -549,12 +553,42 @@ const server = createServer(async (req, res) => {
       return sendJson(res, 201, assetResponse(await userDatabase.spendGameplay(walletId, await bodyJson(req))));
     }
 
-    if (url.pathname === '/api/payments/orders' && req.method === 'POST') return sendJson(res, 201, assetResponse(await paymentOrderStore.create(await trustedPurchaseOrder(await bodyJson(req)))));
+    if(['/api/wallet/rewards/progress','/api/wallet/rewards/claim'].includes(url.pathname)&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;return sendJson(res,200,assetResponse(await userDatabase.memberReward(context.walletId,url.pathname.endsWith('/progress')?'progress':'claim',await bodyJson(req))));}
+    if(url.pathname==='/api/store/purchases'&&req.method==='POST'){
+      const context=await memberContext(req,res,true);if(!context)return;
+      const body=await bodyJson(req),items=body.items;
+      if(!Array.isArray(items)||!items.length||items.length>50)throw Object.assign(new Error('Choose up to 50 digital models.'),{statusCode:400});
+      const catalog=[...(await repositoryGameCatalog()),...(await readModels()).filter(item=>item.status==='published')];
+      const collections={aape:['Originals',39],voltwolf:['Legends',64],sharko:['Beasts',58],flaminglow:['Chaos',69],muzikaz:['New Legends',52],pixella:['Trait Avatars',46],beedeere:['Online Events',55]};
+      const resolved=items.map(line=>{const id=String(line.deliverable?.id||'').replace(/^repository-/,''),asset=catalog.find(item=>String(item.id).replace(/^repository-/,'')===id);if(!asset?.modelUrl)throw Object.assign(new Error('MZK checkout supports catalog models. Remove merchandise or use crypto checkout for those items.'),{statusCode:400});const quantity=Number(line.quantity);if(!Number.isSafeInteger(quantity)||quantity<1||quantity>100)throw new Error('Invalid model quantity.');const collection=collections[id];const usd=collection&&String(line.name).startsWith(collection[0]+' ·')?collection[1]:Number(asset.price||asset.priceUsd)||25;return {id:'store-model-'+id,name:asset.name||asset.title,modelUrl:asset.modelUrl,thumbnailUrl:asset.thumbnailUrl||'',type:asset.assetType||'prop',quantity,priceUsd:usd};});
+      const subtotal=resolved.reduce((sum,item)=>sum+item.priceUsd*item.quantity,0),amountMzk=Math.round((subtotal+(subtotal<75?8.95:0)+subtotal*.0825)*100);
+      if(Number(body.expectedAmountMzk)!==amountMzk)return authorizationError(res,409,'STORE_PRICE_CHANGED','The catalog price changed. Refresh the cart before paying.','checkout');
+      return sendJson(res,201,assetResponse(await userDatabase.purchaseStoreModels(context.walletId,resolved,amountMzk,body.requestId)));
+    }
+    if(url.pathname==='/api/wallet/refund' &&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;return sendJson(res,200,assetResponse(await userDatabase.refundAudioSpend(context.walletId,(await bodyJson(req)).requestId)));}
+    if(url.pathname==='/api/wallet/spend'&&req.method==='POST'){
+      const context=await memberContext(req,res,true);if(!context)return;
+      return sendJson(res,201,assetResponse(await userDatabase.spendGameplay(context.walletId,await bodyJson(req))));
+    }
+    if(url.pathname==='/api/account/tokens/claim'&&req.method==='POST'){
+      const context=await memberContext(req,res,true);if(!context)return;
+      const body=await bodyJson(req),order=await paymentOrderStore.get(body.orderId);
+      if(!order||!paymentOrderStore.authorize(order,body.claimToken))return authorizationError(res,403,'PURCHASE_CLAIM_INVALID','The purchase claim is invalid.','payment');
+      const verified=['PAID','FULFILLED'].includes(order.paymentStatus)?order:await paymentOrderStore.verify(order.orderId);
+      const account=await loadoutCodeStore.fulfillTokenPurchase(verified,context.account.accountId);
+      const state=await userDatabase.ensureAccount(account);
+      return sendJson(res,200,assetResponse({account,owner_id:state.walletId,balance:Number(state.tokens.MZK||0),creditedMzk:account.tokenPurchases.find(item=>item.orderId===order.orderId).tokens}));
+    }
+    if (url.pathname === '/api/payments/orders' && req.method === 'POST') {
+      const body=await bodyJson(req);delete body.memberAccountId;
+      if(['MZK_PURCHASE','LAND_TIER'].includes(String(body.purchaseType||'').toUpperCase())){const active=await accountSession(req,res,true);if(!active)return;body.memberAccountId=active.accountId;}
+      return sendJson(res,201,assetResponse(await paymentOrderStore.create(await trustedPurchaseOrder(body))));
+    }
     if (url.pathname === '/api/admin/sales' && req.method === 'GET') { if (!requireAdmin(req, res)) return; return sendJson(res, 200, assetResponse(await paymentOrderStore.list())); }
     const paymentOrder = url.pathname.match(/^\/api\/payments\/orders\/([^/]+)$/);
     if (paymentOrder && req.method === 'GET') { const order = await paymentOrderStore.get(paymentOrder[1]); return order ? sendJson(res, 200, assetResponse(order)) : sendJson(res, 404, { success: false, message: 'Payment order not found.' }); }
     const paymentAction = url.pathname.match(/^\/api\/payments\/orders\/([^/]+)\/(submit|verify|fulfill)$/);
-    if (paymentAction && req.method === 'POST') { const body = await bodyJson(req).catch(() => ({})); const [, id, action] = paymentAction; if (action === 'fulfill' && !requireAdmin(req, res)) return; const result = action === 'submit' ? await paymentOrderStore.submit(id, body.transactionHash, body.wallet) : action === 'verify' ? await paymentOrderStore.verify(id) : await paymentOrderStore.fulfill(id, body.fulfillment); return sendJson(res, 200, assetResponse(result)); }
+    if (paymentAction && req.method === 'POST') { const body = await bodyJson(req).catch(() => ({})); const [, id, action] = paymentAction; if (action === 'fulfill' && !requireAdmin(req, res)) return; const result = action === 'submit' ? await paymentOrderStore.submit(id, body.transactionHash, body.wallet) : action === 'verify' ? await paymentOrderStore.verify(id) : await paymentOrderStore.fulfill(id, body.fulfillment); if(['PAID','FULFILLED'].includes(result.paymentStatus)&&result.memberAccountId&&['MZK_PURCHASE','LAND_TIER'].includes(result.purchaseType)){const account=await loadoutCodeStore.fulfillTokenPurchase(result,result.memberAccountId);await userDatabase.ensureAccount(account);} return sendJson(res, 200, assetResponse(result)); }
 
     if(url.pathname==='/api/rpg/telemetry'&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;return sendJson(res,200,assetResponse(await userDatabase.recordRpgTelemetry(context.walletId,await bodyJson(req))));}
     if (url.pathname === '/api/rpg/state' && req.method === 'GET') { const context=await memberContext(req,res);if(!context)return;return sendJson(res,200,assetResponse(await userDatabase.rpgState(context.walletId))); }
@@ -576,7 +610,7 @@ const server = createServer(async (req, res) => {
     if (builderPlacement && req.method === 'DELETE') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.world.edit')) return; return sendJson(res, 200, assetResponse(await userDatabase.updateBuilderPlacement(context.walletId, decodeURIComponent(builderPlacement[1]), {}, true))); }
 
     if (url.pathname === '/api/wallet/state' && req.method === 'GET') { await resolveAccountSession(req); return sendJson(res, 200, assetResponse(await userDatabase.get(requestWallet(req)))); }
-    if (url.pathname === '/api/wallet/state' && req.method === 'PUT') return sendJson(res, 200, assetResponse(await userDatabase.put(requestWallet(req), await bodyJson(req))));
+    if (url.pathname === '/api/wallet/state' && req.method === 'PUT') {const context=await memberContext(req,res,true);if(!context)return;const body=await bodyJson(req);if('tokens' in body||Object.hasOwn(body.memory||{},'account')||Object.hasOwn(body.memory||{},'memberRewards'))return authorizationError(res,403,'SERVER_BALANCE_REQUIRED','MZK balances are maintained by verified purchases and server transactions.','wallet');return sendJson(res,200,assetResponse(await userDatabase.put(context.walletId,body)));}
     if (url.pathname === '/api/land/deeds' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.landDeeds(requestWallet(req))));
     if (url.pathname === '/api/land/claims' && req.method === 'POST') { const body = await bodyJson(req); const allowed = new Map([['volt-city', 'Volt City'], ['skyline-deck', 'Skyline Deck'], ['echo-gardens', 'Echo Gardens'], ['crew-plaza', 'Crew Plaza'], ['studio-ridge', 'Studio Ridge'], ['neon-docks', 'Neon Docks'], ['bassline-badlands', 'Bassline Badlands'], ['pixel-peaks', 'Pixel Peaks']]); const worldId = cleanText(body.worldId).toLowerCase(); if (!allowed.has(worldId)) return sendJson(res, 400, { success: false, message: 'Unknown MUZIKAZ world.' }); return sendJson(res, 201, assetResponse(await userDatabase.claimLand({ walletId: requestWallet(req), worldId, name: allowed.get(worldId), priceMzk: 4000, requestId: body.requestId }))); }
     if (url.pathname === '/api/market/members' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.members()));

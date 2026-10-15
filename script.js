@@ -1208,7 +1208,7 @@ function initWorldPlot() {
       selection.innerHTML = `<span class="world-plot__selection-number">!</span><span><strong>Claim not recorded.</strong> ${escapeHtml(error.message)}</span><small>Your MZK was not spent locally. Reconnect to the live service and retry.</small>`;
       return;
     }
-    window.MZKWallet?.spend(STARTER_PLOT_MZK, `Starter land deed · ${selectedSpace}`, requestId, { asset: selectedSpace, deedId: deed.id, type: 'starter-land' });
+    await window.MZKWallet?.refreshShared?.();
     claimOwnedAsset(`MUZIKAZ World · ${selectedSpace}`, 'Public-area plot claim');
     updateOwnedCount();
     updateCart(reserveButton, 'Plot claimed');
@@ -2245,14 +2245,19 @@ function initMzkCheckout() {
   const button = document.querySelector('#checkout-mzk-pay'), status = document.querySelector('#payment-status');
   if (!button || !window.MZKWallet) return;
   window.MZKWallet.mount('#checkout-mzk-balance');
-  button.addEventListener('click', () => {
+  button.addEventListener('click', async () => {
+    if(button.disabled)return;
     const items = readCart(), amount = Math.round(checkoutUsdTotal() * window.MZKWallet.MZK_PER_USD);
     if (!items.length) return;
     if (!validateWalletCheckout()) return;
+    button.disabled=true;
+    await window.MZKWallet.refreshShared().catch(()=>{});
     const owner = checkoutOwner('MZK');
-    if (!owner || owner.startsWith('guest-')) { status.innerHTML = 'Sign in or connect your member wallet before paying with MZK so the claim reaches the correct Backpack. <a href="members.html#bottle-login">Connect account</a>.'; return; }
-    const result = window.MZKWallet.spend(amount, `MUZIKAZ cart purchase (${items.length} lines)`, `mzk-order:${Date.now()}`);
-    if (!result.ok) { status.innerHTML = `You need ${amount.toLocaleString()} MZK. <a href="buy-mzk.html">Buy MZK with ETH, POL, BNB, SOL, ADA, BTC, or DOGE</a>.`; return; }
+    if (!owner || owner.startsWith('guest-')) { button.disabled=false; status.innerHTML = 'Sign in or connect your member wallet before paying with MZK so the claim reaches the correct Backpack. <a href="members.html#bottle-login">Connect account</a>.'; return; }
+    button.disabled=true;
+    const result = await window.MZKWallet.purchaseItems(items, amount, `mzk-order:${Date.now()}`);
+    button.disabled=false;
+    if (!result.ok) { status.textContent=result.error||'The token purchase could not be completed.'; return; }
     const orderId = `MZ-MZK-${Date.now().toString().slice(-6)}`;
     claimCheckoutItems(items, owner, `MZK order ${orderId}`);
     window.localStorage.setItem('muzikazLastReceipt', JSON.stringify({ orderId, total: `${amount} MZK`, items, paidAt: new Date().toISOString(), method: 'MZK' }));
@@ -2980,7 +2985,7 @@ function initSpaceBuilder() {
   }
   toggles.replaceChildren(...types.map((type) => { const label = document.createElement('label'); const input = document.createElement('input'); input.type = 'checkbox'; input.value = type; input.checked = state.enabledTypes?.includes(type) !== false; input.addEventListener('change', renderCatalog); label.append(input, document.createTextNode(type)); return label; }));
   renderCatalog(); render();
-  root.querySelector('#space-add-asset').addEventListener('click', () => { const asset = catalog.find((item) => item.id === select.value); if (!asset) return; const requestId = `space-add:${state.id}:${crypto.randomUUID?.() || Date.now()}`; const payment = window.MZKWallet?.spend?.(asset.cost, `Game space addition · ${asset.name}`, requestId, { spaceId: state.id, assetId: asset.id, assetType: asset.type }); if (!payment?.ok) { status.textContent = `You need ${Math.max(0, asset.cost - balance())} more MZK to add ${asset.name}. Connect or fund your wallet, then retry.`; return render(); } state.objects.push({ ...asset, instanceId: requestId, spawnOrder: state.objects.length + 1, addedAt: new Date().toISOString() }); state.spentMzk = Number(state.spentMzk || 0) + asset.cost; save(); render(); status.textContent = `${asset.name} added to the gameplay loadout for ${asset.cost} MZK.`; });
+  root.querySelector('#space-add-asset').addEventListener('click', async () => { const asset = catalog.find((item) => item.id === select.value); if (!asset) return; const requestId = `space-add:${state.id}:${crypto.randomUUID?.() || Date.now()}`; const payment = await window.MZKWallet?.spendAsync?.(asset.cost, `Game space addition · ${asset.name}`, requestId, { spaceId: state.id, assetId: asset.id, assetType: asset.type }); if (!payment?.ok) { status.textContent = `You need ${Math.max(0, asset.cost - balance())} more MZK to add ${asset.name}. Connect or fund your wallet, then retry.`; return render(); } state.objects.push({ ...asset, instanceId: requestId, spawnOrder: state.objects.length + 1, addedAt: new Date().toISOString() }); state.spentMzk = Number(state.spentMzk || 0) + asset.cost; save(); render(); status.textContent = `${asset.name} added to the gameplay loadout for ${asset.cost} MZK.`; });
   name.addEventListener('change', save);
   root.querySelector('#space-save-draft').addEventListener('click', () => { save(); status.textContent = 'Draft saved to this wallet profile. No additional tokens or coins were used.'; });
   function manifest(published = false) { save(); return { schema: 'muzikaz-game-space-v1', id: state.id, owner: owner(), name: state.name, version: state.version + (published ? 1 : 0), status: published ? 'published' : 'draft', enabledTypes: state.enabledTypes, spentMzk: state.spentMzk, publishCostCoins: published ? 100 : 0, objects: state.objects, updatedAt: new Date().toISOString() }; }

@@ -278,6 +278,20 @@ export class MzkAccountStore {
     if (price >= 200) account.gameAssets = unique([...(account.gameAssets || []), 'Custom In-Game Asset Order']);
     account.updatedAt = now; return publicAccount(account);
   }); }
+  fulfillTokenPurchase(order, accountId) { return this.serialized(async data => {
+    if (!accountId || order.memberAccountId !== accountId) throw Object.assign(new Error('This payment belongs to a different member account.'), {statusCode:403});
+    if (!['PAID','FULFILLED'].includes(order.paymentStatus) || !['MZK_PURCHASE','LAND_TIER'].includes(order.purchaseType) || !order.transactionHash || Number(order.basePrice)<5) throw Object.assign(new Error('Independently verified payment is required.'), {statusCode:409});
+    const account=data.accounts.find(item=>item.accountId===accountId);
+    if(!account)throw Object.assign(new Error('Member account not found.'),{statusCode:404});
+    account.tokenPurchases ||= [];
+    if(account.tokenPurchases.some(item=>item.orderId===order.orderId))return publicAccount(account);
+    const usd=Number(order.basePrice),first=!account.tokenPurchases.length&&!account.bottlePurchases?.length;
+    const tokens=order.purchaseType==='LAND_TIER'?4000:first?(usd>=200?Math.max(Math.round(usd*100),26000):usd>=100?Math.max(Math.round(usd*100),13000):usd>=30?Math.max(Math.round(usd*100),5000):Math.max(Math.round(usd*100),2000)):Math.round(usd*100);
+    grantStandardLoadout(account);
+    account.mzkBalance=Number(account.mzkBalance||0)+tokens;
+    account.tokenPurchases.push({orderId:order.orderId,transactionHash:order.transactionHash,tokens,priceUsd:usd,purchasedAt:order.confirmedAt});
+    account.updatedAt=new Date().toISOString();return publicAccount(account);
+  }); }
   selectAvatar(accountId, avatarId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const id = String(avatarId || ''); if (id !== 'starter-avatar' && !/^repository-[a-z0-9-]{1,100}$/.test(id)) throw Object.assign(new Error('That avatar is unavailable or Unrevealed. Choose an included MUZIKAZ avatar.'), { statusCode: 409 }); account.selectedAvatarId = id; account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
   async getAccount(accountId) { const account = (await this.records()).accounts.find((a) => a.accountId === accountId); return account ? publicAccount(account) : null; }
   repairEntitledAccount(accountId) { return this.serialized(async (data) => {

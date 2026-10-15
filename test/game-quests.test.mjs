@@ -9,7 +9,7 @@ test('RAD-TOX field quests connect every advertised action to progress and rewar
   for (const event of ['defeat', 'laser-hit', 'spray', 'taser-hit', 'brick', 'blast-hit']) {
     assert.match(script, new RegExp(`trackGameQuest\\('${event}'\\)`), `${event} gameplay records quest progress`);
   }
-  assert.ok(script.includes("MZKWallet?.record?.({id:`rad-tox-quest:"), 'claiming credits the shared MZK wallet');
+  assert.ok(script.includes("await window.MZKWallet.claimReward('field:'+id)"), 'claiming credits the canonical server wallet');
   assert.match(script, /item\.claimed=new Date\(\)\.toISOString\(\)/, 'completed quest claims persist idempotently');
   assert.match(script, /QUEST_ICONS/, 'quest cards and celebrations use inline SVG art');
 });

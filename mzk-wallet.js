@@ -20,14 +20,16 @@
   const parse = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch (_) { return fallback; } };
   const profiles = () => { const value = parse(PROFILE_KEY, {}); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; };
   const activeProfile = () => profiles()[normalize(localStorage.getItem(ACTIVE_KEY))] || null;
-  const walletId = () => activeProfile()?.address || normalize(localStorage.getItem('muzikazBottleMemberEmail')) || normalize(localStorage.getItem('voice3.wallet')) || localStorage.getItem('voice3.guestId') || (() => { const id = uid('guest'); localStorage.setItem('voice3.guestId', id); return id; })();
+  let shared = null, sharedLoading = null, sharedSpending = false;
+  const walletId = () => shared?.owner_id || activeProfile()?.address || normalize(localStorage.getItem('muzikazBottleMemberEmail')) || normalize(localStorage.getItem('voice3.wallet')) || localStorage.getItem('voice3.guestId') || (() => { const id = uid('guest'); localStorage.setItem('voice3.guestId', id); return id; })();
   const read = () => { try { const value = JSON.parse(localStorage.getItem(LEDGER_KEY) || '[]'); return Array.isArray(value) ? value : []; } catch (_) { return []; } };
   const write = (ledger) => { localStorage.setItem(LEDGER_KEY, JSON.stringify(ledger.slice(-5000))); window.dispatchEvent(new CustomEvent('mzk:balance-changed')); window.dispatchEvent(new CustomEvent('voice3:rewards-updated')); };
-  const balance = (owner = walletId()) => read().filter((entry) => entry.walletId === normalize(owner)).reduce((total, entry) => total + Number(entry.amount || 0), 0);
-  const history = (owner = walletId()) => read().filter((entry) => entry.walletId === normalize(owner));
+  const balance = (owner = walletId()) => window.MUZIKAZ_API ? (shared && normalize(owner) === normalize(shared.owner_id) ? Number(shared.balance || 0) : 0) : read().filter((entry) => entry.walletId === normalize(owner)).reduce((total, entry) => total + Number(entry.amount || 0), 0);
+  const history = (owner = walletId()) => window.MUZIKAZ_API ? (shared && normalize(owner) === normalize(shared.owner_id) ? shared.ledger || [] : []) : read().filter((entry) => entry.walletId === normalize(owner));
   function record({ id = uid(), owner = walletId(), amount, kind, reason = 'MZK activity', ...meta }) { const ledger = read(); const existing = ledger.find((entry) => entry.id === id); if (existing) return existing; const entry = { id, walletId: normalize(owner), currency: 'MZK', kind: kind || (amount < 0 ? 'spend' : 'earn'), amount: Number(amount) || 0, reason, createdAt: new Date().toISOString(), ...meta }; ledger.push(entry); write(ledger); return entry; }
   function ensureWallet(owner = walletId()) { owner = normalize(owner); if (!owner || owner.startsWith('guest-') || history(owner).length) return balance(owner); record({ id: `mzk:welcome:${owner}`, owner, amount: STARTING_MZK, kind: 'welcome', reason: 'MUZIKAZ member wallet welcome balance' }); return balance(owner); }
   function grantGameStartMzk(owner = walletId()) {
+    if(window.MUZIKAZ_API)return {granted:false,balance:balance(owner)};
     owner = normalize(owner);
     if (!owner || balance(owner) !== 0) return { granted: false, balance: balance(owner) };
     const tx = record({ id: uid('mzk:game-start'), owner, amount: GAME_START_MZK, kind: 'game-start', reason: 'RAD-TOX single-player starting balance' });
@@ -35,7 +37,7 @@
   }
   function purchaseTokens(usd, owner = walletId()) {
     usd = Number(usd);
-    const firstPurchase = !history(owner).some((entry) => entry.kind === 'purchase');
+    const firstPurchase = shared ? !shared.hasTokenPurchase : !history(owner).some((entry) => entry.kind === 'purchase');
     if (!firstPurchase) return Math.round(usd * MZK_PER_USD);
     const baseTokens = Math.round(usd * MZK_PER_USD);
     if (usd >= 200) return Math.max(baseTokens, 26000);
@@ -75,8 +77,8 @@
   }
   function randomItem(items) { const values = new Uint32Array(1); if (globalThis.crypto?.getRandomValues) globalThis.crypto.getRandomValues(values); else values[0] = Math.floor(Math.random() * 0xffffffff); return items[values[0] % items.length]; }
   function claimStarterLoadout() { const owner = normalize(walletId()), existing = starterLoadout(owner); if (existing) return { ok: true, firstEntry: false, balance: balance(owner), loadout: existing }; const payment = spend(GAME_ENTRY_MZK, 'First-time Builder Loadout package', uid('starter-loadout'), { package: 'builder-loadout-v1' }); if (!payment.ok) return payment; const loadout = { id: uid('loadout'), owner, avatar: randomItem(STARTER_AVATARS), land: randomItem(STARTER_LANDS), assets: ['Builder Tool Kit', 'Starter Room Shell', 'Public Community Spot'], entryPaidMzk: GAME_ENTRY_MZK, claimedAt: new Date().toISOString() }; const all = loadouts(); all[owner] = loadout; localStorage.setItem(LOADOUT_KEY, JSON.stringify(all)); window.dispatchEvent(new CustomEvent('mzk:starter-loadout-claimed', { detail: loadout })); return { ok: true, firstEntry: true, balance: balance(owner), loadout }; }
-  function spend(amount, reason, id = uid('spend'), meta = {}) { amount = Math.abs(Number(amount) || 0); ensureWallet(); const existing = read().find((entry) => entry.id === id); if (existing) return { ok: true, duplicate: true, balance: balance(), tx: existing }; if (!amount || balance() < amount) return { ok: false, error: 'INSUFFICIENT_MZK', balance: balance() }; const tx = record({ id, amount: -amount, kind: 'spend', reason, ...meta }); return { ok: true, tx, balance: balance() }; }
-  function transfer(from, to, amount, reason, id = uid('transfer'), meta = {}) { from = normalize(from); to = normalize(to); amount = Math.abs(Number(amount) || 0); ensureWallet(from); ensureWallet(to); if (!from || !to || from === to || !amount) return { ok: false, error: 'INVALID_TRANSFER', balance: balance(from) }; if (read().some((entry) => entry.id === `${id}:debit`)) return { ok: true, duplicate: true, balance: balance(from) }; if (balance(from) < amount) return { ok: false, error: 'INSUFFICIENT_MZK', balance: balance(from) }; record({ id: `${id}:debit`, owner: from, amount: -amount, kind: 'transfer', reason, counterparty: to, ...meta }); record({ id: `${id}:credit`, owner: to, amount, kind: 'transfer', reason, counterparty: from, ...meta }); return { ok: true, balance: balance(from) }; }
+  function spend(amount, reason, id = uid('spend'), meta = {}) { if(window.MUZIKAZ_API)return {ok:false,error:'USE_SHARED_SPEND',balance:balance()}; amount = Math.abs(Number(amount) || 0); ensureWallet(); const existing = read().find((entry) => entry.id === id); if (existing) return { ok: true, duplicate: true, balance: balance(), tx: existing }; if (!amount || balance() < amount) return { ok: false, error: 'INSUFFICIENT_MZK', balance: balance() }; const tx = record({ id, amount: -amount, kind: 'spend', reason, ...meta }); return { ok: true, tx, balance: balance() }; }
+  function transfer(from, to, amount, reason, id = uid('transfer'), meta = {}) {if(window.MUZIKAZ_API)return {ok:false,error:'USE_MEMBER_MARKET',balance:balance()}; from = normalize(from); to = normalize(to); amount = Math.abs(Number(amount) || 0); ensureWallet(from); ensureWallet(to); if (!from || !to || from === to || !amount) return { ok: false, error: 'INVALID_TRANSFER', balance: balance(from) }; if (read().some((entry) => entry.id === `${id}:debit`)) return { ok: true, duplicate: true, balance: balance(from) }; if (balance(from) < amount) return { ok: false, error: 'INSUFFICIENT_MZK', balance: balance(from) }; record({ id: `${id}:debit`, owner: from, amount: -amount, kind: 'transfer', reason, counterparty: to, ...meta }); record({ id: `${id}:credit`, owner: to, amount, kind: 'transfer', reason, counterparty: from, ...meta }); return { ok: true, balance: balance(from) }; }
   function connectIdentity({ address, chainId, contract, tokenIds = [] }) {
     address = normalize(address); contract = normalize(contract); chainId = normalize(chainId);
     if (!validAddress(address) || !validAddress(contract) || !/^0x[a-f0-9]+$/.test(chainId)) throw new Error('A valid wallet, chain, and Bottle contract are required.');
@@ -133,5 +135,31 @@
     start.dataset.mzkDemoAccess = 'public';
     start.dataset.mzkStartGrant = grant.granted ? String(GAME_START_MZK) : '0';
   }, true);
-  window.MZKWallet = { symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, GAME_START_MZK, purchaseTokens, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, provisionStandardLoadout, grantGameStartMzk, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
+  async function sharedApi(path, options={}) {
+    if(!window.MUZIKAZ_API?.fetch)throw new Error('Open Members and sign in to use shared MZK.');
+    const response=await window.MUZIKAZ_API.fetch(path,{...options,retries:0,headers:{'Content-Type':'application/json','X-CSRF-Token':shared?.csrfToken||window.MuzikazAccountSession?.csrfToken||'',...(options.headers||{})}});
+    const result=await response.json();if(!response.ok||result.success===false)throw new Error(result.message||result.error||'Shared wallet is unavailable.');return result.data;
+  }
+  async function refreshShared(){
+    if(sharedLoading)return sharedLoading;
+    sharedLoading=(async()=>{try{shared=await sharedApi('/api/market/session');window.dispatchEvent(new CustomEvent('mzk:balance-changed'));return shared;}catch(error){shared=null;throw error;}finally{sharedLoading=null;}})();return sharedLoading;
+  }
+  async function spendAsync(amount,reason,id=uid('spend'),meta={}){
+    if(sharedSpending)return {ok:false,error:'PAYMENT_PENDING',balance:balance()};
+    sharedSpending=true;
+    try{
+      await refreshShared();const owner=shared.owner_id;
+      const receipt=await sharedApi('/api/wallet/spend',{method:'POST',body:JSON.stringify({amountMzk:amount,reason,requestId:id,gameId:meta.gameId||meta.assetId||'muzikaz-world'})});
+      if(shared?.owner_id===owner){shared.balance=receipt.balanceAfterMzk;window.dispatchEvent(new CustomEvent('mzk:balance-changed'));window.dispatchEvent(new CustomEvent('voice3:rewards-updated'));}
+      return {ok:true,tx:receipt,balance:receipt.balanceAfterMzk};
+    }catch(error){return {ok:false,error:error.message,balance:balance()};}finally{sharedSpending=false;}
+  }
+  let rewardQueue=Promise.resolve();
+  function rewardProgress(scope,event,requestId=uid('reward')){const allowed={field:['defeat','laser-hit','spray','taser-hit','brick','blast-hit'],audio:['voice-recorded','voice-cropped','audio-uploaded','clip-added','bass-added','clip-moved','clip-trimmed','effect-applied','mix-saved','mix-exported','audio-nft-minted']};if(!allowed[scope]?.includes(event))return Promise.resolve();const task=rewardQueue.catch(()=>{}).then(async()=>{if(!shared)await refreshShared();return sharedApi('/api/wallet/rewards/progress',{method:'POST',body:JSON.stringify({scope,event,requestId})});});rewardQueue=task;return task;}
+  async function claimReward(rewardId){await rewardQueue.catch(()=>{});if(!shared)await refreshShared();const receipt=await sharedApi('/api/wallet/rewards/claim',{method:'POST',body:JSON.stringify({rewardId})});await refreshShared();window.dispatchEvent(new CustomEvent('voice3:rewards-updated'));return receipt;}
+  async function purchaseItems(items,expectedAmountMzk,requestId){try{const signature=JSON.stringify([expectedAmountMzk,items.map(item=>[item.deliverable?.id,item.quantity])]);try{const pending=JSON.parse(window.sessionStorage.getItem('muzikazPendingMzkCart')||'null');if(pending?.signature===signature)requestId=pending.requestId;else window.sessionStorage.setItem('muzikazPendingMzkCart',JSON.stringify({signature,requestId}));}catch{}await refreshShared();const receipt=await sharedApi('/api/store/purchases',{method:'POST',body:JSON.stringify({items,expectedAmountMzk,requestId})});await refreshShared();window.dispatchEvent(new CustomEvent('muzikaz:inventory-changed'));try{window.sessionStorage.removeItem('muzikazPendingMzkCart');}catch{}return {ok:true,tx:receipt,balance:receipt.balanceAfterMzk};}catch(error){return {ok:false,error:error.message,balance:balance()};}}
+  async function refundSpend(requestId){await refreshShared();const receipt=await sharedApi('/api/wallet/refund',{method:'POST',body:JSON.stringify({requestId})});await refreshShared();return {ok:true,tx:receipt,balance:receipt.balanceAfterMzk};}
+  async function claimPurchase(orderId,claimToken){await refreshShared();const receipt=await sharedApi('/api/account/tokens/claim',{method:'POST',body:JSON.stringify({orderId,claimToken})});await refreshShared();window.dispatchEvent(new CustomEvent('muzikaz:inventory-refresh'));return receipt;}
+  if(window.MUZIKAZ_API){refreshShared().catch(()=>{});window.addEventListener('focus',()=>refreshShared().catch(()=>{}));window.addEventListener('muzikaz:member-ready',()=>refreshShared().catch(()=>{}));window.addEventListener('muzikaz:inventory-changed',()=>refreshShared().catch(()=>{}));window.addEventListener('muzikaz:market-listings-changed',()=>refreshShared().catch(()=>{}));window.setInterval(()=>{if(!sharedSpending)refreshShared().catch(()=>{});},15000);}
+  window.MZKWallet = { refreshShared, spendAsync, claimPurchase, refundSpend, purchaseItems, rewardProgress, claimReward, sharedSession:()=>shared, symbol: 'MZK', MZK_PER_USD, MINIMUM_PURCHASE_USD, GAME_ENTRY_MZK, GAME_START_MZK, purchaseTokens, walletId, balance, history, record, spend, transfer, creditPurchase, starterLoadout, claimStarterLoadout, provisionStandardLoadout, grantGameStartMzk, ensureWallet, mount, profile: activeProfile, connectedAddress, connectedChainId: () => normalize(localStorage.getItem(CONNECTED_CHAIN_KEY)), connectBrowserWallet, disconnectBrowserWallet, connectIdentity, setUsername, exportWallet, importWallet, downloadWallet };
 })();
