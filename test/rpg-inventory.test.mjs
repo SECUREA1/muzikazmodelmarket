@@ -14,7 +14,7 @@ test('RPG supplies debit shared MZK, trade ownership and consume once with trust
  await assert.rejects(db.rpgAction('alice','use',item.id,'use-a'),/Owned RPG/);
  await db.recordRpgTelemetry('bob',{health:10,world:'arena'});
  await db.rpgAction('bob','use',item.id,'use-b');await db.rpgAction('bob','use',item.id,'use-b');
- state=await db.rpgState('bob');assert.equal(state.stats.health,45);assert.equal(state.items.length,0);assert.equal(state.history[0].world,'arena');
+ state=await db.rpgState('bob');assert.equal(state.stats.health,45);assert.equal(state.items.length,0);assert.equal(state.history[0].world,'arena');assert.equal(state.history[1].stats.health,45);assert.equal(state.history[1].reason,'care');assert.equal(state.recentCare.length,1);
  await assert.rejects(db.rpgAction('bob','use',item.id,'use-c'),/Owned RPG/);
  await assert.rejects(db.rpgAction('bob','buy','ioncore-survival-pack','expensive'),/Insufficient/);
  await db.put('bob',{items:[{id:item.id,type:'rpg-consumable',catalogId:'core-medkit'}]});assert.equal((await db.rpgState('bob')).items.length,0);

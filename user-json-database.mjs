@@ -331,14 +331,14 @@ export class UserJsonDatabase {
   }
 
   async rpgState(walletId) {
-    const user=await this.get(walletId);
-    return {owner_id:user.walletId,balance:Number(user.tokens.MZK||0),stats:{...RPG_DEFAULT_STATS,...user.memory?.ioncoreRpg?.stats},history:user.memory?.ioncoreRpg?.history||[],items:user.items.filter(item=>item.type==='rpg-consumable')};
+    const user=await this.get(walletId);const recentCare=(await this.read()).transactions.filter(entry=>entry.walletId===user.walletId&&entry.type==='RPG_USE').slice(-50);
+    return {recentCare,owner_id:user.walletId,balance:Number(user.tokens.MZK||0),stats:{...RPG_DEFAULT_STATS,...user.memory?.ioncoreRpg?.stats},history:user.memory?.ioncoreRpg?.history||[],items:user.items.filter(item=>item.type==='rpg-consumable')};
   }
 
   recordRpgTelemetry(walletId,input){
     const wallet=cleanWallet(walletId),health=Number(input?.health);
     if(!Number.isFinite(health)||health<0||health>100)throw new Error('Health must be between 0 and 100.');
-    return this.transaction(data=>{const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');const previous=user.memory.ioncoreRpg||{};user.memory.ioncoreRpg={stats:{...RPG_DEFAULT_STATS,...previous.stats,health},history:[...(previous.history||[]),{health,world:String(input.world||'').slice(0,140),recordedAt:new Date().toISOString()}].slice(-100)};user.updatedAt=new Date().toISOString();user.revision++;return user.memory.ioncoreRpg;});
+    return this.transaction(data=>{const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');const previous=user.memory.ioncoreRpg||{};user.memory.ioncoreRpg={stats:{...RPG_DEFAULT_STATS,...previous.stats,health},history:[...(previous.history||[]),{health,stats:{...RPG_DEFAULT_STATS,...previous.stats,health},reason:'gameplay',world:String(input.world||'').slice(0,140),recordedAt:new Date().toISOString()}].slice(-100)};user.updatedAt=new Date().toISOString();user.revision++;return user.memory.ioncoreRpg;});
   }
 
   rpgAction(walletId, action, itemId, requestId) {
@@ -359,7 +359,7 @@ export class UserJsonDatabase {
         const owned=user.items.find(entry=>entry.id===itemId&&entry.type==='rpg-consumable');
         item=RPG_CATALOG.find(entry=>entry.id===owned?.catalogId);if(!item)throw new Error('Owned RPG supply not found.');
         user.items=user.items.filter(entry=>entry.id!==itemId);
-        user.memory.ioncoreRpg={...user.memory.ioncoreRpg,stats:applyRpgEffect(user.memory.ioncoreRpg?.stats,item.effect)};
+        const stats=applyRpgEffect(user.memory.ioncoreRpg?.stats,item.effect);user.memory.ioncoreRpg={...user.memory.ioncoreRpg,stats,history:[...(user.memory.ioncoreRpg?.history||[]),{health:stats.health,stats,reason:'care',itemName:item.name,recordedAt:new Date().toISOString()}].slice(-100)};
       }else throw new Error('Unknown RPG action.');
       user.revision++;user.updatedAt=new Date().toISOString();
       return appendTransaction(data,{type:action==='buy'?'RPG_PURCHASE':'RPG_USE',action,walletId:wallet,requestId:request,itemId,amountMzk:action==='buy'?-item.price:0,balanceAfterMzk:user.tokens.MZK,effect:action==='use'?item.effect:null});

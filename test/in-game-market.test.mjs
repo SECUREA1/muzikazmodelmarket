@@ -53,11 +53,11 @@ test('in-game care panel loads the member inventory and records current arena he
  globalThis.fetch=async()=>({ok:true,json:async()=>({items:[{id:'ion-health-vial',name:'Health vial',description:'Restore health',price:25}]})});
  try{
   const {createGameMarketplace}=await import('../public/js/in-game-market.js');
-  const market=createGameMarketplace({telemetry:()=>({health:40,maxHealth:100})});market.open();
+  const market=createGameMarketplace({telemetry:()=>({health:40,maxHealth:100})});market.open('care');
   await new Promise(resolve=>setTimeout(resolve,10));
   handlers.get('click')({target:{closest(selector){return selector==='[data-market-tab]'?{dataset:{marketTab:'care'}}:null;}}});
   await new Promise(resolve=>setTimeout(resolve,10));
-  assert.match(nodes.get('[data-market-body]').innerHTML,/Body telemetry/);
+  assert.match(nodes.get('[data-market-body]').innerHTML,/body telemetry/i);
   assert.match(nodes.get('[data-market-body]').innerHTML,/data-market-care-use="0"/);
   const sample=calls.find(call=>call.path==='/api/rpg/telemetry');assert.equal(JSON.parse(sample.options.body).health,40);assert.equal(sample.options.headers['X-CSRF-Token'],'token');
   const pack=calls.find(call=>call.path==='/api/wallet/state');assert.equal(pack.options.headers['X-Wallet-Address'],'account:care-member');
