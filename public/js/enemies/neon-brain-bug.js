@@ -1,7 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 import { AnimatedSvgEffect } from '../effects/animated-svg-effect.js';
 
-const BRAIN_BUG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><defs><radialGradient id="brain" cx="35%" cy="28%"><stop stop-color="#fff3fd"/><stop offset=".28" stop-color="#ff91cf"/><stop offset=".7" stop-color="#ff238e"/><stop offset="1" stop-color="#710044"/></radialGradient></defs><path d="M53 159C25 121 41 55 88 50c17-29 61-28 78 2 45 0 63 56 33 87 7 39-38 63-65 43-31 26-78 9-81-23Z" fill="url(#brain)" stroke="#ffd1ed" stroke-width="7"/><g fill="none" stroke="#8d075d" stroke-width="8" stroke-linecap="round"><path d="M74 78q24 15 8 43t20 39M115 60q-16 27 8 45t-3 54M157 70q-22 23-4 43t-11 45M186 92q-25 17-9 39"/></g></svg>`;
+export const BRAIN_BUG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><defs><radialGradient id="brain" cx="35%" cy="28%"><stop stop-color="#fff3fd"/><stop offset=".28" stop-color="#ff91cf"/><stop offset=".7" stop-color="#ff238e"/><stop offset="1" stop-color="#710044"/></radialGradient></defs><path d="M53 159C25 121 41 55 88 50c17-29 61-28 78 2 45 0 63 56 33 87 7 39-38 63-65 43-31 26-78 9-81-23Z" fill="url(#brain)" stroke="#ffd1ed" stroke-width="7"/><g fill="none" stroke="#8d075d" stroke-width="8" stroke-linecap="round"><path d="M74 78q24 15 8 43t20 39M115 60q-16 27 8 45t-3 54M157 70q-22 23-4 43t-11 45M186 92q-25 17-9 39"/></g></svg>`;
 const ATTACK_TELL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><radialGradient id="g"><stop stop-color="#fff"/><stop offset=".35" stop-color="#ff6fbd" stop-opacity=".9"/><stop offset="1" stop-color="#ff0084" stop-opacity="0"/></radialGradient></defs><circle cx="64" cy="64" r="57" fill="none" stroke="#ff8bca" stroke-width="7" stroke-dasharray="12 8"/><path d="M64 15 75 49 111 50 82 71 92 106 64 85 36 106 46 71 17 50 53 49Z" fill="url(#g)"/></svg>`;
 const ATTACK_FLASH_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><radialGradient id="f"><stop stop-color="#fff"/><stop offset=".18" stop-color="#ffb8de"/><stop offset=".55" stop-color="#ff168f" stop-opacity=".8"/><stop offset="1" stop-color="#ff168f" stop-opacity="0"/></radialGradient></defs><circle cx="64" cy="64" r="62" fill="url(#f)"/><g stroke="#fff" stroke-width="5"><path d="M64 2v28M64 98v28M2 64h28M98 64h28"/></g></svg>`;
 
@@ -83,3 +83,4 @@ export class NeonBrainBug {
 
   dispose() { this.attackTell.dispose(); this.attackFlash.dispose(); this.root.traverse(object => { object.geometry?.dispose?.(); if (object.material) (Array.isArray(object.material) ? object.material : [object.material]).forEach(material => material.dispose?.()); }); this.texture.dispose(); }
 }
+

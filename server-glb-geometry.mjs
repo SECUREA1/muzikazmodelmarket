@@ -1,6 +1,7 @@
 import {readFileSync} from 'node:fs';
 import {resolve,sep} from 'node:path';
 import * as THREE from './public/vendor/three/three.module.min.js';
+import {accelerateStaticRaycast} from './server-mesh-raycast.mjs';
 function localModelPath(url){
  const path=new URL(url,'http://local').pathname;
  let root=process.cwd(),relative=path.replace(/^\//,'');
@@ -35,5 +36,6 @@ export function environmentGeometry(environment){
  const root=new THREE.Group();for(const url of environment.modelUrls?.length?environment.modelUrls:[environment.modelUrl])root.add(glbGeometry(url));
  root.scale.setScalar((Number(environment.scale)||1)*(Number(environment.spaceScale)||1));root.rotation.set(environment.rotation?.x||0,environment.rotation?.y||0,environment.rotation?.z||0);root.updateMatrixWorld(true);
  const size=new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()),footprint=Math.max(size.x,size.z);
- if(environment.playableSize>0&&footprint>0)root.scale.multiplyScalar(THREE.MathUtils.clamp(environment.playableSize/footprint,.01,100));root.updateMatrixWorld(true);return root;
+ if(environment.playableSize>0&&footprint>0)root.scale.multiplyScalar(THREE.MathUtils.clamp(environment.playableSize/footprint,.01,100));root.updateMatrixWorld(true);root.traverse(mesh=>{if(mesh.isMesh)accelerateStaticRaycast(mesh);});return root;
 }
+
