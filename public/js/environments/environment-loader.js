@@ -1,3 +1,4 @@
+import {replaceServerStreets} from './server-streets.js';
 import {createBuilderLand} from './builder-land.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
@@ -20,7 +21,7 @@ export class EnvironmentLoader {
   unload() { this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
   loadOne(url, index, count) { return new Promise((resolve, reject) => this.loader.load(url, resolve, (e) => this.onProgress(((index + (e.total ? e.loaded / e.total : 0.35)) / count) * 100), reject)); }
 
-  createBuilderLand(environment){return createBuilderLand(environment);}
+  createBuilderLand(environment){const root=createBuilderLand(environment);replaceServerStreets(root,environment.streets||environment.builderScene?.streets||[],{labels:true});return root;}
 
   setSpaceScale(scale) {
     if (!this.world) return null;

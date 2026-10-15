@@ -1,3 +1,4 @@
+import {createServerStreets} from './server-streets.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
 export function createBuilderLand(environment) {
     const built = environment.builderScene || {};
@@ -5,7 +6,7 @@ export function createBuilderLand(environment) {
     const meta = built.layoutMeta || environment.layoutMeta || {};
     const heightAt = (x, z) => {
       const ripple = .28 * Math.sin(x * .31) * Math.cos(z * .27);
-      if (['grand-floor','hedge-maze','neon-maze','dungeon-maze','vendor-street','creator-studios','market-square','railroad-world','skyport','desert-airfield','blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio'].includes(layout)) return layout === 'grand-floor' ? 0 : ripple * .18;
+      if (['community-park','grand-floor','hedge-maze','neon-maze','dungeon-maze','vendor-street','creator-studios','market-square','railroad-world','skyport','desert-airfield','blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio'].includes(layout)) return ['community-park','grand-floor'].includes(layout) ? 0 : ripple * .18;
       if (layout === 'loft') return ripple;
       if (layout === 'suite') return .16 * Math.sin(x * .45) + .1 * Math.cos(z * .35);
       if (layout === 'mountain-pass') return 1.2 + Math.sin(x * .18) * 1.5 + Math.cos(z * .22) * 1.1 - 2.2 * Math.exp(-(x * x) / 18);
@@ -18,13 +19,14 @@ export function createBuilderLand(environment) {
       if (layout === 'dune-sea') return .75 * Math.sin(x * .16) + .55 * Math.cos(z * .19) + .25 * Math.sin((x + z) * .3);
       return ripple + 1.1 * Math.exp(-(x * x + z * z) / 85);
     };
-    const geometry = new THREE.PlaneGeometry(40, 40, 80, 80);
+    const size=Math.max(40,Math.min(512,Number(built.mapSize)||40)),segments=Math.min(160,Math.max(80,Math.round(size)));
+    const geometry = new THREE.PlaneGeometry(size,size,segments,segments);
     const positions = geometry.attributes.position;
     for (let i = 0; i < positions.count; i += 1) positions.setZ(i, heightAt(positions.getX(i), -positions.getY(i)));
     positions.needsUpdate = true; geometry.computeVertexNormals();
     const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: Number(meta.color) || 0x315b32, roughness:.95, metalness:0 }));
     terrain.name = `BUILDER_WALKABLE_FLOOR_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; terrain.userData.colliderShape = 'mesh';
-    const root = new THREE.Group(); root.name = `PROCEDURAL_${environment.id}`; root.add(terrain); root.userData.proceduralLand = true; root.userData.layout = layout;
+    const root = new THREE.Group(); root.name = `PROCEDURAL_${environment.id}`; root.add(terrain); root.userData.proceduralLand = true; root.userData.layout = layout;root.userData.streetHeightAt=heightAt;
     // Recreate the complete template, not merely its terrain plane. Every mesh
     // is part of the world root, so the standard collision pass automatically
     // makes buildings, trees, rails, cover and set dressing solid in Test Map.
@@ -63,5 +65,6 @@ export function createBuilderLand(environment) {
       [-8,-2,4].forEach((z,index)=>add([38,.04,.09],0,z,index===1?0xe4bd43:0x748084,.025));add([38,.12,.5],0,10.95,0xe2b84b,.06);add([18,3.3,4],0,16.4,0x20282b,1.65);add([5.5,2.8,2.6],15.7,16.2,0x273134,1.4);
     }
     else if(layout==='movie-studio'){[[-11,-10],[10,-10],[-11,10],[10,10]].forEach(([x,z],i)=>add([8,4,7],x,z,i%2?0x52475a:0x45535b));add([3,.3,16],0,0,0xb65b48,.15)}
+    root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));
     return root;
   }

@@ -342,7 +342,7 @@ test('builder lands and placed items retain verified collision floors', async ()
   ]);
   assert.match(loader, /createBuilderLand\(environment\)/);
   assert.match(loader, /environment\.builderScene \|\| environment\.proceduralLand/);
-  assert.match(loader, /new THREE\.PlaneGeometry\(40, 40, 80, 80\)/);
+  assert.match(loader, /new THREE\.PlaneGeometry\(size,size,segments,segments\)/);
   assert.match(loader, /terrain\.userData\.colliderShape = 'mesh'/, 'builder map terrain keeps an explicit mesh collider');
   assert.match(loader, /BUILDER_TEMPLATE_\$\{layout\}/, 'the playable map reconstructs the template set dressing instead of loading an empty terrain');
   assert.match(loader, /root\.add\(mesh\)/, 'template buildings and props join the world root and its collision pass');

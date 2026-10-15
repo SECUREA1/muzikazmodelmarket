@@ -1,5 +1,5 @@
 import {SharedGameInventory} from './shared-game-inventory.js';
-export function connectAuthoritativeRoom({roomId,input,render,onStatus}){
+export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null}){
  const api=new SharedGameInventory();let stopped=false,busy=false,session=null,joined=false,sequence=-1;
  const client={ready:false,selfId:null,async send(action,fields={}){
   if(stopped)throw Error('Room closed.');
@@ -7,7 +7,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus}){
   const state=await api.api('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify({...fields,action,requestId:crypto.randomUUID()})});
   if(stopped)return;client.selfId=state.selfId||client.selfId;if(state.sequence>=sequence){sequence=state.sequence;render(state,client.selfId);}client.ready=true;return state;
  },async object(command){if(!client.ready)throw Error('Waiting for the server. Placement preview has not been saved.');session ||= await api.session();await api.api('/api/rooms/'+encodeURIComponent(roomId)+'/objects',{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify(command)});const state=await api.api('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay');if(!stopped&&state.sequence>=sequence){sequence=state.sequence;render(state,client.selfId);}return state;},stop(){stopped=true;client.ready=false;clearInterval(timer);}};
- async function tick(){if(stopped||busy)return;busy=true;try{if(!joined){await client.send('join');joined=true;}else{const controls=document.hidden?{}:input();await client.send('input',{input:controls});if(controls.firing)await client.send('fire',{tool:controls.tool,direction:controls.direction,color:controls.color});}}catch(error){if([400,403,422,429].includes(error.status)){onStatus?.(error.message);}else{client.ready=false;joined=false;session=null;onStatus?.('Server connection required: '+error.message);}}finally{busy=false;}}
+ async function tick(){if(stopped||busy)return;busy=true;try{if(!joined){const arrival=await client.send('join',meetingId?{meetingId}:{});if(arrival?.result?.message)onStatus?.(arrival.result.message);joined=true;}else{const controls=document.hidden?{}:input();await client.send('input',{input:controls});if(controls.firing)await client.send('fire',{tool:controls.tool,direction:controls.direction,color:controls.color});}}catch(error){if(error.code==='ROOM_SWITCHED'){client.ready=false;stopped=true;clearInterval(timer);onStatus?.(error.message);}else if([400,403,422,429].includes(error.status)){onStatus?.(error.message);}else{client.ready=false;joined=false;session=null;onStatus?.('Server connection required: '+error.message);}}finally{busy=false;}}
  const timer=setInterval(tick,150);tick();return client;
 }
 export function projectSharedBuildings({THREE,system,records,create}){

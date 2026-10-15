@@ -7,20 +7,21 @@ import {buildingDimensions,buildingMaterial} from './public/js/building-material
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,Number(value)||0));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 const copy=value=>JSON.parse(JSON.stringify(value));
-const fail=(message,statusCode=400)=>{throw Object.assign(new Error(message),{statusCode});};
+const fail=(message,statusCode=400,code)=>{throw Object.assign(new Error(message),{statusCode,code});};
 const damageByTool={laser:20,bat:25,taser:8,toxin:12,dynamite:60,flamethrower:15,'pulse-rifle':18,shotgun:35,marksman:45};
 export class AuthoritativeRooms {
  constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,capacity});this.collision=new ServerBuilderCollision();}
  initialize(room,environment){
   const manifest=compileBuilderScene(environment.builderScene||{});
   room.simulation ||= {version:1,players:{},actors:{},events:[],time:this.now(),sequence:0};
-  const sim=room.simulation;
-  if(!sim.initialized||sim.environmentUpdatedAt!==environment.updatedAt){
+  const sim=room.simulation,contentUpdatedAt=environment.contentUpdatedAt||environment.updatedAt;
+  if(!sim.initialized||sim.environmentUpdatedAt!==contentUpdatedAt){
    const authored=new Set(manifest.objects.map(actor=>actor.objectId));for(const [id,actor]of Object.entries(sim.actors))if(!actor.spawned&&!authored.has(id))delete sim.actors[id];
    for(const actor of manifest.objects){if(sim.actors[actor.objectId]){sim.actors[actor.objectId].position=copy(actor.transform.position);sim.actors[actor.objectId].rotation=copy(actor.transform.rotation);}if(!sim.actors[actor.objectId])sim.actors[actor.objectId]={id:actor.objectId,modelId:actor.modelId,position:copy(actor.transform.position),rotation:copy(actor.transform.rotation),health:actor.gameplay.health,active:true,open:false,switched:false};}
-   sim.initialized=true;sim.environmentUpdatedAt=environment.updatedAt;
+   sim.initialized=true;sim.environmentUpdatedAt=contentUpdatedAt;
   }
   manifest.actors.push(...Object.values(sim.actors).filter(actor=>actor.definition).map(actor=>actor.definition));
+  sim.streets=environment.streets||[];sim.mapRevision=environment.atlas?.revision||0;
   return {sim,manifest};
  }
  step(room,environment){
@@ -46,6 +47,7 @@ export class AuthoritativeRooms {
     }
    }
    if(!blocked)player.position=this.collision.resolve(environment,player.position,next,sim.actors);
+   const street=(environment.streets||[]).map(street=>{const dx=street.to.x-street.from.x,dz=street.to.z-street.from.z,t=Math.max(0,Math.min(1,((player.position.x-street.from.x)*dx+(player.position.z-street.from.z)*dz)/Math.max(.01,dx*dx+dz*dz)));return {street,distance:Math.hypot(player.position.x-street.from.x-dx*t,player.position.z-street.from.z-dz*t)};}).filter(hit=>hit.distance<=hit.street.width/2+2).sort((a,b)=>a.distance-b.distance)[0];player.locationName=street?.street.name||player.meetingName||environment.name;
    if(player.position.y>next.y){player.velocityY=0;player.grounded=true;}
    if(player.vehicleId){const vehicle=sim.actors[player.vehicleId];if(vehicle){vehicle.position={...player.position};vehicle.rotation.y=player.yaw;}}
    if(player.heldId){const held=sim.actors[player.heldId];if(held)held.position={x:player.position.x-Math.sin(player.yaw),y:player.position.y+1,z:player.position.z-Math.cos(player.yaw)};}
@@ -64,20 +66,21 @@ export class AuthoritativeRooms {
   }
   sim.sequence++;return {sim,manifest};
  }
- view(room){const sim=room.simulation,now=this.now();return {authoritative:true,serverTime:now,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,modelUrl:p.modelUrl,position:p.position,yaw:p.yaw,health:p.health,ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
+ view(room){const sim=room.simulation,now=this.now();return {authoritative:true,streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,yaw:p.yaw,health:p.health,ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
  snapshot(id,environment){return this.store.update(id,room=>{this.step(room,environment);return this.view(room);},{persist:false});}
- command(id,environment,identity,command){return this.store.update(id,async room=>{
+ command(id,environment,identity,command){return this.store.update(id,async (room,allRooms)=>{
   const {sim,manifest}=this.step(room,environment),now=this.now(),actorId='account:'+identity.accountId;
   const requestId=String(command.requestId||'');if(!/^[\w-]{1,100}$/.test(requestId))fail('A command request ID is required.');
   sim.receipts ||= {};const receiptKey=actorId+':'+requestId;if(sim.receipts[receiptKey]){if(sim.receipts[receiptKey].action!==command.action)fail('Request ID already used.',409);return {...this.view(room),selfId:actorId,result:sim.receipts[receiptKey].result};}
   let player=sim.players[actorId],result={};
   if(command.action==='join'){
-   const active=Object.entries(sim.players).filter(([id,p])=>id!==actorId&&now-p.lastSeen<15000);if(active.length>=this.capacity)fail('This multiplayer room is full.',409);
-   const spawn=manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2};
+   const active=Object.entries(sim.players).filter(([id,p])=>id!==actorId&&now-p.lastSeen<15000);if(active.length>=(environment.publicDestination?128:this.capacity))fail('This multiplayer room is full.',409);
+   const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);const spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects):manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2};
    if(!player)player=sim.players[actorId]={username:identity.username,position:{x:Number(spawn.x)||0,y:Number(spawn.y)||0,z:Number(spawn.z)||0},floor:Number(spawn.y)||0,yaw:0,velocityY:0,grounded:true,ammo:120,fuel:100,health:clamp(identity.stats?.health??100,0,100),stats:identity.stats||{},score:0,inventory:[],quests:{},cooldowns:{},lastSeen:now};
-   player.input={};player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.walletId=identity.walletId;
+   for(const [otherId,otherRoom]of Object.entries(allRooms)){if(otherId===id)continue;const previous=otherRoom.simulation?.players[actorId];if(!previous)continue;previous.lastSeen=0;previous.replacedByRoom=id;previous.input={};for(const key of ['heldId','seatedId','vehicleId']){const held=otherRoom.simulation.actors[previous[key]];if(held)held.holderId=null;previous[key]=null;}}
+   if(meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;result.message='Joined '+player.locationName;
   }else{
-   if(!player||now-player.lastSeen>15000)fail('Join this room before sending gameplay commands.',409);
+   if(player?.replacedByRoom)fail('This account joined another destination. Reload to rejoin this room.',409,'ROOM_SWITCHED');if(!player||now-player.lastSeen>15000)fail('Join this room before sending gameplay commands.',409);
    player.lastSeen=now;
    if(command.action==='input'){const input=command.input||{};player.input={forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}
    else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...(manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2})};player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolUses={};}
@@ -137,7 +140,7 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
    }else fail('This action has no server handler. It was not run locally.',422);
   }
   if(now-(player.lastTelemetry||0)>5000){await this.telemetry(identity.walletId,{health:player.health,world:id});player.lastTelemetry=now;}
-  if(!['input','join'].includes(command.action)){sim.events.push({id:requestId,actorId,action:command.action,...result,at:now});sim.events=sim.events.slice(-100);}
+  if(command.action!=='input'){sim.events.push({id:requestId,actorId,action:command.action,...result,at:now});sim.events=sim.events.slice(-100);}
   sim.receipts[receiptKey]={action:command.action,result};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
   return {...this.view(room),selfId:actorId,result};
  },{persist:command.action!=='input'});}

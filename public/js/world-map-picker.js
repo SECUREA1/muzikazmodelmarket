@@ -1,3 +1,4 @@
+import {mountWorldAtlas} from './world-atlas.js';
 export function filterWorlds(worlds,query='') {
  const words=query.toLowerCase().trim().split(/\s+/).filter(Boolean);
  return worlds.filter(({env})=>words.every(word=>[env.name,env.id,env.category,env.description,env.ownerName,env.roomId].join(' ').toLowerCase().includes(word)));
@@ -18,5 +19,6 @@ export function mountWorldMapPicker(root,worlds,{currentId,onJoin,onClose}) {
  search.addEventListener('input',()=>{root.dataset.worldQuery=search.value;page=0;const list=filtered();if(!list.some(item=>item.env.id===selected?.env.id))selected=list[0];render();});
  root.querySelector('[data-world-prev]').addEventListener('click',()=>{page--;render();});root.querySelector('[data-world-next]').addEventListener('click',()=>{page++;render();});root.querySelector('[data-world-close]').addEventListener('click',onClose);
  join.addEventListener('click',async()=>{if(!selected||join.disabled)return;join.disabled=true;try{await onJoin(selected.env);}catch(error){root.querySelector('[data-world-description]').textContent=error.message;join.disabled=false;}});
+ const atlas=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Public streets, live activity & meeting locations';const atlasRoot=document.createElement('section');atlas.append(summary,atlasRoot);root.querySelector('.world-map-picker').append(atlas);atlas.addEventListener('toggle',()=>{if(atlas.open)mountWorldAtlas(atlasRoot);});
  render();if(searchFocused)search.focus({preventScroll:true});
 }

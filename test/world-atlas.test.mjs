@@ -1,0 +1,29 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {WorldAtlas,attachAtlas} from '../world-atlas.mjs';
+import {SharedRoomStore} from '../shared-room-store.mjs';
+import {AuthoritativeRooms} from '../authoritative-room.mjs';
+import {createServerStreets} from '../public/js/environments/server-streets.js';
+test('public destinations, generated roads and coordinate meeting IDs are durable and unique',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'world-atlas-'));const owner={accountId:'alice',username:'Alice'},guest={accountId:'bob',username:'Bob'};
+ try{const atlas=new WorldAtlas(join(dir,'atlas.json'));const initial=await atlas.synchronize();const commons=initial.cells['0,0'];assert.equal(commons.mapId,'public-commons');assert.equal(commons.size,256);assert.equal(new Set(commons.streets.map(street=>street.name)).size,commons.streets.length);
+ const [first,second]=await Promise.all([atlas.resolve(1000,1000,owner),atlas.resolve(1000,1000,guest)]);assert.equal(first.cell.mapId,second.cell.mapId);assert.equal(first.meeting.id,second.meeting.id);assert.equal([first,second].filter(result=>result.created).length,1);assert.equal(first.cell.ownerName,'Alice');
+ const reloaded=new WorldAtlas(atlas.file),data=await reloaded.read();assert.equal(Object.values(data.cells).length,2);assert.deepEqual(data.cells['4,4'].streets,first.cell.streets);
+ const added=await reloaded.addStreet('public-commons',{from:{x:-16,z:12},to:{x:16,z:12},width:4},guest);assert.ok(added.street.name);assert.equal(added.street.createdBy,'Bob');
+ const map={id:'alice-map',name:'Alice town',ownerId:'account:alice',ownerName:'Alice',visibility:'public',updatedAt:'2026-01-01',builderScene:{mapSize:40,layout:'grand-floor',objects:[]}};let updated=await reloaded.synchronize([map]);const cell=Object.values(updated.cells).find(cell=>cell.mapId===map.id);assert.ok(cell);assert.notDeepEqual([cell.column,cell.row],[0,0]);
+ await assert.rejects(reloaded.addStreet(map.id,{from:{x:-10,z:8},to:{x:10,z:8}},guest),{statusCode:403});
+ await assert.rejects(reloaded.resolve(Infinity,0,owner),{statusCode:400});await assert.rejects(reloaded.addStreet(map.id,{from:{x:-30,z:0},to:{x:10,z:8}},owner),{statusCode:400});
+ await reloaded.addStreet(map.id,{from:{x:-10,z:8},to:{x:10,z:8}},owner);updated=await reloaded.read();const environment=attachAtlas(map,updated);assert.equal(environment.streets.length,7);assert.equal(environment.contentUpdatedAt,map.updatedAt);
+ const stableRevision=(await reloaded.synchronize([map])).revision;assert.equal((await reloaded.synchronize([map])).revision,stableRevision,'unchanged maps do not create artificial updates');assert.equal(attachAtlas(environment,await reloaded.read()).contentUpdatedAt,map.updatedAt);
+ const point=await reloaded.resolve(6,8,owner);const joinedMap=attachAtlas(commons.environment,await reloaded.read());const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),capacity:1});
+ const one=await runtime.command('public-commons',joinedMap,{...owner,walletId:'a',stats:{health:100}},{action:'join',requestId:'join-alice',meetingId:point.meeting.id});const two=await runtime.command('public-commons',joinedMap,{...guest,walletId:'b',stats:{health:100}},{action:'join',requestId:'join-bob',meetingId:point.meeting.id});assert.deepEqual(one.players['account:alice'].position,two.players['account:bob'].position);assert.equal(Object.keys(two.players).length,2);assert.equal(two.streets.length,7);
+ await assert.rejects(runtime.command('public-commons',joinedMap,{...guest,walletId:'b'},{action:'join',requestId:'bad-point',meetingId:'invented'}),{statusCode:404});
+ await runtime.store.mutate('public-commons','account:alice',{id:'meeting-obstacle',revision:0,object:{materialId:'wood',position:[6,.2,8],rotation:[0,0,0],scale:[1,1,1],paint:[]}});const relocated=await runtime.command('public-commons',joinedMap,{...guest,walletId:'b'},{action:'join',requestId:'safe-arrival',meetingId:point.meeting.id});assert.notDeepEqual(relocated.players['account:bob'].position,one.players['account:alice'].position,'arrival avoids newly placed building pieces');
+ await runtime.store.update('public-commons',room=>{room.simulation.actors['public-seat-0'].position.x=30;});await reloaded.addStreet('public-commons',{from:{x:-30,z:30},to:{x:30,z:30}},guest);const streetUpdate=attachAtlas(commons.environment,await reloaded.read());const refreshed=await runtime.snapshot('public-commons',streetUpdate);assert.equal(refreshed.streets.length,8);assert.equal(refreshed.actors['public-seat-0'].position.x,30,'street updates do not reset existing gameplay actors');
+ await runtime.command('alice-map',environment,{...guest,walletId:'b'},{action:'join',requestId:'move-room'});await assert.rejects(runtime.command('public-commons',streetUpdate,{...guest,walletId:'b'},{action:'input',requestId:'stale-tab',input:{}}),{statusCode:409,code:'ROOM_SWITCHED'});
+ const geometry=createServerStreets(environment.streets);assert.equal(geometry.children.filter(item=>item.isMesh).length,2,'roads and lane markings are merged into two draw calls');
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
