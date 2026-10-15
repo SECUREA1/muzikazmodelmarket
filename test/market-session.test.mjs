@@ -39,6 +39,15 @@ test('cookie and bearer member sessions own market and care actions without a br
   const bought=await call('/api/store/purchases',paymentHeaders,{items:cart,expectedAmountMzk:cost,requestId:'buy-model'});assert.equal(bought.status,201);
   assert.equal((await call('/api/store/purchases',paymentHeaders,{items:cart,expectedAmountMzk:cost,requestId:'buy-model'})).body.data.balanceAfterMzk,bought.body.data.balanceAfterMzk);
   assert.ok((await call('/api/wallet/state',paymentHeaders)).body.data.items.some(item=>item.id==='store-model-'+model.id));
+  const shop=await call('/api/economy',paymentHeaders);assert.equal(shop.status,200);
+  assert.equal(shop.body.data.items.find(item=>item.sku==='tool:laser').owned,true);
+  assert.equal(shop.body.data.items.find(item=>item.sku==='tool:scanner').owned,false);
+  assert.equal((await call('/api/economy/use',paymentHeaders,{sku:'tool:scanner',requestId:'unowned-scanner'})).status,403);
+  const upgrade=await call('/api/economy/buy',paymentHeaders,{sku:'tool:scanner',requestId:'scanner-purchase',priceMzk:0,amountMzk:0});assert.equal(upgrade.status,200);assert.equal(upgrade.body.data.amountMzk,-150);
+  assert.equal((await call('/api/economy/buy',paymentHeaders,{sku:'tool:scanner',requestId:'scanner-purchase'})).body.data.id,upgrade.body.data.id);
+  const scan=await call('/api/economy/use',paymentHeaders,{sku:'tool:scanner',requestId:'scan-once'});assert.equal(scan.body.data.amountMzk,-2);
+  assert.equal((await call('/api/wallet/state',paymentHeaders,{items:[{id:'economy:tool:jetpack',economySku:'tool:jetpack'}]},'PUT')).status,403);
+  const pack=await call('/api/account/bootstrap',paymentHeaders);assert.equal(pack.status,200);assert.ok(pack.body.data.backpack.catalogAssets.length<models.length);
   const cookie=login.headers['set-cookie'].split(';')[0],cookieHeaders={cookie};
   const session=await call('/api/market/session',cookieHeaders);assert.equal(session.status,200);const owner=session.body.data.owner_id;assert.match(owner,/^account:/);
   const csrf=session.body.data.csrfToken,headers={cookie,'x-csrf-token':csrf,'x-wallet-address':'someone-else'};

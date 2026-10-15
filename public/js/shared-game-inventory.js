@@ -5,6 +5,8 @@ export class SharedGameInventory {
  constructor(){this.pending=new Map();}
  async api(path,options={}){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),8000);try{const response=await (window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API)||window.fetch.bind(window))(path,{signal:controller.signal,timeout:8000,credentials:'include',cache:'no-store',retries:0,...options,headers:{Accept:'application/json',...(options.body?{'Content-Type':'application/json'}:{}),...options.headers}});const payload=await response.json();if(!response.ok||payload.success===false)throw new Error(payload.message||'Sign in through Members to use your shared Backpack.');return payload.data;}finally{clearTimeout(timer);}}
  async recordTelemetry(health,world){const bootstrap=await this.session();return this.api('/api/rpg/telemetry',{method:'POST',headers:{'X-CSRF-Token':bootstrap.csrfToken},body:JSON.stringify({health,world})});}
+ economy(){return this.api('/api/economy');}
+ async economyAction(action,sku,requestId=crypto.randomUUID()){const session=await this.session();const receipt=await this.api('/api/economy/'+action,{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify({sku,requestId})});if(action==='buy')signalInventoryChange();window.MZKWallet?.refreshShared?.().catch(()=>{});return receipt;}
  session(){return this.api('/api/market/session');}
  state(){return this.api('/api/rpg/state');}
  builderPack(){return this.api('/api/builder/backpack');}

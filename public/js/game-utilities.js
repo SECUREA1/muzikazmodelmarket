@@ -10,6 +10,17 @@ export const UTILITY_TOOLS = Object.freeze({
 
 export class UtilityKit {
   constructor(){this.ready=new Map();this.used=new Map();}
+  validate(id,context,now){
+    const tool=UTILITY_TOOLS[id];if(!tool)return {ok:false,message:'Unknown utility.'};
+    if((this.ready.get(id)||0)>now)return {ok:false,message:'Utility is cooling down.'};
+    if((this.used.get(id)||0)>=(tool.charges??Infinity))return {ok:false,message:'Utility depleted for this run.'};
+    if(id==='medkit'&&context.health>=context.maxHealth)return {ok:false,message:'Health is already full.'};
+    if(id==='repair-tool'&&(!context.target?.userData.brick||!context.target.userData.hits))return {ok:false,message:'Aim at a damaged building piece.'};
+    if(id==='recycler'&&!context.target?.userData.brick)return {ok:false,message:'Aim at a building piece.'};
+    if(id==='supply-kit'&&context.paintFuel>=context.maxPaintFuel&&context.igniterFuel>=context.maxIgniterFuel)return {ok:false,message:'Fuel is already full.'};
+    if(id==='beacon'&&!context.point)return {ok:false,message:'Aim at a surface.'};
+    return {ok:true};
+  }
   use(id,context,now){
     const tool=UTILITY_TOOLS[id];if(!tool)return {ok:false,message:'Unknown utility.'};
     const wait=(this.ready.get(id)||0)-now;if(wait>0)return {ok:false,message:`${tool.label} ready in ${Math.ceil(wait)}s.`};
