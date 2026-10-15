@@ -20,11 +20,13 @@
     console.warn('[MUZIKAZ Chat] Chat markup is incomplete; multiplayer chat was not started.');
     return;
   }
+  toggle.disabled=false;toggle.removeAttribute('aria-disabled');toggle.removeAttribute('tabindex');delete toggle.dataset.avatarDisabled;
+  const panelParent=root.parentNode,panelNext=root.nextSibling;
   const headers = { 'Content-Type': 'application/json', 'X-MUZIKAZ-Session': sessionId, 'X-User-Id': email.toLowerCase(), 'X-User-Name': username };
   const peers = new Map(), remoteAudio = new Map(), pendingCandidates = new Map();
   let pollingVoice = false;
   window.MUZIKAZ_HOUSE_TRACKING = { roomId:localStorage.getItem('muzikazMultiplayerWorld') || window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', ...(window.MUZIKAZ_HOUSE_TRACKING || {}) };
-  let joined = false, localStream = null, speakerOn = true, currentUsers = [], unread = 0, loadingChat = null, sendingMessage = false;
+  let joined = false, localStream = null, speakerOn = true, currentUsers = [], unread = 0, loadingChat = null, sendingMessage = false, presenceRequest=null;
   let textToSpeechOn = localStorage.getItem('muzikazChatTextToSpeech') === 'true';
   let gameScrollY = 0;
   const payload = (response) => response?.data ?? response;
@@ -79,6 +81,8 @@
     if (sendingMessage) return;
     sendingMessage = true;
     try {
+      const roomId=activeRoom();await heartbeat();
+      if(roomId!==activeRoom())throw new Error('The room changed. Send your message again in the current room.');
       const response = await apiFetch('/api/houses/ioncore-house/chat', { method:'POST', headers, body:JSON.stringify({ message:message.slice(0, 140) }) });
       const data = await jsonResponse(response);
       window.MUZIKAZ_HOUSE_TRACKING = { ...(window.MUZIKAZ_HOUSE_TRACKING || {}), message:data.message };
@@ -88,13 +92,21 @@
     } finally { sendingMessage = false; }
   }
   async function heartbeat() {
-    let storedAvatar = null;
-    try { storedAvatar = JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null'); } catch { localStorage.removeItem('muzikazDesignatedAvatar'); }
-    const avatar = window.MUZIKAZ_DESIGNATED_AVATAR || storedAvatar;
-    if (!avatar) throw new Error('Choose your designated avatar before joining the Crib.');
-    const response = await apiFetch('/api/houses/ioncore-house/presence', { method:'POST', headers, body:JSON.stringify({ username, voiceEnabled:Boolean(localStream), roomId:window.MUZIKAZ_HOUSE_TRACKING?.roomId || 'rad-tox', color, avatarUrl: avatar.modelUrl, modelUrl: avatar.modelUrl, avatarName:avatar.displayName || avatar.name || 'Player avatar', position:window.MUZIKAZ_HOUSE_TRACKING?.position, rotation:window.MUZIKAZ_HOUSE_TRACKING?.rotation, movementState:window.MUZIKAZ_HOUSE_TRACKING?.movementState || 'idle', animationState:window.MUZIKAZ_HOUSE_TRACKING?.animationState || avatar.animation || 'auto', message:window.MUZIKAZ_HOUSE_TRACKING?.message }) });
-    const data = await jsonResponse(response); joined = true; renderPresence(data); status.textContent = '';
+    const roomId=activeRoom();
+    if(presenceRequest?.roomId===roomId)return presenceRequest.promise;
+    const promise=(async()=>{
+      let avatar=window.MUZIKAZ_DESIGNATED_AVATAR;
+      if(!avatar)try{avatar=JSON.parse(localStorage.getItem('muzikazDesignatedAvatar')||'null');}catch{localStorage.removeItem('muzikazDesignatedAvatar');}
+      // The server confirms account, room membership and character. Text chat
+      // must not depend on a cached browser avatar or microphone permission.
+      const response=await apiFetch('/api/houses/ioncore-house/presence',{method:'POST',headers,body:JSON.stringify({username,voiceEnabled:Boolean(localStream),roomId,color,avatarUrl:avatar?.modelUrl,modelUrl:avatar?.modelUrl,avatarName:avatar?.displayName||avatar?.name,position:window.MUZIKAZ_HOUSE_TRACKING?.position,rotation:window.MUZIKAZ_HOUSE_TRACKING?.rotation,movementState:window.MUZIKAZ_HOUSE_TRACKING?.movementState||'idle',animationState:window.MUZIKAZ_HOUSE_TRACKING?.animationState||'auto'})});
+      const data=await jsonResponse(response);
+      if(roomId===activeRoom()){joined=true;renderPresence(data);status.textContent='';}
+    })();
+    presenceRequest={roomId,promise};
+    try{await promise;}finally{if(presenceRequest?.promise===promise)presenceRequest=null;}
   }
+
 
   async function signal(to, kind, signalPayload = null) { headers['X-CSRF-Token'] = window.MuzikazAccountSession?.csrfToken || headers['X-CSRF-Token'] || ''; const response = await apiFetch('/api/houses/ioncore-house/voice/signal', { method:'POST', headers, body:JSON.stringify({ to, kind, payload:signalPayload }) }); await jsonResponse(response); }
   function createPeer(remoteId) {
@@ -134,10 +146,14 @@
     if (document.documentElement.classList.contains('crib-chat-selected')) window.scrollTo(0, gameScrollY);
   }
   function setPanel(open) {
+    if(open&&document.fullscreenElement&&!document.fullscreenElement.contains(root))document.fullscreenElement.append(root);
+    if(!open&&root.parentNode!==panelParent)panelParent.insertBefore(root,panelNext?.parentNode===panelParent?panelNext:null);
     panel.hidden = !open;
     toggle.setAttribute('aria-expanded', String(open));
     document.documentElement.classList.toggle('crib-chat-selected', open);
     if (open) {
+      document.exitPointerLock?.();
+      window.dispatchEvent(new CustomEvent('muzikaz:chat-panel',{detail:{open:true}}));
       gameScrollY = window.scrollY;
       const shell = document.querySelector('.house-explorer-shell');
       if (shell) shell.style.setProperty('--crib-locked-game-height', `${Math.round(shell.getBoundingClientRect().height)}px`);
@@ -145,7 +161,11 @@
       syncChatViewport();
       input.focus({ preventScroll:true });
       window.scrollTo(0, gameScrollY);
+      heartbeat().then(loadChat).catch(error=>{status.textContent=error.message;});
     } else {
+      document.documentElement.classList.remove('crib-chat-composing');
+      if(!document.querySelector('dialog[open]'))document.documentElement.classList.remove('game-menu-open');
+      window.dispatchEvent(new CustomEvent('muzikaz:chat-panel',{detail:{open:false}}));
       document.querySelector('.house-explorer-shell')?.style.removeProperty('--crib-locked-game-height');
       document.documentElement.style.removeProperty('--crib-visual-top');
       document.documentElement.style.removeProperty('--crib-visual-height');
@@ -155,6 +175,8 @@
   window.visualViewport?.addEventListener('scroll', syncChatViewport);
   input.addEventListener('focus', () => { document.documentElement.classList.add('crib-chat-composing'); syncChatViewport(); });
   input.addEventListener('blur', () => document.documentElement.classList.remove('crib-chat-composing'));
+  panel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();setPanel(false);toggle.focus();}event.stopPropagation();});
+  panel.addEventListener('keyup',event=>event.stopPropagation());
   toggle.addEventListener('click', () => setPanel(panel.hidden));
   panel.querySelector('[data-close-chat]').addEventListener('click', () => { setPanel(false); toggle.focus(); });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !panel.hidden) { setPanel(false); toggle.focus(); } });
@@ -187,7 +209,8 @@
     catch(error){voiceStatus.textContent=error.message||'Voice connection interrupted';}
     finally{pollingVoice=false;}
   },1000);
-  const beginPresence = () => heartbeat().catch((error) => { status.textContent = error.message; toggle.disabled = true; });
+  const beginPresence = () => heartbeat().catch((error) => { joined=false;status.textContent = error.message; });
+  window.addEventListener('muzikaz:multiplayer-room-ready',beginPresence);
   window.addEventListener('muzikaz:multiplayer-world-change', () => { disableMicrophone(); messages.replaceChildren(); unread = 0; unreadCount.hidden = true; Promise.all([heartbeat(), loadChat()]).catch((error) => { status.textContent = error.message; }); });
   if (window.MUZIKAZ_DESIGNATED_AVATAR || localStorage.getItem('muzikazDesignatedAvatar')) beginPresence(); else window.addEventListener('muzikaz-avatar-ready', beginPresence, { once:true });
   const timer = setInterval(() => { heartbeat().catch((error) => { status.textContent = error.message; }); loadChat().catch(() => {}); }, 5_000);

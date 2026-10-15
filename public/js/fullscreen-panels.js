@@ -1,3 +1,4 @@
+import {shortcutIcon} from './menu-shortcut-icons.js';
 // Native modal dialogs provide focus containment, Escape handling and inert
 // background content. The existing panel owns its open/closed state.
 export function decorateMenuClose(button,label='Close menu'){
@@ -16,6 +17,7 @@ export function fullscreenPanel(panel, { onOpen = () => {}, onClose = () => {}, 
   decorateMenuClose(close,'Close '+dialog.getAttribute('aria-label'));
   const header=document.createElement('header');header.className='game-menu-header';
   const title=document.createElement('h2');title.textContent=panel.id==='rad-tox-tools'?'Tools':dialog.getAttribute('aria-label');
+  if(panel.id==='game-explorer-options')title.insertAdjacentHTML('afterbegin',shortcutIcon('settings'));
   header.append(title,close);dialog.prepend(header);
   const isVisible = () => !panel.hidden && (!collapsed || !panel.classList.contains('is-collapsed'));
   let wasOpen=false;
