@@ -495,11 +495,11 @@ function renderQualityCheck(){const checks=qualityResults(),passed=checks.filter
 $('#certify-scene').addEventListener('click',()=>{const checks=qualityResults();if(checks.some(check=>!check.pass))return;sceneData.certification={certified:true,score:100,checkedAt:new Date().toISOString(),version:1};persist('Quality certified — this build is ready to share');renderQualityCheck()});
 
 let publishing=false;
-async function publishAndPlay(){
+async function publishAndPlay({launch=true}={}){
  if(publishing)return;publishing=true;const buttons=[$('#publish-scene'),$('#play-scene')];buttons.forEach(button=>button.disabled=true);
  try{
   if(!sceneData.id||sceneData.id==='active')sceneData.id=`custom-map-${uid()}`;
-  sceneData.gameplay={...sceneData.gameplay,multiplayer:$('#play-mode').value!=='solo'};persist('Map saved. Preparing play…');
+  sceneData.gameplay={...sceneData.gameplay,multiplayer:$('#play-mode').value!=='solo'};persist(launch?'Draft saved. Preparing selected-mode test…':'Draft saved. Publishing map…');
   const inventory=new SharedGameInventory();let session=await ensurePlayAccess(inventory);if(!session){$('#save-state').textContent='Map saved · choose Play when ready';return;}
   const publish=()=>inventory.api('/api/custom-maps',{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify({scene:cloneData(sceneData)})});
   let result;try{result=await publish();}catch(error){
@@ -507,9 +507,24 @@ async function publishAndPlay(){
    if(!result&&error.code==='MAP_ID_CONFLICT'){sceneData.id=`custom-map-${uid()}`;persist('Saved a new copy for this player.');result=await publish();}
    if(!result)throw error;
   }
-  window.location.assign(result.playUrl);
- }catch(error){showToast(error.message);$('#save-state').textContent='Map saved · '+error.message;}
+  const playLink=$('#published-map-link');playLink.href=result.playUrl;playLink.hidden=false;$('#builder-publish-status').textContent=`Published ${result.name||sceneData.name} · ${sceneData.gameplay.multiplayer?'Multiplayer':'Solo'} ready`;await refreshBuilderAccess();
+  if(launch)window.location.assign(result.playUrl);
+ }catch(error){showToast(error.message);$('#save-state').textContent='Draft saved locally';$('#builder-publish-status').textContent=error.message;}
  finally{publishing=false;buttons.forEach(button=>button.disabled=false);}
 }
 $('#play-mode').addEventListener('change',()=>{sceneData.gameplay={...sceneData.gameplay,multiplayer:$('#play-mode').value!=='solo'};markChanged();});
-$('#publish-scene').addEventListener('click',publishAndPlay);
+$('#publish-scene').addEventListener('click',()=>publishAndPlay({launch:false}));
+const builderAccessInventory=new SharedGameInventory();let accessBusy=false;
+async function refreshBuilderAccess(){
+ try{await builderAccessInventory.session();$('#builder-session-status').textContent='Session active · ready to test and publish';$('#builder-guest-pass').disabled=true;}
+ catch(error){$('#builder-session-status').textContent=error.status===401?'Choose a guest pass or sign in to test and publish.':'Access service unavailable. Your local draft is safe. Try again.';$('#builder-guest-pass').disabled=false;}
+}
+async function openBuilderAccess(guest){
+ if(accessBusy)return;accessBusy=true;$('#builder-guest-pass').disabled=true;$('#builder-login').disabled=true;
+ try{persist('Draft saved before sign-in.');if(guest)await builderAccessInventory.api('/api/access/guest',{method:'POST',body:'{}'});else await choosePlayAccess(builderAccessInventory);await refreshBuilderAccess();}
+ catch(error){$('#builder-session-status').textContent=error.message;$('#builder-guest-pass').disabled=false;}
+ finally{accessBusy=false;$('#builder-login').disabled=false;}
+}
+$('#builder-guest-pass').addEventListener('click',()=>openBuilderAccess(true));
+$('#builder-login').addEventListener('click',()=>openBuilderAccess(false));
+window.addEventListener('focus',()=>{if(!accessBusy)refreshBuilderAccess();});refreshBuilderAccess();

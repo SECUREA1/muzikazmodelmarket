@@ -189,3 +189,24 @@
 .builder-unified-header #world-atlas[hidden]{display:none!important;}
 
 .builder-unified-header .environment-actions select{min-height:44px;max-width:100%;padding:8px;border:1px solid #42634b;border-radius:7px;background:#0b170f;color:#fff;font-size:16px;}
+/* The complete dashboard keeps testing, publishing and access visible together. */
+.environment-builder-page .builder-dashboard{position:relative;}
+.builder-dashboard .builder-header-main{grid-template-columns:190px minmax(180px,1fr) auto;}
+.builder-operation-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+.builder-operation-grid>section{min-width:0;padding:14px;border:1px solid #36513d;border-radius:12px;background:#0c1810;}
+.builder-dashboard h2{font-size:13px;letter-spacing:.04em;margin:0 0 10px;color:#d9f7cb;}
+.builder-operation-grid p{font:12px/1.5 system-ui;color:#a8bdab;margin:10px 0 0;}
+.builder-launch-panel>label{font:12px system-ui;color:#c2d4c5;margin-right:8px;}
+.builder-dashboard #play-mode{min-height:44px;padding:8px 12px;background:#13281b;color:#fff;border:1px solid #5e805f;border-radius:7px;font-size:16px;}
+.builder-launch-actions,.builder-access-panel>div{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;}
+.builder-dashboard .builder-operation-grid button{min-height:46px;padding:10px 14px;border:1px solid #587c52;border-radius:8px;background:#233e28;color:#efffe8;font-weight:800;cursor:pointer;}
+.builder-dashboard .builder-operation-grid button.primary{background:#b9ff38;color:#10200b;flex:1;}
+.builder-dashboard .builder-operation-grid button:disabled{opacity:.55;cursor:wait;}
+.builder-dashboard a{color:#b9ff80;}.builder-dashboard #published-map-link[hidden]{display:none;}
+.builder-dashboard #published-map-link{display:inline-flex;min-height:44px;align-items:center;}
+.builder-dashboard .builder-header-tools{display:block;}
+.builder-dashboard .builder-header-settings{max-width:none;margin-top:12px;padding-top:12px;border-top:1px solid #2b3e30;}
+.builder-dashboard .builder-header-settings-body{padding-top:0;display:grid;grid-template-columns:minmax(240px,1fr) minmax(300px,1.5fr);gap:10px 18px;}
+.builder-dashboard .view-toolbar{margin:0;}.builder-dashboard .world-atlas{grid-column:1/-1;}
+@media(max-width:1000px){.builder-dashboard .builder-header-main{grid-template-columns:minmax(160px,1fr) minmax(180px,2fr);}.builder-dashboard .builder-header-settings-body{grid-template-columns:1fr;}}
+@media(max-width:760px){.builder-dashboard .builder-header-main{grid-template-columns:minmax(0,1fr);}.builder-operation-grid{grid-template-columns:1fr;}.builder-dashboard .builder-operation-grid button{flex:1;}.builder-dashboard .builder-header-settings-body{display:block;}.builder-dashboard .builder-map-settings{grid-template-columns:1fr 1fr;}.builder-dashboard .builder-map-settings label{min-width:0;}.builder-dashboard .view-toolbar{margin-block:10px;}}
