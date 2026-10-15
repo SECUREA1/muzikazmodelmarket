@@ -273,3 +273,10 @@ html.game-menu-open { overflow:hidden; }
 .rad-match-results table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap;}.rad-match-results caption{text-align:left;margin-bottom:10px;}
 .rad-match-results th,.rad-match-results td{padding:10px 12px;border-bottom:1px solid #304934;text-align:right;}.rad-match-results th:first-child{text-align:left;}
 .rad-match-results .is-self{background:#213b22;}.rad-results-rules{color:#b7cbb3;font-size:13px;}[data-results-error]{color:#ffb3a8;}
+
+/* Recognizable local SVG icons for Settings and all workspace shortcuts. */
+.menu-shortcut-icon{display:inline-block;flex:0 0 24px;width:24px;height:24px;vertical-align:middle;color:#baff39;}
+.game-menu-header h2:has(.menu-shortcut-icon),.settings-explorer-shortcuts h4{display:flex;align-items:center;gap:10px;}
+.settings-explorer-navigation .settings-nav-list a,.settings-explorer-navigation .settings-nav-list button{flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;}
+.settings-explorer-navigation .settings-menu-icon{display:grid;flex:0 0 36px;width:36px;height:36px;place-items:center;border:1px solid #496442;border-radius:9px;background:#122318;}
+.settings-explorer-navigation .settings-menu-copy{display:flex;min-width:0;flex-direction:column;gap:4px;}

@@ -261,12 +261,12 @@ for (const requiredAvatarIdentityFeature of ['liveAvatarIdentity', 'root.userDat
   if (!houseExplorer.includes(requiredAvatarIdentityFeature)) throw new Error(`Live players must use and refresh their designated avatar: ${requiredAvatarIdentityFeature}`);
 }
 const cribMultiplayer = await readFile('dist/public/js/crib-multiplayer.js', 'utf8');
-if (!cribMultiplayer.includes('avatarUrl: avatar.modelUrl') || !cribMultiplayer.includes('modelUrl: avatar.modelUrl')) {
+if (!/avatarUrl:\s*avatar\??\.modelUrl/.test(cribMultiplayer) || !/modelUrl:\s*avatar\??\.modelUrl/.test(cribMultiplayer)) {
   throw new Error('Crib presence must publish each designated GLB avatar URL.');
 }
 const server = await readFile('server.mjs', 'utf8');
-if (!server.includes('avatarAssetId: asset.id, modelUrl: asset.modelUrl')) {
-  throw new Error('The live presence server must publish its validated profile avatar instead of a client fallback.');
+if (!server.includes('avatarAssetId: asset?.id||null, modelUrl: asset?.modelUrl||authoritativePlayer.modelUrl||null')) {
+  throw new Error('The live presence server must publish its validated profile or authoritative player avatar.');
 }
 if (houseExplorer.includes('await this.initAudio()')) {
   throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');
