@@ -3,6 +3,7 @@ import { readFile, writeFile, mkdir, stat, unlink, rename } from 'node:fs/promis
 import { createReadStream, createWriteStream } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
+import { normalizePlayerPreferences } from './public/js/player-preferences.js';
 import { UserJsonDatabase, cleanWallet } from './user-json-database.mjs';
 import { LoadoutCodeStore } from './loadout-code-store.mjs';
 import { PaymentOrderStore, MUZIKAZ_PAYMENT_NETWORKS } from './payment-order-store.mjs';
@@ -425,6 +426,12 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/health' && req.method === 'GET') {
       await ensureStorage();
       return sendJson(res, 200, { success: true, service: 'muzikaz-member-market', version: serviceVersion, commit: deploymentCommit, startedAt: serviceStartedAt, storage: 'ready', persistentStorageConfigured: dataDir.startsWith('/var/data'), routes: { accountBootstrap: true, accessActivation: true, gameSession: true } });
+    }
+    if(url.pathname==='/api/player/settings'&&['GET','PUT'].includes(req.method)){
+      const context=await memberContext(req,res,req.method==='PUT');if(!context)return;
+      const settings=req.method==='PUT'?normalizePlayerPreferences((await bodyJson(req)).settings):normalizePlayerPreferences(context.state.memory?.playerSettings);
+      if(req.method==='PUT')await userDatabase.put(context.walletId,{memory:{playerSettings:settings}});
+      return sendJson(res,200,assetResponse({owner_id:context.walletId,settings}));
     }
     if(url.pathname==='/api/market/session'&&req.method==='GET'){
       const context=await memberContext(req,res);if(!context)return;

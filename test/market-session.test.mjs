@@ -23,7 +23,10 @@ test('cookie and bearer member sessions own market and care actions without a br
   const cookie=login.headers['set-cookie'].split(';')[0],cookieHeaders={cookie};
   const session=await call('/api/market/session',cookieHeaders);assert.equal(session.status,200);const owner=session.body.data.owner_id;assert.match(owner,/^account:/);
   const csrf=session.body.data.csrfToken,headers={cookie,'x-csrf-token':csrf,'x-wallet-address':'someone-else'};
-  const wallet=await call('/api/wallet/state',headers);assert.equal(wallet.body.data.walletId,owner);const balance=wallet.body.data.tokens.MZK;
+  const settings=await call('/api/player/settings',headers,{settings:{mouseSensitivity:1.5,invertLook:true,effectsVolume:0,health:1000}},'PUT');assert.equal(settings.status,200);assert.equal(settings.body.data.owner_id,owner);assert.equal(settings.body.data.settings.mouseSensitivity,1.5);assert.equal('health'in settings.body.data.settings,false);
+  assert.equal((await call('/api/player/settings',cookieHeaders,{settings:{effectsVolume:1}},'PUT')).body.code,'CSRF_INVALID');
+  assert.equal((await call('/api/player/settings',cookieHeaders)).body.data.settings.effectsVolume,0);
+  const wallet=await call('/api/wallet/state',headers);assert.equal(wallet.body.data.walletId,owner);const balance=wallet.body.data.tokens.MZK;assert.equal(balance,session.body.data.balance);assert.equal(wallet.body.data.items.some(item=>item.id==='health'),false);
   const purchase=await call('/api/rpg/purchases',headers,{itemId:'ion-health-vial',requestId:'buy-care'});assert.equal(purchase.status,200);assert.equal(purchase.body.data.balance,balance-25);
   const item=purchase.body.data.items[0];assert.ok(item);
   const listed=await call('/api/market/listings',headers,{itemId:item.id,priceMzk:10},'PUT');assert.equal(listed.status,200);
@@ -35,6 +38,7 @@ test('cookie and bearer member sessions own market and care actions without a br
   const history=await call('/api/market/activity',cookieHeaders);assert.equal(history.status,200);
   const second=await call('/api/access/free-play',{}, {username:'OtherCarePlayer',password:'other-session-test'});assert.equal(second.status,200);
   const secondHeaders={cookie:second.headers['set-cookie'].split(';')[0]};const secondSession=await call('/api/market/session',secondHeaders);secondHeaders['x-csrf-token']=secondSession.body.data.csrfToken;
+  assert.equal((await call('/api/player/settings',secondHeaders)).body.data.settings.mouseSensitivity,1);
   const extra=await call('/api/rpg/purchases',headers,{itemId:'ion-health-vial',requestId:'buy-trade'});const tradedItem=extra.body.data.items[0];
   assert.equal((await call('/api/market/listings',headers,{itemId:tradedItem.id,priceMzk:10},'PUT')).status,200);
   const trade=await call('/api/market/trades',secondHeaders,{sellerId:owner,itemId:tradedItem.id,requestId:'trade-care',expectedPriceMzk:10});assert.equal(trade.status,201);assert.equal(trade.body.data.buyerId,secondSession.body.data.owner_id);

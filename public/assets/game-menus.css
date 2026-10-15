@@ -156,3 +156,25 @@ dialog.tools-pouch-screen .rad-tox-tools__content>.rad-tool-choice[hidden],dialo
  .game-fullscreen-dialog .rad-tox-pack-grid{grid-template-columns:minmax(0,1fr);}
  .game-fullscreen-dialog .building-design-controls{padding:10px;}
 }
+
+.player-settings{display:grid;gap:18px;margin-top:18px;min-width:0;}
+.player-settings>section{min-width:0;padding:14px;border:1px solid #496442;border-radius:10px;background:#101d14;}
+.player-settings h3{font-size:18px!important;margin:0 0 10px!important;}
+.player-settings p{font-size:13px;line-height:1.5;overflow-wrap:anywhere;}
+.player-settings-grid,.player-settings-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:12px;}
+.player-settings-grid label,.player-settings-metrics label{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 10px;padding:10px;border:1px solid #354d32;border-radius:8px;color:#e5f3dd;}
+.player-settings-grid input[type=range],.player-settings-metrics meter{grid-column:1/-1;width:100%;min-width:0;min-height:30px;accent-color:#caff49;}
+.player-settings-grid input[type=color]{width:48px;height:44px;padding:3px;}
+.player-settings-grid .player-setting-check{display:flex;gap:10px;min-height:44px;}
+.player-settings-grid input[type=checkbox]{width:20px;height:20px;accent-color:#caff49;}
+.player-settings output,.player-settings-metrics strong{color:#d4ff9f;font-variant-numeric:tabular-nums;}
+.player-settings-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;}
+.player-settings-actions button{flex:1 1 150px;min-height:44px;}
+.player-settings-metrics p{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;margin:0;border-bottom:1px solid #354d32;}
+.player-settings-metrics p strong{text-align:right;overflow-wrap:anywhere;}
+.player-settings details{margin-top:12px;}.player-settings summary{min-height:44px;padding:10px 0;cursor:pointer;}
+.player-settings [data-settings-history] p{padding:8px;border-top:1px solid #354d32;}
+.house-stage .house-reticle{color:var(--player-reticle-color,#caff49);font-size:var(--player-reticle-size,20px);}
+.house-stage .rad-tox-hud{font-size:var(--player-hud-size,12px);}
+.house-stage.player-reduced-motion .rad-tox-spend,.house-stage.player-reduced-motion .multiplayer-live-count{animation:none!important;transition:none!important;}
+@media(max-width:600px){.player-settings-grid,.player-settings-metrics{grid-template-columns:minmax(0,1fr);}.player-settings>section{padding:10px;}.player-settings input[type=range]{min-height:44px;}}
