@@ -516,8 +516,8 @@ $('#play-mode').addEventListener('change',()=>{sceneData.gameplay={...sceneData.
 $('#publish-scene').addEventListener('click',()=>publishAndPlay({launch:false}));
 const builderAccessInventory=new SharedGameInventory();let accessBusy=false;
 async function refreshBuilderAccess(){
- try{await builderAccessInventory.session();$('#builder-session-status').textContent='Session active · ready to test and publish';$('#builder-guest-pass').disabled=true;}
- catch(error){$('#builder-session-status').textContent=error.status===401?'Choose a guest pass or sign in to test and publish.':'Access service unavailable. Your local draft is safe. Try again.';$('#builder-guest-pass').disabled=false;}
+ try{await builderAccessInventory.session();$('#builder-session-status').textContent='Session active';$('#builder-session-status').dataset.state='active';$('#builder-guest-pass').disabled=true;}
+ catch(error){$('#builder-session-status').dataset.state='inactive';$('#builder-session-status').textContent=error.status===401?'Choose a guest pass or sign in to test and publish.':'Access service unavailable. Your local draft is safe. Try again.';$('#builder-guest-pass').disabled=false;}
 }
 async function openBuilderAccess(guest){
  if(accessBusy)return;accessBusy=true;$('#builder-guest-pass').disabled=true;$('#builder-login').disabled=true;
