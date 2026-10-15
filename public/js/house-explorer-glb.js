@@ -621,7 +621,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   settingsUI.restore();
   optionsButton.addEventListener('click',()=>settingsUI.open());
-  const fullscreenMenus=[explorerOptions,sprayTools,buildingPopup,inventoryPack,questPanel,buildMenu,rangeOpsPanel,avatarMenu].map(panel=>fullscreenPanel(panel,{onOpen:lockMenuInput}));
+  const fullscreenMenus=[explorerOptions,sprayTools,buildingPopup,inventoryPack,questPanel,buildMenu,rangeOpsPanel,avatarMenu].map(panel=>fullscreenPanel(panel,{onOpen:lockMenuInput,onClose:()=>{if(panel===sprayTools){toolsToggle.setAttribute('aria-expanded','false');toolsButton?.setAttribute('aria-expanded','false');}}}));
   fullscreenMenus[0].dialog.addEventListener('close',()=>{if(fullscreenMenus[0].dialog.open)return;settingsUI.close();optionsButton.setAttribute('aria-expanded','false');});
   const pickerPanel=fullscreenPanel(library,{onOpen:lockMenuInput,collapsed:true});fullscreenMenus.push(pickerPanel);
   pickerPanel.dialog.addEventListener('close',()=>{if(!pickerPanel.dialog.open){document.querySelector('#add-avatar')?.setAttribute('aria-expanded','false');document.querySelector('#house-world-button')?.setAttribute('aria-expanded','false');}});

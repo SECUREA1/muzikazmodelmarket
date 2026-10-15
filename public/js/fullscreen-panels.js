@@ -1,6 +1,9 @@
 // Native modal dialogs provide focus containment, Escape handling and inert
 // background content. The existing panel owns its open/closed state.
-export function fullscreenPanel(panel, { onOpen = () => {}, collapsed = false } = {}) {
+export function decorateMenuClose(button,label='Close menu'){
+  if(!button)return;button.setAttribute('aria-label',label);button.title=label;button.innerHTML='<span class="game-menu-close-label">Close</span><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+}
+export function fullscreenPanel(panel, { onOpen = () => {}, onClose = () => {}, collapsed = false } = {}) {
   const dialog = document.createElement('dialog');
   dialog.className = 'game-fullscreen-dialog';
   if(panel.id==='rad-tox-tools')dialog.classList.add('tools-pouch-screen');
@@ -10,19 +13,26 @@ export function fullscreenPanel(panel, { onOpen = () => {}, collapsed = false } 
   document.body.append(dialog);
   const close = document.createElement('button');
   close.type='button';close.className='game-fullscreen-close';close.textContent='Close ×';
-  close.setAttribute('aria-label','Close '+dialog.getAttribute('aria-label'));
+  decorateMenuClose(close,'Close '+dialog.getAttribute('aria-label'));
   const header=document.createElement('header');header.className='game-menu-header';
   const title=document.createElement('h2');title.textContent=panel.id==='rad-tox-tools'?'Tools':dialog.getAttribute('aria-label');
   header.append(title,close);dialog.prepend(header);
   const isVisible = () => !panel.hidden && (!collapsed || !panel.classList.contains('is-collapsed'));
-  const hide = () => { if(collapsed)panel.classList.add('is-collapsed');else panel.hidden=true; };
+  let wasOpen=false;
+  const hide = () => {
+    if(collapsed)panel.classList.add('is-collapsed');else panel.hidden=true;
+    if(dialog.open)dialog.close();
+    if(panel.id)document.querySelectorAll?.('[aria-controls]').forEach(trigger=>{if((trigger.getAttribute('aria-controls')||'').split(/\s+/).includes(panel.id))trigger.setAttribute('aria-expanded','false');});
+    if(!document.querySelector('dialog[open]'))document.documentElement.classList.remove('game-menu-open');
+    if(wasOpen){wasOpen=false;onClose();}
+  };
   const sync = () => {
-    const label=panel.getAttribute('aria-label')||'Game menu';dialog.setAttribute('aria-label',label);title.textContent=panel.id==='rad-tox-tools'?'Tools':label;close.setAttribute('aria-label','Close '+label);
+    const label=panel.getAttribute('aria-label')||'Game menu';dialog.setAttribute('aria-label',label);title.textContent=panel.id==='rad-tox-tools'?'Tools':label;close.setAttribute('aria-label','Close '+label);close.title='Close '+label;
     if(isVisible() && !dialog.open){
       const host=document.fullscreenElement || document.body;
       if(dialog.parentElement!==host)host.append(dialog);
-      onOpen();dialog.showModal();document.documentElement.classList.add('game-menu-open');
-    } else if(!isVisible() && dialog.open)dialog.close();
+      onOpen();dialog.showModal();wasOpen=true;document.documentElement.classList.add('game-menu-open');
+    } else if(!isVisible() && dialog.open)hide();
   };
   close.addEventListener('click',hide);
   dialog.addEventListener('cancel',hide);
@@ -43,6 +53,6 @@ export function organizeToolPicker(dialog) {
   const header=document.createElement('header');header.className='game-menu-header';
   const title=document.createElement('h2');title.textContent=original?.textContent||dialog.getAttribute('aria-label');
   original?.classList.add('game-menu-original-title');
-  if(close){close.classList.add('game-menu-close');close.textContent='Close ×';header.append(title,close);}else header.append(title);
+  if(close){close.classList.add('game-menu-close');decorateMenuClose(close,'Close '+title.textContent);header.append(title,close);}else header.append(title);
   dialog.prepend(header);
 }
