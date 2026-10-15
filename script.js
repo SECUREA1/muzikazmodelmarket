@@ -1200,7 +1200,9 @@ function initWorldPlot() {
     reserveButton.disabled = true; reserveButton.textContent = 'Recording deed…';
     let deed;
     try {
-      const response = await fetch('/api/land/claims', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Wallet-Address': walletId }, body: JSON.stringify({ worldId, requestId }) });
+      await window.MZKWallet.refreshShared();
+      const session=window.MZKWallet.sharedSession();if(!session)throw new Error('Sign in through Members before buying a plot.');
+      const response = await window.MUZIKAZ_API.fetch('/api/land/claims', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token':session.csrfToken }, body: JSON.stringify({ worldId, requestId }) });
       const result = await response.json(); if (!response.ok) throw new Error(result.message || 'The live deed database rejected this claim.');
       deed = result.data || result;
     } catch (error) {
@@ -1210,11 +1212,14 @@ function initWorldPlot() {
     }
     await window.MZKWallet?.refreshShared?.();
     claimOwnedAsset(`MUZIKAZ World · ${selectedSpace}`, 'Public-area plot claim');
+    window.dispatchEvent(new Event('muzikaz:member-plots-changed'));
+    try{localStorage.setItem('muzikaz.memberPlots.signal',String(Date.now()));}catch{}
     updateOwnedCount();
     updateCart(reserveButton, 'Plot claimed');
     const selectedIndex = spaces.findIndex((space) => space.dataset.worldSpace === selectedSpace) + 1;
     selection.innerHTML = `<span class="world-plot__selection-number">${String(selectedIndex).padStart(2, '0')}</span><span><strong>${selectedSpace} claimed.</strong> Your deed is within this public area and its free community spot is included.</span><small>Plot status <b>Owned by you</b></small>`;
     reserveButton.disabled = true;
+    const plotLink=document.createElement('a');plotLink.className='btn';plotLink.textContent='Open your hosted plot';plotLink.href=deed.playUrl||`model-explorer.html?environment=plot-${encodeURIComponent(deed.id)}&autoplay=1`;selection.append(plotLink);
     reserveButton.textContent = `${selectedSpace} owned`;
   });
   updateOwnedCount();

@@ -23,11 +23,11 @@ test('cookie and bearer member sessions own market and care actions without a br
   const wrong=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'incorrect-password'});assert.equal(wrong.status,401);
   const restored=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'member-session-test'});assert.equal(restored.status,200);assert.equal(restored.body.data.account.accountId,login.body.data.account.accountId);
   const paymentHeaders={authorization:'Bearer '+login.body.data.sessionToken};
-  const topup=await paymentOrderStore.create({memberAccountId:login.body.data.account.accountId,purchaseType:'MZK_PURCHASE',itemId:'mzk-land-presale',basePrice:30,paymentAsset:'SOL',expectedAmount:1});
+  const topup=await paymentOrderStore.create({memberAccountId:login.body.data.account.accountId,purchaseType:'MZK_PURCHASE',itemId:'mzk-land-presale',basePrice:100,paymentAsset:'SOL',expectedAmount:1});
   assert.equal((await call('/api/account/tokens/claim',paymentHeaders,{orderId:topup.orderId,claimToken:topup.claimToken})).status,409);
   // Simulate the independent verifier's PAID result, without submitting real crypto.
   const orders=await paymentOrderStore.records();Object.assign(orders[0],{paymentStatus:'PAID',transactionHash:'fixture-chain-confirmation',confirmedAt:new Date().toISOString()});await paymentOrderStore.save(orders);
-  const credited=await call('/api/account/tokens/claim',paymentHeaders,{orderId:topup.orderId,claimToken:topup.claimToken});assert.equal(credited.status,200);assert.equal(credited.body.data.creditedMzk,5000);
+  const credited=await call('/api/account/tokens/claim',paymentHeaders,{orderId:topup.orderId,claimToken:topup.claimToken});assert.equal(credited.status,200);assert.equal(credited.body.data.creditedMzk,13000);
   assert.equal((await call('/api/account/tokens/claim',paymentHeaders,{orderId:topup.orderId,claimToken:topup.claimToken})).body.data.balance,credited.body.data.balance);
   assert.equal((await call('/api/wallet/state',paymentHeaders,{tokens:{MZK:999999}},'PUT')).status,403);
   assert.equal((await call('/api/wallet/state',paymentHeaders,{memory:{account:null}},'PUT')).status,403);
@@ -48,6 +48,13 @@ test('cookie and bearer member sessions own market and care actions without a br
   const scan=await call('/api/economy/use',paymentHeaders,{sku:'tool:scanner',requestId:'scan-once'});assert.equal(scan.body.data.amountMzk,-2);
   assert.equal((await call('/api/wallet/state',paymentHeaders,{items:[{id:'economy:tool:jetpack',economySku:'tool:jetpack'}]},'PUT')).status,403);
   const pack=await call('/api/account/bootstrap',paymentHeaders);assert.equal(pack.status,200);assert.ok(pack.body.data.backpack.catalogAssets.length<models.length);
+  const plot=await call('/api/land/claims',paymentHeaders,{worldId:'volt-city',requestId:'api-plot'});assert.equal(plot.status,201);assert.match(plot.body.data.playUrl,/environment=plot-deed-volt-city/);
+  const publicPlots=await call('/api/member-maps');assert.equal(publicPlots.body.data.some(map=>map.id==='plot-deed-volt-city'),true);
+  assert.equal((await call('/api/environments')).body.data.some(map=>map.id==='plot-deed-volt-city'),true);
+  const environments=(await call('/api/environments')).body.data.filter(env=>!env.memberPlot&&env.playable!==false&&env.visibility!=='private');const template=environments.find(env=>env.id!=='muzikaz-main')||environments[0];
+  const configured=await call('/api/land/deeds/deed-volt-city/space',paymentHeaders,{environmentId:template.id,name:'Member API test plot'},'PUT');assert.equal(configured.status,200);
+  const hosted=(await call('/api/environments/plot-deed-volt-city')).body.data;assert.equal(hosted.name,'Member API test plot');assert.equal(hosted.baseEnvironmentId,template.id);assert.equal(hosted.roomId,'plot-deed-volt-city');
+  assert.equal((await call('/api/land/deeds/deed-volt-city/space',paymentHeaders,{environmentId:'not-a-server-map'},'PUT')).status,400);
   const cookie=login.headers['set-cookie'].split(';')[0],cookieHeaders={cookie};
   const session=await call('/api/market/session',cookieHeaders);assert.equal(session.status,200);const owner=session.body.data.owner_id;assert.match(owner,/^account:/);
   const csrf=session.body.data.csrfToken,headers={cookie,'x-csrf-token':csrf,'x-wallet-address':'someone-else'};
@@ -68,6 +75,7 @@ test('cookie and bearer member sessions own market and care actions without a br
   const state=await call('/api/rpg/state',bearer);assert.equal(state.status,200);assert.equal(state.body.data.owner_id,owner);assert.equal(state.body.data.stats.health,55);
   const history=await call('/api/market/activity',cookieHeaders);assert.equal(history.status,200);
   const second=await call('/api/access/free-play',{}, {username:'OtherCarePlayer',password:'other-session-test'});assert.equal(second.status,200);
+  assert.equal((await call('/api/land/deeds/deed-volt-city/space',{authorization:'Bearer '+second.body.data.sessionToken},{environmentId:template.id,name:'Stolen plot'},'PUT')).status,403);
   const secondHeaders={cookie:second.headers['set-cookie'].split(';')[0]};const secondSession=await call('/api/market/session',secondHeaders);secondHeaders['x-csrf-token']=secondSession.body.data.csrfToken;
   assert.equal((await call('/api/player/settings',secondHeaders)).body.data.settings.mouseSensitivity,1);
   // Real voice handlers: authenticated, room-scoped, queued delivery and mic opt-in.

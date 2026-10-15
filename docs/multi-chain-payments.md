@@ -42,3 +42,11 @@ The browser wallet displays the authenticated balance and uses asynchronous serv
 Players can browse Game upgrades in the in-game Marketplace, earn quest MZK, buy upgrades, and resell eligible purchases to other members for MZK. Basic included entitlements cannot be resold. Advanced gear has visible purchase and use prices: for example, the jetpack costs 750 MZK to unlock and 1 per powered second, the scanner costs 150 plus 2 per scan, and advanced materials start at 60 plus 1 per placement. Avatar cosmetics are purchased once without a recurring equip fee. Creator-authored custom items remain usable by their creator.
 
 Purchases and usage are serialized server transactions. Repeat request IDs cannot double-charge, insufficient funds grant nothing, and reselling removes the seller's ownership. Wallet PUT requests cannot inject item ownership. Paid gameplay actions wait for authorization while the free basic kit remains available. Utility validation runs before payment so cooldowns, full health, or invalid targets do not incur a charge. Client gameplay is not an authoritative anti-cheat simulation.
+
+### Deed-backed multiplayer plots
+
+A purchased land deed automatically creates a persistent public member plot on the shared multiplayer backend. `GET /api/member-maps` lists these spaces; they also appear in `/api/environments`, the game world picker, Members → Member plots, and in-game Settings. Deed inventory cards include stable join links.
+
+Only the current deed holder can update the plot name and public environment template with authenticated, CSRF-protected `PUT /api/land/deeds/:id/space`. Visitors share the plot's stable room ID; changing the template requires rejoining to load it. Selling the deed transfers configuration rights without changing the room or join URL. Linking a member wallet preserves ownership. Existing deeds receive the same stable plot identity automatically.
+
+Plots use the existing shared server and its configured persistent user database, rather than provisioning a dedicated process per plot. The existing eight deed regions and global multiplayer capacity still apply. This adds hosted room discovery and environment selection; it does not add persistence for arbitrary objects placed during gameplay.
