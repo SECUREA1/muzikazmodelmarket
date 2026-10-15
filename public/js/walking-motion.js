@@ -56,8 +56,8 @@ export class WalkingMotion {
  }
 }
 
-export function walkingStick(x,y){
- const length=Math.hypot(x,y),amount=Math.min(1,Math.max(0,(length-.08)/.92));
+export function walkingStick(x,y,deadzone=.08){
+ const length=Math.hypot(x,y),amount=Math.min(1,Math.max(0,(length-deadzone)/(1-deadzone)));
  return amount?{x:x/length*amount,y:y/length*amount}:{x:0,y:0};
 }
 export function walkingSprint(wasSprinting,amount){return amount>(wasSprinting?.64:.82);}
