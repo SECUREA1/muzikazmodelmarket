@@ -89,7 +89,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    }
   } finally { busy=false; }
  }
- const timer=setInterval(tick,100);
+ const timer=setInterval(tick,50);
  tick();
  return client;
 }
