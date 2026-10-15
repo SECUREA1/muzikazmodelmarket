@@ -1,3 +1,4 @@
+import {ensurePlayAccess,choosePlayAccess} from './play-access.js';
 import {OwnedItemPlacement} from './owned-item-placement.js';
 import {animateSharedEnemy} from './shared-enemy-animation.js';
 import {createSharedEnemyEffects} from './shared-enemy-effects.js';
@@ -47,7 +48,7 @@ const hud = document.querySelector('.house-hud');
 if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   let playerPreferences={...PLAYER_DEFAULTS};
   let authoritativeClient=null,serverHostedRoom=true;
-  let guestSolo=false,gameplayStarted=false;
+  let guestSolo=new URL(location.href).searchParams.get('mode')==='solo',gameplayStarted=false;
   const localSandbox = false;
   const oldStatus = document.querySelector('#house-status');
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
@@ -1199,7 +1200,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const worlds = registry.all().map((env,index)=>({env,index,count:Math.max(usersInWorld(env.id),Number(env.playerCount)||0)})).sort((a,b)=>b.count-a.count||a.index-b.index);
     library.classList.remove('backpack-panel');
     library.setAttribute('aria-label', 'Select a multiplayer game world');
-    mountWorldMapPicker(library,worlds,{currentId:activeEnvironment?.id,onClose:()=>{pickerPanel.dialog.close();library.classList.add('is-collapsed');worldButton?.setAttribute('aria-expanded','false');worldButton?.focus();},onJoin:async env=>{pickerPanel.dialog.close();library.classList.add('is-collapsed');worldButton?.setAttribute('aria-expanded','false');if(env.id===activeEnvironment?.id&&env.updatedAt===activeEnvironment?.updatedAt&&!env.meetingId)return;guestSolo=false;serverHostedRoom=true;setStatus(`Joining ${env.name}, the shared multiplayer world…`);if(!registry.find(env.id))await registry.refresh();await loadById(env.id,{meetingId:env.meetingId||null});}});
+    mountWorldMapPicker(library,worlds,{currentId:activeEnvironment?.id,onClose:()=>{pickerPanel.dialog.close();library.classList.add('is-collapsed');worldButton?.setAttribute('aria-expanded','false');worldButton?.focus();},onJoin:async env=>{pickerPanel.dialog.close();library.classList.add('is-collapsed');worldButton?.setAttribute('aria-expanded','false');if(env.id===activeEnvironment?.id&&env.updatedAt===activeEnvironment?.updatedAt&&!env.meetingId)return;guestSolo=env.multiplayer===false;serverHostedRoom=!guestSolo;const playUrl=new URL(location.href);playUrl.searchParams.set('mode',guestSolo?'solo':'multiplayer');history.replaceState({},'',playUrl);setStatus(`Opening ${env.name} for ${guestSolo?'solo':'multiplayer'} play…`);if(!registry.find(env.id))await registry.refresh();await loadById(env.id,{meetingId:env.meetingId||null});}});
   }
 
   function openPicker(kind) {
@@ -1729,6 +1730,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   async function startRoomGameplay() {
     scaleControl.querySelectorAll('input,button').forEach(control=>{control.disabled=serverHostedRoom;control.title=serverHostedRoom?'Shared world size is fixed.':'';});
+    if(guestSolo){serverHostedRoom=false;connectionBadge.textContent='Solo play';return;}
+    const access=await ensurePlayAccess(sharedInventory);if(!access)throw Object.assign(Error('Choose guest access or sign in to play multiplayer.'),{status:401});
     if (!serverHostedRoom) return;
     if (!authoritativeClient || !authoritativeClient.ready) {
       authoritativeClient?.stop();
@@ -1743,11 +1746,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     } catch (error) {
       if(authoritativeClient!==connectingClient)throw error;
       connectingClient.stop(); authoritativeClient=null;
-      // The ordinary house launch promises solo play to guests. Private/member
-      // destinations still require an accepted authenticated server connection.
-      const memberDestination=params.has('meet') || params.has('useItem') || (requestedEnvironment && requestedEnvironment!=='muzikaz-main');
-      if (error.status!==401 || error.code==='CSRF_INVALID' || memberDestination) throw error;
-      guestSolo=true; serverHostedRoom=false;envLoader.setSupplementalCollisionRoots(envLoader.supplementalCollisionRoots);connectionBadge.textContent='Solo · sign in for live multiplayer';
+      if(error.status===401&&error.code!=='CSRF_INVALID'){
+        const access=await choosePlayAccess(sharedInventory);if(access)return startRoomGameplay();
+      }
+      throw error;
     }
   }
   let gameInitializationPromise = null;

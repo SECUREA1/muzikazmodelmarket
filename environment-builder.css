@@ -155,3 +155,20 @@
 .environment-topbar > * { min-width:0; }
 .environment-topbar a, .environment-topbar button { white-space:normal; overflow-wrap:anywhere; }
 @media(max-width:720px){ .environment-topbar { align-items:center; } .environment-topbar button, .environment-topbar a { min-height:44px; } }
+/* Give publish controls their own row, including when shared navigation styles load. */
+.environment-builder-page .environment-topbar{display:grid;height:auto;grid-template-columns:minmax(180px,1fr) minmax(220px,420px) auto;padding-block:10px;gap:10px 20px;}
+.environment-builder-page .environment-topbar .environment-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;overflow:visible;gap:8px;}
+.environment-builder-page .environment-topbar .scene-name{grid-column:2;grid-row:1;min-width:0;}
+.environment-builder-page .environment-topbar .page-navigation-toggle{grid-column:3;grid-row:1;}
+.environment-builder-page .environment-actions label{font-size:12px;align-self:center;}
+.environment-builder-page .environment-actions select{min-height:44px;max-width:100%;padding:8px;border:1px solid #34533e;border-radius:6px;background:#111a14;color:#fff;font-size:16px;}
+@media(max-width:760px){
+ .environment-builder-page .environment-topbar{grid-template-columns:minmax(0,1fr) 44px;gap:8px;}
+ .environment-builder-page .environment-topbar .scene-name{grid-column:1/-1;grid-row:2;}
+ .environment-builder-page .environment-topbar .page-navigation-toggle{grid-column:2;}
+ .environment-builder-page .environment-topbar .environment-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-row:3;width:100%;}
+ .environment-builder-page .environment-topbar .environment-actions button{min-height:44px;white-space:normal;}
+ .environment-builder-page .environment-actions .primary{grid-column:auto;min-width:0;}
+ .environment-builder-page .environment-actions #save-scene{grid-column:1/-1;}
+ .environment-builder-page .environment-actions .page-action-label{position:static;width:auto;height:auto;overflow:visible;clip-path:none;white-space:normal;}
+}
