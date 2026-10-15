@@ -36,7 +36,7 @@ test('health compatibility does not block username login on a rolling deployment
   const requests = [];
   const { window, attributes } = loadConnection(async (url) => {
     requests.push(url);
-    if (url.endsWith('/api/health')) return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'content-type': 'application/json' } });
+    if (url.endsWith('/api/health')) return new Response(JSON.stringify({ success: true, service: 'muzikaz-member-market' }), { status: 200, headers: { 'content-type': 'application/json' } });
     return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'content-type': 'application/json' } });
   }, 'https://muzikazmodelmarket.onrender.com');
   assert.equal((await window.MUZIKAZ_API.fetch('/api/access/free-play', { method: 'POST' })).status, 200);
@@ -69,6 +69,7 @@ test('missing member-market routes on a custom domain retry against the hosted A
   assert.deepEqual(requests, [
     'https://static.example/api/health',
     'https://static.example/api/market/members',
+    'https://muzikazmodelmarket.onrender.com/api/health',
     'https://muzikazmodelmarket.onrender.com/api/market/members'
   ]);
   assert.equal(attributes['data-api-base'], 'https://muzikazmodelmarket.onrender.com');
@@ -96,4 +97,51 @@ test('game session token follows cross-origin RAD-TOX requests', async () => {
   await window.MUZIKAZ_API.fetch('/api/game/session');
   assert.equal(options.headers['X-Game-Session'], 'game-portable');
   assert.equal(window.MUZIKAZ_API.getGameSessionToken(), 'game-portable');
+});
+
+test('login recovers after initial API discovery fails without reloading', async () => {
+  let online = false; let posts = 0;
+  const { window, attributes } = loadConnection(async (url) => {
+    if (!online) throw new Error('offline');
+    if (url.endsWith('/api/health')) return health();
+    posts++; return new Response('{}');
+  }, 'https://muzikazmodelmarket.onrender.com');
+  await assert.rejects(window.MUZIKAZ_API.ready, /offline/);
+  assert.equal(attributes['data-api-connected'], 'false');
+  online = true;
+  assert.equal((await window.MUZIKAZ_API.fetch('/api/access/free-play', {method:'POST'})).status, 200);
+  assert.equal(posts, 1);
+  assert.equal(attributes['data-api-connected'], 'true');
+});
+
+test('an unrelated successful health endpoint cannot receive member passwords', async () => {
+  const posts = [];
+  const {window} = loadConnection(async (url, request) => {
+    if (url === 'https://static.example/api/health') return new Response(JSON.stringify({success:true}));
+    if (url.endsWith('/api/health')) return health();
+    posts.push([url, request.body]); return new Response('{}');
+  });
+  await window.MUZIKAZ_API.fetch('/api/access/free-play', {method:'POST', body:'credential'});
+  assert.deepEqual(posts, [['https://muzikazmodelmarket.onrender.com/api/access/free-play','credential']]);
+});
+
+test('a failed credential request is never submitted twice', async () => {
+  let posts = 0;
+  const {window} = loadConnection(async url => {
+    if (url.endsWith('/api/health')) return health();
+    posts++; throw new Error('connection lost');
+  });
+  await assert.rejects(window.MUZIKAZ_API.fetch('/api/access/free-play', {method:'POST'}), /connection lost/);
+  assert.equal(posts, 1);
+});
+
+test('service worker leaves authenticated API requests entirely on the network', async () => {
+  const listeners = {};
+  let intercepted = false;
+  vm.runInNewContext(await readFile(new URL('../service-worker.js', import.meta.url), 'utf8'), {
+    self: {addEventListener: (name, handler) => { listeners[name] = handler; }},
+    URL, location: {origin:'https://muzikazmodelmarket.onrender.com'}
+  });
+  listeners.fetch({request:{url:'https://muzikazmodelmarket.onrender.com/api/market/session',method:'GET'},respondWith(){intercepted=true;}});
+  assert.equal(intercepted, false);
 });

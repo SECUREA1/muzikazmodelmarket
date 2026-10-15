@@ -107,19 +107,12 @@
            * therefore authoritative too: move the original request to the
            * persistent service once, rather than showing API_ROUTE_NOT_FOUND
            * in otherwise functional member-market panels. */
-          if (missing && useHostedApi()) return attempt(remaining, path, (compatibleRoutes[path] || []).slice());
+          if (missing && useHostedApi()) return confirm(base).then(function () { return attempt(remaining, path, (compatibleRoutes[path] || []).slice()); });
           return response;
         });
       }, function (error) {
         window.clearTimeout(timer);
-        /*
-         * Some static hosts answer API requests without CORS headers. Browsers
-         * expose that as a rejected fetch instead of the host's 404 response,
-         * so the response-based fallback above never gets a chance to run.
-         * Move POST requests (including access-code activation) to the account
-         * service immediately as well; this does not consume a retry or ask the
-         * member to submit their code a second time.
-         */
+        /* Never replay a credential after an ambiguous network failure. */
         if (remaining > 0) return attempt(remaining - 1, requestPath, aliases);
         throw error;
       });
@@ -131,29 +124,41 @@
   root.setAttribute('data-api-connected', 'pending');
   root.setAttribute('data-api-base', base);
   function confirm(candidate) {
-    return window.fetch(new window.URL('/api/health', candidate + '/').href, { method: 'GET', mode: 'cors', credentials: 'include', cache: 'no-store' }).then(function (response) {
-      return response.clone().json().then(function (payload) {
-        // Health payloads may gain or lose descriptive fields during a rolling
-        // deployment. A successful MUZIKAZ response is enough to send the
-        // credential to the same origin; route-level JSON errors remain the
-        // authority for compatibility fallback.
-        if (!response.ok || !payload || payload.success !== true) throw new Error('The member service is unavailable.');
+    var timer;
+    var expired = new window.Promise(function (_, reject) {
+      timer = window.setTimeout(function () { reject(new Error('The member service is taking too long to respond. Please try signing in again.')); }, 10000);
+    });
+    return window.Promise.race([window.fetch(new window.URL('/api/health', candidate + '/').href, { method: 'GET', mode: 'cors', credentials: 'include', cache: 'no-store' }).then(function (response) {
+      return response.json().then(function (payload) {
+        if (!response.ok || !payload || payload.success !== true || payload.service !== 'muzikaz-member-market') throw new Error('The member API is unavailable. Please try signing in again.');
         return true;
       });
-    });
+    }), expired]).then(function (value) { window.clearTimeout(timer); return value; }, function (error) { window.clearTimeout(timer); throw error; });
   }
-  var ready = confirm(base).catch(function () {
-    useHostedApi();
-    return confirm(base);
-  }).then(function () {
-    root.setAttribute('data-api-connected', 'true');
-    root.setAttribute('data-api-base', base);
-    return base;
-  }, function (error) {
-    root.setAttribute('data-api-connected', 'false');
-    throw error;
-  });
-  function fetchApi(path, options) { return ready.then(function () { return requestApi(path, options); }); }
+  var connecting = null;
+  function connect() {
+    if (connecting) return connecting;
+    root.setAttribute('data-api-connected', 'pending');
+    connecting = confirm(base).catch(function (error) {
+      if (!useHostedApi()) throw error;
+      return confirm(base);
+    }).then(function () {
+      root.setAttribute('data-api-connected', 'true');
+      root.setAttribute('data-api-base', base);
+      return base;
+    }, function (error) {
+      connecting = null;
+      root.setAttribute('data-api-connected', 'false');
+      throw error;
+    });
+    if (window.MUZIKAZ_API) window.MUZIKAZ_API.ready = connecting;
+    return connecting;
+  }
+  var ready = connect();
+  /* Initial discovery may fail before any panel has subscribed. A later login
+   * starts discovery again instead of retaining a permanently rejected promise. */
+  ready.catch(function () {});
+  function fetchApi(path, options) { return connect().then(function () { return requestApi(path, options); }); }
 
   function getSessionToken() {
     try {

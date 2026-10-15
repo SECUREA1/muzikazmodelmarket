@@ -1,4 +1,4 @@
-const CACHE = 'muzikaz-world-v2.3.0';
+const CACHE = 'muzikaz-world-v2.3.1';
 const BRAND_SHELL = [
   '/favicon.ico', '/public/assets/app-icons/icon-192.png', '/public/assets/app-icons/icon-512.png',
   '/public/assets/app-icons/icon-maskable-512.png', '/public/assets/app-icons/apple-touch-icon.png',
@@ -17,6 +17,8 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Account, inventory and telemetry responses must never enter offline caches.
+  if (new URL(event.request.url).pathname.startsWith('/api/')) return;
   if (event.request.method !== 'GET' || new URL(event.request.url).origin !== location.origin) return;
   event.respondWith(fetch(event.request).then((response) => {
     if (response.ok) caches.open(CACHE).then((cache) => cache.put(event.request, response.clone()));

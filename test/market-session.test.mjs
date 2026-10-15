@@ -20,6 +20,8 @@ test('cookie and bearer member sessions own market and care actions without a br
    await handler(req,res);return result;
   }
   const login=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'member-session-test'});assert.equal(login.status,200);
+  const wrong=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'incorrect-password'});assert.equal(wrong.status,401);
+  const restored=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'member-session-test'});assert.equal(restored.status,200);assert.equal(restored.body.data.account.accountId,login.body.data.account.accountId);
   const cookie=login.headers['set-cookie'].split(';')[0],cookieHeaders={cookie};
   const session=await call('/api/market/session',cookieHeaders);assert.equal(session.status,200);const owner=session.body.data.owner_id;assert.match(owner,/^account:/);
   const csrf=session.body.data.csrfToken,headers={cookie,'x-csrf-token':csrf,'x-wallet-address':'someone-else'};
