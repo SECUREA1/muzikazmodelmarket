@@ -221,7 +221,7 @@ export class UserJsonDatabase {
   }
 
   listItem(walletId, itemId, price, active = true) {
-    const wallet = cleanWallet(walletId); const amount = Math.trunc(Number(price));
+    const wallet = cleanWallet(walletId); const amount = Number(price);
     if (!Number.isSafeInteger(amount) || amount < 1 || amount > 1_000_000) throw new Error('A listing price from 1 to 1,000,000 MZK is required.');
     return this.transaction((data) => {
       const user = data.users[wallet];
@@ -242,7 +242,7 @@ export class UserJsonDatabase {
     return this.transaction((data) => {
       data.trades ||= [];
       const duplicate = data.trades.find((trade) => trade.requestId === id);
-      if (duplicate) return duplicate;
+      if (duplicate) { if (duplicate.buyerId !== buyer || duplicate.sellerId !== seller || duplicate.itemId !== itemId) throw Object.assign(new Error('Trade request conflicts with an existing purchase.'),{statusCode:409}); return duplicate; }
       const buyerUser = data.users[buyer]; const sellerUser = data.users[seller];
       if (!buyerUser || !sellerUser) throw new Error('Both members must have a market profile.');
       const index = sellerUser.items.findIndex((item) => item.id === itemId);
@@ -254,7 +254,9 @@ export class UserJsonDatabase {
       const balance = Number(buyerUser.tokens?.MZK || 0);
       if (balance < price) throw new Error('The buyer does not have enough MZK.');
       buyerUser.tokens.MZK = balance - price;
-      sellerUser.tokens.MZK = Number(sellerUser.tokens?.MZK || 0) + price;
+      const sellerBalance = Number(sellerUser.tokens?.MZK || 0) + price;
+      if (!Number.isSafeInteger(sellerBalance)) throw new Error('Seller balance exceeds the supported range.');
+      sellerUser.tokens.MZK = sellerBalance;
       sellerUser.items.splice(index, 1); item.listing = { ...item.listing, active: false };
       buyerUser.items.push(item);
       const now = new Date().toISOString(); buyerUser.updatedAt = now; sellerUser.updatedAt = now;
@@ -351,7 +353,7 @@ export class UserJsonDatabase {
 
   spendGameplay(walletId, input) {
     const wallet = cleanWallet(walletId); const body = plainObject(input);
-    const amount = Math.trunc(Number(body.amountMzk));
+    const amount = Number(body.amountMzk);
     const requestId = String(body.requestId || '').trim();
     const gameId = String(body.gameId || 'muzikaz-gameplay').trim().slice(0, 140);
     const reason = String(body.reason || 'gameplay').trim().slice(0, 280);
@@ -544,7 +546,7 @@ export class UserJsonDatabase {
   }
 
   listBuilderAsset(walletId, input) {
-    const seller = cleanWallet(walletId); const assetId = String(input?.asset_id || input?.assetId || '').trim(); const price = Math.trunc(Number(input?.price_mzk ?? input?.priceMzk));
+    const seller = cleanWallet(walletId); const assetId = String(input?.asset_id || input?.assetId || '').trim(); const price = Number(input?.price_mzk ?? input?.priceMzk);
     if (!Number.isSafeInteger(price) || price < 1 || price > 1_000_000) throw new Error('A listing price from 1 to 1,000,000 MZK is required.');
     return this.transaction((data) => {
       const ownership = data.builderOwnership?.[assetId]; if (!ownership || ownership.owner_id !== seller) throw new Error('Only the authoritative asset owner can create this listing.');
@@ -567,13 +569,15 @@ export class UserJsonDatabase {
     if (!request || request.length > 140) throw new Error('A purchase request id is required.');
     return this.transaction((data) => {
       data.transactions ||= []; const prior = data.transactions.find((entry) => entry.type === 'BUILDER_MARKET_PURCHASE' && entry.requestId === request);
-      if (prior) return { transaction: prior, listing: data.builderListings[id], ownership: data.builderOwnership[data.builderListings[id]?.asset_id] };
+      if (prior) { if (prior.walletId !== buyer || prior.listingId !== id) throw Object.assign(new Error('Purchase request conflicts with an existing purchase.'),{statusCode:409}); return { transaction: prior, listing: data.builderListings[id], ownership: data.builderOwnership[data.builderListings[id]?.asset_id] }; }
       const listing = data.builderListings?.[id]; if (!listing || listing.listing_status !== 'active') throw new Error('This builder listing is no longer active.');
       if (listing.seller_id === buyer) throw new Error('Builders cannot purchase their own listing.');
       const ownership = data.builderOwnership?.[listing.asset_id]; if (!ownership || ownership.owner_id !== listing.seller_id) throw new Error('Seller ownership could not be verified.');
       const buyerUser = data.users[buyer]; const sellerUser = data.users[listing.seller_id]; if (!buyerUser || !sellerUser) throw new Error('Buyer and seller accounts are required.');
       const price = Number(listing.price_mzk); const balance = Number(buyerUser.tokens?.MZK || 0); if (balance < price) throw new Error('The buyer does not have enough MZK.');
-      buyerUser.tokens.MZK = balance - price; sellerUser.tokens.MZK = Number(sellerUser.tokens?.MZK || 0) + price;
+      const sellerBalance = Number(sellerUser.tokens?.MZK || 0) + price;
+      if (!Number.isSafeInteger(price) || price < 1 || !Number.isSafeInteger(sellerBalance)) throw new Error('Invalid listing price or seller balance.');
+      buyerUser.tokens.MZK = balance - price; sellerUser.tokens.MZK = sellerBalance;
       const now = new Date().toISOString(); ownership.owner_id = buyer; ownership.acquired_from = id; ownership.acquired_at = now; ownership.updated_at = now;
       listing.buyer_id = buyer; listing.listing_status = 'sold'; listing.sold_at = now;
       const transaction = appendTransaction(data, { type: 'BUILDER_MARKET_PURCHASE', walletId: buyer, counterpartyId: listing.seller_id, amountMzk: -price, balanceAfterMzk: buyerUser.tokens.MZK, requestId: request, listingId: id, assetId: listing.asset_id });

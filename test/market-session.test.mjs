@@ -31,6 +31,8 @@ test('cookie and bearer member sessions own market and care actions without a br
   const wrong=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'incorrect-password'});assert.equal(wrong.status,401);
   const restored=await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'member-session-test'});assert.equal(restored.status,200);assert.equal(restored.body.data.account.accountId,login.body.data.account.accountId);
   const paymentHeaders={authorization:'Bearer '+login.body.data.sessionToken};
+  assert.equal((await call('/api/wallet/state',{'x-wallet-address':'account:someone-else'})).status,401);
+
   const topup=await paymentOrderStore.create({memberAccountId:login.body.data.account.accountId,purchaseType:'MZK_PURCHASE',itemId:'mzk-land-presale',basePrice:100,paymentAsset:'SOL',expectedAmount:1});
   assert.equal((await call('/api/account/tokens/claim',paymentHeaders,{orderId:topup.orderId,claimToken:topup.claimToken})).status,409);
   // Simulate the independent verifier's PAID result, without submitting real crypto.
@@ -40,6 +42,10 @@ test('cookie and bearer member sessions own market and care actions without a br
   assert.equal((await call('/api/wallet/state',paymentHeaders,{tokens:{MZK:999999}},'PUT')).status,403);
   assert.equal((await call('/api/wallet/state',paymentHeaders,{memory:{account:null}},'PUT')).status,403);
   assert.equal((await call('/api/wallet/state',{}, {tokens:{MZK:999999}},'PUT')).status,401);
+  for (const memory of [{backpack:{items:[]}},{ioncoreRpg:{health:999}},{profile:{username:'admin'}},{memberRewards:{claimed:[]}}]) assert.equal((await call('/api/wallet/state',paymentHeaders,{memory},'PUT')).status,403);
+  assert.equal((await call('/api/economy/buy',paymentHeaders,[])).status,400);
+  assert.equal((await call('/api/economy/buy',paymentHeaders,JSON.parse('{"sku":"tool:jetpack","__proto__":{"admin":true}}'))).status,400);
+
   const models=JSON.parse(await readFile(new URL('../public/models/glb-models.json',import.meta.url),'utf8')).models;
   const model=models.find(item=>item.id&&item.modelUrl);const cart=[{name:model.name,quantity:1,deliverable:{id:model.id}}];
   const cost=Math.round((25+8.95+25*.0825)*100);

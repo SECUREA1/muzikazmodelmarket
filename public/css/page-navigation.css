@@ -13,3 +13,5 @@
 @media(max-width:1000px){.environment-topbar .environment-brand span,.environment-topbar #save-state{display:none;}.environment-topbar .scene-name{flex:0 1 100px;}.page-navigation-toggle>span{display:none;}.environment-topbar .environment-actions button{font-size:11px;padding:7px;}.topbar>span{display:none;}.topbar button{flex:0 0 auto;}}
 .environment-actions button,.topbar button{display:inline-flex;align-items:center;justify-content:center;gap:6px;}.environment-actions button svg,.topbar button svg{flex-shrink:0;}
 @media(max-width:1000px){.environment-actions .page-action-label,.topbar .page-action-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}.environment-topbar .environment-brand{flex:0 0 44px;min-width:44px;}.environment-topbar .environment-actions button{min-width:44px;}.environment-topbar .environment-brand img{width:36px;height:36px;object-fit:contain;}}
+
+.page-navigation a[hidden] { display:none !important; }

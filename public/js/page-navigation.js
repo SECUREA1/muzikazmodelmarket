@@ -12,7 +12,16 @@
   for (const [href,label] of [['model-explorer.html?environment=public-commons&autoplay=1','Play public world'],['model-explorer.html#custom-item-library','Custom item library'],['model-market.html','Game marketplace'],['builder-market.html','Builder marketplace'],['environment-builder.html','Environment builder'],['members.html#world-atlas','Member maps and deeds'],['buy-mzk.html','Buy MZK'],['members.html','Account and Backpack']]) {
     const link=document.createElement('a'); link.href=href; link.textContent=label; nav.append(link);
   }
-  const setOpen=(open,restore=false)=>{nav.hidden=!open;toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-label',open?'Close navigation':'Open navigation');if(restore)toggle.focus();};
+  window.addEventListener('resize', () => filterMobileLinks(), {passive:true});
+  function filterMobileLinks() {
+    const mobile = window.matchMedia('(max-width: 720px)').matches;
+    nav.querySelectorAll('a').forEach(link => {
+      const label = (link.textContent || '').replace(/[^a-z]/gi,'').toLowerCase();
+      const href = (link.getAttribute('href') || '').replace(/[^a-z]/gi,'').toLowerCase();
+      if (['mainfeed','hologhost'].includes(label) || /mainfeed|hologhost/.test(href)) link.hidden = mobile;
+    });
+  }
+  const setOpen=(open,restore=false)=>{filterMobileLinks();nav.hidden=!open;toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-label',open?'Close navigation':'Open navigation');if(restore)toggle.focus();};
   toggle.addEventListener('click',()=>setOpen(nav.hidden));
   nav.addEventListener('click',event=>{if(event.target.closest('a'))setOpen(false);});
   document.addEventListener('click',event=>{if(!nav.contains(event.target)&&!toggle.contains(event.target))setOpen(false);});

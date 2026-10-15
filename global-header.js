@@ -37,7 +37,17 @@
   const mobileHeader = window.matchMedia('(max-width: 720px)');
   const walletButton = header.querySelector('#wallet-connect');
   const walletLabel = walletButton.querySelector('span');
+  window.addEventListener('resize', () => filterMobileLinks(), {passive:true});
+  function filterMobileLinks() {
+    const mobile = window.matchMedia('(max-width: 720px)').matches;
+    nav.querySelectorAll('a').forEach(link => {
+      const label = (link.textContent || '').replace(/[^a-z]/gi,'').toLowerCase();
+      const href = (link.getAttribute('href') || '').replace(/[^a-z]/gi,'').toLowerCase();
+      if (['mainfeed','hologhost'].includes(label) || /mainfeed|hologhost/.test(href)) link.hidden = mobile;
+    });
+  }
   const toggleMenu = () => {
+    filterMobileLinks();
     const isOpen = nav.classList.toggle('is-open');
     menu.setAttribute('aria-expanded', String(isOpen));
     menu.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
