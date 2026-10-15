@@ -609,7 +609,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   const fullscreenMenus=[explorerOptions,sprayTools,buildingPopup,inventoryPack,questPanel,buildMenu,rangeOpsPanel,avatarMenu].map(panel=>fullscreenPanel(panel,{onOpen:lockMenuInput}));
   fullscreenMenus[0].dialog.addEventListener('close',()=>optionsButton.setAttribute('aria-expanded','false'));
-  fullscreenMenus.push(fullscreenPanel(library,{onOpen:lockMenuInput,collapsed:true}));
+  const pickerPanel=fullscreenPanel(library,{onOpen:lockMenuInput,collapsed:true});fullscreenMenus.push(pickerPanel);
+  pickerPanel.dialog.addEventListener('close',()=>{if(!pickerPanel.dialog.open){document.querySelector('#add-avatar')?.setAttribute('aria-expanded','false');document.querySelector('#house-world-button')?.setAttribute('aria-expanded','false');}});
   let selectedBuildingType='all';
   const filterBuildingItems=()=>{const query=buildingPopup.querySelector('[data-building-search]').value;let count=0;buildingPopup.querySelectorAll('[data-brick-material]').forEach(button=>{const visible=matchesBuildingItem(buildingMaterial(button.dataset.brickMaterial),selectedBuildingType,query);button.hidden=!visible;if(visible)count++;});buildingPopup.querySelector('[data-building-result-count]').textContent=count?`${count} items shown`:'No matching items. Change the type or search.';};
   buildingPopup.addEventListener('click',event=>{
@@ -925,7 +926,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   window.addEventListener('muzikaz:game-assets-changed',()=>{renderPicker();toxicBubbleSystem.updateInventory();});
   function renderPicker() {
     const worlds = registry.all(); syncEnvironmentSelect(worlds);
-    const records = backpackRecords(); const categories = BACKPACK_CATEGORIES.map(([id,label],index) => { const count=records.filter(item=>item.type===id).length, angle=(index+.5)*360/BACKPACK_CATEGORIES.length-90, active=id===backpackCategory; return `<button type="button" class="backpack-category backpack-category--${id} ${active?'is-active':''}" style="--label-angle:${angle}deg;clip-path:${backpackPieSlice(index)}" data-backpack-category="${id}" aria-label="${label}, ${count} items" aria-pressed="${active}" aria-expanded="${active&&backpackSelectionOpen}" aria-controls="backpack-selection" title="${label}: ${count}"><span class="backpack-category-label"><b class="backpack-category-graphic" aria-hidden="true">${backpackIcon(id)}</b><em>${label}</em><small>${count}</small></span></button>`; }).join('');
+    const records = backpackRecords(); const categories = BACKPACK_CATEGORIES.map(([id,label],index) => { const count=records.filter(item=>item.type===id).length, angle=(index+.5)*360/BACKPACK_CATEGORIES.length, active=id===backpackCategory; return `<button type="button" class="backpack-category backpack-category--${id} ${active?'is-active':''}" style="--label-angle:${angle}deg;--backpack-slice:${backpackPieSlice(index)}" data-backpack-category="${id}" aria-label="${label}, ${count} items" aria-pressed="${active}" aria-expanded="${active&&backpackSelectionOpen}" aria-controls="backpack-selection" title="${label}: ${count}"><span class="backpack-category-label"><b class="backpack-category-graphic" aria-hidden="true">${backpackIcon(id)}</b><em>${label}</em><small>${count}</small></span></button>`; }).join('');
     const selected = records.filter(item => item.type === backpackCategory);
     const designated = (() => { try { return JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null')?.id; } catch { return ''; } })();
     const cards = selected.map((asset,index) => { const consumed=asset.consumable&&consumedBackpackItems.has(asset.id),canRefill=consumed&&Number.isFinite(Number(asset.refillCostMzk)),treatPet=asset.petId&&backpackAssets.find(item=>item.id===asset.petId),refillCost=Number(asset.refillCostMzk)||DEFAULT_PET_TREAT_COST,active=activeBackpackItems.has(asset.id);const useLabel=canRefill?`Buy another · ${refillCost} MZK`:consumed?'Consumed':treatPet?`Feed ${treatPet.name}`:asset.type==='lands'?'Enter land':asset.type==='avatars'?(asset.id===designated?'Use avatar again':'Use avatar'):asset.type==='wearables'?'Equip on player':asset.type==='vehicles'?'Deploy vehicle':asset.type==='pets'?'Call companion':'Place in world';const action=canRefill?`data-buy-treat="${escapeHtml(asset.id)}"`:`data-use-asset="${escapeHtml(asset.id)}"`; return `<article class="backpack-orbit-card ${asset.id===designated?'is-equipped':''} ${active?'is-active':''} ${consumed&&!canRefill?'is-consumed':''}" style="--orbit-index:${index}" data-backpack-id="${escapeHtml(asset.id)}"><div class="backpack-asset-preview">${backpackAssetVisual(asset)}</div><strong>${escapeHtml(asset.name)}</strong><small>${active?'Active in game':canRefill?`Snack eaten · refill costs ${refillCost} MZK`:consumed?'Used up':asset.id==='rad-tox-dynamite'?'Reusable item · 25 MZK per throw':asset.consumable?'1 snack · consumed on use':escapeHtml(asset.owner||'Public MUZIKAZ')}</small><div class="backpack-card-actions"><button type="button" ${action} ${consumed&&!canRefill?'disabled':''} aria-busy="false">${useLabel}</button></div></article>`; }).join('');
@@ -987,10 +988,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
 
   function openPicker(kind) {
-    backpackSelectionOpen = !mobileBackpackQuery.matches;
+    backpackSelectionOpen = true;
     library.classList.remove('is-collapsed');
     if (kind === 'world') { renderMultiplayerWorlds(); refreshMultiplayerPresence(); }
     else { library.classList.add('backpack-panel'); library.setAttribute('aria-label', 'Drop Backpack asset library'); renderPicker(); }
+    pickerPanel.open();
     document.querySelector('#house-world-button')?.setAttribute('aria-expanded', String(kind === 'world'));
     document.querySelector('#add-avatar')?.setAttribute('aria-expanded', String(kind !== 'world'));
     library.querySelector('[data-close-worlds],[data-close-backpack],button')?.focus({ preventScroll:true });

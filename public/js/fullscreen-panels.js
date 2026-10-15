@@ -17,6 +17,7 @@ export function fullscreenPanel(panel, { onOpen = () => {}, collapsed = false } 
   const isVisible = () => !panel.hidden && (!collapsed || !panel.classList.contains('is-collapsed'));
   const hide = () => { if(collapsed)panel.classList.add('is-collapsed');else panel.hidden=true; };
   const sync = () => {
+    const label=panel.getAttribute('aria-label')||'Game menu';dialog.setAttribute('aria-label',label);title.textContent=panel.id==='rad-tox-tools'?'Tools':label;close.setAttribute('aria-label','Close '+label);
     if(isVisible() && !dialog.open){
       const host=document.fullscreenElement || document.body;
       if(dialog.parentElement!==host)host.append(dialog);
@@ -27,13 +28,14 @@ export function fullscreenPanel(panel, { onOpen = () => {}, collapsed = false } 
   dialog.addEventListener('cancel',hide);
   dialog.addEventListener('keydown',event=>event.stopPropagation());
   dialog.addEventListener('close',()=>{
+    if(dialog.open)return;
     hide();
     if(!document.querySelector('dialog[open]'))document.documentElement.classList.remove('game-menu-open');
   });
   const observer=new MutationObserver(sync);
   observer.observe(panel,{attributes:true,attributeFilter:['hidden','class']});
   sync();
-  return { dialog, sync, close:hide, disconnect:()=>observer.disconnect() };
+  return { dialog, sync, open(){panel.hidden=false;if(collapsed)panel.classList.remove('is-collapsed');sync();},close:hide, disconnect:()=>observer.disconnect() };
 }
 
 export function organizeToolPicker(dialog) {

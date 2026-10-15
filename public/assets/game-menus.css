@@ -126,3 +126,33 @@ dialog.tools-pouch-screen .rad-tox-tools__content>.rad-tool-choice .rad-tool-ico
 dialog.tools-pouch-screen .rad-tox-tools__content>.rad-tool-choice[hidden],dialog.game-fullscreen-dialog .game-fullscreen-content [hidden]{display:none!important;}
 .game-fullscreen-dialog .backpack-circle::before,.game-fullscreen-dialog .backpack-circle::after,.game-fullscreen-dialog .backpack-categories::before,.game-fullscreen-dialog .backpack-categories::after{display:none!important;}
 .game-fullscreen-dialog .game-fullscreen-content{max-height:none!important;overflow:visible!important;}
+
+/* Backpack pie navigation: fixed geometry inside the responsive modal layout. */
+.game-fullscreen-dialog .backpack-picker .backpack-categories{position:relative!important;display:block!important;width:280px!important;max-width:100%!important;height:280px!important;min-height:280px!important;margin:0 auto!important;padding:0!important;border:2px solid #789653!important;border-radius:50%!important;overflow:hidden!important;background:#102014!important;aspect-ratio:1!important;--wheel-radius:92px;}
+.game-fullscreen-dialog .backpack-picker{grid-template-columns:280px minmax(0,1fr)!important;}
+.game-fullscreen-dialog .backpack-categories .backpack-category{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;min-height:0!important;min-width:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;clip-path:var(--backpack-slice)!important;background:#20341e!important;}
+.game-fullscreen-dialog .backpack-categories .backpack-category:nth-of-type(even){background:#172b19!important;}
+.game-fullscreen-dialog .backpack-categories .backpack-category.is-active,.game-fullscreen-dialog .backpack-categories .backpack-category:focus-visible{background:#466033!important;box-shadow:inset 0 0 0 2px #d9ff89;outline:none;}
+.game-fullscreen-dialog .backpack-categories .backpack-category:hover{background:#354b2a!important;}
+.game-fullscreen-dialog .backpack-categories .backpack-category-label{position:absolute!important;inset:50% auto auto 50%!important;display:grid!important;grid-template-columns:1fr;justify-items:center;gap:3px;width:76px!important;height:auto!important;transform:translate(-50%,-50%) rotate(var(--label-angle)) translateY(calc(-1 * var(--wheel-radius))) rotate(calc(-1 * var(--label-angle)))!important;transform-origin:center;text-align:center;}
+.game-fullscreen-dialog .backpack-categories .backpack-category-label em{font-size:10px;line-height:1.2;white-space:nowrap;overflow:visible;}
+.game-fullscreen-dialog .backpack-categories .backpack-category-label small{font-size:10px;}
+.game-fullscreen-dialog .backpack-categories .backpack-pie-center{position:absolute;left:50%;top:50%;z-index:2;display:grid!important;place-items:center;gap:3px;transform:translate(-50%,-50%);width:78px;height:78px;padding:8px;border:1px solid #90ad6f;border-radius:50%;background:#102014;color:#d9ff89;pointer-events:none;}
+.game-fullscreen-dialog .backpack-categories .backpack-pie-center strong{font-size:10px;max-width:100%;overflow-wrap:anywhere;}
+.game-fullscreen-dialog .backpack-categories .backpack-pie-center .backpack-svg-icon{width:24px;height:24px;}
+.game-fullscreen-dialog .backpack-selection .backpack-orbit-card{border-radius:10px!important;}
+.game-fullscreen-dialog .backpack-selection .backpack-card-actions button{min-height:44px!important;font-size:12px!important;padding:9px!important;}
+.game-fullscreen-dialog .backpack-selection .backpack-empty{min-width:0;grid-column:1/-1;width:100%;}
+@media(min-width:901px){.game-fullscreen-dialog .backpack-picker .backpack-categories{position:sticky!important;top:76px;}dialog.tools-pouch-screen .rad-tox-tools__content{grid-template-columns:repeat(4,minmax(0,1fr))!important;}}
+@media(max-width:900px){.game-fullscreen-dialog .backpack-picker{grid-template-columns:minmax(0,1fr)!important;}}
+@media(max-width:700px){
+ .game-fullscreen-dialog .backpack-picker .backpack-categories{width:252px!important;height:252px!important;min-height:252px!important;--wheel-radius:82px;}
+ .game-fullscreen-dialog .backpack-selection .backpack-circle{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:8px;}
+ .game-fullscreen-dialog .backpack-selection .backpack-orbit-card{display:grid!important;grid-template-columns:60px minmax(0,1fr);align-items:center;text-align:left;gap:4px 10px;padding:10px!important;}
+ .game-fullscreen-dialog .backpack-selection .backpack-asset-preview{grid-row:1/4;width:60px!important;height:60px!important;}
+ .game-fullscreen-dialog .backpack-selection .backpack-orbit-card>strong,.game-fullscreen-dialog .backpack-selection .backpack-orbit-card>small{max-width:none;width:100%;line-height:1.4;}
+ .game-fullscreen-dialog .backpack-selection .backpack-card-actions{grid-column:2;margin:3px 0 0;}
+ dialog.tools-pouch-screen .rad-tox-tools__content>.rad-tool-choice{min-height:76px!important;padding:10px!important;}
+ .game-fullscreen-dialog .rad-tox-pack-grid{grid-template-columns:minmax(0,1fr);}
+ .game-fullscreen-dialog .building-design-controls{padding:10px;}
+}

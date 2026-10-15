@@ -55,6 +55,7 @@
 
     requestAnimationFrame(() => {
       target.scrollIntoView({ behavior: moveFocus ? 'smooth' : 'auto', block: 'center' });
+      if(moveFocus&&target.matches('button#add-avatar,button#house-world-button,button[data-house-tools]'))target.click();
       if (moveFocus && target.matches('button, select, input, [tabindex]')) {
         window.setTimeout(() => target.focus({ preventScroll: true }), 350);
       }
