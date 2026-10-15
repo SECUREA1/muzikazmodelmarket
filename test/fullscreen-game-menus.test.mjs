@@ -12,7 +12,7 @@ test('game pickers use modal containment, right-side scrolling and shared close 
  assert.ok(source.includes('overflow-y:scroll!important'));
  assert.ok(source.includes('scrollbar-gutter:stable'));
  assert.ok(source.includes('height:100dvh!important'));
- assert.ok(source.includes('[sprayTools,buildingPopup,inventoryPack,questPanel,buildMenu,rangeOpsPanel,avatarMenu]'));
+ assert.ok(source.includes('[explorerOptions,sprayTools,buildingPopup,inventoryPack,questPanel,buildMenu,rangeOpsPanel,avatarMenu]'));
  assert.ok(source.includes('fullscreenPanel(library'));
 });
 

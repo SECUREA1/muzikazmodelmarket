@@ -145,3 +145,8 @@
 @media(max-width:1050px){.environment-workspace.library-collapsed,.environment-workspace.inspector-collapsed{grid-template-columns:1fr}.workspace-panel-bar{top:78px}.environment-workspace.inspector-collapsed .object-inspector{display:none}}
 @media(max-width:760px){.workspace-panel-bar{top:0;overflow-x:auto;padding-inline:10px}.workspace-panel-bar>span{display:none}.workspace-panel-bar button{flex:0 0 auto}.quality-panel{top:62px;right:8px;max-height:calc(100dvh - 74px)}}
 @media(min-width:761px){.object-library,.object-inspector{top:121px;height:calc(100dvh - 121px)}}
+
+/* Keep workspace columns and long inspector fields within the device width. */
+.environment-workspace,.environment-topbar,.environment-actions,.build-stage,.object-library,.object-inspector{min-width:0;max-width:100%;box-sizing:border-box;}
+.environment-workspace input,.environment-workspace select,.environment-workspace textarea{min-width:0;max-width:100%;box-sizing:border-box;}
+@media(min-width:1051px){body .environment-workspace{grid-template-columns:minmax(180px,230px) minmax(0,1fr) minmax(200px,250px);}body .environment-workspace.library-collapsed{grid-template-columns:minmax(0,1fr) minmax(200px,250px);}body .environment-workspace.inspector-collapsed{grid-template-columns:minmax(180px,230px) minmax(0,1fr);}body .environment-workspace.library-collapsed.inspector-collapsed{grid-template-columns:minmax(0,1fr);}}
