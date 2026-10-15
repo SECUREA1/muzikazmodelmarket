@@ -229,3 +229,8 @@ body.model-explorer-page .game-view-options .explorer-options.is-unified .explor
 .settings-explorer-navigation .settings-nav-list a,.settings-explorer-navigation .settings-nav-list button{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;width:100%;min-height:48px;height:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #496442;border-radius:8px;background:#213423;color:#eefadd;font:600 13px/1.4 system-ui;text-decoration:none;text-align:left;white-space:normal;}
 .settings-explorer-navigation .settings-nav-list small{color:#b7c9ac;font-size:11px;font-weight:400;}
 @media(max-width:600px){.settings-explorer-navigation .settings-nav-list{grid-template-columns:minmax(0,1fr);}.game-view-options .settings-explorer-navigation{padding:10px;}}
+
+/* Mobile gameplay uses the Settings control in the game dock. */
+@media(max-width:720px){
+  .site-header .game-settings-shortcut{display:none!important;}
+}
