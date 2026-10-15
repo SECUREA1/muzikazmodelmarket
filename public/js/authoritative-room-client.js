@@ -38,13 +38,14 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   },
   async send(action,fields={},requestId=crypto.randomUUID()) {
    if (stopped) throw failure || Error('Room closed.');
+   const sentAt=performance.now();
    const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,action,requestId});
    if (stopped) return;
    const selfId=state?.selfId || client.selfId;
    if (!selfId || !state?.players?.[selfId]) throw Error('The server has not confirmed your player in this room.');
    client.selfId=selfId;
    if(state.result?.loot&&!collected.has(state.result.loot.id)){collected.add(state.result.loot.id);signalInventoryChange();onStatus?.(state.result.message);}
-   if (state.sequence>=sequence) { render(state,selfId); sequence=state.sequence; }
+   if (state.sequence>=sequence) { render(state,selfId,{sentAt,receivedAt:performance.now()}); sequence=state.sequence; }
    client.ready=true; settle(); return state;
   },
   async object(command) {
