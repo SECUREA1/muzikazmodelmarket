@@ -46,7 +46,7 @@
   <link rel="stylesheet" href="public/assets/game-control-dock.css">
   <link rel="stylesheet" href="public/assets/game-menus.css">
 </head>
-<body class="model-explorer-page">
+<body class="model-explorer-page" data-game-controls="pending">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata.","sameAs":["https://muzikaz.com/"]}</script>
   <div class="topbar">
     <span>Member VibeVerse portal</span>
@@ -133,7 +133,7 @@
             </div>
           </section>
         </div>
-        <aside class="house-hud" aria-label="Vibe Crib Explorer controls">
+        <aside class="house-hud" data-legacy-game-controls hidden aria-label="Legacy explorer controls">
           <p class="kicker">Muzikaz Vibe Crib</p>
           <h3>Walk the drop-ready neon crib.</h3>
           <div class="hud-pill-grid">
@@ -171,7 +171,7 @@
           <button class="house-bottom-control" id="house-world-button" type="button" aria-expanded="false" aria-controls="house-picker-panel multiplayer-paywall" data-multiplayer-control><b aria-hidden="true">🌐</b><span>Multiplayer Worlds</span></button>
           <button class="house-bottom-control" id="crib-chat-toggle" type="button" aria-expanded="false" aria-controls="crib-chat-panel" data-multiplayer-control><b aria-hidden="true">💬</b><span>Chat</span><b id="crib-online-count" aria-label="Players online">0</b><span class="crib-unread-count" id="crib-unread-count" aria-label="Unread messages" hidden>0</span></button>
           <button class="house-bottom-control" id="add-avatar" type="button" aria-expanded="false" aria-controls="house-picker-panel"><b aria-hidden="true">🎒</b><span>Backpack</span></button>
-          <button class="house-bottom-control house-bottom-control-begin" id="house-tools" type="button" data-house-tools aria-haspopup="dialog" aria-expanded="false" aria-controls="rad-tox-tools"><b aria-hidden="true">🛠</b><span>Tools</span></button>
+          <button class="house-bottom-control" id="house-tools" type="button" data-house-tools aria-haspopup="dialog" aria-expanded="false" aria-controls="rad-tox-tools"><b aria-hidden="true">🛠</b><span>Tools</span></button>
 
           <div class="house-world-menu" id="house-world-menu" hidden aria-hidden="true"></div>
         </div>

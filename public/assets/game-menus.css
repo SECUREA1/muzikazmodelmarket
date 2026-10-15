@@ -300,3 +300,7 @@ html.game-menu-open { overflow:hidden; }
 .building-adjust-dialog .building-adjust-axes input{box-sizing:border-box;grid-column:1/-1;width:100%;min-width:0;min-height:38px;height:38px;margin:0;touch-action:pan-y;}
 .building-adjust-footer [data-adjust-apply]{background:#baff39;color:#10200b;border-color:#baff39;}
 @media(max-height:450px) and (min-width:460px){.building-adjust-dialog{width:min(650px,calc(100dvw - 16px));padding:8px;}.building-adjust-dialog[open]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 16px;}.building-adjust-heading,.building-adjust-footer{grid-column:1/-1;}.building-adjust-heading{margin:0;}.building-adjust-axes{margin:0;align-content:center;}.building-adjust-dialog [data-adjust-hint]{margin:6px 0;}}
+/* Legacy explorer controls never flash before the live game initializes. */
+.model-explorer-page [data-legacy-game-controls]{display:none!important;}
+.model-explorer-page:not([data-game-controls=ready]) :is(.house-bottom-controls,.house-control-dock,.mobile-move-pad,.rad-tox-hud,.building-adjust-button,.builder-nearby-action,.range-ops-button,.house-reticle){display:none!important;}
+.model-explorer-page .house-explorer-shell{grid-template-columns:minmax(0,1fr);}

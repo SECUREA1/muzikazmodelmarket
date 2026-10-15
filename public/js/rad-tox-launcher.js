@@ -12,6 +12,7 @@
   function showError(message) {
     clearLoadTimer();
     requested = false;
+    document.body.dataset.gameControls='pending';
     if (overlay) { overlay.classList.remove('is-loading'); overlay.classList.add('has-error'); }
     if (status) status.textContent = message + ' Select Try again to restart cleanly.';
     if (button) { button.disabled = false; button.textContent = 'Try again'; }
@@ -22,6 +23,7 @@
   function begin() {
     if (requested) return;
     requested = true;
+    document.body.dataset.gameControls='loading';
     if (overlay) overlay.classList.remove('has-error');
     if (button) { button.disabled = true; button.textContent = 'Loading…'; }
     if (overlay) overlay.classList.add('is-loading');
@@ -38,7 +40,7 @@
   }
   if (button) button.addEventListener('click', function (click) { click.preventDefault(); begin(); });
   document.addEventListener('muzikaz:rad-tox-engine-ready', function () { engineReady = true; clearLoadTimer(); document.dispatchEvent(event('muzikaz:rad-tox-request')); }, { once: true });
-  document.addEventListener('muzikaz:gameplay-ready', clearLoadTimer);
+  document.addEventListener('muzikaz:gameplay-ready', function () { clearLoadTimer(); document.body.dataset.gameControls='ready'; });
   document.addEventListener('muzikaz:rad-tox-stage', function (stage) { if (stage.detail && stage.detail.message && status) status.textContent = stage.detail.message; });
   document.addEventListener('muzikaz:rad-tox-native-error', function (failure) { showError((failure.detail && failure.detail.message) || 'The playable world could not be initialized.'); });
   // Builder TEST GAME links have always used autoplay=1. The engine is loaded
