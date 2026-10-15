@@ -17,7 +17,7 @@ export class UtilityKit {
     let message;
     if(id==='medkit'){
       if(context.health>=context.maxHealth)return {ok:false,message:'Health is already full.'};
-      context.heal(30);message='Medkit used · 30 health restored.';
+      const amount=Math.min(30,context.maxHealth-context.health);context.heal(amount);message=`Medkit used · ${amount} health restored.`;
     }else if(id==='shield-kit'){context.shield(now+6);message='Utility shield active for 6 seconds.';
     }else if(id==='scanner'){const count=context.scan(15);message=`Scanner revealed ${count} nearby enemies.`;
     }else if(id==='repair-tool'){
@@ -26,7 +26,7 @@ export class UtilityKit {
     }else if(id==='recycler'){
       if(!context.target?.userData.brick)return {ok:false,message:'Aim at a building piece within 8 metres.'};
       context.remove(context.target);message='Building piece recycled · space cleared.';
-    }else if(id==='supply-kit'){context.refill(12);message='Supply kit used · paint and igniter fuel replenished.';
+    }else if(id==='supply-kit'){if(context.paintFuel>=context.maxPaintFuel&&context.igniterFuel>=context.maxIgniterFuel)return {ok:false,message:'Paint and igniter fuel are already full.'};context.refill(12);message='Supply kit used · paint and igniter fuel replenished.';
     }else if(id==='beacon'){
       if(!context.point)return {ok:false,message:'Aim at a surface within 20 metres.'};
       context.mark(context.point);message='Waypoint marked for 20 seconds.';

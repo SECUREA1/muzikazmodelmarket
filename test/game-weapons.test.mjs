@@ -42,6 +42,6 @@ test('weapon category opens a native modal and selection equips through the game
   const tools=source.slice(source.indexOf('const sprayTools ='),source.indexOf('const toolsToggle='));
   assert.ok(tools.includes('data-weapons-category'));
   for(const id of ['laser','bat','taser','dynamite'])assert.ok(!tools.includes(`toolButton('${id}'`),id+' must live in the popup');
-  assert.ok(source.includes("if(EXTRA_WEAPONS[this.tool])return this.fireExtraWeapon(origin,direction)"));
+  assert.ok(source.includes("if(RANGED_WEAPONS[this.tool])return this.fireExtraWeapon(origin,direction)"));
   assert.ok(source.includes('return toxicBubbleSystem.fireExtraWeapon(rangeRaycaster.ray.origin'));
 });
