@@ -5,9 +5,9 @@ import {GameMarketClient,marketPrice} from '../public/js/in-game-market.js';
 test('market client browses for guests but requires a member for mutations',async()=>{
  let calls=0;const client=new GameMarketClient({owner:()=> 'guest-test',request:async()=>{calls++;return {ok:true,json:async()=>({success:true,data:[]})};}});
  assert.deepEqual(await client.listings(),[]);
- await assert.rejects(client.buy('seller','item'),/Connect/);
- assert.throws(()=>client.list('item',5),/Connect/);
- assert.throws(()=>client.message('seller','hello'),/Connect/);
+ await assert.rejects(client.buy('seller','item'),/Sign in/);
+ assert.throws(()=>client.list('item',5),/Sign in/);
+ assert.throws(()=>client.message('seller','hello'),/Sign in/);
  assert.equal(calls,1);
 });
 
@@ -41,7 +41,7 @@ test('in-game care panel loads the member inventory and records current arena he
  const calls=[];
  globalThis.window={MZKWallet:{walletId:()=> 'guest-test'},addEventListener(){},MUZIKAZ_API:{async fetch(path,options={}){
   calls.push({path,options});let data;
-  if(path==='/api/account/bootstrap')data={account:{accountId:'care-member'},csrfToken:'token'};
+  if(path==='/api/market/session')data={owner_id:'account:care-member',account:{accountId:'care-member'},csrfToken:'token'};
   else if(path==='/api/market/listings')data=[];
   else if(path==='/api/wallet/state')data={tokens:{MZK:100},items:[]};
   else if(path==='/api/rpg/telemetry')data={};

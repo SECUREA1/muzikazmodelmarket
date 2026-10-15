@@ -153,7 +153,7 @@ function user(req) {
 function requestWallet(req) {
   const active = req.muzikazAuthentication?.session;
   const sessionWallet = active ? (active.wallet || `account:${active.accountId}`) : '';
-  return cleanWallet(req.headers['x-wallet-address'] || req.headers['x-user-id'] || sessionWallet);
+  return cleanWallet(req.muzikazWalletId || sessionWallet || req.headers['x-wallet-address'] || req.headers['x-user-id']);
 }
 function matchesAdminToken(value) { const supplied = Buffer.from(String(value || '')); const expected = Buffer.from(persistentAdminToken); return supplied.length === expected.length && timingSafeEqual(supplied, expected); }
 function isAdmin(req) { const token = String(req.headers['x-admin-token'] || cookie(req, 'mzk_admin') || ''); return (process.env.ADMIN_PUBLISH_TOKEN && token === process.env.ADMIN_PUBLISH_TOKEN) || matchesAdminToken(token); }
@@ -197,12 +197,17 @@ async function accountSession(req, res, csrf = false) {
   return authentication;
 }
 
+async function memberContext(req, res, csrf = false) {
+  const session=await accountSession(req,res,csrf);if(!session)return null;
+  const account=await loadoutCodeStore.getAccount(session.accountId);
+  if(!account){authorizationError(res,401,'ACCOUNT_NOT_FOUND','The session account no longer exists.','account');return null;}
+  const state=await userDatabase.ensureAccount(account);req.muzikazWalletId=state.walletId;
+  return {session,account,state,walletId:state.walletId};
+}
+
 async function builderContext(req, res, csrf = false) {
-  const session = await accountSession(req, res, csrf); if (!session) return null;
-  const account = await loadoutCodeStore.getAccount(session.accountId);
-  if (!account) { authorizationError(res, 401, 'ACCOUNT_NOT_FOUND', 'The session account no longer exists.', 'account'); return null; }
-  const state = await userDatabase.ensureAccount(account);
-  const walletId = state.walletId;
+  const context=await memberContext(req,res,csrf);if(!context)return null;
+  const {session,account,state,walletId}=context;
   const hasSupportedBalance = Object.entries(state.tokens || {}).some(([symbol, amount]) => symbol === 'MZK' || (Number(amount) > 0 && /^[A-Z0-9_-]{2,16}$/.test(symbol)));
   const land = await userDatabase.landDeeds(walletId);
   const access = Boolean(account.memberAccess || account.loadoutAccess || account.marketplaceAccess || account.creatorVaultAccess || account.worldAccess || hasSupportedBalance || land.length);
@@ -421,6 +426,14 @@ const server = createServer(async (req, res) => {
       await ensureStorage();
       return sendJson(res, 200, { success: true, service: 'muzikaz-member-market', version: serviceVersion, commit: deploymentCommit, startedAt: serviceStartedAt, storage: 'ready', persistentStorageConfigured: dataDir.startsWith('/var/data'), routes: { accountBootstrap: true, accessActivation: true, gameSession: true } });
     }
+    if(url.pathname==='/api/market/session'&&req.method==='GET'){
+      const context=await memberContext(req,res);if(!context)return;
+      const csrfToken=await accountSessionStore.issueCsrf(context.session.token);
+      return sendJson(res,200,assetResponse({authenticated:true,owner_id:context.walletId,account:{accountId:context.account.accountId,primaryEthereumWallet:context.account.primaryEthereumWallet||null},balance:Number(context.state.tokens.MZK||0),csrfToken,expiresAt:context.session.expiresAt}));
+    }
+    if((url.pathname.startsWith('/api/market/')||url.pathname==='/api/wallet/state')&&accountSessionToken(req)){
+      const context=await memberContext(req,res);if(!context)return;
+    }
     if (url.pathname === '/api/account/bootstrap' && req.method === 'GET') {
       const active = await accountSession(req, res); if (!active) return;
       const account = await loadoutCodeStore.getAccount(active.accountId);
@@ -532,9 +545,9 @@ const server = createServer(async (req, res) => {
     const paymentAction = url.pathname.match(/^\/api\/payments\/orders\/([^/]+)\/(submit|verify|fulfill)$/);
     if (paymentAction && req.method === 'POST') { const body = await bodyJson(req).catch(() => ({})); const [, id, action] = paymentAction; if (action === 'fulfill' && !requireAdmin(req, res)) return; const result = action === 'submit' ? await paymentOrderStore.submit(id, body.transactionHash, body.wallet) : action === 'verify' ? await paymentOrderStore.verify(id) : await paymentOrderStore.fulfill(id, body.fulfillment); return sendJson(res, 200, assetResponse(result)); }
 
-    if(url.pathname==='/api/rpg/telemetry'&&req.method==='POST'){const context=await builderContext(req,res,true);if(!context)return;return sendJson(res,200,assetResponse(await userDatabase.recordRpgTelemetry(context.walletId,await bodyJson(req))));}
-    if (url.pathname === '/api/rpg/state' && req.method === 'GET') { const context=await builderContext(req,res);if(!context)return;return sendJson(res,200,assetResponse(await userDatabase.rpgState(context.walletId))); }
-    if (['/api/rpg/purchases','/api/rpg/use'].includes(url.pathname) && req.method === 'POST') { const context=await builderContext(req,res,true);if(!context)return;const body=await bodyJson(req);const receipt=await userDatabase.rpgAction(context.walletId,url.pathname.endsWith('/use')?'use':'buy',body.itemId,body.requestId);return sendJson(res,200,assetResponse({receipt,...await userDatabase.rpgState(context.walletId)})); }
+    if(url.pathname==='/api/rpg/telemetry'&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;return sendJson(res,200,assetResponse(await userDatabase.recordRpgTelemetry(context.walletId,await bodyJson(req))));}
+    if (url.pathname === '/api/rpg/state' && req.method === 'GET') { const context=await memberContext(req,res);if(!context)return;return sendJson(res,200,assetResponse(await userDatabase.rpgState(context.walletId))); }
+    if (['/api/rpg/purchases','/api/rpg/use'].includes(url.pathname) && req.method === 'POST') { const context=await memberContext(req,res,true);if(!context)return;const body=await bodyJson(req);const receipt=await userDatabase.rpgAction(context.walletId,url.pathname.endsWith('/use')?'use':'buy',body.itemId,body.requestId);return sendJson(res,200,assetResponse({receipt,...await userDatabase.rpgState(context.walletId)})); }
 
     if (url.pathname === '/api/builder/permissions' && req.method === 'GET') { const context = await builderContext(req, res); if (!context) return; return sendJson(res, 200, assetResponse({ account_id: context.account.accountId, owner_id: context.walletId, mzk_balance: Number(context.state.tokens?.MZK || 0), permissions: context.permissions, land: context.land })); }
     if (url.pathname === '/api/builder/market' && req.method === 'GET') { const context = await builderContext(req, res); if (!context) return; return sendJson(res, 200, assetResponse(await userDatabase.builderMarket(url.searchParams.get('category') || ''))); }

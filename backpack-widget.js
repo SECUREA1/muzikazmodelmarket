@@ -273,11 +273,12 @@
     }
 
     async function loadBackpack() {
-      const address = window.MZKWallet.connectedAddress();
-      if (!address) { renderGuestBackpack(); return false; }
-      const activeAddress = window.MZKWallet.connectedAddress();
+      let memberSession=null;try{const {SharedGameInventory}=await import('./public/js/shared-game-inventory.js');memberSession=await new SharedGameInventory().session();}catch{}
+      const activeAddress=memberSession?.owner_id||window.MZKWallet.connectedAddress();
+      if(!activeAddress){renderGuestBackpack();return false;}
+      const walletRequest=window.MUZIKAZ_API?.fetch?.bind(window.MUZIKAZ_API)||window.fetch.bind(window);
       const status = drawer.querySelector('[data-backpack-status]');
-      status.textContent = 'Syncing this wallet’s Backpack…';
+      status.textContent = memberSession?'Syncing your signed-in member Backpack…':'Syncing this wallet’s Backpack…';
       let remoteItems = [];
       let remoteState = null;
       let gameCatalog = [];
@@ -288,7 +289,7 @@
         if (accountResponse.ok && accountPayload.success !== false) gameCatalog = accountPayload.data?.catalogAssets || [];
       } catch (_) { /* Wallet inventory remains available without an account session. */ }
       try {
-        const response = await fetch(API_PATH, { headers: { 'X-Wallet-Address': activeAddress, Accept: 'application/json' } });
+        const response = await walletRequest(API_PATH, { headers: { 'X-Wallet-Address': activeAddress, Accept: 'application/json' } });
         const payload = await response.json();
         if (!response.ok || !payload.success) throw new Error(payload.message || 'Backpack sync failed.');
         remoteState = payload.data;
@@ -299,18 +300,18 @@
       }
       const modelAssets = localModelAssets(activeAddress);
       const items = [...new Set([...remoteItems.map((item) => typeof item === 'string' ? item : item?.name), ...localItems(activeAddress), ...modelAssets.map((asset) => asset.name)].filter(Boolean))];
-      if (remoteState && items.length !== remoteItems.length) {
+      if (remoteState && !memberSession && !remoteState.memory?.account?.accountId && items.length !== remoteItems.length) {
         try {
           await fetch(API_PATH, { method: 'PUT', headers: { 'X-Wallet-Address': activeAddress, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ items, tokens: { ...(remoteState.tokens || {}), MZK: window.MZKWallet.balance(activeAddress) }, memory: remoteState.memory || {} }) });
         } catch (_) { /* Local inventory is still available when durable sync cannot be written. */ }
       }
-      let network = 'Ethereum';
-      try { const chain = await window.ethereum?.request?.({ method: 'eth_chainId' }); network = chain ? `Ethereum · ${chain}` : network; } catch (_) { /* The connected account remains usable if chain lookup is denied. */ }
+      let network = activeAddress.startsWith('account:')?'Member session':'Ethereum';
+      try { const chain = activeAddress.startsWith('account:')?null:await window.ethereum?.request?.({ method: 'eth_chainId' }); network = chain ? `Ethereum · ${chain}` : network; } catch (_) { /* The connected account remains usable if chain lookup is denied. */ }
       drawer.querySelector('[data-drawer-address]').textContent = `Registered account ${activeAddress}`;
       drawer.querySelector('[data-account-address]').textContent = short(activeAddress);
       drawer.querySelector('[data-account-address]').title = activeAddress;
       drawer.querySelector('[data-account-network]').textContent = network;
-      drawer.querySelector('[data-account-balance]').textContent = `${window.MZKWallet.balance(activeAddress).toLocaleString()} MZK`;
+      drawer.querySelector('[data-account-balance]').textContent = `${Number(remoteState?.tokens?.MZK??memberSession?.balance??window.MZKWallet.balance(activeAddress)).toLocaleString()} MZK`;
       const modelCards = modelAssets.map((asset) => `<article class="mzk-backpack-model"><model-viewer src="${escapeHtml(asset.modelUrl)}" ${asset.iosModelUrl ? `ios-src="${escapeHtml(asset.iosModelUrl)}"` : ''} camera-controls auto-rotate shadow-intensity="1" alt="${escapeHtml(asset.name)} purchased 3D model"></model-viewer><div><span class="mzk-inventory-label">3D Model</span><strong>${escapeHtml(asset.name)}</strong><small>Purchased GLB · Connected to ${short(activeAddress)}</small></div></article>`);
       const catalogLabel = (asset) => asset.assetType === 'environment' ? 'Environment' : asset.assetType === 'avatar' ? 'Avatar' : asset.assetType === 'vehicle' ? 'Vehicle' : 'Prop';
       const catalogCards = gameCatalog.map((asset) => `<article class="mzk-backpack-catalog-item" data-asset-type="${escapeHtml(asset.assetType)}">${icon()}<div><span class="mzk-inventory-label">${catalogLabel(asset)}</span><strong>${escapeHtml(asset.name)}</strong><small>${escapeHtml(asset.category)} · Included in game</small></div></article>`);

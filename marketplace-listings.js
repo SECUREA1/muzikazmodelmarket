@@ -4,7 +4,8 @@
   if (!shelves.length) return;
   const statuses = [...document.querySelectorAll('[data-user-market-status]')];
   const escape = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
-  const owner = () => String(window.MZKWallet?.connectedAddress?.() || window.MZKWallet?.walletId?.() || '').trim().toLowerCase();
+  let sessionOwner='';const inventory=import('./public/js/shared-game-inventory.js').then(module=>new module.SharedGameInventory());
+  const owner = () => sessionOwner||String(window.MZKWallet?.connectedAddress?.() || window.MZKWallet?.walletId?.() || '').trim().toLowerCase();
   const setStatus = (message) => statuses.forEach((status) => { status.textContent = message; });
   const api = async (path, options = {}) => {
     const headers = { Accept: 'application/json', ...(options.headers || {}) };
@@ -31,10 +32,10 @@
     setStatus(`${listings.length} active user listing${listings.length === 1 ? '' : 's'} shown from ${sellers} seller${sellers === 1 ? '' : 's'} in the shared MUZIKAZ market.`);
   }
   async function buy(button) {
-    if (!owner() || owner().startsWith('guest-')) throw new Error('Connect your member wallet before buying a user listing.');
+    const session=await (await inventory).session();sessionOwner=session.owner_id;
     button.disabled = true; setStatus('Completing the atomic MZK marketplace transfer…');
     try {
-      const trade = await api('/api/market/trades', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sellerId: button.dataset.sellerId, itemId: button.dataset.buyUserListing, requestId: `${owner()}:${Date.now()}:${button.dataset.buyUserListing}` }) });
+      const trade = await api('/api/market/trades', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token':session.csrfToken }, body: JSON.stringify({ sellerId: button.dataset.sellerId, itemId: button.dataset.buyUserListing, requestId: `${owner()}:${Date.now()}:${button.dataset.buyUserListing}` }) });
       setStatus(`${trade.itemName} is now in your Backpack. ${Number(trade.priceMzk).toLocaleString()} MZK was transferred to the seller.`);
       await load(); window.dispatchEvent(new CustomEvent('muzikaz:market-listings-changed', { detail: trade }));
     } finally { button.disabled = false; }
