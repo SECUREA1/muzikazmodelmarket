@@ -39,3 +39,12 @@ test('vertical walking and stair movement interpolate without a camera step',()=
  motion.push({x:0,y:0,z:0},1000);motion.push({x:.4,y:.2,z:0},1100);
  motion.sample(1150,target);assert.equal(target.x,.2);assert.equal(target.y,.1);
 });
+
+test('local controls use current snapshots without the remote interpolation delay',()=>{
+ const motion=new ServerMotion({delay:0,maxExtrapolation:100}),target={};
+ motion.push({x:0,y:0,z:0},1000);motion.push({x:.3,y:0,z:0},1050);
+ assert.equal(motion.sample(1050,target).x,.3);
+ assert.ok(Math.abs(motion.sample(1060,target).x-.36)<1e-10);
+ motion.push({x:.3,y:0,z:0},1100);
+ assert.equal(motion.sample(1100,target).x,.3,'stopping does not replay buffered walking');
+});

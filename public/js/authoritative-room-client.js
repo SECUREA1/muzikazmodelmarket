@@ -2,7 +2,7 @@ import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory
 
 export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,onError}) {
  const api = new SharedGameInventory();
- let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0;
+ let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0, inputRequested=false,fireBusy=false;
  const waiters=new Set(),collected=new Set();
  function settle(error) {
   for (const waiter of waiters) { clearTimeout(waiter.timer); error ? waiter.reject(error) : waiter.resolve(client); }
@@ -54,23 +54,10 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    if (!stopped && state.sequence>=sequence) { render(state,client.selfId); sequence=state.sequence; }
    return state;
   },
+  requestInput() { if(!client.ready||stopped)return; if(busy){inputRequested=true;return;}void tick(); },
   stop() { close(Error('Room closed.')); }
  };
- async function tick() {
-  if (stopped || busy || Date.now()<retryAt) return;
-  busy=true;
-  try {
-   if (!joined) {
-    const arrival=await client.send('join',meetingId?{meetingId}:{});
-    if (stopped) return;
-    joined=true;
-    onStatus?.(arrival?.result?.message || 'Connected. Gameplay is ready.');
-   } else {
-    const controls=document.hidden?{}:input();
-    const state=await client.send('input',{input:controls});
-    if (!stopped && state?.players?.[client.selfId]?.health>0 && state?.match?.state!=='finished' && controls.firing) await client.send('fire',{tool:controls.tool,direction:controls.direction,color:controls.color});
-   }
-  } catch (error) {
+ function handleError(error) {
    if (stopped) return;
    // Failed joins and expired sessions must leave the loading state. A denied
    // tool action in an already joined room is not a connection failure.
@@ -87,7 +74,28 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     if(wasReady)client.whenReady().catch(()=>{});
     onStatus?.('Server connection required: '+error.message);
    }
-  } finally { busy=false; }
+ }
+ async function tick() {
+  if (stopped || busy || Date.now()<retryAt) return;
+  busy=true;
+  try {
+   if (!joined) {
+    const arrival=await client.send('join',meetingId?{meetingId}:{});
+    if (stopped) return;
+    joined=true;
+    onStatus?.(arrival?.result?.message || 'Connected. Gameplay is ready.');
+   } else {
+    const controls=document.hidden?{}:input();
+    const state=await client.send('input',{input:controls});
+    if (!stopped && !fireBusy && state?.players?.[client.selfId]?.health>0 && state?.match?.state!=='finished' && controls.firing) {
+     fireBusy=true;
+     // A slow weapon response must not stall movement or room snapshots.
+     void client.send('fire',{tool:controls.tool,direction:controls.direction,color:controls.color})
+      .catch(handleError).finally(()=>{fireBusy=false;});
+    }
+   }
+  } catch (error) { handleError(error);
+  } finally { busy=false;if(inputRequested){inputRequested=false;if(!stopped&&client.ready)queueMicrotask(tick);} }
  }
  const timer=setInterval(tick,50);
  tick();
