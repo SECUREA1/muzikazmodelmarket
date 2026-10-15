@@ -48,6 +48,15 @@ test('cookie and bearer member sessions own market and care actions without a br
   const scan=await call('/api/economy/use',paymentHeaders,{sku:'tool:scanner',requestId:'scan-once'});assert.equal(scan.body.data.amountMzk,-2);
   assert.equal((await call('/api/wallet/state',paymentHeaders,{items:[{id:'economy:tool:jetpack',economySku:'tool:jetpack'}]},'PUT')).status,403);
   const pack=await call('/api/account/bootstrap',paymentHeaders);assert.equal(pack.status,200);assert.ok(pack.body.data.backpack.catalogAssets.length<models.length);
+  assert.equal((await call('/api/custom-maps',{}, {scene:{id:'room-test'}})).status,401);
+  const published=await call('/api/custom-maps',paymentHeaders,{scene:{id:'room-test',name:'Shared test',objects:[]}});assert.equal(published.status,201);assert.equal(published.body.data.ownerName,'SessionCarePlayer');assert.equal(published.body.data.roomId,'room-test');assert.match(published.body.data.playUrl,/environment=room-test/);
+  presence.set('room-count-fixture',{sessionId:'room-count-fixture',accountId:'test-builder',roomId:'room-test',lastActiveAt:new Date().toISOString()});
+  const liveMaps=(await call('/api/environments')).body.data;assert.equal(liveMaps[0].id,'room-test');assert.equal(liveMaps[0].playerCount,1);assert.equal(liveMaps[0].live,true);assert.equal((await call('/api/member-maps')).body.data.some(map=>map.id==='room-test'),true);presence.delete('room-count-fixture');
+  const object={materialId:'wood',position:[1,0,1],rotation:[0,0,0],scale:[1,1,1],paint:[],open:false};
+  assert.equal((await call('/api/rooms/room-test/objects',paymentHeaders,{id:'wood-1',revision:0,object})).status,200);
+  assert.equal((await call('/api/rooms/room-test/objects')).body.data.objects['wood-1'].materialId,'wood');
+  assert.equal((await call('/api/rooms/missing/objects')).status,404);
+  assert.equal((await call('/api/rooms/room-test/objects',paymentHeaders,{id:'unowned',revision:0,object:{...object,materialId:'glass'}})).status,403);
   const plot=await call('/api/land/claims',paymentHeaders,{worldId:'volt-city',requestId:'api-plot'});assert.equal(plot.status,201);assert.match(plot.body.data.playUrl,/environment=plot-deed-volt-city/);
   const publicPlots=await call('/api/member-maps');assert.equal(publicPlots.body.data.some(map=>map.id==='plot-deed-volt-city'),true);
   assert.equal((await call('/api/environments')).body.data.some(map=>map.id==='plot-deed-volt-city'),true);

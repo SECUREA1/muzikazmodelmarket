@@ -1,5 +1,6 @@
 import { memberPlotEnvironment } from './member-plots.mjs';
-import { economyInventory } from './game-economy.mjs';
+import { SharedRoomStore } from './shared-room-store.mjs';
+import { economyItem, ownsEconomyItem, economyInventory } from './game-economy.mjs';
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, stat, unlink, rename } from 'node:fs/promises';
 import { createReadStream, createWriteStream } from 'node:fs';
@@ -127,12 +128,14 @@ function environmentRecord(input = {}, extra = {}) {
   const now = new Date().toISOString();
   return { id: cleanText(input.id, randomUUID()), name: cleanText(input.name || input.title, 'Uploaded Environment'), description: cleanText(input.description, ''), modelUrl: String(extra.modelUrl || input.modelUrl || '').replace(/[<>]/g, ''), thumbnailUrl: String(extra.thumbnailUrl || input.thumbnailUrl || '').replace(/[<>]/g, ''), spawn: { x: clampNumber(input.spawnX ?? input.spawn?.x, -10000, 10000, 0), y: clampNumber(input.spawnY ?? input.spawn?.y, -10000, 10000, 1), z: clampNumber(input.spawnZ ?? input.spawn?.z, -10000, 10000, 2), rotationY: clampNumber(input.spawnRotationY ?? input.spawn?.rotationY, -Math.PI * 4, Math.PI * 4, 0) }, scale: clampNumber(input.scale, 0.001, 100, 1), rotation: { x: clampNumber(input.rotationX ?? input.rotation?.x, -Math.PI * 4, Math.PI * 4, 0), y: clampNumber(input.rotationY ?? input.rotation?.y, -Math.PI * 4, Math.PI * 4, 0), z: clampNumber(input.rotationZ ?? input.rotation?.z, -Math.PI * 4, Math.PI * 4, 0) }, collisionMode: ['auto', 'mesh', 'none'].includes(input.collisionMode) ? input.collisionMode : 'auto', visibility: input.visibility === 'private' ? 'private' : 'public', source: 'uploaded', canDelete: true, canEdit: true, originalFilename: cleanText(extra.originalFilename, ''), storedFilename: cleanText(extra.storedFilename, ''), fileSize: Number(extra.fileSize || input.fileSize || 0), mimeType: cleanText(extra.mimeType || input.mimeType, 'model/gltf-binary'), createdAt: input.createdAt || now, updatedAt: now };
 }
+const sharedRooms=new SharedRoomStore(join(dataDir,'shared-rooms.json'));
+function liveRoomMetadata(map){const roomId=map.roomId||map.id;const playerCount=new Set(activePresence().filter(user=>user.roomId===roomId).map(user=>user.accountId||user.sessionId)).size;return {...map,roomId,playerCount,live:playerCount>0,playUrl:map.playUrl||`model-explorer.html?environment=${encodeURIComponent(map.id)}&house=${encodeURIComponent(roomId)}&autoplay=1`};}
 async function combinedEnvironments() {
   const [repo, uploaded, customMaps] = await Promise.all([readRepositoryEnvironments(), readUploadedEnvironments(), readCustomMaps()]);
   const liveMaps = customMaps.map((map) => ({ ...map, modelUrl:'', modelUrls:[], proceduralLand:true, spawn:{x:0,y:1,z:2,rotationY:0}, scale:1, spaceScale:1, rotation:{x:0,y:0,z:0}, collisionMode:'auto', canDelete:false, canEdit:false }));
   const bases=[...liveMaps,...repo,...uploaded.filter(publicEnvironment)];
   const plots=(await userDatabase.memberPlots()).map(deed=>memberPlotEnvironment(deed,bases)).filter(Boolean);
-  return [...plots,...bases];
+  return [...plots,...bases].map(liveRoomMetadata).sort((a,b)=>b.playerCount-a.playerCount);
 }
 async function saveEnvironmentUpload(req) {
   const parts = await multipartFields(req, maxEnvironmentBytes + 2_000_000); const fields = {}; parts.filter((p) => !p.filename).forEach((p) => { fields[p.name] = p.data.toString('utf8').trim(); });
@@ -619,7 +622,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/wallet/state' && req.method === 'GET') { await resolveAccountSession(req); return sendJson(res, 200, assetResponse(await userDatabase.get(requestWallet(req)))); }
     if (url.pathname === '/api/wallet/state' && req.method === 'PUT') {const context=await memberContext(req,res,true);if(!context)return;const body=await bodyJson(req);if('items' in body||'tokens' in body||Object.hasOwn(body.memory||{},'account')||Object.hasOwn(body.memory||{},'memberRewards'))return authorizationError(res,403,'SERVER_BALANCE_REQUIRED','Balances, ownership and reward progress are maintained by server transactions.','wallet');return sendJson(res,200,assetResponse(await userDatabase.put(context.walletId,body)));}
     if (url.pathname === '/api/land/deeds' && req.method === 'GET') {const context=await memberContext(req,res);if(!context)return;return sendJson(res,200,assetResponse((await userDatabase.memberPlots()).filter(deed=>deed.ownerId===context.walletId)));}
-    if(url.pathname==='/api/member-maps'&&req.method==='GET')return sendJson(res,200,assetResponse((await combinedEnvironments()).filter(env=>env.memberPlot)));
+    if(url.pathname==='/api/member-maps'&&req.method==='GET')return sendJson(res,200,assetResponse((await combinedEnvironments()).filter(env=>env.memberPlot||env.source==='custom-builder')));
     const plotConfig=url.pathname.match(/^\/api\/land\/deeds\/([^/]+)\/space$/);
     if(plotConfig&&req.method==='PUT'){const context=await memberContext(req,res,true);if(!context)return;const body=await bodyJson(req),bases=(await combinedEnvironments()).filter(env=>!env.memberPlot);if(!bases.some(env=>env.id===body.environmentId&&env.playable!==false&&env.visibility!=='private'))return authorizationError(res,400,'PLOT_ENVIRONMENT_INVALID','Choose an available public environment.','plot');const deed=await userDatabase.configurePlot(context.walletId,decodeURIComponent(plotConfig[1]),body);broadcast('member-plot-updated',{spaceId:deed.spaceId});return sendJson(res,200,assetResponse(deed));}
     if (url.pathname === '/api/land/claims' && req.method === 'POST') { const body = await bodyJson(req); const allowed = new Map([['volt-city', 'Volt City'], ['skyline-deck', 'Skyline Deck'], ['echo-gardens', 'Echo Gardens'], ['crew-plaza', 'Crew Plaza'], ['studio-ridge', 'Studio Ridge'], ['neon-docks', 'Neon Docks'], ['bassline-badlands', 'Bassline Badlands'], ['pixel-peaks', 'Pixel Peaks']]); const worldId = cleanText(body.worldId).toLowerCase(); if (!allowed.has(worldId)) return sendJson(res, 400, { success: false, message: 'Unknown MUZIKAZ world.' }); return sendJson(res, 201, assetResponse(await userDatabase.claimLand({ walletId: requestWallet(req), worldId, name: allowed.get(worldId), priceMzk: 4000, requestId: body.requestId }))); }
@@ -633,11 +636,13 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/market/activity' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.activity(requestWallet(req), url.searchParams.get('peer') || '')));
 
     if (url.pathname === '/api/environments' && req.method === 'GET') return sendJson(res, 200, assetResponse(await combinedEnvironments()));
-    if (url.pathname === '/api/custom-maps' && req.method === 'GET') return sendJson(res, 200, assetResponse(await readCustomMaps()));
+    const sharedRoom=url.pathname.match(/^\/api\/rooms\/([^/]+)\/objects$/);
+    if(sharedRoom&&['GET','POST'].includes(req.method)){const id=decodeURIComponent(sharedRoom[1]);if(!(await combinedEnvironments()).some(env=>env.id===id))return sendJson(res,404,{message:'Room not found.'});if(req.method==='GET')return sendJson(res,200,assetResponse(await sharedRooms.get(id)));const context=await memberContext(req,res,true);if(!context)return;const command=await bodyJson(req,20000);const room=await sharedRooms.mutate(id,`account:${context.account.accountId}`,command,value=>{const item=economyItem('material:'+value.materialId);if(!item||!ownsEconomyItem(context.state,item))throw Object.assign(new Error('Purchase this building material first.'),{statusCode:403});});broadcast('room-objects-updated',{roomId:id,revision:room.revision});return sendJson(res,200,assetResponse(room));}
+    if (url.pathname === '/api/custom-maps' && req.method === 'GET') return sendJson(res, 200, assetResponse((await readCustomMaps()).map(liveRoomMetadata).sort((a,b)=>b.playerCount-a.playerCount)));
     if (url.pathname === '/api/custom-maps' && req.method === 'POST') {
-      const input = await bodyJson(req); const serialized = JSON.stringify(input);
+      const input = await bodyJson(req,2_000_000); const serialized = JSON.stringify(input);
       if (serialized.length > 2_000_000) return sendJson(res, 413, { success: false, code: 'MAP_TOO_LARGE', message: 'Custom maps must be smaller than 2 MB.' });
-      const active = await resolveAccountSession(req); const ownerId = active ? `account:${active.accountId}` : cleanText(req.headers['x-user-id'] || input.ownerId, 'guest-builder'); const record = customMapRecord(input, ownerId);
+      const context=await memberContext(req,res,true);if(!context)return;const ownerId=`account:${context.account.accountId}`;const record=customMapRecord(input,ownerId);record.ownerName=context.account.username||context.account.displayName||'MUZIKAZ Builder';record.roomId=record.id;record.playUrl=`model-explorer.html?environment=${encodeURIComponent(record.id)}&house=${encodeURIComponent(record.id)}&autoplay=1`;
       const result = await updateCustomMaps((records) => { const index = records.findIndex((map) => map.id === record.id); if (index >= 0 && records[index].ownerId !== ownerId) throw Object.assign(new Error('That map id belongs to another creator.'), { statusCode: 409, code: 'MAP_ID_CONFLICT' }); if (index >= 0) records[index] = { ...record, createdAt: records[index].createdAt }; else records.unshift(record); return { created: index < 0, record: index >= 0 ? records[index] : record }; });
       broadcast('custom-map-live', result.record); return sendJson(res, result.created ? 201 : 200, assetResponse(result.record));
     }

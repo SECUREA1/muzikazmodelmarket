@@ -254,3 +254,5 @@ body.model-explorer-page .game-view-options .explorer-options.is-unified .explor
 .economy-locked{border-style:dashed!important;background:#1b241a!important;}
 [data-economy-price]{display:block!important;font-size:10px!important;line-height:1.3!important;color:#d4eda4!important;white-space:normal!important;margin-top:4px;}
 .game-market-tabs{flex-wrap:wrap;}.game-market-row button{min-height:44px;}
+
+.world-map-sector.has-players small{color:#ff6868}.world-map-sector.has-players small::before{content:"● ";animation:room-live-pulse 1.4s ease-in-out infinite}@keyframes room-live-pulse{50%{opacity:.25}}@media(prefers-reduced-motion:reduce){.world-map-sector.has-players small::before{animation:none}}
