@@ -6,6 +6,7 @@ import { validTool, canActivateTool } from './game-tool-rules.js';
 import { SharedGameInventory, ownedBuilderModel, watchInventoryChange } from './shared-game-inventory.js';
 import { PLAYER_DEFAULTS } from './player-preferences.js';
 import { mountSettingsExplorerMenu } from './settings-explorer-menu.js';
+import { mountWorldMapPicker } from './world-map-picker.js';
 import { mountPlayerSettings } from './player-settings.js';
 import { CareEffects } from './care-effects.js';
 import { createGameMarketplace } from './in-game-market.js';
@@ -997,15 +998,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const worlds = registry.all().map((env,index)=>({env,index,count:usersInWorld(env.id)})).sort((a,b)=>b.count-a.count||a.index-b.index);
     library.classList.remove('backpack-panel');
     library.setAttribute('aria-label', 'Select a multiplayer game world');
-    library.innerHTML = `<div class="house-picker-title"><strong>All Environment Maps</strong><button type="button" data-close-worlds aria-label="Close environment map list">×</button></div><p class="multiplayer-world-intro">Live user maps are pinned first. Every environment below is a complete playable multiplayer map.</p><div class="multiplayer-world-grid">${worlds.map(({env,count},index) => { const files=env.modelUrls?.length || (env.modelUrl?1:0); const live=count?`<em class="multiplayer-live-count">Live (${count} user${count===1?'':'s'})</em>`:'';return `<button type="button" class="multiplayer-world-card ${count?'has-live-users':''} ${env.id===activeEnvironment?.id?'is-current':''}" data-enter-world="${escapeHtml(env.id)}" aria-pressed="${env.id===activeEnvironment?.id}"><strong>${index+1}. ${escapeHtml(env.name || env.id)}</strong><span>${escapeHtml(env.label || env.category || 'Playable map')} · ${files} environment file${files===1?'':'s'}<br>${escapeHtml(env.description || 'Public multiplayer game level')}${live}</span><b>${env.id===activeEnvironment?.id?'You are here':'Play map'}</b></button>`; }).join('')}</div><div class="multiplayer-world-footer"><span>${worlds.length} complete playable map${worlds.length===1?'':'s'}</span><span>${multiplayerPresence.length} live user${multiplayerPresence.length===1?'':'s'} · public rooms</span></div>`;
-    library.querySelector('[data-close-worlds]')?.addEventListener('click', () => { library.classList.add('is-collapsed'); worldButton?.setAttribute('aria-expanded','false'); worldButton?.focus(); });
-    library.querySelectorAll('[data-enter-world]').forEach((button) => button.addEventListener('click', async () => {
-      const env = registry.find(button.dataset.enterWorld);
-      if (!env) return;
-      library.classList.add('is-collapsed'); worldButton?.setAttribute('aria-expanded','false');
-      setStatus(`Joining ${env.name}, the shared multiplayer world…`);
-      await loadById(env.id);
-    }));
+    mountWorldMapPicker(library,worlds,{currentId:activeEnvironment?.id,onClose:()=>{pickerPanel.dialog.close();library.classList.add('is-collapsed');worldButton?.setAttribute('aria-expanded','false');worldButton?.focus();},onJoin:async env=>{pickerPanel.dialog.close();library.classList.add('is-collapsed');worldButton?.setAttribute('aria-expanded','false');if(env.id===activeEnvironment?.id)return;setStatus(`Joining ${env.name}, the shared multiplayer world…`);await loadById(env.id);}});
   }
 
   function openPicker(kind) {

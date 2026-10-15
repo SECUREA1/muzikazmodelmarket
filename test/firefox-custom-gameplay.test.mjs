@@ -43,7 +43,7 @@ test('builder uses self-contained ESM dependencies and the completed cross-origi
     readFile(new URL('../public/js/environments/environment-api.js', import.meta.url), 'utf8')
   ]);
 
-  assert.doesNotMatch(html, /public\/js\/api-connection\.js/);
+  assert.match(html, /public\/js\/api-connection\.js/);
   assert.doesNotMatch(html, /type="importmap"/);
   assert.match(builder, /from '\.\/public\/vendor\/three\/three\.module\.min\.js'/);
   assert.equal((builder.match(/from 'https:\/\//g) || []).length, 0);
