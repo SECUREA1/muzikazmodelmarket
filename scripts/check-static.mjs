@@ -450,8 +450,8 @@ for (const requiredAdminFlow of ["/api/admin/login", "muzikazAdminToken", "x-adm
     throw new Error(`script.js is missing protected-admin flow: ${requiredAdminFlow}`);
   }
 }
-if (!serverSource.includes("process.env.MUZIKAZ_ADMIN_USERNAME || 'giraff'") || !serverSource.includes("process.env.MUZIKAZ_ADMIN_PASSWORD || 'boots'")) {
-  throw new Error('The configured giraff administrator credentials are not connected to the server login.');
+if (!serverSource.includes("process.env.MUZIKAZ_ADMIN_USERNAME || 'admin'") || !serverSource.includes("process.env.MUZIKAZ_ADMIN_PASSWORD || 'boots'")) {
+  throw new Error('The configured admin administrator credentials are not connected to the server login.');
 }
 
 const apiConnection = await readFile('dist/public/js/api-connection.js', 'utf8');

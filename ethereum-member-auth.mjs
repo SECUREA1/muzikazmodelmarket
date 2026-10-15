@@ -1,4 +1,4 @@
-import { verifyMessage, getAddress } from 'ethers';
+import { verifyMessage, getAddress } from './vendor/ethers/ethers.mjs';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { dirname } from 'node:path';

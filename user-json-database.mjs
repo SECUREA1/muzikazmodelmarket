@@ -100,6 +100,35 @@ export class UserJsonDatabase {
    * This is intentionally additive: logging in must never replace saves,
    * listings, uploaded-asset references, or other application memory.
    */
+  adminModify(walletId, input, actor) { return this.transaction(data => {
+    const wallet = cleanWallet(walletId), user = data.users[wallet];
+    const fail = message => { throw Object.assign(new Error(message), {statusCode:400}); };
+    if (!user) fail('Member wallet not found.');
+    const reason = String(input.reason || '').trim().slice(0, 300);
+    if (!reason) fail('Enter a reason for the member change.');
+    const delta = input.amountMzk === undefined ? 0 : Number(input.amountMzk);
+    if (!Number.isSafeInteger(delta) || !Number.isSafeInteger(Number(user.tokens.MZK) + delta) || Number(user.tokens.MZK) + delta < 0) fail('MZK adjustment must be a whole number and cannot make the balance negative.');
+    let item = null;
+    if (input.action === 'add-item') {
+      const catalog = economyItem(input.sku);
+      if (!catalog || catalog.basic) fail('Choose a purchasable catalog item.');
+      if (ownsEconomyItem(user, catalog)) fail('This member already owns the upgrade.');
+      item = {...catalog, id:'economy:'+catalog.sku, economySku:catalog.sku, type:'game-upgrade', source:'admin-grant', acquiredAt:new Date().toISOString(), listing:{active:false}};
+      user.items.push(item);
+    } else if (input.action === 'remove-item') {
+      item = user.items.find(row => row.id === input.itemId);
+      if (!item) fail('This item is no longer in the member Backpack.');
+      user.items = user.items.filter(row => row.id !== item.id);
+      const deed = item.worldId && data.landDeeds[item.worldId];
+      if (deed && deed.ownerId === wallet) { deed.status = 'revoked'; deed.revokedAt = new Date().toISOString(); }
+    } else if (input.action !== 'adjust') fail('Unknown member adjustment.');
+    if (input.displayName !== undefined) user.memory.profile = {...user.memory.profile, displayName:String(input.displayName).trim().slice(0,80)};
+    user.tokens.MZK = Number(user.tokens.MZK) + delta;
+    user.revision = Number(user.revision || 0) + 1; user.updatedAt = new Date().toISOString();
+    appendTransaction(data, {type:'ADMIN_MEMBER_CHANGE', walletId:wallet, actor, reason, action:input.action, amountMzk:delta, balanceAfterMzk:user.tokens.MZK, item: item && clone(item)});
+    return user;
+  }); }
+
   ensureAccount(account) {
     const accountKey = cleanWallet(`account:${account?.accountId}`);
     const wallet = cleanWallet(account?.primaryEthereumWallet || accountKey);
@@ -126,7 +155,7 @@ export class UserJsonDatabase {
       const memory = mergeMemory(previous.memory, {
         account: { issuedEntitlements: [...issued], accountId: account.accountId, backpackId: account.backpackId, accessCodeStatus: account.accessCodeStatus, gameAccess: Boolean(account.gameAccess), creatorVaultAccess: Boolean(account.creatorVaultAccess), selectedAvatarId: account.selectedAvatarId || 'starter-avatar', bottleClaims: clone(account.bottleClaims || []), bottlePurchases: clone(account.bottlePurchases || []), purchaseTierUsd: Number(account.purchaseTierUsd || 0), paymentMzkValue: Number(account.paymentMzkValue || 0) },
         backpack: { backpackId: account.backpackId, bottleClaims: clone(account.bottleClaims || []), bottlePurchases: clone(account.bottlePurchases || []), syncedAt: now },
-        profile: account.username ? { username: account.username, displayName: account.username } : {}
+        profile: account.username ? { username: account.username, displayName: previous.memory?.profile?.displayName || account.username } : {}
       });
       const tokens = { ...(previous.tokens || {}) };
       const previouslyGrantedMzk = previous.memory?.account?.accountId === account.accountId

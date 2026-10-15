@@ -58,7 +58,7 @@ let customMapWriteQueue = Promise.resolve();
 const supportSockets = new Set();
 const supportMessages = [];
 const port = Number(process.env.PORT || 4173);
-const adminUsername = process.env.MUZIKAZ_ADMIN_USERNAME || 'giraff';
+const adminUsername = process.env.MUZIKAZ_ADMIN_USERNAME || 'admin';
 const adminPassword = process.env.MUZIKAZ_ADMIN_PASSWORD || 'boots';
 const adminSessionSecret = process.env.MUZIKAZ_ADMIN_SESSION_SECRET || `${adminUsername}\0${adminPassword}\0muzikaz-admin-session`;
 const persistentAdminToken = createHmac('sha256', adminSessionSecret).update(`admin:${adminUsername}`).digest('base64url');
@@ -322,9 +322,10 @@ async function reconcileStorePayments(){
 }
 async function backpackFor(account) {
   const stateAsset = (name, type) => ({ id: createHash('sha256').update(`${type}:${name}`).digest('hex').slice(0, 20), name, type, state: /^Unrevealed/i.test(name) ? 'unrevealed' : 'revealed' });
-  const assets = [...(account.gameAssets || []).map((name) => stateAsset(name, 'game')), ...(account.purchasedAssets || []).map((name) => stateAsset(name, 'purchase'))];
+  const rawAssets = [...(account.gameAssets || []).map((name) => stateAsset(name, 'game')), ...(account.purchasedAssets || []).map((name) => stateAsset(name, 'purchase'))];
   for(const order of await paymentOrderStore.records())if(order.memberAccountId===account.accountId&&order.purchaseType==='MARKETPLACE'&&['PAID','FULFILLED'].includes(order.paymentStatus))await deliverVerifiedStoreOrder(order);
   const walletState=await userDatabase.ensureAccount(account);
+  const assets = rawAssets.filter(asset => asset.name === 'Starter Avatar' || walletState.items.some(item => item.name === asset.name));
   const catalog = (await repositoryGameCatalog()).filter(asset=>walletState.items.some(item=>item.modelUrl&&publicModelUrl(item.modelUrl)===publicModelUrl(asset.modelUrl)));
   const inventoryAvatars=walletState.items.filter(item=>item.modelUrl&&(['avatar','avatars'].includes(item.assetType||item.type))).map(item=>({...item,eligible:true,state:'revealed'}));
   const catalogAvatars = catalog.filter((asset) => asset.assetType === 'avatar').map((asset) => ({ ...asset, eligible: true, state: 'revealed' }));
@@ -605,6 +606,28 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/admin/logout' && req.method === 'POST') {
       res.setHeader('Set-Cookie', `mzk_admin=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
       return sendJson(res, 200, assetResponse({ authenticated: false }));
+    }
+    if (url.pathname === '/api/admin/members' && req.method === 'GET') {
+      if (!requireAdmin(req,res)) return;
+      const accounts = (await loadoutCodeStore.records()).accounts;
+      const members = [];
+      for (const record of accounts) { const account = await loadoutCodeStore.getAccount(record.accountId); const state = await userDatabase.ensureAccount(account); members.push({account,state}); }
+      return sendJson(res,200,assetResponse({members,catalog:GAME_ECONOMY.filter(item=>!item.basic)}));
+    }
+    const adminMember = url.pathname.match(/^\/api\/admin\/members\/([^/]+)$/);
+    if (adminMember && req.method === 'POST') {
+      if (!requireAdmin(req,res)) return;
+      const id = decodeURIComponent(adminMember[1]), input = await bodyJson(req);
+      if (!String(input.reason || '').trim()) return sendJson(res,400,{success:false,message:'Enter a reason for this change.'});
+      let account = await loadoutCodeStore.getAccount(id);
+      if (!account) return sendJson(res,404,{success:false,message:'Member not found.'});
+      if (input.action === 'profile') {
+        account = await loadoutCodeStore.adminUpdate(id,input);
+        if (input.password) { await accountSessionStore.revokeAccountSessions(id); await gameSessionStore.revokeAccountSessions(id); }
+      }
+      const state = await userDatabase.ensureAccount(account);
+      const updated = await userDatabase.adminModify(state.walletId,{...input,action:input.action==='profile'?'adjust':input.action},adminUsername);
+      return sendJson(res,200,assetResponse({account,state:updated}));
     }
     if (url.pathname === '/api/admin/data' && req.method === 'GET') {
       if (!requireAdmin(req, res)) return;

@@ -336,6 +336,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   Array.from(bottomControls.children).filter(item=>item.matches('button.house-bottom-control')).forEach(button=>dockActions.append(button));
   const explorerOptions=document.createElement('section');explorerOptions.id='game-explorer-options';explorerOptions.className='game-view-options';explorerOptions.hidden=true;explorerOptions.setAttribute('aria-label','Settings & Explorer options');
   const optionsIntro=document.createElement('p');optionsIntro.textContent='Customize your controls, view and appearance. Review your member body telemetry and care inventory below.';explorerOptions.append(optionsIntro,dockSummary);stage.append(explorerOptions);
+  // Retire legacy HUD controls; keep reset reachable inside Settings.
+  const legacyActions = document.querySelector('.house-actions');
+  if (resetButton) { resetButton.setAttribute('aria-label','Reset view'); resetButton.title='Reset view'; resetButton.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2 8M3 4v6h6"/></svg>'; explorerOptions.append(resetButton); }
+  legacyActions?.remove();
+  document.querySelector('.camera-preview-panel')?.remove();
   const dockPaths={
     'house-world-button':'<circle cx="12" cy="12" r="9"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5Z"/>',
     'house-fullscreen':'<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>',

@@ -93,7 +93,50 @@
     const result = await response.json();
     if (!response.ok || !result.success) { const error = new Error(result.message || 'Administrator data could not be loaded.'); error.status = response.status; throw error; }
     snapshot = result.data; renderSnapshot();
+    await loadMembers();
   }
+  let members = [];
+  function selectedMember() { return members.find(row => row.account.accountId === $('#member-select').value); }
+  function renderMember() {
+    const member = selectedMember(); $('#member-editor').hidden = !member;
+    if (!member) return;
+    const form = $('#member-profile');
+    form.elements.username.value = member.account.username || '';
+    form.elements.displayName.value = member.state.memory?.profile?.displayName || '';
+    form.elements.password.value = '';
+    for (const key of ['gameAccess','creatorVaultAccess','marketplaceAccess']) form.elements[key].checked = Boolean(member.account[key]);
+    $('#member-status').textContent = `${member.account.accountId} · ${member.state.tokens.MZK} MZK · ${member.state.items.length} items`;
+    $('#member-inventory').replaceChildren(...member.state.items.map(item => {
+      const li = document.createElement('li'), label = document.createElement('span'), button = document.createElement('button');
+      label.textContent = `${item.name || item.title || item.id} · ${item.type || 'item'}`;
+      button.type = 'button'; button.textContent = 'Remove';
+      button.addEventListener('click', () => changeMember({action:'remove-item',itemId:item.id}));
+      li.append(label,button); return li;
+    }));
+  }
+  async function loadMembers() {
+    const data = await accessRequest('/api/admin/members'); members = data.members;
+    const selected = $('#member-select').value;
+    $('#member-select').replaceChildren(new Option('Select a member…',''), ...members.map(row=>new Option(`${row.account.username || row.account.accountId} · ${row.state.tokens.MZK} MZK`,row.account.accountId)));
+    $('#member-select').value = selected; renderMember();
+    $('#member-catalog').replaceChildren(...data.catalog.map(item=>new Option(`${item.category} · ${item.name || item.label || item.sku}`,item.sku)));
+  }
+  async function changeMember(input) {
+    const member = selectedMember(); if (!member) return;
+    const reason = $('#member-reason').value.trim();
+    if (!reason) { $('#member-status').textContent = 'Enter a reason for this change.'; $('#member-reason').focus(); return; }
+    const buttons = $('#member-editor').querySelectorAll('button'); buttons.forEach(button=>button.disabled=true);
+    try {
+      await accessRequest('/api/admin/members/'+encodeURIComponent(member.account.accountId),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...input,reason})});
+      await loadData();
+      $('#member-status').textContent += ' · Change saved to server.';
+    } catch(error) { $('#member-status').textContent = error.message; }
+    finally { buttons.forEach(button=>button.disabled=false); }
+  }
+  $('#member-select').addEventListener('change',renderMember);
+  $('#member-profile').addEventListener('submit',event=>{event.preventDefault();const form=event.currentTarget;changeMember({action:'profile',username:form.elements.username.value,displayName:form.elements.displayName.value,password:form.elements.password.value,...Object.fromEntries(['gameAccess','creatorVaultAccess','marketplaceAccess'].map(key=>[key,form.elements[key].checked]))});});
+  $('#member-tokens').addEventListener('submit',event=>{event.preventDefault();changeMember({action:'adjust',amountMzk:Number(event.currentTarget.elements.amountMzk.value)});});
+  $('#member-item').addEventListener('submit',event=>{event.preventDefault();changeMember({action:'add-item',sku:event.currentTarget.elements.sku.value});});
   const formatDate = (value) => value ? new Date(value).toLocaleString() : '—';
   async function accessRequest(path = '/api/admin/access-codes', options = {}) {
     const response = await apiFetch(path, { ...options, headers: authHeaders({ Accept: 'application/json', ...options.headers }) });

@@ -45,6 +45,7 @@ function grantStandardLoadout(account) {
   account.worldAccess = true;
   account.avatarAccess = true;
   account.marketplaceAccess = true;
+  for (const key of ['gameAccess','creatorVaultAccess','marketplaceAccess']) if (typeof account.adminAccessOverrides?.[key] === 'boolean') account[key] = account.adminAccessOverrides[key];
   account.loadoutProvisioningVersion = LOADOUT_PROVISIONING_VERSION;
   delete account.provisioningVersion;
   account.provisionedAt ||= new Date().toISOString();
@@ -297,6 +298,21 @@ export class MzkAccountStore {
     account.updatedAt=new Date().toISOString();return publicAccount(account);
   }); }
   selectAvatar(accountId, avatarId) { return this.serialized(async (data) => { const account = data.accounts.find((a) => a.accountId === accountId); if (!account) throw Object.assign(new Error('Account not found.'), { statusCode: 404 }); const id = String(avatarId || ''); if (id !== 'starter-avatar' && !/^(?:repository|owned|store-model)-[a-z0-9-]{1,100}$/.test(id)) throw Object.assign(new Error('That avatar is unavailable or Unrevealed. Choose an included MUZIKAZ avatar.'), { statusCode: 409 }); account.selectedAvatarId = id; account.updatedAt = new Date().toISOString(); return publicAccount(account); }); }
+  adminUpdate(accountId, input) { return this.serialized(async data => {
+    const account = data.accounts.find(row => row.accountId === accountId);
+    const fail = (message, statusCode = 400) => { throw Object.assign(new Error(message), {statusCode}); };
+    if (!account) fail('Member not found.', 404);
+    const username = String(input.username ?? account.username).trim();
+    if (!/^[a-zA-Z0-9_.-]{3,24}$/.test(username)) fail('Username must be 3–24 letters, numbers, dots, dashes, or underscores.');
+    if (data.accounts.some(row => row.accountId !== accountId && String(row.username).toLowerCase() === username.toLowerCase())) fail('Username is already in use.', 409);
+    const password = String(input.password || '');
+    if (password && (password.length < 6 || password.length > 128)) fail('Password must be 6–128 characters.');
+    if (password) { const secret = hashPassword(password); account.passwordHash = secret.hash; account.passwordSalt = secret.salt; }
+    account.username = username;
+    for (const key of ['gameAccess','creatorVaultAccess','marketplaceAccess']) if (typeof input[key] === 'boolean') { account[key] = input[key]; account.adminAccessOverrides ||= {}; account.adminAccessOverrides[key] = input[key]; }
+    account.updatedAt = new Date().toISOString();
+    return publicAccount(account);
+  }); }
   async getAccount(accountId) { const account = (await this.records()).accounts.find((a) => a.accountId === accountId); return account ? publicAccount(account) : null; }
   repairEntitledAccount(accountId) { return this.serialized(async (data) => {
     const account = data.accounts.find((item) => item.accountId === accountId);

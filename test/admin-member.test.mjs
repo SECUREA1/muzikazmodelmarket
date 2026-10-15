@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm,readFile,writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {MzkAccountStore} from '../loadout-code-store.mjs';
+import {UserJsonDatabase} from '../user-json-database.mjs';
+import {GAME_ECONOMY} from '../game-economy.mjs';
+import {pathToFileURL} from 'node:url';
+test('admin member changes persist without regranting removed items or exposing passwords',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'admin-members-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const accounts=new MzkAccountStore(join(dir,'accounts.json')),db=new UserJsonDatabase(join(dir,'users.json'));
+ let account=await accounts.freePlayLogin('AdminTarget','old-password');let state=await db.ensureAccount(account);const original=state.tokens.MZK;
+ const item=GAME_ECONOMY.find(row=>!row.basic);
+ await db.adminModify(state.walletId,{action:'add-item',sku:item.sku,reason:'Support grant'},'admin');
+ await db.adminModify(state.walletId,{action:'remove-item',itemId:'economy:'+item.sku,reason:'Support removal'},'admin');
+ await db.adminModify(state.walletId,{action:'adjust',amountMzk:50,displayName:'Custom name',reason:'Correction'},'admin');
+ state=await db.ensureAccount(account);assert.equal(state.tokens.MZK,original+50);assert.equal(state.items.some(row=>row.economySku===item.sku),false);assert.equal(state.memory.profile.displayName,'Custom name');
+ await assert.rejects(db.adminModify(state.walletId,{action:'adjust',amountMzk:-999999999,reason:'Invalid'},'admin'));
+ await assert.rejects(db.adminModify(state.walletId,{action:'adjust',amountMzk:1},'admin'));
+ account=await accounts.adminUpdate(account.accountId,{username:'RenamedPlayer',password:'new-password',gameAccess:false});
+ assert.equal(account.passwordHash,undefined);
+ await assert.rejects(accounts.freePlayLogin('RenamedPlayer','old-password'));
+ const relogin=await accounts.freePlayLogin('RenamedPlayer','new-password'); assert.equal(relogin.accountId,account.accountId); assert.equal(relogin.gameAccess,false);
+ assert.equal((await db.read()).transactions.filter(row=>row.type==='ADMIN_MEMBER_CHANGE').length,3);
+});
+test('Ethereum authentication loads outside node_modules',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'standalone-eth-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const source=await readFile(new URL('../ethereum-member-auth.mjs',import.meta.url),'utf8');
+ const bundled=new URL('../vendor/ethers/ethers.mjs',import.meta.url).href;
+ await writeFile(join(dir,'auth.mjs'),source.replace("'./vendor/ethers/ethers.mjs'",JSON.stringify(bundled)));
+ assert.equal(typeof (await import(pathToFileURL(join(dir,'auth.mjs')).href)).EthereumMemberAuth,'function');
+});

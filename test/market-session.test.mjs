@@ -188,6 +188,20 @@ test('cookie and bearer member sessions own market and care actions without a br
   const walletLogin=await call('/api/access/wallet',{},walletProof);assert.equal(walletLogin.status,200);assert.equal(walletLogin.body.data.account.accountId,login.body.data.account.accountId);assert.equal(walletLogin.body.data.account.backpackId,login.body.data.account.backpackId);assert.equal(walletLogin.body.data.expiresAt,null);
   assert.equal((await call('/api/access/wallet',{},walletProof)).status,401);
   assert.equal((await call('/api/store/purchases',paymentHeaders,{items:cart,expectedAmountMzk:cost,requestId:'buy-model'})).body.data.id,bought.body.data.id);
+  assert.equal((await call('/api/admin/members')).status,403);
+  const adminLogin=await call('/api/admin/login',{}, {username:'admin',password:'boots'});assert.equal(adminLogin.status,200);
+  const adminHeaders={'x-admin-token':adminLogin.body.data.token};
+  const adminMembers=await call('/api/admin/members',adminHeaders);assert.equal(adminMembers.status,200);assert.ok(adminMembers.body.data.members.some(row=>row.account.accountId===login.body.data.account.accountId));
+  assert.equal(JSON.stringify(adminMembers.body).includes('passwordHash'),false);
+  const target='/api/admin/members/'+login.body.data.account.accountId;
+  assert.equal((await call(target,adminHeaders,{action:'adjust',amountMzk:25})).status,400);
+  const beforeAdmin=(await call('/api/wallet/state',paymentHeaders)).body.data.tokens.MZK;
+  assert.equal((await call(target,adminHeaders,{action:'adjust',amountMzk:25,reason:'Admin test correction'})).status,200);
+  assert.equal((await call('/api/wallet/state',paymentHeaders)).body.data.tokens.MZK,beforeAdmin+25);
+  assert.equal((await call(target,adminHeaders,{action:'profile',password:'replacement-secret',reason:'Member requested reset'})).status,200);
+  assert.equal((await call('/api/wallet/state',paymentHeaders)).status,401);
+  assert.equal((await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'member-session-test'})).status,401);
+  assert.equal((await call('/api/access/free-play',{}, {username:'SessionCarePlayer',password:'replacement-secret'})).status,200);
   await call('/api/session',headers,undefined,'DELETE');
   const expired=await call('/api/market/session',bearer);assert.equal(expired.status,401);
  }finally{process.env=oldEnv;await rm(dir,{recursive:true,force:true});}
