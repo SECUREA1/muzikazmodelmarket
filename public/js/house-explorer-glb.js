@@ -339,7 +339,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const inventoryIcon = (label) => `<span class="rad-pack-icon" aria-hidden="true">${packIcons[String(label).toLowerCase().replace(' fuel','').replace('nearby pickup','nearby')] || packIcons.pickup}</span>`;
   const scaleControl = document.createElement('div'); scaleControl.className = 'house-space-scale'; scaleControl.innerHTML = '<strong>Space size <output>1.0x</output></strong><button type="button" data-space-scale="down" aria-label="Shrink space by 0.1x">−</button><input type="range" min="0.1" max="100" step="0.1" value="1" aria-label="House space size scale"><button type="button" data-space-scale="up" aria-label="Grow space by 0.1x">+</button>';
   const viewControls = document.createElement('div'); viewControls.className = 'house-view-controls'; viewControls.innerHTML = '<strong>View controls <output>Zoom 40%</output></strong><button type="button" data-zoom="in" aria-label="Zoom in">Zoom +</button><button type="button" data-zoom="out" aria-label="Zoom out">Zoom −</button>';
-  const controlDock = document.createElement('div'); controlDock.className = 'house-control-dock'; controlDock.setAttribute('aria-label', 'House view and game controls'); bottomControls.prepend(scaleControl); bottomControls.append(viewControls); controlDock.append(bottomControls); library.before(controlDock);
+  const controlDock = document.createElement('div'); controlDock.className = 'house-control-dock'; controlDock.setAttribute('aria-label', 'House view and game controls');
+  const dockSummary=document.createElement('div');dockSummary.className='game-dock-summary';
+  const dockActions=document.createElement('div');dockActions.className='game-dock-actions';dockActions.setAttribute('role','group');dockActions.setAttribute('aria-label','Game actions');
+  dockSummary.append(scaleControl);const dockProfile=bottomControls.querySelector('.game-profile-wallet');if(dockProfile)dockSummary.append(dockProfile);else dockSummary.classList.add('game-dock-summary--compact');dockSummary.append(viewControls);
+  Array.from(bottomControls.children).filter(item=>item.matches('button.house-bottom-control')).forEach(button=>dockActions.append(button));
+  bottomControls.prepend(dockSummary,dockActions);controlDock.append(bottomControls);library.before(controlDock);
 
   const isCoarsePointer = matchMedia('(pointer: coarse)').matches;
   const isFirefox = /firefox\//i.test(navigator.userAgent || '') && !/seamonkey/i.test(navigator.userAgent || '');
