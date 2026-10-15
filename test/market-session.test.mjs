@@ -23,6 +23,9 @@ test('cookie and bearer member sessions own market and care actions without a br
   const cookie=login.headers['set-cookie'].split(';')[0],cookieHeaders={cookie};
   const session=await call('/api/market/session',cookieHeaders);assert.equal(session.status,200);const owner=session.body.data.owner_id;assert.match(owner,/^account:/);
   const csrf=session.body.data.csrfToken,headers={cookie,'x-csrf-token':csrf,'x-wallet-address':'someone-else'};
+  const savedDesign=await call('/api/designer/drafts',headers,{name:'My design',design:{product:'Sticker sheet',character:'Chaos Ape',fields:{quantity:'2',name:'Crew'},uploads:[],placements:{'preview-name':{left:'30%',top:'50%'}}}});assert.equal(savedDesign.status,200);const draftId=savedDesign.body.data.id;
+  assert.equal((await call('/api/designer/drafts/'+draftId,cookieHeaders)).body.data.design.fields.name,'Crew');
+  assert.equal((await call('/api/designer/drafts',cookieHeaders,{design:{fields:{quantity:1}}})).body.code,'CSRF_INVALID');
   const settings=await call('/api/player/settings',headers,{settings:{mouseSensitivity:1.5,invertLook:true,effectsVolume:0,health:1000}},'PUT');assert.equal(settings.status,200);assert.equal(settings.body.data.owner_id,owner);assert.equal(settings.body.data.settings.mouseSensitivity,1.5);assert.equal('health'in settings.body.data.settings,false);
   assert.equal((await call('/api/player/settings',cookieHeaders,{settings:{effectsVolume:1}},'PUT')).body.code,'CSRF_INVALID');
   assert.equal((await call('/api/player/settings',cookieHeaders)).body.data.settings.effectsVolume,0);
@@ -39,6 +42,8 @@ test('cookie and bearer member sessions own market and care actions without a br
   const second=await call('/api/access/free-play',{}, {username:'OtherCarePlayer',password:'other-session-test'});assert.equal(second.status,200);
   const secondHeaders={cookie:second.headers['set-cookie'].split(';')[0]};const secondSession=await call('/api/market/session',secondHeaders);secondHeaders['x-csrf-token']=secondSession.body.data.csrfToken;
   assert.equal((await call('/api/player/settings',secondHeaders)).body.data.settings.mouseSensitivity,1);
+  assert.equal((await call('/api/designer/drafts/'+draftId,secondHeaders)).status,404);
+  assert.equal((await call('/api/designer/drafts',secondHeaders)).body.data.length,0);
   const extra=await call('/api/rpg/purchases',headers,{itemId:'ion-health-vial',requestId:'buy-trade'});const tradedItem=extra.body.data.items[0];
   assert.equal((await call('/api/market/listings',headers,{itemId:tradedItem.id,priceMzk:10},'PUT')).status,200);
   const trade=await call('/api/market/trades',secondHeaders,{sellerId:owner,itemId:tradedItem.id,requestId:'trade-care',expectedPriceMzk:10});assert.equal(trade.status,201);assert.equal(trade.body.data.buyerId,secondSession.body.data.owner_id);

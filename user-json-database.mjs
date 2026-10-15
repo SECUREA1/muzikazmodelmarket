@@ -1,5 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { cleanDesignerDraft } from './public/js/designer-draft-rules.js';
 import { randomUUID } from 'node:crypto';
 import { RPG_DEFAULT_STATS, applyRpgEffect } from './public/js/rpg-rules.js';
 const RPG_CATALOG=JSON.parse(await readFile(new URL('./public/models/ioncore-rpg-items.json',import.meta.url),'utf8')).items;
@@ -329,6 +330,14 @@ export class UserJsonDatabase {
       return { asset, ownership: data.builderOwnership[id] };
     });
   }
+
+  async designerDrafts(walletId,id=''){
+    const owner=cleanWallet(walletId);await this.initialize();const drafts=Object.values((await this.read()).designerDrafts||{}).filter(draft=>draft.owner_id===owner);
+    if(id){const draft=drafts.find(draft=>draft.id===id);if(!draft)throw Object.assign(new Error('Design draft not found.'),{statusCode:404});return draft;}
+    return drafts.map(({design,...draft})=>({...draft,product:design.product,character:design.character,artworkCount:design.uploads.length})).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
+  }
+  saveDesignerDraft(walletId,input){const owner=cleanWallet(walletId),design=cleanDesignerDraft(input?.design);return this.transaction(data=>{data.designerDrafts||={};const id=String(input.id||'design-'+randomUUID()),previous=data.designerDrafts[id];if(input.id&&(!previous||previous.owner_id!==owner))throw Object.assign(new Error('Design draft not found.'),{statusCode:404});if(!previous&&Object.values(data.designerDrafts).filter(draft=>draft.owner_id===owner).length>=5)throw new Error('Your five design slots are full. Edit or delete an existing draft.');const now=new Date().toISOString();return data.designerDrafts[id]={id,owner_id:owner,name:String(input.name||design.character+' '+design.product).trim().slice(0,140)||'Untitled design',design,createdAt:previous?.createdAt||now,updatedAt:now};});}
+  deleteDesignerDraft(walletId,id){const owner=cleanWallet(walletId);return this.transaction(data=>{const draft=data.designerDrafts?.[id];if(!draft||draft.owner_id!==owner)throw Object.assign(new Error('Design draft not found.'),{statusCode:404});delete data.designerDrafts[id];return {id};});}
 
   async rpgState(walletId) {
     const user=await this.get(walletId);const recentCare=(await this.read()).transactions.filter(entry=>entry.walletId===user.walletId&&entry.type==='RPG_USE').slice(-50);

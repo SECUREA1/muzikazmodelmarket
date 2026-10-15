@@ -75,5 +75,7 @@
   });
   function showError(error) { status.textContent = error.message || 'The member market is unavailable.'; }
   registerExistingWallet().then(() => loadMembers()).catch(showError);
+  window.addEventListener('muzikaz:member-ready',()=>registerExistingWallet().then(()=>loadMembers(owner())).catch(showError));
+  window.addEventListener('muzikaz:market-listings-changed',()=>loadMembers(owner()).catch(showError));
   window.addEventListener('mzk:wallet-connection-changed', () => registerExistingWallet().then(() => loadMembers(owner())).catch(showError));
 }());

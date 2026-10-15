@@ -358,7 +358,7 @@ for (const id of ['bottle-login', 'designer', 'ar-viewer', 'admin', 'marketplace
     throw new Error(`members.html is missing subscriber section #${id}`);
   }
 }
-for (const requiredFreePlayEntry of ['id="member-locked-content" data-locked="true"', 'name="email"', 'name="passcode"', 'No account API or purchase is required']) {
+for (const requiredFreePlayEntry of ['id="member-locked-content" data-locked="true"', 'name="username"', 'name="password"', 'Your saved designs and inventory load from that account']) {
   if (!membersHtml.includes(requiredFreePlayEntry)) {
     throw new Error(`members.html is missing its simple member entry: ${requiredFreePlayEntry}`);
   }
@@ -413,7 +413,7 @@ for (const requiredAdminMarkup of ['id="admin-login-form"', 'name="username"', '
 }
 const appScript = await readFile('dist/script.js', 'utf8');
 const bottleAccessSources = appScript + await readFile('dist/contract-ownership.js', 'utf8');
-if (!appScript.includes('initModelMarketGate') || !appScript.includes("localStorage.setItem('muzikazBottleMember', 'true')")) {
+if (!appScript.includes('initModelMarketGate') || !appScript.includes("window.MUZIKAZ_API.setSessionToken(session.sessionToken)")) {
   throw new Error('The Model Market cover must share the simple members-area browser login.');
 }
 for (const requiredBottleAccessFlow of ['eth_requestAccounts', 'eth_call', 'eth_sendTransaction', 'eth_getTransactionReceipt', 'validateBottleOwnership', 'BOTTLE_BALANCE_OF_SELECTOR']) {
@@ -433,14 +433,14 @@ for (const requiredBackpackModelFlow of ['muzikazBackpackAssetsV1', 'localModelA
 for (const requiredMintReward of ['BACKPACK_LOADOUT_USD = 30', 'Unrevealed MUZIKAZ Land', 'Violet Wish Bottle', 'grantBottleMintBackpackAssets']) {
   if (!appScript.includes(requiredMintReward)) throw new Error(`Bottle mint activation is missing its required payment or Backpack reward: ${requiredMintReward}`);
 }
-for (const requiredSimpleLoginCopy of ['Sign in with any email address and passcode', 'choose your avatar', 'No account API or purchase is required']) {
+for (const requiredSimpleLoginCopy of ['Sign in with your member username and password', 'New usernames create a member account', 'Your saved designs and inventory load from that account']) {
   if (!membersHtml.includes(requiredSimpleLoginCopy)) throw new Error(`members.html is missing simple-login guidance: ${requiredSimpleLoginCopy}`);
 }
-for (const requiredSimpleLoginAction of ["localStorage.setItem('muzikazBottleMember', 'true')", "renderOwnedCollection(currentMemberEmail)", "scrollToSection('member-locked-content')"]) {
+for (const requiredSimpleLoginAction of ["request('/api/market/session')", "request('/api/access/free-play'", "window.MUZIKAZ_API.setSessionToken(session.sessionToken)"]) {
   if (!appScript.includes(requiredSimpleLoginAction)) throw new Error(`script.js is missing simple member login behavior: ${requiredSimpleLoginAction}`);
 }
-if (appScript.slice(appScript.indexOf('function initBottleLogin'), appScript.indexOf('marketQualityToggle?.addEventListener')).includes("/api/access/free-play")) {
-  throw new Error('The member login must not call the account API.');
+if (!appScript.slice(appScript.indexOf('function initBottleLogin'), appScript.indexOf('marketQualityToggle?.addEventListener')).includes("/api/access/free-play")) {
+  throw new Error('Member login must verify a server account session.');
 }
 if (!appScript.includes('config.approvedContracts') || !appScript.includes('MUZIKAZ_BOTTLE_APPROVED_CONTRACTS')) {
   throw new Error('script.js must validate ownership across all approved Bottle contracts.');

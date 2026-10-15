@@ -185,16 +185,16 @@ function normalizeDeliverable(deliverable) {
   };
 }
 
-function addCartLine(name, price, meta = '', deliverable = null) {
+function addCartLine(name, price, meta = '', deliverable = null, design = null) {
   if (!name) return;
   const items = readCart();
   const asset = normalizeDeliverable(deliverable);
-  const key = `${name}|${meta}|${asset?.id || ''}|${asset?.modelUrl || ''}`;
+  const key = `${name}|${meta}|${asset?.id || ''}|${asset?.modelUrl || ''}|${design?.savedAt||''}`;
   const existing = items.find((item) => item.key === key);
   if (existing) {
     existing.quantity += 1;
   } else {
-    items.push({ key, name, price: Number(price) || 0, meta, quantity: 1, deliverable: asset });
+    items.push({ key, name, price: Number(price) || 0, meta, quantity: 1, deliverable: asset, ...(design?{design}:{} ) });
   }
   writeCart(items);
 }
@@ -715,6 +715,7 @@ function initWorldAtlas() {
 initWorldAtlas();
 
 function renderOwnedCollection(preferredOwner = currentMemberEmail) {
+  if(document.body.classList.contains('members-page')){window.dispatchEvent(new Event('muzikaz:member-inventory-refresh'));return;}
   const current = document.querySelector('#owned-current-user');
   const copy = document.querySelector('#owned-current-copy');
   const select = document.querySelector('#owned-profile-select');
@@ -1364,7 +1365,7 @@ function updatePreview() {
   document.querySelector('#preview-meta').textContent = `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${data.get('layout') || character.traits.join(' / ')}`;
   const values = [character.name, data.get('name') || 'MUZIKAZ', data.get('number') || '88', data.get('sleeve') || 'LIVE THE BEAT', `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${data.get('layout') || character.traits.join(' / ')}`];
   const previewValues = document.querySelector('#preview-values');
-  if (previewValues) previewValues.innerHTML = values.map((value) => `<li>${value}</li>`).join('');
+  if (previewValues) previewValues.innerHTML = values.map((value) => `<li>${escapeMarkup(value)}</li>`).join('');
   renderOrderSummary();
 }
 
@@ -1375,7 +1376,8 @@ function renderOrderSummary() {
   const quantity = Number(data.get('quantity') || 1);
   const total = product.price * quantity;
   const uploads = uploadState.layers.length ? uploadState.layers.map((layer) => layer.name).join(', ') : 'No custom upload yet';
-  summary.innerHTML = `<strong>${product.name} custom order</strong><span>${character.name} · ${data.get('size')} · Qty ${quantity} · $${total.toFixed(2)}</span><span>Text: ${data.get('name')} / ${data.get('number')} / ${data.get('sleeve')}</span><span>Uploaded art: ${uploads}</span><span>Notes: ${data.get('notes') || 'None'}</span>`;
+  summary.innerHTML = `<strong>${escapeMarkup(product.name)} custom order</strong><span>${escapeMarkup(character.name)} · ${escapeMarkup(data.get('size'))} · Qty ${quantity} · $${total.toFixed(2)}</span><span>Text: ${escapeMarkup(data.get('name'))} / ${escapeMarkup(data.get('number'))} / ${escapeMarkup(data.get('sleeve'))}</span><span>Uploaded art: ${escapeMarkup(uploads)}</span><span>Notes: ${escapeMarkup(data.get('notes') || 'None')}</span>`;
+  const stack=document.querySelector('#layer-stack');if(stack)stack.innerHTML='<li>Product template and print-safe guide</li><li>Character, logo and text layers · drag on the preview</li>'+uploadState.layers.map(layer=>`<li><button type="button" data-select-design-layer="${escapeMarkup(layer.id)}">${escapeMarkup(layer.name)}${layer.id===uploadState.activeId?' · Selected':''}</button></li>`).join('');
 }
 
 function renderMarketplace(type = marketplaceState.type, modelFocus = marketplaceState.modelFocus) {
@@ -1540,6 +1542,7 @@ function exportDesignerOrder() {
     version: 1,
     savedAt: new Date().toISOString(),
     fields: Object.fromEntries(data.entries()),
+    placements:Object.fromEntries(['preview-character','preview-name','preview-number','preview-sleeve'].map(id=>{const layer=document.getElementById(id);return [id,{left:layer.style.left||'',top:layer.style.top||''}];}).filter(([,value])=>value.left&&value.top)),
     product: product.name,
     character: character.name,
     color: data.get('color'),
@@ -1581,6 +1584,7 @@ function restoreDesignerOrder(saved) {
     layer.dataset.flipY = savedLayer.flipY || 'false';
     applyLayerTransform(layer);
   });
+  ['preview-character','preview-name','preview-number','preview-sleeve'].forEach(id=>{const layer=document.getElementById(id);layer.style.removeProperty('left');layer.style.removeProperty('top');layer.style.removeProperty('right');layer.style.removeProperty('bottom');const placement=saved.placements?.[id];if(placement){layer.style.left=placement.left;layer.style.top=placement.top;layer.style.right='auto';layer.style.bottom='auto';}});
   updatePreview();
   return true;
 }
@@ -1666,7 +1670,10 @@ function enableStickerStageDragging() {
 }
 
 enableStickerStageDragging();
+window.MUZIKAZ_DESIGNER={export:exportDesignerOrder,restore:restoreDesignerOrder,status:setDesignerStatus,products:()=>designerProducts};
+document.querySelector('#layer-stack')?.addEventListener('click',event=>{const id=event.target.closest('[data-select-design-layer]')?.dataset.selectDesignLayer;if(id){const layer=[...document.querySelectorAll('.uploaded-design-layer')].find(layer=>layer.dataset.layerId===id);if(layer){selectUploadLayer(layer);renderOrderSummary();}}});
 document.querySelector('#save-design')?.addEventListener('click', () => {
+  if(window.MUZIKAZ_DESIGNER_STORE){window.MUZIKAZ_DESIGNER_STORE.save();return;}
   uploadState.saved = exportDesignerOrder();
   try {
     localStorage.setItem('muzikazSavedDesign', JSON.stringify(uploadState.saved));
@@ -1676,6 +1683,7 @@ document.querySelector('#save-design')?.addEventListener('click', () => {
   }
 });
 document.querySelector('#load-design')?.addEventListener('click', () => {
+  if(window.MUZIKAZ_DESIGNER_STORE){window.MUZIKAZ_DESIGNER_STORE.browse();return;}
   try {
     uploadState.saved = JSON.parse(localStorage.getItem('muzikazSavedDesign') || 'null');
     setDesignerStatus(restoreDesignerOrder(uploadState.saved) ? `Loaded saved ${uploadState.saved.product} draft with its placement settings.` : 'No saved design draft found yet.');
@@ -1694,12 +1702,13 @@ document.querySelector('#edit-design')?.addEventListener('click', () => {
 });
 document.querySelector('#download-design-spec')?.addEventListener('click', downloadDesignerSpec);
 document.querySelector('[data-add-custom]')?.addEventListener('click', (event) => {
+  if(!designerControls.reportValidity())return;
   const order = exportDesignerOrder();
   const title = `${order.character} ${order.product} custom order`;
   const product = designerProducts.find((item) => item.name === order.product) || { price: 74.99 };
-  addCartLine(title, product.price * order.quantity, `Custom merch designer · ${order.uploads.length} upload(s) · ${order.logoStyle}`);
+  try{addCartLine(title, product.price * order.quantity, `Custom merch designer · ${order.uploads.length} upload(s) · ${order.logoStyle}`,null,order);}catch{setDesignerStatus('The artwork is too large for this device cart. Save a member draft or download the print spec first.');return;}
   updateCart(event.currentTarget, 'Design added');
-  setDesignerStatus('Checkout-ready custom order added with final summary, text, upload references, quantity, and notes.');
+  setDesignerStatus('Design and complete print specification added to your cart. Complete checkout to place an order.');
 });
 document.querySelector('#asset-upload')?.addEventListener('change', (event) => {
   const files = [...event.currentTarget.files].map((file) => `<li>${file.name} → thumbnails, tiles, cards, previews queued</li>`).join('');
@@ -2079,36 +2088,12 @@ arPopoutButton?.addEventListener('click', () => {
 });
 
 function initBottleLogin() {
-  const form = document.querySelector('#bottle-login-form');
-  const lockedContent = document.querySelector('#member-locked-content');
-  const status = document.querySelector('#bottle-login-status');
-  if (!form || !lockedContent) return;
-  const unlock = async (message) => {
-    if (window.MUZIKAZ_AVATAR_GATE) await window.MUZIKAZ_AVATAR_GATE.ensure();
-    lockedContent.dataset.locked = 'false';
-    if (status) status.textContent = message;
-  };
-  if (hasBottleLogin()) {
-    currentMemberEmail = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail') || currentMemberEmail || 'crew@muzikaz.example');
-    unlock(`Bottle member access is active for ${currentMemberEmail}. Subscriber tools are unlocked.`);
-    renderOwnedCollection(currentMemberEmail);
-  }
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const data = new FormData(form);
-    currentMemberEmail = normalizeMemberEmail(data.get('email'));
-    window.localStorage.setItem('muzikazBottleMember', 'true');
-    window.localStorage.setItem('muzikazBottleMemberEmail', currentMemberEmail);
-    renderOwnedCollection(currentMemberEmail);
-    await unlock(`${currentMemberEmail} is logged in. Your designated avatar and Drop Backpack are retained across visits.`);
-    const redirect = window.sessionStorage.getItem('muzikazLoginRedirect');
-    if (redirect) {
-      window.sessionStorage.removeItem('muzikazLoginRedirect');
-      window.location.href = redirect;
-      return;
-    }
-    scrollToSection('member-locked-content');
-  });
+  const form=document.querySelector('#bottle-login-form'),lockedContent=document.querySelector('#member-locked-content'),status=document.querySelector('#bottle-login-status');if(!form||!lockedContent)return;
+  async function request(path,options={}){const response=await window.MUZIKAZ_API.fetch(path,{...options,retries:0,headers:{Accept:'application/json',...(options.body?{'Content-Type':'application/json'}:{})}});const result=await response.json();if(!response.ok||result.success===false)throw new Error(result.message||'Member login is unavailable.');return result.data;}
+  let authVersion=0;
+  function unlock(session){window.MuzikazAccountSession=session;currentMemberEmail=normalizeMemberEmail(session.account?.username||session.owner_id||'account:'+session.account.accountId);localStorage.setItem('muzikazBottleMember','true');localStorage.setItem('muzikazBottleMemberEmail',currentMemberEmail);lockedContent.dataset.locked='false';status.textContent='Signed in as '+currentMemberEmail+'. Designs and inventory use your member account.';window.dispatchEvent(new Event('muzikaz:member-ready'));}
+  request('/api/market/session').then(session=>{if(!authVersion)unlock(session);}).catch(()=>{if(authVersion)return;lockedContent.dataset.locked='true';status.textContent='Sign in with your member username and password. New usernames create a member account.';});
+  form.addEventListener('submit',async event=>{event.preventDefault();if(!form.reportValidity())return;authVersion++;const button=form.querySelector('button');button.disabled=true;status.textContent='Verifying member login…';try{const fields=new FormData(form);const session=await request('/api/access/free-play',{method:'POST',body:JSON.stringify({username:fields.get('username'),password:fields.get('password')})});window.MUZIKAZ_API.setSessionToken(session.sessionToken);unlock(session);form.elements.password.value='';const redirect=sessionStorage.getItem('muzikazLoginRedirect');if(redirect){sessionStorage.removeItem('muzikazLoginRedirect');location.href=redirect;return;}document.getElementById(location.hash.slice(1)||'member-locked-content')?.scrollIntoView({behavior:'smooth',block:'start'});}catch(error){status.textContent=error.message;}finally{button.disabled=false;}});
 }
 
 marketQualityToggle?.addEventListener('change', () => renderMarketplace());

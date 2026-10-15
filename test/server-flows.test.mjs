@@ -128,18 +128,18 @@ test('admin, new-user Loadout Pass, and aggregate marketplace work through the l
   assert.deepEqual(new Set(listings.body.data.map((item) => item.sellerName)), new Set(['New User', 'Second Seller']), 'an anonymous visitor sees active listings from every seller');
 });
 
-test('member entry uses a simple browser-only login', async () => {
+test('member entry verifies an account session for designer and inventory access', async () => {
   const [source, page] = await Promise.all([
     readFile(new URL('../script.js', import.meta.url), 'utf8'),
     readFile(new URL('../members.html', import.meta.url), 'utf8')
   ]);
   const login = source.slice(source.indexOf('function initBottleLogin'), source.indexOf('marketQualityToggle?.addEventListener'));
-  assert.match(page, /name="email"/);
-  assert.match(page, /name="passcode"/);
+  assert.match(page, /name="username"/);
+  assert.match(page, /name="password"/);
   assert.match(page, /public\/js\/avatar-selection\.js/);
-  assert.match(login, /localStorage\.setItem\('muzikazBottleMember', 'true'\)/);
-  assert.match(login, /MUZIKAZ_AVATAR_GATE\.ensure/);
-  assert.doesNotMatch(login, /\/api\/access\//, 'simple member login must not call the account API');
+  assert.match(login, /localStorage\.setItem\('muzikazBottleMember','true'\)/);
+  assert.match(login, /setSessionToken\(session.sessionToken\)/);
+  assert.match(login, /\/api\/access\/free-play/, 'member login must authenticate the API session');
 });
 
 test('the VibeVerse multiplayer client uses the simple login without a Loadout gate', async () => {
