@@ -215,7 +215,8 @@ export class UserJsonDatabase {
         itemType: String(item.type || 'Backpack item'),
         priceMzk: Number(item.listing.priceMzk),
         listedAt: item.listing.updatedAt || user.updatedAt,
-        thumbnailUrl: String(item.thumbnailUrl || item.previewUrl || '')
+        thumbnailUrl: String(item.thumbnailUrl || item.thumbnail_url || item.previewUrl || item.imageUrl || item.image_url || ''),
+        modelUrl: String(item.modelUrl || item.glb_url || ''),buildAssetId:item.buildAssetId||null,materialId:item.materialId||null,toolId:item.toolId||null,category:item.category||item.type||'Item'
       }));
     }).sort((a, b) => String(b.listedAt || '').localeCompare(String(a.listedAt || '')) || a.itemName.localeCompare(b.itemName));
   }

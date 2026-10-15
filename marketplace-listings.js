@@ -1,5 +1,6 @@
-(function () {
+(async function () {
   'use strict';
+  const {marketItemPreview,hydrateMarketPreviews}=await import('./public/js/market-item-preview.js');
   const shelves = [...document.querySelectorAll('[data-user-market-listings]')];
   if (!shelves.length) return;
   const statuses = [...document.querySelectorAll('[data-user-market-status]')];
@@ -20,7 +21,7 @@
     return result.data;
   };
   const card = (listing) => `<article class="user-market-card">
-    ${listing.thumbnailUrl ? `<img src="${escape(listing.thumbnailUrl)}" alt="${escape(listing.itemName)}">` : '<span class="user-market-card__icon" aria-hidden="true">ϟ</span>'}
+    ${marketItemPreview(listing)}
     <div><span class="pill">${escape(listing.itemType)}</span><h4>${escape(listing.itemName)}</h4><small>Seller: ${escape(listing.sellerName)}</small><strong>${Number(listing.priceMzk).toLocaleString()} MZK</strong></div>
     <button type="button" data-buy-user-listing="${escape(listing.itemId)}" data-seller-id="${escape(listing.sellerId)}" ${listing.sellerId === owner() ? 'disabled' : ''}>${listing.sellerId === owner() ? 'Your listing' : 'Buy with MZK'}</button>
   </article>`;
@@ -28,6 +29,7 @@
     setStatus('Loading every active user listing…');
     const listings = await api('/api/market/listings');
     shelves.forEach((shelf) => { shelf.innerHTML = listings.length ? listings.map(card).join('') : '<p class="user-market-empty">No user items are listed yet. Active Backpack listings will appear here automatically.</p>'; });
+    shelves.forEach(hydrateMarketPreviews);
     const sellers = new Set(listings.map((listing) => listing.sellerId)).size;
     setStatus(`${listings.length} active user listing${listings.length === 1 ? '' : 's'} shown from ${sellers} seller${sellers === 1 ? '' : 's'} in the shared MUZIKAZ market.`);
   }

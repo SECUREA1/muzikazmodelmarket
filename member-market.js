@@ -1,5 +1,6 @@
-(function () {
+(async function () {
   'use strict';
+  const {marketItemPreview,hydrateMarketPreviews}=await import('./public/js/market-item-preview.js');
   const select = document.querySelector('#exchange-member-select');
   const packs = document.querySelector('#exchange-packs');
   const trades = document.querySelector('#exchange-trades');
@@ -34,8 +35,8 @@
     const profiles = await Promise.all(peerMembers.map((member) => api(`/api/market/members/${encodeURIComponent(member.walletId)}`)));
     const listed = profiles.flatMap((profile) => profile.items.filter((item) => item.listing?.active).map((item) => ({ profile, item })));
     const directory = document.createElement('section'); directory.className = 'market-directory-listings'; directory.setAttribute('aria-label', 'All member marketplace listings');
-    directory.innerHTML = `<h4>All member listings</h4><div>${listed.map(({ profile, item }) => `<article><span class="pill">${escape(profile.displayName)}</span><h4>${escape(item.name || item.title || item.id)}</h4><strong>${Number(item.listing.priceMzk).toLocaleString()} MZK</strong>${profile.walletId === owner() ? '<small>Your listing</small>' : `<button type="button" data-directory-owner="${escape(profile.walletId)}" data-exchange-buy="${escape(item.id)}">Trade now</button>`}</article>`).join('') || '<p>No members have active listings yet.</p>'}</div>`;
-    packs.append(directory);
+    directory.innerHTML = `<h4>All member listings</h4><div>${listed.map(({ profile, item }) => `<article>${marketItemPreview(item)}<span class="pill">${escape(profile.displayName)}</span><h4>${escape(item.name || item.title || item.id)}</h4><strong>${Number(item.listing.priceMzk).toLocaleString()} MZK</strong>${profile.walletId === owner() ? '<small>Your listing</small>' : `<button type="button" data-directory-owner="${escape(profile.walletId)}" data-exchange-buy="${escape(item.id)}">Trade now</button>`}</article>`).join('') || '<p>No members have active listings yet.</p>'}</div>`;
+    packs.append(directory);hydrateMarketPreviews(packs);
   }
 
   async function loadProfile(peer) {
@@ -43,10 +44,11 @@
     const [profile, activity] = await Promise.all([api(`/api/market/members/${encodeURIComponent(peer)}`), api(`/api/market/activity?peer=${encodeURIComponent(peer)}`)]);
     const mine = peer === owner();
     packs.innerHTML = profile.items.map((item) => mine
-      ? `<article><span class="pill">Your pack</span><h4>${escape(item.name || item.title || item.id)}</h4><form data-exchange-list="${escape(item.id)}"><label>MZK price <input name="price" type="number" min="1" max="1000000" value="${Number(item.listing?.priceMzk || 25)}" required></label><button type="submit">${item.listing?.active ? 'Update listing' : 'List for trade'}</button></form></article>`
+      ? `<article>${marketItemPreview(item)}<span class="pill">Your pack</span><h4>${escape(item.name || item.title || item.id)}</h4><form data-exchange-list="${escape(item.id)}"><label>MZK price <input name="price" type="number" min="1" max="1000000" value="${Number(item.listing?.priceMzk || 25)}" required></label><button type="submit">${item.listing?.active ? 'Update listing' : 'List for trade'}</button></form></article>`
       : item.listing?.active
-      ? `<article><span class="pill">Listed pack</span><h4>${escape(item.name || item.title || item.id)}</h4><strong>${Number(item.listing.priceMzk).toLocaleString()} MZK</strong><button type="button" data-exchange-buy="${escape(item.id)}">Trade now</button></article>`
-      : `<article><span class="pill">Backpack pack</span><h4>${escape(item.name || item.title || item.id)}</h4><small>Not listed for trade</small></article>`).join('') || '<p>This member’s Backpack is empty.</p>';
+      ? `<article>${marketItemPreview(item)}<span class="pill">Listed pack</span><h4>${escape(item.name || item.title || item.id)}</h4><strong>${Number(item.listing.priceMzk).toLocaleString()} MZK</strong><button type="button" data-exchange-buy="${escape(item.id)}">Trade now</button></article>`
+      : `<article>${marketItemPreview(item)}<span class="pill">Backpack pack</span><h4>${escape(item.name || item.title || item.id)}</h4><small>Not listed for trade</small></article>`).join('') || '<p>This member’s Backpack is empty.</p>';
+    hydrateMarketPreviews(packs);
     trades.innerHTML = activity.trades.slice().reverse().map((trade) => `<li><b>${escape(trade.itemName)}</b><span>${escape(trade.sellerId)} → ${escape(trade.buyerId)}</span><strong>${Number(trade.priceMzk).toLocaleString()} MZK</strong></li>`).join('') || '<li>No shared trades yet.</li>';
     messages.innerHTML = activity.messages.slice().reverse().map((message) => `<li><b>${message.from === owner() ? 'You' : escape(profile.displayName)}</b><span>${escape(message.text)}</span><time>${new Date(message.createdAt).toLocaleString()}</time></li>`).join('') || '<li>No messages yet.</li>';
     form.hidden = mine;
