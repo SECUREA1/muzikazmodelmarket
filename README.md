@@ -84,7 +84,9 @@ npm run build:land-data
 npm run check:land-data
 ```
 
-Build and run the Rust server locally:
+Older Render services may still start `./target/release/muzikazmodelmarket`. That executable now replaces itself with `node server.mjs` from the repository root, so member login, sessions, inventory, and trading use the same backend. Node must be installed in that service runtime. For Render services created manually, apply the Node runtime, build command, and start command shown above; editing the blueprint alone does not change a manually configured service.
+
+Build and run the compatibility launcher locally (requires Rust to build and Node to run):
 
 ```bash
 cargo build --release

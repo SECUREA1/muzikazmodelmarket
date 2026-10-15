@@ -41,3 +41,12 @@ test('legacy Rust deployment exposes the complete admin Loadout generator contra
   assert.match(server, /fn revoke_loadout_code/);
   assert.match(server, /loadout-codes-rust\.json/);
 });
+
+test('legacy Render executable starts the canonical member API instead of the incomplete Rust router', async () => {
+  const source = await readFile(new URL('../src/main.rs', import.meta.url), 'utf8');
+  const main = source.slice(source.indexOf('fn main()'), source.indexOf('fn legacy_main()'));
+  assert.match(main, /join\("server\.mjs"\)/);
+  assert.match(main, /Command::new\("node"\)/);
+  assert.match(main, /command\.exec\(\)/);
+  assert.doesNotMatch(main, /TcpListener|legacy_main\(\)/);
+});

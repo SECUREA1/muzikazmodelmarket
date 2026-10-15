@@ -205,7 +205,30 @@ struct State {
     loadout_codes: Arc<RwLock<Vec<LoadoutCode>>>,
     users: Arc<RwLock<HashMap<String, String>>>,
 }
+// Keep older Render start commands on the same account/session implementation.
+// Running two independent stores here would split member identities and inventory.
 fn main() -> std::io::Result<()> {
+    let entry = env::current_dir()?.join("server.mjs");
+    if entry.is_file() {
+        let mut command = std::process::Command::new("node");
+        command.arg(&entry);
+        #[cfg(unix)]
+        {
+            use std::os::unix::process::CommandExt;
+            return Err(command.exec());
+        }
+        #[cfg(not(unix))]
+        {
+            let status = command.status()?;
+            std::process::exit(status.code().unwrap_or(1));
+        }
+    }
+    Err(std::io::Error::new(std::io::ErrorKind::NotFound,
+        "Member API entrypoint server.mjs is missing. Deploy the repository root with Node and run node server.mjs."))
+}
+
+#[allow(dead_code)]
+fn legacy_main() -> std::io::Result<()> {
     let port = env::var("PORT").unwrap_or("4173".into());
     let data = PathBuf::from(env::var("MUZIKAZ_DATA_DIR").unwrap_or("data".into()));
     let uploads = PathBuf::from(
