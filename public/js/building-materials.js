@@ -95,6 +95,14 @@ function createStructure(T, profile, tint) {
     root.add(mesh); return mesh;
   };
   switch(profile.shape) {
+    case 'wall':
+      part(w,h,d);for(let i=0;i<6;i++)part(.06,h,.03,-w/2+.2+i*.4,0,d/2-.03);break;
+    case 'crate':
+      part(w,h,d);for(const y of [.08,h-.14])part(w,.06,.04,0,y,d/2-.04,0x554330);break;
+    case 'pillar':
+      part(w*.75,h,d*.75);part(w,.12,d);part(w,.12,d,0,h-.12);break;
+    case 'counter':
+      part(w,h-.08,d);part(w,.08,d,0,h-.08,0,0xd5b885);break;
     case 'roof':
       for(let i=0;i<6;i++)part(w/6,.15,d,-w/2+w*(i+.5)/6,.45-Math.abs(i-2.5)*.12);break;
     case 'arch':
@@ -118,6 +126,7 @@ function createStructure(T, profile, tint) {
     case 'door': {
       part(.15,h,d,-w/2+.075);part(.15,h,d,w/2-.075);part(w,.15,d,0,h-.15);
       const leaf=part(w-.3,h-.15,.1);leaf.userData.buildDoorLeaf=true;
+      const handle=part(.06,.06,.08,w/2-.3,h*.5,d/2-.08,0xd5b34d);handle.userData.buildDoorLeaf=true;
       root.userData.canToggle=true;root.userData.open=false;break;
     }
     case 'fence':
@@ -148,4 +157,27 @@ export function toggleBuildingObject(root) {
     mesh.userData.collisionDisabled = root.userData.open;
   });
   return true;
+}
+
+// Catalog artwork is projected from the actual model, so each SVG matches its mesh.
+export function buildingIcon(T,id) {
+  const root=createBuildingBlock(T,id),camera=new T.OrthographicCamera(-2.2,2.2,2.2,-2.2,.01,30);
+  const bounds=new T.Box3().setFromObject(root),center=bounds.getCenter(new T.Vector3()),size=bounds.getSize(new T.Vector3()).length();
+  root.scale.setScalar(2.7/Math.max(size,.5));root.position.copy(center).multiplyScalar(-2.7/Math.max(size,.5));root.updateMatrixWorld(true);
+  camera.position.set(5,4,6);camera.lookAt(0,0,0);camera.updateMatrixWorld(true);
+  const faces=[],a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3();
+  root.traverse(mesh=>{
+    if(!mesh.isMesh)return;const p=mesh.geometry.attributes.position,index=mesh.geometry.index,count=index?index.count:p.count;
+    for(let i=0;i<count;i+=3){
+      mesh.getVertexPosition(index?index.getX(i):i,a);a.applyMatrix4(mesh.matrixWorld);
+      mesh.getVertexPosition(index?index.getX(i+1):i+1,b);b.applyMatrix4(mesh.matrixWorld);
+      mesh.getVertexPosition(index?index.getX(i+2):i+2,c);c.applyMatrix4(mesh.matrixWorld);
+      const normal=b.clone().sub(a).cross(c.clone().sub(a)).normalize();if(normal.dot(camera.position.clone().sub(a))<=0)continue;
+      const color=mesh.material.color.clone().multiplyScalar(.65+.35*Math.max(0,normal.dot(new T.Vector3(.4,.8,.5).normalize())));
+      const vertices=[a.clone().project(camera),b.clone().project(camera),c.clone().project(camera)];
+      faces.push({z:vertices.reduce((sum,v)=>sum+v.z,0)/3,path:vertices.map((v,i)=>(i?'L':'M')+(64+v.x*64).toFixed(1)+' '+(64-v.y*64).toFixed(1)).join(' ')+'Z',color:color.getHexString(),opacity:mesh.material.opacity});
+    }
+  });
+  root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose();});
+  return `<svg viewBox="0 0 128 128" class="building-item-art" aria-hidden="true"><ellipse cx="64" cy="106" rx="42" ry="8" fill="#000" opacity=".25"/>${faces.sort((a,b)=>b.z-a.z).map(f=>`<path d="${f.path}" fill="#${f.color}" opacity="${f.opacity}"/>`).join('')}</svg>`;
 }
