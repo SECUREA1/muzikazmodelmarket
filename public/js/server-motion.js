@@ -35,7 +35,7 @@ export class ServerMotion {
   const ahead=Math.max(0,Math.min(this.maxExtrapolation,time-last.time));
   const distance=Math.hypot(...['x','y','z'].map(axis=>last.position[axis]-previous.position[axis]));
   const limit=distance?Math.min(1,15*dt/1000/distance):1;
-  for(const axis of ['x','y','z'])target[axis]=last.position[axis]+(dt>0?(last.position[axis]-previous.position[axis])*ahead/dt*limit:0);
+  for(const axis of ['x','y','z'])target[axis]=last.position[axis]+(dt>=25?(last.position[axis]-previous.position[axis])*ahead/dt*limit:0);
   return target;
  }
 }
