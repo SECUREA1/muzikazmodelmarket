@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../public/vendor/three/three.module.min.js';
-import { BUILDING_MATERIALS, buildingMaterial, createBuildingBlock } from '../public/js/building-materials.js';
+import { BUILDING_MATERIALS, buildingMaterial, buildingDimensions, createBuildingBlock, toggleBuildingObject } from '../public/js/building-materials.js';
 
 const dispose = root => root.traverse(o => { o.geometry?.dispose(); o.material?.dispose(); });
 
 test('all building materials create usable grid-sized meshes with unique identifiers', () => {
   assert.equal(new Set(BUILDING_MATERIALS.map(m => m.id)).size, BUILDING_MATERIALS.length);
   for (const id of ['water', 'rock', 'dirt', 'brick', 'cement', 'wood', 'metal', 'glass', 'grass', 'sand']) assert.ok(BUILDING_MATERIALS.some(m => m.id === id));
-  for (const material of BUILDING_MATERIALS) {
+  for (const material of BUILDING_MATERIALS.filter(m => !m.shape)) {
     const root = createBuildingBlock(THREE, material.id);
     assert.equal(root.userData.materialId, material.id);
     const body = root.children[0];
@@ -38,4 +38,38 @@ test('painting a newly created block preserves its material and previously place
   assert.equal(painted.children[0].material.roughness, buildingMaterial('cement').roughness);
   assert.equal(placed.children[0].material.color.getHex(), buildingMaterial('cement').color);
   dispose(placed); dispose(painted);
+});
+
+
+test('fort pieces and marketplace props have selected dimensions and usable openings', () => {
+  for (const id of ['wall','floor','steps','ramp','window','door','fence','pillar','market','counter','bench','planter']) {
+    const root=createBuildingBlock(THREE,id);
+    assert.equal(root.userData.structure,true);
+    const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3());
+    const dimensions=buildingDimensions(id);
+    for(let axis=0;axis<3;axis++)assert.ok(size.getComponent(axis)<=dimensions[axis]+.001, id);
+    dispose(root);
+  }
+  const window=createBuildingBlock(THREE,'window');
+  window.updateMatrixWorld(true);
+  const ray=new THREE.Raycaster(new THREE.Vector3(0,.1,2),new THREE.Vector3(0,0,-1));
+  assert.equal(ray.intersectObject(window,true).length,0,'window aperture remains empty');
+  const steps=createBuildingBlock(THREE,'steps');
+  assert.equal(steps.children.length,4);
+  assert.ok(steps.children[0].geometry.parameters.height<steps.children[3].geometry.parameters.height);
+  dispose(window);dispose(steps);
+});
+
+test('opening and closing a door updates visible and collision geometry', () => {
+  const door=createBuildingBlock(THREE,'door');
+  const leaf=door.children.find(mesh=>mesh.userData.buildDoorLeaf);
+  assert.equal(toggleBuildingObject(door),true);
+  assert.equal(leaf.visible,false);
+  assert.equal(leaf.userData.collisionDisabled,true);
+  assert.equal(toggleBuildingObject(door),true);
+  assert.equal(leaf.visible,true);
+  assert.equal(leaf.userData.collisionDisabled,false);
+  const cement=createBuildingBlock(THREE,'cement');
+  assert.equal(toggleBuildingObject(cement),false);dispose(cement);
+  dispose(door);
 });

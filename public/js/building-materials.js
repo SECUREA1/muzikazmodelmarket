@@ -12,6 +12,22 @@ export const BUILDING_MATERIALS = Object.freeze([
   { id: 'water', name: 'Water', color: 0x249fe0, roughness: .18, opacity: .55, solid: false },
   { id: 'asphalt', name: 'Asphalt', color: 0x30343a, roughness: 1 },
   { id: 'snow', name: 'Snow', color: 0xf0f6ff, roughness: 1 },
+  { id: 'clay', name: 'Clay', color: 0xc68264, roughness: 1 },
+  { id: 'marble', name: 'Marble', color: 0xe1ded5, roughness: .25 },
+  { id: 'copper', name: 'Copper', color: 0xb66d42, roughness: .3, metalness: .85 },
+  { id: 'ice', name: 'Ice', color: 0x91dcff, roughness: .15, opacity: .65 },
+  { id: 'wall', name: 'Fort wall', color: 0xa97743, roughness: .85, shape: 'wall', dimensions: [2.4, 2.4, .2] },
+  { id: 'floor', name: 'Floor platform', color: 0x929a9f, roughness: .9, shape: 'floor', dimensions: [2.4, .2, 2.4] },
+  { id: 'steps', name: 'Stone steps', color: 0x969b9d, roughness: 1, shape: 'steps', dimensions: [1.8, 1.2, 2.4] },
+  { id: 'ramp', name: 'Fort ramp', color: 0xa97743, roughness: .85, shape: 'ramp', dimensions: [2.4, 1.2, 2.4] },
+  { id: 'window', name: 'Window wall', color: 0xd6c9b5, roughness: .8, shape: 'window', dimensions: [2.4, 2.4, .2] },
+  { id: 'door', name: 'Opening door', color: 0x9b653c, roughness: .8, shape: 'door', dimensions: [1.8, 2.4, .2] },
+  { id: 'fence', name: 'Fence', color: 0x957145, roughness: .9, shape: 'fence', dimensions: [2.4, 1.2, .15] },
+  { id: 'pillar', name: 'Support pillar', color: 0xc1beb7, roughness: .9, shape: 'pillar', dimensions: [.4, 2.4, .4] },
+  { id: 'market', name: 'Market stall', color: 0xc78440, roughness: .8, shape: 'market', dimensions: [2.4, 2.4, 1.8] },
+  { id: 'counter', name: 'Shop counter', color: 0x8b633f, roughness: .8, shape: 'counter', dimensions: [2.4, .9, .6] },
+  { id: 'bench', name: 'Park bench', color: 0x956132, roughness: .85, shape: 'bench', dimensions: [1.8, 1.2, .6] },
+  { id: 'planter', name: 'Planter', color: 0xb55f3d, roughness: .9, shape: 'planter', dimensions: [1.2, .6, .6] },
 ].map(material => Object.freeze({ solid: true, metalness: 0, ...material })));
 
 export function buildingMaterial(id) {
@@ -20,6 +36,7 @@ export function buildingMaterial(id) {
 
 export function createBuildingBlock(THREE, id, { width = 1.2, height = .4, depth = .6, tint = null } = {}) {
   const profile = buildingMaterial(id), root = new THREE.Group();
+  if (profile.shape) return createStructure(THREE, profile, tint);
   const material = new THREE.MeshStandardMaterial({ color: tint ?? profile.color,
     roughness: profile.roughness, metalness: profile.metalness,
     transparent: profile.opacity !== undefined, opacity: profile.opacity ?? 1,
@@ -52,4 +69,63 @@ export function createBuildingBlock(THREE, id, { width = 1.2, height = .4, depth
   }
   root.traverse(object => { if (object.isMesh) { object.castShadow = profile.solid; object.receiveShadow = true; } });
   return root;
+}
+
+export function buildingDimensions(id) {
+  return buildingMaterial(id).dimensions || [1.2, .4, .6];
+}
+
+function createStructure(T, profile, tint) {
+  const root = new T.Group(), [w, h, d] = profile.dimensions;
+  root.userData = { materialId: profile.id, solid: true, structure: true };
+  const part = (width, height, depth, x=0, y=0, z=0, color=tint ?? profile.color) => {
+    const mesh = new T.Mesh(new T.BoxGeometry(width, height, depth), new T.MeshStandardMaterial({color, roughness:profile.roughness}));
+    mesh.position.set(x, y-h/2+height/2, z);
+    mesh.userData.brickPaintPart='body'; mesh.castShadow=true; mesh.receiveShadow=true;
+    root.add(mesh); return mesh;
+  };
+  switch(profile.shape) {
+    case 'steps': case 'ramp': {
+      // Small treads keep capsule stepping reliable without a bounding-box slope.
+      const count = profile.shape === 'ramp' ? 8 : 4;
+      for(let i=0;i<count;i++)part(w,h*(i+1)/count,d/count,0,0,-d/2+d*(i+.5)/count);
+      break;
+    }
+    case 'window':
+      part(w,.65,d); part(w,.45,d,0,h-.45);
+      part(.35,h-1.1,d,-w/2+.175,.65);part(.35,h-1.1,d,w/2-.175,.65);
+      break;
+    case 'door': {
+      part(.15,h,d,-w/2+.075);part(.15,h,d,w/2-.075);part(w,.15,d,0,h-.15);
+      const leaf=part(w-.3,h-.15,.1);leaf.userData.buildDoorLeaf=true;
+      root.userData.canToggle=true;root.userData.open=false;break;
+    }
+    case 'fence':
+      for(const x of [-w/2+.08,0,w/2-.08])part(.16,h,d,x);
+      for(const y of [.3,.85])part(w,.14,d,0,y);break;
+    case 'market':
+      for(const x of [-w/2+.1,w/2-.1])for(const z of [-d/2+.1,d/2-.1])part(.12,h,.12,x,0,z);
+      part(w,.65,.5,0,0,d/2-.25);
+      for(let i=0;i<6;i++)part(w/6,.12,d,-w/2+w*(i+.5)/6,h-.12,0,i%2?0xffefe0:0xcc3e38);
+      break;
+    case 'bench':
+      part(w,.12,d,0,.45);part(w,.7,.1,0,.5,d/2-.05);
+      for(const x of [-w/2+.2,w/2-.2])part(.12,.45,d,x);break;
+    case 'planter':
+      part(w,.45,d);part(w-.1,.05,d-.1,0,.45,0,0x523d28);
+      for(const x of [-.3,0,.3])part(.2,.15,.25,x,.45,0,0x57933c);break;
+    default: part(w,h,d);
+  }
+  return root;
+}
+
+export function toggleBuildingObject(root) {
+  if (!root?.userData.canToggle) return false;
+  root.userData.open = !root.userData.open;
+  root.traverse(mesh => {
+    if (!mesh.userData.buildDoorLeaf) return;
+    mesh.visible = !root.userData.open;
+    mesh.userData.collisionDisabled = root.userData.open;
+  });
+  return true;
 }

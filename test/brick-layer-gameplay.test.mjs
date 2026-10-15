@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 test('Brick Layer snaps, highlights, collides, and breaks after five hits', async () => {
   const script = await readFile('public/js/house-explorer-glb.js', 'utf8');
 
-  assert.match(script, /toolButton\('brick','Brick Layer'/, 'the Brick Layer appears in the tool picker');
+  assert.match(script, /toolButton\('brick','Building Materials'/, 'the Brick Layer appears in the tool picker');
   assert.match(script, /MUZIKAZ_BRICK_PLACEMENT_HIGHLIGHT/, 'the selected tool shows a placement highlight');
   assert.ok(script.includes('Math.round(point.x/(w/2))*(w/2)') && script.includes('Math.round((point.y-h/2)/h)*h+h/2'), 'brick positions snap to equal map-grid intervals');
   assert.match(script, /MUZIKAZ_CLIMBABLE_BRICK/, 'placed bricks are identified as climbable world objects');
