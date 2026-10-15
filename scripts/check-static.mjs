@@ -348,7 +348,7 @@ for (const page of ['index.html', 'model-market.html']) {
 }
 const cribHtml = await readFile('dist/model-explorer.html', 'utf8');
 if (!cribHtml.includes('simple members-area login') || cribHtml.includes('data-multiplayer-control disabled') || cribHtml.includes('id="multiplayer-paywall"')) throw new Error('Vibe Crib multiplayer must remain available without a Loadout gate.');
-if (cribMultiplayer.includes("apiFetch('/api/account/bootstrap'") || !cribMultiplayer.includes("localStorage.getItem('muzikazBottleMember')") || !cribMultiplayer.includes("'X-User-Name'")) throw new Error('Vibe Crib multiplayer must use the simple browser login identity without the account API.');
+if (!cribMultiplayer.includes("apiFetch('/api/market/session'") || !cribMultiplayer.includes("apiFetch('/api/houses/ioncore-house/voice/signal'") || !cribMultiplayer.includes("voiceEnabled:Boolean(localStream)")) throw new Error('Vibe Crib voice must use the member session and opt-in room signaling.');
 for (const page of ['model-market.html', 'buy-mzk.html']) {
   const html = await readFile(`dist/${page}`, 'utf8');
   if (!html.includes('4,000 MZK')) throw new Error(`${page} must display the 4,000 MZK starter-land price.`);
