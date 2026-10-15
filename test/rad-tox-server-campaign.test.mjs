@@ -40,11 +40,11 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
     const direction=[target.position.x-player.position.x,target.position.y+1-(player.position.y+1.5),target.position.z-player.position.z];
     now+=250;state=await send('fire',{tool:'laser',direction});
    }
-   now+=1;state=await send('input',{input:{}});assert.equal(state.radTox.state,'cleared');
-   now+=1600;await send('input',{input:{}});state=await runtime.snapshot(environment.id,environment);
+   now+=1;state=await send('input',{input:{}});assert.equal(state.radTox.state,wave===4?'finished':'cleared');
+   if(wave<4){now+=9999;state=await send('input',{input:{}});assert.equal(state.radTox.wave,wave,'countdown cannot be skipped');now+=1;await send('input',{input:{}});state=await runtime.snapshot(environment.id,environment);}
   }
   assert.equal(state.match.state,'finished');assert.equal(state.match.outcome,'victory');assert.equal(state.match.results.length,2);
-  const completed=state.match.id;state=await send('next-rad-tox',{matchId:completed});assert.equal(state.radTox.level,2);assert.equal(state.radTox.wave,1);assert.ok(state.radTox.remaining>0);
+  const completed=state.match.id;await assert.rejects(send('next-rad-tox',{matchId:completed}),{statusCode:409});now+=10000;state=await send('next-rad-tox',{matchId:completed});assert.equal(state.radTox.level,2);assert.equal(state.radTox.wave,1);assert.ok(state.radTox.remaining>0);
   assert.ok((await store.get(environment.id)).simulation.matchHistory[0].results.find(row=>row.id==='account:alice').score>0);assert.ok(rewards.some(args=>args[1]==='defeat'));
   const reloaded=new AuthoritativeRooms({store:new SharedRoomStore(file),now:()=>now});
   // Input snapshots are intentionally transient; persist the current encounter with a start command.
@@ -64,3 +64,4 @@ test('Builder rooms keep their authored gameplay instead of receiving a house ca
   assert.equal(state.radTox,null);assert.deepEqual(state.actors,{});
  }finally{await rm(dir,{recursive:true,force:true});}
 });
+

@@ -1,3 +1,4 @@
+import {createSharedEnemyVisual} from './shared-enemy-visual.js';
 import {loadSvgGameTexture} from './svg-game-texture.js';
 import {syncServerAvatar,projectServerActor,disposeProjection} from './server-scene-projection.js';
 import {hitsRemaining,healthAfterHit} from './rpg-combat-rules.js';
@@ -624,23 +625,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       active.add(actor.id);
       let root=serverRadToxRoots.get(actor.id);
       if(!root) {
-        root=new THREE.Group();root.userData.serverRadTox=true;
-        const color=actor.kind==='ghost'?0x39cfff:actor.kind==='brain'?0xff42ad:actor.kind==='boss'?0xff6326:0xa8ff24;
-        if(actor.kind==='snake') {
-          for(let i=0;i<6;i++) {
-            const segment=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:.2}));
-            segment.position.set(Math.sin(i*.8)*.12,.18,i*.18);root.add(segment);
-          }
-        } else {
-          const bubble=new THREE.Mesh(new THREE.SphereGeometry(actor.kind==='boss'?.85:.42,12,10),new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:.4,transparent:true,opacity:.65}));
-          bubble.position.y=1;root.add(bubble);
-          const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:actor.kind==='brain'?toxicBubbleSystem.resources.brain:actor.kind==='ghost'?toxicBubbleSystem.resources.ghost:toxicBubbleSystem.resources.glow.map,color:0xffffff,transparent:true,depthWrite:false}));
-          sprite.position.y=1;sprite.scale.setScalar(actor.kind==='boss'?2.5:1.3);root.add(sprite);
-          if(actor.kind==='toxic'){const warning=new THREE.Sprite(toxicBubbleSystem.resources.warning.clone());warning.position.set(0,1.15,.04);warning.scale.setScalar(.48);root.add(warning);}
-        }
+        root=createSharedEnemyVisual({THREE,actor,resources:toxicBubbleSystem.resources});
         scene.add(root);serverRadToxRoots.set(actor.id,root);
       }
-      root.position.set(actor.position.x,actor.position.y,actor.position.z);
+      root.userData.serverTarget ||= new THREE.Vector3();root.userData.serverTarget.set(actor.position.x,actor.position.y,actor.position.z);
+      if(!root.userData.serverPositioned||root.position.distanceToSquared(root.userData.serverTarget)>25){root.position.copy(root.userData.serverTarget);root.userData.serverPositioned=true;}
+      root.userData.serverYaw=actor.rotation?.y||0;
+      if(actor.lastAttack&&root.userData.lastAttack!==actor.lastAttack){root.userData.lastAttack=actor.lastAttack;root.userData.attackFlashUntil=performance.now()+250;}
     }
     for(const [id,root] of serverRadToxRoots)if(!active.has(id)) {
       root.removeFromParent();root.traverse(object=>{object.geometry?.dispose();object.material?.dispose();});serverRadToxRoots.delete(id);
@@ -1575,6 +1566,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const delta = Math.min(.05, clock.getDelta());
     const menuOpen=Boolean(document.querySelector('dialog[open]'));
     if(!serverHostedRoom&&!menuOpen&&!vehicleController.update(delta))updatePlayer(delta);else if(serverHostedRoom){if(serverPlayerInitialized)playerRig.position.lerp(serverPlayerTarget,1-Math.exp(-18*delta));player.yaw-=thumbInput.rightX*delta*2.5;player.pitch=THREE.MathUtils.clamp(player.pitch-thumbInput.rightY*delta*1.9,-1.25,1.15);playerRig.rotation.y=player.yaw;if(!renderer.xr.isPresenting){camera.position.set(0,player.eyeHeight,0);camera.rotation.set(player.pitch,0,0);}}
+    serverRadToxRoots.forEach(root=>{if(!root.userData.serverTarget)return;root.position.lerp(root.userData.serverTarget,1-Math.exp(-18*delta));root.rotation.y=root.userData.serverYaw;const attacking=performance.now()<(root.userData.attackFlashUntil||0);for(const child of root.children)if(child.isSprite){child.material.color.setHex(attacking?0xff7777:0xffffff);}});
     serverPlayerRoots.forEach(root=>{const target=root.userData.serverTarget;if(!target)return;const alpha=1-Math.exp(-18*delta);root.position.lerp(target,alpha);root.userData.serverMixer?.update(delta);const turn=Math.atan2(Math.sin(root.userData.serverYaw-root.rotation.y),Math.cos(root.userData.serverYaw-root.rotation.y));root.rotation.y+=turn*alpha;});
     placedAvatars.children.forEach((root) => { if (!serverHostedRoom&&root.userData.petTravel) updateTravelingPet(root, delta, clock.elapsedTime); if(root.userData.pinnedToPlayer){const pin=root.userData.pinnedToPlayer;root.position.set(playerRig.position.x+Math.cos(player.yaw)*pin.side-Math.sin(player.yaw)*pin.distance,playerRig.position.y+pin.height,playerRig.position.z-Math.sin(player.yaw)*pin.side-Math.cos(player.yaw)*pin.distance);root.rotation.set(pin.rotation[0],player.yaw+pin.rotation[1],pin.rotation[2]);} root.userData.gameMixer?.update(delta); });
     liveAvatarRoots.forEach((root) => { updateLiveAvatarFacing(root, delta); root.position.lerp(root.userData.targetPosition, Math.min(1, delta * 8)); });
@@ -1754,6 +1746,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     // monopolize memory on mobile browsers before the visitor is ready to play.
   }
 }
+
 
 
 
