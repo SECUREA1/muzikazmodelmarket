@@ -1,4 +1,4 @@
-import {openMatch,finishMatch,healPlayer,matchRows} from './rpg-match.mjs';
+import {damagePlayer,openMatch,finishMatch,healPlayer,matchRows} from './rpg-match.mjs';
 export const ROUND_COUNTDOWN_MS=10000;
 // Shared encounters are owned by the room, never by a client's local enemy list.
 export function supportsRadTox(environment) {
@@ -62,7 +62,7 @@ export function nextRadToxLevel(sim,environment,now,expectedMatchId) {
 
 // Only the server advances attack clocks or applies damage. Clients animate
 // these phases and replay the resulting events without running enemy AI.
-export function stepRadToxEnemy(sim,actor,players,now,dt,blocksShot=()=>false) {
+export function stepRadToxEnemy(sim,actor,players,now,dt,blocksShot=()=>false,resolveMovement=(_previous,next)=>next,applyAttack=true) {
  const target=players.slice().sort((a,b)=>Math.hypot(a.position.x-actor.position.x,a.position.z-actor.position.z)-Math.hypot(b.position.x-actor.position.x,b.position.z-actor.position.z))[0];
  if(!target){actor.attack=null;return;}
  const dx=target.position.x-actor.position.x,dz=target.position.z-actor.position.z,span=Math.hypot(dx,dz);
@@ -70,15 +70,18 @@ export function stepRadToxEnemy(sim,actor,players,now,dt,blocksShot=()=>false) {
  const cooldown=actor.kind==='brain'?1450:actor.kind==='boss'?1250:1000;
  actor.rotation.y=Math.atan2(dx,dz);
  const step=Math.min(span,dt*actor.definition.movement.speed);
- if(span>range*.65&&span>.001){actor.position.x+=dx/span*step;actor.position.z+=dz/span*step;}
+ if(span>range*.65&&span>.001){
+  const next=resolveMovement(actor.position,{...actor.position,x:actor.position.x+dx/span*step,z:actor.position.z+dz/span*step});
+  actor.position={x:next.x,y:next.y,z:next.z};
+ }
  if(actor.lastAttack===undefined)actor.lastAttack=now;
  const readyAt=actor.lastAttack+cooldown;
  const inRange=span<range;
- actor.attack={phase:inRange&&now>=readyAt-480?'tell':'idle',targetId:target.id,readyAt};
- if(!inRange||now<readyAt)return;
+ actor.attack={phase:inRange&&now>=readyAt-480?'tell':'idle',targetId:target.actorId||target.id,readyAt};
+ if(!applyAttack||!inRange||now<readyAt)return;
  const origin={...actor.position,y:actor.position.y+(actor.kind==='snake'?.2:1)},aim={x:target.position.x-origin.x,y:target.position.y+1-origin.y,z:target.position.z-origin.z},length=Math.hypot(aim.x,aim.y,aim.z);
  if(blocksShot(origin,[aim.x/length,aim.y/length,aim.z/length],length))return;
  damagePlayer(target,now);actor.lastAttack=now;actor.attack.phase='attack';
- sim.events.push({id:`${actor.id}:attack:${now}`,action:'enemy-attack',actorId:actor.id,kind:actor.kind,origin,target:{...target.position},targetId:target.id,at:now});
+ sim.events.push({id:`${actor.id}:attack:${now}`,action:'enemy-attack',actorId:actor.id,kind:actor.kind,origin,target:{...target.position},targetId:target.actorId||target.id,at:now});
  sim.events=sim.events.slice(-100);
 }

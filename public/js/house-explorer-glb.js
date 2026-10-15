@@ -1,7 +1,6 @@
 import {createSharedEnemyEffects} from './shared-enemy-effects.js';
-import {createSharedEnemyVisual} from './shared-enemy-visual.js';
 import {loadSvgGameTexture} from './svg-game-texture.js';
-import {syncServerAvatar,projectServerActor,disposeProjection} from './server-scene-projection.js';
+import {targetServerEnemy,interpolateServerEnemy,disposeServerEnemyProjection,syncServerAvatar,projectServerActor,disposeProjection} from './server-scene-projection.js';
 import {hitsRemaining,healthAfterHit} from './rpg-combat-rules.js';
 import {mountMatchResults} from './match-results.js';
 import {replaceServerStreets} from './environments/server-streets.js';
@@ -614,20 +613,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const matchResults=mountMatchResults({dock:dockActions,onOpen:()=>{keys.clear();mobile.clear();document.exitPointerLock?.();},onNext:matchId=>authoritativeClient.send('next-rad-tox',{matchId}),onRespawn:()=>authoritativeClient.send('respawn')});
   const enemyEffects=createSharedEnemyEffects({THREE,scene,resources:()=>toxicBubbleSystem.resources});
   const serverRadToxRoots=new Map(),serverShotEvents=new Set();
-  function disposeServerEnemy(root) {
-    if(root.userData.serverController){root.userData.serverController.dispose();return;}
-    root.removeFromParent();
-    // Solo factories share geometry, materials and SVG textures. Never dispose
-    // those resources when a network actor disappears.
-    root.traverse(object=>{object.geometry?.dispose();if(!object.material)return;const materials=Array.isArray(object.material)?object.material:[object.material];materials.forEach(material=>{if(!Object.values(toxicBubbleSystem.resources).includes(material))material.dispose();});});
-  }
+  function disposeServerEnemy(root) {disposeServerEnemyProjection(root);}
   function clearServerRadTox() {
     for(const root of serverRadToxRoots.values())disposeServerEnemy(root);
-    serverRadToxRoots.clear();serverShotEvents.clear();toxicBubbleSystem.serverEncounter=null;matchResults.reset();
-    for(const root of serverRadToxRoots.values()) {
-      root.removeFromParent();root.traverse(object=>{object.geometry?.dispose();object.material?.dispose();});
-    }
-    enemyEffects.clear();serverRadToxRoots.clear();serverShotEvents.clear();toxicBubbleSystem.serverEncounter=null;matchResults.reset();
+    enemyEffects.clear();serverRadToxRoots.clear();serverShotEvents.clear();toxicBubbleSystem.clearBrainSpray();toxicBubbleSystem.clearGhostGas();toxicBubbleSystem.clearParticles();toxicBubbleSystem.clearLasers();toxicBubbleSystem.serverEncounter=null;matchResults.reset();
   }
   function createServerEnemy(actor) {
     const system=toxicBubbleSystem,position=new THREE.Vector3(),before=system.bubbles.length;
@@ -659,17 +648,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       let root=serverRadToxRoots.get(actor.id);
       if(!root){root=createServerEnemy(actor);serverRadToxRoots.set(actor.id,root);}
       const height=actor.kind==='snake'?0:actor.kind==='brain'?.62:actor.kind==='boss'?1.8:1;
-      root.position.set(actor.position.x,actor.position.y+height,actor.position.z);
-      root.rotation.y=actor.rotation?.y||0;
+      targetServerEnemy(root,actor,height);
       root.userData.health=actor.health;
       root.userData.attack=actor.attack;
-      if(!root) {
-        root=createSharedEnemyVisual({THREE,actor,resources:toxicBubbleSystem.resources});
-        scene.add(root);serverRadToxRoots.set(actor.id,root);
-      }
-      root.userData.serverTarget ||= new THREE.Vector3();root.userData.serverTarget.set(actor.position.x,actor.position.y,actor.position.z);
-      if(!root.userData.serverPositioned||root.position.distanceToSquared(root.userData.serverTarget)>25){root.position.copy(root.userData.serverTarget);root.userData.serverPositioned=true;}
-      root.userData.serverYaw=actor.rotation?.y||0;
+      if(actor.paint!==undefined&&root.userData.serverPaint!==actor.paint){root.traverse(object=>{for(const material of [].concat(object.material||[]))material.color?.setHex(actor.paint);});root.userData.serverPaint=actor.paint;}
       if(actor.lastAttack&&root.userData.lastAttack!==actor.lastAttack){root.userData.lastAttack=actor.lastAttack;root.userData.attackFlashUntil=performance.now()+250;}
     }
     for(const [id,root] of serverRadToxRoots)if(!active.has(id)) {
@@ -683,6 +665,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       if(event.action==='enemy-attack') {
         const root=serverRadToxRoots.get(event.actorId),controller=root?.userData.serverController;
         controller?.attackTell?.stop();controller?.attackFlash?.play();
+        if(!event.target)continue; // Shared projectile snapshots render this attack.
         if(event.kind==='brain'&&event.target)toxicBubbleSystem.sprayBrainPink(origin,new THREE.Vector3(event.target.x,event.target.y+1,event.target.z));
         else if(event.kind==='ghost'&&root&&event.target)toxicBubbleSystem.sprayGhostGas(root,new THREE.Vector3(event.target.x,event.target.y+1,event.target.z));
         else toxicBubbleSystem.createDynamiteGas(origin,.6);
@@ -697,6 +680,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   function updateServerEnemyVisuals(delta,elapsed) {
     for(const root of serverRadToxRoots.values()) {
+      interpolateServerEnemy(root,delta);
       const controller=root.userData.serverController;
       controller?.mixer?.update(delta);
       controller?.attackTell?.update(delta);controller?.attackFlash?.update(delta);
@@ -731,7 +715,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       const install=root=>{
         if(generation!==worldLoadGeneration){disposeProjection(root);return;}
         if(!serverActors[actor.id]||serverActors[actor.id].active===false){disposeProjection(root);serverAssetLoads.delete(actor.id);return;}
-        root.userData.builderObjectId=actor.id;root.userData.serverRenderOffset ||= {x:0,y:0,z:0};
+        root.userData.builderObjectId=actor.id;root.userData.serverDynamic=true;root.userData.serverRenderOffset ||= {x:0,y:0,z:0};
         builderDecor.add(root);projectServerActor(root,serverActors[actor.id]);
       };
       if(actor.worldGateway){
@@ -753,7 +737,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         },undefined,failed);
       }else failed();
     }
-    for(const root of builderDecor.children)projectServerActor(root,snapshot.actors[root.userData.builderObjectId]);
+    for(const root of [...builderDecor.children]){
+      const id=root.userData.builderObjectId,actor=snapshot.actors[id];
+      if((!actor||actor.active===false)&&root.userData.serverDynamic){disposeProjection(root);serverAssetLoads.delete(id);serverAssetRetryAt.delete(id);continue;}
+      projectServerActor(root,actor);
+    }
   }
   const legacyGameplayMethods=['activate','handleEnvironmentReady','spawnInitial','spawnEndBoss','spawnSnakes','spawnBrainBugs','spawnFloorGas','advanceLevel','completeLevelIfReady','takeDamage','popBubble','collectPickup','resetRun','awardSheepCoin','damageTarget','damageFlameTarget','explodeDynamite','damageLootBlock','spawnAttachmentBlock','createDrawingStroke'];
   for(const name of legacyGameplayMethods){const original=toxicBubbleSystem[name]?.bind(toxicBubbleSystem);if(original)toxicBubbleSystem[name]=(...args)=>serverHostedRoom?false:original(...args);}
@@ -1635,9 +1623,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     lastFrameTime = time;
     const delta = Math.min(.05, clock.getDelta());
     const menuOpen=Boolean(document.querySelector('dialog[open]'));
-    if(!serverHostedRoom&&!menuOpen&&!vehicleController.update(delta))updatePlayer(delta);else if(serverHostedRoom){if(serverPlayerInitialized)playerRig.position.lerp(serverPlayerTarget,1-Math.exp(-18*delta));player.yaw-=thumbInput.rightX*delta*2.5*RIGHT_THUMBSTICK_SENSITIVITY*playerPreferences.touchSensitivity;player.pitch=THREE.MathUtils.clamp(player.pitch-thumbInput.rightY*delta*1.9*RIGHT_THUMBSTICK_SENSITIVITY*playerPreferences.touchSensitivity*(playerPreferences.invertLook?-1:1),-1.25,1.15);playerRig.rotation.y=player.yaw;if(!renderer.xr.isPresenting){camera.position.set(0,player.eyeHeight,0);camera.rotation.set(player.pitch,0,0);}}
+    if(!serverHostedRoom&&!menuOpen&&!vehicleController.update(delta))updatePlayer(delta);else if(serverHostedRoom){if(serverPlayerInitialized)playerRig.position.lerp(serverPlayerTarget,1-Math.exp(-18*delta));if(!menuOpen){player.yaw-=thumbInput.rightX*delta*2.5*RIGHT_THUMBSTICK_SENSITIVITY*playerPreferences.touchSensitivity;player.pitch=THREE.MathUtils.clamp(player.pitch-thumbInput.rightY*delta*1.9*RIGHT_THUMBSTICK_SENSITIVITY*playerPreferences.touchSensitivity*(playerPreferences.invertLook?-1:1),-1.25,1.15);}playerRig.rotation.y=player.yaw;if(!renderer.xr.isPresenting){camera.position.set(0,player.eyeHeight,0);camera.rotation.set(player.pitch,0,0);}}
     enemyEffects.update(delta);
-    serverRadToxRoots.forEach(root=>{if(!root.userData.serverTarget)return;root.position.lerp(root.userData.serverTarget,1-Math.exp(-18*delta));root.rotation.y=root.userData.serverYaw;const attacking=performance.now()<(root.userData.attackFlashUntil||0);for(const child of root.children)if(child.isSprite){child.material.color.setHex(attacking?0xff7777:0xffffff);}});
     serverPlayerRoots.forEach(root=>{const target=root.userData.serverTarget;if(!target)return;const alpha=1-Math.exp(-18*delta);root.position.lerp(target,alpha);root.userData.serverMixer?.update(delta);const turn=Math.atan2(Math.sin(root.userData.serverYaw-root.rotation.y),Math.cos(root.userData.serverYaw-root.rotation.y));root.rotation.y+=turn*alpha;});
     placedAvatars.children.forEach((root) => { if (!serverHostedRoom&&root.userData.petTravel) updateTravelingPet(root, delta, clock.elapsedTime); if(root.userData.pinnedToPlayer){const pin=root.userData.pinnedToPlayer;root.position.set(playerRig.position.x+Math.cos(player.yaw)*pin.side-Math.sin(player.yaw)*pin.distance,playerRig.position.y+pin.height,playerRig.position.z-Math.sin(player.yaw)*pin.side-Math.cos(player.yaw)*pin.distance);root.rotation.set(pin.rotation[0],player.yaw+pin.rotation[1],pin.rotation[2]);} root.userData.gameMixer?.update(delta); });
     liveAvatarRoots.forEach((root) => { updateLiveAvatarFacing(root, delta); root.position.lerp(root.userData.targetPosition, Math.min(1, delta * 8)); });

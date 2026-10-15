@@ -50,3 +50,25 @@ export function projectServerActor(root,actor) {
  });
  state.serverPaint=actor.paint;state.serverSwitched=actor.switched;state.serverCollisionDisabled=!root.visible||!!actor.open;
 }
+
+// Enemy positions remain server-owned; interpolation only smooths presentation.
+export function targetServerEnemy(root,actor,height=0) {
+ const state=root.userData;
+ state.serverTarget ||= root.position.clone();
+ state.serverTarget.set(actor.position.x,actor.position.y+height,actor.position.z);
+ state.serverYaw=actor.rotation?.y||0;
+ if(!state.serverPositioned||root.position.distanceToSquared(state.serverTarget)>25){
+  root.position.copy(state.serverTarget);root.rotation.y=state.serverYaw;state.serverPositioned=true;
+ }
+}
+export function interpolateServerEnemy(root,delta) {
+ const state=root.userData;if(!state.serverTarget)return;
+ const alpha=1-Math.exp(-18*Math.max(0,delta));
+ root.position.lerp(state.serverTarget,alpha);
+ root.rotation.y+=Math.atan2(Math.sin(state.serverYaw-root.rotation.y),Math.cos(state.serverYaw-root.rotation.y))*alpha;
+}
+export function disposeServerEnemyProjection(root) {
+ root.removeFromParent();
+ if(root.userData.serverController)root.userData.serverController.dispose();
+ else disposeProjection(root);
+}
