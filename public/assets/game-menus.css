@@ -178,3 +178,13 @@ dialog.tools-pouch-screen .rad-tox-tools__content>.rad-tool-choice[hidden],dialo
 .house-stage .rad-tox-hud{font-size:var(--player-hud-size,12px);}
 .house-stage.player-reduced-motion .rad-tox-spend,.house-stage.player-reduced-motion .multiplayer-live-count{animation:none!important;transition:none!important;}
 @media(max-width:600px){.player-settings-grid,.player-settings-metrics{grid-template-columns:minmax(0,1fr);}.player-settings>section{padding:10px;}.player-settings input[type=range]{min-height:44px;}}
+
+/* One Settings surface owns both workspace navigation and player controls. */
+body.model-explorer-page .game-view-options .explorer-options.is-unified{position:static;inset:auto;width:100%;max-width:none;margin:0 0 16px;z-index:auto;}
+.game-view-options .explorer-options.is-unified .explorer-options__toggle,.game-view-options .explorer-options.is-unified [data-close-explorer-options]{display:none!important;}
+body.model-explorer-page .game-view-options .explorer-options.is-unified .explorer-options__panel{position:static;inset:auto;display:block;width:100%;max-height:none;margin:0;border:1px solid #496442;border-radius:10px;overflow:visible;box-shadow:none;background:#101d14;backdrop-filter:none;}
+.game-view-options .explorer-options.is-unified .explorer-options__panel ul{max-height:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:6px;padding:10px;}
+.game-view-options .explorer-options.is-unified .explorer-options__panel li{min-width:0;}
+.game-view-options .explorer-options.is-unified .explorer-options__panel li[hidden]{display:none!important;}
+.game-view-options .explorer-options.is-unified .explorer-options__panel a{height:100%;min-height:60px;}
+.site-header .game-settings-shortcut{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;flex-shrink:0;}

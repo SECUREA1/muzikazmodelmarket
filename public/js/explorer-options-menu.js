@@ -13,13 +13,14 @@
 
   const normalize = (value) => value.toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim();
   const setOpen = (open, restoreFocus = false) => {
-    toggle.setAttribute('aria-expanded', String(open));
-    panel.hidden = !open;
+    const unified=root.classList.contains('is-unified');
+    toggle.setAttribute('aria-expanded',String(open||unified));
+    panel.hidden=!(open||unified);
     if (open) requestAnimationFrame(() => search.focus());
     else {
       search.value = '';
       filterOptions();
-      if (restoreFocus) toggle.focus();
+      if (restoreFocus&&!unified) toggle.focus();
     }
   };
 
@@ -76,12 +77,13 @@
     const link = event.target.closest('a[href^="#"]');
     if (!link) return;
     event.preventDefault();
+    const dialog=root.closest('dialog');if(dialog?.open)dialog.close();
     if (!showWorkspace(link)) return;
     window.history.pushState(null, '', link.getAttribute('href'));
     setOpen(false);
   });
   document.addEventListener('click', (event) => {
-    if (!root.contains(event.target) && !panel.hidden) setOpen(false);
+    if (!root.classList.contains('is-unified') && !root.contains(event.target) && !panel.hidden) setOpen(false);
   });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !panel.hidden) setOpen(false, true);
