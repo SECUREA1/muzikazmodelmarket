@@ -65,7 +65,12 @@ export function nextRadToxLevel(sim,environment,now,expectedMatchId) {
 // Only the server advances attack clocks or applies damage. Clients animate
 // these phases and replay the resulting events without running enemy AI.
 export function stepRadToxEnemy(sim,actor,players,now,dt,blocksShot=()=>false,resolveMovement=(_previous,next)=>next,applyAttack=true) {
- const target=players.slice().sort((a,b)=>Math.hypot(a.position.x-actor.position.x,a.position.z-actor.position.z)-Math.hypot(b.position.x-actor.position.x,b.position.z-actor.position.z))[0];
+ const rangeTo=player=>Math.hypot(player.position.x-actor.position.x,player.position.z-actor.position.z);
+ const nearest=players.reduce((best,player)=>!best||rangeTo(player)<rangeTo(best)?player:best,null);
+ const current=players.find(player=>(player.actorId||player.id)===actor.movementTargetId);
+ // Keep pursuing the same player until another is substantially closer.
+ const target=current&&nearest&&rangeTo(current)<=rangeTo(nearest)*1.25+.5?current:nearest;
+ actor.movementTargetId=target?.actorId||target?.id||null;
  if(!target){actor.attack=null;return;}
  const dx=target.position.x-actor.position.x,dz=target.position.z-actor.position.z,span=Math.hypot(dx,dz);
  const config=ENEMY_BEHAVIORS[actor.kind]||ENEMY_BEHAVIORS.toxic;

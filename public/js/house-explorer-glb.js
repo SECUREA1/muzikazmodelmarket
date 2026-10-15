@@ -722,7 +722,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         const root=createBuilderModel(actor.modelId);
         if(root){root.add(liveLabel(root,{username:actor.worldGateway.name,message:'Enter shared world · E / Use'}));root.userData.worldGateway=actor.worldGateway;install(root);}else failed();
       }else if(actor.loot){
-        const root=new THREE.Group();root.userData.serverLoot=true;const supply=new THREE.Mesh(new THREE.OctahedronGeometry(.25),new THREE.MeshStandardMaterial({color:actor.loot.color,emissive:actor.loot.color,emissiveIntensity:.45}));supply.position.y=.4;root.add(supply);root.add(liveLabel(root,{username:actor.loot.name,message:'Walk over to collect · Backpack care',color:actor.loot.color}));install(root);
+        const root=new THREE.Group();root.userData.serverLoot=true;const supply=new THREE.Mesh(new THREE.OctahedronGeometry(.25),new THREE.MeshStandardMaterial({color:actor.loot.color,emissive:actor.loot.color,emissiveIntensity:.45}));supply.position.y=.4;root.add(supply);install(root);
       }else if(actor.asset?.renderKind==='image'){
         new THREE.TextureLoader().load(actor.asset.thumbnailUrl,texture=>{
           texture.colorSpace=THREE.SRGBColorSpace;

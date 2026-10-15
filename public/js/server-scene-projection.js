@@ -1,3 +1,4 @@
+import {ServerMotion} from './server-motion.js';
 // Scene objects display confirmed state; they never decide gameplay outcomes.
 export function disposeProjection(root) {
  root.userData.serverMixer?.stopAllAction();
@@ -52,19 +53,23 @@ export function projectServerActor(root,actor) {
 }
 
 // Enemy positions remain server-owned; interpolation only smooths presentation.
-export function targetServerEnemy(root,actor,height=0) {
+export function targetServerEnemy(root,actor,height=0,now=performance.now()) {
  const state=root.userData;
  state.serverTarget ||= root.position.clone();
  state.serverTarget.set(actor.position.x,actor.position.y+height,actor.position.z);
+ state.serverEnemyMotion ||= new ServerMotion();
+ state.serverEnemyMotion.push({x:actor.position.x,y:actor.position.y+height,z:actor.position.z},now);
+ state.serverPredicted ||= root.position.clone();
  state.serverYaw=actor.rotation?.y||0;
  if(!state.serverPositioned||root.position.distanceToSquared(state.serverTarget)>25){
   root.position.copy(state.serverTarget);root.rotation.y=state.serverYaw;state.serverPositioned=true;
  }
 }
-export function interpolateServerEnemy(root,delta) {
+export function interpolateServerEnemy(root,delta,now=performance.now()) {
  const state=root.userData;if(!state.serverTarget)return;
  const alpha=1-Math.exp(-18*Math.max(0,delta));
- root.position.lerp(state.serverTarget,alpha);
+ state.serverEnemyMotion.sample(now,state.serverPredicted);
+ root.position.lerp(state.serverPredicted,alpha);
  root.rotation.y+=Math.atan2(Math.sin(state.serverYaw-root.rotation.y),Math.cos(state.serverYaw-root.rotation.y))*alpha;
 }
 export function disposeServerEnemyProjection(root) {
