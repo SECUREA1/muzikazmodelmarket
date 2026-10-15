@@ -1,3 +1,4 @@
+import {environmentGeometry} from './server-glb-geometry.mjs';
 import {buildingDimensions} from './public/js/building-materials.js';
 import * as THREE from './public/vendor/three/three.module.min.js';
 import {createBuilderLand} from './public/js/environments/builder-land.js';
@@ -8,11 +9,24 @@ export class ServerBuilderCollision {
  constructor(){this.cache=new Map();}
  world(environment){
   const key=environment.id+':'+(environment.updatedAt||'');if(this.cache.has(key))return this.cache.get(key);
-  const root=createBuilderLand(environment),walls=[];
+  const glb=!environment.builderScene&&!environment.proceduralLand&&Boolean(environment.modelUrl||environment.modelUrls?.length);const root=glb?environmentGeometry(environment):createBuilderLand(environment),walls=[];
   for(const item of environment.builderScene?.objects||[]){let object;try{object=createBuilderModel(item.asset?.buildAssetId||item.modelId);}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);object.userData.builderObjectId=item.id;root.add(object);}
   root.updateMatrixWorld(true);const floors=[];
-  root.traverse(mesh=>{if(!mesh.isMesh||mesh.userData.streetVisual)return;floors.push(mesh);if(!mesh.userData.streetVisual&&!mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')){let parent=mesh;while(parent&&!parent.userData.builderObjectId)parent=parent.parent;walls.push({box:new THREE.Box3().setFromObject(mesh),objectId:parent?.userData.builderObjectId});}});
-  const world={root,walls,floors};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
+  root.traverse(mesh=>{if(!mesh.isMesh||mesh.userData.streetVisual||/SKY|PARTICLE|VFX|WATER|HELPER/i.test(mesh.name))return;floors.push(mesh);if(!glb&&!mesh.userData.streetVisual&&!mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')){let parent=mesh;while(parent&&!parent.userData.builderObjectId)parent=parent.parent;walls.push({box:new THREE.Box3().setFromObject(mesh),objectId:parent?.userData.builderObjectId});}});
+  const world={root,walls,floors,glb};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
+ }
+ blocksShot(environment,origin,direction,distance,actors={}){
+  if(!environment.builderScene&&!environment.proceduralLand&&!environment.modelUrl&&!environment.modelUrls?.length)return false;
+  const world=this.world(environment),start=new THREE.Vector3(origin.x,origin.y,origin.z),aim=new THREE.Vector3(...direction),ray=new THREE.Ray(start,aim);
+  if(world.glb)return new THREE.Raycaster(start,aim,.02,Math.max(.02,distance-.05)).intersectObjects(world.floors,false).length>0;
+  return world.walls.some(({box,objectId})=>{const actor=actors[objectId];if(actor&&(actor.open||!actor.active||actor.holderId))return false;const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;});
+ }
+ safeSpawn(environment,point){
+  if(environment.builderScene||environment.proceduralLand||(!environment.modelUrl&&!environment.modelUrls?.length))return point;
+  const world=this.world(environment),bounds=new THREE.Box3().setFromObject(world.root),center=bounds.getCenter(new THREE.Vector3());
+  const candidates=[point,{x:center.x,z:center.z}];for(let r=1;r<=6;r++)for(let i=0;i<8;i++)candidates.push({x:point.x+Math.cos(i*Math.PI/4)*r,z:point.z+Math.sin(i*Math.PI/4)*r});
+  for(const candidate of candidates){const ray=new THREE.Raycaster(new THREE.Vector3(candidate.x,Math.max(Number(point.y)||1,bounds.max.y)+2,candidate.z),new THREE.Vector3(0,-1,0));const hits=ray.intersectObjects(world.floors,false).filter(hit=>hit.face&&hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y>.55);const hit=hits.sort((a,b)=>Math.abs(a.point.y-(Number(point.y)||0))-Math.abs(b.point.y-(Number(point.y)||0)))[0];if(hit)return {x:candidate.x,y:hit.point.y+.02,z:candidate.z};}
+  throw Object.assign(Error('This map has no safe floor spawn.'),{statusCode:409});
  }
  meetingPosition(environment,point,actors={},objects={}){
   const world=this.world(environment),terrain=world.floors.filter(mesh=>mesh.name.startsWith('BUILDER_WALKABLE_FLOOR'));

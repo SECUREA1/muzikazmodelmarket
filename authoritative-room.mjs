@@ -1,4 +1,6 @@
-import {startRadTox,advanceRadTox} from './rad-tox-campaign.mjs';
+import {combatStats,damagePlayer,registerParticipant,checkTeamDefeat,matchView,SPAWN_PROTECTION_MS,PLAYER_HIT_CAPACITY} from './rpg-match.mjs';
+import {startRadTox,advanceRadTox,nextRadToxLevel} from './rad-tox-campaign.mjs';
+import {rayBoxDistance} from './server-combat-ray.mjs';
 import {createHash} from 'node:crypto';
 import {ServerBuilderCollision} from './server-builder-collision.mjs';
 import {RANGED_WEAPONS} from './public/js/game-weapons.js';
@@ -54,21 +56,21 @@ export class AuthoritativeRooms {
    if(player.heldId){const held=sim.actors[player.heldId];if(held)held.position={x:player.position.x-Math.sin(player.yaw),y:player.position.y+1,z:player.position.z-Math.cos(player.yaw)};}
   }
   const active=Object.values(sim.players).filter(player=>now-player.lastSeen<1500&&player.health>0);
-  for(const definition of manifest.actors){const actor=sim.actors[definition.objectId];if(!actor?.active||actor.health<=0||actor.holderId)continue;
+  for(const definition of sim.match?.state==='finished'?[]:manifest.actors){const actor=sim.actors[definition.objectId];if(!actor?.active||actor.health<=0||actor.holderId)continue;
    const kind=definition.gameplay.behavior;
    if(kind==='hostile'||kind==='patrol'){
     const target=active.slice().sort((a,b)=>distance(actor.position,a.position)-distance(actor.position,b.position))[0];
     const chase=kind==='hostile'&&target&&distance(actor.position,target.position)<clamp(definition.ai?.detectionRange||9,1,50);
     const goal=chase?target.position:{x:definition.position.x+Math.sin(now/1000)*3,y:definition.position.y,z:definition.position.z+Math.cos(now/1000)*3};
     const span=distance(actor.position,goal),step=Math.min(1,dt*clamp(definition.movement.speed||2,0,10)/Math.max(.001,span));actor.position.x+=(goal.x-actor.position.x)*step;actor.position.z+=(goal.z-actor.position.z)*step;
-    if(chase&&span<1.5&&now-(actor.lastAttack||0)>1000){if(now>=(target.shieldUntil||0))target.health=Math.max(0,target.health-clamp(definition.gameplay.damage,0,50));actor.lastAttack=now;}
+    if(chase&&span<1.5&&now-(actor.lastAttack||0)>1000){if(definition.gameplay.damage>0)damagePlayer(target,now);actor.lastAttack=now;}
    }
-   if(kind==='hazard')for(const target of active)if(distance(target.position,actor.position)<1.5&&now-(actor.lastAttack||0)>1000){if(now>=(target.shieldUntil||0))target.health=Math.max(0,target.health-clamp(definition.gameplay.damage,0,50));actor.lastAttack=now;}
+   if(kind==='hazard')for(const target of active)if(distance(target.position,actor.position)<1.5&&now-(actor.lastAttack||0)>1000){if(definition.gameplay.damage>0)damagePlayer(target,now);actor.lastAttack=now;}
   }
-  advanceRadTox(sim,now);
+  checkTeamDefeat(sim,now);advanceRadTox(sim,now);
   sim.sequence++;return {sim,manifest};
  }
- view(room){const sim=room.simulation,now=this.now();return {authoritative:true,radTox:sim.radTox?copy(sim.radTox):null,streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,yaw:p.yaw,health:p.health,ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
+ view(room){const sim=room.simulation,now=this.now();return {authoritative:true,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
  snapshot(id,environment){return this.store.update(id,room=>{this.step(room,environment);return this.view(room);},{persist:false});}
  command(id,environment,identity,command){return this.store.update(id,async (room,allRooms)=>{
   const {sim,manifest}=this.step(room,environment),now=this.now(),actorId='account:'+identity.accountId;
@@ -77,16 +79,21 @@ export class AuthoritativeRooms {
   let player=sim.players[actorId],result={};
   if(command.action==='join'){
    const active=Object.entries(sim.players).filter(([id,p])=>id!==actorId&&now-p.lastSeen<15000);if(active.length>=(environment.publicDestination?128:this.capacity))fail('This multiplayer room is full.',409);
-   const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);const spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects):manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2};
+   const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);let spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects):this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2});
+   if(!player&&!meeting){const count=active.length;spawn=this.collision.safeSpawn(environment,{...spawn,x:spawn.x+(count%4)*1.2,z:spawn.z+Math.floor(count/4)*1.2});}
    if(!player)player=sim.players[actorId]={username:identity.username,position:{x:Number(spawn.x)||0,y:Number(spawn.y)||0,z:Number(spawn.z)||0},floor:Number(spawn.y)||0,yaw:0,velocityY:0,grounded:true,ammo:120,fuel:100,health:clamp(identity.stats?.health??100,0,100),stats:identity.stats||{},score:0,inventory:[],quests:{},cooldowns:{},lastSeen:now};
    for(const [otherId,otherRoom]of Object.entries(allRooms)){if(otherId===id)continue;const previous=otherRoom.simulation?.players[actorId];if(!previous)continue;previous.lastSeen=0;previous.replacedByRoom=id;previous.input={};for(const key of ['heldId','seatedId','vehicleId']){const held=otherRoom.simulation.actors[previous[key]];if(held)held.holderId=null;previous[key]=null;}}
-   if(meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;result.message='Joined '+player.locationName;
+   if(meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;player.actorId=actorId;
+   startRadTox(sim,environment,now,player.position);registerParticipant(sim,actorId,player,now);
+   result.message='Joined '+player.locationName;
   }else{
    if(player?.replacedByRoom)fail('This account joined another destination. Reload to rejoin this room.',409,'ROOM_SWITCHED');if(!player||now-player.lastSeen>15000)fail('Join this room before sending gameplay commands.',409);
    player.lastSeen=now;
-   if(command.action==='input'){const input=command.input||{};player.input={forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}
+   if(command.action==='input'){const input=command.input||{};player.input=sim.match?.state==='finished'?{}:{forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position))result.message='RAD-TOX encounter active.';else result.message='Builder gameplay active.';}
-   else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...(manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2})};player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolUses={};}
+   else if(command.action==='next-rad-tox'){if(nextRadToxLevel(sim,environment,now,command.matchId)){for(const [index,participantId] of Object.keys(sim.match.participants).entries()){const participant=sim.players[participantId],entry=environment.spawn||{x:0,y:0,z:2};participant.position=this.collision.safeSpawn(environment,{...entry,x:entry.x+(index%4)*1.2,z:entry.z+Math.floor(index/4)*1.2});participant.floor=participant.position.y;participant.velocityY=0;participant.input={};participant.toolReady={};participant.toolUses={};}result.message='Next shared level started.';}else if(sim.match?.id===command.matchId)fail('Complete the current level before starting another.',409);}
+   else if(sim.match?.state==='finished'&&command.action!=='input')fail('This level has ended. Review the results and start the next level.',409);
+   else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolUses={};player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
    else if(player.health<=0)fail('Respawn before acting.',409);
    else if(command.action==='drop'){const held=sim.actors[player.heldId];if(held){held.holderId=null;held.position={...player.position};player.heldId=null;}}
    else if(command.action==='interact'){
@@ -99,7 +106,7 @@ export class AuthoritativeRooms {
      if(now-(player.cooldowns[target.objectId]||0)<config.cooldown*1000)fail('Item is cooling down.',429);player.cooldowns[target.objectId]=now;
      if(config.behavior==='door')entity.open=!entity.open;
      else if(config.behavior==='switch')entity.switched=!entity.switched;
-     else if(['pickup','hold'].includes(config.behavior)){if(player.heldId)fail('Drop the held item first.',409);player.heldId=entity.id;entity.holderId=actorId;if(!player.inventory.includes(target.modelId))player.inventory.push(target.modelId);}
+     else if(['pickup','hold'].includes(config.behavior)){if(player.heldId)fail('Drop the held item first.',409);player.heldId=entity.id;entity.holderId=actorId;if(!player.inventory.includes(target.modelId))player.inventory.push(target.modelId);const collected=combatStats(player).itemsCollected ||= [];if(!collected.includes(target.modelId))collected.push(target.modelId);}
      else if(config.behavior==='vehicle'){player.vehicleId=entity.id;entity.holderId=actorId;}
      else if(config.behavior==='seat'){player.seatedId=entity.id;entity.holderId=actorId;player.position={...entity.position};}
      else if(config.behavior==='heal')player.health=Math.min(100,player.health+clamp(config.value||25,0,100));
@@ -107,7 +114,7 @@ export class AuthoritativeRooms {
      else if(config.behavior==='quest'){const quest=target.quest?.id||entity.id;player.quests[quest]=player.quests[quest]==='active'?'complete':'active';}
      result.message=target.dialogue?.text||config.prompt||'Item activated';
      if(config.action==='toggle')entity.switched=!entity.switched;if(config.action==='use')entity.lastUsedAt=now;
-     if(config.action==='damage')player.health=Math.max(0,player.health-clamp(config.value,0,100));
+     if(config.action==='damage'&&config.value>0)damagePlayer(player,now);
      if(config.action==='score')player.score+=clamp(config.value,0,100);
      if(config.action==='teleport'){const portal=config.portal;if(!portal?.enabled)fail('Portal is locked.',409);if(portal.destinationType==='map')result.destination=portal.targetMapId;else{const destination=sim.actors[portal.targetObjectId];if(!destination)fail('Destination is unavailable.');player.position={...destination.position};}}
     }
@@ -132,16 +139,39 @@ export class AuthoritativeRooms {
     await this.charge(identity,'tool:'+tool,createHash('sha256').update(id+actorId+sim.sequence).digest('hex'));if(tool==='flamethrower')player.fuel=(player.fuel??100)-5;if(profile)player.ammo=(player.ammo??120)-1;player.lastShot=now;player.toolReady[tool]=now+cooldown;player.toolUses ||= {};player.toolUses[tool]=(player.toolUses[tool]||0)+1;
     const origin={...player.position,y:player.position.y+1.5},targets=[];
     for(const entity of Object.values(sim.actors)){if(!entity.active||entity.health<=0)continue;const offset=[entity.position.x-origin.x,entity.position.y+1-origin.y,entity.position.z-origin.z],along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along));if(along>0&&along<(tool==='bat'?3:40)&&perpendicular<1)targets.push({entity,along});}
+    const range=tool==='bat'?3:tool==='taser'?4:tool==='toxin'?9:tool==='flamethrower'?12:Math.min(40,profile?.range||40);
+    for(const [targetId,target]of Object.entries(sim.players)){
+     if(targetId===actorId||target.health<=0||target.replacedByRoom||now-target.lastSeen>15000)continue;
+     const along=rayBoxDistance(origin,ray,{x:target.position.x-.35,y:target.position.y,z:target.position.z-.35},{x:target.position.x+.35,y:target.position.y+1.8,z:target.position.z+.35});
+     if(along!==null&&along<range)targets.push({entity:target,along,playerId:targetId});
+    }
     const blocks=[];for(const object of Object.values(room.objects)){if(object.deleted||object.open)continue;const offset=object.position.map((n,i)=>n-[origin.x,origin.y,origin.z][i]),along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along)),size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);if(along>0&&along<40&&perpendicular<Math.max(...size)/2)blocks.push({object,along});}
-    const blocker=blocks.sort((a,b)=>a.along-b.along)[0];let hit=targets.sort((a,b)=>a.along-b.along)[0];if(blocker&&(!hit||blocker.along<hit.along)){hit=null;const object=blocker.object;if(tool==='spray')object.paint=object.paint.map(()=>clamp(command.color,0,0xffffff));else if(!utility){object.hits=(object.hits||0)+1;if(object.hits>=5)object.deleted=true;}object.revision=++room.revision;}
+    const blocker=blocks.sort((a,b)=>a.along-b.along)[0];let hit=targets.filter(target=>target.along<range).sort((a,b)=>a.along-b.along)[0];
+    if(hit&&this.collision.blocksShot(environment,origin,ray,hit.along,sim.actors))hit=null;if(blocker&&(!hit||blocker.along<hit.along)){hit=null;const object=blocker.object;if(tool==='spray')object.paint=object.paint.map(()=>clamp(command.color,0,0xffffff));else if(!utility){object.hits=(object.hits||0)+1;if(object.hits>=5)object.deleted=true;}object.revision=++room.revision;}
 if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else if(tool==='shield-kit')player.shieldUntil=now+6000;else if(tool==='scanner')result.message='Scanner: '+targets.length+' targets in your aim path';else if(tool==='recycler'||tool==='repair-tool'){const candidates=Object.values(room.objects).filter(object=>!object.deleted&&object.ownerId===actorId&&distance({x:object.position[0],y:object.position[1],z:object.position[2]},player.position)<8).sort((a,b)=>distance({x:a.position[0],y:a.position[1],z:a.position[2]},player.position)-distance({x:b.position[0],y:b.position[1],z:b.position[2]},player.position));const target=candidates[0];if(target){if(tool==='recycler')target.deleted=true;target.hits=0;target.revision=++room.revision;}}else if(tool==='beacon')result.message='Waypoint beacon shared in room events';else if(tool==='supply-kit'){player.fuel=100;player.ammo=Math.min(120,(player.ammo??120)+12);}}
     else if(tool==='jetpack'){player.velocityY=8;player.grounded=false;}
-    else if(tool==='spray'){if(hit)hit.entity.paint=clamp(command.color,0,0xffffff);}
-    else if(hit){hit.entity.health=Math.max(0,hit.entity.health-(profile?.damage||damageByTool[tool]||20));if(hit.entity.health===0){hit.entity.active=false;player.score+=10;await this.reward(identity,'defeat',requestId+'-defeat');player.progress ||= {};player.progress.defeat=(player.progress.defeat||0)+1;}}
+    else if(tool==='spray'){if(hit&&!hit.playerId)hit.entity.paint=clamp(command.color,0,0xffffff);}
+    else if(hit){
+     const before=hit.entity.health;
+     if(hit.playerId)damagePlayer(hit.entity,now,player);
+     else {
+      hit.entity.health=Math.max(0,before-(profile?.damage||damageByTool[tool]||20));
+      combatStats(player).damageDealt+=before-hit.entity.health;
+      if(hit.entity.health===0){hit.entity.active=false;player.score+=10;const stats=combatStats(player);stats.enemyKills++;stats.score+=10;await this.reward(identity,'defeat',requestId+'-defeat');player.progress ||= {};player.progress.defeat=(player.progress.defeat||0)+1;}
+     }
+     if(hit.entity.health<before){
+      hit.entity.contributors ||= {};hit.entity.contributors[actorId]=true;
+      if(hit.entity.health===0)for(const helperId of Object.keys(hit.entity.contributors))if(helperId!==actorId&&sim.players[helperId]){const helper=sim.players[helperId];combatStats(helper).assists++;combatStats(helper).score+=5;helper.score+=5;}
+     }
+    }
+    if(!utility&&!['spray','jetpack'].includes(tool)){
+     const stats=combatStats(player);stats.shots++;if(hit){stats.hits++;stats[hit.playerId?'playerHits':'enemyHits']++;}else stats.misses++;
+    }
     player.progress ||= {};if(hit){const event=tool==='taser'?'taser-hit':tool==='dynamite'?'blast-hit':tool==='spray'?'spray':'laser-hit';await this.reward(identity,event,requestId+'-hit');player.progress[event]=(player.progress[event]||0)+1;}
-    result={...result,tool,origin,direction:ray,hitId:hit?.entity.id||null};
+    result={...result,tool,origin,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:hit?.playerId?'player':hit?'enemy':null};
    }else fail('This action has no server handler. It was not run locally.',422);
   }
+  checkTeamDefeat(sim,now);
   if(now-(player.lastTelemetry||0)>5000){await this.telemetry(identity.walletId,{health:player.health,world:id});player.lastTelemetry=now;}
   if(command.action!=='input'){sim.events.push({id:requestId,actorId,action:command.action,...result,at:now});sim.events=sim.events.slice(-100);}
   sim.receipts[receiptKey]={action:command.action,result};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
@@ -150,4 +180,3 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
  async player(id,actorId){return (await this.store.get(id)).simulation?.players[actorId];}
  async care(actorId,receipt){const rooms=await this.store.read();for(const [id,room] of Object.entries(rooms)){if(!room.simulation?.players[actorId])continue;await this.store.update(id,current=>{const player=current.simulation.players[actorId];player.careReceipts ||= [];if(player.careReceipts.includes(receipt.id))return;const effect=receipt.effect;player.stats ||= {};if(effect?.stat==='all')for(const key of Object.keys(player.stats))player.stats[key]=key==='toxicity'?0:100;else if(effect?.stat&&effect.stat!=='health')player.stats[effect.stat]=Math.max(0,Math.min(100,(player.stats[effect.stat]||0)+Number(effect.amount||0)));if(effect?.stat==='health'||effect?.stat==='all')player.health=effect.stat==='all'?100:Math.min(100,player.health+Number(effect.amount||0));player.careReceipts.push(receipt.id);player.careReceipts=player.careReceipts.slice(-100);});}}
 }
-

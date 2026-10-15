@@ -11,11 +11,12 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
  try {
   const file=join(dir,'rooms.json'),store=new SharedRoomStore(file),rewards=[];
   const runtime=new AuthoritativeRooms({store,now:()=>now,reward:async(...args)=>rewards.push(args)});
+  runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.blocksShot=()=>false;
   const environment={id:'muzikaz-main',name:'House',modelUrl:'/house.glb',playable:true,spawn:{x:0,y:1,z:2}};
   const alice={accountId:'alice',walletId:'alice',username:'Alice',stats:{health:100}};
   const bob={...alice,accountId:'bob',walletId:'bob',username:'Bob'};
   const send=(action,fields={},identity=alice)=>runtime.command(environment.id,environment,identity,{action,requestId:'campaign-'+ ++request,...fields});
-  let state=await send('join');assert.equal(state.radTox,null,'joining a map alone is not a started game');
+  let state=await send('join');assert.equal(state.radTox.state,'active','everyone joins the same running encounter');
   state=await send('start-rad-tox');assert.equal(state.radTox.level,1);assert.equal(state.radTox.wave,1);
   const enemies=Object.values(state.actors).filter(actor=>actor.radTox);
   assert.equal(enemies.length,8);assert.ok(enemies.every(actor=>actor.active&&actor.health>0));
@@ -42,8 +43,9 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
    now+=1;state=await send('input',{input:{}});assert.equal(state.radTox.state,'cleared');
    now+=1600;await send('input',{input:{}});state=await runtime.snapshot(environment.id,environment);
   }
-  assert.equal(state.radTox.level,2);assert.equal(state.radTox.wave,1);assert.ok(state.radTox.remaining>0);
-  assert.ok(state.players['account:alice'].score>0);assert.ok(rewards.some(args=>args[1]==='defeat'));
+  assert.equal(state.match.state,'finished');assert.equal(state.match.outcome,'victory');assert.equal(state.match.results.length,2);
+  const completed=state.match.id;state=await send('next-rad-tox',{matchId:completed});assert.equal(state.radTox.level,2);assert.equal(state.radTox.wave,1);assert.ok(state.radTox.remaining>0);
+  assert.ok((await store.get(environment.id)).simulation.matchHistory[0].results.find(row=>row.id==='account:alice').score>0);assert.ok(rewards.some(args=>args[1]==='defeat'));
   const reloaded=new AuthoritativeRooms({store:new SharedRoomStore(file),now:()=>now});
   // Input snapshots are intentionally transient; persist the current encounter with a start command.
   await send('start-rad-tox');

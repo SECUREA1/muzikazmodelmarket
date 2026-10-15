@@ -1,3 +1,4 @@
+import {openMatch,finishMatch,healPlayer} from './rpg-match.mjs';
 // Shared encounters are owned by the room, never by a client's local enemy list.
 export function supportsRadTox(environment) {
  return environment.playable!==false && !environment.builderScene && !environment.proceduralLand && Boolean(environment.modelUrl || environment.modelUrls?.length);
@@ -23,22 +24,32 @@ export function spawnRadToxWave(sim, now, center) {
 }
 export function startRadTox(sim,environment,now,center) {
  if(!supportsRadTox(environment))return false;
+ if(sim.radTox&&!sim.match)openMatch(sim,sim.radTox.level||1,now);
  if(!sim.radTox) {
   sim.radTox={level:1,wave:1,state:'active',remaining:0,targetCount:0};
+  openMatch(sim,1,now);
   spawnRadToxWave(sim,now,center);
  }
  return true;
 }
 export function advanceRadTox(sim,now) {
- if(!sim.radTox)return;
+ if(!sim.radTox || sim.match?.state==='finished')return;
  const campaign=sim.radTox;
  campaign.remaining=Object.values(sim.actors).filter(actor=>actor.radTox&&actor.active&&actor.health>0).length;
  const players=Object.values(sim.players).filter(player=>now-player.lastSeen<1500&&player.health>0);
  if(campaign.remaining || !players.length)return;
  if(!campaign.nextWaveAt){campaign.state='cleared';campaign.nextWaveAt=now+1500;return;}
  if(now<campaign.nextWaveAt)return;
+ if(campaign.wave===4){finishMatch(sim,'victory',now);return;}
  campaign.wave++;
- if(campaign.wave>4){campaign.wave=1;campaign.level++;}
- for(const player of players){player.ammo=120;player.fuel=100;player.health=Math.min(100,player.health+15);}
+ for(const player of players){player.ammo=120;player.fuel=100;healPlayer(player,15);}
  spawnRadToxWave(sim,now,players[0].position);
+}
+
+export function nextRadToxLevel(sim,environment,now,expectedMatchId) {
+ if(!supportsRadTox(environment)||!sim.match||sim.match.state!=='finished'||sim.match.id!==expectedMatchId)return false;
+ const level=sim.match.outcome==='victory'?sim.radTox.level+1:sim.radTox.level;
+ const center=environment.spawn||{x:0,y:0,z:2};
+ sim.radTox={level,wave:1,state:'active',remaining:0,targetCount:0};
+ openMatch(sim,level,now);spawnRadToxWave(sim,now,center);return true;
 }
