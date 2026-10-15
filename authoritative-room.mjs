@@ -1,6 +1,6 @@
 import {stepEnemyCombat} from './server-enemy-combat.mjs';
 import {combatStats,damagePlayer,registerParticipant,checkTeamDefeat,matchView,SPAWN_PROTECTION_MS,PLAYER_HIT_CAPACITY} from './rpg-match.mjs';
-import {startRadTox,advanceRadTox,nextRadToxLevel} from './rad-tox-campaign.mjs';
+import {startRadTox,advanceRadTox,nextRadToxLevel,stepRadToxEnemy} from './rad-tox-campaign.mjs';
 import {rayBoxDistance} from './server-combat-ray.mjs';
 import {createHash} from 'node:crypto';
 import {ServerBuilderCollision} from './server-builder-collision.mjs';
@@ -65,6 +65,7 @@ export class AuthoritativeRooms {
   }
   const active=Object.values(sim.players).filter(player=>!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
   for(const definition of sim.match?.state==='finished'?[]:manifest.actors){const actor=sim.actors[definition.objectId];if(!actor?.active||actor.health<=0||actor.holderId)continue;
+   if(actor.radTox){stepRadToxEnemy(sim,actor,active,now,dt,(origin,ray,span)=>this.collision.blocksShot(environment,origin,ray,span,sim.actors));continue;}
    const kind=definition.gameplay.behavior;
    if(kind==='hostile'||kind==='patrol'){
     const target=active.slice().sort((a,b)=>distance(actor.position,a.position)-distance(actor.position,b.position))[0];
@@ -178,7 +179,9 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
      const stats=combatStats(player);stats.shots++;if(hit){stats.hits++;stats[hit.playerId?'playerHits':'enemyHits']++;}else stats.misses++;
     }
     player.progress ||= {};if(hit){const event=tool==='taser'?'taser-hit':tool==='dynamite'?'blast-hit':tool==='spray'?'spray':'laser-hit';await this.reward(identity,event,requestId+'-hit');player.progress[event]=(player.progress[event]||0)+1;}
-    result={...result,tool,origin,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:hit?.playerId?'player':hit?'enemy':null};
+    const shotDistance=hit?.along??Math.min(range,blocker?.along??range);
+    const end={x:origin.x+ray[0]*shotDistance,y:origin.y+ray[1]*shotDistance,z:origin.z+ray[2]*shotDistance};
+    result={...result,tool,origin,end,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:hit?.playerId?'player':hit?'enemy':null};
    }else fail('This action has no server handler. It was not run locally.',422);
   }
   checkTeamDefeat(sim,now);
