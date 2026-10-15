@@ -3,6 +3,7 @@
 export function fullscreenPanel(panel, { onOpen = () => {}, collapsed = false } = {}) {
   const dialog = document.createElement('dialog');
   dialog.className = 'game-fullscreen-dialog';
+  if(panel.id==='rad-tox-tools')dialog.classList.add('tools-pouch-screen');
   dialog.setAttribute('aria-label', panel.getAttribute('aria-label') || 'Game menu');
   panel.classList.add('game-fullscreen-content');
   dialog.append(panel);
