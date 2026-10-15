@@ -1,7 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {setTimeout as pause} from 'node:timers/promises';
-import {connectAuthoritativeRoom} from '../public/js/authoritative-room-client.js';
+import {connectAuthoritativeRoom,projectSharedBuildings} from '../public/js/authoritative-room-client.js';
+import * as THREE from '../public/vendor/three/three.module.min.js';
+
+test('shared buildings only project changed revisions and retain pending edits',()=>{
+ const system={bricks:[],brickGroup:new THREE.Group(),buildEditor:{pending:null},toggleSharedDoor(root){root.userData.open=!root.userData.open;}};
+ let paints=0;
+ const create=()=>{const root=new THREE.Group();root.add(new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial()));const color=root.children[0].material.color;const set=color.setHex.bind(color);color.setHex=value=>{paints++;return set(value);};return root;};
+ const record={id:'wall',materialId:'brick',revision:1,position:[1,2,3],rotation:[0,0,0],scale:[1,1,1],paint:[0xff0000],open:false};
+ const project=records=>projectSharedBuildings({THREE,system,records,create});
+ project({wall:record});const root=system.bricks[0];assert.equal(paints,1);
+ project({wall:structuredClone(record)});assert.equal(paints,1,'unchanged snapshots skip mesh traversal');
+ project({wall:{...record,revision:2,position:[4,2,3],open:true}});assert.equal(root.position.x,4);assert.equal(root.userData.open,true);assert.equal(paints,2);
+ system.buildEditor.pending={root};root.position.x=9;project({wall:{...record,revision:3}});assert.equal(root.position.x,9);project({});assert.equal(system.bricks.length,1);
+ system.buildEditor.pending=null;project({});assert.equal(system.bricks.length,0);assert.equal(root.parent,null);
+ root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose();});
+});
 test('room client projects confirmed snapshots and stops actions after connection loss',async()=>{
  const previousWindow=globalThis.window,previousDocument=globalThis.document;let unavailable=false,sequence=0;const requests=[],rendered=[],statuses=[];
  globalThis.document={hidden:false};
@@ -76,3 +91,4 @@ test('stopping during session lookup prevents a late gameplay join',async()=>{
   client.stop();release(response({csrfToken:'proof'}));await pause(10);assert.equal(joins,0);assert.equal(client.ready,false);
  });
 });
+

@@ -450,8 +450,8 @@ for (const requiredAdminFlow of ["/api/admin/login", "muzikazAdminToken", "x-adm
     throw new Error(`script.js is missing protected-admin flow: ${requiredAdminFlow}`);
   }
 }
-if (!serverSource.includes("process.env.MUZIKAZ_ADMIN_USERNAME || 'admin'") || !serverSource.includes("process.env.MUZIKAZ_ADMIN_PASSWORD || 'boots'")) {
-  throw new Error('The configured admin administrator credentials are not connected to the server login.');
+if (!serverSource.includes('process.env.MUZIKAZ_ADMIN_USERNAME') || !serverSource.includes('process.env.MUZIKAZ_ADMIN_PASSWORD') || /MUZIKAZ_ADMIN_PASSWORD\s*\|\|\s*['"]/u.test(serverSource)) {
+  throw new Error('Administrator credentials must be configurable without a hardcoded password fallback.');
 }
 
 const apiConnection = await readFile('dist/public/js/api-connection.js', 'utf8');
@@ -469,3 +469,4 @@ for (const page of [['index.html', mainHtml], ['model-market.html', modelMarketH
     if (!page[1].includes(gameControl)) throw new Error(`${page[0]} is missing the shared ${gameControl} game control.`);
   }
 }
+

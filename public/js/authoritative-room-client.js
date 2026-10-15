@@ -91,15 +91,18 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
 }
 export function projectSharedBuildings({THREE,system,records,create}){
  const active=new Set();
+ const roots=new Map(system.bricks.filter(root=>root.userData.sharedId).map(root=>[root.userData.sharedId,root]));
  for(const record of Object.values(records||{})){
   if(record.deleted)continue;active.add(record.id);
-  let root=system.bricks.find(root=>root.userData.sharedId===record.id);
+  let root=roots.get(record.id);
   if(system.buildEditor.pending?.root===root&&root)continue;
+  if(root&&Number.isFinite(record.revision)&&root.userData.sharedRevision===record.revision)continue;
   if(!root){root=create(record.materialId);root.userData={...root.userData,brick:true,hits:0,maxHits:5,locked:true,sharedId:record.id};system.brickGroup.add(root);system.bricks.push(root);}
   root.position.fromArray(record.position);root.rotation.set(...record.rotation);root.scale.fromArray(record.scale);root.userData.buildScale=root.scale.clone();root.userData.sharedRevision=record.revision;root.userData.sharedOwner=record.ownerId;
   let index=0;root.traverse(mesh=>{if(mesh.isMesh&&mesh.material?.color){const color=record.paint[index++];if(color!==undefined)mesh.material.color.setHex(color);}});
   if(!!root.userData.open!==record.open)system.toggleSharedDoor?.(root);
  }
- for(const root of [...system.bricks])if(root.userData.sharedId&&!active.has(root.userData.sharedId)&&system.buildEditor.pending?.root!==root){root.removeFromParent();system.bricks=system.bricks.filter(item=>item!==root);}
+ system.bricks=system.bricks.filter(root=>{if(root.userData.sharedId&&!active.has(root.userData.sharedId)&&system.buildEditor.pending?.root!==root){root.removeFromParent();return false;}return true;});
 }
 export function buildingCommand(root){const paint=[];root.traverse(mesh=>{if(mesh.isMesh&&mesh.material?.color)paint.push(mesh.material.color.getHex());});return {id:root.userData.sharedId||crypto.randomUUID(),revision:root.userData.sharedRevision||0,object:{materialId:root.userData.materialId,position:root.position.toArray(),rotation:[root.rotation.x,root.rotation.y,root.rotation.z],scale:root.scale.toArray(),paint,open:!!root.userData.open}};}
+
