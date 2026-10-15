@@ -234,3 +234,14 @@ body.model-explorer-page .game-view-options .explorer-options.is-unified .explor
 @media(max-width:720px){
   .site-header .game-settings-shortcut{display:none!important;}
 }
+
+/* Separate preview and placement actions without nesting interactive buttons. */
+.building-item-row{display:flex;min-width:0;gap:8px;align-items:stretch;}
+.building-item-row[hidden]{display:none!important;}
+.building-item-row>[data-brick-material]{flex:1;min-width:0;}
+.game-fullscreen-dialog .building-item-row>.building-row-use{display:none;}
+@media(max-width:720px){
+  .game-fullscreen-dialog .building-item-row>.building-row-use{display:inline-flex;flex:0 0 64px;width:64px;min-height:48px;align-items:center;justify-content:center;padding:8px!important;background:#baff39!important;color:#142018!important;font-weight:800;text-align:center!important;}
+  .building-item-row .building-item-copy{min-width:0;overflow-wrap:anywhere;}
+  .building-select-actions{display:none;}
+}
