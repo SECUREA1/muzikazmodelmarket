@@ -42,3 +42,20 @@ test('avatar changes discard late models, animate the confirmed model, and retai
  sync('broken.glb',Date.now()+6000);assert.equal(pending.length,4);current=false;pending[3].success({scene:new THREE.Group()});assert.equal(body.visible,true);
  disposeProjection(root);
 });
+
+test('server enemy projection interpolates positions and turns, and snaps teleports',async()=>{
+ const {targetServerEnemy,interpolateServerEnemy}=await import('../public/js/server-scene-projection.js');
+ const root=new THREE.Group(),actor={position:{x:1,y:0,z:2},rotation:{y:3.1}};
+ targetServerEnemy(root,actor,.62);assert.deepEqual(root.position.toArray(),[1,.62,2]);
+ actor.position.x=2;actor.rotation.y=-3.1;targetServerEnemy(root,actor,.62);
+ assert.equal(root.position.x,1);interpolateServerEnemy(root,.05);
+ assert.ok(root.position.x>1&&root.position.x<2);assert.ok(root.rotation.y>3.1,'turn follows the short path across pi');
+ actor.position.x=30;targetServerEnemy(root,actor,.62);assert.equal(root.position.x,30);
+});
+
+test('controller disposal detaches brain roots even when the controller only frees resources',async()=>{
+ const {disposeServerEnemyProjection}=await import('../public/js/server-scene-projection.js');
+ const scene=new THREE.Scene(),root=new THREE.Group();let disposed=0;
+ root.userData.serverController={dispose(){disposed++;}};scene.add(root);
+ disposeServerEnemyProjection(root);assert.equal(root.parent,null);assert.equal(scene.children.length,0);assert.equal(disposed,1);
+});

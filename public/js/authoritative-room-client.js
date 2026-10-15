@@ -66,8 +66,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     onStatus?.(arrival?.result?.message || 'Connected. Gameplay is ready.');
    } else {
     const controls=document.hidden?{}:input();
-    await client.send('input',{input:controls});
-    if (!stopped && controls.firing) await client.send('fire',{tool:controls.tool,direction:controls.direction,color:controls.color});
+    const state=await client.send('input',{input:controls});
+    if (!stopped && state?.players?.[client.selfId]?.health>0 && state?.match?.state!=='finished' && controls.firing) await client.send('fire',{tool:controls.tool,direction:controls.direction,color:controls.color});
    }
   } catch (error) {
    if (stopped) return;
@@ -75,7 +75,10 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    // tool action in an already joined room is not a connection failure.
    if (error.code==='ROOM_SWITCHED' || error.status===401 || (!joined && [400,403,404,409,422].includes(error.status))) {
     close(error); onStatus?.(error.message); onError?.(error);
-   } else if (joined && [400,403,422,429].includes(error.status)) {
+   } else if (joined && error.code==='ROOM_JOIN_REQUIRED') {
+    client.ready=false;joined=false;
+    onStatus?.('Rejoining the shared room…');
+   } else if (joined && [400,403,409,422,429].includes(error.status)) {
     onStatus?.(error.message);
    } else {
     const wasReady=client.ready;

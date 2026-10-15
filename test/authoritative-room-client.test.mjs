@@ -92,3 +92,39 @@ test('stopping during session lookup prevents a late gameplay join',async()=>{
  });
 });
 
+
+test('expected gameplay conflicts keep the room connected and do not rejoin',async()=>{
+ let joins=0,fires=0,inputs=0;const statuses=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const {action}=JSON.parse(options.body);
+  if(action==='join')joins++;
+  if(action==='input')inputs++;
+  if(action==='fire'){fires++;return response({message:'Refill your igniter fuel.'},409);}
+  const state=confirmed(joins+inputs);state.players[state.selfId].health=100;return response(state);
+ },async client=>{
+  await client.whenReady();await pause(450);
+  assert.ok(fires>=1);assert.ok(inputs>=2);assert.equal(joins,1);assert.equal(client.ready,true);
+  assert.ok(statuses.includes('Refill your igniter fuel.'));
+ },{input:()=>({firing:true,tool:'flamethrower',direction:[0,0,-1]}),onStatus:message=>statuses.push(message)});
+});
+
+test('dead players continue heartbeats without automatic firing',async()=>{
+ let fires=0,inputs=0;
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const {action}=JSON.parse(options.body);if(action==='fire')fires++;if(action==='input')inputs++;
+  const state=confirmed(inputs+1);state.players[state.selfId].health=0;return response(state);
+ },async client=>{await client.whenReady();await pause(250);assert.ok(inputs>0);assert.equal(fires,0);assert.equal(client.ready,true);},
+ {input:()=>({firing:true,tool:'flamethrower',direction:[0,0,-1]})});
+});
+
+test('an expired room presence rejoins while ordinary conflicts do not',async()=>{
+ let joins=0,inputs=0;
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const {action}=JSON.parse(options.body);if(action==='join')joins++;
+  if(action==='input'&&++inputs===1)return response({message:'Join this room before sending gameplay commands.',code:'ROOM_JOIN_REQUIRED'},409);
+  return response(confirmed(joins+inputs));
+ },async client=>{await client.whenReady();await pause(450);assert.equal(joins,2);assert.equal(client.ready,true);});
+});

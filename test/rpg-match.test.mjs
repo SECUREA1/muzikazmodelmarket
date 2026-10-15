@@ -85,3 +85,40 @@ test('enemy kills credit the final attacker and give the other contributor an as
  state=await send('alice','input',{input:{}});assert.equal(state.match.results[0].username,'bob');assert.equal(state.match.results[1].assists,1);assert.ok(state.match.results.every(row=>row.shots===row.hits+row.misses));
 }));
 
+test('respawn clears falling momentum, shield and tool cooldowns without erasing match statistics',()=>arena(async({send,store,map,advance,arrange})=>{
+ await send('alice','join');await send('bob','join');await arrange();
+ await store.update(map.id,room=>{
+  const player=room.simulation.players['account:alice'];player.health=0;player.velocityY=-15;player.grounded=false;player.shieldUntil=999999;player.toolReady={laser:999999};player.toolUses={medkit:2};player.combat.deaths=1;
+ });
+ advance(50);const state=await send('alice','respawn');
+ const stored=(await store.get(map.id)).simulation.players['account:alice'];
+ assert.equal(state.players['account:alice'].health,100);assert.equal(stored.velocityY,0);assert.equal(stored.grounded,true);assert.equal(stored.shieldUntil,0);assert.deepEqual(stored.toolReady,{});assert.deepEqual(stored.toolUses,{});assert.equal(stored.combat.deaths,1);
+}));
+
+test('expired room presence has a distinct recovery code',()=>arena(async({send,advance})=>{
+ await send('alice','join');advance(16000);
+ await assert.rejects(send('alice','input',{input:{}}),error=>error.statusCode===409&&error.code==='ROOM_JOIN_REQUIRED');
+ const state=await send('alice','join');assert.ok(state.players['account:alice']);
+}));
+
+test('nearby enemies do not intercept use actions intended for gameplay items',()=>arena(async({send,store,map,arrange})=>{
+ await send('alice','join');await arrange();
+ await store.update(map.id,room=>{
+  const sim=room.simulation;sim.players['account:alice'].health=50;
+  for(const [id,behavior,z]of [['hostile','hostile',.25],['healer','heal',1]]){
+   const position={x:0,y:0,z},gameplay={behavior,health:100,damage:0,interactionDistance:3,cooldown:0,action:'none',value:25};
+   sim.actors[id]={id,position,rotation:{y:0},active:true,health:100,definition:{objectId:id,position:{...position},gameplay,movement:{speed:0},ai:{detectionRange:3}}};
+  }
+ });
+ const state=await send('alice','interact');assert.equal(state.players['account:alice'].health,75);
+}));
+
+test('defeat releases held objects for teammates',()=>arena(async({send,store,map,advance,arrange})=>{
+ await send('alice','join');await send('bob','join');await arrange();
+ await store.update(map.id,room=>{
+  const sim=room.simulation,player=sim.players['account:alice'];player.health=0;player.heldId='held';
+  sim.actors.held={id:'held',position:{x:0,y:0,z:0},active:true,health:100,holderId:player.actorId};
+ });
+ advance(50);const state=await send('bob','input',{input:{}});
+ assert.equal(state.actors.held.holderId,null);assert.equal(state.players['account:alice'].heldId,null);
+}));
