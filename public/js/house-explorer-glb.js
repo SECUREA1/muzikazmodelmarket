@@ -898,10 +898,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const consumedBackpackItems = new Set((()=>{try{return JSON.parse(localStorage.getItem('muzikazConsumedBackpackItems')||'[]');}catch{return [];}})());
   const unlockedAttachmentLoot = new Set((()=>{try{return JSON.parse(localStorage.getItem('muzikazUnlockedAttachmentLoot')||'[]');}catch{return [];}})());
   const DEFAULT_PET_TREAT_COST = 5;
+  let ownedSupplies = [];
+  let supplyUsePending = false;
   let backpackCategory = 'avatars';
   let backpackSelectionOpen = false;
   const mobileBackpackQuery = window.matchMedia('(max-width: 760px)');
   const BACKPACK_ICONS = Object.freeze({
+    supplies:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v15H4ZM8 6V3h8v3M12 10v7M8.5 13.5h7"/></svg>',
     avatars:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4 21c.5-5 3.1-7.5 8-7.5s7.5 2.5 8 7.5"/><path class="backpack-icon-accent" d="m17.5 3 .7 1.5 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7Z"/></svg>',
     lands:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20 9 9l3 5 2-3 7 9Z"/><path class="backpack-icon-accent" d="M14 11V4h6l-2 2 2 2h-6"/><circle cx="7" cy="6" r="2"/></svg>',
     props:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 7 8-4 8 4-8 4Z"/><path d="M4 7v10l8 4 8-4V7M12 11v10"/><path class="backpack-icon-accent" d="m8.5 5 7 4"/></svg>',
@@ -911,7 +914,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   const BACKPACK_CATEGORIES = Object.freeze([
     ['avatars','Avatars'],['lands','Land'],['props','Props'],
-    ['wearables','Wearables'],['pets','Pets'],['vehicles','Vehicles']
+    ['wearables','Wearables'],['pets','Pets'],['vehicles','Vehicles'],['supplies','Supplies']
   ]);
   function backpackIcon(type) { return `<span class="backpack-svg-icon">${BACKPACK_ICONS[type] || BACKPACK_ICONS.props}</span>`; }
   function backpackAssetStack(asset, imageUrl = '') {
@@ -1083,6 +1086,21 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     placedAvatars.add(root);addAvatarCollider(root);return root;
   }
   async function deployBackpackAsset(asset) {
+    if(asset?.type==='supplies'){
+      if(supplyUsePending)return false;
+      supplyUsePending=true;
+      try{
+        const session=await sharedInventory.session();
+        if(session.owner_id!==asset.supplyOwner)throw new Error('Your account changed. Refresh the Backpack before consuming supplies.');
+        if(toxicBubbleSystem.active&&!serverHostedRoom)await sharedInventory.recordTelemetry(100*toxicBubbleSystem.health/TOXIC_BUBBLE_CONFIG.maxHealth,activeEnvironment?.id);
+        const result=await sharedInventory.action('use',asset.id);
+        ownedSupplies=ownedSupplies.filter(item=>item.id!==asset.id);
+        careEffects.accept(result);
+        setStatus(`${asset.name} consumed. ${asset.description||'Body stats updated.'}`);
+        await refreshLibrary();
+        return true;
+      }finally{supplyUsePending=false;renderPicker();}
+    }
     if(serverHostedRoom&&['avatar','avatars'].includes(asset?.type)){const result=await sharedInventory.useBackpack(asset.id);if(result.action==='avatar'){closeBackpack();location.reload();return true;}}
     if(asset?.requiresReveal){const deed=await gameEconomy.inventory.revealLand(asset.id);closeBackpack();await registry.refresh();await loadById(deed.spaceId);return true;}
     if(asset?.container?.requiresShot&&!unlockedAttachmentLoot.has(asset.id)){closeBackpack();if(toxicBubbleSystem.state!==RAD_TOX_STATES.ACTIVE)await toxicBubbleSystem.begin();toxicBubbleSystem.setTool('laser');toxicBubbleSystem.spawnAttachmentBlock(asset);return true;}
@@ -1147,7 +1165,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const liveAvatars = cachedAvatars.map(avatar => ({ ...avatar, type:'avatars', description:avatar.description || 'Public avatar' }));
 
     const starter={id:'starter-avatar',name:'Starter Avatar',type:'avatars',modelUrl:'/public/models/avatars/DAX.glb',basic:true};
-    const merged = [starter,...backpackAssets.filter(item=>item.ownedBuilder),...(gameEconomy?.ownedAssets()||[])];
+    const merged = [starter,...ownedSupplies,...backpackAssets.filter(item=>item.ownedBuilder),...(gameEconomy?.ownedAssets()||[])];
     const seen = new Set();
     return merged.filter(item => { const modelKey=modelIdentity(item.modelUrl); const key=modelKey ? `${item.type}:${modelKey}` : `${item.type}:${item.id}`; if(seen.has(key)) return false; seen.add(key); return true; });
   }
@@ -1159,13 +1177,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const records = backpackRecords(); const categories = BACKPACK_CATEGORIES.map(([id,label],index) => { const count=records.filter(item=>item.type===id).length, angle=(index+.5)*360/BACKPACK_CATEGORIES.length, active=id===backpackCategory; return `<button type="button" class="backpack-category backpack-category--${id} ${active?'is-active':''}" style="--label-angle:${angle}deg;--backpack-slice:${backpackPieSlice(index)}" data-backpack-category="${id}" aria-label="${label}, ${count} items" aria-pressed="${active}" aria-expanded="${active&&backpackSelectionOpen}" aria-controls="backpack-selection" title="${label}: ${count}"><span class="backpack-category-label"><b class="backpack-category-graphic" aria-hidden="true">${backpackIcon(id)}</b><em>${label}</em><small>${count}</small></span></button>`; }).join('');
     const selected = records.filter(item => item.type === backpackCategory);
     const designated = (() => { try { return JSON.parse(localStorage.getItem('muzikazDesignatedAvatar') || 'null')?.id; } catch { return ''; } })();
-    const cards = selected.map((asset,index) => { const consumed=asset.consumable&&consumedBackpackItems.has(asset.id),canRefill=consumed&&Number.isFinite(Number(asset.refillCostMzk)),treatPet=asset.petId&&backpackAssets.find(item=>item.id===asset.petId),refillCost=Number(asset.refillCostMzk)||DEFAULT_PET_TREAT_COST,active=activeBackpackItems.has(asset.id);const useLabel=canRefill?`Buy another · ${refillCost} MZK`:consumed?'Consumed':treatPet?`Feed ${treatPet.name}`:asset.type==='lands'?'Enter land':asset.type==='avatars'?(asset.id===designated?'Use avatar again':'Use avatar'):asset.type==='wearables'?'Equip on player':asset.type==='vehicles'?'Deploy vehicle':asset.type==='pets'?'Call companion':'Place in world';const action=canRefill?`data-buy-treat="${escapeHtml(asset.id)}"`:`data-use-asset="${escapeHtml(asset.id)}"`; return `<article class="backpack-orbit-card ${asset.id===designated?'is-equipped':''} ${active?'is-active':''} ${consumed&&!canRefill?'is-consumed':''}" style="--orbit-index:${index}" data-backpack-id="${escapeHtml(asset.id)}"><div class="backpack-asset-preview">${backpackAssetVisual(asset)}</div><strong>${escapeHtml(asset.name)}</strong><small>${asset.economySku?`${gameEconomy?.get(asset.economySku)?.useCostMzk||0} MZK / use`:active?'Active in game':canRefill?`Snack eaten · refill costs ${refillCost} MZK`:consumed?'Used up':asset.id==='rad-tox-dynamite'?'Reusable item · 25 MZK per throw':asset.consumable?'1 snack · consumed on use':escapeHtml(asset.owner||'Public MUZIKAZ')}</small><div class="backpack-card-actions"><button type="button" ${action} ${consumed&&!canRefill?'disabled':''} aria-busy="false">${useLabel}</button>${!asset.basic?`<button type="button" data-gameplay-download="${escapeHtml(asset.id)}">Download file</button>`:''}</div></article>`; }).join('');
+    const cards = selected.map((asset,index) => { const consumed=asset.consumable&&consumedBackpackItems.has(asset.id),canRefill=consumed&&Number.isFinite(Number(asset.refillCostMzk)),treatPet=asset.petId&&backpackAssets.find(item=>item.id===asset.petId),refillCost=Number(asset.refillCostMzk)||DEFAULT_PET_TREAT_COST,active=activeBackpackItems.has(asset.id);const useLabel=asset.type==='supplies'?'Consume':canRefill?`Buy another · ${refillCost} MZK`:consumed?'Consumed':treatPet?`Feed ${treatPet.name}`:asset.type==='lands'?'Enter land':asset.type==='avatars'?(asset.id===designated?'Use avatar again':'Use avatar'):asset.type==='wearables'?'Equip on player':asset.type==='vehicles'?'Deploy vehicle':asset.type==='pets'?'Call companion':'Place in world';const action=canRefill?`data-buy-treat="${escapeHtml(asset.id)}"`:`data-use-asset="${escapeHtml(asset.id)}"`; return `<article class="backpack-orbit-card ${asset.id===designated?'is-equipped':''} ${active?'is-active':''} ${consumed&&!canRefill?'is-consumed':''}" style="--orbit-index:${index}" data-backpack-id="${escapeHtml(asset.id)}"><div class="backpack-asset-preview">${backpackAssetVisual(asset)}</div><strong>${escapeHtml(asset.name)}</strong><small>${asset.type==='supplies'?escapeHtml(asset.description||'Single use · updates body stats'):asset.economySku?`${gameEconomy?.get(asset.economySku)?.useCostMzk||0} MZK / use`:active?'Active in game':canRefill?`Snack eaten · refill costs ${refillCost} MZK`:consumed?'Used up':asset.id==='rad-tox-dynamite'?'Reusable item · 25 MZK per throw':asset.consumable?'1 snack · consumed on use':escapeHtml(asset.owner||'Public MUZIKAZ')}</small><div class="backpack-card-actions"><button type="button" ${action} ${consumed&&!canRefill?'disabled':''} aria-busy="false">${useLabel}</button>${!asset.basic&&asset.type!=='supplies'?`<button type="button" data-gameplay-download="${escapeHtml(asset.id)}">Download file</button>`:''}</div></article>`; }).join('');
     const activeCategory=BACKPACK_CATEGORIES.find(row=>row[0]===backpackCategory) || BACKPACK_CATEGORIES[0];
     const marketLabel = backpackCategory === 'lands' ? 'Buy land' : `Shop ${activeCategory[1]}`;
     const marketAction = `<a data-game-upgrade-shop class="backpack-market-action" href="model-market.html?market=${encodeURIComponent(backpackCategory)}#marketplace-preview"><span aria-hidden="true">＋</span> ${marketLabel}</a>`;
     library.classList.toggle('is-selection-open', !mobileBackpackQuery.matches || backpackSelectionOpen);
     library.innerHTML = `<div class="backpack-header"><div><p>In-game inventory</p><strong>Drop Backpack</strong><small>Choose a category, then select an item</small></div><button type="button" data-close-backpack aria-label="Close backpack">×</button></div><div class="backpack-picker"><nav class="backpack-categories" aria-label="Backpack categories"><div class="backpack-pie-center" aria-hidden="true">${backpackIcon(activeCategory[0])}<strong>${activeCategory[1]}</strong></div>${categories}</nav><section class="backpack-selection" id="backpack-selection" aria-label="${activeCategory[1]} in backpack"><div class="backpack-selection-heading"><p class="backpack-selection-title">${backpackIcon(activeCategory[0])}<strong>${activeCategory[1]}</strong><small>${selected.length} available</small></p>${marketAction}</div><div class="backpack-circle" style="--item-count:${Math.max(selected.length,1)}">${cards||'<p class="backpack-empty">No owned upgrades in this category yet. Open Marketplace → Game upgrades to purchase items with MZK.</p>'}</div></section></div><footer><button type="button" data-gameplay-import>Open gameplay file</button><span>${records.length} available assets · ${selected.length} shown</span><small>Use arrow keys to switch categories.</small></footer>`;
-    library.querySelector('[data-game-upgrade-shop]')?.addEventListener('click',event=>{event.preventDefault();pickerPanel.dialog.close();gameMarketplace.open('upgrades');});
+    library.querySelector('[data-game-upgrade-shop]')?.addEventListener('click',event=>{event.preventDefault();pickerPanel.dialog.close();gameMarketplace.open(backpackCategory==='supplies'?'care':'upgrades');});
     library.querySelector('[data-close-backpack]')?.addEventListener('click',()=>{ library.classList.add('is-collapsed'); document.querySelector('#add-avatar')?.setAttribute('aria-expanded','false'); });
     library.querySelectorAll('[data-backpack-category]').forEach((button,index)=>{ button.addEventListener('click',()=>{ const next=button.dataset.backpackCategory; backpackSelectionOpen=true; backpackCategory=next; renderPicker(); if(mobileBackpackQuery.matches&&backpackSelectionOpen) library.querySelector('.backpack-selection')?.scrollIntoView({block:'nearest',behavior:'smooth'}); }); button.addEventListener('keydown',event=>{ if(!['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(event.key))return; event.preventDefault(); const step=['ArrowLeft','ArrowUp'].includes(event.key)?-1:1, next=(index+step+BACKPACK_CATEGORIES.length)%BACKPACK_CATEGORIES.length; backpackCategory=BACKPACK_CATEGORIES[next][0]; backpackSelectionOpen=true; renderPicker(); library.querySelectorAll('[data-backpack-category]')[next]?.focus(); }); });
     library.querySelectorAll('[data-use-asset]').forEach(button=>button.addEventListener('click',async()=>{ const asset=records.find(item=>item.id===button.dataset.useAsset&&item.type===backpackCategory); if(!asset){setStatus('That Backpack item is no longer available. Refresh the Backpack and try again.');return;} button.disabled=true;button.setAttribute('aria-busy','true');button.closest('.backpack-orbit-card')?.classList.add('is-deploying');try{await popBackpackAsset(asset);}catch(error){console.error('[MUZIKAZ Backpack]',error);setStatus(error?.message||`${asset.name} could not be used safely.`);}finally{if(button.isConnected){button.disabled=false;button.setAttribute('aria-busy','false');button.closest('.backpack-orbit-card')?.classList.remove('is-deploying');renderPicker();}} }));
@@ -1189,6 +1207,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       backpackAssets = Array.isArray(pack) ? pack : (pack.assets || []);
     }
     try{const owned=await sharedInventory.builderPack();backpackAssets=backpackAssets.filter(item=>!item.ownedBuilder).concat(owned.assets.map(ownedBuilderModel));}catch{backpackAssets=backpackAssets.filter(item=>!item.ownedBuilder);}
+    try{
+      const [state,catalog]=await Promise.all([sharedInventory.state(),fetch('public/models/ioncore-rpg-items.json').then(response=>{if(!response.ok)throw new Error('Supply catalog unavailable.');return response.json();})]);
+      ownedSupplies=state.items.map(item=>{const definition=catalog.items.find(entry=>entry.id===item.catalogId);return {...item,type:'supplies',supplyOwner:state.owner_id,description:definition?.description||'Single-use care supply',consumable:true};});
+    }catch{ownedSupplies=[];}
     addSavedBuilderWorld();
     renderPicker();
     if (worldResult.status === 'rejected') setStatus(`Maps are temporarily unavailable. ${worldResult.reason?.message || ''}`.trim());
@@ -1197,6 +1219,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
 
   window.addEventListener('muzikaz:member-plots-changed',()=>refreshLibrary().catch(()=>{}));
+  window.addEventListener('mzk:wallet-connection-changed',()=>{ownedSupplies=[];renderPicker();});
   watchInventoryChange(()=>{gameEconomy?.refresh().then(()=>{toxicBubbleSystem.updateInventory();if(!buildMenu.hidden)renderBuildMenu();});refreshLibrary().catch(()=>{});syncCareEffects().catch(()=>{});});
   let multiplayerPresence=[];
   function usersInWorld(id){return multiplayerPresence.filter(user=>(user.roomId||'rad-tox')===id).length;}
