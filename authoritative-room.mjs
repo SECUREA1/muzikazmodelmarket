@@ -1,3 +1,4 @@
+import {builderBaseSpawn} from './public/js/environments/builder-base.js';
 import {projectArcadeDevices} from './server-arcade-games.mjs';
 import {deviceCommand,advanceDevicePlayback} from './server-interactive-devices.mjs';
 import {deviceDefinition} from './public/js/interactive-devices.js';
@@ -54,6 +55,13 @@ export class AuthoritativeRooms {
   }
   this.prepareEncounter(sim,environment);
   refreshRpgLoot(sim,environment,this.now(),position=>this.collision.safeSpawn(environment,position));
+  const alignmentKey=JSON.stringify(environment.builderScene?.baseTransform||{});
+  if(sim.baseAlignmentKey!==alignmentKey){
+   for(const [id,actor]of Object.entries(sim.actors))if(actor.loot?.currency==='MZK')delete sim.actors[id];
+   sim.coinSites={};sim.coinRetryAt={};
+   if(sim.baseAlignmentKey!==undefined&&environment.builderScene?.baseEnvironment)for(const player of Object.values(sim.players)){const entry=this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment));player.position={...entry};player.floor=entry.y;player.velocityY=0;player.grounded=true;}
+   sim.baseAlignmentKey=alignmentKey;
+  }
   refreshMzkCoins(sim,environment,this.now(),(position,occupied)=>environment.builderScene||environment.proceduralLand?this.collision.safeSpawn(environment,position):this.collision.encounterSpawn(environment,position,this.collision.safeSpawn(environment,environment.spawn||{x:0,y:0,z:2}),occupied));
   manifest.actors.push(...Object.values(sim.actors).filter(actor=>actor.definition).map(actor=>actor.definition));
   sim.streets=environment.streets||[];sim.mapRevision=environment.atlas?.revision||0;
@@ -61,13 +69,13 @@ export class AuthoritativeRooms {
  }
  step(room,environment){
   const {sim,manifest}=this.initialize(room,environment),now=this.now();advanceDevicePlayback(sim,now);if(now-sim.time<33){checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;
-  const half=clamp(environment.builderScene?.mapSize||200,20,2000)/2;
+  const half=clamp(environment.builderScene?.mapSize||200,20,2000)/2;const baseBounds=environment.builderScene?.baseEnvironment?this.collision.world(environment).bounds:null;
   for(const player of Object.values(sim.players)){
    if(now-player.lastSeen>15000){for(const key of ['heldId','seatedId','vehicleId']){const actor=sim.actors[player[key]];if(actor?.holderId)actor.holderId=null;player[key]=null;}player.input={};}if(player.health<=0){for(const key of ['heldId','seatedId','vehicleId']){const held=sim.actors[player[key]];if(held?.holderId===player.actorId)held.holderId=null;player[key]=null;}player.input={};continue;}if(player.replacedByRoom||now-player.lastSeen>1000)continue;
    const input=player.input||{},forward=clamp(input.forward,-1,1),side=clamp(input.side,-1,1),length=Math.max(1,Math.hypot(forward,side));
    let speed=player.vehicleId?12:input.sprint?6:4;
    if(player.seatedId) speed=0;
-   const next={...player.position,x:clamp(player.position.x+(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*side)*speed*dt/length,-half,half),z:clamp(player.position.z+(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*side)*speed*dt/length,-half,half)};
+   const next={...player.position,x:clamp(player.position.x+(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*side)*speed*dt/length,baseBounds?.min.x??-half,baseBounds?.max.x??half),z:clamp(player.position.z+(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*side)*speed*dt/length,baseBounds?.min.z??-half,baseBounds?.max.z??half)};
    const floor=environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length?-100:0;
    if(input.jump&&player.grounded){player.velocityY=6;player.grounded=false;}
    player.velocityY=(player.velocityY||0)-18*dt;next.y=Math.max(floor,next.y+player.velocityY*dt);player.grounded=next.y<=floor;if(player.grounded)player.velocityY=0;
@@ -115,7 +123,7 @@ export class AuthoritativeRooms {
     if(pending?.token===command.travelToken&&pending.to===id&&pending.expiresAt>=now)travel=pending;
     else if(!(player?.lastPortalArrival?.token===command.travelToken&&player.lastPortalArrival.from===command.travelFrom&&player.lastPortalArrival.expiresAt>=now))fail('This portal trip has expired. Enter the portal again.',409,'PORTAL_TRIP_EXPIRED');
    }
-   const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);let spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects):this.collision.safeSpawn(environment,manifest.spawn?.position||environment.builderScene?.baseEnvironment?.spawn||environment.spawn||{x:0,y:0,z:2});
+   const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);let spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects):this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2});
    if(travel)spawn=portalArrivalPosition(environment,manifest,travel.from,this.collision,sim.actors,room.objects);
    if(player&&player.floorVersion!==2&&!meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.floorVersion=2;}
    if(!player&&!meeting&&!travel){const count=active.length;spawn=this.collision.safeSpawn(environment,{...spawn,x:spawn.x+(count%4)*1.2,z:spawn.z+Math.floor(count/4)*1.2});}
@@ -132,7 +140,7 @@ export class AuthoritativeRooms {
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position))result.message='RAD-TOX encounter active.';else result.message='Builder gameplay active.';}
    else if(command.action==='next-rad-tox'){if(sim.radTox?.transition&&now<sim.radTox.transition.at)fail('The next round starts after the 10-second results countdown.',409);if(nextRadToxLevel(sim,environment,now,command.matchId)){for(const [index,participantId] of Object.keys(sim.match.participants).entries()){const participant=sim.players[participantId],entry=environment.spawn||{x:0,y:0,z:2};participant.position=this.collision.safeSpawn(environment,{...entry,x:entry.x+(index%4)*1.2,z:entry.z+Math.floor(index/4)*1.2});participant.floor=participant.position.y;participant.velocityY=0;participant.grounded=true;participant.shieldUntil=0;participant.input={};participant.toolReady={};participant.toolUses={};}result.message='Next shared level started.';}else if(sim.match?.id===command.matchId)fail('Complete the current level before starting another.',409);}
    else if(sim.match?.state==='finished'&&!['input','interact'].includes(command.action))fail('This level has ended. Review the results and start the next level.',409);
-   else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||environment.builderScene?.baseEnvironment?.spawn||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
+   else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
    else if(player.health<=0&&command.action!=='interact')fail('Respawn before acting.',409);
    else if(command.action==='teleport-floor'){
     if(player.seatedId||player.vehicleId)fail('Leave the seat or vehicle before teleporting.',409);

@@ -1,10 +1,11 @@
+import {builderBaseSpawn} from './public/js/environments/builder-base.js';
 import {randomUUID} from 'node:crypto';
 export const MZK_COIN_COUNT=8;
 export const MZK_COIN_RESPAWN_MS=60000;
 // Room-owned spawns and one-use IDs are the only source of coin rewards.
 export function refreshMzkCoins(sim,environment,now,safeSpawn,random=Math.random){
  sim.coinSites ||= {};sim.coinRetryAt ||= {};
- const center=environment.builderScene?.baseEnvironment?.spawn||environment.spawn||{x:0,y:0,z:2};
+ const center=builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2};
  for(let i=0;i<MZK_COIN_COUNT;i++){
   if(now<(sim.coinRetryAt[i]||0))continue;
   const previous=sim.actors[sim.coinSites[i]];

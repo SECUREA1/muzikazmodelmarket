@@ -1,3 +1,4 @@
+import {applyBuilderBaseTransform,normalizedBaseTransform} from './public/js/environments/builder-base.js';
 import { overheadBuildView } from './public/js/builder-view.js';
 import {BUILDER_SECTIONS,libraryModels,libraryCounts,catalogRecords,createPlacementSelection} from './public/js/builder-library.js';
 let placementStatus='idle',placementError='',repeatPlacement=false,pendingCatalogRestore=[],pendingCatalogSceneId=null;
@@ -364,7 +365,7 @@ function removeSelected(){if(!selectedId)return;disposeRuntime(selectedId);scene
 function changeSelected(fn){const o=selected();if(!o)return;fn(o);updateTransform(o);markChanged();updateUi()}
 function interact(o=selected()){if(!o)return;const rt=runtime.get(o.id);o.functionalSettings.active=!o.functionalSettings.active;const behavior=o.functionalSettings.behavior;rt?.root.traverse(n=>{if((behavior==='door'||o.animationState.clip==='open')&&(n.name==='door'||n.parent===rt.root))n.rotation.y=o.functionalSettings.active?-Math.PI*.62:0;if(behavior==='pickup')n.visible=!o.functionalSettings.active;if(behavior==='hostile'){n.rotation.x=o.functionalSettings.active?-.28:0;o.animationState.clip=o.functionalSettings.active?'attack':(modelFor(o.modelId)?.animation||'idle')}if((behavior==='talk'||behavior==='heal'||behavior==='quest')&&n.isMesh&&n.material?.emissive)n.material.emissiveIntensity=o.functionalSettings.active?1.4:.25});if(rt){rt.root.userData.interaction={behavior,active:o.functionalSettings.active,trigger:o.functionalSettings.trigger};if(behavior==='pickup')rt.root.scale.setScalar(o.functionalSettings.active?.01:o.scale.x)}const action=o.functionalSettings.action,value=o.functionalSettings.value;const result=action==='message'?(value||'Hello, explorer!'):action==='score'?`Awarded ${value||100} points`:action==='teleport'?`Teleport target: ${value||'player spawn'}`:action==='damage'?`${value||10} damage triggered`:action==='spawn'?`Spawned ${value||'linked object'}`:action==='sound'?`Playing ${value||'selected sound'}`:`${o.functionalSettings.active?'interaction active':'interaction reset'}`;showToast(`${o.avatarSettings?.displayName||modelFor(o.modelId).name}: ${result}`);markChanged()}
 
-renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;const point=terrainPoint(e);if(preview&&point){preview.position.copy(point);const box=new THREE.Box3().setFromObject(preview);preview.position.y+=point.y-box.min.y}if(!dragging)return;const o=selected();dragging.moved ||= Math.hypot(e.clientX-dragging.startX,e.clientY-dragging.startY)>6;if(dragging.rotate){o.rotation.y=dragging.startRotation+(e.clientX-dragging.startX)*.015}else if(point){o.position.x=THREE.MathUtils.clamp(point.x,-sceneData.mapSize/2+.5,sceneData.mapSize/2-.5);o.position.z=THREE.MathUtils.clamp(point.z,-sceneData.mapSize/2+.5,sceneData.mapSize/2-.5);o.groundOffset=baseWorld?0:Math.max(0,point.y-groundAt(o.position.x,o.position.z));if(baseWorld)o.position.y=point.y}updateTransform(o);updateUi()});
+renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;const point=terrainPoint(e);if(preview&&point){preview.position.copy(point);const box=new THREE.Box3().setFromObject(preview);preview.position.y+=point.y-box.min.y}if(!dragging)return;const o=selected();dragging.moved ||= Math.hypot(e.clientX-dragging.startX,e.clientY-dragging.startY)>6;if(dragging.rotate){o.rotation.y=dragging.startRotation+(e.clientX-dragging.startX)*.015}else if(point){o.position.x=clampBuildCoordinate(point.x,'x');o.position.z=clampBuildCoordinate(point.z,'z');o.groundOffset=baseWorld?0:Math.max(0,point.y-groundAt(o.position.x,o.position.z));if(baseWorld)o.position.y=point.y}updateTransform(o);updateUi()});
 renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;if(e.button!==0||viewMode==='walkthrough')return;const point=terrainPoint(e);if(pendingModelId&&point){placePending(point);return}screenRay(e);const hit=raycaster.intersectObjects([...runtime.values()].map(r=>r.root),true).find(h=>h.object.userData.builderRoot||h.object.parent);let node=hit?.object;while(node&&!node.userData.objectId)node=node.parent;if(node?.userData.objectId){selectObject(node.userData.objectId);dragging={id:selectedId,startX:e.clientX,startY:e.clientY,startRotation:selected().rotation.y,rotate:e.shiftKey,moved:false,pointerId:e.pointerId};renderer.domElement.setPointerCapture?.(e.pointerId);controls.enabled=false}else{selectedId=null;inspectorRequested=false;document.body.classList.remove('inspector-open');updateUi()}});
 addEventListener('pointerup',e=>{if(!dragging)return;const finished=dragging;dragging=null;controls.enabled=true;markChanged();if(finished.moved)return;const now=performance.now();if(lastObjectTap?.id===finished.id&&now-lastObjectTap.time<400){lastObjectTap=null;selectObject(finished.id,{openInspector:true});showToast('Object controls opened')}else lastObjectTap={id:finished.id,time:now}});addEventListener('keydown',e=>{if(e.key==='Escape'&&pendingModelId){pendingModelId=null;preview?.removeFromParent();preview=null;renderLibrary()}if((e.key==='Delete'||e.key==='Backspace')&&!/INPUT|SELECT/.test(document.activeElement.tagName))removeSelected()});
 document.addEventListener('click',e=>{const del=e.target.closest('[data-delete-group]');if(del){e.preventDefault();e.stopPropagation();customModels=customModels.filter(m=>m.groupId!==del.dataset.deleteGroup);localStorage.setItem(CUSTOM_KEY,JSON.stringify(customModels));renderLibrary();return}const library=e.target.closest('[data-model]');if(library)beginPlacement(library.dataset.model);const listed=e.target.closest('[data-select-object]');if(listed)selectObject(listed.dataset.selectObject,{openInspector:true});const swatch=e.target.closest('[data-color]');if(swatch)changeSelected(o=>{o.materialSettings.accent=swatch.dataset.color;o.materialSettings.useAccent=true});const mode=e.target.closest('[data-view-mode]');if(mode){viewMode=mode.dataset.viewMode;document.querySelectorAll('[data-view-mode]').forEach(b=>{b.classList.toggle('active',b===mode);b.setAttribute('aria-pressed',String(b===mode));});controls.mouseButtons=viewMode==='walkthrough'?{LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN}:{LEFT:THREE.MOUSE.PAN,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.ROTATE};$('#view-help').textContent=viewMode==='walkthrough'?'Drag to orbit · right-drag to pan · wheel to move through the scene':'Select an item, then click the terrain to place it'}});
@@ -397,12 +398,12 @@ $('#portal-target-location').addEventListener('change',e=>changeSelected(o=>o.fu
 $('#portal-target-map').addEventListener('change',e=>changeSelected(o=>o.functionalSettings.portal.targetMapId=e.target.value));
 
 function resetBuildView(){
- closeRepositoryMap();
+ setMoveWorldMode(false);worldDrag=null;closeRepositoryMap();
  if(rangeState.playing)finishRangeCourse(true);
  $('#range-game-panel').hidden=true;
  document.querySelector('[data-view-mode="build"]').click();
  dragging=null;controls.enabled=true;
- const view=overheadBuildView(sceneData.mapSize,camera.aspect,camera.fov);
+ const size=baseWorld?new THREE.Box3().setFromObject(baseWorld).getSize(new THREE.Vector3()):null;const view=overheadBuildView(size?Math.max(size.x,size.z):sceneData.mapSize,camera.aspect,camera.fov);
  // Clear orbit damping before setting a new absolute view.
  const damping=controls.enableDamping;controls.enableDamping=false;controls.update();
  controls.maxDistance=Math.max(controls.maxDistance,view.distance*1.1);
@@ -423,9 +424,46 @@ function closeRepositoryMap(){
 }
 let baseWorld=null,baseLoadGeneration=0;
 function clearBaseWorld(){
- baseLoadGeneration++;if(baseWorld){world.remove(baseWorld);baseWorld.traverse(node=>{node.geometry?.dispose();for(const material of [].concat(node.material||[]))material.dispose?.();});baseWorld=null;}
- terrain.visible=true;worldDressing.visible=true;
+ baseLoadGeneration++;setMoveWorldMode(false);if(baseWorld){world.remove(baseWorld);baseWorld.traverse(node=>{node.geometry?.dispose();for(const material of [].concat(node.material||[]))material.dispose?.();});baseWorld=null;}
+ terrain.visible=true;worldDressing.visible=true;$('#world-alignment').hidden=true;
 }
+function syncBaseControls(){
+ $('#world-alignment').hidden=!baseWorld;
+ const transform=normalizedBaseTransform(sceneData.baseTransform);
+ for(const key of ['x','y','z','rotation','scale'])$('#world-base-'+key).value=transform[key];$('#world-base-angle').textContent=transform.rotation+'°';
+}
+function clampBuildCoordinate(value,axis){const box=baseWorld?.userData.buildBounds;return THREE.MathUtils.clamp(value,box?box.min[axis]+.5:-sceneData.mapSize/2+.5,box?box.max[axis]-.5:sceneData.mapSize/2-.5);}
+function alignBase(transform){
+ if(!baseWorld)return;
+ sceneData.baseTransform=applyBuilderBaseTransform(baseWorld,transform);baseWorld.userData.buildBounds=new THREE.Box3().setFromObject(baseWorld);syncBaseControls();markChanged();
+}
+$('#world-alignment').addEventListener('input',event=>{
+ if(!event.target.matches('[data-base-transform]'))return;
+ const transform=Object.fromEntries(['x','y','z','rotation','scale'].map(key=>[key,$('#world-base-'+key).value]));alignBase(transform);
+});
+let moveWorldMode=false,worldDrag=null;
+function setMoveWorldMode(enabled){if(!enabled)worldDrag=null;moveWorldMode=Boolean(enabled&&baseWorld);controls.enabled=!moveWorldMode;$('#world-base-move').setAttribute('aria-pressed',String(moveWorldMode));$('#world-base-move').textContent=moveWorldMode?'DONE MOVING WORLD':'DRAG WORLD ON MAP';}
+$('#world-base-move').addEventListener('click',()=>{cancelTouchAction();setMoveWorldMode(!moveWorldMode);});
+renderer.domElement.addEventListener('pointerdown',event=>{
+ if(!moveWorldMode||!baseWorld||event.button!==0)return;
+ event.preventDefault();event.stopImmediatePropagation();if(worldDrag)return;screenRay(event);
+ const plane=new THREE.Plane(new THREE.Vector3(0,1,0),-baseWorld.userData.buildBounds.min.y),point=raycaster.ray.intersectPlane(plane,new THREE.Vector3());if(!point)return;
+ worldDrag={point,plane,transform:normalizedBaseTransform(sceneData.baseTransform),pointerId:event.pointerId};renderer.domElement.setPointerCapture(event.pointerId);
+},true);
+renderer.domElement.addEventListener('pointermove',event=>{
+ if(!worldDrag||event.pointerId!==worldDrag.pointerId)return;
+ event.preventDefault();event.stopImmediatePropagation();screenRay(event);const point=raycaster.ray.intersectPlane(worldDrag.plane,new THREE.Vector3());if(!point)return;
+ alignBase({...worldDrag.transform,x:worldDrag.transform.x+point.x-worldDrag.point.x,z:worldDrag.transform.z+point.z-worldDrag.point.z});
+},true);
+for(const type of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(type,event=>{if(worldDrag?.pointerId===event.pointerId){event.stopImmediatePropagation();worldDrag=null;}},true);
+$('#world-base-ghost').addEventListener('change',event=>{if(!baseWorld)return;baseWorld.traverse(node=>{for(const material of [].concat(node.material||[])){material.userData.overlayOriginal ||= {opacity:material.opacity,transparent:material.transparent,depthWrite:material.depthWrite};const original=material.userData.overlayOriginal;material.opacity=event.target.checked ? .3 : original.opacity;material.transparent=event.target.checked||original.transparent;material.depthWrite=event.target.checked?false:original.depthWrite;material.needsUpdate=true;}});});
+$('#world-base-reset').addEventListener('click',()=>alignBase({}));
+$('#world-base-center').addEventListener('click',()=>{
+ if(!baseWorld)return;
+ const box=new THREE.Box3().setFromObject(baseWorld),center=box.getCenter(new THREE.Vector3()),transform=normalizedBaseTransform(sceneData.baseTransform);
+ const objects=[...runtime.values()].map(value=>value.root),target=new THREE.Box3();objects.forEach(root=>target.expandByObject(root));const destination=target.isEmpty()?new THREE.Vector3():target.getCenter(new THREE.Vector3());
+ alignBase({...transform,x:transform.x+destination.x-center.x,z:transform.z+destination.z-center.z});resetBuildView();
+});
 async function showRepositoryMap(layout){
  const meta=layouts[layout],generation=++baseLoadGeneration,root=new THREE.Group();
  $('#save-state').textContent='Loading editable '+meta.name+'…';
@@ -437,8 +475,8 @@ async function showRepositoryMap(layout){
   const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3()),span=Math.max(size.x,size.z);
   if(!Number.isFinite(span)||span<=0)throw Error('Selected map has no buildable geometry.');
   if(base.playableSize>0){root.scale.multiplyScalar(THREE.MathUtils.clamp(base.playableSize/span,.01,100));root.updateMatrixWorld(true);}
-  clearBaseWorld();baseWorld=root;world.add(root);terrain.visible=false;worldDressing.visible=false;
-  sceneData.baseEnvironment=cloneData(base);sceneData.layout=layout;
+  clearBaseWorld();$('#world-base-ghost').checked=false;baseWorld=root;world.add(root);terrain.visible=false;worldDressing.visible=false;
+  sceneData.baseEnvironment=cloneData(base);sceneData.layout=layout;applyBuilderBaseTransform(baseWorld,sceneData.baseTransform);baseWorld.userData.buildBounds=new THREE.Box3().setFromObject(baseWorld);syncBaseControls();
   applyMapSize([40,80,120,160,240,320].find(value=>value>=Math.max(...new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).toArray()))||320);
   updateLayout(layout);sceneData.objects.forEach(updateTransform);persist(meta.name+' loaded · place items directly on its floors');resetBuildView();
  }catch(error){root.traverse(node=>{node.geometry?.dispose();for(const material of [].concat(node.material||[]))material.dispose?.();});if(generation===baseLoadGeneration){$('#layout-select').value=sceneData.layout;showToast(error.message);$('#save-state').textContent='Map load failed · select again to retry';}}
@@ -458,7 +496,7 @@ function selectLayout(layout){
 }
 function updateLayout(layout){sceneData.layout=layouts[layout]?layout:'grand-floor';const meta=layouts[sceneData.layout];$('#layout-select').value=sceneData.layout;$('#layout-label').textContent=meta.name.toUpperCase();$('#layout-description').textContent=meta.description;$('#land-canvas').className=`land-canvas layout-${sceneData.layout}`;$('#land-canvas').setAttribute('aria-label',`${meta.name} 3D editor. Select an item then click the terrain to place it.`);shapeTerrain();sceneData.objects.forEach(updateTransform);renderAtlas();markChanged()}
 $('#generate-world').addEventListener('click',generateWorld);$('#generator-theme').addEventListener('change',event=>{if(layouts[event.target.value])selectLayout(event.target.value);});$('#online-model-form').addEventListener('submit',importOnlineModel);
-$('#weather-select').addEventListener('change',e=>{sceneData.weather=e.target.value;applyWeather();markChanged()});$('#layout-select').addEventListener('change',e=>selectLayout(e.target.value));$('#world-atlas').addEventListener('click',e=>{const button=e.target.closest('[data-layout]');if(button)selectLayout(button.dataset.layout)});$('#scene-name').addEventListener('input',e=>{sceneData.name=e.target.value;markChanged()});$('#save-scene').addEventListener('click',()=>persist(`“${sceneData.name}” saved with complete 3D state`));$('#play-scene').addEventListener('click',testGameLocally);$('#clear-scene').addEventListener('click',()=>{if(sceneData.objects.length&&!confirm('Start a new map?'))return;sceneData={version:3,id:uid(),name:'Untitled environment',layout:sceneData.layout,mapSize:sceneData.mapSize||40,weather:sceneData.weather,baseEnvironment:sceneData.baseEnvironment,gameplay:{multiplayer:$('#play-mode').value!=='solo'},objects:[]};selectedId=null;closeRepositoryMap();$('#scene-name').value=sceneData.name;updateLayout(sceneData.layout);rebuildAll()});
+$('#weather-select').addEventListener('change',e=>{sceneData.weather=e.target.value;applyWeather();markChanged()});$('#layout-select').addEventListener('change',e=>selectLayout(e.target.value));$('#world-atlas').addEventListener('click',e=>{const button=e.target.closest('[data-layout]');if(button)selectLayout(button.dataset.layout)});$('#scene-name').addEventListener('input',e=>{sceneData.name=e.target.value;markChanged()});$('#save-scene').addEventListener('click',()=>persist(`“${sceneData.name}” saved with complete 3D state`));$('#play-scene').addEventListener('click',testGameLocally);$('#clear-scene').addEventListener('click',()=>{if(sceneData.objects.length&&!confirm('Start a new map?'))return;sceneData={version:3,id:uid(),name:'Untitled environment',layout:sceneData.layout,mapSize:sceneData.mapSize||40,weather:sceneData.weather,baseEnvironment:sceneData.baseEnvironment,baseTransform:sceneData.baseTransform,gameplay:{multiplayer:$('#play-mode').value!=='solo'},objects:[]};selectedId=null;closeRepositoryMap();$('#scene-name').value=sceneData.name;updateLayout(sceneData.layout);rebuildAll()});
 $('#range-start').addEventListener('click',startRangeCourse);$('#range-stop').addEventListener('click',()=>finishRangeCourse(true));$('#range-again').addEventListener('click',()=>{$('#range-result').hidden=true;startRangeCourse()});$('#range-exit').addEventListener('click',()=>{$('#range-result').hidden=true;$('#range-game-panel').hidden=true;$('#range-game-intro').hidden=false});
 renderer.domElement.addEventListener('pointerdown',event=>{if(!rangeState.playing)return;event.preventDefault();event.stopImmediatePropagation();fireRangeShot(event)},true);
 addEventListener('keydown',event=>{if(!rangeState.playing)return;if(event.code==='Space'){event.preventDefault();fireRangeShot()}if(event.key==='Escape')finishRangeCourse(true)});
@@ -660,9 +698,9 @@ function updateTouchTools(){
 }
 function cancelTouchAction(){placementSelection.cancel();pendingModelId=null;clearPlacementPreview();mobileMove=false;renderLibrary();updateTouchTools();$('#view-help').textContent='Tap an item to select · drag to navigate · pinch to zoom';}
 function tapBuilderCanvas(event){
- if(viewMode==='walkthrough')return;
+ if(viewMode==='walkthrough'||moveWorldMode)return;
  const point=terrainPoint(event);if(pendingModelId&&point){placePending(point);return;}
- if(mobileMove&&selected()&&point){changeSelected(object=>{object.position.x=THREE.MathUtils.clamp(point.x,-sceneData.mapSize/2+.5,sceneData.mapSize/2-.5);object.position.z=THREE.MathUtils.clamp(point.z,-sceneData.mapSize/2+.5,sceneData.mapSize/2-.5);object.groundOffset=baseWorld?0:Math.max(0,point.y-groundAt(object.position.x,object.position.z));if(baseWorld)object.position.y=point.y;});mobileMove=false;updateTouchTools();return;}
+ if(mobileMove&&selected()&&point){changeSelected(object=>{object.position.x=clampBuildCoordinate(point.x,'x');object.position.z=clampBuildCoordinate(point.z,'z');object.groundOffset=baseWorld?0:Math.max(0,point.y-groundAt(object.position.x,object.position.z));if(baseWorld)object.position.y=point.y;});mobileMove=false;updateTouchTools();return;}
  screenRay(event);const hit=raycaster.intersectObjects([...runtime.values()].map(value=>value.root),true)[0];let node=hit?.object;while(node&&!node.userData.objectId)node=node.parent;if(node)selectObject(node.userData.objectId);
 }
 installBuilderTouchGestures(renderer.domElement,tapBuilderCanvas);

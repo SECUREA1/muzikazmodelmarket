@@ -1,4 +1,4 @@
-import {builderBaseEnvironment} from './builder-base.js';
+import {builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn} from './builder-base.js';
 import {createSlimeFloor,collectSlimeFloorMeshes} from './slime-floor.js';
 import {replaceServerStreets} from './server-streets.js';
 import {createBuilderLand} from './builder-land.js';
@@ -72,7 +72,7 @@ export class EnvironmentLoader {
     world.traverse(object=>{object.geometry?.dispose?.();[].concat(object.material||[]).forEach(material=>this.disposeMaterial(material));});
   }
   async load(environment) {
-    const base=builderBaseEnvironment(environment);if(base)environment={...base,...environment,modelUrl:base.modelUrl,modelUrls:base.modelUrls,scale:base.scale,spaceScale:base.spaceScale,rotation:base.rotation,playableSize:base.playableSize,spawn:base.spawn};
+    const base=builderBaseEnvironment(environment);if(base)environment={...base,...environment,modelUrl:base.modelUrl,modelUrls:base.modelUrls,scale:base.scale,spaceScale:base.spaceScale,rotation:base.rotation,playableSize:base.playableSize,spawn:builderBaseSpawn(environment)};
     const token = ++this.token; const builderLand = Boolean(!base&&(environment.builderScene || environment.proceduralLand)); const urls = builderLand ? [] : (environment.modelUrls?.length ? environment.modelUrls : [environment.modelUrl].filter(Boolean));
     const nextWorld = new THREE.Group(); nextWorld.name = `WORLD_${environment.id}`; const baseScale = Number(environment.scale) || 1; let spaceScale = Number(environment.spaceScale) || 1; nextWorld.userData.baseScale = baseScale; nextWorld.scale.setScalar(baseScale * spaceScale); nextWorld.rotation.set(environment.rotation?.x || 0, environment.rotation?.y || 0, environment.rotation?.z || 0);
     const nextMixers = [];
@@ -97,6 +97,7 @@ export class EnvironmentLoader {
         nextWorld.userData.authoredFootprint = authoredFootprint;
         nextWorld.updateMatrixWorld(true);
       }
+      if(base)applyBuilderBaseTransform(nextWorld,environment.builderScene.baseTransform);
       const quality = applyWorldQuality(nextWorld, this.renderer);
       // Prepare streamed materials before the world becomes visible. Three uses
       // parallel shader compilation when the browser supports it.
