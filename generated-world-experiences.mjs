@@ -1,5 +1,6 @@
+import {furnishBuildings} from './public/js/building-furnishing.js';
 // Shared scene data uses the same models and interaction rules as authored maps.
-export const GENERATED_EXPERIENCE_VERSION=2;
+export const GENERATED_EXPERIENCE_VERSION=3;
 const themes={
  'studio-ridge':{name:'Creator courtyard',landmark:'recording-booth',guide:'forest-ranger',prop:'studio-desk',color:'#af8cff'},
  'volt-city':{name:'Neon makers plaza',landmark:'sci-fi-bunker',guide:'clockwork-knight',prop:'lever-switch',color:'#ffd45c'},
@@ -21,6 +22,10 @@ export function generatedExperience(environment){
  add('studio','studio-desk',14,22,'talk',{dialogueSettings:{text:'The creator corner is a meeting space. Open the Environment Builder to make and publish your own playable map.'}});
  add('studio-seat','pillow-ring',14,24,'seat');add('gallery','art-wall',14,27);add('studio-light','floor-lamp',17,25);
  for(const [id,x,z]of [['market-atm',-20,10],['shared-video-player',-14,28],['media-boombox',-20,22],['arcade-slot-machine',22,22],['video-poker-table',22,28]])add(id,id,x,z,'interact',{functionalSettings:{behavior:'interact',device:id,interactionDistance:5,prompt:'Use '+id.replaceAll('-',' ')}});
+ // Dedicated walk-in service and game rooms keep interactive devices accessible.
+ add('market-hall','general-store',-18,72);
+ add('arcade-hall','neighborhood-center',18,72);
+ objects.push(...furnishBuildings({objects}));
  add('landmark',theme.landmark,-12,48);add('theme-prop',theme.prop,-20,48);
  add('discovery-crystal','treasure-crystal',15,48,'pickup');add('restoration','healing-potion',20,48,'heal',{functionalSettings:{behavior:'heal',interactionDistance:3,cooldown:10,value:25,prompt:'Restore health'}});
  add('exploration-journal','quest-scroll',-10,10,'quest',{questSettings:{id:environment.id+'-discovery',name:'Discover '+theme.name},dialogueSettings:{text:'Start your discovery journal. Explore the gathering area, garden and district portals; return here to mark your visit complete.'}});

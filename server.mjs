@@ -1,3 +1,5 @@
+import {CameraSignaling} from './server-camera-signaling.mjs';
+const cameraSignaling=new CameraSignaling();
 import {DeviceMediaUploads} from './device-media-uploads.mjs';
 import {deviceDefinition} from './public/js/interactive-devices.js';
 import {MasterServerState} from './master-server-state.mjs';
@@ -959,6 +961,19 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'GET') { if (!await accountSession(req, res)) return; activePresence(); return sendJson(res, 200, presencePayload()); }
     if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'POST') { if (!await accountSession(req, res)) return; const id = session(req); const actor = user(req); const body = await bodyJson(req).catch(() => ({})); const asset = await designatedAvatar(req, actor); activePresence(); const targetRoom=cleanText(body.roomId,''),voiceCapacity=(await roomEnvironment(targetRoom))?.publicDestination?128:maxHouseUsers;const roomMembers=new Set(activePresence().filter(member=>member.roomId===targetRoom&&member.accountId!==req.muzikazAuthentication.accountId).map(member=>member.accountId));if(roomMembers.size>=voiceCapacity)return sendJson(res,409,{error:'This room is full.',...presencePayload()}); const now = new Date().toISOString(); const previous = presence.get(id) || {}; const authoritativePlayer=await authoritativeRooms.player(cleanText(body.roomId,''),'account:'+req.muzikazAuthentication.accountId);if(!authoritativePlayer||Date.now()-authoritativePlayer.lastSeen>15000)return authorizationError(res,409,'ROOM_REQUIRED','Join the authoritative room before sending presence.','presence');body.position=authoritativePlayer.position;body.rotation={y:authoritativePlayer.yaw};actor.name=authoritativePlayer.username;const position = { x: clampNumber(body.position?.x, -100000, 100000, previous.position?.x || 0), y: clampNumber(body.position?.y, -10000, 10000, previous.position?.y || 0), z: clampNumber(body.position?.z, -100000, 100000, previous.position?.z || 2.5) }; const rotation = { x: 0, y: clampNumber(body.rotation?.y, -Math.PI * 4, Math.PI * 4, previous.rotation?.y || 0), z: 0 }; presence.set(id, { sessionId: id, accountId: req.muzikazAuthentication.accountId, voiceEnabled: body.voiceEnabled === true, voiceCaption: body.voiceEnabled===true?cleanText(body.voiceCaption,'').slice(0,140):'', voiceCaptionAt: body.voiceEnabled===true&&body.voiceCaption?Math.min(Date.now(),Math.max(Date.now()-10000,Number(body.voiceCaptionAt)||0)):0, userId: actor.id, username: actor.name, joinedAt: previous.joinedAt || now, lastActiveAt: now, roomId: cleanText(body.roomId, roomId(position)), color: cleanText(body.color, previous.color || '#9cff00'), avatarAssetId: asset?.id||null, modelUrl: asset?.modelUrl||authoritativePlayer.modelUrl||null, avatarName: asset?.name||authoritativePlayer.username, position, rotation, movementState: ['idle','walk','run','jump'].includes(body.movementState) ? body.movementState : 'idle', animationState: cleanText(body.animationState, 'auto'), message: cleanText(body.message, previous.message || '') }); const data = presencePayload(); broadcast('player-state', presence.get(id)); broadcast('house-presence-updated', data); return sendJson(res, 200, data); }
     if (url.pathname === '/api/houses/ioncore-house/presence/leave' && req.method === 'POST') { presence.delete(session(req)); const data = presencePayload(); broadcast('house-presence-updated', data); return sendJson(res, 200, { ok: true, ...data }); }
+    if(url.pathname==='/api/houses/ioncore-house/camera/signal'&&['GET','POST'].includes(req.method)){
+      const active=await accountSession(req,res,req.method==='POST');if(!active)return;activePresence();
+      const member=presence.get(session(req));if(!member||member.accountId!==active.accountId)return sendJson(res,403,{error:'Join this space before sharing a camera.'});
+      if(req.method==='GET')return sendJson(res,200,cameraSignaling.poll(member,presence));
+      const body=await bodyJson(req,64000);let screen,player;
+      if(body.operation==='start'){
+        const environment=await roomEnvironment(member.roomId);if(!environment)return sendJson(res,404,{error:'Room not found.'});
+        const snapshot=await authoritativeRooms.snapshot(member.roomId,environment),actor=snapshot.actors?.[body.deviceId],device=snapshot.devices?.[body.deviceId];
+        screen=actor&&device?{...actor,kind:device.kind}:null;
+        player=await authoritativeRooms.player(member.roomId,'account:'+active.accountId);
+      }
+      return sendJson(res,200,cameraSignaling.command(member,presence,body,{screen,player}));
+    }
     if (url.pathname === '/api/houses/ioncore-house/voice/signal' && ['GET','POST'].includes(req.method)) {
       const active = await accountSession(req, res, req.method === 'POST'); if (!active) return;
       activePresence();

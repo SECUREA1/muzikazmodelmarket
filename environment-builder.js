@@ -1,3 +1,4 @@
+import {furnishBuildings} from './public/js/building-furnishing.js';
 import {ENTERABLE_BUILDINGS,BUILDING_DISTRICTS,createBuildingDistrict} from './public/js/building-districts.js';
 import {setBuildingCutaway,isBuildingRoof} from './public/js/enterable-building-models.js';
 import {backpackPlacementModels} from './public/js/builder-backpack-models.js';
@@ -330,7 +331,7 @@ function testGameLocally(){publishAndPlay();}
 function screenRay(event){const rect=renderer.domElement.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera)}
 function terrainPoint(event){screenRay(event);return raycaster.intersectObjects([terrain,...((pendingModelId||dragging)?[...runtime.values()].filter(value=>value.root.userData.isPlaced&&value.root.userData.objectId!==dragging?.id).map(value=>value.root):[])],true).find(hit=>(!interiorView||!isBuildingRoof(hit.object))&&(!hit.face||hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y>.5))?.point||null}
 async function beginPlacement(modelId){pendingModelId=modelId;renderLibrary();$('#view-help').textContent='Move over the terrain for a grounded preview · click to place · Esc to cancel';if(preview){preview.removeFromParent();preview=null}const model=modelFor(modelId),template=await templateFor(model);if(pendingModelId!==modelId)return;preview=model.procedural?template.clone(true):cloneSkeleton(template);preview.traverse(n=>{if(n.isMesh){const fade=material=>{const copy=material.clone();copy.transparent=true;copy.opacity=Math.min(copy.opacity,.55);copy.depthWrite=false;return copy};n.material=Array.isArray(n.material)?n.material.map(fade):fade(n.material)}});setBuildingCutaway(preview,interiorView);world.add(preview)}
-function placePending(point){if(!pendingModelId)return;const o=makeObject(pendingModelId,point.x,point.z);o.groundOffset=Math.max(0,point.y-groundAt(point.x,point.z));sceneData.objects.push(o);selectedId=o.id;const name=modelFor(o.modelId).name;pendingModelId=null;if(preview){preview.removeFromParent();preview=null}buildRuntime(o);markChanged();renderLibrary();updateUi();showToast(`${name} placed as a grounded 3D object`)}
+function placePending(point){if(!pendingModelId)return;const o=makeObject(pendingModelId,point.x,point.z);o.groundOffset=Math.max(0,point.y-groundAt(point.x,point.z));sceneData.objects.push(o);selectedId=o.id;const name=modelFor(o.modelId).name;pendingModelId=null;if(preview){preview.removeFromParent();preview=null}buildRuntime(o);markChanged();renderLibrary();updateUi();showToast(`${name} placed as a grounded 3D object`);if(ENTERABLE_BUILDINGS[modelFor(o.modelId)?.buildAssetId||o.modelId]&&$('#builder-auto-furnish').checked)furnishBuildingInteriors();}
 function frameObjects(objects,padding=1.45){
  const roots=objects.map(o=>runtime.get(o.id)?.root).filter(Boolean);if(!roots.length)return;
  const bounds=roots.reduce((box,root)=>box.union(new THREE.Box3().setFromObject(root)),new THREE.Box3()),center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3()),span=Math.max(size.x,size.y,size.z,2),direction=camera.position.clone().sub(controls.target).normalize();
@@ -558,3 +559,13 @@ $('#enter-building').addEventListener('click',()=>{const object=selected(),root=
 $('#builder-open-backpack').addEventListener('click',()=>builderCare.open('pack'));$('#builder-refresh-backpack').addEventListener('click',async()=>{await refreshMemberModels();activeFilter='backpack';renderLibrary('backpack');showToast('Backpack refreshed · select an item and click inside a building.');});
 
 if(requested&&BUILDING_DISTRICTS[requested]&&!sceneData.objects.length)generateUrbanWorld(requested);
+
+async function furnishBuildingInteriors(backpack=false){
+ if(backpack)await refreshMemberModels();
+ const additions=furnishBuildings(sceneData,{models:models(),backpack});
+ for(const item of additions){const base=makeObject(item.modelId,item.position.x,item.position.z);sceneData.objects.push({...base,...item,functionalSettings:{...base.functionalSettings,...item.functionalSettings}});}
+ if(additions.length){rebuildAll();persist(`${additions.length} interactive items placed inside buildings`);updateUi();}
+ else showToast(backpack?'No free interior slots or compatible Backpack devices.':'No empty interior slots. Place an enterable building first.');
+}
+$('#builder-furnish-devices').addEventListener('click',()=>furnishBuildingInteriors());
+$('#builder-furnish-backpack').addEventListener('click',()=>furnishBuildingInteriors(true));
