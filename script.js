@@ -573,6 +573,7 @@ function initWorldAtlas() {
   let position = { x: 36, y: 49, place: 'Crew Plaza', detail: 'Social hub · crews gathering now' };
   const isLandAsset = (asset) => Boolean(findWorldAsset(asset)) || /\b(?:unrevealed\s+.*land|muzikaz\s+world|digital\s+land|world\s+plot|land\s+(?:asset|world|reservation|deed|claim))\b/i.test(asset);
   const ownedLand = owner ? (readOwnedProfiles()[owner] || []).find(isLandAsset) : '';
+  let serverPins=[];
   let claims = {};
   try { claims = JSON.parse(window.localStorage.getItem('muzikazLandClaims') || '{}') || {}; } catch (error) { claims = {}; }
   const savedClaim = owner ? claims[owner] : null;
@@ -586,7 +587,14 @@ function initWorldAtlas() {
     if (saved && Number.isFinite(Number(saved.x)) && Number.isFinite(Number(saved.y))) position = { ...position, ...saved };
   } catch (error) { /* A fresh map position is safe when browser storage is unavailable. */ }
 
+  function destinationLink(point){
+    let linked;try{linked=new URL(point.playUrl,window.location.href);}catch{}
+    const id=point.mapId||point.environmentId||point.spaceId||(point.deedId?'plot-'+point.deedId:null)||linked?.searchParams.get('environment')||linked?.searchParams.get('house');
+    const meeting=point.meetingId||linked?.searchParams.get('meet');
+    return id?`model-explorer.html?environment=${encodeURIComponent(id)}&house=${encodeURIComponent(id)}${meeting?'&meet='+encodeURIComponent(meeting):''}&autoplay=1&mode=multiplayer`:`index.html?atlasX=${clamp(point.x)}&atlasY=${clamp(point.y)}#world-map`;
+  }
   function render(next, announce = true) {
+    if(!next.mapId&&!next.environmentId&&!next.spaceId&&!next.playUrl&&!next.deedId){for(const key of ['mapId','environmentId','spaceId','playUrl','deedId','meetingId'])delete position[key];}
     position = { ...position, ...next, x: clamp(next.x), y: clamp(next.y) };
     marker.style.setProperty('--x', `${position.x}%`);
     marker.style.setProperty('--y', `${position.y}%`);
@@ -596,7 +604,7 @@ function initWorldAtlas() {
     detail.textContent = position.detail;
     readout.textContent = `X ${position.x} · Y ${position.y}`;
     const asset = WORLD_ASSETS.find((item) => item.name === position.place);
-    if (asset && assetLogo && assetType && assetAction) {
+    if (asset && !position.mapId&&!position.environmentId&&!position.spaceId&&!position.deedId&&!position.playUrl && assetLogo && assetType && assetAction) {
       assetLogo.src = asset.logo;
       assetLogo.alt = `${asset.name} logo`;
       assetType.textContent = `${asset.kind} · ${ownerWorldNames().has(asset.name) ? 'Owned' : `${asset.price} · For sale`}`;
@@ -606,7 +614,7 @@ function initWorldAtlas() {
       assetLogo.src = 'public/assets/muzikaz-world-map.svg';
       assetLogo.alt = 'Your selected live world location';
       assetType.textContent = 'Custom map position';
-      assetAction.href = `index.html?atlasX=${position.x}&atlasY=${position.y}#world-map`;
+      assetAction.href = destinationLink(position);
       assetAction.textContent = 'Enter this map location';
     }
     enter.firstChild.textContent = `Enter ${position.place} `;
@@ -619,7 +627,7 @@ function initWorldAtlas() {
   function renderClaim() {
     atlas.querySelectorAll('[data-member-land-claim]').forEach((pin) => pin.remove());
     const spaceList = document.querySelector('#world-map-space-list');
-    const pinnedClaims = Object.values(claims).filter((claim) => claim && Number.isFinite(Number(claim.x)) && Number.isFinite(Number(claim.y))).sort((a, b) => Number(b.owner === owner) - Number(a.owner === owner) || String(a.owner).localeCompare(String(b.owner)));
+    const pinnedClaims = [...new Map([...Object.values(claims),...serverPins].map(pin=>[pin.mapId?pin.mapId+':'+(pin.meetingId||'entry'):'local:'+pin.owner,pin])).values()].filter((claim) => claim && Number.isFinite(Number(claim.x)) && Number.isFinite(Number(claim.y))).sort((a, b) => Number(b.owner === owner) - Number(a.owner === owner) || String(a.owner).localeCompare(String(b.owner)));
     pinnedClaims.forEach((pinnedClaim, index) => {
       const pinOwner = normalizeMemberEmail(pinnedClaim.owner) || 'member';
       const pin = document.createElement('button');
@@ -627,12 +635,11 @@ function initWorldAtlas() {
       pin.classList.toggle('is-home-base', pinOwner === owner); pin.style.setProperty('--x', `${clamp(pinnedClaim.x)}%`); pin.style.setProperty('--y', `${clamp(pinnedClaim.y)}%`);
       pin.innerHTML = `<i>⚑</i><span>${pinOwner === owner ? 'MY HOME' : escapeMarkup(pinOwner)}</span>`;
       pin.setAttribute('aria-label', `${pinOwner}'s pinned land at ${pinnedClaim.place}, X ${clamp(pinnedClaim.x)}, Y ${clamp(pinnedClaim.y)}`);
-      pin.addEventListener('click', (event) => { event.stopPropagation(); render({ ...pinnedClaim, detail: `Pinned land tied to ${pinOwner}'s profile and Drop Backpack.` }); });
+      pin.addEventListener('click', (event) => { event.stopPropagation(); render({ ...pinnedClaim, detail: 'Saved server map and arrival point.' });enterSelectedLocation(event); });
       viewport.append(pin);
       pinnedClaim.pinOrder = index;
     });
-    if (spaceList) spaceList.innerHTML = pinnedClaims.map((claim, index) => `<li><button type="button" data-pinned-owner="${escapeMarkup(claim.owner)}"><b>${index === 0 && claim.owner === owner ? 'HOME' : String(index + 1).padStart(2, '0')}</b><span>${escapeMarkup(claim.place)} <small>X ${clamp(claim.x)} · Y ${clamp(claim.y)} · ${escapeMarkup(claim.owner)}</small></span></button></li>`).join('') || '<li>No personal pins yet. Explore any public district or enter your selected coordinates.</li>';
-    spaceList?.querySelectorAll('[data-pinned-owner]').forEach((button) => button.addEventListener('click', () => { const claim = claims[button.dataset.pinnedOwner]; if (claim) render(claim); }));
+    if(spaceList){spaceList.replaceChildren();pinnedClaims.forEach((claim,index)=>{const item=document.createElement('li'),link=document.createElement('a');link.href=destinationLink(claim);link.textContent=`${index+1}. ${claim.place} · X ${clamp(claim.x)} · Y ${clamp(claim.y)}`;link.addEventListener('click',event=>{if(event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;render({...claim,detail:'Saved server map and arrival point.'});enterSelectedLocation(event);});item.append(link);spaceList.append(item);});if(!pinnedClaims.length){const item=document.createElement('li');item.textContent='No personal pins yet. Enter a build point to save its server map here.';spaceList.append(item);}}
     const claim = owner ? claims[owner] : null;
     if (claim) {
       ownership.innerHTML = `<strong>Claim active:</strong> ${claim.place} · X ${claim.x}, Y ${claim.y} · tied to <a href="members.html#owned-collection">${owner}'s profile</a>.`;
@@ -690,7 +697,7 @@ function initWorldAtlas() {
   });
   claimButton.addEventListener('click', () => {
     if (!owner || !ownedLand) return;
-    claims[owner] = { owner, asset: ownedLand, x: position.x, y: position.y, place: position.place, claimedAt: new Date().toISOString() };
+    claims[owner] = { ...position, owner, asset: ownedLand, x: position.x, y: position.y, place: position.place, claimedAt: new Date().toISOString() };
     window.localStorage.setItem('muzikazLandClaims', JSON.stringify(claims));
     window.localStorage.setItem('muzikazWorldPosition', JSON.stringify(position));
     status.textContent = `Land claimed! ${position.place} at X ${position.x}, Y ${position.y} is now tied to your deed, Backpack, map, and profile.`;
@@ -703,10 +710,14 @@ function initWorldAtlas() {
     const chosen={...position},asset=WORLD_ASSETS.find(asset=>asset.name===chosen.place);
     status.textContent=`Opening ${chosen.place} on the live server…`;
     try{
-      const [{SharedGameInventory},{resolveIndexDestination},{ensurePlayAccess}]=await Promise.all([import('./public/js/shared-game-inventory.js'),import('./public/js/index-atlas-travel.js'),import('./public/js/play-access.js')]);
+      const [{SharedGameInventory},{resolveIndexDestination,rememberDestination},{ensurePlayAccess}]=await Promise.all([import('./public/js/shared-game-inventory.js'),import('./public/js/index-atlas-travel.js'),import('./public/js/play-access.js')]);
       const inventory=new SharedGameInventory();
-      if(!asset){try{await inventory.roomSession();}catch(error){if(error.status!==401)throw error;if(!await ensurePlayAccess(inventory)){status.textContent='Choose a destination when you are ready.';return;}}}
+      if(!asset||chosen.mapId||chosen.environmentId||chosen.spaceId||chosen.playUrl||chosen.deedId){try{await inventory.roomSession();}catch(error){if(error.status!==401)throw error;if(!await ensurePlayAccess(inventory)){status.textContent='Choose a destination when you are ready.';return;}}}
       const url=await resolveIndexDestination(inventory,chosen,asset);
+      const remembered=rememberDestination(chosen,url);
+      window.localStorage.setItem('muzikazWorldPosition',JSON.stringify(remembered));
+      for(const [key,claim]of Object.entries(claims)){if(Number(claim.x)===Number(chosen.x)&&Number(claim.y)===Number(chosen.y)&&claim.place===chosen.place)claims[key]={...claim,...remembered};}
+      window.localStorage.setItem('muzikazLandClaims',JSON.stringify(claims));
       window.location.assign(url);
     }catch(error){status.textContent=error.message||'The live server could not open this location. Try again.';}
     finally{entering=false;enter.disabled=false;}
@@ -720,6 +731,8 @@ function initWorldAtlas() {
   render(position, false);
   if (savedClaim && !atlasParams.has('atlasX')) render({ ...savedClaim, detail: `Owned land tied to ${owner}'s Backpack and member profile.` }, false);
   renderClaim();
+  async function refreshServerPins(){try{const {SharedGameInventory}=await import('./public/js/shared-game-inventory.js');serverPins=await new SharedGameInventory().api('/api/world-atlas/pins');}catch{serverPins=[];}renderClaim();}
+  refreshServerPins();window.addEventListener('focus',refreshServerPins);window.addEventListener('muzikaz:member-ready',refreshServerPins);
   const liveDirectory=document.createElement('section');liveDirectory.setAttribute('aria-label','All live worlds and builder maps');atlas.after(liveDirectory);
   import('./public/js/world-atlas.js').then(({mountWorldAtlas})=>mountWorldAtlas(liveDirectory)).catch(()=>{const link=document.createElement('a');link.href='members.html#world-atlas';link.textContent='Open the live world directory';liveDirectory.append(link);});
 }
