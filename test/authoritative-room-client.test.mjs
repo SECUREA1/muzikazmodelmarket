@@ -163,3 +163,13 @@ test('intermediate drag bursts use the heartbeat while neutral edges flush immed
   side=0;client.requestInput();await pause(5);assert.equal(received.at(-1),0,'release bypasses the heartbeat');
  },{input:()=>({side})});
 });
+
+test('a confirmed MZK token refreshes the wallet and plays pickup feedback only once',async()=>{
+ const previousEvent=globalThis.CustomEvent;globalThis.CustomEvent=class extends Event{constructor(type,options){super(type);this.detail=options.detail;}};
+ let refreshes=0,pickups=0;
+ try{
+  await withRoom(async path=>{window.dispatchEvent=event=>{if(event.type==='muzikaz:pickup-confirmed')pickups++;};window.MZKWallet={refreshShared:async()=>{refreshes++;}};return path==='/api/game/room-session'?response({csrfToken:'proof'}):response({...confirmed(1),result:{loot:{id:'coin-once',currency:'MZK',amount:1},message:'+1 MZK'}});},async client=>{
+   await client.whenReady();await client.send('collect');await client.send('collect');assert.equal(pickups,1);assert.equal(refreshes,1);
+  },{render:()=>{}});
+ }finally{globalThis.CustomEvent=previousEvent;}
+});

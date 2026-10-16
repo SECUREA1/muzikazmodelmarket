@@ -1,3 +1,4 @@
+import {refreshMzkCoins} from './server-mzk-coins.mjs';
 import {refreshRpgLoot,dropRpgLoot} from './server-rpg-loot.mjs';
 import {validateOwnedPlacement} from './owned-item-placement.mjs';
 import {ENEMY_BEHAVIORS,stepEnemyCombat} from './server-enemy-combat.mjs';
@@ -16,7 +17,7 @@ const copy=value=>JSON.parse(JSON.stringify(value));
 const fail=(message,statusCode=400,code)=>{throw Object.assign(new Error(message),{statusCode,code});};
 const damageByTool={laser:20,bat:25,taser:8,toxin:12,dynamite:60,flamethrower:15,'pulse-rifle':18,shotgun:35,marksman:45};
 export class AuthoritativeRooms {
- constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,collectLoot,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();}
+ constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},collectCoin=async()=>{throw new Error("Coin storage unavailable.");},capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,collectLoot,collectCoin,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();}
  async tickActive(){
   if(this.ticking)return;this.ticking=true;
   try{for(const [id,environment]of this.activeWorlds)await this.store.update(id,room=>{
@@ -47,6 +48,7 @@ export class AuthoritativeRooms {
   }
   this.prepareEncounter(sim,environment);
   refreshRpgLoot(sim,environment,this.now(),position=>this.collision.safeSpawn(environment,position));
+  refreshMzkCoins(sim,environment,this.now(),(position,occupied)=>environment.builderScene||environment.proceduralLand?this.collision.safeSpawn(environment,position):this.collision.encounterSpawn(environment,position,this.collision.safeSpawn(environment,environment.spawn||{x:0,y:0,z:2}),occupied));
   manifest.actors.push(...Object.values(sim.actors).filter(actor=>actor.definition).map(actor=>actor.definition));
   sim.streets=environment.streets||[];sim.mapRevision=environment.atlas?.revision||0;
   return {sim,manifest};
@@ -135,7 +137,7 @@ export class AuthoritativeRooms {
      if(now-(player.cooldowns[target.objectId]||0)<config.cooldown*1000)fail('Item is cooling down.',429);player.cooldowns[target.objectId]=now;
      if(config.behavior==='door')entity.open=!entity.open;
      else if(config.behavior==='switch')entity.switched=!entity.switched;
-     else if(['pickup','hold'].includes(config.behavior)){if(player.heldId)fail('Drop the held item first.',409);player.heldId=entity.id;entity.holderId=actorId;if(!player.inventory.includes(target.modelId))player.inventory.push(target.modelId);const collected=combatStats(player).itemsCollected ||= [];if(!collected.includes(target.modelId))collected.push(target.modelId);}
+     else if(['pickup','hold'].includes(config.behavior)){if(player.heldId)fail('Drop the held item first.',409);player.heldId=entity.id;entity.holderId=actorId;if(!player.inventory.includes(target.modelId))player.inventory.push(target.modelId);result.pickup={id:entity.id+':'+now,kind:'item'};const collected=combatStats(player).itemsCollected ||= [];if(!collected.includes(target.modelId))collected.push(target.modelId);}
      else if(config.behavior==='vehicle'){player.vehicleId=entity.id;entity.holderId=actorId;}
      else if(config.behavior==='seat'){player.seatedId=entity.id;entity.holderId=actorId;player.position={...entity.position};}
      else if(config.behavior==='heal')player.health=Math.min(100,player.health+clamp(config.value||25,0,100));
@@ -222,12 +224,14 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
   return {...this.view(room),selfId:actorId,result};
  },{persist:command.action!=='input'});}
  async collectNearbyLoot(sim,player,identity,roomId,now,entityId,result){
+  if(player.health<=0||sim.match?.state==='finished')return;
   if(!entityId&&now<(player.lootRetryAt||0))return;
-  const loot=Object.values(sim.actors).find(actor=>actor.loot&&actor.active&&(!entityId||actor.id===entityId)&&distance(actor.position,player.position)<=1.8);
+  const loot=Object.values(sim.actors).find(actor=>actor.loot&&actor.active&&(!entityId||actor.id===entityId)&&distance(actor.position,player.position)<=(actor.loot.currency?1.1:1.8));
   if(!loot){if(entityId)fail('Supply is unavailable or out of reach.',409);return;}
-  let receipt;try{receipt=await this.collectLoot(identity,loot.loot.catalogId,'loot:'+loot.loot.token);}catch(error){if(entityId)throw error;player.lootRetryAt=now+5000;result.message=error.message;return;}
+  let receipt;try{receipt=loot.loot.currency==='MZK'?await this.collectCoin(identity,'coin:'+loot.loot.token):await this.collectLoot(identity,loot.loot.catalogId,'loot:'+loot.loot.token);}catch(error){if(entityId)throw error;player.lootRetryAt=now+5000;result.message=error.message;return;}
   loot.active=false;loot.loot.collectedAt=now;loot.loot.collectedBy=player.actorId;
   if(receipt?.claimedByOther)return;
+  if(loot.loot.currency==='MZK'){result.loot={id:loot.id,currency:'MZK',amount:1,balance:receipt.balanceAfterMzk,receiptId:receipt.id};result.message='+1 MZK · added to your wallet';return;}
   const stats=combatStats(player);stats.itemsCollected ||= [];if(!stats.itemsCollected.includes(loot.loot.catalogId))stats.itemsCollected.push(loot.loot.catalogId);
   result.loot={id:loot.id,catalogId:loot.loot.catalogId,receiptId:receipt?.id};result.message=loot.loot.name+' added to Backpack · Care supplies';
  }

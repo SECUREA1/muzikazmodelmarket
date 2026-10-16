@@ -188,6 +188,7 @@ export class BuilderGameplayRuntime {
       this.player.heldObjectId = puttingAway ? null : actor.objectId;
       instance?.setHeld?.(!puttingAway, this.player);
       if (!instance?.setHeld) instance?.setActive?.(puttingAway);
+      if(!puttingAway&&typeof window!=='undefined'&&window.CustomEvent)window.dispatchEvent(new window.CustomEvent('muzikaz:pickup-confirmed',{detail:{kind:'item'}}));
       message = puttingAway ? 'Put away' : 'Held — press E to use or put away';
       if (config.respawn && !puttingAway) instance?.respawnAfter?.(config.respawn);
     }

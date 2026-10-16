@@ -48,7 +48,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    const selfId=state?.selfId || client.selfId;
    if (!selfId || !state?.players?.[selfId]) throw Error('The server has not confirmed your player in this room.');
    client.selfId=selfId;
-   if(state.result?.loot&&!collected.has(state.result.loot.id)){collected.add(state.result.loot.id);signalInventoryChange();onStatus?.(state.result.message);}
+   if(state.result?.loot&&!collected.has(state.result.loot.id)){collected.add(state.result.loot.id);signalInventoryChange();window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.loot}));if(state.result.loot.currency==='MZK')window.MZKWallet?.refreshShared?.().catch(()=>{});onStatus?.(state.result.message);}
+   if(state.result?.pickup&&!collected.has(state.result.pickup.id)){collected.add(state.result.pickup.id);window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.pickup}));}
    if (state.sequence>sequence) { render(state,selfId,{sentAt,receivedAt:performance.now()}); sequence=state.sequence; }
    client.ready=true; settle(); return state;
   },

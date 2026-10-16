@@ -550,6 +550,18 @@ export class UserJsonDatabase {
     return this.transaction(data=>{const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');const previous=user.memory.ioncoreRpg||{};user.memory.ioncoreRpg={stats:{...RPG_DEFAULT_STATS,...previous.stats,health},history:[...(previous.history||[]),{health,stats:{...RPG_DEFAULT_STATS,...previous.stats,health},reason:'gameplay',world:String(input.world||'').slice(0,140),recordedAt:new Date().toISOString()}].slice(-100)};user.updatedAt=new Date().toISOString();user.revision++;return user.memory.ioncoreRpg;});
   }
 
+  grantMzkCoin(walletId,requestId){
+    const wallet=cleanWallet(walletId);
+    if(!/^coin:[a-f0-9-]{36}$/.test(requestId))throw new Error('Invalid server coin receipt.');
+    return this.transaction(data=>{
+      const duplicate=data.transactions.find(entry=>entry.type==='MZK_COIN'&&entry.requestId===requestId);
+      if(duplicate)return duplicate.walletId===wallet?duplicate:{claimedByOther:true};
+      const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');
+      user.tokens.MZK=Number(user.tokens.MZK||0)+1;user.revision++;user.updatedAt=new Date().toISOString();
+      return appendTransaction(data,{type:'MZK_COIN',walletId:wallet,requestId,amountMzk:1,balanceAfterMzk:user.tokens.MZK});
+    });
+  }
+
   grantRpgLoot(walletId,itemId,requestId){
     const wallet=cleanWallet(walletId),item=RPG_CATALOG.find(entry=>entry.id===itemId);
     if(!item||!/^loot:[\w-]{1,100}$/.test(requestId))throw new Error('Invalid server loot.');
