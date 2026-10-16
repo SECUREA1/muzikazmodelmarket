@@ -30,6 +30,12 @@ test('marketplace bundle API authenticates purchases, validates prices, and upda
   const replay=await call('/api/economy/bundles/buy',headers,body);assert.equal(replay.body.data.id,purchase.body.data.id);
   const after=(await call('/api/economy',headers)).body.data;assert.equal(after.balance,before.balance-bundle.priceMzk);assert.equal(after.bundles.find(item=>item.id===bundle.id).owned,true);
   for(const item of bundle.entries)assert.equal(after.items.find(owned=>owned.sku===item.sku).owned,true);
-  const catalog=(await call('/api/market/catalog')).body.data;assert.ok(catalog.some(item=>item.id===bundle.id&&item.source==='bundle'));
+  const bulkLogin=await call('/api/access/free-play',{}, {username:'BulkAPIPlayer',password:'test-bulk-api-password'}),bulkCookie=bulkLogin.headers['set-cookie'].split(';')[0],bulkSession=await call('/api/market/session',{cookie:bulkCookie}),bulkHeaders={cookie:bulkCookie,'x-csrf-token':bulkSession.body.data.csrfToken};
+  const bulkBefore=(await call('/api/economy',bulkHeaders)).body.data,order={sku:'material:wall',quantity:100,expectedPriceMzk:400,requestId:'bulk-api-buy'};
+  assert.equal((await call('/api/economy/materials/buy',{},order)).status,401);assert.equal((await call('/api/economy/materials/buy',{cookie:bulkCookie},order)).body.code,'CSRF_INVALID');
+  assert.equal((await call('/api/economy/materials/buy',bulkHeaders,{...order,expectedPriceMzk:1})).status,409);
+  const bulk=await call('/api/economy/materials/buy',bulkHeaders,order);assert.equal(bulk.status,200);assert.equal((await call('/api/economy/materials/buy',bulkHeaders,order)).body.data.id,bulk.body.data.id);
+  const bulkAfter=(await call('/api/economy',bulkHeaders)).body.data;assert.equal(bulkAfter.balance,bulkBefore.balance-400);assert.equal(bulkAfter.items.find(item=>item.sku==='material:wall').stock,100);
+  const catalog=(await call('/api/market/catalog')).body.data;assert.ok(catalog.some(item=>item.id===bundle.id&&item.source==='bundle'));assert.equal(catalog.find(item=>item.worldId==='pixel-peaks').priceMzk,10000);assert.equal(catalog.find(item=>item.worldId==='skyline-deck').priceMzk,1000);
  }finally{for(const key of Object.keys(process.env))if(!(key in previous))delete process.env[key];Object.assign(process.env,previous);await rm(dir,{recursive:true,force:true});}
 });

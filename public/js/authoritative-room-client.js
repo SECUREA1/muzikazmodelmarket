@@ -1,9 +1,10 @@
-import {SharedGameInventory} from './shared-game-inventory.js';
+import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory.js';
 
 export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,onError}) {
  const api = new SharedGameInventory();
- let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0;
- const waiters=new Set();
+ let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0, inputRequested=false,fireBusy=false;
+ let fireRequest=null;
+ const waiters=new Set(),collected=new Set();
  function settle(error) {
   for (const waiter of waiters) { clearTimeout(waiter.timer); error ? waiter.reject(error) : waiter.resolve(client); }
   waiters.clear();
@@ -36,40 +37,33 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     waiters.add(waiter);
    });
   },
-  async send(action,fields={}) {
+  async send(action,fields={},requestId=crypto.randomUUID()) {
    if (stopped) throw failure || Error('Room closed.');
-   const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,action,requestId:crypto.randomUUID()});
+   if(action==='fire'&&fireRequest)return fireRequest;
+   const sentAt=performance.now();
+   const pending=post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,action,requestId});
+   if(action==='fire')fireRequest=pending;
+   let state;try{state=await pending;}finally{if(fireRequest===pending)fireRequest=null;}
    if (stopped) return;
    const selfId=state?.selfId || client.selfId;
    if (!selfId || !state?.players?.[selfId]) throw Error('The server has not confirmed your player in this room.');
    client.selfId=selfId;
-   if (state.sequence>=sequence) { render(state,selfId); sequence=state.sequence; }
+   if(state.result?.loot&&!collected.has(state.result.loot.id)){collected.add(state.result.loot.id);signalInventoryChange();onStatus?.(state.result.message);}
+   if (state.sequence>sequence) { render(state,selfId,{sentAt,receivedAt:performance.now()}); sequence=state.sequence; }
    client.ready=true; settle(); return state;
   },
   async object(command) {
    if (!client.ready) throw Error('Waiting for the server. Placement preview has not been saved.');
    await post('/api/rooms/'+encodeURIComponent(roomId)+'/objects',command);
    const state=await api.api('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay');
-   if (!stopped && state.sequence>=sequence) { render(state,client.selfId); sequence=state.sequence; }
+   if (!stopped && state.sequence>sequence) { render(state,client.selfId); sequence=state.sequence; }
    return state;
   },
+  // Intermediate drags are read by the 50ms heartbeat; edges flush immediately.
+  requestInput(immediate=true) { if(!immediate||!client.ready||stopped)return; if(busy){inputRequested=true;return;}void tick(); },
   stop() { close(Error('Room closed.')); }
  };
- async function tick() {
-  if (stopped || busy || Date.now()<retryAt) return;
-  busy=true;
-  try {
-   if (!joined) {
-    const arrival=await client.send('join',meetingId?{meetingId}:{});
-    if (stopped) return;
-    joined=true;
-    onStatus?.(arrival?.result?.message || 'Connected. Gameplay is ready.');
-   } else {
-    const controls=document.hidden?{}:input();
-    const state=await client.send('input',{input:controls});
-    if (!stopped && state?.players?.[client.selfId]?.health>0 && state?.match?.state!=='finished' && controls.firing) await client.send('fire',{tool:controls.tool,direction:controls.direction,color:controls.color});
-   }
-  } catch (error) {
+ function handleError(error) {
    if (stopped) return;
    // Failed joins and expired sessions must leave the loading state. A denied
    // tool action in an already joined room is not a connection failure.
@@ -86,9 +80,31 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     if(wasReady)client.whenReady().catch(()=>{});
     onStatus?.('Server connection required: '+error.message);
    }
-  } finally { busy=false; }
  }
- const timer=setInterval(tick,200);
+ async function tick() {
+  if (stopped || busy || Date.now()<retryAt) return;
+  busy=true;
+  try {
+   if (!joined) {
+    const arrival=await client.send('join',meetingId?{meetingId}:{});
+    if (stopped) return;
+    joined=true;
+    onStatus?.(arrival?.result?.message || 'Connected. Gameplay is ready.');
+   } else {
+    const controls=document.hidden?{}:input();
+    const state=await client.send('input',{input:controls});
+    const firingControls=document.hidden?{}:input();
+    if (!stopped && !fireBusy && state?.players?.[client.selfId]?.health>0 && state?.match?.state!=='finished' && firingControls.firing) {
+     fireBusy=true;
+     // A slow weapon response must not stall movement or room snapshots.
+     void client.send('fire',{tool:firingControls.tool,direction:firingControls.direction,color:firingControls.color})
+      .catch(handleError).finally(()=>{fireBusy=false;});
+    }
+   }
+  } catch (error) { handleError(error);
+  } finally { busy=false;if(inputRequested){inputRequested=false;if(!stopped&&client.ready)queueMicrotask(tick);} }
+ }
+ const timer=setInterval(tick,50);
  tick();
  return client;
 }

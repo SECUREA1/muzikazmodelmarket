@@ -280,3 +280,30 @@ html.game-menu-open { overflow:hidden; }
 .settings-explorer-navigation .settings-nav-list a,.settings-explorer-navigation .settings-nav-list button{flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;}
 .settings-explorer-navigation .settings-menu-icon{display:grid;flex:0 0 36px;width:36px;height:36px;place-items:center;border:1px solid #496442;border-radius:9px;background:#122318;}
 .settings-explorer-navigation .settings-menu-copy{display:flex;min-width:0;flex-direction:column;gap:4px;}
+
+.owned-placement-controls{position:absolute;z-index:30;left:50%;bottom:calc(120px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(580px,calc(100% - 20px));box-sizing:border-box;padding:12px;border:1px solid #9cff00;border-radius:12px;background:#0d1d12f5;color:#efffdc;pointer-events:auto;box-shadow:0 6px 24px #0008;}
+.owned-placement-controls[hidden],.owned-placement-edit[hidden]{display:none!important;}
+.owned-placement-controls strong,.owned-placement-controls output{display:block;}.owned-placement-controls p{font:12px/1.4 system-ui;margin:6px 0 10px;}
+.owned-placement-controls>div{display:flex;flex-wrap:wrap;gap:8px;}.owned-placement-controls button,.owned-placement-edit{min-height:48px;min-width:48px;padding:10px 12px;border:1px solid #789d5d;border-radius:8px;background:#213c26;color:#f2ffe6;font:700 13px system-ui;touch-action:manipulation;cursor:pointer;}
+.owned-placement-controls [data-place-action=lock]{flex:1;background:#baff39;color:#10200b;min-width:135px;}.owned-placement-controls button:disabled{opacity:.55;cursor:wait;}.owned-placement-controls output{margin-top:8px;font:12px system-ui;}
+.owned-placement-edit{position:absolute;z-index:20;left:10px;top:82px;max-width:calc(100% - 20px);}
+@media(max-width:600px){.owned-placement-controls{bottom:calc(132px + env(safe-area-inset-bottom,0px));padding:10px;}.owned-placement-controls button{flex:1 1 65px;}.owned-placement-controls p{margin:5px 0 8px;}}
+.play-access-dialog{box-sizing:border-box;width:min(420px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:22px;border:1px solid #9cff00;border-radius:14px;background:#0d1d12;color:#efffdc;font:15px/1.5 system-ui;z-index:2000}.play-access-dialog::backdrop{background:#000b}.play-access-dialog h2{margin-top:0}.play-access-dialog button,.play-access-dialog input{box-sizing:border-box;width:100%;min-height:46px;margin:6px 0;padding:10px;border:1px solid #789d5d;border-radius:8px}.play-access-dialog button{background:#baff39;color:#10200b;font-weight:700;cursor:pointer}.play-access-dialog fieldset{margin:14px 0;border:1px solid #789d5d}.play-access-dialog label{display:block}.play-access-dialog a{color:#9cff00}.play-access-dialog [data-status]{overflow-wrap:anywhere}
+/* Compact transform launcher and a complete, viewport-sized adjustment panel. */
+.building-adjust-button{box-sizing:border-box;width:44px;height:44px;min-width:44px;min-height:44px;padding:4px;right:10px;border-radius:10px;font:800 11px/1 system-ui;touch-action:manipulation;}
+.building-adjust-dialog{inset:0;margin:auto;width:min(420px,calc(100dvw - 16px));max-width:calc(100dvw - 16px);max-height:calc(100dvh - 16px);padding:12px;overflow:hidden;scrollbar-gutter:auto;font:13px/1.35 system-ui;}
+.building-adjust-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}.building-adjust-dialog .building-adjust-heading h2{margin:0;font-size:18px;}.building-adjust-dialog .building-adjust-heading button{flex:0 0 36px;min-height:36px;height:36px;padding:0;font-size:24px;}
+.building-adjust-dialog .building-adjust-modes{display:flex;flex-wrap:nowrap;gap:6px;}.building-adjust-dialog button{box-sizing:border-box;min-width:0;min-height:44px;padding:7px;font:700 12px/1.2 system-ui;touch-action:manipulation;}
+.building-adjust-dialog [data-adjust-hint]{margin:8px 0;color:#c3d7c4;font-size:11px;line-height:1.3;}
+.building-adjust-axes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 14px;margin:8px 0;}
+.building-adjust-dialog .building-adjust-axes label{min-width:0;display:grid;grid-template-columns:1fr auto;gap:0;margin:0;font-weight:700;}
+.building-adjust-dialog .building-adjust-axes input{box-sizing:border-box;grid-column:1/-1;width:100%;min-width:0;min-height:38px;height:38px;margin:0;touch-action:pan-y;}
+.building-adjust-footer [data-adjust-apply]{background:#baff39;color:#10200b;border-color:#baff39;}
+@media(max-height:450px) and (min-width:460px){.building-adjust-dialog{width:min(650px,calc(100dvw - 16px));padding:8px;}.building-adjust-dialog[open]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 16px;}.building-adjust-heading,.building-adjust-footer{grid-column:1/-1;}.building-adjust-heading{margin:0;}.building-adjust-axes{margin:0;align-content:center;}.building-adjust-dialog [data-adjust-hint]{margin:6px 0;}}
+/* Legacy explorer controls never flash before the live game initializes. */
+.model-explorer-page [data-legacy-game-controls]{display:none!important;}
+.model-explorer-page:not([data-game-controls=ready]) :is(.house-bottom-controls,.house-control-dock,.mobile-move-pad,.rad-tox-hud,.building-adjust-button,.builder-nearby-action,.range-ops-button,.house-reticle){display:none!important;}
+.model-explorer-page .house-explorer-shell{grid-template-columns:minmax(0,1fr);}
+.owned-placement-controls [data-place-action=quick]{flex:1 1 100%;background:#baff39;color:#10200b;white-space:normal;line-height:1.4}
+.owned-placement-controls [data-place-action=single]{flex:1 1 100%;white-space:normal;line-height:1.4}
+.owned-placement-controls button[hidden]{display:none!important}

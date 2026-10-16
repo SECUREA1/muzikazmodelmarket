@@ -1,3 +1,4 @@
+import {catalogItemPrice} from './public/js/game-item-pricing.js';
 import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {BUILDING_MATERIALS} from './public/js/building-materials.js';
@@ -19,11 +20,11 @@ const raw=[
  ...backpack.filter(item=>item.visibility!=='private').map(item=>({...item,sku:'backpack:'+item.id,category:'Backpack · '+item.type,kind:'asset',assetType:item.type,basic:item.id==='backpack-dax',priceMzk:item.type==='vehicles'?500:item.type==='avatars'?300:item.type==='lands'?400:100,useCostMzk:item.type==='avatars'?0:item.type==='vehicles'?5:1})),
  ...models.filter(item=>item.visibility!=='private'&&item.modelUrl).map(item=>({...item,sku:'repository:'+item.id,category:'Models',kind:'asset',assetType:item.assetType||'props',priceMzk:Math.round(Number(item.price||25)*100),useCostMzk:item.assetType==='avatar'?0:2}))
 ];
-export const GAME_ECONOMY=raw.map(item=>({...item,priceMzk:item.basic?0:item.priceMzk,useCostMzk:item.basic?0:item.useCostMzk}));
+export const GAME_ECONOMY=raw.map(item=>{const priceMzk=catalogItemPrice(item);return {...item,priceMzk,priceUsd:priceMzk/100,...(item.kind==='material'?{unitPriceMzk:item.basic?0:priceMzk}:{}),useCostMzk:item.basic?0:item.kind==='material'?priceMzk:item.useCostMzk};});
 export function economyItem(sku){return GAME_ECONOMY.find(item=>item.sku===sku);}
 const modelPath=value=>{try{return decodeURIComponent(String(value||'')).replace(/^\//,'');}catch{return String(value||'').replace(/^\//,'');}};
 export function ownsEconomyItem(state,item){return Boolean(item&&(item.basic||state.items?.some(owned=>owned.economySku===item.sku||item.kind==='asset'&&owned.modelUrl&&modelPath(owned.modelUrl)===modelPath(item.modelUrl))));}
-export function economyInventory(state){return GAME_ECONOMY.map(item=>({...item,owned:ownsEconomyItem(state,item)}));}
+export function economyInventory(state){return GAME_ECONOMY.map(item=>({...item,owned:ownsEconomyItem(state,item),...(item.kind==='material'?{stock:Number(state.memory?.materialCredits?.[item.sku]||0)}:{})}));}
 
 export const CARE_SUPPLIES=(await json('./public/models/ioncore-rpg-items.json')).items;
 export const BUNDLE_DISCOUNT_PERCENT=20;

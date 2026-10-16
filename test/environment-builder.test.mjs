@@ -18,7 +18,7 @@ test('environment builder exposes layout, placement and editing controls', async
   assert.match(script,/inventory.api\('\/api\/custom-maps'/);
   assert.match(script,/window.location.assign\(result.playUrl\)/);
   const launch=script.slice(script.indexOf('function testGameLocally()'),script.indexOf('function screenRay'));
-  assert.match(launch,/publish-scene/);
+  assert.match(launch,/publishAndPlay/);
   assert.doesNotMatch(launch,/sessionStorage|sandbox|localFallback/);
   assert.match(launcher,/get\('autoplay'\) === '1'\) begin\(\)/);
 
@@ -167,7 +167,7 @@ test('environment builder supports custom role-play actors and interactions', as
   for (const behavior of ['talk', 'quest', 'hostile', 'patrol', 'pickup', 'door', 'heal']) assert.match(html, new RegExp(`value="${behavior}"`));
   assert.match(script, /muzikaz\.environmentBuilder\.customItems\.v1/);
   assert.match(script, /data-delete-group/);
-  assert.match(script, /multiplayer:true/);
+  assert.match(script, /multiplayer:\$\('#play-mode'\)\.value!=='solo'/);
   assert.ok((script.match(/type:'enemy'/g) || []).length >= 4, 'includes several ready-made enemies');
   assert.ok((script.match(/type:'interactive'/g) || []).length >= 4, 'includes several interactive role-play objects');
 });
@@ -346,7 +346,7 @@ test('builder lands and placed items retain verified collision floors', async ()
   assert.match(loader, /terrain\.userData\.colliderShape = 'mesh'/, 'builder map terrain keeps an explicit mesh collider');
   assert.match(loader, /BUILDER_TEMPLATE_\$\{layout\}/, 'the playable map reconstructs the template set dressing instead of loading an empty terrain');
   assert.match(loader, /root\.add\(mesh\)/, 'template buildings and props join the world root and its collision pass');
-  assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode\)/, 'procedural terrain enters the normal collision pipeline');
+  assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode,\[\],\{buildOctree:!this\.serverAuthoritative\(\)\}\)/, 'procedural terrain enters the normal collision pipeline');
   assert.match(loader, /resolveSafeSpawn\(nextWorld, collision\.floorMeshes, environment\.spawn\)/, 'the initial player position is resolved against verified collision floors');
   assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;activeWorldSpawn=\{position:spawn\.position\.clone\(\),rotationY:Number\(spawn\.rotationY\)\|\|0\};resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\)/, 'map loading places the player directly at an authored or safe resolved spawn');
   assert.match(loader, /setSupplementalCollisionRoots\(roots = \[\]\)/, 'the loader can safely include placed Builder items in its collision octree');
@@ -408,7 +408,7 @@ test('saved sandbox maps embed custom item definitions for exact game reconstruc
   assert.match(script, /sceneData\.customModels=cloneData\(customModels\)/);
   assert.match(script, /sceneData\.placedModels=cloneData/, 'every placed asset definition travels with the local sandbox scene');
   assert.match(script,/inventory.api\('\/api\/custom-maps'/);
-  assert.match(script,/scene:\{...cloneData\(sceneData\)/);
+  assert.match(script,/scene:cloneData\(sceneData\)/);
   assert.match(game, /built\.placedModels/);
   assert.match(game, /prepareAuthoredBuilderModel/);
   assert.match(game, /createGeneratedAsset\(definition\)/);

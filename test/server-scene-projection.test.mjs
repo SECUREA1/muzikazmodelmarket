@@ -59,3 +59,17 @@ test('controller disposal detaches brain roots even when the controller only fre
  root.userData.serverController={dispose(){disposed++;}};scene.add(root);
  disposeServerEnemyProjection(root);assert.equal(root.parent,null);assert.equal(scene.children.length,0);assert.equal(disposed,1);
 });
+
+test('enemy motion continues between snapshots and bounds prediction during a stalled connection',async()=>{
+ const {targetServerEnemy,interpolateServerEnemy}=await import('../public/js/server-scene-projection.js');
+ const root=new THREE.Group(),actor={position:{x:0,y:0,z:0},rotation:{y:0}};
+ targetServerEnemy(root,actor,0,1000);
+ actor.position.x=.1;targetServerEnemy(root,actor,0,1100);
+ interpolateServerEnemy(root,1,1150);
+ assert.ok(Math.abs(root.position.x-.15)<.001);
+ interpolateServerEnemy(root,1,5000);
+ assert.ok(Math.abs(root.position.x-.2)<.001,'prediction stops after 100 ms');
+ actor.position.x=30;targetServerEnemy(root,actor,0,5100);
+ interpolateServerEnemy(root,1,5200);
+ assert.equal(root.position.x,30,'teleports discard prior velocity');
+});

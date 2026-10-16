@@ -2722,6 +2722,8 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 .members-page .member-section-menu__list:not([hidden]){display:grid}
 .members-page .member-section-menu__list a{display:flex;min-height:46px;align-items:center;padding:10px 14px;border:1px solid rgba(190,255,89,.14);border-radius:10px;color:#eef7e9;font-size:12px;font-weight:900;text-decoration:none;text-transform:uppercase}
 .members-page .member-section-menu__list a:hover,.members-page .member-section-menu__list a:focus-visible,.members-page .member-section-menu__list a.is-active{border-color:var(--lime);background:rgba(156,255,0,.12);color:var(--lime)}
+.members-page .member-section-menu__list a.member-section-menu__play{justify-content:center;border-color:var(--lime);background:var(--lime);color:#071000;box-shadow:0 0 18px rgba(156,255,0,.35),inset 0 0 12px rgba(255,255,255,.2)}
+.members-page .member-section-menu__list a.member-section-menu__play:hover,.members-page .member-section-menu__list a.member-section-menu__play:focus-visible{background:#c5ff63;color:#071000;box-shadow:0 0 24px rgba(156,255,0,.55);outline:2px solid #fff;outline-offset:2px}
 .members-page .member-locked-content>.section-block[hidden]{display:none}
 .members-page .section-block{
   width:min(1440px,100%);
@@ -3755,3 +3757,9 @@ body .site-header.global-site-header.header-icons-only .global-nav .mzk-site-uti
 @media(max-width:1000px){body .site-header.global-site-header .global-nav a.nav-link{width:100%!important;max-width:100%!important;}body .site-header.global-site-header .icons :is(a,button){width:44px!important;min-width:44px!important;max-width:44px!important;padding:8px!important;box-sizing:border-box;}body .site-header.global-site-header .icons :is(a,button)>span{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important;}}
 
 .global-nav a[hidden] { display:none !important; }
+
+/* The microphone meter follows measured voice energy, with no idle animation. */
+#crib-mic-toggle.is-on{border-color:#36ff82;color:#baffd2}
+#crib-mic-toggle.is-speaking{background:rgba(54,255,130,.22);box-shadow:0 0 calc(6px + var(--voice-level,0)*18px) rgba(54,255,130,.6)}
+#crib-mic-toggle.is-speaking>span{transform:scale(calc(1 + var(--voice-level,0)*.18))}
+@media(prefers-reduced-motion:reduce){#crib-mic-toggle.is-speaking>span{transform:none}}

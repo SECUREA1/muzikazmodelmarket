@@ -1,9 +1,10 @@
+import {ServerMotion} from './server-motion.js';
 // Scene objects display confirmed state; they never decide gameplay outcomes.
 export function disposeProjection(root) {
  root.userData.serverMixer?.stopAllAction();
- root.userData.serverMixer?.uncacheRoot(root);
+ root.userData.serverMixer?.uncacheRoot(root.userData.serverMixerRoot||root);
  root.removeFromParent();
- root.traverse(object=>{object.geometry?.dispose();for(const material of [].concat(object.material||[]))material.dispose();});
+ root.traverse(object=>{object.geometry?.dispose();for(const material of [].concat(object.material||[])){if(root.userData.serverLoot||object.userData.voiceOverlay)material.map?.dispose();material.dispose();}});
 }
 
 export function syncServerAvatar({THREE,root,peer,loader,prepare,isCurrent,now=Date.now()}) {
@@ -51,24 +52,55 @@ export function projectServerActor(root,actor) {
  state.serverPaint=actor.paint;state.serverSwitched=actor.switched;state.serverCollisionDisabled=!root.visible||!!actor.open;
 }
 
+// Remote players render from a short buffer instead of chasing each packet.
+export function targetServerPlayer(root,peer,now=performance.now()) {
+ const state=root.userData;
+ state.serverPlayerMotion ||= new ServerMotion();
+ state.serverPlayerMotion.push(peer.position,now);
+ state.serverYaw=peer.yaw||0;
+ // First snapshots, teleports and long gaps discard the old interpolation path.
+ if(state.serverPlayerMotion.snapshots.length===1){
+  root.position.copy(peer.position);root.rotation.y=state.serverYaw;
+ }
+}
+export function interpolateServerPlayer(root,delta,now=performance.now()) {
+ const state=root.userData;if(!state.serverPlayerMotion)return;
+ state.serverPlayerMotion.sample(now,root.position);
+ const alpha=1-Math.exp(-18*Math.max(0,delta));
+ root.rotation.y+=Math.atan2(Math.sin(state.serverYaw-root.rotation.y),Math.cos(state.serverYaw-root.rotation.y))*alpha;
+}
+
 // Enemy positions remain server-owned; interpolation only smooths presentation.
-export function targetServerEnemy(root,actor,height=0) {
+export function targetServerEnemy(root,actor,height=0,now=performance.now()) {
  const state=root.userData;
  state.serverTarget ||= root.position.clone();
  state.serverTarget.set(actor.position.x,actor.position.y+height,actor.position.z);
+ state.serverEnemyMotion ||= new ServerMotion({delay:0,maxExtrapolation:100});
+ state.serverEnemyMotion.push({x:actor.position.x,y:actor.position.y+height,z:actor.position.z},now);
+ state.serverPredicted ||= root.position.clone();
  state.serverYaw=actor.rotation?.y||0;
  if(!state.serverPositioned||root.position.distanceToSquared(state.serverTarget)>25){
   root.position.copy(state.serverTarget);root.rotation.y=state.serverYaw;state.serverPositioned=true;
  }
 }
-export function interpolateServerEnemy(root,delta) {
+export function interpolateServerEnemy(root,delta,now=performance.now()) {
  const state=root.userData;if(!state.serverTarget)return;
  const alpha=1-Math.exp(-18*Math.max(0,delta));
- root.position.lerp(state.serverTarget,alpha);
+ state.serverEnemyMotion.sample(now,state.serverPredicted);
+ root.position.lerp(state.serverPredicted,alpha);
  root.rotation.y+=Math.atan2(Math.sin(state.serverYaw-root.rotation.y),Math.cos(state.serverYaw-root.rotation.y))*alpha;
 }
 export function disposeServerEnemyProjection(root) {
  root.removeFromParent();
  if(root.userData.serverController)root.userData.serverController.dispose();
  else disposeProjection(root);
+}
+
+// Keep authored model size and floor offsets inside a transformable anchor.
+export function anchorServerAsset(THREE,content){
+ content.updateMatrixWorld(true);const bottom=new THREE.Box3().setFromObject(content).min.y;
+ if(Number.isFinite(bottom))content.position.y-=bottom;
+ const root=new THREE.Group();root.add(content);
+ if(content.userData.serverMixer){root.userData.serverMixer=content.userData.serverMixer;root.userData.serverMixerRoot=content;delete content.userData.serverMixer;}
+ return root;
 }

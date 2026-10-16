@@ -14,7 +14,7 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   assert.match(launcher, /setTimeout\(showStall, 30000\)/, 'a stalled module load reports its state without starting a duplicate engine');
   assert.match(launcher, /new URLSearchParams\(window\.location\.search\)\.get\('autoplay'\) === '1'\) begin\(\)/, 'autoplay routes load the deferred engine without waiting for a second click');
   assert.match(game, /signal: AbortSignal.timeout\(5000\)/, 'bundled startup maps have a bounded request');
-  assert.match(game, /let startEnvironment = requestedEnvironment \|\| registry.find\('muzikaz-main'\)/, 'normal launches start in the house');
+  assert.match(game, /let startEnvironment = selectedWorldId\(registry,params\)/, 'normal launches start in the house');
   assert.match(game, /#house-outside-button/, 'the game wires the outside map control');
   assert.match(game, /if \(!envLoader.world\) throw new Error/, 'a missing world cannot be reported as a successful launch');
   assert.match(game, /gameInitializationPromise = null/, 'a failed game initialization can be started again');
@@ -33,12 +33,13 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
 });
 
 
-test('shared gameplay is confirmed before dismissing startup, with solo play for guests', async () => {
+test('shared gameplay is confirmed before dismissing startup, with explicit solo and guest access', async () => {
   const game = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
   assert.match(game, /await connectingClient\.whenReady\(\)/);
   assert.match(game, /await startRoomGameplay\(\);\s+await toxicBubbleSystem\.begin\(\);\s+gameplayStarted=true;\s+gameStartScreen\?\.classList\.add\('is-hidden'\)/);
-  assert.match(game, /error\.status!==401.*memberDestination/);
-  assert.match(game, /guestSolo=true; serverHostedRoom=false/);
+  assert.match(game, /await ensurePlayAccess\(sharedInventory\)/);
+  assert.match(game, /if\(guestSolo\)\{serverHostedRoom=false/);
+  assert.match(game, /await choosePlayAccess\(sharedInventory\)/);
   assert.doesNotMatch(game, /Shared room loaded\. Connecting to authoritative gameplay/);
 });
 

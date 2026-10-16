@@ -132,14 +132,14 @@ initHeroGateway();
 // One catalog drives both the world map and the marketplace. Coordinates belong
 // to the asset, so a purchased world always resolves to the same map location.
 const WORLD_ASSETS = [
-  { id: 'volt-city', name: 'Volt City', kind: 'Land world', x: 23, y: 28, price: '$35.00', logo: 'logo_symbol_crop_2x.png', detail: 'The electric capital · live stages and creator towers' },
-  { id: 'skyline-deck', name: 'Skyline Deck', kind: 'Land world', x: 49, y: 22, price: '$25.00', logo: 'available_online_events_banner_2x_transparent.png', detail: 'Rooftop events · tonight at 20:00' },
-  { id: 'echo-gardens', name: 'Echo Gardens', kind: 'Land world', x: 74, y: 31, price: '$25.00', logo: 'dark_smoke_green_fx_2x.png', detail: 'Living sound biome · open for builders' },
+  { id: 'volt-city', name: 'Volt City', kind: 'Land world', x: 23, y: 28, price: '$90.00', logo: 'logo_symbol_crop_2x.png', detail: 'The electric capital · live stages and creator towers' },
+  { id: 'skyline-deck', name: 'Skyline Deck', kind: 'Land world', x: 49, y: 22, price: '$10.00', logo: 'available_online_events_banner_2x_transparent.png', detail: 'Rooftop events · tonight at 20:00' },
+  { id: 'echo-gardens', name: 'Echo Gardens', kind: 'Land world', x: 74, y: 31, price: '$50.00', logo: 'dark_smoke_green_fx_2x.png', detail: 'Living sound biome · open for builders' },
   { id: 'crew-plaza', name: 'Crew Plaza', kind: 'Land world', x: 36, y: 49, price: '$25.00', logo: 'join_the_crew_banner_2x_transparent.png', detail: 'Social hub · crews gathering now' },
-  { id: 'studio-ridge', name: 'Studio Ridge', kind: '3D Environment', x: 63, y: 53, price: '$48.00', logo: 'smoke_energy_background_large_2x_transparent.png', detail: 'MUZIKAZ Main Floor · complete walkable GLB stage', environmentId: 'muzikaz-main' },
-  { id: 'neon-docks', name: 'Neon Docks', kind: 'Land world', x: 18, y: 70, price: '$25.00', logo: 'brand_name_tagline_panel_2x.png', detail: 'Drop port · new assets arriving' },
-  { id: 'bassline-badlands', name: 'Bassline Badlands', kind: '3D Environment', x: 50, y: 76, price: '$52.00', logo: 'hero_banner_full_transparent.png', detail: 'MUZIKAZ Upper Floor · high-energy adventure environment', environmentId: 'muzikaz-upper' },
-  { id: 'pixel-peaks', name: 'Pixel Peaks', kind: '3D Environment', x: 82, y: 72, price: '$58.00', logo: 'logo_panel_2x_transparent.png', detail: 'Sheep Base · panoramic walkable mountain build', environmentId: 'sheepbase' }
+  { id: 'studio-ridge', name: 'Studio Ridge', kind: '3D Environment', x: 63, y: 53, price: '$40.00', logo: 'smoke_energy_background_large_2x_transparent.png', detail: 'MUZIKAZ Main Floor · complete walkable GLB stage', environmentId: 'muzikaz-main' },
+  { id: 'neon-docks', name: 'Neon Docks', kind: 'Land world', x: 18, y: 70, price: '$65.00', logo: 'brand_name_tagline_panel_2x.png', detail: 'Drop port · new assets arriving' },
+  { id: 'bassline-badlands', name: 'Bassline Badlands', kind: '3D Environment', x: 50, y: 76, price: '$75.00', logo: 'hero_banner_full_transparent.png', detail: 'MUZIKAZ Upper Floor · high-energy adventure environment', environmentId: 'muzikaz-upper' },
+  { id: 'pixel-peaks', name: 'Pixel Peaks', kind: '3D Environment', x: 82, y: 72, price: '$100.00', logo: 'logo_panel_2x_transparent.png', detail: 'Sheep Base · panoramic walkable mountain build', environmentId: 'sheepbase' }
 ];
 
 function findWorldAsset(value) {
@@ -1143,7 +1143,7 @@ function initFlexLabCategories() {
 }
 
 function initWorldPlot() {
-  const STARTER_PLOT_MZK = 4000;
+  let landValues={};
   const plot = document.querySelector('#muzikaz-world-plot');
   const spaces = Array.from(document.querySelectorAll('[data-world-space]'));
   const consent = document.querySelector('#world-plot-consent');
@@ -1176,20 +1176,20 @@ function initWorldPlot() {
     });
     const selectedIndex = spaces.findIndex((space) => space.dataset.worldSpace === name) + 1;
     const isOwned = ownedPlotNames().includes(name);
-    const worldId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const worldId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');const selectedPrice=landValues[worldId]?.priceMzk;const selectedUsd=selectedPrice/100;const priceBox=plot.querySelector('.world-plot__price');if(priceBox&&selectedPrice){priceBox.querySelector('strong').textContent='$'+selectedUsd.toFixed(2)+' USD';priceBox.querySelector('em').textContent=selectedPrice.toLocaleString()+' MZK · '+landValues[worldId].size+' m · '+landValues[worldId].type;}
     selection.innerHTML = `<span class="world-plot__selection-number">${String(selectedIndex).padStart(2, '0')}</span><span><strong>${name} selected.</strong> This public-area plot includes one free spot in its community.</span><small>Plot status <b>${isOwned ? 'Owned by you' : 'Available'}</b></small>`;
-    reserveButton.textContent = isOwned ? `${name} owned` : `Claim ${name} · ${STARTER_PLOT_MZK.toLocaleString()} MZK`;
-    reserveButton.disabled = isOwned || !consent.checked;
+    reserveButton.textContent = isOwned ? `${name} owned` : `Claim ${name} · ${selectedPrice?.toLocaleString()||'Loading price…'} MZK`;
+    reserveButton.disabled = isOwned || !consent.checked || !selectedPrice;
     if (purchaseLink) {
-      purchaseLink.href = `buy-mzk.html?purchase=land&amount=40&world=${encodeURIComponent(worldId)}&return=${encodeURIComponent(`model-market.html?world=${worldId}#muzikaz-world-plot`)}`;
-      purchaseLink.querySelector('strong').textContent = isOwned ? `${name} already owned` : `Purchase ${name} · $40`;
+      purchaseLink.href = `buy-mzk.html?amount=${selectedUsd||40}&world=${encodeURIComponent(worldId)}&return=${encodeURIComponent(`model-market.html?world=${worldId}#muzikaz-world-plot`)}`;
+      purchaseLink.querySelector('strong').textContent = isOwned ? `${name} already owned` : (selectedPrice?`Fund wallet for ${name} · $${selectedUsd.toFixed(2)}`:'Loading land price…');
       purchaseLink.classList.toggle('is-owned', isOwned);
-      purchaseLink.setAttribute('aria-disabled', String(isOwned));
+      purchaseLink.setAttribute('aria-disabled', String(isOwned||!selectedPrice));if(!selectedPrice)purchaseLink.removeAttribute('href');
     }
   };
 
   spaces.forEach((space) => space.addEventListener('click', () => selectSpace(space.dataset.worldSpace)));
-  consent.addEventListener('change', () => { reserveButton.disabled = ownedPlotNames().includes(selectedSpace) || !consent.checked; });
+  consent.addEventListener('change', () => { const id=selectedSpace.toLowerCase().replace(/[^a-z0-9]+/g,'-');reserveButton.disabled = ownedPlotNames().includes(selectedSpace) || !consent.checked || !landValues[id]; });
   agreement.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!consent.checked) return;
@@ -1202,11 +1202,11 @@ function initWorldPlot() {
     try {
       await window.MZKWallet.refreshShared();
       const session=window.MZKWallet.sharedSession();if(!session)throw new Error('Sign in through Members before buying a plot.');
-      const response = await window.MUZIKAZ_API.fetch('/api/land/claims', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token':session.csrfToken }, body: JSON.stringify({ worldId, requestId }) });
+      const response = await window.MUZIKAZ_API.fetch('/api/land/claims', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token':session.csrfToken }, body: JSON.stringify({ worldId, requestId, expectedPriceMzk:landValues[worldId]?.priceMzk }) });
       const result = await response.json(); if (!response.ok) throw new Error(result.message || 'The live deed database rejected this claim.');
       deed = result.data || result;
     } catch (error) {
-      reserveButton.disabled = false; reserveButton.textContent = `Claim ${selectedSpace} · ${STARTER_PLOT_MZK.toLocaleString()} MZK`;
+      reserveButton.disabled = false; reserveButton.textContent = `Claim ${selectedSpace} · ${landValues[worldId]?.priceMzk.toLocaleString()||'Loading price…'} MZK`;
       selection.innerHTML = `<span class="world-plot__selection-number">!</span><span><strong>Claim not recorded.</strong> ${escapeHtml(error.message)}</span><small>Your MZK was not spent locally. Reconnect to the live service and retry.</small>`;
       return;
     }
@@ -1224,6 +1224,7 @@ function initWorldPlot() {
   });
   updateOwnedCount();
   selectSpace(selectedSpace);
+  import('./public/js/game-item-pricing.js').then(({LAND_VALUES})=>{landValues=LAND_VALUES;selectSpace(selectedSpace);}).catch(()=>{reserveButton.disabled=true;reserveButton.textContent='Land prices unavailable · reload to retry';});
 }
 
 

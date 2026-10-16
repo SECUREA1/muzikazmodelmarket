@@ -35,3 +35,18 @@ test('Backpack lands and the SVG-backed item collection deploy inside gameplay',
   assert.ok(dimensionalItems.length >= 6, 'offers a useful list instead of a single SVG-backed 3D item');
   for (const item of dimensionalItems) assert.ok(item.buildAssetId, `${item.name} has an in-world procedural model`);
 });
+
+test('owned care supplies appear in the wheel and consume through shared inventory before spawning', async () => {
+  const game = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
+  assert.match(game, /\['supplies','Supplies'\]/);
+  assert.match(game, /\[starter,\.\.\.ownedSupplies,/);
+  assert.match(game, /supplyOwner:state.owner_id/);
+  const deploy = game.slice(game.indexOf('async function deployBackpackAsset(asset)'));
+  assert.ok(deploy.indexOf("asset?.type==='supplies'") < deploy.indexOf("serverCommand('spawn'"));
+  assert.match(deploy, /session.owner_id!==asset.supplyOwner/);
+  assert.match(deploy, /await sharedInventory.action\('use',asset.id\)/);
+  assert.match(deploy, /careEffects.accept\(result\)/);
+  assert.match(deploy, /ownedSupplies=ownedSupplies.filter\(item=>item.id!==asset.id\)/);
+  assert.match(game, /asset.type==='supplies'\?'Consume'/);
+  assert.match(game, /gameMarketplace.open\(backpackCategory==='supplies'\?'care':'upgrades'\)/);
+});

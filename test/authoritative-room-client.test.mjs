@@ -128,3 +128,38 @@ test('an expired room presence rejoins while ordinary conflicts do not',async()=
   return response(confirmed(joins+inputs));
  },async client=>{await client.whenReady();await pause(450);assert.equal(joins,2);assert.equal(client.ready,true);});
 });
+
+test('stick changes flush immediately and a slow weapon response does not stall controls',async()=>{
+ let sequence=0,side=0,releaseFire;const received=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='input')received.push(command.input.side);
+  if(command.action==='fire')return new Promise(resolve=>{releaseFire=()=>resolve(response(confirmed(++sequence)));});
+  const state=confirmed(++sequence);state.players[state.selfId].health=100;return response(state);
+ },async client=>{
+  await client.whenReady();side=1;client.requestInput();await pause(10);
+  assert.ok(received.includes(1),'stick press sends without waiting for the polling interval');
+  assert.ok(releaseFire,'weapon request is pending');
+  side=-1;client.requestInput();await pause(10);
+  assert.equal(received.at(-1),-1,'direction changes still reach the server while firing');
+  side=0;client.requestInput();await pause(10);
+  assert.equal(received.at(-1),0,'release is sent immediately');
+  client.stop();releaseFire();await pause(5);
+ },{input:()=>({side,firing:true,tool:'flamethrower',direction:[0,0,-1]})});
+});
+
+test('intermediate drag bursts use the heartbeat while neutral edges flush immediately',async()=>{
+ let side=0,sequence=0;const received=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);if(command.action==='input')received.push(command.input.side);
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();
+  for(let i=0;i<100;i++){side=i/100;client.requestInput(false);}
+  await pause(10);assert.equal(received.length,0,'pointer events do not each create a request');
+  await pause(70);assert.equal(received.at(-1),.99,'heartbeat uses the latest drag state');
+  side=0;client.requestInput();await pause(5);assert.equal(received.at(-1),0,'release bypasses the heartbeat');
+ },{input:()=>({side})});
+});

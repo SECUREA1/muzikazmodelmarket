@@ -1,3 +1,4 @@
+import {materialBulkQuote} from './public/js/game-item-pricing.js';
 import { cleanCustomItem } from './custom-item-rules.mjs';
 import { plotSpaceId, plotPlayUrl } from './member-plots.mjs';
 import { economyItem, ownsEconomyItem, economyInventory, GAME_BUNDLES, economyBundleQuote, economyBundles } from './game-economy.mjs';
@@ -215,7 +216,8 @@ export class UserJsonDatabase {
         itemType: String(item.type || 'Backpack item'),
         priceMzk: Number(item.listing.priceMzk),
         listedAt: item.listing.updatedAt || user.updatedAt,
-        thumbnailUrl: String(item.thumbnailUrl || item.previewUrl || '')
+        thumbnailUrl: String(item.thumbnailUrl || item.thumbnail_url || item.previewUrl || item.imageUrl || item.image_url || ''),
+        modelUrl: String(item.modelUrl || item.glb_url || ''),buildAssetId:item.buildAssetId||null,materialId:item.materialId||null,toolId:item.toolId||null,category:item.category||item.type||'Item'
       }));
     }).sort((a, b) => String(b.listedAt || '').localeCompare(String(a.listedAt || '')) || a.itemName.localeCompare(b.itemName));
   }
@@ -289,7 +291,22 @@ export class UserJsonDatabase {
   }
 
   async economy(walletId){const state=await this.get(walletId);return {balance:Number(state.tokens.MZK||0),items:economyInventory(state),bundles:economyBundles(state),ownedAssets:state.items.map(item=>item.type==='land-entitlement'?{...item,assetType:'lands',requiresReveal:true}:item.type==='land-deed'?{...item,memberPlot:true,assetType:'lands',environmentId:plotSpaceId(item),playUrl:plotPlayUrl(item)}:item)};}
-  economyAction(walletId,action,sku,requestId){const wallet=cleanWallet(walletId),item=economyItem(sku);if(!item)throw Object.assign(new Error('Unknown game upgrade.'),{statusCode:400});if(!requestId||String(requestId).length>140)throw new Error('A purchase or use request id is required.');return this.transaction(data=>{const type=action==='buy'?'GAME_ITEM_PURCHASE':'GAME_ITEM_USE';const duplicate=data.transactions.find(row=>row.walletId===wallet&&row.type===type&&row.requestId===requestId);if(duplicate){if(duplicate.sku!==sku)throw new Error('This request was used for another item.');return duplicate;}const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');const owned=ownsEconomyItem(user,item);if(action==='buy'&&owned)throw Object.assign(new Error('This upgrade is already owned.'),{statusCode:409});if(action==='use'&&!owned)throw Object.assign(new Error('Purchase this upgrade before using it.'),{statusCode:403});const cost=action==='buy'?item.priceMzk:item.useCostMzk;if(Number(user.tokens.MZK||0)<cost)throw Object.assign(new Error('Not enough MZK. Play with the free basic kit or earn quest rewards.'),{statusCode:409});user.tokens.MZK-=cost;if(action==='buy')user.items.push({...item,id:'economy:'+sku,economySku:sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt:new Date().toISOString()});user.updatedAt=new Date().toISOString();user.revision=Number(user.revision||0)+1;return appendTransaction(data,{type,walletId:wallet,amountMzk:-cost,balanceAfterMzk:user.tokens.MZK,requestId,sku,reason:item.name});});}
+  economyAction(walletId,action,sku,requestId){const wallet=cleanWallet(walletId),item=economyItem(sku);if(!item)throw Object.assign(new Error('Unknown game upgrade.'),{statusCode:400});if(!requestId||String(requestId).length>140)throw new Error('A purchase or use request id is required.');return this.transaction(data=>{const type=action==='buy'?'GAME_ITEM_PURCHASE':'GAME_ITEM_USE';const duplicate=data.transactions.find(row=>row.walletId===wallet&&row.type===type&&row.requestId===requestId);if(duplicate){if(duplicate.sku!==sku)throw new Error('This request was used for another item.');return duplicate;}const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');const owned=ownsEconomyItem(user,item);if(action==='buy'&&owned)throw Object.assign(new Error('This upgrade is already owned.'),{statusCode:409});if(action==='use'&&!owned)throw Object.assign(new Error('Purchase this upgrade before using it.'),{statusCode:403});const prepaid=action==='use'&&item.kind==='material'&&Number(user.memory?.materialCredits?.[sku]||0)>0;const cost=prepaid?0:action==='buy'?item.priceMzk:item.useCostMzk;if(Number(user.tokens.MZK||0)<cost)throw Object.assign(new Error('Not enough MZK. Play with the free basic kit or earn quest rewards.'),{statusCode:409});user.tokens.MZK-=cost;if(prepaid)user.memory.materialCredits[sku]--;if(action==='buy'&&item.kind==='material'&&!item.basic){user.memory ||= {};user.memory.materialCredits ||= {};user.memory.materialCredits[sku]=(user.memory.materialCredits[sku]||0)+1;}if(action==='buy')user.items.push({...item,id:'economy:'+sku,economySku:sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt:new Date().toISOString()});user.updatedAt=new Date().toISOString();user.revision=Number(user.revision||0)+1;return appendTransaction(data,{type,walletId:wallet,amountMzk:-cost,balanceAfterMzk:user.tokens.MZK,requestId,sku,reason:item.name});});}
+
+  buyMaterialBulk(walletId,sku,quantity,expectedPriceMzk,requestId){
+    const wallet=cleanWallet(walletId),item=economyItem(sku),quote=materialBulkQuote(item,quantity);
+    if(!/^[\w-]{1,140}$/.test(String(requestId||'')))throw Object.assign(Error('A bulk purchase request ID is required.'),{statusCode:400});
+    return this.transaction(data=>{
+      const duplicate=data.transactions.find(row=>row.walletId===wallet&&row.type==='MATERIAL_BULK_PURCHASE'&&row.requestId===requestId);
+      if(duplicate){if(duplicate.sku!==sku||duplicate.quantity!==quantity)throw Object.assign(Error('Request already used for another material order.'),{statusCode:409});return duplicate;}
+      if(expectedPriceMzk!==quote.priceMzk)throw Object.assign(Error('Material price changed. Review your order again.'),{statusCode:409});
+      const user=data.users[wallet];if(!user)throw Error('Member wallet not found.');
+      if(Number(user.tokens.MZK||0)<quote.priceMzk)throw Object.assign(Error('Not enough MZK for these materials.'),{statusCode:409});
+      if(!ownsEconomyItem(user,item)){if(user.items.length>=10000)throw Object.assign(Error('Backpack is full.'),{statusCode:409});user.items.push({...item,id:'economy:'+sku,economySku:sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt:new Date().toISOString()});}
+      user.memory ||= {};user.memory.materialCredits ||= {};user.memory.materialCredits[sku]=(user.memory.materialCredits[sku]||0)+quantity;user.tokens.MZK-=quote.priceMzk;user.updatedAt=new Date().toISOString();user.revision=Number(user.revision||0)+1;
+      return appendTransaction(data,{type:'MATERIAL_BULK_PURCHASE',walletId:wallet,requestId,...quote,amountMzk:-quote.priceMzk,balanceAfterMzk:user.tokens.MZK,stock:user.memory.materialCredits[sku],reason:item.name+' × '+quantity});
+    });
+  }
 
   buyEconomyBundle(walletId,bundleId,expectedPriceMzk,requestId){
     const wallet=cleanWallet(walletId),bundle=GAME_BUNDLES.find(bundle=>bundle.id===bundleId);
@@ -308,7 +325,7 @@ export class UserJsonDatabase {
       const acquiredAt=new Date().toISOString();
       for(const entry of quote.entries)for(let index=0;index<entry.quantity;index++){
         if(entry.kind==='care')user.items.push({id:'ioncore-'+randomUUID(),catalogId:entry.catalogId,name:entry.name,type:'rpg-consumable',source:'ioncore-market',acquiredAt});
-        else {const item=economyItem(entry.sku);user.items.push({...item,id:'economy:'+item.sku,economySku:item.sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt});}
+        else {const item=economyItem(entry.sku);if(item.kind==='material'&&!item.basic){user.memory ||= {};user.memory.materialCredits ||= {};user.memory.materialCredits[item.sku]=(user.memory.materialCredits[item.sku]||0)+1;}user.items.push({...item,id:'economy:'+item.sku,economySku:item.sku,type:'game-upgrade',source:'game-market',listing:{active:false},acquiredAt});}
       }
       user.tokens.MZK-=quote.priceMzk;user.updatedAt=acquiredAt;user.revision=Number(user.revision||0)+1;
       return appendTransaction(data,{type:'GAME_BUNDLE_PURCHASE',walletId:wallet,amountMzk:-quote.priceMzk,balanceAfterMzk:user.tokens.MZK,requestId,bundleId,items:quote.entries,discountPercent:quote.discountPercent,savingsMzk:quote.savingsMzk,reason:bundle.name});
@@ -531,6 +548,20 @@ export class UserJsonDatabase {
     const wallet=cleanWallet(walletId),health=Number(input?.health);
     if(!Number.isFinite(health)||health<0||health>100)throw new Error('Health must be between 0 and 100.');
     return this.transaction(data=>{const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');const previous=user.memory.ioncoreRpg||{};user.memory.ioncoreRpg={stats:{...RPG_DEFAULT_STATS,...previous.stats,health},history:[...(previous.history||[]),{health,stats:{...RPG_DEFAULT_STATS,...previous.stats,health},reason:'gameplay',world:String(input.world||'').slice(0,140),recordedAt:new Date().toISOString()}].slice(-100)};user.updatedAt=new Date().toISOString();user.revision++;return user.memory.ioncoreRpg;});
+  }
+
+  grantRpgLoot(walletId,itemId,requestId){
+    const wallet=cleanWallet(walletId),item=RPG_CATALOG.find(entry=>entry.id===itemId);
+    if(!item||!/^loot:[\w-]{1,100}$/.test(requestId))throw new Error('Invalid server loot.');
+    return this.transaction(data=>{
+      const duplicate=data.transactions.find(entry=>entry.type==='RPG_LOOT'&&entry.requestId===requestId);
+      if(duplicate){if(duplicate.walletId!==wallet||duplicate.itemId!==itemId)return {claimedByOther:true};return duplicate;}
+      const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');
+      if(user.items.length>=10000)throw new Error('Backpack is full.');
+      user.items.push({id:'ioncore-'+randomUUID(),catalogId:item.id,name:item.name,type:'rpg-consumable',source:'gameplay-loot'});
+      user.revision++;user.updatedAt=new Date().toISOString();
+      return appendTransaction(data,{type:'RPG_LOOT',walletId:wallet,requestId,itemId,amountMzk:0,balanceAfterMzk:user.tokens.MZK});
+    });
   }
 
   rpgAction(walletId, action, itemId, requestId) {

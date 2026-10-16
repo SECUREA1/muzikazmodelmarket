@@ -65,7 +65,12 @@ export function nextRadToxLevel(sim,environment,now,expectedMatchId) {
 // Only the server advances attack clocks or applies damage. Clients animate
 // these phases and replay the resulting events without running enemy AI.
 export function stepRadToxEnemy(sim,actor,players,now,dt,blocksShot=()=>false,resolveMovement=(_previous,next)=>next,applyAttack=true) {
- const target=players.slice().sort((a,b)=>Math.hypot(a.position.x-actor.position.x,a.position.z-actor.position.z)-Math.hypot(b.position.x-actor.position.x,b.position.z-actor.position.z))[0];
+ const rangeTo=player=>Math.hypot(player.position.x-actor.position.x,player.position.z-actor.position.z);
+ const nearest=players.reduce((best,player)=>!best||rangeTo(player)<rangeTo(best)?player:best,null);
+ const current=players.find(player=>(player.actorId||player.id)===actor.movementTargetId);
+ // Keep pursuing the same player until another is substantially closer.
+ const target=current&&nearest&&rangeTo(current)<=rangeTo(nearest)*1.25+.5?current:nearest;
+ actor.movementTargetId=target?.actorId||target?.id||null;
  if(!target){actor.attack=null;return;}
  const dx=target.position.x-actor.position.x,dz=target.position.z-actor.position.z,span=Math.hypot(dx,dz);
  const config=ENEMY_BEHAVIORS[actor.kind]||ENEMY_BEHAVIORS.toxic;
@@ -73,7 +78,7 @@ export function stepRadToxEnemy(sim,actor,players,now,dt,blocksShot=()=>false,re
  actor.rotation.y=Math.atan2(dx,dz);
  // Ranged enemies keep circling and retreat after firing instead of freezing
  // as soon as their initial spawn happens to be inside attack range.
- const speed=actor.definition.movement.speed;
+ const speed=Math.max(0,Number(actor.radTox ? config.moveSpeed : actor.definition?.movement?.speed ?? config.moveSpeed)||0);
  let mx=0,mz=0;
  if(span>.001){
   const dxn=dx/span,dzn=dz/span,ranged=Boolean(config.speed);
@@ -85,7 +90,10 @@ export function stepRadToxEnemy(sim,actor,players,now,dt,blocksShot=()=>false,re
   if(!ranged&&span<config.range*.7){mx=0;mz=0;}
  }
  const previous={...actor.position},amount=speed*dt;
- const proposals=[{x:mx,z:mz},{x:mx,z:0},{x:0,z:mz}];
+ // Try sliding first, then a consistent lateral step around a blocking corner.
+ const side=actor.id.charCodeAt(actor.id.length-1)%2?1:-1;
+ const proposals=[{x:mx,z:mz},{x:mx,z:0},{x:0,z:mz},
+  {x:-mz*side,z:mx*side},{x:mz*side,z:-mx*side}];
  for(const direction of proposals){
   if(!direction.x&&!direction.z)continue;
   const next=resolveMovement(previous,{...previous,x:previous.x+direction.x*amount,z:previous.z+direction.z*amount});

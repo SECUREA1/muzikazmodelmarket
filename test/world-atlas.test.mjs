@@ -16,7 +16,7 @@ test('public destinations, generated roads and coordinate meeting IDs are durabl
  const map={id:'alice-map',name:'Alice town',ownerId:'account:alice',ownerName:'Alice',visibility:'public',updatedAt:'2026-01-01',builderScene:{mapSize:40,layout:'grand-floor',objects:[]}};let updated=await reloaded.synchronize([map]);const cell=Object.values(updated.cells).find(cell=>cell.mapId===map.id);assert.ok(cell);assert.notDeepEqual([cell.column,cell.row],[0,0]);
  await assert.rejects(reloaded.addStreet(map.id,{from:{x:-10,z:8},to:{x:10,z:8}},guest),{statusCode:403});
  await assert.rejects(reloaded.resolve(Infinity,0,owner),{statusCode:400});await assert.rejects(reloaded.addStreet(map.id,{from:{x:-30,z:0},to:{x:10,z:8}},owner),{statusCode:400});
- await reloaded.addStreet(map.id,{from:{x:-10,z:8},to:{x:10,z:8}},owner);updated=await reloaded.read();const environment=attachAtlas(map,updated);assert.equal(environment.streets.length,7);assert.equal(environment.contentUpdatedAt,map.updatedAt);
+ await reloaded.addStreet(map.id,{from:{x:-10,z:8},to:{x:10,z:8}},owner);updated=await reloaded.read();const environment=attachAtlas(map,updated);assert.equal(environment.streets.length,1);assert.equal(environment.contentUpdatedAt,map.updatedAt);
  const stableRevision=(await reloaded.synchronize([map])).revision;assert.equal((await reloaded.synchronize([map])).revision,stableRevision,'unchanged maps do not create artificial updates');assert.equal(attachAtlas(environment,await reloaded.read()).contentUpdatedAt,map.updatedAt);
  const point=await reloaded.resolve(6,8,owner);const joinedMap=attachAtlas(commons.environment,await reloaded.read());const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),capacity:1});
  const one=await runtime.command('public-commons',joinedMap,{...owner,walletId:'a',stats:{health:100}},{action:'join',requestId:'join-alice',meetingId:point.meeting.id});const two=await runtime.command('public-commons',joinedMap,{...guest,walletId:'b',stats:{health:100}},{action:'join',requestId:'join-bob',meetingId:point.meeting.id});assert.deepEqual(one.players['account:alice'].position,two.players['account:bob'].position);assert.equal(Object.keys(two.players).length,2);assert.equal(two.streets.length,7);
@@ -47,5 +47,19 @@ test('a public-hub portal enters the canonical shared destination through an aut
  await runtime.command(environment.id,environment,alice,{action:'join',requestId:'join-hub'});
  await store.update(environment.id,room=>{room.simulation.players['account:alice'].position={x:gateway.position.x,y:0,z:gateway.position.z-4.5};});
  const state=await runtime.command(environment.id,environment,alice,{action:'interact',requestId:'enter-house'});assert.equal(state.result.destination,'main-house');
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
+
+test('selected builder designs exclude atlas defaults while preserving authored streets and public worlds',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'isolated-builder-'));
+ try{
+ const atlas=new WorldAtlas(join(dir,'atlas.json')),map={id:'my-design',name:'My design',source:'custom-builder',ownerId:'account:alice',visibility:'public',builderScene:{layout:'grand-floor',mapSize:80,objects:[{id:'my-sofa',modelId:'sofa',position:{x:3,y:0,z:4},functionalSettings:{behavior:'seat'}}]}};
+ let state=await atlas.synchronize([map]);const cell=Object.values(state.cells).find(cell=>cell.mapId===map.id);assert.equal(cell.streets.length,6,'atlas index data stays intact');
+ const design=attachAtlas(map,state);assert.deepEqual(design.streets,[]);assert.deepEqual(design.builderScene.objects,map.builderScene.objects);assert.equal(design.publicDestination,false);
+ const {createBuilderLand}=await import('../public/js/environments/builder-land.js');const root=createBuilderLand(design);assert.equal(root.getObjectByName('SERVER_STREETS').children.length,0,'no generic public road geometry is built');
+ const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json'))});const snapshot=await runtime.snapshot(map.id,design);assert.deepEqual(snapshot.streets,[]);assert.deepEqual(Object.keys(snapshot.actors),['my-sofa']);
+ const road={id:'designed-road',name:'My path',from:{x:-5,z:2},to:{x:5,z:2},width:3};const withRoad=attachAtlas({...map,builderScene:{...map.builderScene,streets:[road]}},state);assert.deepEqual(withRoad.streets,[road]);assert.deepEqual(attachAtlas(withRoad,state).streets,[road],'repeated atlas attachment does not duplicate authored data');
+ const publicMap=attachAtlas(state.cells['0,0'].environment,state);assert.equal(publicMap.streets.length,6);assert.ok(publicMap.builderScene.objects.some(object=>object.id==='public-seat-0'),'public content remains available by explicit selection');
+ await atlas.addStreet(map.id,{from:{x:-10,z:0},to:{x:10,z:0}},{accountId:'alice',username:'Alice'});state=await atlas.read();const edited=attachAtlas(map,state);assert.equal(edited.streets.length,1);assert.equal(edited.streets[0].createdBy,'Alice');
  }finally{await rm(dir,{recursive:true,force:true});}
 });
