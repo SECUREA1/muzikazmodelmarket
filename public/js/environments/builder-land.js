@@ -1,31 +1,15 @@
+import {addFiringRangeDressing} from './layout-firing-range.js';
+import {finishLayoutArchitecture} from './layout-details.js';
+import {layoutHeight,createLayoutTerrain,createLayoutMaterial} from './layout-terrain.js';
 import {createServerStreets} from './server-streets.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
 export function createBuilderLand(environment) {
     const built = environment.builderScene || {};
     const layout = built.layout || environment.layout || 'grand-floor';
     const meta = built.layoutMeta || environment.layoutMeta || {};
-    const heightAt = (x, z) => {
-      if(layout.startsWith('urban-'))return 0;
-      const ripple = .28 * Math.sin(x * .31) * Math.cos(z * .27);
-      if (['community-park','grand-floor','hedge-maze','neon-maze','dungeon-maze','vendor-street','creator-studios','market-square','railroad-world','skyport','desert-airfield','blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio'].includes(layout)) return ['community-park','grand-floor'].includes(layout) ? 0 : ripple * .18;
-      if (layout === 'loft') return ripple;
-      if (layout === 'suite') return .16 * Math.sin(x * .45) + .1 * Math.cos(z * .35);
-      if (layout === 'mountain-pass') return 1.2 + Math.sin(x * .18) * 1.5 + Math.cos(z * .22) * 1.1 - 2.2 * Math.exp(-(x * x) / 18);
-      if (layout === 'crystal-cavern') return -.6 + Math.abs(Math.sin(x * .25) * Math.cos(z * .2)) * 1.25;
-      if (layout === 'deep-mine') return -Math.min(3.2, Math.max(0, Math.floor((20 - Math.max(Math.abs(x), Math.abs(z))) / 4)) * .55) + ripple * .3;
-      if (layout === 'sunrise-farm') return .35 * Math.sin(x * .18) + .22 * Math.cos(z * .2);
-      if (layout === 'coastal-cliffs') return x > 5 ? -1.5 : 1.1 + Math.sin(z * .16) * .65 - Math.max(0, x + 7) * .055;
-      if (layout === 'ancient-forest') return .45 * Math.sin(x * .2) + .4 * Math.cos(z * .17) + 1.25 * Math.exp(-(x * x + z * z) / 120);
-      if (layout === 'neon-wetlands') return -.35 + Math.max(0, .7 * Math.sin(x * .22) * Math.cos(z * .25));
-      if (layout === 'dune-sea') return .75 * Math.sin(x * .16) + .55 * Math.cos(z * .19) + .25 * Math.sin((x + z) * .3);
-      return ripple + 1.1 * Math.exp(-(x * x + z * z) / 85);
-    };
-    const size=Math.max(40,Math.min(512,Number(built.mapSize)||40)),segments=Math.min(160,Math.max(80,Math.round(size)));
-    const geometry = new THREE.PlaneGeometry(size,size,segments,segments);
-    const positions = geometry.attributes.position;
-    for (let i = 0; i < positions.count; i += 1) positions.setZ(i, heightAt(positions.getX(i), -positions.getY(i)));
-    positions.needsUpdate = true; geometry.computeVertexNormals();
-    const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: Number(meta.color) || 0x315b32, roughness:.95, metalness:0 }));
+    const heightAt=(x,z)=>layoutHeight(layout,x,z);
+    const geometry=createLayoutTerrain(layout,built.mapSize,Number(meta.color)||0x315b32);
+    const terrain=new THREE.Mesh(geometry,createLayoutMaterial(layout,built.mapSize));
     terrain.name = `BUILDER_WALKABLE_FLOOR_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; terrain.userData.colliderShape = 'mesh';
     const root = new THREE.Group(); root.name = `PROCEDURAL_${environment.id}`; root.add(terrain); root.userData.proceduralLand = true; root.userData.layout = layout;root.userData.streetHeightAt=heightAt;
     // Recreate the complete template, not merely its terrain plane. Every mesh
@@ -53,19 +37,9 @@ export function createBuilderLand(environment) {
     else if(layout==='desert-outpost'){[[-12,-10],[11,-9],[-10,10],[12,9]].forEach(([x,z],i)=>add([6,2.8,5],x,z,i%2?0x8d7654:0x71624c));add([3,5,3],0,0,0x5a5549)}
     else if(layout==='mega-mall'){[-13,-6,6,13].forEach((x,i)=>add([5,3.2,8],x,10,i%2?0x54707a:0x79566d));add([9,.5,9],0,0,0x8ba8a1,.25)}
     else if(layout==='office-tower'){add([7,5,7],0,0,0x566a73);[-13,13].forEach(x=>add([5,3,10],x,4,0x40525a));add([18,.15,2],0,-10,0x83a0a7)}
-    else if(layout==='firing-range'){
-      const lanes=[-14,-7,0,7,14];
-      const targetPart=(size,x,z,color,y,lane,hitZone)=>{const mesh=add(size,x,z,color,y);mesh.name=`FIRING_RANGE_TARGET_${lane+1}_${hitZone.toUpperCase()}`;mesh.userData.rangeTarget=true;mesh.userData.rangeLane=lane;mesh.userData.hitZone=hitZone;mesh.userData.targetHomeY=mesh.position.y;return mesh;};
-      add([39,3.5,.5],0,-19,0x272d30,1.75);[-19,19].forEach(x=>add([.5,3.5,38],x,0,0x252b2e,1.75));
-      // A layered qualification course reads much more clearly from the player
-      // camera than the old row of boxes: overhead baffles frame each distance,
-      // circular scoring plates sit behind reactive silhouettes, and lit rails
-      // lead the eye from every protected booth to its target.
-      for(let z=-14;z<=10;z+=6)add([38,.28,1.1],0,z,0x171c1e,3.3);
-      lanes.forEach((x,index)=>{if(index<lanes.length-1)add([.18,2.35,15],x+3.5,5,0x343d40,1.175);add([4.6,.85,1.05],x,12.5,0x20282b,.425);targetPart([1.55,1.55,.08],x,-13.7,0xe5dec9,1.55,index,'outer');targetPart([1.05,1.05,.1],x,-13.62,0x20262a,1.55,index,'body');targetPart([.48,.48,.12],x,-13.54,index===2?0xff334f:0xe1bc43,1.55,index,'bullseye');targetPart([.85,1.25,.16],x,-15.45,index===2?0xff334f:0x202629,1.35,index,'body');targetPart([1.4,.28,.16],x,-15.45,index===2?0xff334f:0x202629,1.72,index,'body');add([.58,.72,.3],x,11.55,0x304438,1.2);add([.66,.42,.34],x,11.52,0x151b19,1.32);add([.58,.1,.5],x,11.25,0x22292d,1.34);add([.08,.08,27],x,-.7,index===2?0x52ecff:0x566468,3.18)});
-      [-8,-2,4].forEach((z,index)=>add([38,.04,.09],0,z,index===1?0xe4bd43:0x748084,.025));add([38,.12,.5],0,10.95,0xe2b84b,.06);add([18,3.3,4],0,16.4,0x20282b,1.65);add([5.5,2.8,2.6],15.7,16.2,0x273134,1.4);
-    }
+    else if(layout==='firing-range')addFiringRangeDressing(root,add,heightAt);
     else if(layout==='movie-studio'){[[-11,-10],[10,-10],[-11,10],[10,10]].forEach(([x,z],i)=>add([8,4,7],x,z,i%2?0x52475a:0x45535b));add([3,.3,16],0,0,0xb65b48,.15)}
+    finishLayoutArchitecture(root);
     root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));
     return root;
   }

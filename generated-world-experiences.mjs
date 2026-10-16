@@ -1,6 +1,6 @@
 import {furnishBuildings} from './public/js/building-furnishing.js';
 // Shared scene data uses the same models and interaction rules as authored maps.
-export const GENERATED_EXPERIENCE_VERSION=3;
+export const GENERATED_EXPERIENCE_VERSION=4;
 const themes={
  'studio-ridge':{name:'Creator courtyard',landmark:'recording-booth',guide:'forest-ranger',prop:'studio-desk',color:'#af8cff'},
  'volt-city':{name:'Neon makers plaza',landmark:'sci-fi-bunker',guide:'clockwork-knight',prop:'lever-switch',color:'#ffd45c'},
@@ -33,5 +33,6 @@ export function generatedExperience(environment){
  for(const [id,x,z,target]of [['garden-pad',8,14,'return-pad'],['return-pad',8,48,'garden-pad']])add(id,'teleport-pad',x,z,'interact',{functionalSettings:{behavior:'interact',action:'teleport',interactionDistance:3,cooldown:1,prompt:id==='garden-pad'?'Visit the discovery garden':'Return to the welcome plaza',portal:{enabled:true,destinationType:'object',targetObjectId:'public-experience-'+target}}});
  for(let i=0;i<6;i++)add('garden-path-'+i,'path-tile',8,20+i*4);
  add('garden-bed-a','flower-bed',3,46);add('garden-bed-b','flower-bed',25,46);
- return {objects,name:theme.name,description:`${theme.name} · lounge seating, a creator corner, a local guide, discovery items, health restoration, shared media, shopping, arcade games and linked garden pads.`};
+ const accent=parseInt(theme.color.slice(1),16),color=(((accent>>16&255)*.18+30)|0)<<16|(((accent>>8&255)*.18+48)|0)<<8|(((accent&255)*.18+32)|0);
+ return {objects,layoutMeta:{color,sky:0x17252d},name:theme.name,description:`${theme.name} · lounge seating, a creator corner, a local guide, discovery items, health restoration, shared media, shopping, arcade games and linked garden pads.`};
 }

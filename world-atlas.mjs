@@ -28,7 +28,7 @@ function upgradePublicPlazas(data){
   if(scene.publicExperienceVersion!==GENERATED_EXPERIENCE_VERSION){
    const experience=generatedExperience(cell.environment);
    scene.objects=scene.objects.filter(object=>!object.id.startsWith('public-experience-'));scene.objects.push(...experience.objects);
-   scene.publicExperienceVersion=GENERATED_EXPERIENCE_VERSION;scene.experienceName=experience.name;cell.environment.description=experience.description;
+   scene.layoutMeta={...scene.layoutMeta,...experience.layoutMeta};scene.publicExperienceVersion=GENERATED_EXPERIENCE_VERSION;scene.experienceName=experience.name;cell.environment.description=experience.description;
    changed=true;
   }
   if(changed){cell.environment.updatedAt=new Date().toISOString();cell.updatedAt=cell.environment.updatedAt;cell.environment.contentUpdatedAt=(cell.environment.contentUpdatedAt||'')+':experience-'+GENERATED_EXPERIENCE_VERSION;data.revision++;}
