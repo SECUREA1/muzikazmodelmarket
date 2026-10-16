@@ -2,7 +2,7 @@ import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory
 
 export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,onError}) {
  const api = new SharedGameInventory();
- let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0;
+ let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0, firePending=null;
  const waiters=new Set(),collected=new Set();
  function settle(error) {
   for (const waiter of waiters) { clearTimeout(waiter.timer); error ? waiter.reject(error) : waiter.resolve(client); }
@@ -38,20 +38,24 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   },
   async send(action,fields={},requestId=crypto.randomUUID()) {
    if (stopped) throw failure || Error('Room closed.');
-   const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,action,requestId});
+   if(action==='fire'&&firePending)return firePending;
+   const pending=post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,action,requestId});
+   if(action==='fire')firePending=pending;
+   let state;
+   try{state=await pending;}finally{if(firePending===pending)firePending=null;}
    if (stopped) return;
    const selfId=state?.selfId || client.selfId;
    if (!selfId || !state?.players?.[selfId]) throw Error('The server has not confirmed your player in this room.');
    client.selfId=selfId;
    if(state.result?.loot&&!collected.has(state.result.loot.id)){collected.add(state.result.loot.id);signalInventoryChange();onStatus?.(state.result.message);}
-   if (state.sequence>=sequence) { render(state,selfId); sequence=state.sequence; }
+   if (state.sequence>sequence) { render(state,selfId); sequence=state.sequence; }
    client.ready=true; settle(); return state;
   },
   async object(command) {
    if (!client.ready) throw Error('Waiting for the server. Placement preview has not been saved.');
    await post('/api/rooms/'+encodeURIComponent(roomId)+'/objects',command);
    const state=await api.api('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay');
-   if (!stopped && state.sequence>=sequence) { render(state,client.selfId); sequence=state.sequence; }
+   if (!stopped && state.sequence>sequence) { render(state,client.selfId); sequence=state.sequence; }
    return state;
   },
   stop() { close(Error('Room closed.')); }
@@ -68,7 +72,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    } else {
     const controls=document.hidden?{}:input();
     const state=await client.send('input',{input:controls});
-    if (!stopped && state?.players?.[client.selfId]?.health>0 && state?.match?.state!=='finished' && controls.firing) await client.send('fire',{tool:controls.tool,direction:controls.direction,color:controls.color});
+    const firingControls=document.hidden?{}:input();
+    if (!stopped && state?.players?.[client.selfId]?.health>0 && state?.match?.state!=='finished' && firingControls.firing&&!firePending) void client.send('fire',{tool:firingControls.tool,direction:firingControls.direction,color:firingControls.color}).catch(error=>{if(!stopped)onStatus?.(error.message);});
    }
   } catch (error) {
    if (stopped) return;

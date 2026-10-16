@@ -128,3 +128,20 @@ test('an expired room presence rejoins while ordinary conflicts do not',async()=
   return response(confirmed(joins+inputs));
  },async client=>{await client.whenReady();await pause(450);assert.equal(joins,2);assert.equal(client.ready,true);});
 });
+
+test('a delayed held shot does not block walking input or queue duplicate shots',async()=>{
+ let release,inputs=0,shots=0,sequence=0;
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='fire'){shots++;return new Promise(resolve=>{release=()=>resolve(response(confirmed(++sequence)));});}
+  if(command.action==='input')inputs++;
+  return response({...confirmed(++sequence),players:{'account:test':{health:100,position:{x:0,y:0,z:2}}}});
+ },async client=>{
+  await client.whenReady();
+  await pause(220);
+  assert.ok(inputs>=2,'movement polling continues while a shot is pending');
+  assert.equal(shots,1,'one held shot may be in flight');
+  release();await pause(5);
+ },{input:()=>({forward:1,firing:true,tool:'flamethrower',direction:[0,0,-1]})});
+});
