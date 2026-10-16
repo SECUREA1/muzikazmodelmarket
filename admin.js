@@ -1,6 +1,10 @@
 (() => {
   const tokenKey = 'muzikazAdminToken';
   const views = {
+    savedMatches:{title:'Tournaments & saved matches',columns:['worldId','state','match','campaign','players']},
+    members:{title:'All member accounts',columns:['accountId','username','primaryEthereumWallet','gameAccess','loadoutStatus','createdAt','updatedAt']},
+    land:{title:'All land deeds',columns:['id','worldId','ownerId','spaceId','name','createdAt']},
+    savedBuilds:{title:'All saved & published builds',columns:['id','name','ownerId','visibility','status','updatedAt']},
     mzkTransactions: { title: 'All MZK transactions', columns: ['id','type','walletId','counterpartyId','amountMzk','balanceAfterMzk','requestId','createdAt'] },
     items: { title: 'All item records', columns: ['itemId','name','itemType','source','ownerId','status','version','updatedAt'] },
     backpackItems: { title: 'All Backpack items', columns: ['walletId','backpackId','itemId','name','itemType','source','revealStatus','listed','priceMzk','acquiredAt','updatedAt'] },
@@ -219,6 +223,26 @@
     try { await accessRequest(`/api/admin/access-codes/${encodeURIComponent(id)}/revoke`, { method: 'POST' }); $('#access-code-status').textContent = 'Access pass revoked.'; await loadAccessCodes(); }
     catch (error) { $('#access-code-status').textContent = error.message || 'The pass could not be revoked.'; }
   });
+  let masterFile=null,masterBusy=false;
+  const masterStatus=message=>$('#master-status').textContent=message;
+  function masterControls(){for(const id of ['master-download','master-upload','master-confirm'])$('#'+id).disabled=masterBusy;$('#master-restore').disabled=masterBusy||!masterFile||!$('#master-confirm').checked;}
+  async function masterRequest(path,options={}){const response=await apiFetch(path,{...options,headers:authHeaders({'Accept':'application/json',...(options.body?{'Content-Type':'application/json'}:{}),...options.headers}),cache:'no-store'});if(!response.ok){let result;try{result=await response.json();}catch{}throw Error(result?.message||'Master state request failed.');}return response;}
+  $('#master-download').addEventListener('click',async()=>{
+    masterBusy=true;masterControls();masterStatus('Pausing writes and collecting a consistent server backup…');
+    try{const response=await masterRequest('/api/admin/master-state'),blob=await response.blob(),href=URL.createObjectURL(blob),link=document.createElement('a');link.href=href;link.download='muzikaz-master-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(href),30000);masterStatus('Master file downloaded. Store this private recovery file securely.');}catch(error){masterStatus(error.message);}finally{masterBusy=false;masterControls();}
+  });
+  $('#master-upload').addEventListener('change',async()=>{
+    masterFile=null;$('#master-confirm').checked=false;const file=$('#master-upload').files[0];if(!file){masterControls();return;}
+    masterBusy=true;masterControls();masterStatus('Validating the selected master file…');
+    try{if(file.size>384*1024*1024)throw Error('Master file exceeds the 384 MB upload limit.');const text=await file.text();JSON.parse(text);const result=await (await masterRequest('/api/admin/master-state/validate',{method:'POST',body:text})).json();masterFile=text;const data=result.data;$('#master-file-summary').textContent=`Backup ${data.createdAt||'date unknown'} · `+Object.entries(data.summary).map(([key,value])=>`${value} ${key.replace(/([A-Z])/g,' $1').toLowerCase()}`).join(' · ');masterStatus('File validated. Review the counts and confirm replacement to restore.');}catch(error){$('#master-file-summary').textContent='This file is not ready to restore.';masterStatus(error.message);}finally{masterBusy=false;masterControls();}
+  });
+  $('#master-confirm').addEventListener('change',masterControls);
+  $('#master-restore').addEventListener('click',async()=>{
+    if(!masterFile||!$('#master-confirm').checked||masterBusy)return;
+    masterBusy=true;masterControls();masterStatus('Restoring server memory. Keep this page open; gameplay will reconnect afterward…');
+    try{const result=await (await masterRequest('/api/admin/master-state/restore',{method:'POST',headers:{'x-master-restore':'replace-server-state'},body:masterFile})).json();masterStatus('Server restored. Automatic recovery copy: '+result.data.rollbackFile);masterFile=null;$('#master-upload').value='';$('#master-confirm').checked=false;await loadData();}catch(error){masterStatus(error.message+' Refresh server data before retrying.');}finally{masterBusy=false;masterControls();}
+  });
+  for(const [id,view]of [['show-member-list','members'],['show-land-list','land'],['show-build-list','savedBuilds']])$('#'+id).addEventListener('click',()=>{$('#search').value='';$('#view').value=view;renderTable();$('#view-title').scrollIntoView({behavior:'smooth',block:'center'});});
   $('#export').addEventListener('click', () => { const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' })); link.download = `muzikaz-admin-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(link.href); });
   $('#sign-out').addEventListener('click', async () => { try { await apiFetch('/api/admin/logout', { method: 'POST', headers: authHeaders({ Accept: 'application/json' }) }); } finally { returnToLogin(); } });
   (async () => {

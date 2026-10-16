@@ -1,3 +1,4 @@
+import {MasterServerState} from './master-server-state.mjs';
 import {synchronizeWorldDirectory} from './world-directory.mjs';
 import {LAND_VALUES} from './public/js/game-item-pricing.js';
 import {resolveAccountProof,recoverRoomSession} from './room-session.mjs';
@@ -152,13 +153,37 @@ const serverBackups = new ServerBackups(process.env.MUZIKAZ_BACKUP_DIR || join(d
   avatarUploads: uploadDir, assetUploads: assetUploadDir, environmentUploads: environmentUploadDir,
   modelUploads: process.env.UPLOAD_STORAGE_PATH || join(dataDir, 'uploads', 'models')
 });
+const masterRuntimeFile=join(dataDir,'server-runtime.json');
+const masterState=new MasterServerState({
+ data:{path:dataDir,type:'directory'},accounts:{path:loadoutCodeStore.file,type:'file'},users:{path:userDatabaseFile,type:'file'},payments:{path:paymentOrderStore.file,type:'file'},
+ accountSessions:{path:accountSessionsFile,type:'file'},gameSessions:{path:gameSessionsFile,type:'file'},
+ environments:{path:environmentDataFile,type:'file'},customMaps:{path:customMapsFile,type:'file'},atlas:{path:worldAtlas.file,type:'file'},rooms:{path:sharedRooms.file,type:'file'},runtime:{path:masterRuntimeFile,type:'file'},
+ avatarUploads:{path:uploadDir,type:'directory'},assetUploads:{path:assetUploadDir,type:'directory'},environmentUploads:{path:environmentUploadDir,type:'directory'},modelUploads:{path:process.env.UPLOAD_STORAGE_PATH||join(dataDir,'uploads','models'),type:'directory'}
+},{backupDirectory:serverBackups.directory});
+let masterMaintenance=false,activeServerRequests=0;
+const backgroundJobs=new Set();
+function backgroundJob(work){if(masterMaintenance)return;const task=Promise.resolve().then(work);backgroundJobs.add(task);task.catch(error=>console.error('[Server task]',error.message)).finally(()=>backgroundJobs.delete(task));}
+async function drainServerState(){
+ const deadline=Date.now()+30000;
+ while(activeServerRequests||backgroundJobs.size||authoritativeRooms.ticking||authoritativeRooms.telemetryPending.size){if(Date.now()>deadline)throw Object.assign(Error('Server is busy. Retry the master operation.'),{statusCode:409});await new Promise(resolve=>setTimeout(resolve,25));}
+ await Promise.all([userDatabase.queue,loadoutCodeStore.queue,paymentOrderStore.queue,accountSessionStore.queue,gameSessionStore.queue,ethereumAuth.queue,customMapWriteQueue,worldAtlas.queue,serverBackups.queue]);
+ await sharedRooms.flush();
+}
+async function exclusiveMasterState(work){
+ if(masterMaintenance)throw Object.assign(Error('A master state operation is already running.'),{statusCode:409});
+ masterMaintenance=true;
+ try{await drainServerState();return await work();}finally{masterMaintenance=false;}
+}
+async function saveMasterRuntime(){await mkdir(dataDir,{recursive:true});await writeFile(masterRuntimeFile,JSON.stringify({chatMessages,supportMessages}),{mode:0o600});}
+async function loadMasterRuntime(){let data;try{data=JSON.parse(await readFile(masterRuntimeFile,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;data={};}chatMessages.splice(0,chatMessages.length,...(Array.isArray(data.chatMessages)?data.chatMessages.slice(-100):[]));supportMessages.splice(0,supportMessages.length,...(Array.isArray(data.supportMessages)?data.supportMessages.slice(-500):[]));}
+function invalidateMasterCaches(){sharedRooms.data=null;sharedRooms.dirty=false;worldAtlas.data=null;authoritativeRooms.activeWorlds.clear();authoritativeRooms.manifestCache.clear();authoritativeRooms.collision.cache.clear();roomEnvironmentCache=null;presence.clear();voiceSignals.clear();for(const store of [accountSessionStore,gameSessionStore]){store.verifiedSecrets.clear();store.tokenIndex.clear();}for(const client of clients)client.end();clients.clear();}
 async function snapshotServer() {
   await Promise.all([sharedRooms.flush(), userDatabase.queue, loadoutCodeStore.queue, paymentOrderStore.queue, accountSessionStore.queue, gameSessionStore.queue, ethereumAuth.queue, customMapWriteQueue]);
   return serverBackups.snapshot();
 }
 const authoritativeRooms=new AuthoritativeRooms({store:sharedRooms,capacity:maxHouseUsers,resolveDestination:async id=>Boolean(await roomEnvironment(id)),collectCoin:(identity,requestId)=>userDatabase.grantMzkCoin(identity.walletId,requestId),collectLoot:(identity,itemId,requestId)=>userDatabase.grantRpgLoot(identity.walletId,itemId,requestId),reward:(identity,event,requestId)=>userDatabase.memberReward(identity.walletId,'progress',{scope:'field',event,requestId}),resolveAsset:async(identity,command)=>{const state=await userDatabase.get(identity.walletId),catalog=economyItem(command.sku);if(catalog&&ownsEconomyItem(state,catalog)&&catalog.kind==='asset')return catalog;const purchased=state.items.find(item=>item.id===command.itemId&&['mzk-store','verified-store'].includes(item.source)&&item.modelUrl);if(purchased)return {...purchased,behavior:'decor',targetHeight:['avatar','avatars'].includes(purchased.assetType||purchased.type)?1.8:undefined};const custom=state.items.find(item=>item.id===command.itemId&&item.type==='custom-item');if(custom)return {...custom,behavior:custom.configuration?.behavior||'decor'};const item=state.items.find(item=>item.id===command.itemId&&(item.modelUrl||item.buildAssetId));if(!item){const pack=await userDatabase.builderBackpack(identity.walletId),owned=pack.assets.find(asset=>asset.id===command.itemId);if(!owned)return null;const config=owned.function_data||{};if(!owned.glb_url&&!config.buildAssetId&&!config.modelId)return null;return {id:owned.id,name:owned.name,modelUrl:owned.glb_url||null,buildAssetId:config.buildAssetId||config.modelId||null,assetType:owned.asset_type||'props',behavior:config.behavior||'decor'};}const canonical=GAME_ECONOMY.find(asset=>asset.kind==='asset'&&(asset.modelUrl&&asset.modelUrl===item.modelUrl||asset.buildAssetId&&asset.buildAssetId===item.buildAssetId));return canonical&&ownsEconomyItem(state,canonical)?canonical:null;},charge:(identity,sku,requestId)=>userDatabase.economyAction(identity.walletId,'use',sku,'room:'+requestId),telemetry:(walletId,sample)=>userDatabase.recordRpgTelemetry(walletId,sample)});
-setInterval(()=>sharedRooms.flush().catch(error=>console.error('Room checkpoint failed',error)),1000).unref();
-setInterval(()=>authoritativeRooms.tickActive().catch(error=>console.error('Room simulation failed',error)),50).unref();
+setInterval(()=>backgroundJob(()=>sharedRooms.flush()),1000).unref();
+setInterval(()=>backgroundJob(()=>authoritativeRooms.tickActive()),50).unref();
 let roomEnvironmentCache=null,roomEnvironmentCachedAt=0;
 async function roomEnvironment(id){if(!roomEnvironmentCache||Date.now()-roomEnvironmentCachedAt>3000){roomEnvironmentCache=await combinedEnvironments();roomEnvironmentCachedAt=Date.now();}return roomEnvironmentCache.find(env=>env.id===id);}
 function liveRoomMetadata(map,rooms={}){const roomId=map.roomId||map.id;const members=new Set(activePresence().filter(user=>{if(user.roomId!==roomId)return false;const player=rooms[roomId]?.simulation?.players['account:'+user.accountId];return !player||Date.now()-player.lastSeen<15000;}).map(user=>user.accountId?'account:'+user.accountId:user.sessionId));for(const [id,player]of Object.entries(rooms[roomId]?.simulation?.players||{}))if(Date.now()-player.lastSeen<15000)members.add(id);const playerCount=members.size;return {...map,roomId,playerCount,live:playerCount>0,playUrl:map.playUrl||`model-explorer.html?environment=${encodeURIComponent(map.id)}&house=${encodeURIComponent(roomId)}&autoplay=1`};}
@@ -469,7 +494,7 @@ function corsHeaders(extra = {}, origin = '') {
   const development = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/.test(origin);
   const production = /^https:\/\/(?:www\.)?muzikaz\.com$/.test(origin) || origin === 'https://muzikazmodelmarket.onrender.com';
   const allowedOrigin = origin && (configured.includes(origin) || development || production) ? origin : '';
-  return { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin, 'Access-Control-Allow-Credentials': 'true' } : {}), Vary: 'Origin', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-CSRF-Token,X-Game-Session,X-Idempotency-Key,X-Wallet-Address,X-MUZIKAZ-Session,X-User-Id,X-User-Role,X-User-Name,X-Admin-Token,X-MUZIKAZ-Land-Asset', 'Cross-Origin-Resource-Policy': 'cross-origin', 'Cache-Control': 'no-store', ...extra };
+  return { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin, 'Access-Control-Allow-Credentials': 'true' } : {}), Vary: 'Origin', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-CSRF-Token,X-Game-Session,X-Idempotency-Key,X-Wallet-Address,X-MUZIKAZ-Session,X-User-Id,X-User-Role,X-User-Name,X-Admin-Token,X-MUZIKAZ-Land-Asset,X-Master-Restore', 'Cross-Origin-Resource-Policy': 'cross-origin', 'Cache-Control': 'no-store', ...extra };
 }
 function originAllowed(origin) { return !origin || Boolean(corsHeaders({}, origin)['Access-Control-Allow-Origin']); }
 function sendJson(res, status, data) {
@@ -501,7 +526,28 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (url.pathname.startsWith('/api/') && !originAllowed(res.muzikazRequestOrigin)) return sendJson(res, 403, { success: false, code: 'CORS_ORIGIN_DENIED', message: 'This origin is not allowed to call the MUZIKAZ API.', stage: 'cors' });
   if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders({ 'X-Request-ID': res.muzikazRequestId }, res.muzikazRequestOrigin)); res.end(); return; }
+  const isMasterRoute=url.pathname.startsWith('/api/admin/master-state');
+  if(masterMaintenance&&!isMasterRoute)return sendJson(res,503,{success:false,code:'MASTER_STATE_MAINTENANCE',message:'Server state is being backed up or restored. Reconnect shortly.'});
+  if(!isMasterRoute)activeServerRequests++;
   try {
+    if(isMasterRoute){
+      if(!requireAdmin(req,res))return;
+      res.setHeader('Cache-Control','no-store');
+      if(url.pathname==='/api/admin/master-state'&&req.method==='GET'){
+        const bundle=await exclusiveMasterState(async()=>{await ensureStorage();await userDatabase.initialize();await saveMasterRuntime();return masterState.capture({serviceVersion,commit:deploymentCommit});});
+        const bytes=Buffer.from(JSON.stringify(bundle,null,2));
+        res.writeHead(200,corsHeaders({'Content-Type':'application/json','Content-Disposition':`attachment; filename="muzikaz-master-${bundle.createdAt.replace(/[:.]/g,'-')}.json"`,'Cache-Control':'no-store'},res.muzikazRequestOrigin));return res.end(bytes);
+      }
+      if(req.method==='POST'&&['/api/admin/master-state/validate','/api/admin/master-state/restore'].includes(url.pathname)){
+        if(!String(req.headers['content-type']||'').startsWith('application/json'))return sendJson(res,415,{success:false,message:'Upload a JSON master state file.'});
+        const bundle=await readJsonInput(req,384*1024*1024),checked=masterState.validate(bundle);
+        if(url.pathname.endsWith('/validate'))return sendJson(res,200,assetResponse({summary:checked.inventory.summary,createdAt:bundle.createdAt,bytes:checked.bytes,limitations:bundle.limitations}));
+        if(req.headers['x-master-restore']!=='replace-server-state')return sendJson(res,400,{success:false,message:'Confirm replacing server state before restoring.'});
+        const result=await exclusiveMasterState(async()=>{await saveMasterRuntime();const restored=await masterState.restore(bundle);invalidateMasterCaches();await loadMasterRuntime();return restored;});
+        broadcast('world-atlas-updated',{restored:true});return sendJson(res,200,assetResponse(result));
+      }
+      return sendJson(res,404,{success:false,message:'Master state operation not found.'});
+    }
     if (url.pathname === '/api/admin/backups' && ['GET','POST'].includes(req.method)) {
       if (!requireAdmin(req,res)) return;
       return sendJson(res,200,assetResponse(req.method === 'POST' ? await snapshotServer() : { snapshots:await serverBackups.list(), lastError:serverBackups.lastError }));
@@ -656,6 +702,10 @@ const server = createServer(async (req, res) => {
       const mzkTransactions = (usersData.transactions || []).slice();
       const backpackItems = users.flatMap(({ walletKey, record }) => (record.items || []).map((item) => ({ walletId: record.walletId || walletKey, itemId: item.id, name: item.name || item.title || item.id, record: item })));
       const items = [...backpackItems, ...submissions.map((item) => ({ itemId: item.id, name: item.title, record: item }))];
+      const memberAccounts=(await loadoutCodeStore.records()).accounts.map(({accountId,username,primaryEthereumWallet,gameAccess,loadoutStatus,createdAt,updatedAt})=>({accountId,username,primaryEthereumWallet,gameAccess,loadoutStatus,createdAt,updatedAt}));
+      const savedBuilds=await readCustomMaps();
+      const savedMatches=Object.entries(await sharedRooms.read()).filter(([,room])=>room.simulation?.match||room.simulation?.radTox).map(([worldId,room])=>({worldId,state:room.simulation.match?.state||'campaign',match:room.simulation.match,campaign:room.simulation.radTox,players:room.simulation.players}));
+      const land=Object.values(usersData.landDeeds||{});
       const spaces = Object.values(usersData.landDeeds || {}).map((deed) => ({ spaceId: deed.id, worldId: deed.worldId, ownerId: deed.ownerId, record: deed }));
       const paidSales = sales.filter((order) => ['PAID', 'FULFILLED'].includes(order.paymentStatus));
       return sendJson(res, 200, assetResponse({
@@ -670,7 +720,7 @@ const server = createServer(async (req, res) => {
           avatars: avatars.length,
           gameplaySpentMzk: gameplay.wallets.reduce((total, row) => total + row.spentMzk, 0)
         },
-        mzkTransactions, items, backpackItems, spaces, submissions, users, sales, models, customizations: [], derivatives: [], environments, avatars, avatarProfiles, gameplaySpending: gameplay.transactions
+        members:memberAccounts,land,savedBuilds,savedMatches,mzkTransactions, items, backpackItems, spaces, submissions, users, sales, models, customizations: [], derivatives: [], environments, avatars, avatarProfiles, gameplaySpending: gameplay.transactions
       }));
     }
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.create(await bodyJson(req)))); }
@@ -956,7 +1006,7 @@ const server = createServer(async (req, res) => {
     const cacheControl = extension === '.glb' || extension === '.usdz' ? 'public, max-age=31536000, immutable' : extension === '.json' ? 'no-cache' : 'public, max-age=3600';
     res.writeHead(200, corsHeaders({ 'Content-Type': mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }));
     createReadStream(filePath).pipe(res);
-  } catch (error) { if (!res.headersSent) sendJson(res, error.statusCode || (url.pathname.startsWith('/api/') ? 500 : 404), { success: false, code: error.code || (url.pathname.startsWith('/api/') ? 'API_REQUEST_FAILED' : 'NOT_FOUND'), message: error.message || 'Not found', stage: error.stage || (error.statusCode === 409 ? 'account-state' : 'request') }); }
+  } catch (error) { if (!res.headersSent) sendJson(res, error.statusCode || (url.pathname.startsWith('/api/') ? 500 : 404), { success: false, code: error.code || (url.pathname.startsWith('/api/') ? 'API_REQUEST_FAILED' : 'NOT_FOUND'), message: error.message || 'Not found', stage: error.stage || (error.statusCode === 409 ? 'account-state' : 'request') }); } finally {if(!isMasterRoute)activeServerRequests--;}
 });
 
 server.on('upgrade', (req, socket) => {
@@ -969,13 +1019,14 @@ server.on('upgrade', (req, socket) => {
   socket.supportName = cleanText(url.searchParams.get('name'), 'Guest');
   socket.write(['HTTP/1.1 101 Switching Protocols', 'Upgrade: websocket', 'Connection: Upgrade', `Sec-WebSocket-Accept: ${createHash('sha1').update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64')}`, '\r\n'].join('\r\n'));
   supportSockets.add(socket); supportHistory(socket);
-  socket.on('data', (chunk) => consumeWebsocketFrames(socket, chunk));
+  socket.on('data', (chunk) => {if(!masterMaintenance)consumeWebsocketFrames(socket, chunk);});
   socket.on('close', () => supportSockets.delete(socket)); socket.on('error', () => supportSockets.delete(socket));
 });
 await loadoutCodeStore.migrate();
-const storeDeliveryTimer=setInterval(()=>reconcileStorePayments().catch(error=>console.error('[Store delivery]',error.message)),30000);storeDeliveryTimer.unref();
-const backupTimer = setInterval(() => snapshotServer().catch(error=>console.error('[Backups]', error.message)), 6 * 60 * 60 * 1000); backupTimer.unref();
-snapshotServer().catch(error=>console.error('[Backups]', error.message));
+await loadMasterRuntime();
+const storeDeliveryTimer=setInterval(()=>backgroundJob(()=>reconcileStorePayments()),30000);storeDeliveryTimer.unref();
+const backupTimer = setInterval(() => backgroundJob(()=>snapshotServer()), 6 * 60 * 60 * 1000); backupTimer.unref();
+backgroundJob(()=>snapshotServer());
 server.listen(port, () => console.log(`MUZIKAZ shared house server running on http://localhost:${port}`));
 
 
