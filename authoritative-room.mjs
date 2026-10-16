@@ -25,13 +25,16 @@ const copy=value=>JSON.parse(JSON.stringify(value));
 const fail=(message,statusCode=400,code)=>{throw Object.assign(new Error(message),{statusCode,code});};
 const damageByTool={laser:20,bat:25,taser:8,toxin:12,dynamite:60,flamethrower:15,'pulse-rifle':18,shotgun:35,marksman:45};
 export class AuthoritativeRooms {
- constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},collectCoin=async()=>{throw new Error("Coin storage unavailable.");},resolveDestination=null,capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,collectLoot,collectCoin,resolveDestination,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();}
+ constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},collectCoin=async()=>{throw new Error("Coin storage unavailable.");},resolveDestination=null,capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,collectLoot,collectCoin,resolveDestination,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();this.tickRetryAt=new Map();}
  async tickActive(){
   if(this.ticking)return;this.ticking=true;
-  try{for(const [id,environment]of this.activeWorlds)await this.store.update(id,room=>{
-   if(!Object.values(room.simulation?.players||{}).some(player=>!player.replacedByRoom&&this.now()-player.lastSeen<15000)){this.activeWorlds.delete(id);return;}
-   this.step(room,environment);
-  },{persist:false});}finally{this.ticking=false;}
+  try{const ids=[...this.activeWorlds.keys()].filter(id=>this.now()>=(this.tickRetryAt.get(id)||0));if(!ids.length)return;
+   const results=await this.store.updateMany(ids,(room,id)=>{const environment=this.activeWorlds.get(id);if(!environment)return;
+    if(!Object.values(room.simulation?.players||{}).some(player=>!player.replacedByRoom&&this.now()-player.lastSeen<15000)){this.activeWorlds.delete(id);this.tickRetryAt.delete(id);return;}
+    this.step(room,environment);
+   },{persist:false});
+   for(const {id,error}of results)if(error){this.tickRetryAt.set(id,this.now()+1000);console.error('[Room simulation]',id,error.message);}else this.tickRetryAt.delete(id);
+  }finally{this.ticking=false;}
  }
  prepareEncounter(sim,environment){
   if(!sim.radTox)return;
@@ -111,7 +114,7 @@ export class AuthoritativeRooms {
   sim.sequence++;return {sim,manifest};
  }
  view(room){const sim=room.simulation,now=this.now();return {authoritative:true,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,devices:projectArcadeDevices(sim.devices||{}),players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
- snapshot(id,environment){return this.store.update(id,room=>{this.step(room,environment);return this.view(room);},{persist:false});}
+ snapshot(id,environment){return this.store.update(id,room=>{this.step(room,environment);return this.view(room);},{persist:false,roomOnly:true});}
  command(id,environment,identity,command){this.activeWorlds.set(id,environment);return this.store.update(id,async (room,allRooms)=>{
   const {sim,manifest}=this.step(room,environment),now=this.now(),actorId='account:'+identity.accountId;
   const requestId=String(command.requestId||'');if(!/^[\w-]{1,100}$/.test(requestId))fail('A command request ID is required.');
@@ -266,7 +269,7 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
   if(command.action!=='input'){sim.events.push({id:requestId,actorId,action:command.action,...result,at:now});sim.events=sim.events.slice(-100);}
   sim.receipts[receiptKey]={action:command.action,result};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
   return {...this.view(room),selfId:actorId,result};
- },{persist:command.action!=='input'});}
+ },{persist:command.action!=='input',roomOnly:command.action==='input'});}
  async collectNearbyLoot(sim,player,identity,roomId,now,entityId,result){
   if(player.health<=0||sim.match?.state==='finished')return;
   if(!entityId&&now<(player.lootRetryAt||0))return;

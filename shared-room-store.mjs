@@ -6,12 +6,16 @@ export class SharedRoomStore {
  constructor(file){this.file=file;this.queue=Promise.resolve();this.data=null;this.dirty=false;}
  async read(){if(!this.data){try{this.data=JSON.parse(await readFile(this.file,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;this.data={};}}return structuredClone(this.data);}
  async save(data){await mkdir(dirname(this.file),{recursive:true});const temporary=this.file+'.'+randomUUID()+'.tmp';await writeFile(temporary,JSON.stringify(data));await rename(temporary,this.file);this.data=structuredClone(data);this.dirty=false;}
- update(id,change,{persist=true}={}){
-  const operation=this.queue.then(async()=>{const data=await this.read(),room=data[id]||{revision:0,objects:{}};const result=await change(room,data);data[id]=room;if(persist)await this.save(data);else{this.data=structuredClone(data);this.dirty=true;}return result;});
+ update(id,change,{persist=true,roomOnly=false}={}){
+  const operation=this.queue.then(async()=>{if(!this.data)await this.read();const data=roomOnly?{...this.data}:await this.read(),room=roomOnly?structuredClone(data[id]||{revision:0,objects:{}}):data[id]||{revision:0,objects:{}};const result=await change(room,roomOnly?undefined:data);data[id]=room;if(persist)await this.save(data);else{this.data=roomOnly?data:structuredClone(data);this.dirty=true;}return roomOnly?structuredClone(result):result;});
+  this.queue=operation.catch(()=>{});return operation;
+ }
+ updateMany(ids,change,{persist=false}={}){
+  const operation=this.queue.then(async()=>{const data=await this.read(),results=[];for(const id of new Set(ids)){const room=structuredClone(data[id]||{revision:0,objects:{}});try{const result=await change(room,id);data[id]=room;results.push({id,result});}catch(error){results.push({id,error});}}if(persist)await this.save(data);else{this.data=structuredClone(data);this.dirty=true;}return results;});
   this.queue=operation.catch(()=>{});return operation;
  }
  flush(){const operation=this.queue.then(async()=>{if(this.dirty)await this.save(this.data);});this.queue=operation.catch(()=>{});return operation;}
- async get(id){const data=await this.read();return data[id]||{revision:0,objects:{}};}
+ async get(id){if(!this.data)await this.read();return structuredClone(this.data[id]||{revision:0,objects:{}});}
  mutate(id,actor,command,validate=()=>{}){return this.update(id,async room=>{
   const key=String(command.id||'');if(!/^[\w-]{1,100}$/.test(key))fail('Invalid object id.',400);
   const prior=room.objects[key];if(command.revision!==(prior?.revision||0))fail('Object changed. Refresh and try again.',409);
