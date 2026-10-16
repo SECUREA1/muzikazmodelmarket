@@ -59,7 +59,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    if (!stopped && state.sequence>sequence) { render(state,client.selfId); sequence=state.sequence; }
    return state;
   },
-  requestInput() { if(!client.ready||stopped)return; if(busy){inputRequested=true;return;}void tick(); },
+  // Intermediate drags are read by the 50ms heartbeat; edges flush immediately.
+  requestInput(immediate=true) { if(!immediate||!client.ready||stopped)return; if(busy){inputRequested=true;return;}void tick(); },
   stop() { close(Error('Room closed.')); }
  };
  function handleError(error) {

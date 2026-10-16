@@ -52,6 +52,24 @@ export function projectServerActor(root,actor) {
  state.serverPaint=actor.paint;state.serverSwitched=actor.switched;state.serverCollisionDisabled=!root.visible||!!actor.open;
 }
 
+// Remote players render from a short buffer instead of chasing each packet.
+export function targetServerPlayer(root,peer,now=performance.now()) {
+ const state=root.userData;
+ state.serverPlayerMotion ||= new ServerMotion();
+ state.serverPlayerMotion.push(peer.position,now);
+ state.serverYaw=peer.yaw||0;
+ // First snapshots, teleports and long gaps discard the old interpolation path.
+ if(state.serverPlayerMotion.snapshots.length===1){
+  root.position.copy(peer.position);root.rotation.y=state.serverYaw;
+ }
+}
+export function interpolateServerPlayer(root,delta,now=performance.now()) {
+ const state=root.userData;if(!state.serverPlayerMotion)return;
+ state.serverPlayerMotion.sample(now,root.position);
+ const alpha=1-Math.exp(-18*Math.max(0,delta));
+ root.rotation.y+=Math.atan2(Math.sin(state.serverYaw-root.rotation.y),Math.cos(state.serverYaw-root.rotation.y))*alpha;
+}
+
 // Enemy positions remain server-owned; interpolation only smooths presentation.
 export function targetServerEnemy(root,actor,height=0,now=performance.now()) {
  const state=root.userData;
