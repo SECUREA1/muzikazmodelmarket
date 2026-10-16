@@ -1,3 +1,4 @@
+import {BUILDER_SECTIONS} from '../public/js/builder-library.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -163,7 +164,7 @@ test('environment builder supports custom role-play actors and interactions', as
   for (const control of ['open-item-maker', 'item-maker', 'custom-item-name', 'custom-item-type', 'custom-item-color', 'custom-item-behavior', 'object-color', 'object-behavior']) {
     assert.match(html, new RegExp(`id="${control}"`));
   }
-  for (const category of ['avatar', 'enemy', 'interactive']) assert.match(html, new RegExp(`data-library-filter="${category}"`));
+  for (const category of ['characters', 'creatures', 'interactive']) assert.ok(BUILDER_SECTIONS.some(([id])=>id===category));
   for (const behavior of ['talk', 'quest', 'hostile', 'patrol', 'pickup', 'door', 'heal']) assert.match(html, new RegExp(`value="${behavior}"`));
   assert.match(script, /muzikaz\.environmentBuilder\.customItems\.v1/);
   assert.match(script, /data-delete-group/);
@@ -428,7 +429,7 @@ test('expanded asset library covers deployable worlds, weapons, ghosts, slime an
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/js/builder-models-3d.js', import.meta.url), 'utf8')
   ]);
-  for (const category of ['terrain','plants','buildings','props','weapons','characters','creatures','interactive']) assert.match(html, new RegExp(`data-library-filter="${category}"`));
+  for (const category of ['terrain','plants','buildings','props','weapons','characters','creatures','interactive']) assert.ok(BUILDER_SECTIONS.some(([id])=>id===category));
   for (const asset of ['terrain-cliff','ancient-oak','timber-cabin','supply-crate','plasma-sword','spectral-ghost','emerald-slime','teleport-pad']) {
     assert.match(script, new RegExp(asset), `${asset} is selectable`);
     assert.match(models, new RegExp(asset), `${asset} has complete procedural geometry`);
