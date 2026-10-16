@@ -72,3 +72,30 @@ test('district portals enter the exact deed room and persist the member position
  const rejoined=await send(plot,'join');assert.deepEqual(rejoined.players['account:alice'].position,position);
  const restarted=new SharedRoomStore(store.file);assert.deepEqual((await restarted.get(plot.id)).simulation.players['account:alice'].position,position);
 });
+
+test('every district alias opens a populated room and a newly published map has a round trip portal route',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'district-open-all-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const atlas=new WorldAtlas(join(dir,'atlas.json')),runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json'))});
+ const {EnvironmentRegistry}=await import('../public/js/environments/environment-registry.js');
+ const {normalizeEnvironmentList}=await import('../public/js/environments/environment-registry.js');
+ let result=await synchronizeWorldDirectory(atlas,[]);
+ const registry=new EnvironmentRegistry();registry.environments=normalizeEnvironmentList(result.environments);
+ for(const region of WORLD_DISTRICTS){
+  const district=registry.find(region.id);assert.ok(district);assert.equal(registry.find('space-'+region.id).id,district.id);assert.equal(registry.find('district-'+region.id).id,district.id);
+  assert.equal(new URL(district.playUrl,'https://world.example/').searchParams.get('environment'),district.id);
+  assert.ok(district.builderScene.objects.some(object=>object.modelId==='lamp-post'));
+  assert.ok(district.builderScene.objects.some(object=>object.modelId==='market-stall'));
+  const room=await runtime.snapshot(district.id,district);
+  assert.ok(Object.values(room.actors).some(actor=>actor.worldGateway?.destination==='public-commons'));
+  for(const target of district.portalTargets)assert.ok(result.environments.some(map=>map.id===target),'all district portals target a hosted world');
+ }
+ const map={id:'new-builder-game',name:'New builder game',source:'custom-builder',visibility:'public',builderScene:{layout:'grand-floor',mapSize:40,objects:[]}};
+ result=await synchronizeWorldDirectory(atlas,[map]);const byId=new Map(result.environments.map(map=>[map.id,map]));
+ const visited=new Set(),queue=['public-commons'];while(queue.length){const id=queue.shift();if(visited.has(id))continue;visited.add(id);const place=byId.get(id);assert.ok(place);queue.push(...place.portalTargets);}
+ assert.equal(visited.size,byId.size,'Commons routes reach every listed world');
+ const published=byId.get(map.id),district=byId.get(published.districtId);
+ assert.ok(district.builderScene.objects.some(object=>object.functionalSettings.portal?.targetMapId===map.id));
+ assert.ok(published.travelPortals.some(portal=>portal.mapId===district.id));assert.ok(published.travelPortals.some(portal=>portal.mapId==='public-commons'));
+ const districtIds=district.builderScene.objects.map(object=>object.id),revision=result.atlas.revision;
+ result=await synchronizeWorldDirectory(atlas,[map]);assert.deepEqual(result.environments.find(place=>place.id===district.id).builderScene.objects.map(object=>object.id),districtIds,'refresh never duplicates plaza objects or portals');assert.equal(result.atlas.revision,revision);
+});

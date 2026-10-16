@@ -8,6 +8,18 @@ const hash=value=>createHash('sha256').update(String(value)).digest().readUInt32
 const fail=(message,statusCode=400)=>{throw Object.assign(new Error(message),{statusCode});};
 export function generatedStreet(mapId,index,from,to,width=5){return {id:'street-'+index,name:names[(hash(mapId)+index)%names.length]+' '+(Math.abs(to.x-from.x)>=Math.abs(to.z-from.z)?'Road':'Avenue')+(index>=names.length?' '+(Math.floor(index/names.length)+1):''),from,to,width};}
 export function defaultStreets(id,size){const edge=size/2-2;return [-size/4,0,size/4].flatMap((offset,index)=>[generatedStreet(id,index*2,{x:-edge,z:offset},{x:edge,z:offset}),generatedStreet(id,index*2+1,{x:offset,z:-edge},{x:offset,z:edge})]);}
+function publicPlazaObjects(){
+ const specs=[['pond',-18,-18],['market-stall',18,-18],['market-stall',24,-18],['flower-bed',-24,18],['flower-bed',24,18],...[-24,24].flatMap(x=>[-24,24].map(z=>['lamp-post',x,z]))];
+ return specs.map(([modelId,x,z],index)=>({id:'public-plaza-'+index,modelId,position:{x,y:0,z},scale:{x:1,y:1,z:1},functionalSettings:{behavior:'decor'}}));
+}
+function upgradePublicPlazas(data){
+ for(const cell of Object.values(data.cells)){
+  if(!cell.generated||!cell.environment?.builderScene||cell.environment.builderScene.publicPlazaVersion===1)continue;
+  const scene=cell.environment.builderScene;scene.objects.push(...publicPlazaObjects());scene.publicPlazaVersion=1;
+  cell.environment.updatedAt=new Date().toISOString();cell.updatedAt=cell.environment.updatedAt;
+  cell.environment.contentUpdatedAt=(cell.environment.contentUpdatedAt||'')+':plaza-v1';data.revision++;
+ }
+}
 export function landscapedEnvironment(id,name,ownerName='MUZIKAZ community'){
  const objects=[];
  for(let i=0;i<24;i++){const x=[-110,-86,-38,38,86,110][i%6],z=[-108,-88,88,108][Math.floor(i/6)];objects.push({id:'landscape-tree-'+i,modelId:i%2?'pine-tree':'canopy-tree',position:{x,y:0,z},scale:{x:1,y:1,z:1},functionalSettings:{behavior:'decor'}});}
@@ -63,6 +75,7 @@ function buildDistrictDirectory(atlas,data){
  // offering direct shortcuts in the Commons. No destination is silently capped.
  commons.portalTargets=[...districts.map(cell=>cell.mapId),...(locations.length<=16?locations.map(cell=>cell.mapId):[])];
  for(const cell of locations)if(cell.generated)cell.portalTargets=['public-commons',cell.districtId];
+ upgradePublicPlazas(data);
  connectAtlasDestinations(data);
 }
 export class WorldAtlas {

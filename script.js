@@ -600,8 +600,8 @@ function initWorldAtlas() {
       assetLogo.src = asset.logo;
       assetLogo.alt = `${asset.name} logo`;
       assetType.textContent = `${asset.kind} · ${ownerWorldNames().has(asset.name) ? 'Owned' : `${asset.price} · For sale`}`;
-      assetAction.href = ownerWorldNames().has(asset.name) && asset.environmentId ? `index.html?environment=${asset.environmentId}#house-explorer` : `model-market.html?world=${asset.id}#marketplace-preview`;
-      assetAction.textContent = ownerWorldNames().has(asset.name) && asset.environmentId ? 'Enter owned environment' : ownerWorldNames().has(asset.name) ? 'View owned asset' : 'View in market';
+      assetAction.href = `model-explorer.html?environment=world-district-${encodeURIComponent(asset.id)}&house=world-district-${encodeURIComponent(asset.id)}&autoplay=1&mode=multiplayer`;
+      assetAction.textContent = 'Explore public district';
     } else if (assetLogo) {
       assetLogo.removeAttribute('src');
       assetLogo.alt = '';
@@ -701,8 +701,10 @@ function initWorldAtlas() {
     atlas.classList.remove('is-entering');
     void atlas.offsetWidth;
     atlas.classList.add('is-entering');
-    status.textContent = `Welcome to ${position.place}! Spawn confirmed at X ${position.x}, Y ${position.y}. Start exploring or build from here.`;
-    window.setTimeout(() => atlas.classList.remove('is-entering'), 900);
+    const selected = WORLD_ASSETS.find(asset => asset.name === position.place);
+    const destination = selected ? 'world-district-' + selected.id : 'public-commons';
+    status.textContent = `Opening ${selected?.name || 'Public Commons'}…`;
+    window.location.assign(`model-explorer.html?environment=${encodeURIComponent(destination)}&house=${encodeURIComponent(destination)}&autoplay=1&mode=multiplayer`);
   });
   const requestedWorld = new URLSearchParams(window.location.search).get('world');
   const requestedAsset = WORLD_ASSETS.find((asset) => asset.id === requestedWorld);
@@ -710,6 +712,8 @@ function initWorldAtlas() {
   render(position, false);
   if (savedClaim) render({ ...savedClaim, detail: `Owned land tied to ${owner}'s Backpack and member profile.` }, false);
   renderClaim();
+  const liveDirectory=document.createElement('section');liveDirectory.setAttribute('aria-label','All live worlds and builder maps');atlas.after(liveDirectory);
+  import('./public/js/world-atlas.js').then(({mountWorldAtlas})=>mountWorldAtlas(liveDirectory)).catch(()=>{const link=document.createElement('a');link.href='members.html#world-atlas';link.textContent='Open the live world directory';liveDirectory.append(link);});
 }
 
 initWorldAtlas();
