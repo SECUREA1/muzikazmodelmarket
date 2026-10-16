@@ -258,3 +258,5 @@
 @media(max-width:760px){.library-browser-toolbar{border-bottom:1px solid #3b5f44}.library-category-menu .library-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.builder-touch-tools .repeat-placement{flex:1 1 100%}.library-grid .library-item{touch-action:pan-y}.object-library[data-library-view=slider] .library-item{touch-action:pan-x}}
 
 .reset-build-view{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:5;min-height:44px;max-width:calc(100% - 24px);padding:10px 16px;border:1px solid var(--cyan);border-radius:24px;background:#0b201eee;color:#fff;font-size:11px;font-weight:800;cursor:pointer;touch-action:manipulation;white-space:nowrap}.reset-build-view:focus-visible{outline:3px solid var(--acid);outline-offset:3px}
+
+.repository-map-preview{position:absolute;inset:0;z-index:4;background:#07100b;padding-top:64px}.repository-map-preview[hidden]{display:none}.repository-map-preview iframe{display:block;width:100%;height:100%;border:0}.reset-build-view{z-index:6}
