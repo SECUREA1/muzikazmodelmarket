@@ -1,3 +1,4 @@
+import {generatedExperience,GENERATED_EXPERIENCE_VERSION} from './generated-world-experiences.mjs';
 import {WORLD_DISTRICTS,DISTRICT_PAGE_SIZE,districtMapId,districtFor} from './world-districts.mjs';
 import {mkdir,readFile,writeFile,rename} from 'node:fs/promises';
 import {dirname} from 'node:path';
@@ -21,10 +22,16 @@ function publicPlazaObjects(){
 }
 function upgradePublicPlazas(data){
  for(const cell of Object.values(data.cells)){
-  if(!cell.generated||!cell.environment?.builderScene||cell.environment.builderScene.publicPlazaVersion===1)continue;
-  const scene=cell.environment.builderScene;scene.objects.push(...publicPlazaObjects());scene.publicPlazaVersion=1;
-  cell.environment.updatedAt=new Date().toISOString();cell.updatedAt=cell.environment.updatedAt;
-  cell.environment.contentUpdatedAt=(cell.environment.contentUpdatedAt||'')+':plaza-v1';data.revision++;
+  if(!cell.generated||!cell.environment?.builderScene)continue;
+  const scene=cell.environment.builderScene;let changed=false;
+  if(scene.publicPlazaVersion!==1){scene.objects.push(...publicPlazaObjects());scene.publicPlazaVersion=1;changed=true;}
+  if(scene.publicExperienceVersion!==GENERATED_EXPERIENCE_VERSION){
+   const experience=generatedExperience(cell.environment);
+   scene.objects=scene.objects.filter(object=>!object.id.startsWith('public-experience-'));scene.objects.push(...experience.objects);
+   scene.publicExperienceVersion=GENERATED_EXPERIENCE_VERSION;scene.experienceName=experience.name;cell.environment.description=experience.description;
+   changed=true;
+  }
+  if(changed){cell.environment.updatedAt=new Date().toISOString();cell.updatedAt=cell.environment.updatedAt;cell.environment.contentUpdatedAt=(cell.environment.contentUpdatedAt||'')+':experience-'+GENERATED_EXPERIENCE_VERSION;data.revision++;}
  }
 }
 export function landscapedEnvironment(id,name,ownerName='MUZIKAZ community'){

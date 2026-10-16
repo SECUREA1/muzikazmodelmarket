@@ -10,6 +10,6 @@
 .world-atlas [data-atlas-preview]{display:flex;gap:16px;align-items:center;padding:16px;margin-top:12px;border:1px solid #568376;border-radius:12px;background:#132e31}
 .world-atlas [data-atlas-preview] .atlas-building-preview{width:120px;height:100px}
 .world-atlas [data-atlas-preview] h3{margin:0 0 6px}.world-atlas [data-atlas-preview] p{color:#b7d9d0;font-size:13px;line-height:1.5}.world-atlas [data-atlas-preview] .btn{display:inline-flex;text-decoration:none}
-.world-atlas [data-atlas-route]{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.world-atlas [data-atlas-route] button+button::before{content:'→ ';color:#8df8ff}
+.world-atlas [data-atlas-route]{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.world-atlas [data-atlas-route] a+a::before{content:'→ ';color:#8df8ff}
 .world-atlas .atlas-portal-route{pointer-events:none}
 @media(max-width:600px){.world-atlas [data-atlas-preview]{align-items:flex-start;padding:12px;gap:10px}.world-atlas [data-atlas-preview] .atlas-building-preview{width:80px;height:70px}.world-atlas [data-atlas-preview] .btn{width:100%;justify-content:center}}

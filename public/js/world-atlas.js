@@ -17,7 +17,7 @@ export function mountWorldAtlas(root,{onTravel}={}){
  function renderPortalDetails(place){
   const route=root.querySelector('[data-atlas-route]');route.replaceChildren();
   const byId=new Map(state.locations.map(item=>[item.mapId,item]));
-  for(const id of atlasPortalRoute(place)){const target=byId.get(id);if(!target)continue;const button=document.createElement('button');button.type='button';button.textContent=target.name;button.setAttribute('aria-label','Preview portal to '+target.name);button.addEventListener('click',()=>{selected=id;autoFit=false;zoom=5;panX=panZ=0;render();});route.append(button);}
+  for(const id of atlasPortalRoute(place)){const target=byId.get(id);if(!target)continue;const link=document.createElement('a');link.href=target.playUrl;link.className='btn';link.textContent=target.name;link.setAttribute('aria-label','Enter '+target.name);route.append(link);}
   const preview=root.querySelector('[data-atlas-preview]');preview.replaceChildren(createAtlasPreview(place));
   const info=document.createElement('div'),title=document.createElement('h3'),detail=document.createElement('p'),enter=document.createElement('a');title.textContent=place.name;detail.textContent=[place.districtName,place.ownerName,place.deedId?'Deed '+place.deedId:'',place.baseEnvironmentId?'Interior / game: '+place.baseEnvironmentId:'',place.description||''].filter(Boolean).join(' · ');enter.href=place.playUrl;enter.textContent=place.deedId?'Enter deed location':'Enter saved world';enter.className='btn';info.append(title,detail,enter);preview.append(info);
  }

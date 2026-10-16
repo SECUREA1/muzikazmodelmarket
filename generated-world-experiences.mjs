@@ -1,0 +1,31 @@
+// Shared scene data uses the same models and interaction rules as authored maps.
+export const GENERATED_EXPERIENCE_VERSION=1;
+const themes={
+ 'studio-ridge':{name:'Creator courtyard',landmark:'recording-booth',guide:'forest-ranger',prop:'studio-desk',color:'#af8cff'},
+ 'volt-city':{name:'Neon makers plaza',landmark:'sci-fi-bunker',guide:'clockwork-knight',prop:'lever-switch',color:'#ffd45c'},
+ 'skyline-deck':{name:'Skyline lounge',landmark:'art-wall',guide:'spectral-ghost',prop:'planter',color:'#68dbff'},
+ 'echo-gardens':{name:'Listening garden',landmark:'ancient-oak',guide:'forest-ranger',prop:'giant-mushrooms',color:'#7bea99'},
+ 'crew-plaza':{name:'Crew social club',landmark:'market-stall',guide:'desert-merchant',prop:'dining-set',color:'#ff8dbb'},
+ 'neon-docks':{name:'Dockside trading yard',landmark:'wooden-cart',guide:'desert-merchant',prop:'supply-crate',color:'#52e0da'},
+ 'bassline-badlands':{name:'Desert discovery camp',landmark:'windmill',guide:'desert-merchant',prop:'desert-cactus',color:'#ff9e64'},
+ 'pixel-peaks':{name:'Summit rest stop',landmark:'stone-tower',guide:'forest-ranger',prop:'garden-rocks',color:'#acb7ff'}
+};
+export function generatedExperience(environment){
+ const theme=themes[environment.atlasDistrict?.id]||{name:'Commons welcome park',landmark:'art-wall',guide:'forest-ranger',prop:'planter',color:'#caff69'};
+ const objects=[];
+ const add=(id,modelId,x,z,behavior='decor',extra={})=>{const item={id:'public-experience-'+id,modelId,name:extra.name||id.replaceAll('-',' '),position:{x,y:0,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},materialSettings:{useAccent:true,accent:theme.color},functionalSettings:{behavior,interactionDistance:3,cooldown:.5,...extra.functionalSettings},...extra};objects.push(item);return item;};
+ const text=`Welcome to ${environment.name}. Sit in the lounge, try the studio, collect a discovery crystal, or use the garden pads. The surrounding portal buildings open districts and saved creator worlds.`;
+ add('welcome','street-sign',-4,8,'talk',{dialogueSettings:{text},functionalSettings:{behavior:'talk',interactionDistance:4,prompt:'Read the park guide'}});
+ add('host',theme.guide,10,10,'talk',{dialogueSettings:{text:`${theme.name}: ${text}`},functionalSettings:{behavior:'talk',interactionDistance:4,prompt:'Talk to your local guide'}});
+ add('lounge-sofa','sofa',-14,22,'seat');add('lounge-chair-a','armchair',-18,19,'seat');add('lounge-chair-b','armchair',-10,19,'seat');add('lounge-table','coffee-table',-14,19);
+ add('studio','studio-desk',14,22,'talk',{dialogueSettings:{text:'The creator corner is a meeting space. Open the Environment Builder to make and publish your own playable map.'}});
+ add('studio-seat','pillow-ring',14,24,'seat');add('gallery','art-wall',14,27);add('studio-light','floor-lamp',17,25);
+ add('landmark',theme.landmark,-12,48);add('theme-prop',theme.prop,-20,48);
+ add('discovery-crystal','treasure-crystal',15,48,'pickup');add('restoration','healing-potion',20,48,'heal',{functionalSettings:{behavior:'heal',interactionDistance:3,cooldown:10,value:25,prompt:'Restore health'}});
+ add('exploration-journal','quest-scroll',-10,10,'quest',{questSettings:{id:environment.id+'-discovery',name:'Discover '+theme.name},dialogueSettings:{text:'Start your discovery journal. Explore the gathering area, garden and district portals; return here to mark your visit complete.'}});
+ add('garden-switch','lever-switch',12,48,'switch',{functionalSettings:{behavior:'switch',interactionDistance:3,cooldown:.5,prompt:'Toggle the garden beacon'}});
+ for(const [id,x,z,target]of [['garden-pad',8,14,'return-pad'],['return-pad',8,48,'garden-pad']])add(id,'teleport-pad',x,z,'interact',{functionalSettings:{behavior:'interact',action:'teleport',interactionDistance:3,cooldown:1,prompt:id==='garden-pad'?'Visit the discovery garden':'Return to the welcome plaza',portal:{enabled:true,destinationType:'object',targetObjectId:'public-experience-'+target}}});
+ for(let i=0;i<6;i++)add('garden-path-'+i,'path-tile',8,20+i*4);
+ add('garden-bed-a','flower-bed',3,46);add('garden-bed-b','flower-bed',25,46);
+ return {objects,name:theme.name,description:`${theme.name} · lounge seating, a creator corner, a local guide, discovery items, health restoration and linked garden pads.`};
+}

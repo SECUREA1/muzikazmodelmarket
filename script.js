@@ -659,13 +659,13 @@ function initWorldAtlas() {
 
   places.forEach((place) => place.addEventListener('click', (event) => {
     event.stopPropagation();
-    render({ x: place.dataset.mapX, y: place.dataset.mapY, place: place.dataset.mapPlace, detail: place.dataset.mapDetail });
+    render({ x: place.dataset.mapX, y: place.dataset.mapY, place: place.dataset.mapPlace, detail: place.dataset.mapDetail });enterSelectedLocation(event);
   }));
-  districtButtons.forEach((button) => button.addEventListener('click', () => {
+  districtButtons.forEach((button) => button.addEventListener('click', (event) => {
     const asset = WORLD_ASSETS.find((item) => item.name === button.dataset.atlasDistrict);
     if (!asset) return;
     render({ x: asset.x, y: asset.y, place: asset.name, detail: asset.detail });
-    viewport.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    enterSelectedLocation(event);
   }));
   modeButtons.forEach((button) => button.addEventListener('click', () => {
     atlas.dataset.mode = button.dataset.atlasMode;
