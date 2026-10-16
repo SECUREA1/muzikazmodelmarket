@@ -304,3 +304,6 @@ html.game-menu-open { overflow:hidden; }
 .model-explorer-page [data-legacy-game-controls]{display:none!important;}
 .model-explorer-page:not([data-game-controls=ready]) :is(.house-bottom-controls,.house-control-dock,.mobile-move-pad,.rad-tox-hud,.building-adjust-button,.builder-nearby-action,.range-ops-button,.house-reticle){display:none!important;}
 .model-explorer-page .house-explorer-shell{grid-template-columns:minmax(0,1fr);}
+.owned-placement-controls [data-place-action=quick]{flex:1 1 100%;background:#baff39;color:#10200b;white-space:normal;line-height:1.4}
+.owned-placement-controls [data-place-action=single]{flex:1 1 100%;white-space:normal;line-height:1.4}
+.owned-placement-controls button[hidden]{display:none!important}

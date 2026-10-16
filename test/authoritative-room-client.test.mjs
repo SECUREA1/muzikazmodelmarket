@@ -129,19 +129,22 @@ test('an expired room presence rejoins while ordinary conflicts do not',async()=
  },async client=>{await client.whenReady();await pause(450);assert.equal(joins,2);assert.equal(client.ready,true);});
 });
 
-test('a delayed held shot does not block walking input or queue duplicate shots',async()=>{
- let release,inputs=0,shots=0,sequence=0;
+test('stick changes flush immediately and a slow weapon response does not stall controls',async()=>{
+ let sequence=0,side=0,releaseFire;const received=[];
  await withRoom(async(path,options)=>{
   if(path==='/api/game/room-session')return response({csrfToken:'proof'});
   const command=JSON.parse(options.body);
-  if(command.action==='fire'){shots++;return new Promise(resolve=>{release=()=>resolve(response(confirmed(++sequence)));});}
-  if(command.action==='input')inputs++;
-  return response({...confirmed(++sequence),players:{'account:test':{health:100,position:{x:0,y:0,z:2}}}});
+  if(command.action==='input')received.push(command.input.side);
+  if(command.action==='fire')return new Promise(resolve=>{releaseFire=()=>resolve(response(confirmed(++sequence)));});
+  const state=confirmed(++sequence);state.players[state.selfId].health=100;return response(state);
  },async client=>{
-  await client.whenReady();
-  await pause(220);
-  assert.ok(inputs>=2,'movement polling continues while a shot is pending');
-  assert.equal(shots,1,'one held shot may be in flight');
-  release();await pause(5);
- },{input:()=>({forward:1,firing:true,tool:'flamethrower',direction:[0,0,-1]})});
+  await client.whenReady();side=1;client.requestInput();await pause(10);
+  assert.ok(received.includes(1),'stick press sends without waiting for the polling interval');
+  assert.ok(releaseFire,'weapon request is pending');
+  side=-1;client.requestInput();await pause(10);
+  assert.equal(received.at(-1),-1,'direction changes still reach the server while firing');
+  side=0;client.requestInput();await pause(10);
+  assert.equal(received.at(-1),0,'release is sent immediately');
+  client.stop();releaseFire();await pause(5);
+ },{input:()=>({side,firing:true,tool:'flamethrower',direction:[0,0,-1]})});
 });

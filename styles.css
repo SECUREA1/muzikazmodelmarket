@@ -2722,6 +2722,8 @@ body.original-platform .hero-character--two{right:auto;left:-8%;bottom:-3%;opaci
 .members-page .member-section-menu__list:not([hidden]){display:grid}
 .members-page .member-section-menu__list a{display:flex;min-height:46px;align-items:center;padding:10px 14px;border:1px solid rgba(190,255,89,.14);border-radius:10px;color:#eef7e9;font-size:12px;font-weight:900;text-decoration:none;text-transform:uppercase}
 .members-page .member-section-menu__list a:hover,.members-page .member-section-menu__list a:focus-visible,.members-page .member-section-menu__list a.is-active{border-color:var(--lime);background:rgba(156,255,0,.12);color:var(--lime)}
+.members-page .member-section-menu__list a.member-section-menu__play{justify-content:center;border-color:var(--lime);background:var(--lime);color:#071000;box-shadow:0 0 18px rgba(156,255,0,.35),inset 0 0 12px rgba(255,255,255,.2)}
+.members-page .member-section-menu__list a.member-section-menu__play:hover,.members-page .member-section-menu__list a.member-section-menu__play:focus-visible{background:#c5ff63;color:#071000;box-shadow:0 0 24px rgba(156,255,0,.55);outline:2px solid #fff;outline-offset:2px}
 .members-page .member-locked-content>.section-block[hidden]{display:none}
 .members-page .section-block{
   width:min(1440px,100%);

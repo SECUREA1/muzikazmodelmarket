@@ -57,7 +57,7 @@ export function targetServerEnemy(root,actor,height=0,now=performance.now()) {
  const state=root.userData;
  state.serverTarget ||= root.position.clone();
  state.serverTarget.set(actor.position.x,actor.position.y+height,actor.position.z);
- state.serverEnemyMotion ||= new ServerMotion();
+ state.serverEnemyMotion ||= new ServerMotion({delay:0,maxExtrapolation:100});
  state.serverEnemyMotion.push({x:actor.position.x,y:actor.position.y+height,z:actor.position.z},now);
  state.serverPredicted ||= root.position.clone();
  state.serverYaw=actor.rotation?.y||0;

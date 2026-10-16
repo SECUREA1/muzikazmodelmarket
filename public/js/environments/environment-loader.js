@@ -1,3 +1,4 @@
+import {createSlimeFloor,collectSlimeFloorMeshes} from './slime-floor.js';
 import {replaceServerStreets} from './server-streets.js';
 import {createBuilderLand} from './builder-land.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
@@ -19,7 +20,10 @@ export class EnvironmentLoader {
     this.loader.setMeshoptDecoder(MeshoptDecoder);
   }
   disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture) value.dispose(); material.dispose?.(); }
-  unload() { this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
+  clearFloorEffects() { this.floorSlime?.dispose(); this.floorSlime=null; }
+  refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
+  updateEffects(elapsed, reducedMotion=false) { this.floorSlime?.update(elapsed,reducedMotion); }
+  unload() { this.clearFloorEffects(); this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
   loadOne(url, index, count) { return new Promise((resolve, reject) => this.loader.load(url, resolve, (e) => this.onProgress(((index + (e.total ? e.loaded / e.total : 0.35)) / count) * 100), reject)); }
 
   createBuilderLand(environment){const root=createBuilderLand(environment);replaceServerStreets(root,environment.streets||environment.builderScene?.streets||[],{labels:true});return root;}
@@ -74,7 +78,7 @@ export class EnvironmentLoader {
       const collision = buildCollision(nextWorld, environment.collisionMode,[],{buildOctree:!this.serverAuthoritative()});
       if (!collision.visibleMeshes.length) throw new Error('Missing meshes: the environment loaded, but no renderable world meshes were found.');
       const spawn = resolveSafeSpawn(nextWorld, collision.floorMeshes, environment.spawn);
-      this.unload(); this.world = nextWorld; this.activeEnvironment = environment; this.mixers = nextMixers; this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree; this.bounds = spawn.bounds; this.scene.add(nextWorld); this.onProgress(100);
+      this.unload(); this.world = nextWorld; this.activeEnvironment = environment; this.mixers = nextMixers; this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree; this.bounds = spawn.bounds; this.scene.add(nextWorld); this.refreshFloorEffects(); this.onProgress(100);
       return { world: nextWorld, mixers: nextMixers, meshes: collision.visibleMeshes, octree: collision.octree, spawn, quality, collision, scale: this.spaceScale };
     } catch (error) { nextMixers.forEach((m) => m.stopAllAction()); nextWorld.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); throw error; }
   }

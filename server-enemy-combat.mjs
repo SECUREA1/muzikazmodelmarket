@@ -1,10 +1,10 @@
 import {damagePlayer} from './rpg-match.mjs';
 export const ENEMY_BEHAVIORS=Object.freeze({
- toxic:{range:1.5,cooldown:1200,moveSpeed:.9,height:1},
- snake:{range:1.2,cooldown:1000,moveSpeed:1.8,height:.2},
- ghost:{range:9,cooldown:1800,speed:6,moveSpeed:1.4,height:1},
- brain:{range:7,cooldown:1600,speed:7,moveSpeed:2.65,height:.74},
- boss:{range:12,cooldown:1400,speed:8,moveSpeed:2.15,height:1.8}
+ toxic:{range:1.5,cooldown:1200,moveSpeed:2,height:1},
+ snake:{range:1.2,cooldown:1000,moveSpeed:3,height:.2},
+ ghost:{range:9,cooldown:1800,speed:6,moveSpeed:2.8,height:1},
+ brain:{range:7,cooldown:1600,speed:7,moveSpeed:3.4,height:.74},
+ boss:{range:12,cooldown:1400,speed:8,moveSpeed:2.8,height:1.8}
 });
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 const event=(sim,value)=>{sim.events.push(value);sim.events=sim.events.slice(-100);};
