@@ -13,5 +13,11 @@ export function createInteractiveDevice(THREE,id){
  if(shape==='karaoke'){box([.08,2.6,.08],[1.05,1.3,0]);box([.28,.12,.16],[1.05,2.6,0],accent);}
  if(shape==='projector')box([.5,.3,.7],[.6,2.3,.1],accent);
  box([.1,height,.1],[-width/2+.06,height/2,0],accent);box([.1,height,.1],[width/2-.06,height/2,0],accent);
+ // Decorative panels never participate in collision or change cabinet dimensions.
+ if(typeof document!=='undefined'){
+  const texture=new THREE.TextureLoader().load('/public/images/interactive-devices/'+id+'.svg',undefined,undefined,()=>{});texture.colorSpace=THREE.SRGBColorSpace;
+  const material=new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,toneMapped:false});
+  for(const side of [-1,1]){const poster=new THREE.Mesh(new THREE.PlaneGeometry(.58,height*.78),material);poster.position.set(side*(width*.5+.006),height*.53,.1);poster.rotation.y=side*Math.PI/2;poster.userData.collisionDisabled=true;poster.name='CABINET_ARTWORK';root.add(poster);}
+ }
  root.name=profile.name;root.userData={modelId:id,builderObject:true,interactiveDevice:id,dimensions:[width,height,.9]};return root;
 }

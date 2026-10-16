@@ -1,3 +1,5 @@
+import {pokerPayout} from './public/js/poker-rules.js';
+export {pokerPayout} from './public/js/poker-rules.js';
 import {newArcadeGame,arcadeMove} from './server-arcade-games.mjs';
 import {randomInt} from 'node:crypto';
 import {deviceDefinition,deviceTime,sharedMediaUrl} from './public/js/interactive-devices.js';
@@ -7,10 +9,6 @@ export function nearbyDevice(sim,manifest,player,id,reach=5){
  if(!actor||actor.active===false||actor.holderId||!profile||Math.hypot(actor.position.x-player.position.x,actor.position.y-player.position.y,actor.position.z-player.position.z)>reach)fail('Move within reach of an interactive device.');return {actor,profile};
 }
 function drawCards(count,exclude=[]){const deck=Array.from({length:52},(_,index)=>index).filter(card=>!exclude.includes(card)),cards=[];while(cards.length<count)cards.push(deck.splice(randomInt(deck.length),1)[0]);return cards;}
-export function pokerPayout(cards){
- const ranks=cards.map(card=>card%13).sort((a,b)=>a-b),counts=Object.values(ranks.reduce((all,rank)=>(all[rank]=(all[rank]||0)+1,all),{})).sort((a,b)=>b-a),flush=cards.every(card=>Math.floor(card/13)===Math.floor(cards[0]/13)),straight=new Set(ranks).size===5&&(ranks[4]-ranks[0]===4||ranks.join(',')==='0,1,2,3,12');
- if(straight&&flush)return ranks[0]===8?250:50;if(counts[0]===4)return 25;if(counts[0]===3&&counts[1]===2)return 9;if(flush)return 6;if(straight)return 4;if(counts[0]===3)return 3;if(counts[0]===2&&counts[1]===2)return 2;if(counts[0]===2&&ranks.some((rank,index)=>index&&rank===ranks[index-1]&&rank>=9))return 1;return 0;
-}
 const questions=[['Which tool moves a placed item?',['Mute','Placement controls','Reload'],1],['How do you keep a build available to other players?',['Close the tab','Erase the floor','Publish the map'],2],['What is used by arcade machines?',['Practice credits','Crypto transfers','Land deeds'],0],['What lets nearby players hear voice?',['Bigger bricks','Photo frame','Room microphone'],2]];
 export function deviceCommand(sim,manifest,player,actorId,command,now){
  const {actor,profile}=nearbyDevice(sim,manifest,player,command.entityId,command.operation==='duration'?60:5);sim.devices ||= {};let state=sim.devices[actor.id];
