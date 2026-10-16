@@ -1,14 +1,19 @@
+import {ENTERABLE_BUILDINGS} from './building-districts.js';
 import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
 export const MARKET_CATEGORIES=Object.freeze([
  ['weapons','Weapons & combat'],['tools','Tools & utilities'],['flight','Flight & mobility'],
- ['arcade','Arcade & card machines'],['materials','Building materials'],['furniture','Furniture & interiors'],
+ ['arcade','Arcade & card machines'],['media','Media & live screens'],['buildings','Buildings & businesses'],['outdoors','Nature & outdoors'],['materials','Building materials'],['furniture','Furniture & interiors'],
  ['avatars','Characters & avatars'],['vehicles','Vehicles'],['pets','Pets & creatures'],
  ['wearables','Clothing & wearables'],['lands','Land & worlds'],['props','Props & models'],['care','Care supplies'],['other','Other items']
 ].map(([id,label])=>({id,label})));
 export function marketCategory(item={},section='upgrades'){
- const device=INTERACTIVE_DEVICES[item.buildAssetId||item.asset?.buildAssetId||item.function_data?.device||item.asset?.function_data?.device];if(device&&['arcade','poker','slots','trivia'].includes(device.kind))return 'arcade';
+ const reference=item.function_data?.device||item.asset?.function_data?.device||item.buildAssetId||item.asset?.buildAssetId,skuReference=String(item.sku||item.economySku||item.itemId||item.id||''),nativeId=reference||[...Object.keys(INTERACTIVE_DEVICES),...Object.keys(ENTERABLE_BUILDINGS)].find(id=>skuReference.endsWith(id));
+ const device=INTERACTIVE_DEVICES[nativeId];if(device&&['arcade','poker','slots','trivia'].includes(device.kind))return 'arcade';
+ if(device&&['video','audio','image','board'].includes(device.kind))return 'media';
+ if(ENTERABLE_BUILDINGS[nativeId])return 'buildings';
  const category=String(item.category||item.asset?.builder_category||'').toLowerCase();
+ if(category.includes('media & live'))return 'media';if(category.includes('buildings & businesses'))return 'buildings';if(category.includes('nature & outdoors'))return 'outdoors';
  if(category.includes('arcade')||category.includes('card machines'))return 'arcade';
  const type=String(item.assetType||item.itemType||item.type||item.asset?.asset_type||'').toLowerCase();
  const sku=String(item.sku||item.economySku||item.itemId||item.id||'').replace(/^economy:/,'');
@@ -26,6 +31,7 @@ export function marketCategory(item={},section='upgrades'){
  if(/wearable|clothing|accessor/.test(value))return 'wearables';
  if(/land|world|environment|map|terrain/.test(value))return 'lands';
  if(/furniture|interior|room/.test(value))return 'furniture';
+ if(/outdoor|plant|nature/.test(value))return 'outdoors';
  if(/prop|model|building|plant/.test(value)||item.modelUrl||item.glb_url||item.buildAssetId)return 'props';
  return 'other';
 }
