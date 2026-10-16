@@ -1,4 +1,6 @@
+import {ARCADE_GAMES} from './arcade-games.js';
 export const INTERACTIVE_DEVICES=Object.freeze({
+ ...Object.fromEntries(Object.entries(ARCADE_GAMES).map(([id,item])=>[id,{...item,kind:'arcade'}])),
  'market-atm':{name:'MZK Market ATM',kind:'market',description:'Open the live item marketplace and your Backpack.',color:0x96f04e,shape:'kiosk'},
  'item-vending-machine':{name:'Item Vending Machine',kind:'market',description:'Shop equipment and building supplies using your own account.',color:0x36dccc,shape:'kiosk'},
  'shared-video-player':{name:'Community Video Player',kind:'video',description:'Anyone nearby can upload a video or add a link to the shared queue.',color:0x51b8ff,shape:'screen'},
@@ -15,7 +17,7 @@ export const INTERACTIVE_DEVICES=Object.freeze({
  'arcade-slot-machine':{name:'Arcade Slots',kind:'slots',description:'Spin three reels using separate practice credits.',color:0xff9770,shape:'arcade'},
  'video-poker-table':{name:'Video Poker Table',kind:'poker',description:'Deal, hold and draw a five-card hand using practice credits.',color:0x69df9a,shape:'table'}
 });
-export const deviceDefinition=(modelId,gameplay={})=>INTERACTIVE_DEVICES[modelId]||INTERACTIVE_DEVICES[gameplay.device]||null;
+export const deviceDefinition=(modelId,gameplay={})=>INTERACTIVE_DEVICES[gameplay.device]||INTERACTIVE_DEVICES[modelId]||null;
 export function sharedMediaUrl(value,kind){
  const text=String(value||'').trim();if(text.length>2048)throw Error('Media link is too long.');
  const local=/^\/uploads\/media\/[a-zA-Z0-9-]+\.(mp4|webm|mp3|wav|ogg|png|jpg|webp)$/.test(text);let url;

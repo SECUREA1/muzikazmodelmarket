@@ -1,3 +1,4 @@
+import {newArcadeGame,arcadeMove} from './server-arcade-games.mjs';
 import {randomInt} from 'node:crypto';
 import {deviceDefinition,deviceTime,sharedMediaUrl} from './public/js/interactive-devices.js';
 const fail=message=>{throw Object.assign(Error(message),{statusCode:409});};
@@ -13,9 +14,11 @@ export function pokerPayout(cards){
 const questions=[['Which tool moves a placed item?',['Mute','Placement controls','Reload'],1],['How do you keep a build available to other players?',['Close the tab','Erase the floor','Publish the map'],2],['What is used by arcade machines?',['Practice credits','Crypto transfers','Land deeds'],0],['What lets nearby players hear voice?',['Bigger bricks','Photo frame','Room microphone'],2]];
 export function deviceCommand(sim,manifest,player,actorId,command,now){
  const {actor,profile}=nearbyDevice(sim,manifest,player,command.entityId,command.operation==='duration'?60:5);sim.devices ||= {};let state=sim.devices[actor.id];
- state ||= sim.devices[actor.id]={name:profile.name,kind:profile.kind,revision:0,queue:[],current:null,playing:false,offset:0,startedAt:now,volume:.7,gamers:{}};
- if(!state.gamers[actorId]&&['slots','poker','trivia'].includes(profile.kind)&&Object.keys(state.gamers).length>=256)fail('This arcade player list is full.');
+ if(state&&(state.kind!==profile.kind||state.game!==profile.game))state=null;
+ state ||= sim.devices[actor.id]={name:profile.name,kind:profile.kind,game:profile.game,revision:0,queue:[],current:null,playing:false,offset:0,startedAt:now,volume:.7,gamers:{}};
+ if(!state.gamers[actorId]&&['slots','poker','trivia','arcade'].includes(profile.kind)&&Object.keys(state.gamers).length>=256)fail('This arcade player list is full.');
  if(command.operation==='open'&&profile.kind==='trivia'){const gamer=state.gamers[actorId] ||= {name:player.username,credits:100,round:0};gamer.question=questions[gamer.round%questions.length].slice(0,2);}
+ if(command.operation==='open'&&profile.kind==='arcade'){state.gamers[actorId] ||= {name:player.username,credits:100,round:0};}
  if(command.operation==='open')return {deviceId:actor.id,deviceKind:profile.kind,message:profile.name};
  if(command.revision!==state.revision)fail('Device changed. Refresh its controls and try again.');
  const op=command.operation;
@@ -29,6 +32,13 @@ export function deviceCommand(sim,manifest,player,actorId,command,now){
   else if(op==='next'){state.current=state.queue.shift()||null;state.offset=0;state.startedAt=now;state.playing=!!state.current&&profile.kind!=='image';}
   else if(op==='volume'){if(!Number.isFinite(command.volume)||command.volume<0||command.volume>1)fail('Choose a volume between 0 and 1.');state.volume=command.volume;}
   else fail('Unsupported media control.');
+ }else if(profile.kind==='arcade'){
+  if(!state.gamers[actorId]&&Object.keys(state.gamers).length>=256)fail('This arcade player list is full.');
+  const gamer=state.gamers[actorId] ||= {name:player.username,credits:100,round:0};
+  if(now-(gamer.lastPlay||0)<150)fail('Wait a moment before the next move.');
+  if(op==='start'){gamer.game=newArcadeGame(profile.game,randomInt);gamer.round++;}
+  else{if(!gamer.game)fail('Start a game first.');gamer.game=arcadeMove(gamer.game,command,randomInt);}
+  gamer.lastPlay=now;
  }else if(profile.kind==='board'){
   if(op!=='post')fail('Post a message to this board.');state.text=String(command.text||'').trim().slice(0,1000);state.author=player.username;
  }else if(['slots','poker','trivia'].includes(profile.kind)){

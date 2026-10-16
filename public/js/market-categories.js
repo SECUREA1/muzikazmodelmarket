@@ -1,12 +1,15 @@
+import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
 export const MARKET_CATEGORIES=Object.freeze([
  ['weapons','Weapons & combat'],['tools','Tools & utilities'],['flight','Flight & mobility'],
- ['materials','Building materials'],['furniture','Furniture & interiors'],
+ ['arcade','Arcade & card machines'],['materials','Building materials'],['furniture','Furniture & interiors'],
  ['avatars','Characters & avatars'],['vehicles','Vehicles'],['pets','Pets & creatures'],
  ['wearables','Clothing & wearables'],['lands','Land & worlds'],['props','Props & models'],['care','Care supplies'],['other','Other items']
 ].map(([id,label])=>({id,label})));
 export function marketCategory(item={},section='upgrades'){
+ const device=INTERACTIVE_DEVICES[item.buildAssetId||item.asset?.buildAssetId||item.function_data?.device||item.asset?.function_data?.device];if(device&&['arcade','poker','slots','trivia'].includes(device.kind))return 'arcade';
  const category=String(item.category||item.asset?.builder_category||'').toLowerCase();
+ if(category.includes('arcade')||category.includes('card machines'))return 'arcade';
  const type=String(item.assetType||item.itemType||item.type||item.asset?.asset_type||'').toLowerCase();
  const sku=String(item.sku||item.economySku||item.itemId||item.id||'').replace(/^economy:/,'');
  const tool=item.toolId||(sku.startsWith('tool:')?sku.slice(5):'');

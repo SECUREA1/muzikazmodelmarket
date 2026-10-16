@@ -1,6 +1,6 @@
 import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 export const URBAN_LAYOUTS={
- 'urban-media-lounge':{name:'Media & Arcade Commons',icon:'♫',description:'A public media lounge with fifteen interactive terminals, shared video, music, shopping and arcade games.',color:0x283747,sky:0x11152d},
+ 'urban-media-lounge':{name:'Media & Arcade Commons',icon:'♫',description:'A public media lounge with 27 interactive terminals, shared video, music, shopping and arcade games.',color:0x283747,sky:0x11152d},
  'urban-downtown':{name:'Downtown Sandbox',icon:'▥',description:'An urban driving grid with courier checkpoints, a garage, safehouse and public square.',color:0x343c42,sky:0x151d2e},
  'urban-docklands':{name:'Docklands Run',icon:'▰',description:'Industrial streets, cargo depots and a timed delivery circuit.',color:0x3c4446,sky:0x13262c},
  'urban-nightlife':{name:'Neon Night District',icon:'✦',description:'A nightlife avenue with social venues, creator studios and a street driving challenge.',color:0x303044,sky:0x120e25}

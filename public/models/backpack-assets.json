@@ -2128,6 +2128,222 @@
       "visibility": "public",
       "description": "A flexible community hall for games, meetings and classes. Place Backpack items inside, then save or publish your map.",
       "behavior": "decor"
+    },
+    {
+      "id": "backpack-blackjack-cabinet",
+      "name": "Blackjack Club",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "blackjack-cabinet",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/blackjack-cabinet.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Hit or stand against the house dealer. Practice cards only.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "blackjack-cabinet",
+        "behavior": "interact",
+        "prompt": "Play Blackjack Club"
+      }
+    },
+    {
+      "id": "backpack-high-low-cabinet",
+      "name": "High / Low Cards",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "high-low-cabinet",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/high-low-cabinet.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Predict the next card and build a streak.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "high-low-cabinet",
+        "behavior": "interact",
+        "prompt": "Play High / Low Cards"
+      }
+    },
+    {
+      "id": "backpack-memory-match-cabinet",
+      "name": "Memory Match",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "memory-match-cabinet",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/memory-match-cabinet.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Find all eight matching pairs on a hidden card board.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "memory-match-cabinet",
+        "behavior": "interact",
+        "prompt": "Play Memory Match"
+      }
+    },
+    {
+      "id": "backpack-tic-tac-toe-cabinet",
+      "name": "Neon Noughts & Crosses",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "tic-tac-toe-cabinet",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/tic-tac-toe-cabinet.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Play a three-in-a-row match against the cabinet.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "tic-tac-toe-cabinet",
+        "behavior": "interact",
+        "prompt": "Play Neon Noughts & Crosses"
+      }
+    },
+    {
+      "id": "backpack-four-in-row-cabinet",
+      "name": "Four in a Row",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "four-in-row-cabinet",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/four-in-row-cabinet.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Drop discs and connect four against the cabinet.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "four-in-row-cabinet",
+        "behavior": "interact",
+        "prompt": "Play Four in a Row"
+      }
+    },
+    {
+      "id": "backpack-mine-sweeper-cabinet",
+      "name": "Minefield Puzzle",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "mine-sweeper-cabinet",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/mine-sweeper-cabinet.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Reveal safe cells on a six-by-six board. First pick is safe.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "mine-sweeper-cabinet",
+        "behavior": "interact",
+        "prompt": "Play Minefield Puzzle"
+      }
+    },
+    {
+      "id": "backpack-lights-out-cabinet",
+      "name": "Neon Lights Out",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "lights-out-cabinet",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/lights-out-cabinet.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Toggle a light and its neighbours until every light is off.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "lights-out-cabinet",
+        "behavior": "interact",
+        "prompt": "Play Neon Lights Out"
+      }
+    },
+    {
+      "id": "backpack-rock-paper-scissors-cabinet",
+      "name": "Rock Paper Scissors",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "rock-paper-scissors-cabinet",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/rock-paper-scissors-cabinet.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Challenge the machine to a quick hand-gesture duel.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "rock-paper-scissors-cabinet",
+        "behavior": "interact",
+        "prompt": "Play Rock Paper Scissors"
+      }
+    },
+    {
+      "id": "backpack-retro-snake-cabinet",
+      "name": "Pixel Snake",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "retro-snake-cabinet",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/retro-snake-cabinet.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Steer through the grid, eat stars and avoid your tail.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "retro-snake-cabinet",
+        "behavior": "interact",
+        "prompt": "Play Pixel Snake"
+      }
+    },
+    {
+      "id": "backpack-retro-pong-cabinet",
+      "name": "Neon Paddle Rally",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "retro-pong-cabinet",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/retro-pong-cabinet.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Move your paddle and return the ball against the machine.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "retro-pong-cabinet",
+        "behavior": "interact",
+        "prompt": "Play Neon Paddle Rally"
+      }
+    },
+    {
+      "id": "backpack-brick-breaker-cabinet",
+      "name": "Cosmic Brick Breaker",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "brick-breaker-cabinet",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/brick-breaker-cabinet.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Bounce the ball into every brick with your paddle.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "brick-breaker-cabinet",
+        "behavior": "interact",
+        "prompt": "Play Cosmic Brick Breaker"
+      }
+    },
+    {
+      "id": "backpack-maze-runner-cabinet",
+      "name": "Pixel Maze Quest",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "maze-runner-cabinet",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/maze-runner-cabinet.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Navigate a maze and reach the exit.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "maze-runner-cabinet",
+        "behavior": "interact",
+        "prompt": "Play Pixel Maze Quest"
+      }
     }
   ]
 }
