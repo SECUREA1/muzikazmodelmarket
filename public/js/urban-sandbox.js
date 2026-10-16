@@ -7,7 +7,7 @@ export const URBAN_LAYOUTS={
 };
 export function createUrbanScene(layout,mapSize=80){
  if(!URBAN_LAYOUTS[layout])throw Error('Choose an urban sandbox template.');
- const size=[80,120].includes(Number(mapSize))?Number(mapSize):80,r=size*.3,objects=[];
+ const size=[80,120,160,240,320].includes(Number(mapSize))?Number(mapSize):80,r=size*.3,objects=[];
  const add=(id,modelId,x,z,behavior='decor',extra={})=>objects.push({id:'urban-'+id,modelId,name:id.replaceAll('-',' '),position:{x,y:0,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},functionalSettings:{behavior,interactionDistance:4,...extra.functionalSettings},...extra});
  if(layout==='urban-media-lounge'){for(const [index,[id,item]]of Object.entries(INTERACTIVE_DEVICES).entries()){add('device-'+index,id,-14+(index%5)*7,-14+Math.floor(index/5)*9,'interact',{functionalSettings:{behavior:'interact',device:id,interactionDistance:5,prompt:'Use '+item.name}});}add('spawn','hero-spawn',0,15,'talk',{functionalSettings:{behavior:'talk',isPlayerSpawn:true,interactionDistance:3}});return {name:URBAN_LAYOUTS[layout].name,layout,mapSize:size,weather:'clear',streets:[],objects,gameplay:{multiplayer:true,interactiveLounge:true}};}
  const checkpoints=[{x:-r,z:-r,radius:5},{x:r,z:-r,radius:5},{x:r,z:r,radius:5},{x:-r,z:r,radius:5}].map((point,index)=>({...point,objectId:'urban-checkpoint-'+index}));

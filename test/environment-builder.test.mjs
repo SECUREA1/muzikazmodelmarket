@@ -352,7 +352,7 @@ test('builder lands and placed items retain verified collision floors', async ()
   assert.match(loader, /setSupplementalCollisionRoots\(roots = \[\]\)/, 'the loader can safely include placed Builder items in its collision octree');
   assert.match(game, /function refreshBuilderCollision\(\)/, 'placed Builder items batch their collision refresh instead of rebuilding once per asset');
   assert.match(game, /window\.setTimeout/, 'collision rebuilding yields to the browser so the map can open first');
-  assert.match(game, /worldX=center\.x\+x,worldZ=center\.z\+z,ground=floorPointAt/, 'every placed object is grounded at its authored horizontal position');
+  assert.match(game, /worldX=center\.x\+x,worldZ=center\.z\+z,ground=authored\?\{y:Number\(item\.position\.y\)\|\|0\}:floorPointAt/, 'authored positions preserve interior floor heights while legacy placements resolve their floor');
   assert.match(game, /spawnFloor\.y\+FLOOR_ENTRY_OFFSET/, 'the player spawn begins just above the verified floor with the full body capsule above it');
   assert.match(server, /proceduralLand:true/);
   assert.match(server, /modelUrl:'', modelUrls:\[\]/, 'published builder maps no longer borrow a repository GLB');
