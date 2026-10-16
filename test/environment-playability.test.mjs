@@ -71,3 +71,10 @@ test('saved authored base loads the original meshes with the custom identity and
  for(const axis of ['x','z'])assert.ok(Math.abs(a.getSize(new THREE.Vector3())[axis]-b.getSize(new THREE.Vector3())[axis])<.01);
  loader.unload();expected.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});
 });
+
+test('safety floor remains entirely beneath the visible floor and player entry stays above it',()=>{
+ const root=new THREE.Group(),floor=new THREE.Mesh(new THREE.PlaneGeometry(12,12),new THREE.MeshBasicMaterial());floor.rotation.x=-Math.PI/2;floor.position.y=4;root.add(floor);root.updateMatrixWorld(true);
+ const collision=buildCollision(root,'auto',[],{buildOctree:false}),safety=new THREE.Box3().setFromObject(collision.containment.floor);
+ assert.ok(Math.abs(safety.max.y-4)<1e-8);assert.ok(safety.min.y<4);assert.equal(collision.containment.floor.material.visible,false);
+ const entry=resolveSafeSpawn(root,collision.floorMeshes,{x:0,y:4,z:0});assert.ok(Math.abs(entry.position.y-4.02)<1e-8);
+});

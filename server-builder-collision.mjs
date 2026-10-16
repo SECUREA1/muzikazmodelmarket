@@ -1,3 +1,4 @@
+import {PLAYER_FLOOR_CLEARANCE} from './public/js/player-floor.js';
 import {builderBaseEnvironment,applyBuilderBaseTransform} from './public/js/environments/builder-base.js';
 import {drawingCollisionModel} from './public/js/placed-item-collision.js';
 import {placedCollisionWorld,disposePlacedCollision} from './server-placed-collision.mjs';
@@ -47,7 +48,7 @@ export class ServerBuilderCollision {
   // share a mesh with the floor, so mesh names alone cannot protect the entry.
   const choices=hits.filter(hit=>!new THREE.Raycaster(hit.point.clone().add(new THREE.Vector3(0,.08,0)),new THREE.Vector3(0,1,0),0,1.7).intersectObjects([...world.floors,...dynamic],false).length);
   if(entry){choices.sort((a,b)=>a.point.y-b.point.y);} // Ground entrance, never highest roof.
-  const hit=choices[0];return hit?{x:point.x,y:hit.point.y+.02,z:point.z}:null;
+  const hit=choices[0];return hit?{x:point.x,y:hit.point.y+PLAYER_FLOOR_CLEARANCE,z:point.z}:null;
  }
  teleportPosition(environment,origin,point,actors={},objects={}){
   const reject=()=>{throw Object.assign(Error('Choose a visible, clear floor spot.'),{statusCode:422});};
@@ -89,7 +90,7 @@ export class ServerBuilderCollision {
   if(builderBaseEnvironment(environment)||!environment.builderScene&&!environment.proceduralLand)return this.safeSpawn(environment,point);
   const world=this.world(environment),terrain=world.floors.filter(mesh=>mesh.name.startsWith('BUILDER_WALKABLE_FLOOR'));
   const edge=Math.max(40,Math.min(512,Number(environment.builderScene?.mapSize)||40))/2-1;
-  for(let radius=0;radius<=12;radius+=2)for(let step=0;step<(radius?8:1);step++){const x=Math.max(-edge,Math.min(edge,point.x+Math.cos(step*Math.PI/4)*radius)),z=Math.max(-edge,Math.min(edge,point.z+Math.sin(step*Math.PI/4)*radius));const hit=new THREE.Raycaster(new THREE.Vector3(x,1000,z),new THREE.Vector3(0,-1,0)).intersectObjects(terrain,false)[0];if(!hit)continue;const y=hit.point.y;const dynamic=Object.values(objects).filter(object=>!object.deleted&&!object.open).map(object=>{const size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);return {box:new THREE.Box3(new THREE.Vector3(...object.position.map((n,i)=>n-size[i]/2)),new THREE.Vector3(...object.position.map((n,i)=>n+size[i]/2)))};});const blocked=[...world.walls,...dynamic].some(({box,objectId})=>{const actor=objectId&&actors[objectId];return !(actor&&(actor.open||!actor.active))&&x>box.min.x-.35&&x<box.max.x+.35&&z>box.min.z-.35&&z<box.max.z+.35&&y<box.max.y-.05&&y+1.8>box.min.y;});if(!blocked)return {x,y,z};}
+  for(let radius=0;radius<=12;radius+=2)for(let step=0;step<(radius?8:1);step++){const x=Math.max(-edge,Math.min(edge,point.x+Math.cos(step*Math.PI/4)*radius)),z=Math.max(-edge,Math.min(edge,point.z+Math.sin(step*Math.PI/4)*radius));const hit=new THREE.Raycaster(new THREE.Vector3(x,1000,z),new THREE.Vector3(0,-1,0)).intersectObjects(terrain,false)[0];if(!hit)continue;const y=hit.point.y;const dynamic=Object.values(objects).filter(object=>!object.deleted&&!object.open).map(object=>{const size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);return {box:new THREE.Box3(new THREE.Vector3(...object.position.map((n,i)=>n-size[i]/2)),new THREE.Vector3(...object.position.map((n,i)=>n+size[i]/2)))};});const blocked=[...world.walls,...dynamic].some(({box,objectId})=>{const actor=objectId&&actors[objectId];return !(actor&&(actor.open||!actor.active))&&x>box.min.x-.35&&x<box.max.x+.35&&z>box.min.z-.35&&z<box.max.z+.35&&y<box.max.y-.05&&y+1.8>box.min.y;});if(!blocked)return {x,y:y+PLAYER_FLOOR_CLEARANCE,z};}
   throw Object.assign(new Error('This meeting location has no safe arrival point.'),{statusCode:409});
  }
  resolve(environment,previous,next,actors){
@@ -104,10 +105,10 @@ export class ServerBuilderCollision {
   }
   const {walls,floors}=this.world(environment),ray=new THREE.Raycaster(new THREE.Vector3(next.x,Math.max(previous.y,next.y)+.36,next.z),new THREE.Vector3(0,-1,0),0,100);
   const floor=ray.intersectObjects(floors,false).find(hit=>!hit.object.name.includes('TARGET')&&hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y>.5);
-  if(floor&&next.y<floor.point.y)next={...next,y:floor.point.y};
+  if(floor&&next.y<floor.point.y+PLAYER_FLOOR_CLEARANCE)next={...next,y:floor.point.y+PLAYER_FLOOR_CLEARANCE};
   for(const {box,objectId}of walls){const actor=objectId&&actors[objectId];if(actor&&(actor.open||!actor.active||actor.holderId))continue;if(next.x>box.min.x-.3&&next.x<box.max.x+.3&&next.z>box.min.z-.3&&next.z<box.max.z+.3&&next.y<box.max.y-.03&&next.y+1.7>box.min.y+.03){if(box.max.y-previous.y<=.35)next.y=Math.max(next.y,box.max.y);else return {...previous,y:next.y};}}
   const edge=Math.max(40,Math.min(512,Number(environment.builderScene?.mapSize)||40))/2-.5;
   if(!floor&&(Math.abs(next.x)>edge||Math.abs(next.z)>edge))return previous;
-  return {...next,floorY:floor?.point.y??-100};
+  return {...next,floorY:floor?floor.point.y+PLAYER_FLOOR_CLEARANCE:-100};
  }
 }
