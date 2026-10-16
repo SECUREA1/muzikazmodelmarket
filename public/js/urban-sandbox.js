@@ -12,12 +12,15 @@ export function createUrbanScene(layout,mapSize=80){
  add('spawn','hero-spawn',0,3,'talk',{functionalSettings:{behavior:'talk',isPlayerSpawn:true,interactionDistance:3}});
  add('dispatcher','desert-merchant',5,5,'quest',{functionalSettings:{behavior:'quest',interactionDistance:4,cooldown:1,prompt:'Start the courier driving circuit',urbanMission:{id:layout+'-courier',name:'City courier circuit',checkpoints,timeLimit:120,rewardScore:50,requiresVehicle:true}}});
  add('garage-quad','dune-quad',r-7,5,'vehicle',{vehicleSettings:{mode:'drive',speed:12,turnSpeed:1.75}});
- add('garage','open-studio',r-10,11);add('garage-sign','street-sign',r-6,10,'talk',{dialogueSettings:{text:'Press F near the quad to drive. Start the circuit at the dispatcher, then drive through the four numbered pads in order. Press E to leave the vehicle.'}});
- add('safehouse','open-studio',-r+9,11);add('safehouse-seat','sofa',-r+9,12,'seat');add('safehouse-medkit','healing-potion',-r+6,8,'heal',{functionalSettings:{behavior:'heal',interactionDistance:3,cooldown:15,value:25,prompt:'Use the safehouse recovery kit'}});
+ add('garage','drive-in-garage',r-11,14);add('garage-sign','street-sign',r-6,10,'talk',{dialogueSettings:{text:'Press F near the quad to drive. Start the circuit at the dispatcher, then drive through the four numbered pads in order. Press E to leave the vehicle.'}});
+ add('safehouse','estate-house',-r+11,14);add('safehouse-seat','sofa',-r+9,12,'seat');add('safehouse-medkit','healing-potion',-r+6,8,'heal',{functionalSettings:{behavior:'heal',interactionDistance:3,cooldown:15,value:25,prompt:'Use the safehouse recovery kit'}});
  add('safehouse-door','glass-door',-r+9,8,'door');add('garage-switch','lever-switch',r-7,11,'switch');
  for(const [index,point] of checkpoints.entries())add('checkpoint-'+index,'teleport-pad',point.x,point.z,'talk',{dialogueSettings:{text:'Courier checkpoint '+(index+1)+'. Drive through while your circuit is active.'},metadata:{urbanCheckpoint:index+1}});
- const block=layout==='urban-docklands'?'sci-fi-bunker':layout==='urban-nightlife'?'recording-booth':'stone-tower';
- for(let x=-1;x<=1;x+=2)for(let z=-1;z<=1;z+=2){add('block-'+x+'-'+z,block,x*r*.6,z<0?-r*.55:r*.75);add('lamp-'+x+'-'+z,'lamp-post',x*(r-5),z*(r-5));}
+ add('office','open-office',-r+11,-r+11);
+ add('yard','estate-yard',r-12,-r+13);
+ add('neighborhood-job','scout-avatar',-7,5,'quest',{functionalSettings:{behavior:'quest',interactionDistance:4,cooldown:1,prompt:'Neighborhood supply job',quest:{id:layout+'-supplies',title:'Neighborhood supplies',requiredItems:['supply-crate','treasure-crystal'],rewardScore:35}}});
+ add('job-crystal','treasure-crystal',r-11,-r+13,'pickup');
+ for(let x=-1;x<=1;x+=2)for(let z=-1;z<=1;z+=2){add('lamp-'+x+'-'+z,'lamp-post',x*(r-5),z*(r-5));}
  add('plaza-table','coffee-table',8,-10);add('plaza-seat-a','pillow-ring',5,-10,'seat');add('plaza-seat-b','pillow-ring',11,-10,'seat');
  add('venue',layout==='urban-nightlife'?'studio-desk':'market-stall',-8,-10,'talk',{dialogueSettings:{text:'Welcome to '+URBAN_LAYOUTS[layout].name+'. Explore the blocks, use the garage and safehouse, or start a timed courier run.'}});
  add('venue-art','art-wall',-8,-13);add('supply','supply-crate',-12,-10,'pickup');

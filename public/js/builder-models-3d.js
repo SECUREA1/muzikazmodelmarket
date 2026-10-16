@@ -3,6 +3,10 @@ import * as THREE from '../vendor/three/three.module.min.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  'estate-house':['Estate House','Enterable four-room home with wide passages and a terrace.',[20,3.6,16]],
+  'estate-yard':['Estate Yard','Open lawn with paths, planting and a wide entrance.',[24,1.1,22]],
+  'drive-in-garage':['Drive-in Garage','Double garage with a wide open vehicle bay and work area.',[14,4,12]],
+  'open-office':['Open Office','Enterable office with workstations and a meeting room.',[20,3.6,16]],
   'grand-floor': ['Grand Build Floor', 'A playable foundation tile that expands the walkable world directly from the Backpack.', [8, .24, 8]],
   'open-studio': ['Open Studio', 'An open-sided playable studio room with a floor, feature wall and neon columns.', [6, 2.8, 5]],
   'connected-suite': ['Connected Suite', 'A playable connected room with two doorways and a raised floor.', [6, 2.8, 5]],
@@ -172,9 +176,31 @@ function playableRoom(id) {
   return root;
 }
 
+function estateModule(id){
+ const root=new THREE.Group(),yard=id==='estate-yard',garage=id==='drive-in-garage',w=yard?24:garage?14:20,d=yard?22:garage?12:16,h=yard?1:garage?4:3.6;
+ const stone=material(0xc2c7cb,.8),floor=material(yard?0x4e8250:0x515b65,.9),wood=material(0x9b7755,.8);
+ const part=(size,at,mat=stone,name='wall')=>{const object=box(size,mat,at);object.name=name;root.add(object);return object;};
+ part([w,.16,d],[0,.08,0],floor,'BUILDER_WALKABLE_FLOOR_estate');
+ part([w,h,.24],[0,h/2,d/2]);for(const x of [-w/2,w/2])part([.24,h,d],[x,h/2,0]);
+ const opening=yard?6:garage?9:3,wing=(w-opening)/2;
+ for(const sign of [-1,1])part([wing,h,.24],[sign*(opening/2+wing/2),h/2,-d/2]);
+ if(!yard){
+ part([opening,h-2.8,.24],[0,2.8+(h-2.8)/2,-d/2]);
+ // Roof kept above avatar clearance. Rooms have two-metre passages.
+ part([w+.4,.18,d+.4],[0,h+.09,0],stone,'roof');
+ if(!garage){for(const z of [-d/4,d/4])part([.18,h,d/2-4],[0,h/2,z]);
+ for(const x of [-w/4,w/4]){part([w/2-2,h,.18],[x,h/2,0]);}
+ const furnishings=id==='open-office'?['studio-desk','studio-desk','dining-set','bookshelf']:['sofa','loft-bed','kitchen-island','bathroom-vanity'];
+ furnishings.forEach((model,index)=>{const object=createBuilderModel(model);object.position.set(index%2?w*.3:-w*.3,.16,index<2?d*.28:-d*.28);root.add(object);});
+ }else{for(const x of [-w*.38,w*.38])part([1,.85,3],[x,.585,d*.25],wood,'workbench');}
+ }else{part([2,.03,d],[0,.175,0],stone,'path');for(const x of [-9,9]){const tree=createBuilderModel('canopy-tree');tree.position.set(x,.16,6);root.add(tree);}}
+ root.userData.placementSurface=true;return root;
+}
+
 export function createBuilderModel(id) {
   let root;
-  if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
+  if(['estate-house','estate-yard','drive-in-garage','open-office'].includes(id))root=estateModule(id);
+  else if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
   else if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);
   else if(GAMEPLAY_ITEMS[id]) return gameplayItem(id);
   else if(EXPANDED[id]) return expandedModel(id);

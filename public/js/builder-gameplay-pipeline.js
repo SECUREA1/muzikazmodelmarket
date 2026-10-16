@@ -1,3 +1,4 @@
+import {questInteraction} from './rpg-quests.js';
 /** Shared, renderer-independent Builder -> RAD-TOX gameplay contract. */
 export const BUILDER_MANIFEST_VERSION = 2;
 export const PLAYABLE_BEHAVIORS = new Set([
@@ -202,7 +203,7 @@ export class BuilderGameplayRuntime {
     else if (config.behavior === 'heal') this.player.health = Math.min(this.player.maxHealth, this.player.health + value);
     else if (config.behavior === 'door') { instance.open = !instance.open; instance?.setDoorOpen?.(instance.open); }
     else if (config.behavior === 'talk') { message = actor.dialogue?.text || config.value || message; this.effects.dialogue?.(actor.dialogue, actor); }
-    else if (config.behavior === 'quest') { const id = actor.quest?.id || actor.objectId; this.player.quests[id] = this.player.quests[id] === 'active' ? 'complete' : 'active'; this.effects.quest?.(actor.quest, this.player.quests[id], actor); }
+    else if (config.behavior === 'quest') { const quest = config.quest || actor.quest; questInteraction(this.player, quest, actor.objectId); const id = quest?.id || actor.objectId; this.effects.quest?.(quest, this.player.quests[id], actor); }
     if (config.action === 'score') this.player.score += value;
     if (config.action === 'damage') this.player.health = Math.max(0, this.player.health - value);
     if (config.action === 'toggle' && instance) { instance.toggled = !instance.toggled; instance.setSwitched?.(instance.toggled); }

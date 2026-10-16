@@ -1,3 +1,4 @@
+import {questInteraction} from './public/js/rpg-quests.js';
 import {startUrbanMission,updateUrbanMission} from './public/js/urban-missions.js';
 import {worldTravelObjects,portalArrivalPosition} from './server-world-travel.mjs';
 import {refreshMzkCoins} from './server-mzk-coins.mjs';
@@ -161,7 +162,7 @@ export class AuthoritativeRooms {
      else if(config.behavior==='heal')player.health=Math.min(100,player.health+clamp(config.value||25,0,100));
      else if(config.behavior==='hazard')entity.active=false;
      else if(config.urbanMission)result.message=startUrbanMission(player,{...config.urbanMission,checkpoints:(config.urbanMission.checkpoints||[]).map(point=>point.objectId?{...point,x:sim.actors[point.objectId]?.position.x,z:sim.actors[point.objectId]?.position.z}:point)},now);
-     else if(config.behavior==='quest'){const quest=target.quest?.id||entity.id;player.quests[quest]=player.quests[quest]==='active'?'complete':'active';}
+     else if(config.behavior==='quest')result.message=questInteraction(player,config.quest||target.quest,entity.id);
      result.message=result.message||target.dialogue?.text||config.prompt||'Item activated';
      if(config.action==='toggle')entity.switched=!entity.switched;if(config.action==='use')entity.lastUsedAt=now;
      if(config.action==='damage'&&config.value>0)damagePlayer(player,now);
@@ -187,7 +188,7 @@ export class AuthoritativeRooms {
     if(asset.consumable&&asset.petId){const pet=Object.values(sim.actors).find(actor=>actor.asset?.id===asset.petId&&actor.active);if(!pet)fail('Deploy your pet in this room before feeding it.',409);pet.boostUntil=now+10000;result.message=pet.asset.name+' received a treat.';}else{
     const entityId='spawn-'+requestId,position=chosenPlacement?.position||{x:player.position.x-Math.sin(player.yaw)*2,y:player.position.y,z:player.position.z-Math.cos(player.yaw)*2},rotation=chosenPlacement?.rotation||{x:0,y:player.yaw,z:0},scale=chosenPlacement?.scale||{x:1,y:1,z:1};
     const behavior=asset.behavior||(asset.assetType==='vehicles'?'vehicle':asset.assetType==='pets'?'patrol':'interact');
-    const definition={objectId:entityId,modelId:asset.id,position:{...position},transform:{position:{...position},rotation:{...rotation},scale:{...scale}},gameplay:{behavior,health:100,damage:0,interactionDistance:3,cooldown:1,action:'none'},movement:{speed:1},asset};
+    const definition={objectId:entityId,modelId:asset.id,position:{...position},transform:{position:{...position},rotation:{...rotation},scale:{...scale}},gameplay:{behavior,health:100,damage:0,interactionDistance:3,cooldown:1,action:'none',prompt:asset.configuration?.prompt||'',quest:asset.configuration?.quest},quest:asset.configuration?.quest,dialogue:{text:asset.configuration?.prompt||''},movement:{speed:1},asset};
     sim.actors[entityId]={id:entityId,position,rotation,scale,placementRevision:1,active:true,health:100,spawned:true,ownerId:actorId,asset,definition};
     result.message=asset.name+' deployed to the shared room.';result.spawnedId=entityId;result.placementRevision=1;}
    }

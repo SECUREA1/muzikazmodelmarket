@@ -9,7 +9,7 @@ export function cleanCustomItem(input, ownedItems = []) {
   const settings = { material: ['original','metal','wood','plastic','glass','neon','stone','matte'].includes(configuration.material) ? configuration.material : 'original',
     color: /^#[a-f\d]{6}$/i.test(configuration.color) ? configuration.color : '#a8ff18',
     colorBlend: number('colorBlend',35,0,100), scale: number('scale',1,.1,5), orientation: number('orientation',0,-360,360), tilt: number('tilt',0,-90,90), mirrored: Boolean(configuration.mirrored), depth: number('depth',28,1,120), bevel: number('bevel',6,0,30), groundAligned: configuration.groundAligned !== false,
-    behavior: 'decor', attachment: 'none', animation: '' };
+    behavior: ['decor','static','pickup','collect','trigger','bounce','talk','quest','heal','seat','switch','door'].includes(configuration.behavior) ? ({static:'decor',collect:'pickup',trigger:'talk',bounce:'talk'}[configuration.behavior]||configuration.behavior) : 'decor', prompt:String(configuration.prompt||'').slice(0,500), quest:{title:String(configuration.quest?.title||name).slice(0,140),requiredItems:Array.isArray(configuration.quest?.requiredItems)?[...new Set(configuration.quest.requiredItems.map(item=>String(item).slice(0,140)).filter(Boolean))].slice(0,16):[],rewardScore:Math.max(0,Math.min(50,Number(configuration.quest?.rewardScore)||0))}, attachment: 'none', animation: '' };
   if (input.format === 'glb') {
     const owned = ownedItems.find(item => item.modelUrl && item.modelUrl === input.modelUrl);
     if (!owned) throw Object.assign(new Error('Purchase this model in the marketplace before saving a customized copy.'), { statusCode: 403 });
