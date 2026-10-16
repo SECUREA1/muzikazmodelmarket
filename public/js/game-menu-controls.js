@@ -26,3 +26,13 @@ export function mountToolsWheel(panel){
  wheel.addEventListener('keydown',event=>{const visible=buttons.filter(button=>!button.hidden),index=visible.indexOf(document.activeElement),delta={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[event.key];if(index<0||!delta)return;event.preventDefault();visible[(index+delta+visible.length)%visible.length].focus();});
  render();
 }
+
+export function mountBottomHud(stage,{menu,actions,prompt,status,connection,balance}){
+ loadGameMenuStyles();
+ const stack=document.createElement('div');stack.className='game-bottom-hud';
+ const row=document.createElement('div');row.className='game-bottom-hud__controls';
+ if(menu)row.append(menu);if(prompt)row.append(prompt);
+ if(actions)stack.append(actions);stack.append(row);
+ for(const node of [status,connection,balance])if(node)stack.append(node);
+ stage.append(stack);return stack;
+}

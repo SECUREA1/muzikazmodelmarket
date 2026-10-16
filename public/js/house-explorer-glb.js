@@ -1,6 +1,6 @@
 import {spatialEffectGain} from './shared-effect-audio.js';
 import {WalkingFloorFollower,capsuleFeet,capsuleEndpoints} from './player-floor.js';
-import {mountToolsWheel,gameplayOverlayOpen} from './game-menu-controls.js';
+import {mountToolsWheel,gameplayOverlayOpen,mountBottomHud} from './game-menu-controls.js';
 import {hasMapMachine,machineCandidates,defaultMachineObject} from './map-machine.js';
 import {deviceDefinition,INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {ENTERABLE_BUILDINGS} from './building-districts.js';
@@ -1509,7 +1509,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     builderActionButton.setAttribute('aria-label',next.label);
     builderActionTitle.textContent=next.title;builderActionHint.textContent=(next.key||'e').toUpperCase()+' · Tap';
   }
-  function refreshNearbyAction(now=performance.now(),force=false){if(!force&&now-nearbyActionCheckedAt<100)return;nearbyActionCheckedAt=now;if(gameplayOverlayOpen()||now<actionMessageUntil){renderNearbyAction({kind:'none'});touchActionsExpanded=false;touchActions.hidden=true;actionMenuToggle.setAttribute('aria-expanded','false');actionMenuToggle.hidden=true;return;}actionMenuToggle.hidden=!envLoader.world;refreshTouchActions();try{renderNearbyAction(resolveNearbyAction());}catch(error){renderNearbyAction({kind:'none',prompt:'',label:'',title:'',hint:'',vehicleActive:false});reportInteractionError('Nearby interaction',error);}}
+  function refreshNearbyAction(now=performance.now(),force=false){if(!force&&now-nearbyActionCheckedAt<100)return;nearbyActionCheckedAt=now;const overlayOpen=gameplayOverlayOpen();bottomHud.hidden=overlayOpen;if(status)status.hidden=now>=actionMessageUntil||!status.textContent;if(overlayOpen||now<actionMessageUntil){renderNearbyAction({kind:'none'});touchActionsExpanded=false;touchActions.hidden=true;actionMenuToggle.setAttribute('aria-expanded','false');actionMenuToggle.hidden=true;return;}actionMenuToggle.hidden=!envLoader.world;refreshTouchActions();try{renderNearbyAction(touchActionsExpanded?{kind:'none'}:resolveNearbyAction());}catch(error){renderNearbyAction({kind:'none',prompt:'',label:'',title:'',hint:'',vehicleActive:false});reportInteractionError('Nearby interaction',error);}}
   function performGameplayAction(key){
     if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return;
     if(key==='q'){player.eyeHeight=player.eyeHeight<player.height-.1?player.height:1.1;return;}
@@ -1534,6 +1534,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const touchActions=document.createElement('nav');touchActions.id='game-touch-actions';touchActions.className='game-touch-actions';touchActions.hidden=true;touchActions.setAttribute('aria-label','Gameplay touch controls');
   for(const [key,label]of [['e','Use'],['f','Vehicle'],['jump','Jump'],['sprint','Run'],['q','Crouch'],['g','Drop'],['r','Respawn'],['i','Pack'],['escape','Cancel']]){const button=document.createElement('button');button.type='button';button.dataset.gameAction=key;const title=document.createElement('span'),hint=document.createElement('small');title.textContent=label;hint.textContent=({jump:'Space',sprint:'Shift',escape:'Esc'}[key]||key.toUpperCase());button.append(title,hint);button.setAttribute('aria-label',label);touchActions.append(button);}
   stage.append(touchActions);
+  const bottomHud=mountBottomHud(stage,{menu:actionMenuToggle,actions:touchActions,prompt:builderActionButton,status,connection:connectionBadge,balance:demoBalance});
   touchActions.addEventListener('click',event=>{const key=event.target.closest('[data-game-action]')?.dataset.gameAction;if(!key||key==='jump')return;event.preventDefault();event.stopPropagation();if(key==='sprint'){touchSprint=!touchSprint;touchActions.querySelector('[data-game-action=sprint]').setAttribute('aria-pressed',String(touchSprint));return;}safelyInteract('Touch action',()=>performGameplayAction(key));});
   const jumpButton=touchActions.querySelector('[data-game-action=jump]');
   let jumpHeld=false,jumpGeneration=0,jumpProof=Promise.resolve();
