@@ -115,14 +115,14 @@
         <section class="world-atlas" id="world-map" aria-labelledby="world-map-title">
             <header class="world-atlas__header">
                 <div><p class="kicker">Live server atlas · districts & published maps</p><h2 id="world-map-title">Where will you land?</h2></div>
-                <p>Explore every active district in the MUZIKAZ world, then set your own spawn point. Select a beacon or tap anywhere on the map.</p>
+                <p>Choose any live district, published builder map or member space. Search destinations below, or tap the map to open a custom build point.</p>
             </header>
             <div class="world-atlas__layout">
                 <div class="world-atlas__viewport" id="world-map-viewport">
                     <img src="public/assets/muzikaz-world-map.svg" alt="Illustrated map of the MUZIKAZ world with islands, routes, mountains, forests, and districts" draggable="false">
                     <svg class="world-atlas__routes" aria-hidden="true"></svg>
                     <div class="world-atlas__scan" aria-hidden="true"></div>
-                    <div class="world-atlas__markers" aria-label="World assets with coordinates, ownership, and sale status"></div>
+                    <div class="world-atlas__markers" aria-label="Public district entry beacons"></div>
                     <div class="world-atlas__you" id="world-map-you" style="--x:36%;--y:49%"><span>YOU</span></div>
                     <div class="world-atlas__compass" aria-hidden="true"><b>N</b><span>✦</span></div>
                     <div class="world-atlas__modes" role="group" aria-label="Map atmosphere">
@@ -133,16 +133,17 @@
                     <p class="world-atlas__hint">Tap map to move your spawn</p>
                 </div>
                 <aside class="world-atlas__panel">
-                    <div class="world-atlas__live"><span></span> WORLD ONLINE</div>
+                    <div class="world-atlas__live"><span></span> <span id="world-live-count">CONNECTING TO LIVE WORLD</span></div>
+                    <div class="world-atlas__destination-picker"><label for="world-destination-search">Find any destination<input id="world-destination-search" type="search" placeholder="Map, district, creator or deed" autocomplete="off"></label><label for="world-live-destination">Live destination<select id="world-live-destination"><option value="">Choose a destination</option></select></label><button id="world-destinations-refresh" type="button">Refresh destinations</button></div>
                     <p class="kicker">Current destination</p>
                     <h3 id="world-place-name">Crew Plaza</h3>
-                    <p id="world-place-detail">Social hub · crews gathering now</p>
-                    <div class="world-atlas__asset"><img id="world-asset-logo" alt="Crew Plaza logo"><div><strong id="world-asset-type">Land world · For sale</strong><a id="world-asset-action" href="model-market.html?world=crew-plaza#marketplace-preview">View in market</a></div></div>
-                    <dl><div><dt>Position</dt><dd id="world-position-readout">X 36 · Y 49</dd></div><div><dt>Status</dt><dd>Ready to enter</dd></div></dl>
+                    <p id="world-place-detail">Open the shared Crew Plaza district.</p><div id="world-selected-preview" hidden></div>
+                    <div class="world-atlas__asset"><img id="world-asset-logo" alt="Crew Plaza logo"><div><strong id="world-asset-type">Public district</strong><a id="world-asset-action" href="model-explorer.html?environment=world-district-crew-plaza&amp;house=world-district-crew-plaza&amp;autoplay=1">Explore public district</a></div></div>
+                    <dl><div><dt>Position</dt><dd id="world-position-readout">X 36 · Y 49</dd></div><div><dt>Status</dt><dd id="world-destination-state">Loading live destinations</dd></div></dl>
                     <form id="world-position-form">
                         <label>X coordinate<input name="x" type="number" min="0" max="100" value="36" required></label>
                         <label>Y coordinate<input name="y" type="number" min="0" max="100" value="49" required></label>
-                        <button class="btn" type="submit">Set my position</button>
+                        <button class="btn" type="submit">Open this build point</button>
                     </form>
                     <button class="world-atlas__claim" id="world-claim-button" type="button">Stake land claim <span>⚑</span></button>
                     <button class="world-atlas__enter" id="world-enter-button" type="button">Enter Crew Plaza <span>→</span></button>
@@ -151,13 +152,7 @@
                     <p class="world-atlas__status" id="world-map-status" role="status">Choose a glowing place or create your own position.</p>
                 </aside>
             </div>
-            <nav class="world-atlas__districts" aria-label="Featured MUZIKAZ districts">
-                <button type="button" data-atlas-district="Studio Ridge"><b>01</b><span><strong>Studio Ridge</strong><small>GLB stage</small></span><i>Live</i></button>
-                <button type="button" data-atlas-district="Crew Plaza"><b>02</b><span><strong>Crew Plaza</strong><small>Social hub</small></span><i>248</i></button>
-                <button type="button" data-atlas-district="Neon Docks"><b>03</b><span><strong>Neon Docks</strong><small>Drop port</small></span><i>12 drops</i></button>
-                <button type="button" data-atlas-district="Echo Gardens"><b>04</b><span><strong>Echo Gardens</strong><small>Sound biome</small></span><i>Chill</i></button>
-                <button type="button" data-atlas-district="Skyline Deck"><b>05</b><span><strong>Skyline Deck</strong><small>Event roof</small></span><i>20:00</i></button>
-            </nav>
+            <nav class="world-atlas__districts" id="world-live-locations" aria-label="All live map destinations"><a href="model-explorer.html?environment=world-district-studio-ridge&amp;autoplay=1"><b>01</b><span><strong>Studio Ridge</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-volt-city&amp;autoplay=1"><b>02</b><span><strong>Volt City</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-skyline-deck&amp;autoplay=1"><b>03</b><span><strong>Skyline Deck</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-echo-gardens&amp;autoplay=1"><b>04</b><span><strong>Echo Gardens</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-crew-plaza&amp;autoplay=1"><b>05</b><span><strong>Crew Plaza</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-neon-docks&amp;autoplay=1"><b>06</b><span><strong>Neon Docks</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-bassline-badlands&amp;autoplay=1"><b>07</b><span><strong>Bassline Badlands</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-pixel-peaks&amp;autoplay=1"><b>08</b><span><strong>Pixel Peaks</strong><small>Public district</small></span></a></nav>
         </section>
 
 

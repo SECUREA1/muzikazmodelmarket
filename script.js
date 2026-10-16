@@ -558,7 +558,7 @@ function initWorldAtlas() {
   const modeButtons = [...atlas.querySelectorAll('[data-atlas-mode]')];
   const owner = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail'));
   const ownedAssets = ownerWorldNames();
-  if (markers) markers.innerHTML = WORLD_ASSETS.map((asset) => `<button type="button" style="--x:${asset.x}%;--y:${asset.y}%" data-map-place="${asset.name}" data-map-x="${asset.x}" data-map-y="${asset.y}" data-map-detail="${asset.detail}" data-world-id="${asset.id}" class="${ownedAssets.has(asset.name) ? 'is-owned' : ''}"><i></i><span>${asset.name}<small>X ${asset.x} · Y ${asset.y}</small></span><em>${ownedAssets.has(asset.name) ? 'OWNED' : `${asset.price} · FOR SALE`}</em></button>`).join('');
+  if (markers) markers.innerHTML = WORLD_ASSETS.map((asset) => `<button type="button" style="--x:${asset.x}%;--y:${asset.y}%" data-map-place="${asset.name}" data-map-x="${asset.x}" data-map-y="${asset.y}" data-map-detail="${asset.detail}" data-world-id="${asset.id}" class="${ownedAssets.has(asset.name) ? 'is-owned' : ''}"><i></i><span>${asset.name}<small>X ${asset.x} · Y ${asset.y}</small></span><em>${ownedAssets.has(asset.name) ? 'OWNED' : 'PUBLIC DISTRICT'}</em></button>`).join('');
   if (routes) {
     routes.setAttribute('viewBox', '0 0 100 100');
     routes.innerHTML = WORLD_ASSETS.slice(1).map((asset, index) => {
@@ -573,7 +573,7 @@ function initWorldAtlas() {
   let position = { x: 36, y: 49, place: 'Crew Plaza', detail: 'Social hub · crews gathering now' };
   const isLandAsset = (asset) => Boolean(findWorldAsset(asset)) || /\b(?:unrevealed\s+.*land|muzikaz\s+world|digital\s+land|world\s+plot|land\s+(?:asset|world|reservation|deed|claim))\b/i.test(asset);
   const ownedLand = owner ? (readOwnedProfiles()[owner] || []).find(isLandAsset) : '';
-  let serverPins=[];
+  let serverPins=[],liveLocations=[];let directoryBusy=false;
   let claims = {};
   try { claims = JSON.parse(window.localStorage.getItem('muzikazLandClaims') || '{}') || {}; } catch (error) { claims = {}; }
   const savedClaim = owner ? claims[owner] : null;
@@ -607,7 +607,7 @@ function initWorldAtlas() {
     if (asset && !position.mapId&&!position.environmentId&&!position.spaceId&&!position.deedId&&!position.playUrl && assetLogo && assetType && assetAction) {
       assetLogo.src = asset.logo;
       assetLogo.alt = `${asset.name} logo`;
-      assetType.textContent = `${asset.kind} · ${ownerWorldNames().has(asset.name) ? 'Owned' : `${asset.price} · For sale`}`;
+      assetType.textContent = `${asset.kind} · ${ownerWorldNames().has(asset.name) ? 'Owned' : 'Public exploration'}`;
       assetAction.href = `model-explorer.html?environment=world-district-${encodeURIComponent(asset.id)}&house=world-district-${encodeURIComponent(asset.id)}&autoplay=1&mode=multiplayer`;
       assetAction.textContent = 'Explore public district';
     } else if (assetLogo) {
@@ -618,6 +618,12 @@ function initWorldAtlas() {
       assetAction.textContent = 'Enter this map location';
     }
     enter.firstChild.textContent = `Enter ${position.place} `;
+    const liveSelect=document.querySelector('#world-live-destination'),destinationState=document.querySelector('#world-destination-state');
+    const selectedMap=position.mapId||(asset?'world-district-'+asset.id:'');if(liveSelect)liveSelect.value=selectedMap;
+    if(destinationState)destinationState.textContent=selectedMap?'Ready to enter':'Custom build point';
+    if(position.mapId&&assetType)assetType.textContent='Saved server destination';
+    const preview=document.querySelector('#world-selected-preview');if(preview){preview.hidden=!selectedMap;preview.dataset.requested=selectedMap;if(selectedMap)import('./public/js/world-destination-preview.js').then(({mountWorldPreview})=>{if(preview.dataset.requested===selectedMap)mountWorldPreview(preview,{id:selectedMap,name:position.place,updatedAt:liveLocations.find(place=>place.mapId===selectedMap)?.updatedAt});}).catch(()=>{});}
+
     places.forEach((place) => place.classList.toggle('is-active', place.dataset.mapPlace === position.place));
     districtButtons.forEach((button) => button.classList.toggle('is-active', button.dataset.atlasDistrict === position.place));
     if (announce) status.textContent = `${position.place} selected. Your spawn is set to X ${position.x}, Y ${position.y}.`;
@@ -667,7 +673,8 @@ function initWorldAtlas() {
     render({ x: asset.x, y: asset.y, place: asset.name, detail: asset.detail });
     enterSelectedLocation(event);
   }));
-  modeButtons.forEach((button) => button.addEventListener('click', () => {
+  modeButtons.forEach((button) => button.addEventListener('click', (event) => {
+    event.preventDefault();event.stopPropagation();
     atlas.dataset.mode = button.dataset.atlasMode;
     modeButtons.forEach((item) => {
       const active = item === button;
@@ -693,7 +700,7 @@ function initWorldAtlas() {
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const values = new FormData(form);
-    render({ x: values.get('x'), y: values.get('y'), place: 'My Build Point', detail: 'Your exact custom coordinates are saved on this device.' });
+    render({ x: values.get('x'), y: values.get('y'), place: 'My Build Point', detail: 'Opening these coordinates in the saved server atlas.' });enterSelectedLocation(event);
   });
   claimButton.addEventListener('click', () => {
     if (!owner || !ownedLand) return;
@@ -732,6 +739,24 @@ function initWorldAtlas() {
   if (savedClaim && !atlasParams.has('atlasX')) render({ ...savedClaim, detail: `Owned land tied to ${owner}'s Backpack and member profile.` }, false);
   renderClaim();
   async function refreshServerPins(){try{const {SharedGameInventory}=await import('./public/js/shared-game-inventory.js');serverPins=await new SharedGameInventory().api('/api/world-atlas/pins');}catch{serverPins=[];}renderClaim();}
+  const destinationSearch=document.querySelector('#world-destination-search'),destinationSelect=document.querySelector('#world-live-destination'),locationList=document.querySelector('#world-live-locations'),refreshDestinations=document.querySelector('#world-destinations-refresh');
+  async function renderLiveDestinations(){
+    const {filterAtlasLocations,atlasLocationPosition}=await import('./public/js/index-atlas-directory.js');
+    const matches=filterAtlasLocations(liveLocations,destinationSearch?.value||'');destinationSelect.replaceChildren();const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent=matches.length?'Choose a live destination':'No matching locations';destinationSelect.append(placeholder);locationList.replaceChildren();
+    for(const place of matches){const option=document.createElement('option');option.value=place.mapId;option.textContent=place.name+(place.districtName?' · '+place.districtName:'');destinationSelect.append(option);
+      const link=document.createElement('a');link.href=destinationLink({mapId:place.mapId});const title=document.createElement('strong'),info=document.createElement('small'),body=document.createElement('span');title.textContent=place.name;info.textContent=[place.districtName,place.ownerName,`${place.playerCount||0} online`].filter(Boolean).join(' · ');body.append(title,info);link.append(body);link.addEventListener('click',event=>{if(event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;render(atlasLocationPosition(place));enterSelectedLocation(event);});locationList.append(link);}
+    destinationSelect.value=position.mapId||(WORLD_ASSETS.find(asset=>asset.name===position.place)?'world-district-'+WORLD_ASSETS.find(asset=>asset.name===position.place).id:'');
+    document.querySelector('#world-live-count').textContent=`${liveLocations.length} LIVE DESTINATIONS · ${matches.length} SHOWN`;
+  }
+  async function refreshLiveDestinations(){
+    if(directoryBusy)return;directoryBusy=true;if(refreshDestinations)refreshDestinations.disabled=true;
+    try{const {SharedGameInventory}=await import('./public/js/shared-game-inventory.js');const directory=await new SharedGameInventory().api('/api/world-atlas');liveLocations=directory.locations||[];await renderLiveDestinations();status.textContent=`${liveLocations.length} server destinations available. Choose a map or enter a custom build point.`;}
+    catch(error){status.textContent=error.message||'Live destinations could not load. Try Refresh destinations.';document.querySelector('#world-live-count').textContent='LIVE SERVER UNAVAILABLE';}
+    finally{directoryBusy=false;if(refreshDestinations)refreshDestinations.disabled=false;}
+  }
+  destinationSearch?.addEventListener('input',renderLiveDestinations);destinationSelect?.addEventListener('change',async()=>{const place=liveLocations.find(place=>place.mapId===destinationSelect.value);if(place){const {atlasLocationPosition}=await import('./public/js/index-atlas-directory.js');render(atlasLocationPosition(place));}});
+  refreshDestinations?.addEventListener('click',refreshLiveDestinations);refreshLiveDestinations();
+  const directoryTimer=setInterval(()=>{if(!atlas.isConnected){clearInterval(directoryTimer);return;}if(!document.hidden&&!destinationSearch?.matches(':focus')&&!destinationSelect?.matches(':focus'))refreshLiveDestinations();},30000);
   refreshServerPins();window.addEventListener('focus',refreshServerPins);window.addEventListener('muzikaz:member-ready',refreshServerPins);
   const liveDirectory=document.createElement('section');liveDirectory.setAttribute('aria-label','All live worlds and builder maps');atlas.after(liveDirectory);
   import('./public/js/world-atlas.js').then(({mountWorldAtlas})=>mountWorldAtlas(liveDirectory)).catch(()=>{const link=document.createElement('a');link.href='members.html#world-atlas';link.textContent='Open the live world directory';liveDirectory.append(link);});
