@@ -245,3 +245,4 @@
 .builder-dashboard #builder-session-status[data-state=active]{border-color:#56714a;color:#d7f7bd;}
 @media(max-width:760px){.builder-dashboard .builder-session-launch>.builder-access-panel{border-left:0;border-top:1px solid #36533f;}.builder-dashboard .builder-access-panel>div>a{margin-left:auto;}}
 .builder-dashboard #builder-map-summary{display:block;grid-column:1/-1;margin:0 0 6px;color:#bdd4b9;font:12px/1.4 system-ui;overflow-wrap:anywhere;}
+#urban-templates{display:grid;gap:7px;margin-top:10px}#urban-templates button{padding:10px;border:1px solid #315b65;border-radius:6px;background:#10232b;color:#a4f3ff;font:900 10px/1.4 Inter,sans-serif;text-align:left;cursor:pointer}#urban-templates button:hover,#urban-templates button:focus-visible{border-color:var(--acid);color:var(--acid)}#urban-mission-editor{grid-column:1/-1}#urban-mission-editor p{color:#9bb3a7;font-size:10px;line-height:1.5}

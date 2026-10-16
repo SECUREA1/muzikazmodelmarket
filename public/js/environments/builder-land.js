@@ -5,6 +5,7 @@ export function createBuilderLand(environment) {
     const layout = built.layout || environment.layout || 'grand-floor';
     const meta = built.layoutMeta || environment.layoutMeta || {};
     const heightAt = (x, z) => {
+      if(layout.startsWith('urban-'))return 0;
       const ripple = .28 * Math.sin(x * .31) * Math.cos(z * .27);
       if (['community-park','grand-floor','hedge-maze','neon-maze','dungeon-maze','vendor-street','creator-studios','market-square','railroad-world','skyport','desert-airfield','blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio'].includes(layout)) return ['community-park','grand-floor'].includes(layout) ? 0 : ripple * .18;
       if (layout === 'loft') return ripple;
