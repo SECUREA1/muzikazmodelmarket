@@ -1,3 +1,4 @@
+import {builderBaseEnvironment} from './public/js/environments/builder-base.js';
 import {drawingCollisionModel} from './public/js/placed-item-collision.js';
 import {placedCollisionWorld,disposePlacedCollision} from './server-placed-collision.mjs';
 import {resolvePlacedSolids} from './public/js/placed-item-collision.js';
@@ -13,8 +14,8 @@ export class ServerBuilderCollision {
  world(environment){
   const key=environment.id+':'+(environment.updatedAt||'');if(this.cache.has(key))return this.cache.get(key);
   const definitions=new Map([...(environment.builderScene?.catalogModels||[]),...(environment.builderScene?.placedModels||[]),...(environment.builderScene?.customModels||[])].map(model=>[model.id,model]));
-  const glb=!environment.builderScene&&!environment.proceduralLand&&Boolean(environment.modelUrl||environment.modelUrls?.length);const root=glb?environmentGeometry(environment):createBuilderLand(environment),walls=[];
-  for(const item of environment.builderScene?.objects||[]){let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){object=environmentGeometry({modelUrl:definition.modelUrl});const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3());if(definition.targetHeight&&size.y)object.scale.multiplyScalar(definition.targetHeight/size.y);object.updateMatrixWorld(true);object.position.y-=new THREE.Box3().setFromObject(object).min.y;}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);object.userData.builderObjectId=item.id;root.add(object);}
+  const base=builderBaseEnvironment(environment);const glb=Boolean(base)||!environment.builderScene&&!environment.proceduralLand&&Boolean(environment.modelUrl||environment.modelUrls?.length);const root=glb?new THREE.Group():createBuilderLand(environment),walls=[];if(glb)root.add(environmentGeometry(base||environment));
+  for(const item of environment.builderScene?.objects||[]){if(['hostile','patrol'].includes(item.functionalSettings?.behavior))continue;let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){object=environmentGeometry({modelUrl:definition.modelUrl});const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3());if(definition.targetHeight&&size.y)object.scale.multiplyScalar(definition.targetHeight/size.y);object.updateMatrixWorld(true);object.position.y-=new THREE.Box3().setFromObject(object).min.y;}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);object.userData.builderObjectId=item.id;root.add(object);}
   root.updateMatrixWorld(true);const floors=[];
   root.traverse(mesh=>{if(!mesh.isMesh||mesh.userData.streetVisual||/SKY|PARTICLE|VFX|WATER|HELPER/i.test(mesh.name))return;floors.push(mesh);if(!glb&&!mesh.userData.streetVisual&&!mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')){let parent=mesh;while(parent&&!parent.userData.builderObjectId)parent=parent.parent;walls.push({box:new THREE.Box3().setFromObject(mesh),objectId:parent?.userData.builderObjectId});}});
   const world={root,walls,floors,glb,bounds:new THREE.Box3().setFromObject(root)};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
@@ -60,8 +61,8 @@ export class ServerBuilderCollision {
   return floor;
  }
  safeSpawn(environment,point){
-  if(environment.builderScene||environment.proceduralLand)return this.meetingPosition(environment,point);
-  if(!environment.modelUrl&&!environment.modelUrls?.length)return point;
+  if(!builderBaseEnvironment(environment)&&(environment.builderScene||environment.proceduralLand))return this.meetingPosition(environment,point);
+  if(!builderBaseEnvironment(environment)&&!environment.modelUrl&&!environment.modelUrls?.length)return point;
   const world=this.world(environment),bounds=world.bounds,center=bounds.getCenter(new THREE.Vector3());
   const named=world.root.getObjectByName('SPAWN_PLAYER')||world.root.getObjectByName('SPAWN_DEFAULT');
   const anchor=named?named.getWorldPosition(new THREE.Vector3()):point;
@@ -70,7 +71,7 @@ export class ServerBuilderCollision {
   throw Object.assign(Error('This map has no safe ground-floor entry.'),{statusCode:409});
  }
  encounterSpawn(environment,point,center,occupied=[]) {
-  if(!environment.modelUrl&&!environment.modelUrls?.length)return point;
+  if(!builderBaseEnvironment(environment)&&!environment.modelUrl&&!environment.modelUrls?.length)return point;
   const candidates=[point];
   for(const radius of [3,4,2,5,1.6,6])for(let index=0;index<24;index++){
    const angle=index*Math.PI/12;candidates.push({x:center.x+Math.sin(angle)*radius,y:center.y,z:center.z+Math.cos(angle)*radius});
@@ -85,15 +86,15 @@ export class ServerBuilderCollision {
   return {...center};
  }
  meetingPosition(environment,point,actors={},objects={}){
-  if(!environment.builderScene&&!environment.proceduralLand)return this.safeSpawn(environment,point);
+  if(builderBaseEnvironment(environment)||!environment.builderScene&&!environment.proceduralLand)return this.safeSpawn(environment,point);
   const world=this.world(environment),terrain=world.floors.filter(mesh=>mesh.name.startsWith('BUILDER_WALKABLE_FLOOR'));
   const edge=Math.max(40,Math.min(512,Number(environment.builderScene?.mapSize)||40))/2-1;
   for(let radius=0;radius<=12;radius+=2)for(let step=0;step<(radius?8:1);step++){const x=Math.max(-edge,Math.min(edge,point.x+Math.cos(step*Math.PI/4)*radius)),z=Math.max(-edge,Math.min(edge,point.z+Math.sin(step*Math.PI/4)*radius));const hit=new THREE.Raycaster(new THREE.Vector3(x,1000,z),new THREE.Vector3(0,-1,0)).intersectObjects(terrain,false)[0];if(!hit)continue;const y=hit.point.y;const dynamic=Object.values(objects).filter(object=>!object.deleted&&!object.open).map(object=>{const size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);return {box:new THREE.Box3(new THREE.Vector3(...object.position.map((n,i)=>n-size[i]/2)),new THREE.Vector3(...object.position.map((n,i)=>n+size[i]/2)))};});const blocked=[...world.walls,...dynamic].some(({box,objectId})=>{const actor=objectId&&actors[objectId];return !(actor&&(actor.open||!actor.active))&&x>box.min.x-.35&&x<box.max.x+.35&&z>box.min.z-.35&&z<box.max.z+.35&&y<box.max.y-.05&&y+1.8>box.min.y;});if(!blocked)return {x,y,z};}
   throw Object.assign(new Error('This meeting location has no safe arrival point.'),{statusCode:409});
  }
  resolve(environment,previous,next,actors){
-  if(!environment.builderScene&&!environment.proceduralLand){
-   if(!environment.modelUrl&&!environment.modelUrls?.length)return next;
+  if(builderBaseEnvironment(environment)||!environment.builderScene&&!environment.proceduralLand){
+   if(!builderBaseEnvironment(environment)&&!environment.modelUrl&&!environment.modelUrls?.length)return next;
    if(Math.abs(next.x-previous.x)+Math.abs(next.y-previous.y)+Math.abs(next.z-previous.z)<1e-7)return next;
    const world=this.world(environment),delta=new THREE.Vector3(next.x-previous.x,0,next.z-previous.z),length=delta.length();
    if(length>.0001){const hits=new THREE.Raycaster(new THREE.Vector3(previous.x,previous.y+.85,previous.z),delta.normalize(),0,length+.32).intersectObjects(world.floors,false);if(hits.some(hit=>Math.abs(hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y||0)<.55))return {...previous,y:next.y};}
