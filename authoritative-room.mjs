@@ -1,3 +1,4 @@
+import {populateMapMachine} from './server-map-machine.mjs';
 import {builderBaseSpawn} from './public/js/environments/builder-base.js';
 import {projectArcadeDevices} from './server-arcade-games.mjs';
 import {deviceCommand,advanceDevicePlayback} from './server-interactive-devices.mjs';
@@ -63,6 +64,7 @@ export class AuthoritativeRooms {
    sim.baseAlignmentKey=alignmentKey;
   }
   refreshMzkCoins(sim,environment,this.now(),(position,occupied)=>environment.builderScene||environment.proceduralLand?this.collision.safeSpawn(environment,position):this.collision.encounterSpawn(environment,position,this.collision.safeSpawn(environment,environment.spawn||{x:0,y:0,z:2}),occupied));
+  populateMapMachine(sim,manifest,environment,this.collision,this.now(),room.objects);
   manifest.actors.push(...Object.values(sim.actors).filter(actor=>actor.definition).map(actor=>actor.definition));
   sim.streets=environment.streets||[];sim.mapRevision=environment.atlas?.revision||0;
   return {sim,manifest};
