@@ -173,3 +173,13 @@ test('a confirmed MZK token refreshes the wallet and plays pickup feedback only 
   },{render:()=>{}});
  }finally{globalThis.CustomEvent=previousEvent;}
 });
+
+test('a confirmed portal arrival is sent once and automatic reconnect uses the saved room position',async()=>{
+ const joins=[];let sequence=0,inputs=0;
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);if(command.action==='join')joins.push(command);
+  if(command.action==='input'&&++inputs===1)return response({message:'Rejoin',code:'ROOM_JOIN_REQUIRED'},409);
+  return response(confirmed(++sequence));
+ },async client=>{await client.whenReady();await pause(250);assert.ok(joins.length>=2);assert.equal(joins[0].travelFrom,'public-commons');assert.equal(joins[0].travelToken,'server-ticket');assert.equal(joins[1].travelToken,undefined);},{arrival:{from:'public-commons',token:'server-ticket'}});
+});

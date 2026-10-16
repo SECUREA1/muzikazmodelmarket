@@ -1,3 +1,4 @@
+import {worldTravelObjects,portalArrivalPosition} from './server-world-travel.mjs';
 import {refreshMzkCoins} from './server-mzk-coins.mjs';
 import {refreshRpgLoot,dropRpgLoot} from './server-rpg-loot.mjs';
 import {validateOwnedPlacement} from './owned-item-placement.mjs';
@@ -5,7 +6,7 @@ import {ENEMY_BEHAVIORS,stepEnemyCombat} from './server-enemy-combat.mjs';
 import {combatStats,damagePlayer,registerParticipant,checkTeamDefeat,matchView,SPAWN_PROTECTION_MS,PLAYER_HIT_CAPACITY} from './rpg-match.mjs';
 import {startRadTox,advanceRadTox,nextRadToxLevel,stepRadToxEnemy} from './rad-tox-campaign.mjs';
 import {rayBoxDistance} from './server-combat-ray.mjs';
-import {createHash} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
 import {ServerBuilderCollision} from './server-builder-collision.mjs';
 import {RANGED_WEAPONS} from './public/js/game-weapons.js';
 import {UTILITY_TOOLS} from './public/js/game-utilities.js';
@@ -17,7 +18,7 @@ const copy=value=>JSON.parse(JSON.stringify(value));
 const fail=(message,statusCode=400,code)=>{throw Object.assign(new Error(message),{statusCode,code});};
 const damageByTool={laser:20,bat:25,taser:8,toxin:12,dynamite:60,flamethrower:15,'pulse-rifle':18,shotgun:35,marksman:45};
 export class AuthoritativeRooms {
- constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},collectCoin=async()=>{throw new Error("Coin storage unavailable.");},capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,collectLoot,collectCoin,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();}
+ constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},collectCoin=async()=>{throw new Error("Coin storage unavailable.");},resolveDestination=null,capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,collectLoot,collectCoin,resolveDestination,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();}
  async tickActive(){
   if(this.ticking)return;this.ticking=true;
   try{for(const [id,environment]of this.activeWorlds)await this.store.update(id,room=>{
@@ -38,9 +39,9 @@ export class AuthoritativeRooms {
   }
  }
  initialize(room,environment){
-  const manifestKey=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'');let base=this.manifestCache.get(manifestKey);if(!base){base=compileBuilderScene(environment.builderScene||environment.placementScene||{});this.manifestCache.set(manifestKey,base);if(this.manifestCache.size>32)this.manifestCache.delete(this.manifestCache.keys().next().value);}const manifest={...base,actors:[...base.actors]};
+  const manifestKey=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.travelPortals||[]);let base=this.manifestCache.get(manifestKey);if(!base){const scene=environment.builderScene||environment.placementScene||{};base=compileBuilderScene({...scene,objects:[...(scene.objects||[]),...worldTravelObjects(environment,this.collision)]});this.manifestCache.set(manifestKey,base);if(this.manifestCache.size>32)this.manifestCache.delete(this.manifestCache.keys().next().value);}const manifest={...base,actors:[...base.actors]};
   room.simulation ||= {version:1,players:{},actors:{},events:[],time:this.now(),sequence:0};
-  const sim=room.simulation,contentUpdatedAt=environment.contentUpdatedAt||environment.updatedAt;
+  const sim=room.simulation,contentUpdatedAt=manifestKey;
   if(!sim.initialized||sim.environmentUpdatedAt!==contentUpdatedAt){
    const authored=new Set(manifest.objects.map(actor=>actor.objectId));for(const [id,actor]of Object.entries(sim.actors))if(!actor.spawned&&!actor.radTox&&!authored.has(id))delete sim.actors[id];
    for(const actor of manifest.objects){if(sim.actors[actor.objectId]){sim.actors[actor.objectId].position=copy(actor.transform.position);sim.actors[actor.objectId].rotation=copy(actor.transform.rotation);sim.actors[actor.objectId].scale=copy(actor.transform.scale);sim.actors[actor.objectId].worldGateway=actor.gameplay.action==='teleport'&&actor.gameplay.portal?.destinationType==='map'?{destination:actor.gameplay.portal.targetMapId,name:actor.gameplay.prompt||actor.gameplay.portal.targetMapId,ownerName:actor.gameplay.portal.ownerName,deedId:actor.gameplay.portal.deedId,color:actor.gameplay.portal.color}:null;}if(!sim.actors[actor.objectId])sim.actors[actor.objectId]={id:actor.objectId,modelId:actor.modelId,worldGateway:actor.gameplay.action==='teleport'&&actor.gameplay.portal?.destinationType==='map'?{destination:actor.gameplay.portal.targetMapId,name:actor.gameplay.prompt||actor.gameplay.portal.targetMapId,ownerName:actor.gameplay.portal.ownerName,deedId:actor.gameplay.portal.deedId,color:actor.gameplay.portal.color}:null,position:copy(actor.transform.position),rotation:copy(actor.transform.rotation),scale:copy(actor.transform.scale),health:actor.gameplay.health,active:true,open:false,switched:false};}
@@ -108,12 +109,20 @@ export class AuthoritativeRooms {
   let player=sim.players[actorId],result={};
   if(command.action==='join'){
    const active=Object.entries(sim.players).filter(([id,p])=>id!==actorId&&now-p.lastSeen<15000);if(active.length>=(environment.publicDestination?128:this.capacity))fail('This multiplayer room is full.',409);
+   let travel=null,travelSource=null;
+   if(command.travelToken){
+    travelSource=allRooms[String(command.travelFrom||'')]?.simulation?.players[actorId];const pending=travelSource?.pendingTravel;
+    if(pending?.token===command.travelToken&&pending.to===id&&pending.expiresAt>=now)travel=pending;
+    else if(!(player?.lastPortalArrival?.token===command.travelToken&&player.lastPortalArrival.from===command.travelFrom&&player.lastPortalArrival.expiresAt>=now))fail('This portal trip has expired. Enter the portal again.',409,'PORTAL_TRIP_EXPIRED');
+   }
    const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);let spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects):this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2});
+   if(travel)spawn=portalArrivalPosition(environment,manifest,travel.from,this.collision,sim.actors,room.objects);
    if(player&&player.floorVersion!==2&&!meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.floorVersion=2;}
-   if(!player&&!meeting){const count=active.length;spawn=this.collision.safeSpawn(environment,{...spawn,x:spawn.x+(count%4)*1.2,z:spawn.z+Math.floor(count/4)*1.2});}
+   if(!player&&!meeting&&!travel){const count=active.length;spawn=this.collision.safeSpawn(environment,{...spawn,x:spawn.x+(count%4)*1.2,z:spawn.z+Math.floor(count/4)*1.2});}
    if(!player)player=sim.players[actorId]={username:identity.username,position:{x:Number(spawn.x)||0,y:Number(spawn.y)||0,z:Number(spawn.z)||0},floor:Number(spawn.y)||0,floorVersion:2,yaw:0,velocityY:0,grounded:true,ammo:120,fuel:100,health:clamp(identity.stats?.health??100,0,100),stats:identity.stats||{},score:0,inventory:[],quests:{},cooldowns:{},lastSeen:now};
    for(const [otherId,otherRoom]of Object.entries(allRooms)){if(otherId===id)continue;const previous=otherRoom.simulation?.players[actorId];if(!previous)continue;previous.lastSeen=0;previous.replacedByRoom=id;previous.input={};for(const key of ['heldId','seatedId','vehicleId']){const held=otherRoom.simulation.actors[previous[key]];if(held)held.holderId=null;previous[key]=null;}}
-   if(meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;player.actorId=actorId;
+   if(travel){player.lastPortalArrival=travel;delete travelSource.pendingTravel;}
+   if(meeting||travel){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;player.actorId=actorId;
    startRadTox(sim,environment,now,player.position);registerParticipant(sim,actorId,player,now);
    result.message='Joined '+player.locationName;
   }else{
@@ -122,17 +131,18 @@ export class AuthoritativeRooms {
    if(command.action==='input'){const input=command.input||{};player.input=player.health<=0||sim.match?.state==='finished'?{}:{forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position))result.message='RAD-TOX encounter active.';else result.message='Builder gameplay active.';}
    else if(command.action==='next-rad-tox'){if(sim.radTox?.transition&&now<sim.radTox.transition.at)fail('The next round starts after the 10-second results countdown.',409);if(nextRadToxLevel(sim,environment,now,command.matchId)){for(const [index,participantId] of Object.keys(sim.match.participants).entries()){const participant=sim.players[participantId],entry=environment.spawn||{x:0,y:0,z:2};participant.position=this.collision.safeSpawn(environment,{...entry,x:entry.x+(index%4)*1.2,z:entry.z+Math.floor(index/4)*1.2});participant.floor=participant.position.y;participant.velocityY=0;participant.grounded=true;participant.shieldUntil=0;participant.input={};participant.toolReady={};participant.toolUses={};}result.message='Next shared level started.';}else if(sim.match?.id===command.matchId)fail('Complete the current level before starting another.',409);}
-   else if(sim.match?.state==='finished'&&command.action!=='input')fail('This level has ended. Review the results and start the next level.',409);
+   else if(sim.match?.state==='finished'&&!['input','interact'].includes(command.action))fail('This level has ended. Review the results and start the next level.',409);
    else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
-   else if(player.health<=0)fail('Respawn before acting.',409);
+   else if(player.health<=0&&command.action!=='interact')fail('Respawn before acting.',409);
    else if(command.action==='drop'){const held=sim.actors[player.heldId];if(held){held.holderId=null;held.position={...player.position};player.heldId=null;}}
    else if(command.action==='collect'){await this.collectNearbyLoot(sim,player,identity,id,now,command.entityId,result);}
    else if(command.action==='interact'){
     if(player.vehicleId){sim.actors[player.vehicleId].holderId=null;player.vehicleId=null;}
     else if(player.seatedId){sim.actors[player.seatedId].holderId=null;player.seatedId=null;}
     else{
-     const target=manifest.actors.filter(a=>(!['hostile','patrol','decor'].includes(a.gameplay.behavior)||(a.gameplay.action&&a.gameplay.action!=='none'))&&sim.actors[a.objectId]?.active&&distance(sim.actors[a.objectId].position,player.position)<=Math.min(5,a.gameplay.interactionDistance)).sort((a,b)=>distance(sim.actors[a.objectId].position,player.position)-distance(sim.actors[b.objectId].position,player.position))[0];
+     const target=manifest.actors.filter(a=>(!command.entityId||a.objectId===command.entityId)&&(!['hostile','patrol','decor'].includes(a.gameplay.behavior)||(a.gameplay.action&&a.gameplay.action!=='none'))&&sim.actors[a.objectId]?.active&&distance(sim.actors[a.objectId].position,player.position)<=Math.min(5,a.gameplay.interactionDistance)).sort((a,b)=>distance(sim.actors[a.objectId].position,player.position)-distance(sim.actors[b.objectId].position,player.position))[0];
      if(!target)fail('No usable item is within reach.',409);const entity=sim.actors[target.objectId],config=target.gameplay;
+     if(config.action!=='teleport'||config.portal?.destinationType!=='map'){if(sim.match?.state==='finished')fail('This level has ended.',409);if(player.health<=0)fail('Respawn before acting.',409);}
      if(entity.holderId&&entity.holderId!==actorId)fail('Another player is using this item.',409);
      if(now-(player.cooldowns[target.objectId]||0)<config.cooldown*1000)fail('Item is cooling down.',429);player.cooldowns[target.objectId]=now;
      if(config.behavior==='door')entity.open=!entity.open;
@@ -147,7 +157,7 @@ export class AuthoritativeRooms {
      if(config.action==='toggle')entity.switched=!entity.switched;if(config.action==='use')entity.lastUsedAt=now;
      if(config.action==='damage'&&config.value>0)damagePlayer(player,now);
      if(config.action==='score')player.score+=clamp(config.value,0,100);
-     if(config.action==='teleport'){const portal=config.portal;if(!portal?.enabled)fail('Portal is locked.',409);if(portal.destinationType==='map')result.destination=portal.targetMapId;else{const destination=sim.actors[portal.targetObjectId];if(!destination)fail('Destination is unavailable.');player.position={...destination.position};}}
+     if(config.action==='teleport'){const portal=config.portal;if(!portal?.enabled)fail('Portal is locked.',409);if(portal.destinationType==='map'){if(this.resolveDestination&&!await this.resolveDestination(portal.targetMapId))fail('This destination is no longer listed in the shared world.',404,'DESTINATION_UNAVAILABLE');result.destination=portal.targetMapId;const travel=player.pendingTravel?.to===portal.targetMapId&&player.pendingTravel.expiresAt>=now?player.pendingTravel:{from:id,to:portal.targetMapId,token:randomUUID(),expiresAt:now+120000};player.pendingTravel=travel;result.travel=travel;}else{const destination=sim.actors[portal.targetObjectId];if(!destination)fail('Destination is unavailable.');player.position={...destination.position};}}
     }
    }
    else if(command.action==='place-item'){

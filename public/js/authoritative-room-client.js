@@ -1,9 +1,9 @@
 import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory.js';
 
-export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,onError}) {
+export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,onError}) {
  const api = new SharedGameInventory();
  let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0, inputRequested=false,fireBusy=false;
- let fireRequest=null;
+ let fireRequest=null,arrivalPending=arrival;
  const waiters=new Set(),collected=new Set();
  function settle(error) {
   for (const waiter of waiters) { clearTimeout(waiter.timer); error ? waiter.reject(error) : waiter.resolve(client); }
@@ -87,10 +87,11 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   busy=true;
   try {
    if (!joined) {
-    const arrival=await client.send('join',meetingId?{meetingId}:{});
+    const joinedState=await client.send('join',{...(meetingId?{meetingId}:{}),...(arrivalPending?{travelFrom:arrivalPending.from,travelToken:arrivalPending.token}:{})});
+    arrivalPending=null;
     if (stopped) return;
     joined=true;
-    onStatus?.(arrival?.result?.message || 'Connected. Gameplay is ready.');
+    onStatus?.(joinedState?.result?.message || 'Connected. Gameplay is ready.');
    } else {
     const controls=document.hidden?{}:input();
     const state=await client.send('input',{input:controls});

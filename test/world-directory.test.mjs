@@ -14,7 +14,7 @@ import {atlasPortalRoute,atlasBuildingPath} from '../public/js/atlas-building-ar
 test('all listed repository, uploaded and saved maps have durable reachable district buildings beyond 128 destinations',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'complete-world-'));t.after(()=>rm(dir,{recursive:true,force:true}));
  const atlas=new WorldAtlas(join(dir,'atlas.json'));
- const maps=Array.from({length:145},(_,i)=>({id:'map-'+String(i).padStart(3,'0'),name:'Saved world '+i,source:i%3===0?'repository':i%3===1?'upload':'custom-builder',ownerId:'account:alice',ownerName:'Alice',worldId:'volt-city',visibility:'public',builderScene:{layout:'grand-floor',mapSize:40,objects:[]}}));
+ const maps=Array.from({length:145},(_,i)=>({id:'map-'+String(i).padStart(3,'0'),name:'Saved world '+i,source:i%3===0?'repository':i%3===1?'upload':'custom-builder',ownerId:'account:alice',ownerName:'Alice',worldId:'volt-city',visibility:'public',multiplayer:false,builderScene:{layout:'grand-floor',mapSize:40,objects:[]}}));
  maps.push({id:'secret',name:'Secret',visibility:'private',builderScene:{objects:[]}});
  const deeds=[{id:'deed-volt-city',name:'Alice estate',ownerId:'account:alice',ownerName:'Alice',worldId:'volt-city',hostedSpace:{environmentId:maps[0].id,name:'Alice private game room'}}];
  let result=await synchronizeWorldDirectory(atlas,maps,deeds);const indexed=new Map(result.environments.map(map=>[map.id,map]));
@@ -23,10 +23,11 @@ test('all listed repository, uploaded and saved maps have durable reachable dist
  assert.ok(indexed.has('world-district-volt-city-5'),'districts paginate rather than dropping locations');
  const reachable=new Set(),visit=id=>{if(reachable.has(id))return;reachable.add(id);for(const target of indexed.get(id)?.portalTargets||[])visit(target);};visit('public-commons');
  for(const map of maps.filter(map=>map.visibility==='public')){
-  assert.ok(reachable.has(map.id),map.id+' is connected');
+  assert.ok(reachable.has(map.id),map.id+' is connected');assert.equal(indexed.get(map.id).multiplayer,true);assert.equal(indexed.get(map.id).sharedWorld,true);assert.equal(indexed.get(map.id).roomId,map.id);assert.equal(indexed.get(map.id).travelPortals.length,2);assert.match(indexed.get(map.id).playUrl,/mode=multiplayer/);
   const district=indexed.get(indexed.get(map.id).districtId),building=district.builderScene.objects.find(object=>object.atlasDestination===map.id);
   assert.ok(building,map.id+' has a physical building');assert.equal(building.functionalSettings.portal.targetMapId,map.id);
  }
+ for(const region of WORLD_DISTRICTS){const hub=indexed.get('world-district-'+region.id);for(const other of WORLD_DISTRICTS)if(other.id!==region.id)assert.ok(hub.portalTargets.includes('world-district-'+other.id));}
  const plot=indexed.get('plot-deed-volt-city');assert.ok(reachable.has(plot.id));assert.equal(plot.baseEnvironmentId,maps[0].id);assert.deepEqual(atlasPortalRoute({...plot,mapId:plot.id}),['public-commons',plot.districtId,plot.id]);
  for(const district of result.environments.filter(map=>map.atlasDistrict))assert.ok(district.builderScene.objects.filter(object=>object.atlasDestination).length<=35,'bounded district geometry');
  const revision=result.atlas.revision;result=await synchronizeWorldDirectory(atlas,maps,deeds);assert.equal(result.atlas.revision,revision,'unchanged registry stays stable');

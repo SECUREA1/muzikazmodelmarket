@@ -54,7 +54,7 @@ function buildDistrictDirectory(atlas,data){
    cell.kind='district';cell.districtId=id;cell.districtName=region.name;cell.districtColor=region.color;
    const slice=members.filter(member=>Math.floor(data.destinationDistrictSlots[member.mapId].index/DISTRICT_PAGE_SIZE)===page).sort((a,b)=>data.destinationDistrictSlots[a.mapId].index-data.destinationDistrictSlots[b.mapId].index);
    for(const member of slice){member.districtId=id;member.districtName=region.name;member.districtColor=region.color;}
-   cell.portalTargets=['public-commons',...slice.map(member=>member.mapId),...(page?[districtMapId(region.id,page-1)]:[]),...(page+1<pages?[districtMapId(region.id,page+1)]:[])];districts.push(cell);
+   cell.portalTargets=[...new Set(['public-commons',...slice.map(member=>member.mapId),...(page?[districtMapId(region.id),districtMapId(region.id,page-1)]:WORLD_DISTRICTS.filter(other=>other.id!==region.id).map(other=>districtMapId(other.id))),...(page+1<pages?[districtMapId(region.id,page+1)]:[])])];districts.push(cell);
   }
  }
  const active=new Set(districts.map(cell=>cell.mapId));for(const [key,cell]of Object.entries(data.cells))if(cell.environment?.atlasDistrict&&!active.has(cell.mapId)){delete data.cells[key];data.revision++;}
