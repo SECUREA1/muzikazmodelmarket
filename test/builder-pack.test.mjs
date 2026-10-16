@@ -1,3 +1,4 @@
+import {INTERACTIVE_DEVICES} from '../public/js/interactive-devices.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
@@ -32,10 +33,10 @@ test('in-game Tools and Drop Backpack expose the complete map-building pack', as
   assert.match(game, /Build map & game/);
   assert.match(game, /muzikaz\.builder\.buildTray/);
   assert.match(game, /deployPlayableBuilderAsset\(asset\)/);
-  assert.match(game, /BUILD_ASSETS\.length}\/\$\{BUILD_ASSETS\.length} Builder items available/);
+  assert.match(game, /Browse all Builder items/);
   assert.match(game, /data-rad-pack-builder/);
   assert.match(game, /\.\.\.tray\.map\(item=>\['Build asset'/);
-  assert.equal(buildAssets.length, 79);
+  assert.equal(buildAssets.length, 79+Object.keys(INTERACTIVE_DEVICES).length);
   assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'landscape').length, 13);
   assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'interior').length, 14);
   assert.ok(buildAssets.every((asset) => ['props','vehicles'].includes(asset.type) && asset.thumbnailUrl));

@@ -1,8 +1,11 @@
+import {INTERACTIVE_DEVICES} from './interactive-devices.js';
+import {createInteractiveDevice} from './interactive-device-models.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  ...Object.fromEntries(Object.entries(INTERACTIVE_DEVICES).map(([id,item])=>[id,[item.name,item.description,[item.shape==='cinema'?5:2.4,item.shape==='cinema'?3.3:2.6,1.3]]])),
   'estate-house':['Estate House','Enterable four-room home with wide passages and a terrace.',[20,3.6,16]],
   'estate-yard':['Estate Yard','Open lawn with paths, planting and a wide entrance.',[24,1.1,22]],
   'drive-in-garage':['Drive-in Garage','Double garage with a wide open vehicle bay and work area.',[14,4,12]],
@@ -199,7 +202,8 @@ function estateModule(id){
 
 export function createBuilderModel(id) {
   let root;
-  if(['estate-house','estate-yard','drive-in-garage','open-office'].includes(id))root=estateModule(id);
+  if(INTERACTIVE_DEVICES[id])return createInteractiveDevice(THREE,id);
+  else if(['estate-house','estate-yard','drive-in-garage','open-office'].includes(id))root=estateModule(id);
   else if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
   else if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);
   else if(GAMEPLAY_ITEMS[id]) return gameplayItem(id);

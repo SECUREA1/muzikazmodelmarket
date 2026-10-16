@@ -1,3 +1,4 @@
+import {INTERACTIVE_DEVICES} from './public/js/interactive-devices.js';
 import {URBAN_LAYOUTS,createUrbanScene} from './public/js/urban-sandbox.js';
 import {createServerStreets} from './public/js/environments/server-streets.js';
 import {catalogId,normalizeCatalogModel} from './public/js/builder-catalog.js';
@@ -86,7 +87,7 @@ let memberModels=[];
 let customModels=upgradeCustomModels(readJson(CUSTOM_KEY,[])), onlineModels=readJson(ONLINE_MODELS_KEY,[]), catalogModels=[], activeFilter='all', selectedId=null, pendingModelId=null, dragging=null, toastTimer, viewMode='build', inspectorRequested=false, lastObjectTap=null;
 localStorage.setItem(CUSTOM_KEY,JSON.stringify(customModels));
 let sceneData={version:3,id:'active',name:'Untitled environment',layout:'grand-floor',mapSize:40,weather:'clear',objects:[]};
-const completeProceduralModels=Object.entries(BUILDER_MODEL_INFO).filter(([id])=>![...builtins,...gameplayModels,...expandedModels].some(m=>m.id===id)).map(([id,[name,description]])=>({id,name,description,type:'props',category:'props',size:72,procedural:true,buildAssetId:id,behavior:'decor',scale:'game ready',assetKind:'premade'}));
+const completeProceduralModels=Object.entries(BUILDER_MODEL_INFO).filter(([id])=>![...builtins,...gameplayModels,...expandedModels].some(m=>m.id===id)).map(([id,[name,description]])=>({id,name,description,type:'props',category:'props',size:72,procedural:true,buildAssetId:id,behavior:INTERACTIVE_DEVICES[id]?'interact':'decor',function_data:INTERACTIVE_DEVICES[id]?{device:id,prompt:'Use '+name}:undefined,scale:'game ready',assetKind:'premade'}));
 const models=()=>[...completeProceduralModels,...memberModels,...builtins,...gameplayModels,...expandedModels,...catalogModels,...onlineModels,...customModels], modelFor=id=>models().find(m=>m.id===id), selected=()=>sceneData.objects.find(o=>o.id===selectedId);
 
 // Repository manifests are the source of truth for deposited items and maps.

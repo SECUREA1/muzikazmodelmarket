@@ -1,4 +1,6 @@
+import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 export const URBAN_LAYOUTS={
+ 'urban-media-lounge':{name:'Media & Arcade Commons',icon:'♫',description:'A public media lounge with fifteen interactive terminals, shared video, music, shopping and arcade games.',color:0x283747,sky:0x11152d},
  'urban-downtown':{name:'Downtown Sandbox',icon:'▥',description:'An urban driving grid with courier checkpoints, a garage, safehouse and public square.',color:0x343c42,sky:0x151d2e},
  'urban-docklands':{name:'Docklands Run',icon:'▰',description:'Industrial streets, cargo depots and a timed delivery circuit.',color:0x3c4446,sky:0x13262c},
  'urban-nightlife':{name:'Neon Night District',icon:'✦',description:'A nightlife avenue with social venues, creator studios and a street driving challenge.',color:0x303044,sky:0x120e25}
@@ -7,6 +9,7 @@ export function createUrbanScene(layout,mapSize=80){
  if(!URBAN_LAYOUTS[layout])throw Error('Choose an urban sandbox template.');
  const size=[80,120].includes(Number(mapSize))?Number(mapSize):80,r=size*.3,objects=[];
  const add=(id,modelId,x,z,behavior='decor',extra={})=>objects.push({id:'urban-'+id,modelId,name:id.replaceAll('-',' '),position:{x,y:0,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},functionalSettings:{behavior,interactionDistance:4,...extra.functionalSettings},...extra});
+ if(layout==='urban-media-lounge'){for(const [index,[id,item]]of Object.entries(INTERACTIVE_DEVICES).entries()){add('device-'+index,id,-14+(index%5)*7,-14+Math.floor(index/5)*9,'interact',{functionalSettings:{behavior:'interact',device:id,interactionDistance:5,prompt:'Use '+item.name}});}add('spawn','hero-spawn',0,15,'talk',{functionalSettings:{behavior:'talk',isPlayerSpawn:true,interactionDistance:3}});return {name:URBAN_LAYOUTS[layout].name,layout,mapSize:size,weather:'clear',streets:[],objects,gameplay:{multiplayer:true,interactiveLounge:true}};}
  const checkpoints=[{x:-r,z:-r,radius:5},{x:r,z:-r,radius:5},{x:r,z:r,radius:5},{x:-r,z:r,radius:5}].map((point,index)=>({...point,objectId:'urban-checkpoint-'+index}));
  const streets=[-r,0,r].flatMap((offset,index)=>[{id:'urban-street-h-'+index,name:['Harbor Road','Creator Avenue','Skyline Drive'][index],from:{x:-size*.45,z:offset},to:{x:size*.45,z:offset},width:7},{id:'urban-street-v-'+index,name:['Market Street','Central Boulevard','Garage Lane'][index],from:{x:offset,z:-size*.45},to:{x:offset,z:size*.45},width:7}]);
  add('spawn','hero-spawn',0,3,'talk',{functionalSettings:{behavior:'talk',isPlayerSpawn:true,interactionDistance:3}});

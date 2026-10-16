@@ -1,3 +1,5 @@
+import {deviceCommand,advanceDevicePlayback} from './server-interactive-devices.mjs';
+import {deviceDefinition} from './public/js/interactive-devices.js';
 import {questInteraction} from './public/js/rpg-quests.js';
 import {startUrbanMission,updateUrbanMission} from './public/js/urban-missions.js';
 import {worldTravelObjects,portalArrivalPosition} from './server-world-travel.mjs';
@@ -57,7 +59,7 @@ export class AuthoritativeRooms {
   return {sim,manifest};
  }
  step(room,environment){
-  const {sim,manifest}=this.initialize(room,environment),now=this.now();if(now-sim.time<33){checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;
+  const {sim,manifest}=this.initialize(room,environment),now=this.now();advanceDevicePlayback(sim,now);if(now-sim.time<33){checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;
   const half=clamp(environment.builderScene?.mapSize||200,20,2000)/2;
   for(const player of Object.values(sim.players)){
    if(now-player.lastSeen>15000){for(const key of ['heldId','seatedId','vehicleId']){const actor=sim.actors[player[key]];if(actor?.holderId)actor.holderId=null;player[key]=null;}player.input={};}if(player.health<=0){for(const key of ['heldId','seatedId','vehicleId']){const held=sim.actors[player[key]];if(held?.holderId===player.actorId)held.holderId=null;player[key]=null;}player.input={};continue;}if(player.replacedByRoom||now-player.lastSeen>1000)continue;
@@ -97,7 +99,7 @@ export class AuthoritativeRooms {
   this.prepareEncounter(sim,environment);
   sim.sequence++;return {sim,manifest};
  }
- view(room){const sim=room.simulation,now=this.now();return {authoritative:true,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
+ view(room){const sim=room.simulation,now=this.now();return {authoritative:true,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,devices:sim.devices||{},players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
  snapshot(id,environment){return this.store.update(id,room=>{this.step(room,environment);return this.view(room);},{persist:false});}
  command(id,environment,identity,command){this.activeWorlds.set(id,environment);return this.store.update(id,async (room,allRooms)=>{
   const {sim,manifest}=this.step(room,environment),now=this.now(),actorId='account:'+identity.accountId;
@@ -148,7 +150,8 @@ export class AuthoritativeRooms {
      if(config.action!=='teleport'||config.portal?.destinationType!=='map'){if(sim.match?.state==='finished')fail('This level has ended.',409);if(player.health<=0)fail('Respawn before acting.',409);}
      if(entity.holderId&&entity.holderId!==actorId)fail('Another player is using this item.',409);
      if(now-(player.cooldowns[target.objectId]||0)<config.cooldown*1000)fail('Item is cooling down.',429);player.cooldowns[target.objectId]=now;
-     if(config.behavior==='door')entity.open=!entity.open;
+     if(deviceDefinition(target.modelId,config)){Object.assign(result,deviceCommand(sim,manifest,player,actorId,{entityId:entity.id,operation:'open'},now));}
+     else if(config.behavior==='door')entity.open=!entity.open;
      else if(config.behavior==='switch')entity.switched=!entity.switched;
      else if(['pickup','hold'].includes(config.behavior)){if(player.heldId)fail('Drop the held item first.',409);player.heldId=entity.id;entity.holderId=actorId;if(!player.inventory.includes(target.modelId))player.inventory.push(target.modelId);result.pickup={id:entity.id+':'+now,kind:'item'};const collected=combatStats(player).itemsCollected ||= [];if(!collected.includes(target.modelId))collected.push(target.modelId);}
      else if(config.behavior==='vehicle'){player.vehicleId=entity.id;entity.holderId=actorId;}
@@ -164,6 +167,7 @@ export class AuthoritativeRooms {
      if(config.action==='teleport'){const portal=config.portal;if(!portal?.enabled)fail('Portal is locked.',409);if(portal.destinationType==='map'){if(this.resolveDestination&&!await this.resolveDestination(portal.targetMapId))fail('This destination is no longer listed in the shared world.',404,'DESTINATION_UNAVAILABLE');result.destination=portal.targetMapId;const travel=player.pendingTravel?.to===portal.targetMapId&&player.pendingTravel.expiresAt>=now?player.pendingTravel:{from:id,to:portal.targetMapId,token:randomUUID(),expiresAt:now+120000};player.pendingTravel=travel;result.travel=travel;}else{const destination=sim.actors[portal.targetObjectId];if(!destination)fail('Destination is unavailable.');player.position={...destination.position};}}
     }
    }
+   else if(command.action==='device'){result=deviceCommand(sim,manifest,player,actorId,command,now);}
    else if(command.action==='place-item'){
     const entity=sim.actors[command.entityId];
     if(!entity?.spawned||entity.ownerId!==actorId)fail('Only the owner can reposition this item.',403);
@@ -181,8 +185,8 @@ export class AuthoritativeRooms {
     if(asset.consumable&&asset.petId&&!Object.values(sim.actors).some(actor=>actor.asset?.id===asset.petId&&actor.active))fail('Deploy your pet in this room before feeding it.',409);if(asset.sku)await this.charge(identity,asset.sku,createHash('sha256').update(id+actorId+sim.sequence).digest('hex'));
     if(asset.consumable&&asset.petId){const pet=Object.values(sim.actors).find(actor=>actor.asset?.id===asset.petId&&actor.active);if(!pet)fail('Deploy your pet in this room before feeding it.',409);pet.boostUntil=now+10000;result.message=pet.asset.name+' received a treat.';}else{
     const entityId='spawn-'+requestId,position=chosenPlacement?.position||{x:player.position.x-Math.sin(player.yaw)*2,y:player.position.y,z:player.position.z-Math.cos(player.yaw)*2},rotation=chosenPlacement?.rotation||{x:0,y:player.yaw,z:0},scale=chosenPlacement?.scale||{x:1,y:1,z:1};
-    const behavior=asset.behavior||(asset.assetType==='vehicles'?'vehicle':asset.assetType==='pets'?'patrol':'interact');
-    const definition={objectId:entityId,modelId:asset.id,position:{...position},transform:{position:{...position},rotation:{...rotation},scale:{...scale}},gameplay:{behavior,health:100,damage:0,interactionDistance:3,cooldown:1,action:'none',prompt:asset.configuration?.prompt||'',quest:asset.configuration?.quest},quest:asset.configuration?.quest,dialogue:{text:asset.configuration?.prompt||''},movement:{speed:1},asset};
+    const behavior=deviceDefinition(asset.buildAssetId)?'interact':asset.behavior||(asset.assetType==='vehicles'?'vehicle':asset.assetType==='pets'?'patrol':'interact');
+    const definition={objectId:entityId,modelId:asset.id,position:{...position},transform:{position:{...position},rotation:{...rotation},scale:{...scale}},gameplay:{behavior,device:deviceDefinition(asset.buildAssetId)?asset.buildAssetId:undefined,health:100,damage:0,interactionDistance:3,cooldown:1,action:'none',prompt:asset.configuration?.prompt||'',quest:asset.configuration?.quest},quest:asset.configuration?.quest,dialogue:{text:asset.configuration?.prompt||''},movement:{speed:1},asset};
     sim.actors[entityId]={id:entityId,position,rotation,scale,placementRevision:1,active:true,health:100,spawned:true,ownerId:actorId,asset,definition};
     result.message=asset.name+' deployed to the shared room.';result.spawnedId=entityId;result.placementRevision=1;}
    }

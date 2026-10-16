@@ -1533,6 +1533,276 @@
       "builderCategory": "creatures",
       "buildAssetId": "sky-ray",
       "description": "Sky Ray from the Environment Builder, ready to drop into the running game."
+    },
+    {
+      "id": "backpack-market-atm",
+      "name": "MZK Market ATM",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "market-atm",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/market-atm.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Open the live item marketplace and your Backpack.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "market-atm",
+        "behavior": "interact",
+        "prompt": "Use MZK Market ATM"
+      }
+    },
+    {
+      "id": "backpack-item-vending-machine",
+      "name": "Item Vending Machine",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "item-vending-machine",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/item-vending-machine.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Shop equipment and building supplies using your own account.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "item-vending-machine",
+        "behavior": "interact",
+        "prompt": "Use Item Vending Machine"
+      }
+    },
+    {
+      "id": "backpack-shared-video-player",
+      "name": "Community Video Player",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "shared-video-player",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/shared-video-player.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Anyone nearby can upload a video or add a link to the shared queue.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "shared-video-player",
+        "behavior": "interact",
+        "prompt": "Use Community Video Player"
+      }
+    },
+    {
+      "id": "backpack-cinema-screen",
+      "name": "Cinema Wall",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "cinema-screen",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/cinema-screen.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "A wide shared screen for community movie sessions.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "cinema-screen",
+        "behavior": "interact",
+        "prompt": "Use Cinema Wall"
+      }
+    },
+    {
+      "id": "backpack-media-boombox",
+      "name": "Crew Boombox",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "media-boombox",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/media-boombox.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "A shared audio queue with distance-based volume.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "media-boombox",
+        "behavior": "interact",
+        "prompt": "Use Crew Boombox"
+      }
+    },
+    {
+      "id": "backpack-shared-jukebox",
+      "name": "Neon Jukebox",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "shared-jukebox",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/shared-jukebox.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Queue music and share playback with the room.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "shared-jukebox",
+        "behavior": "interact",
+        "prompt": "Use Neon Jukebox"
+      }
+    },
+    {
+      "id": "backpack-radio-console",
+      "name": "Radio Console",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "radio-console",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/radio-console.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Tune a direct audio stream for nearby listeners.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "radio-console",
+        "behavior": "interact",
+        "prompt": "Use Radio Console"
+      }
+    },
+    {
+      "id": "backpack-dj-mixing-deck",
+      "name": "DJ Mixing Deck",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "dj-mixing-deck",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/dj-mixing-deck.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Control the shared track, seek position and room volume.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "dj-mixing-deck",
+        "behavior": "interact",
+        "prompt": "Use DJ Mixing Deck"
+      }
+    },
+    {
+      "id": "backpack-karaoke-machine",
+      "name": "Karaoke Stage",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "karaoke-machine",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/karaoke-machine.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Queue backing tracks alongside the existing room voice chat.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "karaoke-machine",
+        "behavior": "interact",
+        "prompt": "Use Karaoke Stage"
+      }
+    },
+    {
+      "id": "backpack-video-projector",
+      "name": "Video Projector",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "video-projector",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/video-projector.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "A projector station with a shared display.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "video-projector",
+        "behavior": "interact",
+        "prompt": "Use Video Projector"
+      }
+    },
+    {
+      "id": "backpack-digital-photo-frame",
+      "name": "Community Photo Frame",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "digital-photo-frame",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/digital-photo-frame.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Share an image on an in-world frame.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "digital-photo-frame",
+        "behavior": "interact",
+        "prompt": "Use Community Photo Frame"
+      }
+    },
+    {
+      "id": "backpack-community-noticeboard",
+      "name": "Community Noticeboard",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "community-noticeboard",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/community-noticeboard.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Post a shared message for everyone in this space.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "community-noticeboard",
+        "behavior": "interact",
+        "prompt": "Use Community Noticeboard"
+      }
+    },
+    {
+      "id": "backpack-trivia-terminal",
+      "name": "Trivia Challenge",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "trivia-terminal",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/trivia-terminal.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Answer server-checked questions and compare arcade scores.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "trivia-terminal",
+        "behavior": "interact",
+        "prompt": "Use Trivia Challenge"
+      }
+    },
+    {
+      "id": "backpack-arcade-slot-machine",
+      "name": "Arcade Slots",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "arcade-slot-machine",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/arcade-slot-machine.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Spin three reels using separate practice credits.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "arcade-slot-machine",
+        "behavior": "interact",
+        "prompt": "Use Arcade Slots"
+      }
+    },
+    {
+      "id": "backpack-video-poker-table",
+      "name": "Video Poker Table",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "video-poker-table",
+      "builderCategory": "interactive",
+      "thumbnailUrl": "/public/images/interactive-devices/video-poker-table.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "description": "Deal, hold and draw a five-card hand using practice credits.",
+      "behavior": "interact",
+      "function_data": {
+        "device": "video-poker-table",
+        "behavior": "interact",
+        "prompt": "Use Video Poker Table"
+      }
     }
   ]
 }

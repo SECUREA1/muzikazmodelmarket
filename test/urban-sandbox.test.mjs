@@ -11,7 +11,7 @@ import {SharedRoomStore} from '../shared-room-store.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {ServerBuilderCollision} from '../server-builder-collision.mjs';
 test('urban templates include editable roads, usable models, vehicles, safehouses and ordered routes',()=>{
- for(const layout of Object.keys(URBAN_LAYOUTS))for(const size of [40,80,120]){
+ for(const layout of Object.keys(URBAN_LAYOUTS).filter(id=>id!=='urban-media-lounge'))for(const size of [40,80,120]){
   const scene=createUrbanScene(layout,size);assert.ok(scene.mapSize>=80);assert.equal(scene.streets.length,6);const manifest=compileBuilderScene(scene);assert.ok(manifest.spawn);
   assert.equal(manifest.actors.find(actor=>actor.objectId==='urban-garage-quad').gameplay.behavior,'vehicle');
   const mission=manifest.actors.find(actor=>actor.objectId==='urban-dispatcher').gameplay.urbanMission;assert.equal(mission.checkpoints.length,4);

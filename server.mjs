@@ -1,3 +1,5 @@
+import {DeviceMediaUploads} from './device-media-uploads.mjs';
+import {deviceDefinition} from './public/js/interactive-devices.js';
 import {MasterServerState} from './master-server-state.mjs';
 import {synchronizeWorldDirectory} from './world-directory.mjs';
 import {LAND_VALUES} from './public/js/game-item-pricing.js';
@@ -34,6 +36,8 @@ const uploadDir = process.env.MUZIKAZ_AVATAR_UPLOAD_DIR || process.env.MUZIKAZ_U
 const assetUploadDir = process.env.MUZIKAZ_ASSET_UPLOAD_DIR || join(root, 'uploads', 'assets');
 const environmentUploadDir = process.env.MUZIKAZ_ENVIRONMENT_UPLOAD_DIR || join(root, 'uploads', 'environments');
 const dataFile = join(dataDir, 'shared-house-avatars.json');
+const mediaUploadDir=join(dataDir,'uploads','media');
+const deviceMediaUploads=new DeviceMediaUploads(mediaUploadDir,join(dataDir,'shared-media.json'));
 const assetsFile = join(dataDir, 'asset-library.json');
 const modelsFile = join(dataDir, 'published-models.json');
 const avatarProfilesFile = join(dataDir, 'avatar-profiles.json');
@@ -69,7 +73,7 @@ const adminSessionSecret = process.env.MUZIKAZ_ADMIN_SESSION_SECRET || `${adminU
 const persistentAdminToken = createHmac('sha256', adminSessionSecret).update(`admin:${adminUsername}`).digest('base64url');
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
 const maxEnvironmentBytes = Number(process.env.MUZIKAZ_ENVIRONMENT_MAX_BYTES || 150 * 1024 * 1024);
-const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
+const mimeTypes = { '.mp4':'video/mp4','.webm':'video/webm','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
 const allowedUploadTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const maxHouseUsers = 15;
 const presenceTtlMs = 30_000;
@@ -166,7 +170,7 @@ function backgroundJob(work){if(masterMaintenance)return;const task=Promise.reso
 async function drainServerState(){
  const deadline=Date.now()+30000;
  while(activeServerRequests||backgroundJobs.size||authoritativeRooms.ticking||authoritativeRooms.telemetryPending.size){if(Date.now()>deadline)throw Object.assign(Error('Server is busy. Retry the master operation.'),{statusCode:409});await new Promise(resolve=>setTimeout(resolve,25));}
- await Promise.all([userDatabase.queue,loadoutCodeStore.queue,paymentOrderStore.queue,accountSessionStore.queue,gameSessionStore.queue,ethereumAuth.queue,customMapWriteQueue,worldAtlas.queue,serverBackups.queue]);
+ await Promise.all([userDatabase.queue,loadoutCodeStore.queue,paymentOrderStore.queue,accountSessionStore.queue,gameSessionStore.queue,ethereumAuth.queue,customMapWriteQueue,worldAtlas.queue,serverBackups.queue,deviceMediaUploads.queue]);
  await sharedRooms.flush();
 }
 async function exclusiveMasterState(work){
@@ -178,7 +182,7 @@ async function saveMasterRuntime(){await mkdir(dataDir,{recursive:true});await w
 async function loadMasterRuntime(){let data;try{data=JSON.parse(await readFile(masterRuntimeFile,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;data={};}chatMessages.splice(0,chatMessages.length,...(Array.isArray(data.chatMessages)?data.chatMessages.slice(-100):[]));supportMessages.splice(0,supportMessages.length,...(Array.isArray(data.supportMessages)?data.supportMessages.slice(-500):[]));}
 function invalidateMasterCaches(){sharedRooms.data=null;sharedRooms.dirty=false;worldAtlas.data=null;authoritativeRooms.activeWorlds.clear();authoritativeRooms.manifestCache.clear();authoritativeRooms.collision.cache.clear();authoritativeRooms.collision.placedCache=null;roomEnvironmentCache=null;presence.clear();voiceSignals.clear();for(const store of [accountSessionStore,gameSessionStore]){store.verifiedSecrets.clear();store.tokenIndex.clear();}for(const client of clients)client.end();clients.clear();}
 async function snapshotServer() {
-  await Promise.all([sharedRooms.flush(), userDatabase.queue, loadoutCodeStore.queue, paymentOrderStore.queue, accountSessionStore.queue, gameSessionStore.queue, ethereumAuth.queue, customMapWriteQueue]);
+  await Promise.all([sharedRooms.flush(), userDatabase.queue, loadoutCodeStore.queue, paymentOrderStore.queue, accountSessionStore.queue, gameSessionStore.queue, ethereumAuth.queue, customMapWriteQueue, deviceMediaUploads.queue]);
   return serverBackups.snapshot();
 }
 const authoritativeRooms=new AuthoritativeRooms({store:sharedRooms,capacity:maxHouseUsers,resolveDestination:async id=>Boolean(await roomEnvironment(id)),collectCoin:(identity,requestId)=>userDatabase.grantMzkCoin(identity.walletId,requestId),collectLoot:(identity,itemId,requestId)=>userDatabase.grantRpgLoot(identity.walletId,itemId,requestId),reward:(identity,event,requestId)=>userDatabase.memberReward(identity.walletId,'progress',{scope:'field',event,requestId}),resolveAsset:async(identity,command)=>{const state=await userDatabase.get(identity.walletId),catalog=economyItem(command.sku);if(catalog&&ownsEconomyItem(state,catalog)&&catalog.kind==='asset')return catalog;const purchased=state.items.find(item=>item.id===command.itemId&&['mzk-store','verified-store'].includes(item.source)&&item.modelUrl);if(purchased)return {...purchased,behavior:'decor',targetHeight:['avatar','avatars'].includes(purchased.assetType||purchased.type)?1.8:undefined};const custom=state.items.find(item=>item.id===command.itemId&&item.type==='custom-item');if(custom)return {...custom,behavior:custom.configuration?.behavior||'decor'};const item=state.items.find(item=>item.id===command.itemId&&(item.modelUrl||item.buildAssetId));if(!item){const pack=await userDatabase.builderBackpack(identity.walletId),owned=pack.assets.find(asset=>asset.id===command.itemId);if(!owned)return null;const config=owned.function_data||{};if(!owned.glb_url&&!config.buildAssetId&&!config.modelId)return null;return {id:owned.id,name:owned.name,modelUrl:owned.glb_url||null,buildAssetId:config.buildAssetId||config.modelId||null,assetType:owned.asset_type||'props',behavior:config.behavior||'decor'};}const canonical=GAME_ECONOMY.find(asset=>asset.kind==='asset'&&(asset.modelUrl&&asset.modelUrl===item.modelUrl||asset.buildAssetId&&asset.buildAssetId===item.buildAssetId));return canonical&&ownsEconomyItem(state,canonical)?canonical:null;},charge:(identity,sku,requestId)=>userDatabase.economyAction(identity.walletId,'use',sku,'room:'+requestId),telemetry:(walletId,sample)=>userDatabase.recordRpgTelemetry(walletId,sample)});
@@ -494,7 +498,7 @@ function corsHeaders(extra = {}, origin = '') {
   const development = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/.test(origin);
   const production = /^https:\/\/(?:www\.)?muzikaz\.com$/.test(origin) || origin === 'https://muzikazmodelmarket.onrender.com';
   const allowedOrigin = origin && (configured.includes(origin) || development || production) ? origin : '';
-  return { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin, 'Access-Control-Allow-Credentials': 'true' } : {}), Vary: 'Origin', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-CSRF-Token,X-Game-Session,X-Idempotency-Key,X-Wallet-Address,X-MUZIKAZ-Session,X-User-Id,X-User-Role,X-User-Name,X-Admin-Token,X-MUZIKAZ-Land-Asset,X-Master-Restore', 'Cross-Origin-Resource-Policy': 'cross-origin', 'Cache-Control': 'no-store', ...extra };
+  return { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin, 'Access-Control-Allow-Credentials': 'true' } : {}), Vary: 'Origin', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-CSRF-Token,X-Game-Session,X-Idempotency-Key,X-Wallet-Address,X-MUZIKAZ-Session,X-User-Id,X-User-Role,X-User-Name,X-Admin-Token,X-MUZIKAZ-Land-Asset,X-Master-Restore,Range', 'Cross-Origin-Resource-Policy': 'cross-origin', 'Cache-Control': 'no-store', ...extra };
 }
 function originAllowed(origin) { return !origin || Boolean(corsHeaders({}, origin)['Access-Control-Allow-Origin']); }
 function sendJson(res, status, data) {
@@ -874,6 +878,13 @@ const server = createServer(async (req, res) => {
     }
     if(url.pathname==='/api/world-atlas/resolve'&&req.method==='POST'){const authentication=await roomAuthentication(req,res,true);if(!authentication)return;const account=await loadoutCodeStore.getAccount(authentication.accountId);if(!account)return authorizationError(res,401,'ACCOUNT_NOT_FOUND','The game account no longer exists.','account');const context={account};await combinedEnvironments();const body=await bodyJson(req,4000),result=await worldAtlas.resolve(body.x,body.z,{accountId:context.account.accountId,username:context.account.username||'Member'});roomEnvironmentCache=null;broadcast('world-atlas-updated',{revision:result.revision,mapId:result.cell.mapId});return sendJson(res,result.created?201:200,assetResponse(result));}
     if(url.pathname==='/api/world-atlas/streets'&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;await combinedEnvironments();const body=await bodyJson(req,4000),result=await worldAtlas.addStreet(String(body.mapId||''),body,{accountId:context.account.accountId,walletId:context.walletId,username:context.account.username||'Member'});roomEnvironmentCache=null;broadcast('world-atlas-updated',result);return sendJson(res,201,assetResponse(result));}
+    const deviceUpload=url.pathname.match(/^\/api\/rooms\/([^/]+)\/device-upload$/);
+    if(deviceUpload&&req.method==='POST'){
+      const identity=await roomIdentity(req,res,false);if(!identity)return;const id=decodeURIComponent(deviceUpload[1]),room=await sharedRooms.get(id),player=room.simulation?.players['account:'+identity.accountId],actor=room.simulation?.actors[url.searchParams.get('entityId')],environment=await roomEnvironment(id);
+      const authored=environment?.builderScene?.objects?.find(item=>item.id===actor?.id),profile=deviceDefinition(actor?.asset?.buildAssetId||authored?.modelId,authored?.functionalSettings);
+      if(!player||Date.now()-player.lastSeen>15000||!actor||actor.active===false||!profile||!['audio','video','image'].includes(profile.kind)||Math.hypot(actor.position.x-player.position.x,actor.position.y-player.position.y,actor.position.z-player.position.z)>5)return sendJson(res,409,{success:false,message:'Stand beside a media device before uploading.'});
+      return sendJson(res,201,assetResponse(await deviceMediaUploads.upload(req,identity,id)));
+    }
     const roomGameplay=url.pathname.match(/^\/api\/rooms\/([^/]+)\/gameplay$/);
     if(roomGameplay&&['GET','POST'].includes(req.method)){const id=decodeURIComponent(roomGameplay[1]),environment=await roomEnvironment(id);if(!environment)return sendJson(res,404,{message:'Room not found.'});if(req.method==='GET')return sendJson(res,200,assetResponse(await authoritativeRooms.snapshot(id,environment)));const command=await bodyJson(req,16000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;const snapshot=await authoritativeRooms.command(id,environment,identity,command);broadcast('room-gameplay-updated',{roomId:id,sequence:snapshot.sequence});return sendJson(res,200,assetResponse(snapshot));}
     const sharedRoom=url.pathname.match(/^\/api\/rooms\/([^/]+)\/objects$/);
@@ -972,12 +983,12 @@ const server = createServer(async (req, res) => {
     let path = normalize(decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)).replace(/^[/\\]+/, '');
     if (/(?:^|\/)(?:data|backups|work|node_modules|test|scripts|\.[^/]+)(?:\/|$)/i.test(path) || /\.(?:mjs|yaml|yml|env|log|bin|tmp)$/i.test(path)) return sendJson(res,404,{error:'Not found'});
     if (path.includes('..')) return sendJson(res, 400, { error: 'Bad path' });
-    const uploadMatch = path.match(/^uploads\/(avatars|assets|environments)\/([a-zA-Z0-9._-]+)$/);
+    const uploadMatch = path.match(/^uploads\/(avatars|assets|environments|media)\/([a-zA-Z0-9._-]+)$/);
     if (path.startsWith('uploads/') && !uploadMatch) return sendJson(res,404,{error:'Not found'});
     let uploadedFile = '';
     if (uploadMatch) {
       const [,kind,name] = uploadMatch;
-      if (!/\.(?:png|jpe?g|webp|glb|gltf|usdz|mp3|wav|ogg)$/i.test(name)) return sendJson(res,404,{error:'Not found'});
+      if (!/\.(?:png|jpe?g|webp|glb|gltf|usdz|mp3|wav|ogg|mp4|webm)$/i.test(name)) return sendJson(res,404,{error:'Not found'});
       if (kind === 'assets') {
         const asset = (await readAssets()).find(item => item.storedFilename === name);
         if (!asset) return sendJson(res,404,{error:'Not found'});
@@ -991,7 +1002,8 @@ const server = createServer(async (req, res) => {
         const environment = (await readUploadedEnvironments()).find(item => item.storedFilename === name || item.thumbnailUrl === '/uploads/environments/' + name);
         if (!environment || (environment.visibility === 'private' && !isAdmin(req))) return sendJson(res,404,{error:'Not found'});
       }
-      uploadedFile = join({avatars:uploadDir,assets:assetUploadDir,environments:environmentUploadDir}[kind], name);
+      if(kind==='media'&&!(await deviceMediaUploads.records()).some(record=>record.id===name))return sendJson(res,404,{error:'Not found'});
+      uploadedFile = join({avatars:uploadDir,assets:assetUploadDir,environments:environmentUploadDir,media:mediaUploadDir}[kind], name);
       const info = await lstat(uploadedFile).catch(()=>null);
       if (!info?.isFile() || info.isSymbolicLink()) return sendJson(res,404,{error:'Not found'});
     }
@@ -1004,6 +1016,11 @@ const server = createServer(async (req, res) => {
     if (!filePath) throw new Error('Not found');
     const extension = extname(filePath).toLowerCase();
     const cacheControl = extension === '.glb' || extension === '.usdz' ? 'public, max-age=31536000, immutable' : extension === '.json' ? 'no-cache' : 'public, max-age=3600';
+    if(uploadMatch?.[1]==='media'){
+      const info=await stat(filePath),headers={'Content-Type':mimeTypes[extension]||'application/octet-stream','Accept-Ranges':'bytes','Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'};const range=req.headers.range;
+      if(range){const match=/^bytes=(\d*)-(\d*)$/.exec(range);let start=match?.[1]?Number(match[1]):0,end=match?.[2]?Number(match[2]):info.size-1;if(match&&!match[1]&&match[2]){start=Math.max(0,info.size-Number(match[2]));end=info.size-1;}if(!match||(!match[1]&&!match[2])||start>end||start>=info.size||end>=info.size){res.writeHead(416,corsHeaders({'Content-Range':`bytes */${info.size}`},res.muzikazRequestOrigin));return res.end();}res.writeHead(206,corsHeaders({...headers,'Content-Length':end-start+1,'Content-Range':`bytes ${start}-${end}/${info.size}`},res.muzikazRequestOrigin));return createReadStream(filePath,{start,end}).pipe(res);}
+      res.writeHead(200,corsHeaders({...headers,'Content-Length':info.size},res.muzikazRequestOrigin));return createReadStream(filePath).pipe(res);
+    }
     res.writeHead(200, corsHeaders({ 'Content-Type': mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }));
     createReadStream(filePath).pipe(res);
   } catch (error) { if (!res.headersSent) sendJson(res, error.statusCode || (url.pathname.startsWith('/api/') ? 500 : 404), { success: false, code: error.code || (url.pathname.startsWith('/api/') ? 'API_REQUEST_FAILED' : 'NOT_FOUND'), message: error.message || 'Not found', stage: error.stage || (error.statusCode === 409 ? 'account-state' : 'request') }); } finally {if(!isMasterRoute)activeServerRequests--;}
