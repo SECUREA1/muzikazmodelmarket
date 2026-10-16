@@ -1,3 +1,6 @@
+import {drawingCollisionModel} from './public/js/placed-item-collision.js';
+import {placedCollisionWorld,disposePlacedCollision} from './server-placed-collision.mjs';
+import {resolvePlacedSolids} from './public/js/placed-item-collision.js';
 import {environmentGeometry} from './server-glb-geometry.mjs';
 import {buildingDimensions} from './public/js/building-materials.js';
 import * as THREE from './public/vendor/three/three.module.min.js';
@@ -9,11 +12,23 @@ export class ServerBuilderCollision {
  constructor(){this.cache=new Map();}
  world(environment){
   const key=environment.id+':'+(environment.updatedAt||'');if(this.cache.has(key))return this.cache.get(key);
+  const definitions=new Map([...(environment.builderScene?.catalogModels||[]),...(environment.builderScene?.placedModels||[]),...(environment.builderScene?.customModels||[])].map(model=>[model.id,model]));
   const glb=!environment.builderScene&&!environment.proceduralLand&&Boolean(environment.modelUrl||environment.modelUrls?.length);const root=glb?environmentGeometry(environment):createBuilderLand(environment),walls=[];
-  for(const item of environment.builderScene?.objects||[]){let object;try{object=createBuilderModel(item.asset?.buildAssetId||item.modelId);}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);object.userData.builderObjectId=item.id;root.add(object);}
+  for(const item of environment.builderScene?.objects||[]){let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){object=environmentGeometry({modelUrl:definition.modelUrl});const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3());if(definition.targetHeight&&size.y)object.scale.multiplyScalar(definition.targetHeight/size.y);object.updateMatrixWorld(true);object.position.y-=new THREE.Box3().setFromObject(object).min.y;}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);object.userData.builderObjectId=item.id;root.add(object);}
   root.updateMatrixWorld(true);const floors=[];
   root.traverse(mesh=>{if(!mesh.isMesh||mesh.userData.streetVisual||/SKY|PARTICLE|VFX|WATER|HELPER/i.test(mesh.name))return;floors.push(mesh);if(!glb&&!mesh.userData.streetVisual&&!mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')){let parent=mesh;while(parent&&!parent.userData.builderObjectId)parent=parent.parent;walls.push({box:new THREE.Box3().setFromObject(mesh),objectId:parent?.userData.builderObjectId});}});
   const world={root,walls,floors,glb,bounds:new THREE.Box3().setFromObject(root)};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
+ }
+ placedWorld(actors={},objects={}){
+  const key=JSON.stringify([Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),Object.values(actors).filter(actor=>actor.spawned).map(actor=>[actor.id,actor.asset?.id,actor.asset?.buildAssetId,actor.placementRevision,actor.active,actor.holderId,actor.position,actor.rotation,actor.scale])]);
+  if(this.placedCache?.key===key)return this.placedCache.world;
+  disposePlacedCollision(this.placedCache?.world);const world=placedCollisionWorld(actors,objects);this.placedCache={key,world};return world;
+ }
+ resolvePlaced(environment,previous,next,actors={},objects={}){return resolvePlacedSolids(previous,{...next,floorY:next.floorY??(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length?-100:0)},this.placedWorld(actors,objects).boxes);}
+ paintPoint(environment,origin,direction,actors,objects){
+  const meshes=[...this.world(environment).floors,...this.placedWorld(actors,objects).meshes];
+  const start=new THREE.Vector3(origin.x,origin.y+1.5,origin.z),ray=new THREE.Raycaster(start,new THREE.Vector3(...direction),.2,8),hit=ray.intersectObjects(meshes,false)[0];
+  return hit?hit.point.clone().addScaledVector(hit.face?.normal.clone().transformDirection(hit.object.matrixWorld)||new THREE.Vector3(0,1,0),.18):start.addScaledVector(ray.ray.direction,4);
  }
  blocksShot(environment,origin,direction,distance,actors={}){
   if(!environment.builderScene&&!environment.proceduralLand&&!environment.modelUrl&&!environment.modelUrls?.length)return false;
@@ -21,25 +36,26 @@ export class ServerBuilderCollision {
   if(world.glb)return new THREE.Raycaster(start,aim,.02,Math.max(.02,distance-.05)).intersectObjects(world.floors,false).length>0;
   return world.walls.some(({box,objectId})=>{const actor=actors[objectId];if(actor&&(actor.open||!actor.active||actor.holderId))return false;const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;});
  }
- groundAt(environment,point,{entry=false}={}){
+ groundAt(environment,point,{entry=false,actors,objects}={}){
   const world=this.world(environment),bounds=world.bounds;
-  const meshes=world.floors.filter(mesh=>!/ROOF|CEILING|CANOPY|AWNING/i.test(mesh.name));
+  const dynamic=actors||objects?this.placedWorld(actors,objects).meshes:[];
+  const meshes=[...world.floors,...dynamic].filter(mesh=>!/ROOF|CEILING|CANOPY|AWNING/i.test(mesh.name));
   const startY=entry?bounds.max.y+2:point.y+.4;
   const hits=new THREE.Raycaster(new THREE.Vector3(point.x,startY,point.z),new THREE.Vector3(0,-1,0),0,Math.max(2,startY-bounds.min.y+2)).intersectObjects(meshes,false).filter(hit=>hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y>.55);
   // Prefer a floor with overhead clearance and a ceiling above it. A roof may
   // share a mesh with the floor, so mesh names alone cannot protect the entry.
-  const choices=hits.filter(hit=>!new THREE.Raycaster(hit.point.clone().add(new THREE.Vector3(0,.08,0)),new THREE.Vector3(0,1,0),0,1.7).intersectObjects(world.floors,false).length);
+  const choices=hits.filter(hit=>!new THREE.Raycaster(hit.point.clone().add(new THREE.Vector3(0,.08,0)),new THREE.Vector3(0,1,0),0,1.7).intersectObjects([...world.floors,...dynamic],false).length);
   if(entry){choices.sort((a,b)=>a.point.y-b.point.y);} // Ground entrance, never highest roof.
   const hit=choices[0];return hit?{x:point.x,y:hit.point.y+.02,z:point.z}:null;
  }
  teleportPosition(environment,origin,point,actors={},objects={}){
   const reject=()=>{throw Object.assign(Error('Choose a visible, clear floor spot.'),{statusCode:422});};
   if(!point||!['x','y','z'].every(axis=>Number.isFinite(point[axis]))||Math.hypot(point.x-origin.x,point.y-origin.y,point.z-origin.z)>256)reject();
-  const floor=this.groundAt(environment,point);if(!floor||Math.abs(floor.y-point.y)>.45)reject();
+  const floor=this.groundAt(environment,point,{actors,objects});if(!floor||Math.abs(floor.y-point.y)>.45)reject();
   const eye={x:origin.x,y:origin.y+1.6,z:origin.z},delta=[floor.x-eye.x,floor.y+.08-eye.y,floor.z-eye.z],length=Math.hypot(...delta);
   if(length>.1&&this.blocksShot(environment,eye,delta.map(n=>n/length),length,actors))reject();
   const world=this.world(environment);
-  const dynamic=Object.values(objects).filter(object=>!object.deleted&&!object.open).map(object=>{const size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);return {box:new THREE.Box3(new THREE.Vector3(...object.position.map((n,i)=>n-size[i]/2)),new THREE.Vector3(...object.position.map((n,i)=>n+size[i]/2)))};});
+  const dynamic=this.placedWorld(actors,objects).boxes.map(box=>({box,objectId:box.objectId}));
   if([...world.walls,...dynamic].some(({box,objectId})=>{const actor=actors[objectId];return !(actor&&(actor.open||!actor.active||actor.holderId))&&floor.x>box.min.x-.3&&floor.x<box.max.x+.3&&floor.z>box.min.z-.3&&floor.z<box.max.z+.3&&floor.y<box.max.y-.03&&floor.y+1.7>box.min.y+.03;}))reject();
   return floor;
  }
@@ -91,6 +107,6 @@ export class ServerBuilderCollision {
   for(const {box,objectId}of walls){const actor=objectId&&actors[objectId];if(actor&&(actor.open||!actor.active||actor.holderId))continue;if(next.x>box.min.x-.3&&next.x<box.max.x+.3&&next.z>box.min.z-.3&&next.z<box.max.z+.3&&next.y<box.max.y-.03&&next.y+1.7>box.min.y+.03){if(box.max.y-previous.y<=.35)next.y=Math.max(next.y,box.max.y);else return {...previous,y:next.y};}}
   const edge=Math.max(40,Math.min(512,Number(environment.builderScene?.mapSize)||40))/2-.5;
   if(!floor&&(Math.abs(next.x)>edge||Math.abs(next.z)>edge))return previous;
-  return next;
+  return {...next,floorY:floor?.point.y??-100};
  }
 }

@@ -37,6 +37,11 @@ export class WalkingMotion {
   const length=Math.hypot(this.offset.x,this.offset.z);
   if(length>.45){this.offset.x*=.45/length;this.offset.z*=.45/length;}
  }
+ constrain(target){
+  if(!this.position)return;
+  for(const axis of ['x','z']){this.position[axis]=target[axis];this.offset[axis]=0;this.velocity[axis]=0;}
+  const latest=this.history.at(-1);if(latest){latest.x=target.x;latest.z=target.z;}
+ }
  sample(now,delta,input,speed,target){
   if(!this.position)return target;
   const dt=Math.max(0,Math.min(.05,delta));

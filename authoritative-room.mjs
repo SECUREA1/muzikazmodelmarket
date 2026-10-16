@@ -65,20 +65,14 @@ export class AuthoritativeRooms {
    let speed=player.vehicleId?12:input.sprint?6:4;
    if(player.seatedId) speed=0;
    const next={...player.position,x:clamp(player.position.x+(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*side)*speed*dt/length,-half,half),z:clamp(player.position.z+(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*side)*speed*dt/length,-half,half)};
-   const floor=environment.builderScene||environment.proceduralLand?-100:Number(player.floor)||0;
+   const floor=environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length?-100:0;
    if(input.jump&&player.grounded){player.velocityY=6;player.grounded=false;}
    player.velocityY=(player.velocityY||0)-18*dt;next.y=Math.max(floor,next.y+player.velocityY*dt);player.grounded=next.y<=floor;if(player.grounded)player.velocityY=0;
-   let blocked=false;
-   for(const object of Object.values(room.objects)){
-    if(object.deleted||object.open||buildingMaterial(object.materialId).solid===false)continue;
-    const size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]),[x,y,z]=object.position;
-    // Conservative world-space footprint for rotated pieces, resolved on server.
-    const rotation=object.rotation[1],w=Math.abs(Math.cos(rotation))*size[0]+Math.abs(Math.sin(rotation))*size[2],d=Math.abs(Math.sin(rotation))*size[0]+Math.abs(Math.cos(rotation))*size[2];
-    if(Math.abs(next.x-x)<w/2+.3&&Math.abs(next.z-z)<d/2+.3&&next.y<y+size[1]/2&&next.y+1.7>y-size[1]/2){
-     if(player.position.y>=y+size[1]/2-.35){next.y=y+size[1]/2;player.velocityY=0;player.grounded=true;}else blocked=true;
-    }
-   }
-   if(!blocked){player.position=this.collision.resolve(environment,player.position,next,sim.actors);if(Number.isFinite(player.position.floorY)){player.floor=player.position.floorY;delete player.position.floorY;if(player.position.y<=player.floor+.03){player.grounded=true;player.velocityY=0;}}}
+   const resolved=this.collision.resolve(environment,player.position,next,sim.actors);
+   player.position=this.collision.resolvePlaced(environment,player.position,resolved,sim.actors,room.objects);
+   if(Number.isFinite(player.position.floorY)){player.floor=player.position.floorY;delete player.position.floorY;}
+   if(player.position.grounded||player.position.y<=player.floor+.03){player.grounded=true;player.velocityY=0;}
+   if(player.position.hitCeiling)player.velocityY=Math.min(0,player.velocityY);delete player.position.grounded;delete player.position.hitCeiling;
    const street=(environment.streets||[]).map(street=>{const dx=street.to.x-street.from.x,dz=street.to.z-street.from.z,t=Math.max(0,Math.min(1,((player.position.x-street.from.x)*dx+(player.position.z-street.from.z)*dz)/Math.max(.01,dx*dx+dz*dz)));return {street,distance:Math.hypot(player.position.x-street.from.x-dx*t,player.position.z-street.from.z-dz*t)};}).filter(hit=>hit.distance<=hit.street.width/2+2).sort((a,b)=>a.distance-b.distance)[0];player.locationName=street?.street.name||player.meetingName||environment.name;
    if(player.position.y>next.y){player.velocityY=0;player.grounded=true;}
    updateUrbanMission(player,now);
@@ -191,6 +185,21 @@ export class AuthoritativeRooms {
     const definition={objectId:entityId,modelId:asset.id,position:{...position},transform:{position:{...position},rotation:{...rotation},scale:{...scale}},gameplay:{behavior,health:100,damage:0,interactionDistance:3,cooldown:1,action:'none',prompt:asset.configuration?.prompt||'',quest:asset.configuration?.quest},quest:asset.configuration?.quest,dialogue:{text:asset.configuration?.prompt||''},movement:{speed:1},asset};
     sim.actors[entityId]={id:entityId,position,rotation,scale,placementRevision:1,active:true,health:100,spawned:true,ownerId:actorId,asset,definition};
     result.message=asset.name+' deployed to the shared room.';result.spawnedId=entityId;result.placementRevision=1;}
+   }
+   else if(command.action==='clear-paint'){
+    const strokes=Object.values(sim.actors).filter(actor=>actor.ownerId===actorId&&actor.asset?.renderKind==='paint-stroke').sort((a,b)=>b.createdAt-a.createdAt);
+    for(const stroke of command.lastOnly?strokes.slice(0,1):strokes)delete sim.actors[stroke.id];player.lastPaintPoint=null;result.message='Solid paint removed.';
+   }
+   else if(command.action==='draw-paint'){
+    if(player.health<=0||sim.match?.state==='finished')fail('Join an active game before drawing.',409);
+    player.toolReady ||= {};if(now<(player.toolReady.spray||0))fail('Paint tool is cooling down.',429);
+    if(Object.values(sim.actors).filter(actor=>actor.asset?.renderKind==='paint-stroke').length>=300)fail('Clear old solid paint before drawing more.',409);
+    const direction=command.direction;if(!Array.isArray(direction)||direction.length!==3||!direction.every(Number.isFinite)||Math.hypot(...direction)<.1)fail('Invalid paint direction.');
+    const norm=Math.hypot(...direction),point=this.collision.paintPoint(environment,player.position,direction.map(value=>value/norm),sim.actors,room.objects);
+    await this.charge(identity,'tool:spray',createHash('sha256').update('paint:'+id+':'+actorId+':'+requestId).digest('hex'));
+    const start=player.lastPaintPoint&&now-player.lastPaintAt<1000&&distance(player.lastPaintPoint,point)<=1.6?player.lastPaintPoint:point,delta={x:point.x-start.x,y:point.y-start.y,z:point.z-start.z},entityId='paint-'+actorId+'-'+requestId;
+    sim.actors[entityId]={id:entityId,spawned:true,ownerId:actorId,active:true,health:100,createdAt:now,placementRevision:1,position:{x:(start.x+point.x)/2,y:Math.min(start.y,point.y)-.18,z:(start.z+point.z)/2},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},asset:{id:entityId,name:'Solid paint',renderKind:'paint-stroke',strokeDelta:delta,color:clamp(command.color,0,0xffffff)}};
+    player.lastPaintPoint={x:point.x,y:point.y,z:point.z};player.lastPaintAt=now;player.toolReady.spray=now+250;result.message='Solid paint placed for everyone.';
    }
    else if(command.action==='fire'){
     const tool=String(command.tool||'laser'),utility=UTILITY_TOOLS[tool],profile=RANGED_WEAPONS[tool],cooldown=utility?utility.cooldown*1000:profile?profile.interval*1000:tool==='dynamite'?1200:250;if(!utility&&!profile&&!['bat','taser','toxin','flamethrower','spray','jetpack'].includes(tool))fail('This tool has no server action.',422);
