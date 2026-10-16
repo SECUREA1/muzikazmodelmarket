@@ -1,3 +1,4 @@
+import {applyBuilderBaseTransform} from './builder-base.js';
 import {addFiringRangeDressing} from './layout-firing-range.js';
 import {finishLayoutArchitecture} from './layout-details.js';
 import {layoutHeight,createLayoutTerrain,createLayoutMaterial} from './layout-terrain.js';
@@ -41,5 +42,6 @@ export function createBuilderLand(environment) {
     else if(layout==='movie-studio'){[[-11,-10],[10,-10],[-11,10],[10,10]].forEach(([x,z],i)=>add([8,4,7],x,z,i%2?0x52475a:0x45535b));add([3,.3,16],0,0,0xb65b48,.15)}
     finishLayoutArchitecture(root);
     root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));
+    applyBuilderBaseTransform(root,built.baseTransform);
     return root;
   }

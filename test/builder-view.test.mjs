@@ -1,3 +1,4 @@
+import {layoutHeight} from '../public/js/environments/layout-terrain.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -17,8 +18,9 @@ test('overhead reset fits every map corner on portrait and desktop screens',()=>
 test('layout entry uses one dispatch and district terrain matches runtime flat floors',()=>{
  const source=readFileSync(new URL('../environment-builder.js',import.meta.url),'utf8');
  assert.ok(source.includes('function selectLayout(layout)'));
- assert.ok(source.includes('if(URBAN_LAYOUTS[layout]||BUILDING_DISTRICTS[layout])return 0'));
- assert.ok(source.includes('if(URBAN_LAYOUTS[id]||BUILDING_DISTRICTS[id]){worldDressing'));
+ for(const layout of ['urban-downtown','urban-civic-quarter','urban-frontier-town'])for(const [x,z]of [[0,0],[20,-35],[-100,70]])assert.equal(layoutHeight(layout,x,z),0);
+ assert.ok(source.includes('const template=createBuilderLand('));
+ assert.ok(source.includes('frameBounds.expandByObject(value.root)'));
  assert.ok(!source.includes('sceneData.layout=requested'));
  assert.ok(source.includes("$('#reset-build-view').addEventListener('click',resetBuildView)"));
 });

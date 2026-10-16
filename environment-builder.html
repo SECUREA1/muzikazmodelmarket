@@ -75,7 +75,7 @@
 
       <div class="playable-map-banner" role="note"><strong>GAME SYSTEMS INCLUDED</strong><span>Custom avatars · enemy encounters · doors, quests &amp; pickups · player spawn</span></div>
       <div class="builder-touch-tools" role="toolbar" aria-label="Touch building tools"><button type="button" id="touch-open-library">☰ Items &amp; buildings</button><output id="touch-item-name" aria-live="polite">Choose an item</output><span id="placement-load-status" role="status"></span><label class="repeat-placement"><input type="checkbox" id="repeat-placement">Keep placing this item</label><button type="button" id="touch-retry" hidden>Retry item loading</button><button type="button" id="touch-place-center">Place in view</button><button type="button" id="touch-move" aria-pressed="false">Move</button><button type="button" id="touch-rotate">Rotate 45°</button><button type="button" id="touch-edit">Edit item</button><button type="button" id="touch-cancel">Cancel</button></div>
-      <details id="world-alignment" class="world-alignment" hidden open>
+      <details id="world-alignment" class="world-alignment" open>
         <summary>WORLD OVERLAY · MOVE &amp; ALIGN</summary>
         <p>Adjust the world beneath your build. Placed items stay where they are. Save or publish to keep this alignment.</p>
         <div class="world-alignment-fields">
@@ -90,6 +90,7 @@
         <button type="button" id="world-base-center">CENTER UNDER BUILD</button>
         <button type="button" id="world-base-reset">RESET WORLD ALIGNMENT</button>
       </details>
+      <details id="scene-layer-alignment" class="world-alignment"><summary>SCENE ITEMS · MOVE &amp; ALIGN</summary><p>Move, rotate or scale your placed items together around the map origin. The world stays in place. Save or publish to keep your changes.</p><div class="world-alignment-fields"><label>Move X (m)<input id="scene-layer-x" data-scene-transform="x" type="number" min="-1000" max="1000" step="0.25" value="0"></label><label>Height Y (m)<input id="scene-layer-y" data-scene-transform="y" type="number" min="-1000" max="1000" step="0.25" value="0"></label><label>Move Z (m)<input id="scene-layer-z" data-scene-transform="z" type="number" min="-1000" max="1000" step="0.25" value="0"></label><label>Rotation (degrees)<input id="scene-layer-rotation" data-scene-transform="rotation" type="number" min="-360" max="360" step="1" value="0"></label><label>Scene scale<input id="scene-layer-scale" data-scene-transform="scale" type="number" min="0.1" max="4" step="0.05" value="1"></label></div><button type="button" id="scene-layer-reset">RESET SCENE ALIGNMENT</button></details>
       <div class="land-viewport" id="land-viewport">
         <div class="land-canvas layout-grand-floor" id="land-canvas" tabindex="0" aria-label="Grand Build Floor 3D editor. Select an item then click the terrain to place it.">
           <button type="button" id="reset-build-view" class="reset-build-view" title="Center the whole map from above without changing your build">⌖ RESET BUILD VIEW</button>

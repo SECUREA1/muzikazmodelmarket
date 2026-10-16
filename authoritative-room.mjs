@@ -63,7 +63,7 @@ export class AuthoritativeRooms {
   if(sim.baseAlignmentKey!==alignmentKey){
    for(const [id,actor]of Object.entries(sim.actors))if(actor.loot?.currency==='MZK')delete sim.actors[id];
    sim.coinSites={};sim.coinRetryAt={};
-   if(sim.baseAlignmentKey!==undefined&&environment.builderScene?.baseEnvironment)for(const player of Object.values(sim.players)){const entry=this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment));player.position={...entry};player.floor=entry.y;player.velocityY=0;player.grounded=true;}
+   if(sim.baseAlignmentKey!==undefined&&environment.builderScene)for(const player of Object.values(sim.players)){const entry=this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment));player.position={...entry};player.floor=entry.y;player.velocityY=0;player.grounded=true;}
    sim.baseAlignmentKey=alignmentKey;
   }
   refreshMzkCoins(sim,environment,this.now(),(position,occupied)=>environment.builderScene||environment.proceduralLand?this.collision.safeSpawn(environment,position):this.collision.encounterSpawn(environment,position,this.collision.safeSpawn(environment,environment.spawn||{x:0,y:0,z:2}),occupied));
@@ -74,7 +74,7 @@ export class AuthoritativeRooms {
  }
  step(room,environment){
   const {sim,manifest}=this.initialize(room,environment),now=this.now();advanceDevicePlayback(sim,now);if(now-sim.time<33){checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;
-  const half=clamp(environment.builderScene?.mapSize||200,20,2000)/2;const baseBounds=environment.builderScene?.baseEnvironment?this.collision.world(environment).bounds:null;
+  const half=clamp(environment.builderScene?.mapSize||200,20,2000)/2;const baseBounds=environment.builderScene&&(environment.builderScene.baseEnvironment||environment.builderScene.baseTransform)?this.collision.world(environment).bounds:null;
   for(const player of Object.values(sim.players)){
    if(now-player.lastSeen>15000){for(const key of ['heldId','seatedId','vehicleId']){const actor=sim.actors[player[key]];if(actor?.holderId)actor.holderId=null;player[key]=null;}player.input={};}if(player.health<=0){for(const key of ['heldId','seatedId','vehicleId']){const held=sim.actors[player[key]];if(held?.holderId===player.actorId)held.holderId=null;player[key]=null;}player.input={};continue;}if(player.replacedByRoom||now-player.lastSeen>1000)continue;
    const input=player.input||{},forward=clamp(input.forward,-1,1),side=clamp(input.side,-1,1),length=Math.max(1,Math.hypot(forward,side));

@@ -1,3 +1,4 @@
+import {transformSceneLayer} from './public/js/scene-layer-transform.js';
 import {layoutHeight,createLayoutTerrain,createLayoutMaterial} from './public/js/environments/layout-terrain.js';
 import {createBuilderLand} from './public/js/environments/builder-land.js';
 import {applyBuilderBaseTransform,normalizedBaseTransform} from './public/js/environments/builder-base.js';
@@ -150,7 +151,7 @@ const terrainHeight=(x,z)=>layoutHeight(sceneData.layout,x,z);
 
 function addWorldDressing(){
  worldDressing.traverse(node=>{node.geometry?.dispose();[].concat(node.material||[]).forEach(material=>{material?.map?.dispose();material?.dispose();});});worldDressing.clear();
- const template=createBuilderLand({id:'editor-preview',builderScene:{...sceneData,objects:[]}});
+ const template=createBuilderLand({id:'editor-preview',builderScene:{...sceneData,baseTransform:{},objects:[]}});
  for(const child of [...template.children]){
   if(child.name.startsWith('BUILDER_WALKABLE_FLOOR')){child.geometry.dispose();child.material.map?.dispose();child.material.dispose();continue;}
   worldDressing.add(child);
@@ -158,15 +159,15 @@ function addWorldDressing(){
 }
 function shapeTerrain(){
  const meta=layouts[sceneData.layout];terrainGeometry.dispose();terrainGeometry=createLayoutTerrain(sceneData.layout,sceneData.mapSize,meta.color);terrain.geometry=terrainGeometry;terrain.scale.set(1,1,1);terrain.material.map?.dispose();terrain.material.dispose();terrain.material=createLayoutMaterial(sceneData.layout,sceneData.mapSize);const badge=$('#texture-credit');badge.classList.add('ready');badge.querySelector('span').textContent='Shared procedural surface · editor & gameplay';
- world.background.setHex(meta.sky);world.fog.color.setHex(meta.sky);applyWeather();if(grid)grid.visible=!['crystal-cavern','mountain-pass'].includes(sceneData.layout);addWorldDressing();
+ world.background.setHex(meta.sky);world.fog.color.setHex(meta.sky);applyWeather();if(grid)grid.visible=!['crystal-cavern','mountain-pass'].includes(sceneData.layout);addWorldDressing();applyBuilderBaseTransform(proceduralWorld,sceneData.baseTransform);proceduralWorld.userData.buildBounds=new THREE.Box3().setFromObject(proceduralWorld);
 }
-const terrain=new THREE.Mesh(terrainGeometry,createLayoutMaterial('grand-floor',40));terrain.rotation.x=-Math.PI/2;terrain.receiveShadow=true;terrain.name='BUILDER_WALKABLE_FLOOR';terrain.userData.colliderShape='mesh';world.add(terrain);
+const terrain=new THREE.Mesh(terrainGeometry,createLayoutMaterial('grand-floor',40));terrain.rotation.x=-Math.PI/2;terrain.receiveShadow=true;terrain.name='BUILDER_WALKABLE_FLOOR';terrain.userData.colliderShape='mesh';const proceduralWorld=new THREE.Group();proceduralWorld.name="EDITOR_WORLD_LAYER";proceduralWorld.add(terrain);world.add(proceduralWorld);
 // A deep wooden plinth and brass rim make the playable land read as a premium
 // adventure table while remaining safely outside the raycastable build floor.
 const tableBase=new THREE.Mesh(new THREE.BoxGeometry(42,1.15,42),new THREE.MeshStandardMaterial({color:0x17100b,roughness:.52,metalness:.08}));tableBase.position.y=-.72;tableBase.receiveShadow=true;tableBase.name='TABLETOP_MAP_BASE';world.add(tableBase);
 const tableRim=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(40.35,.42,40.35)),new THREE.LineBasicMaterial({color:0xc19a52,transparent:true,opacity:.72}));tableRim.position.y=-.16;tableRim.name='TABLETOP_BRASS_RIM';world.add(tableRim);
 const grid=new THREE.GridHelper(40,40,0x92c45c,0x426347);grid.position.y=.025;grid.material.transparent=true;grid.material.opacity=.25;world.add(grid);
-const placedGroup=new THREE.Group();world.add(placedGroup);world.add(worldDressing); const raycaster=new THREE.Raycaster(), pointer=new THREE.Vector2(), loader=new GLTFLoader(), cache=new Map(), runtime=new Map();
+const placedGroup=new THREE.Group();world.add(placedGroup);proceduralWorld.add(worldDressing); const raycaster=new THREE.Raycaster(), pointer=new THREE.Vector2(), loader=new GLTFLoader(), cache=new Map(), runtime=new Map();
 let preview=null, clock=new THREE.Clock();
 const placementSelection=createPlacementSelection({load:templateFor,onState:state=>{placementStatus=state.status;placementError=state.error?.message||'';updateTouchTools();renderLibrary();}});
 
@@ -367,13 +368,13 @@ function resetBuildView(){
  $('#range-game-panel').hidden=true;
  document.querySelector('[data-view-mode="build"]').click();
  dragging=null;controls.enabled=true;
- const size=baseWorld?new THREE.Box3().setFromObject(baseWorld).getSize(new THREE.Vector3()):null;const view=overheadBuildView(size?Math.max(size.x,size.z):sceneData.mapSize,camera.aspect,camera.fov);
+ const frameBounds=new THREE.Box3().setFromObject(baseWorld||proceduralWorld);for(const value of runtime.values())frameBounds.expandByObject(value.root);const size=frameBounds.getSize(new THREE.Vector3());const view=overheadBuildView(Math.max(size.x,size.z),camera.aspect,camera.fov);
  // Clear orbit damping before setting a new absolute view.
  const damping=controls.enableDamping;controls.enableDamping=false;controls.update();
  controls.maxDistance=Math.max(controls.maxDistance,view.distance*1.1);
  camera.far=Math.max(camera.far,view.distance*3);camera.updateProjectionMatrix();
  if(world.fog){world.fog.near=view.distance*.8;world.fog.far=view.distance+sceneData.mapSize*2;}
- const center=baseWorld?new THREE.Box3().setFromObject(baseWorld).getCenter(new THREE.Vector3()):new THREE.Vector3();controls.target.copy(center);camera.position.set(center.x,center.y+view.height,center.z+view.offset);controls.update();controls.enableDamping=damping;
+ const center=frameBounds.getCenter(new THREE.Vector3());controls.target.copy(center);camera.position.set(center.x,center.y+view.height,center.z+view.offset);controls.update();controls.enableDamping=damping;
  $('#view-help').textContent='Centered above the map · select an item and tap the floor to build';
 }
 $('#reset-build-view').addEventListener('click',resetBuildView);
@@ -389,29 +390,34 @@ function closeRepositoryMap(){
 let baseWorld=null,baseLoadGeneration=0;
 function clearBaseWorld(){
  baseLoadGeneration++;setMoveWorldMode(false);if(baseWorld){world.remove(baseWorld);baseWorld.traverse(node=>{node.geometry?.dispose();for(const material of [].concat(node.material||[]))material.dispose?.();});baseWorld=null;}
- terrain.visible=true;worldDressing.visible=true;$('#world-alignment').hidden=true;
+ terrain.visible=true;worldDressing.visible=true;$('#world-alignment').hidden=false;
 }
 function syncBaseControls(){
- $('#world-alignment').hidden=!baseWorld;
+ syncSceneLayerControls();
+ $('#world-alignment').hidden=false;
  const transform=normalizedBaseTransform(sceneData.baseTransform);
  for(const key of ['x','y','z','rotation','scale'])$('#world-base-'+key).value=transform[key];$('#world-base-angle').textContent=transform.rotation+'°';
 }
-function clampBuildCoordinate(value,axis){const box=baseWorld?.userData.buildBounds;return THREE.MathUtils.clamp(value,box?box.min[axis]+.5:-sceneData.mapSize/2+.5,box?box.max[axis]-.5:sceneData.mapSize/2-.5);}
+function clampBuildCoordinate(value,axis){const box=(baseWorld||proceduralWorld).userData.buildBounds;return THREE.MathUtils.clamp(value,box?box.min[axis]+.5:-sceneData.mapSize/2+.5,box?box.max[axis]-.5:sceneData.mapSize/2-.5);}
+function preserveSceneHeights(anchors){if(!baseWorld)for(const object of sceneData.objects){const y=anchors?.get(object.id);if(Number.isFinite(y))object.groundOffset=y-groundAt(object.position.x,object.position.z,y+100);}}
 function alignBase(transform){
- if(!baseWorld)return;
- sceneData.baseTransform=applyBuilderBaseTransform(baseWorld,transform);baseWorld.userData.buildBounds=new THREE.Box3().setFromObject(baseWorld);syncBaseControls();markChanged();
+ const layer=baseWorld||proceduralWorld;
+ const anchors=worldDrag?.anchors||new Map([...runtime].map(([id,rt])=>[id,new THREE.Box3().setFromObject(rt.root).min.y]));if(worldDrag)worldDrag.anchors=anchors;
+ sceneData.baseTransform=applyBuilderBaseTransform(layer,transform);layer.userData.buildBounds=new THREE.Box3().setFromObject(layer);
+ if(!worldDrag)preserveSceneHeights(anchors);
+ syncBaseControls();markChanged();
 }
-$('#world-alignment').addEventListener('input',event=>{
+$('#world-alignment').addEventListener('change',event=>{
  if(!event.target.matches('[data-base-transform]'))return;
  const transform=Object.fromEntries(['x','y','z','rotation','scale'].map(key=>[key,$('#world-base-'+key).value]));alignBase(transform);
 });
 let moveWorldMode=false,worldDrag=null;
-function setMoveWorldMode(enabled){if(!enabled)worldDrag=null;moveWorldMode=Boolean(enabled&&baseWorld);controls.enabled=!moveWorldMode;$('#world-base-move').setAttribute('aria-pressed',String(moveWorldMode));$('#world-base-move').textContent=moveWorldMode?'DONE MOVING WORLD':'DRAG WORLD ON MAP';}
+function setMoveWorldMode(enabled){if(!enabled){preserveSceneHeights(worldDrag?.anchors);worldDrag=null;}moveWorldMode=Boolean(enabled);controls.enabled=!moveWorldMode;$('#world-base-move').setAttribute('aria-pressed',String(moveWorldMode));$('#world-base-move').textContent=moveWorldMode?'DONE MOVING WORLD':'DRAG WORLD ON MAP';}
 $('#world-base-move').addEventListener('click',()=>{cancelTouchAction();setMoveWorldMode(!moveWorldMode);});
 renderer.domElement.addEventListener('pointerdown',event=>{
- if(!moveWorldMode||!baseWorld||event.button!==0)return;
+ if(!moveWorldMode||event.button!==0)return;
  event.preventDefault();event.stopImmediatePropagation();if(worldDrag)return;screenRay(event);
- const plane=new THREE.Plane(new THREE.Vector3(0,1,0),-baseWorld.userData.buildBounds.min.y),point=raycaster.ray.intersectPlane(plane,new THREE.Vector3());if(!point)return;
+ const plane=new THREE.Plane(new THREE.Vector3(0,1,0),-(baseWorld||proceduralWorld).userData.buildBounds.min.y),point=raycaster.ray.intersectPlane(plane,new THREE.Vector3());if(!point)return;
  worldDrag={point,plane,transform:normalizedBaseTransform(sceneData.baseTransform),pointerId:event.pointerId};renderer.domElement.setPointerCapture(event.pointerId);
 },true);
 renderer.domElement.addEventListener('pointermove',event=>{
@@ -419,12 +425,21 @@ renderer.domElement.addEventListener('pointermove',event=>{
  event.preventDefault();event.stopImmediatePropagation();screenRay(event);const point=raycaster.ray.intersectPlane(worldDrag.plane,new THREE.Vector3());if(!point)return;
  alignBase({...worldDrag.transform,x:worldDrag.transform.x+point.x-worldDrag.point.x,z:worldDrag.transform.z+point.z-worldDrag.point.z});
 },true);
-for(const type of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(type,event=>{if(worldDrag?.pointerId===event.pointerId){event.stopImmediatePropagation();worldDrag=null;}},true);
-$('#world-base-ghost').addEventListener('change',event=>{if(!baseWorld)return;baseWorld.traverse(node=>{for(const material of [].concat(node.material||[])){material.userData.overlayOriginal ||= {opacity:material.opacity,transparent:material.transparent,depthWrite:material.depthWrite};const original=material.userData.overlayOriginal;material.opacity=event.target.checked ? .3 : original.opacity;material.transparent=event.target.checked||original.transparent;material.depthWrite=event.target.checked?false:original.depthWrite;material.needsUpdate=true;}});});
+for(const type of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(type,event=>{if(worldDrag?.pointerId===event.pointerId){event.stopImmediatePropagation();preserveSceneHeights(worldDrag.anchors);worldDrag=null;}},true);
+$('#world-base-ghost').addEventListener('change',event=>{(baseWorld||proceduralWorld).traverse(node=>{for(const material of [].concat(node.material||[])){material.userData.overlayOriginal ||= {opacity:material.opacity,transparent:material.transparent,depthWrite:material.depthWrite};const original=material.userData.overlayOriginal;material.opacity=event.target.checked ? .3 : original.opacity;material.transparent=event.target.checked||original.transparent;material.depthWrite=event.target.checked?false:original.depthWrite;material.needsUpdate=true;}});});
+
+function syncSceneLayerControls(){const value=normalizedBaseTransform(sceneData.sceneAlignment);for(const key of ['x','y','z','rotation','scale'])$('#scene-layer-'+key).value=value[key];}
+function alignSceneLayer(next){
+ const anchors=sceneData.objects.map(object=>{const rt=runtime.get(object.id);return {...object,position:{...object.position,y:rt?new THREE.Box3().setFromObject(rt.root).min.y:object.position.y}};});
+ const transformed=transformSceneLayer(anchors,sceneData.sceneAlignment,next);if(transformed.some(object=>Object.values(object.scale).some(value=>value<.05||value>20))){syncSceneLayerControls();showToast('Keep each item scale between 0.05 and 20.');return;}
+ sceneData.objects=transformed.map(object=>{const y=object.position.y;if(baseWorld)object.position.y=y+(object.groundOffset||0);else object.groundOffset=y-groundAt(object.position.x,object.position.z,y+100);return object;});
+ sceneData.sceneAlignment=normalizedBaseTransform(next);for(const object of sceneData.objects)updateTransform(object);syncSceneLayerControls();updateUi();markChanged();
+}
+$('#scene-layer-alignment').addEventListener('change',event=>{if(!event.target.matches('[data-scene-transform]'))return;alignSceneLayer(Object.fromEntries(['x','y','z','rotation','scale'].map(key=>[key,$('#scene-layer-'+key).value])));});
+$('#scene-layer-reset').addEventListener('click',()=>alignSceneLayer({}));
 $('#world-base-reset').addEventListener('click',()=>alignBase({}));
 $('#world-base-center').addEventListener('click',()=>{
- if(!baseWorld)return;
- const box=new THREE.Box3().setFromObject(baseWorld),center=box.getCenter(new THREE.Vector3()),transform=normalizedBaseTransform(sceneData.baseTransform);
+ const box=new THREE.Box3().setFromObject(baseWorld||proceduralWorld),center=box.getCenter(new THREE.Vector3()),transform=normalizedBaseTransform(sceneData.baseTransform);
  const objects=[...runtime.values()].map(value=>value.root),target=new THREE.Box3();objects.forEach(root=>target.expandByObject(root));const destination=target.isEmpty()?new THREE.Vector3():target.getCenter(new THREE.Vector3());
  alignBase({...transform,x:transform.x+destination.x-center.x,z:transform.z+destination.z-center.z});resetBuildView();
 });
@@ -540,7 +555,7 @@ async function refreshMemberModels(){try{const inventory=new SharedGameInventory
 const builderCare=createGameMarketplace({onOpen:()=>{controls.enabled=false;},onClose:()=>{controls.enabled=true;},canUse:item=>Boolean(item.modelUrl||item.glb_url||item.buildAssetId||item.renderKind==='image'||item.function_data?.buildAssetId),onUse:async item=>{await refreshMemberModels();const model=models().find(model=>model.sourceId===item.id||model.id===item.id||item.buildAssetId&&model.buildAssetId===item.buildAssetId||item.modelUrl&&model.modelUrl===item.modelUrl);if(!model)throw new Error('This item has no placeable 3D asset. Choose a model, vehicle, character or building item.');builderCare.close();await beginPlacement(model.id);}});
 const memberLinks=document.createElement('nav');memberLinks.setAttribute('aria-label','Member inventory and care');memberLinks.innerHTML='<button type="button" data-builder-market>Object catalogue · Free to place</button> <button type="button" data-builder-bundles>Discount bundles · Save 20%</button> <button type="button" data-builder-care>Body telemetry · Field inventory · Care trades</button> · <a href="builder-market.html#backpack" target="_blank" rel="noopener">Builder Backpack ↗</a> · <a href="ioncore-rpg-market.html" target="_blank" rel="noopener">Body telemetry & care supplies ↗</a>';document.querySelector('#library-grid').before(memberLinks);memberLinks.querySelector('[data-builder-care]').addEventListener('click',()=>builderCare.open('care'));memberLinks.querySelector('[data-builder-market]').addEventListener('click',()=>{activeFilter='all';renderLibrary();populateCompleteCatalog()});memberLinks.querySelector('[data-builder-bundles]').addEventListener('click',()=>builderCare.open('bundles'));
 await refreshMemberModels();watchInventoryChange(refreshMemberModels);
-const requested=new URLSearchParams(location.search).get('layout'),saved=readJson(STORAGE_KEY,readJson(LEGACY_KEY,null));if(saved?.baseEnvironment&&saved.layoutMeta&&saved.layout)layouts[saved.layout]={...saved.layoutMeta,baseEnvironment:saved.baseEnvironment};if(saved&&Array.isArray(saved.objects)){pendingCatalogSceneId=saved.id||'active';catalogModels=[...(saved.placedModels||[]),...(saved.catalogModels||[])].filter(m=>m?.id);}if(saved&&Array.isArray(saved.objects))pendingCatalogRestore=saved.objects.filter(object=>!modelFor(object.modelId));if(saved&&Array.isArray(saved.objects))sceneData={...sceneData,...saved,layout:layouts[saved.layout]?saved.layout:'grand-floor',objects:saved.objects.filter(o=>modelFor(o.modelId)).map(migrateObject)};const tray=readJson(TRAY_KEY,[]);if(!sceneData.objects.length)tray.filter(i=>modelFor(i.id)).forEach((i,n)=>sceneData.objects.push(makeObject(i.id,-8+(n%5)*4,-5+Math.floor(n/5)*4)));$('#scene-name').value=sceneData.name;$('#layout-select').value=sceneData.layout;$('#weather-select').value=sceneData.weather||'clear';$('#play-mode').value=sceneData.gameplay?.multiplayer===false?'solo':'multiplayer';applyMapSize(sceneData.mapSize||40);$('#layout-label').textContent=layouts[sceneData.layout].name.toUpperCase();$('#layout-description').textContent=layouts[sceneData.layout].description;$('#land-canvas').className=`land-canvas layout-${sceneData.layout}`;shapeTerrain();for(const option of $('#layout-select').options)if(layouts[option.value])option.textContent=layouts[option.value].name;renderAtlas();renderLibrary();rebuildAll();populateCompleteCatalog().then(()=>{const wanted=requested||saved?.layout;if(wanted&&layouts[wanted]&&(sceneData.layout!==wanted||layouts[wanted].environmentId||requested&&!sceneData.objects.length))selectLayout(wanted)});
+const requested=new URLSearchParams(location.search).get('layout'),saved=readJson(STORAGE_KEY,readJson(LEGACY_KEY,null));if(saved?.baseEnvironment&&saved.layoutMeta&&saved.layout)layouts[saved.layout]={...saved.layoutMeta,baseEnvironment:saved.baseEnvironment};if(saved&&Array.isArray(saved.objects)){pendingCatalogSceneId=saved.id||'active';catalogModels=[...(saved.placedModels||[]),...(saved.catalogModels||[])].filter(m=>m?.id);}if(saved&&Array.isArray(saved.objects))pendingCatalogRestore=saved.objects.filter(object=>!modelFor(object.modelId));if(saved&&Array.isArray(saved.objects))sceneData={...sceneData,...saved,layout:layouts[saved.layout]?saved.layout:'grand-floor',objects:saved.objects.filter(o=>modelFor(o.modelId)).map(migrateObject)};const tray=readJson(TRAY_KEY,[]);if(!sceneData.objects.length)tray.filter(i=>modelFor(i.id)).forEach((i,n)=>sceneData.objects.push(makeObject(i.id,-8+(n%5)*4,-5+Math.floor(n/5)*4)));$('#scene-name').value=sceneData.name;$('#layout-select').value=sceneData.layout;$('#weather-select').value=sceneData.weather||'clear';$('#play-mode').value=sceneData.gameplay?.multiplayer===false?'solo':'multiplayer';applyMapSize(sceneData.mapSize||40);$('#layout-label').textContent=layouts[sceneData.layout].name.toUpperCase();$('#layout-description').textContent=layouts[sceneData.layout].description;$('#land-canvas').className=`land-canvas layout-${sceneData.layout}`;shapeTerrain();syncBaseControls();for(const option of $('#layout-select').options)if(layouts[option.value])option.textContent=layouts[option.value].name;renderAtlas();renderLibrary();rebuildAll();populateCompleteCatalog().then(()=>{const wanted=requested||saved?.layout;if(wanted&&layouts[wanted]&&(sceneData.layout!==wanted||layouts[wanted].environmentId||requested&&!sceneData.objects.length))selectLayout(wanted)});
 
 // Avatar Look Lab popup: component-only SVG preview, per-piece fitting, and reversible edits.
 const avatarDialog=$('#avatar-customizer');

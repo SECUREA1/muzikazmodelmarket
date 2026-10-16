@@ -22,8 +22,8 @@ export function applyBuilderBaseTransform(root, value) {
 }
 
 export function builderBaseSpawn(environment) {
-  const base=builderBaseEnvironment(environment);if(!base)return null;
-  const point=base.spawn||{x:0,y:0,z:2},t=normalizedBaseTransform(environment.builderScene.baseTransform),angle=t.rotation*Math.PI/180;
+  const base=builderBaseEnvironment(environment);if(!base&&!environment.builderScene)return null;
+  const point=(base||environment).spawn||{x:0,y:0,z:2},t=normalizedBaseTransform(environment.builderScene.baseTransform),angle=t.rotation*Math.PI/180;
   const x=(Number(point.x)||0)*t.scale,z=(Number(point.z)||0)*t.scale;
   return {x:x*Math.cos(angle)+z*Math.sin(angle)+t.x,y:(Number(point.y)||0)*t.scale+t.y,z:-x*Math.sin(angle)+z*Math.cos(angle)+t.z,rotationY:(Number(point.rotationY)||0)+angle};
 }
