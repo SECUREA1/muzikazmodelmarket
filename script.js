@@ -1,3 +1,4 @@
+const arCameraReady=import('./public/js/ar-camera-preview.js');
 const menuButton = document.querySelector('.menu-toggle');
 const nav = document.querySelector('.nav');
 const mobileLogoMenuButton = document.querySelector('.global-site-header .world-logo');
@@ -2019,7 +2020,7 @@ function activateMarketplaceAr(listing){
     arPopoutButton?.click();
     return;
   }
-  if (listing.modelUrl) window.open(listing.modelUrl, '_blank', 'noopener');
+  if(listing.modelUrl)arCameraReady.then(()=>window.MuzikazAR.open({name:listing.name,modelUrl:listing.modelUrl}));
 }
 
 function selectedArCharacter() {
@@ -2049,7 +2050,7 @@ function updateArViewer(useCustomFile = Boolean(customArFileUrl)) {
   const character = selectedArCharacter();
   const characterSrc = characterImage(character);
   document.querySelector('#ar-character-name').textContent = `${character.name} AR viewer`;
-  document.querySelector('#ar-character-copy').textContent = `${character.bio} Open the highlighted pop-out button to launch this character preview on iPhone Quick Look or Android Scene Viewer when a GLB/USDZ AR file is available.`;
+  document.querySelector('#ar-character-copy').textContent = `${character.bio} Open the camera preview to display this 3D character over your surroundings. Camera permission is requested only when you choose to open it; no model file is saved.`;
   if (arPreviewImg) {
     arPreviewImg.src = characterSrc;
     arPreviewImg.hidden = useCustomFile && /\.(glb|gltf|usdz|reality)$/i.test(customArFileUrl);
@@ -2123,27 +2124,10 @@ function escapeArPopupText(value) {
   return String(value ?? '').replace(/[&<>'\"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '\"': '&quot;' }[char]));
 }
 
-arPopoutButton?.addEventListener('click', () => {
-  const character = selectedArCharacter();
-  const popup = window.open('', `muzikaz-ar-${character.file}`, 'popup,width=430,height=740');
-  if (!popup) {
-    alert('Allow pop-ups to open the AR viewer window. Upload a GLB or USDZ file for native AR launch on mobile.');
-    return;
-  }
-  const catalogModel = modelForCharacter(character);
-  const modelUrl = customArFileUrl || catalogModel?.modelUrl || '';
-  const iosModelUrl = !customArFileUrl ? catalogModel?.iosModelUrl || '' : '';
-  const previewUrl = arPreviewImg?.src || characterImage(character);
-  const safeCharacterName = escapeArPopupText(character.name);
-  const safeModelUrl = escapeArPopupText(modelUrl);
-  const safeIosModelUrl = escapeArPopupText(iosModelUrl);
-  const safePreviewUrl = escapeArPopupText(previewUrl);
-  const viewerMarkup = modelUrl && /\.(glb|gltf|usdz|reality)$/i.test(modelUrl)
-    ? `<model-viewer src="${safeModelUrl}" ${iosModelUrl ? `ios-src="${safeIosModelUrl}"` : ''} poster="${safePreviewUrl}" camera-controls touch-action="pan-y" auto-rotate ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" interaction-prompt="auto" shadow-intensity="1" alt="${safeCharacterName} AR model"><button slot="ar-button" type="button">Place ${safeCharacterName} in AR</button></model-viewer>`
-    : `<img src="${safePreviewUrl}" alt="${safeCharacterName}"><p>No matching GLB/USDZ filing is connected yet; upload a model file on the main page to launch native AR.</p>`;
-  const sourceCopy = catalogModel ? `${escapeArPopupText(catalogModel.name)} is connected from the AR model filing: ${escapeArPopupText(catalogModel.modelUrl)}.` : 'Select another character or upload a GLB, GLTF, USDZ, or Reality file for native AR on iPhone or Android.';
-  popup.document.write(`<!doctype html><title>${safeCharacterName} AR Preview</title><script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"><\/script><style>body{margin:0;background:#020302;color:#9cff00;font-family:system-ui;text-align:center;text-transform:uppercase}main{min-height:100vh;display:grid;place-items:center;padding:18px}model-viewer,img{width:100%;height:72vh;max-height:72vh;object-fit:contain;filter:drop-shadow(0 20px 30px #000)}button{border:1px solid #9cff00;border-radius:999px;background:#9cff00;color:#030403;padding:12px 18px;font-weight:900;text-transform:uppercase}p{text-transform:none;color:#fff}</style><main><div><h1>${safeCharacterName}</h1>${viewerMarkup}<p>${sourceCopy}</p></div></main>`);
-  popup.document.close();
+arPopoutButton?.addEventListener('click', async () => {
+  const character=selectedArCharacter(),model=modelForCharacter(character);
+  await arCameraReady;
+  await window.MuzikazAR.open({name:character.name,modelUrl:customArFileUrl||model?.modelUrl||''});
 });
 
 function initBottleLogin() {
@@ -2912,7 +2896,7 @@ function initAssetDashboard(){
   async function loadAssets(){try{status.textContent='Loading assets…'; const list=[...(await api(current==='Public Assets'?'/api/assets/public':'/api/assets/mine')),...localAssets()]; cachedAssets=list; const view=filtered(list); renderTabs(list); grid.replaceChildren(...(view.length?view.map(card):[emptyCard(current)])); status.textContent=`${view.length} assets loaded for ${current}.`; updateAssetMetrics(list); renderAssignmentOptions(); }catch(e){const list=localAssets(); cachedAssets=list; const view=filtered(list); renderTabs(list); grid.replaceChildren(...(view.length?view.map(card):[emptyCard(current)])); status.textContent=list.length?`${view.length} browser draft assets loaded for ${current}. Start the server to sync.`:e.message; updateAssetMetrics(list); renderAssignmentOptions();}}
   function updateAssetMetrics(list){document.getElementById('metric-thumbnails').textContent=list.filter(a=>a.thumbnailUrl).length;document.getElementById('metric-store-tiles').textContent=list.filter(a=>a.intendedUse==='Marketplace tile').length;document.getElementById('metric-product-previews').textContent=list.filter(a=>a.intendedUse==='Product preview').length;}
   function emptyCard(label){const el=document.createElement('article');el.className='asset-card empty-asset-card';el.innerHTML=`<h4>No ${label.toLowerCase()} yet</h4><p>Upload graphics or 3D models, then use the tabs and approval buttons to manage display.</p>`;return el;}
-  function card(a){const el=document.createElement('article');el.className='asset-card'; const preview=a.fileType==='model'?`<model-viewer src="${a.publicUrl}" camera-controls touch-action="pan-y" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1"><button slot="ar-button" type="button">Place in AR</button></model-viewer>`:`<img src="${a.thumbnailUrl||a.publicUrl}" alt="${a.title}">`; el.innerHTML=`${preview}<h4>${a.title}</h4><p>${a.originalFilename}</p><p>Owner: ${a.ownerDisplayName}</p><p>${a.fileType} · ${a.fileSize} bytes · ${a.category||'uncategorized'}</p><p>Status: ${a.status} · ${a.visibility}</p><p>Related model: ${a.relatedModelId||'none'}</p><p>Uploaded: ${a.createdAt} Approved: ${a.approvedAt||'—'}</p><p>Published: ${a.publishLocation||a.publishedAt||'—'}</p><div class="button-row"></div><p>${a.moderatorNote||''}</p>`; const row=el.querySelector('.button-row'); [['Edit',()=>edit(a)],['Preview',()=>window.open(a.publicUrl,'_blank')],['Assign',()=>assign(a)],['Download',()=>window.open(a.publicUrl,'_blank')],['Archive',()=>action(a,'archive')],['Delete',()=>del(a)]].forEach(([t,fn])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;row.append(b);}); if(sessionStorage.getItem('muzikazAdminToken'))[['Approve','approve'],['Reject','reject'],['Feature','approve'],['Publish','publish'],['Unpublish','unpublish']].forEach(([t,act])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>action(a,act);row.append(b);}); return el;}
+  function card(a){const el=document.createElement('article');el.className='asset-card'; const preview=a.fileType==='model'?`<model-viewer src="${a.publicUrl}" camera-controls touch-action="pan-y" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1"><button slot="ar-button" type="button">Place in AR</button></model-viewer>`:`<img src="${a.thumbnailUrl||a.publicUrl}" alt="${a.title}">`; el.innerHTML=`${preview}<h4>${a.title}</h4><p>${a.originalFilename}</p><p>Owner: ${a.ownerDisplayName}</p><p>${a.fileType} · ${a.fileSize} bytes · ${a.category||'uncategorized'}</p><p>Status: ${a.status} · ${a.visibility}</p><p>Related model: ${a.relatedModelId||'none'}</p><p>Uploaded: ${a.createdAt} Approved: ${a.approvedAt||'—'}</p><p>Published: ${a.publishLocation||a.publishedAt||'—'}</p><div class="button-row"></div><p>${a.moderatorNote||''}</p>`; const row=el.querySelector('.button-row'); [['Edit',()=>edit(a)],['Preview',()=>a.fileType==='model'?arCameraReady.then(()=>window.MuzikazAR.open({name:a.title,modelUrl:a.publicUrl})):window.open(a.publicUrl,'_blank')],['Assign',()=>assign(a)],['Download',()=>import('./public/js/backpack-files.js').then(({downloadGameplayItem})=>downloadGameplayItem(a.id)).catch(error=>alert(error.message))],['Archive',()=>action(a,'archive')],['Delete',()=>del(a)]].forEach(([t,fn])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;row.append(b);}); if(sessionStorage.getItem('muzikazAdminToken'))[['Approve','approve'],['Reject','reject'],['Feature','approve'],['Publish','publish'],['Unpublish','unpublish']].forEach(([t,act])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>action(a,act);row.append(b);}); return el;}
   async function action(a,act){const reason=act==='reject'?prompt('Reason required')||'Changes required':''; await api(`/api/assets/${a.id}/${act}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason})}); status.textContent= act==='publish'?'Published to live model space':'Asset updated'; loadAssets();}
   async function del(a){await api(`/api/assets/${a.id}`,{method:'DELETE'});loadAssets();}
   async function edit(a){const title=prompt('Title',a.title); if(title) await api(`/api/assets/${a.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({title})}); loadAssets();}
