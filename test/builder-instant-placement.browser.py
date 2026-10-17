@@ -30,6 +30,9 @@ async def main():
     if name=='broken' and attempts[name]==1: await route.fulfill(status=503,body='Temporarily unavailable')
     else: await route.fulfill(json=asset)
    await page.route('**/test-*.gltf',delayed)
+   await page.add_init_script("const originalRAF=requestAnimationFrame.bind(window);window.requestAnimationFrame=callback=>callback.name==='animate'?setTimeout(()=>callback(performance.now()),150):originalRAF(callback)")
+   # The fixture deliberately holds model downloads across several UI pages.
+   await page.add_init_script("const nativeTimeout=setTimeout;window.setTimeout=(fn,delay,...args)=>nativeTimeout(fn,delay===20000?180000:delay,...args)")
    await page.goto(base+'/environment-builder.html')
    await page.wait_for_function('window.MuzikazEnvironmentBuilder && document.querySelectorAll(".library-item").length>50')
    async def open_catalog(name):
@@ -49,6 +52,16 @@ async def main():
      assert await page.locator('#touch-place-center').is_enabled()
      await page.locator('#touch-place-center').click()
     return await page.evaluate('window.MuzikazEnvironmentBuilder.getScene().objects.at(-1).id')
+   async def control(selector):
+    target=page.locator(selector)
+    entry=await target.evaluate("n=>n.closest('[data-builder-screen]')?.dataset.builderScreen")
+    if entry and not await target.is_visible():
+     side=await target.evaluate("n=>n.closest('aside').id")
+     await page.get_by_label('Object panel screen' if side=='inspector-panel' else 'Item panel screen',exact=True).select_option(entry)
+     for _ in range(80):
+      if await target.is_visible():break
+      await page.locator('#'+side+' .builder-panel-pagination').get_by_role('button',name='Next',exact=True).click()
+    return target
    async def edit():
     if width<=760: await page.locator('#touch-edit').click()
    first=await drag_drop('slow')
@@ -56,7 +69,7 @@ async def main():
    assert not gates['slow'].is_set()
    await edit()
    for field,value in (('scale-exact','175'),('rotation-exact','137'),('height-exact','1.25'),('position-x','2.5')):
-    await page.locator('#'+field).fill(value);await page.locator('#'+field).press('Tab')
+    await (await control('#'+field)).fill(value);await (await control('#'+field)).press('Tab')
    before=await page.evaluate('id=>window.MuzikazEnvironmentBuilder.getScene().objects.find(o=>o.id===id)',first)
    gates['slow'].set()
    await page.wait_for_function('id=>window.MuzikazEnvironmentBuilder.getObject3D(id)?.userData.builderAssetState==="ready"',arg=first)
@@ -64,11 +77,11 @@ async def main():
    for key in ('position','rotation','scale','groundOffset'): assert before[key]==after[key],(width,key,before[key],after[key])
    feet=await page.evaluate('''async id=>{const T=await import('/public/vendor/three/three.module.min.js');return new T.Box3().setFromObject(window.MuzikazEnvironmentBuilder.getObject3D(id)).min.y;}''',first)
    assert abs(feet-after['position']['y'])<.001,(feet,after['position'])
-   await page.locator('[data-tuning-axis=height][data-tuning-sign="1"]').click()
+   await (await control('[data-tuning-axis=height][data-tuning-sign="1"]')).click()
    await page.locator('#tuning-undo').click()
    assert await page.locator('#height-exact').input_value()=='1.25'
    second=await drag_drop('delete');await edit()
-   await page.locator('#remove-object').click()
+   await (await control('#remove-object')).click()
    gates['delete'].set();await page.wait_for_timeout(300)
    assert await page.evaluate('id=>window.MuzikazEnvironmentBuilder.getObject3D(id)===null',second)
    assert await page.evaluate('window.MuzikazEnvironmentBuilder.getScene().objects.length')==1
