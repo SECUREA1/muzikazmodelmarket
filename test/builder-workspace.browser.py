@@ -18,6 +18,9 @@ with sync_playwright() as p:
  page.route('https://**/*',lambda r:r.abort())
  page.goto(f'http://127.0.0.1:{server.server_port}/environment-builder.html')
  page.wait_for_function("document.querySelectorAll('.library-item').length>50")
+ assert page.locator('#library-panel').bounding_box()['width']>=330
+ assert page.locator('#inspector-panel').bounding_box()['width']>=350
+ assert page.locator('#library-tile-size').input_value()=='140'
  page.locator('#library-search').fill('campfire')
  page.wait_for_function("document.querySelector('[data-model=campfire]') !== null")
  page.locator('[data-catalog-favorite=campfire]').click()
@@ -29,6 +32,8 @@ with sync_playwright() as p:
  page.locator('#touch-place-center').click()
  page.wait_for_function("document.querySelector('#object-count').textContent.includes('1 OBJECT')")
  assert page.locator('#inspector-controls').is_visible()
+ assert page.locator('#rotation-control').bounding_box()['width']>=240
+ assert page.locator('#rotation-exact').bounding_box()['height']>=48
  before=float(page.locator('#position-x').input_value())
  page.locator('[data-tuning-axis=x][data-tuning-sign="1"]').click()
  after=float(page.locator('#position-x').input_value())
@@ -82,7 +87,11 @@ with sync_playwright() as p:
  page.locator('[data-tuning-axis=height][data-tuning-sign="1"]').click()
  assert abs(float(page.locator('#height-exact').input_value())-before-.1)<.001
  assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'), 'mobile page overflow'
+ assert page.locator('#inspector-panel').bounding_box()['height']>=.85*844
+ assert page.locator('[data-tuning-axis=height][data-tuning-sign=\"1\"]').bounding_box()['height']>=48
  page.screenshot(path=str(artifacts/'builder-mobile-controls.png'))
+ page.set_viewport_size({'width':320,'height':740})
+ assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'), 'narrow mobile overflow'
  print(json.dumps({'errors':errors,'bad':bad[:10],'checks':['catalogue search/categories/sorting','favourites','recent placements','place in scene','exact transforms','nudges','undo/redo','inspector tabs','scene search','mobile drawers','mobile placement and tuning','no horizontal overflow']}))
  assert not errors, errors
  browser.close()
