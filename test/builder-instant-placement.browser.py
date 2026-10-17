@@ -16,7 +16,7 @@ async def main():
  async with async_playwright() as p:
   browser=await p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--enable-unsafe-swiftshader'])
   for width,height in ((1440,1000),(390,844)):
-   context=await browser.new_context(viewport={'width':width,'height':height},service_workers='block')
+   context=await browser.new_context(viewport={'width':width,'height':height},service_workers='block',has_touch=width<=760)
    page=await context.new_page();errors=[]
    page.on('pageerror',lambda error:errors.append(str(error)))
    gates={name:asyncio.Event() for name in ('slow','delete','broken')};attempts={name:0 for name in gates}
@@ -44,13 +44,18 @@ async def main():
    async def drag_drop(name):
     await open_catalog(name)
     # Native desktop drops must initiate selection themselves, including when no preview exists.
-    if width>760:
+    if width>760 and name!='slow':
      await page.locator('#land-canvas').scroll_into_view_if_needed()
      await page.evaluate('''name=>{const canvas=document.querySelector('#land-canvas canvas'),r=canvas.getBoundingClientRect(),data=new DataTransfer();data.setData('text/plain','test-'+name);canvas.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data,clientX:r.x+r.width/2,clientY:r.y+r.height/2}));}''',name)
     else:
      await page.locator('[data-model="test-'+name+'"]').click()
      assert await page.locator('#touch-place-center').is_enabled()
-     await page.locator('#touch-place-center').click()
+     await page.locator('#land-canvas canvas').scroll_into_view_if_needed()
+     canvas=page.locator('#land-canvas canvas')
+     count=await page.evaluate('window.MuzikazEnvironmentBuilder.getScene().objects.length')
+     if width<=760: await canvas.tap(position={'x':(await canvas.bounding_box())['width']/2,'y':(await canvas.bounding_box())['height']/2})
+     else: await canvas.click(position={'x':(await canvas.bounding_box())['width']/2,'y':(await canvas.bounding_box())['height']/2})
+     assert await page.evaluate('window.MuzikazEnvironmentBuilder.getScene().objects.length')==count+1
     return await page.evaluate('window.MuzikazEnvironmentBuilder.getScene().objects.at(-1).id')
    async def control(selector):
     target=page.locator(selector)
