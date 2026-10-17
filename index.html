@@ -14,7 +14,7 @@
     <meta name="muzikaz-github-branch" content="main">
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="High-quality MUZIKAZ.com profile for neon 3D model packs, mascot merch, creator tools, live dashboards, wallets, feeds, datasets, and collectible brand stations." />
     <meta name="keywords" content="MUZIKAZ, muzikaz.com, 3D model market, character models, mascot merch, creator dashboard, wallet rewards, brand kit, neon collectibles" />
     <meta name="author" content="MUZIKAZ" />
@@ -47,8 +47,10 @@
     <meta name="msapplication-TileColor" content="#05070a">
   <link rel="stylesheet" href="public/assets/game-control-dock.css">
 <link rel="stylesheet" href="public/css/main-market-filters.css">
+  <link rel="stylesheet" href="public/css/home-gateway.css">
 </head>
-<body class="original-platform" data-game-controls="pending" data-game-launcher>
+<body class="original-platform muzikaz-home" data-game-controls="pending" data-game-launcher>
+    <a class="skip-link" href="#home">Skip to content</a>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x.png","description":"High-quality MUZIKAZ.com profile for neon 3D model packs, mascot merch, creator tools, live dashboards, wallets, feeds, datasets, and collectible brand stations.","sameAs":["https://muzikaz.com/"]}</script>
     <div class="topbar">
         <span>Free drops every Friday</span>
@@ -77,17 +79,17 @@
         <button class="menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Open menu"><svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span></button>
     </header>
 
-    <main id="home">
+    <main id="home" tabindex="-1">
         <section class="hero" aria-labelledby="hero-title" data-hero-mode="explore">
             <div class="hero-poster">
                 <div class="hero-poster__glow" aria-hidden="true"></div>
                 <img src="public/assets/muzikaz-world-poster.svg" alt="Enter MUZIKAZ WORLD — your avatar, your sound, your universe" />
                 <model-viewer class="hero-character hero-character--one" src="public/models/avatars/VOLTWOLF.glb" camera-controls auto-rotate autoplay ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1.2" interaction-prompt="none" alt="Interactive 3D VOLTWOLF character"><button class="ar-button" slot="ar-button" type="button">Place VOLTWOLF in AR</button></model-viewer>
                 <model-viewer class="hero-character hero-character--two" src="public/models/avatars/sharko.glb" camera-controls auto-rotate autoplay ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1.2" interaction-prompt="none" alt="Interactive 3D Sharko character"><button class="ar-button" slot="ar-button" type="button">Place Sharko in AR</button></model-viewer>
-                <div class="hero-signal" aria-hidden="true"><i></i><span>World signal</span><b>98%</b></div>
+                <div class="hero-signal" aria-hidden="true"><i></i><span>MUZIKAZ WORLD</span><b>Find your frequency</b></div>
             </div>
             <div class="hero-copy">
-                <div class="hero-live"><i aria-hidden="true"></i> Live universe <span>Season 01</span></div>
+                <div class="hero-live"><i aria-hidden="true"></i> Music · Play · Create <span>MUZIKAZ WORLD</span></div>
                 <img class="hero-logo" src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ WORLD" />
                 <p class="world-kicker">One connected creative universe</p>
                 <h1 id="hero-title">Your sound.<br><em>Your universe.</em></h1>
@@ -106,11 +108,42 @@
             <div class="hero-scroll-cue" aria-hidden="true"><span>Scroll to explore</span><i></i></div>
         </section>
 
-        <section class="feature-strip" aria-label="Store benefits">
-            <article><b>⚡</b><div><strong>Instant Files</strong><span>Preview-ready assets load from this page.</span></div></article>
-            <article><b>🎧</b><div><strong>Beat Culture</strong><span>Neon streetwear energy for every drop.</span></div></article>
-            <article><b>🛡️</b><div><strong>Creator Safe</strong><span>Clear packs for mockups, banners, and pages.</span></div></article>
-            <article><b>🚚</b><div><strong>Fast Drops</strong><span>New legends and merch collections weekly.</span></div></article>
+        <section class="home-gateway" aria-labelledby="home-gateway-title">
+            <header class="home-gateway__heading">
+                <div><p class="kicker">Your next move</p><h2 id="home-gateway-title">Find your frequency.</h2></div>
+                <p>One world. Every way in. Pick your path and make it yours.</p>
+            </header>
+            <nav class="home-gateway__tiles" aria-label="Start exploring MUZIKAZ">
+                <a class="home-gateway__tile" href="model-explorer.html?environment=public-commons&amp;mode=multiplayer&amp;autoplay=1">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 11 7-11 7z"/></svg>
+                    <span class="home-gateway__number">01 / PLAY</span><strong>Enter the commons</strong><span>Jump into the public world and meet the crew.</span><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 18 18 6M6 6h12v12"/></svg></b>
+                </a>
+                <a class="home-gateway__tile" href="#world-map">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2zM8 4v13M16 7v13"/></svg>
+                    <span class="home-gateway__number">02 / EXPLORE</span><strong>Choose your district</strong><span>Find districts, published maps and member spaces.</span><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 18 18 6M6 6h12v12"/></svg></b>
+                </a>
+                <a class="home-gateway__tile" href="environment-builder.html">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5zM3 12l9 5 9-5M3 16l9 5 9-5"/></svg>
+                    <span class="home-gateway__number">03 / CREATE</span><strong>Build your world</strong><span>Place objects, shape a scene and publish your map.</span><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 18 18 6M6 6h12v12"/></svg></b>
+                </a>
+                <a class="home-gateway__tile" href="model-market.html">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1-5H5zM6 9v11h12V9M9 20v-6h6v6"/></svg>
+                    <span class="home-gateway__number">04 / COLLECT</span><strong>Find your next drop</strong><span>Discover avatars, interactive items and creator gear.</span><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 18 18 6M6 6h12v12"/></svg></b>
+                </a>
+            </nav>
+            <details class="home-essentials" id="essential-links">
+                <summary><span>More destinations <small>Your tools, collection and account</small></span><span class="home-essentials__toggle" aria-hidden="true">+</span></summary>
+                <nav aria-label="More MUZIKAZ destinations">
+                    <a href="builder-market.html">Builder marketplace<span>Worlds, buildings &amp; scene assets</span></a>
+                    <a href="model-explorer.html#custom-item-library">Custom item studio<span>Create and explore custom items</span></a>
+                    <a href="members.html#owned-collection">Your Backpack<span>Find your owned items</span></a>
+                    <a href="members.html#world-atlas">Your maps &amp; deeds<span>Explore saved member locations</span></a>
+                    <a href="members.html">Member account<span>Sign in and manage your profile</span></a>
+                    <a href="buy-mzk.html">Get MZK<span>Explore the MZK exchange</span></a>
+                    <a href="#merch">Merch collection<span>Wear the MUZIKAZ world</span></a>
+                    <a href="checkout.html">Checkout<span>Review your shopping cart</span></a>
+                </nav>
+            </details>
         </section>
 
         <section class="world-atlas" id="world-map" aria-labelledby="world-map-title">
@@ -396,11 +429,11 @@
     <footer id="contact">
         <div>
             <a class="logo world-logo" href="#home" aria-label="MUZIKAZ WORLD home"><img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ WORLD" /></a>
-            <p>Neon model-market landing page powered by the included MUZIKAZ asset pack.</p>
+            <p>Your sound. Your universe. Explore, create and collect in MUZIKAZ WORLD.</p>
         </div>
         <div><h4>Shop</h4><a href="#models">Models</a><a href="#merch">Merch</a><a href="members.html">Bottle Login</a></div>
         <div><h4>Support</h4><a href="mailto:jodelchad@chaines.io">Contact</a><a href="#crew">Drops</a></div>
-        <div><h4>Company</h4><a href="#crew">Crew</a><a href="#home">About</a></div>
+        <div><h4>Explore</h4><a href="#world-map">World atlas</a><a href="environment-builder.html">World builder</a><a href="#essential-links">All destinations</a></div>
         <div><h4>Follow</h4><p class="socials">◎ ♫ ✕</p></div>
     </footer>
 
