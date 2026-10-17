@@ -1,3 +1,4 @@
+import {mountThumbstick} from './thumbstick-input.js';
 import {spatialEffectGain} from './shared-effect-audio.js';
 import {WalkingFloorFollower,capsuleFeet,capsuleEndpoints} from './player-floor.js';
 import {mountToolsWheel,gameplayOverlayOpen,mountBottomHud} from './game-menu-controls.js';
@@ -15,7 +16,7 @@ import {ServerMotion} from './server-motion.js';
 import {selectedWorldId,outsideDestination,outsideLabel} from './world-navigation.js';
 import {ensurePlayAccess,choosePlayAccess} from './play-access.js';
 import {OwnedItemPlacement} from './owned-item-placement.js';
-import {WalkingMotion,walkingStick,walkingSprint} from './walking-motion.js';
+import {WalkingMotion,walkingSprint} from './walking-motion.js';
 import {animateSharedEnemy} from './shared-enemy-animation.js';
 import {createSharedEnemyEffects} from './shared-enemy-effects.js';
 import {loadSvgGameTexture} from './svg-game-texture.js';
@@ -1671,9 +1672,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function shootAtReticle() { if(ownedPlacement.active)return ownedPlacement.confirm();const rangeHit=handleRangeShot({centre:true});if(rangeHit!==null)return;const tool=toxicBubbleSystem.tool, shot=toxicBubbleSystem.handlePointerInteraction({}, { centre: true }); if(UTILITY_TOOLS[tool]||tool==='jetpack')return shot;if(tool==='dynamite'&&shot){setStatus('Dynamite lit, tossed, and live — watch it bounce, then clear the full blast radius.');return;} setStatus(shot ? `${RANGE_WEAPONS[tool] ? `${RANGE_WEAPONS[tool].label} fired` : 'Tool fired'}.` : 'No action at the reticle. Move or look, then use the shoot button again.'); }
   function setFullscreen() { if (document.fullscreenElement) { document.exitFullscreen?.(); return; } const request = stage.requestFullscreen?.(); if (request?.catch) request.catch(() => setStatus('Fullscreen is unavailable in this browser.')); else setStatus('Fullscreen is unavailable in this browser.'); }
   // Anchor walking to the initial touch; the 8px tap zone stays neutral.
-  function setupThumbstick(name) { const stick = document.querySelector(`[data-thumbstick="${name}"] .thumbstick-base`); const knob = stick?.querySelector('.thumbstick-knob'); if (!stick || !knob) return; let pointerId = null; let startX = 0; let startY = 0; let moved = false; let stickRect; const write = (event) => { const rect = stickRect; const radius = rect.width * .29; let x = THREE.MathUtils.clamp(event.clientX - (name === 'left' ? startX : rect.left + rect.width / 2), -radius, radius); let y = THREE.MathUtils.clamp(event.clientY - (name === 'left' ? startY : rect.top + rect.height / 2), -radius, radius); const length = Math.hypot(x, y); if (length > radius) { x = x / length * radius; y = y / length * radius; } knob.style.transform = `translate(${x}px, ${y}px)`; const wasNeutral=thumbInput.leftX===0&&thumbInput.leftY===0; const axes=name==='left'?walkingStick(x/radius,y/radius,Math.min(.9,8/radius)):{x:x/radius,y:y/radius};thumbInput[`${name}X`] = axes.x; thumbInput[`${name}Y`] = axes.y; moved ||= Math.hypot(event.clientX - startX, event.clientY - startY) > 8; if(name==='left')authoritativeClient?.requestInput(wasNeutral !== (axes.x===0&&axes.y===0)); };
-    const release = (event) => { if (pointerId !== event.pointerId) return; if (!moved&&event.type==='pointerup') { if (name === 'left') shootAtReticle(); else jump(); } pointerId = null; thumbInput[`${name}X`] = 0; thumbInput[`${name}Y`] = 0; knob.style.transform = 'translate(0, 0)'; stick.classList.remove('is-active'); if(name==='left')authoritativeClient?.requestInput(); };
-    stick.addEventListener('pointerdown', (event) => { if(pointerId!==null)return;event.preventDefault(); pointerId = event.pointerId; startX = event.clientX; startY = event.clientY; moved = false; stickRect = stick.getBoundingClientRect(); safelyCapturePointer(stick,pointerId); stick.classList.add('is-active'); safelyInteract(`${name} controller interaction`,()=>write(event)); }); stick.addEventListener('pointermove', (event) => { if (pointerId === event.pointerId) { event.preventDefault(); safelyInteract(`${name} controller interaction`,()=>write(event)); } }); stick.addEventListener('pointerup', release); stick.addEventListener('pointercancel', release);stick.addEventListener('lostpointercapture',release);window.addEventListener('blur',()=>{if(pointerId!==null)release({pointerId,type:'blur'});});
+  function setupThumbstick(name) {
+    const stick=document.querySelector(`[data-thumbstick="${name}"] .thumbstick-base`),knob=stick?.querySelector('.thumbstick-knob');if(!stick||!knob)return;
+    mountThumbstick({stick,knob,capture:safelyCapturePointer,canUse:()=>Boolean(envLoader.world)&&!gameplayOverlayOpen(),
+      onChange:(axes,released=false)=>{const wasNeutral=thumbInput[`${name}X`]===0&&thumbInput[`${name}Y`]===0;thumbInput[`${name}X`]=axes.x;thumbInput[`${name}Y`]=axes.y;if(name==='left')authoritativeClient?.requestInput(released||wasNeutral!==(axes.x===0&&axes.y===0));},
+      onTap:()=>{if(name==='left')shootAtReticle();else jump();}
+    });
   }
   setupThumbstick('left'); setupThumbstick('right');
   fullscreenButton?.addEventListener('click', setFullscreen);
@@ -1960,13 +1964,3 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     // monopolize memory on mobile browsers before the visitor is ready to play.
   }
 }
-
-
-
-
-
-
-
-
-
-
