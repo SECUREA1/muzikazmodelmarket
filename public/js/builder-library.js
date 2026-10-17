@@ -11,7 +11,7 @@ export function builderSections(model){
 export function libraryModels(models,filter='all',query=''){
  const seen=new Set(),text=String(query).trim().toLowerCase();return models.filter(model=>{
   const tags=builderSections(model);if(filter!=='all'&&!tags.has(filter))return false;
-  if(text&&!`${model.name} ${model.description||''} ${[...tags].join(' ')}`.toLowerCase().includes(text))return false;
+  if(text&&!`${model.name} ${model.id} ${model.buildAssetId||''} ${model.description||''} ${model.behavior||''} ${model.action||''} ${model.function_data?.device||''} ${[...tags].join(' ')}`.toLowerCase().includes(text))return false;
   const nativeId=model.buildAssetId||(model.procedural&&!model.generated?model.id:null),key=!model.custom&&!model.ownedBuilder&&!model.configuration&&nativeId?'native:'+nativeId:model.id;if(seen.has(key))return false;seen.add(key);return true;
  });
 }
