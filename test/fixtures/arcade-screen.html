@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Arcade screen verification</title><style>body{margin:0;padding:16px;background:#080d18;color:white;font:16px system-ui}main{max-width:720px;margin:auto}canvas{max-width:100%;border-radius:14px}h1{font-size:18px}</style><main><h1>MUZIKAZ · Arcade screen verification</h1><div id="screen"></div><canvas width="768" height="432"></canvas></main><script type="module">
+import {mountArcadeScreen,arcadeVisualModel,practicePresentation} from '/public/js/arcade-screen.js';
+import {paintArcadeCanvas} from '/public/js/arcade-screen-canvas.js';
+import {ARCADE_LIBRARY} from '/public/js/arcade-library.js';
+import {newArcadeGame,arcadeMove,projectArcadeDevices} from '/public/js/arcade-rules.js';
+import {createDeviceDemo} from '/public/js/device-demos.js';
+window.gameIds=ARCADE_LIBRARY.map(g=>g.id);window.commands=[];
+let screen,game,demo,spectating=false;
+const projected=()=>game?projectArcadeDevices({m:{gamers:{p:{game}}}}).m.gamers.p.game:null;
+window.refreshArcade=()=>{const view=demo?.view();const data={type:window.activeType,game:projected(),view:demo?(window.activeType==='poker'?practicePresentation('poker',view.gamer,view.holds):view):undefined,gamer:view?.gamer,holds:view?.holds||[],canPlay:!spectating};screen.update(data);paintArcadeCanvas(document.querySelector('canvas').getContext('2d'),arcadeVisualModel(data));};
+window.showArcade=(type,watch=false)=>{screen?.dispose();window.activeType=type;spectating=watch;const entry=ARCADE_LIBRARY.find(g=>g.id===type);game=entry.kind==='arcade'?newArcadeGame(type,n=>0):null;demo=game?null:createDeviceDemo(entry,n=>0);screen=mountArcadeScreen(document.querySelector('#screen'),{onCommand:(operation,index,text)=>{window.commands.push({operation,index,text});if(game)game=arcadeMove(game,{operation,index,text},n=>0);else demo.move(operation,index,text);window.refreshArcade();}});window.refreshArcade();};
+window.showArcade('tictactoe');window.arcadeFixtureReady=true;
+</script></html>
+<script type="module">
+import {mountInteractiveDevices} from '/public/js/interactive-device-ui.js';
+import * as THREE from '/public/vendor/three/three.module.min.js';
+import {ARCADE_LIBRARY} from '/public/js/arcade-library.js';
+import {newArcadeGame,projectArcadeDevices} from '/public/js/arcade-rules.js';
+let ui;
+window.showLiveArcade=(type,spectating=false)=>{
+ if(!ui)ui=mountInteractiveDevices({THREE,stage:document.body,send:async(action,fields)=>{window.commands.push(fields);return {ok:true};},getRoots:()=>[],getPosition:()=>({x:0,y:0,z:0}),market:()=>{},upload:()=>{},announce:message=>{window.lastAnnouncement=message;}});
+ const entry=ARCADE_LIBRARY.find(g=>g.id===type),gamer={name:'Alice',credits:100,hand:[1,15,28,42,12],phase:'hold',question:['Choose an answer',['One','Two']]};if(entry.kind==='arcade')gamer.game=newArcadeGame(type,n=>0);
+ ui.snapshot({serverTime:Date.now(),devices:projectArcadeDevices({m:{name:'Commons Arcade · 30 games',kind:entry.kind,game:entry.game,selectedGame:type,multiGame:true,revision:12,activePlayerId:'alice',gamers:{alice:gamer}}}),actors:{}},spectating?'bob':'alice');ui.open('m',entry.kind);
+};
+window.closeLiveArcade=()=>{ui?.dispose();ui=null;};
+</script>
