@@ -20,19 +20,21 @@ export function fullscreenPanel(panel, { onOpen = () => {}, onClose = () => {}, 
   if(panel.id==='game-explorer-options')title.insertAdjacentHTML('afterbegin',shortcutIcon('settings'));
   header.append(title,close);dialog.prepend(header);
   const isVisible = () => !panel.hidden && (!collapsed || !panel.classList.contains('is-collapsed'));
-  let wasOpen=false;
+  let wasOpen=false, returnFocus=null;
   const hide = () => {
     if(collapsed)panel.classList.add('is-collapsed');else panel.hidden=true;
     if(dialog.open)dialog.close();
     if(panel.id)document.querySelectorAll?.('[aria-controls]').forEach(trigger=>{if((trigger.getAttribute('aria-controls')||'').split(/\s+/).includes(panel.id))trigger.setAttribute('aria-expanded','false');});
     if(!document.querySelector('dialog[open]'))document.documentElement.classList.remove('game-menu-open');
-    if(wasOpen){wasOpen=false;onClose();}
+    if(wasOpen){wasOpen=false;onClose();if(returnFocus?.isConnected&&!document.querySelector('dialog[open]'))returnFocus.focus({preventScroll:true});}
   };
   const sync = () => {
     const label=panel.getAttribute('aria-label')||'Game menu';dialog.setAttribute('aria-label',label);title.textContent=panel.id==='rad-tox-tools'?'Tools':label;close.setAttribute('aria-label','Close '+label);close.title='Close '+label;
     if(isVisible() && !dialog.open){
       const host=document.fullscreenElement || document.body;
       if(dialog.parentElement!==host)host.append(dialog);
+      returnFocus=document.activeElement;
+      document.querySelectorAll('dialog.game-fullscreen-dialog[open],dialog.rad-weapons-popup[open]').forEach(other=>{if(other!==dialog)other.close();});
       onOpen();dialog.showModal();wasOpen=true;document.documentElement.classList.add('game-menu-open');
     } else if(!isVisible() && dialog.open)hide();
   };
@@ -58,3 +60,4 @@ export function organizeToolPicker(dialog) {
   if(close){close.classList.add('game-menu-close');decorateMenuClose(close,'Close '+title.textContent);header.append(title,close);}else header.append(title);
   dialog.prepend(header);
 }
+

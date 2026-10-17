@@ -1,3 +1,4 @@
+import {mountGamePanelNavigation} from './game-panel-navigation.js';
 import {loadGameMenuStyles} from './game-menu-controls.js';
 import {shortcutIcon,shortcutKey} from './menu-shortcut-icons.js';
 import {mountWorldAtlas} from './world-atlas.js';
@@ -20,9 +21,11 @@ export function mountSettingsExplorerMenu(panel,actions={}){
  tile.addEventListener('click',()=>setView('tiles'));list.addEventListener('click',()=>setView('list'));hamburger.addEventListener('click',()=>{const collapsed=root.dataset.navigationCollapsed!=='true';root.dataset.navigationCollapsed=String(collapsed);hamburger.setAttribute('aria-expanded',String(!collapsed));});views.append(hamburger,tile,list);root.prepend(views);setView(mode);
  root.append(extra);panel.prepend(root);const plots=document.createElement('section');panel.append(plots);mountMemberPlotBrowser(plots);
  const atlas=document.createElement('section');atlas.setAttribute('aria-label','Public world atlas');panel.append(atlas);mountWorldAtlas(atlas);
+ const screenNavigation=mountGamePanelNavigation(panel,[{id:'navigation',label:'Game navigation',element:root},{id:'plots',label:'Member plots',element:plots},{id:'atlas',label:'Public world atlas',element:atlas}]);
  const search=root.querySelector('#explorer-options-search,[data-settings-menu-search]'),count=root.querySelector('#explorer-options-count,[data-settings-menu-count]');
  function filter(){const terms=search.value.trim().toLowerCase().split(/\s+/).filter(Boolean);let shown=0;root.querySelectorAll('li').forEach(row=>{const text=(row.textContent+' '+(row.dataset.optionKeywords||'')).toLowerCase();row.hidden=row.dataset.settingsDuplicate==='true'||!terms.every(term=>text.includes(term));if(!row.hidden)shown++;});if(count)count.textContent=shown+' menu items';const empty=root.querySelector('#explorer-options-empty');if(empty)empty.hidden=shown!==0;}
  root.addEventListener('input',event=>{if(event.target===search)filter();});
  root.addEventListener('click',event=>{const button=event.target.closest('[data-settings-explorer-action]');if(!button)return;const key=button.dataset.settingsExplorerAction,dialog=root.closest('dialog');if(dialog?.open)dialog.close();if(existing)root.querySelector('a[href="#house-explorer-canvas"]')?.click();requestAnimationFrame(()=>actions[key]?.());});
- return {reset(){search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));filter();root.querySelector('#explorer-options-panel')?.removeAttribute('hidden');},root};
+ return {reset(){screenNavigation.reset();search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));filter();root.querySelector('#explorer-options-panel')?.removeAttribute('hidden');},root};
 }
+

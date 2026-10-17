@@ -1,3 +1,4 @@
+import {mountGamePanelNavigation} from './game-panel-navigation.js';
 import {mountWorldPreview} from './world-destination-preview.js';
 import {portalIcon,portalSector} from './portal-menu-art.js';
 import {mountWorldAtlas} from './world-atlas.js';
@@ -22,7 +23,10 @@ export function mountWorldMapPicker(root,worlds,{currentId,onJoin,onClose}) {
  search.addEventListener('input',()=>{root.dataset.worldQuery=search.value;page=0;const list=filtered();if(!list.some(item=>item.env.id===selected?.env.id))selected=list[0];render();});
  root.querySelector('[data-world-prev]').addEventListener('click',()=>{page--;render();});root.querySelector('[data-world-next]').addEventListener('click',()=>{page++;render();});root.querySelector('[data-world-close]').addEventListener('click',onClose);
  join.addEventListener('click',async()=>{if(!selected||join.disabled)return;join.disabled=true;try{await onJoin(selected.env);}catch(error){root.querySelector('[data-world-description]').textContent=error.message;join.disabled=false;}});
- const atlas=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Connected world · district buildings, deed portals & saved maps';const atlasRoot=document.createElement('section');atlas.append(summary,atlasRoot);root.querySelector('.world-map-picker').append(atlas);atlas.addEventListener('toggle',()=>{if(atlas.open)mountWorldAtlas(atlasRoot,{onTravel:async url=>{const destination=new URL(url,location.href),id=destination.searchParams.get('environment'),entry=worlds.find(item=>item.env.id===id);await onJoin({...entry?.env,id,name:entry?.env.name||id,meetingId:destination.searchParams.get('meet')});}});});if(currentId==='public-commons'||currentId?.startsWith('world-district-')){atlas.open=true;mountWorldAtlas(atlasRoot,{onTravel:async url=>{const target=new URL(url,location.href),id=target.searchParams.get('environment'),entry=worlds.find(item=>item.env.id===id);await onJoin({...entry?.env,id,name:entry?.env.name||id,meetingId:target.searchParams.get('meet')});}});}
+ const atlasRoot=document.createElement('section');root.append(atlasRoot);
+ let atlasMounted=false;
+ mountGamePanelNavigation(root,[{id:'worlds',label:'Select a playable world',element:root.querySelector('.world-map-picker')},{id:'atlas',label:'Public streets & meeting locations',element:atlasRoot,onShow(){if(atlasMounted)return;atlasMounted=true;mountWorldAtlas(atlasRoot,{onTravel:async url=>{const destination=new URL(url,location.href),id=destination.searchParams.get('environment'),entry=worlds.find(item=>item.env.id===id);await onJoin({...entry?.env,id,name:entry?.env.name||id,meetingId:destination.searchParams.get('meet')});}});}}]);
  root.worldMapPicker={panel:root.querySelector('.world-map-picker'),currentId,refresh(next){worlds=[...next].sort((a,b)=>b.count-a.count);selected=worlds.find(item=>item.env.id===selected?.env.id)||filtered()[0];render();}};
  render();if(searchFocused)search.focus({preventScroll:true});
 }
+
