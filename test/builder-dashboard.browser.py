@@ -38,6 +38,18 @@ try:
    assert page.locator('#layout-select').input_value()=='loft'
    reveal('.builder-dashboard-field:has(select[aria-label="Map weather"]) select').select_option('cloudy')
    assert page.locator('#weather-select').input_value()=='cloudy'
+   # Both map layers are reachable through the same paged tuner on desktop and touch.
+   for screen,prefix,label,field in [('world','baseTransform','World X (m)','#world-base-x'),('scene','sceneAlignment','Scene X (m)','#scene-layer-x')]:
+    chooser.select_option(screen)
+    reveal('input[aria-label="'+label+'"]').fill('6')
+    page.get_by_label(label,exact=True).press('Tab')
+    assert page.locator(field).input_value()=='6'
+    assert page.evaluate('window.MuzikazEnvironmentBuilder.getScene()')[prefix]['x']==6
+    reset='Reset world alignment' if screen=='world' else 'Reset scene alignment'
+    reveal('.builder-dashboard-action:has-text("'+reset+'")').click()
+    assert page.locator(field).input_value()=='0'
+   chooser.select_option('world')
+   assert page.get_by_label('World X (m)',exact=True).input_value()=='0'
    chooser.select_option('games');page.get_by_label('Game mode',exact=True).select_option('solo')
    assert page.locator('#play-mode').input_value()=='solo'
    chooser.select_option('view');reveal('.builder-dashboard-toggle:has-text("Keep placing") input').check()
@@ -55,6 +67,19 @@ try:
    page.locator('#touch-place-center').click()
    objects=page.evaluate('window.MuzikazEnvironmentBuilder.getScene().objects')
    assert len(objects)==1 and objects[0]['modelId']==model
+   if width<=760:page.locator('#touch-open-library').click()
+   before=objects[0]['position']['x']
+   chooser.select_option('scene')
+   reveal('input[aria-label="Scene X (m)"]').fill('3')
+   page.get_by_label('Scene X (m)',exact=True).press('Tab')
+   shifted=page.evaluate('window.MuzikazEnvironmentBuilder.getScene()')
+   assert abs(shifted['objects'][0]['position']['x']-before-3)<0.001
+   chooser.select_option('world')
+   reveal('input[aria-label="World X (m)"]').fill('5')
+   page.get_by_label('World X (m)',exact=True).press('Tab')
+   adjusted=page.evaluate('window.MuzikazEnvironmentBuilder.getScene()')
+   assert adjusted['baseTransform']['x']==5 and adjusted['sceneAlignment']['x']==3
+   assert adjusted['objects'][0]['position']['x']==shifted['objects'][0]['position']['x']
    assert not errors,errors
    print({'viewport':[width,height],'dashboard':'passed'},flush=True)
    page.close()
