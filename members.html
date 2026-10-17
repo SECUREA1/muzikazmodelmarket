@@ -42,6 +42,7 @@
     <meta name="msapplication-TileColor" content="#05070a">
   <link rel="stylesheet" href="public/assets/member-designer.css">
 <link rel="stylesheet" href="public/css/main-market-filters.css">
+<link rel="stylesheet" href="public/css/member-access.css">
 </head>
 <body class="original-platform members-page">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Subscriber dashboard for MUZIKAZ creator uploads, tabs, wallets, merch designer tools, avatar photos, and marketplace drops.","sameAs":["https://muzikaz.com/"]}</script>
@@ -74,13 +75,14 @@
     <main>
         <section class="member-hero" id="bottle-login" aria-labelledby="bottle-login-title">
             <div class="member-login-card">
-                <p class="kicker">Members only</p>
-                <h1 id="bottle-login-title">Member access unlocks the MUZIKAZ upgrade lab.</h1>
+                <p class="kicker member-access-kicker">MUZIKAZ · Member access</p>
+                <h1 id="bottle-login-title">Your next world starts here.</h1>
                 <p>Sign in with your member username and password to edit saved designs and view your account Backpack. New usernames create a member account.</p>
+                <div class="member-access-pills" aria-label="Member activities"><span>Create</span><span>Collect</span><span>Play</span></div>
                 <form id="bottle-login-form" class="bottle-login-form">
-                    <label>Username <input type="text" name="username" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_.-]{3,24}" autocomplete="username" placeholder="Your member username" required /></label>
+                    <label>Username <input type="text" name="username" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_.-]{3,24}" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Your member username" required /></label>
                     <label>Password <input type="password" name="password" minlength="6" maxlength="128" autocomplete="current-password" placeholder="Your member password" required /></label>
-                    <button type="submit">Continue</button>
+                    <button type="submit">Continue to your account <span aria-hidden="true">→</span></button>
                 </form>
                 <div class="ethereum-member-login"><label>Ethereum address (optional)<input type="text" data-ethereum-member-address autocomplete="off" spellcheck="false" placeholder="0x…" maxlength="42"></label><button type="button" data-ethereum-member-login>Sign in with Ethereum wallet</button><button type="button" data-ethereum-member-link hidden>Link wallet to this member account</button><small>Confirm wallet ownership with a signature. No payment is required.</small></div>
                 <p class="status-message" id="bottle-login-status" role="status">Sign in to your member account. Your saved designs and inventory load from that account.</p>

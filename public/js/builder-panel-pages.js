@@ -21,10 +21,16 @@ export function mountBuilderPanelPages({onMode=()=>{}}={}){
  }
  function pager(panel,entries,header,shared=[]){
   panel.classList.add('builder-paged-panel');
-  const nav=node('label','builder-panel-chooser','Choose a screen'),select=node('select','');select.setAttribute('aria-label',panel===library?'Item panel screen':'Object panel screen');nav.append(select);
+  const nav=node('label','builder-panel-chooser','Workspace screen'),select=node('select',''),hint=node('small','builder-screen-hint');select.setAttribute('aria-label',panel===library?'Item panel screen':'Object panel screen');nav.append(select,hint);
   const viewport=node('div','builder-panel-viewport'),footer=node('nav','builder-panel-pagination');footer.setAttribute('aria-label',panel===library?'Item panel pages':'Object panel pages');
   const prev=node('button','','Previous'),status=node('output',''),next=node('button','','Next');prev.type=next.type='button';status.setAttribute('aria-live','polite');footer.append(prev,status,next);
-  for(const entry of entries){const option=node('option','',entry.label);option.value=entry.id;select.append(option);viewport.append(entry.box);}
+  const optionGroups=new Map();
+  function optionGroup(entry){
+   if(panel===library){if(['items','dashboard','categories','filters','display'].includes(entry.id))return 'Browse & organize';if(['maps','games','view'].includes(entry.id))return 'Map & gameplay';if(['create','import','generate','urban','buildings','furnish'].includes(entry.id))return 'Build & create';return 'Your collection';}
+   if(['objects','move','rotation','scale','position','actions'].includes(entry.id))return 'Scene & transforms';
+   if(['materials','animation-function','animation-studio','avatar-studio'].includes(entry.id))return 'Appearance & animation';return 'Gameplay & interactions';
+  }
+  for(const entry of entries){const name=optionGroup(entry);let group=optionGroups.get(name);if(!group){group=document.createElement('optgroup');group.label=name;optionGroups.set(name,group);select.append(group);}const option=node('option','',entry.label);option.value=entry.id;group.append(option);viewport.append(entry.box);}
   panel.replaceChildren(header,nav,...shared,viewport,footer);
   let current=entries[0],start=0,end=0,back=[],frame=0,alive=true,rendering=false;
   const groups=entry=>[...entry.box.querySelectorAll('details')];
@@ -35,7 +41,7 @@ export function mountBuilderPanelPages({onMode=()=>{}}={}){
    try{
     for(const entry of entries){if(entry.box.hidden!==(entry!==current))entry.box.hidden=entry!==current;const option=[...select.options].find(o=>o.value===entry.id);option.disabled=!available(entry);}
     if(!available(current)){current=entries[0];start=0;back=[];for(const entry of entries)if(entry.box.hidden!==(entry!==current))entry.box.hidden=entry!==current;}
-    select.value=current.id;panel.dataset.panelScreen=current.id;
+    select.value=current.id;panel.dataset.panelScreen=current.id;hint.textContent=optionGroup(current)+' · '+current.label;
     current.box.querySelectorAll('[data-builder-page-hidden]').forEach(el=>el.removeAttribute('data-builder-page-hidden'));
     // Open wrappers so no content remains trapped behind a second disclosure menu.
     groups(current).forEach(group=>group.open=true);

@@ -32,6 +32,8 @@ try:
      page.locator('#library-panel .builder-panel-pagination').get_by_role('button',name='Next',exact=True).click()
     raise AssertionError('Unreachable dashboard control: '+selector)
    chooser.select_option('maps')
+   assert chooser.locator('optgroup[label="Map & gameplay"] option[value=maps]').count()==1
+   assert 'maps & weather' in page.locator('#library-panel .builder-screen-hint').inner_text().lower()
    page.get_by_label('World layout',exact=True).select_option('loft')
    assert page.locator('#layout-select').input_value()=='loft'
    reveal('.builder-dashboard-field:has(select[aria-label="Map weather"]) select').select_option('cloudy')
