@@ -1,4 +1,8 @@
 import {finishGameItem} from './game-item-finish.js';
+import {CAMP_MODEL_INFO} from './summer-camp.js';
+import {createCampModel} from './summer-camp-models.js';
+import {LAYOUT_SCENE_INFO} from './builder-layout-scenes.js';
+import {createLayoutSceneModel} from './layout-scene-models.js';
 import {ENTERABLE_BUILDINGS} from './building-districts.js';
 import {createEnterableBuilding} from './enterable-building-models.js';
 import {INTERACTIVE_DEVICES} from './interactive-devices.js';
@@ -8,6 +12,8 @@ import * as THREE from '../vendor/three/three.module.min.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  ...CAMP_MODEL_INFO,
+  ...LAYOUT_SCENE_INFO,
   ...Object.fromEntries(Object.entries(ENTERABLE_BUILDINGS).map(([id,item])=>[id,[item.name,item.description,[item.width+.7,item.height+.8,item.depth+3]]])),
   ...Object.fromEntries(Object.entries(INTERACTIVE_DEVICES).map(([id,item])=>[id,[item.name,item.description,[item.shape==='cinema'?5:2.4,item.shape==='cinema'?3.3:2.6,1.3]]])),
   'estate-house':['Estate House','Enterable four-room home with wide passages and a terrace.',[20,3.6,16]],
@@ -242,7 +248,9 @@ function estateModule(id){
 
 export function createBuilderModel(id) {
   let root;
-  if(ENTERABLE_BUILDINGS[id])return finishGameItem(THREE,createEnterableBuilding(THREE,id));
+  if(LAYOUT_SCENE_INFO[id])root=createLayoutSceneModel(THREE,id);
+  else if(CAMP_MODEL_INFO[id])root=createCampModel(THREE,id);
+  else if(ENTERABLE_BUILDINGS[id])return finishGameItem(THREE,createEnterableBuilding(THREE,id));
   else if(INTERACTIVE_DEVICES[id])return createInteractiveDevice(THREE,id);
   else if(['estate-house','estate-yard','drive-in-garage','open-office'].includes(id))root=estateModule(id);
   else if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);

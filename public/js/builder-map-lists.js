@@ -1,5 +1,6 @@
 // Inlays are regular, playable scene objects. The main world remains a separate
 // environment, so changing a room/module never replaces its surrounding map.
+import {isLayoutSceneObject} from './builder-layout-scenes.js';
 export const INLAY_MAPS=Object.freeze([
  {id:'grand-floor',name:'Foundation tile',group:'Floors & rooms',size:'8 × 8 m'},
  {id:'open-studio',name:'Open studio',group:'Floors & rooms',size:'6 × 5 m'},
@@ -13,4 +14,4 @@ export const INLAY_MAPS=Object.freeze([
 const compact=new Set(INLAY_MAPS.filter(item=>item.group==='Floors & rooms').map(item=>item.id));
 export function inlayMapId(object={}){return object.asset?.buildAssetId||object.modelId||'';}
 export function isInlayMapObject(object={}){return INLAY_MAPS.some(item=>item.id===inlayMapId(object))&&(object.builderLayer==='inlay'||compact.has(inlayMapId(object)));}
-export function retainedInlayMaps(scene={}){return structuredClone((scene.objects||[]).filter(isInlayMapObject));}
+export function retainedInlayMaps(scene={}){return structuredClone((scene.objects||[]).filter(object=>isInlayMapObject(object)||isLayoutSceneObject(object)));}
