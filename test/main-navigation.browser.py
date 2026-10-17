@@ -14,7 +14,7 @@ base=f'http://127.0.0.1:{server.server_port}'
 try:
  with sync_playwright() as p:
   browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
-  for width in (375,768,1280):
+  for width in (320,375,768,1280):
    for path in ('index.html','model-market.html','builder-market.html','members.html','model-explorer.html','environment-builder.html'):
     page=browser.new_page(viewport={'width':width,'height':812})
     errors=[]
@@ -33,6 +33,14 @@ try:
     builder=path=='environment-builder.html'
     nav=page.locator('#page-navigation' if builder else '#primary-navigation')
     toggle=page.locator('.page-navigation-toggle' if builder else ('#wallet-connect' if width<=720 else '.menu-toggle'))
+    if not builder:
+     shortcut=page.get_by_role('link',name='Open world builder',exact=True)
+     assert shortcut.is_visible()==(width<=720)
+     if width<=720:
+      box=shortcut.bounding_box()
+      assert box['width']>=44 and box['height']>=44
+      assert shortcut.get_attribute('href')=='environment-builder.html'
+      assert page.evaluate("document.querySelector('.site-header').scrollWidth<=document.querySelector('.site-header').clientWidth+1")
     if builder or width<=1000:
      toggle.click()
      assert toggle.get_attribute('aria-expanded')=='true',(path,width)
@@ -53,6 +61,6 @@ try:
     assert not errors,(path,width,errors)
     page.close()
   browser.close()
- print('Shared navigation passed: 6 main pages at 375, 768 and 1280 pixels; links, menu bounds, Escape and builder scrolling.')
+ print('Shared navigation passed: 6 main pages at 320, 375, 768 and 1280 pixels; links, menu bounds, Escape and builder scrolling.')
 finally:
  server.shutdown()
