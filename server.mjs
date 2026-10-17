@@ -1,3 +1,4 @@
+import {applyHttpSecurity} from './http-security.mjs';
 import {CameraSignaling} from './server-camera-signaling.mjs';
 const cameraSignaling=new CameraSignaling();
 import {DeviceMediaUploads} from './device-media-uploads.mjs';
@@ -65,6 +66,7 @@ const gameSessionStore = new DurableSessionStore(gameSessionsFile, { ttlSeconds:
 const ethereumAuth = new EthereumMemberAuth(join(dataDir,'wallet-challenges.json'),{origin:process.env.PUBLIC_BASE_URL||'https://muzikazmodelmarket.onrender.com'});
 const walletChallengeAttempts = new Map();
 const accessAttempts = new Map();
+const adminAccessAttempts = new Map();
 let customMapWriteQueue = Promise.resolve();
 const supportSockets = new Set();
 const supportMessages = [];
@@ -75,7 +77,7 @@ const adminSessionSecret = process.env.MUZIKAZ_ADMIN_SESSION_SECRET || `${adminU
 const persistentAdminToken = createHmac('sha256', adminSessionSecret).update(`admin:${adminUsername}`).digest('base64url');
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
 const maxEnvironmentBytes = Number(process.env.MUZIKAZ_ENVIRONMENT_MAX_BYTES || 150 * 1024 * 1024);
-const mimeTypes = { '.mp4':'video/mp4','.webm':'video/webm','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
+const mimeTypes = { '.mp4':'video/mp4','.webm':'video/webm','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.txt': 'text/plain; charset=utf-8', '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
 const allowedUploadTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const maxHouseUsers = 15;
 const presenceTtlMs = 30_000;
@@ -372,7 +374,7 @@ async function backpackFor(account) {
   const catalogAvatars = catalog.filter((asset) => asset.assetType === 'avatar').map((asset) => ({ ...asset, eligible: true, state: 'revealed' }));
   return { accountId: account.accountId, backpackId: account.backpackId, status: account.loadoutRedeemed ? 'ready' : 'empty', mzkBalance: Number(walletState.tokens.MZK || 0), land: walletState.items.filter(item=>['land-deed','land-entitlement'].includes(item.type)).map(item=>({...item,state:item.type==='land-deed'?'revealed':'unrevealed',requiresReveal:item.type==='land-entitlement',...(item.type==='land-deed'?{spaceId:plotSpaceId(item),playUrl:plotPlayUrl(item)}:{})})), avatars: [STARTER_AVATAR, ...inventoryAvatars, ...catalogAvatars, ...assets.filter((asset) => /avatar/i.test(asset.name) && asset.name !== 'Starter Avatar').map((asset) => ({ ...asset, eligible: asset.state === 'revealed' }))], assets, catalogAssets: catalog, environments: catalog.filter((asset) => asset.assetType === 'environment'), props: catalog.filter((asset) => asset.assetType === 'prop'), vehicles: catalog.filter((asset) => asset.assetType === 'vehicle'), bottleClaims: (account.bottleClaims || []).map((name) => stateAsset(name, 'bottle')), entitlements: [...(account.creatorVaultAccess ? ['creator-vault'] : []), ...(account.marketplaceAccess ? ['marketplace'] : []), ...(account.gameAccess ? ['members-game'] : [])], selectedAvatarId: [STARTER_AVATAR,...inventoryAvatars,...catalogAvatars].some(item=>item.id===account.selectedAvatarId)?account.selectedAvatarId:STARTER_AVATAR.id, updatedAt: account.updatedAt };
 }
-function throttleAccess(req) { const key = String(req.socket.remoteAddress || 'unknown'); const now = Date.now(); const attempt = accessAttempts.get(key) || { failures: 0, resetAt: now + 15 * 60_000 }; if (attempt.resetAt <= now) { attempt.failures = 0; attempt.resetAt = now + 15 * 60_000; } if (attempt.failures >= 8) throw Object.assign(new Error('Too many failed access attempts. Try again later.'), { statusCode: 429 }); accessAttempts.set(key, attempt); return { success: () => accessAttempts.delete(key), failure: () => { attempt.failures += 1; } }; }
+function throttleAccess(req, attempts=accessAttempts) { const key = String(req.socket.remoteAddress || 'unknown'); const now = Date.now(); const attempt = attempts.get(key) || { failures: 0, resetAt: now + 15 * 60_000 }; if (attempt.resetAt <= now) { attempt.failures = 0; attempt.resetAt = now + 15 * 60_000; } if (attempt.failures >= 8) throw Object.assign(new Error('Too many failed access attempts. Try again later.'), { statusCode: 429 }); attempts.set(key, attempt); return { success: () => attempts.delete(key), failure: () => { attempt.failures += 1; } }; }
 async function requireLandOwnership(req, res) {
   let deeds = [];
   try { deeds = await userDatabase.landDeeds(requestWallet(req)); } catch {}
@@ -380,7 +382,7 @@ async function requireLandOwnership(req, res) {
   sendJson(res, 403, { success: false, code: 'LAND_OWNERSHIP_REQUIRED', message: 'Land ownership required: add a MUZIKAZ World land deed to your Drop Backpack before uploading avatars, assets, or games.' });
   return null;
 }
-function isPublicAsset(asset) { return asset.visibility === 'public' || asset.status === 'published' || asset.status === 'approved'; }
+function isPublicAsset(asset) { return asset.visibility !== 'private' && (asset.visibility === 'public' || asset.status === 'published' || asset.status === 'approved'); }
 function isGlbAvatar(asset) { const url = asset.publicUrl || asset.modelUrl || ''; const labels = `${asset.category || ''} ${asset.tags || ''} ${asset.intendedUse || ''}`; return /\.glb(?:$|[?#])/i.test(url) && /avatar|character|player/i.test(labels) && !/prop|building|vehicle|weapon|environment/i.test(labels); }
 async function readAvatarProfiles() { await ensureStorage(); return JSON.parse(await readFile(avatarProfilesFile, 'utf8')); }
 async function writeAvatarProfiles(records) { await ensureStorage(); await writeFile(avatarProfilesFile, JSON.stringify(records, null, 2)); }
@@ -503,9 +505,10 @@ function corsHeaders(extra = {}, origin = '') {
   return { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin, 'Access-Control-Allow-Credentials': 'true' } : {}), Vary: 'Origin', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-CSRF-Token,X-Game-Session,X-Idempotency-Key,X-Wallet-Address,X-MUZIKAZ-Session,X-User-Id,X-User-Role,X-User-Name,X-Admin-Token,X-MUZIKAZ-Land-Asset,X-Master-Restore,Range', 'Cross-Origin-Resource-Policy': 'cross-origin', 'Cache-Control': 'no-store', ...extra };
 }
 function originAllowed(origin) { return !origin || Boolean(corsHeaders({}, origin)['Access-Control-Allow-Origin']); }
+function safeRequestPath(value){try{return new URL(value,'http://localhost').pathname;}catch{return '/';}}
 function sendJson(res, status, data) {
   const requestId = res.muzikazRequestId || randomUUID();
-  if (status >= 400 && res.muzikazRequest) console.warn('[MUZIKAZ API]', JSON.stringify({ requestId, method: res.muzikazRequest.method, pathname: new URL(res.muzikazRequest.url, 'http://localhost').pathname, origin: res.muzikazRequestOrigin || null, authenticationMechanism: res.muzikazRequest.muzikazAuthentication?.mechanism || null, hasBearerToken: Boolean(bearer(res.muzikazRequest)), hasSessionCookie: Boolean(cookie(res.muzikazRequest, 'mzk_session')), status, errorCode: data?.code || 'REQUEST_FAILED', stage: data?.stage || 'request' }));
+  if (status >= 400 && res.muzikazRequest) console.warn('[MUZIKAZ API]', JSON.stringify({ requestId, method: res.muzikazRequest.method, pathname: safeRequestPath(res.muzikazRequest.url), origin: res.muzikazRequestOrigin || null, authenticationMechanism: res.muzikazRequest.muzikazAuthentication?.mechanism || null, hasBearerToken: Boolean(bearer(res.muzikazRequest)), hasSessionCookie: Boolean(cookie(res.muzikazRequest, 'mzk_session')), status, errorCode: data?.code || 'REQUEST_FAILED', stage: data?.stage || 'request' }));
   res.writeHead(status, corsHeaders({ 'Content-Type': 'application/json; charset=utf-8', 'X-Request-ID': requestId }, res.muzikazRequestOrigin)); res.end(JSON.stringify(data));
 }
 function isPublicAssetUrl(value) { try { const url = new URL(value, 'http://localhost'); return url.protocol === 'https:' || url.pathname.startsWith('/uploads/') || (url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)); } catch { return false; } }
@@ -526,10 +529,12 @@ async function uploadFile(req) { const type = String(req.headers['content-type']
 }
 
 const server = createServer(async (req, res) => {
+  applyHttpSecurity(req,res,{production:process.env.NODE_ENV==='production'});
+  if(req.url?.startsWith('/api/'))res.setHeader('X-Robots-Tag','noindex, nofollow');
   res.muzikazRequest = req;
   res.muzikazRequestOrigin = String(req.headers.origin || '');
   res.muzikazRequestId = String(req.headers['x-request-id'] || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80) || randomUUID();
-  const url = new URL(req.url, `http://${req.headers.host}`);
+  let url;try{url=new URL(req.url,'http://localhost');}catch{return sendJson(res,400,{success:false,code:'INVALID_URL',message:'Invalid request URL.'});}
   if (url.pathname.startsWith('/api/') && !originAllowed(res.muzikazRequestOrigin)) return sendJson(res, 403, { success: false, code: 'CORS_ORIGIN_DENIED', message: 'This origin is not allowed to call the MUZIKAZ API.', stage: 'cors' });
   if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders({ 'X-Request-ID': res.muzikazRequestId }, res.muzikazRequestOrigin)); res.end(); return; }
   const isMasterRoute=url.pathname.startsWith('/api/admin/master-state');
@@ -660,11 +665,15 @@ const server = createServer(async (req, res) => {
       return sendJson(res, 200, assetResponse({ accountId: account.accountId, backpack, selectedAvatar, warning: selectedAvatar.id !== game.avatarId ? 'The selected model is unavailable; Starter Avatar was loaded.' : null, expiresAt: game.expiresAt }));
     }
     if (url.pathname === '/api/admin/login' && req.method === 'POST') {
-      const credentials = await bodyJson(req);
-      const recognizedAdmin = matchesSecret(credentials.username, adminUsername) || matchesSecret(credentials.username, 'admin');
-      if (!recognizedAdmin || !matchesSecret(credentials.password, adminPassword)) return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
-      res.setHeader('Set-Cookie', `mzk_admin=${persistentAdminToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=315360000${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
-      return sendJson(res, 200, assetResponse({ token: persistentAdminToken, persistent: true }));
+      const attempt=throttleAccess(req,adminAccessAttempts);
+      try{
+        const credentials = await bodyJson(req);
+        const recognizedAdmin = matchesSecret(credentials.username, adminUsername) || matchesSecret(credentials.username, 'admin');
+        if (!recognizedAdmin || !matchesSecret(credentials.password, adminPassword)){attempt.failure();return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });}
+        attempt.success();
+        res.setHeader('Set-Cookie', `mzk_admin=${persistentAdminToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=315360000${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+        return sendJson(res, 200, assetResponse({ token: persistentAdminToken, persistent: true }));
+      }catch(error){attempt.failure();throw error;}
     }
     if (url.pathname === '/api/admin/session' && req.method === 'GET') {
       if (!isAdmin(req)) return sendJson(res, 401, { success: false, code: 'ADMIN_SESSION_EXPIRED', message: 'Administrator session is missing or expired.' });
@@ -996,11 +1005,11 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/houses/ioncore-house/chat' && req.method === 'POST') { if (!await accountSession(req, res)) return; const id = session(req); const person = presence.get(id); if (!person) return sendJson(res, 401, { error: 'Join the Vibe Crib before chatting.' }); if(person.accountId!==req.muzikazAuthentication.accountId)return sendJson(res,403,{error:'This chat presence belongs to another account.'});const player=await authoritativeRooms.player(person.roomId,'account:'+req.muzikazAuthentication.accountId);if(!player||player.replacedByRoom||Date.now()-player.lastSeen>15000)return authorizationError(res,409,'ROOM_REQUIRED','Join this multiplayer room before chatting.','chat'); const body = await bodyJson(req); const message = cleanText(body.message, '').trim(); if (!message) return sendJson(res, 400, { error: 'Message cannot be empty.' }); const record = { id: randomUUID(), sessionId: id, username: person.username, roomId: person.roomId, message, createdAt: new Date().toISOString() }; person.message = message; person.lastActiveAt = record.createdAt; chatMessages.push(record); broadcast('house-presence-updated', presencePayload()); if (chatMessages.length > 100) chatMessages.splice(0, chatMessages.length - 100); broadcast('house-chat-message', record); return sendJson(res, 201, record); }
     if (url.pathname.startsWith('/api/')) return sendJson(res, 404, { success: false, code: 'API_ROUTE_NOT_FOUND', message: 'API route not found.' });
     let path = normalize(decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)).replace(/^[/\\]+/, '');
-    if (/(?:^|\/)(?:data|backups|work|node_modules|test|scripts|\.[^/]+)(?:\/|$)/i.test(path) || /\.(?:mjs|yaml|yml|env|log|bin|tmp)$/i.test(path)) return sendJson(res,404,{error:'Not found'});
+    if (path!=='.well-known/security.txt' && /(?:^|\/)(?:data|backups|work|node_modules|test|scripts|\.[^/]+)(?:\/|$)/i.test(path) || /\.(?:mjs|yaml|yml|env|log|bin|tmp)$/i.test(path)) return sendJson(res,404,{error:'Not found'});
     if (path.includes('..')) return sendJson(res, 400, { error: 'Bad path' });
     const uploadMatch = path.match(/^uploads\/(avatars|assets|environments|media)\/([a-zA-Z0-9._-]+)$/);
     if (path.startsWith('uploads/') && !uploadMatch) return sendJson(res,404,{error:'Not found'});
-    let uploadedFile = '';
+    let uploadedFile = '',privateUpload=false;
     if (uploadMatch) {
       const [,kind,name] = uploadMatch;
       if (!/\.(?:png|jpe?g|webp|glb|gltf|usdz|mp3|wav|ogg|mp4|webm)$/i.test(name)) return sendJson(res,404,{error:'Not found'});
@@ -1008,6 +1017,7 @@ const server = createServer(async (req, res) => {
         const asset = (await readAssets()).find(item => item.storedFilename === name);
         if (!asset) return sendJson(res,404,{error:'Not found'});
         if (!isPublicAsset(asset)) {
+          privateUpload=true;
           const active = await resolveAccountSession(req), account = active && await loadoutCodeStore.getAccount(active.accountId);
           const owner = account && String(account.primaryEthereumWallet || 'account:' + account.accountId).toLowerCase();
           if (!isAdmin(req) && owner !== asset.ownerId) return sendJson(res,404,{error:'Not found'});
@@ -1016,6 +1026,7 @@ const server = createServer(async (req, res) => {
       if (kind === 'environments') {
         const environment = (await readUploadedEnvironments()).find(item => item.storedFilename === name || item.thumbnailUrl === '/uploads/environments/' + name);
         if (!environment || (environment.visibility === 'private' && !isAdmin(req))) return sendJson(res,404,{error:'Not found'});
+        if(environment.visibility==='private')privateUpload=true;
       }
       if(kind==='media'&&!(await deviceMediaUploads.records()).some(record=>record.id===name))return sendJson(res,404,{error:'Not found'});
       uploadedFile = join({avatars:uploadDir,assets:assetUploadDir,environments:environmentUploadDir,media:mediaUploadDir}[kind], name);
@@ -1030,7 +1041,8 @@ const server = createServer(async (req, res) => {
     }
     if (!filePath) throw new Error('Not found');
     const extension = extname(filePath).toLowerCase();
-    const cacheControl = extension === '.glb' || extension === '.usdz' ? 'public, max-age=31536000, immutable' : extension === '.json' ? 'no-cache' : 'public, max-age=3600';
+    if(privateUpload)res.setHeader('X-Robots-Tag','noindex, nofollow');
+    const cacheControl = privateUpload ? 'private, no-store' : extension === '.glb' || extension === '.usdz' ? 'public, max-age=31536000, immutable' : extension === '.json' ? 'no-cache' : 'public, max-age=3600';
     if(uploadMatch?.[1]==='media'){
       const info=await stat(filePath),headers={'Content-Type':mimeTypes[extension]||'application/octet-stream','Accept-Ranges':'bytes','Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'};const range=req.headers.range;
       if(range){const match=/^bytes=(\d*)-(\d*)$/.exec(range);let start=match?.[1]?Number(match[1]):0,end=match?.[2]?Number(match[2]):info.size-1;if(match&&!match[1]&&match[2]){start=Math.max(0,info.size-Number(match[2]));end=info.size-1;}if(!match||(!match[1]&&!match[2])||start>end||start>=info.size||end>=info.size){res.writeHead(416,corsHeaders({'Content-Range':`bytes */${info.size}`},res.muzikazRequestOrigin));return res.end();}res.writeHead(206,corsHeaders({...headers,'Content-Length':end-start+1,'Content-Range':`bytes ${start}-${end}/${info.size}`},res.muzikazRequestOrigin));return createReadStream(filePath,{start,end}).pipe(res);}
@@ -1042,7 +1054,8 @@ const server = createServer(async (req, res) => {
 });
 
 server.on('upgrade', (req, socket) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
+  if(!originAllowed(String(req.headers.origin||'')))return socket.destroy();
+  let url;try{url=new URL(req.url,'http://localhost');}catch{return socket.destroy();}
   if (url.pathname !== '/ws/support' || String(req.headers.upgrade).toLowerCase() !== 'websocket') return socket.destroy();
   const key = req.headers['sec-websocket-key']; if (!key) return socket.destroy();
   const token = url.searchParams.get('adminToken') || '';
@@ -1060,5 +1073,3 @@ const storeDeliveryTimer=setInterval(()=>backgroundJob(()=>reconcileStorePayment
 const backupTimer = setInterval(() => backgroundJob(()=>snapshotServer()), 6 * 60 * 60 * 1000); backupTimer.unref();
 backgroundJob(()=>snapshotServer());
 server.listen(port, () => console.log(`MUZIKAZ shared house server running on http://localhost:${port}`));
-
-
