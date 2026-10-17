@@ -3730,7 +3730,7 @@ body .site-header.global-site-header .global-nav .nav-link span,body .global-sit
 body .global-site-header :is(.nav-icon,.wallet-connect img){width:22px;height:22px;flex-shrink:0;}
 @media(min-width:1001px) and (max-width:1499px){body .site-header.global-site-header :is(.global-nav .nav-link,.icons a,.icons button)>span{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}body .site-header.global-site-header .world-logo{flex-basis:120px;width:120px;}}
 @media(max-width:1000px){
- body .site-header.global-site-header .global-nav{position:fixed;inset:64px 8px auto auto;display:none;flex-direction:column;align-items:stretch;width:min(360px,calc(100vw - 16px));max-height:calc(100dvh - 72px);overflow-y:auto;overscroll-behavior:contain;padding:10px;background:#08120d;border:1px solid #476944;border-radius:10px;box-shadow:0 15px 35px #0009;z-index:1200;}
+ body .site-header.global-site-header .global-nav{position:fixed;inset:var(--global-header-height,64px) 8px auto auto;display:none;flex-direction:column;align-items:stretch;width:min(360px,calc(100vw - 16px));max-height:calc(100dvh - var(--global-header-height,64px) - 8px);overflow-y:auto;overscroll-behavior:contain;padding:10px;background:#08120d;border:1px solid #476944;border-radius:10px;box-shadow:0 15px 35px #0009;z-index:1200;}
  body .site-header.global-site-header .global-nav.is-open{display:flex;}
  body .site-header.global-site-header .global-nav .nav-link{justify-content:flex-start;width:100%;}
  body .site-header.global-site-header .header-market-buttons{flex-direction:column;align-items:stretch;width:100%;}
