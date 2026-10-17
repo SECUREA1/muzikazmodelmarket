@@ -40,7 +40,7 @@ export function mountLiveCameraScreens({THREE,getRoots,getPosition,screenFor,ann
    if(room()!==currentRoom){reset();currentRoom=room();return;}
    if(local)await request({operation:'heartbeat'});
    const result=await request(),near=new Set();if(pollGeneration!==generation||room()!==currentRoom)return;
-   for(const feed of result.feeds||[]){const root=rootFor(feed.deviceId);if(!root)continue;const position=root.getWorldPosition(new THREE.Vector3());if(position.distanceTo(getPosition())>60)continue;near.add(feed.source);if(feed.source===self())continue;
+   for(const feed of result.feeds||[]){const root=rootFor(feed.deviceId);if(!root)continue;const position=root.getWorldPosition(new THREE.Vector3());if(position.distanceTo(getPosition())>60)continue;near.add(feed.source);const view=views.get(feed.source);if(view&&view.root!==root&&view.video.srcObject)show(feed.source,feed.deviceId,view.video.srcObject);if(feed.source===self())continue;
     if(!peers.has(feed.source+':'+feed.source)&&Date.now()-(watching.get(feed.source)||0)>5000){watching.set(feed.source,Date.now());await request({operation:'watch',source:feed.source,to:feed.source});}
    }
    for(const [id,entry]of peers)if(!near.has(entry.source))closePeer(id);

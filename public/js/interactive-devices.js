@@ -27,3 +27,9 @@ export function sharedMediaUrl(value,kind){
  if(!allowed.test(url.pathname))throw Error('Use a direct '+kind+' file link in a supported format.');return local?text:url.href;
 }
 export function deviceTime(state,now){return Math.max(0,(state?.offset||0)+(state?.playing?Math.max(0,now-state.startedAt)/1000:0));}
+
+// Every viewer selects the same public machine session from the server snapshot.
+export function deviceScreenGamer(state){
+ if(state?.activePlayerId&&state.gamers?.[state.activePlayerId])return state.gamers[state.activePlayerId];
+ return Object.values(state?.gamers||{}).sort((a,b)=>(b.lastPlay||0)-(a.lastPlay||0))[0]||null;
+}
