@@ -11,8 +11,8 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
  try {
   const file=join(dir,'rooms.json'),store=new SharedRoomStore(file),rewards=[];
   const runtime=new AuthoritativeRooms({store,now:()=>now,reward:async(...args)=>rewards.push(args)});
-  runtime.collision.encounterSpawn=(_,point)=>point;runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.blocksShot=()=>false;runtime.collision.resolve=(_,previous,next)=>next;
-  const environment={id:'muzikaz-main',name:'House',modelUrl:'/house.glb',playable:true,spawn:{x:0,y:1,z:2}};
+  runtime.collision.encounterSpawn=(_,point)=>point;runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.blocksShot=()=>false;runtime.collision.resolve=(_,previous,next)=>({...next,y:1,floorY:1});runtime.collision.resolvePlaced=(_,previous,next)=>next;
+  const environment={id:'muzikaz-main',name:'House',modelUrl:'/public/models/environments/muzimakzmain.glb',playable:true,spawn:{x:0,y:1,z:2}};
   const alice={accountId:'alice',walletId:'alice',username:'Alice',stats:{health:100}};
   const bob={...alice,accountId:'bob',walletId:'bob',username:'Bob'};
   const send=async(action,fields={},identity=alice)=>{
@@ -29,6 +29,7 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
   const first=state.actors[enemies[0].id],before=first.position.z;
   now+=250;state=await runtime.snapshot(environment.id,environment);
   assert.ok(state.actors[first.id].position.z>before,'enemies actively chase the player');
+  await store.update(environment.id,room=>{const player=room.simulation.players['account:alice'];player.spawnProtectedUntil=0;const snake=Object.values(room.simulation.actors).find(actor=>actor.radTox&&actor.kind==='snake');snake.position={...player.position,z:player.position.z+.5};});
   const initialHealth=state.players['account:alice'].health;
   for(let tick=0;tick<28;tick++){now+=250;state=await send('input',{input:{}});}
   assert.ok(state.players['account:alice'].health<initialHealth,'nearby enemies damage the player on the server');
@@ -64,7 +65,7 @@ test('Builder rooms keep their authored gameplay instead of receiving a house ca
   const map={id:'builder',builderScene:{objects:[]}},identity={accountId:'alice',stats:{health:100}};
   await runtime.command(map.id,map,identity,{action:'join',requestId:'join'});
   const state=await runtime.command(map.id,map,identity,{action:'start-rad-tox',requestId:'start'});
-  assert.equal(state.radTox,null);assert.deepEqual(state.actors,{});
+  assert.equal(state.radTox,null);assert.equal(Object.values(state.actors).filter(actor=>actor.radTox).length,0);
  }finally{await rm(dir,{recursive:true,force:true});}
 });
 

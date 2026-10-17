@@ -18,3 +18,7 @@
 .house-stage .game-bottom-hud .house-status{display:block;width:auto!important;min-height:0!important;padding:6px 10px;font:12px/1.35 system-ui;color:#efffd7;background:#0b1b14ed;border-radius:10px;overflow:hidden;overflow-wrap:anywhere;white-space:normal;max-height:3em}
 .house-stage .game-bottom-hud :is(.house-status,.game-touch-actions,.builder-nearby-action,.game-action-menu-toggle,.rad-tox-demo-balance)[hidden]{display:none!important}
 .house-stage .game-bottom-hud .builder-nearby-action :is(strong,small){color:inherit!important;overflow-wrap:anywhere}
+.house-stage .game-bottom-hud .game-touch-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:6px;border-radius:13px}
+.house-stage .game-bottom-hud .game-touch-actions button{min-width:0;min-height:44px;white-space:normal;touch-action:manipulation}
+/* Retired duplicate prompt must stay hidden even when page button styles override [hidden]. */
+.house-stage>button[aria-label="Use nearby item"]{display:none!important}

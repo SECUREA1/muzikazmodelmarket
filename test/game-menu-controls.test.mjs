@@ -18,6 +18,7 @@ test('radial menu retains original tool buttons and compact actions share touch 
  assert.ok(game.includes("e.target.closest('button,a,summary,[role=button]')"));
  assert.ok(game.includes('if(overlayOpen||now<actionMessageUntil)'));
  assert.ok(game.includes('builderPrompt.hidden=true;builderActionButton.hidden=hidden'));
+ assert.ok(!game.includes('touchActionsExpanded'));assert.ok(!game.includes("className='game-action-menu-toggle'"));assert.ok(game.includes('touchActions.hidden=!envLoader.world'));
 });
 
 test('bottom HUD moves original controls into separate flowing rows without duplicate buttons',t=>{
