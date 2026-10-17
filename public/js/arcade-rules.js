@@ -57,9 +57,9 @@ export function arcadeMove(game,command,rng){
   else{const next=g.position+directions[direction];if(next<0||next>=100||g.board[next])fail('A wall blocks that path.');g.position=next;if(next===98){g.done=true;g.score=25;g.message='Exit reached';}}
  }else if(['pong','breakout'].includes(g.type)){
   if(!['up','down','step'].includes(op))fail('Move the paddle or advance.');g.paddle=Math.max(1,Math.min(8,g.paddle+(op==='up'?-1:op==='down'?1:0)));
-  for(let step=0;step<(op==='step'?2:0)&&!g.done;step++){let x=g.ball%10,y=Math.floor(g.ball/10);if(y+g.dy<0||y+g.dy>9)g.dy*=-1;if(g.type==='pong'&&rng(4)!==0)g.cpu=Math.max(1,Math.min(8,g.cpu+Math.sign(y-g.cpu)));
-   if(x+g.dx===0){if(Math.abs(y-g.paddle)>1){g.done=true;g.message='Ball missed';break;}g.dx=1;g.dy=Math.sign(y-g.paddle);g.score++;}
-   if(x+g.dx===9){if(g.type==='pong'&&Math.abs(y-g.cpu)>1){g.done=true;g.score+=10;g.message='You win the rally';break;}g.dx=-1;}
+  for(let step=0;step<(op==='step'?2:0)&&!g.done;step++){let x=g.ball%10,y=Math.floor(g.ball/10);if(y+g.dy<0||y+g.dy>9)g.dy*=-1;if(g.type==='pong'&&!g.multiplayer&&rng(4)!==0)g.cpu=Math.max(1,Math.min(8,g.cpu+Math.sign(y-g.cpu)));
+   if(x+g.dx===0){if(Math.abs(y-g.paddle)>1){g.done=true;g.message=g.multiplayer?'Player 2 wins':'Ball missed';if(g.multiplayer)g.winner=2;break;}g.dx=1;g.dy=Math.sign(y-g.paddle);g.score++;}
+   if(x+g.dx===9){if(g.type==='pong'&&Math.abs(y-g.cpu)>1){g.done=true;g.score+=10;g.message=g.multiplayer?'Player 1 wins':'You win the rally';if(g.multiplayer)g.winner=1;break;}g.dx=-1;}
    const next=(y+g.dy)*10+x+g.dx;if(g.type==='breakout'&&g.bricks.includes(next)){g.bricks=g.bricks.filter(i=>i!==next);g.dx*=-1;g.score++;if(!g.bricks.length){g.done=true;g.message='All bricks cleared';}}
    else g.ball=next;
   }

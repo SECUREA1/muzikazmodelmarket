@@ -1,3 +1,4 @@
+import {maintainArcadeMatch,multiplayerCommand} from './server-arcade-multiplayer.mjs';
 import {ARCADE_LIBRARY} from './public/js/arcade-library.js';
 import {pokerPayout} from './public/js/poker-rules.js';
 export {pokerPayout} from './public/js/poker-rules.js';
@@ -16,7 +17,7 @@ export function deviceCommand(sim,manifest,player,actorId,command,now){
  if(state&&!baseProfile.multiGame&&(state.kind!==profile.kind||state.game!==profile.game))state=null;
  state ||= sim.devices[actor.id]={id:actor.id,name:profile.name,kind:profile.kind,game:profile.game,revision:0,queue:[],current:null,playing:false,offset:0,startedAt:now,volume:.7,gamers:{}};
  if(baseProfile.multiGame){state.multiGame=true;state.selectedGame ||= 'tictactoe';const selected=ARCADE_LIBRARY.find(item=>item.id===state.selectedGame)||ARCADE_LIBRARY.find(item=>item.id==='tictactoe');profile={...baseProfile,...selected,game:selected.kind==='arcade'?selected.game:undefined};state.kind=profile.kind;state.game=profile.game;}
- state.id=actor.id;
+ state.id=actor.id;maintainArcadeMatch(sim,state,now);
  if(!state.gamers[actorId]&&['slots','poker','trivia','arcade'].includes(profile.kind)&&Object.keys(state.gamers).length>=256)fail('This arcade player list is full.');
  if(command.operation==='open'&&profile.kind==='trivia'){const gamer=state.gamers[actorId] ||= {name:player.username,credits:100,round:0};gamer.question=questions[gamer.round%questions.length].slice(0,2);}
  if(command.operation==='open'&&profile.kind==='arcade'){state.gamers[actorId] ||= {name:player.username,credits:100,round:0};}
@@ -25,6 +26,10 @@ export function deviceCommand(sim,manifest,player,actorId,command,now){
  if(command.revision!==state.revision&&!(motionInput&&Number.isInteger(command.revision)&&command.revision>=Math.max(0,state.revision-16)&&command.revision<=state.revision))fail('Device changed. Refresh its controls and try again.');
  const op=command.operation;
  const gameDevice=['arcade','slots','poker','trivia'].includes(profile.kind);
+ if(profile.kind==='arcade'&&(state.match||['create-match','join-match','ready-match','start-match','leave-match'].includes(op))){
+  if(!state.match&&state.activePlayerId&&state.activePlayerId!==actorId&&machineControllerPresent(sim,state,now))fail('This machine is in use.');
+  multiplayerCommand(state,player,actorId,command,now,randomInt);state.revision++;state.updatedBy=player.username;state.updatedAt=now;return {deviceId:actor.id,message:'Shared match updated.'};
+ }
  if(gameDevice&&state.activePlayerId&&state.activePlayerId!==actorId&&machineControllerPresent(sim,state,now))fail('This machine is in use. Watch the shared screen until the player finishes or leaves.');
  if(op==='select-game'){
   if(!baseProfile.multiGame)fail('This cabinet has one built-in game.');const selected=ARCADE_LIBRARY.find(item=>item.id===command.gameId);if(!selected)fail('Choose a game from the cabinet library.');
@@ -74,10 +79,11 @@ export function deviceCommand(sim,manifest,player,actorId,command,now){
 
 function machineControllerPresent(sim,state,now){
  const player=sim.players?.[state.activePlayerId],actor=sim.actors?.[state.id],gamer=state.gamers?.[state.activePlayerId];
- return Boolean(player&&player.health!==0&&!player.replacedByRoom&&now-player.lastSeen<15000&&now-(state.lastInputAt||0)<(state.kind==='slots'?2000:60000)&&(!gamer?.game||!gamer.game.done)&&(!actor||actor.active!==false&&!actor.holderId&&Math.hypot(actor.position.x-player.position.x,actor.position.y-player.position.y,actor.position.z-player.position.z)<=5));
+ return Boolean(player&&player.health!==0&&!player.replacedByRoom&&now-player.lastSeen<15000&&now-(state.match?.lastInputAt||state.lastInputAt||0)<(state.match?120000:state.kind==='slots'?2000:60000)&&(!gamer?.game||!gamer.game.done)&&(!actor||actor.active!==false&&!actor.holderId&&Math.hypot(actor.position.x-player.position.x,actor.position.y-player.position.y,actor.position.z-player.position.z)<=5));
 }
 export function advanceDevicePlayback(sim,now){
  for(const [id,state]of Object.entries(sim.devices||{})){
+  state.id=id;maintainArcadeMatch(sim,state,now);
   if(state.kind!=='arcade'||!state.running)continue;
   state.id=id;
   const gamer=state.gamers?.[state.activePlayerId];
@@ -86,7 +92,7 @@ export function advanceDevicePlayback(sim,now){
   const next=state.nextStepAt??now+250;if(now<next){state.nextStepAt=next;continue;}
   const steps=Math.min(4,1+Math.floor((now-next)/250));
   for(let i=0;i<steps&&!gamer.game.done;i++){if(gamer.game.moves>=1000){gamer.game={...gamer.game,done:true,message:'Round limit reached. Start a new game.'};break;}gamer.game=arcadeMove(gamer.game,{operation:'step'},randomInt);}
-  state.nextStepAt=now+250;state.running=!gamer.game.done;state.updatedAt=now;state.revision++;
+  state.nextStepAt=now+250;state.running=!gamer.game.done;if(state.match&&gamer.game.done)state.match.phase='finished';state.updatedAt=now;state.revision++;
  }
 
  for(const state of Object.values(sim.devices||{})){const duration=state.current?.duration;if(!state.playing||!Number.isFinite(duration)||deviceTime(state,now)<duration)continue;state.current=state.queue.shift()||null;state.offset=0;state.startedAt=now;state.playing=!!state.current;state.revision++;}
