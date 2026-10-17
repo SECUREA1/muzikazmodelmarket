@@ -33,8 +33,8 @@ try:
     raise AssertionError('Unreachable dashboard control: '+selector)
    chooser.select_option('maps')
    assert chooser.locator('optgroup[label="Map & gameplay"] option[value=maps]').count()==1
-   assert 'maps & weather' in page.locator('#library-panel .builder-screen-hint').inner_text().lower()
-   page.get_by_label('World layout',exact=True).select_option('loft')
+   assert 'large world maps & weather' in page.locator('#library-panel .builder-screen-hint').inner_text().lower()
+   page.get_by_label('Large world map',exact=True).select_option('loft')
    assert page.locator('#layout-select').input_value()=='loft'
    reveal('.builder-dashboard-field:has(select[aria-label="Map weather"]) select').select_option('cloudy')
    assert page.locator('#weather-select').input_value()=='cloudy'
