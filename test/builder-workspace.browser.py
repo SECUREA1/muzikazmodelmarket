@@ -25,6 +25,18 @@ with sync_playwright() as p:
  map_box=page.locator('#land-canvas').bounding_box()
  assert abs(map_box['x']+map_box['width']/2-720)<3, 'map must occupy the centre lane'
  assert page.locator('#library-tile-size').input_value()=='140'
+ page.locator('#builder-panel-menu summary').click()
+ page.locator('[data-builder-menu=canvas]').click()
+ assert page.locator('.environment-workspace').get_attribute('class').find('library-collapsed')>=0
+ assert not page.locator('#library-panel').is_visible()
+ page.locator('#builder-panel-menu summary').click()
+ page.locator('[data-builder-menu=restore]').click()
+ for panel in ('library','inspector'):
+  page.locator('#expand-'+panel).click()
+  assert page.locator('.environment-workspace').get_attribute('data-expanded-panel')==panel
+  assert page.locator('#'+('library-panel' if panel=='library' else 'inspector-panel')).bounding_box()['width']>=600
+  page.locator('#expand-'+panel).click()
+  assert page.locator('.environment-workspace').get_attribute('data-expanded-panel') is None
  page.locator('#library-search').fill('campfire')
  page.wait_for_function("document.querySelector('[data-model=campfire]') !== null")
  page.locator('[data-catalog-favorite=campfire]').click()
@@ -52,6 +64,16 @@ with sync_playwright() as p:
  assert page.locator('#scale-exact').input_value()=='175'
  page.locator('#height-exact').fill('0.25');page.locator('#height-exact').press('Tab')
  assert float(page.locator('#elevation-control').input_value())==.25
+ original_x=page.locator('#position-x').input_value()
+ page.locator('#position-x').fill('')
+ page.locator('#position-x').press('Tab')
+ assert page.locator('#position-x').input_value()==original_x
+ original_count=page.locator('#object-count').inner_text()
+ page.evaluate("const text=document.createElement('textarea');text.id='typing-check';document.querySelector('#inspector-controls').prepend(text)")
+ page.locator('#typing-check').fill('Edit a message')
+ page.locator('#typing-check').press('Backspace')
+ assert page.locator('#object-count').inner_text()==original_count
+ page.locator('#typing-check').evaluate('(node)=>node.remove()')
  page.locator('[data-inspector-tab=look]').click()
  assert not page.locator('#rotation-exact').is_visible()
  assert page.locator('#object-color').is_visible()
@@ -80,7 +102,16 @@ with sync_playwright() as p:
  page.set_viewport_size({'width':390,'height':844})
  if 'inspector-open' in page.locator('body').get_attribute('class'):
   page.locator('#close-inspector').click()
- page.locator('#touch-open-library').click()
+ page.locator('[data-workspace-panel=library]').click()
+ assert 'builder-library-open' in page.locator('body').get_attribute('class')
+ assert page.locator('[data-workspace-panel=inspector]').get_attribute('aria-pressed')=='false'
+ page.locator('#expand-library').click()
+ assert page.locator('#library-panel').bounding_box()['height']>=840
+ page.locator('#expand-library').click()
+ page.keyboard.press('Escape')
+ assert 'builder-library-open' not in page.locator('body').get_attribute('class')
+ page.locator('[data-workspace-panel=library]').click()
+
  assert page.locator('body').get_attribute('class').find('inspector-open')<0
  page.locator('#library-clear-filters').click()
  page.locator('#library-category').select_option('arcade')
@@ -95,6 +126,13 @@ with sync_playwright() as p:
  page.locator('#touch-place-center').click()
  page.locator('#touch-edit').click()
  page.locator('#inspector-controls').wait_for(state='visible')
+ page.locator('#expand-inspector').click()
+ assert page.locator('#inspector-panel').bounding_box()['height']>=840
+ page.locator('#rotation-exact').fill('205')
+ page.locator('#rotation-exact').press('Tab')
+ assert page.locator('#rotation-control').input_value()=='205'
+ page.locator('#tuning-undo').click()
+ page.locator('#expand-inspector').click()
  before=float(page.locator('#height-exact').input_value())
  page.locator('[data-tuning-axis=height][data-tuning-sign="1"]').click()
  assert abs(float(page.locator('#height-exact').input_value())-before-.1)<.001
