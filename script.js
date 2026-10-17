@@ -1379,7 +1379,7 @@ function seedDesigner() {
   if (!productSelect || !characterSelect) return;
   productSelect.innerHTML = designerProducts.map((product) => `<option value="${product.id}">${product.name}</option>`).join('');
   characterSelect.innerHTML = designerCharacters.map((character) => `<option value="${character.id}">${character.name}</option>`).join('');
-  productSelect.value = 'avatar-stickers';
+  productSelect.value = designerProducts.some(product=>product.id==='hoodie')?'hoodie':designerProducts[0].id;
   characterSelect.value = 'chaos';
   updatePreview();
 }
@@ -1394,6 +1394,9 @@ function designerData() {
 function updatePreview() {
   if (!designerControls) return;
   const { data, product, character } = designerData();
+  const sizeSelect=designerControls.elements.namedItem('size');
+  const formats=product.id==='hoodie'?['S','M','L','XL','2XL','3XL']:product.id==='bottle'?['20 oz','24 oz']:product.id==='cap'?['One Size']:product.id==='avatar-stickers'?['Sticker sheet']:product.id==='poster'?['11 × 17 in','18 × 24 in','24 × 36 in']:['Standard'];
+  if(sizeSelect&&sizeSelect.dataset.product!==product.id){const previous=sizeSelect.value;sizeSelect.replaceChildren(...formats.map(value=>new Option(value,value)));sizeSelect.value=formats.includes(previous)?previous:formats[0];sizeSelect.dataset.product=product.id;data.set('size',sizeSelect.value);}
   const mockup = document.querySelector('#designer-mockup');
   mockup?.style.setProperty('--design-color', data.get('color'));
   const selectedShape = data.get('printShape') === 'auto' ? (productPrintTemplates[product.id]?.shape || 'front') : data.get('printShape');
@@ -1403,6 +1406,7 @@ function updatePreview() {
   document.querySelector('#sticker-stage')?.setAttribute('data-print-shape', selectedShape);
   const productArt = document.querySelector('#product-template-art');
   if (productArt) {
+    if(productArt.parentElement!==mockup)mockup.prepend(productArt);
     productArt.src = product.asset;
     productArt.alt = `${product.name} product template`;
   }
@@ -1411,19 +1415,20 @@ function updatePreview() {
     characterArt.src = character.art;
     characterArt.alt = `${character.name} artwork`;
   }
-  document.querySelector('#preview-character').textContent = character.name;
+  const characterLayer=document.querySelector('#preview-character');
+  if(characterLayer instanceof HTMLImageElement){characterLayer.src=character.art;characterLayer.alt=character.name;}else if(characterLayer)characterLayer.textContent=character.name;
   const logo = document.querySelector('#preview-name');
   const logoStyle = data.get('logo') || 'Wordmark';
   if (logo) {
     logo.dataset.logoStyle = logoStyle;
-    logo.textContent = logoStyle === 'Lightning Crest' ? 'ϟ' : logoStyle === 'Badge Patch' ? 'MZ' : (data.get('name') || 'MUZIKAZ');
+    logo.textContent = logoStyle === 'Lightning Crest' ? 'ϟ' : logoStyle === 'Badge Patch' ? 'MZ' : (data.get('name') ?? 'MUZIKAZ');
   }
-  document.querySelector('#preview-number').textContent = data.get('number') || '88';
-  document.querySelector('#preview-sleeve').textContent = data.get('sleeve') || 'LIVE THE BEAT';
+  document.querySelector('#preview-number').textContent = data.get('number') ?? '88';
+  document.querySelector('#preview-sleeve').textContent = data.get('sleeve') ?? 'LIVE THE BEAT';
   const isSticker = product.id === 'avatar-stickers';
   document.querySelector('#preview-title').textContent = isSticker ? `${character.name} custom stickers drop` : `${character.name} custom ${product.category.toLowerCase()} drop`;
   document.querySelector('#preview-meta').textContent = `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${data.get('layout') || character.traits.join(' / ')}`;
-  const values = [character.name, data.get('name') || 'MUZIKAZ', data.get('number') || '88', data.get('sleeve') || 'LIVE THE BEAT', `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${data.get('layout') || character.traits.join(' / ')}`];
+  const values = [character.name, data.get('name') ?? 'MUZIKAZ', data.get('number') ?? '88', data.get('sleeve') ?? 'LIVE THE BEAT', `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${data.get('layout') || character.traits.join(' / ')}`];
   const previewValues = document.querySelector('#preview-values');
   if (previewValues) previewValues.innerHTML = values.map((value) => `<li>${escapeMarkup(value)}</li>`).join('');
   renderOrderSummary();
@@ -1531,6 +1536,7 @@ function makeUploadLayer(src, name) {
   layer.dataset.flipY = 'false';
   layer.alt = `${name} custom uploaded design`;
   layer.src = src;
+  layer.addEventListener('error',()=>setDesignerStatus('Artwork could not load. Replace this layer before ordering.'),{once:true});
   layer.style.left = '50%';
   layer.style.top = '50%';
   layer.draggable = false;
@@ -1575,11 +1581,17 @@ function handleLayerAction(action) {
     uploadState.layers = uploadState.layers.filter((item) => item.id !== layer.dataset.layerId);
     layer.remove();
     uploadState.activeId = null;
+    const remaining=document.querySelector('.uploaded-design-layer');if(remaining)selectUploadLayer(remaining);
     renderOrderSummary();
     setDesignerStatus('Custom design layer deleted from the preview.');
     return;
   }
-  if (action === 'duplicate') makeUploadLayer(layer.src, `${layer.alt.replace(' custom uploaded design', '')} copy`);
+  if (action === 'duplicate') {
+    const source={left:layer.style.left,top:layer.style.top,zIndex:layer.style.zIndex,...layer.dataset};
+    makeUploadLayer(layer.src, `${layer.alt.replace(' custom uploaded design', '')} copy`);
+    const copy=activeUploadLayer();for(const key of ['scale','rotate','flipX','flipY'])copy.dataset[key]=source[key]||layer.dataset[key];
+    copy.style.left=source.left;copy.style.top=source.top;copy.style.zIndex=String((Number(source.zIndex)||10)+1);applyLayerTransform(copy);selectUploadLayer(copy);
+  }
   applyLayerTransform(layer);
   renderOrderSummary();
 }
@@ -1622,7 +1634,10 @@ function exportDesignerOrder() {
 
 function restoreDesignerOrder(saved) {
   if (!saved || !designerControls) return false;
+  designerControls.reset();
+  const sizeField=designerControls.elements.namedItem('size');if(sizeField)delete sizeField.dataset.product;
   const fields = saved.fields || {};
+  const productField=designerControls.elements.namedItem('product');if(productField&&fields.product){productField.value=fields.product;updatePreview();}
   Object.entries(fields).forEach(([name, value]) => {
     const field = designerControls.elements.namedItem(name);
     if (field && typeof value === 'string') field.value = value;
@@ -1656,7 +1671,7 @@ function downloadDesignerSpec() {
   link.href = URL.createObjectURL(blob);
   link.download = `muzikaz-${order.product.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-print-spec.json`;
   link.click();
-  URL.revokeObjectURL(link.href);
+  setTimeout(()=>URL.revokeObjectURL(link.href),1000);
   setDesignerStatus('Print specification downloaded. Attach it to a fulfillment workflow or keep it with this custom order.');
 }
 
@@ -1679,10 +1694,8 @@ document.querySelectorAll('[data-layer-action]').forEach((button) => button.addE
 document.querySelectorAll('[data-studio-jump]').forEach((button) => button.addEventListener('click', () => document.getElementById(button.dataset.studioJump)?.scrollIntoView({ behavior: 'smooth', block: 'center' })));
 function stagePercentPosition(pointerEvent, stage, dragStart, snap) {
   const stageRect = stage.getBoundingClientRect();
-  const targetX = pointerEvent.clientX - dragStart.offsetX + dragStart.anchorX;
-  const targetY = pointerEvent.clientY - dragStart.offsetY + dragStart.anchorY;
-  const rawX = ((targetX - stageRect.left) / stageRect.width) * 100;
-  const rawY = ((targetY - stageRect.top) / stageRect.height) * 100;
+  const rawX = dragStart.left + (pointerEvent.clientX-dragStart.pointerX)/stageRect.width*100;
+  const rawY = dragStart.top + (pointerEvent.clientY-dragStart.pointerY)/stageRect.height*100;
   return {
     x: Math.round(rawX / snap) * snap,
     y: Math.round(rawY / snap) * snap
@@ -1702,12 +1715,10 @@ function enableStickerStageDragging() {
     layer.setPointerCapture?.(event.pointerId);
     layer.style.right = 'auto';
     layer.style.bottom = 'auto';
-    const layerRect = layer.getBoundingClientRect();
     const dragStart = {
-      offsetX: event.clientX - layerRect.left,
-      offsetY: event.clientY - layerRect.top,
-      anchorX: isUploadedLayer ? layerRect.width / 2 : 0,
-      anchorY: isUploadedLayer ? layerRect.height / 2 : 0
+      left:layer.offsetLeft/stage.clientWidth*100,
+      top:layer.offsetTop/stage.clientHeight*100,
+      pointerX:event.clientX,pointerY:event.clientY
     };
     const move = (moveEvent) => {
       const snap = moveEvent.shiftKey ? 10 : 1;
@@ -1720,12 +1731,14 @@ function enableStickerStageDragging() {
       layer.removeEventListener('pointermove', move);
       layer.removeEventListener('pointerup', stop);
       layer.removeEventListener('pointercancel', stop);
+      layer.removeEventListener('lostpointercapture', stop);
       if (!layer.classList.contains('uploaded-design-layer')) layer.classList.remove('active');
       setDesignerStatus('Sticker placement updated. Drag any sticker or upload again; hold Shift to snap to 10% zones.');
     };
     layer.addEventListener('pointermove', move);
     layer.addEventListener('pointerup', stop);
     layer.addEventListener('pointercancel', stop);
+    layer.addEventListener('lostpointercapture', stop);
   });
 }
 

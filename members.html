@@ -175,11 +175,7 @@
 
         <section class="section-block designer-block live-merch-studio" id="designer">
             <div class="section-title"><span></span><h2>Live merch designer</h2><a href="#marketplace">Open marketplace</a></div>
-            <div class="designer-callout">
-                <p class="kicker">Featured open marketplace drop</p>
-                <h3>Chaos Ape custom stickers drop</h3>
-                <p>Build a production-ready sticker sheet: upload art, drag it inside the cutline-safe zone, save a reusable draft, and attach a complete design specification to your custom order.</p>
-            </div>
+            <div class="designer-callout"><p class="kicker">Your merch studio</p><h3>Choose a product. Make it yours.</h3><p>Select your merch and character, add text or upload artwork, then drag each layer in the live preview. Save a member draft or add your complete design to the cart.</p></div>
             <details class="button-menu studio-tabs" open>
                 <summary>Customize sections</summary>
                 <div class="button-group" aria-label="Customizer sections">
@@ -187,18 +183,16 @@
                 </div>
             </details>
             <div class="designer-layout studio-layout">
-                <article class="designer-preview studio-preview" aria-live="polite">
+                <article class="designer-preview studio-preview">
                     <div class="mockup sticker-sheet-mockup" id="designer-mockup" data-product-template="avatar-stickers">
                         <div class="print-template-label" id="print-template-label">Sticker sheet print area</div>
                         <div class="sticker-sheet-stage" id="sticker-stage">
                             <div class="safe-area-guide" aria-hidden="true"><span>PRINT-SAFE AREA</span></div>
                             <img class="product-template-art" id="product-template-art" src="trait_avatars_row_2_2x.png" alt="Avatar Sticker Sheet product template" />
-                            <span class="sticker-cutline main-character" id="preview-character">Chaos Ape</span>
-                            <img class="character-art-layer" id="character-art-layer" src="character_traits_overview_panel_2x.png" alt="Chaos Ape artwork" />
+                            <img class="sticker-cutline main-character" id="preview-character" src="character_traits_overview_panel_2x.png" alt="Chaos Ape" draggable="false">
                             <strong class="sticker-cutline logo-sticker" id="preview-name">MUZIKAZ</strong>
                             <b class="sticker-cutline number-sticker" id="preview-number">88</b>
                             <small class="sticker-cutline sleeve-sticker" id="preview-sleeve">LIVE THE BEAT</small>
-                            <span class="sticker-cutline mini-sticker">CHAOS</span>
                             <div class="upload-layer-zone" id="upload-layer-zone" aria-label="Uploaded custom art layer zone"></div>
                         </div>
                     </div>
@@ -206,7 +200,7 @@
                         <p class="kicker" id="preview-meta">Avatar Sticker Sheet · M · Wordmark · Chaos / 3D Model Packs</p>
                         <h3 id="preview-title">Chaos Ape custom stickers drop</h3>
                         <ul class="preview-values" id="preview-values"><li>Chaos Ape</li><li>MUZIKAZ</li><li>88</li><li>LIVE THE BEAT</li></ul>
-                        <div class="preview-actions button-group"><button type="button" id="save-design">Save draft</button><button type="button" id="load-design">Load draft</button><button type="button" id="duplicate-design">Duplicate layer</button><button type="button" class="ghost" id="download-design-spec">Download print spec</button></div>
+                        <p class="designer-drag-help">Drag artwork and text to position them. Use the upload controls to resize, rotate, flip or duplicate your selected artwork.</p><div class="preview-actions button-group"><button type="button" id="save-design">Save draft</button><button type="button" id="load-design">Load draft</button><button type="button" id="duplicate-design">Duplicate layer</button><button type="button" class="ghost" id="download-design-spec">Download print spec</button></div>
                         <p class="status-message studio-status" id="designer-status" role="status">Upload PNG, JPG, JPEG, or SVG artwork to place it on the merch preview.</p>
                     </div>
                 </article>
