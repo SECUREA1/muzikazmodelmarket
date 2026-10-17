@@ -130,3 +130,49 @@ body.builder-paged-workspace .builder-paged-panel .library-item strong{white-spa
 .builder-camera-tools button:focus-visible{outline:3px solid #c6ff85;outline-offset:2px}
 .builder-camera-tools button:hover{background:#294524}
 @media(max-width:420px){.builder-camera-tools{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* The sandbox keeps the canvas central and gives every tool a searchable home. */
+.builder-gold-workspace{--builder-gold:#edcb7b;--builder-gold-muted:#a78e55}
+.builder-gold-workspace .builder-paged-panel{background:linear-gradient(165deg,#1b2118,#101710 65%);border-color:#8c794a;box-shadow:0 12px 36px #0005,inset 0 1px #f9df9820}
+.builder-gold-workspace .builder-page-heading h2,.builder-gold-workspace .inspector-heading h2{color:#ffe5a5;letter-spacing:.02em}
+.builder-gold-workspace .builder-panel-chooser select{border-color:#867145;background-color:#171e13;color:#fff0cd}
+.builder-gold-workspace .builder-panel-pagination{border-color:#75643b}
+.builder-gold-workspace .builder-dashboard-grid{display:block}
+.builder-command-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 12px}
+.builder-command-group h3{grid-column:1/-1;font:800 12px/1.4 system-ui;letter-spacing:.06em;text-transform:uppercase;color:#f1d897;margin:8px 0 2px}
+.builder-gold-workspace .builder-dashboard-tile{border-color:#78683f;background:linear-gradient(145deg,#303321,#172016);min-height:82px}
+.builder-gold-workspace .builder-dashboard-tile svg{stroke:#f0ce80}
+.builder-gold-workspace .builder-dashboard-tile:hover{border-color:#f3d28c;background:#353d26}
+.builder-gold-workspace .builder-dashboard-tile:disabled{opacity:.55;cursor:default}
+.builder-gold-workspace .builder-dashboard-tile:disabled:hover{border-color:#78683f;background:#20271b}
+.builder-gold-workspace .builder-dashboard-grid>.builder-dashboard-tile{margin-top:6px}
+.builder-command-tools{display:grid;gap:6px;flex:0 0 auto}
+.builder-paged-panel:not([data-panel-screen=dashboard])>.builder-command-tools{display:none}
+.builder-workspace-overview{font:650 11px/1.4 system-ui;color:#e6d7ab;overflow-wrap:anywhere;padding:8px 10px;border:1px solid #76643e;border-radius:9px;background:#2b2c1c}
+.builder-command-label{display:grid;gap:5px;font:700 12px/1.3 system-ui;color:#eed99e}
+.builder-command-label input{box-sizing:border-box;width:100%;min-width:0;min-height:44px;padding:9px 10px;font:16px system-ui;color:#fff2cc;background:#0e170e;border:1px solid #97804b;border-radius:10px}
+.builder-command-count{font:500 11px/1.4 system-ui;color:#c1c6ac;overflow-wrap:anywhere}
+.builder-workspace-dock{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px;padding:8px;border:1px solid #807044;border-radius:12px;background:linear-gradient(120deg,#2b301e,#111b12)}
+.builder-workspace-dock button{flex:1 1 80px;min-width:0;min-height:44px;padding:8px 6px;border:1px solid #817043;border-radius:8px;background:#202b1c;color:#ffe7ae;font:700 12px/1.3 system-ui;cursor:pointer;touch-action:manipulation}
+.builder-workspace-dock button:hover{border-color:#ffdf91;background:#39422a}
+.builder-workspace-dock button:focus-visible{outline:3px solid #ffe5a5;outline-offset:2px}
+.builder-gold-workspace .builder-paged-panel :is(button,input,select):focus-visible{outline-color:#ffe5a5}
+@media(max-height:540px){
+ .builder-workspace-overview{display:none}.builder-command-label{font-size:0;gap:0}.builder-command-label input{min-height:36px;font-size:14px;padding:6px}
+ .builder-command-tools{gap:3px}.builder-command-count{font-size:10px}.builder-command-group{gap:5px;margin-bottom:5px}.builder-command-group h3{font-size:11px;margin:5px 0 0}
+ .builder-gold-workspace .builder-dashboard-tile{min-height:58px}
+}
+@media(prefers-reduced-motion:reduce){.builder-gold-workspace .builder-paged-panel,.builder-gold-workspace .builder-dashboard-tile{transition:none}}
+
+.builder-gold-workspace .builder-paged-panel .inspector-heading{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px}
+.builder-gold-workspace .inspector-heading button{min-width:0;min-height:44px;padding:6px 4px;font:700 12px/1.3 system-ui;border:1px solid #817043;border-radius:8px;background:#202b1c;color:#ffe7ae}
+
+.builder-gold-workspace .builder-dashboard-tile,.builder-gold-workspace .builder-dashboard-tile :is(strong,small){text-transform:none;letter-spacing:normal}
+.builder-gold-workspace .builder-dashboard-tile strong{color:#fff0cf}
+.builder-gold-workspace .builder-dashboard-tile small{color:#c8cfb9}
+.builder-gold-workspace .object-inspector #expand-inspector{grid-column:auto;margin:0}
+@media(min-width:761px){.builder-gold-workspace .builder-paged-panel .inspector-heading{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-height:540px){.builder-command-group{grid-template-columns:minmax(0,1fr)}}
+/* The directory owns detailed alignment; keep the stage available for building. */
+.builder-gold-workspace .build-stage>:is(#world-alignment,#scene-layer-alignment,.stage-help,.playable-map-banner){display:none}
+.builder-gold-workspace .map-toolbar .builder-return-menu{display:none}

@@ -8,9 +8,41 @@ export function createBuilderDashboard({onOpen}){
  const paths={items:'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',map:'M3 5l6-2 6 2 6-2v16l-6 2-6-2-6 2zM9 3v16M15 5v16',game:'M7 7h10l4 10-3 2-4-4h-4l-4 4-3-2zM8 9v5M6 11h4M16 10h.01M18 13h.01',view:'M4 6h16M4 12h16M4 18h16M9 3v6M15 9v6M9 15v6'};
  function tile(label,description,icon,action){const button=make('button','builder-dashboard-tile');button.type='button';const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',paths[icon]||paths.items);svg.append(path);const text=make('span');text.append(make('strong','',label),make('small','',description));button.append(svg,text);button.addEventListener('click',action);return button;}
  const dashboard=make('div','builder-dashboard-grid');
- for(const [id,label,description,icon]of [['categories','Item categories','Choose what to place','items'],['maps','Maps & weather','Choose a world layout','map'],['world','World / land tuner','Move and scale the base map','map'],['scene','Scene layout tuner','Align placed items separately','view'],['games','Test & publish','Solo or multiplayer','game'],['view','View & placement','Roof, repeat and camera toggles','view'],['objects','Scene objects','Find and adjust placed items','view'],['canvas','Back to map','Continue placing items','map']]){
-  const button=tile(label,description,icon,()=>id==='canvas'?document.querySelector('[data-builder-menu=canvas]').click():onOpen(id));button.dataset.builderDashboard=id;dashboard.append(button);
+ const commandTools=make('div','builder-command-tools'),overview=make('output','builder-workspace-overview'),commandLabel=make('label','builder-command-label','Find a tool'),commandSearch=make('input'),commandCount=make('output','builder-command-count');
+ commandSearch.type='search';commandSearch.id='builder-command-search';commandSearch.placeholder='Assets, portals, animation, maps…';commandSearch.setAttribute('aria-label','Find a builder tool');commandSearch.autocomplete='off';commandLabel.append(commandSearch);commandCount.setAttribute('aria-live','polite');commandTools.append(overview,commandLabel,commandCount);
+ let commandGroups=[];
+ const empty=make('p','builder-command-empty','No tools match. Try a category, object setting or map tool.');empty.hidden=true;
+ const setText=(el,value)=>{if(el.textContent!==value)el.textContent=value;};
+ function syncCommands(){
+  const query=commandSearch.value.trim().toLowerCase(),selected=!document.querySelector('#touch-edit').disabled;let count=0;
+  for(const group of commandGroups){let visible=0;for(const command of group.commands){const match=!query||command.keywords.includes(query);if(command.button.hidden===match)command.button.hidden=!match;
+   const unavailable=command.selection&&(!selected||command.entry.box.children.length&&![...command.entry.box.children].some(child=>!child.hidden));command.button.disabled=Boolean(unavailable);command.button.title=unavailable?'Select a compatible item on the map first':'';
+   if(match){visible++;count++;}}
+   if(group.node.hidden===(visible>0))group.node.hidden=!visible;
+  }
+  if(empty.hidden===(count===0))empty.hidden=count!==0;
+  setText(commandCount,`${count} tools${selected?' · item selected':' · select an item for object tools'}`);
+  const text=id=>document.querySelector(id)?.textContent.trim()||'';
+  const total=document.querySelector('#library-category option[value=all]')?.textContent.match(/\((\d+)\)$/)?.[1]||text('#library-count');
+  setText(overview,`${text('#layout-label')} · ${text('#object-count')} · ${total} assets`);
  }
+ commandSearch.addEventListener('input',()=>{syncCommands();onOpen('dashboard');});
+ commandSearch.addEventListener('keydown',event=>{if(event.key==='Escape'&&commandSearch.value){event.preventDefault();event.stopPropagation();commandSearch.value='';syncCommands();onOpen('dashboard');}});
+ function configureTools(items,objects){
+  dashboard.replaceChildren();commandGroups=[];
+  const worldScreens=['maps','world','scene','generate','urban','view','guide'],releaseScreens=['games','release'];
+  const definitions=[['Create & collect',items.filter(e=>e.id!=='dashboard'&&!worldScreens.includes(e.id)&&!releaseScreens.includes(e.id)),'items'],['World & workspace',items.filter(e=>worldScreens.includes(e.id)),'map'],['Shape your scene',objects.filter(e=>['objects','move','rotation','scale','position','materials','actions'].includes(e.id)),'view'],['Gameplay & animation',objects.filter(e=>!['objects','move','rotation','scale','position','materials','actions'].includes(e.id)),'game'],['Play & share',items.filter(e=>releaseScreens.includes(e.id)),'game']];
+  for(const [heading,entries,icon]of definitions){const group=make('section','builder-command-group'),commands=[];group.append(make('h3','',heading));
+   for(const entry of entries){const inspector=objects.includes(entry),id=inspector?'inspector:'+entry.id:entry.id,selection=inspector&&entry.id!=='objects',description=selection?'Select an item, then tune its settings':inspector?'Browse every placed object':entry.id==='items'?'Search, select and drop onto the map':'Open workspace tools';
+    const button=tile(entry.label,description,icon,()=>onOpen(id));button.dataset.builderDashboard=entry.id;button.dataset.builderCommand=id;
+    commands.push({button,entry,selection,keywords:(entry.label+' '+heading+' '+entry.box.textContent).toLowerCase()});group.append(button);}
+   commandGroups.push({node:group,commands});dashboard.append(group);
+  }
+  const back=tile('Back to map','Continue building','map',()=>document.querySelector('[data-builder-menu=canvas]').click());back.dataset.builderDashboard='canvas';dashboard.append(empty,back);syncCommands();
+ }
+ const commandObserver=new MutationObserver(syncCommands);
+ for(const selector of ['#layout-label','#object-count','#library-count','#library-category','#touch-edit']){const source=document.querySelector(selector);if(source)commandObserver.observe(source,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['disabled']});}
+ watchers.push(commandObserver);syncers.push(syncCommands);
  const categories=make('div','builder-category-groups'),category=document.querySelector('#library-category'),search=document.querySelector('#library-search'),scope=document.querySelector('#library-scope');
  const categoryTiles=new Map();
  const sections=[['Build the space',['buildings','interior','seating','props','landscape','plants','terrain']],['Add gameplay',['interactive','arcade','audio','video','services','characters','creatures','vehicles','weapons','wearables']],['Your collection',['all','backpack','custom']]];
@@ -33,7 +65,9 @@ export function createBuilderDashboard({onOpen}){
  const world=[make('p','','Adjust the large world / land beneath your build. Placed scene items stay in place.'),...['x','y','z','rotation','scale'].map((key,i)=>inputProxy('#world-base-'+key,['World X (m)','World height (m)','World Z (m)','World rotation (degrees)','World scale'][i])),toggle('#world-base-ghost','Transparent world overlay'),toggle('#world-base-move','Drag world on map',true),action('#world-base-center','Center world under scene'),action('#world-base-reset','Reset world alignment'),action('[data-builder-menu=canvas]','Return to building')];
  const scene=[make('p','','Adjust the smaller scene layout and all placed items together. The world stays in place.'),...['x','y','z','rotation','scale'].map((key,i)=>inputProxy('#scene-layer-'+key,['Scene X (m)','Scene height (m)','Scene Z (m)','Scene rotation (degrees)','Scene scale'][i])),action('#scene-layer-reset','Reset scene alignment'),action('[data-builder-menu=canvas]','Return to building')];
  const maps=[selectProxy('#layout-select','World layout'),selectProxy('#weather-select','Map weather'),tile('World / land tuner','Move, rotate and scale the base map','map',()=>onOpen('world')),tile('Scene layout tuner','Align placed items separately','view',()=>onOpen('scene')),action('#frame-scene','Fit the whole scene'),action('[data-builder-menu=canvas]','Build on this map')];
+ const guide=[make('h3','','Build without losing your place'),make('p','','Use the map shortcut bar to jump between assets, buildings, world settings and scene objects. Find any tool in the dashboard; Ctrl / Command + K opens tool search.'),make('p','','Choose an asset category, search for an item, then tap the floor or use Drag to map. Items can be placed while their full detail loads.'),make('p','','Desktop: drag an object to move it; Shift-drag to rotate. Double-click an object or use Edit item for exact size, height, materials and gameplay settings.'),make('p','','Touch: drag empty space to pan, pinch to zoom, and use Move followed by a destination tap. Rotate 45°, Edit item, focus and zoom buttons are available beside the map.'),make('p','','World / land moves the base map. Scene layout moves your placed items together. Their reset controls are independent.'),make('p','','Use Undo tuning to reverse a transform. Save draft stores your build locally; Test and Publish send the scene to the server and require the existing account and server checks.')];
+ const release=[action('#clear-scene','Start a new map'),action('#save-scene','Save draft'),action('[data-workspace-panel=quality]','Open build quality checks'),action('#publish-scene','Publish this map')];
  const games=[selectProxy('#play-mode','Game mode'),action('#save-scene','Save draft'),action('#play-scene','Test this map'),action('#publish-scene','Publish this map')];
  const view=[action('#builder-zoom-in','Zoom in'),action('#builder-zoom-out','Zoom out'),action('#builder-focus-selection','Focus selected item'),action('[data-view-mode=build]','Build view'),action('[data-view-mode=walkthrough]','3D walkthrough'),toggle('#building-cutaway','Hide building roofs',true),toggle('#repeat-placement','Keep placing the same item'),action('#frame-scene','Fit the whole scene'),action('[data-builder-menu=canvas]','Return to building')];
- return{dashboard,categories,maps,world,scene,games,view,sync(){syncers.forEach(sync=>sync());},dispose(){watchers.forEach(watch=>watch.disconnect());cleanups.forEach(cleanup=>cleanup());}};
+ return{dashboard,commandTools,configureTools,categories,maps,world,scene,games,release,guide,view,sync(){syncers.forEach(sync=>sync());},dispose(){watchers.forEach(watch=>watch.disconnect());cleanups.forEach(cleanup=>cleanup());}};
 }
