@@ -183,3 +183,26 @@ test('a confirmed portal arrival is sent once and automatic reconnect uses the s
   return response(confirmed(++sequence));
  },async client=>{await client.whenReady();await pause(250);assert.ok(joins.length>=2);assert.equal(joins[0].travelFrom,'public-commons');assert.equal(joins[0].travelToken,'server-ticket');assert.equal(joins[1].travelToken,undefined);},{arrival:{from:'public-commons',token:'server-ticket'}});
 });
+
+test('a transient network error resumes input without replaying a meeting join',async()=>{
+ let sequence=0,failed=false;const commands=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);commands.push(command);
+  if(command.action==='input'&&!failed){failed=true;throw Error('temporary network interruption');}
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();await pause(1250);assert.equal(failed,true);assert.equal(client.ready,true);assert.equal(commands.filter(c=>c.action==='join').length,1);assert.ok(commands.filter(c=>c.action==='input').length>1);
+ },{meetingId:'commons-entry'});
+});
+test('an expired room rejoin preserves position by omitting the consumed arrival and meeting',async()=>{
+ let sequence=0,expired=false;const commands=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);commands.push(command);
+  if(command.action==='input'&&!expired){expired=true;return response({message:'Rejoin required',code:'ROOM_JOIN_REQUIRED'},409);}
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();await pause(220);const joins=commands.filter(c=>c.action==='join');assert.equal(joins.length,2);assert.equal(joins[0].meetingId,'commons-entry');assert.equal(joins[0].travelToken,'proof');assert.equal(joins[1].meetingId,undefined);assert.equal(joins[1].travelToken,undefined);assert.equal(client.ready,true);
+ },{meetingId:'commons-entry',arrival:{from:'previous-room',token:'proof'}});
+});

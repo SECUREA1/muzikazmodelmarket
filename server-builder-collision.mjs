@@ -1,3 +1,4 @@
+import {slideWalking} from './public/js/walking-collision.js';
 import {PLAYER_FLOOR_CLEARANCE} from './public/js/player-floor.js';
 import {builderBaseEnvironment,applyBuilderBaseTransform} from './public/js/environments/builder-base.js';
 import {drawingCollisionModel} from './public/js/placed-item-collision.js';
@@ -97,18 +98,24 @@ export class ServerBuilderCollision {
   if(builderBaseEnvironment(environment)||!environment.builderScene&&!environment.proceduralLand){
    if(!builderBaseEnvironment(environment)&&!environment.modelUrl&&!environment.modelUrls?.length)return next;
    if(Math.abs(next.x-previous.x)+Math.abs(next.y-previous.y)+Math.abs(next.z-previous.z)<1e-7)return next;
-   const world=this.world(environment),delta=new THREE.Vector3(next.x-previous.x,0,next.z-previous.z),length=delta.length();
-   if(length>.0001){const hits=new THREE.Raycaster(new THREE.Vector3(previous.x,previous.y+.85,previous.z),delta.normalize(),0,length+.32).intersectObjects(world.floors,false);if(hits.some(hit=>Math.abs(hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y||0)<.55))return {...previous,y:next.y};}
-   const floor=this.groundAt(environment,{x:next.x,y:Math.max(previous.y,next.y),z:next.z});
-   if(!floor)return {...previous,y:Math.max(previous.y,next.y)};
-   if(next.y<=floor.y+.35&&next.y<=previous.y+.01)return {...next,y:floor.y,floorY:floor.y};return {...next,floorY:floor.y};
+   const world=this.world(environment);
+   const meshes=world.floors.filter(mesh=>{let root=mesh;while(root&&!root.userData.builderObjectId)root=root.parent;const actor=actors?.[root?.userData.builderObjectId];return !mesh.userData.collisionDisabled&&!(actor&&(actor.open||actor.active===false||actor.holderId));});
+   const moved=slideWalking(previous,next,(from,to)=>{
+    const delta=new THREE.Vector3(to.x-from.x,0,to.z-from.z),length=delta.length();if(length<1e-7)return true;delta.normalize();
+    return ![-.3,0,.3].some(offset=>[.46,.85,1.55].some(height=>new THREE.Raycaster(new THREE.Vector3(from.x-delta.z*offset,Math.max(previous.y,next.y)+height,from.z+delta.x*offset),delta,0,length+.3).intersectObjects(meshes,false).some(hit=>Math.abs(hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y||0)<.55)));
+   });
+   // Always resolve support at the accepted position, even when a wall blocks motion.
+   const floor=this.groundAt(environment,{x:moved.x,y:Math.max(previous.y,next.y),z:moved.z});
+   if(!floor){const support=this.groundAt(environment,previous);return {...previous,y:Math.max(previous.y,next.y),floorY:support?.y??previous.y};}
+   if(moved.y<=floor.y+.35&&moved.y<=previous.y+.01)return {...moved,y:floor.y,floorY:floor.y};return {...moved,floorY:floor.y};
   }
-  const {walls,floors}=this.world(environment),ray=new THREE.Raycaster(new THREE.Vector3(next.x,Math.max(previous.y,next.y)+.36,next.z),new THREE.Vector3(0,-1,0),0,100);
-  const floor=ray.intersectObjects(floors,false).find(hit=>!hit.object.name.includes('TARGET')&&hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y>.5);
-  if(floor&&next.y<floor.point.y+PLAYER_FLOOR_CLEARANCE)next={...next,y:floor.point.y+PLAYER_FLOOR_CLEARANCE};
-  for(const {box,objectId}of walls){const actor=objectId&&actors[objectId];if(actor&&(actor.open||!actor.active||actor.holderId))continue;if(next.x>box.min.x-.3&&next.x<box.max.x+.3&&next.z>box.min.z-.3&&next.z<box.max.z+.3&&next.y<box.max.y-.03&&next.y+1.7>box.min.y+.03){if(box.max.y-previous.y<=.35)next.y=Math.max(next.y,box.max.y);else return {...previous,y:next.y};}}
-  const bounds=this.world(environment).bounds;
-  if(!floor&&(next.x<bounds.min.x||next.x>bounds.max.x||next.z<bounds.min.z||next.z>bounds.max.z))return previous;
-  return {...next,floorY:floor?floor.point.y+PLAYER_FLOOR_CLEARANCE:-100};
+  const {walls,floors,bounds}=this.world(environment);
+  const boxes=walls.filter(({objectId})=>{const actor=objectId&&actors?.[objectId];return !(actor&&(actor.open||!actor.active||actor.holderId));}).map(({box})=>box);
+  const moved=resolvePlacedSolids(previous,next,boxes,{step:.35});
+  const ray=new THREE.Raycaster(new THREE.Vector3(moved.x,Math.max(previous.y,moved.y)+.36,moved.z),new THREE.Vector3(0,-1,0),0,100);
+  const floor=ray.intersectObjects(floors,false).find(hit=>!hit.object.name.includes('TARGET')&&!hit.object.userData.collisionDisabled&&hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y>.5);
+  if(floor&&moved.y<floor.point.y+PLAYER_FLOOR_CLEARANCE)moved.y=floor.point.y+PLAYER_FLOOR_CLEARANCE;
+  if(!floor&&(moved.x<bounds.min.x||moved.x>bounds.max.x||moved.z<bounds.min.z||moved.z>bounds.max.z))return {...previous,floorY:previous.y};
+  return {...moved,floorY:Math.max(moved.floorY??-100,floor?floor.point.y+PLAYER_FLOOR_CLEARANCE:-100)};
  }
 }

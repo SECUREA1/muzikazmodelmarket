@@ -3,7 +3,7 @@ import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory
 export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,onError}) {
  const api = new SharedGameInventory();
  let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0, inputRequested=false,fireBusy=false;
- let fireRequest=null,arrivalPending=arrival;
+ let fireRequest=null,arrivalPending=arrival,meetingPending=meetingId;
  const waiters=new Set(),collected=new Set();
  function settle(error) {
   for (const waiter of waiters) { clearTimeout(waiter.timer); error ? waiter.reject(error) : waiter.resolve(client); }
@@ -77,7 +77,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     onStatus?.(error.message);
    } else {
     const wasReady=client.ready;
-    client.ready=false; joined=false; session=null; retryAt=Date.now()+1000;
+    client.ready=false; session=null; retryAt=Date.now()+1000;
     if(wasReady)client.whenReady().catch(()=>{});
     onStatus?.('Server connection required: '+error.message);
    }
@@ -87,8 +87,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   busy=true;
   try {
    if (!joined) {
-    const joinedState=await client.send('join',{...(meetingId?{meetingId}:{}),...(arrivalPending?{travelFrom:arrivalPending.from,travelToken:arrivalPending.token}:{})});
-    arrivalPending=null;
+    const joinedState=await client.send('join',{...(meetingPending?{meetingId:meetingPending}:{}),...(arrivalPending?{travelFrom:arrivalPending.from,travelToken:arrivalPending.token}:{})});
+    arrivalPending=null;meetingPending=null;
     if (stopped) return;
     joined=true;
     onStatus?.(joinedState?.result?.message || 'Connected. Gameplay is ready.');
@@ -126,4 +126,3 @@ export function projectSharedBuildings({THREE,system,records,create}){
  system.bricks=system.bricks.filter(root=>{if(root.userData.sharedId&&!active.has(root.userData.sharedId)&&system.buildEditor.pending?.root!==root){root.removeFromParent();return false;}return true;});
 }
 export function buildingCommand(root){const paint=[];root.traverse(mesh=>{if(mesh.isMesh&&mesh.material?.color)paint.push(mesh.material.color.getHex());});return {id:root.userData.sharedId||crypto.randomUUID(),revision:root.userData.sharedRevision||0,object:{materialId:root.userData.materialId,position:root.position.toArray(),rotation:[root.rotation.x,root.rotation.y,root.rotation.z],scale:root.scale.toArray(),paint,open:!!root.userData.open}};}
-
