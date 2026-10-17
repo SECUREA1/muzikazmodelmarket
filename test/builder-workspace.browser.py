@@ -19,7 +19,11 @@ with sync_playwright() as p:
  page.goto(f'http://127.0.0.1:{server.server_port}/environment-builder.html')
  page.wait_for_function("document.querySelectorAll('.library-item').length>50")
  assert page.locator('#library-panel').bounding_box()['width']>=330
- assert page.locator('#inspector-panel').bounding_box()['width']>=350
+ assert page.locator('#inspector-panel').bounding_box()['width']>=320
+ assert abs(page.locator('#library-panel').bounding_box()['width']-page.locator('#inspector-panel').bounding_box()['width'])<2
+ assert page.locator('#world-alignment').get_attribute('open') is None
+ map_box=page.locator('#land-canvas').bounding_box()
+ assert abs(map_box['x']+map_box['width']/2-720)<3, 'map must occupy the centre lane'
  assert page.locator('#library-tile-size').input_value()=='140'
  page.locator('#library-search').fill('campfire')
  page.wait_for_function("document.querySelector('[data-model=campfire]') !== null")
@@ -61,6 +65,12 @@ with sync_playwright() as p:
  assert page.locator('#scene-search-empty').is_visible()
  page.locator('#scene-object-search').fill('campfire')
  assert page.locator('[data-select-object]').count()==1
+ assert page.evaluate("getComputedStyle(document.querySelector('#scene-list')).maxHeight==='none'")
+ page.locator('[data-select-object]').click()
+ assert page.locator('#inspector-controls').is_visible()
+ assert page.locator('[data-inspector-tab=transform]').get_attribute('aria-pressed')=='true'
+ page.locator('#scene-objects-browse').click()
+ assert page.locator('#scene-object-search').is_visible()
  page.locator('#library-clear-filters').click()
  page.locator('#library-sort').select_option('name-desc')
  names=page.locator('.library-item strong').all_text_contents()
@@ -68,6 +78,8 @@ with sync_playwright() as p:
  page.locator('#land-canvas').scroll_into_view_if_needed()
  page.screenshot(path=str(artifacts/'builder-desktop.png'),full_page=True)
  page.set_viewport_size({'width':390,'height':844})
+ if 'inspector-open' in page.locator('body').get_attribute('class'):
+  page.locator('#close-inspector').click()
  page.locator('#touch-open-library').click()
  assert page.locator('body').get_attribute('class').find('inspector-open')<0
  page.locator('#library-clear-filters').click()
@@ -92,6 +104,15 @@ with sync_playwright() as p:
  page.screenshot(path=str(artifacts/'builder-mobile-controls.png'))
  page.set_viewport_size({'width':320,'height':740})
  assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'), 'narrow mobile overflow'
+ for _ in range(3):
+  page.locator('#duplicate-object').click()
+ page.locator('#scene-objects-browse').click()
+ page.locator('#scene-object-search').fill('')
+ assert page.locator('[data-select-object]').count()>=5
+ assert page.locator('#scene-list').bounding_box()['height']>300
+ assert page.evaluate("document.querySelector('#scene-list').scrollHeight<=document.querySelector('#scene-list').clientHeight+1")
+ page.locator('[data-select-object]').last.click()
+ assert page.locator('#inspector-controls').is_visible()
  print(json.dumps({'errors':errors,'bad':bad[:10],'checks':['catalogue search/categories/sorting','favourites','recent placements','place in scene','exact transforms','nudges','undo/redo','inspector tabs','scene search','mobile drawers','mobile placement and tuning','no horizontal overflow']}))
  assert not errors, errors
  browser.close()
