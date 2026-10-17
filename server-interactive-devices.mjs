@@ -1,3 +1,4 @@
+import {ARCADE_LIBRARY} from './public/js/arcade-library.js';
 import {pokerPayout} from './public/js/poker-rules.js';
 export {pokerPayout} from './public/js/poker-rules.js';
 import {newArcadeGame,arcadeMove} from './server-arcade-games.mjs';
@@ -11,9 +12,10 @@ export function nearbyDevice(sim,manifest,player,id,reach=5){
 function drawCards(count,exclude=[]){const deck=Array.from({length:52},(_,index)=>index).filter(card=>!exclude.includes(card)),cards=[];while(cards.length<count)cards.push(deck.splice(randomInt(deck.length),1)[0]);return cards;}
 const questions=[['Which tool moves a placed item?',['Mute','Placement controls','Reload'],1],['How do you keep a build available to other players?',['Close the tab','Erase the floor','Publish the map'],2],['What is used by arcade machines?',['Practice credits','Crypto transfers','Land deeds'],0],['What lets nearby players hear voice?',['Bigger bricks','Photo frame','Room microphone'],2]];
 export function deviceCommand(sim,manifest,player,actorId,command,now){
- const {actor,profile}=nearbyDevice(sim,manifest,player,command.entityId,command.operation==='duration'?60:5);sim.devices ||= {};let state=sim.devices[actor.id];
- if(state&&(state.kind!==profile.kind||state.game!==profile.game))state=null;
+ const {actor,profile:baseProfile}=nearbyDevice(sim,manifest,player,command.entityId,command.operation==='duration'?60:5);let profile=baseProfile;sim.devices ||= {};let state=sim.devices[actor.id];
+ if(state&&!baseProfile.multiGame&&(state.kind!==profile.kind||state.game!==profile.game))state=null;
  state ||= sim.devices[actor.id]={id:actor.id,name:profile.name,kind:profile.kind,game:profile.game,revision:0,queue:[],current:null,playing:false,offset:0,startedAt:now,volume:.7,gamers:{}};
+ if(baseProfile.multiGame){state.multiGame=true;state.selectedGame ||= 'tictactoe';const selected=ARCADE_LIBRARY.find(item=>item.id===state.selectedGame)||ARCADE_LIBRARY.find(item=>item.id==='tictactoe');profile={...baseProfile,...selected,game:selected.kind==='arcade'?selected.game:undefined};state.kind=profile.kind;state.game=profile.game;}
  state.id=actor.id;
  if(!state.gamers[actorId]&&['slots','poker','trivia','arcade'].includes(profile.kind)&&Object.keys(state.gamers).length>=256)fail('This arcade player list is full.');
  if(command.operation==='open'&&profile.kind==='trivia'){const gamer=state.gamers[actorId] ||= {name:player.username,credits:100,round:0};gamer.question=questions[gamer.round%questions.length].slice(0,2);}
@@ -24,6 +26,12 @@ export function deviceCommand(sim,manifest,player,actorId,command,now){
  const op=command.operation;
  const gameDevice=['arcade','slots','poker','trivia'].includes(profile.kind);
  if(gameDevice&&state.activePlayerId&&state.activePlayerId!==actorId&&machineControllerPresent(sim,state,now))fail('This machine is in use. Watch the shared screen until the player finishes or leaves.');
+ if(op==='select-game'){
+  if(!baseProfile.multiGame)fail('This cabinet has one built-in game.');const selected=ARCADE_LIBRARY.find(item=>item.id===command.gameId);if(!selected)fail('Choose a game from the cabinet library.');
+  for(const gamer of Object.values(state.gamers))for(const field of ['game','hand','phase','question','reels','award'])delete gamer[field];
+  const gamer=state.gamers[actorId] ||= {name:player.username,credits:100,round:0};gamer.lastPlay=0;if(selected.kind==='trivia')gamer.question=questions[gamer.round%questions.length].slice(0,2);
+  state.selectedGame=selected.id;state.kind=selected.kind;state.game=selected.game;state.running=false;state.activePlayerId=actorId;state.lastInputAt=now;state.updatedBy=player.username;state.updatedAt=now;state.revision++;return {deviceId:actor.id,deviceKind:selected.kind,message:selected.name+' selected.'};
+ }
  if(['audio','video','image'].includes(profile.kind)){
   if(op==='enqueue'){
    if(state.queue.length>=20)fail('The shared queue is full.');const url=sharedMediaUrl(command.url,profile.kind),item={id:command.requestId,url,title:String(command.title||'Community media').slice(0,100),addedBy:player.username};

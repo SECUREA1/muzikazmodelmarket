@@ -1,3 +1,4 @@
+import {MULTI_ARCADE_PROFILE} from './arcade-library.js';
 import {ARCADE_GAMES} from './arcade-games.js';
 export const INTERACTIVE_DEVICES=Object.freeze({
  ...Object.fromEntries(Object.entries(ARCADE_GAMES).map(([id,item])=>[id,{...item,kind:'arcade'}])),
@@ -17,7 +18,7 @@ export const INTERACTIVE_DEVICES=Object.freeze({
  'arcade-slot-machine':{name:'Arcade Slots',kind:'slots',description:'Spin three reels using separate practice credits.',color:0xff9770,shape:'arcade'},
  'video-poker-table':{name:'Video Poker Table',kind:'poker',description:'Deal, hold and draw a five-card hand using practice credits.',color:0x69df9a,shape:'table'}
 });
-export const deviceDefinition=(modelId,gameplay={})=>INTERACTIVE_DEVICES[gameplay.device]||INTERACTIVE_DEVICES[modelId]||null;
+export const deviceDefinition=(modelId,gameplay={})=>gameplay.device==='commons-arcade'?MULTI_ARCADE_PROFILE:INTERACTIVE_DEVICES[gameplay.device]||INTERACTIVE_DEVICES[modelId]||null;
 export function sharedMediaUrl(value,kind){
  const text=String(value||'').trim();if(text.length>2048)throw Error('Media link is too long.');
  const local=/^\/uploads\/media\/[a-zA-Z0-9-]+\.(mp4|webm|mp3|wav|ogg|png|jpg|webp)$/.test(text);let url;

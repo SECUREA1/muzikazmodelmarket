@@ -1,3 +1,4 @@
+import {extraGameIds,extraPresentation} from './extra-arcade-games.js';
 export const ARCADE_GAMES=Object.freeze({
  'blackjack-cabinet':{game:'blackjack',name:'Blackjack Club',description:'Hit or stand against the house dealer. Practice cards only.',color:0x67dfa3,shape:'table'},
  'high-low-cabinet':{game:'highlow',name:'High / Low Cards',description:'Predict the next card and build a streak.',color:0xffcf70,shape:'arcade'},
@@ -12,9 +13,10 @@ export const ARCADE_GAMES=Object.freeze({
  'brick-breaker-cabinet':{game:'breakout',name:'Cosmic Brick Breaker',description:'Bounce the ball into every brick with your paddle.',color:0xffa45f,shape:'arcade'},
  'maze-runner-cabinet':{game:'maze',name:'Pixel Maze Quest',description:'Navigate a maze and reach the exit.',color:0xb69aff,shape:'arcade'}
 });
-export const arcadeGameIds=new Set(Object.values(ARCADE_GAMES).map(item=>item.game));
+export const arcadeGameIds=new Set([...Object.values(ARCADE_GAMES).map(item=>item.game),...extraGameIds]);
 export const cardText=card=>['2','3','4','5','6','7','8','9','10','J','Q','K','A'][card%13]+['♣','♦','♥','♠'][Math.floor(card/13)];
 export function arcadePresentation(game){
+ if(game&&extraGameIds.has(game.type))return extraPresentation(game);
  if(!game)return {text:'Start a game.',buttons:[]};const {type,board=[]}=game;
  let cells=null,columns=0,buttons=[],text=game.message||'Your turn';
  if(type==='blackjack'){text+=' · You: '+game.hand.map(cardText).join(' ')+' · Dealer: '+(game.done?game.dealer.map(cardText).join(' '):cardText(game.dealer[0])+' ?');buttons=[['Hit','hit'],['Stand','stand']];}

@@ -7,9 +7,9 @@ import {machineCandidates,defaultMachineObject} from './public/js/map-machine.js
 export function populateMapMachine(sim,manifest,environment,collision,now,objects={}){
  const definitions=new Map(manifest.actors.map(actor=>[actor.objectId,actor]));
  const actors=Object.values(sim.actors),automatic=actors.filter(actor=>actor.runtimeMachine);
- const hasMachine=actors.some(actor=>!actor.runtimeMachine&&actor.active!==false&&!actor.holderId&&deviceDefinition(actor.asset?.buildAssetId||actor.modelId,actor.definition?.gameplay||definitions.get(actor.id)?.gameplay||{}));
+ const hasMachine=actors.some(actor=>!actor.runtimeMachine&&actor.active!==false&&!actor.holderId&&['arcade','slots','poker','trivia'].includes(deviceDefinition(actor.asset?.buildAssetId||actor.modelId,actor.definition?.gameplay||definitions.get(actor.id)?.gameplay||{})?.kind));
  if(hasMachine){for(const actor of automatic){delete sim.actors[actor.id];if(sim.devices)delete sim.devices[actor.id];}return;}
- const key=(environment.contentUpdatedAt||environment.updatedAt||'')+JSON.stringify(environment.builderScene?.baseTransform||{});
+ const key='multicade-v1:'+(environment.contentUpdatedAt||environment.updatedAt||'')+JSON.stringify(environment.builderScene?.baseTransform||{});
  if(automatic.some(actor=>actor.active!==false&&actor.machineLayoutKey===key))return;
  for(const actor of automatic){delete sim.actors[actor.id];if(sim.devices)delete sim.devices[actor.id];}
  if(now<(sim.machineRetryAt||0))return;

@@ -1522,7 +1522,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       return serverCommand(action.kind==='respawn'?'respawn':'interact',action.entityId?{entityId:action.entityId}:{});
     }
     if(key==='f')return vehicleController.toggle();if(key==='g')return dropHeldBuilderItem();if(key==='r')return resetPlayer();
-    if(key==='e'){const nearby=builderGameplay.nearest(playerRig.position,'e'),profile=nearby&&deviceDefinition(nearby.actor.modelId,nearby.actor.gameplay);if(profile){const id=Object.entries(INTERACTIVE_DEVICES).find(([,item])=>item===profile)?.[0];if(id)return interactiveDevices.openDemo(id);}return builderGameplay.interact('e',playerRig.position);}
+    if(key==='e'){const nearby=builderGameplay.nearest(playerRig.position,'e'),profile=nearby&&deviceDefinition(nearby.actor.modelId,nearby.actor.gameplay);if(profile){if(profile.multiGame)return interactiveDevices.openDemo('commons-arcade');const id=Object.entries(INTERACTIVE_DEVICES).find(([,item])=>item===profile)?.[0];if(id)return interactiveDevices.openDemo(id);}return builderGameplay.interact('e',playerRig.position);}
   }
   async function activateNearbyAction(event){
     event?.preventDefault();event?.stopPropagation();if(nearbyActionLocked)return;

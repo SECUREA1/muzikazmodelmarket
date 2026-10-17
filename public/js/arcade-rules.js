@@ -1,3 +1,4 @@
+import {extraGameIds,newExtraGame,moveExtraGame,projectExtraGame} from './extra-arcade-games.js';
 import {arcadeGameIds} from './arcade-games.js';
 const fail=message=>{throw Object.assign(Error(message),{statusCode:409});};
 const shuffle=(values,rng)=>{for(let i=values.length-1;i>0;i--){const j=rng(i+1);[values[i],values[j]]=[values[j],values[i]];}return values;};
@@ -5,6 +6,7 @@ const draw=game=>{if(!game.deck.length)fail('Deck is empty. Start a new game.');
 export const blackjackValue=cards=>{let total=0,aces=0;for(const card of cards){const rank=card%13;if(rank===12){aces++;total+=11;}else total+=Math.min(10,rank+2);}while(total>21&&aces-- >0)total-=10;return total;};
 function winning(board,columns,run){for(let i=0;i<board.length;i++)if(board[i])for(const [dx,dy]of [[1,0],[0,1],[1,1],[-1,1]]){const x=i%columns,y=Math.floor(i/columns);if(Array.from({length:run},(_,n)=>{const a=x+dx*n,b=y+dy*n;return a>=0&&a<columns&&b>=0&&b<board.length/columns&&board[b*columns+a]===board[i];}).every(Boolean))return board[i];}return 0;}
 export function newArcadeGame(type,rng){
+ if(extraGameIds.has(type))return newExtraGame(type,rng);
  if(!arcadeGameIds.has(type))fail('Unknown arcade game.');const g={type,score:0,done:false,moves:0,message:'Your turn'};
  if(['blackjack','highlow'].includes(type))g.deck=shuffle(Array.from({length:52},(_,i)=>i),rng);
  if(type==='blackjack'){g.hand=[draw(g),draw(g)];g.dealer=[draw(g),draw(g)];}
@@ -22,6 +24,7 @@ export function newArcadeGame(type,rng){
 function toggle(board,i){for(const j of [i,i-5,i+5,...(i%5?[i-1]:[]),...(i%5<4?[i+1]:[])])if(j>=0&&j<25)board[j]=1-board[j];}
 function index(command,size){if(!Number.isInteger(command.index)||command.index<0||command.index>=size)fail('Choose a valid game cell.');return command.index;}
 export function arcadeMove(game,command,rng){
+ if(extraGameIds.has(game.type))return moveExtraGame(game,command,rng);
  const g=structuredClone(game),op=command.operation;if(g.done)fail('Start a new game to play again.');if(g.moves>=1000)fail('Round limit reached. Start a new game.');g.moves++;
  if(g.type==='blackjack'){
   if(!['hit','stand'].includes(op))fail('Choose Hit or Stand.');if(op==='hit')g.hand.push(draw(g));const total=blackjackValue(g.hand);
@@ -66,6 +69,7 @@ export function arcadeMove(game,command,rng){
 export function projectArcadeDevices(devices){
  const result=structuredClone(devices);
  for(const state of Object.values(result))for(const gamer of Object.values(state.gamers||{})){
+  if(gamer.game&&extraGameIds.has(gamer.game.type))gamer.game=projectExtraGame(gamer.game);
   const g=gamer.game;if(!g)continue;delete g.deck;
   if(g.type==='memory')g.board=g.board.map((value,i)=>g.shown.includes(i)||g.matched.includes(i)?value:null);
   if(g.type==='mines'&&!g.done)g.board=g.board.map((value,i)=>g.revealed.includes(i)?value:null);
