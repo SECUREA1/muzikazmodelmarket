@@ -39,6 +39,7 @@ async def main():
     if width<=760:
      if 'inspector-open' in (await page.locator('body').get_attribute('class')): await page.locator('#close-inspector').click()
      await page.locator('#touch-open-library').click()
+     await page.get_by_label('Item panel screen',exact=True).select_option('items')
     await page.locator('#library-search').fill('Loading '+name)
     await page.locator('[data-model="test-'+name+'"]').wait_for()
    async def drag_drop(name):

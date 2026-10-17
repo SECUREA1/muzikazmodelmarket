@@ -1,10 +1,11 @@
-import {INTERACTIVE_DEVICES} from './interactive-devices.js';
+import {deviceDefinition} from './interactive-devices.js';
 import {ENTERABLE_BUILDINGS} from './building-districts.js';
-export const BUILDER_SECTIONS=[['all','All items'],['buildings','Buildings'],['interactive','Interactive'],['arcade','Arcade & cards'],['interior','Furniture & interiors'],['landscape','Outdoor & plants'],['plants','Plants'],['terrain','Terrain'],['characters','Characters'],['creatures','Enemies & creatures'],['vehicles','Vehicles'],['weapons','Weapons'],['backpack','My Backpack'],['custom','Custom items'],['props','Props'],['wearables','Wearables']];
+export const BUILDER_SECTIONS=[['all','All items'],['buildings','Buildings'],['interactive','Interactive'],['arcade','Arcade & cards'],['audio','Music & audio'],['video','Screens & media'],['services','Shops & services'],['seating','Seating'],['interior','Furniture & interiors'],['landscape','Outdoor & plants'],['plants','Plants'],['terrain','Terrain'],['characters','Characters'],['creatures','Enemies & creatures'],['vehicles','Vehicles'],['weapons','Weapons'],['backpack','My Backpack'],['custom','Custom items'],['props','Props'],['wearables','Wearables']];
 export function builderSections(model){
- const tags=new Set([model.category,model.type].filter(Boolean)),id=model.buildAssetId||model.id,device=INTERACTIVE_DEVICES[model.function_data?.device||id];
+ const tags=new Set([model.category,model.type].filter(Boolean)),id=model.buildAssetId||model.id,device=deviceDefinition(id,model.function_data||{});
  if(tags.has('avatar')||tags.has('character'))tags.add('characters');if(tags.has('enemy')||tags.has('creature'))tags.add('creatures');if(tags.has('vehicle'))tags.add('vehicles');if(tags.has('weapon'))tags.add('weapons');if(tags.has('wearable'))tags.add('wearables');
  if(ENTERABLE_BUILDINGS[id])tags.add('buildings');if(device||['interact','switch','door','heal','quest'].includes(model.behavior))tags.add('interactive');if(device&&['arcade','poker','slots','trivia'].includes(device.kind))tags.add('arcade');
+ if(device?.kind==='audio')tags.add('audio');if(device&&['video','image','board'].includes(device.kind))tags.add('video');if(device?.kind==='market')tags.add('services');if((model.function_data?.behavior||model.behavior)==='seat'||tags.has('seating'))tags.add('seating');
  if(tags.has('plants')||tags.has('outdoor'))tags.add('landscape');if(tags.has('furniture'))tags.add('interior');if(model.ownedBuilder||model.category==='backpack')tags.add('backpack');if(model.custom||model.assetKind==='custom-svg')tags.add('custom');
  return tags;
 }

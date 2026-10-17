@@ -23,7 +23,7 @@ with sync_playwright() as p:
  page.wait_for_function("document.body.classList.contains('builder-paged-workspace')")
  def control(selector):
   target=page.locator(selector)
-  if selector in ('#scene-object-search','#library-search','#library-clear-filters') and not target.is_visible():
+  if selector in ('#scene-object-search','#library-search','#library-clear-filters','#library-category') and not target.is_visible():
    page.get_by_label('Object panel screen' if selector=='#scene-object-search' else 'Item panel screen',exact=True).select_option('objects' if selector=='#scene-object-search' else 'items')
   if target.count()==1:
    entry=target.evaluate("n=>n.closest('[data-builder-screen]')?.dataset.builderScreen")

@@ -1,5 +1,7 @@
+import {createBuilderDashboard} from './builder-dashboard.js';
 // Keep the original controls and their listeners; page content instead of scrolling it.
 export function mountBuilderPanelPages({onMode=()=>{}}={}){
+ let dashboard;
  const library=document.querySelector('#library-panel'),inspector=document.querySelector('#inspector-panel');
  const style=document.createElement('link');style.rel='stylesheet';style.href='/public/css/builder-panel-pages.css';document.head.append(style);
  const node=(tag,cls,text)=>{const el=document.createElement(tag);el.className=cls;if(text)el.textContent=text;return el;};
@@ -49,7 +51,7 @@ export function mountBuilderPanelPages({onMode=()=>{}}={}){
    }finally{rendering=false;}
   }
   const schedule=()=>{if(alive&&!frame)frame=requestAnimationFrame(render);};
-  function show(id){if(window.innerWidth>760&&panel.getBoundingClientRect().bottom>window.innerHeight)panel.scrollIntoView({block:'start'});const entry=entries.find(e=>e.id===id);if(!entry||!available(entry))return;current=entry;start=0;back=[];if(entry.mode)onMode(entry.mode);render();}
+  function show(id){dashboard?.sync();if(window.innerWidth>760&&panel.getBoundingClientRect().bottom>window.innerHeight)panel.scrollIntoView({block:'start'});const entry=entries.find(e=>e.id===id);if(!entry||!available(entry))return;current=entry;start=0;back=[];if(entry.mode)onMode(entry.mode);render();}
   select.addEventListener('change',()=>show(select.value));prev.addEventListener('click',()=>{start=back.pop()||0;render();});next.addEventListener('click',()=>{back.push(start);start=end;render();});
   viewport.addEventListener('click',event=>{if(event.target.closest('summary'))event.preventDefault();});
   const changes=new MutationObserver(records=>{
@@ -62,18 +64,20 @@ export function mountBuilderPanelPages({onMode=()=>{}}={}){
   panel.addEventListener('invalid',event=>{const entry=entries.find(e=>e.box.contains(event.target));if(!entry)return;show(entry.id);entry.box.querySelectorAll('[data-builder-page-hidden]').forEach(el=>el.removeAttribute('data-builder-page-hidden'));const items=blocks(entry.box),index=items.findIndex(item=>item.contains(event.target));if(index>=0){start=index;back=[0];render();}event.target.focus({preventScroll:true});},true);
   schedule();return{show,refresh:schedule,dispose(){alive=false;cancelAnimationFrame(frame);resize.disconnect();changes.disconnect();}};
  }
- const libraryHeader=node('header','builder-page-heading'),title=node('h2','','Items & buildings');libraryHeader.append(title,document.querySelector('#expand-library'),document.querySelector('#library-browser-close'));
+ const libraryHeader=node('header','builder-page-heading'),title=node('h2','','Build dashboard');title.id='library-title';const dashboardButton=node('button','','Dashboard');dashboardButton.type='button';dashboardButton.addEventListener('click',()=>itemPager.show('dashboard'));libraryHeader.append(title,dashboardButton,document.querySelector('#expand-library'),document.querySelector('#library-browser-close'));
  const discovery=document.querySelector('.catalog-discovery'),filters=document.querySelector('.catalog-filter-row'),result=document.querySelector('.catalog-result-row');
  const toolbar=document.querySelector('.library-browser-toolbar');
- const search=document.querySelector('.library-search');
- const itemEntries=[makeEntry('items','Browse items',[document.querySelector('#library-grid')]),makeEntry('filters','Category, collection & sort',[filters]),makeEntry('display','Tiles, list & preview size',[document.querySelector('.library-display-modes'),document.querySelector('.library-tile-size')])];
+ const search=document.querySelector('.library-search'),browseTools=node('div','builder-browse-tools'),categoryLabel=document.querySelector('#library-category').closest('label');
+ dashboard=createBuilderDashboard({onOpen:id=>{if(id==='objects'){document.querySelector('[data-builder-menu=inspector]').click();return;}itemPager.show(id);}});browseTools.append(search,categoryLabel);
+ const itemEntries=[makeEntry('items','Browse items',[document.querySelector('#library-grid'),document.querySelector('#library-empty')]),makeEntry('filters','Collection & sort',[filters]),makeEntry('display','Tiles, list & preview size',[document.querySelector('.library-display-modes'),document.querySelector('.library-tile-size')])];
+ itemEntries.splice(1,0,makeEntry('dashboard','Builder dashboard',[dashboard.dashboard]),makeEntry('categories','Browse item categories',[dashboard.categories]),makeEntry('maps','Maps & weather',dashboard.maps),makeEntry('games','Game testing & publishing',dashboard.games),makeEntry('view','View & placement toggles',dashboard.view));
  const advanced=document.querySelector('.builder-library-advanced');
  if(advanced){itemEntries.push(makeEntry('create','Create a custom item',[document.querySelector('#open-item-maker')]));const generator=advanced.querySelector('.library-advanced .world-generator');if(generator){const online=generator.querySelector('.online-model-import');if(online)itemEntries.push(makeEntry('import','Import a 3D model',[online]));itemEntries.push(makeEntry('generate','Generate a world',[generator]));}const urban=advanced.querySelector('#urban-templates');if(urban)itemEntries.push(makeEntry('urban','City & district templates',[urban]));}
  const buildings=document.querySelector('.building-kit');if(buildings){itemEntries.push(makeEntry('buildings','Browse buildings',[buildings.querySelector('p'),buildings.querySelector('label'),document.querySelector('#building-category')?.closest('label'),document.querySelector('#building-kit-grid')]));itemEntries.push(makeEntry('furnish','Furnish & Backpack tools',[document.querySelector('#builder-auto-furnish')?.closest('label'),document.querySelector('.building-kit-actions')]));}
  const resources=document.querySelector('.catalog-resources');itemEntries.push(makeEntry('inventory','Inventory & marketplace',[resources,document.querySelector('#library-status'),document.querySelector('#library-refresh')]));
  // Keep legacy IDs and category handlers available without displaying duplicate chrome.
  const legacy=node('div','builder-page-legacy');legacy.hidden=true;legacy.append(discovery,toolbar,document.querySelector('.library-category-menu'),document.querySelector('.catalog-library-heading'));legacy.append(...library.children);document.body.append(legacy);
- const itemPager=pager(library,itemEntries,libraryHeader,[search,result]);
+ const itemPager=pager(library,itemEntries,libraryHeader,[browseTools,result]);
  const heading=document.querySelector('.inspector-heading'),oldTabs=document.querySelector('#inspector-tabs'),controls=document.querySelector('#inspector-controls');
  const utility=document.querySelector('.tuning-utility'),summary=document.querySelector('.selected-summary'),browse=document.querySelector('#scene-objects-browse'),sceneSearch=document.querySelector('.scene-object-search');
  const controlEntries=[makeEntry('objects','Scene objects',[document.querySelector('.scene-list'),document.querySelector('#inspector-empty')]),makeEntry('move','Move step & nudges',[document.querySelector('.tuning-quick')],'transform')];
@@ -88,8 +92,10 @@ export function mountBuilderPanelPages({onMode=()=>{}}={}){
  browse.addEventListener('click',()=>{inspectorPager.show('objects');document.querySelector('#scene-object-search').focus({preventScroll:true});});
  document.body.classList.add('builder-paged-workspace');
  const jump=node('button','builder-return-map','Return to map & panels');jump.type='button';jump.addEventListener('click',()=>document.querySelector('.environment-workspace').scrollIntoView({block:'start'}));document.querySelector('.builder-header-tools').append(jump);
- const menu=node('button','builder-return-menu','☰ Map & publish menu');menu.type='button';menu.addEventListener('click',()=>document.querySelector('.builder-unified-header').scrollIntoView({block:'start'}));document.querySelector('.map-toolbar').append(menu);
+ const menu=node('button','builder-return-menu','☰ Builder dashboard');menu.type='button';menu.addEventListener('click',()=>{document.querySelector('[data-builder-menu=library]').click();itemPager.show('dashboard');});document.querySelector('.map-toolbar').append(menu);
  const stateObserver=new MutationObserver(()=>inspectorPager.refresh());stateObserver.observe(controls,{attributes:true,attributeFilter:['hidden']});
  style.addEventListener('load',()=>{if(window.innerWidth>760)document.querySelector('.environment-workspace').scrollIntoView({block:'start'});itemPager.refresh();inspectorPager.refresh();});
- return{showInspector(id='move'){inspectorPager.show(id);},showItems(id='items'){itemPager.show(id);},dispose(){itemPager.dispose();inspectorPager.dispose();stateObserver.disconnect();}};
+ document.querySelector('#touch-open-library').textContent='☰ Build dashboard';
+ dashboard.sync();
+ return{showInspector(id='move'){inspectorPager.show(id);},showItems(id=window.innerWidth<=760?'dashboard':'items'){itemPager.show(id);},dispose(){itemPager.dispose();inspectorPager.dispose();stateObserver.disconnect();dashboard.dispose();}};
 }

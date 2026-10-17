@@ -744,7 +744,7 @@ $('#touch-edit').addEventListener('click',()=>{if(selectedId)selectObject(select
 $('#touch-cancel').addEventListener('click',cancelTouchAction);
 const libraryPanel=$('#library-panel');
 libraryPanel.addEventListener('error',event=>{const image=event.target;if(image.tagName!=='IMG'||!image.closest('.item-preview'))return;const fallback=document.createElement('span');fallback.className='item-glyph';fallback.textContent='◆';fallback.setAttribute('role','img');fallback.setAttribute('aria-label',image.alt||'Object preview');image.replaceWith(fallback);},true);
-function openMobileLibrary(){setWorkspacePanel('library',true);builderPanelPages?.showItems();$('#library-search').focus({preventScroll:true});}
+function openMobileLibrary(){setWorkspacePanel('library',true);builderPanelPages?.showItems();}
 $('#touch-open-library').addEventListener('click',openMobileLibrary);
 $('#library-browser-close').addEventListener('click',()=>{setWorkspacePanel('library',false);$('#touch-open-library').focus();});
 $('#library-browser-toggle').addEventListener('click',()=>{const closed=libraryPanel.classList.toggle('library-browser-closed');$('#library-browser-toggle').setAttribute('aria-expanded',String(!closed));});
