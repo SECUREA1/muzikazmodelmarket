@@ -4,3 +4,35 @@
 .arcade-player-stage .device-demo>div>button{min-height:44px;padding:10px 16px;margin:4px 8px 4px 0;border:1px solid #4c7597;border-radius:10px;background:#1c3552;color:#e7f5ff;font:700 13px system-ui}.arcade-player-side .arcade-player-session[data-error=true]{color:#ffb5bd!important}
 @media(max-width:760px){.arcade-player-header-actions button:first-child{display:none}}
 @media(min-width:761px) and (min-height:551px){.arcade-player-header{padding:12px 20px}.arcade-player-nav{padding:7px 20px}.arcade-player-actions{padding:4px 0}.arcade-player-stage .arcade-screen-header{display:flex;align-items:center;justify-content:space-between;gap:10px}.arcade-player-stage .arcade-screen-header .arcade-brand{display:none}.arcade-player-stage .arcade-title{font-size:18px!important}.arcade-player-stage .arcade-board{width:min(100%,calc(100dvh - 460px))}.arcade-player-stage .arcade-status{font-size:12px;line-height:1.4}}
+/* Each selection replaces the current screen. No long modal scrolling. */
+.arcade-player-play{display:flex;flex-direction:column;align-items:stretch;overflow:hidden;gap:8px}
+.arcade-player-actions{position:static;flex:0 0 auto;padding:0}
+.arcade-player-stage{position:relative;flex:1;min-height:0;overflow:hidden;display:flex;justify-content:center;align-items:flex-start}
+.arcade-player-stage>[data-arcade-game],.arcade-player-stage>div{width:100%;flex:0 0 100%;transform-origin:top center}
+.arcade-player-stage .arcade-screen{padding:10px}
+.arcade-player-stage .arcade-board{width:min(100%,360px);margin:8px auto}
+.arcade-player-stage .arcade-brand{display:none}
+.arcade-player-stage .arcade-title{font-size:16px!important}
+.arcade-player-stage .arcade-status{font-size:12px;line-height:1.4;margin:6px 0}
+.arcade-player-side{margin:16px;overflow:hidden;min-height:0}
+.arcade-player-details pre{font-size:12px;max-height:none}
+.arcade-player-library,.arcade-player-guide{display:flex;flex-direction:column;overflow:hidden;gap:10px;padding:16px}
+.arcade-player-library h3,.arcade-player-guide h3{font-size:20px;margin:0}
+.arcade-player-library-tools{flex-shrink:0}
+.arcade-player-library-notice{margin:0;font-size:12px;line-height:1.4}
+.arcade-player-game-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0;min-height:0}
+.arcade-player-dialog .arcade-player-game{padding:14px!important;gap:6px}
+.arcade-player-game strong{font-size:15px}
+.arcade-player-game span{font-size:12px;line-height:1.4}
+.arcade-player-game small{font-size:10px}
+.arcade-library-pages{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:8px;flex-shrink:0}
+.arcade-library-pages button{margin:0!important;padding:8px 12px!important;border-radius:8px;border:1px solid #456482;background:#1b304c;color:#e6f1ff;font:700 12px system-ui}
+.arcade-library-pages output{font:12px system-ui;color:#c0d9ef;white-space:nowrap}
+.arcade-player-guide p{margin:0;font-size:14px;line-height:1.6}
+.arcade-player-guide>p:first-of-type{padding:14px}
+@media(max-width:760px){.arcade-player-game-grid{grid-template-columns:minmax(0,1fr)}.arcade-player-library-tools{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.arcade-player-library-tools label{font-size:11px}.arcade-player-library-tools input,.arcade-player-library-tools select{padding:6px;min-height:44px;font-size:14px}.arcade-player-nav{gap:4px}.arcade-player-nav button{padding:8px 5px!important;font-size:11px!important}.arcade-player-play{padding:8px}.arcade-player-header-actions{flex-direction:row}.arcade-player-header{align-items:center}.arcade-player-header small{font-size:9px}.arcade-player-header h2{font-size:17px!important}}
+@media(max-height:540px){.arcade-player-header{padding:6px 12px}.arcade-player-header small{display:none}.arcade-player-nav{padding:4px 12px}.arcade-player-library{gap:6px;padding:10px}.arcade-player-library h3,.arcade-player-library-notice{display:none}.arcade-player-game-grid{grid-template-columns:minmax(0,1fr)}.arcade-player-dialog .arcade-player-game{padding:10px!important}.arcade-player-game span{display:none}.arcade-player-library-tools label{gap:3px}.arcade-player-side{gap:8px;padding:10px}.arcade-player-side p{line-height:1.35}.arcade-player-guide{padding:12px}.arcade-player-guide p{font-size:12px;line-height:1.5}}
+
+.arcade-player-side{flex:1;position:relative;display:block;min-height:0}.arcade-session-body{display:flex;flex-direction:column;gap:12px;transform-origin:top center;width:100%}.arcade-session-body p{margin:0!important;font:13px/1.5 system-ui;color:#bacce3}.arcade-session-body h3{margin:0;font-size:15px}.arcade-session-body>button{min-height:44px;padding:10px;border:1px solid #456482;border-radius:10px;background:#1b304c;color:#e6f1ff;font:700 13px system-ui}.arcade-session-body .arcade-player-credit{font-size:11px}.arcade-session-body [data-error=true]{color:#ffb5bd!important}
+
+.arcade-guide-viewport{flex:1;min-height:0;overflow:hidden}.arcade-guide-content{width:100%;transform-origin:top center}.arcade-guide-content p{margin-top:14px;padding:14px;border:1px solid #3b5c7d;background:#11243d;border-radius:12px}.arcade-player-guide>.arcade-library-pages{margin-top:0}

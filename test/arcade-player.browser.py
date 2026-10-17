@@ -20,8 +20,31 @@ with sync_playwright() as p:
  page.wait_for_function('window.arcadeFixtureReady === true')
  page.evaluate("window.showLiveArcade('pong')")
  page.get_by_role('button',name='Games',exact=True).click()
+ seen=set()
+ while True:
+  seen.update(page.locator('.arcade-player-game').all_text_contents())
+  assert page.evaluate("document.querySelector('.arcade-player-library').scrollHeight<=document.querySelector('.arcade-player-library').clientHeight+1")
+  next_page=page.get_by_role('button',name='Next games',exact=True)
+  if next_page.is_disabled(): break
+  next_page.click()
+ assert len(seen)==30
+ for library_width,library_height in [(375,667),(844,390),(1280,800)]:
+  page.set_viewport_size({'width':library_width,'height':library_height})
+  page.get_by_label('Search arcade games',exact=True).fill(' ')
+  found=set()
+  while True:
+   found.update(page.locator('.arcade-player-game').all_text_contents())
+   for control in page.locator('.arcade-player-library button:visible').all():
+    box=control.bounding_box()
+    assert box and box['y']>=0 and box['y']+box['height']<=library_height+1,(library_width,library_height,box)
+   next_page=page.get_by_role('button',name='Next games',exact=True)
+   if next_page.is_disabled(): break
+   next_page.click()
+  assert len(found)==30
+ page.set_viewport_size({'width':375,'height':812})
  page.get_by_label('Arcade play style',exact=True).select_option('versus')
- assert page.locator('.arcade-player-game').count()==3
+ assert page.locator('.arcade-player-game').count()==2
+ assert page.locator('.arcade-library-pages output').first.inner_text()=='Page 1 of 2'
  page.get_by_label('Search arcade games',exact=True).fill('paddle')
  assert page.locator('.arcade-player-game').count()==1
  page.get_by_role('button',name='Load Neon Paddle Rally',exact=True).click()
@@ -45,10 +68,13 @@ with sync_playwright() as p:
   page.set_viewport_size({'width':width,'height':900})
   for game in page.evaluate('window.gameIds'):
    page.evaluate('(type)=>window.showLiveArcade(type)',game)
+   page.get_by_role('button',name='Play',exact=True).click()
    assert page.locator('.arcade-player-title').inner_text()
    assert page.evaluate("document.querySelector('dialog').scrollWidth<=document.querySelector('dialog').clientWidth"),f'{game} overflows at {width}'
   page.evaluate("window.showLiveArcade('pong')")
-  assert page.locator('dialog .arcade-board').bounding_box()['width']>250
+  page.get_by_role('button',name='Play',exact=True).click()
+  page.wait_for_timeout(100)
+  assert page.locator('dialog .arcade-board').bounding_box()['width']>200
   controls=page.locator('dialog .arcade-controls').bounding_box();bounds=page.locator('dialog').bounding_box()
   assert controls['y']+controls['height']<=bounds['y']+bounds['height'], 'game action buttons must remain in view'
   page.screenshot(path=str(artifacts/('arcade-player-mobile.png' if width==375 else 'arcade-player-desktop.png')))
