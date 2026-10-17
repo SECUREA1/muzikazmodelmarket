@@ -9,12 +9,12 @@ import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {projectServerActor,interpolateServerEnemy} from '../public/js/server-scene-projection.js';
 import {animateSharedEnemy} from '../public/js/shared-enemy-animation.js';
 import {spatialEffectGain} from '../public/js/shared-effect-audio.js';
-test('batched room updates clone the database once, roll back only failed rooms and flush durable state',async t=>{
+test('batched room updates isolate rooms, roll back failures and flush durable state',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'room-batch-'));t.after(()=>rm(dir,{recursive:true,force:true}));const store=new SharedRoomStore(join(dir,'rooms.json'));
- store.data={a:{count:0},b:{count:0},c:{count:0}};let reads=0;const read=store.read.bind(store);store.read=()=>{reads++;return read();};
+ store.data={a:{count:0},b:{count:0},c:{count:0}};
  const results=await store.updateMany(['a','b','c'],(room,id)=>{room.count++;if(id==='b')throw Error('bad map');});
- assert.equal(reads,1);assert.ok(results.find(result=>result.id==='b').error);assert.equal((await store.get('a')).count,1);assert.equal((await store.get('b')).count,0);assert.equal((await store.get('c')).count,1);
- const result=await store.update('a',room=>{room.count++;return room;},{persist:false,roomOnly:true});assert.equal(reads,1);result.count=100;assert.equal((await store.get('a')).count,2);
+ assert.ok(results.find(result=>result.id==='b').error);assert.equal((await store.get('a')).count,1);assert.equal((await store.get('b')).count,0);assert.equal((await store.get('c')).count,1);
+ const result=await store.update('a',room=>{room.count++;return room;},{persist:false,roomOnly:true});result.count=100;assert.equal((await store.get('a')).count,2);
  await assert.rejects(store.update('a',room=>{room.count=50;throw Error('rejected');},{persist:false,roomOnly:true}),/rejected/);assert.equal((await store.get('a')).count,2);
  await store.flush();assert.equal((await new SharedRoomStore(store.file).get('a')).count,2);
 });

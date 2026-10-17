@@ -1,4 +1,4 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
+import * as THREE from '../../vendor/three/three.module.min.js';
 
 export const QUALITY_PRESETS = {
   performance: { pixelRatio: 1, shadows: false, exposure: 0.95, shadowSize: 512 },
@@ -29,6 +29,7 @@ export function configureRenderer(renderer, presetName = 'auto') {
 export function applyWorldQuality(root, renderer) {
   const maxAnisotropy = renderer.capabilities.getMaxAnisotropy?.() || 1;
   let lights = 0;
+  const materialsSeen = new Set(), texturesSeen = new Set();
   root.traverse((object) => {
     if (object.isLight) lights += 1;
     if (!object.isMesh) return;
@@ -37,8 +38,12 @@ export function applyWorldQuality(root, renderer) {
     object.receiveShadow = true;
     const materials = Array.isArray(object.material) ? object.material : [object.material].filter(Boolean);
     materials.forEach((material) => {
-      for (const value of Object.values(material)) if (value?.isTexture) {
+      if (materialsSeen.has(material)) return;
+      materialsSeen.add(material);
+      for (const value of Object.values(material)) if (value?.isTexture && !texturesSeen.has(value)) {
+        texturesSeen.add(value);
         value.anisotropy = Math.min(8, maxAnisotropy);
+        // Upload each shared texture once per world, rather than once per mesh.
         // Explicitly flag texture updates; Firefox otherwise may retain a stale
         // upload after a GLB material is cloned or moved between worlds.
         value.needsUpdate = true;

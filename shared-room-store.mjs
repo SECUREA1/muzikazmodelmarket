@@ -11,7 +11,19 @@ export class SharedRoomStore {
   this.queue=operation.catch(()=>{});return operation;
  }
  updateMany(ids,change,{persist=false}={}){
-  const operation=this.queue.then(async()=>{const data=await this.read(),results=[];for(const id of new Set(ids)){const room=structuredClone(data[id]||{revision:0,objects:{}});try{const result=await change(room,id);data[id]=room;results.push({id,result});}catch(error){results.push({id,error});}}if(persist)await this.save(data);else{this.data=structuredClone(data);this.dirty=true;}return results;});
+  // Inactive worlds can contain thousands of saved objects. A simulation tick
+  // owns only the requested rooms, so leave all other room records untouched.
+  const operation=this.queue.then(async()=>{
+   if(!this.data)await this.read();
+   const data={...this.data},results=[];let changed=false;
+   for(const id of new Set(ids)){
+    const room=structuredClone(data[id]||{revision:0,objects:{}});
+    try{const result=await change(room,id);data[id]=structuredClone(room);changed=true;results.push({id,result});}
+    catch(error){results.push({id,error});}
+   }
+   if(persist)await this.save(data);else if(changed){this.data=data;this.dirty=true;}
+   return results;
+  });
   this.queue=operation.catch(()=>{});return operation;
  }
  flush(){const operation=this.queue.then(async()=>{if(this.dirty)await this.save(this.data);});this.queue=operation.catch(()=>{});return operation;}
