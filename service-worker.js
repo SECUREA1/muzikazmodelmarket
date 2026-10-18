@@ -1,4 +1,4 @@
-const CACHE = 'muzikaz-world-v2.3.5-security';
+const CACHE = 'muzikaz-world-v2.3.6-range-launch';
 const BRAND_SHELL = [
   '/favicon.ico', '/public/assets/app-icons/icon-192.png', '/public/assets/app-icons/icon-512.png',
   '/public/assets/app-icons/icon-maskable-512.png', '/public/assets/app-icons/apple-touch-icon.png',
@@ -21,7 +21,10 @@ self.addEventListener('fetch', (event) => {
   const requestedUrl=new URL(event.request.url);
   if (requestedUrl.pathname.startsWith('/api/') || requestedUrl.pathname.startsWith('/uploads/') || event.request.headers?.has('Authorization')) return;
   if (event.request.method !== 'GET' || new URL(event.request.url).origin !== location.origin) return;
-  event.respondWith(fetch(event.request).then((response) => {
+  // Revalidate stable entry points and modules even if an older deployment gave
+  // the browser an hour-long freshness lifetime. Keep cached offline fallbacks.
+  const revalidate=event.request.mode==='navigate'||/\.(?:html|js|mjs|css|json|webmanifest)$/i.test(requestedUrl.pathname);
+  event.respondWith(fetch(event.request,revalidate?{cache:'no-cache'}:undefined).then((response) => {
     if (response.ok && !/(?:no-store|private)/i.test(response.headers.get('Cache-Control')||'')) {
       const copy=response.clone();
       event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{}));

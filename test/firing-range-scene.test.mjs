@@ -40,6 +40,19 @@ test('scoreboard canvases show server scores, clocks and live spectators',()=>{
  }finally{if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}
 });
 
+test('open practice displays an unlimited clock while countdowns and tournaments keep real timers',()=>{
+ const range=createBuilderLand(environment);
+ range.userData.setFiringRangeState({state:'live',settings:{mode:'freeplay'},remainingMs:0,endsAt:0},{serverTime:5000});
+ assert.equal(range.userData.rangeDisplay.clock,'OPEN');
+ range.userData.updateFiringRangeEffects(125000);assert.equal(range.userData.rangeDisplay.clock,'OPEN');
+ range.userData.setFiringRangeState({state:'countdown',settings:{mode:'freeplay'},startsAt:128000,remainingMs:3000},{serverTime:125000});
+ assert.equal(range.userData.rangeDisplay.clock,'00:03');
+ range.userData.updateFiringRangeEffects(126100);assert.equal(range.userData.rangeDisplay.clock,'00:02');
+ range.userData.setFiringRangeState({state:'live',settings:{mode:'precision'},endsAt:187000,remainingMs:60000},{serverTime:127000});
+ assert.equal(range.userData.rangeDisplay.clock,'01:00');
+ range.userData.updateFiringRangeEffects(128100);assert.equal(range.userData.rangeDisplay.clock,'00:59');
+});
+
 test('moving targets and shot flashes follow the authoritative clock without moving paper targets',()=>{
  const range=createBuilderLand(environment),settings={mode:'moving',targetSpeed:1.4};
  range.userData.setFiringRangeState({state:'live',settings,remainingMs:45000,lastShot:{targetId:'silhouette-2',locationId:'main',at:1800}},{serverTime:2000});

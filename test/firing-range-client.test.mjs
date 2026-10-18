@@ -1,8 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../public/vendor/three/three.module.min.js';
-import {createFiringRangeSceneBridge} from '../public/js/firing-range-client.js';
+import {createFiringRangeSceneBridge,openFiringRangeSession} from '../public/js/firing-range-client.js';
 import {firingRangeScopeFov} from '../public/js/firing-range-scope.js';
+
+test('range entry confirms its own server mode and prepares controls before exposing the lobby',async()=>{
+ const calls=[],snapshot={firingRange:{state:'ready',participants:{},settings:{mode:'precision'}}};
+ const client={ready:true,async send(action){calls.push(action);return snapshot;}};
+ const result=await openFiringRangeSession({client,prepare:async()=>{await Promise.resolve();calls.push('prepared');},onReady:state=>{assert.equal(state,snapshot);calls.push('opened');}});
+ assert.equal(result,snapshot);assert.deepEqual(calls,['range-ready','prepared','opened']);
+});
+
+test('unconfirmed or disconnected range entry keeps the lobby closed and can be retried',async()=>{
+ let opened=0;
+ await assert.rejects(openFiringRangeSession({client:{ready:false},onReady:()=>opened++}),/Join the live server/);
+ const client={ready:true,send:async()=>({firingRange:null})};
+ await assert.rejects(openFiringRangeSession({client,onReady:()=>opened++}),/not confirmed/);
+ assert.equal(opened,0);
+ client.send=async()=>({firingRange:{state:'live',settings:{mode:'freeplay'}}});
+ await openFiringRangeSession({client,onReady:()=>opened++});assert.equal(opened,1);
+});
 
 test('scope magnification preserves the ordinary field of view and scales the optical angle',()=>{
  assert.equal(firingRangeScopeFov(68,{active:false,zoom:8}),68);
