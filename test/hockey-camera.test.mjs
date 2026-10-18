@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {Box3} from '../public/vendor/three/three.module.min.js';
+import {Box3,PerspectiveCamera,Vector3,Vector2,Raycaster} from '../public/vendor/three/three.module.min.js';
 import {createHockey} from '../public/js/hockey-rules.js';
 import {updateHockeyScoreboard} from '../public/js/hockey-facilities.js';
-import {hockeyViewHeading,hockeySkateVector,hockeyCameraPose,hockeyAimPoint} from '../public/js/hockey-camera.js';
+import {hockeyViewHeading,hockeySkateVector,hockeyCameraPose,hockeyAimPoint,hockeyViewForGameCamera,hockeyGameCameraForView} from '../public/js/hockey-camera.js';
 import {createHockeyArena,createHockeyItem,createHockeyViewRig,animateHockeyViewRig,batchHockeyArena,batchHockeySkater,animateHockeyPose} from '../public/js/hockey-models.js';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 test('camera relative skating faces the attacking net and reverses correctly after an end change',()=>{
@@ -18,7 +18,7 @@ test('player cameras follow the controlled player and keep chase eyes clear of s
  const spectator=hockeyCameraPose('chase');assert.equal(spectator.immersive,false);assert.equal(spectator.position[1],43);assert.equal(hockeyCameraPose('broadcast',{aspect:.7}).position[1],65);
 });
 test('bad camera inputs and sky rays never produce nonfinite world aim or movement',()=>{
- for(const view of ['chase','ice','broadcast','unknown']){const pose=hockeyCameraPose(view,{player:{x:Infinity,z:NaN},heading:NaN,pitch:Infinity});assert.ok([...pose.position,...pose.target,pose.fov].every(Number.isFinite));}
+ for(const view of ['chase','ice','top-down','broadcast','unknown']){const pose=hockeyCameraPose(view,{player:{x:Infinity,z:NaN},heading:NaN,pitch:Infinity});assert.ok([...pose.position,...pose.target,pose.fov].every(Number.isFinite));}
  const direction=hockeySkateVector(Infinity,NaN,NaN);assert.ok(Object.values(direction).every(Number.isFinite));
  assert.deepEqual(hockeyAimPoint({x:0,y:2,z:0},{x:1,y:.1,z:0},{x:5,z:6}),{x:5,z:6});assert.deepEqual(hockeyAimPoint({x:0,y:2,z:0},{x:1,y:-.5,z:0}),{x:4,z:0});assert.ok(Math.abs(hockeyAimPoint({x:0,y:2,z:0},{x:1,y:-.003,z:0}).x)<=45);
 });
@@ -46,4 +46,18 @@ test('skater batching preserves animated limbs and world bounds and never batche
 test('batched arena retains live scoreboard canvases and updates their existing textures',()=>{
  const prior=globalThis.document,painted=[];globalThis.document={createElement:()=>({getContext:()=>({fillRect(){},fillText(text){painted.push(text);}})})};
  try{const arena=createHockeyArena(),scoreboard=arena.getObjectByName('CENTER_ICE_JUMBOTRON'),panels=scoreboard.children.filter(node=>node.material?.map),maps=panels.map(node=>node.material.map),versions=maps.map(map=>map.version);assert.equal(panels.length,2);batchHockeyArena(arena);const match=createHockey();match.score=[4,2];match.remaining=83;updateHockeyScoreboard(arena,match);assert.ok(painted.includes('4  —  2'));assert.ok(painted.includes('P1  1:23'));panels.forEach((panel,i)=>{assert.equal(panel.material.map,maps[i]);assert.ok(maps[i].version>versions[i]);assert.equal(panel.visible,true);});}finally{if(prior===undefined)delete globalThis.document;else globalThis.document=prior;}
+});
+
+test('Top down follows the skater vertically below arena overheads and preserves screen-relative movement and aim',()=>{
+ for(const attack of [1,-1]){
+  const player={x:4,z:-3},heading=hockeyViewHeading(attack),pose=hockeyCameraPose('top-down',{player,heading}),camera=new PerspectiveCamera(pose.fov,.84,.035,300);
+  assert.deepEqual(pose.position,[4,11,-3]);assert.deepEqual(pose.target,[4,0,-3]);assert.equal(pose.immersive,true);assert.ok(pose.position[1]<12,'camera stays below scoreboard bottom');
+  camera.position.fromArray(pose.position);camera.up.fromArray(pose.up);camera.lookAt(...pose.target);camera.updateMatrixWorld(true);const forward=hockeySkateVector(0,1,heading),right=hockeySkateVector(1,0,heading),ahead=new Vector3(player.x+forward.x*2,.03,player.z+forward.z*2).project(camera),side=new Vector3(player.x+right.x*2,.03,player.z+right.z*2).project(camera);assert.ok(ahead.y>0);near(ahead.x,0);assert.ok(side.x>0);near(side.y,0);
+  const ray=new Raycaster();ray.setFromCamera(new Vector2(.4,.3),camera);const aim=hockeyAimPoint(ray.ray.origin,ray.ray.direction),dx=aim.x-player.x,dz=aim.z-player.z;assert.ok(dx*forward.x+dz*forward.z>0);assert.ok(dx*right.x+dz*right.z>0);
+ }
+ const fallback=hockeyCameraPose('top-down',{puck:{x:17,z:6}});assert.deepEqual(fallback.position,[17,11,6]);assert.equal(fallback.immersive,false);
+});
+test('hockey maps canonical shared camera preferences without changing match state',async()=>{
+ const {readGameCameraMode,writeGameCameraMode}=await import('../public/js/game-camera.js'),before=globalThis.localStorage,storage=new Map();globalThis.localStorage={getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
+ try{const state=createHockey(),snapshot=JSON.stringify(state);for(const mode of ['first-person','top-down']){writeGameCameraMode(mode);const view=hockeyViewForGameCamera(readGameCameraMode());assert.equal(hockeyGameCameraForView(view),mode);const player=state.players[0];hockeyCameraPose(view,{player});assert.equal(JSON.stringify(state),snapshot);}assert.equal(hockeyGameCameraForView('chase'),null);assert.equal(hockeyGameCameraForView('broadcast'),null);}finally{if(before===undefined)delete globalThis.localStorage;else globalThis.localStorage=before;}
 });

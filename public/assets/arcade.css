@@ -52,3 +52,23 @@ body.playing main,body.playing footer,body.playing header{display:none}
  #game .game-bottom{bottom:10px;left:10px;right:10px;font-size:10px;padding:9px 11px}
  #game .game-bottom button{white-space:nowrap;font-size:10px;padding:9px}
 }
+
+#camera-toggle{position:fixed;right:4%;bottom:176px;z-index:6;font-size:12px;background:#173537ed;border-color:#dcfa7090;box-shadow:0 4px 20px #0005}
+body.playing #camera-toggle{bottom:99px;right:24px}
+body.riding #camera-toggle{bottom:24px}
+body.top-down .intro h1,body.top-down .intro>p,body.top-down .intro>.eyebrow{display:none}
+body.top-down .intro{top:4px;background:none}
+body.top-down .map-tip{display:none}
+body.top-down aside{top:16px}
+body.top-down nav button{height:88px;padding:10px}
+body.top-down nav button .icon{font-size:19px;margin-bottom:7px}
+@media(max-width:760px){
+ #camera-toggle{bottom:159px;right:4%;font-size:10px;padding:10px 12px}
+ body.playing #camera-toggle{bottom:91px;right:10px}
+ body.top-down aside{top:20px}
+ body.top-down .intro{top:0}
+ body.top-down nav button{height:77px;min-width:105px}
+ body.top-down nav button .num{display:none}
+ body.top-down .view-controls{gap:5px}
+ body.top-down .view-controls button{padding:10px;font-size:10px}
+}

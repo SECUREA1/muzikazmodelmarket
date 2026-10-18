@@ -93,6 +93,10 @@ cargo build --release
 PORT=4173 ./target/release/muzikazmodelmarket
 ```
 
+## In-game camera views
+
+Use **View** or **V** to switch between **First person** and **Top down** in all playable worlds, hockey and Neon Junction. The browser remembers the choice across map travel; changing it keeps the current player, match and server connection. Builder test maps inherit these controls. See [in-game views](docs/game-camera.md) for controls and ride/VR behavior.
+
 ## VR headset play
 
 The RAD-TOX House Explorer supports WebXR immersive VR in browsers that expose

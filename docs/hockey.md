@@ -21,7 +21,7 @@ Each cup has a playable semifinal, a simulated AI semifinal, a championship, and
 - Q body-checks, F poke-checks. H hooks, J slashes and K holds; illegal contact can cause penalties.
 - X switches to an available AI skater. L replaces a tired shift at a stoppage or near the bench; the icing team cannot change on its icing stoppage.
 - G pulls/returns the goalie for an extra attacker. T takes the team's single 30-second timeout at a stoppage.
-- Touch buttons provide movement, shots, passes, checks, pokes and lofting. Automatic shot aim helps touch players.
+- The fixed touch pad provides movement, shots, passes, checks, pokes, lofting and a View toggle while the rink stays visible. In First person, swiping turns the view and automatic shot aim follows it; in Top down, tap or drag the ice to aim.
 
 Five skaters and a goalie start for each team. The simulation supplies AI for empty positions. Ten humans can occupy skater slots; goaltenders are AI. Inactive connections become AI after 15 seconds. Team roster metadata contains twenty athletes and the arena benches show reserve players. Shift rotation and fatigue use three lines.
 
@@ -29,7 +29,9 @@ Spectator mode takes no skater slot, supports up to 64 authenticated viewers per
 
 ## Immersive 3D views
 
-A match starts with a player-following chase camera. **On the ice** puts the camera at skater eye height with a visible animated glove/stick rig. Right-drag or touch swipe turns the view; C centers the attacking net. Switching skaters transfers the camera to the newly controlled player. Broadcast and stadium seat/end views remain available, and authenticated spectators retain a free camera.
+**First person** is the default when the browser has no saved view preference. It puts the camera at skater eye height with a visible animated glove/stick rig. **Top down** looks vertically down from 11 m and follows the controlled skater; its camera stays below the suspended scoreboard and trusses. The attacking net is toward the top of the screen, and movement follows that orientation. In Top down, point at or tap/drag the ice to aim. In First person or Player chase, right-drag or touch swipe turns the view; C centers the attacking net.
+
+Press **V** or use either **View** button to switch First person / Top down during solo or live server play. The choice is remembered with the shared [game camera preference](game-camera.md) for other maps on the same browser and site. Changing the camera preserves the match, room, human slot, score and clock; camera choice stays in the client presentation. Switching skaters transfers the camera to the newly controlled player, and changing ends centers the new attacking direction. The Camera list also retains Player chase, broadcast and stadium seat/end views; authenticated spectators retain a free camera.
 
 The arena has an open cutaway shell, roof trusses, lit ribbons, a standing instanced crowd and detailed helmets, jersey stripes, skate blades and woven goal nets. The vector ice finish adds fine scratches without changing the official rink geometry or scoring rules. Runtime-only batching combines static arena decorations while retaining named builder metadata, scoreboards and animated rig controls; it removes hundreds of draw calls without changing the arena shape. Shared SVG masters have 2048-pixel desktop GPU uploads and bounded mobile resolution; the catalog arena illustration is a scalable 2400 × 1800 SVG.
 
@@ -65,6 +67,6 @@ Live matches are in one server process's memory. Empty rooms expire and server r
 
 ## Validation
 
-`node --test test/hockey.test.mjs test/guest-map-play.test.mjs test/environment-builder.test.mjs test/world-map-picker.test.mjs test/browser-game-module-syntax.test.mjs` verifies rules, tiers, roster/substitution, overtime/shootouts, penalty shots, tournament elimination, spectator permissions, publication, scene geometry and browser module syntax. Browser checks exercise Elite solo, two live guest players plus a read-only spectator, all camera modes, skater/goalie controls and builder publish-and-play. `npm run build && npm run check` validates shipped static files.
+`node --test test/hockey-camera.test.mjs test/game-camera.test.mjs test/hockey.test.mjs test/guest-map-play.test.mjs test/environment-builder.test.mjs test/world-map-picker.test.mjs test/browser-game-module-syntax.test.mjs` verifies rules, tiers, roster/substitution, overtime/shootouts, penalty shots, tournament elimination, spectator permissions, publication, scene geometry and browser module syntax. Browser checks exercise Elite solo, two live guest players plus a read-only spectator, all camera modes, skater/goalie controls and builder publish-and-play. `npm run build && npm run check` validates shipped static files.
 
 The wider suite retains pre-existing failures outside the hockey release. Compare against that baseline rather than describing the whole suite as passing.

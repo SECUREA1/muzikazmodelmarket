@@ -346,13 +346,49 @@ function stationShell(root, id, h) {
     }
   }
 }
-const cameras = {
-  hockey: {eye: [1, 4.7, 8.5], target: [0, 1.0, -.3], width: 7.0},
-  shooting: {eye: [0, 2.7, 7], target: [0, 2.1, -1.8], width: 8.2},
-  basketball: {eye: [1.1, 4.9, 8.8], target: [0, 2.0, -.3], width: 7.1},
-  'air-hockey': {eye: [.25, 5.8, 5.3], target: [0, 1.45, 0], width: 6.8},
-  billiards: {eye: [.4, 5.6, 5.3], target: [0, 1.45, 0], width: 6.8}
+const cameraDefinitions = {
+  hockey: {eye: [.65, 2.4, 5.4], target: [0, 1.25, -1.4], width: 6.6, depth: 8.2},
+  shooting: {eye: [0, 2.45, 3.1], target: [0, 2.35, -2.15], width: 8.2, depth: 7.2},
+  basketball: {eye: [-.55, 2.35, 3.8], target: [0, 2.75, -2.5], width: 6.6, depth: 8.8},
+  'air-hockey': {eye: [0, 2.6, 3.4], target: [0, 1.55, -.3], width: 6.5, depth: 4.8},
+  billiards: {eye: [0, 2.6, 3.4], target: [0, 1.6, -.25], width: 6.5, depth: 4.8}
 };
+
+/** Station-local poses keep every camera and aiming ray in the authored map.
+ * The range uses an elevated oblique view so its vertical targets remain aimable.
+ * Standing views widen and move back on narrow screens without gaining height.
+ */
+export function arcadeGameCameraPose(game, mode = 'first-person', {aspect = 1.6, state = {}} = {}) {
+  const id = gameId(game), definition = cameraDefinitions[id];
+  if (!definition) return null;
+  const ratio = Math.max(.3, finite(aspect, 1.6));
+  if (mode === 'top-down') {
+    if (id === 'shooting') {
+      const target = [0, 1.9, -1.5], eye = [0, 11.5, 6.8], distance = Math.hypot(9.6, 8.3);
+      const scale = Math.max(1, definition.width / (2 * distance * Math.tan(26 * Math.PI / 180) * ratio));
+      eye[1] = target[1] + (eye[1] - target[1]) * scale;eye[2] = target[2] + (eye[2] - target[2]) * scale;
+      return {mode, eye, target, up: [0, 1, 0], fov: 52, width: definition.width, depth: definition.depth};
+    }
+    const height = Math.max(id === 'basketball' ? 13.5 : 10, definition.depth / (2 * Math.tan(26 * Math.PI / 180)), definition.width / (2 * Math.tan(26 * Math.PI / 180) * ratio));
+    const y = id === 'hockey' || id === 'basketball' ? .72 : 1.55;
+    return {mode, eye: [0, y + height, 0], target: [0, y, 0], up: [0, 0, -1], fov: 52,
+      width: definition.width, depth: definition.depth};
+  }
+  const eye = [...definition.eye], target = [...definition.target], fov = 76;
+  if (id === 'basketball') {
+    const movingX = finite(state.shot?.x, basketballPosition(finite(state.gameElapsed)));
+    eye[0] = (movingX - 400) * .008 - .55;
+  }
+  // Keep the entire playable width available in portrait without turning a
+  // standing camera into an elevated spectator camera.
+  const needed = definition.width / (2 * Math.tan(fov * Math.PI / 360) * ratio);
+  const dz = eye[2] - target[2], dx = eye[0] - target[0], horizontal = Math.hypot(dx, dz);
+  if (needed > horizontal) {
+    const scale = needed / horizontal;
+    eye[0] = target[0] + dx * scale; eye[2] = target[2] + dz * scale;
+  }
+  return {mode: 'first-person', eye, target, up: [0, 1, 0], fov, width: definition.width, depth: definition.depth};
+}
 
 function occlusionSamples(id) {
   const points = [];
@@ -429,7 +465,7 @@ export function createArcadeGamePresentation({scene, park, config = {}} = {}) {
   }
   function update(state = {}) {
     if (!active) return;
-    active.update({...state, difficulty: state.difficulty || active.config.difficulty});
+    active.state = state;active.update({...state, difficulty: state.difficulty || active.config.difficulty});
   }
   function clearView(camera) {
     const state = active.occlusion, signature = state.signature;
@@ -456,20 +492,25 @@ export function createArcadeGamePresentation({scene, park, config = {}} = {}) {
       }
     }
   }
-  function setCamera(camera) {
+  function setCamera(camera, mode = 'first-person') {
     if (!active || !camera) return false;
-    const definition = cameras[active.id];
-    eye.fromArray(definition.eye); target.fromArray(definition.target);
-    const distance = eye.distanceTo(target), fov = (camera.fov || 43) * Math.PI / 180;
-    const needed = definition.width / (2 * Math.tan(fov / 2) * Math.max(.35, camera.aspect || 1));
-    if (needed > distance) eye.sub(target).multiplyScalar(needed / distance).add(target);
+    const pose = arcadeGameCameraPose(active.id, mode, {aspect: camera.aspect, state: active.state});
+    active.cameraMode = pose.mode;
+    eye.fromArray(pose.eye); target.fromArray(pose.target); up.fromArray(pose.up);
     active.root.updateWorldMatrix(true, false);
     active.root.localToWorld(eye); active.root.localToWorld(target);
-    up.set(0, 1, 0).transformDirection(active.root.matrixWorld);
+    up.transformDirection(active.root.matrixWorld);
+    if (camera.fov !== pose.fov) {camera.fov = pose.fov; camera.updateProjectionMatrix();}
     camera.position.copy(eye); camera.up.copy(up); camera.lookAt(target); camera.updateMatrixWorld(true);
+    // A local player's head and torso cannot occlude their own standing view.
+    active.root.traverse(node => {
+      if (!/^PLAYER_(?:SKATER|BASKETBALL)_(?:HEAD|HELMET|VISOR|JERSEY|SHORTS|SLEEVE_|LEG_|SHOE_|SKATE_BLADE_)/.test(node.name)) return;
+      node.visible = pose.mode !== 'first-person';
+    });
     clearView(camera);
     return true;
   }
+
   function pointer(ndcX, ndcY, camera) {
     if (!active || !camera || !Number.isFinite(ndcX) || !Number.isFinite(ndcY)) return null;
     ray.setFromCamera({x: ndcX, y: ndcY}, camera);
@@ -489,7 +530,7 @@ export function createArcadeGamePresentation({scene, park, config = {}} = {}) {
       while (ancestor) {visible = visible && ancestor.visible; ancestor = ancestor.parent;}
       objects.push({name: node.name, position: world.toArray(), visible});
     });
-    return {active: true, id: active.id, index: active.index, anchor: active.station.name,
+    return {active: true, id: active.id, index: active.index, anchor: active.station.name, cameraMode: active.cameraMode || 'first-person',
       position: active.root.getWorldPosition(new T.Vector3()).toArray(),
       occlusion: {candidates: active.occlusion.candidates.length, hidden: active.occlusion.candidates.filter(node => !node.mesh.visible).length}, objects};
   }

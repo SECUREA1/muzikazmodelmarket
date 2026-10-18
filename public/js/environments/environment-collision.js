@@ -32,6 +32,14 @@ function isDedicatedCollider(object) {
   return COLLISION_RE.test(object?.name || '') || object?.userData?.collider === true || object?.userData?.collision === true || object?.userData?.colliderShape === 'mesh';
 }
 
+function isRenderedMesh(object) {
+  for (let current = object; current; current = current.parent) {
+    if (current.visible === false) return false;
+  }
+  const materials = Array.isArray(object.material) ? object.material : [object.material];
+  return materials.some((material) => material?.visible !== false);
+}
+
 function collisionIsDisabled(object) {
   for (let current = object; current; current = current.parent) {
     if (current.userData?.collisionDisabled === true || current.userData?.collider === false || current.userData?.collision === false) return true;
@@ -178,7 +186,14 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
     if (!object.isMesh || !object.geometry) return;
     if (collisionIsDisabled(object)) return;
     const name = object.name || '';
-    if (isDedicatedCollider(object)) { if (COLLISION_RE.test(name)) object.visible = false; collisionMeshes.push(object); return; }
+    if (isDedicatedCollider(object)) {
+      // Explicit physical metadata also belongs on visible authored geometry,
+      // including Builder terrain. Only named helper colliders are hidden.
+      if (COLLISION_RE.test(name)) object.visible = false;
+      if (isRenderedMesh(object)) visibleMeshes.push(object);
+      collisionMeshes.push(object);
+      return;
+    }
     visibleMeshes.push(object);
     const material = Array.isArray(object.material) ? object.material[0] : object.material;
     // A playable world always needs physical geometry.  `none` is retained as

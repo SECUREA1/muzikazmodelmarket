@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from '../public/vendor/three/three.module.min.js';
 import {createArcadePart} from '../public/js/arcade-park.js';
-import {arcadeGamePoint, arcadeGamePointer, createArcadeGamePresentation} from '../public/js/arcade-3d-games.js';
+import {arcadeGamePoint, arcadeGamePointer, arcadeGameCameraPose, createArcadeGamePresentation} from '../public/js/arcade-3d-games.js';
 
 const ids = ['hockey', 'shooting', 'basketball', 'air-hockey', 'billiards'];
 const near = (actual, expected, message = '') => assert.ok(actual.distanceTo(expected) < 1e-7,
@@ -184,7 +184,7 @@ test('narrow foreground scenery clears the play corridor, preserves park backdro
     scene.add(station); station.position.set(3, 0, -4); station.rotation.y = .4; station.scale.setScalar(1.1);
     station.updateMatrixWorld(true);
     const frame = new T.Matrix4().makeRotationY(id === 'basketball' ? Math.PI / 2 : 0);
-    const position = new T.Vector3(id === 'basketball' ? .55 : .125, 3.45, id === 'basketball' ? 4.25 : 2.65).applyMatrix4(frame);
+    const pose = arcadeGameCameraPose(id), position = new T.Vector3().fromArray(pose.eye).add(new T.Vector3().fromArray(pose.target)).multiplyScalar(.5).applyMatrix4(frame);
     station.localToWorld(position);
     function pole(name, color = '#718c7a', transparent = false) {
       const mesh = new T.Mesh(new T.BoxGeometry(.18, 7, .18),
