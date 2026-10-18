@@ -1,4 +1,5 @@
 import {applyHttpSecurity} from './http-security.mjs';
+import {staticCacheControl} from './static-cache-policy.mjs';
 import {CameraSignaling} from './server-camera-signaling.mjs';
 const cameraSignaling=new CameraSignaling();
 import {DeviceMediaUploads} from './device-media-uploads.mjs';
@@ -1042,7 +1043,7 @@ const server = createServer(async (req, res) => {
     if (!filePath) throw new Error('Not found');
     const extension = extname(filePath).toLowerCase();
     if(privateUpload)res.setHeader('X-Robots-Tag','noindex, nofollow');
-    const cacheControl = privateUpload ? 'private, no-store' : extension === '.glb' || extension === '.usdz' ? 'public, max-age=31536000, immutable' : extension === '.json' ? 'no-cache' : 'public, max-age=3600';
+    const cacheControl = staticCacheControl(extension, {privateUpload});
     if(uploadMatch?.[1]==='media'){
       const info=await stat(filePath),headers={'Content-Type':mimeTypes[extension]||'application/octet-stream','Accept-Ranges':'bytes','Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'};const range=req.headers.range;
       if(range){const match=/^bytes=(\d*)-(\d*)$/.exec(range);let start=match?.[1]?Number(match[1]):0,end=match?.[2]?Number(match[2]):info.size-1;if(match&&!match[1]&&match[2]){start=Math.max(0,info.size-Number(match[2]));end=info.size-1;}if(!match||(!match[1]&&!match[2])||start>end||start>=info.size||end>=info.size){res.writeHead(416,corsHeaders({'Content-Range':`bytes */${info.size}`},res.muzikazRequestOrigin));return res.end();}res.writeHead(206,corsHeaders({...headers,'Content-Length':end-start+1,'Content-Range':`bytes ${start}-${end}/${info.size}`},res.muzikazRequestOrigin));return createReadStream(filePath,{start,end}).pipe(res);}

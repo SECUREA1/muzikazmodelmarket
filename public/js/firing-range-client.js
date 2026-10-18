@@ -1,4 +1,13 @@
 /** Keep range scenery in the same coordinate system as authoritative targets. */
+export async function openFiringRangeSession({client,prepare=()=>{},onReady=()=>{}}){
+ if(!client?.ready)throw new Error('Join the live server before opening the firing range.');
+ const snapshot=await client.send('range-ready');
+ if(!snapshot?.firingRange)throw new Error('The server has not confirmed this firing range. Try joining the map again.');
+ await prepare();
+ onReady(snapshot);
+ return snapshot;
+}
+
 export function createFiringRangeSceneBridge({THREE,getRoots}){
  let scenes=[],state=null;
  const point=new THREE.Vector3();
