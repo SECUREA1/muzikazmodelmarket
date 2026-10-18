@@ -1,7 +1,9 @@
+import {createArcadePark} from '../arcade-park.js';
 import {createHockeyArena} from '../hockey-models.js';
 import {createServerStreets} from './server-streets.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
 export function createBuilderLand(environment) {
+    if((environment.builderScene?.layout||environment.layout)==='arcade-park')return createArcadePark(environment.builderScene?.gameplay?.arcade||environment.arcade).root;
     if((environment.builderScene?.layout||environment.layout)==='hockey-arena')return createHockeyArena();
     const built = environment.builderScene || {};
     const layout = built.layout || environment.layout || 'grand-floor';

@@ -468,5 +468,33 @@
       "periodSeconds": 180
     },
     "playUrl": "hockey.html?environment=hockey-cup-elite&mode=multiplayer"
+  },
+  {
+    "id": "neon-junction",
+    "name": "Neon Junction \u2014 Arcade Park",
+    "label": "Arcade \u00b7 games and rides",
+    "category": "Arcade & rides",
+    "game": "arcade",
+    "layout": "arcade-park",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": false,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "description": "Seven attractions: hockey, shooting arcade, basketball, air hockey, billiards, a perimeter train and an elevated coaster with locked ride cameras. Solo arcade sessions with local points.",
+    "arcade": {
+      "roundSeconds": 45,
+      "trainLapSeconds": 55,
+      "coasterLapSeconds": 32,
+      "coasterPeak": 13,
+      "difficulty": "easy"
+    },
+    "playUrl": "arcade.html?environment=neon-junction&mode=solo"
   }
 ]

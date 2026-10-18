@@ -1546,6 +1546,18 @@
       "visibility": "public",
       "description": "Regulation ice hockey with AI players and referees. Customize rules, jerseys and tournament format.",
       "image": "/public/images/hockey.svg"
+    },
+    {
+      "id": "builder-land-arcade-park",
+      "name": "Neon Junction Arcade Park",
+      "owner": "MUZIKAZ",
+      "type": "lands",
+      "builderLayoutId": "arcade-park",
+      "builderUrl": "/environment-builder.html?layout=arcade-park",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "builder-layout",
+      "visibility": "public",
+      "description": "Customize seven arcade attractions, round times, ride speeds, coaster height and table placements."
     }
   ]
 }
