@@ -242,7 +242,9 @@ function basketballGame(root, h) {
     ball.position.set(startX + (endX - startX) * p,
       1.9 + 1.48 * p + Math.sin(p * Math.PI) * 2.8, 2.55 - 5.37 * p);
     ball.rotation.set(p * -5, p * 3, p * 2);
-    player.root.position.x = shot ? startX : (movingX - 400) * .008;
+    // Keep the timing ball visible beside the player in the shoulder camera.
+    // Its own world position remains exactly aligned with the scoring state.
+    player.root.position.x = (shot ? startX : (movingX - 400) * .008) - .55;
     player.left.position.y = player.right.position.y = 1.15 + (shot ? Math.sin(Math.min(1, p * 3) * Math.PI / 2) * .65 : .1);
     alignment.material.opacity = basketballRelease(movingX, state.difficulty).scored ? .9 : .18;
     alignment.visible = !shot && !state.ended;
