@@ -4,11 +4,15 @@ Neon Junction is a complete solo arcade map in the world registry, the game Menu
 
 ## Games and rides
 
-The seven attractions are arcade hockey, moving-target shooting, timing basketball, air hockey against a computer mallet, billiards, the Park Express perimeter train, and the elevated Skyline coaster. Games support pointer/touch aiming, keyboard arrows, Space/Enter to shoot, restart, and exit. Basketball shows the scoring window and animates both baskets and misses. Hockey is a short goalie challenge, separate from the full regulation hockey game.
+The seven attractions are arcade hockey, moving-target shooting, timing basketball, air hockey against a computer mallet, billiards, the Park Express perimeter train, and the elevated Skyline coaster. All five games use physical 3D equipment in the selected park station, with visible player context, depth, moving opponents and projectiles. Pointer/touch aims through the 3D game plane; keyboard arrows adjust aim and Space/Enter shoots. Restart and exit remain available. Basketball shows the scoring window and animates both baskets and misses. Hockey is a short goalie challenge, separate from the full regulation hockey game.
 
 The train and coaster follow closed tracks. Boarding locks the rider camera to the moving vehicle, including a customized or separately placed ride. The train faces inward across the scenery. A full lap restores the overview; **Exit ride** or Escape exits early. Dragging, zooming and attraction switching cannot detach a rider.
 
-Mini-games stop rendering the covered 3D park, use real active-tab time, and run small physics steps for fast pucks/balls. This prevents slow GPU rendering from stretching basketball shots and round timers. Hidden tabs pause; returning does not fast-forward the game. The park animates at up to 30 frames per second in overview and on rides.
+Choose **Explore the park** for eye-level walking with WASD/arrows, Shift to move faster, and drag to look. E or the nearby-use button opens an attraction within reach. Touch buttons supply walking and use actions. Furniture and other solid objects block movement, including transformed builder items; the camera follows the ground and raised platforms. Overview remains available.
+
+Active games render in the same WebGL park with a compact HUD. Hockey shows skates, stick, puck, goalie and net; shooting has depth, moving targets and a blaster; basketball has a vertical flight arc, rim/net and player release; air hockey and billiards use full tables, mallets/cues, balls and collision motion. The selected station's static equipment is temporarily replaced by its live equipment, then restored exactly on exit.
+
+Game clocks use real active-tab time and small collision substeps. Hidden tabs pause without catch-up. Rendering is capped at 30 fps, with adaptive pixel density and shadow quality after observed slow draws. There is no separate flat canvas game view.
 
 Scores persist locally in the browser. They are arcade points, not currency, MZK rewards, verified server scores or a multiplayer leaderboard. Published custom maps share the layout; players run independent solo sessions.
 
@@ -36,8 +40,14 @@ The complete stations and rides carry playable attraction actions. Individual eq
 
 Saved builder items load into the dedicated arcade runtime with their transforms and paint. Supported procedural, generated, drawn and authored GLB props are rebuilt; a failed custom prop produces a visible notice while the other attractions remain playable. Placed attraction assemblies in other builder maps can launch their saved arcade instance via the normal Use action.
 
+## SVG and 3D assets
+
+The hockey and park catalog previews are detailed 2400 × 1800 SVG illustrations. Six shared 2048 × 2048 SVG surface masters provide ice scratches, maple grain, felt weave, laminate, brushed metal and park paving. Geometry supplies actual markings, depth, nets, posts and collision surfaces; a texture does not replace a 3D model.
+
+`sports-surfaces.js` rasterizes the vector masters for GPU upload, capped at 2048 pixels on desktop and 1024 on small screens. It shares cached textures and preserves procedural materials if a finish fails to load. Builder previews, saved pieces and live games use the same surface tags and preserve paint settings.
+
 ## Implementation and validation
 
-`arcade-rules.js` defines bounded configuration and part metadata. `arcade-park.js` provides independent scene assemblies and transform-aware ride curves. `arcade-runtime.js` handles active time, physics steps and basketball release rules. `arcade-builder-runtime.js` rebuilds saved objects and their interaction targets. `arcade-game.js` connects the menu, mini-games, ride cameras, settings and shared API.
+`arcade-rules.js` defines bounded configuration and part metadata. `arcade-park.js` provides independent scene assemblies and transform-aware ride curves. `arcade-runtime.js` handles active time, physics steps and basketball release rules. `arcade-builder-runtime.js` rebuilds saved objects and their interaction targets. `arcade-game.js` connects the menu, games, walking, ride cameras, settings and shared API. `arcade-3d-games.js` renders the active station and converts world-space pointer rays to the game simulation. `arcade-navigation.js` handles bounded walking and collision sliding.
 
 Automated tests cover settings, geometry, independent placed rides, saved object transforms, publication/configuration persistence, builder kit completeness, runtime timing, basketball scoring and module syntax. Browser checks cover all seven attractions, touch input, restart/close, low-frame-rate basketball timing, hidden-tab pause, custom-map publication/reopening and extracted attraction/ride launches. Static build checks require the arcade page and runtime assets. The wider suite retains eleven pre-existing failures; focused arcade checks are reported separately.

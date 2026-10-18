@@ -19,7 +19,7 @@ export class EnvironmentLoader {
     const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/basis/'); ktx2.detectSupport(renderer); this.loader.setKTX2Loader(ktx2);
     this.loader.setMeshoptDecoder(MeshoptDecoder);
   }
-  disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture) value.dispose(); material.dispose?.(); }
+  disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture && !value.userData.sportsSurfaceShared) value.dispose(); material.dispose?.(); }
   clearFloorEffects() { this.floorSlime?.dispose(); this.floorSlime=null; }
   refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
   updateEffects(elapsed, reducedMotion=false) { this.floorSlime?.update(elapsed,reducedMotion); }

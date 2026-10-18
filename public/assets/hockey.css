@@ -2,3 +2,22 @@
 #match-details{margin:8px 20px;padding:12px;border:1px solid #324d65;border-radius:8px;background:#102538;font-size:13px}#match-details summary{cursor:pointer;color:#9eeaff}#referee-log{max-height:160px;overflow:auto;line-height:1.6}#penalties{color:#ffcc83}footer label{font-size:13px}footer select{font-size:13px;padding:6px}
 
 #touch{flex-wrap:wrap}#controls-help{margin:8px 20px;padding:12px;border:1px solid #324d65;border-radius:8px;font-size:13px;line-height:1.5}#controls-help summary{cursor:pointer;color:#9eeaff}
+
+#view-hint{margin:0;padding:8px 20px;background:#0c1f30;border-top:1px solid #25475c;color:#9bd8ee;font-size:12px;letter-spacing:.025em}#rink{background:radial-gradient(ellipse,#23455e,#091321)}#touch button{min-width:44px;min-height:44px;touch-action:none}#center-view{border-color:#5fc0d4;color:#a5eeff}#controls-help p{max-width:100ch}@media(max-width:640px){header{padding:10px 12px}header h1{font-size:15px}.scoreboard{gap:8px;padding:8px}.scoreboard strong{font-size:20px}footer{padding:10px 12px;gap:8px}footer>span:first-child{font-size:12px}#lobby{top:85px;padding:18px}#lobby h2{margin-top:0}#lobby label{display:block}#lobby select{width:100%;margin-top:5px}#view-hint{padding:8px 12px;font-size:11px}}
+
+/* Keep touch skating and actions visible while the player watches the ice. */
+@media(pointer:coarse){
+ body{padding-bottom:calc(126px + env(safe-area-inset-bottom,0px))}
+ #touch{position:fixed;z-index:20;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-areas:". up . shoot pass check" "left down right poke loft .";gap:5px;padding:8px;border:1px solid #41667e;border-radius:14px;background:#091b2eef;box-shadow:0 4px 22px #0008;backdrop-filter:blur(8px)}
+ #touch button{min-width:0;min-height:44px;padding:8px 2px;font-size:12px;font-weight:650;border-color:#58829c;background:#173c53;user-select:none;-webkit-user-select:none}
+ #touch button:active{background:#286a7f;border-color:#b9ff38}
+ #touch [data-key="arrowup"]{grid-area:up}#touch [data-key="arrowleft"]{grid-area:left}#touch [data-key="arrowdown"]{grid-area:down}#touch [data-key="arrowright"]{grid-area:right}
+ #touch [data-key=" "]{grid-area:shoot;background:#336845}#touch [data-key="e"]{grid-area:pass}#touch [data-key="q"]{grid-area:check}#touch [data-key="f"]{grid-area:poke}#touch [data-key="shift"]{grid-area:loft}
+ main:has(#lobby:not([hidden])) #touch{display:none}
+ footer{gap:6px;padding:8px 12px}footer>span:first-child{display:none}footer button,footer select{padding:7px;font-size:12px;min-height:36px}footer label{display:flex;align-items:center;gap:6px}#roster{width:100%;font-size:11px}
+ #view-hint{line-height:1.4}
+}
+@media(pointer:coarse) and (orientation:landscape){
+ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+ #touch{grid-template-columns:repeat(9,minmax(0,1fr));grid-template-areas:"up left down right shoot pass check poke loft"}
+}

@@ -1,10 +1,17 @@
 import {createArcadePark} from '../arcade-park.js';
 import {createHockeyArena} from '../hockey-models.js';
+import {applySportsSurfaces} from '../sports-surfaces.js';
 import {createServerStreets} from './server-streets.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
+function sportsLand(root,theme) {
+    // Loading a world never waits for vector finishes. The procedural materials
+    // remain playable if SVG rasterization is unavailable.
+    void applySportsSurfaces(root,{theme,maxResolution:2048}).catch(error=>console.warn('[builder-land-surfaces]',error.message));
+    return root;
+}
 export function createBuilderLand(environment) {
-    if((environment.builderScene?.layout||environment.layout)==='arcade-park')return createArcadePark(environment.builderScene?.gameplay?.arcade||environment.arcade).root;
-    if((environment.builderScene?.layout||environment.layout)==='hockey-arena')return createHockeyArena();
+    if((environment.builderScene?.layout||environment.layout)==='arcade-park')return sportsLand(createArcadePark(environment.builderScene?.gameplay?.arcade||environment.arcade).root,'arcade');
+    if((environment.builderScene?.layout||environment.layout)==='hockey-arena')return sportsLand(createHockeyArena(),'hockey');
     const built = environment.builderScene || {};
     const layout = built.layout || environment.layout || 'grand-floor';
     const meta = built.layoutMeta || environment.layoutMeta || {};

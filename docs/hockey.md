@@ -17,7 +17,7 @@ Each cup has a playable semifinal, a simulated AI semifinal, a championship, and
 
 ## Controls and roles
 
-- WASD/arrows skate with acceleration and momentum. Pointer aims, Space shoots, E passes, Shift lofts.
+- WASD/arrows skate with acceleration and momentum. In player-following views, forward/right movement follows the camera heading. Pointer aims, Space shoots, E passes, Shift lofts.
 - Q body-checks, F poke-checks. H hooks, J slashes and K holds; illegal contact can cause penalties.
 - X switches to an available AI skater. L replaces a tired shift at a stoppage or near the bench; the icing team cannot change on its icing stoppage.
 - G pulls/returns the goalie for an extra attacker. T takes the team's single 30-second timeout at a stoppage.
@@ -27,13 +27,19 @@ Five skaters and a goalie start for each team. The simulation supplies AI for em
 
 Spectator mode takes no skater slot, supports up to 64 authenticated viewers per room, and provides broadcast, lower bowl, upper bowl, behind-goal and free orbit cameras. Spectator commands cannot move players, change lineups, advance brackets or alter results. If a tournament leaves no human finalists, spectators can continue watching its AI championship.
 
+## Immersive 3D views
+
+A match starts with a player-following chase camera. **On the ice** puts the camera at skater eye height with a visible animated glove/stick rig. Right-drag or touch swipe turns the view; C centers the attacking net. Switching skaters transfers the camera to the newly controlled player. Broadcast and stadium seat/end views remain available, and authenticated spectators retain a free camera.
+
+The arena has an open cutaway shell, roof trusses, lit ribbons, a standing instanced crowd and detailed helmets, jersey stripes, skate blades and woven goal nets. The vector ice finish adds fine scratches without changing the official rink geometry or scoring rules. Runtime-only batching combines static arena decorations while retaining named builder metadata, scoreboards and animated rig controls; it removes hundreds of draw calls without changing the arena shape. Shared SVG masters have 2048-pixel desktop GPU uploads and bounded mobile resolution; the catalog arena illustration is a scalable 2400 × 1800 SVG.
+
 ## Arena and builder
 
 The ice is 200 × 85 ft with 28 ft corner radii, 6 × 4 ft goals, regulation-scale markings, boards, glass and creases. Four skating officials represent two referees and two linesmen. Player strides, stick actions, goalie saves and referee signals animate procedurally. The puck's display is enlarged for readability; scoring uses a separate simulation, including complete goal-line crossing and crossbar height.
 
 The arena includes 2,368 individually instanced spectator seats across lower/upper bowls and end stands, aisles, guard rails, concourses, spectator tunnels, two team benches with reserve skaters/spare sticks/water bottles, locker-room tunnels, two enclosed penalty boxes with benches and gates, the official scorer's table, arena lighting and an updating suspended scoreboard.
 
-Choose **Sports → Ice Hockey Arena** in the builder. It expands the map to at least 80 m. Saved options include all four difficulty tiers, exhibition/cup format, 30–1200 second periods, jersey colors, penalties, delayed/immediate offside, hybrid/automatic icing, and regular-season/playoff overtime. Tournament format always uses playoff overtime. Save, Test Map and Publish Map retain the settings and launch the selected solo/multiplayer mode.
+Choose **Sports → Ice Hockey Arena** in the builder. It expands the editor map to 120 m to fit the full stadium enclosure. Saved options include all four difficulty tiers, exhibition/cup format, 30–1200 second periods, jersey colors, penalties, delayed/immediate offside, hybrid/automatic icing, and regular-season/playoff overtime. Tournament format always uses playoff overtime. Save, Test Map and Publish Map retain the settings and launch the selected solo/multiplayer mode.
 
 The item library contains procedural skates, sticks, pucks, nets, skaters, goalies, referees and linesmen. Regulation equipment, officials and match actors are supplied automatically; authored hockey items are editor references and do not create extra scoring goals or roster slots. Supported procedural scenery outside the ice is reconstructed during play. Uploaded GLB/custom drawing scenery is not reconstructed by this hockey runtime. Authored scenery does not alter official scoring geometry.
 
@@ -61,4 +67,4 @@ Live matches are in one server process's memory. Empty rooms expire and server r
 
 `node --test test/hockey.test.mjs test/guest-map-play.test.mjs test/environment-builder.test.mjs test/world-map-picker.test.mjs test/browser-game-module-syntax.test.mjs` verifies rules, tiers, roster/substitution, overtime/shootouts, penalty shots, tournament elimination, spectator permissions, publication, scene geometry and browser module syntax. Browser checks exercise Elite solo, two live guest players plus a read-only spectator, all camera modes, skater/goalie controls and builder publish-and-play. `npm run build && npm run check` validates shipped static files.
 
-The repository's unchanged baseline has 12 failing tests outside the hockey release. Compare against that baseline rather than describing the whole suite as passing.
+The wider suite retains pre-existing failures outside the hockey release. Compare against that baseline rather than describing the whole suite as passing.

@@ -1,5 +1,8 @@
 import * as T from '../vendor/three/three.module.min.js';
 import {createArcadePark,animateArcadePark} from './arcade-park.js';
+import {createArcadeWalker,lookArcadeWalker,stepArcadeWalker,nearestArcadeInteraction} from './arcade-navigation.js';
+import {createArcadeGamePresentation} from './arcade-3d-games.js';
+import {applySportsSurfaces} from './sports-surfaces.js';
 import {createArcadeClock,advanceArcadeClock,arcadePhysicsSteps,arcadePointer,basketballPosition,basketballRelease,arcadeAnimationSpeed} from './arcade-runtime.js';
 import {arcadeSettings,arcadeAttractions,createArcadeSession,enterArcadeAttraction,exitArcadeAttraction,stepArcadeRide,arcadeRidePose,localArcadePoints,isArcadeMap} from './arcade-rules.js';
 const host=document.documentElement.dataset.arcadeHost||'site';
@@ -41,105 +44,224 @@ if(host==='muzikaz'&&builderScene?.objects?.length){try{const {loadArcadeBuilder
 
 function instanceRideSpeed(runtime){return arcadeAnimationSpeed(runtime?.animationEnabled,runtime?.animationSpeed);}
 function availableAttractionIds(){const ids=new Set(config.enabled);for(const interaction of builderObjects?.interactions.values()||[])if(interaction.index<5||instanceRideSpeed(interaction.rideRuntime)>0)ids.add(attractions[interaction.index]?.id);ids.delete(undefined);return ids;}
-function selectFromMenu(index){const interaction=!config.enabled.includes(attractions[index]?.id)?[...(builderObjects?.interactions.values()||[])].find(item=>item.index===index&&(index<5||instanceRideSpeed(item.rideRuntime)>0)):null;return select(index,interaction?.rideRuntime||null,interaction?.config||null);}
+function selectFromMenu(index){const interaction=!config.enabled.includes(attractions[index]?.id)?[...(builderObjects?.interactions.values()||[])].find(item=>item.index===index&&(index<5||instanceRideSpeed(item.rideRuntime)>0)):null;return select(index,interaction);}
 function refreshAttractionButtons(){const available=availableAttractionIds();for(const [index,button] of [...document.querySelectorAll('#attractions button')].entries()){button.disabled=session.mode==='ride'||!available.has(button.dataset.attraction);button.querySelector('small').textContent=available.has(button.dataset.attraction)?(index>4?'RIDE':'PLAY')+' · FREE':'CLOSED';}}
-refreshAttractionButtons();update();
+for(const button of document.querySelectorAll('#attractions button'))button.disabled=true;
+$('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=true;update();
+await applySportsSurfaces(park.root,{theme:'arcade',renderer});
+if(builderObjects)await applySportsSurfaces(builderObjects.root,{theme:'arcade',renderer});
+const presentation=createArcadeGamePresentation({scene,park,config});
+const walker=createArcadeWalker();
+let explorationMode='walk',nearby=null,activeInteraction=null;
 let yaw=.62,pitch=.78,distance=61,drag=false,lastX,lastY,moved=0,ride=null,rideRuntime=null,rideConfig=null,ridePhase=null,trainT=0,coasterT=0,parkTime=0,lastParkRender=-Infinity;
 const center=new T.Vector3(0,0,0),desired=new T.Vector3(),frameClock=createArcadeClock(performance.now());
+const walkKeys=new Set(),touchKeys=new Set(),collisionBoxes=[],walkInteractions=[],walkSurfaces=[];
+const bounds={minX:-26,maxX:26,minZ:-18,maxZ:18};
+const uniqueInteractions=[...new Set(builderObjects?.interactions.values()||[])];
+function visibleObject(object){while(object){if(!object.visible)return false;object=object.parent;}return true;}
+function registerWalkInteraction(index,anchor,interaction=null){
+ const local=index===5?new T.Vector3(12,0,8):index===6?new T.Vector3(20*(interaction?.config.coasterWidth||config.coasterWidth)/39,0,0):new T.Vector3(0,0,3.8);
+ anchor.updateWorldMatrix(true,false);const point=anchor.localToWorld(local);
+ walkInteractions.push({index,anchor,interaction,x:point.x,z:point.z,id:attractions[index].id,enabled:visibleObject(anchor)&&(index<5||!interaction?.rideRuntime||instanceRideSpeed(interaction.rideRuntime)>0)});
+}
+for(let i=0;i<attractions.length;i++)if(config.enabled.includes(attractions[i].id))registerWalkInteraction(i,park.parts[attractions[i].id]);
+for(const interaction of uniqueInteractions)registerWalkInteraction(interaction.index,interaction.instance,interaction);
+function collectFurniture(root){
+ root.updateMatrixWorld(true);
+ root.traverse(node=>{
+  if(!node.isMesh||!visibleObject(node))return;
+  let parent=node,part='',vehicle=false;while(parent){part||=parent.userData.arcadePart||'';vehicle||=/^ARCADE_(TRAIN_|COASTER_CAR)/.test(parent.name);parent=parent.parent;}
+  if(vehicle||['ground','paths','train','rail-segment'].includes(part))return;
+  const box=new T.Box3().setFromObject(node),size=box.getSize(new T.Vector3());
+  if(node.geometry?.type==='BoxGeometry'&&size.y<.5&&size.x>2&&size.z>2&&box.max.y>=-.1&&box.max.y<=.9){
+   node.geometry.computeBoundingBox();walkSurfaces.push({inverse:node.matrixWorld.clone().invert(),bounds:node.geometry.boundingBox.clone(),height:box.max.y});
+  }
+  if(box.min.y>1.2||box.max.y<.65||size.y<.45||size.x>8.5||size.z>8.5||size.x<.05||size.z<.05)return;
+  collisionBoxes.push({minX:box.min.x,maxX:box.max.x,minZ:box.min.z,maxZ:box.max.z});
+ });
+}
+collectFurniture(park.root);if(builderObjects)collectFurniture(builderObjects.root);
+const ground=park.parts.ground;if(ground?.visible){const box=new T.Box3().setFromObject(ground);bounds.minX=box.min.x+.4;bounds.maxX=box.max.x-.4;bounds.minZ=box.min.z+.4;bounds.maxZ=box.max.z-.4;}
+const groundProbe=new T.Vector3();
+function updateWalkerGround(){
+ let height=.08;
+ for(const surface of walkSurfaces){groundProbe.set(walker.x,surface.height,walker.z).applyMatrix4(surface.inverse);if(groundProbe.x>=surface.bounds.min.x&&groundProbe.x<=surface.bounds.max.x&&groundProbe.z>=surface.bounds.min.z&&groundProbe.z<=surface.bounds.max.z)height=Math.max(height,surface.height+.02);}
+ walker.ground=height;
+}
+function setExploration(mode){
+ explorationMode=mode;drag=false;walkKeys.clear();touchKeys.clear();
+ document.body.classList.toggle('walking',mode==='walk');
+ $('#walkhud').hidden=mode!=='walk';$('#explore').setAttribute('aria-pressed',String(mode==='walk'));$('#overview').setAttribute('aria-pressed',String(mode==='overview'));
+ lastParkRender=-Infinity;
+}
 function reset(reason='exit'){
  exitArcadeAttraction(session,reason);ride=null;rideRuntime=null;rideConfig=null;ridePhase=null;drag=false;
  refreshAttractionButtons();
  $('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=false;
  document.body.classList.remove('riding');$('#ridehud').hidden=true;
- yaw=.62;pitch=.78;distance=61;center.set(0,0,0);camera.up.set(0,1,0);
+ camera.up.set(0,1,0);setExploration(explorationMode);
 }
-$('#overview').onclick=()=>{if(ride===null)reset();};
-$('#explore').onclick=()=>{distance=44;center.set(0,0,0);toast('Choose an attraction below to play or ride')};
+$('#overview').onclick=()=>{if(ride!==null||game!==null)return;yaw=.62;pitch=.78;distance=61;center.set(0,0,0);setExploration('overview');};
+$('#explore').onclick=()=>{if(ride!==null||game!==null)return;setExploration('walk');toast('WASD or arrows to walk. Drag to look. Press E near an attraction.');};
 let toastTimer;function toast(s){clearTimeout(toastTimer);$('#toast').textContent=s;$('#toast').style.opacity=1;toastTimer=setTimeout(()=>$('#toast').style.opacity=0,3500)}
-if(savedObjectsMessage)toast(savedObjectsMessage);
-function select(i,instanceRuntime=null,instanceConfig=null){
- if(!attractions[i])return false;
+if(savedObjectsMessage)toast(savedObjectsMessage);if(startupError)toast(startupError);
+function select(i,interaction=null){
+ if(!attractions[i]||game!==null)return false;
+ const instanceRuntime=interaction?.rideRuntime,instanceConfig=interaction?.config;
  if(i>=5&&instanceRuntime&&instanceRideSpeed(instanceRuntime)===0){toast('This ride is paused in the builder. Choose another attraction.');return false;}
  const attractionId=attractions[i].id,attractionConfig=instanceConfig?arcadeSettings({...instanceConfig,enabled:[...new Set([...arcadeSettings(instanceConfig).enabled,attractionId])],parts:{...instanceConfig.parts,[attractionId]:{...instanceConfig.parts?.[attractionId],enabled:true}}}):config,previousConfig=session.config;
  session.config=attractionConfig;const entered=enterArcadeAttraction(session,attractions[i].id);session.config=previousConfig;
- if(!entered)return false;gameConfig=attractionConfig;
- seen.add(i);update();beep();if(i<5){startGame(i);return true;}
+ if(!entered)return false;gameConfig=attractionConfig;activeInteraction=interaction;
+ seen.add(i);update();beep();walkKeys.clear();touchKeys.clear();
+ if(i<5){startGame(i);return true;}
  ride=i;rideRuntime=instanceRuntime;rideConfig=attractionConfig;drag=false;pressed.clear();
  for(const b of document.querySelectorAll('#attractions button'))b.disabled=true;
  $('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=true;
- document.body.classList.add('riding');$('#ridehud').hidden=false;$('#ridename').textContent=items[i][0];
+ document.body.classList.add('riding');$('#ridehud').hidden=false;$('#walkhud').hidden=true;$('#ridename').textContent=items[i][0];
  $('#rideinfo').textContent=i===5?'A full lap around the arcade park.':'Restraints locked. Get ready for the climb.';
  $('#ridetype').textContent=i===5?'SCENIC TOUR • ON BOARD':'THRILL RIDE • CAMERA LOCKED';
  frameClock.previous=performance.now();return true;
 }
+function interactNearby(){if(explorationMode==='walk'&&ride===null&&game===null&&nearby)select(nearby.index,nearby.interaction);}
+$('#interact').onclick=interactNearby;
 $('#exitride').onclick=()=>reset();
-addEventListener('keydown',e=>{if(e.key==='Escape'&&ride!==null){e.preventDefault();reset();}});
-renderer.domElement.onpointerdown=e=>{if(ride!==null)return;drag=true;moved=0;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)};
-renderer.domElement.onpointermove=e=>{if(!drag)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;moved+=Math.abs(dx)+Math.abs(dy);yaw-=dx*.006;pitch=Math.max(.25,Math.min(1.3,pitch+dy*.004));lastX=e.clientX;lastY=e.clientY};
+addEventListener('keydown',e=>{
+ if(e.target.matches('input,select,textarea')||$('#park-settings').open)return;
+ if(e.key==='Escape'&&ride!==null){e.preventDefault();reset();return;}
+ if(e.key==='Escape'&&game!==null){e.preventDefault();closeGame();return;}
+ if(game!==null||ride!==null)return;
+ if(e.code==='KeyE'){e.preventDefault();if(!e.repeat)interactNearby();return;}
+ if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();walkKeys.add(e.code);}
+});
+addEventListener('keyup',e=>walkKeys.delete(e.code));
+for(const button of document.querySelectorAll('[data-walk]')){
+ button.onpointerdown=e=>{e.preventDefault();button.setPointerCapture(e.pointerId);touchKeys.add(button.dataset.walk);};
+ button.onpointerup=button.onpointercancel=()=>touchKeys.delete(button.dataset.walk);
+}
+renderer.domElement.onpointerdown=e=>{if(ride!==null||game!==null)return;drag=true;moved=0;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)};
+renderer.domElement.onpointermove=e=>{if(!drag)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;moved+=Math.abs(dx)+Math.abs(dy);if(explorationMode==='walk')lookArcadeWalker(walker,dx,dy);else{yaw-=dx*.006;pitch=Math.max(.25,Math.min(1.3,pitch+dy*.004));}lastX=e.clientX;lastY=e.clientY;};
 renderer.domElement.onpointerup=e=>{
- drag=false;if(moved>=6||ride!==null)return;
+ drag=false;if(moved>=6||ride!==null||game!==null)return;
  const ray=new T.Raycaster();ray.setFromCamera(new T.Vector2(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1),camera);
  for(const hit of ray.intersectObjects(clickMeshes,true)){
-  let ancestor=hit.object,visible=true;while(ancestor){if(!ancestor.visible){visible=false;break;}ancestor=ancestor.parent;}if(!visible)continue;
+  if(!visibleObject(hit.object))continue;
+  if(explorationMode==='walk'&&hit.distance>7)continue;
   let object=hit.object,interaction;while(object){interaction=builderObjects?.interactions.get(object);if(interaction||Number.isInteger(object.userData.index))break;object=object.parent;}
-  const index=interaction?.index??object?.userData.index;if(Number.isInteger(index)&&select(index,interaction?.rideRuntime||null,interaction?.config||null))break;
+  const index=interaction?.index??object?.userData.index;if(Number.isInteger(index)&&select(index,interaction))break;
  }
 };
 renderer.domElement.onpointercancel=()=>{drag=false;};
-renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();if(ride===null)distance=Math.max(28,Math.min(85,distance+e.deltaY*.04))},{passive:false});
+renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();if(ride===null&&game===null&&explorationMode==='overview')distance=Math.max(28,Math.min(85,distance+e.deltaY*.04))},{passive:false});
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);lastParkRender=-Infinity;});
+let slowDraws=0,quality='high';
 function animate(now){
  requestAnimationFrame(animate);
  const dt=advanceArcadeClock(frameClock,now,{paused:document.hidden||$('#park-settings').open});
- if(document.hidden)return;
- // Minigames draw directly to a small 2D canvas. The covered 3D park does not
- // compete for GPU time or make shots/timers crawl on phones and integrated GPUs.
- if(game!==null){updateGame(dt);return;}
+ if(document.hidden||$('#park-settings').open)return;
  parkTime+=dt;
+ if(game!==null)updateGame(dt);
+ if(ride===null&&game===null&&explorationMode==='walk'){
+  const down=(...keys)=>keys.some(key=>walkKeys.has(key)||touchKeys.has(key));
+  stepArcadeWalker(walker,dt,{forward:Number(down('KeyW','ArrowUp','forward'))-Number(down('KeyS','ArrowDown','back')),right:Number(down('KeyD','ArrowRight','right'))-Number(down('KeyA','ArrowLeft','left')),sprint:down('ShiftLeft','ShiftRight'),bounds,colliders:collisionBoxes});
+  updateWalkerGround();nearby=nearestArcadeInteraction(walker,walkInteractions);
+  $('#interact').hidden=!nearby;$('#nearby').textContent=nearby?'E · '+attractions[nearby.index].name:'Walk to an attraction';
+ }
  if(ride!==null){let elapsed=dt*instanceRideSpeed(rideRuntime);while(elapsed>0&&session.ride){const step=Math.min(elapsed,.1);elapsed-=step;if(stepArcadeRide(session,step)){reset('complete');toast('Ride complete. Welcome back to the park!');break;}}}
  if(now-lastParkRender<1000/30)return;lastParkRender=now;
  const phases=animateArcadePark(park.root,parkTime,config);trainT=phases.trainT;coasterT=phases.coasterT;
  for(const part of builderObjects?.rideParts||[]){const speed=arcadeAnimationSpeed(part.userData.arcadeAnimationEnabled,part.userData.arcadeAnimationSpeed);if(speed>0)animateArcadePark(part,parkTime*speed);}
- if(ride!==null){
+ if(game!==null){
+  presentation.update({game,gameElapsed,pointer,shot,puck,balls,targets,ended,attempts,difficulty:gameConfig.difficulty});presentation.setCamera(camera);
+ }else if(ride!==null){
   const isTrain=ride===5,curve=(isTrain?rideRuntime?.trainCurve:rideRuntime?.coaster)||(isTrain?trainCurve:coaster);
   ridePhase=(parkTime*instanceRideSpeed(rideRuntime)/(isTrain?rideConfig.trainLapSeconds:rideConfig.coasterLapSeconds))%1;const pose=arcadeRidePose(isTrain?'train':'coaster',ridePhase),t=pose.phase;
   const rideScale=rideRuntime?.rideScale||config.parts?.[isTrain?'train':'coaster']?.scale||1,rideUp=rideRuntime?.rideUp||new T.Vector3(0,1,0);
   camera.up.copy(rideUp);desired.copy(curve.getPointAt(t)).addScaledVector(rideUp,pose.eyeHeight*rideScale);camera.position.copy(desired);
   if(isTrain){const scenic=curve.getPointAt(t).add(curve.getPointAt((t+.5)%1)).multiplyScalar(.5).addScaledVector(rideUp,(pose.eyeHeight+.8)*rideScale);camera.lookAt(scenic);}else camera.lookAt(curve.getPointAt((t+pose.lookAhead)%1).addScaledVector(rideUp,.9*rideScale));
   $('#rideprogress').value=session.ride?.progress||0;
+ }else if(explorationMode==='walk'){
+  camera.up.set(0,1,0);camera.position.set(walker.x,walker.ground+walker.eyeHeight,walker.z);
+  desired.set(walker.x+Math.sin(walker.yaw)*Math.cos(walker.pitch),camera.position.y+Math.sin(walker.pitch),walker.z-Math.cos(walker.yaw)*Math.cos(walker.pitch));camera.lookAt(desired);
  }else{
   desired.set(center.x+Math.sin(yaw)*distance*Math.cos(pitch),Math.sin(pitch)*distance,center.z+Math.cos(yaw)*distance*Math.cos(pitch));
   camera.position.lerp(desired,.15);camera.lookAt(center);
  }
- renderer.render(scene,camera);
+ const renderStart=performance.now();renderer.render(scene,camera);
+ // Reduce fill cost once on a slow GPU, while simulation and timers retain real time.
+ if(performance.now()-renderStart>70||dt>.12)slowDraws++;else slowDraws=Math.max(0,slowDraws-1);
+ if(slowDraws>=4&&quality==='high'){quality='balanced';renderer.setPixelRatio(Math.min(devicePixelRatio,1));renderer.shadowMap.enabled=false;renderer.setSize(innerWidth,innerHeight);}
 }
-camera.position.set(32,43,43);
-const canvas=$('#play'),ctx=canvas.getContext('2d');let gameConfig=config,game=null,score=0,remaining=45,gameElapsed=0,ended=false,pointer={x:400,y:370},puck,balls=[],shot=null,targets=[],attempts=0;const pressed=new Set();const instructions=[`Move to aim. Click or tap to shoot past the moving goalie. Score in ${config.roundSeconds} seconds.`,`Click or tap moving targets. Smaller targets earn more points. ${config.roundSeconds} seconds.`,`Click or tap when the ball lines up with the hoop. ${config.roundSeconds} seconds.`,`Move your mallet with mouse, arrows or touch. Score in the top goal; defend the bottom.`,`Aim the white ball with mouse, arrows or touch. Click or Space shoots. Sink all six colored balls.`];
-function startGame(i){if(!Number.isInteger(i)||i<0||i>4)return;game=i;score=0;remaining=gameConfig.roundSeconds;gameElapsed=0;ended=false;attempts=0;shot=null;pointer={x:400,y:370};pressed.clear();frameClock.previous=performance.now();puck={x:400,y:230,vx:130,vy:180};balls=Array.from({length:6},(_,j)=>({x:480+(j%3)*27,y:200+Math.floor(j/3)*27,vx:0,vy:0,c:['#eabd5f','#b09ae0','#e78d99','#79c8cf','#d2e881','#eea06e'][j],sunk:false}));balls.unshift({x:220,y:240,vx:0,vy:0,c:'#e8eee0',sunk:false});targets=Array.from({length:5},(_,j)=>({x:100+j*145,y:150+(j%2)*90,r:20+j*4,phase:j}));$('#gametitle').textContent=items[i][0];$('#instructions').textContent=instructions[i].replace(/\d+ seconds/g,gameConfig.roundSeconds+' seconds');$('#feedback').textContent='Ready. Make it count.';if(!$('#game').open)$('#game').showModal();updateGame(0);canvas.focus()}
-function award(n,msg){score+=n;total=localArcadePoints(total+n);session.points+=n;update();beep(650+n*4);$('#feedback').textContent=msg}function finish(){ended=true;$('#feedback').textContent='Round complete! '+score+' points earned. Play again?';beep(300)}function closeGame(){const previous=game;game=null;shot=null;pressed.clear();if($('#game').open)$('#game').close();exitArcadeAttraction(session);frameClock.previous=performance.now();lastParkRender=-Infinity;if(previous!==null)$('#attractions button[data-attraction="'+attractions[previous].id+'"]').focus();}
+camera.position.set(walker.x,walker.ground+walker.eyeHeight,walker.z);
+const canvas=$('#play');let gameConfig=config,game=null,score=0,remaining=45,gameElapsed=0,ended=false,pointer={x:400,y:370},puck,balls=[],shot=null,targets=[],attempts=0;const pressed=new Set();const instructions=[`Move to aim. Click or tap to shoot past the moving goalie. Score in ${config.roundSeconds} seconds.`,`Click or tap moving targets. Smaller targets earn more points. ${config.roundSeconds} seconds.`,`Click or tap when the ball lines up with the hoop. ${config.roundSeconds} seconds.`,`Move your mallet with mouse, arrows or touch. Score in the top goal; defend the bottom.`,`Aim the white ball with mouse, arrows or touch. Click or Space shoots. Sink all six colored balls.`];
+function startGame(i){if(!Number.isInteger(i)||i<0||i>4)return;game=i;score=0;remaining=gameConfig.roundSeconds;gameElapsed=0;ended=false;attempts=0;shot=null;pointer={x:400,y:370};pressed.clear();frameClock.previous=performance.now();puck={x:400,y:230,vx:130,vy:180};balls=Array.from({length:6},(_,j)=>({x:480+(j%3)*27,y:200+Math.floor(j/3)*27,vx:0,vy:0,c:['#eabd5f','#b09ae0','#e78d99','#79c8cf','#d2e881','#eea06e'][j],sunk:false}));balls.unshift({x:220,y:240,vx:0,vy:0,c:'#e8eee0',sunk:false});targets=Array.from({length:5},(_,j)=>({x:100+j*145,y:150+(j%2)*90,r:20+j*4,phase:j}));$('#gametitle').textContent=items[i][0];$('#instructions').textContent=instructions[i].replace(/\d+ seconds/g,gameConfig.roundSeconds+' seconds');$('#feedback').textContent='Ready. Make it count.';presentation.activate(i,{anchor:activeInteraction?.instance||park.parts[attractions[i].id],config:gameConfig});renderer.shadowMap.needsUpdate=true;applySportsSurfaces(presentation.root,{theme:'arcade',renderer});document.body.classList.add('playing');$('#walkhud').hidden=true;if(!$('#game').open)$('#game').show();updateGame(0);presentation.update({game,gameElapsed,pointer,shot,puck,balls,targets,ended,attempts,difficulty:gameConfig.difficulty});presentation.setCamera(camera);lastParkRender=-Infinity;canvas.focus()}
+function award(n,msg){score+=n;total=localArcadePoints(total+n);session.points+=n;update();beep(650+n*4);$('#feedback').textContent=msg}function finish(){ended=true;$('#feedback').textContent='Round complete! '+score+' points earned. Play again?';beep(300)}function closeGame(){const previous=game;game=null;shot=null;pressed.clear();presentation.deactivate();renderer.shadowMap.needsUpdate=true;document.body.classList.remove('playing');camera.up.set(0,1,0);setExploration(explorationMode);if($('#game').open)$('#game').close();exitArcadeAttraction(session);frameClock.previous=performance.now();lastParkRender=-Infinity;if(previous!==null)$('#attractions button[data-attraction="'+attractions[previous].id+'"]').focus();}
 $('#closegame').onclick=closeGame;
 $('#game').addEventListener('cancel',e=>{e.preventDefault();closeGame();});
 $('#game').addEventListener('close',()=>{if(game!==null&&!$('#game').open)closeGame();});
 $('#restart').onclick=()=>{if(game!==null)startGame(game);};
-function pos(e){const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;pointer=arcadePointer((e.clientX-r.left)/r.width*800,(e.clientY-r.top)/r.height*460);}
+function pos(e){const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;const hit=presentation.pointer((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2,camera);if(hit)pointer=arcadePointer(hit.x,hit.y);}
 canvas.onpointermove=pos;
 canvas.onpointerdown=e=>{if(e.button!==0&&e.pointerType!=='touch')return;e.preventDefault();pos(e);canvas.focus();try{canvas.setPointerCapture(e.pointerId);}catch{}action();};
 canvas.onkeydown=e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' ','Enter'].includes(e.key)){e.preventDefault();if(e.key===' '||e.key==='Enter'){if(!e.repeat)action();}else pressed.add(e.key);}};
 canvas.onkeyup=e=>pressed.delete(e.key);
 canvas.onblur=()=>pressed.clear();
-addEventListener('blur',()=>{pressed.clear();drag=false;});
-document.addEventListener('visibilitychange',()=>{frameClock.previous=performance.now();pressed.clear();drag=false;});
-function action(){if(game===null||ended||document.hidden)return;if(game===0&&!shot){shot={x:400,y:400,tx:Math.max(100,Math.min(700,pointer.x)),p:0};attempts++;beep(220)}if(game===1){let hit=false;for(const t of targets){if(Math.hypot(pointer.x-t.dx,pointer.y-t.dy)<t.r){award(Math.round(100-t.r),'Bullseye!');t.phase+=2.4;hit=true;break}}if(!hit)$('#feedback').textContent='Miss — keep tracking the targets.'}if(game===2&&!shot){const x=basketballPosition(gameElapsed);shot={x,y:385,tx:x,p:0,...basketballRelease(x,gameConfig.difficulty)};attempts++;beep(250)}if(game===4&&balls.every(b=>Math.hypot(b.vx,b.vy)<8)){const b=balls[0];b.sunk=false;const dx=pointer.x-b.x,dy=pointer.y-b.y,l=Math.hypot(dx,dy)||1;b.vx=dx/l*560;b.vy=dy/l*560;attempts++;beep(180)}}
-function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h)}function circle(x,y,r,c,stroke){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=c;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke()}}function text(s,x,y,size=20,c='#d7e7df'){ctx.fillStyle=c;ctx.font=`bold ${size}px Arial`;ctx.textAlign='center';ctx.fillText(s,x,y)}function stroke(x1,y1,x2,y2,c='#ffffff55',width=2){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=c;ctx.lineWidth=width;ctx.stroke()}
-function updateGame(dt){if(game===null)return;if(!ended){const active=Math.min(dt,remaining);gameElapsed+=active;remaining=Math.max(0,remaining-dt);pointer=arcadePointer(pointer.x+((pressed.has('ArrowRight')?1:0)-(pressed.has('ArrowLeft')?1:0))*360*active,pointer.y+((pressed.has('ArrowDown')?1:0)-(pressed.has('ArrowUp')?1:0))*360*active);if(remaining<=0)finish();}const now=gameElapsed*1000;$('#gamescore').textContent='SCORE '+score;$('#timer').textContent=Math.ceil(remaining)+'s';ctx.clearRect(0,0,800,460);rect(0,0,800,460,'#10272c');for(let i=0;i<800;i+=40)stroke(i,0,i,460,'#ffffff05');for(let i=0;i<460;i+=40)stroke(0,i,800,i,'#ffffff05');if(game===0){rect(45,40,710,380,'#b4d9da');stroke(50,240,750,240,'#d27587',3);circle(400,240,55,'#b4d9da','#608f9c');rect(215,35,370,70,'#354c53');for(let x=220;x<590;x+=20)stroke(x,40,x,100,'#d9e6dc44');for(let y=40;y<105;y+=15)stroke(215,y,585,y,'#d9e6dc44');const goalie=400+Math.sin(now/600)*145;rect(goalie-38,75,76,35,'#d37b94');circle(goalie,68,18,'#ede3c9');stroke(400,400,pointer.x,100,'#34575c55');circle(400,400,12,'#23383e');if(shot&&!ended){shot.p+=dt*2.1;const p=Math.min(1,shot.p);circle(400+(shot.tx-400)*p,400-315*p,10,'#182b32');if(p>=1){if(shot.tx>220&&shot.tx<580&&Math.abs(shot.tx-goalie)>52)award(100,'GOAL! Top shelf.');else{$('#feedback').textContent='Saved! Aim away from the goalie.';beep(120)}shot=null}}text('CLICK TO SHOOT',400,445,12,'#8cb0b3')}
-if(game===1){text('TARGET PRACTICE',400,50,15,'#7a9b9f');targets.forEach(t=>{t.dx=t.x+Math.sin(now/1000+t.phase)*45;t.dy=t.y+Math.cos(now/1300+t.phase)*48;circle(t.dx,t.dy,t.r+6,'#56717a');circle(t.dx,t.dy,t.r,'#dc91a9');circle(t.dx,t.dy,t.r*.65,'#203740');circle(t.dx,t.dy,t.r*.28,'#dcfa70')});stroke(pointer.x-15,pointer.y,pointer.x+15,pointer.y,'#dcfa70');stroke(pointer.x,pointer.y-15,pointer.x,pointer.y+15,'#dcfa70');text('TRACK · AIM · FIRE',400,420,12,'#8cb0b3')}
-if(game===2){rect(100,130,600,300,'#946542');stroke(400,130,400,430,'#e6c9a255');circle(400,335,60,'#946542','#e6c9a277');rect(315,38,170,95,'#b8d0c8');rect(360,85,80,48,'#b8d0c8');ctx.strokeStyle='#fff';ctx.strokeRect(360,85,80,48);ctx.beginPath();ctx.ellipse(400,135,45,10,0,0,Math.PI*2);ctx.strokeStyle='#f79255';ctx.lineWidth=6;ctx.stroke();for(let i=-2;i<=2;i++)stroke(400+i*17,142,400+i*11,184,'#e1ead7',2);const bx=basketballPosition(gameElapsed);const aligned=basketballRelease(bx,gameConfig.difficulty).scored;stroke(400,205,400,415,aligned?'#dcfa7088':'#ffffff20',2);if(!shot){circle(bx,385,19,'#e8a25e');if(aligned)circle(bx,385,23,'#e8a25e','#dcfa70');}if(shot&&!ended){shot.p+=dt*1.6;const p=Math.min(1,shot.p),x=shot.x+(shot.endX-shot.x)*p,y=385-240*p-Math.sin(p*Math.PI)*180;circle(x,y,19-8*p,'#e8a25e');if(p>=1){if(shot.scored)award(150,'SWISH! Nothing but net.');else{$('#feedback').textContent='Off the rim. Release under the hoop.';beep(120)}shot=null}}text('RELEASE WHEN THE BALL IS CENTERED',400,450,12,'#c7a985')}
-if(game===3){rect(80,25,640,410,'#8cbcc7');rect(90,35,620,390,'#183c49');stroke(90,230,710,230,'#82b2c2');circle(400,230,52,'#183c49','#82b2c2');rect(300,22,200,12,'#df8c9f');rect(300,426,200,12,'#9bcbd5');const mx=Math.max(115,Math.min(685,pointer.x)),my=Math.max(250,Math.min(400,pointer.y)),aiX=400+Math.sin(now/(gameConfig.difficulty==='normal'?650:1000))*190;circle(aiX,95,28,'#de849e');circle(mx,my,28,'#c7efea');if(!ended)for(const step of arcadePhysicsSteps(dt)){puck.x+=puck.vx*step;puck.y+=puck.vy*step;if(puck.x<105||puck.x>695){puck.x=Math.max(105,Math.min(695,puck.x));puck.vx*=-1}for(const m of [{x:mx,y:my},{x:aiX,y:95}]){const dx=puck.x-m.x,dy=puck.y-m.y,l=Math.hypot(dx,dy);if(l<42){const speed=Math.hypot(puck.vx,puck.vy),nx=l>1e-6?dx/l:speed?puck.vx/speed:0,ny=l>1e-6?dy/l:speed?puck.vy/speed:-1;puck.x=m.x+nx*43;puck.y=m.y+ny*43;puck.vx=nx*390;puck.vy=ny*390;beep(230)}}if(puck.y<42||puck.y>418){if(puck.x>300&&puck.x<500){if(puck.y<42)award(100,'GOAL! Great angle.');else $('#feedback').textContent='Opponent scores. Defend your goal!';puck={x:400,y:230,vx:100,vy:puck.y<42?180:-180}}else{puck.y=Math.max(42,Math.min(418,puck.y));puck.vy*=-1}}}circle(puck.x,puck.y,12,'#ddeb92')}
-if(game===4){rect(55,45,690,370,'#705b49');rect(75,65,650,330,'#2b705d');const pockets=[[80,70],[400,65],[720,70],[80,390],[400,395],[720,390]];pockets.forEach(p=>circle(...p,20,'#0a2023'));if(!ended){for(const step of arcadePhysicsSteps(dt)){for(const b of balls){if(b.sunk)continue;b.x+=b.vx*step;b.y+=b.vy*step;b.vx*=Math.pow(.31,step);b.vy*=Math.pow(.31,step);if(pockets.some(p=>Math.hypot(b.x-p[0],b.y-p[1])<23)){b.sunk=true;b.vx=b.vy=0;if(b===balls[0]){$('#feedback').textContent='Scratch! Cue ball reset.';b.x=220;b.y=240;b.sunk=false}else award(100,'Pocketed! Nice shot.');continue}if(b.x<90||b.x>710){b.x=Math.max(90,Math.min(710,b.x));b.vx*=-.9}if(b.y<80||b.y>380){b.y=Math.max(80,Math.min(380,b.y));b.vy*=-.9}}for(let i=0;i<balls.length;i++)for(let j=i+1;j<balls.length;j++){const a=balls[i],b=balls[j];if(a.sunk||b.sunk)continue;const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d<24&&d>0){const nx=dx/d,ny=dy/d,v=(a.vx-b.vx)*nx+(a.vy-b.vy)*ny;if(v>0){a.vx-=v*nx;a.vy-=v*ny;b.vx+=v*nx;b.vy+=v*ny}a.x-=nx*(24-d)/2;a.y-=ny*(24-d)/2;b.x+=nx*(24-d)/2;b.y+=ny*(24-d)/2}}}if(balls.slice(1).every(b=>b.sunk)){award(300,'Table cleared! +300 bonus');finish()}}if(balls.every(b=>Math.hypot(b.vx,b.vy)<8)){const b=balls[0];stroke(b.x,b.y,pointer.x,pointer.y,'#d7e6c555',1)}balls.forEach(b=>{if(!b.sunk){circle(b.x,b.y,12,b.c);circle(b.x-3,b.y-4,3,'#ffffff66')}});text('AIM FROM THE WHITE BALL · CLICK TO SHOOT',400,445,12,'#8cb0b3')}
-if(ended){rect(0,0,800,460,'#07181ac9');text('ROUND COMPLETE',400,200,34,'#dcfa70');text(score+' POINTS',400,250,24);text('Hit Restart to play again',400,292,15)}}
+addEventListener('blur',()=>{pressed.clear();walkKeys.clear();touchKeys.clear();drag=false;});
+document.addEventListener('visibilitychange',()=>{frameClock.previous=performance.now();pressed.clear();walkKeys.clear();touchKeys.clear();drag=false;});
+function action(){if(game===null||ended||document.hidden)return;if(game===0&&!shot){shot={x:400,y:400,tx:Math.max(100,Math.min(700,pointer.x)),p:0};attempts++;beep(220)}if(game===1){attempts++;let hit=false;for(const t of targets){if(Math.hypot(pointer.x-t.dx,pointer.y-t.dy)<t.r){award(Math.round(100-t.r),'Bullseye!');t.phase+=2.4;hit=true;break}}if(!hit)$('#feedback').textContent='Miss — keep tracking the targets.'}if(game===2&&!shot){const x=basketballPosition(gameElapsed);shot={x,y:385,tx:x,p:0,...basketballRelease(x,gameConfig.difficulty)};attempts++;beep(250)}if(game===4&&balls.every(b=>Math.hypot(b.vx,b.vy)<8)){const b=balls[0];b.sunk=false;const dx=pointer.x-b.x,dy=pointer.y-b.y,l=Math.hypot(dx,dy)||1;b.vx=dx/l*560;b.vy=dy/l*560;attempts++;beep(180)}}
+function updateGame(dt){
+ if(game===null)return;
+ let active=0;
+ if(!ended){active=Math.min(dt,remaining);gameElapsed+=active;remaining=Math.max(0,remaining-dt);pointer=arcadePointer(pointer.x+((pressed.has('ArrowRight')?1:0)-(pressed.has('ArrowLeft')?1:0))*360*active,pointer.y+((pressed.has('ArrowDown')?1:0)-(pressed.has('ArrowUp')?1:0))*360*active);}
+ const now=gameElapsed*1000;
+ if(game===0&&shot&&!ended){
+  shot.p+=active*2.1;
+  if(shot.p>=1){const goalie=400+Math.sin(now/600)*145;if(shot.tx>220&&shot.tx<580&&Math.abs(shot.tx-goalie)>52)award(100,'GOAL! Top shelf.');else{$('#feedback').textContent='Saved! Aim away from the goalie.';beep(120);}shot=null;}
+ }
+ if(game===1)for(const t of targets){t.dx=t.x+Math.sin(now/1000+t.phase)*45;t.dy=t.y+Math.cos(now/1300+t.phase)*48;}
+ if(game===2&&shot&&!ended){
+  shot.p+=active*1.6;
+  if(shot.p>=1){if(shot.scored)award(150,'SWISH! Nothing but net.');else{$('#feedback').textContent='Off the rim. Release under the hoop.';beep(120);}shot=null;}
+ }
+ if(game===3&&!ended){
+  const mx=Math.max(115,Math.min(685,pointer.x)),my=Math.max(250,Math.min(400,pointer.y)),aiX=400+Math.sin(now/(gameConfig.difficulty==='normal'?650:1000))*190;
+  for(const step of arcadePhysicsSteps(active)){
+   puck.x+=puck.vx*step;puck.y+=puck.vy*step;
+   if(puck.x<105||puck.x>695){puck.x=Math.max(105,Math.min(695,puck.x));puck.vx*=-1;}
+   for(const m of [{x:mx,y:my},{x:aiX,y:95}]){
+    const dx=puck.x-m.x,dy=puck.y-m.y,l=Math.hypot(dx,dy);
+    if(l<42){const speed=Math.hypot(puck.vx,puck.vy),nx=l>1e-6?dx/l:speed?puck.vx/speed:0,ny=l>1e-6?dy/l:speed?puck.vy/speed:-1;puck.x=m.x+nx*43;puck.y=m.y+ny*43;puck.vx=nx*390;puck.vy=ny*390;beep(230);}
+   }
+   if(puck.y<42||puck.y>418){
+    if(puck.x>300&&puck.x<500){if(puck.y<42)award(100,'GOAL! Great angle.');else $('#feedback').textContent='Opponent scores. Defend your goal!';puck={x:400,y:230,vx:100,vy:puck.y<42?180:-180};}
+    else{puck.y=Math.max(42,Math.min(418,puck.y));puck.vy*=-1;}
+   }
+  }
+ }
+ if(game===4&&!ended){
+  const pockets=[[80,70],[400,65],[720,70],[80,390],[400,395],[720,390]];
+  for(const step of arcadePhysicsSteps(active)){
+   for(const b of balls){
+    if(b.sunk)continue;b.x+=b.vx*step;b.y+=b.vy*step;b.vx*=Math.pow(.31,step);b.vy*=Math.pow(.31,step);
+    if(pockets.some(p=>Math.hypot(b.x-p[0],b.y-p[1])<23)){b.sunk=true;b.vx=b.vy=0;if(b===balls[0]){$('#feedback').textContent='Scratch! Cue ball reset.';b.x=220;b.y=240;b.sunk=false;}else award(100,'Pocketed! Nice shot.');continue;}
+    if(b.x<90||b.x>710){b.x=Math.max(90,Math.min(710,b.x));b.vx*=-.9;}
+    if(b.y<80||b.y>380){b.y=Math.max(80,Math.min(380,b.y));b.vy*=-.9;}
+   }
+   for(let i=0;i<balls.length;i++)for(let j=i+1;j<balls.length;j++){
+    const a=balls[i],b=balls[j];if(a.sunk||b.sunk)continue;const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+    if(d<24&&d>0){const nx=dx/d,ny=dy/d,v=(a.vx-b.vx)*nx+(a.vy-b.vy)*ny;if(v>0){a.vx-=v*nx;a.vy-=v*ny;b.vx+=v*nx;b.vy+=v*ny;}a.x-=nx*(24-d)/2;a.y-=ny*(24-d)/2;b.x+=nx*(24-d)/2;b.y+=ny*(24-d)/2;}
+   }
+  }
+  if(balls.slice(1).every(b=>b.sunk)){award(300,'Table cleared! +300 bonus');finish();}
+ }
+ if(remaining<=0&&!ended)finish();
+ $('#gamescore').textContent='SCORE '+score;$('#timer').textContent=Math.ceil(remaining)+'s';
+ $('#game').classList.toggle('round-ended',ended);
+}
 $('#park-settings-button').onclick=()=>{if(ride!==null)return;const form=$('#park-settings');for(const input of form.querySelectorAll('[name]'))input.value=config[input.name]??'';form.showModal();};
 $('#park-config-form').onsubmit=e=>{if(e.submitter?.value==='cancel')return;e.preventDefault();const next={...config};for(const input of $('#park-settings').querySelectorAll('[name]'))next[input.name]=input.value;try{localStorage.setItem('neon-junction.config',JSON.stringify(arcadeSettings(next)));location.reload();}catch{$('#settings-status').textContent='This browser cannot save local park settings.';}};
-window.NeonJunction=Object.freeze({snapshot:()=>({mode:session.mode,attraction:session.attraction,ride:session.ride?{...session.ride}:null,game,score,remaining,gameElapsed,ended,attempts,pointer:{...pointer},shot:shot?{...shot}:null,points:total,visited:[...seen],camera:camera.position.toArray(),cameraUp:camera.up.toArray(),trainT,coasterT,ridePhase}),ready:true});
+refreshAttractionButtons();$('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=false;
+window.NeonJunction=Object.freeze({snapshot:()=>({mode:session.mode,attraction:session.attraction,ride:session.ride?{...session.ride}:null,game,score,remaining,gameElapsed,ended,attempts,pointer:{...pointer},shot:shot?{...shot}:null,points:total,visited:[...seen],camera:camera.position.toArray(),cameraUp:camera.up.toArray(),trainT,coasterT,ridePhase,viewMode:game!==null?'game':ride!==null?'ride':explorationMode,playerPosition:[walker.x,walker.ground+walker.eyeHeight,walker.z],walking:{...walker,nearby:nearby?.id||null,colliders:collisionBoxes.length},presentation:presentation.snapshot(),graphics:{park:park.root.userData.sportsSurfaceStatus||null,builder:builderObjects?.root.userData.sportsSurfaceStatus||null,game:presentation.root?.userData.sportsSurfaceStatus||null},render:{fps:30,pixelRatio:renderer.getPixelRatio(),quality,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles},puck:puck?{...puck}:null,balls:balls.map(b=>({...b})),targets:targets.map(t=>({...t}))}),ready:true});
+setExploration('walk');
 const autoIndex=attractions.findIndex(attraction=>attraction.id===autoAttraction);
-if(autoIndex>=0&&!startupError){const interaction=launchPartId?[...(builderObjects?.interactions.values()||[])].find(item=>item.objectId===launchPartId):null;if(interaction)select(autoIndex,interaction.rideRuntime||null,interaction.config||null);else selectFromMenu(autoIndex);}
+if(autoIndex>=0&&!startupError){const interaction=launchPartId?[...(builderObjects?.interactions.values()||[])].find(item=>item.objectId===launchPartId):null;if(interaction)select(autoIndex,interaction);else selectFromMenu(autoIndex);}
 requestAnimationFrame(animate);
