@@ -1,9 +1,10 @@
+import {mountXRGameControls,xrStick} from './xr-game-controls.js';
 import {isCleanSportsEnvironment,canonicalWorldId} from './sports-worlds.js';
 import {createBasketballAIAvatar,animateBasketballAIAvatar} from './basketball-ai-avatar.js';
 import {mountBasketballAim} from './basketball-aim.js';
 import {mountBasketballHud} from './basketball-hud.js';
 import {setBasketballJersey} from './basketball-jerseys.js';
-import {ensureBasketballGame,assignBasketballTeam,takeBasketballSpot,configureBasketballGame,watchBasketballGame,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,isBasketballEnvironment,basketballHoopForTeam,constrainBasketballSpectator,predictBasketballShotPath} from './basketball-rules.js';
+import {ensureBasketballGame,assignBasketballTeam,takeBasketballSpot,stealBasketball,configureBasketballGame,watchBasketballGame,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,isBasketballEnvironment,basketballHoopForTeam,constrainBasketballSpectator,predictBasketballShotPath} from './basketball-rules.js';
 import {isBasketball,basketballJerseyTeam,tossBasketball,stepBasketball,basketballShotSolution,predictBasketballTrajectory,basketballCatchPosition} from './basketball.js';
 import {radToxStickMarkup,loadRadToxControllerStyles} from './rad-tox-controller.js';
 import {isArcadeMap,ARCADE_PARTS} from './arcade-rules.js';
@@ -805,7 +806,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     toxicBubbleSystem.active=true;
     toxicBubbleSystem.updateHud();
   };
-  for(const name of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt']){const original=toxicBubbleSystem[name]?.bind(toxicBubbleSystem);if(original)toxicBubbleSystem[name]=(...args)=>{if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active)return basketballAction('basketball-shoot');if(name==='handlePointerInteraction'&&isTopDownView()&&!args[1]?.centre){const event=args[0],rect=canvas.getBoundingClientRect();if(Number.isFinite(event?.clientX)&&Number.isFinite(event?.clientY))aimTopDownPointer(new THREE.Vector2(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1));args=[{},{centre:true}];}if(!serverHostedRoom)return original(...args);if(toxicBubbleSystem.tool==='brick')return toxicBubbleSystem.placeBrick();if(ownedPlacement.active)return ownedPlacement.confirm();return serverCommand('fire',{tool:toxicBubbleSystem.tool,direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex});};}
+  for(const name of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt']){const original=toxicBubbleSystem[name]?.bind(toxicBubbleSystem);if(original)toxicBubbleSystem[name]=(...args)=>{if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active)return basketballAction('basketball-shoot');if(name==='handlePointerInteraction'&&isTopDownView()&&!args[1]?.centre){const event=args[0],rect=canvas.getBoundingClientRect();if(Number.isFinite(event?.clientX)&&Number.isFinite(event?.clientY))aimTopDownPointer(new THREE.Vector2(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1));args=[{},{centre:true}];}if(!serverHostedRoom)return original(...args);if(toxicBubbleSystem.tool==='brick')return toxicBubbleSystem.placeBrick();if(ownedPlacement.active)return ownedPlacement.confirm();const direction=name==='handleXRInteraction'&&args[0]?new THREE.Vector3(0,0,-1).applyQuaternion(args[0].getWorldQuaternion(new THREE.Quaternion())):camera.getWorldDirection(new THREE.Vector3());return serverCommand('fire',{tool:toxicBubbleSystem.tool,direction:direction.toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex});};}
   async function createOwnedPreview(asset){
     let root;
     if(asset.materialId)root=createBuildingBlock(THREE,asset.materialId);
@@ -1446,7 +1447,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   window.addEventListener('muzikaz:asset-published', () => checkForHouseUpdates().catch((error) => console.info('[MUZIKAZ Integration]', 'Automatic world/avatar refresh failed', error)));
 
   function getMovementInput(){const input=getInput(),adjusted=explorerMovementInput(input,player.yaw,isTopDownView());return input.set(adjusted.x,adjusted.y);}
-  function getInput() { stickSprinting=walkingSprint(stickSprinting,Math.hypot(thumbInput.leftX,thumbInput.leftY)); const input = new THREE.Vector2(); if (keys.has('w')||keys.has('arrowup')||mobile.has('forward')) input.y += 1; if (keys.has('s')||keys.has('arrowdown')||mobile.has('back')) input.y -= 1; if (keys.has('a')||keys.has('arrowleft')||mobile.has('left')) input.x -= 1; if (keys.has('d')||keys.has('arrowright')||mobile.has('right')) input.x += 1; input.x += thumbInput.leftX; input.y -= thumbInput.leftY; const session = renderer.xr.getSession(); if (session) for (const source of session.inputSources) { const axes = source.gamepad?.axes || []; const ax = Number(axes[2] ?? axes[0] ?? 0), ay = Number(axes[3] ?? axes[1] ?? 0); if (source.handedness === 'left') { input.x += Math.abs(ax) > .15 ? ax : 0; input.y += Math.abs(ay) > .15 ? -ay : 0; } if (source.handedness === 'right') { if (Math.abs(ax) > .72 && turnReady) { player.yaw -= Math.sign(ax) * Math.PI / 6; turnReady = false; } else if (Math.abs(ax) < .25) turnReady = true; } } return input.lengthSq() > 1 ? input.normalize() : input; }
+  function getInput() { if(xrGameControls?.menuOpen)return new THREE.Vector2();stickSprinting=walkingSprint(stickSprinting,Math.hypot(thumbInput.leftX,thumbInput.leftY)); const input = new THREE.Vector2(); if (keys.has('w')||keys.has('arrowup')||mobile.has('forward')) input.y += 1; if (keys.has('s')||keys.has('arrowdown')||mobile.has('back')) input.y -= 1; if (keys.has('a')||keys.has('arrowleft')||mobile.has('left')) input.x -= 1; if (keys.has('d')||keys.has('arrowright')||mobile.has('right')) input.x += 1; input.x += thumbInput.leftX; input.y -= thumbInput.leftY; const session = renderer.xr.getSession(); if (session) for (const [index,source] of [...session.inputSources].entries()) { const {x:ax,y:ay}=xrStick(source),hand=source.handedness||(index?'right':'left'); if (hand === 'left') { input.x += ax; input.y -= ay; } if (hand === 'right') { if (Math.abs(ax) > .72 && turnReady) { player.yaw -= Math.sign(ax) * Math.PI / 6; turnReady = false; } else if (Math.abs(ax) < .25) turnReady = true; } } return input.lengthSq() > 1 ? input.normalize() : input; }
   // The right look stick is deliberately 25% gentler than its previous turn/look rates.
   const RIGHT_THUMBSTICK_SENSITIVITY = 0.75;
   let jetpackPaidSecondsRemaining = 0;
@@ -1530,9 +1531,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const ballControls=document.createElement('div');ballControls.className='basketball-controls';ballControls.style.cssText='position:absolute;bottom:140px;right:18px;z-index:30;display:flex;gap:8px';ballControls.hidden=true;
   for(const [action,label] of [['catch','Catch basketball (E)'],['toss','Toss basketball (T)']]){const button=document.createElement('button');button.type='button';button.textContent=label;button.addEventListener('click',()=>safelyInteract('Basketball',()=>basketballAction(action)));ballControls.append(button);}stage.append(ballControls);
   function basketballAction(action,fields={}){
-    if(['basketball-shoot','toss'].includes(action))fields={...basketballAim.options(),direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),...fields};
+    if(['basketball-shoot','toss'].includes(action))fields={...basketballAim.options(),direction:(renderer.xr.isPresenting?renderer.xr.getCamera():camera).getWorldDirection(new THREE.Vector3()).toArray(),...fields};
     if(serverHostedRoom)return serverCommand(action,{pitch:-player.pitch,...fields}).then(state=>{if(state&&action==='basketball-watch'){player.yaw=Math.PI/2;player.pitch=0;}return state;});
     const now=Date.now();localBasketballPlayer.position={x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z};localBasketballPlayer.yaw=player.yaw;
+    if(action==='basketball-steal'){const ball=stealBasketball(localBasketballSim,localBasketballPlayer,now);heldBasketball=localBasketballs.find(item=>item.id===ball.id)||null;setStatus('Basketball stolen — pass or shoot.');return;}
     if(action==='basketball-join-spot'){takeBasketballSpot(localBasketballSim,localBasketballPlayer,now,fields.team);localJerseyTeam=localBasketballPlayer.basketballTeam;playerRig.position.set(localBasketballPlayer.position.x,localBasketballPlayer.position.y,localBasketballPlayer.position.z);return;}
     if(action==='basketball-team'){assignBasketballTeam(localBasketballSim,localBasketballPlayer,now,fields.team);localBasketballPlayer.basketballJersey=fields.team;localJerseyTeam=fields.team;return;}
     if(action==='basketball-settings')return configureBasketballGame(localBasketballSim,fields.settings,now);
@@ -1589,7 +1591,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const team=serverHostedRoom?localJerseyTeam:localBasketballPlayer.basketballJersey;setBasketballJersey(THREE,localJerseyAnchor,team,{firstPerson:true});
     placedAvatars.children.forEach(root=>{if(root.userData.localPlayerAvatar)setBasketballJersey(THREE,root,team);});
   }
-  window.addEventListener('keydown',event=>{if(event.repeat||isTypingTarget(event.target)||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return;const key=event.key.toLowerCase(),hasBall=serverHostedRoom?Object.values(serverActors).some(isBasketball):localBasketballs.length>0;if(hasBall&&(key==='t'||key==='e'||(key==='r'&&isBasketballEnvironment(activeEnvironment)))){if(key==='e'&&isBasketballEnvironment(activeEnvironment)&&(serverHostedRoom?basketballSelf?.basketballRole:localBasketballPlayer.basketballRole)==='spectator')return;if(key==='e'&&(heldBasketball||(serverHostedRoom?!Object.values(serverActors).some(ball=>basketballCatchPosition(ball,playerRig.position)):!localBasketballs.some(ball=>basketballCatchPosition(ball,playerRig.position)))))return;event.preventDefault();event.stopImmediatePropagation();safelyInteract('Basketball',()=>basketballAction(key==='t'?'toss':key==='r'?'basketball-shoot':'catch'));}},true);
+  window.addEventListener('keydown',event=>{if(event.repeat||isTypingTarget(event.target)||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return;const key=event.key.toLowerCase();if(key==='q'&&isBasketballEnvironment(activeEnvironment)){event.preventDefault();event.stopImmediatePropagation();safelyInteract('Steal basketball',()=>basketballAction('basketball-steal'));return;}const hasBall=serverHostedRoom?Object.values(serverActors).some(isBasketball):localBasketballs.length>0;if(hasBall&&(key==='t'||key==='e'||(key==='r'&&isBasketballEnvironment(activeEnvironment)))){if(key==='e'&&isBasketballEnvironment(activeEnvironment)&&(serverHostedRoom?basketballSelf?.basketballRole:localBasketballPlayer.basketballRole)==='spectator')return;if(key==='e'&&(heldBasketball||(serverHostedRoom?!Object.values(serverActors).some(ball=>basketballCatchPosition(ball,playerRig.position)):!localBasketballs.some(ball=>basketballCatchPosition(ball,playerRig.position)))))return;event.preventDefault();event.stopImmediatePropagation();safelyInteract('Basketball',()=>basketballAction(key==='t'?'toss':key==='r'?'basketball-shoot':'catch'));}},true);
   function dropHeldBuilderItem(){const forward=camera.getWorldDirection(new THREE.Vector3());forward.y=0;forward.normalize();return builderGameplay.dropHeld(playerRig.position.clone().addScaledVector(forward,1.5));}
   let nearbyAction={kind:'none',prompt:'',label:'',title:'',hint:'',vehicleActive:false};
   let nearbyActionCheckedAt=-Infinity;
@@ -1767,51 +1769,40 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   setupThumbstick('left'); setupThumbstick('right');
   fullscreenButton?.addEventListener('click', setFullscreen);
   beginResetButton?.addEventListener('click', () => {if(serverHostedRoom){serverCommand('respawn');return;} resetPlayer(activeWorldSpawn.position, activeWorldSpawn.rotationY); toxicBubbleSystem.begin(); setStatus('RAD-TOX begin or reset requested.'); });
-  async function setupVRControls() {
-    if (!renderer.xr.enabled || !webXrAvailable) return;
-    if (!(await navigator.xr.isSessionSupported('immersive-vr'))) return;
-    const [{ VRButton }, { XRControllerModelFactory }] = await Promise.all([
-      import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/VRButton.js/+esm'),
-      import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/XRControllerModelFactory.js/+esm')
-    ]);
-    const controllerFactory = new XRControllerModelFactory();
-    for (let i = 0; i < 2; i += 1) {
-      const controller = renderer.xr.getController(i);
-      controller.addEventListener('connected', (event) => {
-        controller.userData.handedness = event.data.handedness || (i === 0 ? 'left' : 'right');
-        controller.userData.inputSource = event.data;
-        controller.userData.aimRay ??= createXRAimRay();
-        controller.add(controller.userData.aimRay);
-      });
-      controller.addEventListener('disconnected', () => {if(toxicBubbleSystem.flameController===controller)toxicBubbleSystem.flameTrigger=null; controller.userData.inputSource = null; controller.userData.aimRay?.removeFromParent(); });
-      // Both triggers always aim and use the currently selected tool. This prevents
-      // a missed shot from unexpectedly moving the player across the map.
-      controller.addEventListener('selectend',()=>{if(toxicBubbleSystem.flameController===controller){toxicBubbleSystem.flameTrigger=null;toxicBubbleSystem.flameController=null;}});
-      controller.addEventListener('selectstart', () => {
-        if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return;
-        if(toxicBubbleSystem.tool==='flamethrower'){toxicBubbleSystem.flameController=controller;toxicBubbleSystem.flameTrigger=()=>({origin:controller.getWorldPosition(new THREE.Vector3()),direction:new THREE.Vector3(0,0,-1).applyQuaternion(controller.getWorldQuaternion(new THREE.Quaternion()))});}
-        const origin=controller.getWorldPosition(new THREE.Vector3()),direction=new THREE.Vector3(0,0,-1).applyQuaternion(controller.getWorldQuaternion(new THREE.Quaternion()));
-        const rangeHit=handleRangeShot({origin,direction});
-        const hit = rangeHit===null?toxicBubbleSystem.handleXRInteraction(controller):rangeHit;
-        pulseXRController(controller, hit ? .55 : .18, hit ? 45 : 18);
-        if (!hit && rangeHit===null && toxicBubbleSystem.state === RAD_TOX_STATES.ACTIVE) setStatus('Shot missed — keep aiming with the controller ray and try again.');
-      });
-      // Grip gestures provide the non-combat actions without sacrificing a trigger:
-      // left grip changes weapon; right grip teleports to the aimed walkable floor.
-      controller.addEventListener('squeezeend', () => {
-        if (controller.userData.handedness === 'left' || (i === 0 && !controller.userData.handedness)) cycleXRTool(controller);
-        else teleportFromController(controller);
-      });
-      const grip = renderer.xr.getControllerGrip(i);
-      grip.add(controllerFactory.createControllerModel(grip));
-      playerRig.add(controller, grip);
-    }
-    const vrButton = VRButton.createButton(renderer, { requiredFeatures: ['local-floor'], optionalFeatures: ['bounded-floor', 'hand-tracking'] });
-    vrButton.classList.add('house-vr-button');
-    stage.append(vrButton);
-    renderer.xr.addEventListener('sessionstart', () => { topDownAimTarget=null;syncCameraToggle();updateGameCamera();camera.position.set(0, 0, 0); quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto'); setStatus('WebXR ready. Left stick walks, right stick snap-turns, either trigger aims and uses your tool, left grip changes tool, and right grip teleports.'); });
-    renderer.xr.addEventListener('sessionend', () => { syncCameraToggle();updateGameCamera();camera.position.set(0, player.eyeHeight, 0); quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto'); setStatus(activeEnvironment ? `Ready: ${activeEnvironment.name}. WebXR session ended.` : 'WebXR session ended.'); });
+  let xrGameControls=null;
+  function xrBasketballInteract(){const self=serverHostedRoom?authoritativeClient?.selfId:'local',balls=serverHostedRoom?Object.values(serverActors):localBasketballs;const held=balls.some(ball=>isBasketball(ball)&&ball.holderId&&ball.holderId!==self);return basketballAction(held?'basketball-steal':'catch');}
+  async function setupVRControls(){
+    if(!renderer.xr.enabled||!webXrAvailable)return;
+    xrGameControls=mountXRGameControls({renderer,scene,camera,rig:playerRig,parent:stage,pollMovement:false,status:setStatus,
+      onEnter:()=>{if(!gameplayStarted)throw Error('Start the world and choose guest access or sign in before entering VR.');},
+      onExit:()=>{syncCameraToggle();updateGameCamera();camera.position.set(0,player.eyeHeight,0);keys.clear();},
+      onTrigger:(hand,{origin,direction},controller)=>{
+        if(isBasketballEnvironment(activeEnvironment))return hand==='left'?xrBasketballInteract():basketballAction('basketball-shoot',{direction:direction.toArray()});
+        const rangeHit=handleRangeShot({origin,direction});if(rangeHit!==null)return rangeHit;
+        return toxicBubbleSystem.handleXRInteraction(controller);
+      },
+      onGrip:(hand,ray,controller)=>isBasketballEnvironment(activeEnvironment)?(hand==='left'?xrBasketballInteract():basketballAction('toss',{direction:ray.direction.toArray()})):hand==='left'?cycleXRTool(controller):teleportFromController(controller),
+      onAction:()=>{if(isBasketballEnvironment(activeEnvironment))return xrBasketballInteract();},
+      menuItems:()=>isBasketballEnvironment(activeEnvironment)?[
+        {label:'Start basketball · current setup + AI',run:()=>basketballAction('basketball-start')},
+        {label:'Join Home · take an AI spot',run:()=>basketballAction('basketball-join-spot',{team:'home'})},
+        {label:'Join Away · take an AI spot',run:()=>basketballAction('basketball-join-spot',{team:'away'})},
+        {label:'Watch game',run:()=>basketballAction('basketball-watch')},
+        {label:'Team size · cycle 1–5',run:()=>{const rules=(serverHostedRoom?basketballSnapshot:localBasketballSim.basketball).settings,size=rules.teamSize%5+1;return basketballAction('basketball-settings',{settings:{teamSize:size,homeHumans:Math.min(rules.homeHumans,size),awayHumans:Math.min(rules.awayHumans,size)}});}},{label:'AI difficulty · cycle tiers',run:()=>{const rules=(serverHostedRoom?basketballSnapshot:localBasketballSim.basketball).settings;return basketballAction('basketball-settings',{settings:{aiDifficulty:rules.aiDifficulty%5+1}});}},
+        {label:'Catch / steal basketball',run:xrBasketballInteract},
+        {label:'Shoot',run:()=>basketballAction('basketball-shoot')},{label:'Pass',run:()=>basketballAction('toss')},
+        {label:'Solo world · re-enter VR',run:()=>openXRWorldMode('solo')},{label:'Live world · re-enter VR',run:()=>openXRWorldMode('multiplayer')},
+        {label:'Exit VR',run:()=>xrGameControls.endSession()}
+      ]:isCleanSportsEnvironment(activeEnvironment)?[
+        {label:rangeActive?'End training course':'Start training course',run:()=>rangeStart.click()},
+        ...Object.entries(rangeCourses).map(([mode,course])=>({label:'Course: '+course.label,run:()=>{stopRangeCourse();rangeMode=mode;resetRangeReadout();rangeStart.click();}})),
+        ...['laser','pulse-rifle','flamethrower','rail-cannon'].map(tool=>({label:'Weapon: '+tool,run:()=>toxicBubbleSystem.setTool(tool)})),
+        {label:'Solo world · re-enter VR',run:()=>openXRWorldMode('solo')},{label:'Live world · re-enter VR',run:()=>openXRWorldMode('multiplayer')},
+        {label:'Exit VR',run:()=>xrGameControls.endSession()}
+      ]:[{label:'Next weapon',run:()=>cycleXRTool(xrGameControls.controllers[0])},{label:'Teleport · solo worlds',run:()=>teleportFromController(xrGameControls.controllers[1])},{label:'Exit VR',run:()=>xrGameControls.endSession()}]});
+    renderer.xr.addEventListener('sessionstart',()=>{topDownAimTarget=null;keys.clear();syncCameraToggle();camera.position.set(0,0,0);camera.rotation.set(0,0,0);setStatus('VR ready. Left stick moves; right stick snap-turns. X/B opens the in-VR game menu.');});
   }
+  async function openXRWorldMode(mode){await xrGameControls.endSession();const url=new URL(location.href);url.searchParams.set('mode',mode);url.searchParams.set('autoplay','1');location.assign(url.href);}
   setupVRControls().catch((error) => console.warn('[MUZIKAZ VR]', error));
   const visibilityObserver = window.IntersectionObserver ? new IntersectionObserver(([entry]) => { viewActive = Boolean(entry?.isIntersecting); }, { threshold: 0.05 }) : null; visibilityObserver?.observe(stage); document.addEventListener('visibilitychange', () => { viewActive = !document.hidden; });
   let renderWidth=0,renderHeight=0,renderPixelRatio=0;
@@ -1858,7 +1849,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (targetFrameMs && !renderer.xr.isPresenting && time - lastFrameTime < targetFrameMs) return;
     lastFrameTime = targetFrameMs ? time - ((time - lastFrameTime) % targetFrameMs) : time;
     const delta = Math.min(.05, clock.getDelta());
-    const menuOpen=Boolean(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'));
+    xrGameControls?.update(delta);
+    const menuOpen=Boolean(xrGameControls?.menuOpen||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'));
     // Bound collision steps on slower frames while retaining elapsed-time movement.
     if(!serverHostedRoom&&!menuOpen&&!vehicleController.update(delta)) {
       const steps = Math.max(1, Math.ceil(delta / (1 / 60)));
@@ -1882,7 +1874,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (!performanceMode || renderer.xr.isPresenting) envLoader.mixers.forEach((m) => m.update(delta));
     toxicBubbleSystem.updateBuildingEditor(delta);
     toxicBubbleSystem.updateBrickPreview();ownedPlacement.update();if(ownedPlacement.active&&toxicBubbleSystem.brickPreview)toxicBubbleSystem.brickPreview.visible=false;
-    if(!serverHostedRoom&&!menuOpen&&!isBasketballEnvironment(activeEnvironment))toxicBubbleSystem.update(delta,clock.elapsedTime);
+    if(!serverHostedRoom&&!menuOpen&&!isCleanSportsEnvironment(activeEnvironment))toxicBubbleSystem.update(delta,clock.elapsedTime);
     if(serverHostedRoom)updateServerEnemyVisuals(delta,clock.elapsedTime);
     updateBasketballs(delta);
     if(!serverHostedRoom)builderGameplay.update(delta,playerRig.position);

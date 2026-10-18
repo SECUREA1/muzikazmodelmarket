@@ -159,3 +159,9 @@ test('a live spectator explicitly takes an AI spot without resetting the match',
  await send('viewer','basketball-watch');advance(40);state=await runtime.snapshot(map.id,map);
  assert.equal(Object.values(state.players).filter(p=>p.basketballAI&&p.basketballTeam==='away').length,5);
 }));
+
+test('a player steals the AI-held game ball through the authoritative command',()=>fixture(async({send,store,map})=>{
+ await send('alice','join');await send('alice','basketball-start');
+ let botId,ballId;await store.update(map.id,room=>{const sim=room.simulation,player=sim.players['account:alice'],bot=Object.values(sim.players).find(p=>p.basketballAI&&p.basketballTeam!==player.basketballTeam);botId=bot.actorId;ballId=sim.basketball.ballId;for(const p of Object.values(sim.players))p.heldId=null;player.position={x:0,y:0,z:0};bot.position={x:1,y:0,z:0};bot.heldId=ballId;sim.actors[ballId].holderId=botId;sim.actors[ballId].position={x:1,y:1,z:0};});
+ const state=await send('alice','basketball-steal');assert.equal(state.actors[ballId].holderId,'account:alice');assert.equal(state.players[botId].heldId,null);assert.equal(state.players['account:alice'].heldId,ballId);assert.equal(state.basketball.possession,'home');
+}));

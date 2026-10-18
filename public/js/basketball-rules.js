@@ -76,6 +76,20 @@ export function ensureBasketballGame(sim,environment,now) {
 }
 
 // Joining a live roster is explicit: entering the room still starts as a spectator.
+export function stealBasketball(sim,player,now,{visible=()=>true}={}){
+ requireBasketballPlayer(sim,player);
+ if(sim.basketball?.state!=='live')error('Start the basketball game before attempting a steal.');
+ if(player.heldId)error('Pass or shoot your held ball first.');
+ if(now-(player.basketballStealAt??-Infinity)<800)error('Recover before attempting another steal.');
+ const ball=basketballGameBall(sim),holder=Object.values(sim.players).find(p=>(p.actorId||p.id)===ball?.holderId);
+ if(!holder||holder===player||holder.basketballTeam===player.basketballTeam||!isBasketballPlayer(holder))error('Move close to an opponent holding the basketball.');
+ if(Math.hypot(holder.position.x-player.position.x,holder.position.z-player.position.z)>1.7||Math.abs(holder.position.y-player.position.y)>1.5||!visible(player,holder,ball))error('Move within reach of the visible ball carrier to steal.');
+ holder.heldId=null;player.heldId=ball.id;ball.holderId=player.actorId||player.id;
+ ball.position={x:player.position.x,y:player.position.y+1,z:player.position.z};delete ball.ballVelocity;delete ball.ballCatchSegment;delete ball.basketballShot;
+ player.basketballStealAt=now;player.basketballSteals=(player.basketballSteals||0)+1;
+ touchBasketball(sim,ball,player,now);sim.basketball.lastPlay=`${player.username||'Player'} stole the ball.`;return ball;
+}
+
 export function takeBasketballSpot(sim,player,now,team){
  if(!sim.basketball)error('Enter Basketball Arena to choose a player spot.');
  if(!teams.includes(team))error('Choose the Home or Away team.');

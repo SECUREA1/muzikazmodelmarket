@@ -1,5 +1,5 @@
 import {isBasketball,basketballCatchPosition,basketballJerseyTeam,tossBasketball,stepBasketball} from './public/js/basketball.js';
-import {isBasketballEnvironment,ensureBasketballGame,assignBasketballTeam,takeBasketballSpot,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,configureBasketballGame,watchBasketballGame,requireBasketballPlayer,constrainBasketballSpectator,basketballSpectatorRestricted,BASKETBALL_BALL_ID} from './public/js/basketball-rules.js';
+import {isBasketballEnvironment,ensureBasketballGame,assignBasketballTeam,takeBasketballSpot,stealBasketball,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,configureBasketballGame,watchBasketballGame,requireBasketballPlayer,constrainBasketballSpectator,basketballSpectatorRestricted,BASKETBALL_BALL_ID} from './public/js/basketball-rules.js';
 import {refreshRpgLoot,dropRpgLoot} from './server-rpg-loot.mjs';
 import {validateOwnedPlacement} from './owned-item-placement.mjs';
 import {ENEMY_BEHAVIORS,stepEnemyCombat} from './server-enemy-combat.mjs';
@@ -142,6 +142,7 @@ export class AuthoritativeRooms {
    }
    else if(command.action==='basketball-settings'){configureBasketballGame(sim,command.settings,now);result.message='Shared basketball settings updated.';}
    else if(command.action==='basketball-watch'){watchBasketballGame(sim,player,now);result.message='Watching from the sideline. Choose a side before the next game.';}
+   else if(command.action==='basketball-steal'){const ball=stealBasketball(sim,player,now,{visible:(from,to)=>{const origin={...from.position,y:from.position.y+1},target={...to.position,y:to.position.y+1},span=distance(origin,target);return span<.05||!this.collision.blocksShot(environment,origin,[(target.x-origin.x)/span,(target.y-origin.y)/span,(target.z-origin.z)/span],span,sim.actors);}});result.caughtId=ball.id;result.message='Basketball stolen.';}
    else if(command.action==='basketball-join-spot'){takeBasketballSpot(sim,player,now,command.team);result.message='Player spot joined.';}
    else if(command.action==='basketball-team'){if(!sim.basketball)fail('Enter Basketball Arena to choose a team.',409);assignBasketballTeam(sim,player,now,command.team);result.message=(player.basketballTeam==='home'?'Home':'Away')+' team selected.';}
    else if(command.action==='basketball-start'){startBasketballGame(sim,now);result.message='Tip-off! The shared basketball game has started.';}

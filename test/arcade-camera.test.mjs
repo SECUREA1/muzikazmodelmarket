@@ -37,7 +37,10 @@ test('both camera modes preserve transformed world-space aiming for all five gam
   try{
    for(const aspect of [.45,1.6])for(const mode of ['first-person','top-down']){
     const camera=new T.PerspectiveCamera(43,aspect,.1,250);assert.equal(presentation.setCamera(camera,mode),true);
-    const world=presentation.root.localToWorld(arcadeGamePoint(id,525,185));const projected=world.project(camera);
+    const world=presentation.root.localToWorld(arcadeGamePoint(id,525,185));
+    const xrPointer=presentation.rayPointer(camera.position.clone(),world.clone().sub(camera.position).normalize());
+    assert.ok(Math.abs(xrPointer.x-525)<1e-7&&Math.abs(xrPointer.y-185)<1e-7,id+' tracked controller ray matches the world target');
+    const projected=world.project(camera);
     assert.ok(Math.abs(projected.x)<1&&Math.abs(projected.y)<1,`${id} ${mode} aim plane remains in the viewport`);
     const pointer=presentation.pointer(projected.x,projected.y,camera);
     assert.ok(Math.abs(pointer.x-525)<1e-7&&Math.abs(pointer.y-185)<1e-7,`${id} ${mode} pointer matches the same physical target`);

@@ -11,3 +11,11 @@ Hockey offers the same two views alongside its chase, broadcast and spectator ca
 Neon Junction supports both views while exploring and playing the five arcade games. Train and coaster rides keep their attached ride camera until exit, then restore the selected exploration view. Arcade scores and games remain local single-player sessions.
 
 The shared preference and shortcut guard live in `public/js/game-camera.js`. Runtime-specific cameras keep their own world-space picking and game simulation.
+
+## Headset controls
+
+Native basketball, hockey, the firing range and Neon Junction share `xr-game-controls.js`. Compatible secure-context WebXR browsers expose Enter VR when an immersive headset is available. All runtimes use the XR animation loop; desktop throttling is bypassed in the headset. Head pose remains tracked in first person. Hockey follows the active skater; park games keep the station camera; rides keep their moving seat position while allowing head tracking.
+
+Left stick moves. Right stick snap-turns in native worlds and hockey and aims in arcade games. Right trigger shoots/plays; left trigger catches or steals in native basketball, passes in hockey/team arcade basketball, and interacts with a nearby attraction in the park. Basketball right grip passes; hockey grips check and poke. Extra actions, solo/live entry, joining, spectating, courses, weapons, park games and rides are available in a 3D menu. X/B or right-stick click opens it; left stick selects and trigger confirms. Long menus have pages. The menu neutralizes movement; headset exit/disconnection resets input. Account sign-in should be completed before entering VR; explicit live guest menu choices create a guest session when needed. Native world mode changes navigate and require entering VR again.
+
+Validation uses deterministic controller-input tests and a simulated XR session/menu browser test. Physical headset rendering and vendor-specific controller behavior still require device QA.

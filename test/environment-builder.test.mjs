@@ -35,7 +35,10 @@ test('multiplayer map list pins live user maps with a flashing status', async ()
   assert.match(game, /b\.count-a\.count/);
   assert.match(game, /multiplayer-live-count/);
   const picker=await readFile(new URL('../public/js/world-map-picker.js',import.meta.url),'utf8');
-  assert.match(picker, /\$\{count\} live/);
+  assert.match(picker, /mapWheelSvg/);
+  const {mapWheelSvg}=await import('../public/js/map-wheel-svg.js');
+  const wheel=mapWheelSvg([{env:{id:'live-world',name:'Live world'},count:3}],'live-world');
+  assert.match(wheel,/3 LIVE/);assert.match(wheel,/has-players/);
   assert.match(game, /@keyframes multiplayerLiveFlash/);
   assert.match(server, /presence' && req\.method === 'GET'/);
   assert.match(rust, /method == "GET"/);

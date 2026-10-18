@@ -1,3 +1,4 @@
+import {mountXRGameControls} from './xr-game-controls.js';
 import {legacyArcadeDestination} from './sports-worlds.js';
 import {mountRadToxController} from './rad-tox-controller.js';
 import {createArcadeMatch} from './arcade-match.js';
@@ -178,9 +179,10 @@ renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();if(ride===nu
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);lastParkRender=-Infinity;});
 let slowDraws=0,quality='high';
 function animate(now){
- requestAnimationFrame(animate);
- const dt=advanceArcadeClock(frameClock,now,{paused:document.hidden||$('#park-settings').open});
- if(document.hidden||$('#park-settings').open)return;
+
+ const dt=advanceArcadeClock(frameClock,now,{paused:(document.hidden&&!renderer.xr.isPresenting)||$('#park-settings').open});
+ if((document.hidden&&!renderer.xr.isPresenting)||$('#park-settings').open)return;
+ xrControls.update(dt);vrRig.position.set(0,0,0);vrRig.rotation.set(0,0,0);
  parkTime+=dt;
  if(game!==null)updateGame(dt);
  if(ride===null&&game===null){
@@ -191,7 +193,7 @@ function animate(now){
   $('#interact').hidden=!nearby;$('#nearby').textContent=nearby?'Enter / E · '+attractions[nearby.index].name:'Walk to an attraction';
  }
  if(ride!==null){let elapsed=dt*instanceRideSpeed(rideRuntime);while(elapsed>0&&session.ride){const step=Math.min(elapsed,.1);elapsed-=step;if(stepArcadeRide(session,step)){reset('complete');toast('Ride complete. Welcome back to the park!');break;}}}
- if(now-lastParkRender<1000/30)return;lastParkRender=now;
+ if(!renderer.xr.isPresenting&&now-lastParkRender<1000/30)return;lastParkRender=now;
  visitorMarker.visible=game===null&&ride===null&&cameraMode==='top-down';visitorMarker.position.set(walker.x,walker.ground+.04,walker.z);
  const phases=animateArcadePark(park.root,parkTime,config);trainT=phases.trainT;coasterT=phases.coasterT;
  for(const part of builderObjects?.rideParts||[]){const speed=arcadeAnimationSpeed(part.userData.arcadeAnimationEnabled,part.userData.arcadeAnimationSpeed);if(speed>0)animateArcadePark(part,parkTime*speed);}
@@ -215,6 +217,7 @@ function animate(now){
   camera.up.set(0,0,-1);camera.position.set(walker.x,walker.ground+height,walker.z);desired.set(walker.x,walker.ground,walker.z);camera.lookAt(desired);
  }
 
+ if(renderer.xr.isPresenting){const yaw=new T.Euler().setFromQuaternion(camera.quaternion,'YXZ').y;vrRig.position.copy(camera.position);vrRig.position.y-=1.6;vrRig.rotation.set(0,yaw,0);camera.position.set(0,0,0);camera.rotation.set(0,0,0);}
  const renderStart=performance.now();renderer.render(scene,camera);
  // Reduce fill cost once on a slow GPU, while simulation and timers retain real time.
  if(performance.now()-renderStart>70||dt>.12)slowDraws++;else slowDraws=Math.max(0,slowDraws-1);
@@ -263,10 +266,23 @@ window.NeonJunction=Object.freeze({snapshot:()=>({mode:session.mode,attraction:s
 setExploration(cameraMode==='top-down'?'overview':'walk');
 const autoIndex=attractions.findIndex(attraction=>attraction.id===autoAttraction);
 if(autoIndex>=0&&!startupError){const interaction=launchPartId?[...(builderObjects?.interactions.values()||[])].find(item=>item.objectId===launchPartId):null;if(interaction)select(autoIndex,interaction);else selectFromMenu(autoIndex);}
-requestAnimationFrame(animate);
+const vrRig=new T.Group();scene.add(vrRig);vrRig.add(camera);
+async function arcadeVRStart(mode){if(game===null)throw Error('Select a park game first.');$('#game-mode').value=mode;if(mode==='multiplayer'||mode==='spectator'){try{await roomApi.session();}catch(error){if(error.status!==401)throw error;await roomApi.api('/api/access/guest',{method:'POST',body:'{}'});}}await joinSharedGame(mode==='spectator');if((mode==='multiplayer'||mode==='spectator')&&!liveGame)throw Error($('#room-status').textContent||'Live room could not be joined.');if(mode!=='spectator'&&(!liveGame||roomSnapshot?.host===roomSnapshot?.selfId)){await startRound();if(!gameStarted)throw Error($('#room-status').textContent||'The round could not start.');}}
+const xrControls=mountXRGameControls({renderer,scene,camera,rig:vrRig,parent:document.body,status:message=>toast(message),onEnter:()=>setCameraMode('first-person'),onExit:()=>{controllerMove={x:0,y:0};controllerWalkKeys.clear();},onMove:(axis,dt)=>{controllerMove=axis;controllerWalkKeys.clear();if(game!==null&&!basketballState){const base=liveGame?liveInput:pointer,next=arcadePointer(base.x+axis.x*360*dt,base.y+axis.y*360*dt);if(liveGame)liveInput=next;else pointer=next;}if(game===null){if(axis.y<-.15)controllerWalkKeys.add('forward');if(axis.y>.15)controllerWalkKeys.add('back');if(axis.x<-.15)controllerWalkKeys.add('left');if(axis.x>.15)controllerWalkKeys.add('right');}},onLook:(axis,dt)=>{if(game!==null){const base=liveGame?liveInput:pointer,next=arcadePointer(base.x+axis.x*440*dt,base.y+axis.y*440*dt);if(liveGame)liveInput=next;else pointer=next;}},snapTurn:()=>game===null,onTurn:angle=>{if(game===null)walker.yaw+=angle;},onTrigger:(hand,ray)=>{if(game===null){interactNearby();return;}if(!gameStarted){xrControls.openMenu();return;}const aim=presentation.rayPointer(ray.origin,ray.direction);if(aim){if(liveGame)liveInput={...liveInput,...aim};else pointer={...pointer,...aim};}action(hand==='left'&&basketballState?'pass':'shoot');},onGrip:hand=>action(hand==='left'?'steal':'switch'),onAction:name=>game===null?interactNearby():action(name==='switch'?'switch':'pass'),menuItems:()=>game===null?[
+ ...attractions.map((attraction,index)=>({label:(index>4?'Board ':'Play ')+attraction.name,run:()=>{if(ride!==null)reset();selectFromMenu(index);}})),
+ {label:'Sound '+(sound?'on':'off'),run:()=>$('#sound').click()},{label:'Exit ride',run:()=>reset()},{label:'Exit VR',run:()=>xrControls.endSession()}
+]:[
+ {label:'Score '+score+' · '+Math.ceil(Math.max(0,remaining))+' seconds',run:()=>{}},
+ {label:'Start solo vs AI',run:()=>arcadeVRStart('solo')},{label:'Join live · guest / current account',run:()=>arcadeVRStart('multiplayer')},
+ {label:'Team size: '+$('#team-size').value,run:()=>{$('#team-size').selectedIndex=($('#team-size').selectedIndex+1)%$('#team-size').options.length;refreshPlayerSlots();}},{label:'AI fills open spots: '+($('#ai-fill').checked?'on':'off'),run:()=>{$('#ai-fill').checked=!$('#ai-fill').checked;}},{label:'Difficulty: '+$('#game-difficulty').value,run:()=>{$('#game-difficulty').selectedIndex=($('#game-difficulty').selectedIndex+1)%$('#game-difficulty').options.length;}},{label:'Player spot: '+$('#game-slot').selectedOptions[0].textContent,run:()=>{$('#game-slot').selectedIndex=($('#game-slot').selectedIndex+1)%$('#game-slot').options.length;}},
+ {label:ended?'Restart completed round · host':'Start shared round · host',run:async()=>{await startRound(ended);if(!gameStarted)throw Error($('#room-status').textContent||'Wait for the host to start.');}},{label:'Spectate this game',run:()=>arcadeVRStart('spectator')},
+ {label:'Shoot / play',run:()=>action()},{label:'Pass',run:()=>action('pass')},{label:'Steal',run:()=>action('steal')},{label:'Switch player',run:()=>action('switch')},
+ {label:'Return to park',run:closeGame},{label:'Exit VR',run:()=>xrControls.endSession()}
+]});
+renderer.setAnimationLoop(animate);
 
 const controllerWalkKeys=new Set();
-mountRadToxController({onMatch:()=>{if(game!==null){lobby.open=true;$('#game-mode').focus();}else interactNearby();},onExit:()=>{if(game!==null)closeGame();},enabled:()=>ride===null&&(game===null||gameStarted&&!localSpectator&&(!liveGame||roomSnapshot?.role==='player')),onMove:(axis,dt)=>{controllerMove=axis;controllerWalkKeys.clear();if(game===null){if(axis.y<-.15)controllerWalkKeys.add('forward');if(axis.y>.15)controllerWalkKeys.add('back');if(axis.x<-.15)controllerWalkKeys.add('left');if(axis.x>.15)controllerWalkKeys.add('right');}else if(dt>0&&!basketballState){const base=liveGame?liveInput:pointer;const next=arcadePointer(base.x+axis.x*360*dt,base.y+axis.y*360*dt);if(liveGame)liveInput=next;else pointer=next;}},onLook:(axis,dt)=>{if(game===null){if(explorationMode==='walk')lookArcadeWalker(walker,axis.x*350*dt,axis.y*250*dt);else{yaw-=axis.x*2*dt;pitch=Math.max(.25,Math.min(1.3,pitch+axis.y*dt));}}else{const base=liveGame?liveInput:pointer;const next=arcadePointer(base.x+axis.x*440*dt,base.y+axis.y*440*dt);if(liveGame)liveInput=next;else pointer=next;}},onShoot:()=>game===null?interactNearby():action(),onView:()=>setCameraMode(nextGameCameraMode(cameraMode)),buttons:[{label:'Pass · E',when:()=>!!basketballState,tap:()=>action('pass')},{label:'Steal · Q',when:()=>!!basketballState,tap:()=>action('steal')},{label:'Switch · X',when:()=>!!basketballState,tap:()=>action('switch')},{label:'Join / interact · E',when:()=>game===null,tap:interactNearby},{label:'Leave · Esc',when:()=>game!==null,tap:()=>{if(game!==null)closeGame();}}]});
+mountRadToxController({onMatch:()=>{if(game!==null){lobby.open=true;$('#game-mode').focus();}else interactNearby();},onExit:()=>{if(game!==null)closeGame();},enabled:()=>!renderer.xr.isPresenting&&ride===null&&(game===null||gameStarted&&!localSpectator&&(!liveGame||roomSnapshot?.role==='player')),onMove:(axis,dt)=>{controllerMove=axis;controllerWalkKeys.clear();if(game===null){if(axis.y<-.15)controllerWalkKeys.add('forward');if(axis.y>.15)controllerWalkKeys.add('back');if(axis.x<-.15)controllerWalkKeys.add('left');if(axis.x>.15)controllerWalkKeys.add('right');}else if(dt>0&&!basketballState){const base=liveGame?liveInput:pointer;const next=arcadePointer(base.x+axis.x*360*dt,base.y+axis.y*360*dt);if(liveGame)liveInput=next;else pointer=next;}},onLook:(axis,dt)=>{if(game===null){if(explorationMode==='walk')lookArcadeWalker(walker,axis.x*350*dt,axis.y*250*dt);else{yaw-=axis.x*2*dt;pitch=Math.max(.25,Math.min(1.3,pitch+axis.y*dt));}}else{const base=liveGame?liveInput:pointer;const next=arcadePointer(base.x+axis.x*440*dt,base.y+axis.y*440*dt);if(liveGame)liveInput=next;else pointer=next;}},onShoot:()=>game===null?interactNearby():action(),onView:()=>setCameraMode(nextGameCameraMode(cameraMode)),buttons:[{label:'Pass · E',when:()=>!!basketballState,tap:()=>action('pass')},{label:'Steal · Q',when:()=>!!basketballState,tap:()=>action('steal')},{label:'Switch · X',when:()=>!!basketballState,tap:()=>action('switch')},{label:'Join / interact · E',when:()=>game===null,tap:interactNearby},{label:'Leave · Esc',when:()=>game!==null,tap:()=>{if(game!==null)closeGame();}}]});
 
 function readGameSetup(){gameConfig=arcadeSettings({...gameConfig,basketballMode:$('#basketball-mode').value,teamSize:Number($('#team-size').value),periodSeconds:Number($('#game-seconds').value),roundSeconds:Number($('#game-seconds').value),aiFill:$('#game-mode').value==='solo-ai'||$('#ai-fill').checked,difficulty:$('#game-difficulty').value});}
 function refreshPlayerSlots(slots=null){const select=$('#game-slot'),value=select.value,count=slots?.length||(game===2&&$('#basketball-mode').value==='full'?Number($('#team-size').value)*2:2);select.replaceChildren(new Option('Any available AI spot',''));for(let i=0;i<count;i++){const team=i<(slots?count/2:Number($('#team-size').value))?'Home':'Visitors';select.add(new Option((game===2?team+' ':'')+'Player '+(i+1)+(slots?' · '+slots[i].name:''),String(i)));}if([...select.options].some(o=>o.value===value))select.value=value;}

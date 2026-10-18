@@ -185,7 +185,10 @@ export function createBuilderModel(id,options={}) {
   if(id.startsWith('arcade-part-')){if(!ARCADE_PARTS.some(part=>part.id===id.slice(12)))return null;const root=createArcadePart(id.slice(12),options);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
   if(id.startsWith('hockey-')){const root=createHockeyItem(id);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
   let root;
-  if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
+  if(id==='basketball'){root=new THREE.Group();const ball=mesh(new THREE.SphereGeometry(.12,32,24),material(0xd96b20,.88),[0,.12,0]);ball.name='REGULATION_BASKETBALL';root.add(ball);for(const rotation of [[0,0,0],[Math.PI/2,0,0],[0,Math.PI/2,0]]){const seam=mesh(new THREE.TorusGeometry(.1203,.0017,5,64),material(0x26170e,.95),[0,.12,0],rotation);seam.name='BASKETBALL_SEAM';root.add(seam);}}
+  else if(id==='basketball-hoop')root=createBasketballHoop(THREE);
+  else if(id==='basketball-jersey-home'||id==='basketball-jersey-away')root=createBasketballJersey(THREE,id.endsWith('home')?'home':'away');
+  else if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
   else if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);
   else if(GAMEPLAY_ITEMS[id]) return gameplayItem(id);
   else if(EXPANDED[id]) return expandedModel(id);

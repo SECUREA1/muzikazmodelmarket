@@ -525,6 +525,11 @@ export function createArcadeGamePresentation({scene, park, config = {}} = {}) {
     if (!localRay.intersectPlane(active.plane, intersection)) return null;
     return arcadeGamePointer(active.id, intersection);
   }
+  function rayPointer(origin,direction){
+    if(!active)return null;active.root.updateWorldMatrix(true,false);inverse.copy(active.root.matrixWorld).invert();
+    localRay.set(origin,direction).applyMatrix4(inverse);if(!localRay.intersectPlane(active.plane,intersection))return null;
+    return arcadeGamePointer(active.id,intersection);
+  }
   function snapshot() {
     if (!active) return {active: false};
     const objects = [];
@@ -540,6 +545,6 @@ export function createArcadeGamePresentation({scene, park, config = {}} = {}) {
       position: active.root.getWorldPosition(new T.Vector3()).toArray(),
       occlusion: {candidates: active.occlusion.candidates.length, hidden: active.occlusion.candidates.filter(node => !node.mesh.visible).length}, objects};
   }
-  return {activate, update, setCamera, pointer, deactivate, snapshot, dispose: deactivate,
+  return {activate, update, setCamera, pointer, rayPointer, deactivate, snapshot, dispose: deactivate,
     get root() {return active?.root || null;}};
 }

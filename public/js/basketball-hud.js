@@ -42,6 +42,7 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
   root.innerHTML = `<div class="basketball-score-strip"><div class="basketball-team-score"><span>HOME</span><strong data-home>0</strong></div><div class="basketball-clock"><small data-period>PRE GAME</small><b data-clock>12:00</b><small>SHOT <span data-shot>24</span></small></div><div class="basketball-team-score"><span>AWAY</span><strong data-away>0</strong></div></div><div class="basketball-game-actions"><button type="button" data-basketball-action="basketball-start">Start game</button><button type="button" data-basketball-action="basketball-team" data-team="home" aria-pressed="false">Join Home</button><button type="button" data-basketball-action="basketball-team" data-team="away" aria-pressed="false">Join Away</button><button type="button" data-basketball-action="catch">Catch · E</button><button type="button" data-basketball-action="basketball-shoot">Shoot · R</button><button type="button" data-basketball-action="toss">Pass · T</button></div><p class="basketball-caption" role="status" aria-live="polite" data-play>Choose a team and start a game. Everyone can join.</p>`;
   root.querySelector('.basketball-game-actions').insertAdjacentHTML('beforeend','<button type="button" data-basketball-action="basketball-watch" aria-pressed="false">Watch game</button><button type="button" data-basketball-rules>Match setup</button>');
   root.insertAdjacentHTML('beforeend','<p class="basketball-role" data-role></p>');
+  root.querySelector('.basketball-game-actions').insertAdjacentHTML('beforeend','<button type="button" data-basketball-action="basketball-steal">Steal · Q</button>');
   const actions=root.querySelector('.basketball-game-actions');
   const match=document.createElement('dialog');match.className='basketball-rules basketball-match-menu';match.setAttribute('aria-label','Basketball match and players');
   match.innerHTML='<h2>Basketball match</h2><label>World mode<select data-basketball-world-mode><option value="solo">Solo vs AI</option><option value="multiplayer">Live multiplayer · players and AI</option></select></label><button type="button" data-open-world>Open selected mode</button><p>Join Home or Away to take an available player spot. Watch game leaves your spot for another player or AI.</p><button type="button" data-close-match>Return to court</button>';
@@ -84,7 +85,7 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
     }catch(error){status.textContent=error.message;}
     finally{savingSetup=false;for(const button of rules.querySelectorAll('[type=submit],[data-solo-setup]'))button.disabled=currentGame?.state==='live';}
   });
-  const blocked=button=>!ready||pending.has(button)||(currentPlayer?.basketballRole==='spectator'&&['catch','toss','basketball-shoot','basketball-start'].includes(button.dataset.basketballAction));
+  const blocked=button=>!ready||pending.has(button)||(currentPlayer?.basketballRole==='spectator'&&['catch','toss','basketball-shoot','basketball-steal','basketball-start'].includes(button.dataset.basketballAction));
   const pending = new Set();
   root.addEventListener('click', async event => {
     const button = event.target.closest('[data-basketball-action]');
