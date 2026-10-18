@@ -357,7 +357,7 @@
       "y": 1,
       "z": 0
     },
-    "description": "NHL-size 200 \u00d7 85 ft rink. Five skaters and AI goalie per team, AI fills empty spots. Solo or live multiplayer; icing, offside and referee penalties.",
+    "description": "Full regulation ice hockey stadium with a real ice surface, animated skaters, solo AI, live multiplayer, mixed player/AI teams and spectator views.",
     "hockey": {
       "mode": "exhibition",
       "difficulty": "easy",
@@ -473,6 +473,10 @@
     "visibility": "public",
     "source": "repository",
     "roomId": "basketball-arena",
-    "playUrl": "model-explorer.html?environment=basketball-arena&house=basketball-arena&autoplay=1"
+    "playUrl": "model-explorer.html?environment=basketball-arena&house=basketball-arena&autoplay=1",
+    "sourceCommit": "2d6ff8b201d0bd149312a1ca213c86385be35490",
+    "aliases": [
+      "basketball"
+    ]
   }
 ]

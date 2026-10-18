@@ -25,8 +25,8 @@ test('GPU uploads are bounded independently of vector master resolution', () => 
 test('hockey and all park sports surfaces are tagged without changing geometry or official rules', async () => {
   const park = createArcadePark(), arena = createHockeyArena(), kinds = new Set();
   park.root.traverse(node => { if (node.userData.sportsSurface) kinds.add(node.userData.sportsSurface); });
-  assert.deepEqual([...kinds].sort(), ['court', 'felt', 'metal', 'paving', 'wood']);
-  let ice = false; arena.traverse(node => { if (node.userData.sportsSurface === 'wood') ice = true; });
+  assert.deepEqual([...kinds].sort(), ['court', 'felt', 'ice', 'metal', 'paving', 'wood']);
+  let ice = false; arena.traverse(node => { if (node.userData.sportsSurface === 'ice') ice = true; });
   assert.equal(ice, true);
   assert.deepEqual(await applySportsSurfaces(park.root), {applied: 0, failed: []}, 'Node scene tests retain procedural fallback without browser globals');
 });

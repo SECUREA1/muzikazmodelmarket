@@ -22,8 +22,8 @@ test('bad camera inputs and sky rays never produce nonfinite world aim or moveme
  const direction=hockeySkateVector(Infinity,NaN,NaN);assert.ok(Object.values(direction).every(Number.isFinite));
  assert.deepEqual(hockeyAimPoint({x:0,y:2,z:0},{x:1,y:.1,z:0},{x:5,z:6}),{x:5,z:6});assert.deepEqual(hockeyAimPoint({x:0,y:2,z:0},{x:1,y:-.5,z:0}),{x:4,z:0});assert.ok(Math.abs(hockeyAimPoint({x:0,y:2,z:0},{x:1,y:-.003,z:0}).x)<=45);
 });
-test('arena scenery includes an instanced crowd, basketball-style wood surface and woven goal net',()=>{
- const arena=createHockeyArena(),surface=arena.getObjectByName('REGULATION_ICE_SURFACE'),fans=arena.getObjectByName('INSTANCED_ARENA_FANS');assert.equal(surface.userData.sportsSurface,'wood');assert.deepEqual(surface.userData.sportsSurfaceRepeat,[.12,.12]);assert.ok(fans.isInstancedMesh&&fans.count>500);assert.ok(arena.getObjectByName('WOVEN_GOAL_NET').isLineSegments);assert.equal(arena.getObjectByName('ENCLOSED_ARENA_ENVIRONMENT').children.some(n=>n.position?.y>18),false,'roof cutaway must keep broadcast view open');
+test('arena scenery includes an instanced crowd, ice surface and woven goal net',()=>{
+ const arena=createHockeyArena(),surface=arena.getObjectByName('REGULATION_ICE_SURFACE'),fans=arena.getObjectByName('INSTANCED_ARENA_FANS');assert.equal(surface.userData.sportsSurface,'ice');assert.deepEqual(surface.userData.sportsSurfaceRepeat,[1,1]);assert.ok(fans.isInstancedMesh&&fans.count>500);assert.ok(arena.getObjectByName('WOVEN_GOAL_NET').isLineSegments);assert.equal(arena.getObjectByName('ENCLOSED_ARENA_ENVIRONMENT').children.some(n=>n.position?.y>18),false,'roof cutaway must keep broadcast view open');
  const net=createHockeyItem('hockey-net');assert.ok(net.getObjectByName('WOVEN_GOAL_NET').geometry.getAttribute('position').count>150);
 });
 test('first person equipment stays local to presentation and animates without touching the simulation',()=>{

@@ -65,3 +65,7 @@ Hockey keeps its full native rules and solo, AI viewing, multiplayer and spectat
 Firing Range uses the native House Explorer with solo/live selection and individual training-course scoring. Park rides still board with Enter/E, lock the camera during the ride, and restore walking on completion or explicit exit.
 
 Verification: original basketball physics/rules/AI/server and arena collision tests, hockey rules/cameras, arcade games/rides and shared controller checks; mobile browser checks for native basketball and hockey. Main-server production health must be checked after the hosting provider deploys the pushed commit.
+
+The native Basketball Arena is based on commit `2d6ff8b201d0bd149312a1ca213c86385be35490`; its regulation stadium geometry is unchanged from that commit. Later AI, close-alignment aiming and explicit live AI-spot takeover updates remain. Old `environment=basketball` links resolve to this arena, including legacy arcade-page links. The Explorer menu has direct native Basketball, Ice Hockey and Firing Range links, separate from Neon Junction.
+
+Regulation hockey and both static/live arcade hockey surfaces use the ice texture with a pale ice fallback; basketball retains hardwood. All four game worlds reject atlas streets and slime floor shaders, including refreshes and nested world roots. Solo firing-range sessions also exclude RAD-TOX enemies and gas. Automated silhouettes move without changing the lane floors and pause movement for reduced motion.

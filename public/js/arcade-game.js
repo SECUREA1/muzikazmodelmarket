@@ -1,3 +1,4 @@
+import {legacyArcadeDestination} from './sports-worlds.js';
 import {mountRadToxController} from './rad-tox-controller.js';
 import {createArcadeMatch} from './arcade-match.js';
 import {SharedGameInventory} from './shared-game-inventory.js';
@@ -13,6 +14,7 @@ import {arcadeSettings,arcadeAttractions,createArcadeSession,enterArcadeAttracti
 const host=document.documentElement.dataset.arcadeHost||'site';
 let startupError='',mapName='Neon Junction — Arcade Park',loaded={},builderScene=null;
 const launchParams=new URLSearchParams(location.search),environmentId=launchParams.get('environment')||'neon-junction',requestedPart=launchParams.get('part');let autoAttraction=launchParams.get('attraction'),launchPartId=null;
+const legacyDestination=legacyArcadeDestination(environmentId);if(legacyDestination){const target=new URL(legacyDestination,host==='muzikaz'?location.href:(document.documentElement.dataset.apiBase||'https://muzikazmodelmarket.onrender.com/'));if(launchParams.has('mode'))target.searchParams.set('mode',launchParams.get('mode'));location.replace(target.href);}
 async function loadMap(){
  const controller=new AbortController();let timeout;
  try{

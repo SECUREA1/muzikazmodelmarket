@@ -1,5 +1,6 @@
+import {canonicalWorldId} from './sports-worlds.js';
 export function selectedWorldId(registry,params){
- const requested=params.get('environment')||params.get('house');
+ const requested=canonicalWorldId(params.get('environment')||params.get('house'));
  return requested?(registry.find(requested)?.id||requested):(registry.find('muzikaz-main')?.id||registry.all()[0]?.id);
 }
 export function outsideDestination(currentId,returnId){

@@ -116,7 +116,7 @@ function avatar(h, parent, name, color, {hockey = false, handsOnly = false} = {}
 
 function hockeyGame(root, h) {
   root.rotation.y = Math.PI / 2;
-  h.box('LIVE_ICE_SURFACE', 0, .705, 0, 5.9, .025, 7.4, '#be8756').userData.sportsSurface = 'wood';
+  h.box('LIVE_ICE_SURFACE', 0, .705, 0, 5.9, .025, 7.4, '#e3f6ff').userData.sportsSurface = 'ice';
   h.box('RINK_CENTER_LINE', 0, .723, 0, 5.9, .009, .055, '#d86a7f');
   h.ring('RINK_CENTER_CIRCLE', 0, .726, 0, .8, .015, '#c65b70');
   h.disc('GOAL_CREASE', 0, .723, -2.67, .91, .008, '#9dcbd8');

@@ -98,7 +98,7 @@ export function collectSlimeFloorMeshes(root) {
   root.updateWorldMatrix(true,true);
   root.traverse(mesh=>{
     if(!mesh.isMesh || mesh.isSkinnedMesh || !mesh.geometry || /SKY|PARTICLE|VFX|WATER|HELPER|AVATAR|COLLIDER|COLLISION|NAVMESH/i.test(mesh.name || ''))return;
-    for(let parent=mesh;parent;parent=parent.parent)if(parent.visible===false)return;
+    for(let parent=mesh;parent;parent=parent.parent)if(parent.visible===false||parent.userData.cleanSportsWorld||parent.userData.basketball)return;
     const materials=(Array.isArray(mesh.material)?mesh.material:[mesh.material]).filter(Boolean);
     if(!materials.some(material=>material.visible!==false&&(!material.transparent||material.opacity>=.95)))return;
     const normals=mesh.geometry.getAttribute('normal');if(!normals)return;

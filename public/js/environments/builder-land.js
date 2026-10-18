@@ -1,3 +1,4 @@
+import {isCleanSportsEnvironment} from '../sports-worlds.js';
 import {createArcadePark} from '../arcade-park.js';
 import {createHockeyArena} from '../hockey-models.js';
 import {applySportsSurfaces} from '../sports-surfaces.js';
@@ -9,10 +10,10 @@ function sportsLand(root,theme) {
     // Loading a world never waits for vector finishes. The procedural materials
     // remain playable if SVG rasterization is unavailable.
     void applySportsSurfaces(root,{theme,maxResolution:2048}).catch(error=>console.warn('[builder-land-surfaces]',error.message));
-    return root;
+    root.userData.cleanSportsWorld=true;return root;
 }
 export function createBuilderLand(environment) {
-    if(isBasketballEnvironment(environment))return createBasketballStadium(THREE,environment);
+    if(isBasketballEnvironment(environment)){const root=createBasketballStadium(THREE,environment);root.userData.cleanSportsWorld=true;return root;}
     if((environment.builderScene?.layout||environment.layout)==='arcade-park')return sportsLand(createArcadePark(environment.builderScene?.gameplay?.arcade||environment.arcade).root,'arcade');
     if((environment.builderScene?.layout||environment.layout)==='hockey-arena')return sportsLand(createHockeyArena(),'hockey');
     const built = environment.builderScene || {};
@@ -76,9 +77,11 @@ export function createBuilderLand(environment) {
       // lead the eye from every protected booth to its target.
       for(let z=-14;z<=10;z+=6)add([38,.28,1.1],0,z,0x171c1e,3.3);
       lanes.forEach((x,index)=>{if(index<lanes.length-1)add([.18,2.35,15],x+3.5,5,0x343d40,1.175);add([4.6,.85,1.05],x,12.5,0x20282b,.425);targetPart([1.55,1.55,.08],x,-13.7,0xe5dec9,1.55,index,'outer');targetPart([1.05,1.05,.1],x,-13.62,0x20262a,1.55,index,'body');targetPart([.48,.48,.12],x,-13.54,index===2?0xff334f:0xe1bc43,1.55,index,'bullseye');targetPart([.85,1.25,.16],x,-15.45,index===2?0xff334f:0x202629,1.35,index,'body');targetPart([1.4,.28,.16],x,-15.45,index===2?0xff334f:0x202629,1.72,index,'body');add([.58,.72,.3],x,11.55,0x304438,1.2);add([.66,.42,.34],x,11.52,0x151b19,1.32);add([.58,.1,.5],x,11.25,0x22292d,1.34);add([.08,.08,27],x,-.7,index===2?0x52ecff:0x566468,3.18)});
+      const moving=[];root.traverse(mesh=>{if(mesh.userData.rangeTarget&&mesh.position.z<-15){mesh.userData.targetHomeX=mesh.position.x;moving.push(mesh);}});root.userData.updateRangeEffects=(time,reducedMotion=false)=>{for(const mesh of moving)mesh.position.x=mesh.userData.targetHomeX+(reducedMotion?0:Math.sin(time*.7+mesh.userData.rangeLane)*1.1);};
       [-8,-2,4].forEach((z,index)=>add([38,.04,.09],0,z,index===1?0xe4bd43:0x748084,.025));add([38,.12,.5],0,10.95,0xe2b84b,.06);add([18,3.3,4],0,16.4,0x20282b,1.65);add([5.5,2.8,2.6],15.7,16.2,0x273134,1.4);
     }
     else if(layout==='movie-studio'){[[-11,-10],[10,-10],[-11,10],[10,10]].forEach(([x,z],i)=>add([8,4,7],x,z,i%2?0x52475a:0x45535b));add([3,.3,16],0,0,0xb65b48,.15)}
-    root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));
+    root.userData.cleanSportsWorld=isCleanSportsEnvironment(environment);
+    if(!root.userData.cleanSportsWorld)root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));
     return root;
   }
