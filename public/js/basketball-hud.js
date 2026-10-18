@@ -25,10 +25,10 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
     .basketball-world .basketball-controls{display:none!important}
     .basketball-world .rad-tox-reticle{border-color:#efc37c}
     .basketball-role{text-align:center;margin:5px 0 0;color:#ead2a4;font-size:10px;letter-spacing:1px}
-    .basketball-rules{width:min(440px,calc(100vw - 32px));max-height:85vh;overflow:auto;border:1px solid #d8b275;border-radius:12px;padding:22px;background:#101b2e;color:#f8f4eb;font:14px system-ui}
+    .basketball-rules{box-sizing:border-box;width:min(520px,calc(100vw - 24px));max-height:85vh;overflow:auto;border:1px solid #d8b275;border-radius:12px;padding:22px;background:#101b2e;color:#f8f4eb;font:14px system-ui}
     .basketball-rules::backdrop{background:#000a}.basketball-rules h2{margin:0 0 10px;color:#f8f4eb}.basketball-rules p{font-size:12px;line-height:1.5;color:#c0cbd9}
-    .basketball-rules-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.basketball-rules label{display:grid;gap:5px;font-size:12px}.basketball-rules input{width:100%;box-sizing:border-box;padding:9px;border:1px solid #50617a;border-radius:6px;background:#08101e;color:white}
-    .basketball-rules footer{display:flex;gap:8px;margin-top:18px}.basketball-rules button{width:auto!important;padding:9px 16px;border:1px solid #d8b275;border-radius:6px;background:#e9ba72;color:#172034;cursor:pointer}
+    .basketball-rules-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.basketball-rules label{display:grid;gap:5px;font-size:12px}.basketball-rules input,.basketball-rules select{width:100%;box-sizing:border-box;min-height:44px;padding:9px;border:1px solid #50617a;border-radius:6px;background:#08101e;color:white}
+    .basketball-rules details{margin-top:16px}.basketball-rules summary{cursor:pointer;padding:10px 0;color:#ead2a4}.basketball-rules [data-roster-preview]{padding:12px;border-radius:8px;background:#08101e;white-space:pre-line}.basketball-rules button{min-height:44px}.basketball-rules footer{flex-wrap:wrap;display:flex;gap:8px;margin-top:18px}.basketball-rules button{width:auto!important;padding:9px 16px;border:1px solid #d8b275;border-radius:6px;background:#e9ba72;color:#172034;cursor:pointer}
     .basketball-scored .basketball-score-strip{animation:basketball-score-flash .7s ease-out}
     @keyframes basketball-score-flash{0%{box-shadow:0 0 50px #ffd47fbd;transform:scale(1.035)}100%{box-shadow:0 12px 40px #0007;transform:scale(1)}}
     @media(max-width:600px){.basketball-hud{top:8px;width:calc(100% - 16px)}.basketball-team-score{padding:7px 9px}.basketball-team-score strong{font-size:28px}.basketball-score-strip{grid-template-columns:1fr 86px 1fr}.basketball-game-actions{gap:4px}.basketball-game-actions button{padding:6px 8px;font-size:10px}.basketball-caption{font-size:10px}}
@@ -40,28 +40,41 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
   root.hidden = true;
   root.setAttribute('aria-label', 'Basketball game scoreboard and controls');
   root.innerHTML = `<div class="basketball-score-strip"><div class="basketball-team-score"><span>HOME</span><strong data-home>0</strong></div><div class="basketball-clock"><small data-period>PRE GAME</small><b data-clock>12:00</b><small>SHOT <span data-shot>24</span></small></div><div class="basketball-team-score"><span>AWAY</span><strong data-away>0</strong></div></div><div class="basketball-game-actions"><button type="button" data-basketball-action="basketball-start">Start game</button><button type="button" data-basketball-action="basketball-team" data-team="home" aria-pressed="false">Join Home</button><button type="button" data-basketball-action="basketball-team" data-team="away" aria-pressed="false">Join Away</button><button type="button" data-basketball-action="catch">Catch · E</button><button type="button" data-basketball-action="basketball-shoot">Shoot · R</button><button type="button" data-basketball-action="toss">Pass · T</button></div><p class="basketball-caption" role="status" aria-live="polite" data-play>Choose a team and start a game. Everyone can join.</p>`;
-  root.querySelector('.basketball-game-actions').insertAdjacentHTML('beforeend','<button type="button" data-basketball-action="basketball-watch" aria-pressed="false">Watch game</button><button type="button" data-basketball-rules>Game rules</button>');
+  root.querySelector('.basketball-game-actions').insertAdjacentHTML('beforeend','<button type="button" data-basketball-action="basketball-watch" aria-pressed="false">Watch game</button><button type="button" data-basketball-rules>Match setup</button>');
   root.insertAdjacentHTML('beforeend','<p class="basketball-role" data-role></p>');
   stage.append(root);
   const rules = document.createElement('dialog');rules.className='basketball-rules';rules.setAttribute('aria-labelledby','basketball-rules-title');
-  rules.innerHTML='<form><h2 id="basketball-rules-title">Basketball game rules</h2><p>Set the rules before tip-off. Everyone in this server plays the same match. Late arrivals watch the live game and can choose a side for the next one.</p><div class="basketball-rules-fields"><label>Minutes per period<input type="number" name="quarterMinutes" min="1" max="12" step="1" required></label><label>Number of periods<input type="number" name="quarters" min="1" max="4" step="1" required></label><label>Shot clock (seconds)<input type="number" name="shotClockSeconds" min="5" max="60" step="1" required></label><label>Score to win (0 = timed)<input type="number" name="scoreLimit" min="0" max="200" step="1" required></label><label>Win by points<input type="number" name="winBy" min="1" max="10" step="1" required></label></div><p data-rules-status role="status"></p><footer><button type="submit" data-save-rules>Save rules</button><button type="button" data-close-rules>Back to court</button></footer></form>';
+  rules.innerHTML='<form><h2 id="basketball-rules-title">Quick match tuner</h2><p>Choose team size, human players and AI difficulty, then start. Both teams stay equal; AI fills every empty spot at tip-off.</p><button type="button" data-solo-setup>Solo vs AI</button><div class="basketball-rules-fields"><label>Players per team<select name="teamSize"><option value="1">1 vs 1</option><option value="2">2 vs 2</option><option value="3">3 vs 3</option><option value="4">4 vs 4</option><option value="5">5 vs 5</option></select></label><label>AI difficulty<select name="aiDifficulty"><option value="1">Tier 1 · Rookie</option><option value="2">Tier 2 · Amateur</option><option value="3">Tier 3 · Pro</option><option value="4">Tier 4 · All-Star</option><option value="5">Tier 5 · Legend</option></select></label><label>Home human slots<input name="homeHumans" type="number" min="0" max="5" step="1" required></label><label>Away human slots<input name="awayHumans" type="number" min="0" max="5" step="1" required></label></div><details><summary>Competition rules · timing &amp; scoring</summary><div class="basketball-rules-fields"><label>Minutes per period<input type="number" name="quarterMinutes" min="1" max="12" step="1" required></label><label>Number of periods<input type="number" name="quarters" min="1" max="4" step="1" required></label><label>Shot clock (seconds)<input type="number" name="shotClockSeconds" min="5" max="60" step="1" required></label><label>Score to win (0 = timed)<input type="number" name="scoreLimit" min="0" max="200" step="1" required></label><label>Win by points<input type="number" name="winBy" min="1" max="10" step="1" required></label></div></details><p data-roster-preview role="status" aria-live="polite"></p><p>Playing with friends? Save to lobby, let everyone join Home or Away, then start. AI wears numbered team jerseys. Late arrivals watch until the next game.</p><p data-rules-status role="status"></p><footer><button type="submit" name="start" value="true" data-start-match>Start game</button><button type="submit" name="save" data-save-rules>Save to lobby</button><button type="button" data-close-rules>Back to court</button></footer></form>';
   stage.append(rules);
-  let score = '0:0', ready = false, currentGame = null, currentPlayer = null;
-  const defaults={quarterMinutes:12,quarters:4,shotClockSeconds:24,scoreLimit:0,winBy:1};
-  root.querySelector('[data-basketball-rules]').addEventListener('click',()=>{
+  let score = '0:0', ready = false, currentGame = null, currentPlayer = null, currentPlayers = {};
+  let savingSetup=false;
+  const defaults={quarterMinutes:12,quarters:4,shotClockSeconds:24,scoreLimit:0,winBy:1,teamSize:5,homeHumans:5,awayHumans:5,aiDifficulty:3};
+  function previewRoster(){const size=Number(rules.querySelector('[name=teamSize]').value);for(const name of ['homeHumans','awayHumans']){const input=rules.querySelector(`[name=${name}]`);input.max=size;}const members=Object.values(currentPlayers).filter(p=>!p.basketballAI&&p.basketballRole!=='spectator');rules.querySelector('[data-roster-preview]').textContent=['home','away'].map(team=>{const count=members.filter(p=>p.basketballTeam===team).length;const slots=Number(rules.querySelector(`[name=${team}Humans]`).value);return `${team==='home'?'Home':'Away'}: ${slots} human slots + ${Math.max(0,size-slots)} AI · ${count} joined · ${Math.max(0,size-count)} AI at tip-off`;}).join('\n');}
+  rules.addEventListener('input',event=>{if(event.target.name==='teamSize'){for(const name of ['homeHumans','awayHumans']){const input=rules.querySelector(`[name=${name}]`);input.value=Math.min(Number(input.value),Number(event.target.value));}}previewRoster();});
+  const openSetup=()=>{
     document.exitPointerLock?.();
     for(const [key,value] of Object.entries({...defaults,...currentGame?.settings})){const input=rules.querySelector(`[name="${key}"]`);if(input){input.value=value;input.disabled=currentGame?.state==='live';}}
-    rules.querySelector('[data-save-rules]').disabled=currentGame?.state==='live';
-    rules.querySelector('[data-rules-status]').textContent=currentGame?.state==='live'?'These rules are locked until the final buzzer.':'Save the settings, choose Home or Away, then start the game.';
-    rules.showModal();
-  });
+    for(const button of rules.querySelectorAll('[type=submit],[data-solo-setup]'))button.disabled=currentGame?.state==='live'||savingSetup;
+    rules.querySelector('[data-rules-status]').textContent=currentGame?.state==='live'?'These rules are locked until the final buzzer.':'Solo vs AI sets one human slot on your side. Adjust the difficulty to suit your game.';
+    previewRoster();if(!rules.open)rules.showModal();
+  };
+  root.querySelector('[data-basketball-rules]').addEventListener('click',openSetup);
+  rules.querySelector('[data-solo-setup]').onclick=()=>{if(currentGame?.state==='live')return;const team=currentPlayer?.basketballTeam||'home';for(const side of ['home','away'])rules.querySelector(`[name=${side}Humans]`).value=side===team?1:0;previewRoster();};
   rules.querySelector('[data-close-rules]').onclick=()=>rules.close();
   rules.querySelector('form').addEventListener('submit',async event=>{
-    event.preventDefault();if(currentGame?.state==='live')return;
-    const button=rules.querySelector('[data-save-rules]');button.disabled=true;
-    try{const settings=Object.fromEntries(Object.keys(defaults).map(key=>[key,Number(rules.querySelector(`[name="${key}"]`).value)]));const result=await onAction('basketball-settings',{settings});if(result!==false)rules.close();}
-    catch(error){rules.querySelector('[data-rules-status]').textContent=error.message;}
-    finally{button.disabled=currentGame?.state==='live';}
+    event.preventDefault();if(currentGame?.state==='live'||savingSetup)return;
+    const startNow=event.submitter?.name!=='save';
+    savingSetup=true;
+    for(const button of rules.querySelectorAll('[type=submit],[data-solo-setup]'))button.disabled=true;
+    const status=rules.querySelector('[data-rules-status]');status.textContent=startNow?'Saving setup and starting…':'Saving lobby setup…';
+    try{
+      const settings=Object.fromEntries(Object.keys(defaults).map(key=>[key,Number(rules.querySelector(`[name="${key}"]`).value)]));
+      const result=await onAction('basketball-settings',{settings});
+      if(result===false){status.textContent='Setup could not be saved. Check the team slots and try again.';return;}
+      if(startNow){const started=await onAction('basketball-start',{});if(started===false){status.textContent='Game could not start. Choose a team and try again.';return;}}
+      rules.close();
+    }catch(error){status.textContent=error.message;}
+    finally{savingSetup=false;for(const button of rules.querySelectorAll('[type=submit],[data-solo-setup]'))button.disabled=currentGame?.state==='live';}
   });
   const blocked=button=>!ready||pending.has(button)||(currentPlayer?.basketballRole==='spectator'&&['catch','toss','basketball-shoot','basketball-start'].includes(button.dataset.basketballAction));
   const pending = new Set();
@@ -69,6 +82,7 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
     const button = event.target.closest('[data-basketball-action]');
     if (!button || button.disabled) return;
     event.stopPropagation();
+    if(button.dataset.basketballAction==='basketball-start'){openSetup();return;}
     pending.add(button);button.disabled = true;
     try { await onAction(button.dataset.basketballAction, button.dataset.team ? { team: button.dataset.team } : {}); }
     catch (error) { announce(error.message); }
@@ -79,10 +93,11 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
       root.hidden = !enabled;
       stage.classList.toggle('basketball-world', Boolean(enabled));
       ready = Boolean(player);
-      currentGame=game;currentPlayer=player;
+      currentGame=game;currentPlayer=player;currentPlayers=players;
       for(const button of root.querySelectorAll('button'))button.disabled=blocked(button);
       if(!enabled&&rules.open)rules.close();
       if (!enabled || !game) return;
+      if(rules.open){previewRoster();if(game.state==='live'){for(const input of rules.querySelectorAll('input,select,[type=submit],[data-solo-setup]'))input.disabled=true;rules.querySelector('[data-rules-status]').textContent='Match started. Settings are locked until the final buzzer.';}}
       root.querySelector('[data-home]').textContent = game.homeScore || 0;
       root.querySelector('[data-away]').textContent = game.awayScore || 0;
       root.querySelector('[data-clock]').textContent = clock(game.clockMs);
@@ -96,7 +111,7 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
       const spectator=player?.basketballRole==='spectator';
       root.querySelector('[data-basketball-action="basketball-watch"]').setAttribute('aria-pressed',String(spectator));
       root.querySelector('[data-role]').textContent=spectator?(game.state==='live'?'WATCHING LIVE · STANDS & BENCHES ONLY · E TO SIT / STAND':'SPECTATOR · WATCH OR CHOOSE A SIDE'):`PLAYING ${player?.basketballTeam==='away'?'AWAY':'HOME'} · ${game.settings?.scoreLimit?`FIRST TO ${game.settings.scoreLimit} · WIN BY ${game.settings.winBy}`:`${periods} × ${game.settings?.quarterMinutes||12} MIN`}`;
-      const audience=Object.values(players),watching=audience.filter(member=>member.basketballRole==='spectator').length;root.querySelector('[data-role]').textContent+=` · ${audience.length-watching} PLAYING / ${watching} WATCHING`;
+      const audience=Object.values(players),watching=audience.filter(member=>member.basketballRole==='spectator').length;root.querySelector('[data-role]').textContent+=` · ${audience.filter(p=>!p.basketballAI&&p.basketballRole!=='spectator').length} HUMANS + ${audience.filter(p=>p.basketballAI).length} AI / ${watching} WATCHING`;
       const caption = root.querySelector('[data-play]'), play = game.lastPlay || 'Choose Home, Away or Watch. Game rules can be changed before tip-off.';
       if(caption.textContent!==play)caption.textContent=play;
       const nextScore = `${game.homeScore}:${game.awayScore}`;

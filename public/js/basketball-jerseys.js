@@ -16,7 +16,7 @@ function shirtShape(THREE,back=false){
   return shape;
 }
 
-function jerseyTexture(THREE,team,back){
+function jerseyTexture(THREE,team,back,number){
   if(typeof document==='undefined')return null;
   const canvas=document.createElement('canvas');canvas.width=512;canvas.height=640;
   const ctx=canvas.getContext('2d');if(!ctx)return null;
@@ -28,13 +28,13 @@ function jerseyTexture(THREE,team,back){
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=hex(kit.trim);
   ctx.font='900 46px system-ui, sans-serif';ctx.fillText(back?kit.name.toUpperCase():'MUZIKAZ',256,back?205:226);
   ctx.font='900 238px system-ui, sans-serif';ctx.lineWidth=9;ctx.strokeStyle=hex(kit.accent);
-  ctx.strokeText(kit.number,256,402);ctx.fillText(kit.number,256,402);
+  ctx.strokeText(number||kit.number,256,402);ctx.fillText(number||kit.number,256,402);
   ctx.font='800 17px system-ui, sans-serif';ctx.fillText('COURTSIDE ATHLETICS',256,570);
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
   return texture;
 }
 
-export function createBasketballJersey(THREE,team='home'){
+export function createBasketballJersey(THREE,team='home',number=null){
   if(!validTeam(team))throw new Error('Choose a home or away basketball jersey.');
   const kit=BASKETBALL_JERSEYS[team],root=new THREE.Group();root.name='Basketball_Jersey_'+team;
   root.userData={basketballJersey:true,team,attachmentSocket:'torso',dimensions:[.72,.73,.45]};
@@ -45,7 +45,7 @@ export function createBasketballJersey(THREE,team='home'){
     const geometry=new THREE.ShapeGeometry(shirtShape(THREE,back),12);
     // ShapeGeometry's planar UVs use the shape coordinates directly.
     const uv=geometry.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)+.5,uv.getY(i)+.5);
-    const texture=jerseyTexture(THREE,team,back);
+    const texture=jerseyTexture(THREE,team,back,number);
     const cloth=texture?new THREE.MeshStandardMaterial({map:texture,roughness:.95,side:THREE.DoubleSide}):fabric;
     const panel=new THREE.Mesh(geometry,cloth);panel.position.z=back?.225:-.225;
     panel.scale.set(.72,.73,1);if(!back)panel.rotation.y=Math.PI;
@@ -100,7 +100,7 @@ export function setBasketballJersey(THREE,root,team,options={}){
   if(!team)return null;
   const bounds=visibleAvatarBounds(THREE,body),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
   const height=Math.max(.5,size.y),width=options.width||THREE.MathUtils.clamp(size.x*.82,height*.36,height*.56),depth=options.depth||THREE.MathUtils.clamp(size.z*.82,height*.23,height*.4);
-  const jersey=createBasketballJersey(THREE,team);
+  const jersey=createBasketballJersey(THREE,team,options.number);
   jersey.position.set(center.x,bounds.min.y+height*.635,center.z);
   jersey.scale.set(width/.72,(options.height||height*.405)/.73,depth/.45);
   if(options.rotationY)jersey.rotation.y=options.rotationY;

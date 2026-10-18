@@ -50,3 +50,17 @@ test('uniform follows an animated chest socket and re-fits a newly loaded peer a
   const after=attached.getWorldPosition(new THREE.Vector3());assert.ok(Math.abs(after.y-before.y-.2)<1e-6);
   assert.throws(()=>createBasketballJersey(THREE,'invalid'),/home or away/);
 });
+
+test('AI athletes have humanoid limbs, wearable team jerseys and walking animation',async()=>{
+  const {createBasketballAIAvatar,animateBasketballAIAvatar}=await import('../public/js/basketball-ai-avatar.js');
+  const avatar=createBasketballAIAvatar(THREE,'03');
+  assert.equal(avatar.userData.basketballLimbs.length,4);
+  const jersey=setBasketballJersey(THREE,avatar,'away',{number:'03'});
+  assert.equal(jersey.userData.team,'away');assert.equal(jersey.parent,avatar);
+  const bounds=new THREE.Box3().setFromObject(avatar);
+  assert.ok(bounds.min.y>=0&&bounds.max.y>1.7&&bounds.max.y<2);
+  animateBasketballAIAvatar(avatar,true,.1);
+  assert.ok(avatar.userData.basketballLimbs.every(({joint})=>Math.abs(joint.rotation.x)>0));
+  animateBasketballAIAvatar(avatar,false,.1);
+  assert.ok(avatar.userData.basketballLimbs.every(({joint})=>joint.rotation.x===0));
+});

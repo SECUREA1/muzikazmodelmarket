@@ -1,5 +1,5 @@
 import {BASKETBALL_SPECTATOR_SEATS} from './basketball-stadium.js';
-import {isBasketball,stepBasketball,basketballShotSolution} from './basketball.js';
+import {isBasketball,stepBasketball,basketballShotSolution,basketballCatchPosition,tossBasketball} from './basketball.js';
 
 // Metres, regulation NBA court and hoop dimensions. Ball positions refer to
 // the bottom of the model; scoring tests use its physical centre.
@@ -7,7 +7,7 @@ export const BASKETBALL_COURT=Object.freeze({width:15.24,length:28.65,rimZ:12.75
 export const BASKETBALL_BALL_ID='basketball-game-ball';
 const teams=['home','away'],other=team=>team==='home'?'away':'home';
 const error=message=>{throw Object.assign(new Error(message),{statusCode:409});};
-export const BASKETBALL_DEFAULT_SETTINGS=Object.freeze({quarterMinutes:12,quarters:4,shotClockSeconds:24,scoreLimit:0,winBy:1,allowLateJoin:false});
+export const BASKETBALL_DEFAULT_SETTINGS=Object.freeze({quarterMinutes:12,quarters:4,shotClockSeconds:24,scoreLimit:0,winBy:1,allowLateJoin:false,teamSize:5,homeHumans:5,awayHumans:5,aiDifficulty:3});
 export const isBasketballPlayer=player=>player?.basketballRole!=='spectator';
 const online=(sim,now)=>Object.values(sim.players||{}).filter(player=>isBasketballPlayer(player)&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
 const shotClockMs=match=>(match.settings?.shotClockSeconds||24)*1000;
@@ -79,7 +79,13 @@ export function assignBasketballTeam(sim,player,now,requestedTeam) {
  if(requestedTeam!==undefined&&!teams.includes(requestedTeam))error('Choose the Home or Away team.');
  if(sim.basketball?.state==='live'&&(!isBasketballPlayer(player)||!player.basketballTeam))error('Spectators can choose a team before the next tip-off. Late arrivals watch the current game.');
  if(requestedTeam&&sim.basketball?.state==='live'&&player.basketballTeam&&requestedTeam!==player.basketballTeam)error('Change teams before starting a game or after the final buzzer.');
- const counts=online(sim,now).filter(candidate=>candidate!==player).reduce((result,candidate)=>{if(teams.includes(candidate.basketballTeam))result[candidate.basketballTeam]++;return result;},{home:0,away:0});
+ const counts=online(sim,now).filter(candidate=>candidate!==player&&!candidate.basketballAI).reduce((result,candidate)=>{if(teams.includes(candidate.basketballTeam))result[candidate.basketballTeam]++;return result;},{home:0,away:0});
+ const settings=sim.basketball?.settings||BASKETBALL_DEFAULT_SETTINGS;
+ const available=team=>counts[team]<Math.min(settings.teamSize,settings[team+'Humans']);
+ if(!player.basketballAI){
+  if(requestedTeam&&!available(requestedTeam))error('That team has no open human slots. Change match setup before tip-off.');
+  if(!requestedTeam&&!available(player.basketballTeam)){const preferred=counts.home<=counts.away?'home':'away';requestedTeam=available(preferred)?preferred:teams.find(available);if(!requestedTeam){watchBasketballGame(sim,player,now);return null;}}
+ }
  player.basketballRole='player';
  player.basketballTeam=requestedTeam||(teams.includes(player.basketballTeam)?player.basketballTeam:counts.home<=counts.away?'home':'away');
  player.basketballJersey=player.basketballTeam;
@@ -103,11 +109,14 @@ function resetPossession(sim,team,now,message) {
 export function configureBasketballGame(sim,settings,now){
  const match=sim.basketball;if(!match)error('Enter Basketball Arena to configure a basketball game.');
  if(match.state==='live')error('Change basketball settings before tip-off or after the final buzzer.');
- const invalid=()=>{throw Object.assign(new Error('Invalid basketball settings: use 1–12 minute quarters, 1–4 quarters, a 5–60 second shot clock, a 0–200 point limit and win by 1–10. Late arrivals must watch.'),{statusCode:422});};
+ const invalid=()=>{throw Object.assign(new Error('Invalid basketball settings: use 1–12 minute quarters, 1–4 quarters, a 5–60 second shot clock, a 0–200 point limit and win by 1–10. Late arrivals must watch. Team size is 1–5, human slots 0–5 per side and AI tier 1–5.'),{statusCode:422});};
  if(!settings||typeof settings!=='object'||Array.isArray(settings))invalid();
- const limits={quarterMinutes:[1,12],quarters:[1,4],shotClockSeconds:[5,60],scoreLimit:[0,200],winBy:[1,10]};
+ const limits={quarterMinutes:[1,12],quarters:[1,4],shotClockSeconds:[5,60],scoreLimit:[0,200],winBy:[1,10],teamSize:[1,5],homeHumans:[0,5],awayHumans:[0,5],aiDifficulty:[1,5]};
  for(const [key,value]of Object.entries(settings)){if(key==='allowLateJoin'){if(value!==false)invalid();continue;}if(!limits[key]||!Number.isInteger(value)||value<limits[key][0]||value>limits[key][1])invalid();}
- match.settings={...BASKETBALL_DEFAULT_SETTINGS,...match.settings,...settings,allowLateJoin:false};
+ const next={...BASKETBALL_DEFAULT_SETTINGS,...match.settings,...settings,allowLateJoin:false};
+ if(next.homeHumans>next.teamSize||next.awayHumans>next.teamSize||next.homeHumans+next.awayHumans<1)error('Reserve at least one human slot and no more human slots than each team size.');
+ for(const team of teams)if(online(sim,now).filter(p=>!p.basketballAI&&p.basketballTeam===team).length>next[team+'Humans'])error('Move extra players to Watch or the other team before reducing human slots.');
+ match.settings=next;
  if(match.state==='ready'){match.clockMs=quarterMs(match);match.shotClockMs=shotClockMs(match);}
  match.updatedAt=now;match.lastPlay='Game settings saved · choose a side or watch, then start.';return match;
 }
@@ -122,6 +131,7 @@ export function watchBasketballGame(sim,player,now){
  const held=sim.actors[player.heldId],team=player.basketballTeam;releaseBasketballSeatAndVehicle(sim,player);
  player.basketballRole='spectator';player.basketballTeam=null;player.input={};
  if(isBasketball(held)){releaseBall(sim,held);held.position={x:0,y:0,z:0};held.ballFloor=0;if(held.basketballMatchBall&&sim.basketball.state==='live')resetPossession(sim,other(team||sim.basketball.possession),now,'Player moved to the sideline · play continues.');}
+ if(!online(sim,now).some(p=>!p.basketballAI))releaseBall(sim,basketballGameBall(sim));
  player.position={x:8.8,y:0,z:0};player.yaw=Math.PI/2;player.floor=0;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;
  return player;
 }
@@ -133,8 +143,10 @@ function finishBasketballGame(sim,now,winner,message){
 export function startBasketballGame(sim,now) {
  const match=sim.basketball;if(!match)error('Enter Basketball Arena to start a basketball game.');
  if(match.state==='live')error('This shared basketball game is already running.');
- const participants=online(sim,now);if(!participants.length)error('Choose a team before starting. At least one player must be on the court.');
+ for(const [id,p]of Object.entries(sim.players))if(p.basketballAI)delete sim.players[id];
+ let participants=online(sim,now);if(!participants.length)error('Choose a team before starting. At least one player must be on the court.');
  for(const player of participants)assignBasketballTeam(sim,player,now);
+ fillBasketballTeams(sim,now);participants=online(sim,now);
  Object.assign(match,{state:'live',matchId:`basketball-${now}-${(match.gameSequence||0)+1}`,gameSequence:(match.gameSequence||0)+1,homeScore:0,awayScore:0,quarter:1,clockMs:quarterMs(match),shotClockMs:shotClockMs(match),possession:'home',lastScore:null,lastPlay:'Tip-off! Home attacks the orange end; Away attacks the blue end.',startedAt:now,updatedAt:now,playSequence:0,winner:null,endedAt:null});
  const counts={home:0,away:0};
  for(const player of participants){releaseBasketballSeatAndVehicle(sim,player);const index=counts[player.basketballTeam]++;player.position={x:(player.basketballTeam==='home'?-1:1)*(1.1+index%4*1.4),y:0,z:Math.floor(index/4)===0?0:(Math.floor(index/4)%2?1:-1)*Math.ceil(Math.floor(index/4)/2)*1.25};player.floor=0;player.velocityY=0;player.grounded=true;player.input={};player.basketballPoints=0;}
@@ -203,7 +215,7 @@ function scoreCrossing(sim,ball,previous,next,now) {
 
 function advanceClock(sim,now) {
  const match=sim.basketball,elapsed=Math.max(0,now-match.updatedAt);match.updatedAt=now;
- if(match.state!=='live'||!online(sim,now).length)return;
+ if(match.state!=='live'||!online(sim,now).some(p=>!p.basketballAI))return;
  let remaining=elapsed;
  while(remaining>0&&match.state==='live'){
   const span=Math.min(remaining,match.clockMs,match.shotClockMs);match.clockMs-=span;match.shotClockMs-=span;remaining-=span;
@@ -217,6 +229,7 @@ function advanceClock(sim,now) {
 
 export function stepBasketballGame(sim,now,dt) {
  if(!sim.basketball)return;
+ if(sim.basketball.state==='live'&&Object.values(sim.players).some(p=>!p.basketballAI&&isBasketballPlayer(p)&&!p.replacedByRoom&&now-p.lastSeen<15000)){fillBasketballTeams(sim,now);if(dt>0)stepBasketballAI(sim,now,dt);}
  evacuateBasketballSpectators(sim);
  advanceClock(sim,now);
  for(const ball of Object.values(sim.actors)){
@@ -244,4 +257,57 @@ export function predictBasketballShotPath(solution,{duration=3,step=1/30,floor=0
  const seconds=Math.max(0,Math.min(6,Number(duration)||0)),dt=Math.max(1/120,Math.min(.1,Number(step)||1/30)),points=[{...ball.position,t:0}];
  for(let elapsed=0;elapsed<seconds-1e-8;){const span=Math.min(dt,seconds-elapsed);elapsed+=span;stepBasketballGame(sim,elapsed*1000,span);points.push({...ball.position,t:elapsed});if(!ball.ballVelocity)break;}
  return points;
+}
+
+
+export const BASKETBALL_AI_TIERS=Object.freeze(['Rookie','Amateur','Pro','All-Star','Legend']);
+// Bots use replicated player identities, the shared game ball and normal scoring.
+// Missing reserved humans become bots at tip-off; late arrivals watch this match.
+export function fillBasketballTeams(sim,now){
+ const settings=sim.basketball.settings;
+ for(const team of teams){
+  const humans=online(sim,now).filter(p=>!p.basketballAI&&p.basketballTeam===team);
+  const bots=Object.values(sim.players).filter(p=>p.basketballAI&&p.basketballTeam===team);
+  const needed=Math.max(0,settings.teamSize-humans.length);
+  for(const p of bots.slice(needed)){if(p.heldId)releaseBall(sim,sim.actors[p.heldId]);delete sim.players[p.actorId];}
+  for(let i=bots.length;i<needed;i++){
+   const id=`basketball-ai-${team}-${i}`;
+   sim.players[id]={actorId:id,username:`${team==='home'?'Home':'Away'} ${i+1} (AI)`,basketballAI:true,basketballRole:'player',basketballTeam:team,basketballJersey:team,basketballNumber:String(i+1).padStart(2,'0'),basketballPoints:0,position:{x:(i-2)*1.3,y:0,z:team==='home'?5:-5},yaw:team==='home'?0:Math.PI,health:100,lastSeen:now,heldId:null,input:{},floor:0,grounded:true,velocityY:0,inventory:[],quests:{},score:0,aiNextAction:now+1000};
+  }
+ }
+ for(const p of Object.values(sim.players))if(p.basketballAI)p.lastSeen=now;
+ // Once replaced, an absent human must rejoin as a spectator.
+ if(sim.basketball.state==='live')for(const p of Object.values(sim.players))if(!p.basketballAI&&p.basketballRole!=='spectator'&&(p.replacedByRoom||now-p.lastSeen>=15000)){
+  if(p.heldId){const ball=sim.actors[p.heldId];if(ball)releaseBall(sim,ball);}
+  p.basketballRole='spectator';p.basketballTeam=null;p.input={};
+ }
+}
+function stepBasketballAI(sim,now,dt){
+ const match=sim.basketball,ball=basketballGameBall(sim);if(!ball)return;
+ const tier=match.settings.aiDifficulty||3,players=online(sim,now),bots=players.filter(p=>p.basketballAI);
+ for(const bot of bots){
+  const hoop=basketballHoopForTeam(bot.basketballTeam),holder=sim.players[ball.holderId],hasBall=ball.holderId===bot.actorId;
+  const teammates=players.filter(p=>p.basketballTeam===bot.basketballTeam),index=teammates.indexOf(bot);
+  let goal;
+  if(hasBall)goal={x:0,z:hoop.z-Math.sign(hoop.z)*(3.5+(5-tier)*.4)};
+  else if(!holder){const chaser=teammates.slice().sort((a,b)=>Math.hypot(a.position.x-ball.position.x,a.position.z-ball.position.z)-Math.hypot(b.position.x-ball.position.x,b.position.z-ball.position.z))[0];goal=chaser===bot?ball.position:{x:(index%3-1)*4,z:hoop.z*.45};}
+  else if(holder.basketballTeam===bot.basketballTeam)goal={x:(index%3-1)*4,z:hoop.z*.55};
+  else {const opponents=players.filter(p=>p.basketballTeam!==bot.basketballTeam),mark=opponents[index%opponents.length]||holder;goal={x:mark.position.x*.8,z:mark.position.z-Math.sign(hoop.z)*1.3};}
+  const dx=goal.x-bot.position.x,dz=goal.z-bot.position.z,span=Math.hypot(dx,dz),step=Math.min(span,(2.5+tier*.3)*Math.min(.25,dt));
+  if(span>.15){bot.yaw=Math.atan2(-dx,-dz);bot.position.x+=dx/span*step;bot.position.z+=dz/span*step;bot.input={forward:1};}else bot.input={};
+  bot.position.x=Math.max(-7,Math.min(7,bot.position.x));bot.position.z=Math.max(-13.6,Math.min(13.6,bot.position.z));
+  if(hasBall){
+   ball.position={x:bot.position.x,y:1,z:bot.position.z};
+   if(now<bot.aiNextAction)continue;
+   const defenders=players.filter(p=>p.basketballTeam!==bot.basketballTeam),pressured=defenders.some(p=>Math.hypot(p.position.x-bot.position.x,p.position.z-bot.position.z)<1.8);
+   const receiver=teammates.find(p=>p!==bot&&!p.heldId&&Math.hypot(p.position.x-bot.position.x,p.position.z-bot.position.z)>2&&Math.abs(p.position.z-hoop.z)<Math.abs(bot.position.z-hoop.z));
+   if(pressured&&receiver){registerBasketballRelease(sim,ball,bot,now);tossBasketball(ball,bot.position,{x:receiver.position.x-bot.position.x,y:0,z:receiver.position.z-bot.position.z},{mode:'manual',power:.24,angle:20});bot.heldId=null;ball.holderId=null;bot.aiNextAction=now+1000;}
+   else if(Math.hypot(bot.position.x-hoop.x,bot.position.z-hoop.z)<6||match.shotClockMs<3500){
+    const angle=Math.atan2(hoop.x-bot.position.x,hoop.z-bot.position.z)+(Math.random()-.5)*(.9-tier*.14);
+    shootBasketball(sim,bot,now,{direction:{x:Math.sin(angle),y:0,z:Math.cos(angle)}});bot.aiNextAction=now+2000;
+   }
+  }else if(!ball.holderId&&now>=bot.aiNextAction&&(!ball.basketballShot||ball.ballLaunch?.mode==='manual'||now-ball.basketballShot.releasedAt>900&&ball.position.y<2)&&basketballCatchPosition(ball,bot.position,{now})){
+   ball.holderId=bot.actorId;bot.heldId=ball.id;delete ball.ballVelocity;delete ball.ballCatchSegment;touchBasketball(sim,ball,bot,now);bot.aiNextAction=now+1400-tier*150;
+  }
+ }
 }

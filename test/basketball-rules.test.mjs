@@ -69,7 +69,7 @@ test('only basketball environments seed one reusable match ball and six spectato
   const ball = sim.actors[BASKETBALL_BALL_ID];
   assert.equal(match.state, 'ready');
   assert.equal(match.clockMs, 12 * 60 * 1000);
-  assert.deepEqual(match.settings, {quarterMinutes: 12, quarters: 4, shotClockSeconds: 24, scoreLimit: 0, winBy: 1, allowLateJoin: false});
+  assert.deepEqual(match.settings, {quarterMinutes: 12, quarters: 4, shotClockSeconds: 24, scoreLimit: 0, winBy: 1, allowLateJoin: false, teamSize:5,homeHumans:5,awayHumans:5,aiDifficulty:3});
   assert.equal(ball.modelId, 'basketball');
   assert.equal(ball.basketballMatchBall, true);
   assert.equal(Object.values(sim.actors).filter(isBasketball).length, 1);
@@ -221,7 +221,7 @@ test('settings updates are partial, configure the ready clocks and stay fixed du
   const f = fixture();
   setBasketballSettings(f.sim, {quarterMinutes: 3, quarters: 2, shotClockSeconds: 12, scoreLimit: 21, winBy: 2}, f.now);
   configureBasketballGame(f.sim, {allowLateJoin: false}, f.now);
-  assert.deepEqual(f.match.settings, {quarterMinutes: 3, quarters: 2, shotClockSeconds: 12, scoreLimit: 21, winBy: 2, allowLateJoin: false});
+  assert.deepEqual(f.match.settings, {quarterMinutes: 3, quarters: 2, shotClockSeconds: 12, scoreLimit: 21, winBy: 2, allowLateJoin: false, teamSize:5,homeHumans:5,awayHumans:5,aiDifficulty:3});
   assert.equal(f.match.clockMs, 180000);
   assert.equal(f.match.shotClockMs, 12000);
   f.start();
@@ -233,7 +233,7 @@ test('settings updates are partial, configure the ready clocks and stay fixed du
 
 test('settings accept their supported integer boundaries and reject invalid or unknown input atomically', () => {
   const f = fixture();
-  setBasketballSettings(f.sim, {quarterMinutes: 1, quarters: 1, shotClockSeconds: 5, scoreLimit: 0, winBy: 1, allowLateJoin: false}, f.now);
+  setBasketballSettings(f.sim, {quarterMinutes: 1, quarters: 1, shotClockSeconds: 5, scoreLimit: 0, winBy: 1, allowLateJoin: false, teamSize:5,homeHumans:5,awayHumans:5,aiDifficulty:3}, f.now);
   setBasketballSettings(f.sim, {quarterMinutes: 12, quarters: 4, shotClockSeconds: 60, scoreLimit: 200, winBy: 10, allowLateJoin: false}, f.now);
   const configured = {...f.match.settings};
   for (const invalid of [

@@ -112,13 +112,13 @@ test('a player can watch during play and releases the shared ball for remaining 
 
 test('shared basketball settings validate atomically, control tip-off and lock during play',()=>fixture(async({send,runtime,map})=>{
  await send('alice','join');await send('bob','join');
- const defaults={quarterMinutes:12,quarters:4,shotClockSeconds:24,scoreLimit:0,winBy:1,allowLateJoin:false};
+ const defaults={quarterMinutes:12,quarters:4,shotClockSeconds:24,scoreLimit:0,winBy:1,allowLateJoin:false,teamSize:5,homeHumans:5,awayHumans:5,aiDifficulty:3};
  assert.deepEqual((await runtime.snapshot(map.id,map)).basketball.settings,defaults);
  for(const settings of [{quarterMinutes:0},{quarterMinutes:2.5},{shotClockSeconds:61},{allowLateJoin:'yes'},{allowLateJoin:true},{homeScore:999}]){
   await assert.rejects(send('alice','basketball-settings',{settings}),/setting|quarter|clock|join|unknown|allow/i);
   assert.deepEqual((await runtime.snapshot(map.id,map)).basketball.settings,defaults);
  }
- const settings={quarterMinutes:4,quarters:2,shotClockSeconds:10,scoreLimit:11,winBy:2,allowLateJoin:false};
+ const settings={quarterMinutes:4,quarters:2,shotClockSeconds:10,scoreLimit:11,winBy:2,allowLateJoin:false,teamSize:5,homeHumans:5,awayHumans:5,aiDifficulty:3};
  let state=await send('alice','basketball-settings',{settings});
  assert.deepEqual(state.basketball.settings,settings);
  const peer=await send('bob','input',{input:{}});
@@ -131,4 +131,18 @@ test('shared basketball settings validate atomically, control tip-off and lock d
  state=await send('late','join');
  assert.equal(state.players['account:late'].basketballRole,'spectator');
  await assert.rejects(send('late','basketball-team',{team:'away'}),/before|late|running|live|started/i);
+}));
+
+test('solo setup replicates AI identities, jerseys and movement while reserving human capacity',()=>fixture(async({send,runtime,map,advance})=>{
+ await send('alice','join');
+ await send('alice','basketball-settings',{settings:{teamSize:2,homeHumans:1,awayHumans:0,aiDifficulty:4}});
+ let state=await send('alice','basketball-start');
+ const bots=Object.values(state.players).filter(p=>p.basketballAI);
+ assert.equal(bots.length,3);assert.ok(bots.every(p=>p.basketballJersey===p.basketballTeam&&p.basketballNumber));
+ const positions=Object.fromEntries(bots.map(p=>[p.id,{...p.position}]));
+ advance(100);state=await runtime.snapshot(map.id,map);
+ assert.ok(Object.values(state.players).some(p=>p.basketballAI&&Math.hypot(p.position.x-positions[p.id].x,p.position.z-positions[p.id].z)>0));
+ state=await send('bob','join');assert.equal(state.players['account:bob'].basketballRole,'spectator');
+ assert.equal(Object.values(state.players).filter(p=>p.basketballRole!=='spectator').length,4);
+ assert.equal(state.basketball.settings.aiDifficulty,4);
 }));
