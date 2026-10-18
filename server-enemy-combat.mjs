@@ -17,7 +17,9 @@ export function stepEnemyCombat(sim,{now,dt,environment,collision}){
  sim.enemySequence ||= 0;
  for(const actor of Object.values(sim.actors)){
   const config=ENEMY_BEHAVIORS[actor.kind];if(!actor.radTox||!actor.active||actor.health<=0||!config)continue;
-  const target=players.reduce((best,row)=>!best||distance(actor.position,row[1].position)<distance(actor.position,best[1].position)?row:best,null);
+  const nearest=players.reduce((best,row)=>!best||distance(actor.position,row[1].position)<distance(actor.position,best[1].position)?row:best,null);
+  const current=players.find(([id])=>id===actor.movementTargetId);
+  const target=current&&nearest&&distance(actor.position,current[1].position)<=distance(actor.position,nearest[1].position)*1.25+.5?current:nearest;
   if(!target)continue;const [targetId,player]=target,span=distance(actor.position,player.position);
   const origin={x:actor.position.x,y:actor.position.y+config.height,z:actor.position.z},aim={x:player.position.x,y:player.position.y+.9,z:player.position.z};
   const length=distance(origin,aim),direction=[(aim.x-origin.x)/Math.max(.001,length),(aim.y-origin.y)/Math.max(.001,length),(aim.z-origin.z)/Math.max(.001,length)];
@@ -31,11 +33,10 @@ export function stepEnemyCombat(sim,{now,dt,environment,collision}){
  }
  for(const [id,projectile]of Object.entries(sim.projectiles)){
   if(now>=projectile.expiresAt){delete sim.projectiles[id];continue;}
-  const start=projectile.position,step=projectile.velocity.map(n=>n*dt),length=Math.hypot(...step);
+  const elapsed=Math.max(0,Math.min(Math.max(0,dt),(now-projectile.bornAt)/1000));
+  const start=projectile.position,step=projectile.velocity.map(n=>n*elapsed),length=Math.hypot(...step);
   if(!length)continue;
   const direction=step.map(n=>n/length);
-  // Stop at world geometry before considering a hit: attacks cannot pass walls.
-  if(blocked(start,direction,length+.05)){delete sim.projectiles[id];continue;}
   let target=null,along=Infinity;
   for(const [playerId,player]of players){
    const body={x:player.position.x,y:player.position.y+.9,z:player.position.z};
@@ -43,7 +44,9 @@ export function stepEnemyCombat(sim,{now,dt,environment,collision}){
    const point={x:start.x+direction[0]*t,y:start.y+direction[1]*t,z:start.z+direction[2]*t};
    if(distance(body,point)<.55&&t<along){target=[playerId,player];along=t;}
   }
-  if(target){hit(projectile.actorId,...target,start);delete sim.projectiles[id];}
+  // A wall before the player blocks a hit; a wall beyond the player does not.
+  if(blocked(start,direction,(target?along:length)+.05)){delete sim.projectiles[id];continue;}
+  if(target){hit(projectile.actorId,...target,{x:start.x+direction[0]*along,y:start.y+direction[1]*along,z:start.z+direction[2]*along});delete sim.projectiles[id];}
   else projectile.position={x:start.x+step[0],y:start.y+step[1],z:start.z+step[2]};
  }
 }

@@ -4,7 +4,7 @@ import {selectedWorldId,outsideDestination,outsideLabel} from './world-navigatio
 import {ensurePlayAccess,choosePlayAccess} from './play-access.js';
 import {OwnedItemPlacement} from './owned-item-placement.js';
 import {WalkingMotion,walkingStick,walkingSprint} from './walking-motion.js';
-import {animateSharedEnemy} from './shared-enemy-animation.js';
+import {animateSharedEnemy,playSharedEnemyAttack} from './shared-enemy-animation.js';
 import {createSharedEnemyEffects} from './shared-enemy-effects.js';
 import {loadSvgGameTexture} from './svg-game-texture.js';
 import {anchorServerAsset,targetServerPlayer,interpolateServerPlayer,targetServerEnemy,interpolateServerEnemy,disposeServerEnemyProjection,syncServerAvatar,projectServerActor,disposeProjection} from './server-scene-projection.js';
@@ -658,7 +658,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       let root=serverRadToxRoots.get(actor.id);
       if(!root){root=createServerEnemy(actor);serverRadToxRoots.set(actor.id,root);}
       const height=actor.kind==='snake'?.02:actor.kind==='brain'?.62:actor.kind==='boss'?1.8:1;
-      targetServerEnemy(root,actor,height);
+      targetServerEnemy(root,actor,height,performance.now(),snapshot.simulationTime);
       root.userData.health=actor.health;
       root.userData.attack=actor.attack;
       if(actor.paint!==undefined&&root.userData.serverPaint!==actor.paint){root.traverse(object=>{for(const material of [].concat(object.material||[]))material.color?.setHex(actor.paint);});root.userData.serverPaint=actor.paint;}
@@ -673,8 +673,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       serverShotEvents.add(event.id);
       const origin=new THREE.Vector3(event.origin.x,event.origin.y,event.origin.z);
       if(event.action==='enemy-attack') {
-        const root=serverRadToxRoots.get(event.actorId),controller=root?.userData.serverController;
-        controller?.attackTell?.stop();controller?.attackFlash?.play();
+        const root=serverRadToxRoots.get(event.actorId);
+        if(root)playSharedEnemyAttack(root,event.at);
         if(!event.target)continue; // Shared projectile snapshots render this attack.
         if(event.kind==='brain'&&event.target)toxicBubbleSystem.sprayBrainPink(origin,new THREE.Vector3(event.target.x,event.target.y+1,event.target.z));
         else if(event.kind==='ghost'&&root&&event.target)toxicBubbleSystem.sprayGhostGas(root,new THREE.Vector3(event.target.x,event.target.y+1,event.target.z));
