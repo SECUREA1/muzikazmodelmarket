@@ -91,6 +91,8 @@ test('basketball follows a vertical flight arc to the physical hoop and animates
     assert.ok(flight[2].z < flight[0].z - 5);
     assert.equal(f.presenter.root.getObjectByName('BASKETBALL_ALIGNMENT').visible, false);
     assert.ok(f.presenter.root.getObjectByName('PLAYER_BASKETBALL_LEFT_GLOVE').position.y > 1.7);
+    assert.ok(Math.abs(ball.position.x - f.presenter.root.getObjectByName('PLAYER_BASKETBALL').position.x - .55) < 1e-8,
+      'the avatar leaves the logical ball position visible in the shoulder camera');
     const actualBallCenter = ball.localToWorld(new T.Vector3());
     const rim = f.presenter.root.getObjectByName('LIVE_BASKETBALL_HOOP').getObjectByProperty('type', 'Mesh');
     assert.ok(rim, 'existing reusable builder hoop geometry is in the playing station');
