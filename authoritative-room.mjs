@@ -1,5 +1,5 @@
-import {isBasketball,basketballJerseyTeam,tossBasketball,stepBasketball} from './public/js/basketball.js';
-import {isBasketballEnvironment,ensureBasketballGame,assignBasketballTeam,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,configureBasketballGame,watchBasketballGame,requireBasketballPlayer,BASKETBALL_BALL_ID} from './public/js/basketball-rules.js';
+import {isBasketball,basketballCatchPosition,basketballJerseyTeam,tossBasketball,stepBasketball} from './public/js/basketball.js';
+import {isBasketballEnvironment,ensureBasketballGame,assignBasketballTeam,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,configureBasketballGame,watchBasketballGame,requireBasketballPlayer,constrainBasketballSpectator,basketballSpectatorRestricted,BASKETBALL_BALL_ID} from './public/js/basketball-rules.js';
 import {populateMapMachine} from './server-map-machine.mjs';
 import {builderBaseSpawn} from './public/js/environments/builder-base.js';
 import {projectArcadeDevices} from './server-arcade-games.mjs';
@@ -51,7 +51,7 @@ export class AuthoritativeRooms {
   }
  }
  initialize(room,environment){
-  const manifestKey=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.travelPortals||[]);let base=this.manifestCache.get(manifestKey);if(!base){const scene=environment.builderScene||environment.placementScene||{};base=compileBuilderScene({...scene,objects:[...(scene.objects||[]),...worldTravelObjects(environment,this.collision)]});this.manifestCache.set(manifestKey,base);if(this.manifestCache.size>32)this.manifestCache.delete(this.manifestCache.keys().next().value);}const manifest={...base,actors:[...base.actors]};
+  const manifestKey=(isBasketballEnvironment(environment)?'basketball-runtime-v2:':'')+environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.travelPortals||[]);let base=this.manifestCache.get(manifestKey);if(!base){const scene=environment.builderScene||environment.placementScene||{};base=compileBuilderScene({...scene,objects:[...(scene.objects||[]),...worldTravelObjects(environment,this.collision)]});this.manifestCache.set(manifestKey,base);if(this.manifestCache.size>32)this.manifestCache.delete(this.manifestCache.keys().next().value);}const manifest={...base,actors:[...base.actors]};
   room.simulation ||= {version:1,players:{},actors:{},events:[],time:this.now(),sequence:0};
   const sim=room.simulation,contentUpdatedAt=manifestKey;
   if(!sim.initialized||sim.environmentUpdatedAt!==contentUpdatedAt){
@@ -64,10 +64,10 @@ export class AuthoritativeRooms {
   for(const actor of manifest.objects){const entity=sim.actors[actor.objectId];if(entity&&!entity.asset)entity.asset=copy(actor.asset);}
   if(isBasketballEnvironment(environment)){
    ensureBasketballGame(sim,environment,this.now());sim.radTox=null;sim.match=null;sim.projectiles={};
-   for(const [id,actor]of Object.entries(sim.actors))if(actor.radTox||actor.loot&&actor.loot.currency!=='MZK'||actor.runtimeMachine){delete sim.actors[id];if(sim.devices)delete sim.devices[id];}
+   for(const [id,actor]of Object.entries(sim.actors))if(actor.radTox||actor.loot||actor.runtimeMachine){delete sim.actors[id];if(sim.devices)delete sim.devices[id];}
    manifest.actors=manifest.actors.filter(actor=>!['hostile','patrol','hazard'].includes(actor.gameplay?.behavior));
   }else{
-   if(sim.basketball){delete sim.basketball;delete sim.actors[BASKETBALL_BALL_ID];}
+   if(sim.basketball){delete sim.basketball;for(const [id,actor]of Object.entries(sim.actors))if(actor.basketballManaged)delete sim.actors[id];}
    this.prepareEncounter(sim,environment);refreshRpgLoot(sim,environment,this.now(),position=>this.collision.safeSpawn(environment,position));
   }
   const alignmentKey=JSON.stringify(environment.builderScene?.baseTransform||{});
@@ -77,7 +77,7 @@ export class AuthoritativeRooms {
    if(sim.baseAlignmentKey!==undefined&&environment.builderScene)for(const player of Object.values(sim.players)){const entry=this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment));player.position={...entry};player.floor=entry.y;player.velocityY=0;player.grounded=true;}
    sim.baseAlignmentKey=alignmentKey;
   }
-  refreshMzkCoins(sim,environment,this.now(),(position,occupied)=>environment.builderScene||environment.proceduralLand?this.collision.safeSpawn(environment,position):this.collision.encounterSpawn(environment,position,this.collision.safeSpawn(environment,environment.spawn||{x:0,y:0,z:2}),occupied));
+  if(!sim.basketball)refreshMzkCoins(sim,environment,this.now(),(position,occupied)=>environment.builderScene||environment.proceduralLand?this.collision.safeSpawn(environment,position):this.collision.encounterSpawn(environment,position,this.collision.safeSpawn(environment,environment.spawn||{x:0,y:0,z:2}),occupied));
   if(!sim.basketball)populateMapMachine(sim,manifest,environment,this.collision,this.now(),room.objects);
   manifest.actors.push(...Object.values(sim.actors).filter(actor=>actor.definition&&(!sim.basketball||!['hostile','patrol','hazard'].includes(actor.definition.gameplay?.behavior))).map(actor=>actor.definition));
   sim.streets=environment.streets||[];sim.mapRevision=environment.atlas?.revision||0;
@@ -88,6 +88,7 @@ export class AuthoritativeRooms {
   const half=clamp(environment.builderScene?.mapSize||200,20,2000)/2;const baseBounds=environment.builderScene&&(environment.builderScene.baseEnvironment||environment.builderScene.baseTransform)?this.collision.world(environment).bounds:null;
   for(const player of Object.values(sim.players)){
    if(now-player.lastSeen>15000){for(const key of ['heldId','seatedId','vehicleId']){const actor=sim.actors[player[key]];if(actor?.holderId)actor.holderId=null;player[key]=null;}player.input={};}if(player.health<=0){for(const key of ['heldId','seatedId','vehicleId']){const held=sim.actors[player[key]];if(held?.holderId===player.actorId)held.holderId=null;player[key]=null;}player.input={};continue;}if(player.replacedByRoom||now-player.lastSeen>1000)continue;
+   const bench=sim.actors[player.seatedId];if(bench?.basketballSpectatorSeat){player.position={...bench.position};player.floor=bench.position.y;player.velocityY=0;player.grounded=true;player.input={};continue;}
    const input=player.input||{},forward=clamp(input.forward,-1,1),side=clamp(input.side,-1,1),length=Math.max(1,Math.hypot(forward,side));
    let speed=player.vehicleId?12:input.sprint?6:4;
    if(player.seatedId) speed=0;
@@ -96,7 +97,7 @@ export class AuthoritativeRooms {
    if(input.jump&&player.grounded){player.velocityY=6;player.grounded=false;}
    player.velocityY=(player.velocityY||0)-18*dt;next.y=Math.max(floor,next.y+player.velocityY*dt);player.grounded=next.y<=floor;if(player.grounded)player.velocityY=0;
    const resolved=this.collision.resolve(environment,player.position,next,sim.actors);
-   player.position=this.collision.resolvePlaced(environment,player.position,resolved,sim.actors,room.objects);
+   const placed=this.collision.resolvePlaced(environment,player.position,resolved,sim.actors,room.objects);player.position=constrainBasketballSpectator(player.position,placed,sim,player);
    if(Number.isFinite(player.position.floorY)){player.floor=player.position.floorY;delete player.position.floorY;}
    if(player.position.grounded||player.position.y<=player.floor+.03){player.grounded=true;player.velocityY=0;}
    if(player.position.hitCeiling)player.velocityY=Math.min(0,player.velocityY);delete player.position.grounded;delete player.position.hitCeiling;
@@ -121,7 +122,7 @@ export class AuthoritativeRooms {
   }
   for(const actor of Object.values(sim.actors)){
    if(isBasketball(actor)&&actor.holderId){const holder=sim.players[actor.holderId];if(holder)actor.position={x:holder.position.x-Math.sin(holder.yaw)*.65,y:holder.position.y+1,z:holder.position.z-Math.cos(holder.yaw)*.65};}
-   if(!sim.basketball)stepBasketball(actor,dt);
+   if(!sim.basketball){const previous=isBasketball(actor)&&!actor.holderId&&actor.ballVelocity?{...actor.position}:null;stepBasketball(actor,dt);if(previous)actor.ballCatchSegment={from:previous,to:{...actor.position},at:now};}
   }
   if(sim.basketball)stepBasketballGame(sim,now,dt);
   else stepEnemyCombat(sim,{now,dt,environment,collision:this.collision});
@@ -166,7 +167,7 @@ export class AuthoritativeRooms {
    else if(command.action==='basketball-watch'){watchBasketballGame(sim,player,now);result.message='Watching from the sideline. Choose a side before the next game.';}
    else if(command.action==='basketball-team'){if(!sim.basketball)fail('Enter Basketball Arena to choose a team.',409);assignBasketballTeam(sim,player,now,command.team);result.message=(player.basketballTeam==='home'?'Home':'Away')+' team selected.';}
    else if(command.action==='basketball-start'){startBasketballGame(sim,now);result.message='Tip-off! The shared basketball game has started.';}
-   else if(command.action==='basketball-shoot'){shootBasketball(sim,player,now);result.message='Shot released!';}
+   else if(command.action==='basketball-shoot'){shootBasketball(sim,player,now,Object.fromEntries(['power','angle','mode','direction'].filter(key=>command[key]!==undefined).map(key=>[key,command[key]])));result.message='Shot released!';}
    else if(sim.basketball&&['start-rad-tox','next-rad-tox'].includes(command.action))fail('Basketball Arena runs shared basketball games.',409);
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position))result.message='RAD-TOX encounter active.';else result.message='Builder gameplay active.';}
    else if(command.action==='next-rad-tox'){if(sim.radTox?.transition&&now<sim.radTox.transition.at)fail('The next round starts after the 10-second results countdown.',409);if(nextRadToxLevel(sim,environment,now,command.matchId)){for(const [index,participantId] of Object.keys(sim.match.participants).entries()){const participant=sim.players[participantId],entry=environment.spawn||{x:0,y:0,z:2};participant.position=this.collision.safeSpawn(environment,{...entry,x:entry.x+(index%4)*1.2,z:entry.z+Math.floor(index/4)*1.2});participant.floor=participant.position.y;participant.velocityY=0;participant.grounded=true;participant.shieldUntil=0;participant.input={};participant.toolReady={};participant.toolUses={};}result.message='Next shared level started.';}else if(sim.match?.id===command.matchId)fail('Complete the current level before starting another.',409);}
@@ -175,6 +176,7 @@ export class AuthoritativeRooms {
    else if(player.health<=0&&command.action!=='interact')fail('Respawn before acting.',409);
    else if(command.action==='teleport-floor'){
     if(player.seatedId||player.vehicleId)fail('Leave the seat or vehicle before teleporting.',409);
+    if(player.basketballRole==='spectator'&&sim.basketball?.state==='live'){if(!command.position||!['x','y','z'].every(axis=>Number.isFinite(command.position[axis])))fail('Choose a valid spectator floor position.',422);const accepted=constrainBasketballSpectator(player.position,command.position,sim,player);if(basketballSpectatorRestricted(command.position,sim)||distance(accepted,command.position)>.01)fail('Spectators can teleport between the stands and benches outside the active court.',409);}
     player.position=this.collision.teleportPosition(environment,player.position,command.position,sim.actors,room.objects);
     player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;
     result.message='Teleported to the selected floor.';
@@ -183,22 +185,26 @@ export class AuthoritativeRooms {
     requireBasketballPlayer(sim,player);
     const ball=sim.actors[player.heldId];if(!isBasketball(ball))fail('Hold a basketball before tossing.',409);
     const pitch=clamp(command.pitch,-1.25,1.15),direction={x:-Math.sin(player.yaw)*Math.cos(pitch),y:Math.sin(pitch),z:-Math.cos(player.yaw)*Math.cos(pitch)};
-    tossBasketball(ball,player.position,direction);registerBasketballRelease(sim,ball,player,now);player.heldId=null;result.message='Basketball tossed — E to catch nearby.';
+    const tuning=['power','angle','mode'].some(key=>command[key]!==undefined)?Object.fromEntries(['power','angle','mode'].filter(key=>command[key]!==undefined).map(key=>[key,command[key]])):undefined;
+    if(!tossBasketball(ball,player.position,command.direction||direction,tuning))fail('Choose a valid basketball aim direction.',422);registerBasketballRelease(sim,ball,player,now);player.heldId=null;result.message='Basketball tossed — E to catch nearby.';
    }
    else if(command.action==='catch'){
     requireBasketballPlayer(sim,player);
     if(player.heldId)fail('Release the held item before catching.',409);
-    const ball=Object.values(sim.actors).filter(actor=>isBasketball(actor)&&actor.active!==false&&!actor.holderId&&distance(actor.position,{...player.position,y:player.position.y+1})<=3).sort((a,b)=>distance(a.position,player.position)-distance(b.position,player.position))[0];
-    if(!ball)fail('Move within 3 metres of a basketball to catch it.',409);
-    ball.holderId=actorId;delete ball.ballVelocity;player.heldId=ball.id;touchBasketball(sim,ball,player,now);result.message='Basketball caught — T to toss.';
+    const hand={x:player.position.x,y:player.position.y+1,z:player.position.z};
+    const nearby=Object.values(sim.actors).filter(actor=>!command.entityId||actor.id===command.entityId).map(ball=>({ball,catch:basketballCatchPosition(ball,player.position,{now})})).filter(hit=>hit.catch).sort((a,b)=>a.catch.distance-b.catch.distance);
+    const hit=nearby.find(({ball,catch:reach})=>{const target={...reach.position,y:reach.position.y+.12},span=distance(hand,target);return span<.05||!this.collision.blocksShot(environment,hand,[(target.x-hand.x)/span,(target.y-hand.y)/span,(target.z-hand.z)/span],span,{...sim.actors,[ball.id]:{...ball,holderId:actorId}});});
+    if(!hit)fail('Move within 3 metres of a visible basketball to catch it.',409);
+    const ball=hit.ball;ball.holderId=actorId;delete ball.ballVelocity;delete ball.ballCatchSegment;player.heldId=ball.id;ball.position={x:player.position.x-Math.sin(player.yaw)*.65,y:player.position.y+1,z:player.position.z-Math.cos(player.yaw)*.65};touchBasketball(sim,ball,player,now);result.caughtId=ball.id;result.rewound=hit.catch.rewound;result.message='Basketball caught — T to toss.';
    }
    else if(command.action==='drop'){const held=sim.actors[player.heldId];if(held){held.holderId=null;held.position={...player.position};player.heldId=null;}}
    else if(command.action==='collect'){await this.collectNearbyLoot(sim,player,identity,id,now,command.entityId,result);}
    else if(command.action==='interact'){
+    if(command.entityId&&isBasketball(sim.actors[command.entityId]))requireBasketballPlayer(sim,player);
     if(player.vehicleId){sim.actors[player.vehicleId].holderId=null;player.vehicleId=null;}
     else if(player.seatedId){sim.actors[player.seatedId].holderId=null;player.seatedId=null;}
     else{
-     const target=manifest.actors.filter(a=>(!command.entityId||a.objectId===command.entityId)&&(!['hostile','patrol','decor'].includes(a.gameplay.behavior)||(a.gameplay.action&&a.gameplay.action!=='none'))&&sim.actors[a.objectId]?.active&&distance(sim.actors[a.objectId].position,player.position)<=Math.min(5,a.gameplay.interactionDistance)).sort((a,b)=>distance(sim.actors[a.objectId].position,player.position)-distance(sim.actors[b.objectId].position,player.position))[0];
+     const target=manifest.actors.filter(a=>(!command.entityId||a.objectId===command.entityId)&&(!['hostile','patrol','decor'].includes(a.gameplay.behavior)||(a.gameplay.action&&a.gameplay.action!=='none'))&&sim.actors[a.objectId]?.active&&(command.entityId||!sim.actors[a.objectId].basketballSpectatorSeat||!sim.actors[a.objectId].holderId||sim.actors[a.objectId].holderId===actorId)&&distance(sim.actors[a.objectId].position,player.position)<=Math.min(5,a.gameplay.interactionDistance)).sort((a,b)=>distance(sim.actors[a.objectId].position,player.position)-distance(sim.actors[b.objectId].position,player.position))[0];
      if(!target)fail('No usable item is within reach.',409);const entity=sim.actors[target.objectId],config=target.gameplay;
      if(isBasketball(entity))requireBasketballPlayer(sim,player);
      if(config.action!=='teleport'||config.portal?.destinationType!=='map'){if(sim.match?.state==='finished')fail('This level has ended.',409);if(player.health<=0)fail('Respawn before acting.',409);}
@@ -209,8 +215,8 @@ export class AuthoritativeRooms {
      else if(config.behavior==='door')entity.open=!entity.open;
      else if(config.behavior==='switch')entity.switched=!entity.switched;
      else if(['pickup','hold'].includes(config.behavior)){if(player.heldId)fail('Drop the held item first.',409);player.heldId=entity.id;entity.holderId=actorId;delete entity.ballVelocity;touchBasketball(sim,entity,player,now);if(!player.inventory.includes(target.modelId))player.inventory.push(target.modelId);result.pickup={id:entity.id+':'+now,kind:'item'};const collected=combatStats(player).itemsCollected ||= [];if(!collected.includes(target.modelId))collected.push(target.modelId);}
-     else if(config.behavior==='vehicle'){player.vehicleId=entity.id;entity.holderId=actorId;}
-     else if(config.behavior==='seat'){player.seatedId=entity.id;entity.holderId=actorId;player.position={...entity.position};}
+     else if(config.behavior==='vehicle'){if(player.basketballRole==='spectator'&&sim.basketball?.state==='live')fail('Spectators can use the stands and benches while the court is active.',409);player.vehicleId=entity.id;entity.holderId=actorId;}
+     else if(config.behavior==='seat'){if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(entity.position,sim))fail('Spectators can sit on benches outside the active court.',409);player.seatedId=entity.id;entity.holderId=actorId;player.position={...entity.position};}
      else if(config.behavior==='heal')player.health=Math.min(100,player.health+clamp(config.value||25,0,100));
      else if(config.behavior==='hazard')entity.active=false;
      else if(config.urbanMission)result.message=startUrbanMission(player,{...config.urbanMission,checkpoints:(config.urbanMission.checkpoints||[]).map(point=>point.objectId?{...point,x:sim.actors[point.objectId]?.position.x,z:sim.actors[point.objectId]?.position.z}:point)},now);
@@ -228,7 +234,7 @@ export class AuthoritativeRooms {
     if(!entity?.spawned||entity.ownerId!==actorId)fail('Only the owner can reposition this item.',403);
     if(entity.active===false||entity.holderId)fail('Release this item before repositioning it.',409);
     if(command.revision!==(entity.placementRevision||1))fail('This item changed. Select it again before editing.',409);
-    const placement=validateOwnedPlacement(command.placement,player);
+    const placement=validateOwnedPlacement(command.placement,player);if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(placement.position,sim))fail('Place spectator items outside the active basketball court.',409);
     Object.assign(entity,placement);entity.placementRevision=(entity.placementRevision||1)+1;
     entity.definition.position={...placement.position};entity.definition.transform=copy(placement);
     result={spawnedId:entity.id,placementRevision:entity.placementRevision,message:'Item locked in place for everyone in this room.'};
@@ -240,7 +246,7 @@ export class AuthoritativeRooms {
     else if(sim.basketball&&(asset.buildAssetId==='basketball'||asset.id==='basketball')){result.spawnedId=sim.basketball.ballId||BASKETBALL_BALL_ID;result.message='The free game ball is ready on the court.';}
     else{
     if(Object.values(sim.actors).filter(actor=>actor.spawned).length>=250)fail('Room item limit reached.',409);
-    const chosenPlacement=command.placement?validateOwnedPlacement(command.placement,player):null;
+    const chosenPlacement=command.placement?validateOwnedPlacement(command.placement,player):null;if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(chosenPlacement?.position||{x:player.position.x-Math.sin(player.yaw)*2,y:player.position.y,z:player.position.z-Math.cos(player.yaw)*2},sim))fail('Place spectator items outside the active basketball court.',409);
     if(asset.consumable&&asset.petId&&!Object.values(sim.actors).some(actor=>actor.asset?.id===asset.petId&&actor.active))fail('Deploy your pet in this room before feeding it.',409);if(asset.sku)await this.charge(identity,asset.sku,createHash('sha256').update(id+actorId+sim.sequence).digest('hex'));
     if(asset.consumable&&asset.petId){const pet=Object.values(sim.actors).find(actor=>actor.asset?.id===asset.petId&&actor.active);if(!pet)fail('Deploy your pet in this room before feeding it.',409);pet.boostUntil=now+10000;result.message=pet.asset.name+' received a treat.';}else{
     const entityId='spawn-'+requestId,position=chosenPlacement?.position||{x:player.position.x-Math.sin(player.yaw)*2,y:player.position.y,z:player.position.z-Math.cos(player.yaw)*2},rotation=chosenPlacement?.rotation||{x:0,y:player.yaw,z:0},scale=chosenPlacement?.scale||{x:1,y:1,z:1};
@@ -309,6 +315,7 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
     result={...result,firedAt:now,cooldownMs:cooldown,readyAt:player.toolReady[tool],tool,origin,end,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:hit?.playerId?'player':hit?'enemy':null};
    }else fail('This action has no server handler. It was not run locally.',422);
   }
+  if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(player.position,sim)){player.position=constrainBasketballSpectator(player.position,player.position,sim,player);player.input={};player.movementRevision=(player.movementRevision||0)+1;}
   if(command.action==='input'&&player.health>0)await this.collectNearbyLoot(sim,player,identity,id,now,null,result);
   this.prepareEncounter(sim,environment);
   checkTeamDefeat(sim,now);

@@ -75,7 +75,7 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
     finally { pending.delete(button);button.disabled = blocked(button); }
   });
   return {
-    render(game, player, enabled) {
+    render(game, player, enabled, players={}) {
       root.hidden = !enabled;
       stage.classList.toggle('basketball-world', Boolean(enabled));
       ready = Boolean(player);
@@ -95,7 +95,8 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
       for (const button of root.querySelectorAll('[data-team]')) {button.setAttribute('aria-pressed', String(player?.basketballRole!=='spectator'&&player?.basketballTeam === button.dataset.team));button.hidden=game.state==='live';}
       const spectator=player?.basketballRole==='spectator';
       root.querySelector('[data-basketball-action="basketball-watch"]').setAttribute('aria-pressed',String(spectator));
-      root.querySelector('[data-role]').textContent=spectator?(game.state==='live'?'WATCHING LIVE · CHOOSE A SIDE NEXT GAME':'SPECTATOR · WATCH OR CHOOSE A SIDE'):`PLAYING ${player?.basketballTeam==='away'?'AWAY':'HOME'} · ${game.settings?.scoreLimit?`FIRST TO ${game.settings.scoreLimit} · WIN BY ${game.settings.winBy}`:`${periods} × ${game.settings?.quarterMinutes||12} MIN`}`;
+      root.querySelector('[data-role]').textContent=spectator?(game.state==='live'?'WATCHING LIVE · STANDS & BENCHES ONLY · E TO SIT / STAND':'SPECTATOR · WATCH OR CHOOSE A SIDE'):`PLAYING ${player?.basketballTeam==='away'?'AWAY':'HOME'} · ${game.settings?.scoreLimit?`FIRST TO ${game.settings.scoreLimit} · WIN BY ${game.settings.winBy}`:`${periods} × ${game.settings?.quarterMinutes||12} MIN`}`;
+      const audience=Object.values(players),watching=audience.filter(member=>member.basketballRole==='spectator').length;root.querySelector('[data-role]').textContent+=` · ${audience.length-watching} PLAYING / ${watching} WATCHING`;
       const caption = root.querySelector('[data-play]'), play = game.lastPlay || 'Choose Home, Away or Watch. Game rules can be changed before tip-off.';
       if(caption.textContent!==play)caption.textContent=play;
       const nextScore = `${game.homeScore}:${game.awayScore}`;

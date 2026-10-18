@@ -6,6 +6,16 @@ export const BASKETBALL_COURT = Object.freeze({
   hoopDistance: 12.75, threePointRadius: 7.239, freeThrowDistance: 5.79,
   arenaWidth: 46, arenaLength: 62
 });
+export const BASKETBALL_SPECTATOR_AREA = Object.freeze({
+  arrival: Object.freeze({ x: 8.8, y: .02, z: 0, rotationY: Math.PI / 2 }),
+  courtBuffer: .5, benchX: 9.65, benchZ: -2.7,
+  minSidelineX: 8.12, maxSidelineX: 21.2, minZ: -26, maxZ: 26
+});
+export const BASKETBALL_SPECTATOR_SEATS = Object.freeze([-1, 1].flatMap(side => [-.85, 0, .85].map((offset, index) => Object.freeze({
+  id: `basketball-spectator-seat-${side < 0 ? 'west' : 'east'}-${index + 1}`,
+  x: side * BASKETBALL_SPECTATOR_AREA.benchX, y: .47, z: BASKETBALL_SPECTATOR_AREA.benchZ + offset,
+  rotationY: side > 0 ? Math.PI / 2 : -Math.PI / 2, kind: 'bench'
+}))));
 
 const HOME = 0x20c8f1;
 const AWAY = 0xe9597b;
@@ -213,6 +223,50 @@ export function createBasketballStadium(THREE, environment = {}) {
     hoop.position.z = side * BASKETBALL_COURT.hoopDistance; if (side > 0) hoop.rotation.y = Math.PI;
     root.add(hoop); hoops.push(hoop);
   }
+  // Spectators arrive on the courtside concourse and can walk up real aisle
+  // steps. Each rise is below the player step height; the seating bowl is a
+  // usable viewing area rather than an unreachable backdrop.
+  const spectatorSeats = BASKETBALL_SPECTATOR_SEATS.map(seat => ({ ...seat }));
+  for (const side of [-1, 1]) {
+    for (const z of [-10, 0, 10]) {
+      for (let step = 0; step < 23; step++) {
+        const height = .19 + step * .24;
+        box([.47, height, 1.2], concrete, [side * (9.99 + step * .46), height / 2, z], 'ARENA_SPECTATOR_AISLE_STEP');
+      }
+      box([.045, .012, 1.2], side < 0 ? ledBlue : ledOrange, [side * 9.77, .197, z], 'ARENA_SPECTATOR_AISLE_LIGHT', true);
+    }
+    const bench = new THREE.Group(); bench.name = side < 0 ? 'ARENA_SPECTATOR_BENCH_WEST' : 'ARENA_SPECTATOR_BENCH_EAST';
+    bench.position.set(side * BASKETBALL_SPECTATOR_AREA.benchX, 0, BASKETBALL_SPECTATOR_AREA.benchZ);
+    bench.userData.spectatorBench = true; bench.userData.basketballSpectatorBench = true;
+    root.add(bench);
+    const parts = helpers(THREE, bench);
+    parts.box([.72, .12, 2.75], navy, [0, .41, 0], 'ARENA_SPECTATOR_BENCH_SEAT');
+    parts.box([.12, .55, 2.75], side < 0 ? ledBlue : ledOrange, [side * .32, .73, 0], 'ARENA_SPECTATOR_BENCH_BACK');
+    for (const z of [-1.1, 1.1]) parts.box([.56, .35, .1], metal, [0, .175, z], 'ARENA_SPECTATOR_BENCH_LEG');
+    box([.5, .22, 2.75], concrete, [side * 9.1, .11, BASKETBALL_SPECTATOR_AREA.benchZ], 'ARENA_SPECTATOR_BENCH_ACCESS_STEP');
+    bench.userData.seatPositions = spectatorSeats.filter(seat => Math.sign(seat.x) === side);
+    // Clear openings at centre court and both baselines let participants enter
+    // without climbing a rail. The server controls live court admission.
+    for (const [start, end] of [[-15.7, -13.4], [-11.6, -1.4], [1.4, 11.6], [13.4, 15.7]]) {
+      tube([side * 8.35, .8, start], [side * 8.35, .8, end], .035, metal, 'ARENA_COURTSIDE_ACCESS_RAIL');
+      for (const z of [start, end]) tube([side * 8.35, 0, z], [side * 8.35, .8, z], .03, metal, 'ARENA_COURTSIDE_ACCESS_RAIL');
+    }
+  }
+  const accessSign = canvasTexture(THREE, 1024, 256, ctx => {
+    ctx.fillStyle = '#081b2d'; ctx.fillRect(0, 0, 1024, 256);
+    ctx.fillStyle = '#20c8f1'; ctx.fillRect(0, 0, 1024, 12);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#f6fbff'; ctx.font = '800 57px system-ui,sans-serif'; ctx.fillText('SPECTATOR STANDS + BENCHES', 512, 87);
+    ctx.fillStyle = '#b7cfdf'; ctx.font = '600 31px system-ui,sans-serif'; ctx.fillText('WATCH FROM THE SIDELINES  •  PLAYERS ENTER AT THE GATES', 512, 172);
+  });
+  if (accessSign) {
+    const signMaterial = new THREE.MeshBasicMaterial({ map: accessSign.texture, toneMapped: false, side: THREE.DoubleSide });
+    for (const side of [-1, 1]) {
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(5.5, 1.375), signMaterial);
+      sign.name = 'ARENA_SPECTATOR_CONCOURSE_SIGN'; sign.position.set(side * 11.5, 3.1, 0); sign.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2;
+      sign.userData.collisionDisabled = true; root.add(sign);
+    }
+  }
   // Lower and upper seating bowls have real concrete tiers and batched seats.
   // Instancing keeps several thousand seats to a handful of GPU draw calls.
   const seats = [], backs = [];
@@ -282,12 +336,12 @@ export function createBasketballStadium(THREE, environment = {}) {
     const light = new THREE.PointLight(0xf4f7ff, 95, 34, 2); light.position.set(0, 11, z); light.name = 'ARENA_COURT_LIGHT'; root.add(light);
   }
   const display = scoreboard(THREE, root);
-  const spawn = new THREE.Object3D(); spawn.name = 'SPAWN_PLAYER'; spawn.position.set(0, .02, 7); root.add(spawn);
+  const spawn = new THREE.Object3D(); spawn.name = 'SPAWN_PLAYER'; spawn.position.set(BASKETBALL_SPECTATOR_AREA.arrival.x, BASKETBALL_SPECTATOR_AREA.arrival.y, BASKETBALL_SPECTATOR_AREA.arrival.z); spawn.rotation.y = BASKETBALL_SPECTATOR_AREA.arrival.rotationY; root.add(spawn);
   let elapsed = 0, lastScoreAt = null;
   root.userData.proceduralLand = true;
   root.userData.streetHeightAt = () => 0;
   root.userData.layout = 'basketball-stadium';
-  root.userData.basketball = { ...BASKETBALL_COURT, hoops: [{ x: 0, y: 3.05, z: -12.75 }, { x: 0, y: 3.05, z: 12.75 }] };
+  root.userData.basketball = { ...BASKETBALL_COURT, hoops: [{ x: 0, y: 3.05, z: -12.75 }, { x: 0, y: 3.05, z: 12.75 }], spectatorArea: BASKETBALL_SPECTATOR_AREA, spectatorSeats };
   root.userData.updateBasketballScoreboard = state => {
     display.update(state, elapsed);
     if (state?.lastScore?.at && state.lastScore.at !== lastScoreAt) {

@@ -18,6 +18,7 @@ async function fixture(run){
 test('every arena player shares free court, teams, jerseys and one server-owned game ball',()=>fixture(async({send,runtime,map,charged})=>{
  let state=await send('alice','join');assert.equal(state.basketball.state,'ready');assert.equal(state.players['account:alice'].basketballTeam,'home');assert.equal(state.players['account:alice'].basketballJersey,'home');assert.equal(state.actors[BASKETBALL_BALL_ID].asset.buildAssetId,'basketball');assert.equal(state.radTox,null);assert.equal(state.match,null);
  assert.equal(state.players['account:alice'].basketballRole,'player');
+ assert.equal(Object.values(state.actors).some(actor=>actor.loot),false,'the sports court has no generic combat loot or coin pickups');
  state=await send('bob','join');assert.equal(state.players['account:bob'].basketballTeam,'away');
  await assert.rejects(send('eve','basketball-start'),/Join this room/);
  state=await send('bob','basketball-start');assert.equal(state.basketball.state,'live');assert.equal(state.basketball.quarter,1);assert.equal(state.basketball.clockMs,720000);

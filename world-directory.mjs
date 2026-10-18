@@ -1,9 +1,13 @@
 import {memberPlotEnvironment} from './member-plots.mjs';
 import {WORLD_DISTRICTS,districtMapId} from './world-districts.mjs';
 import {attachAtlas} from './world-atlas.mjs';
+import {readFileSync} from 'node:fs';
+const permanentWorlds=JSON.parse(readFileSync(new URL('./public/models/environments/environments.json',import.meta.url),'utf8')).filter(map=>map.permanent===true).map(map=>({...map,source:'repository',visibility:'public',playable:true,multiplayer:true,canDelete:false,canEdit:false}));
 // One authoritative catalogue for the registry, SVG atlas and physical gateways.
 export async function synchronizeWorldDirectory(atlas,published,deeds=[]){
- const maps=[...new Map(published.filter(map=>map.id!=='public-commons'&&!map.id.startsWith('world-district-')&&map.visibility!=='private'&&map.playable!==false).map(map=>[map.id,map])).values()];
+ // Permanent destinations are part of the world itself. A refresh of uploaded
+ // or player-authored maps cannot remove them or override their shared room.
+ const maps=[...new Map([...published,...permanentWorlds].filter(map=>map.id!=='public-commons'&&!map.id.startsWith('world-district-')&&map.visibility!=='private'&&map.playable!==false).map(map=>[map.id,map])).values()];
  const initial=await atlas.synchronize(maps);
  const templates=[...maps,...Object.values(initial.cells).filter(cell=>cell.generated).map(cell=>cell.environment)];
  const plots=deeds.map(deed=>memberPlotEnvironment(deed,templates)).filter(Boolean);

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {isBasketball} from '../public/js/basketball.js';
 import {
   BASKETBALL_BALL_ID,
   BASKETBALL_COURT,
@@ -59,7 +60,7 @@ function fixture(count = 2) {
   };
 }
 
-test('only basketball environments seed one reusable match ball', () => {
+test('only basketball environments seed one reusable match ball and six spectator seats', () => {
   const sim = {players: {}, actors: {}, events: []};
   assert.equal(ensureBasketballGame(sim, {id: 'ordinary-room'}, 1), null);
   assert.deepEqual(sim, {players: {}, actors: {}, events: []});
@@ -71,11 +72,21 @@ test('only basketball environments seed one reusable match ball', () => {
   assert.deepEqual(match.settings, {quarterMinutes: 12, quarters: 4, shotClockSeconds: 24, scoreLimit: 0, winBy: 1, allowLateJoin: false});
   assert.equal(ball.modelId, 'basketball');
   assert.equal(ball.basketballMatchBall, true);
+  assert.equal(Object.values(sim.actors).filter(isBasketball).length, 1);
+  const seats = Object.values(sim.actors).filter(actor => actor.basketballSpectatorSeat);
+  assert.equal(seats.length, 6);
   ball.position.x = 2;
+  seats[0].holderId = 'spectator';
+  const seatState = seats.map(seat => structuredClone(seat));
   assert.equal(ensureBasketballGame(sim, arena, 3), match);
   assert.equal(sim.actors[BASKETBALL_BALL_ID], ball);
   assert.equal(ball.position.x, 2);
-  assert.equal(Object.keys(sim.actors).length, 1);
+  assert.equal(Object.values(sim.actors).filter(isBasketball).length, 1);
+  assert.equal(Object.values(sim.actors).filter(actor => actor.basketballSpectatorSeat).length, 6);
+  for (const [index, seat] of seats.entries()) {
+    assert.equal(sim.actors[seat.id], seat);
+    assert.deepEqual(seat, seatState[index]);
+  }
 });
 
 test('team assignment balances active players and equips the matching jersey', () => {

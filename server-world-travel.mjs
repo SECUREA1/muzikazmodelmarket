@@ -1,13 +1,15 @@
+import {isBasketballEnvironment} from './public/js/basketball-rules.js';
 // Runtime travel fixtures never modify the member's authored layout.
 export function worldTravelObjects(environment,collision){
  if(!environment.travelPortals?.length)return [];
  const center=collision.safeSpawn(environment,environment.spawn||{x:0,y:0,z:2}),occupied=[],authoredIds=new Set((environment.builderScene?.objects||environment.placementScene?.objects||[]).map(object=>object.id));
  return environment.travelPortals.map((portal,index)=>{
-  const candidate={x:center.x+(index? -3:3),y:center.y,z:center.z+2};
+  const basketball=isBasketballEnvironment(environment),candidate=basketball?{x:(index%2?-1:1)*10.8,y:center.y,z:8-Math.floor(index/2)*4}:{x:center.x+(index? -3:3),y:center.y,z:center.z+2};
   const candidates=[candidate];for(const radius of [3,5,2,7,9])for(let step=0;step<24;step++){const angle=step*Math.PI/12+index*Math.PI;candidates.push({x:center.x+Math.cos(angle)*radius,y:center.y,z:center.z+Math.sin(angle)*radius});}
   let position;
   for(const point of candidates){
    let floor;try{floor=environment.builderScene||environment.proceduralLand?collision.meetingPosition(environment,point):collision.groundAt(environment,point);}catch{continue;}
+   if(basketball&&floor&&Math.abs(floor.x)<9&&Math.abs(floor.z)<16)continue;
    if(!floor||occupied.some(other=>Math.hypot(other.x-floor.x,other.z-floor.z)<2.2))continue;
    const origin={...center,y:center.y+.9},delta=[floor.x-center.x,floor.y-center.y,floor.z-center.z],length=Math.hypot(...delta);
    if(length<1||collision.blocksShot(environment,origin,delta.map(n=>n/length),length))continue;
@@ -20,6 +22,7 @@ export function worldTravelObjects(environment,collision){
  });
 }
 export function portalArrivalPosition(environment,manifest,from,collision,actors,objects){
+ if(isBasketballEnvironment(environment))return collision.safeSpawn(environment,environment.spawn||{x:8.8,y:0,z:0});
  const reciprocal=manifest.objects.filter(object=>object.gameplay.portal?.targetMapId===from).sort((a,b)=>Number(b.objectId.startsWith('world-return-'))-Number(a.objectId.startsWith('world-return-')))[0];
  const center=collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2});
  if(!reciprocal)return center;

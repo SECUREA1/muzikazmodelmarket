@@ -1,4 +1,5 @@
-import {isBasketball,stepBasketball} from './basketball.js';
+import {BASKETBALL_SPECTATOR_SEATS} from './basketball-stadium.js';
+import {isBasketball,stepBasketball,basketballShotSolution} from './basketball.js';
 
 // Metres, regulation NBA court and hoop dimensions. Ball positions refer to
 // the bottom of the model; scoring tests use its physical centre.
@@ -18,11 +19,51 @@ export const isBasketballEnvironment=environment=>environment?.id==='basketball-
 export const basketballGameBall=sim=>sim.actors?.[sim.basketball?.ballId||BASKETBALL_BALL_ID];
 export const basketballHoopForTeam=team=>({x:0,y:BASKETBALL_COURT.rimHeight,z:team==='away'?BASKETBALL_COURT.rimZ:-BASKETBALL_COURT.rimZ});
 
+export const BASKETBALL_SPECTATOR_BUFFER=.5;
+export function basketballSpectatorRestricted(position,sim){
+ return Boolean(sim?.basketball?.state==='live'&&position&&Math.abs(position.x)<BASKETBALL_COURT.width/2+BASKETBALL_SPECTATOR_BUFFER-1e-7&&Math.abs(position.z)<BASKETBALL_COURT.length/2+BASKETBALL_SPECTATOR_BUFFER-1e-7);
+}
+/** Block the entire walking/teleport segment, then slide around the court. */
+export function constrainBasketballSpectator(previous,next,sim,player){
+ if(sim?.basketball?.state!=='live'||player?.basketballRole!=='spectator')return {...next};
+ const edgeX=BASKETBALL_COURT.width/2+BASKETBALL_SPECTATOR_BUFFER+.001,edgeZ=BASKETBALL_COURT.length/2+BASKETBALL_SPECTATOR_BUFFER+.001;
+ const project=point=>{
+  if(!basketballSpectatorRestricted(point,sim))return {...point};
+  if(edgeX-Math.abs(point.x)<=edgeZ-Math.abs(point.z))return {...point,x:(point.x<0?-1:1)*edgeX};
+  return {...point,z:(point.z<0?-1:1)*edgeZ};
+ };
+ if(basketballSpectatorRestricted(previous,sim))return project(next);
+ let enter=0,leave=1,axis=null,side=1;
+ for(const [name,edge]of [['x',edgeX],['z',edgeZ]]){
+  const delta=next[name]-previous[name];
+  if(Math.abs(delta)<1e-9){if(Math.abs(previous[name])>=edge)return {...next};continue;}
+  let near=(-edge-previous[name])/delta,far=(edge-previous[name])/delta;
+  if(near>far)[near,far]=[far,near];
+  if(near>=enter){enter=near;axis=name;side=delta>0?-1:1;}
+  leave=Math.min(leave,far);if(enter>leave)return {...next};
+ }
+ if(leave<0||enter>1||!axis)return project(next);
+ return {...next,[axis]:side*(axis==='x'?edgeX:edgeZ)};
+}
+function evacuateBasketballSpectators(sim){
+ if(sim.basketball?.state!=='live')return;
+ for(const player of Object.values(sim.players)){
+  if(player.basketballRole!=='spectator')continue;
+  let corrected=false;
+  const seat=sim.actors[player.seatedId],vehicle=sim.actors[player.vehicleId];
+  if(vehicle){if(vehicle.holderId===player.actorId)vehicle.holderId=null;player.vehicleId=null;corrected=true;}
+  if(seat&&basketballSpectatorRestricted(seat.position,sim)){if(seat.holderId===player.actorId)seat.holderId=null;player.seatedId=null;corrected=true;}
+  if(basketballSpectatorRestricted(player.position,sim)){player.position=constrainBasketballSpectator(player.position,player.position,sim,player);corrected=true;}
+  if(corrected){player.input={};player.velocityY=0;player.movementRevision=(player.movementRevision||0)+1;}
+ }
+}
+
 export function ensureBasketballGame(sim,environment,now) {
  if(!isBasketballEnvironment(environment))return null;
  sim.actors ||= {};sim.players ||= {};sim.events ||= [];
  sim.basketball ||= {state:'ready',matchId:null,homeScore:0,awayScore:0,quarter:1,clockMs:BASKETBALL_COURT.quarterMs,shotClockMs:BASKETBALL_COURT.shotClockMs,possession:'home',lastPlay:'Pick a team and start the game.',lastScore:null,startedAt:null,updatedAt:now,playSequence:0};
  sim.basketball.settings={...BASKETBALL_DEFAULT_SETTINGS,...sim.basketball.settings,allowLateJoin:false};
+ for(const seat of BASKETBALL_SPECTATOR_SEATS)if(!sim.actors[seat.id]){const position={x:seat.x,y:seat.y,z:seat.z},rotation={x:0,y:seat.rotationY,z:0};sim.actors[seat.id]={id:seat.id,modelId:'basketball-spectator-seat',basketballManaged:true,basketballSpectatorSeat:true,active:true,health:100,position,rotation,scale:{x:1,y:1,z:1},definition:{objectId:seat.id,modelId:'basketball-spectator-seat',position:{...position},gameplay:{behavior:'seat',health:100,damage:0,interactionDistance:2.5,cooldown:0,action:'none',prompt:'Sit on spectator bench',seatOffset:[0,0,0]},movement:{speed:0}}};}
  const current=basketballGameBall(sim),authored=Object.values(sim.actors).find(ball=>isBasketball(ball)&&!ball.basketballManaged&&!ball.spawned&&ball.active!==false);
  if(authored&&(!current||current.basketballManaged&&sim.basketball.state!=='live')){
   if(current?.basketballManaged){releaseBall(sim,current);delete sim.actors[current.id];}
@@ -72,12 +113,16 @@ export function configureBasketballGame(sim,settings,now){
 }
 export const setBasketballSettings=configureBasketballGame;
 
+function releaseBasketballSeatAndVehicle(sim,player){
+ for(const key of ['seatedId','vehicleId']){const actor=sim.actors[player[key]];if(actor?.holderId===(player.actorId||player.id))actor.holderId=null;player[key]=null;}
+}
+
 export function watchBasketballGame(sim,player,now){
  if(!sim.basketball)error('Enter Basketball Arena to watch a basketball game.');
- const held=sim.actors[player.heldId],team=player.basketballTeam;
+ const held=sim.actors[player.heldId],team=player.basketballTeam;releaseBasketballSeatAndVehicle(sim,player);
  player.basketballRole='spectator';player.basketballTeam=null;player.input={};
  if(isBasketball(held)){releaseBall(sim,held);held.position={x:0,y:0,z:0};held.ballFloor=0;if(held.basketballMatchBall&&sim.basketball.state==='live')resetPossession(sim,other(team||sim.basketball.possession),now,'Player moved to the sideline · play continues.');}
- player.position={x:10.5,y:0,z:0};player.floor=0;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;
+ player.position={x:8.8,y:0,z:0};player.yaw=Math.PI/2;player.floor=0;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;
  return player;
 }
 function finishBasketballGame(sim,now,winner,message){
@@ -92,8 +137,9 @@ export function startBasketballGame(sim,now) {
  for(const player of participants)assignBasketballTeam(sim,player,now);
  Object.assign(match,{state:'live',matchId:`basketball-${now}-${(match.gameSequence||0)+1}`,gameSequence:(match.gameSequence||0)+1,homeScore:0,awayScore:0,quarter:1,clockMs:quarterMs(match),shotClockMs:shotClockMs(match),possession:'home',lastScore:null,lastPlay:'Tip-off! Home attacks the orange end; Away attacks the blue end.',startedAt:now,updatedAt:now,playSequence:0,winner:null,endedAt:null});
  const counts={home:0,away:0};
- for(const player of participants){const index=counts[player.basketballTeam]++;player.position={x:(player.basketballTeam==='home'?-1:1)*(1.1+index%4*1.4),y:0,z:Math.floor(index/4)===0?0:(Math.floor(index/4)%2?1:-1)*Math.ceil(Math.floor(index/4)/2)*1.25};player.floor=0;player.velocityY=0;player.grounded=true;player.input={};player.basketballPoints=0;}
+ for(const player of participants){releaseBasketballSeatAndVehicle(sim,player);const index=counts[player.basketballTeam]++;player.position={x:(player.basketballTeam==='home'?-1:1)*(1.1+index%4*1.4),y:0,z:Math.floor(index/4)===0?0:(Math.floor(index/4)%2?1:-1)*Math.ceil(Math.floor(index/4)/2)*1.25};player.floor=0;player.velocityY=0;player.grounded=true;player.input={};player.basketballPoints=0;}
  const ball=basketballGameBall(sim);releaseBall(sim,ball);ball.position={x:0,y:0,z:0};ball.ballFloor=0;
+ evacuateBasketballSpectators(sim);
  event(sim,'basketball-start',now,{matchId:match.matchId});return match;
 }
 
@@ -114,7 +160,7 @@ export function registerBasketballRelease(sim,ball,player,now) {
  ball.basketballShot={id:`${player.actorId||player.id}-${now}-${++sim.basketball.playSequence}`,playerId:player.actorId||player.id,team,origin:{...player.position},releasedAt:now,scored:false};
 }
 
-export function shootBasketball(sim,player,now) {
+export function shootBasketball(sim,player,now,options={}) {
  requireBasketballPlayer(sim,player);
  const ball=sim.actors[player.heldId];if(!isBasketball(ball))error('Catch a basketball before shooting.');
  if(!sim.basketball)error('Enter Basketball Arena to shoot at a regulation hoop.');
@@ -122,8 +168,9 @@ export function shootBasketball(sim,player,now) {
  const team=player.basketballTeam||assignBasketballTeam(sim,player,now),target=basketballHoopForTeam(team);
  const origin={x:player.position.x,y:player.position.y+1.8,z:player.position.z};
  const span=Math.hypot(target.x-origin.x,target.z-origin.z);if(span>29||Math.abs(player.position.x)>BASKETBALL_COURT.width/2||Math.abs(player.position.z)>BASKETBALL_COURT.length/2)error('Step onto the court before shooting.');
- const flight=Math.max(1.05,Math.min(2.65,.95+span*.065));
- ball.position=origin;ball.ballFloor=0;ball.ballVelocity={x:(target.x-origin.x)/flight,y:(target.y-BASKETBALL_COURT.ballRadius-origin.y)/flight+9.8*flight/2,z:(target.z-origin.z)/flight};ball.holderId=null;player.heldId=null;
+ const direction=options.direction||{x:-Math.sin(player.yaw||0),y:0,z:-Math.cos(player.yaw||0)};
+ const solution=basketballShotSolution(origin,{...target,y:target.y-BASKETBALL_COURT.ballRadius},direction,options);
+ ball.position=solution.position;ball.ballFloor=0;ball.ballVelocity=solution.velocity;ball.ballLaunch={power:solution.power,angle:solution.angle,mode:solution.mode,reachable:solution.reachable};ball.holderId=null;delete ball.ballCatchSegment;player.heldId=null;
  registerBasketballRelease(sim,ball,player,now);return ball;
 }
 
@@ -170,18 +217,31 @@ function advanceClock(sim,now) {
 
 export function stepBasketballGame(sim,now,dt) {
  if(!sim.basketball)return;
+ evacuateBasketballSpectators(sim);
  advanceClock(sim,now);
  for(const ball of Object.values(sim.actors)){
   if(!isBasketball(ball)||ball.holderId||!ball.ballVelocity)continue;
+  const catchFrom={...ball.position};
   stepBasketball(ball,dt,0,(previous,next)=>{
    if(scoreCrossing(sim,ball,previous,next,now))return false;
    // Regulation transparent backboards: a bank shot reflects at the board.
    if(ball.ballVelocity)for(const sign of [-1,1]){const plane=sign*13.131;if((previous.z-plane)*(next.z-plane)<=0&&Math.abs(next.x)<.9145&&next.y+BASKETBALL_COURT.ballRadius>2.9&&next.y+BASKETBALL_COURT.ballRadius<3.969){ball.ballVelocity.z*=-.7;next.z=plane-sign*.025;}}
   });
+  if(dt>0&&!ball.holderId)ball.ballCatchSegment={from:catchFrom,to:{...ball.position},at:now};
   if(!ball.basketballMatchBall||sim.basketball.state!=='live'||ball.holderId)continue;
   if(Math.abs(ball.position.x)>BASKETBALL_COURT.width/2||Math.abs(ball.position.z)>BASKETBALL_COURT.length/2||ball.position.y<-.5){const team=other(ball.lastBasketballTouch?.team||sim.basketball.possession);resetPossession(sim,team,now,`Out of bounds · ${team==='home'?'Home':'Away'} ball.`);event(sim,'basketball-turnover',now,{team,reason:'out-of-bounds'});}
  }
  // Carrying the ball across a sideline is also a turnover.
  const ball=basketballGameBall(sim),holder=sim.players[ball?.holderId];
  if(holder&&sim.basketball.state==='live'&&(Math.abs(holder.position.x)>BASKETBALL_COURT.width/2||Math.abs(holder.position.z)>BASKETBALL_COURT.length/2)){const team=other(holder.basketballTeam||sim.basketball.possession);resetPossession(sim,team,now,`Out of bounds · ${team==='home'?'Home':'Away'} ball.`);}
+}
+
+/** Preview arena board collisions with the identical flight and bounce rules. */
+export function predictBasketballShotPath(solution,{duration=3,step=1/30,floor=0}={}){
+ if(!solution?.position||!solution?.velocity)return [];
+ const ball={id:'basketball-preview',modelId:'basketball',position:{...solution.position},ballVelocity:{...solution.velocity},ballFloor:floor};
+ const sim={basketball:{state:'ready',updatedAt:0,settings:{...BASKETBALL_DEFAULT_SETTINGS}},actors:{[ball.id]:ball},players:{},events:[]};
+ const seconds=Math.max(0,Math.min(6,Number(duration)||0)),dt=Math.max(1/120,Math.min(.1,Number(step)||1/30)),points=[{...ball.position,t:0}];
+ for(let elapsed=0;elapsed<seconds-1e-8;){const span=Math.min(dt,seconds-elapsed);elapsed+=span;stepBasketballGame(sim,elapsed*1000,span);points.push({...ball.position,t:elapsed});if(!ball.ballVelocity)break;}
+ return points;
 }

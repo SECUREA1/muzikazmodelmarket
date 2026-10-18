@@ -1,7 +1,8 @@
+import {mountBasketballAim} from './basketball-aim.js';
 import {mountBasketballHud} from './basketball-hud.js';
 import {setBasketballJersey} from './basketball-jerseys.js';
-import {ensureBasketballGame,assignBasketballTeam,configureBasketballGame,watchBasketballGame,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,isBasketballEnvironment} from './basketball-rules.js';
-import {isBasketball,basketballJerseyTeam,tossBasketball,stepBasketball} from './basketball.js';
+import {ensureBasketballGame,assignBasketballTeam,configureBasketballGame,watchBasketballGame,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,isBasketballEnvironment,basketballHoopForTeam,constrainBasketballSpectator,predictBasketballShotPath} from './basketball-rules.js';
+import {isBasketball,basketballJerseyTeam,tossBasketball,stepBasketball,basketballShotSolution,predictBasketballTrajectory,basketballCatchPosition} from './basketball.js';
 import {updateVoiceOverlay,disposeVoiceOverlay} from './voice-avatar-overlay.js';
 import {ServerMotion} from './server-motion.js';
 import {selectedWorldId,outsideDestination,outsideLabel} from './world-navigation.js';
@@ -707,7 +708,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   let requestedBackpackDeployment=false;
   function renderServerRoom(snapshot,selfId,timing={}){if(!serverHostedRoom)return;serverActors=snapshot.actors;connectionBadge.textContent=`Live · ${Object.keys(snapshot.players).length} players · ${activeEnvironment?.name||'Shared world'}`;const requestedItem=new URL(location.href).searchParams.get('useItem');if(requestedItem&&!requestedBackpackDeployment&&snapshot.players[selfId]){requestedBackpackDeployment=true;setTimeout(()=>serverCommand('spawn',{itemId:requestedItem}).catch(error=>setStatus(error.message)),0);const clean=new URL(location.href);clean.searchParams.delete('useItem');history.replaceState({},'',clean);}if(snapshot.mapRevision!==renderedStreetRevision&&envLoader.world){envLoader.clearFloorEffects();if(activeEnvironment?.builderScene||activeEnvironment?.proceduralLand)replaceServerStreets(envLoader.world,snapshot.streets||[],{labels:true});envLoader.refreshFloorEffects();renderedStreetRevision=snapshot.mapRevision;}const onlineCount=document.querySelector('#crib-online-count');if(onlineCount)onlineCount.textContent=Object.keys(snapshot.players).length+' online';const self=snapshot.players[selfId];if(self){serverSnapshotAt=performance.now();serverMotion.push(self.position,serverSnapshotAt);walkingMotion.reconcile(self.position,{serverTime:snapshot.serverTime,simulationTime:snapshot.simulationTime,...timing,receivedAt:timing.receivedAt??serverSnapshotAt});serverMovementSpeed=self.seatedId||self.health<=0||snapshot.match?.state==='finished'?0:self.vehicleId?12:4;serverPlayerTarget.set(self.position.x,self.position.y,self.position.z);if(!serverPlayerInitialized||playerRig.position.distanceTo(serverPlayerTarget)>5){playerRig.position.copy(serverPlayerTarget);serverPlayerInitialized=true;}playerCollider.start.copy(serverPlayerTarget).add(new THREE.Vector3(0,player.radius,0));playerCollider.end.copy(serverPlayerTarget).add(new THREE.Vector3(0,player.height,0));player.velocity.set(0,0,0);player.onGround=self.grounded;toxicBubbleSystem.state=self.health>0?RAD_TOX_STATES.ACTIVE:RAD_TOX_STATES.CLEARED;toxicBubbleSystem.serverLocationName=self.locationName;toxicBubbleSystem.health=self.health;toxicBubbleSystem.score=self.score;toxicBubbleSystem.ammo=self.ammo;toxicBubbleSystem.flameSystem.fuel=self.fuel;toxicBubbleSystem.totalPopped=self.progress?.defeat||0;builderGameplay.player.health=self.health;builderGameplay.player.inventory=self.inventory;builderGameplay.player.quests=self.quests;for(const quest of GAME_QUESTS)serverQuestState[quest.id]={...serverQuestState[quest.id],progress:self.progress?.[quest.event]||0};if(!questPanel.hidden)renderGameQuests();}
-    basketballSnapshot=snapshot.basketball||null;basketballSelf=snapshot.players[selfId];basketballPlayers=snapshot.players;localJerseyTeam=basketballSelf?.basketballJersey||null;
+    basketballSnapshot=snapshot.basketball||null;basketballSelf=snapshot.players[selfId];basketballPlayers=snapshot.players;if(basketballSnapshot?.matchId&&basketballMatchViewId!==basketballSnapshot.matchId){basketballMatchViewId=basketballSnapshot.matchId;if(basketballSelf?.basketballRole!=='spectator'){player.yaw=basketballSelf?.basketballTeam==='away'?Math.PI:0;player.pitch=0;}}localJerseyTeam=basketballSelf?.basketballJersey||null;
     renderServerRadTox(snapshot);toxicBubbleSystem.updateHud();matchResults.render(snapshot,selfId);
     const visiblePlayers=new Set();for(const [id,peer]of Object.entries(snapshot.players)){if(id===selfId)continue;visiblePlayers.add(id);let root=serverPlayerRoots.get(id);if(!root){root=new THREE.Group();const body=new THREE.Mesh(new THREE.CapsuleGeometry(.3,1.1,4,8),new THREE.MeshStandardMaterial({color:0x63eaff}));body.position.y=.85;root.add(body);root.add(liveLabel(root,{username:peer.username,message:peer.health+' health'}));scene.add(root);serverPlayerRoots.set(id,root);root.userData.serverBody=body;}const generation=worldLoadGeneration;syncServerAvatar({THREE,root,peer,loader:avatarLoader,prepare:prepareAuthoredBuilderModel,isCurrent:()=>generation===worldLoadGeneration&&serverPlayerRoots.get(id)===root});targetServerPlayer(root,peer);setBasketballJersey(THREE,root,peer.basketballJersey||null);const labelText=isBasketballEnvironment(activeEnvironment)?peer.basketballRole==='spectator'?'Spectator':`${peer.basketballTeam==='away'?'Away':'Home'} · ${peer.basketballPoints||0} pts`:peer.health<=0?'DEFEATED':`${Math.ceil(peer.health)}% · ${peer.hitsRemaining??hitsRemaining(peer.health)}/45 hits left`;if(root.userData.serverHealthLabel!==labelText){const old=root.getObjectByName('Live_player_label');if(old){old.removeFromParent();old.material.map?.dispose();old.material.dispose();}root.add(liveLabel(root,{username:peer.username,message:labelText,color:peer.health<=0?'#ff637d':'#9cff00'}));root.userData.serverHealthLabel=labelText;}}
     for(const [id,root]of serverPlayerRoots)if(!visiblePlayers.has(id)){disposeProjection(root);serverPlayerRoots.delete(id);}
@@ -1464,16 +1465,20 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const isTypingTarget = (target) => target instanceof Element && Boolean(target.closest('input, textarea, select, [contenteditable="true"], [role="textbox"]'));
   const setPlayerAvatarVisible=(visible)=>placedAvatars.children.forEach(root=>{if(root.userData.localPlayerAvatar)root.visible=visible;});
   const vehicleController=new BuilderVehicleController({THREE,vehicles:builderDecor,playerRig,camera,keys,input:()=>({throttle:(mobile.has('forward')?1:0)-(mobile.has('back')?1:0)-thumbInput.leftY,steering:(mobile.has('left')?1:0)-(mobile.has('right')?1:0)-thumbInput.leftX,lift:mobile.has('jump')?1:0}),status:setStatus,onEnter:()=>setPlayerAvatarVisible(false),onExit:(position)=>{setPlayerAvatarVisible(true);playerCollider.start.copy(position);playerCollider.end.copy(position).add(new THREE.Vector3(0,player.height,0));player.velocity.set(0,0,0);}});
-  const localBasketballs=[];let heldBasketball=null,basketballSnapshot=null,basketballSelf=null,basketballPlayers={},localJerseyTeam=null;
+  const localBasketballs=[];let heldBasketball=null,basketballSnapshot=null,basketballSelf=null,basketballPlayers={},basketballMatchViewId=null,localJerseyTeam=null;
   const localBasketballPlayer={actorId:'local',lastSeen:Date.now(),position:{x:0,y:0,z:0},yaw:0,health:100,heldId:null,basketballTeam:'home',inventory:[]};
   let localBasketballSim={actors:{},players:{local:localBasketballPlayer},events:[]};
   const basketballHud=mountBasketballHud({stage,onAction:basketballAction,announce:setStatus});
+  const basketballAim=mountBasketballAim({stage});
+  const flightGeometry=new THREE.BufferGeometry();flightGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(256*3),3));flightGeometry.setDrawRange(0,0);
+  const flightPreview=new THREE.Points(flightGeometry,new THREE.PointsMaterial({color:0xffdc94,size:.065,transparent:true,opacity:.8,depthWrite:false}));flightPreview.name='BASKETBALL_THROW_PREVIEW';flightPreview.frustumCulled=false;flightPreview.visible=false;scene.add(flightPreview);
+
   const localJerseyAnchor=new THREE.Group();localJerseyAnchor.name='Local basketball jersey attachment';playerRig.add(localJerseyAnchor);
   function registerLocalBasketball(root,asset){
     const ball={id:root.uuid,asset,root,position:root.position.clone(),ballFloor:root.position.y};localBasketballs.push(ball);localBasketballSim.actors[ball.id]=ball;return ball;
   }
   function resetBasketballWorld(environment){
-    basketballSnapshot=null;basketballSelf=null;basketballPlayers={};heldBasketball=null;localBasketballPlayer.heldId=null;
+    basketballSnapshot=null;basketballSelf=null;basketballPlayers={};basketballMatchViewId=null;heldBasketball=null;localBasketballPlayer.heldId=null;
     for(const ball of localBasketballs)disposeProjection(ball.root);localBasketballs.length=0;
     localBasketballSim={actors:{},players:{local:localBasketballPlayer},events:[]};
     if(!serverHostedRoom&&isBasketballEnvironment(environment)){
@@ -1485,22 +1490,23 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const ballControls=document.createElement('div');ballControls.className='basketball-controls';ballControls.style.cssText='position:absolute;bottom:140px;right:18px;z-index:30;display:flex;gap:8px';ballControls.hidden=true;
   for(const [action,label] of [['catch','Catch basketball (E)'],['toss','Toss basketball (T)']]){const button=document.createElement('button');button.type='button';button.textContent=label;button.addEventListener('click',()=>safelyInteract('Basketball',()=>basketballAction(action)));ballControls.append(button);}stage.append(ballControls);
   function basketballAction(action,fields={}){
-    if(serverHostedRoom)return serverCommand(action,{pitch:-player.pitch,...fields});
+    if(['basketball-shoot','toss'].includes(action))fields={...basketballAim.options(),direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),...fields};
+    if(serverHostedRoom)return serverCommand(action,{pitch:-player.pitch,...fields}).then(state=>{if(state&&action==='basketball-watch'){player.yaw=Math.PI/2;player.pitch=0;}return state;});
     const now=Date.now();localBasketballPlayer.position={x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z};localBasketballPlayer.yaw=player.yaw;
     if(action==='basketball-team'){assignBasketballTeam(localBasketballSim,localBasketballPlayer,now,fields.team);localBasketballPlayer.basketballJersey=fields.team;localJerseyTeam=fields.team;return;}
     if(action==='basketball-settings')return configureBasketballGame(localBasketballSim,fields.settings,now);
-    if(action==='basketball-watch'){watchBasketballGame(localBasketballSim,localBasketballPlayer,now);localJerseyTeam=null;syncLocalBasketballPlayer();return true;}
-    if(localBasketballPlayer.basketballRole==='spectator'&&['catch','toss','basketball-shoot'].includes(action)){setStatus('You are watching this game. Choose a side before the next tip-off to play.');return false;}
-    if(action==='basketball-start'){const game=startBasketballGame(localBasketballSim,now);syncLocalBasketballPlayer();return game;}
-    if(action==='basketball-shoot'){const result=shootBasketball(localBasketballSim,localBasketballPlayer,now);heldBasketball=null;return result;}
+    if(action==='basketball-watch'){watchBasketballGame(localBasketballSim,localBasketballPlayer,now);player.yaw=Math.PI/2;player.pitch=0;localJerseyTeam=null;syncLocalBasketballPlayer();return true;}
+    if(isBasketballEnvironment(activeEnvironment)&&localBasketballPlayer.basketballRole==='spectator'&&['catch','toss','basketball-shoot'].includes(action)){setStatus('You are watching this game. Choose a side before the next tip-off to play.');return false;}
+    if(action==='basketball-start'){const game=startBasketballGame(localBasketballSim,now);player.yaw=localBasketballPlayer.basketballTeam==='away'?Math.PI:0;player.pitch=0;syncLocalBasketballPlayer();return game;}
+    if(action==='basketball-shoot'){const result=shootBasketball(localBasketballSim,localBasketballPlayer,now,fields);heldBasketball=null;return result;}
     if(action==='toss'){
       if(!heldBasketball){setStatus('Catch a basketball first.');return;}
-      registerBasketballRelease(localBasketballSim,heldBasketball,localBasketballPlayer,now);tossBasketball(heldBasketball,playerRig.position,camera.getWorldDirection(new THREE.Vector3()));heldBasketball=null;localBasketballPlayer.heldId=null;setStatus('Basketball tossed — move close and press E to catch.');
+      registerBasketballRelease(localBasketballSim,heldBasketball,localBasketballPlayer,now);tossBasketball(heldBasketball,playerRig.position,camera.getWorldDirection(new THREE.Vector3()),{...fields,mode:'manual'});heldBasketball=null;localBasketballPlayer.heldId=null;setStatus('Basketball tossed — move close and press E to catch.');
     }else{
       if(heldBasketball||builderGameplay.heldActor()){setStatus('Release your held item first.');return;}
-      const hand=camera.getWorldPosition(new THREE.Vector3()),ball=localBasketballs.filter(ball=>ball.root.parent&&ball.root.position.distanceTo(hand)<=3).sort((a,b)=>a.root.position.distanceTo(hand)-b.root.position.distanceTo(hand))[0];
+      const ball=localBasketballs.map(ball=>({ball,reach:ball.root.parent&&basketballCatchPosition(ball,playerRig.position,{now})})).filter(hit=>hit.reach).sort((a,b)=>a.reach.distance-b.reach.distance)[0]?.ball;
       if(!ball){setStatus('Move within 3 metres of a basketball to catch it.');return;}
-      heldBasketball=ball;ball.holderId='local';delete ball.ballVelocity;localBasketballPlayer.heldId=ball.id;touchBasketball(localBasketballSim,ball,localBasketballPlayer,now);setStatus('Basketball caught — R to shoot, T to pass.');
+      heldBasketball=ball;ball.holderId='local';delete ball.ballVelocity;delete ball.ballCatchSegment;localBasketballPlayer.heldId=ball.id;touchBasketball(localBasketballSim,ball,localBasketballPlayer,now);setStatus('Basketball caught — R to shoot, T to pass.');
     }
   }
   function syncLocalBasketballPlayer(){
@@ -1512,25 +1518,45 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   function updateBasketballs(delta){
     const arena=isBasketballEnvironment(activeEnvironment);
+    if(!serverHostedRoom&&arena){const constrained=constrainBasketballSpectator(localBasketballPlayer.position,{x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z},localBasketballSim,localBasketballPlayer);playerRig.position.set(constrained.x,constrained.y,constrained.z);playerCollider.start.set(constrained.x,constrained.y+player.radius,constrained.z);playerCollider.end.set(constrained.x,constrained.y+player.height,constrained.z);}
     localBasketballPlayer.position={x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z};localBasketballPlayer.yaw=player.yaw;localBasketballPlayer.lastSeen=Date.now();
     if(!serverHostedRoom&&arena){stepBasketballGame(localBasketballSim,Date.now(),delta);syncLocalBasketballPlayer();}
     for(let index=localBasketballs.length-1;index>=0;index--){const ball=localBasketballs[index];if(!ball.root.parent||!localBasketballSim.actors[ball.id]){if(ball.root.parent)disposeProjection(ball.root);localBasketballs.splice(index,1);delete localBasketballSim.actors[ball.id];if(heldBasketball===ball)heldBasketball=null;continue;}if(heldBasketball===ball&&localBasketballPlayer.heldId===ball.id){ball.position=camera.getWorldPosition(new THREE.Vector3()).addScaledVector(camera.getWorldDirection(new THREE.Vector3()),.65);ball.position.y-=.35;}else if(!arena)stepBasketball(ball,delta);ball.root.position.set(ball.position.x,ball.position.y,ball.position.z);}
     const elapsed=clock.elapsedTime;
-    if(serverHostedRoom){for(const root of builderDecor.children){const ball=serverActors[root.userData.builderObjectId];if(!isBasketball(ball))continue;const holder=basketballPlayers[ball.holderId],moving=Math.abs(holder?.input?.forward||0)+Math.abs(holder?.input?.side||0)>.1;root.position.y=ball.position.y+(root.userData.serverRenderOffset?.y||0)-(moving?.78*Math.abs(Math.sin(elapsed*8)):0);if(ball.ballVelocity){root.rotation.x=elapsed*8;root.rotation.z=elapsed*3;}}}
+    if(serverHostedRoom){for(const root of builderDecor.children){const ball=serverActors[root.userData.builderObjectId];if(!isBasketball(ball))continue;const holder=basketballPlayers[ball.holderId],moving=Math.abs(holder?.input?.forward||0)+Math.abs(holder?.input?.side||0)>.1;root.position.y=ball.position.y+(root.userData.serverRenderOffset?.y||0)-(moving ? .78*Math.abs(Math.sin(elapsed*8)):0);if(ball.ballVelocity){root.rotation.x=elapsed*8;root.rotation.z=elapsed*3;}}}
     else for(const ball of localBasketballs){if(ball===heldBasketball&&move.lengthSq()>.00001)ball.root.position.y-=.7*Math.abs(Math.sin(elapsed*8));if(ball.ballVelocity){ball.root.rotation.x=elapsed*8;ball.root.rotation.z=elapsed*3;}}
     const hasBall=serverHostedRoom?Object.values(serverActors).some(isBasketball):localBasketballs.length>0;ballControls.hidden=!hasBall||arena;ballControls.style.display=hasBall&&!arena?'flex':'none';
     const game=serverHostedRoom?basketballSnapshot:localBasketballSim.basketball,self=serverHostedRoom?basketballSelf:localBasketballPlayer;
-    basketballHud.render(game,self,arena);
+    basketballHud.render(game,self,arena,serverHostedRoom?basketballPlayers:localBasketballSim.players);
+    let solution=null;
+    const held=serverHostedRoom?isBasketball(serverActors[self?.heldId]):Boolean(heldBasketball);
+    const spectator=arena&&self?.basketballRole==='spectator';
+    if(held&&!spectator){
+      const options=basketballAim.options(),previewPass=!arena||basketballAim.previewAction()==='toss';
+      const origin={x:playerRig.position.x,y:playerRig.position.y+(previewPass?1.2:1.8),z:playerRig.position.z};
+      const hoop=basketballHoopForTeam(self?.basketballTeam||'home'),target={...hoop,y:hoop.y-.12};
+      try{solution=basketballShotSolution(origin,target,camera.getWorldDirection(new THREE.Vector3()),{...options,mode:previewPass?'manual':options.mode});}catch{}
+      if(solution){const predict=arena?predictBasketballShotPath:predictBasketballTrajectory,points=predict(solution,{duration:Math.min(6,Math.max(3,(solution.flightTime||2)+1)),step:1/30,floor:0}).slice(0,256),attribute=flightGeometry.getAttribute('position');points.forEach((point,index)=>attribute.setXYZ(index,point.x,point.y+.12,point.z));attribute.needsUpdate=true;flightGeometry.setDrawRange(0,points.length);flightPreview.material.color.setHex(solution.reachable===false?0xff8866:0xffdc94);}
+    }
+    flightPreview.visible=Boolean(held&&!spectator&&solution);
+    basketballAim.render({enabled:arena||held,held,spectator,solution});
+
     if(arena)envLoader.world?.userData.setBasketballState?.(game);
     const team=serverHostedRoom?localJerseyTeam:localBasketballPlayer.basketballJersey;setBasketballJersey(THREE,localJerseyAnchor,team,{firstPerson:true});
     placedAvatars.children.forEach(root=>{if(root.userData.localPlayerAvatar)setBasketballJersey(THREE,root,team);});
   }
-  window.addEventListener('keydown',event=>{if(event.repeat||isTypingTarget(event.target)||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return;const key=event.key.toLowerCase(),hasBall=serverHostedRoom?Object.values(serverActors).some(isBasketball):localBasketballs.length>0;if(hasBall&&(key==='t'||key==='e'||(key==='r'&&isBasketballEnvironment(activeEnvironment)))){if(key==='e'&&(heldBasketball||(serverHostedRoom?!Object.values(serverActors).some(ball=>isBasketball(ball)&&!ball.holderId&&new THREE.Vector3(ball.position.x,ball.position.y,ball.position.z).distanceTo(camera.getWorldPosition(new THREE.Vector3()))<=3):!localBasketballs.some(ball=>ball.root.position.distanceTo(camera.getWorldPosition(new THREE.Vector3()))<=3))))return;event.preventDefault();event.stopImmediatePropagation();safelyInteract('Basketball',()=>basketballAction(key==='t'?'toss':key==='r'?'basketball-shoot':'catch'));}},true);
+  window.addEventListener('keydown',event=>{if(event.repeat||isTypingTarget(event.target)||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return;const key=event.key.toLowerCase(),hasBall=serverHostedRoom?Object.values(serverActors).some(isBasketball):localBasketballs.length>0;if(hasBall&&(key==='t'||key==='e'||(key==='r'&&isBasketballEnvironment(activeEnvironment)))){if(key==='e'&&isBasketballEnvironment(activeEnvironment)&&(serverHostedRoom?basketballSelf?.basketballRole:localBasketballPlayer.basketballRole)==='spectator')return;if(key==='e'&&(heldBasketball||(serverHostedRoom?!Object.values(serverActors).some(ball=>basketballCatchPosition(ball,playerRig.position)):!localBasketballs.some(ball=>basketballCatchPosition(ball,playerRig.position)))))return;event.preventDefault();event.stopImmediatePropagation();safelyInteract('Basketball',()=>basketballAction(key==='t'?'toss':key==='r'?'basketball-shoot':'catch'));}},true);
   function dropHeldBuilderItem(){const forward=camera.getWorldDirection(new THREE.Vector3());forward.y=0;forward.normalize();return builderGameplay.dropHeld(playerRig.position.clone().addScaledVector(forward,1.5));}
   let nearbyAction={kind:'none',prompt:'',label:'',title:'',hint:'',vehicleActive:false};
   let nearbyActionCheckedAt=-Infinity;
   let nearbyActionLocked=false;
   function resolveNearbyAction(){
+    if(serverHostedRoom&&isBasketballEnvironment(activeEnvironment)){
+      if(basketballSelf?.seatedId)return{kind:'item',prompt:'E — Stand up from bench',label:'Stand up from spectator bench',title:'STAND UP',hint:'Tap or press E',vehicleActive:false};
+      const seat=Object.values(serverActors).filter(actor=>actor.active!==false&&!actor.holderId&&actor.definition?.gameplay?.behavior==='seat').find(actor=>Math.hypot(actor.position.x-playerRig.position.x,actor.position.y-playerRig.position.y,actor.position.z-playerRig.position.z)<=2.5);
+      if(seat)return{kind:'item',prompt:'E — Sit on spectator bench',label:'Sit on spectator bench',title:'SIT ON BENCH',hint:'Tap or press E to sit and watch',vehicleActive:false};
+    }
+
     if(serverHostedRoom){const gateway=builderDecor.children.find(object=>object.userData.worldGateway&&object.position.distanceTo(playerRig.position)<=6);if(gateway)return{kind:'item',prompt:'E — '+gateway.userData.worldGateway.name,label:gateway.userData.worldGateway.name,title:'ENTER WORLD',hint:'Tap or click to travel',vehicleActive:false};}
     if(builderGameplay.player.seatedObjectId)return{kind:'item',prompt:'E — Stand up',label:'Stand up from seat',title:'STAND UP',hint:'Tap, click, or press E',vehicleActive:false};
     const held=builderGameplay.heldActor();
@@ -1787,6 +1813,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       const speed=serverMovementSpeed===4&&controls.sprint?6:serverMovementSpeed;
       serverMotion.sample(performance.now(),serverViewTarget);
       walkingMotion.sample(performance.now(),delta,controls,speed,serverViewTarget);
+      if(isBasketballEnvironment(activeEnvironment)&&basketballSelf?.basketballRole==='spectator'){const next=constrainBasketballSpectator(playerRig.position,serverViewTarget,{basketball:basketballSnapshot},basketballSelf);serverViewTarget.set(next.x,next.y,next.z);}
       playerRig.position.x=serverViewTarget.x;playerRig.position.z=serverViewTarget.z;
       playerRig.position.y+=(serverViewTarget.y-playerRig.position.y)*(1-Math.exp(-25*delta));
       if(!renderer.xr.isPresenting)camera.position.x=camera.position.z=0;
