@@ -363,7 +363,9 @@
       "difficulty": "easy",
       "periodSeconds": 180
     },
-    "playUrl": "hockey.html?environment=hockey-arena&mode=multiplayer"
+    "playUrl": "hockey.html?environment=hockey-arena&mode=multiplayer",
+    "spaceScale": 1,
+    "scale": 1
   },
   {
     "id": "neon-junction",
@@ -391,135 +393,9 @@
       "coasterPeak": 13,
       "difficulty": "easy"
     },
-    "playUrl": "arcade.html?environment=neon-junction&mode=multiplayer"
-  },
-  {
-    "id": "basketball",
-    "name": "Basketball",
-    "label": "Sports \u00b7 Basketball",
-    "category": "Sports",
-    "game": "arcade",
-    "layout": "arcade-park",
-    "proceduralLand": true,
-    "playable": true,
-    "multiplayer": true,
-    "visibility": "public",
-    "source": "repository",
-    "playableSize": 80,
-    "spawn": {
-      "x": 0,
-      "y": 1,
-      "z": 0
-    },
-    "description": "Full-court basketball: 1\u20135 players per team, four quarters, overtime, passing, steals, rebounds and 2/3-point scoring. Solo against AI, live players with AI filling empty spots, or watch AI play. Shooting challenge also available.",
-    "arcade": {
-      "roundSeconds": 45,
-      "trainLapSeconds": 55,
-      "coasterLapSeconds": 32,
-      "coasterPeak": 13,
-      "difficulty": "easy",
-      "enabled": [
-        "basketball"
-      ],
-      "basketballMode": "full",
-      "teamSize": 3,
-      "periodSeconds": 60,
-      "aiFill": true
-    },
-    "playUrl": "arcade.html?environment=basketball&attraction=basketball&mode=multiplayer"
-  },
-  {
-    "id": "shooting",
-    "name": "Shooting Arcade",
-    "label": "Sports \u00b7 Shooting Arcade",
-    "category": "Sports",
-    "game": "arcade",
-    "layout": "arcade-park",
-    "proceduralLand": true,
-    "playable": true,
-    "multiplayer": true,
-    "visibility": "public",
-    "source": "repository",
-    "playableSize": 80,
-    "spawn": {
-      "x": 0,
-      "y": 1,
-      "z": 0
-    },
-    "description": "Shooting Arcade \u2014 join a shared round, take an available player spot, or spectate. First person and Top down views.",
-    "arcade": {
-      "roundSeconds": 45,
-      "trainLapSeconds": 55,
-      "coasterLapSeconds": 32,
-      "coasterPeak": 13,
-      "difficulty": "easy",
-      "enabled": [
-        "shooting"
-      ]
-    },
-    "playUrl": "arcade.html?environment=shooting&attraction=shooting&mode=multiplayer"
-  },
-  {
-    "id": "air-hockey",
-    "name": "Air Hockey",
-    "label": "Sports \u00b7 Air Hockey",
-    "category": "Sports",
-    "game": "arcade",
-    "layout": "arcade-park",
-    "proceduralLand": true,
-    "playable": true,
-    "multiplayer": true,
-    "visibility": "public",
-    "source": "repository",
-    "playableSize": 80,
-    "spawn": {
-      "x": 0,
-      "y": 1,
-      "z": 0
-    },
-    "description": "Air Hockey \u2014 join a shared round, take an available player spot, or spectate. First person and Top down views.",
-    "arcade": {
-      "roundSeconds": 45,
-      "trainLapSeconds": 55,
-      "coasterLapSeconds": 32,
-      "coasterPeak": 13,
-      "difficulty": "easy",
-      "enabled": [
-        "air-hockey"
-      ]
-    },
-    "playUrl": "arcade.html?environment=air-hockey&attraction=air-hockey&mode=multiplayer"
-  },
-  {
-    "id": "billiards",
-    "name": "Billiards",
-    "label": "Sports \u00b7 Billiards",
-    "category": "Sports",
-    "game": "arcade",
-    "layout": "arcade-park",
-    "proceduralLand": true,
-    "playable": true,
-    "multiplayer": true,
-    "visibility": "public",
-    "source": "repository",
-    "playableSize": 80,
-    "spawn": {
-      "x": 0,
-      "y": 1,
-      "z": 0
-    },
-    "description": "Billiards \u2014 join a shared round, take an available player spot, or spectate. First person and Top down views.",
-    "arcade": {
-      "roundSeconds": 45,
-      "trainLapSeconds": 55,
-      "coasterLapSeconds": 32,
-      "coasterPeak": 13,
-      "difficulty": "easy",
-      "enabled": [
-        "billiards"
-      ]
-    },
-    "playUrl": "arcade.html?environment=billiards&attraction=billiards&mode=multiplayer"
+    "playUrl": "arcade.html?environment=neon-junction&mode=multiplayer",
+    "spaceScale": 1,
+    "scale": 1
   },
   {
     "id": "firing-range",
@@ -548,6 +424,55 @@
       "gameplay": {
         "multiplayer": true
       }
-    }
+    },
+    "spaceScale": 1,
+    "scale": 1
+  },
+  {
+    "id": "basketball-arena",
+    "name": "MUZIKAZ Basketball Arena",
+    "label": "Live basketball stadium",
+    "category": "Sports",
+    "levelOrder": 0,
+    "playable": true,
+    "multiplayer": true,
+    "publicDestination": true,
+    "permanent": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+    "basketball": true,
+    "description": "Permanent public basketball stadium: regulation hardwood court, glass-backboard hoops, live scoreboard, team jerseys and shared matches. Join a team to play, or watch from the spectator benches and accessible stands.",
+    "proceduralLand": true,
+    "builderScene": {
+      "layout": "basketball-stadium",
+      "mapSize": 62,
+      "objects": [],
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false
+      }
+    },
+    "spawn": {
+      "x": 8.8,
+      "y": 0.02,
+      "z": 0,
+      "rotationY": 1.5707963267948966
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 62,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository",
+    "roomId": "basketball-arena",
+    "playUrl": "model-explorer.html?environment=basketball-arena&house=basketball-arena&autoplay=1"
   }
 ]

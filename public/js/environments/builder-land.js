@@ -1,7 +1,9 @@
 import {createArcadePark} from '../arcade-park.js';
 import {createHockeyArena} from '../hockey-models.js';
 import {applySportsSurfaces} from '../sports-surfaces.js';
+import {isBasketballEnvironment} from '../basketball-rules.js';
 import {createServerStreets} from './server-streets.js';
+import {createBasketballStadium} from '../basketball-stadium.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
 function sportsLand(root,theme) {
     // Loading a world never waits for vector finishes. The procedural materials
@@ -10,6 +12,7 @@ function sportsLand(root,theme) {
     return root;
 }
 export function createBuilderLand(environment) {
+    if(isBasketballEnvironment(environment))return createBasketballStadium(THREE,environment);
     if((environment.builderScene?.layout||environment.layout)==='arcade-park')return sportsLand(createArcadePark(environment.builderScene?.gameplay?.arcade||environment.arcade).root,'arcade');
     if((environment.builderScene?.layout||environment.layout)==='hockey-arena')return sportsLand(createHockeyArena(),'hockey');
     const built = environment.builderScene || {};

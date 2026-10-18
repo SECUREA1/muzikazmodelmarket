@@ -2,10 +2,16 @@ import {ARCADE_PARTS} from './arcade-rules.js';
 import {createArcadePart,animateArcadePark} from './arcade-park.js';
 import {createHockeyItem} from './hockey-models.js';
 import * as THREE from '../vendor/three/three.module.min.js';
+import {createBasketballHoop} from './basketball-stadium.js';
+import {createBasketballJersey} from './basketball-jerseys.js';
 
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  'basketball-jersey-away': ['Away Basketball Jersey', 'Free sleeveless coral MUZIKAZ team uniform attached to your avatar torso.', [.72,.73,.45]],
+  'basketball-jersey-home': ['Home Basketball Jersey', 'Free sleeveless teal MUZIKAZ team uniform attached to your avatar torso.', [.72,.73,.45]],
+  'basketball-hoop': ['Basketball Hoop & Net', 'Regulation 3.05 metre rim, woven white net, glass backboard and padded support.', [1.873,3.991,2.777]],
+  basketball: ['Basketball', 'Free regulation size ball for tossing, catching and scoring.', [.24,.24,.24]],
   'grand-floor': ['Grand Build Floor', 'A playable foundation tile that expands the walkable world directly from the Backpack.', [8, .24, 8]],
   'open-studio': ['Open Studio', 'An open-sided playable studio room with a floor, feature wall and neon columns.', [6, 2.8, 5]],
   'connected-suite': ['Connected Suite', 'A playable connected room with two doorways and a raised floor.', [6, 2.8, 5]],

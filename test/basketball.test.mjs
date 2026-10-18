@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {economyItem,ownsEconomyItem} from '../game-economy.mjs';
+import {tossBasketball,stepBasketball} from '../public/js/basketball.js';
+import {SharedRoomStore} from '../shared-room-store.mjs';
+import {AuthoritativeRooms} from '../authoritative-room.mjs';
+test('basketball is free to own, deploy and reuse',()=>{const ball=economyItem('backpack:basketball');assert.equal(ball.priceMzk,0);assert.equal(ball.useCostMzk,0);assert.equal(ownsEconomyItem({items:[]},ball),true);assert.equal(ball.behavior,'pickup');});
+test('toss launches a ball that falls, bounces and settles',()=>{const ball={modelId:'basketball'};assert.equal(tossBasketball(ball,{x:0,y:2,z:0},{x:0,y:0,z:-1}),true);stepBasketball(ball,.2);assert.ok(ball.position.z<0);assert.ok(ball.position.y>3.2);let bounced=false;for(let i=0;i<3000;i++){const vy=ball.ballVelocity?.y;stepBasketball(ball,1/60);if(vy<0&&ball.ballVelocity?.y>0)bounced=true;}assert.equal(bounced,true);assert.equal(ball.position.y,2);assert.equal(ball.ballVelocity,undefined);});
+test('server supports catch, toss, catch again, and rejects distant catches',async()=>{const dir=await mkdtemp(join(tmpdir(),'basketball-'));let now=100000,sequence=0;try{const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),now:()=>now,resolveAsset:async()=>economyItem('backpack:basketball')});const map={id:'basketball-room',spawn:{x:0,y:0,z:0},builderScene:{layout:'grand-floor',objects:[]}},identity={accountId:'alice',walletId:'alice',username:'Alice',stats:{health:100}};const send=(action,extra={})=>runtime.command(map.id,map,identity,{action,requestId:'ball-'+(++sequence),...extra});await send('join');const spawned=await send('spawn',{sku:'backpack:basketball'}),id=Object.keys(spawned.actors).find(id=>id.startsWith('spawn-'));let state=await send('catch');assert.equal(state.players['account:alice'].heldId,id);state=await send('toss',{pitch:0});assert.equal(state.players['account:alice'].heldId,null);assert.ok(state.actors[id].ballVelocity);state=await send('catch');assert.equal(state.players['account:alice'].heldId,id);assert.equal(state.actors[id].ballVelocity,undefined);await send('toss',{pitch:0});for(let i=0;i<6;i++){now+=250;await runtime.snapshot(map.id,map);}await assert.rejects(send('catch'),/within 3 metres/);}finally{await rm(dir,{recursive:true,force:true});}});
