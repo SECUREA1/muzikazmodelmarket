@@ -178,7 +178,13 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
     if (!object.isMesh || !object.geometry) return;
     if (collisionIsDisabled(object)) return;
     const name = object.name || '';
-    if (isDedicatedCollider(object)) { if (COLLISION_RE.test(name)) object.visible = false; collisionMeshes.push(object); return; }
+    if (isDedicatedCollider(object)) {
+      // A visible terrain mesh can also be an explicit collider. Only helper
+      // meshes named COLLIDER/COLLISION/NAVMESH are hidden from rendering.
+      if (COLLISION_RE.test(name)) object.visible = false;
+      else if (object.visible !== false && [].concat(object.material || []).some(material => material.visible !== false)) visibleMeshes.push(object);
+      collisionMeshes.push(object); return;
+    }
     visibleMeshes.push(object);
     const material = Array.isArray(object.material) ? object.material[0] : object.material;
     // A playable world always needs physical geometry.  `none` is retained as

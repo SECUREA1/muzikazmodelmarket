@@ -61,3 +61,5 @@
  .custom-toolkit-menu:not([open]) nav{display:none}
 }
 .custom-toolkit-menu:not([open]) nav{display:none}
+
+.custom-drawing-3d{position:absolute;inset:0;z-index:2;touch-action:none}.custom-drawing-3d canvas{display:block;width:100%;height:100%;touch-action:none}.custom-drawing-3d[hidden],.custom-extruded-preview.has-3d-preview{display:none}.custom-preview-stage .preview-axis{z-index:3;pointer-events:none}.custom-draw-stage{background-image:linear-gradient(#a8ff1815 1px,transparent 1px),linear-gradient(90deg,#a8ff1815 1px,transparent 1px);background-size:36px 36px}

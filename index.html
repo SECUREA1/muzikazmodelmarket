@@ -14,7 +14,7 @@
     <meta name="muzikaz-github-branch" content="main">
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="High-quality MUZIKAZ.com profile for neon 3D model packs, mascot merch, creator tools, live dashboards, wallets, feeds, datasets, and collectible brand stations." />
     <meta name="keywords" content="MUZIKAZ, muzikaz.com, 3D model market, character models, mascot merch, creator dashboard, wallet rewards, brand kit, neon collectibles" />
     <meta name="author" content="MUZIKAZ" />
@@ -46,8 +46,11 @@
     <meta name="msapplication-TileImage" content="public/assets/app-icons/tile-150.png">
     <meta name="msapplication-TileColor" content="#05070a">
   <link rel="stylesheet" href="public/assets/game-control-dock.css">
+<link rel="stylesheet" href="public/css/main-market-filters.css">
+  <link rel="stylesheet" href="public/css/home-gateway.css">
 </head>
-<body class="original-platform">
+<body class="original-platform muzikaz-home" data-game-controls="pending" data-game-launcher>
+    <a class="skip-link" href="#home">Skip to content</a>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x.png","description":"High-quality MUZIKAZ.com profile for neon 3D model packs, mascot merch, creator tools, live dashboards, wallets, feeds, datasets, and collectible brand stations.","sameAs":["https://muzikaz.com/"]}</script>
     <div class="topbar">
         <span>Free drops every Friday</span>
@@ -76,17 +79,17 @@
         <button class="menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Open menu"><svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span></button>
     </header>
 
-    <main id="home">
+    <main id="home" tabindex="-1">
         <section class="hero" aria-labelledby="hero-title" data-hero-mode="explore">
             <div class="hero-poster">
                 <div class="hero-poster__glow" aria-hidden="true"></div>
                 <img src="public/assets/muzikaz-world-poster.svg" alt="Enter MUZIKAZ WORLD — your avatar, your sound, your universe" />
                 <model-viewer class="hero-character hero-character--one" src="public/models/avatars/VOLTWOLF.glb" camera-controls auto-rotate autoplay ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1.2" interaction-prompt="none" alt="Interactive 3D VOLTWOLF character"><button class="ar-button" slot="ar-button" type="button">Place VOLTWOLF in AR</button></model-viewer>
                 <model-viewer class="hero-character hero-character--two" src="public/models/avatars/sharko.glb" camera-controls auto-rotate autoplay ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1.2" interaction-prompt="none" alt="Interactive 3D Sharko character"><button class="ar-button" slot="ar-button" type="button">Place Sharko in AR</button></model-viewer>
-                <div class="hero-signal" aria-hidden="true"><i></i><span>World signal</span><b>98%</b></div>
+                <div class="hero-signal" aria-hidden="true"><i></i><span>MUZIKAZ WORLD</span><b>Find your frequency</b></div>
             </div>
             <div class="hero-copy">
-                <div class="hero-live"><i aria-hidden="true"></i> Live universe <span>Season 01</span></div>
+                <div class="hero-live"><i aria-hidden="true"></i> Music · Play · Create <span>MUZIKAZ WORLD</span></div>
                 <img class="hero-logo" src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ WORLD" />
                 <p class="world-kicker">One connected creative universe</p>
                 <h1 id="hero-title">Your sound.<br><em>Your universe.</em></h1>
@@ -105,24 +108,55 @@
             <div class="hero-scroll-cue" aria-hidden="true"><span>Scroll to explore</span><i></i></div>
         </section>
 
-        <section class="feature-strip" aria-label="Store benefits">
-            <article><b>⚡</b><div><strong>Instant Files</strong><span>Preview-ready assets load from this page.</span></div></article>
-            <article><b>🎧</b><div><strong>Beat Culture</strong><span>Neon streetwear energy for every drop.</span></div></article>
-            <article><b>🛡️</b><div><strong>Creator Safe</strong><span>Clear packs for mockups, banners, and pages.</span></div></article>
-            <article><b>🚚</b><div><strong>Fast Drops</strong><span>New legends and merch collections weekly.</span></div></article>
+        <section class="home-gateway" aria-labelledby="home-gateway-title">
+            <header class="home-gateway__heading">
+                <div><p class="kicker">Your next move</p><h2 id="home-gateway-title">Find your frequency.</h2></div>
+                <p>One world. Every way in. Pick your path and make it yours.</p>
+            </header>
+            <nav class="home-gateway__tiles" aria-label="Start exploring MUZIKAZ">
+                <a class="home-gateway__tile" href="model-explorer.html?environment=public-commons&amp;mode=multiplayer&amp;autoplay=1">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 11 7-11 7z"/></svg>
+                    <span class="home-gateway__number">01 / PLAY</span><strong>Enter the commons</strong><span>Jump into the public world and meet the crew.</span><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 18 18 6M6 6h12v12"/></svg></b>
+                </a>
+                <a class="home-gateway__tile" href="#world-map">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2zM8 4v13M16 7v13"/></svg>
+                    <span class="home-gateway__number">02 / EXPLORE</span><strong>Choose your district</strong><span>Find districts, published maps and member spaces.</span><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 18 18 6M6 6h12v12"/></svg></b>
+                </a>
+                <a class="home-gateway__tile" href="environment-builder.html">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5zM3 12l9 5 9-5M3 16l9 5 9-5"/></svg>
+                    <span class="home-gateway__number">03 / CREATE</span><strong>Build your world</strong><span>Place objects, shape a scene and publish your map.</span><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 18 18 6M6 6h12v12"/></svg></b>
+                </a>
+                <a class="home-gateway__tile" href="model-market.html">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1-5H5zM6 9v11h12V9M9 20v-6h6v6"/></svg>
+                    <span class="home-gateway__number">04 / COLLECT</span><strong>Find your next drop</strong><span>Discover avatars, interactive items and creator gear.</span><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 18 18 6M6 6h12v12"/></svg></b>
+                </a>
+            </nav>
+            <details class="home-essentials" id="essential-links">
+                <summary><span>More destinations <small>Your tools, collection and account</small></span><span class="home-essentials__toggle" aria-hidden="true">+</span></summary>
+                <nav aria-label="More MUZIKAZ destinations">
+                    <a href="builder-market.html">Builder marketplace<span>Worlds, buildings &amp; scene assets</span></a>
+                    <a href="model-explorer.html#custom-item-library">Custom item studio<span>Create and explore custom items</span></a>
+                    <a href="members.html#owned-collection">Your Backpack<span>Find your owned items</span></a>
+                    <a href="members.html#world-atlas">Your maps &amp; deeds<span>Explore saved member locations</span></a>
+                    <a href="members.html">Member account<span>Sign in and manage your profile</span></a>
+                    <a href="buy-mzk.html">Get MZK<span>Explore the MZK exchange</span></a>
+                    <a href="#merch">Merch collection<span>Wear the MUZIKAZ world</span></a>
+                    <a href="checkout.html">Checkout<span>Review your shopping cart</span></a>
+                </nav>
+            </details>
         </section>
 
         <section class="world-atlas" id="world-map" aria-labelledby="world-map-title">
             <header class="world-atlas__header">
-                <div><p class="kicker">Live world atlas · 8 assets mapped</p><h2 id="world-map-title">Where will you land?</h2></div>
-                <p>Explore every active district in the MUZIKAZ world, then set your own spawn point. Select a beacon or tap anywhere on the map.</p>
+                <div><p class="kicker">Live server atlas · districts & published maps</p><h2 id="world-map-title">Where will you land?</h2></div>
+                <p>Choose any live district, published builder map or member space. Search destinations below, or tap the map to open a custom build point.</p>
             </header>
             <div class="world-atlas__layout">
                 <div class="world-atlas__viewport" id="world-map-viewport">
                     <img src="public/assets/muzikaz-world-map.svg" alt="Illustrated map of the MUZIKAZ world with islands, routes, mountains, forests, and districts" draggable="false">
                     <svg class="world-atlas__routes" aria-hidden="true"></svg>
                     <div class="world-atlas__scan" aria-hidden="true"></div>
-                    <div class="world-atlas__markers" aria-label="World assets with coordinates, ownership, and sale status"></div>
+                    <div class="world-atlas__markers" aria-label="Public district entry beacons"></div>
                     <div class="world-atlas__you" id="world-map-you" style="--x:36%;--y:49%"><span>YOU</span></div>
                     <div class="world-atlas__compass" aria-hidden="true"><b>N</b><span>✦</span></div>
                     <div class="world-atlas__modes" role="group" aria-label="Map atmosphere">
@@ -133,51 +167,46 @@
                     <p class="world-atlas__hint">Tap map to move your spawn</p>
                 </div>
                 <aside class="world-atlas__panel">
-                    <div class="world-atlas__live"><span></span> WORLD ONLINE</div>
+                    <div class="world-atlas__live"><span></span> <span id="world-live-count">CONNECTING TO LIVE WORLD</span></div>
+                    <div class="world-atlas__destination-picker"><label for="world-destination-search">Find any destination<input id="world-destination-search" type="search" placeholder="Map, district, creator or deed" autocomplete="off"></label><label for="world-live-destination">Live destination<select id="world-live-destination"><option value="">Choose a destination</option></select></label><button id="world-destinations-refresh" type="button">Refresh destinations</button></div>
                     <p class="kicker">Current destination</p>
                     <h3 id="world-place-name">Crew Plaza</h3>
-                    <p id="world-place-detail">Social hub · crews gathering now</p>
-                    <div class="world-atlas__asset"><img id="world-asset-logo" alt="Crew Plaza logo"><div><strong id="world-asset-type">Land world · For sale</strong><a id="world-asset-action" href="model-market.html?world=crew-plaza#marketplace-preview">View in market</a></div></div>
-                    <dl><div><dt>Position</dt><dd id="world-position-readout">X 36 · Y 49</dd></div><div><dt>Status</dt><dd>Ready to enter</dd></div></dl>
+                    <p id="world-place-detail">Open the shared Crew Plaza district.</p><div id="world-selected-preview" hidden></div>
+                    <div class="world-atlas__asset"><img id="world-asset-logo" alt="Crew Plaza logo"><div><strong id="world-asset-type">Public district</strong><a id="world-asset-action" href="model-explorer.html?environment=world-district-crew-plaza&amp;house=world-district-crew-plaza&amp;autoplay=1">Explore public district</a></div></div>
+                    <dl><div><dt>Position</dt><dd id="world-position-readout">X 36 · Y 49</dd></div><div><dt>Status</dt><dd id="world-destination-state">Loading live destinations</dd></div></dl>
                     <form id="world-position-form">
                         <label>X coordinate<input name="x" type="number" min="0" max="100" value="36" required></label>
                         <label>Y coordinate<input name="y" type="number" min="0" max="100" value="49" required></label>
-                        <button class="btn" type="submit">Set my position</button>
+                        <button class="btn" type="submit">Open this build point</button>
                     </form>
                     <button class="world-atlas__claim" id="world-claim-button" type="button">Stake land claim <span>⚑</span></button>
                     <button class="world-atlas__enter" id="world-enter-button" type="button">Enter Crew Plaza <span>→</span></button>
-                    <p class="world-atlas__ownership" id="world-map-ownership">Land claims unlock when an owned digital land asset is in your Drop Backpack.</p>
+                    <p class="world-atlas__ownership" id="world-map-ownership">Public exploration is open to guests. Personal land claims require a deed.</p>
                     <ol class="world-atlas__space-list" id="world-map-space-list" aria-label="Pinned profile spaces, home base first"></ol>
                     <p class="world-atlas__status" id="world-map-status" role="status">Choose a glowing place or create your own position.</p>
                 </aside>
             </div>
-            <nav class="world-atlas__districts" aria-label="Featured MUZIKAZ districts">
-                <button type="button" data-atlas-district="Studio Ridge"><b>01</b><span><strong>Studio Ridge</strong><small>GLB stage</small></span><i>Live</i></button>
-                <button type="button" data-atlas-district="Crew Plaza"><b>02</b><span><strong>Crew Plaza</strong><small>Social hub</small></span><i>248</i></button>
-                <button type="button" data-atlas-district="Neon Docks"><b>03</b><span><strong>Neon Docks</strong><small>Drop port</small></span><i>12 drops</i></button>
-                <button type="button" data-atlas-district="Echo Gardens"><b>04</b><span><strong>Echo Gardens</strong><small>Sound biome</small></span><i>Chill</i></button>
-                <button type="button" data-atlas-district="Skyline Deck"><b>05</b><span><strong>Skyline Deck</strong><small>Event roof</small></span><i>20:00</i></button>
-            </nav>
+            <nav class="world-atlas__districts" id="world-live-locations" aria-label="All live map destinations"><a href="model-explorer.html?environment=world-district-studio-ridge&amp;autoplay=1"><b>01</b><span><strong>Studio Ridge</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-volt-city&amp;autoplay=1"><b>02</b><span><strong>Volt City</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-skyline-deck&amp;autoplay=1"><b>03</b><span><strong>Skyline Deck</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-echo-gardens&amp;autoplay=1"><b>04</b><span><strong>Echo Gardens</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-crew-plaza&amp;autoplay=1"><b>05</b><span><strong>Crew Plaza</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-neon-docks&amp;autoplay=1"><b>06</b><span><strong>Neon Docks</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-bassline-badlands&amp;autoplay=1"><b>07</b><span><strong>Bassline Badlands</strong><small>Public district</small></span></a><a href="model-explorer.html?environment=world-district-pixel-peaks&amp;autoplay=1"><b>08</b><span><strong>Pixel Peaks</strong><small>Public district</small></span></a></nav>
         </section>
 
 
         <section class="section-block house-explorer" id="house-explorer" aria-labelledby="house-explorer-title">
-            <div class="section-title"><span></span><h2 id="house-explorer-title">3D House Explorer</h2></div>
+            <div class="section-title game-section-heading"><span aria-hidden="true"></span><div><p class="game-section-eyebrow">MUZIKAZ · PLAY TOGETHER</p><h2 id="house-explorer-title">MUZIKAZ WORLD LIVE</h2><p class="game-section-subtitle">Your avatar. Your crew. Your next adventure.</p></div></div>
             <div class="house-explorer-shell">
                 <div class="house-stage">
                     <canvas id="house-explorer-canvas" width="1280" height="720" aria-label="Interactive inside-the-house canvas explorer"></canvas>
                     <div class="house-reticle" aria-hidden="true">+</div>
-                    <div class="house-status" id="house-status" role="status">RAD-TOX starts automatically. Every level contains toxic bubbles, blue ghosts, and snakes.</div>
+                    <div class="house-status" id="house-status" role="status">Choose your world. Start your story.</div>
                     <section class="house-game-start game-overlay" id="house-game-start" data-house-start-surface aria-labelledby="house-game-start-title">
                         <div class="game-overlay__content">
-                        <h3 id="house-game-start-title">Ready to play?</h3>
+                        <h3 id="house-game-start-title">Your next world starts here.</h3>
                         <p id="house-game-load-status" role="status"><strong class="starter-price">Free public demo · single player + multiplayer</strong> Begin with 500 MZK when your balance is zero. Play every environment, weapon, encounter, and shared world now. MZK purchases are optional and remain available for collectibles, land, and marketplace items.</p>
                         <span class="game-loading-indicator" aria-hidden="true"></span>
                         <button class="btn house-start-button" type="button" data-house-start>Begin Game</button>
                         </div>
                     </section>
                 </div>
-                <aside class="house-hud" aria-label="3D House Explorer controls">
+                <aside class="house-hud" data-legacy-game-controls hidden aria-label="Legacy explorer controls">
                     <p class="kicker">IonCore interior sim</p>
                     <h3>Walk the neon floor plan.</h3>
                     <div class="hud-pill-grid">
@@ -286,6 +315,7 @@
 
         <section class="section-block public-marketplace market-toggle-panel" id="marketplace-preview" data-market-panel="marketplace-preview" role="tabpanel" aria-labelledby="market-toggle-marketplace">
             <div class="section-title"><span></span><h2>Marketplace engine</h2><a href="members.html#marketplace">Open the market</a></div>
+            <section class="shared-market-catalog" data-shared-market-catalog aria-label="Complete marketplace item list"></section>
             <div class="market-engine-grid" aria-label="Connected marketplace collections">
                 <article><img data-connected-model="originals" src="muzikaz_high_level_image_pack1/04_collection_tiles/originals_tile_2x.png" alt="Originals collection tile"><span class="pill">Character Models</span><h3>Originals Pack</h3><p>Starter mascot page with hero art, supporting graphics, logo assets, and connected hoodie/keychain merch.</p><a class="card-link" href="originals.html">Open page</a></article>
                 <article><img data-connected-model="legends" src="futuristic_armored_wolf_humanoid.png" alt="Legends cyber wolf tile"><span class="pill">3D Model Packs</span><h3>Legends Pack</h3><p>Armored future icon with model preview, retail pairings, drop content, and full collection HTML.</p><a class="card-link" href="legends.html">Open page</a></article>
@@ -399,11 +429,11 @@
     <footer id="contact">
         <div>
             <a class="logo world-logo" href="#home" aria-label="MUZIKAZ WORLD home"><img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ WORLD" /></a>
-            <p>Neon model-market landing page powered by the included MUZIKAZ asset pack.</p>
+            <p>Your sound. Your universe. Explore, create and collect in MUZIKAZ WORLD.</p>
         </div>
         <div><h4>Shop</h4><a href="#models">Models</a><a href="#merch">Merch</a><a href="members.html">Bottle Login</a></div>
         <div><h4>Support</h4><a href="mailto:jodelchad@chaines.io">Contact</a><a href="#crew">Drops</a></div>
-        <div><h4>Company</h4><a href="#crew">Crew</a><a href="#home">About</a></div>
+        <div><h4>Explore</h4><a href="#world-map">World atlas</a><a href="environment-builder.html">World builder</a><a href="#essential-links">All destinations</a></div>
         <div><h4>Follow</h4><p class="socials">◎ ♫ ✕</p></div>
     </footer>
 
@@ -422,5 +452,6 @@
   <script src="battle-theme.js"></script>
     <script src="backpack-widget.js"></script>
   <script src="global-header.js"></script>
+<script type="module" src="public/js/shared-market-catalog.js"></script>
 </body>
 </html>

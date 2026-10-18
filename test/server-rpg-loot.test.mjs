@@ -29,7 +29,7 @@ test('server enemy drops grant durable care supplies once, enforce reach and pre
  const map={id:'custom',updatedAt:'v1',spawn:{x:0,y:0,z:0},builderScene:{objects:[{id:'enemy',modelId:'enemy',position:{x:0,y:0,z:-1},functionalSettings:{behavior:'hostile',health:20,damage:0}}]}};
  const send=(action,extra={},requestId=action+'-'+now)=>runtime.command('custom',map,identity,{action,requestId,...extra});
  await send('join');let state=await send('fire',{tool:'laser',direction:[0,0,-1]});
- const loot=Object.values(state.actors).find(a=>a.loot);assert.ok(loot,'defeated enemy drops care supply');
+ const loot=Object.values(state.actors).find(a=>a.loot&&!a.loot.currency);assert.ok(loot,'defeated enemy drops care supply');
  await assert.rejects(send('collect',{entityId:'missing'},'bad'),{statusCode:409});
  state=await send('collect',{entityId:loot.id},'collect-once');assert.equal(state.actors[loot.id].active,false);
  await send('collect',{entityId:loot.id},'collect-once');

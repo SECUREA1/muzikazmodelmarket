@@ -1,8 +1,31 @@
+import {finishGameItem} from './game-item-finish.js';
+import {CAMP_MODEL_INFO} from './summer-camp.js';
+import {createCampModel} from './summer-camp-models.js';
+import {LAYOUT_SCENE_INFO} from './builder-layout-scenes.js';
+import {createLayoutSceneModel} from './layout-scene-models.js';
+import {ENTERABLE_BUILDINGS} from './building-districts.js';
+import {createEnterableBuilding} from './enterable-building-models.js';
+import {INTERACTIVE_DEVICES} from './interactive-devices.js';
+import {createInteractiveDevice} from './interactive-device-models.js';
 import * as THREE from '../vendor/three/three.module.min.js';
+import {createBasketballHoop} from './basketball-stadium.js';
+import {createBasketballJersey} from './basketball-jerseys.js';
 
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  ...CAMP_MODEL_INFO,
+  ...LAYOUT_SCENE_INFO,
+  ...Object.fromEntries(Object.entries(ENTERABLE_BUILDINGS).map(([id,item])=>[id,[item.name,item.description,[item.width+.7,item.height+.8,item.depth+3]]])),
+  ...Object.fromEntries(Object.entries(INTERACTIVE_DEVICES).map(([id,item])=>[id,[item.name,item.description,[item.shape==='cinema'?5:2.4,item.shape==='cinema'?3.3:2.6,1.3]]])),
+  'estate-house':['Estate House','Enterable four-room home with wide passages and a terrace.',[20,3.6,16]],
+  'estate-yard':['Estate Yard','Open lawn with paths, planting and a wide entrance.',[24,1.1,22]],
+  'drive-in-garage':['Drive-in Garage','Double garage with a wide open vehicle bay and work area.',[14,4,12]],
+  'open-office':['Open Office','Enterable office with workstations and a meeting room.',[20,3.6,16]],
+  basketball: ['Basketball', 'Free regulation size ball for tossing, catching and scoring.', [.24,.24,.24]],
+  'basketball-hoop': ['Basketball Hoop & Net', 'Regulation 3.05 metre rim, woven white net, glass backboard and padded support.', [1.873,3.991,2.777]],
+  'basketball-jersey-home': ['Home Basketball Jersey', 'Free sleeveless teal MUZIKAZ team uniform attached to your avatar torso.', [.72,.73,.45]],
+  'basketball-jersey-away': ['Away Basketball Jersey', 'Free sleeveless coral MUZIKAZ team uniform attached to your avatar torso.', [.72,.73,.45]],
   'grand-floor': ['Grand Build Floor', 'A playable foundation tile that expands the walkable world directly from the Backpack.', [8, .24, 8]],
   'open-studio': ['Open Studio', 'An open-sided playable studio room with a floor, feature wall and neon columns.', [6, 2.8, 5]],
   'connected-suite': ['Connected Suite', 'A playable connected room with two doorways and a raised floor.', [6, 2.8, 5]],
@@ -99,14 +122,50 @@ function expandedModel(id){
 function gameplayItem(id){
  const [name,behavior,colorValue]=GAMEPLAY_ITEMS[id],root=new THREE.Group(),color=new THREE.Color(colorValue),glow=material(color,.38,.08,{emissive:color.clone().multiplyScalar(.28),emissiveIntensity:.65});
  const actor=['hero-spawn','scout-avatar','wolf-guardian','rad-tox','void-wolf','ember-dragon','rogue-bot','friendly-ghost'].includes(id);
- if(actor){const body=mesh(new THREE.CapsuleGeometry(.34,.92,7,14),glow,[0,.8,0]);root.add(body,mesh(new THREE.SphereGeometry(.3,16,12),glow,[0,1.62,0]));if(id==='void-wolf'||id==='ember-dragon'){body.rotation.z=Math.PI/2;body.position.y=.62;root.scale.setScalar(id==='ember-dragon'?1.45:.78);}}
- else if(id==='quest-scroll')root.add(mesh(new THREE.CylinderGeometry(.13,.13,1.05,16),glow,[0,.62,0],[0,0,Math.PI/2]));
- else if(id==='treasure-crystal')root.add(mesh(new THREE.OctahedronGeometry(.58),glow,[0,.62,0]));
- else if(id==='healing-potion')root.add(mesh(new THREE.SphereGeometry(.34,18,12),glow,[0,.38,0]),mesh(new THREE.CylinderGeometry(.13,.18,.42,14),glow,[0,.76,0]));
- else if(id==='portal-door')root.add(box([1.5,2.5,.24],glow,[0,1.25,0]));
- else if(id==='campfire')root.add(mesh(new THREE.ConeGeometry(.5,1.1,12),glow,[0,.55,0]));
- else for(let i=0;i<9;i++){const bubble=mesh(new THREE.SphereGeometry(.1+i%3*.045,12,8),glow,[Math.sin(i*2.3)*.65,.2+(i%4)*.38,Math.cos(i*1.7)*.55]);bubble.userData.water=true;root.add(bubble);}
- root.name=name;root.userData={builderObject:true,modelId:id,label:name,behavior,interactive:true,animated:true};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return root;
+ const metal=material(0x324354,.34,.65),dark=material(0x172331,.76,.08),pale=material(0xdce9df,.8),glass=material(0xbeeae8,.2,.04,{transparent:true,opacity:.32});
+ const add=(geo,mat,pos,rot)=>{const part=mesh(geo,mat,pos,rot);root.add(part);return part;};
+ const eye=(x,y,z,r=.045)=>add(new THREE.SphereGeometry(r,10,8),glow,[x,y,z]);
+ if(actor){
+  if(['void-wolf','wolf-guardian','ember-dragon'].includes(id)){
+   const dragon=id==='ember-dragon',fur=material(dragon?0x85402d:0x3d405a,.78),body=add(new THREE.SphereGeometry(.43,18,12),fur,[0,.72,.12]);body.scale.set(1,1,1.65);
+   const head=add(new THREE.SphereGeometry(.3,16,12),fur,[0,1.02,-.6]);head.scale.z=1.2;
+   add(new THREE.ConeGeometry(.2,.55,12),dark,[0,.92,-.97],[Math.PI/2,0,0]);
+   for(const side of [-1,1]){add(new THREE.ConeGeometry(.13,.36,4),fur,[side*.2,1.35,-.58]);eye(side*.18,1.09,-.84,.05);for(const z of [-.32,.57]){add(new THREE.CapsuleGeometry(.085,.39,4,10),fur,[side*.3,.35,z]);add(new THREE.SphereGeometry(.12,12,8),dark,[side*.3,.1,z-.07]);}}
+   add(new THREE.ConeGeometry(.14,.9,10),fur,[0,.85,.97],[-.7,0,0]);
+   if(dragon)for(const side of [-1,1]){const shape=new THREE.Shape();shape.moveTo(0,0);shape.lineTo(side*1.12,.85);shape.lineTo(side*.8,-.28);shape.lineTo(side*.3,-.14);shape.closePath();const wing=add(new THREE.ShapeGeometry(shape),material(0xc67847,.65,.08,{side:THREE.DoubleSide}),[side*.21,1,.28],[0,side*.32,0]);wing.userData.collisionDisabled=true;}
+  }else if(id==='friendly-ghost'){
+   add(new THREE.SphereGeometry(.4,20,14),material(0xc5eff2,.42,.04,{transparent:true,opacity:.84}),[0,1.26,0]);
+   add(new THREE.CylinderGeometry(.32,.55,.85,20),material(0xa8d7e4,.52,.02,{transparent:true,opacity:.7}),[0,.68,0]);
+   for(const x of [-.13,.13])add(new THREE.SphereGeometry(.055,10,8),dark,[x,1.3,-.36]);
+   add(new THREE.TorusGeometry(.52,.025,6,24),glow,[0,.2,0],[Math.PI/2,0,0]);
+  }else{
+   const suit=material(id==='rad-tox'?0x46632e:id==='scout-avatar'?0x374b55:0x263e55,.68,.15);
+   add(new THREE.CapsuleGeometry(.29,.48,6,14),suit,[0,1.03,0]);add(new THREE.SphereGeometry(.25,18,12),pale,[0,1.65,0]);
+   add(new THREE.BoxGeometry(.41,.12,.08),dark,[0,1.68,-.22]);for(const x of [-.105,.105])eye(x,1.69,-.27,.035);
+   add(new THREE.BoxGeometry(.37,.29,.075),metal,[0,1.17,-.25]);add(new THREE.BoxGeometry(.17,.035,.015),glow,[0,1.18,-.294]);
+   for(const side of [-1,1]){add(new THREE.SphereGeometry(.15,12,8),metal,[side*.36,1.25,0]);add(new THREE.CapsuleGeometry(.09,.36,4,10),suit,[side*.38,.96,0]);add(new THREE.SphereGeometry(.105,10,8),dark,[side*.38,.68,0]);add(new THREE.CapsuleGeometry(.105,.39,4,10),suit,[side*.155,.4,0]);add(new THREE.BoxGeometry(.24,.17,.38),dark,[side*.155,.095,-.07]);}
+   if(id==='hero-spawn')add(new THREE.TorusGeometry(.53,.035,8,28),glow,[0,.04,0],[Math.PI/2,0,0]);
+  }
+ }else if(id==='quest-scroll'){
+  add(new THREE.BoxGeometry(.82,.035,.65),material(0xe3ce99,.91),[0,.13,0]);for(const x of [-.43,.43])add(new THREE.CylinderGeometry(.095,.095,.72,14),pale,[x,.16,0],[Math.PI/2,0,0]);add(new THREE.CylinderGeometry(.1,.1,.025,16),glow,[0,.17,-.07]);
+ }else if(id==='treasure-crystal'){
+  add(new THREE.CylinderGeometry(.42,.49,.13,20),metal,[0,.065,0]);add(new THREE.TorusGeometry(.37,.025,6,24),glow,[0,.14,0],[Math.PI/2,0,0]);
+  const gem=add(new THREE.OctahedronGeometry(.52),glow,[0,.68,0]);gem.scale.set(.7,1.2,.7);
+  for(const side of [-1,1]){const shard=add(new THREE.OctahedronGeometry(.23),glow,[side*.26,.35,.08]);shard.rotation.z=side*.3;}
+ }else if(id==='healing-potion'){
+  add(new THREE.SphereGeometry(.35,20,14),glass,[0,.38,0]);const liquid=add(new THREE.SphereGeometry(.29,18,12),glow,[0,.32,0]);liquid.scale.y=.72;
+  add(new THREE.CylinderGeometry(.12,.16,.3,16),glass,[0,.73,0]);add(new THREE.CylinderGeometry(.14,.13,.12,16),material(0x9b7650,.95),[0,.91,0]);add(new THREE.TorusGeometry(.13,.025,6,20),metal,[0,.8,0],[Math.PI/2,0,0]);
+ }else if(id==='portal-door'){
+  for(const x of [-.67,.67])add(new THREE.BoxGeometry(.18,2.45,.28),metal,[x,1.225,0]);add(new THREE.BoxGeometry(1.5,.18,.28),metal,[0,2.41,0]);
+  for(const x of [-.55,.55])add(new THREE.BoxGeometry(.025,2.15,.03),glow,[x,1.23,-.16]);
+  const field=add(new THREE.PlaneGeometry(1.08,2.15),material(color,.3,.03,{emissive:color,emissiveIntensity:.35,transparent:true,opacity:.3,side:THREE.DoubleSide}),[0,1.22,0]);field.userData.collisionDisabled=true;
+  add(new THREE.BoxGeometry(1.5,.09,.38),dark,[0,.045,0]);
+ }else if(id==='campfire'){
+  const stone=material(0x626b70,.95),wood=material(0x60412e,.93);for(let i=0;i<8;i++){const angle=i/8*Math.PI*2;add(new THREE.DodecahedronGeometry(.14),stone,[Math.cos(angle)*.42,.12,Math.sin(angle)*.42]);}
+  for(const angle of [-.65,.65])add(new THREE.CylinderGeometry(.09,.12,.75,12),wood,[0,.18,0],[Math.PI/2,0,angle]);
+  for(let i=0;i<3;i++){const flame=add(new THREE.ConeGeometry(.15,.7-i*.12,12),material(i===0?0xffc16b:0xff7048,.8,0,{emissive:0xff682a,emissiveIntensity:.85,transparent:true,opacity:.86}),[(i-1)*.16,.55-i*.06,0]);flame.userData.itemFlame=i;flame.userData.collisionDisabled=true;}
+ }else for(let i=0;i<9;i++){const bubble=add(new THREE.SphereGeometry(.1+i%3*.045,12,8),glow,[Math.sin(i*2.3)*.65,.2+(i%4)*.38,Math.cos(i*1.7)*.55]);bubble.userData.water=true;}
+ root.name=name;root.userData={builderObject:true,modelId:id,label:name,behavior,interactive:true,animated:true};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return finishGameItem(THREE,root);
 }
 
 function plant(id) {
@@ -172,15 +231,44 @@ function playableRoom(id) {
   return root;
 }
 
+function estateModule(id){
+ const root=new THREE.Group(),yard=id==='estate-yard',garage=id==='drive-in-garage',w=yard?24:garage?14:20,d=yard?22:garage?12:16,h=yard?1:garage?4:3.6;
+ const stone=material(0xc2c7cb,.8),floor=material(yard?0x4e8250:0x515b65,.9),wood=material(0x9b7755,.8);
+ const part=(size,at,mat=stone,name='wall')=>{const object=box(size,mat,at);object.name=name;root.add(object);return object;};
+ part([w,.16,d],[0,.08,0],floor,'BUILDER_WALKABLE_FLOOR_estate');
+ part([w,h,.24],[0,h/2,d/2]);for(const x of [-w/2,w/2])part([.24,h,d],[x,h/2,0]);
+ const opening=yard?6:garage?9:3,wing=(w-opening)/2;
+ for(const sign of [-1,1])part([wing,h,.24],[sign*(opening/2+wing/2),h/2,-d/2]);
+ if(!yard){
+ part([opening,h-2.8,.24],[0,2.8+(h-2.8)/2,-d/2]);
+ // Roof kept above avatar clearance. Rooms have two-metre passages.
+ part([w+.4,.18,d+.4],[0,h+.09,0],stone,'roof');
+ if(!garage){for(const z of [-d/4,d/4])part([.18,h,d/2-4],[0,h/2,z]);
+ for(const x of [-w/4,w/4]){part([w/2-2,h,.18],[x,h/2,0]);}
+ const furnishings=id==='open-office'?['studio-desk','studio-desk','dining-set','bookshelf']:['sofa','loft-bed','kitchen-island','bathroom-vanity'];
+ furnishings.forEach((model,index)=>{const object=createBuilderModel(model);object.position.set(index%2?w*.3:-w*.3,.16,index<2?d*.28:-d*.28);root.add(object);});
+ }else{for(const x of [-w*.38,w*.38])part([1,.85,3],[x,.585,d*.25],wood,'workbench');}
+ }else{part([2,.03,d],[0,.175,0],stone,'path');for(const x of [-9,9]){const tree=createBuilderModel('canopy-tree');tree.position.set(x,.16,6);root.add(tree);}}
+ root.userData.placementSurface=true;return root;
+}
+
 export function createBuilderModel(id) {
   let root;
-  if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
+  if(LAYOUT_SCENE_INFO[id])root=createLayoutSceneModel(THREE,id);
+  else if(CAMP_MODEL_INFO[id])root=createCampModel(THREE,id);
+  else if(ENTERABLE_BUILDINGS[id])return finishGameItem(THREE,createEnterableBuilding(THREE,id));
+  else if(INTERACTIVE_DEVICES[id])return createInteractiveDevice(THREE,id);
+  else if(['estate-house','estate-yard','drive-in-garage','open-office'].includes(id))root=estateModule(id);
+  else if(id==='basketball'){root=new THREE.Group();root.add(mesh(new THREE.SphereGeometry(.12,24,16),material(0xd96b20,.9),[0,.12,0]));for(const rotation of [[0,0,0],[Math.PI/2,0,0],[0,Math.PI/2,0]])root.add(mesh(new THREE.TorusGeometry(.1205,.003,6,48),material(0x24180f,.9),[0,.12,0],rotation));}
+  else if(id==='basketball-hoop')root=createBasketballHoop(THREE);
+  else if(id==='basketball-jersey-home'||id==='basketball-jersey-away')root=createBasketballJersey(THREE,id.endsWith('home')?'home':'away');
+  else if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
   else if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);
   else if(GAMEPLAY_ITEMS[id]) return gameplayItem(id);
-  else if(EXPANDED[id]) return expandedModel(id);
+  else if(EXPANDED[id]) return finishGameItem(THREE,expandedModel(id));
   else if(id==='pillow-ring'){root=new THREE.Group();root.add(mesh(new THREE.TorusGeometry(.58,.24,16,32),material(0x9cff00,.92),[0,.25,0],[Math.PI/2,0,0]));root.add(cylinder(.34,.38,.16,material(0x075b59,.88),[0,.18,0],24));} else if(id==='canopy-tree'||id==='pine-tree') root=plant(id); else if(id==='flower-bed')root=flowerBed(); else if(id==='hedge-corner')root=hedge(); else if(id==='garden-rocks')root=rocks(); else if(id==='pond')root=pond(); else if(id==='path-tile')root=box([2.2,.12,1.2],material(0xa39b8c,.95),[0,.06,0]); else if(id==='hill'){root=mesh(new THREE.SphereGeometry(2.1,24,12,0,Math.PI*2,0,Math.PI/2),material(0x4f9a45,.95),[0,0,0]);root.scale.z=.86;} else if(id==='lamp-post')root=lamp(true); else if(id==='planter')root=planter(); else if(id==='sofa'||id==='armchair')root=seating(id==='armchair'); else if(id==='coffee-table')root=coffeeTable(); else if(id==='bookshelf')root=bookshelf(); else if(id==='floor-lamp')root=lamp(false); else if(id==='room-divider')root=divider(); else if(id==='kitchen-island')root=island(); else if(id==='spiral-stairs')root=stairs(); else if(id==='archway')root=arch(); else if(id==='art-wall')root=artWall(); else if(BUILDER_MODEL_INFO[id])root=detailedInterior(id); else return null;
   const [name,description,dimensions]=BUILDER_MODEL_INFO[id];root.name=name;root.userData={...root.userData,builderObject:true,modelId:id,label:name,description,dimensions,animated:['canopy-tree','pine-tree','pond','lamp-post','floor-lamp'].includes(id)};
-  root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return root;
+  root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return finishGameItem(THREE,root);
 }
 
 // Persistent registry entries with no authored GLB receive a semantic procedural
@@ -204,9 +292,9 @@ export function createGeneratedAsset(model) {
   }else if(recipe==='extruded-svg'){
     const shape=new THREE.Shape();shape.moveTo(0,.95);shape.bezierCurveTo(.65,.72,.72,.05,0,0);shape.bezierCurveTo(-.72,.05,-.65,.72,0,.95);shape.closePath();add(new THREE.ExtrudeGeometry(shape,{depth:.24,bevelEnabled:true,bevelSize:.06,bevelThickness:.05,bevelSegments:3}),[0,0,-.12]);
   }else throw new Error(`Unknown generated asset recipe: ${recipe}`);
-  root.name=model.name;root.userData={...root.userData,builderObject:true,generated:true,generator:recipe,assetId:model.sourceId,dimensions:new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).toArray()};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;}});return root;
+  root.name=model.name;root.userData={...root.userData,builderObject:true,generated:true,generator:recipe,assetId:model.sourceId,dimensions:new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).toArray()};root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;}});return finishGameItem(THREE,root);
 }
 
 export function updateBuilderModels(group, elapsed) {
-  group.children.forEach(root=>{root.traverse(child=>{if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  group.children.forEach(root=>{root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 }

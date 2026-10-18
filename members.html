@@ -41,6 +41,8 @@
     <meta name="msapplication-TileImage" content="public/assets/app-icons/tile-150.png">
     <meta name="msapplication-TileColor" content="#05070a">
   <link rel="stylesheet" href="public/assets/member-designer.css">
+<link rel="stylesheet" href="public/css/main-market-filters.css">
+<link rel="stylesheet" href="public/css/member-access.css">
 </head>
 <body class="original-platform members-page">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Subscriber dashboard for MUZIKAZ creator uploads, tabs, wallets, merch designer tools, avatar photos, and marketplace drops.","sameAs":["https://muzikaz.com/"]}</script>
@@ -73,15 +75,17 @@
     <main>
         <section class="member-hero" id="bottle-login" aria-labelledby="bottle-login-title">
             <div class="member-login-card">
-                <p class="kicker">Members only</p>
-                <h1 id="bottle-login-title">Member access unlocks the MUZIKAZ upgrade lab.</h1>
+                <p class="kicker member-access-kicker">MUZIKAZ · Member access</p>
+                <h1 id="bottle-login-title">Your next world starts here.</h1>
                 <p>Sign in with your member username and password to edit saved designs and view your account Backpack. New usernames create a member account.</p>
+                <div class="member-access-pills" aria-label="Member activities"><span>Create</span><span>Collect</span><span>Play</span></div>
                 <form id="bottle-login-form" class="bottle-login-form">
-                    <label>Username <input type="text" name="username" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_.-]{3,24}" autocomplete="username" placeholder="Your member username" required /></label>
+                    <label>Username <input type="text" name="username" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_.-]{3,24}" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Your member username" required /></label>
                     <label>Password <input type="password" name="password" minlength="6" maxlength="128" autocomplete="current-password" placeholder="Your member password" required /></label>
-                    <button type="submit">Continue</button>
+                    <button type="submit">Continue to your account <span aria-hidden="true">→</span></button>
                 </form>
                 <div class="ethereum-member-login"><label>Ethereum address (optional)<input type="text" data-ethereum-member-address autocomplete="off" spellcheck="false" placeholder="0x…" maxlength="42"></label><button type="button" data-ethereum-member-login>Sign in with Ethereum wallet</button><button type="button" data-ethereum-member-link hidden>Link wallet to this member account</button><small>Confirm wallet ownership with a signature. No payment is required.</small></div>
+                <p><a href="security.html">Account &amp; wallet safety</a></p>
                 <p class="status-message" id="bottle-login-status" role="status">Sign in to your member account. Your saved designs and inventory load from that account.</p>
             </div>
         </section>
@@ -174,11 +178,7 @@
 
         <section class="section-block designer-block live-merch-studio" id="designer">
             <div class="section-title"><span></span><h2>Live merch designer</h2><a href="#marketplace">Open marketplace</a></div>
-            <div class="designer-callout">
-                <p class="kicker">Featured open marketplace drop</p>
-                <h3>Chaos Ape custom stickers drop</h3>
-                <p>Build a production-ready sticker sheet: upload art, drag it inside the cutline-safe zone, save a reusable draft, and attach a complete design specification to your custom order.</p>
-            </div>
+            <div class="designer-callout"><p class="kicker">Your merch studio</p><h3>Choose a product. Make it yours.</h3><p>Select your merch and character, add text or upload artwork, then drag each layer in the live preview. Save a member draft or add your complete design to the cart.</p></div>
             <details class="button-menu studio-tabs" open>
                 <summary>Customize sections</summary>
                 <div class="button-group" aria-label="Customizer sections">
@@ -186,18 +186,16 @@
                 </div>
             </details>
             <div class="designer-layout studio-layout">
-                <article class="designer-preview studio-preview" aria-live="polite">
+                <article class="designer-preview studio-preview">
                     <div class="mockup sticker-sheet-mockup" id="designer-mockup" data-product-template="avatar-stickers">
                         <div class="print-template-label" id="print-template-label">Sticker sheet print area</div>
                         <div class="sticker-sheet-stage" id="sticker-stage">
                             <div class="safe-area-guide" aria-hidden="true"><span>PRINT-SAFE AREA</span></div>
                             <img class="product-template-art" id="product-template-art" src="trait_avatars_row_2_2x.png" alt="Avatar Sticker Sheet product template" />
-                            <span class="sticker-cutline main-character" id="preview-character">Chaos Ape</span>
-                            <img class="character-art-layer" id="character-art-layer" src="character_traits_overview_panel_2x.png" alt="Chaos Ape artwork" />
+                            <img class="sticker-cutline main-character" id="preview-character" src="character_traits_overview_panel_2x.png" alt="Chaos Ape" draggable="false">
                             <strong class="sticker-cutline logo-sticker" id="preview-name">MUZIKAZ</strong>
                             <b class="sticker-cutline number-sticker" id="preview-number">88</b>
                             <small class="sticker-cutline sleeve-sticker" id="preview-sleeve">LIVE THE BEAT</small>
-                            <span class="sticker-cutline mini-sticker">CHAOS</span>
                             <div class="upload-layer-zone" id="upload-layer-zone" aria-label="Uploaded custom art layer zone"></div>
                         </div>
                     </div>
@@ -205,7 +203,7 @@
                         <p class="kicker" id="preview-meta">Avatar Sticker Sheet · M · Wordmark · Chaos / 3D Model Packs</p>
                         <h3 id="preview-title">Chaos Ape custom stickers drop</h3>
                         <ul class="preview-values" id="preview-values"><li>Chaos Ape</li><li>MUZIKAZ</li><li>88</li><li>LIVE THE BEAT</li></ul>
-                        <div class="preview-actions button-group"><button type="button" id="save-design">Save draft</button><button type="button" id="load-design">Load draft</button><button type="button" id="duplicate-design">Duplicate layer</button><button type="button" class="ghost" id="download-design-spec">Download print spec</button></div>
+                        <p class="designer-drag-help">Drag artwork and text to position them. Use the upload controls to resize, rotate, flip or duplicate your selected artwork.</p><div class="preview-actions button-group"><button type="button" id="save-design">Save draft</button><button type="button" id="load-design">Load draft</button><button type="button" id="duplicate-design">Duplicate layer</button><button type="button" class="ghost" id="download-design-spec">Download print spec</button></div>
                         <p class="status-message studio-status" id="designer-status" role="status">Upload PNG, JPG, JPEG, or SVG artwork to place it on the merch preview.</p>
                     </div>
                 </article>
@@ -255,19 +253,19 @@
 
 
         <section class="section-block ar-viewer-block" id="ar-viewer">
-            <div class="section-title"><span></span><h2>Pop-out AR character viewer</h2><a href="#character-shop">Choose checkout</a></div>
+            <div class="section-title"><span></span><h2>Camera character preview</h2><a href="#character-shop">Choose checkout</a></div>
             <div class="ar-viewer-layout">
                 <aside class="ar-file-panel">
                     <p class="kicker">File viewer</p>
                     <h3 id="ar-character-name">Select a character</h3>
-                    <p id="ar-character-copy">Pick any MUZIKAZ character from the collection list, preview the character file, then launch the highlighted AR pop-out on Android or Apple iPhone.</p>
+                    <p id="ar-character-copy">Pick a character and open the camera to preview its 3D model over your surroundings. Downloads require ownership in your server Backpack.</p>
                     <label class="ar-file-drop">
                         <input type="file" id="ar-file-input" accept="image/*,.glb,.gltf,.usdz,.reality" />
                         <span>Upload optional AR file</span>
                         <small>Images preview instantly. GLB/GLTF/ USDZ files can replace the selected character source.</small>
                     </label>
                     <div class="ar-file-meta" id="ar-file-meta">Using built-in character collection artwork.</div>
-                    <button class="ar-popout-button" type="button" id="ar-popout-button">🚀 Pop out AR viewer</button>
+                    <button class="ar-popout-button" type="button" id="ar-popout-button">Open camera with this model</button>
                 </aside>
                 <div class="ar-stage-card">
                     <div class="ar-stage-toolbar">
@@ -311,7 +309,8 @@
 
         <section class="section-block marketplace-block" id="marketplace">
             <div class="section-title"><span></span><h2>Marketplace engine</h2><a href="#admin">Manage store</a></div>
-            <div class="market-controls" aria-label="Marketplace filters and quality controls">
+            <section class="shared-market-catalog" data-shared-market-catalog aria-label="Complete marketplace item list"></section>
+            <h3>Collections &amp; merchandise</h3><p>For the complete game item catalogue, use the detailed item filters above.</p><div class="market-controls" aria-label="Marketplace filters and quality controls">
                 <div>
                     <p class="kicker">Process quality</p>
                     <label class="quality-toggle"><input type="checkbox" id="market-quality-toggle" checked /> <span>Curated quality only</span></label>
@@ -419,5 +418,6 @@
   <script type="module" src="public/js/world-atlas.js"></script>
 <script src="public/js/ethereum-member-login.js"></script>
 <script type="module" src="public/js/backpack-files.js"></script>
+<script type="module" src="public/js/shared-market-catalog.js"></script>
 </body>
 </html>

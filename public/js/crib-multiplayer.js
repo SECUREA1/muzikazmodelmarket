@@ -238,7 +238,7 @@
   loadChat().catch(() => {});
   let events;
   const eventData = (event) => { try { return JSON.parse(event.data); } catch { return null; } };
-  if ('EventSource' in window) { events = new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`)); events.addEventListener('house-presence-updated', (event) => { const data = eventData(event); if (data) renderPresence(data); }); events.addEventListener('house-chat-message', (event) => addMessage(eventData(event)));  }
+  if ('EventSource' in window) { events = new EventSource(apiUrl(`/api/houses/ioncore-house/events?sessionId=${encodeURIComponent(sessionId)}`)); events.addEventListener('house-presence-updated', (event) => { const data = eventData(event); if (data) renderPresence(data); }); events.addEventListener('house-chat-message', (event) => addMessage(eventData(event)));for(const name of ['world-atlas-updated','custom-map-live','member-plot-updated'])events.addEventListener(name,event=>window.dispatchEvent(new CustomEvent('muzikaz:world-directory-updated',{detail:eventData(event)})));  }
   const voiceTimer=setInterval(async()=>{
     if(!joined||pollingVoice)return;
     pollingVoice=true;

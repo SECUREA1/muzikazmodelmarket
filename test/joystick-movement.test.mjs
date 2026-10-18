@@ -1,3 +1,4 @@
+import {mountThumbstick} from '../public/js/thumbstick-input.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -8,24 +9,17 @@ function controller(name) {
   const handlers = {}, knob = {style: {}}, input = {leftX:0,leftY:0}, flushes = [];
   let shots = 0, jumps = 0;
   const stick = {querySelector: () => knob, getBoundingClientRect: () => ({left: 0, top: 0, width: 100, height: 100}), classList: {add(){}, remove(){}}, addEventListener(type, fn){handlers[type] = fn;}};
-  const context = vm.createContext({walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(){}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, safelyCapturePointer(){}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
+  const context = vm.createContext({mountThumbstick,envLoader:{world:{}},gameplayOverlayOpen:()=>false,walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(){}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, safelyCapturePointer(){}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
   vm.runInContext(source.slice(source.indexOf('  function setupThumbstick(name)'), source.indexOf("  setupThumbstick('left')")), context);
   context.setupThumbstick(name);
   return {input, flushes, send: (type,x,y) => handlers[type]({type, pointerId: 1, clientX: x, clientY: y, preventDefault(){}}), shots: () => shots, jumps: () => jumps};
 }
-test('left touch starts neutral off-center, ignores jitter, and ramps to full speed', () => {
-  const c = controller('left');
-  c.send('pointerdown', 35, 25);
-  assert.equal(c.input.leftY, 0);
-  c.send('pointermove', 35, 20);
-  assert.equal(c.input.leftY, 0);
-  c.send('pointermove', 35, 6.5);
-  assert.ok(Math.abs(c.input.leftY + .5) < 1e-10);
-  c.send('pointermove', 35, -20);
-  assert.equal(c.input.leftY, -1);
-  c.send('pointercancel', 35, -20);
-  assert.equal(c.input.leftY, 0);
-  assert.equal(c.shots(), 0);
+test('left and right sticks have the same centered linear response, including small movements', () => {
+  const left=controller('left'),right=controller('right');
+  for(const [type,x,y]of [['pointerdown',50,50],['pointermove',50,49],['pointermove',50,35.5],['pointermove',50,0]]){
+    left.send(type,x,y);right.send(type,x,y);assert.equal(left.input.leftX,right.input.rightX);assert.equal(left.input.leftY,right.input.rightY);
+  }
+  assert.equal(left.input.leftY,-1);left.send('pointercancel',50,0);assert.equal(left.input.leftY,0);assert.equal(left.shots(),0);
 });
 test('tap still shoots and right look and jump retain their response', () => {
   const left = controller('left');
@@ -42,7 +36,7 @@ test('analog movement covers the same distance at 30, 60, and 120 FPS', () => {
   const vector = (x=0,y=0,z=0) => ({x,y,z,copy(v){this.x=v.x;this.y=v.y;this.z=v.z;return this;},multiplyScalar(s){this.x*=s;this.y*=s;this.z*=s;return this;},addScaledVector(v,s){this.x+=v.x*s;this.y+=v.y*s;this.z+=v.z*s;return this;},lengthSq(){return this.x**2+this.y**2+this.z**2;}});
   for (const fps of [30,60,120]) {
     let distance = 0;
-    const context = vm.createContext({walkingSprint,stickSprinting:false,thumbInput:{leftX:0,leftY:-.25},move:vector(),forward:vector(0,0,-1),right:vector(1),input:{x:0,y:.25},delta:1/fps,player:{speed:4},useJetpack:()=>false,playerCollider:{translate(v){distance-=v.z;}}});
+    const context = vm.createContext({walkingSprint,stickSprinting:false,touchSprint:false,keys:new Set(),thumbInput:{leftX:0,leftY:-.25},move:vector(),forward:vector(0,0,-1),right:vector(1),input:{x:0,y:.25},delta:1/fps,player:{speed:4},useJetpack:()=>false,playerCollider:{translate(v){distance-=v.z;}}});
     const step = new vm.Script(`{${movement}}`);
     for(let frame=0;frame<fps;frame++) step.runInContext(context);
     assert.ok(Math.abs(distance-1)<1e-10, `${fps} FPS: ${distance}`);

@@ -1,10 +1,11 @@
 import {ServerMotion} from './server-motion.js';
+import {EnemySnapshotMotion} from './enemy-snapshot-motion.js';
 // Scene objects display confirmed state; they never decide gameplay outcomes.
 export function disposeProjection(root) {
  root.userData.serverMixer?.stopAllAction();
  root.userData.serverMixer?.uncacheRoot(root.userData.serverMixerRoot||root);
  root.removeFromParent();
- root.traverse(object=>{object.geometry?.dispose();for(const material of [].concat(object.material||[])){if(root.userData.serverLoot||object.userData.voiceOverlay)material.map?.dispose();material.dispose();}});
+ root.traverse(object=>{object.geometry?.dispose();for(const material of [].concat(object.material||[])){if(root.userData.serverLoot||object.userData.voiceOverlay||object.name==='CABINET_ARTWORK')material.map?.dispose();material.dispose();}});
 }
 
 export function syncServerAvatar({THREE,root,peer,loader,prepare,isCurrent,now=Date.now()}) {
@@ -27,12 +28,12 @@ export function syncServerAvatar({THREE,root,peer,loader,prepare,isCurrent,now=D
  },undefined,()=>{if(state.serverAvatarRequest===request){state.serverAvatarRequest=null;state.serverAvatarRetryAt=Date.now()+5000;}});
 }
 
-export function projectServerActor(root,actor) {
+export function projectServerActor(root,actor,{localId=null,now=performance.now()}={}) {
  if(!actor){root.visible=false;return;}
  const state=root.userData,offset=state.serverRenderOffset||{};
- root.position.set(actor.position.x+(offset.x||0),actor.position.y+(offset.y||0),actor.position.z+(offset.z||0));
+ const behavior=actor.definition?.gameplay?.behavior||state.functionalSettings?.behavior||actor.asset?.behavior;state.serverObjectMotion=['hostile','patrol','vehicle'].includes(behavior)&&!(localId&&actor.holderId===localId);if(state.serverObjectMotion)targetServerEnemy(root,{...actor,position:{x:actor.position.x+(offset.x||0),y:actor.position.y,z:actor.position.z+(offset.z||0)}},offset.y||0,now);else root.position.set(actor.position.x+(offset.x||0),actor.position.y+(offset.y||0),actor.position.z+(offset.z||0));
  root.visible=actor.active!==false;
- root.rotation.set(actor.rotation?.x||0,(actor.rotation?.y||0)+(actor.open?-Math.PI/2:0),actor.rotation?.z||0);
+ root.rotation.set(actor.rotation?.x||0,state.serverObjectMotion?root.rotation.y:(actor.rotation?.y||0)+(actor.open?-Math.PI/2:0),actor.rotation?.z||0);
  if(actor.scale){
   const previous=state.serverAppliedScale||state.authoredScale||{x:1,y:1,z:1};
   for(const axis of ['x','y','z'])if(Number.isFinite(actor.scale[axis])&&actor.scale[axis]>0)root.scale[axis]*=actor.scale[axis]/(previous[axis]||1);
@@ -71,23 +72,22 @@ export function interpolateServerPlayer(root,delta,now=performance.now()) {
 }
 
 // Enemy positions remain server-owned; interpolation only smooths presentation.
-export function targetServerEnemy(root,actor,height=0,now=performance.now()) {
- const state=root.userData;
+export function targetServerEnemy(root,actor,height=0,now=performance.now(),simulationTime=now) {
+ const state=root.userData,spawnKey=actor.spawnId||actor.spawnedAt||null;
+ state.serverEnemyMotion ||= new EnemySnapshotMotion();
+ if(state.serverSpawnKey!==spawnKey){state.serverEnemyMotion.reset();state.serverPositioned=false;state.serverSpawnKey=spawnKey;delete state.lastAttack;delete state.flashToken;delete state.tellToken;}
  state.serverTarget ||= root.position.clone();
- state.serverTarget.set(actor.position.x,actor.position.y+height,actor.position.z);
- state.serverEnemyMotion ||= new ServerMotion({delay:0,maxExtrapolation:100});
- state.serverEnemyMotion.push({x:actor.position.x,y:actor.position.y+height,z:actor.position.z},now);
- state.serverPredicted ||= root.position.clone();
- state.serverYaw=actor.rotation?.y||0;
- if(!state.serverPositioned||root.position.distanceToSquared(state.serverTarget)>25){
-  root.position.copy(state.serverTarget);root.rotation.y=state.serverYaw;state.serverPositioned=true;
- }
+ const position={x:actor.position.x,y:actor.position.y+height,z:actor.position.z};
+ const previousTime=state.serverEnemyMotion.lastTime,reset=state.serverEnemyMotion.push(position,now,simulationTime);
+ if(state.serverEnemyMotion.lastTime===previousTime)return;
+ state.serverTarget.copy(position);state.serverYaw=actor.rotation?.y||0;
+ if(!state.serverPositioned||reset){root.position.copy(position);root.rotation.y=state.serverYaw;state.serverPositioned=true;}
 }
 export function interpolateServerEnemy(root,delta,now=performance.now()) {
  const state=root.userData;if(!state.serverTarget)return;
+ // The timestamped buffer already interpolates; a second lerp adds variable lag.
+ state.serverEnemyMotion.sample(now,root.position);
  const alpha=1-Math.exp(-18*Math.max(0,delta));
- state.serverEnemyMotion.sample(now,state.serverPredicted);
- root.position.lerp(state.serverPredicted,alpha);
  root.rotation.y+=Math.atan2(Math.sin(state.serverYaw-root.rotation.y),Math.cos(state.serverYaw-root.rotation.y))*alpha;
 }
 export function disposeServerEnemyProjection(root) {

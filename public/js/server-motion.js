@@ -1,15 +1,15 @@
 // Presentation only: interpolate a short snapshot buffer at render frequency.
 // Collisions, health and movement remain server controlled.
 export class ServerMotion {
- constructor({delay=100,maxExtrapolation=75}={}){
-  this.delay=delay;this.maxExtrapolation=maxExtrapolation;this.reset();
+ constructor({delay=100,maxExtrapolation=75,teleportDistance=2.5,maxGap=500}={}){
+  this.delay=delay;this.maxExtrapolation=maxExtrapolation;this.teleportDistance=teleportDistance;this.maxGap=maxGap;this.reset();
  }
  reset(){this.snapshots=[];this.position=null;this.receivedAt=0;}
  push(position,now){
   const previous=this.snapshots.at(-1);
   if(previous&&now<previous.time)return;
   const distance=previous?Math.hypot(position.x-previous.position.x,position.y-previous.position.y,position.z-previous.position.z):0;
-  if(distance>2.5||previous&&now-previous.time>500)this.reset();
+  if(distance>this.teleportDistance||previous&&now-previous.time>this.maxGap)this.reset();
   const snapshot={position:{...position},time:now};
   if(this.snapshots.at(-1)?.time===now)this.snapshots.pop();
   this.snapshots.push(snapshot);

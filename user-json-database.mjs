@@ -436,7 +436,7 @@ export class UserJsonDatabase {
     return clone(Object.values(data.landDeeds || {}).filter((deed) => deed.ownerId === wallet && deed.status === 'active'));
   }
 
-  async memberPlots(){await this.initialize();const data=await this.read();return Object.values(data.landDeeds||{}).filter(deed=>deed.status==='active').map(deed=>({...clone(deed),spaceId:plotSpaceId(deed),playUrl:plotPlayUrl(deed),ownerName:data.users[deed.ownerId]?.memory?.profile?.displayName||data.users[deed.ownerId]?.memory?.profile?.username||'MUZIKAZ member'}));}
+  async memberPlots(){await this.initialize();const data=await this.read();return Object.values(data.landDeeds||{}).filter(deed=>deed.status==='active').map(deed=>({...clone(deed),spaceId:plotSpaceId(deed),playUrl:plotPlayUrl(deed),ownerName:data.users[deed.ownerId]?.memory?.profile?.displayName||data.users[deed.ownerId]?.memory?.profile?.username||'MUZIKAZ member',placements:Object.values(data.builderPlacements||{}).filter(placement=>placement.land_id===deed.id&&placement.status==='placed').map(placement=>{const asset=data.builderAssets?.[placement.asset_id];if(!asset)return null;return {id:placement.placement_id,assetId:asset.asset_id||placement.asset_id,name:asset.name,modelUrl:asset.glb_url||'',buildAssetId:asset.function_data?.buildAssetId||asset.function_data?.modelId||null,objectType:asset.asset_type,transform:clone(placement.transform),functionalSettings:clone({...asset.function_data,...placement.functional_settings}),updatedAt:placement.updated_at};}).filter(Boolean)}));}
   configurePlot(walletId,deedId,{environmentId,name}){const owner=cleanWallet(walletId);return this.transaction(data=>{const deed=Object.values(data.landDeeds||{}).find(item=>item.id===deedId&&item.status==='active');if(!deed)throw Object.assign(new Error('Plot deed not found.'),{statusCode:404});if(deed.ownerId!==owner)throw Object.assign(new Error('Only the current deed holder can configure this space.'),{statusCode:403});deed.hostedSpace={id:plotSpaceId(deed),environmentId:String(environmentId),name:String(name||deed.hostedSpace?.name||deed.name+' · Member plot').trim().slice(0,100)};deed.updatedAt=new Date().toISOString();const item=data.users[owner].items.find(item=>item.id===deed.id);if(item){item.spaceId=plotSpaceId(deed);item.playUrl=plotPlayUrl(deed);item.hostedSpace=clone(deed.hostedSpace);}return {...clone(deed),spaceId:plotSpaceId(deed),playUrl:plotPlayUrl(deed)};});}
 
   saveCustomItem(walletId, input) {
@@ -548,6 +548,18 @@ export class UserJsonDatabase {
     const wallet=cleanWallet(walletId),health=Number(input?.health);
     if(!Number.isFinite(health)||health<0||health>100)throw new Error('Health must be between 0 and 100.');
     return this.transaction(data=>{const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');const previous=user.memory.ioncoreRpg||{};user.memory.ioncoreRpg={stats:{...RPG_DEFAULT_STATS,...previous.stats,health},history:[...(previous.history||[]),{health,stats:{...RPG_DEFAULT_STATS,...previous.stats,health},reason:'gameplay',world:String(input.world||'').slice(0,140),recordedAt:new Date().toISOString()}].slice(-100)};user.updatedAt=new Date().toISOString();user.revision++;return user.memory.ioncoreRpg;});
+  }
+
+  grantMzkCoin(walletId,requestId){
+    const wallet=cleanWallet(walletId);
+    if(!/^coin:[a-f0-9-]{36}$/.test(requestId))throw new Error('Invalid server coin receipt.');
+    return this.transaction(data=>{
+      const duplicate=data.transactions.find(entry=>entry.type==='MZK_COIN'&&entry.requestId===requestId);
+      if(duplicate)return duplicate.walletId===wallet?duplicate:{claimedByOther:true};
+      const user=data.users[wallet];if(!user)throw new Error('Member wallet not found.');
+      user.tokens.MZK=Number(user.tokens.MZK||0)+1;user.revision++;user.updatedAt=new Date().toISOString();
+      return appendTransaction(data,{type:'MZK_COIN',walletId:wallet,requestId,amountMzk:1,balanceAfterMzk:user.tokens.MZK});
+    });
   }
 
   grantRpgLoot(walletId,itemId,requestId){

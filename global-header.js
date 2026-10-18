@@ -48,7 +48,8 @@
         <a class="nav-link header-market-button${active('model-market.html')}" href="model-market.html">${icon('M4 9h16l-1-5H5zM6 9v11h12V9M9 20v-6h6v6')}<span>Game Market</span></a>
         <a class="nav-link header-market-button${active('builder-market.html')}" href="builder-market.html">${icon('M4 5h16v14H4zM8 9h8M8 13h5')}<span>Builder Market</span></a>
       </div>
-      <a class="nav-link${active('model-explorer.html')}" href="model-explorer.html?environment=muzikaz-main&amp;house=muzikaz-main&amp;autoplay=1">${icon('M3 6l5-2 8 3 5-2v13l-5 2-8-3-5 2zM8 4v13M16 7v13')}<span>World Map</span></a>
+      <a class="nav-link" href="index.html#world-map">${icon('M3 6l5-2 8 3 5-2v13l-5 2-8-3-5 2zM8 4v13M16 7v13')}<span>World Map</span></a>
+      <a class="nav-link${active('environment-builder.html')}" href="environment-builder.html">${icon('M12 3v18M3 12h18M5 5l14 14')}<span>Build a world</span></a>
       <a class="nav-link${active('index.html')}" href="index.html#models">${icon('M4 5h16v14H4zM8 9h8M8 13h5')}<span>Models</span></a>
       <a class="nav-link${active('crew-market.html')}" href="crew-market.html">${icon('M12 3a5 5 0 015 5c0 3-2 4-5 4S7 11 7 8a5 5 0 015-5zM4 21c.5-5 3-7 8-7s7.5 2 8 7')}<span>Characters &amp; Worlds</span></a>
       <a class="nav-link" href="index.html#merch">${icon('M8 4l4 2 4-2 5 3-3 5-2-1v9H8v-9l-2 1-3-5z')}<span>Merch</span></a>
@@ -56,6 +57,7 @@
       <a class="nav-link nav-link--icon${active('avatar-whitepaper.html')}" href="avatar-whitepaper.html" data-label="Whitepaper" aria-label="Whitepaper" title="Whitepaper">${icon('M6 3h9l3 3v15H6zM14 3v4h4M9 11h6M9 15h6')}<span>Whitepaper</span></a>
     </nav>
     <div class="icons" aria-label="Account shortcuts">
+      <a class="mobile-header-action header-primary-action header-builder-action" href="environment-builder.html" aria-label="Open world builder" title="World builder">${icon('m12 3 9 5-9 5-9-5zM3 12l9 5 9-5M3 16l9 5 9-5')}<span>Builder</span></a>
       <a class="mobile-header-action header-primary-action header-checkout-action" href="checkout.html" aria-label="Checkout, 0 items" title="Checkout">${icon('M3 4h2l2 11h10l3-8H6M9 20h.01M17 20h.01')}<span>Checkout</span><b class="header-cart-count" aria-hidden="true">0</b></a>
       <a class="mobile-header-action header-primary-action" href="members.html" aria-label="Member access" title="Members">${icon('M12 12a4 4 0 100-8 4 4 0 000 8M5 21a7 7 0 0114 0')}<span>Members</span></a>
       <a class="mobile-header-action header-primary-action header-mzk-action" href="buy-mzk.html" aria-label="Buy MZK" title="Buy MZK">${icon('M12 2v20M17 6.5c-1-1-2.5-1.5-5-1.5-3 0-5 1.2-5 3s2 3 5 3 5 1.2 5 3-2 3-5 3c-2.5 0-4-.5-5-1.5')}<span>$MZK</span></a>
@@ -190,4 +192,3 @@
   renderWallet();
   syncWalletButtonPurpose();
 })();
-

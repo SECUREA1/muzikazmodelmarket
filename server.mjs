@@ -1,3 +1,10 @@
+import {applyHttpSecurity} from './http-security.mjs';
+import {CameraSignaling} from './server-camera-signaling.mjs';
+const cameraSignaling=new CameraSignaling();
+import {DeviceMediaUploads} from './device-media-uploads.mjs';
+import {deviceDefinition} from './public/js/interactive-devices.js';
+import {MasterServerState} from './master-server-state.mjs';
+import {synchronizeWorldDirectory} from './world-directory.mjs';
 import {LAND_VALUES} from './public/js/game-item-pricing.js';
 import {resolveAccountProof,recoverRoomSession} from './room-session.mjs';
 import {readJsonInput,memberWalletPatch} from './request-validation.mjs';
@@ -32,6 +39,8 @@ const uploadDir = process.env.MUZIKAZ_AVATAR_UPLOAD_DIR || process.env.MUZIKAZ_U
 const assetUploadDir = process.env.MUZIKAZ_ASSET_UPLOAD_DIR || join(root, 'uploads', 'assets');
 const environmentUploadDir = process.env.MUZIKAZ_ENVIRONMENT_UPLOAD_DIR || join(root, 'uploads', 'environments');
 const dataFile = join(dataDir, 'shared-house-avatars.json');
+const mediaUploadDir=join(dataDir,'uploads','media');
+const deviceMediaUploads=new DeviceMediaUploads(mediaUploadDir,join(dataDir,'shared-media.json'));
 const assetsFile = join(dataDir, 'asset-library.json');
 const modelsFile = join(dataDir, 'published-models.json');
 const avatarProfilesFile = join(dataDir, 'avatar-profiles.json');
@@ -57,6 +66,7 @@ const gameSessionStore = new DurableSessionStore(gameSessionsFile, { ttlSeconds:
 const ethereumAuth = new EthereumMemberAuth(join(dataDir,'wallet-challenges.json'),{origin:process.env.PUBLIC_BASE_URL||'https://muzikazmodelmarket.onrender.com'});
 const walletChallengeAttempts = new Map();
 const accessAttempts = new Map();
+const adminAccessAttempts = new Map();
 let customMapWriteQueue = Promise.resolve();
 const supportSockets = new Set();
 const supportMessages = [];
@@ -67,7 +77,7 @@ const adminSessionSecret = process.env.MUZIKAZ_ADMIN_SESSION_SECRET || `${adminU
 const persistentAdminToken = createHmac('sha256', adminSessionSecret).update(`admin:${adminUsername}`).digest('base64url');
 const maxUploadBytes = Number(process.env.MUZIKAZ_AVATAR_MAX_BYTES || 3_000_000);
 const maxEnvironmentBytes = Number(process.env.MUZIKAZ_ENVIRONMENT_MAX_BYTES || 150 * 1024 * 1024);
-const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
+const mimeTypes = { '.mp4':'video/mp4','.webm':'video/webm','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.txt': 'text/plain; charset=utf-8', '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.usdz': 'model/vnd.usdz+zip', '.obj': 'text/plain' };
 const allowedUploadTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const maxHouseUsers = 15;
 const presenceTtlMs = 30_000;
@@ -112,11 +122,11 @@ async function readRepositoryEnvironments() {
   } catch { return []; }
 }
 async function readUploadedEnvironments() { await ensureStorage(); return JSON.parse(await readFile(environmentDataFile, 'utf8')); }
-async function writeUploadedEnvironments(records) { await ensureStorage(); await writeFile(environmentDataFile, JSON.stringify(records, null, 2)); }
+async function writeUploadedEnvironments(records) { await ensureStorage(); await writeFile(environmentDataFile, JSON.stringify(records, null, 2));roomEnvironmentCache=null;broadcast('world-atlas-updated',{}); }
 async function readCustomMaps() { await ensureStorage(); return JSON.parse(await readFile(customMapsFile, 'utf8')); }
 async function writeCustomMaps(records) { await ensureStorage(); const temporary = `${customMapsFile}.${process.pid}.${randomUUID()}.tmp`; await writeFile(temporary, `${JSON.stringify(records, null, 2)}\n`); await rename(temporary, customMapsFile); }
 function updateCustomMaps(mutator) {
-  const operation = customMapWriteQueue.then(async () => { const records = await readCustomMaps(); const result = await mutator(records); await writeCustomMaps(records.slice(0, 500)); return result; });
+  const operation = customMapWriteQueue.then(async () => { const records = await readCustomMaps(); const result = await mutator(records); await writeCustomMaps(records); return result; });
   customMapWriteQueue = operation.catch(() => {});
   return operation;
 }
@@ -151,23 +161,46 @@ const serverBackups = new ServerBackups(process.env.MUZIKAZ_BACKUP_DIR || join(d
   avatarUploads: uploadDir, assetUploads: assetUploadDir, environmentUploads: environmentUploadDir,
   modelUploads: process.env.UPLOAD_STORAGE_PATH || join(dataDir, 'uploads', 'models')
 });
+const masterRuntimeFile=join(dataDir,'server-runtime.json');
+const masterState=new MasterServerState({
+ data:{path:dataDir,type:'directory'},accounts:{path:loadoutCodeStore.file,type:'file'},users:{path:userDatabaseFile,type:'file'},payments:{path:paymentOrderStore.file,type:'file'},
+ accountSessions:{path:accountSessionsFile,type:'file'},gameSessions:{path:gameSessionsFile,type:'file'},
+ environments:{path:environmentDataFile,type:'file'},customMaps:{path:customMapsFile,type:'file'},atlas:{path:worldAtlas.file,type:'file'},rooms:{path:sharedRooms.file,type:'file'},runtime:{path:masterRuntimeFile,type:'file'},
+ avatarUploads:{path:uploadDir,type:'directory'},assetUploads:{path:assetUploadDir,type:'directory'},environmentUploads:{path:environmentUploadDir,type:'directory'},modelUploads:{path:process.env.UPLOAD_STORAGE_PATH||join(dataDir,'uploads','models'),type:'directory'}
+},{backupDirectory:serverBackups.directory});
+let masterMaintenance=false,activeServerRequests=0;
+const backgroundJobs=new Set();
+function backgroundJob(work){if(masterMaintenance)return;const task=Promise.resolve().then(work);backgroundJobs.add(task);task.catch(error=>console.error('[Server task]',error.message)).finally(()=>backgroundJobs.delete(task));}
+async function drainServerState(){
+ const deadline=Date.now()+30000;
+ while(activeServerRequests||backgroundJobs.size||authoritativeRooms.ticking||authoritativeRooms.telemetryPending.size){if(Date.now()>deadline)throw Object.assign(Error('Server is busy. Retry the master operation.'),{statusCode:409});await new Promise(resolve=>setTimeout(resolve,25));}
+ await Promise.all([userDatabase.queue,loadoutCodeStore.queue,paymentOrderStore.queue,accountSessionStore.queue,gameSessionStore.queue,ethereumAuth.queue,customMapWriteQueue,worldAtlas.queue,serverBackups.queue,deviceMediaUploads.queue]);
+ await sharedRooms.flush();
+}
+async function exclusiveMasterState(work){
+ if(masterMaintenance)throw Object.assign(Error('A master state operation is already running.'),{statusCode:409});
+ masterMaintenance=true;
+ try{await drainServerState();return await work();}finally{masterMaintenance=false;}
+}
+async function saveMasterRuntime(){await mkdir(dataDir,{recursive:true});await writeFile(masterRuntimeFile,JSON.stringify({chatMessages,supportMessages}),{mode:0o600});}
+async function loadMasterRuntime(){let data;try{data=JSON.parse(await readFile(masterRuntimeFile,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;data={};}chatMessages.splice(0,chatMessages.length,...(Array.isArray(data.chatMessages)?data.chatMessages.slice(-100):[]));supportMessages.splice(0,supportMessages.length,...(Array.isArray(data.supportMessages)?data.supportMessages.slice(-500):[]));}
+function invalidateMasterCaches(){sharedRooms.data=null;sharedRooms.dirty=false;worldAtlas.data=null;authoritativeRooms.activeWorlds.clear();authoritativeRooms.manifestCache.clear();authoritativeRooms.collision.cache.clear();authoritativeRooms.collision.placedCache=null;roomEnvironmentCache=null;presence.clear();voiceSignals.clear();for(const store of [accountSessionStore,gameSessionStore]){store.verifiedSecrets.clear();store.tokenIndex.clear();}for(const client of clients)client.end();clients.clear();}
 async function snapshotServer() {
-  await Promise.all([sharedRooms.flush(), userDatabase.queue, loadoutCodeStore.queue, paymentOrderStore.queue, accountSessionStore.queue, gameSessionStore.queue, ethereumAuth.queue, customMapWriteQueue]);
+  await Promise.all([sharedRooms.flush(), userDatabase.queue, loadoutCodeStore.queue, paymentOrderStore.queue, accountSessionStore.queue, gameSessionStore.queue, ethereumAuth.queue, customMapWriteQueue, deviceMediaUploads.queue]);
   return serverBackups.snapshot();
 }
-const authoritativeRooms=new AuthoritativeRooms({store:sharedRooms,capacity:maxHouseUsers,collectLoot:(identity,itemId,requestId)=>userDatabase.grantRpgLoot(identity.walletId,itemId,requestId),reward:(identity,event,requestId)=>userDatabase.memberReward(identity.walletId,'progress',{scope:'field',event,requestId}),resolveAsset:async(identity,command)=>{const state=await userDatabase.get(identity.walletId),catalog=economyItem(command.sku);if(catalog&&ownsEconomyItem(state,catalog)&&catalog.kind==='asset')return catalog;const purchased=state.items.find(item=>item.id===command.itemId&&['mzk-store','verified-store'].includes(item.source)&&item.modelUrl);if(purchased)return {...purchased,behavior:'decor',targetHeight:['avatar','avatars'].includes(purchased.assetType||purchased.type)?1.8:undefined};const custom=state.items.find(item=>item.id===command.itemId&&item.type==='custom-item');if(custom)return {...custom,behavior:'decor'};const item=state.items.find(item=>item.id===command.itemId&&(item.modelUrl||item.buildAssetId));if(!item){const pack=await userDatabase.builderBackpack(identity.walletId),owned=pack.assets.find(asset=>asset.id===command.itemId);if(!owned)return null;const config=owned.function_data||{};if(!owned.glb_url&&!config.buildAssetId&&!config.modelId)return null;return {id:owned.id,name:owned.name,modelUrl:owned.glb_url||null,buildAssetId:config.buildAssetId||config.modelId||null,assetType:owned.asset_type||'props',behavior:config.behavior||'decor'};}const canonical=GAME_ECONOMY.find(asset=>asset.kind==='asset'&&(asset.modelUrl&&asset.modelUrl===item.modelUrl||asset.buildAssetId&&asset.buildAssetId===item.buildAssetId));return canonical&&ownsEconomyItem(state,canonical)?canonical:null;},charge:(identity,sku,requestId)=>userDatabase.economyAction(identity.walletId,'use',sku,'room:'+requestId),telemetry:(walletId,sample)=>userDatabase.recordRpgTelemetry(walletId,sample)});
-setInterval(()=>sharedRooms.flush().catch(error=>console.error('Room checkpoint failed',error)),1000).unref();
-setInterval(()=>authoritativeRooms.tickActive().catch(error=>console.error('Room simulation failed',error)),50).unref();
+const authoritativeRooms=new AuthoritativeRooms({store:sharedRooms,capacity:maxHouseUsers,resolveDestination:async id=>Boolean(await roomEnvironment(id)),collectCoin:(identity,requestId)=>userDatabase.grantMzkCoin(identity.walletId,requestId),collectLoot:(identity,itemId,requestId)=>userDatabase.grantRpgLoot(identity.walletId,itemId,requestId),reward:(identity,event,requestId)=>userDatabase.memberReward(identity.walletId,'progress',{scope:'field',event,requestId}),resolveAsset:async(identity,command)=>{const state=await userDatabase.get(identity.walletId),catalog=economyItem(command.sku);if(catalog&&ownsEconomyItem(state,catalog)&&catalog.kind==='asset')return catalog;const purchased=state.items.find(item=>item.id===command.itemId&&['mzk-store','verified-store'].includes(item.source)&&item.modelUrl);if(purchased)return {...purchased,behavior:'decor',targetHeight:['avatar','avatars'].includes(purchased.assetType||purchased.type)?1.8:undefined};const custom=state.items.find(item=>item.id===command.itemId&&item.type==='custom-item');if(custom)return {...custom,behavior:custom.configuration?.behavior||'decor'};const item=state.items.find(item=>item.id===command.itemId&&(item.modelUrl||item.buildAssetId));if(!item){const pack=await userDatabase.builderBackpack(identity.walletId),owned=pack.assets.find(asset=>asset.id===command.itemId);if(!owned)return null;const config=owned.function_data||{};if(!owned.glb_url&&!config.buildAssetId&&!config.modelId)return null;return {id:owned.id,name:owned.name,modelUrl:owned.glb_url||null,buildAssetId:config.buildAssetId||config.modelId||null,assetType:owned.asset_type||'props',behavior:config.behavior||'decor'};}const canonical=GAME_ECONOMY.find(asset=>asset.kind==='asset'&&(asset.modelUrl&&asset.modelUrl===item.modelUrl||asset.buildAssetId&&asset.buildAssetId===item.buildAssetId));return canonical&&ownsEconomyItem(state,canonical)?canonical:null;},charge:(identity,sku,requestId)=>userDatabase.economyAction(identity.walletId,'use',sku,'room:'+requestId),telemetry:(walletId,sample)=>userDatabase.recordRpgTelemetry(walletId,sample)});
+setInterval(()=>backgroundJob(()=>sharedRooms.flush()),1000).unref();
+setInterval(()=>backgroundJob(()=>authoritativeRooms.tickActive()),50).unref();
 let roomEnvironmentCache=null,roomEnvironmentCachedAt=0;
 async function roomEnvironment(id){if(!roomEnvironmentCache||Date.now()-roomEnvironmentCachedAt>3000){roomEnvironmentCache=await combinedEnvironments();roomEnvironmentCachedAt=Date.now();}return roomEnvironmentCache.find(env=>env.id===id);}
 function liveRoomMetadata(map,rooms={}){const roomId=map.roomId||map.id;const members=new Set(activePresence().filter(user=>{if(user.roomId!==roomId)return false;const player=rooms[roomId]?.simulation?.players['account:'+user.accountId];return !player||Date.now()-player.lastSeen<15000;}).map(user=>user.accountId?'account:'+user.accountId:user.sessionId));for(const [id,player]of Object.entries(rooms[roomId]?.simulation?.players||{}))if(Date.now()-player.lastSeen<15000)members.add(id);const playerCount=members.size;return {...map,roomId,playerCount,live:playerCount>0,playUrl:map.playUrl||`model-explorer.html?environment=${encodeURIComponent(map.id)}&house=${encodeURIComponent(roomId)}&autoplay=1`};}
 async function combinedEnvironments() {
   const [repo, uploaded, customMaps] = await Promise.all([readRepositoryEnvironments(), readUploadedEnvironments(), readCustomMaps()]);
   const liveMaps = customMaps.map((map) => ({ ...map, modelUrl:'', modelUrls:[], proceduralLand:true, spawn:{x:0,y:1,z:2,rotationY:0}, scale:1, spaceScale:1, rotation:{x:0,y:0,z:0}, collisionMode:'auto', canDelete:false, canEdit:false }));
-  let atlas=await worldAtlas.synchronize(customMaps);const communityMaps=Object.values(atlas.cells).filter(cell=>cell.generated).map(cell=>cell.environment);
-  const bases=[...communityMaps,...liveMaps,...repo,...uploaded.filter(publicEnvironment)].map(map=>attachAtlas(map,atlas));
-  const plots=(await userDatabase.memberPlots()).map(deed=>memberPlotEnvironment(deed,bases)).filter(Boolean);
-  atlas=await worldAtlas.synchronize([...customMaps,...plots]);const rooms=await sharedRooms.read();return [...plots,...bases].map(map=>attachAtlas(map,atlas)).map(map=>liveRoomMetadata(map,rooms)).sort((a,b)=>b.playerCount-a.playerCount);
+  const published=[...liveMaps,...repo,...uploaded.filter(publicEnvironment)].filter(map=>map.visibility!=='private'&&map.playable!==false);
+  const {environments}=await synchronizeWorldDirectory(worldAtlas,published,await userDatabase.memberPlots());
+  const rooms=await sharedRooms.read();return environments.map(map=>liveRoomMetadata(map,rooms)).sort((a,b)=>b.playerCount-a.playerCount);
 }
 async function saveEnvironmentUpload(req) {
   const parts = await multipartFields(req, maxEnvironmentBytes + 2_000_000); const fields = {}; parts.filter((p) => !p.filename).forEach((p) => { fields[p.name] = p.data.toString('utf8').trim(); });
@@ -341,7 +374,7 @@ async function backpackFor(account) {
   const catalogAvatars = catalog.filter((asset) => asset.assetType === 'avatar').map((asset) => ({ ...asset, eligible: true, state: 'revealed' }));
   return { accountId: account.accountId, backpackId: account.backpackId, status: account.loadoutRedeemed ? 'ready' : 'empty', mzkBalance: Number(walletState.tokens.MZK || 0), land: walletState.items.filter(item=>['land-deed','land-entitlement'].includes(item.type)).map(item=>({...item,state:item.type==='land-deed'?'revealed':'unrevealed',requiresReveal:item.type==='land-entitlement',...(item.type==='land-deed'?{spaceId:plotSpaceId(item),playUrl:plotPlayUrl(item)}:{})})), avatars: [STARTER_AVATAR, ...inventoryAvatars, ...catalogAvatars, ...assets.filter((asset) => /avatar/i.test(asset.name) && asset.name !== 'Starter Avatar').map((asset) => ({ ...asset, eligible: asset.state === 'revealed' }))], assets, catalogAssets: catalog, environments: catalog.filter((asset) => asset.assetType === 'environment'), props: catalog.filter((asset) => asset.assetType === 'prop'), vehicles: catalog.filter((asset) => asset.assetType === 'vehicle'), bottleClaims: (account.bottleClaims || []).map((name) => stateAsset(name, 'bottle')), entitlements: [...(account.creatorVaultAccess ? ['creator-vault'] : []), ...(account.marketplaceAccess ? ['marketplace'] : []), ...(account.gameAccess ? ['members-game'] : [])], selectedAvatarId: [STARTER_AVATAR,...inventoryAvatars,...catalogAvatars].some(item=>item.id===account.selectedAvatarId)?account.selectedAvatarId:STARTER_AVATAR.id, updatedAt: account.updatedAt };
 }
-function throttleAccess(req) { const key = String(req.socket.remoteAddress || 'unknown'); const now = Date.now(); const attempt = accessAttempts.get(key) || { failures: 0, resetAt: now + 15 * 60_000 }; if (attempt.resetAt <= now) { attempt.failures = 0; attempt.resetAt = now + 15 * 60_000; } if (attempt.failures >= 8) throw Object.assign(new Error('Too many failed access attempts. Try again later.'), { statusCode: 429 }); accessAttempts.set(key, attempt); return { success: () => accessAttempts.delete(key), failure: () => { attempt.failures += 1; } }; }
+function throttleAccess(req, attempts=accessAttempts) { const key = String(req.socket.remoteAddress || 'unknown'); const now = Date.now(); const attempt = attempts.get(key) || { failures: 0, resetAt: now + 15 * 60_000 }; if (attempt.resetAt <= now) { attempt.failures = 0; attempt.resetAt = now + 15 * 60_000; } if (attempt.failures >= 8) throw Object.assign(new Error('Too many failed access attempts. Try again later.'), { statusCode: 429 }); attempts.set(key, attempt); return { success: () => attempts.delete(key), failure: () => { attempt.failures += 1; } }; }
 async function requireLandOwnership(req, res) {
   let deeds = [];
   try { deeds = await userDatabase.landDeeds(requestWallet(req)); } catch {}
@@ -349,7 +382,7 @@ async function requireLandOwnership(req, res) {
   sendJson(res, 403, { success: false, code: 'LAND_OWNERSHIP_REQUIRED', message: 'Land ownership required: add a MUZIKAZ World land deed to your Drop Backpack before uploading avatars, assets, or games.' });
   return null;
 }
-function isPublicAsset(asset) { return asset.visibility === 'public' || asset.status === 'published' || asset.status === 'approved'; }
+function isPublicAsset(asset) { return asset.visibility !== 'private' && (asset.visibility === 'public' || asset.status === 'published' || asset.status === 'approved'); }
 function isGlbAvatar(asset) { const url = asset.publicUrl || asset.modelUrl || ''; const labels = `${asset.category || ''} ${asset.tags || ''} ${asset.intendedUse || ''}`; return /\.glb(?:$|[?#])/i.test(url) && /avatar|character|player/i.test(labels) && !/prop|building|vehicle|weapon|environment/i.test(labels); }
 async function readAvatarProfiles() { await ensureStorage(); return JSON.parse(await readFile(avatarProfilesFile, 'utf8')); }
 async function writeAvatarProfiles(records) { await ensureStorage(); await writeFile(avatarProfilesFile, JSON.stringify(records, null, 2)); }
@@ -469,12 +502,13 @@ function corsHeaders(extra = {}, origin = '') {
   const development = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/.test(origin);
   const production = /^https:\/\/(?:www\.)?muzikaz\.com$/.test(origin) || origin === 'https://muzikazmodelmarket.onrender.com';
   const allowedOrigin = origin && (configured.includes(origin) || development || production) ? origin : '';
-  return { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin, 'Access-Control-Allow-Credentials': 'true' } : {}), Vary: 'Origin', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-CSRF-Token,X-Game-Session,X-Idempotency-Key,X-Wallet-Address,X-MUZIKAZ-Session,X-User-Id,X-User-Role,X-User-Name,X-Admin-Token,X-MUZIKAZ-Land-Asset', 'Cross-Origin-Resource-Policy': 'cross-origin', 'Cache-Control': 'no-store', ...extra };
+  return { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin, 'Access-Control-Allow-Credentials': 'true' } : {}), Vary: 'Origin', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-CSRF-Token,X-Game-Session,X-Idempotency-Key,X-Wallet-Address,X-MUZIKAZ-Session,X-User-Id,X-User-Role,X-User-Name,X-Admin-Token,X-MUZIKAZ-Land-Asset,X-Master-Restore,Range', 'Cross-Origin-Resource-Policy': 'cross-origin', 'Cache-Control': 'no-store', ...extra };
 }
 function originAllowed(origin) { return !origin || Boolean(corsHeaders({}, origin)['Access-Control-Allow-Origin']); }
+function safeRequestPath(value){try{return new URL(value,'http://localhost').pathname;}catch{return '/';}}
 function sendJson(res, status, data) {
   const requestId = res.muzikazRequestId || randomUUID();
-  if (status >= 400 && res.muzikazRequest) console.warn('[MUZIKAZ API]', JSON.stringify({ requestId, method: res.muzikazRequest.method, pathname: new URL(res.muzikazRequest.url, 'http://localhost').pathname, origin: res.muzikazRequestOrigin || null, authenticationMechanism: res.muzikazRequest.muzikazAuthentication?.mechanism || null, hasBearerToken: Boolean(bearer(res.muzikazRequest)), hasSessionCookie: Boolean(cookie(res.muzikazRequest, 'mzk_session')), status, errorCode: data?.code || 'REQUEST_FAILED', stage: data?.stage || 'request' }));
+  if (status >= 400 && res.muzikazRequest) console.warn('[MUZIKAZ API]', JSON.stringify({ requestId, method: res.muzikazRequest.method, pathname: safeRequestPath(res.muzikazRequest.url), origin: res.muzikazRequestOrigin || null, authenticationMechanism: res.muzikazRequest.muzikazAuthentication?.mechanism || null, hasBearerToken: Boolean(bearer(res.muzikazRequest)), hasSessionCookie: Boolean(cookie(res.muzikazRequest, 'mzk_session')), status, errorCode: data?.code || 'REQUEST_FAILED', stage: data?.stage || 'request' }));
   res.writeHead(status, corsHeaders({ 'Content-Type': 'application/json; charset=utf-8', 'X-Request-ID': requestId }, res.muzikazRequestOrigin)); res.end(JSON.stringify(data));
 }
 function isPublicAssetUrl(value) { try { const url = new URL(value, 'http://localhost'); return url.protocol === 'https:' || url.pathname.startsWith('/uploads/') || (url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)); } catch { return false; } }
@@ -495,13 +529,36 @@ async function uploadFile(req) { const type = String(req.headers['content-type']
 }
 
 const server = createServer(async (req, res) => {
+  applyHttpSecurity(req,res,{production:process.env.NODE_ENV==='production'});
+  if(req.url?.startsWith('/api/'))res.setHeader('X-Robots-Tag','noindex, nofollow');
   res.muzikazRequest = req;
   res.muzikazRequestOrigin = String(req.headers.origin || '');
   res.muzikazRequestId = String(req.headers['x-request-id'] || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80) || randomUUID();
-  const url = new URL(req.url, `http://${req.headers.host}`);
+  let url;try{url=new URL(req.url,'http://localhost');}catch{return sendJson(res,400,{success:false,code:'INVALID_URL',message:'Invalid request URL.'});}
   if (url.pathname.startsWith('/api/') && !originAllowed(res.muzikazRequestOrigin)) return sendJson(res, 403, { success: false, code: 'CORS_ORIGIN_DENIED', message: 'This origin is not allowed to call the MUZIKAZ API.', stage: 'cors' });
   if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders({ 'X-Request-ID': res.muzikazRequestId }, res.muzikazRequestOrigin)); res.end(); return; }
+  const isMasterRoute=url.pathname.startsWith('/api/admin/master-state');
+  if(masterMaintenance&&!isMasterRoute)return sendJson(res,503,{success:false,code:'MASTER_STATE_MAINTENANCE',message:'Server state is being backed up or restored. Reconnect shortly.'});
+  if(!isMasterRoute)activeServerRequests++;
   try {
+    if(isMasterRoute){
+      if(!requireAdmin(req,res))return;
+      res.setHeader('Cache-Control','no-store');
+      if(url.pathname==='/api/admin/master-state'&&req.method==='GET'){
+        const bundle=await exclusiveMasterState(async()=>{await ensureStorage();await userDatabase.initialize();await saveMasterRuntime();return masterState.capture({serviceVersion,commit:deploymentCommit});});
+        const bytes=Buffer.from(JSON.stringify(bundle,null,2));
+        res.writeHead(200,corsHeaders({'Content-Type':'application/json','Content-Disposition':`attachment; filename="muzikaz-master-${bundle.createdAt.replace(/[:.]/g,'-')}.json"`,'Cache-Control':'no-store'},res.muzikazRequestOrigin));return res.end(bytes);
+      }
+      if(req.method==='POST'&&['/api/admin/master-state/validate','/api/admin/master-state/restore'].includes(url.pathname)){
+        if(!String(req.headers['content-type']||'').startsWith('application/json'))return sendJson(res,415,{success:false,message:'Upload a JSON master state file.'});
+        const bundle=await readJsonInput(req,384*1024*1024),checked=masterState.validate(bundle);
+        if(url.pathname.endsWith('/validate'))return sendJson(res,200,assetResponse({summary:checked.inventory.summary,createdAt:bundle.createdAt,bytes:checked.bytes,limitations:bundle.limitations}));
+        if(req.headers['x-master-restore']!=='replace-server-state')return sendJson(res,400,{success:false,message:'Confirm replacing server state before restoring.'});
+        const result=await exclusiveMasterState(async()=>{await saveMasterRuntime();const restored=await masterState.restore(bundle);invalidateMasterCaches();await loadMasterRuntime();return restored;});
+        broadcast('world-atlas-updated',{restored:true});return sendJson(res,200,assetResponse(result));
+      }
+      return sendJson(res,404,{success:false,message:'Master state operation not found.'});
+    }
     if (url.pathname === '/api/admin/backups' && ['GET','POST'].includes(req.method)) {
       if (!requireAdmin(req,res)) return;
       return sendJson(res,200,assetResponse(req.method === 'POST' ? await snapshotServer() : { snapshots:await serverBackups.list(), lastError:serverBackups.lastError }));
@@ -572,8 +629,8 @@ const server = createServer(async (req, res) => {
       return sendJson(res,200,assetResponse({item,action:item.asset_usage==='game_builder'?'builder':'backpack',playUrl:item.type==='published-map'?item.playUrl:item.type==='land-deed'?plotPlayUrl(item):item.asset_usage==='game_builder'?'builder-market.html#backpack':'model-explorer.html?environment=public-commons&autoplay=1&useItem='+encodeURIComponent(item.id)}));
     }
     if(url.pathname==='/api/market/catalog'&&req.method==='GET'){
-      const player=(await userDatabase.marketListings()).map(item=>({...item,id:'player:'+item.sellerId+':'+item.itemId,name:item.itemName,category:/land/.test(item.itemType)?'Land and deeds':item.itemType==='custom-item'?'Custom items':'Player items',source:'player',priceMzk:item.priceMzk,seller:item.sellerName}));
-      const builder=(await userDatabase.builderMarket()).map(item=>({asset:{name:item.asset.name,thumbnail_url:item.asset.thumbnail_url||item.preview,glb_url:item.asset.glb_url,buildAssetId:item.asset.function_data?.buildAssetId||item.asset.function_data?.modelId,builder_category:item.asset.builder_category},id:'builder:'+item.listing_id,name:item.asset.name,category:'Builder assets',source:'builder',priceMzk:item.price_mzk,description:item.asset.builder_category}));
+      const player=(await userDatabase.marketListings()).map(item=>({...item,id:'player:'+item.sellerId+':'+item.itemId,name:item.itemName,itemCategory:item.category,category:/land/.test(item.itemType)?'Land and deeds':item.itemType==='custom-item'?'Custom items':'Player items',source:'player',priceMzk:item.priceMzk,seller:item.sellerName}));
+      const builder=(await userDatabase.builderMarket()).map(item=>({asset:{name:item.asset.name,thumbnail_url:item.asset.thumbnail_url||item.preview,glb_url:item.asset.glb_url,buildAssetId:item.asset.function_data?.buildAssetId||item.asset.function_data?.modelId,builder_category:item.asset.builder_category,asset_type:item.asset.asset_type,function_data:item.asset.function_data},id:'builder:'+item.listing_id,name:item.asset.name,category:'Builder assets',source:'builder',priceMzk:item.price_mzk,description:item.asset.builder_category}));
       const upgrades=economyInventory({items:[]}).map(item=>({...item,id:'upgrade:'+item.sku,name:item.name,category:item.category||'Game upgrades',source:'upgrade',priceMzk:item.priceMzk,basic:item.basic}));
       const models=(await repositoryGameCatalog()).filter(item=>item.assetType!=='environment'&&/\.(?:glb|gltf)(?:[?#]|$)/i.test(item.modelUrl)).map(item=>{const quote=resolveStoreCart([{quantity:1,deliverable:{id:item.id}}],[item]);return {id:'model:'+item.id,name:quote.items[0].name,category:'Models',source:'model',priceUsd:quote.items[0].priceUsd,model:item};});
       const deeds=(await userDatabase.read()).landDeeds||{};
@@ -608,11 +665,15 @@ const server = createServer(async (req, res) => {
       return sendJson(res, 200, assetResponse({ accountId: account.accountId, backpack, selectedAvatar, warning: selectedAvatar.id !== game.avatarId ? 'The selected model is unavailable; Starter Avatar was loaded.' : null, expiresAt: game.expiresAt }));
     }
     if (url.pathname === '/api/admin/login' && req.method === 'POST') {
-      const credentials = await bodyJson(req);
-      const recognizedAdmin = matchesSecret(credentials.username, adminUsername) || matchesSecret(credentials.username, 'admin');
-      if (!recognizedAdmin || !matchesSecret(credentials.password, adminPassword)) return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });
-      res.setHeader('Set-Cookie', `mzk_admin=${persistentAdminToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=315360000${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
-      return sendJson(res, 200, assetResponse({ token: persistentAdminToken, persistent: true }));
+      const attempt=throttleAccess(req,adminAccessAttempts);
+      try{
+        const credentials = await bodyJson(req);
+        const recognizedAdmin = matchesSecret(credentials.username, adminUsername) || matchesSecret(credentials.username, 'admin');
+        if (!recognizedAdmin || !matchesSecret(credentials.password, adminPassword)){attempt.failure();return sendJson(res, 401, { success: false, message: 'Invalid administrator credentials' });}
+        attempt.success();
+        res.setHeader('Set-Cookie', `mzk_admin=${persistentAdminToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=315360000${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+        return sendJson(res, 200, assetResponse({ token: persistentAdminToken, persistent: true }));
+      }catch(error){attempt.failure();throw error;}
     }
     if (url.pathname === '/api/admin/session' && req.method === 'GET') {
       if (!isAdmin(req)) return sendJson(res, 401, { success: false, code: 'ADMIN_SESSION_EXPIRED', message: 'Administrator session is missing or expired.' });
@@ -656,6 +717,10 @@ const server = createServer(async (req, res) => {
       const mzkTransactions = (usersData.transactions || []).slice();
       const backpackItems = users.flatMap(({ walletKey, record }) => (record.items || []).map((item) => ({ walletId: record.walletId || walletKey, itemId: item.id, name: item.name || item.title || item.id, record: item })));
       const items = [...backpackItems, ...submissions.map((item) => ({ itemId: item.id, name: item.title, record: item }))];
+      const memberAccounts=(await loadoutCodeStore.records()).accounts.map(({accountId,username,primaryEthereumWallet,gameAccess,loadoutStatus,createdAt,updatedAt})=>({accountId,username,primaryEthereumWallet,gameAccess,loadoutStatus,createdAt,updatedAt}));
+      const savedBuilds=await readCustomMaps();
+      const savedMatches=Object.entries(await sharedRooms.read()).filter(([,room])=>room.simulation?.match||room.simulation?.radTox).map(([worldId,room])=>({worldId,state:room.simulation.match?.state||'campaign',match:room.simulation.match,campaign:room.simulation.radTox,players:room.simulation.players}));
+      const land=Object.values(usersData.landDeeds||{});
       const spaces = Object.values(usersData.landDeeds || {}).map((deed) => ({ spaceId: deed.id, worldId: deed.worldId, ownerId: deed.ownerId, record: deed }));
       const paidSales = sales.filter((order) => ['PAID', 'FULFILLED'].includes(order.paymentStatus));
       return sendJson(res, 200, assetResponse({
@@ -670,7 +735,7 @@ const server = createServer(async (req, res) => {
           avatars: avatars.length,
           gameplaySpentMzk: gameplay.wallets.reduce((total, row) => total + row.spentMzk, 0)
         },
-        mzkTransactions, items, backpackItems, spaces, submissions, users, sales, models, customizations: [], derivatives: [], environments, avatars, avatarProfiles, gameplaySpending: gameplay.transactions
+        members:memberAccounts,land,savedBuilds,savedMatches,mzkTransactions, items, backpackItems, spaces, submissions, users, sales, models, customizations: [], derivatives: [], environments, avatars, avatarProfiles, gameplaySpending: gameplay.transactions
       }));
     }
     if ((url.pathname === '/api/admin/access-codes' || url.pathname === '/api/admin/loadout-codes') && req.method === 'POST') { if (!requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await loadoutCodeStore.create(await bodyJson(req)))); }
@@ -776,10 +841,10 @@ const server = createServer(async (req, res) => {
     const builderPurchase = url.pathname.match(/^\/api\/builder\/listings\/([^/]+)\/purchase$/);
     if (builderPurchase && req.method === 'POST') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'market.builder.buy')) return; const body = await bodyJson(req); return sendJson(res, 201, assetResponse(await userDatabase.purchaseBuilderAsset(context.walletId, decodeURIComponent(builderPurchase[1]), body.request_id || body.requestId))); }
     if (url.pathname === '/api/builder/placements' && req.method === 'GET') { const context = await builderContext(req, res); if (!context) return; return sendJson(res, 200, assetResponse((await userDatabase.builderBackpack(context.walletId)).placements)); }
-    if (url.pathname === '/api/builder/placements' && req.method === 'POST') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.asset.place')) return; return sendJson(res, 201, assetResponse(await userDatabase.placeBuilderAsset(context.walletId, await bodyJson(req)))); }
+    if (url.pathname === '/api/builder/placements' && req.method === 'POST') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.asset.place')) return; const placement=await userDatabase.placeBuilderAsset(context.walletId, await bodyJson(req));roomEnvironmentCache=null;broadcast('member-plot-updated',{worldId:placement.world_id});return sendJson(res,201,assetResponse(placement)); }
     const builderPlacement = url.pathname.match(/^\/api\/builder\/placements\/([^/]+)$/);
-    if (builderPlacement && req.method === 'PATCH') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.asset.configure')) return; return sendJson(res, 200, assetResponse(await userDatabase.updateBuilderPlacement(context.walletId, decodeURIComponent(builderPlacement[1]), await bodyJson(req)))); }
-    if (builderPlacement && req.method === 'DELETE') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.world.edit')) return; return sendJson(res, 200, assetResponse(await userDatabase.updateBuilderPlacement(context.walletId, decodeURIComponent(builderPlacement[1]), {}, true))); }
+    if (builderPlacement && req.method === 'PATCH') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.asset.configure')) return; const placement=await userDatabase.updateBuilderPlacement(context.walletId, decodeURIComponent(builderPlacement[1]), await bodyJson(req));roomEnvironmentCache=null;broadcast('member-plot-updated',{worldId:placement.world_id});return sendJson(res,200,assetResponse(placement)); }
+    if (builderPlacement && req.method === 'DELETE') { const context = await builderContext(req, res, true); if (!context || !requireBuilderPermission(context, res, 'builder.world.edit')) return; const placement=await userDatabase.updateBuilderPlacement(context.walletId, decodeURIComponent(builderPlacement[1]), {}, true);roomEnvironmentCache=null;broadcast('member-plot-updated',{worldId:placement.world_id});return sendJson(res,200,assetResponse(placement)); }
 
     if (url.pathname === '/api/wallet/state' && req.method === 'GET') { const context=await memberContext(req,res);if(!context)return;return sendJson(res,200,assetResponse(context.state)); }
     if (url.pathname === '/api/wallet/state' && req.method === 'PUT') {const context=await memberContext(req,res,true);if(!context)return;const patch=memberWalletPatch(await bodyJson(req),normalizePlayerPreferences);return sendJson(res,200,assetResponse(await userDatabase.put(context.walletId,patch)));}
@@ -802,7 +867,7 @@ const server = createServer(async (req, res) => {
     if(url.pathname==='/api/member-maps'&&req.method==='GET')return sendJson(res,200,assetResponse((await combinedEnvironments()).filter(env=>env.memberPlot||env.source==='custom-builder'||env.community)));
     const plotConfig=url.pathname.match(/^\/api\/land\/deeds\/([^/]+)\/space$/);
     if(plotConfig&&req.method==='PUT'){const context=await memberContext(req,res,true);if(!context)return;const body=await bodyJson(req),bases=(await combinedEnvironments()).filter(env=>!env.memberPlot);if(!bases.some(env=>env.id===body.environmentId&&env.playable!==false&&env.visibility!=='private'))return authorizationError(res,400,'PLOT_ENVIRONMENT_INVALID','Choose an available public environment.','plot');const deed=await userDatabase.configurePlot(context.walletId,decodeURIComponent(plotConfig[1]),body);roomEnvironmentCache=null;broadcast('member-plot-updated',{spaceId:deed.spaceId});return sendJson(res,200,assetResponse(deed));}
-    if (url.pathname === '/api/land/claims' && req.method === 'POST') { const body = await bodyJson(req); const allowed = new Map(LAND_PRODUCTS); const worldId = cleanText(body.worldId).toLowerCase(); if (!allowed.has(worldId)) return sendJson(res, 400, { success: false, message: 'Unknown MUZIKAZ world.' }); if(body.expectedPriceMzk!==undefined&&body.expectedPriceMzk!==LAND_VALUES[worldId].priceMzk)return sendJson(res,409,{success:false,message:'Land price changed. Refresh and review the current price.'});return sendJson(res, 201, assetResponse(await userDatabase.claimLand({ walletId: requestWallet(req), worldId, name: allowed.get(worldId), priceMzk: LAND_VALUES[worldId].priceMzk, requestId: body.requestId }))); }
+    if (url.pathname === '/api/land/claims' && req.method === 'POST') { const body = await bodyJson(req); const allowed = new Map(LAND_PRODUCTS); const worldId = cleanText(body.worldId).toLowerCase(); if (!allowed.has(worldId)) return sendJson(res, 400, { success: false, message: 'Unknown MUZIKAZ world.' }); if(body.expectedPriceMzk!==undefined&&body.expectedPriceMzk!==LAND_VALUES[worldId].priceMzk)return sendJson(res,409,{success:false,message:'Land price changed. Refresh and review the current price.'});const deed=await userDatabase.claimLand({ walletId: requestWallet(req), worldId, name: allowed.get(worldId), priceMzk: LAND_VALUES[worldId].priceMzk, requestId: body.requestId });roomEnvironmentCache=null;broadcast('member-plot-updated',{spaceId:deed.spaceId});return sendJson(res,201,assetResponse(deed)); }
     if (url.pathname === '/api/market/members' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.members()));
     const marketProfile = url.pathname.match(/^\/api\/market\/members\/([^/]+)$/);
     if (marketProfile && req.method === 'GET') { const profile = await userDatabase.marketProfile(decodeURIComponent(marketProfile[1])); return profile ? sendJson(res, 200, assetResponse(profile)) : sendJson(res, 404, { success: false, message: 'Member not found' }); }
@@ -813,9 +878,24 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/market/activity' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.activity(requestWallet(req), url.searchParams.get('peer') || '')));
 
     if (url.pathname === '/api/environments' && req.method === 'GET') return sendJson(res, 200, assetResponse(await combinedEnvironments()));
-    if(url.pathname==='/api/world-atlas'&&req.method==='GET'){const environments=await combinedEnvironments(),atlas=await worldAtlas.read(),rooms=await sharedRooms.read();const locations=Object.values(atlas.cells).map(cell=>{const environment=environments.find(map=>map.id===cell.mapId);if(!environment)return null;const room=rooms[cell.mapId],event=[room?.simulation?.events?.at(-1),room?.lastBuild].filter(Boolean).sort((a,b)=>b.at-a.at)[0],player=event&&room?.simulation?.players[event.actorId];return {mapId:cell.mapId,name:environment.name,ownerName:environment.ownerName||cell.ownerName,ownerId:cell.ownerId,column:cell.column,row:cell.row,size:cell.size,publicDestination:cell.publicDestination,roomId:cell.mapId,streets:cell.streets,meetingPoints:cell.meetings,playerCount:environment.playerCount,playUrl:environment.playUrl,updatedAt:cell.updatedAt,activity:event?{action:event.action,username:player?.username||'Member',at:event.at}:null,occupants:Object.values(room?.simulation?.players||{}).filter(player=>Date.now()-player.lastSeen<15000).map(player=>({username:player.username,locationName:player.locationName,x:player.position.x,z:player.position.z})),buildingCount:Object.values(room?.objects||{}).filter(object=>!object.deleted).length};}).filter(Boolean).sort((a,b)=>b.playerCount-a.playerCount);return sendJson(res,200,assetResponse({revision:atlas.revision,cellSize:256,commonsId:'public-commons',locations}));}
+    if(url.pathname==='/api/world-atlas'&&req.method==='GET'){const environments=await combinedEnvironments(),atlas=await worldAtlas.read(),rooms=await sharedRooms.read();const locations=Object.values(atlas.cells).map(cell=>{const environment=environments.find(map=>map.id===cell.mapId);if(!environment)return null;const room=rooms[cell.mapId],event=[room?.simulation?.events?.at(-1),room?.lastBuild].filter(Boolean).sort((a,b)=>b.at-a.at)[0],player=event&&room?.simulation?.players[event.actorId];return {mapId:cell.mapId,name:environment.name,permanent:environment.permanent===true,thumbnailUrl:environment.thumbnailUrl||'',kind:cell.kind,deedId:environment.deedId||cell.deedId,worldId:environment.worldId||cell.worldId,baseEnvironmentId:environment.baseEnvironmentId||cell.baseEnvironmentId,description:environment.description||cell.description,districtId:cell.districtId,districtName:cell.districtName,districtColor:cell.districtColor,portalTargets:environment.portalTargets||cell.portalTargets||['public-commons'],source:environment.source,portalCount:(environment.builderScene?.objects||[]).filter(object=>object.atlasDestination).length+(environment.travelPortals?.length||0),savedObjectCount:(environment.placementScene?.objects||environment.builderScene?.objects||[]).filter(object=>!object.atlasDestination).length,ownerName:environment.ownerName||cell.ownerName,ownerId:cell.ownerId,column:cell.column,row:cell.row,size:cell.size,publicDestination:cell.publicDestination,roomId:cell.mapId,streets:cell.streets,meetingPoints:cell.meetings,playerCount:environment.playerCount,playUrl:environment.playUrl,updatedAt:cell.updatedAt,activity:event?{action:event.action,username:player?.username||'Member',at:event.at}:null,occupants:Object.values(room?.simulation?.players||{}).filter(player=>Date.now()-player.lastSeen<15000).map(player=>({username:player.username,locationName:player.locationName,x:player.position.x,z:player.position.z})),buildingCount:Object.values(room?.objects||{}).filter(object=>!object.deleted).length};}).filter(Boolean).sort((a,b)=>b.playerCount-a.playerCount);return sendJson(res,200,assetResponse({revision:atlas.revision,cellSize:256,commonsId:'public-commons',connections:locations.flatMap(place=>place.portalTargets.map(to=>({from:place.mapId,to}))).filter(edge=>locations.some(place=>place.mapId===edge.to)),locations}));}
+    if(url.pathname==='/api/world-atlas/pins'&&['GET','POST'].includes(req.method)){
+      const authentication=await roomAuthentication(req,res,req.method==='POST');if(!authentication)return;
+      await combinedEnvironments();const account=await loadoutCodeStore.getAccount(authentication.accountId);if(!account)return authorizationError(res,401,'ACCOUNT_NOT_FOUND','The game account no longer exists.','account');
+      const identity={accountId:authentication.accountId,username:account.username||'Player'};
+      if(req.method==='GET')return sendJson(res,200,assetResponse(await worldAtlas.pins(identity)));
+      const body=await bodyJson(req,4000),pin=await worldAtlas.pin(String(body.mapId||''),body.meetingId||null,identity,body.point);
+      return sendJson(res,200,assetResponse(pin));
+    }
     if(url.pathname==='/api/world-atlas/resolve'&&req.method==='POST'){const authentication=await roomAuthentication(req,res,true);if(!authentication)return;const account=await loadoutCodeStore.getAccount(authentication.accountId);if(!account)return authorizationError(res,401,'ACCOUNT_NOT_FOUND','The game account no longer exists.','account');const context={account};await combinedEnvironments();const body=await bodyJson(req,4000),result=await worldAtlas.resolve(body.x,body.z,{accountId:context.account.accountId,username:context.account.username||'Member'});roomEnvironmentCache=null;broadcast('world-atlas-updated',{revision:result.revision,mapId:result.cell.mapId});return sendJson(res,result.created?201:200,assetResponse(result));}
     if(url.pathname==='/api/world-atlas/streets'&&req.method==='POST'){const context=await memberContext(req,res,true);if(!context)return;await combinedEnvironments();const body=await bodyJson(req,4000),result=await worldAtlas.addStreet(String(body.mapId||''),body,{accountId:context.account.accountId,walletId:context.walletId,username:context.account.username||'Member'});roomEnvironmentCache=null;broadcast('world-atlas-updated',result);return sendJson(res,201,assetResponse(result));}
+    const deviceUpload=url.pathname.match(/^\/api\/rooms\/([^/]+)\/device-upload$/);
+    if(deviceUpload&&req.method==='POST'){
+      const identity=await roomIdentity(req,res,false);if(!identity)return;const id=decodeURIComponent(deviceUpload[1]),room=await sharedRooms.get(id),player=room.simulation?.players['account:'+identity.accountId],actor=room.simulation?.actors[url.searchParams.get('entityId')],environment=await roomEnvironment(id);
+      const authored=environment?.builderScene?.objects?.find(item=>item.id===actor?.id),profile=deviceDefinition(actor?.asset?.buildAssetId||authored?.modelId,authored?.functionalSettings);
+      if(!player||Date.now()-player.lastSeen>15000||!actor||actor.active===false||!profile||!['audio','video','image'].includes(profile.kind)||Math.hypot(actor.position.x-player.position.x,actor.position.y-player.position.y,actor.position.z-player.position.z)>5)return sendJson(res,409,{success:false,message:'Stand beside a media device before uploading.'});
+      return sendJson(res,201,assetResponse(await deviceMediaUploads.upload(req,identity,id)));
+    }
     const roomGameplay=url.pathname.match(/^\/api\/rooms\/([^/]+)\/gameplay$/);
     if(roomGameplay&&['GET','POST'].includes(req.method)){const id=decodeURIComponent(roomGameplay[1]),environment=await roomEnvironment(id);if(!environment)return sendJson(res,404,{message:'Room not found.'});if(req.method==='GET')return sendJson(res,200,assetResponse(await authoritativeRooms.snapshot(id,environment)));const command=await bodyJson(req,16000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;const snapshot=await authoritativeRooms.command(id,environment,identity,command);broadcast('room-gameplay-updated',{roomId:id,sequence:snapshot.sequence});return sendJson(res,200,assetResponse(snapshot));}
     const sharedRoom=url.pathname.match(/^\/api\/rooms\/([^/]+)\/objects$/);
@@ -824,10 +904,10 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/custom-maps' && req.method === 'POST') {
       const input = await bodyJson(req,2_000_000); const serialized = JSON.stringify(input);
       if (serialized.length > 2_000_000) return sendJson(res, 413, { success: false, code: 'MAP_TOO_LARGE', message: 'Custom maps must be smaller than 2 MB.' });
-      const context=await memberContext(req,res,true);if(!context)return;const ownerId=`account:${context.account.accountId}`;const record=customMapRecord(input,ownerId);record.ownerName=context.account.username||context.account.displayName||'MUZIKAZ Builder';record.roomId=record.id;record.playUrl=`model-explorer.html?environment=${encodeURIComponent(record.id)}&house=${encodeURIComponent(record.id)}&autoplay=1&mode=${record.multiplayer?'multiplayer':'solo'}`;
-      if((await readRepositoryEnvironments()).some(map=>map.id===record.id)||record.id.startsWith('plot-deed-')||record.id==='public-commons'||record.id.startsWith('district-'))return authorizationError(res,409,'MAP_ID_RESERVED','Choose a unique builder map ID.','map');
+      const context=await memberContext(req,res,true);if(!context)return;const ownerId=`account:${context.account.accountId}`;const record=customMapRecord(input,ownerId);record.ownerName=context.account.username||context.account.displayName||'MUZIKAZ Builder';record.roomId=record.id;record.playUrl=`model-explorer.html?environment=${encodeURIComponent(record.id)}&house=${encodeURIComponent(record.id)}&autoplay=1&mode=multiplayer`;
+      if((await readRepositoryEnvironments()).some(map=>map.id===record.id)||record.id.startsWith('plot-deed-')||record.id==='public-commons'||record.id.startsWith('district-')||record.id.startsWith('world-district-'))return authorizationError(res,409,'MAP_ID_RESERVED','Choose a unique builder map ID.','map');
       const result = await updateCustomMaps((records) => { const index = records.findIndex((map) => map.id === record.id); if (index >= 0 && records[index].ownerId !== ownerId) throw Object.assign(new Error('That map id belongs to another creator.'), { statusCode: 409, code: 'MAP_ID_CONFLICT' }); if (index >= 0) records[index] = { ...record, createdAt: records[index].createdAt }; else records.unshift(record); return { created: index < 0, record: index >= 0 ? records[index] : record }; });
-      await worldAtlas.synchronize([result.record]);roomEnvironmentCache=null;broadcast('world-atlas-updated',{mapId:result.record.id});broadcast('custom-map-live', result.record); return sendJson(res, result.created ? 201 : 200, assetResponse(result.record));
+      const directory=await combinedEnvironments(),published=directory.find(map=>map.id===result.record.id);roomEnvironmentCache=directory;roomEnvironmentCachedAt=Date.now();broadcast('world-atlas-updated',{mapId:result.record.id});broadcast('custom-map-live',published);return sendJson(res,result.created?201:200,assetResponse(published));
     }
     if (url.pathname === '/api/environments' && req.method === 'POST') { if (!requireAdmin(req, res)) return; const records = await readUploadedEnvironments(); const record = environmentRecord(await bodyJson(req)); if (!record.modelUrl.startsWith('/uploads/environments/')) throw new Error('Uploaded environment records must point to /uploads/environments/.'); records.unshift(record); await writeUploadedEnvironments(records); return sendJson(res, 201, assetResponse(record)); }
     if (url.pathname === '/api/environments/upload' && req.method === 'POST') { if (!await requireLandOwnership(req, res) || !requireAdmin(req, res)) return; return sendJson(res, 201, assetResponse(await saveEnvironmentUpload(req))); }
@@ -890,6 +970,19 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'GET') { if (!await accountSession(req, res)) return; activePresence(); return sendJson(res, 200, presencePayload()); }
     if (url.pathname === '/api/houses/ioncore-house/presence' && req.method === 'POST') { if (!await accountSession(req, res)) return; const id = session(req); const actor = user(req); const body = await bodyJson(req).catch(() => ({})); const asset = await designatedAvatar(req, actor); activePresence(); const targetRoom=cleanText(body.roomId,''),voiceCapacity=(await roomEnvironment(targetRoom))?.publicDestination?128:maxHouseUsers;const roomMembers=new Set(activePresence().filter(member=>member.roomId===targetRoom&&member.accountId!==req.muzikazAuthentication.accountId).map(member=>member.accountId));if(roomMembers.size>=voiceCapacity)return sendJson(res,409,{error:'This room is full.',...presencePayload()}); const now = new Date().toISOString(); const previous = presence.get(id) || {}; const authoritativePlayer=await authoritativeRooms.player(cleanText(body.roomId,''),'account:'+req.muzikazAuthentication.accountId);if(!authoritativePlayer||Date.now()-authoritativePlayer.lastSeen>15000)return authorizationError(res,409,'ROOM_REQUIRED','Join the authoritative room before sending presence.','presence');body.position=authoritativePlayer.position;body.rotation={y:authoritativePlayer.yaw};actor.name=authoritativePlayer.username;const position = { x: clampNumber(body.position?.x, -100000, 100000, previous.position?.x || 0), y: clampNumber(body.position?.y, -10000, 10000, previous.position?.y || 0), z: clampNumber(body.position?.z, -100000, 100000, previous.position?.z || 2.5) }; const rotation = { x: 0, y: clampNumber(body.rotation?.y, -Math.PI * 4, Math.PI * 4, previous.rotation?.y || 0), z: 0 }; presence.set(id, { sessionId: id, accountId: req.muzikazAuthentication.accountId, voiceEnabled: body.voiceEnabled === true, voiceCaption: body.voiceEnabled===true?cleanText(body.voiceCaption,'').slice(0,140):'', voiceCaptionAt: body.voiceEnabled===true&&body.voiceCaption?Math.min(Date.now(),Math.max(Date.now()-10000,Number(body.voiceCaptionAt)||0)):0, userId: actor.id, username: actor.name, joinedAt: previous.joinedAt || now, lastActiveAt: now, roomId: cleanText(body.roomId, roomId(position)), color: cleanText(body.color, previous.color || '#9cff00'), avatarAssetId: asset?.id||null, modelUrl: asset?.modelUrl||authoritativePlayer.modelUrl||null, avatarName: asset?.name||authoritativePlayer.username, position, rotation, movementState: ['idle','walk','run','jump'].includes(body.movementState) ? body.movementState : 'idle', animationState: cleanText(body.animationState, 'auto'), message: cleanText(body.message, previous.message || '') }); const data = presencePayload(); broadcast('player-state', presence.get(id)); broadcast('house-presence-updated', data); return sendJson(res, 200, data); }
     if (url.pathname === '/api/houses/ioncore-house/presence/leave' && req.method === 'POST') { presence.delete(session(req)); const data = presencePayload(); broadcast('house-presence-updated', data); return sendJson(res, 200, { ok: true, ...data }); }
+    if(url.pathname==='/api/houses/ioncore-house/camera/signal'&&['GET','POST'].includes(req.method)){
+      const active=await accountSession(req,res,req.method==='POST');if(!active)return;activePresence();
+      const member=presence.get(session(req));if(!member||member.accountId!==active.accountId)return sendJson(res,403,{error:'Join this space before sharing a camera.'});
+      if(req.method==='GET')return sendJson(res,200,cameraSignaling.poll(member,presence));
+      const body=await bodyJson(req,64000);let screen,player;
+      if(body.operation==='start'){
+        const environment=await roomEnvironment(member.roomId);if(!environment)return sendJson(res,404,{error:'Room not found.'});
+        const snapshot=await authoritativeRooms.snapshot(member.roomId,environment),actor=snapshot.actors?.[body.deviceId],device=snapshot.devices?.[body.deviceId];
+        screen=actor&&device?{...actor,kind:device.kind}:null;
+        player=await authoritativeRooms.player(member.roomId,'account:'+active.accountId);
+      }
+      return sendJson(res,200,cameraSignaling.command(member,presence,body,{screen,player}));
+    }
     if (url.pathname === '/api/houses/ioncore-house/voice/signal' && ['GET','POST'].includes(req.method)) {
       const active = await accountSession(req, res, req.method === 'POST'); if (!active) return;
       activePresence();
@@ -912,18 +1005,19 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/houses/ioncore-house/chat' && req.method === 'POST') { if (!await accountSession(req, res)) return; const id = session(req); const person = presence.get(id); if (!person) return sendJson(res, 401, { error: 'Join the Vibe Crib before chatting.' }); if(person.accountId!==req.muzikazAuthentication.accountId)return sendJson(res,403,{error:'This chat presence belongs to another account.'});const player=await authoritativeRooms.player(person.roomId,'account:'+req.muzikazAuthentication.accountId);if(!player||player.replacedByRoom||Date.now()-player.lastSeen>15000)return authorizationError(res,409,'ROOM_REQUIRED','Join this multiplayer room before chatting.','chat'); const body = await bodyJson(req); const message = cleanText(body.message, '').trim(); if (!message) return sendJson(res, 400, { error: 'Message cannot be empty.' }); const record = { id: randomUUID(), sessionId: id, username: person.username, roomId: person.roomId, message, createdAt: new Date().toISOString() }; person.message = message; person.lastActiveAt = record.createdAt; chatMessages.push(record); broadcast('house-presence-updated', presencePayload()); if (chatMessages.length > 100) chatMessages.splice(0, chatMessages.length - 100); broadcast('house-chat-message', record); return sendJson(res, 201, record); }
     if (url.pathname.startsWith('/api/')) return sendJson(res, 404, { success: false, code: 'API_ROUTE_NOT_FOUND', message: 'API route not found.' });
     let path = normalize(decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)).replace(/^[/\\]+/, '');
-    if (/(?:^|\/)(?:data|backups|work|node_modules|test|scripts|\.[^/]+)(?:\/|$)/i.test(path) || /\.(?:mjs|yaml|yml|env|log|bin|tmp)$/i.test(path)) return sendJson(res,404,{error:'Not found'});
+    if (path!=='.well-known/security.txt' && /(?:^|\/)(?:data|backups|work|node_modules|test|scripts|\.[^/]+)(?:\/|$)/i.test(path) || /\.(?:mjs|yaml|yml|env|log|bin|tmp)$/i.test(path)) return sendJson(res,404,{error:'Not found'});
     if (path.includes('..')) return sendJson(res, 400, { error: 'Bad path' });
-    const uploadMatch = path.match(/^uploads\/(avatars|assets|environments)\/([a-zA-Z0-9._-]+)$/);
+    const uploadMatch = path.match(/^uploads\/(avatars|assets|environments|media)\/([a-zA-Z0-9._-]+)$/);
     if (path.startsWith('uploads/') && !uploadMatch) return sendJson(res,404,{error:'Not found'});
-    let uploadedFile = '';
+    let uploadedFile = '',privateUpload=false;
     if (uploadMatch) {
       const [,kind,name] = uploadMatch;
-      if (!/\.(?:png|jpe?g|webp|glb|gltf|usdz|mp3|wav|ogg)$/i.test(name)) return sendJson(res,404,{error:'Not found'});
+      if (!/\.(?:png|jpe?g|webp|glb|gltf|usdz|mp3|wav|ogg|mp4|webm)$/i.test(name)) return sendJson(res,404,{error:'Not found'});
       if (kind === 'assets') {
         const asset = (await readAssets()).find(item => item.storedFilename === name);
         if (!asset) return sendJson(res,404,{error:'Not found'});
         if (!isPublicAsset(asset)) {
+          privateUpload=true;
           const active = await resolveAccountSession(req), account = active && await loadoutCodeStore.getAccount(active.accountId);
           const owner = account && String(account.primaryEthereumWallet || 'account:' + account.accountId).toLowerCase();
           if (!isAdmin(req) && owner !== asset.ownerId) return sendJson(res,404,{error:'Not found'});
@@ -932,8 +1026,10 @@ const server = createServer(async (req, res) => {
       if (kind === 'environments') {
         const environment = (await readUploadedEnvironments()).find(item => item.storedFilename === name || item.thumbnailUrl === '/uploads/environments/' + name);
         if (!environment || (environment.visibility === 'private' && !isAdmin(req))) return sendJson(res,404,{error:'Not found'});
+        if(environment.visibility==='private')privateUpload=true;
       }
-      uploadedFile = join({avatars:uploadDir,assets:assetUploadDir,environments:environmentUploadDir}[kind], name);
+      if(kind==='media'&&!(await deviceMediaUploads.records()).some(record=>record.id===name))return sendJson(res,404,{error:'Not found'});
+      uploadedFile = join({avatars:uploadDir,assets:assetUploadDir,environments:environmentUploadDir,media:mediaUploadDir}[kind], name);
       const info = await lstat(uploadedFile).catch(()=>null);
       if (!info?.isFile() || info.isSymbolicLink()) return sendJson(res,404,{error:'Not found'});
     }
@@ -945,14 +1041,21 @@ const server = createServer(async (req, res) => {
     }
     if (!filePath) throw new Error('Not found');
     const extension = extname(filePath).toLowerCase();
-    const cacheControl = extension === '.glb' || extension === '.usdz' ? 'public, max-age=31536000, immutable' : extension === '.json' ? 'no-cache' : 'public, max-age=3600';
+    if(privateUpload)res.setHeader('X-Robots-Tag','noindex, nofollow');
+    const cacheControl = privateUpload ? 'private, no-store' : extension === '.glb' || extension === '.usdz' ? 'public, max-age=31536000, immutable' : extension === '.json' ? 'no-cache' : 'public, max-age=3600';
+    if(uploadMatch?.[1]==='media'){
+      const info=await stat(filePath),headers={'Content-Type':mimeTypes[extension]||'application/octet-stream','Accept-Ranges':'bytes','Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'};const range=req.headers.range;
+      if(range){const match=/^bytes=(\d*)-(\d*)$/.exec(range);let start=match?.[1]?Number(match[1]):0,end=match?.[2]?Number(match[2]):info.size-1;if(match&&!match[1]&&match[2]){start=Math.max(0,info.size-Number(match[2]));end=info.size-1;}if(!match||(!match[1]&&!match[2])||start>end||start>=info.size||end>=info.size){res.writeHead(416,corsHeaders({'Content-Range':`bytes */${info.size}`},res.muzikazRequestOrigin));return res.end();}res.writeHead(206,corsHeaders({...headers,'Content-Length':end-start+1,'Content-Range':`bytes ${start}-${end}/${info.size}`},res.muzikazRequestOrigin));return createReadStream(filePath,{start,end}).pipe(res);}
+      res.writeHead(200,corsHeaders({...headers,'Content-Length':info.size},res.muzikazRequestOrigin));return createReadStream(filePath).pipe(res);
+    }
     res.writeHead(200, corsHeaders({ 'Content-Type': mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }));
     createReadStream(filePath).pipe(res);
-  } catch (error) { if (!res.headersSent) sendJson(res, error.statusCode || (url.pathname.startsWith('/api/') ? 500 : 404), { success: false, code: error.code || (url.pathname.startsWith('/api/') ? 'API_REQUEST_FAILED' : 'NOT_FOUND'), message: error.message || 'Not found', stage: error.stage || (error.statusCode === 409 ? 'account-state' : 'request') }); }
+  } catch (error) { if (!res.headersSent) sendJson(res, error.statusCode || (url.pathname.startsWith('/api/') ? 500 : 404), { success: false, code: error.code || (url.pathname.startsWith('/api/') ? 'API_REQUEST_FAILED' : 'NOT_FOUND'), message: error.message || 'Not found', stage: error.stage || (error.statusCode === 409 ? 'account-state' : 'request') }); } finally {if(!isMasterRoute)activeServerRequests--;}
 });
 
 server.on('upgrade', (req, socket) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
+  if(!originAllowed(String(req.headers.origin||'')))return socket.destroy();
+  let url;try{url=new URL(req.url,'http://localhost');}catch{return socket.destroy();}
   if (url.pathname !== '/ws/support' || String(req.headers.upgrade).toLowerCase() !== 'websocket') return socket.destroy();
   const key = req.headers['sec-websocket-key']; if (!key) return socket.destroy();
   const token = url.searchParams.get('adminToken') || '';
@@ -961,13 +1064,12 @@ server.on('upgrade', (req, socket) => {
   socket.supportName = cleanText(url.searchParams.get('name'), 'Guest');
   socket.write(['HTTP/1.1 101 Switching Protocols', 'Upgrade: websocket', 'Connection: Upgrade', `Sec-WebSocket-Accept: ${createHash('sha1').update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64')}`, '\r\n'].join('\r\n'));
   supportSockets.add(socket); supportHistory(socket);
-  socket.on('data', (chunk) => consumeWebsocketFrames(socket, chunk));
+  socket.on('data', (chunk) => {if(!masterMaintenance)consumeWebsocketFrames(socket, chunk);});
   socket.on('close', () => supportSockets.delete(socket)); socket.on('error', () => supportSockets.delete(socket));
 });
 await loadoutCodeStore.migrate();
-const storeDeliveryTimer=setInterval(()=>reconcileStorePayments().catch(error=>console.error('[Store delivery]',error.message)),30000);storeDeliveryTimer.unref();
-const backupTimer = setInterval(() => snapshotServer().catch(error=>console.error('[Backups]', error.message)), 6 * 60 * 60 * 1000); backupTimer.unref();
-snapshotServer().catch(error=>console.error('[Backups]', error.message));
+await loadMasterRuntime();
+const storeDeliveryTimer=setInterval(()=>backgroundJob(()=>reconcileStorePayments()),30000);storeDeliveryTimer.unref();
+const backupTimer = setInterval(() => backgroundJob(()=>snapshotServer()), 6 * 60 * 60 * 1000); backupTimer.unref();
+backgroundJob(()=>snapshotServer());
 server.listen(port, () => console.log(`MUZIKAZ shared house server running on http://localhost:${port}`));
-
-

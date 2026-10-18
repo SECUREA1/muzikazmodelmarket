@@ -1,3 +1,4 @@
+const arCameraReady=import('./public/js/ar-camera-preview.js');
 const menuButton = document.querySelector('.menu-toggle');
 const nav = document.querySelector('.nav');
 const mobileLogoMenuButton = document.querySelector('.global-site-header .world-logo');
@@ -558,7 +559,7 @@ function initWorldAtlas() {
   const modeButtons = [...atlas.querySelectorAll('[data-atlas-mode]')];
   const owner = normalizeMemberEmail(window.localStorage.getItem('muzikazBottleMemberEmail'));
   const ownedAssets = ownerWorldNames();
-  if (markers) markers.innerHTML = WORLD_ASSETS.map((asset) => `<button type="button" style="--x:${asset.x}%;--y:${asset.y}%" data-map-place="${asset.name}" data-map-x="${asset.x}" data-map-y="${asset.y}" data-map-detail="${asset.detail}" data-world-id="${asset.id}" class="${ownedAssets.has(asset.name) ? 'is-owned' : ''}"><i></i><span>${asset.name}<small>X ${asset.x} · Y ${asset.y}</small></span><em>${ownedAssets.has(asset.name) ? 'OWNED' : `${asset.price} · FOR SALE`}</em></button>`).join('');
+  if (markers) markers.innerHTML = WORLD_ASSETS.map((asset,index) => `<button type="button" style="--x:${asset.x}%;--y:${asset.y}%" data-map-place="${asset.name}" data-map-x="${asset.x}" data-map-y="${asset.y}" data-map-detail="${asset.detail}" aria-label="Enter ${asset.name}" title="${asset.name}" data-world-id="${asset.id}" class="${ownedAssets.has(asset.name) ? 'is-owned' : ''}"><i></i><b class="world-atlas__beacon-number" aria-hidden="true">${index+1}</b><span>${asset.name}<small>X ${asset.x} · Y ${asset.y}</small></span><em>${ownedAssets.has(asset.name) ? 'OWNED' : 'PUBLIC DISTRICT'}</em></button>`).join('');
   if (routes) {
     routes.setAttribute('viewBox', '0 0 100 100');
     routes.innerHTML = WORLD_ASSETS.slice(1).map((asset, index) => {
@@ -573,6 +574,7 @@ function initWorldAtlas() {
   let position = { x: 36, y: 49, place: 'Crew Plaza', detail: 'Social hub · crews gathering now' };
   const isLandAsset = (asset) => Boolean(findWorldAsset(asset)) || /\b(?:unrevealed\s+.*land|muzikaz\s+world|digital\s+land|world\s+plot|land\s+(?:asset|world|reservation|deed|claim))\b/i.test(asset);
   const ownedLand = owner ? (readOwnedProfiles()[owner] || []).find(isLandAsset) : '';
+  let serverPins=[],liveLocations=[];let directoryBusy=false;
   let claims = {};
   try { claims = JSON.parse(window.localStorage.getItem('muzikazLandClaims') || '{}') || {}; } catch (error) { claims = {}; }
   const savedClaim = owner ? claims[owner] : null;
@@ -586,7 +588,14 @@ function initWorldAtlas() {
     if (saved && Number.isFinite(Number(saved.x)) && Number.isFinite(Number(saved.y))) position = { ...position, ...saved };
   } catch (error) { /* A fresh map position is safe when browser storage is unavailable. */ }
 
+  function destinationLink(point){
+    let linked;try{linked=new URL(point.playUrl,window.location.href);}catch{}
+    const id=point.mapId||point.environmentId||point.spaceId||(point.deedId?'plot-'+point.deedId:null)||linked?.searchParams.get('environment')||linked?.searchParams.get('house');
+    const meeting=point.meetingId||linked?.searchParams.get('meet');
+    return id?`model-explorer.html?environment=${encodeURIComponent(id)}&house=${encodeURIComponent(id)}${meeting?'&meet='+encodeURIComponent(meeting):''}&autoplay=1&mode=multiplayer`:`index.html?atlasX=${clamp(point.x)}&atlasY=${clamp(point.y)}#world-map`;
+  }
   function render(next, announce = true) {
+    if(!next.mapId&&!next.environmentId&&!next.spaceId&&!next.playUrl&&!next.deedId){for(const key of ['mapId','environmentId','spaceId','playUrl','deedId','meetingId'])delete position[key];}
     position = { ...position, ...next, x: clamp(next.x), y: clamp(next.y) };
     marker.style.setProperty('--x', `${position.x}%`);
     marker.style.setProperty('--y', `${position.y}%`);
@@ -596,20 +605,26 @@ function initWorldAtlas() {
     detail.textContent = position.detail;
     readout.textContent = `X ${position.x} · Y ${position.y}`;
     const asset = WORLD_ASSETS.find((item) => item.name === position.place);
-    if (asset && assetLogo && assetType && assetAction) {
+    if (asset && !position.mapId&&!position.environmentId&&!position.spaceId&&!position.deedId&&!position.playUrl && assetLogo && assetType && assetAction) {
       assetLogo.src = asset.logo;
       assetLogo.alt = `${asset.name} logo`;
-      assetType.textContent = `${asset.kind} · ${ownerWorldNames().has(asset.name) ? 'Owned' : `${asset.price} · For sale`}`;
-      assetAction.href = ownerWorldNames().has(asset.name) && asset.environmentId ? `index.html?environment=${asset.environmentId}#house-explorer` : `model-market.html?world=${asset.id}#marketplace-preview`;
-      assetAction.textContent = ownerWorldNames().has(asset.name) && asset.environmentId ? 'Enter owned environment' : ownerWorldNames().has(asset.name) ? 'View owned asset' : 'View in market';
+      assetType.textContent = `${asset.kind} · ${ownerWorldNames().has(asset.name) ? 'Owned' : 'Public exploration'}`;
+      assetAction.href = `model-explorer.html?environment=world-district-${encodeURIComponent(asset.id)}&house=world-district-${encodeURIComponent(asset.id)}&autoplay=1&mode=multiplayer`;
+      assetAction.textContent = 'Explore public district';
     } else if (assetLogo) {
-      assetLogo.removeAttribute('src');
-      assetLogo.alt = '';
+      assetLogo.src = 'public/assets/muzikaz-world-map.svg';
+      assetLogo.alt = 'Your selected live world location';
       assetType.textContent = 'Custom map position';
-      assetAction.href = 'model-market.html#marketplace-preview';
-      assetAction.textContent = 'Browse world market';
+      assetAction.href = destinationLink(position);
+      assetAction.textContent = 'Enter this map location';
     }
     enter.firstChild.textContent = `Enter ${position.place} `;
+    const liveSelect=document.querySelector('#world-live-destination'),destinationState=document.querySelector('#world-destination-state');
+    const selectedMap=position.mapId||(asset?'world-district-'+asset.id:'');if(liveSelect)liveSelect.value=selectedMap;
+    if(destinationState)destinationState.textContent=selectedMap?'Ready to enter':'Custom build point';
+    if(position.mapId&&assetType)assetType.textContent='Saved server destination';
+    const preview=document.querySelector('#world-selected-preview');if(preview){preview.hidden=!selectedMap;preview.dataset.requested=selectedMap;if(selectedMap)import('./public/js/world-destination-preview.js').then(({mountWorldPreview})=>{if(preview.dataset.requested===selectedMap)mountWorldPreview(preview,{id:selectedMap,name:position.place,updatedAt:liveLocations.find(place=>place.mapId===selectedMap)?.updatedAt});}).catch(()=>{});}
+
     places.forEach((place) => place.classList.toggle('is-active', place.dataset.mapPlace === position.place));
     districtButtons.forEach((button) => button.classList.toggle('is-active', button.dataset.atlasDistrict === position.place));
     if (announce) status.textContent = `${position.place} selected. Your spawn is set to X ${position.x}, Y ${position.y}.`;
@@ -619,7 +634,7 @@ function initWorldAtlas() {
   function renderClaim() {
     atlas.querySelectorAll('[data-member-land-claim]').forEach((pin) => pin.remove());
     const spaceList = document.querySelector('#world-map-space-list');
-    const pinnedClaims = Object.values(claims).filter((claim) => claim && Number.isFinite(Number(claim.x)) && Number.isFinite(Number(claim.y))).sort((a, b) => Number(b.owner === owner) - Number(a.owner === owner) || String(a.owner).localeCompare(String(b.owner)));
+    const pinnedClaims = [...new Map([...Object.values(claims),...serverPins].map(pin=>[pin.mapId?pin.mapId+':'+(pin.meetingId||'entry'):'local:'+pin.owner,pin])).values()].filter((claim) => claim && Number.isFinite(Number(claim.x)) && Number.isFinite(Number(claim.y))).sort((a, b) => Number(b.owner === owner) - Number(a.owner === owner) || String(a.owner).localeCompare(String(b.owner)));
     pinnedClaims.forEach((pinnedClaim, index) => {
       const pinOwner = normalizeMemberEmail(pinnedClaim.owner) || 'member';
       const pin = document.createElement('button');
@@ -627,12 +642,11 @@ function initWorldAtlas() {
       pin.classList.toggle('is-home-base', pinOwner === owner); pin.style.setProperty('--x', `${clamp(pinnedClaim.x)}%`); pin.style.setProperty('--y', `${clamp(pinnedClaim.y)}%`);
       pin.innerHTML = `<i>⚑</i><span>${pinOwner === owner ? 'MY HOME' : escapeMarkup(pinOwner)}</span>`;
       pin.setAttribute('aria-label', `${pinOwner}'s pinned land at ${pinnedClaim.place}, X ${clamp(pinnedClaim.x)}, Y ${clamp(pinnedClaim.y)}`);
-      pin.addEventListener('click', (event) => { event.stopPropagation(); render({ ...pinnedClaim, detail: `Pinned land tied to ${pinOwner}'s profile and Drop Backpack.` }); });
+      pin.addEventListener('click', (event) => { event.stopPropagation(); render({ ...pinnedClaim, detail: 'Saved server map and arrival point.' });enterSelectedLocation(event); });
       viewport.append(pin);
       pinnedClaim.pinOrder = index;
     });
-    if (spaceList) spaceList.innerHTML = pinnedClaims.map((claim, index) => `<li><button type="button" data-pinned-owner="${escapeMarkup(claim.owner)}"><b>${index === 0 && claim.owner === owner ? 'HOME' : String(index + 1).padStart(2, '0')}</b><span>${escapeMarkup(claim.place)} <small>X ${clamp(claim.x)} · Y ${clamp(claim.y)} · ${escapeMarkup(claim.owner)}</small></span></button></li>`).join('') || '<li>No member land is pinned yet.</li>';
-    spaceList?.querySelectorAll('[data-pinned-owner]').forEach((button) => button.addEventListener('click', () => { const claim = claims[button.dataset.pinnedOwner]; if (claim) render(claim); }));
+    if(spaceList){spaceList.replaceChildren();pinnedClaims.forEach((claim,index)=>{const item=document.createElement('li'),link=document.createElement('a');link.href=destinationLink(claim);link.textContent=`${index+1}. ${claim.place} · X ${clamp(claim.x)} · Y ${clamp(claim.y)}`;link.addEventListener('click',event=>{if(event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;render({...claim,detail:'Saved server map and arrival point.'});enterSelectedLocation(event);});item.append(link);spaceList.append(item);});if(!pinnedClaims.length){const item=document.createElement('li');item.textContent='No personal pins yet. Enter a build point to save its server map here.';spaceList.append(item);}}
     const claim = owner ? claims[owner] : null;
     if (claim) {
       ownership.innerHTML = `<strong>Claim active:</strong> ${claim.place} · X ${claim.x}, Y ${claim.y} · tied to <a href="members.html#owned-collection">${owner}'s profile</a>.`;
@@ -641,10 +655,10 @@ function initWorldAtlas() {
       ownership.innerHTML = `<strong>Deed ready:</strong> ${ownedLand}. Pick an open map point, then stake it to your profile.`;
       claimButton.textContent = 'Stake land claim ⚑';
     } else if (!owner) {
-      ownership.innerHTML = 'Sign in through <a href="members.html">Bottle Login</a>, then claim or purchase digital land for your Backpack.';
+      ownership.innerHTML = 'Public destinations are open to guests. Sign in to save personal land claims.';
       claimButton.textContent = 'Login to stake a claim';
     } else {
-      ownership.innerHTML = `No land deed found in ${owner}'s Backpack. <a href="model-market.html#muzikaz-world-plot">Claim or purchase digital land</a> first.`;
+      ownership.innerHTML = 'Public exploration is open. A land deed is only needed to stake a personal claim.';
       claimButton.textContent = 'Land deed required';
     }
     claimButton.disabled = !ownedLand;
@@ -652,15 +666,16 @@ function initWorldAtlas() {
 
   places.forEach((place) => place.addEventListener('click', (event) => {
     event.stopPropagation();
-    render({ x: place.dataset.mapX, y: place.dataset.mapY, place: place.dataset.mapPlace, detail: place.dataset.mapDetail });
+    render({ x: place.dataset.mapX, y: place.dataset.mapY, place: place.dataset.mapPlace, detail: place.dataset.mapDetail });enterSelectedLocation(event);
   }));
-  districtButtons.forEach((button) => button.addEventListener('click', () => {
+  districtButtons.forEach((button) => button.addEventListener('click', (event) => {
     const asset = WORLD_ASSETS.find((item) => item.name === button.dataset.atlasDistrict);
     if (!asset) return;
     render({ x: asset.x, y: asset.y, place: asset.name, detail: asset.detail });
-    viewport.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    enterSelectedLocation(event);
   }));
-  modeButtons.forEach((button) => button.addEventListener('click', () => {
+  modeButtons.forEach((button) => button.addEventListener('click', (event) => {
+    event.preventDefault();event.stopPropagation();
     atlas.dataset.mode = button.dataset.atlasMode;
     modeButtons.forEach((item) => {
       const active = item === button;
@@ -686,30 +701,66 @@ function initWorldAtlas() {
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const values = new FormData(form);
-    render({ x: values.get('x'), y: values.get('y'), place: 'My Build Point', detail: 'Your exact custom coordinates are saved on this device.' });
+    render({ x: values.get('x'), y: values.get('y'), place: 'My Build Point', detail: 'Opening these coordinates in the saved server atlas.' });enterSelectedLocation(event);
   });
   claimButton.addEventListener('click', () => {
     if (!owner || !ownedLand) return;
-    claims[owner] = { owner, asset: ownedLand, x: position.x, y: position.y, place: position.place, claimedAt: new Date().toISOString() };
+    claims[owner] = { ...position, owner, asset: ownedLand, x: position.x, y: position.y, place: position.place, claimedAt: new Date().toISOString() };
     window.localStorage.setItem('muzikazLandClaims', JSON.stringify(claims));
     window.localStorage.setItem('muzikazWorldPosition', JSON.stringify(position));
     status.textContent = `Land claimed! ${position.place} at X ${position.x}, Y ${position.y} is now tied to your deed, Backpack, map, and profile.`;
     window.dispatchEvent(new CustomEvent('muzikaz-land-claimed', { detail: claims[owner] }));
     renderClaim();
   });
-  enter.addEventListener('click', () => {
-    atlas.classList.remove('is-entering');
-    void atlas.offsetWidth;
-    atlas.classList.add('is-entering');
-    status.textContent = `Welcome to ${position.place}! Spawn confirmed at X ${position.x}, Y ${position.y}. Start exploring or build from here.`;
-    window.setTimeout(() => atlas.classList.remove('is-entering'), 900);
-  });
+  let entering=false;
+  async function enterSelectedLocation(event){
+    event?.preventDefault();if(entering)return;entering=true;enter.disabled=true;
+    const chosen={...position},asset=WORLD_ASSETS.find(asset=>asset.name===chosen.place);
+    status.textContent=`Opening ${chosen.place} on the live server…`;
+    try{
+      const [{SharedGameInventory},{resolveIndexDestination,rememberDestination},{ensurePlayAccess}]=await Promise.all([import('./public/js/shared-game-inventory.js'),import('./public/js/index-atlas-travel.js'),import('./public/js/play-access.js')]);
+      const inventory=new SharedGameInventory();
+      if(!asset||chosen.mapId||chosen.environmentId||chosen.spaceId||chosen.playUrl||chosen.deedId){try{await inventory.roomSession();}catch(error){if(error.status!==401)throw error;if(!await ensurePlayAccess(inventory)){status.textContent='Choose a destination when you are ready.';return;}}}
+      const url=await resolveIndexDestination(inventory,chosen,asset);
+      const remembered=rememberDestination(chosen,url);
+      window.localStorage.setItem('muzikazWorldPosition',JSON.stringify(remembered));
+      for(const [key,claim]of Object.entries(claims)){if(Number(claim.x)===Number(chosen.x)&&Number(claim.y)===Number(chosen.y)&&claim.place===chosen.place)claims[key]={...claim,...remembered};}
+      window.localStorage.setItem('muzikazLandClaims',JSON.stringify(claims));
+      window.location.assign(url);
+    }catch(error){status.textContent=error.message||'The live server could not open this location. Try again.';}
+    finally{entering=false;enter.disabled=false;}
+  }
+  enter.addEventListener('click',enterSelectedLocation);
+  assetAction?.addEventListener('click',event=>{if(event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey)enterSelectedLocation(event);});
   const requestedWorld = new URLSearchParams(window.location.search).get('world');
   const requestedAsset = WORLD_ASSETS.find((asset) => asset.id === requestedWorld);
   if (requestedAsset) position = { x: requestedAsset.x, y: requestedAsset.y, place: requestedAsset.name, detail: requestedAsset.detail };
+  const atlasParams=new URLSearchParams(window.location.search);if(atlasParams.has('atlasX')&&atlasParams.has('atlasY'))position={x:clamp(atlasParams.get('atlasX')),y:clamp(atlasParams.get('atlasY')),place:'My Build Point',detail:'Enter these coordinates in the live shared world.'};
   render(position, false);
-  if (savedClaim) render({ ...savedClaim, detail: `Owned land tied to ${owner}'s Backpack and member profile.` }, false);
+  if (savedClaim && !atlasParams.has('atlasX')) render({ ...savedClaim, detail: `Owned land tied to ${owner}'s Backpack and member profile.` }, false);
   renderClaim();
+  async function refreshServerPins(){try{const {SharedGameInventory}=await import('./public/js/shared-game-inventory.js');serverPins=await new SharedGameInventory().api('/api/world-atlas/pins');}catch{serverPins=[];}renderClaim();}
+  const destinationSearch=document.querySelector('#world-destination-search'),destinationSelect=document.querySelector('#world-live-destination'),locationList=document.querySelector('#world-live-locations'),refreshDestinations=document.querySelector('#world-destinations-refresh');
+  async function renderLiveDestinations(){
+    const {filterAtlasLocations,atlasLocationPosition}=await import('./public/js/index-atlas-directory.js');
+    const matches=filterAtlasLocations(liveLocations,destinationSearch?.value||'');destinationSelect.replaceChildren();const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent=matches.length?'Choose a live destination':'No matching locations';destinationSelect.append(placeholder);locationList.replaceChildren();
+    for(const place of matches){const option=document.createElement('option');option.value=place.mapId;option.textContent=place.name+(place.districtName?' · '+place.districtName:'');destinationSelect.append(option);
+      const link=document.createElement('a');link.href=destinationLink({mapId:place.mapId});const title=document.createElement('strong'),info=document.createElement('small'),body=document.createElement('span');title.textContent=place.name;info.textContent=[place.districtName,place.ownerName,`${place.playerCount||0} online`].filter(Boolean).join(' · ');body.append(title,info);const number=document.createElement('b'),districtIndex=WORLD_ASSETS.findIndex(asset=>'world-district-'+asset.id===place.mapId);number.textContent=districtIndex>=0?String(districtIndex+1):'↗';number.setAttribute('aria-hidden','true');link.append(number,body);link.addEventListener('click',event=>{if(event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;render(atlasLocationPosition(place));enterSelectedLocation(event);});locationList.append(link);}
+    destinationSelect.value=position.mapId||(WORLD_ASSETS.find(asset=>asset.name===position.place)?'world-district-'+WORLD_ASSETS.find(asset=>asset.name===position.place).id:'');
+    document.querySelector('#world-live-count').textContent=`${liveLocations.length} LIVE DESTINATIONS · ${matches.length} SHOWN`;
+  }
+  async function refreshLiveDestinations(){
+    if(directoryBusy)return;directoryBusy=true;if(refreshDestinations)refreshDestinations.disabled=true;
+    try{const {SharedGameInventory}=await import('./public/js/shared-game-inventory.js');const directory=await new SharedGameInventory().api('/api/world-atlas');liveLocations=directory.locations||[];await renderLiveDestinations();status.textContent=`${liveLocations.length} server destinations available. Choose a map or enter a custom build point.`;}
+    catch(error){status.textContent=error.message||'Live destinations could not load. Try Refresh destinations.';document.querySelector('#world-live-count').textContent='LIVE SERVER UNAVAILABLE';}
+    finally{directoryBusy=false;if(refreshDestinations)refreshDestinations.disabled=false;}
+  }
+  destinationSearch?.addEventListener('input',renderLiveDestinations);destinationSelect?.addEventListener('change',async()=>{const place=liveLocations.find(place=>place.mapId===destinationSelect.value);if(place){const {atlasLocationPosition}=await import('./public/js/index-atlas-directory.js');render(atlasLocationPosition(place));}});
+  refreshDestinations?.addEventListener('click',refreshLiveDestinations);refreshLiveDestinations();
+  const directoryTimer=setInterval(()=>{if(!atlas.isConnected){clearInterval(directoryTimer);return;}if(!document.hidden&&!destinationSearch?.matches(':focus')&&!destinationSelect?.matches(':focus'))refreshLiveDestinations();},30000);
+  refreshServerPins();window.addEventListener('focus',refreshServerPins);window.addEventListener('muzikaz:member-ready',refreshServerPins);
+  const liveDirectory=document.createElement('section');liveDirectory.setAttribute('aria-label','All live worlds and builder maps');atlas.after(liveDirectory);
+  import('./public/js/world-atlas.js').then(({mountWorldAtlas})=>mountWorldAtlas(liveDirectory)).catch(()=>{const link=document.createElement('a');link.href='members.html#world-atlas';link.textContent='Open the live world directory';liveDirectory.append(link);});
 }
 
 initWorldAtlas();
@@ -1328,7 +1379,7 @@ function seedDesigner() {
   if (!productSelect || !characterSelect) return;
   productSelect.innerHTML = designerProducts.map((product) => `<option value="${product.id}">${product.name}</option>`).join('');
   characterSelect.innerHTML = designerCharacters.map((character) => `<option value="${character.id}">${character.name}</option>`).join('');
-  productSelect.value = 'avatar-stickers';
+  productSelect.value = designerProducts.some(product=>product.id==='hoodie')?'hoodie':designerProducts[0].id;
   characterSelect.value = 'chaos';
   updatePreview();
 }
@@ -1343,6 +1394,9 @@ function designerData() {
 function updatePreview() {
   if (!designerControls) return;
   const { data, product, character } = designerData();
+  const sizeSelect=designerControls.elements.namedItem('size');
+  const formats=product.id==='hoodie'?['S','M','L','XL','2XL','3XL']:product.id==='bottle'?['20 oz','24 oz']:product.id==='cap'?['One Size']:product.id==='avatar-stickers'?['Sticker sheet']:product.id==='poster'?['11 × 17 in','18 × 24 in','24 × 36 in']:['Standard'];
+  if(sizeSelect&&sizeSelect.dataset.product!==product.id){const previous=sizeSelect.value;sizeSelect.replaceChildren(...formats.map(value=>new Option(value,value)));sizeSelect.value=formats.includes(previous)?previous:formats[0];sizeSelect.dataset.product=product.id;data.set('size',sizeSelect.value);}
   const mockup = document.querySelector('#designer-mockup');
   mockup?.style.setProperty('--design-color', data.get('color'));
   const selectedShape = data.get('printShape') === 'auto' ? (productPrintTemplates[product.id]?.shape || 'front') : data.get('printShape');
@@ -1352,6 +1406,7 @@ function updatePreview() {
   document.querySelector('#sticker-stage')?.setAttribute('data-print-shape', selectedShape);
   const productArt = document.querySelector('#product-template-art');
   if (productArt) {
+    if(productArt.parentElement!==mockup)mockup.prepend(productArt);
     productArt.src = product.asset;
     productArt.alt = `${product.name} product template`;
   }
@@ -1360,19 +1415,20 @@ function updatePreview() {
     characterArt.src = character.art;
     characterArt.alt = `${character.name} artwork`;
   }
-  document.querySelector('#preview-character').textContent = character.name;
+  const characterLayer=document.querySelector('#preview-character');
+  if(characterLayer instanceof HTMLImageElement){characterLayer.src=character.art;characterLayer.alt=character.name;}else if(characterLayer)characterLayer.textContent=character.name;
   const logo = document.querySelector('#preview-name');
   const logoStyle = data.get('logo') || 'Wordmark';
   if (logo) {
     logo.dataset.logoStyle = logoStyle;
-    logo.textContent = logoStyle === 'Lightning Crest' ? 'ϟ' : logoStyle === 'Badge Patch' ? 'MZ' : (data.get('name') || 'MUZIKAZ');
+    logo.textContent = logoStyle === 'Lightning Crest' ? 'ϟ' : logoStyle === 'Badge Patch' ? 'MZ' : (data.get('name') ?? 'MUZIKAZ');
   }
-  document.querySelector('#preview-number').textContent = data.get('number') || '88';
-  document.querySelector('#preview-sleeve').textContent = data.get('sleeve') || 'LIVE THE BEAT';
+  document.querySelector('#preview-number').textContent = data.get('number') ?? '88';
+  document.querySelector('#preview-sleeve').textContent = data.get('sleeve') ?? 'LIVE THE BEAT';
   const isSticker = product.id === 'avatar-stickers';
   document.querySelector('#preview-title').textContent = isSticker ? `${character.name} custom stickers drop` : `${character.name} custom ${product.category.toLowerCase()} drop`;
   document.querySelector('#preview-meta').textContent = `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${data.get('layout') || character.traits.join(' / ')}`;
-  const values = [character.name, data.get('name') || 'MUZIKAZ', data.get('number') || '88', data.get('sleeve') || 'LIVE THE BEAT', `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${data.get('layout') || character.traits.join(' / ')}`];
+  const values = [character.name, data.get('name') ?? 'MUZIKAZ', data.get('number') ?? '88', data.get('sleeve') ?? 'LIVE THE BEAT', `${product.name} · ${data.get('size')} · ${data.get('logo')} · ${data.get('layout') || character.traits.join(' / ')}`];
   const previewValues = document.querySelector('#preview-values');
   if (previewValues) previewValues.innerHTML = values.map((value) => `<li>${escapeMarkup(value)}</li>`).join('');
   renderOrderSummary();
@@ -1480,6 +1536,7 @@ function makeUploadLayer(src, name) {
   layer.dataset.flipY = 'false';
   layer.alt = `${name} custom uploaded design`;
   layer.src = src;
+  layer.addEventListener('error',()=>setDesignerStatus('Artwork could not load. Replace this layer before ordering.'),{once:true});
   layer.style.left = '50%';
   layer.style.top = '50%';
   layer.draggable = false;
@@ -1524,11 +1581,17 @@ function handleLayerAction(action) {
     uploadState.layers = uploadState.layers.filter((item) => item.id !== layer.dataset.layerId);
     layer.remove();
     uploadState.activeId = null;
+    const remaining=document.querySelector('.uploaded-design-layer');if(remaining)selectUploadLayer(remaining);
     renderOrderSummary();
     setDesignerStatus('Custom design layer deleted from the preview.');
     return;
   }
-  if (action === 'duplicate') makeUploadLayer(layer.src, `${layer.alt.replace(' custom uploaded design', '')} copy`);
+  if (action === 'duplicate') {
+    const source={left:layer.style.left,top:layer.style.top,zIndex:layer.style.zIndex,...layer.dataset};
+    makeUploadLayer(layer.src, `${layer.alt.replace(' custom uploaded design', '')} copy`);
+    const copy=activeUploadLayer();for(const key of ['scale','rotate','flipX','flipY'])copy.dataset[key]=source[key]||layer.dataset[key];
+    copy.style.left=source.left;copy.style.top=source.top;copy.style.zIndex=String((Number(source.zIndex)||10)+1);applyLayerTransform(copy);selectUploadLayer(copy);
+  }
   applyLayerTransform(layer);
   renderOrderSummary();
 }
@@ -1571,7 +1634,10 @@ function exportDesignerOrder() {
 
 function restoreDesignerOrder(saved) {
   if (!saved || !designerControls) return false;
+  designerControls.reset();
+  const sizeField=designerControls.elements.namedItem('size');if(sizeField)delete sizeField.dataset.product;
   const fields = saved.fields || {};
+  const productField=designerControls.elements.namedItem('product');if(productField&&fields.product){productField.value=fields.product;updatePreview();}
   Object.entries(fields).forEach(([name, value]) => {
     const field = designerControls.elements.namedItem(name);
     if (field && typeof value === 'string') field.value = value;
@@ -1605,7 +1671,7 @@ function downloadDesignerSpec() {
   link.href = URL.createObjectURL(blob);
   link.download = `muzikaz-${order.product.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-print-spec.json`;
   link.click();
-  URL.revokeObjectURL(link.href);
+  setTimeout(()=>URL.revokeObjectURL(link.href),1000);
   setDesignerStatus('Print specification downloaded. Attach it to a fulfillment workflow or keep it with this custom order.');
 }
 
@@ -1628,10 +1694,8 @@ document.querySelectorAll('[data-layer-action]').forEach((button) => button.addE
 document.querySelectorAll('[data-studio-jump]').forEach((button) => button.addEventListener('click', () => document.getElementById(button.dataset.studioJump)?.scrollIntoView({ behavior: 'smooth', block: 'center' })));
 function stagePercentPosition(pointerEvent, stage, dragStart, snap) {
   const stageRect = stage.getBoundingClientRect();
-  const targetX = pointerEvent.clientX - dragStart.offsetX + dragStart.anchorX;
-  const targetY = pointerEvent.clientY - dragStart.offsetY + dragStart.anchorY;
-  const rawX = ((targetX - stageRect.left) / stageRect.width) * 100;
-  const rawY = ((targetY - stageRect.top) / stageRect.height) * 100;
+  const rawX = dragStart.left + (pointerEvent.clientX-dragStart.pointerX)/stageRect.width*100;
+  const rawY = dragStart.top + (pointerEvent.clientY-dragStart.pointerY)/stageRect.height*100;
   return {
     x: Math.round(rawX / snap) * snap,
     y: Math.round(rawY / snap) * snap
@@ -1651,12 +1715,10 @@ function enableStickerStageDragging() {
     layer.setPointerCapture?.(event.pointerId);
     layer.style.right = 'auto';
     layer.style.bottom = 'auto';
-    const layerRect = layer.getBoundingClientRect();
     const dragStart = {
-      offsetX: event.clientX - layerRect.left,
-      offsetY: event.clientY - layerRect.top,
-      anchorX: isUploadedLayer ? layerRect.width / 2 : 0,
-      anchorY: isUploadedLayer ? layerRect.height / 2 : 0
+      left:layer.offsetLeft/stage.clientWidth*100,
+      top:layer.offsetTop/stage.clientHeight*100,
+      pointerX:event.clientX,pointerY:event.clientY
     };
     const move = (moveEvent) => {
       const snap = moveEvent.shiftKey ? 10 : 1;
@@ -1669,12 +1731,14 @@ function enableStickerStageDragging() {
       layer.removeEventListener('pointermove', move);
       layer.removeEventListener('pointerup', stop);
       layer.removeEventListener('pointercancel', stop);
+      layer.removeEventListener('lostpointercapture', stop);
       if (!layer.classList.contains('uploaded-design-layer')) layer.classList.remove('active');
       setDesignerStatus('Sticker placement updated. Drag any sticker or upload again; hold Shift to snap to 10% zones.');
     };
     layer.addEventListener('pointermove', move);
     layer.addEventListener('pointerup', stop);
     layer.addEventListener('pointercancel', stop);
+    layer.addEventListener('lostpointercapture', stop);
   });
 }
 
@@ -1969,7 +2033,7 @@ function activateMarketplaceAr(listing){
     arPopoutButton?.click();
     return;
   }
-  if (listing.modelUrl) window.open(listing.modelUrl, '_blank', 'noopener');
+  if(listing.modelUrl)arCameraReady.then(()=>window.MuzikazAR.open({name:listing.name,modelUrl:listing.modelUrl}));
 }
 
 function selectedArCharacter() {
@@ -1999,7 +2063,7 @@ function updateArViewer(useCustomFile = Boolean(customArFileUrl)) {
   const character = selectedArCharacter();
   const characterSrc = characterImage(character);
   document.querySelector('#ar-character-name').textContent = `${character.name} AR viewer`;
-  document.querySelector('#ar-character-copy').textContent = `${character.bio} Open the highlighted pop-out button to launch this character preview on iPhone Quick Look or Android Scene Viewer when a GLB/USDZ AR file is available.`;
+  document.querySelector('#ar-character-copy').textContent = `${character.bio} Open the camera preview to display this 3D character over your surroundings. Camera permission is requested only when you choose to open it; no model file is saved.`;
   if (arPreviewImg) {
     arPreviewImg.src = characterSrc;
     arPreviewImg.hidden = useCustomFile && /\.(glb|gltf|usdz|reality)$/i.test(customArFileUrl);
@@ -2073,27 +2137,10 @@ function escapeArPopupText(value) {
   return String(value ?? '').replace(/[&<>'\"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '\"': '&quot;' }[char]));
 }
 
-arPopoutButton?.addEventListener('click', () => {
-  const character = selectedArCharacter();
-  const popup = window.open('', `muzikaz-ar-${character.file}`, 'popup,width=430,height=740');
-  if (!popup) {
-    alert('Allow pop-ups to open the AR viewer window. Upload a GLB or USDZ file for native AR launch on mobile.');
-    return;
-  }
-  const catalogModel = modelForCharacter(character);
-  const modelUrl = customArFileUrl || catalogModel?.modelUrl || '';
-  const iosModelUrl = !customArFileUrl ? catalogModel?.iosModelUrl || '' : '';
-  const previewUrl = arPreviewImg?.src || characterImage(character);
-  const safeCharacterName = escapeArPopupText(character.name);
-  const safeModelUrl = escapeArPopupText(modelUrl);
-  const safeIosModelUrl = escapeArPopupText(iosModelUrl);
-  const safePreviewUrl = escapeArPopupText(previewUrl);
-  const viewerMarkup = modelUrl && /\.(glb|gltf|usdz|reality)$/i.test(modelUrl)
-    ? `<model-viewer src="${safeModelUrl}" ${iosModelUrl ? `ios-src="${safeIosModelUrl}"` : ''} poster="${safePreviewUrl}" camera-controls touch-action="pan-y" auto-rotate ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" interaction-prompt="auto" shadow-intensity="1" alt="${safeCharacterName} AR model"><button slot="ar-button" type="button">Place ${safeCharacterName} in AR</button></model-viewer>`
-    : `<img src="${safePreviewUrl}" alt="${safeCharacterName}"><p>No matching GLB/USDZ filing is connected yet; upload a model file on the main page to launch native AR.</p>`;
-  const sourceCopy = catalogModel ? `${escapeArPopupText(catalogModel.name)} is connected from the AR model filing: ${escapeArPopupText(catalogModel.modelUrl)}.` : 'Select another character or upload a GLB, GLTF, USDZ, or Reality file for native AR on iPhone or Android.';
-  popup.document.write(`<!doctype html><title>${safeCharacterName} AR Preview</title><script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"><\/script><style>body{margin:0;background:#020302;color:#9cff00;font-family:system-ui;text-align:center;text-transform:uppercase}main{min-height:100vh;display:grid;place-items:center;padding:18px}model-viewer,img{width:100%;height:72vh;max-height:72vh;object-fit:contain;filter:drop-shadow(0 20px 30px #000)}button{border:1px solid #9cff00;border-radius:999px;background:#9cff00;color:#030403;padding:12px 18px;font-weight:900;text-transform:uppercase}p{text-transform:none;color:#fff}</style><main><div><h1>${safeCharacterName}</h1>${viewerMarkup}<p>${sourceCopy}</p></div></main>`);
-  popup.document.close();
+arPopoutButton?.addEventListener('click', async () => {
+  const character=selectedArCharacter(),model=modelForCharacter(character);
+  await arCameraReady;
+  await window.MuzikazAR.open({name:character.name,modelUrl:customArFileUrl||model?.modelUrl||''});
 });
 
 function initBottleLogin() {
@@ -2862,7 +2909,7 @@ function initAssetDashboard(){
   async function loadAssets(){try{status.textContent='Loading assets…'; const list=[...(await api(current==='Public Assets'?'/api/assets/public':'/api/assets/mine')),...localAssets()]; cachedAssets=list; const view=filtered(list); renderTabs(list); grid.replaceChildren(...(view.length?view.map(card):[emptyCard(current)])); status.textContent=`${view.length} assets loaded for ${current}.`; updateAssetMetrics(list); renderAssignmentOptions(); }catch(e){const list=localAssets(); cachedAssets=list; const view=filtered(list); renderTabs(list); grid.replaceChildren(...(view.length?view.map(card):[emptyCard(current)])); status.textContent=list.length?`${view.length} browser draft assets loaded for ${current}. Start the server to sync.`:e.message; updateAssetMetrics(list); renderAssignmentOptions();}}
   function updateAssetMetrics(list){document.getElementById('metric-thumbnails').textContent=list.filter(a=>a.thumbnailUrl).length;document.getElementById('metric-store-tiles').textContent=list.filter(a=>a.intendedUse==='Marketplace tile').length;document.getElementById('metric-product-previews').textContent=list.filter(a=>a.intendedUse==='Product preview').length;}
   function emptyCard(label){const el=document.createElement('article');el.className='asset-card empty-asset-card';el.innerHTML=`<h4>No ${label.toLowerCase()} yet</h4><p>Upload graphics or 3D models, then use the tabs and approval buttons to manage display.</p>`;return el;}
-  function card(a){const el=document.createElement('article');el.className='asset-card'; const preview=a.fileType==='model'?`<model-viewer src="${a.publicUrl}" camera-controls touch-action="pan-y" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1"><button slot="ar-button" type="button">Place in AR</button></model-viewer>`:`<img src="${a.thumbnailUrl||a.publicUrl}" alt="${a.title}">`; el.innerHTML=`${preview}<h4>${a.title}</h4><p>${a.originalFilename}</p><p>Owner: ${a.ownerDisplayName}</p><p>${a.fileType} · ${a.fileSize} bytes · ${a.category||'uncategorized'}</p><p>Status: ${a.status} · ${a.visibility}</p><p>Related model: ${a.relatedModelId||'none'}</p><p>Uploaded: ${a.createdAt} Approved: ${a.approvedAt||'—'}</p><p>Published: ${a.publishLocation||a.publishedAt||'—'}</p><div class="button-row"></div><p>${a.moderatorNote||''}</p>`; const row=el.querySelector('.button-row'); [['Edit',()=>edit(a)],['Preview',()=>window.open(a.publicUrl,'_blank')],['Assign',()=>assign(a)],['Download',()=>window.open(a.publicUrl,'_blank')],['Archive',()=>action(a,'archive')],['Delete',()=>del(a)]].forEach(([t,fn])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;row.append(b);}); if(sessionStorage.getItem('muzikazAdminToken'))[['Approve','approve'],['Reject','reject'],['Feature','approve'],['Publish','publish'],['Unpublish','unpublish']].forEach(([t,act])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>action(a,act);row.append(b);}); return el;}
+  function card(a){const el=document.createElement('article');el.className='asset-card'; const preview=a.fileType==='model'?`<model-viewer src="${a.publicUrl}" camera-controls touch-action="pan-y" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" shadow-intensity="1"><button slot="ar-button" type="button">Place in AR</button></model-viewer>`:`<img src="${a.thumbnailUrl||a.publicUrl}" alt="${a.title}">`; el.innerHTML=`${preview}<h4>${a.title}</h4><p>${a.originalFilename}</p><p>Owner: ${a.ownerDisplayName}</p><p>${a.fileType} · ${a.fileSize} bytes · ${a.category||'uncategorized'}</p><p>Status: ${a.status} · ${a.visibility}</p><p>Related model: ${a.relatedModelId||'none'}</p><p>Uploaded: ${a.createdAt} Approved: ${a.approvedAt||'—'}</p><p>Published: ${a.publishLocation||a.publishedAt||'—'}</p><div class="button-row"></div><p>${a.moderatorNote||''}</p>`; const row=el.querySelector('.button-row'); [['Edit',()=>edit(a)],['Preview',()=>a.fileType==='model'?arCameraReady.then(()=>window.MuzikazAR.open({name:a.title,modelUrl:a.publicUrl})):window.open(a.publicUrl,'_blank')],['Assign',()=>assign(a)],['Download',()=>import('./public/js/backpack-files.js').then(({downloadGameplayItem})=>downloadGameplayItem(a.id)).catch(error=>alert(error.message))],['Archive',()=>action(a,'archive')],['Delete',()=>del(a)]].forEach(([t,fn])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;row.append(b);}); if(sessionStorage.getItem('muzikazAdminToken'))[['Approve','approve'],['Reject','reject'],['Feature','approve'],['Publish','publish'],['Unpublish','unpublish']].forEach(([t,act])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>action(a,act);row.append(b);}); return el;}
   async function action(a,act){const reason=act==='reject'?prompt('Reason required')||'Changes required':''; await api(`/api/assets/${a.id}/${act}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason})}); status.textContent= act==='publish'?'Published to live model space':'Asset updated'; loadAssets();}
   async function del(a){await api(`/api/assets/${a.id}`,{method:'DELETE'});loadAssets();}
   async function edit(a){const title=prompt('Title',a.title); if(title) await api(`/api/assets/${a.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({title})}); loadAssets();}

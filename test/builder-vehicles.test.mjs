@@ -56,7 +56,7 @@ test('vehicles are categorized separately and expose a touch enter button', asyn
 
 test('nearby item actions are stable and rate-limited for touch devices', async () => {
   const game = await read('../public/js/house-explorer-glb.js');
-  assert.match(game, /function resolveNearbyAction\(\)/);
+  assert.match(game, /function resolveNearbyAction\((?:key=null)?\)/);
   assert.match(game, /function renderNearbyAction\(next\)/);
   assert.match(game, /now-nearbyActionCheckedAt<100/);
   assert.match(game, /if\(nearbyActionLocked\)return/);
@@ -73,7 +73,7 @@ test('interaction failures stay isolated from the WebGL render loop', async () =
   assert.match(game, /function safelyInteract\(context, action\)/);
   assert.match(game, /function safelyCapturePointer\(element, pointerId\)/);
   assert.match(game, /reportInteractionError\('Nearby interaction',error\)/);
-  assert.match(game, /safelyInteract\('Vehicle interaction'/);
+  assert.match(game, /safelyInteract\('Keyboard action',\(\)=>performGameplayAction\('f'\)/);
   assert.match(game, /safelyInteract\('World interaction'/);
   assert.doesNotMatch(game, /canvas\.setPointerCapture\?\.\(e\.pointerId\)/);
   assert.doesNotMatch(game, /stick\.setPointerCapture\?\.\(pointerId\)/);

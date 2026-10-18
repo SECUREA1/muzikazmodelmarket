@@ -15,9 +15,9 @@
   <script defer src="pwa.js"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="The MUZIKAZ World whitepaper: the Builder Market, mapped worlds, playable asset packs, land, identity, retail drops, and transparent MZK accounting.">
+  <meta name="description" content="MUZIKAZ World white paper: the current browser game, multiplayer, world builder, summer camp maps, shared arcade, MZK economy and development roadmap. Updated 17 October 2026.">
   <meta name="theme-color" content="#050705">
-  <title>MUZIKAZ World Whitepaper | Assets, Land &amp; MZK</title>
+  <title>MUZIKAZ World White Paper | Game, Builder &amp; Roadmap</title>
   <link rel="icon" type="image/png" sizes="32x32" href="public/assets/app-icons/favicon-32.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,7 +27,7 @@
     <meta name="msapplication-TileImage" content="public/assets/app-icons/tile-150.png">
     <meta name="msapplication-TileColor" content="#05070a">
 </head>
-<body class="whitepaper-page">
+<body class="whitepaper-page" id="top">
   <header class="site-header global-site-header">
         <a class="logo world-logo" href="index.html#home" aria-label="MUZIKAZ WORLD home">
             <img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ WORLD" />
@@ -51,248 +51,235 @@
         <button class="menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Open menu"><svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span></button>
     </header>
 
-  <main>
-    <section class="whitepaper-hero">
+<main id="main-content">
+    <section class="whitepaper-hero" aria-labelledby="whitepaper-title">
       <div>
-        <p class="whitepaper-kicker"><span>Platform whitepaper</span> Version 2.2.0 · September 2026</p>
-        <h1>One world.<br>Every asset <em>works.</em></h1>
-        <p class="whitepaper-lede">MUZIKAZ World connects playable characters, mapped land, creator tools, reusable Builder packs, 3D and AR collectibles, toys, streetwear, retail drops, audio, games, and MZK in one asset system. This paper documents what has been built, how marketplace assets move into maps and Backpacks, and how value enters, moves through, and leaves the MZK economy.</p>
-        <div class="spec-status"><b>Living public reference</b><span>Platform: world@2.2.0</span><span>Avatar: avatar@1.1.0</span><span>Last revised: 2026-09-29</span></div>
-        <div class="whitepaper-actions"><a href="#platform-map">Explore the ecosystem</a><a href="model-market.html#character-world-assets">Open Model Market</a></div>
+        <p class="whitepaper-kicker"><span>Game &amp; platform white paper</span> Revision 2.3.0 · October 2026</p>
+        <h1 id="whitepaper-title">Build worlds.<br>Bring them <em>to life.</em></h1>
+        <p class="whitepaper-lede">MUZIKAZ World is a browser game and creator platform connecting explorable maps, multiplayer rooms, playable machines, character inventories and a visual world builder. Players explore and play; creators assemble places, configure activities and publish destinations into the shared world directory.</p>
+        <div class="spec-status"><b>Implementation snapshot</b><span>Reviewed <time datetime="2026-10-17">17 October 2026</time></span><span>Avatar schema 1.0.0</span></div>
+        <div class="whitepaper-actions"><a href="#current-state">See the current game</a><a href="environment-builder.html">Open the world builder</a></div>
       </div>
-      <aside class="identity-stack" aria-label="Avatar architecture summary">
-        <span>01 <b>Identity + characters</b><small>Playable IP, avatars, traits</small></span>
-        <span>02 <b>Land + world space</b><small>Deeds, permissions, building</small></span>
-        <span>03 <b>Products + drops</b><small>Toys, merch, AR, retail</small></span>
-        <span>04 <b>MZK utility</b><small>Acquire, spend, trade, reward</small></span>
-        <span>05 <b>Asset functions</b><small>Backpack, equip, place, create</small></span>
+      <aside class="identity-stack" aria-label="The MUZIKAZ experience">
+        <span>01 <b>Explore connected places</b><small>Atlas, public spaces, deeds and portals</small></span>
+        <span>02 <b>Play together</b><small>Shared rooms, activities and arcade screens</small></span>
+        <span>03 <b>Build your own world</b><small>Full maps, movable scenes and placeable assets</small></span>
+        <span>04 <b>Carry and trade</b><small>Backpack, owned items and member markets</small></span>
+        <span>05 <b>Create beyond the game</b><small>Drawings, models, audio and merch designs</small></span>
       </aside>
     </section>
 
-    <aside class="scope-banner"><b>What this document defines</b><p>The complete current product architecture: asset classes and functions, land and creator access, retail-to-digital connections, MZK flows, and the narrower portable avatar contract. It separates live implementation from forward-looking policy so utility is not confused with a promise of profit.</p><a href="#economy">Read MZK flows ↓</a></aside>
+    <aside class="scope-banner"><b>What this edition covers</b><p>A review of the committed game implementation, including the summer camp pack and independent activity scenes. Feature descriptions explain current behavior; the roadmap identifies further work. Counts are a dated catalog snapshot, not live player, sales or deployment statistics.</p><a href="#delivery-notes">Review scope ↓</a></aside>
 
-    <section class="whitepaper-principles" aria-label="Core principles">
-      <article><b>Canonical</b><p>Stable identifiers point to explicit, versioned records; media changes never silently rewrite an owned edition.</p></article>
-      <article><b>Interoperable</b><p>Named slots, rigs, animations, and permissions make every approved character predictable to the engine.</p></article>
-      <article><b>Player-first</b><p>Rarity creates identity and variety—not automatic competitive dominance.</p></article>
-      <article><b>Verifiable</b><p>Content hashes, approval status, and server-side authorization protect the path from catalog to session.</p></article>
+    <nav class="whitepaper-toc" aria-label="White paper contents"><b>Contents</b><a href="#current-state">Current state</a><a href="#platform-map">Player journey</a><a href="#land">Worlds</a><a href="#builder-system">Builder</a><a href="#gameplay-state">Gameplay</a><a href="#machines">Machines &amp; media</a><a href="#economy">Economy</a><a href="#ownership">Ownership</a><a href="#operations">Operations</a><a href="#roadmap">Roadmap</a><a href="#identity-model">Avatar standard</a></nav>
+
+    <section class="whitepaper-section" id="current-state">
+      <header><p>01 · State of the game</p><h2>A playable platform, with a growing creator toolkit.</h2></header>
+      <p class="section-intro">The current product combines browser-based 3D exploration with server-managed rooms, a scene editor and an account inventory. It supports authored environments and procedural builds. Gameplay runs through specific activities and configured objects; the platform is not yet a single, finished campaign spanning every map.</p>
+      <div class="land-summary" aria-label="Catalog snapshot as of 17 October 2026"><article><b>25</b><span>enterable building templates</span></article><article><b>30</b><span>games in the shared arcade library</span></article><article><b>14</b><span>independently placeable activity scenes</span></article><article><b>3</b><span>summer camp world presets</span></article></div>
+      <div class="wp-status-legend" aria-label="Status definitions"><span class="wp-status">Implemented</span><p>A code path and usable interface exist.</p><span class="wp-status wp-status--conditional">Conditional</span><p>Availability depends on the asset, account, browser or configured service.</p><span class="wp-status wp-status--planned">Planned</span><p>A development direction, without a delivery-date or entitlement promise.</p></div>
+      <div class="wp-state-list" aria-label="Current feature breakdown">
+        <article><div><h3>Exploration &amp; navigation</h3><span class="wp-status">Implemented</span></div><p>The live atlas combines registered environments, public destinations, hosted deeds and published maps. Portals resolve destinations through server records; shared map IDs identify rooms and return routes.</p></article>
+        <article><div><h3>World building</h3><span class="wp-status">Implemented</span></div><p>Desktop and touch controls support selection, placement, drag, rotation, scale, height, camera framing, local drafts and server publication. Large worlds, activity scenes and small room modules have separate choices.</p></article>
+        <article><div><h3>Multiplayer &amp; interactions</h3><span class="wp-status">Implemented</span></div><p>Server room commands manage players, supported movement and combat actions, pickups, seats, vehicles, quests and machine state. Clients render the scene and smooth received movement.</p></article>
+        <article><div><h3>Shared arcade &amp; media</h3><span class="wp-status wp-status--conditional">Conditional</span></div><p>Shared machine controls and spectator screens are implemented. Selected arcade games offer two-player versus or cooperative modes; media, camera and voice features require supported formats, permissions and connectivity.</p></article>
+        <article><div><h3>Inventory &amp; commerce</h3><span class="wp-status">Implemented</span></div><p>Account inventory, item transfers, marketplace listings, payment verification, land records and MZK ledger operations use server persistence. A browser preview or draft does not establish ownership.</p></article>
+        <article><div><h3>Scale, polish &amp; interoperability</h3><span class="wp-status wp-status--planned">Further development</span></div><p>Broader device benchmarks, larger-room load testing, consistent activity quality, moderation tooling and a more uniform avatar compatibility pipeline remain development priorities.</p></article>
+      </div>
+      <p class="design-note"><b>How to read “implemented”:</b> it describes the reviewed software, not a guarantee of uninterrupted hosting, identical frame rates on every device, an independent security certification or a fully populated experience in every user-created map.</p>
     </section>
 
-    <nav class="whitepaper-toc" aria-label="Whitepaper contents"><b>Contents</b><a href="#platform-map">Platform</a><a href="#land">Mapping</a><a href="#builder-system">Builder area</a><a href="#products">Packs + retail</a><a href="#economy">MZK economy</a><a href="#asset-functions">Asset functions</a><a href="#identity-model">Avatar standard</a><a href="#reference-contract">Reference</a></nav>
-
     <section class="whitepaper-section" id="platform-map">
-      <header><p>01 · The connected platform</p><h2>From character file to living creative economy.</h2></header>
-      <p class="section-intro">The project is designed as a loop rather than a set of isolated storefronts. A character can begin as a 3D model, become a playable avatar and AR collectible, appear on a physical product, headline a timed drop, live in a Backpack, and activate experiences on owned land. Creator output returns to the same catalog and market.</p>
+      <header><p>02 · The player and creator journey</p><h2>Explore. Collect. Build. Share.</h2></header>
       <div class="ecosystem-grid">
-        <article><span>Discover</span><h3>Connected markets</h3><p>The Model Market presents Originals, Crew, Chaos, Beasts, Legends, New Legends, world packs, and campaign products. The Builder Market separately filters reusable, game-builder assets that can be bought, carried, and placed.</p><a href="model-market.html">Browse the model market →</a></article>
-        <article><span>Own + carry</span><h3>Drop Backpack</h3><p>A single inventory for avatars, lands, props, wearables, pets, vehicles, purchases, loadout entitlements, and assets listed for member-to-member trade.</p><a href="members.html#owned-collection">Open Backpack →</a></article>
-        <article><span>Create</span><h3>Creator stack</h3><p>Land-gated model, image, and environment publishing; a live merch designer; asset assignments; approval workflows; reusable audio; and world placement tools.</p><a href="members.html#designer">Enter creator tools →</a></article>
-        <article><span>Play + share</span><h3>World experiences</h3><p>Walkable 3D environments, designated avatars, multiplayer presence and chat, RAD-TOX play, quests, a Voice3 mixer, and web-based AR previews.</p><a href="model-explorer.html?environment=muzikaz-main&amp;house=muzikaz-main&amp;autoplay=1&amp;localFallback=1&amp;sandbox=1">Explore in 3D →</a></article>
+        <article><span>Explore</span><h3>Find a place to play</h3><p>Choose a listed destination from the atlas, enter its room and discover the activities configured there. Desktop, mobile touch and compatible headset controls share the browser experience.</p><a href="index.html#world-map">Open the world atlas →</a></article>
+        <article><span>Collect</span><h3>Keep a Backpack</h3><p>Member inventory records acquired characters, items and land entitlements. An item’s available actions depend on its type, configuration, ownership and the destination’s rules.</p><a href="members.html#owned-collection">Open member inventory →</a></article>
+        <article><span>Build</span><h3>Create an experience</h3><p>Choose a full map, place room or activity modules, add objects and configure behavior. Use built-in assets, supported repository content and eligible custom or owned items.</p><a href="environment-builder.html">Enter the world builder →</a></article>
+        <article><span>Share</span><h3>Publish a destination</h3><p>Test and Publish submit the selected scene through the server. The returned map link opens that saved destination; eligible public maps join the connected directory and portal system.</p><a href="model-market.html">Browse the marketplace →</a></article>
       </div>
-      <div class="status-key"><b>Delivery language</b><span><i class="status-live"></i><strong>Built</strong> means a working surface or server route exists.</span><span><i class="status-policy"></i><strong>Policy</strong> means the accounting or governance rule defined here.</span><span><i class="status-future"></i><strong>Planned</strong> means no present entitlement is implied.</span></div>
     </section>
 
     <section class="whitepaper-section" id="land">
-      <header><p>02 · World mapping &amp; land</p><h2>Every place resolves to a map, deed, and world record.</h2></header>
-      <div class="land-summary"><article><b>8</b><span>fixed atlas locations</span></article><article><b>5</b><span>starter public-area plots</span></article><article><b>3</b><span>linked 3D environments</span></article><article><b>1</b><span>free community spot per public claim</span></article></div>
-      <div class="whitepaper-columns">
-        <article class="layer-card layer-card--accent"><span>Deed utility</span><h3>Build, publish, host</h3><p>A canonical land deed unlocks avatar, asset, game, and environment upload gates. Owner and delegated roles control editing and placement; visitors retain public exploration and play. A deed is a world permission object, not merely a map picture.</p></article>
-        <article class="layer-card"><span>Atlas design</span><h3>Connected places</h3><p>Volt City, Skyline Deck, Echo Gardens, Crew Plaza, Studio Ridge, Neon Docks, Bassline Badlands, and Pixel Peaks form the fixed route. Public-area claims are deeds inside those areas; dynamic wild-land claims may add one owner pin without inventing a fixed global supply.</p></article>
+      <header><p>03 · Worlds, districts and land</p><h2>A shared directory, with distinct places inside it.</h2></header>
+      <p class="section-intro">The atlas is a navigation system for multiple maps and rooms. Connected destinations share identity, inventory and routing services; entering another destination changes the active room. They are not all simulated as one uninterrupted terrain or one unlimited multiplayer match.</p>
+      <div class="mapping-layers" aria-label="World structure">
+        <article><b>Full world maps</b><p>Large procedural layouts, district generators and compatible 3D environments provide the surrounding space. Builder world-size choices extend up to 320 metres for supported procedural presets.</p></article>
+        <article><b>Activity scenes</b><p>Fourteen compact sets—including the firing range, vendor street, mazes, arenas and movie studio—can be placed inside a world and moved, rotated and scaled independently.</p></article>
+        <article><b>Rooms &amp; objects</b><p>Eight small inlay choices provide floors, rooms and compounds. Buildings, furnishings, machines, characters and other items retain their own placement and gameplay configuration.</p></article>
+        <article><b>Hosted destinations</b><p>Published maps and revealed deed entitlements resolve to stable server destinations. Transfers change the owner of an eligible deed while keeping its hosted room and saved content.</p></article>
       </div>
-      <ol class="flow-line land-flow"><li><b>Fund</b><span>Acquire MZK after verified payment</span></li><li><b>Claim</b><span>Atomic MZK debit + deed issue</span></li><li><b>Pin</b><span>Correlate profile, Backpack, space, pixel</span></li><li><b>Build</b><span>Place approved assets and environments</span></li><li><b>Operate</b><span>Host games, social rooms, stores, drops</span></li></ol>
-      <p class="design-note"><b>Canonical-state rule:</b> browser storage is only a display cache. Land ownership, MZK debits, deed assignment, listings, and world memory resolve through persistent wallet records. A permanent world object is valid only when profile, Backpack, space, map pixel, and owned asset agree.</p>
-      <div class="mapping-layers" aria-label="World mapping layers">
-        <article><b>Atlas layer</b><p>Eight fixed district pins and seven routes provide the shared navigation frame. Selecting a beacon resolves district details and its connected market destination.</p></article>
-        <article><b>Plot layer</b><p>Five public-area plots expose availability and deed state. A claim is a plot inside its named district, not an extra district or an unsupported scarcity claim.</p></article>
-        <article><b>Player layer</b><p>A player can set a spawn point, while eligible wild-land owners can add one owner pin. Profile, Backpack, home space, deed, and pixel remain correlated.</p></article>
-        <article><b>Build layer</b><p>A world holds independently configurable asset instances. Placement records point back to the purchased Builder asset instead of copying or changing its source record.</p></article>
+      <div class="whitepaper-columns builder-details">
+        <article class="layer-card"><span>Public world</span><h3>Districts and commons</h3><p>The original atlas seed lists eight district pins, five public-area plots and seven connecting routes. Those seed figures are not the total number of playable destinations: published builds, repository environments and hosted land extend the directory.</p></article>
+        <article class="layer-card layer-card--accent"><span>Land entitlement</span><h3>Ownership and access</h3><p>A deed is an account entitlement with a hosted location and applicable build or upload permissions. Public exploration, free built-in placement, paid asset ownership and permission to publish or modify a destination are separate decisions.</p></article>
       </div>
-      <div class="whitepaper-actions"><a href="index.html#world-map">View world atlas</a><a href="model-explorer.html?environment=muzikaz-main&amp;house=muzikaz-main&amp;autoplay=1&amp;localFallback=1&amp;sandbox=1">Open mapped worlds</a><a href="buy-mzk.html">Open land exchange</a></div>
+      <p class="design-note"><b>Destination integrity:</b> a pin or portal points to a server map record. Room access and current ownership are checked by the relevant service. Missing assets, private destinations or an unavailable backend can prevent entry; the roadmap calls for clearer diagnostics and broader destination coverage tests.</p>
+      <div class="whitepaper-actions"><a href="index.html#world-map">Browse destinations</a><a href="buy-mzk.html">View land offers</a></div>
     </section>
 
     <section class="whitepaper-section builder-system-section" id="builder-system">
-      <header><p>03 · Builder Market, Backpack &amp; Environment Builder</p><h2>Acquire, draw, configure, test, then publish.</h2></header>
-      <p class="section-intro">The Builder area turns marketplace inventory and original drawings into reusable world components. The Builder Market and Backpack manage acquired assets; the Environment Builder is the visual scene-and-gameplay editor. Authenticated members, qualifying builders, land owners, and supported MZK accounts can enter without a Genie Bottle gate; individual account actions remain controlled by server-issued permissions.</p>
-      <div class="builder-loop">
-        <article><span>01</span><h3>Find</h3><p>Filter listings by category and <code>asset_usage = game_builder</code>. A listing identifies the source asset, creator, price, license context, and availability.</p></article>
-        <article><span>02</span><h3>Acquire</h3><p>An idempotent purchase debits the buyer, credits the seller, closes the listing when required, and adds the asset reference to the buyer’s Builder Backpack.</p></article>
-        <article><span>03</span><h3>Place</h3><p>Authorized land and world roles create placement instances with their own position, rotation, scale, and configuration while preserving source provenance.</p></article>
-        <article><span>04</span><h3>Build + test</h3><p>The Environment Builder assembles avatars, enemies, props, vehicles, weapons, buildings, terrain, triggers, portals, weather, and a player spawn. A private local sandbox runs the complete scene without joining a multiplayer world.</p></article>
-        <article><span>05</span><h3>Save + publish</h3><p>Environment scenes and custom assets save locally as editable drafts. The separate Game Space flow can export and publish a versioned gameplay manifest after showing its applicable charge.</p></article>
-      </div>
-      <h3 class="subsection-title">Environment Builder workspace</h3>
-      <div class="mapping-layers" aria-label="Environment Builder areas">
-        <article><b>Library + layouts</b><p>A filterable library combines built-in, gameplay, repository, catalog, and creator-drawn models. Starter rooms, mazes, districts, natural biomes, FPS arenas, commercial spaces, and training maps provide editable starting expanses rather than fixed finished games.</p></article>
-        <article><b>Scene + terrain</b><p>Creators place on terrain, drag to move, rotate, scale, recolor, elevate, duplicate, focus, and frame objects. Ground height and walkable-floor collider metadata keep placed objects and players aligned across flat, stepped, and procedural terrain.</p></article>
-        <article><b>Look + motion</b><p>Each instance can retain material accents and animation state, including selected clip, speed, loop, autoplay, and current time. Clear, cloudy, rain, and storm weather settings travel with the scene.</p></article>
-        <article><b>Gameplay + routing</b><p>Behaviors cover decoration, seating, vehicles, conversation, quests, enemies, patrols, pickups, held items, switches, doors, and healing. Triggers invoke messages, teleports, scores, damage, spawns, sounds, toggles, or item use with a configured value and cooldown; portals remain locked until their local or cross-map destination is enabled.</p></article>
-      </div>
-      <h3 class="subsection-title">Drawing avatars and game items</h3>
+      <header><p>04 · The world builder</p><h2>A world, its scenes and its objects. Independently editable.</h2></header>
+      <p class="section-intro">The creator dashboard groups tools by task, with category browsing, searchable controls and paged panels on desktop and mobile. Building is a composition workflow: choose the surrounding map, place smaller experiences inside it, then furnish and configure them.</p>
+      <ol class="flow-line"><li><b>Choose a world</b><span>Map, size, weather and base alignment</span></li><li><b>Add scenes</b><span>Rooms, activity sets and camp stacks</span></li><li><b>Place assets</b><span>Tap a destination or drag onto the map</span></li><li><b>Configure</b><span>Transforms, appearance and interactions</span></li><li><b>Test &amp; publish</b><span>Save through the server and open the returned link</span></li></ol>
       <div class="whitepaper-columns builder-details">
-        <article class="layer-card layer-card--accent"><span>Custom item pipeline</span><h3>Stroke data becomes a reusable object set.</h3><p>A creator starts from an editable model or a blank 480 × 280 drawing plane, then uses pencil, line, rectangle, and circle strokes. The saved source preserves points, brush width, color, depth, bevel, material, fitted clip-ons, type, default behavior, starting animation, and interaction action. One save creates three linked forms—extruded, outlined, and sculpted—and places the selected form in the scene. The source SVG may also be downloaded with behavior and clip-on metadata.</p></article>
-        <article class="layer-card"><span>Avatar Look Lab</span><h3>Components remain attached to the avatar.</h3><p>Face, hat, glasses, headphones, necklace, rings, top, bottom, and accessory choices are fitted to named avatar anchors. Each component stores its own color, scale, rotation, horizontal offset, and vertical offset. Front, side, and back previews, category reset, full reset, and a 40-step undo/redo history support editing; saving writes the exact look into both the avatar settings and scene draft.</p></article>
+        <article class="layer-card layer-card--accent"><span>Separate map and scene controls</span><h3>Move the activity, keep the world.</h3><p>In-map activity scenes have their own placement list and sliders for X, Z, floor offset, rotation and scale. A firing range can sit off-center inside a district. Its geometry and collision move with the module; generating a new world preserves placed activity modules and independent inlays.</p></article>
+        <article class="layer-card"><span>Object tuning</span><h3>Fine adjustments stay available.</h3><p>Placed items support position, elevation, rotation, scale, duplicate, remove, focus and existing undo controls. World alignment and the placed-object layer can also be adjusted separately. Editor visibility toggles aid composition; hiding a layer in the editor does not remove it from saved gameplay.</p></article>
       </div>
-      <p class="design-note"><b>Drawing implementation rule:</b> a browser drawing is an authored vector profile, not automatically a production-ready rigged GLB. Runtime geometry may extrude or outline that profile for the three playable forms. A separately uploaded model must still pass format, scale, animation, collider, safety, rights, and compatibility validation before public distribution.</p>
-      <h3 class="subsection-title">Builder costs and other expenses</h3>
-      <div class="economy-table" role="table" aria-label="Builder area costs and settlement">
-        <div class="economy-row economy-head" role="row"><b>Builder action</b><b>Current charge</b><b>Record / settlement</b><b>Current status</b></div>
-        <div class="economy-row" role="row"><span>Draw an item or customize an avatar</span><span>No charge displayed</span><span>Local editable creator data</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Arrange, save, or privately test an environment</span><span>No charge displayed</span><span>Local scene/map snapshot; sandbox test only</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Buy a Builder Market asset</span><span>Listing price in MZK</span><span>Buyer debit + seller credit + Backpack grant</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Publish through Game Space Builder</span><span>Displayed Builder Coin cost and any item spends</span><span>Versioned manifest receipt; not an on-chain burn</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Public hosting, storage, moderation, minting, royalties, or gas</span><span>Only when quoted before confirmation</span><span>Separate receipt and disclosed payee/disposition required</span><em>Offer-dependent</em></div>
+      <h3 class="subsection-title">The current creation toolkit</h3>
+      <div class="mapping-layers">
+        <article><b>Buildings &amp; interiors</b><p>Twenty-five enterable building templates cover taverns, saloons, shops, banks, services and social venues. Furniture and interactive devices can be placed inside suitable interiors.</p></article>
+        <article><b>Drawing &amp; depth</b><p>Custom item tools preserve vector strokes, colors, depth, bevel, material and configured behavior. Generated forms provide playable geometry; an extruded drawing is not automatically a rigged character.</p></article>
+        <article><b>Appearance &amp; motion</b><p>Avatar Look Lab, compatible fitted pieces, material accents and available animation clips support customization. Each scene instance retains its own saved settings.</p></article>
+        <article><b>Gameplay authoring</b><p>Objects can be configured as decoration, seats, vehicles, conversations, quests, enemies, pickups, doors or supported devices. An object’s appearance alone does not create working gameplay.</p></article>
       </div>
-      <div class="whitepaper-columns builder-details">
-        <article class="layer-card layer-card--accent"><span>Builder Backpack</span><h3>Development inventory</h3><p>Builder assets live beside land/world records and placed instances. Creators can import or create an asset, list it for MZK, cancel their listing, and retain a durable transaction trail.</p></article>
-        <article class="layer-card"><span>Spawn control</span><h3>Enemy and reward roles</h3><p>Map authors explicitly classify spawnable avatars as player, enemy, or reward content. A model does not become hostile, collectible, or valuable merely because it exists in a pack.</p></article>
-      </div>
-      <div class="accuracy-callout"><b>Three surfaces, distinct persistence and settlement.</b><p>The server-backed Builder Market, purchases, Backpack, and placement records are canonical account data. Environment Builder drafts, custom drawings, saved looks, and private test scenes currently persist in browser storage and are not proof of public hosting or ownership. The Game Space Builder composes, exports, and publishes manifests in the member experience; its displayed MZK and Builder Coin charges describe that builder flow and must not be represented as an on-chain burn.</p></div>
-      <div class="whitepaper-actions"><a href="builder-market.html">Open Builder Market</a><a href="environment-builder.html">Open Environment Builder</a><a href="members.html#space-builder">Build a game map</a></div>
-    </section>
-
-    <section class="whitepaper-section" id="products">
-      <header><p>04 · Packs, toys, merch &amp; retail</p><h2>Every pack states what it unlocks.</h2></header>
-      <p class="section-intro">MUZIKAZ’s retail layer turns world identity into products people can wear, collect, customize, scan, and bring back into digital experiences. Product checkout and digital ownership are distinct records; a physical order does not imply token ownership unless a drop explicitly grants it.</p>
-      <div class="product-lanes">
-        <article><span>Wear</span><h3>Streetwear + accessories</h3><p>Hoodies, caps, wristbands, bottles, lanyards, and keychains sit beside character-specific products, colorways, logo placements, sleeve text, and custom artwork.</p></article>
-        <article><span>Collect</span><h3>Toys + display figures</h3><p>Character toys, mascot figures, bottle collectibles, and the IonCore display figure extend character IP into shelf-scale products. Digital 3D previews and collection identity support the retail drop without representing guaranteed manufacturing inventory.</p></article>
-        <article><span>Place</span><h3>3D + AR collectibles</h3><p>The CHAINeS browser supports numbered collectibles, synchronized model viewing, WebXR/Scene Viewer placement, and optional USDZ Quick Look assets.</p></article>
-        <article><span>Customize</span><h3>Drop lab</h3><p>The member studio supplies product templates, safe areas, layers, uploads, character selection, typography, color, transforms, saved drafts, and order specifications.</p></article>
-      </div>
-      <h3 class="subsection-title">Current pack architecture</h3>
+      <h3 class="subsection-title">Summer camp: a complete themed starting point</h3>
       <div class="pack-grid">
-        <article><span>Playable starter</span><h3>Builder Loadout</h3><p>Starter Avatar, unrevealed avatar, Community Spot, room shell, Builder Tool Kit, Creator Market Station, and RAD-TOX gear are provisioned as durable Backpack entries.</p></article>
-        <article><span>Marketplace families</span><h3>Character + world packs</h3><p>Characters can connect to compatible pets, wearables, props, vehicles, graphics, land, environments, and gaming-studio bundles without merging those asset records.</p></article>
-        <article><span>Verified entry tiers</span><h3>Genie Bottle rewards</h3><p>$5 grants 2,000 MZK and the Black Bottle; $30 grants 5,000 MZK and adds Violet; $100 grants 13,000 MZK; $200 grants 26,000 MZK, adds Golden, and includes a custom in-game asset order.</p></article>
+        <article><span>3 full worlds</span><h3>Lakeside · Woodland · Adventure</h3><p>Camp maps combine open arrival lanes, cabins, tents, gathering areas, trail collectibles and a shared arcade. Each preset remains editable after generation.</p></article>
+        <article><span>15 new assets</span><h3>Build the camp your way</h3><p>Tents, a cabin, picnic table, log bench, lantern, sign, canoe rack, dock, target prop, quest board, flag, supply pack, badge, climbing steps and scenic lake.</p></article>
+        <article><span>3 additive scene stacks</span><h3>Small experiences inside a map</h3><p>Add a campfire circle, cabin retreat or adventure trail without replacing the world. Camp benches offer seating; the trail quest grants 35 room score after collecting its required items and returning.</p></article>
       </div>
-      <h3 class="subsection-title">Retail drop lifecycle</h3>
-      <ol class="flow-line retail-flow"><li><b>Character</b><span>Approved IP + model record</span></li><li><b>Design</b><span>Product template + safe artwork</span></li><li><b>Drop</b><span>Edition, price, window, availability</span></li><li><b>Checkout</b><span>Fiat/crypto payment verification</span></li><li><b>Fulfill</b><span>Physical order and explicit digital grants</span></li></ol>
-      <div class="accuracy-callout"><b>Drop integrity</b><p>Every offer should state whether it is physical, digital, redeemable, consumable, tradable, limited, made-to-order, or bundled. Scarcity claims must follow actual inventory controls. Royalties, redemption deadlines, geographic shipping, refunds, taxes, and manufacturing partners must be disclosed at the point of sale.</p></div>
-      <div class="whitepaper-actions"><a href="index.html#merch">Shop merch</a><a href="chaines-ar-collectibles.html">View AR collectibles</a></div>
-    </section>
-
-    <section class="whitepaper-section economy-section" id="economy">
-      <header><p>05 · MZK economy</p><h2>Every intake and burn leaves a receipt.</h2></header>
-      <p class="section-intro">MZK is the platform utility and accounting unit used to access functions—not equity, debt, a share of revenue, or a promise of appreciation. The current store quote uses <strong>100 MZK per US dollar</strong>, with a <strong>$40 / 4,000 MZK</strong> land-purchase minimum. Quotes, bonuses, and availability remain offer terms, not market-value guarantees.</p>
-      <div class="mzk-cycle" aria-label="MZK value flow"><article><b>01</b><span>Intake</span><p>Verified payment, quest reward, admin entitlement, or received transfer creates an idempotent credit.</p></article><i>→</i><article><b>02</b><span>Hold</span><p>The wallet record stores balance, items, memory, and an append-only activity trail.</p></article><i>→</i><article><b>03</b><span>Use</span><p>Land, cart items, creator actions, consumable refills, game actions, or market trades request authorization.</p></article><i>→</i><article><b>04</b><span>Settle</span><p>The service classifies the debit as burn, seller transfer, treasury intake, or reversible reservation.</p></article></div>
-      <div class="economy-table" role="table" aria-label="MZK sources and sinks">
-        <div class="economy-row economy-head" role="row"><b>Event</b><b>Asset function</b><b>Ledger treatment</b><b>Current status</b></div>
-        <div class="economy-row" role="row"><span>Verified MZK purchase</span><span>Fund wallet and land/market access</span><span>Credit after payment confirmation</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Quest participation</span><span>Reward useful creator activity</span><span>Idempotent reward credit</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Land claim</span><span>Issue deed and building permission</span><span>Atomic debit + asset grant</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Backpack market trade</span><span>Move listed asset to buyer</span><span>Buyer debit + seller credit</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Builder Market purchase</span><span>Acquire a reusable world-building asset</span><span>Idempotent buyer debit + seller credit + Backpack grant</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Game map assembly</span><span>Add spawn objects and publish a manifest</span><span>Displayed MZK item spends + Builder Coin publish cost</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Retail/cart checkout</span><span>Purchase product or asset</span><span>Debit + receipt + explicit grant</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Voice3 sound placement</span><span>Add a reusable sound to a mix</span><span>1 MZK debit; undo can reverse it</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Consumable refill / game action</span><span>Restore or activate item utility</span><span>Configured debit; e.g. carrot refill or RAD-TOX use</span><strong>Built</strong></div>
-        <div class="economy-row" role="row"><span>Protocol burn</span><span>Retire settled utility units</span><span>Burn receipt + supply counter update</span><em>Policy / planned</em></div>
-      </div>
-      <div class="burn-policy">
-        <article><span>Intake</span><h3>Value enters only after proof.</h3><p>External-payment intake remains pending until network verification. Reward intake requires a unique event ID. Loadout codes are one-time credentials: activation consumes the code and materializes its assets without silently replacing existing wallet state.</p></article>
-        <article><span>Debit</span><h3>Authorization precedes function.</h3><p>The engine checks identity, balance, ownership, price, and request ID before changing both asset and MZK state. Duplicate requests resolve to the original result. A failed operation must not debit the wallet.</p></article>
-        <article><span>Burn</span><h3>Retirement must be explicit.</h3><p>A <strong>spend is not automatically a burn</strong>. Transfers credit a seller; refundable reservations remain liabilities; treasury intake remains circulating until separately retired. Only an irreversible, publicly classified retirement may be reported as burned.</p></article>
-      </div>
-      <pre class="receipt-example" aria-label="MZK settlement receipt example"><code>{
-  "eventId": "mzk:settlement:&lt;unique-request-id&gt;",
-  "walletId": "&lt;authenticated-wallet&gt;",
-  "assetId": "&lt;land-product-or-consumable&gt;",
-  "amountMzk": 5,
-  "function": "consumable_refill",
-  "disposition": "burn",
-  "status": "settled",
-  "createdAt": "&lt;ISO-8601&gt;"
-}</code></pre>
-      <p class="schema-note"><b>Transparency commitment:</b> Until a server-backed burn registry and supply counters are published, the interface must call implemented reductions <em>spends</em> or <em>debits</em>, not token burns. Future burn reporting should expose gross intake, transfers, treasury-held units, reversed spends, retired units, and net circulating change without exposing private user data.</p>
-    </section>
-
-    <section class="whitepaper-section" id="asset-functions">
-      <header><p>06 · Asset function matrix</p><h2>Ownership answers “what can I do?”</h2></header>
-      <div class="function-grid">
-        <article><b>Avatars</b><p>Designate, equip, animate, spawn, appear in multiplayer, carry traits and permissions.</p></article><article><b>Land</b><p>Claim, pin, build, configure, delegate, publish, host, list, and transfer.</p></article><article><b>Wearables</b><p>Equip to compatible slots, customize appearance, save to loadout, trade when allowed.</p></article><article><b>Props</b><p>Place, display, interact, consume, refill, or assign to products and environments.</p></article><article><b>Pets</b><p>Equip as companions, follow the player, receive compatible consumables, appear in scenes.</p></article><article><b>Vehicles</b><p>Store, spawn in permitted worlds, display, and connect to future traversal rules.</p></article><article><b>Audio</b><p>Record, upload, arrange, trim, loop, mix, export, and mint through explicit flows.</p></article><article><b>Graphics</b><p>Use as thumbnails, textures, posters, store tiles, product art, badges, and overlays.</p></article><article><b>Toys + merch</b><p>Buy, customize, fulfill physically, pair with a character, and receive only disclosed digital grants.</p></article>
-      </div>
-      <p class="design-note"><b>Function metadata:</b> each asset should declare controller, type, media, compatibility, allowed actions, world scope, transferability, consumability, quantity, cost, cooldown, expiration, approval state, and provenance. Interfaces must disable unsupported functions rather than imply them.</p>
-    </section>
-
-    <section class="whitepaper-section" id="identity-model">
-      <header><p>07 · Avatar data model</p><h2>Character and instance are different layers.</h2></header>
-      <div class="whitepaper-columns">
-        <article class="layer-card"><span>Shared definition · one-to-many</span><h3>Character</h3><p><strong>Black Sheep</strong> defines the creative identity: lore, licensed media, rig and animation profiles, compatible fit families, default classes, and balanced base traits.</p></article>
-        <article class="layer-card layer-card--accent"><span>Portable record · unique ID</span><h3>Avatar instance</h3><p><strong>Black Sheep #0013</strong> binds an edition to its assets, traits, controller reference, compatibility, permissions, and schema version. XP, health, location, and cooldowns remain in game state.</p></article>
-      </div>
-      <div class="field-matrix" aria-label="Canonical avatar fields">
-        <span><b>Identity</b> id · characterId · name · edition</span><span><b>Media</b> modelUrl · iosModelUrl · thumbnail</span>
-        <span><b>Control</b> ownerId · optional tokenId · collection</span><span><b>Play</b> classes · traits · abilities</span>
-        <span><b>Fit</b> rigProfile · equipmentSlots</span><span><b>Access</b> allowedWorlds · landRoles</span>
-        <span><b>Motion</b> animationProfile · named actions</span><span><b>Metadata</b> metadata · approvalStatus · schemaVersion</span>
-      </div>
-      <p class="design-note"><b>Versioning rule:</b> an avatar ID is stable, but resolved media must be pinned by a version or content hash for deterministic playback. Breaking contract changes require a new major schema; compatible additions require a newly published schema version and migration guidance.</p>
-    </section>
-
-    <section class="whitepaper-section" id="ownership">
-      <header><p>08 · Control and loadout</p><h2>Marketplace → Backpack → Equip → Enter World.</h2></header>
-      <ol class="flow-line"><li><b>Acquire</b><span>Buy, claim, mint, or receive</span></li><li><b>Backpack</b><span>Store a reference to Avatar ID</span></li><li><b>Designate</b><span>Select one active avatar</span></li><li><b>Equip</b><span>Validate slots and fit profile</span></li><li><b>Spawn</b><span>Verify, load, attach, apply</span></li></ol>
-      <div class="whitepaper-columns ownership-copy">
-        <article><h3>Backpack references, never duplicates</h3><p>An inventory entry records the asset ID, acquisition state, and listing lock. The canonical service resolves current media, traits, and compatibility. Transfers change the controller without moving large model data.</p></article>
-        <article><h3>Active avatar is a session choice</h3><p>Before spawn, a trusted service authenticates the player; authorizes control and world access; checks approval status; resolves pinned media; validates the loadout; calculates effective stats; and signs a short-lived, non-transferable session snapshot.</p></article>
-      </div>
-      <div class="slot-rack"><b>Standard slots</b><span>Head</span><span>Face</span><span>Neck</span><span>Torso</span><span>Hands</span><span>Feet</span><span>Back</span><span>Tool 1</span><span>Tool 2</span></div>
-      <p class="design-note"><b>Compatibility rule:</b> each item declares a fit profile such as <code>humanoid-small</code> or <code>black-sheep-rig@1</code>, allowed slots, attachment bone, offsets, and conflict groups.</p>
-      <div class="accuracy-callout"><b>Control is not assumed to mean blockchain ownership.</b><p><code>ownerId</code> identifies the authoritative account in this schema. A token ID is optional provenance metadata. When an on-chain collection is used, the server must verify chain, contract, token, and current controller before granting a session.</p></div>
+      <p class="design-note"><b>Camp activity scope:</b> the canoe rack, lake and archery target are scenery or props. They do not claim a swimming, canoe-driving or archery game. The implemented camp activities are configured collection quests, seating, climbing and the existing shared arcade.</p>
+      <div class="accuracy-callout"><b>Save draft, Test and Publish have different effects.</b><p>Save draft keeps editable data in this browser. Both Test and Publish send the scene to the custom-map service after the applicable guest/member access checks; Test then opens its play link. A successful server response establishes the saved destination. Testing should not be described as a guaranteed private, browser-only session. Built-in sandbox placement does not grant ownership of paid models or unrestricted downloads.</p></div>
+      <div class="whitepaper-actions"><a href="environment-builder.html">Open the creator dashboard</a><a href="builder-market.html">Browse builder assets</a></div>
     </section>
 
     <section class="whitepaper-section" id="gameplay-state">
-      <header><p>09 · Gameplay and progression</p><h2>Permanent truth and live state move at different speeds.</h2></header>
+      <header><p>05 · Gameplay and multiplayer</p><h2>Shared rules on the server. Responsive presentation in the browser.</h2></header>
       <div class="state-split">
-        <article><span>Durable identity layer</span><h3>Provenance</h3><ul><li>Stable avatar and character IDs</li><li>Controller reference and optional token metadata</li><li>Edition and immutable traits</li><li>Creator attribution and content hash</li></ul></article>
-        <article><span>Game database</span><h3>Living state</h3><ul><li>XP, level, health, and quest progress</li><li>Equipped items and unlocked actions</li><li>Achievements, cosmetics, and location</li><li>Cooldowns and world session state</li></ul></article>
+        <article><span>Shared room state</span><h3>Simulation and authority</h3><ul><li>Player identity, room entry and supported movement commands</li><li>Collision, interaction distance, ownership and cooldown checks</li><li>Supported combat, pickups, seats, quests and vehicle actions</li><li>Machine controls, arcade turns and shared playback state</li></ul></article>
+        <article><span>Client presentation</span><h3>Controls and feedback</h3><ul><li>3D rendering, cameras, animation and sound output</li><li>Keyboard/mouse, touch joysticks and on-screen actions</li><li>Movement smoothing and received-state interpolation</li><li>Compatible WebXR headset input and AR previews</li></ul></article>
       </div>
-      <div class="class-grid"><article><b>Creators</b><span>music · art · events</span></article><article><b>Builders</b><span>construction · placement</span></article><article><b>Explorers</b><span>travel · discovery</span></article><article><b>Fighters</b><span>arena · RAD-TOX</span></article><article><b>Companions</b><span>follow · support</span></article><article><b>Merchants</b><span>stores · trading</span></article></div>
-      <h3 class="subsection-title">Balanced progression</h3>
-      <p>Traits create roles and play styles, not pay-to-win certainty. Progression unlocks expression and access: new dances, creator quests, badges, visual effects, and optional accessory slots. Competitive modes normalize power budgets while preserving character identity.</p>
-      <div class="permission-table" role="table" aria-label="Land permission roles"><div role="row"><b role="columnheader">Visitor</b><span>walk · chat · public games</span></div><div role="row"><b role="columnheader">Friend</b><span>visitor actions · approved interactions</span></div><div role="row"><b role="columnheader">Builder</b><span>place approved assets in assigned zones</span></div><div role="row"><b role="columnheader">Owner</b><span>edit · remove · configure · delegate</span></div></div>
-      <p class="table-caption">Roles are capabilities scoped to a land or world. They are evaluated server-side and do not follow an avatar into every destination.</p>
+      <p>RAD-TOX supplies a combat encounter loop in eligible environments; builder maps use their authored objects and activities. Room-level quest completion, health, scores and equipped or held state belong to gameplay data rather than an immutable avatar definition. Features can vary between hosted multiplayer, solo play and custom maps.</p>
+      <p>Placement geometry supports walkable floors, solid obstacles and gradual steps. Floor following, collision handling and reconciliation aim to keep walking consistent as shared state arrives. The project still needs repeatable performance measurements across physical phones, desktop GPUs and increasing room sizes before publishing frame-rate or capacity targets.</p>
+      <p class="design-note"><b>Progression scope:</b> character classes and traits describe roles such as creator, builder, explorer, fighter, companion and merchant. A universal XP campaign, fully balanced competitive modes and identical progression across every custom game are development goals, not established platform-wide guarantees.</p>
+    </section>
+
+    <section class="whitepaper-section" id="machines">
+      <header><p>06 · Arcade, social and media spaces</p><h2>Place an activity. Let the room participate.</h2></header>
+      <div class="ecosystem-grid">
+        <article><span>Shared arcade library</span><h3>30 games in one cabinet</h3><p>The Commons Arcade offers a menu of card, puzzle and retro games. Server-controlled rounds and shared screens let nearby users watch the active game. Maps without an arcade can receive a default cabinet.</p></article>
+        <article><span>Supported multiplayer modes</span><h3>Ready up or join in</h3><p>Noughts &amp; Crosses, Four in a Row and Pong support versus play. Selected puzzles support cooperative play, including joining a running cooperative round. Other games retain solo control and spectators; private card hands are not automatically converted to two-player games.</p></article>
+        <article><span>Interactive devices</span><h3>27 device profiles</h3><p>Dedicated cabinets sit alongside ATMs, vending terminals, jukeboxes, boomboxes, video players, projectors, photo displays and noticeboards. Market terminals open existing purchasing flows; a decorative machine mesh alone does not process a purchase.</p></article>
+        <article><span>Media and communication</span><h3>Watch, listen and speak</h3><p>Media devices coordinate queues, playback controls and timestamps on the server. Browsers fetch and decode supported media. Voice and live camera features use browser capture and peer connections; room signaling and access checks coordinate participation.</p></article>
+      </div>
+      <p>Microphone indicators and audio-reactive bars show voice readiness and detected audio energy. Above-avatar speech captions depend on browser speech-recognition support and microphone permission. Playback, camera capture and peer connectivity also depend on the device, network and user’s media permissions; they are not universal server-rendered video streams.</p>
+      <p class="design-note"><b>Supported media:</b> the shared queue accepts supported direct media URLs and uploaded files. An arbitrary video webpage is not automatically a playable source. Shared controls synchronize a room’s media state; the server does not guarantee identical decoding or latency on every viewer’s device.</p>
+    </section>
+
+    <section class="whitepaper-section economy-section" id="economy">
+      <header><p>07 · Economy and rewards</p><h2>Clear balances. Clear rewards. Clear ownership.</h2></header>
+      <p class="section-intro">The platform uses several distinct accounting systems. MZK in the application is recorded in the server’s user ledger. Room score and arcade practice credits have different purposes and are not interchangeable wallet balances. Supported crypto payments are independently verified before the associated order is delivered.</p>
+      <div class="wp-currency-grid">
+        <article><h3>MZK balance</h3><p>Used by supported purchases, land and configured game actions. Accepted coin collections can credit this balance through the server reward path.</p></article>
+        <article><h3>Room score</h3><p>Tracks supported activity and quest outcomes. The summer camp quest awards 35 room score; that result does not itself grant 35 MZK.</p></article>
+        <article><h3>Arcade practice credits</h3><p>Cabinet play balances for slots, poker and other supported games. Practice results do not imply a withdrawable prize or a wallet payment.</p></article>
+        <article><h3>Other builder counters</h3><p>Legacy Game Space flows may display Builder Coin or other counters. Their labels and quoted charges belong to that flow, not automatically to the MZK ledger.</p></article>
+      </div>
+      <div class="wp-table-wrap"><table class="wp-data-table"><caption>Current economy behavior</caption><thead><tr><th scope="col">Action</th><th scope="col">Current treatment</th><th scope="col">What establishes the result</th></tr></thead><tbody>
+        <tr><th scope="row">MZK or digital-item checkout</th><td data-label="Current treatment">Quoted balance debit, or delivery after verified external payment</td><td data-label="What establishes the result">Server order, ledger and inventory records</td></tr>
+        <tr><th scope="row">Member or builder market sale</th><td data-label="Current treatment">Applicable buyer debit, seller credit and asset transfer/grant</td><td data-label="What establishes the result">Listing rules, current ownership and idempotent purchase handling</td></tr>
+        <tr><th scope="row">Land claim or reveal</th><td data-label="Current treatment">Applicable claim cost or existing entitlement; stable hosted destination</td><td data-label="What establishes the result">Canonical deed and account records</td></tr>
+        <tr><th scope="row">In-room MZK coin</th><td data-label="Current treatment">1 MZK for a valid, accepted collection</td><td data-label="What establishes the result">Server-owned pickup ID and reward validation; duplicate attempts do not create another award</td></tr>
+        <tr><th scope="row">Camp collection quest</th><td data-label="Current treatment">35 room score on completion</td><td data-label="What establishes the result">Accepted quest, required inventory and completion state</td></tr>
+        <tr><th scope="row">Arcade poker or slots</th><td data-label="Current treatment">Practice-credit changes</td><td data-label="What establishes the result">Server game rules; independent of wallet MZK</td></tr>
+        <tr><th scope="row">Local scene editing</th><td data-label="Current treatment">Built-in placement and draft editing are available in the sandbox</td><td data-label="What establishes the result">Paid imports, publishing access and any quoted actions retain their own authorization rules</td></tr>
+      </tbody></table></div>
+      <p>Catalog prices, currency quotes, promotional grants and action costs can change. The current checkout and server quote establish the charge before confirmation. A marketplace transfer credits its designated recipient; a spend is not automatically a token burn. This implementation does not establish a public on-chain burn registry or a verified circulating-supply report.</p>
+      <p class="design-note"><b>Economic scope:</b> MZK utility and game rewards do not represent equity, revenue rights or a promise of appreciation. App balances and item records are not evidence that a corresponding on-chain token has been minted, transferred or retired.</p>
+    </section>
+
+    <section class="whitepaper-section" id="ownership">
+      <header><p>08 · Identity, Backpack and ownership</p><h2>One account record connects what you own and where you play.</h2></header>
+      <ol class="flow-line"><li><b>Acquire</b><span>Verified purchase, grant, claim or permitted transfer</span></li><li><b>Backpack</b><span>Record the item under its current owner</span></li><li><b>Configure</b><span>Equip, reveal, customize or place when supported</span></li><li><b>Use</b><span>Apply the destination’s access and gameplay rules</span></li><li><b>Trade</b><span>Transfer eligible items through an authorized listing</span></li></ol>
+      <div class="whitepaper-columns">
+        <article class="layer-card"><span>Current account model</span><h3>Server-backed ownership</h3><p>Inventory and linked wallet identity are durable application records. Ethereum sign-in uses a challenge and signature; an address alone is not proof of control. A connected wallet does not make all inventory an on-chain asset.</p></article>
+        <article class="layer-card layer-card--accent"><span>Portable gameplay files</span><h3>Share references, retain ownership checks.</h3><p>Eligible owned-item exports include configuration and model URLs; map packages can reference saved scenes and stable room IDs. Import reopens the canonical record under its current permissions. Editing a file cannot grant ownership or recreate a deleted server balance.</p></article>
+      </div>
+      <p>Local drafts, preview images and cached balances help the interface, but the server decides current item ownership, listing availability, paid downloads and access to private assets. Free premade builder tools and licensed marketplace items can coexist without equating a sandbox placement with a paid entitlement.</p>
+    </section>
+
+    <section class="whitepaper-section" id="products">
+      <header><p>09 · Creator products and retail</p><h2>A shared creative identity, with explicit product terms.</h2></header>
+      <div class="product-lanes">
+        <article><span>Digital creation</span><h3>Models, drawings and assets</h3><p>Creators can develop supported custom objects, reusable configurations, avatar looks and published environments. Public distribution and paid-model customization follow the applicable account, ownership and upload rules.</p></article>
+        <article><span>Physical products</span><h3>Merch and character drops</h3><p>The designer and storefront connect character artwork with product templates, colors, text and saved designs. Checkout, manufacturing and shipping are distinct from gameplay; only an offer’s explicit digital grants enter inventory.</p></article>
+        <article><span>Collection experiences</span><h3>3D and AR viewing</h3><p>Compatible models support 3D previews and available AR paths such as WebXR, Scene Viewer or Quick Look. Camera access, an appropriate device and the model’s supported format determine availability.</p></article>
+        <article><span>Entry offers</span><h3>Loadouts and bundles</h3><p>Verified offers can grant starter items, land entitlements or MZK. The offer and server receipt define what is included. A product image, rarity label or preview does not establish physical stock, a transferable token or extra game powers.</p></article>
+      </div>
+      <div class="whitepaper-actions"><a href="index.html#merch">Explore merch</a><a href="chaines-ar-collectibles.html">Browse AR collectibles</a></div>
+    </section>
+
+    <section class="whitepaper-section" id="operations">
+      <header><p>10 · Persistence, recovery and trust</p><h2>Keep the world’s records separate from its presentation.</h2></header>
+      <div class="standard-grid">
+        <article><b>Persistent services</b><p>The Node service manages accounts, inventories, purchases, maps and shared-room records. Production persistence depends on configured durable storage for the data and upload directories. Static hosting alone does not supply these services.</p></article>
+        <article><b>Admin master state</b><p>Authenticated administrator tools can compile member and land data and export a master state file. Validation and controlled restore can replace server records and included local uploads, with an automatic recovery copy before replacement.</p></article>
+        <article><b>Recovery boundaries</b><p>Master files include captured server data and local assets, not deployment secrets, server code or externally hosted files. Blockchain payments are history and are never replayed. Browser-only drafts and unsaved tournaments are outside that capture.</p></article>
+        <article><b>Current protections</b><p>Authentication, permission checks, request validation, selected rate limits, private-asset controls, origin checks and HTTP security headers protect supported operations. These measures do not constitute independent certification or a blanket search-engine safety endorsement.</p></article>
+      </div>
+      <p class="design-note"><b>Operational status:</b> backup and master-state functionality exist in the code. Offsite retention, restore drills, production monitoring and load capacity must be operated and measured for the actual deployment; this review does not certify those operational practices.</p>
+    </section>
+
+    <section class="whitepaper-section" id="roadmap">
+      <header><p>11 · Development priorities</p><h2>Make the existing experience more dependable, then expand it.</h2></header>
+      <p class="section-intro">These are proposed next priorities based on the current implementation. They do not announce completion dates, a token launch or newly purchased entitlements.</p>
+      <div class="wp-roadmap">
+        <article><span>Priority 01</span><h3>Measure movement and rendering</h3><p>Run repeatable walk, jump, shooting and collision journeys on physical mobile and desktop devices, with concurrent players and increasing scene complexity.</p><b>Completion evidence</b><p>Published device profiles, frame-time and latency measurements, room-size limits and regression results.</p></article>
+        <article><span>Priority 02</span><h3>Strengthen map publication and travel</h3><p>Exercise saved scenes, moved modules, deed transfers, portal round trips and missing-asset recovery across the destination directory.</p><b>Completion evidence</b><p>Automated map entry and save/reload coverage, clear error recovery and documented persistence behavior.</p></article>
+        <article><span>Priority 03</span><h3>Deepen activities and social play</h3><p>Refine arcade onboarding, cooperative join flows, shared media recovery and more varied quests. Expand only the modes with explicit rules and server validation.</p><b>Completion evidence</b><p>Two-user tests for each supported mode, reconnect handling and a clear feature matrix for unsupported modes.</p></article>
+        <article><span>Priority 04</span><h3>Improve creator trust and operations</h3><p>Extend asset diagnostics, moderation, accessibility, rig compatibility and recovery tooling. Document any future economy or interoperability changes before introducing them.</p><b>Completion evidence</b><p>Versioned validation rules, accessible creator flows, restore exercises and auditable permission boundaries.</p></article>
+      </div>
+    </section>
+
+    <section class="whitepaper-section" id="identity-model">
+      <header><p>12 · Avatar reference standard</p><h2>Separate the character, the owned instance and the session.</h2></header>
+      <div class="whitepaper-columns">
+        <article class="layer-card"><span>Character definition</span><h3>The reusable creative identity</h3><p>Lore, licensed media, compatible rig and animation profiles, fit families and descriptive traits define a character. Different owned instances can refer to that definition.</p></article>
+        <article class="layer-card layer-card--accent"><span>Avatar instance</span><h3>A versioned, identifiable record</h3><p>The avatar schema describes identity, owner reference, media URLs, classes, traits, equipment slots and world permissions. Live health, quest status, position and cooldowns belong in game state.</p></article>
+      </div>
+      <div class="field-matrix" aria-label="Avatar schema field groups"><span><b>Identity</b>id · characterId · name · edition · ownerId</span><span><b>Media</b>assets.modelUrl · iosModelUrl · thumbnailUrl · contentHash</span><span><b>Compatibility</b>rigProfile · equipmentSlots · animationProfile</span><span><b>Permissions &amp; metadata</b>worldPermissions · approvalStatus · schemaVersion</span></div>
+      <p>The published schema is version <strong>1.0.0</strong>. It is a reference contract, not evidence that every catalog model already implements complete rig fitting, pinned content hashes or a signed portable session snapshot. Optional token metadata does not replace account or on-chain verification.</p>
     </section>
 
     <section class="whitepaper-section" id="creator-standard">
-      <header><p>10 · Interoperability</p><h2>A strict creator standard makes an open world possible.</h2></header>
-      <div class="standard-grid">
-        <article><b>Asset validation</b><p>glTF 2.0 / GLB, optional USDZ, declared byte and geometry budgets, PBR textures, HTTPS or same-origin URLs, collision bounds, units in meters, origin, scale, and spawn clearance.</p></article>
-        <article><b>Rig validation</b><p>Versioned rig profile, attachment bones, skin weights, humanoid or custom classification, neutral pose, root motion policy, and retargeting map.</p></article>
-        <article><b>Animation contract</b><p>Supported semantic action names include: <code>idle</code>, <code>walk</code>, <code>run</code>, <code>jump</code>, <code>turn</code>, <code>interact</code>, <code>dance</code>, <code>emote</code>, <code>use_tool</code>, <code>damage</code>, and <code>defeat</code>.</p></article>
-        <article><b>Trust and rights</b><p>Creator identity, rights declaration, malware and unsafe-content scans, moderation state, SHA-256 content digest, version history, and a revocation path for compromised files.</p></article>
-      </div>
-      <div class="approval-pipeline"><span>Submitted</span><i>→</i><span>Automated checks</span><i>→</i><span>Human review</span><i>→</i><span>Market Approved</span><i>→</i><span>Published</span></div>
+      <header><p>13 · Asset functions and interoperability</p><h2>Declare the function. Validate the supported use.</h2></header>
+      <div class="function-grid" id="asset-functions"><article><b>Avatars &amp; wearables</b><p>Equip or customize compatible characters and fitted pieces; preserve per-instance appearance settings.</p></article><article><b>Buildings &amp; scenery</b><p>Place geometry, furnish interiors and retain suitable floor and collision structure.</p></article><article><b>Interactive items</b><p>Configure supported behaviors, prompts, distance limits, cooldowns and device profiles.</p></article><article><b>Vehicles</b><p>Use configured drive or flight behavior where the model, scene and game mode support it.</p></article><article><b>Media &amp; graphics</b><p>Display supported content in machines, on props or within permitted creator and product flows.</p></article><article><b>Land &amp; maps</b><p>Resolve a destination, apply ownership rules and retain published scene configuration.</p></article></div>
+      <p>Current validation and access checks are implemented at specific upload, catalog, purchase and gameplay boundaries. A uniform asset certification pipeline—covering geometry budgets, retargeting, rights review, unsafe-content screening and approval across every import path—is a target standard that requires further implementation and operational review.</p>
     </section>
 
     <section class="whitepaper-section implementation-section" id="reference-contract">
-      <header><p>11 · Reference contract</p><h2>One standardized object for market and world.</h2></header>
-      <pre aria-label="Avatar JSON example"><code>{
+      <header><p>14 · Technical reference</p><h2>A small, explicit avatar contract.</h2></header>
+      <pre aria-label="Illustrative avatar JSON contract"><code>{
   "id": "avatar_black_sheep_0013",
   "characterId": "black_sheep",
   "name": "Black Sheep #0013",
   "edition": 13,
   "ownerId": "user_123",
   "assets": {
-    "modelUrl": "/public/models/avatars/rebel%20black%20sheep.glb",
-    "contentHash": "sha256:&lt;64-lowercase-hex-characters&gt;"
+    "modelUrl": "/public/models/avatars/rebel%20black%20sheep.glb"
   },
   "rarity": "rare",
   "classes": ["creator", "explorer"],
-  "traits": { "music": 85, "creativity": 90, "speed": 65 },
+  "traits": { "music": 85, "creativity": 90 },
   "rigProfile": "black-sheep-rig@1",
   "equipmentSlots": ["head", "neck", "torso", "tool1"],
   "animationProfile": "muzikaz-biped@1",
   "animations": ["idle", "walk", "run", "jump", "interact"],
-  "worldPermissions": { "allowedWorlds": ["vibeverse", "studio"] },
+  "worldPermissions": { "allowedWorlds": ["muzikaz-main"] },
   "tradable": true,
   "schemaVersion": "1.0.0"
 }</code></pre>
-      <p class="schema-note"><b>Normative source:</b> The downloadable JSON Schema is authoritative for field names, required properties, value ranges, and enumerations. Narrative examples in this document are explanatory.</p>
-      <div class="whitepaper-actions"><a href="public/models/avatar-schema.json" download>Download JSON Schema</a><a href="model-market.html#character-world-avatars">Browse avatars</a></div>
+      <p class="schema-note">This example illustrates field structure; it does not issue an asset or certify that edition. The downloadable JSON Schema defines the reference field names, required values and enumerations.</p>
+      <div class="whitepaper-actions"><a href="public/models/avatar-schema.json" download>Download avatar schema 1.0.0</a><a href="model-market.html#character-world-avatars">Browse characters</a></div>
+    </section>
+
+    <section class="whitepaper-section wp-delivery-notes" id="delivery-notes">
+      <header><p>15 · Review record</p><h2>A dated reference that can be checked.</h2></header>
+      <p>White paper revision <strong>2.3.0</strong> documents the implementation reviewed on <strong>17 October 2026</strong>, including game changes through <a href="https://github.com/SECUREA1/muzikazmodelmarket/commit/b603ffb8e5408ae5c099023b4e0b157cf86d8608">commit b603ffb8</a>. The document revision is independent of game package and avatar schema versions.</p>
+      <div class="wp-source-links" aria-label="Implementation references"><a href="https://github.com/SECUREA1/muzikazmodelmarket/blob/b603ffb8e5408ae5c099023b4e0b157cf86d8608/public/js/summer-camp.js">Camp maps &amp; items</a><a href="https://github.com/SECUREA1/muzikazmodelmarket/blob/b603ffb8e5408ae5c099023b4e0b157cf86d8608/public/js/builder-layout-scenes.js">Activity scene registry</a><a href="https://github.com/SECUREA1/muzikazmodelmarket/blob/b603ffb8e5408ae5c099023b4e0b157cf86d8608/public/js/arcade-library.js">Arcade catalog</a><a href="https://github.com/SECUREA1/muzikazmodelmarket/blob/b603ffb8e5408ae5c099023b4e0b157cf86d8608/authoritative-room.mjs">Server room rules</a><a href="https://github.com/SECUREA1/muzikazmodelmarket/blob/b603ffb8e5408ae5c099023b4e0b157cf86d8608/master-server-state.mjs">Master state boundaries</a></div>
+      <p class="schema-note"><b>Evidence and limits:</b> this edition reconciles the code, catalog definitions and existing focused tests. It is not a live production audit, independent security assessment, end-to-end certification of every map or proof of specific player capacity. Roadmap completion requires the evidence described above.</p>
     </section>
   </main>
-  <footer class="whitepaper-footer"><a class="whitepaper-brand" href="model-market.html"><img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ World"></a><p>MUZIKAZ World Platform Whitepaper · 2.1.0 · Avatar Standard 1.0.0</p><a href="#top">Back to top ↑</a></footer>
+  <footer class="whitepaper-footer"><a class="whitepaper-brand" href="model-market.html"><img src="public/assets/muzikaz-world-logo.svg" alt="MUZIKAZ World"></a><p>MUZIKAZ World White Paper · 2.3.0 · Reviewed 17 October 2026 · Avatar Schema 1.0.0</p><a href="#top">Back to top ↑</a></footer>
   <script src="script.js"></script>
   <script src="battle-theme.js"></script>
     <script src="public/js/api-connection.js"></script><script src="mzk-wallet.js"></script>
