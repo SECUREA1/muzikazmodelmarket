@@ -1,5 +1,6 @@
 import {builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn} from './builder-base.js';
 import {isBasketballEnvironment} from '../basketball-rules.js';
+import {isFiringRangeEnvironment} from '../firing-range.js';
 import {createSlimeFloor,collectSlimeFloorMeshes} from './slime-floor.js';
 import {replaceServerStreets} from './server-streets.js';
 import {createBuilderLand} from './builder-land.js';
@@ -23,7 +24,7 @@ export class EnvironmentLoader {
   }
   disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture) value.dispose(); material.dispose?.(); }
   clearFloorEffects() { this.floorSlime?.dispose(); this.floorSlime=null; }
-  refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world&&!isBasketballEnvironment(this.activeEnvironment)?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
+  refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world&&!isBasketballEnvironment(this.activeEnvironment)&&!isFiringRangeEnvironment(this.activeEnvironment)?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
   updateEffects(elapsed, reducedMotion=false) { this.floorSlime?.update(elapsed,reducedMotion); this.world?.userData.updateBasketballEffects?.(elapsed,reducedMotion); }
   unload({cancelPending=true} = {}) { if(cancelPending)this.token+=1; this.clearFloorEffects(); this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
   async loadOne(url, index, count) {

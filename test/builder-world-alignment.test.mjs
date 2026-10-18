@@ -12,7 +12,7 @@ test('alignment is absolute and resetting restores authored geometry without cha
  assert.equal(normalizedBaseTransform({scale:0}).scale,.1);assert.equal(normalizedBaseTransform({x:Infinity}).x,0);assert.equal(normalizedBaseTransform(null).scale,1);
 });
 test('saved moved worlds keep collision floors and arrival points aligned beyond the original map boundary',async()=>{
- const base=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url)))[0];
+ const base=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url))).find(environment=>environment.modelUrl||environment.modelUrls?.length);
  const environment={id:'aligned-world',builderScene:{baseEnvironment:base,baseTransform:{x:180,y:6,z:-120,rotation:90,scale:1.25},mapSize:80,objects:[]}};
  const collision=new ServerBuilderCollision(),spawn=builderBaseSpawn(environment),world=collision.world(environment);
  const safe=collision.safeSpawn(environment,spawn);assert.ok(safe.x>100);assert.ok(safe.z<-50);const flat={...environment,id:'aligned-flat',builderScene:{...environment.builderScene,baseTransform:{...environment.builderScene.baseTransform,y:0}}};const flatSpawn=collision.safeSpawn(flat,builderBaseSpawn(flat));assert.ok(Math.abs(safe.y-flatSpawn.y-6)<.01);

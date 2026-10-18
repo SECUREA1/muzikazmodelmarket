@@ -107,7 +107,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     if (!stopped && !fireBusy && state?.players?.[client.selfId]?.health>0 && state?.match?.state!=='finished' && firingControls.firing) {
      fireBusy=true;
      // A slow weapon response must not stall movement or room snapshots.
-     void client.send('fire',{tool:firingControls.tool,direction:firingControls.direction,color:firingControls.color})
+     void client.send('fire',{tool:firingControls.tool,direction:firingControls.direction,color:firingControls.color,...(Number.isFinite(firingControls.eyeHeight)?{eyeHeight:firingControls.eyeHeight}:{})})
       .catch(error=>{if(error.status!==429)handleError(error);}).finally(()=>{fireBusy=false;});
     }
    }

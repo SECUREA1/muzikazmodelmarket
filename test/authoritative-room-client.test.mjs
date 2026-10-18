@@ -119,6 +119,16 @@ test('dead players continue heartbeats without automatic firing',async()=>{
  {input:()=>({firing:true,tool:'flamethrower',direction:[0,0,-1]})});
 });
 
+test('held fire carries the current camera height so scoped range shots keep the same origin',async()=>{
+ let sequence=0;const shots=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);if(command.action==='fire')shots.push(command);
+  const state=confirmed(++sequence);state.players[state.selfId].health=100;return response(state);
+ },async client=>{await client.whenReady();await pause(160);assert.ok(shots.length>=1);assert.equal(shots[0].eyeHeight,1.25);},
+ {input:()=>({firing:true,tool:'marksman',direction:[0,0,-1],eyeHeight:1.25})});
+});
+
 test('an expired room presence rejoins while ordinary conflicts do not',async()=>{
  let joins=0,inputs=0;
  await withRoom(async(path,options)=>{
