@@ -113,7 +113,8 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   assert.match(game, /rangeRaycaster\.intersectObject\(envLoader\.world,true\)/, 'range scoring raycasts the actual loaded world');
   assert.match(game, /handleRangeShot\(\{event\}\)/, 'touch and unlocked-pointer shots use their screen position');
   assert.match(game, /handleRangeShot\(\{centre:true\}\)/, 'pointer-lock and mobile shoot controls use the reticle');
-  assert.match(game, /Move \/ shoot/, 'the original mobile controller keeps tap-to-shoot on the movement stick');
+  assert.match(game, /radToxStickMarkup/, 'firing range uses the shared RAD-TOX controller');
+  assert.match(await readFile(new URL('../public/js/rad-tox-controller.js',import.meta.url),'utf8'), /Move \/ shoot/, 'shared movement stick retains tap-to-shoot');
   assert.match(game, /if \(name === 'left'\) shootAtReticle\(\)/, 'tapping the movement stick shoots the range reticle');
   assert.doesNotMatch(game, /data-mobile-(?:fire|jump)/, 'the replacement Fire and Jump buttons stay removed');
   assert.doesNotMatch(game, /data-mobile-action=/, 'duplicate action buttons are not rendered beneath the thumbsticks');
