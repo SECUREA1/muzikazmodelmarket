@@ -6,15 +6,15 @@ export class HockeyRooms {
   const now=this.now();for(const [id,room]of this.rooms){
    for(const [actor,seen]of room.seen)if(now-seen>15000){leaveHockey(room.state,actor);room.seen.delete(actor);}
    if(!room.seen.size){this.rooms.delete(id);continue;}
-   let remaining=Math.min(.5,Math.max(0,(now-room.at)/1000));while(remaining>1e-6){const dt=Math.min(.05,remaining);stepHockey(room.state,dt);remaining-=dt;}room.at=now;room.sequence++;
+   let remaining=Math.min(.5,Math.max(0,(now-room.at)/1000));while(remaining>1e-6){const dt=Math.min(.05,remaining);if(room.started)stepHockey(room.state,dt);remaining-=dt;}room.at=now;room.sequence++;
   }
  }
  command(id,environment,identity,command={}){
   const actor='account:'+identity.accountId;let room=this.rooms.get(id);
-  if(!room){if(!['join','spectate'].includes(command.action))throw Object.assign(Error('Join the hockey match first.'),{statusCode:409});room={state:createHockey(environment.builderScene?.gameplay?.hockey||environment.hockey),at:this.now(),seen:new Map(),sequence:0};this.rooms.set(id,room);}
+  if(!room){if(!['join','spectate'].includes(command.action))throw Object.assign(Error('Join the hockey match first.'),{statusCode:409});room={state:createHockey({...environment.builderScene?.gameplay?.hockey||environment.hockey,...(command.action==='join'&&command.settings?{difficulty:command.settings.difficulty,mode:command.settings.mode}:{})}),at:this.now(),seen:new Map(),sequence:0,started:false};this.rooms.set(id,room);}
   const s=room.state;
   if(command.action==='join'){
-   joinHockey(s,actor,identity.username);s.spectators=s.spectators.filter(p=>p.id!==actor);room.seen.set(actor,this.now());
+   joinHockey(s,actor,identity.username,command.slot||null);room.started=true;s.spectators=s.spectators.filter(p=>p.id!==actor);room.seen.set(actor,this.now());
   }else if(command.action==='spectate'){
    if(!s.spectators.some(p=>p.id===actor)&&s.spectators.length>=64)throw Object.assign(Error('All spectator places are occupied.'),{statusCode:409});
    leaveHockey(s,actor);s.spectators.push({id:actor,name:String(identity.username||'Spectator').slice(0,32)});room.seen.set(actor,this.now());

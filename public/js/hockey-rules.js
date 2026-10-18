@@ -22,10 +22,10 @@ export function faceoff(s,x=0,z=0,reason='Faceoff'){
  for(const p of s.players){const d=attackDirection(s,p.team);p.x=p.goalie?-d*(RINK.goalX-.7):clamp(x-d*(p.slot<3?2.4:9),-24,24);p.z=p.goalie?0:clamp(z+[-1.2,-6,6,-7,7][p.slot],-11,11);p.vx=p.vz=0;p.animation='idle';if(p.penalty>0&&!p.queuedReplacement){p.x=p.team===0?-5:5;p.z=14.8;}else if(!p.onIce){p.x=(p.team===0?-10:10)+(p.slot-2)*.8;p.z=-14.8;}}
  s.referees.forEach(r=>r.signal=reason.startsWith('Goal')?'goal':'whistle');recordHockeyEvent(s,'stoppage',reason,{x,z});
 }
-export function joinHockey(s,id,name='Player'){
- let p=s.players.find(p=>p.human===id);if(p)return p;const counts=[0,1].map(t=>s.players.filter(p=>p.team===t&&p.human).length),team=counts[0]<=counts[1]?0:1;
- p=s.players.find(p=>p.team===team&&!p.human&&!p.goalie&&!p.ejected)||s.players.find(p=>!p.human&&!p.goalie&&!p.ejected);
- if(!p)throw Object.assign(Error('All ten skater positions are occupied. Choose spectator mode.'),{statusCode:409});p.human=id;p.name=String(name).slice(0,32);p.input={};s.host ||= id;updateHockeyLineup(s);return p;
+export function joinHockey(s,id,name='Player',slotId=null){
+ let p=s.players.find(p=>p.human===id);if(p&&(!slotId||p.id===slotId))return p;const previous=p;const counts=[0,1].map(t=>s.players.filter(p=>p.team===t&&p.human).length),team=counts[0]<=counts[1]?0:1;
+ p=slotId?s.players.find(p=>p.id===slotId&&!p.human&&!p.goalie&&!p.ejected):s.players.find(p=>p.team===team&&!p.human&&!p.goalie&&!p.ejected)||(slotId?null:s.players.find(p=>!p.human&&!p.goalie&&!p.ejected));
+ if(!p)throw Object.assign(Error('All ten skater positions are occupied. Choose spectator mode.'),{statusCode:409});if(previous){previous.human=null;previous.name='AI skater';previous.input={};}p.human=id;p.name=String(name).slice(0,32);p.input={};s.host ||= id;updateHockeyLineup(s);return p;
 }
 export function leaveHockey(s,id){const p=s.players.find(p=>p.human===id);if(p){p.human=null;p.name='AI skater';p.input={};}s.spectators=s.spectators.filter(p=>p.id!==id);if(s.host===id)s.host=s.players.find(p=>p.human)?.human||null;}
 export function hockeyInput(s,id,i={}){const p=s.players.find(p=>p.human===id);if(!p)throw Object.assign(Error('Join this hockey room first.'),{statusCode:409});p.input=sanitizeHockeyInput(i);}

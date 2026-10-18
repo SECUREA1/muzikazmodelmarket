@@ -116,7 +116,7 @@ function avatar(h, parent, name, color, {hockey = false, handsOnly = false} = {}
 
 function hockeyGame(root, h) {
   root.rotation.y = Math.PI / 2;
-  h.box('LIVE_ICE_SURFACE', 0, .705, 0, 5.9, .025, 7.4, '#d5f4ef').userData.sportsSurface = 'ice';
+  h.box('LIVE_ICE_SURFACE', 0, .705, 0, 5.9, .025, 7.4, '#be8756').userData.sportsSurface = 'wood';
   h.box('RINK_CENTER_LINE', 0, .723, 0, 5.9, .009, .055, '#d86a7f');
   h.ring('RINK_CENTER_CIRCLE', 0, .726, 0, .8, .015, '#c65b70');
   h.disc('GOAL_CREASE', 0, .723, -2.67, .91, .008, '#9dcbd8');
@@ -275,7 +275,7 @@ function airHockeyGame(root, h) {
     const pointer = state.pointer || {x: 400, y: 370}, elapsed = finite(state.gameElapsed);
     arcadeGamePoint('air-hockey', clamp(finite(pointer.x, 400), 115, 685), clamp(finite(pointer.y, 370), 250, 400), player.position);
     player.position.y = 1.53;
-    arcadeGamePoint('air-hockey', 400 + Math.sin(elapsed / (state.difficulty === 'normal' ? .65 : 1)) * 190, 95, opponent.position);
+    arcadeGamePoint('air-hockey', state.opponent?.x ?? 400 + Math.sin(elapsed / (state.difficulty === 'normal' ? .65 : 1)) * 190, state.opponent?.y ?? 95, opponent.position);
     opponent.position.y = 1.53;
     hand.position.set(player.position.x, 1.91, player.position.z + .06);
     sleeve.position.set(player.position.x, 1.91, player.position.z + .4);
@@ -336,7 +336,7 @@ function stationShell(root, id, h) {
     h.box('LIVE_COURT_SLAB', 0, .48, 0, 5.9, .12, 7.8, '#7c644b');
     h.box('LIVE_BASKETBALL_COURT', 0, .60, 0, 5.9, .12, 7.8, '#be8756').userData.sportsSurface = 'wood';
   } else if (id === 'shooting') {
-    h.box('LIVE_RANGE_FLOOR', 0, .7, 0, 8, .3, 5.8, '#3c3d4a').userData.sportsSurface = 'paving';
+    h.box('LIVE_RANGE_FLOOR', 0, .7, 0, 8, .3, 5.8, '#3c3d4a').userData.sportsSurface = 'wood';
     h.box('LIVE_RANGE_COUNTER', 0, 1, 2.1, 8, .7, .4, '#625c66').userData.sportsSurface = 'metal';
   } else if (id === 'air-hockey' || id === 'billiards') {
     h.box('LIVE_TABLE_CABINET', 0, 1.05, 0, 6, .7, 3.5, id === 'billiards' ? '#8b759f' : '#75a5c8');

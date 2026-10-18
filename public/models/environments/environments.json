@@ -366,110 +366,6 @@
     "playUrl": "hockey.html?environment=hockey-arena&mode=multiplayer"
   },
   {
-    "id": "hockey-tournament",
-    "name": "Ice Hockey Tournament",
-    "label": "Sports \u00b7 tournament",
-    "category": "Sports",
-    "game": "hockey",
-    "layout": "hockey-arena",
-    "proceduralLand": true,
-    "playable": true,
-    "multiplayer": true,
-    "visibility": "public",
-    "source": "repository",
-    "playableSize": 80,
-    "spawn": {
-      "x": 0,
-      "y": 1,
-      "z": 0
-    },
-    "description": "NHL-size 200 \u00d7 85 ft rink. Five skaters and AI goalie per team, AI fills empty spots. Solo or live multiplayer; icing, offside and referee penalties.",
-    "hockey": {
-      "mode": "tournament",
-      "difficulty": "easy",
-      "periodSeconds": 180
-    },
-    "playUrl": "hockey.html?environment=hockey-tournament&mode=multiplayer"
-  },
-  {
-    "id": "hockey-cup-normal",
-    "name": "Ice Hockey \u00b7 Silver Club Cup",
-    "label": "Sports \u00b7 tiered hockey cup",
-    "category": "Sports",
-    "game": "hockey",
-    "layout": "hockey-arena",
-    "proceduralLand": true,
-    "playable": true,
-    "multiplayer": true,
-    "visibility": "public",
-    "source": "repository",
-    "playableSize": 80,
-    "spawn": {
-      "x": 0,
-      "y": 1,
-      "z": 0
-    },
-    "description": "NHL-size 200 \u00d7 85 ft rink. Five skaters and AI goalie per team, AI fills empty spots. Solo or live multiplayer; icing, offside and referee penalties. Silver Club Cup difficulty tier. Lower and upper spectator bowls, team benches and enclosed penalty boxes.",
-    "hockey": {
-      "mode": "tournament",
-      "difficulty": "normal",
-      "periodSeconds": 180
-    },
-    "playUrl": "hockey.html?environment=hockey-cup-normal&mode=multiplayer"
-  },
-  {
-    "id": "hockey-cup-pro",
-    "name": "Ice Hockey \u00b7 Gold Pro Cup",
-    "label": "Sports \u00b7 tiered hockey cup",
-    "category": "Sports",
-    "game": "hockey",
-    "layout": "hockey-arena",
-    "proceduralLand": true,
-    "playable": true,
-    "multiplayer": true,
-    "visibility": "public",
-    "source": "repository",
-    "playableSize": 80,
-    "spawn": {
-      "x": 0,
-      "y": 1,
-      "z": 0
-    },
-    "description": "NHL-size 200 \u00d7 85 ft rink. Five skaters and AI goalie per team, AI fills empty spots. Solo or live multiplayer; icing, offside and referee penalties. Gold Pro Cup difficulty tier. Lower and upper spectator bowls, team benches and enclosed penalty boxes.",
-    "hockey": {
-      "mode": "tournament",
-      "difficulty": "pro",
-      "periodSeconds": 180
-    },
-    "playUrl": "hockey.html?environment=hockey-cup-pro&mode=multiplayer"
-  },
-  {
-    "id": "hockey-cup-elite",
-    "name": "Ice Hockey \u00b7 Platinum Elite Cup",
-    "label": "Sports \u00b7 tiered hockey cup",
-    "category": "Sports",
-    "game": "hockey",
-    "layout": "hockey-arena",
-    "proceduralLand": true,
-    "playable": true,
-    "multiplayer": true,
-    "visibility": "public",
-    "source": "repository",
-    "playableSize": 80,
-    "spawn": {
-      "x": 0,
-      "y": 1,
-      "z": 0
-    },
-    "description": "NHL-size 200 \u00d7 85 ft rink. Five skaters and AI goalie per team, AI fills empty spots. Solo or live multiplayer; icing, offside and referee penalties. Platinum Elite Cup difficulty tier. Lower and upper spectator bowls, team benches and enclosed penalty boxes.",
-    "hockey": {
-      "mode": "tournament",
-      "difficulty": "elite",
-      "periodSeconds": 180
-    },
-    "playUrl": "hockey.html?environment=hockey-cup-elite&mode=multiplayer"
-  },
-  {
     "id": "neon-junction",
     "name": "Neon Junction \u2014 Arcade Park",
     "label": "Arcade \u00b7 games and rides",
@@ -478,7 +374,7 @@
     "layout": "arcade-park",
     "proceduralLand": true,
     "playable": true,
-    "multiplayer": false,
+    "multiplayer": true,
     "visibility": "public",
     "source": "repository",
     "playableSize": 80,
@@ -487,7 +383,7 @@
       "y": 1,
       "z": 0
     },
-    "description": "Walk through a 3D park and play hockey, shooting arcade, basketball, air hockey and billiards in their physical stations; board the perimeter train and elevated coaster. Customize 15 park assemblies and 34 reusable builder items. Solo arcade sessions with local points.",
+    "description": "Walk through a 3D park and play hockey, shooting arcade, basketball, air hockey and billiards in their physical stations; board the perimeter train and elevated coaster. Customize 15 park assemblies and 34 reusable builder items. Shared multiplayer rounds with player slots and spectators.",
     "arcade": {
       "roundSeconds": 45,
       "trainLapSeconds": 55,
@@ -495,6 +391,130 @@
       "coasterPeak": 13,
       "difficulty": "easy"
     },
-    "playUrl": "arcade.html?environment=neon-junction&mode=solo"
+    "playUrl": "arcade.html?environment=neon-junction&mode=multiplayer"
+  },
+  {
+    "id": "basketball",
+    "name": "Basketball",
+    "label": "Sports \u00b7 Basketball",
+    "category": "Sports",
+    "game": "arcade",
+    "layout": "arcade-park",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "description": "Basketball \u2014 join a shared round, take an available player spot, or spectate. First person and Top down views.",
+    "arcade": {
+      "roundSeconds": 45,
+      "trainLapSeconds": 55,
+      "coasterLapSeconds": 32,
+      "coasterPeak": 13,
+      "difficulty": "easy",
+      "enabled": [
+        "basketball"
+      ]
+    },
+    "playUrl": "arcade.html?environment=basketball&attraction=basketball&mode=multiplayer"
+  },
+  {
+    "id": "shooting",
+    "name": "Shooting Arcade",
+    "label": "Sports \u00b7 Shooting Arcade",
+    "category": "Sports",
+    "game": "arcade",
+    "layout": "arcade-park",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "description": "Shooting Arcade \u2014 join a shared round, take an available player spot, or spectate. First person and Top down views.",
+    "arcade": {
+      "roundSeconds": 45,
+      "trainLapSeconds": 55,
+      "coasterLapSeconds": 32,
+      "coasterPeak": 13,
+      "difficulty": "easy",
+      "enabled": [
+        "shooting"
+      ]
+    },
+    "playUrl": "arcade.html?environment=shooting&attraction=shooting&mode=multiplayer"
+  },
+  {
+    "id": "air-hockey",
+    "name": "Air Hockey",
+    "label": "Sports \u00b7 Air Hockey",
+    "category": "Sports",
+    "game": "arcade",
+    "layout": "arcade-park",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "description": "Air Hockey \u2014 join a shared round, take an available player spot, or spectate. First person and Top down views.",
+    "arcade": {
+      "roundSeconds": 45,
+      "trainLapSeconds": 55,
+      "coasterLapSeconds": 32,
+      "coasterPeak": 13,
+      "difficulty": "easy",
+      "enabled": [
+        "air-hockey"
+      ]
+    },
+    "playUrl": "arcade.html?environment=air-hockey&attraction=air-hockey&mode=multiplayer"
+  },
+  {
+    "id": "billiards",
+    "name": "Billiards",
+    "label": "Sports \u00b7 Billiards",
+    "category": "Sports",
+    "game": "arcade",
+    "layout": "arcade-park",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "description": "Billiards \u2014 join a shared round, take an available player spot, or spectate. First person and Top down views.",
+    "arcade": {
+      "roundSeconds": 45,
+      "trainLapSeconds": 55,
+      "coasterLapSeconds": 32,
+      "coasterPeak": 13,
+      "difficulty": "easy",
+      "enabled": [
+        "billiards"
+      ]
+    },
+    "playUrl": "arcade.html?environment=billiards&attraction=billiards&mode=multiplayer"
   }
 ]
