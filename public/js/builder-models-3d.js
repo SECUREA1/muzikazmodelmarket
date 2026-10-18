@@ -1,3 +1,5 @@
+import {ARCADE_PARTS} from './arcade-rules.js';
+import {createArcadePart,animateArcadePark} from './arcade-park.js';
 import {createHockeyItem} from './hockey-models.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 
@@ -173,7 +175,8 @@ function playableRoom(id) {
   return root;
 }
 
-export function createBuilderModel(id) {
+export function createBuilderModel(id,options={}) {
+  if(id.startsWith('arcade-part-')){if(!ARCADE_PARTS.some(part=>part.id===id.slice(12)))return null;const root=createArcadePart(id.slice(12),options);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
   if(id.startsWith('hockey-')){const root=createHockeyItem(id);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
   let root;
   if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
@@ -210,5 +213,5 @@ export function createGeneratedAsset(model) {
 }
 
 export function updateBuilderModels(group, elapsed) {
-  group.children.forEach(root=>{root.traverse(child=>{if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  group.children.forEach(root=>{if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 }

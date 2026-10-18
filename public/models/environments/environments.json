@@ -487,7 +487,7 @@
       "y": 1,
       "z": 0
     },
-    "description": "Seven attractions: hockey, shooting arcade, basketball, air hockey, billiards, a perimeter train and an elevated coaster with locked ride cameras. Solo arcade sessions with local points.",
+    "description": "Seven interactive attractions: hockey, shooting arcade, basketball, air hockey, billiards, perimeter train and elevated coaster. Customize 15 park assemblies and 34 reusable builder items. Solo arcade sessions with local points.",
     "arcade": {
       "roundSeconds": 45,
       "trainLapSeconds": 55,

@@ -40,6 +40,7 @@ export function normalizeBuilderObject(object = {}, index = 0) {
   return {
     objectId: String(object.id || `object-${index}`),
     modelId: String(object.modelId || ''),
+    arcadeSettings: object.arcadeSettings ? copy(object.arcadeSettings) : null,
     objectType: String(object.objectType || object.type || behavior),
     asset: copy(object.asset || { modelUrl: object.modelUrl || null }),
     transform: {

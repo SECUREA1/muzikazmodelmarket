@@ -13,7 +13,7 @@ test('play mode replaces every Builder Pack thumbnail with a described, scaled 3
   assert.match(models, /MeshStandardMaterial/);
   assert.match(models, /castShadow=true/);
   assert.match(models, /updateBuilderModels/);
-  assert.match(game, /createBuilderModel\(item\.modelId\)/);
+  assert.match(game, /createBuilderModel\(item\.asset\?\.buildAssetId\|\|definition\?\.buildAssetId\|\|item\.modelId\)/);
   assert.match(game, /updateBuilderModels\(builderDecor, clock\.elapsedTime\)/);
   assert.doesNotMatch(game, /new THREE\.PlaneGeometry\(flat\?2\.4/);
 });

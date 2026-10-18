@@ -15,6 +15,7 @@ const requiredFiles = [
   'dist/builder-market.css',
   'dist/environment-builder.js',
   'dist/environment-builder.css',
+  ...['arcade.html','public/assets/arcade.css','public/images/arcade.svg','public/js/arcade-game.js','public/js/arcade-park.js','public/js/arcade-rules.js','public/js/arcade-runtime.js','public/js/arcade-builder-runtime.js'].map(file => `dist/${file}`),
   'dist/admin.html',
   'dist/admin.js',
   'dist/public/js/rad-tox-launcher.js',

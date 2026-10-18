@@ -51,9 +51,9 @@ test('builder filters duplicate and unknown attractions and permits an explicitl
 test('builder placements stay within the park while leaving unspecified attraction defaults intact',()=>{
  const input={placements:{hockey:{x:999,z:-999},billiards:{x:'2.5',z:Infinity},train:{x:0,z:0}}};
  const settings=arcadeSettings(input),attractions=arcadeAttractions(input);
- assert.deepEqual(settings.placements.hockey,{x:18,z:-11});
- assert.deepEqual(settings.placements.billiards,{x:2.5,z:9});
- assert.deepEqual(settings.placements.basketball,{x:13,z:-7});
+ assert.deepEqual(settings.placements.hockey,{x:18,z:-11,rotation:0,scale:1,color:'#8ee6ed'});
+ assert.deepEqual(settings.placements.billiards,{x:2.5,z:9,rotation:0,scale:1,color:'#b6a0ed'});
+ assert.deepEqual(settings.placements.basketball,{x:13,z:-7,rotation:0,scale:1,color:'#efa963'});
  assert.equal(attractions.find(a=>a.id==='train').x,12);
  assert.equal(attractions.find(a=>a.id==='hockey').x,18);
  assert.equal(input.placements.hockey.x,999);
@@ -208,8 +208,8 @@ test('custom coaster height and table placements change the builder scene',()=>{
  const custom=createArcadePark({coasterPeak:21,placements:{'air-hockey':{x:-3,z:4}}});
  try{
   const platform=custom.clickMeshes.find(mesh=>mesh.userData.index===3);
-  assert.equal(platform.position.x,-3);
-  assert.equal(platform.position.z,4);
+  assert.equal(platform.getWorldPosition(platform.position.clone()).x,-3);
+  assert.equal(platform.getWorldPosition(platform.position.clone()).z,4);
   const peak=Math.max(...Array.from({length:160},(_,i)=>custom.coaster.getPointAt(i/160).y));
   assert.ok(peak>=20.5);
  }finally{dispose(custom.root);}
