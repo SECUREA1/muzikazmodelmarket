@@ -338,5 +338,135 @@
     "visibility": "public",
     "source": "repository",
     "combined": true
+  },
+  {
+    "id": "hockey-arena",
+    "name": "Ice Hockey Arena",
+    "label": "Sports \u00b7 hockey",
+    "category": "Sports",
+    "game": "hockey",
+    "layout": "hockey-arena",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "description": "NHL-size 200 \u00d7 85 ft rink. Five skaters and AI goalie per team, AI fills empty spots. Solo or live multiplayer; icing, offside and referee penalties.",
+    "hockey": {
+      "mode": "exhibition",
+      "difficulty": "easy",
+      "periodSeconds": 180
+    },
+    "playUrl": "hockey.html?environment=hockey-arena&mode=multiplayer"
+  },
+  {
+    "id": "hockey-tournament",
+    "name": "Ice Hockey Tournament",
+    "label": "Sports \u00b7 tournament",
+    "category": "Sports",
+    "game": "hockey",
+    "layout": "hockey-arena",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "description": "NHL-size 200 \u00d7 85 ft rink. Five skaters and AI goalie per team, AI fills empty spots. Solo or live multiplayer; icing, offside and referee penalties.",
+    "hockey": {
+      "mode": "tournament",
+      "difficulty": "easy",
+      "periodSeconds": 180
+    },
+    "playUrl": "hockey.html?environment=hockey-tournament&mode=multiplayer"
+  },
+  {
+    "id": "hockey-cup-normal",
+    "name": "Ice Hockey \u00b7 Silver Club Cup",
+    "label": "Sports \u00b7 tiered hockey cup",
+    "category": "Sports",
+    "game": "hockey",
+    "layout": "hockey-arena",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "description": "NHL-size 200 \u00d7 85 ft rink. Five skaters and AI goalie per team, AI fills empty spots. Solo or live multiplayer; icing, offside and referee penalties. Silver Club Cup difficulty tier. Lower and upper spectator bowls, team benches and enclosed penalty boxes.",
+    "hockey": {
+      "mode": "tournament",
+      "difficulty": "normal",
+      "periodSeconds": 180
+    },
+    "playUrl": "hockey.html?environment=hockey-cup-normal&mode=multiplayer"
+  },
+  {
+    "id": "hockey-cup-pro",
+    "name": "Ice Hockey \u00b7 Gold Pro Cup",
+    "label": "Sports \u00b7 tiered hockey cup",
+    "category": "Sports",
+    "game": "hockey",
+    "layout": "hockey-arena",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "description": "NHL-size 200 \u00d7 85 ft rink. Five skaters and AI goalie per team, AI fills empty spots. Solo or live multiplayer; icing, offside and referee penalties. Gold Pro Cup difficulty tier. Lower and upper spectator bowls, team benches and enclosed penalty boxes.",
+    "hockey": {
+      "mode": "tournament",
+      "difficulty": "pro",
+      "periodSeconds": 180
+    },
+    "playUrl": "hockey.html?environment=hockey-cup-pro&mode=multiplayer"
+  },
+  {
+    "id": "hockey-cup-elite",
+    "name": "Ice Hockey \u00b7 Platinum Elite Cup",
+    "label": "Sports \u00b7 tiered hockey cup",
+    "category": "Sports",
+    "game": "hockey",
+    "layout": "hockey-arena",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "description": "NHL-size 200 \u00d7 85 ft rink. Five skaters and AI goalie per team, AI fills empty spots. Solo or live multiplayer; icing, offside and referee penalties. Platinum Elite Cup difficulty tier. Lower and upper spectator bowls, team benches and enclosed penalty boxes.",
+    "hockey": {
+      "mode": "tournament",
+      "difficulty": "elite",
+      "periodSeconds": 180
+    },
+    "playUrl": "hockey.html?environment=hockey-cup-elite&mode=multiplayer"
   }
 ]

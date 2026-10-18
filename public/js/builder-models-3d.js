@@ -1,3 +1,4 @@
+import {createHockeyItem} from './hockey-models.js';
 import * as THREE from '../vendor/three/three.module.min.js';
 
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
@@ -173,6 +174,7 @@ function playableRoom(id) {
 }
 
 export function createBuilderModel(id) {
+  if(id.startsWith('hockey-')){const root=createHockeyItem(id);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
   let root;
   if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
   else if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);

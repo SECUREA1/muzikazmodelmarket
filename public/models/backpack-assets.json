@@ -1533,6 +1533,19 @@
       "builderCategory": "creatures",
       "buildAssetId": "sky-ray",
       "description": "Sky Ray from the Environment Builder, ready to drop into the running game."
+    },
+    {
+      "id": "builder-land-hockey-arena",
+      "name": "Ice Hockey Arena",
+      "owner": "MUZIKAZ",
+      "type": "lands",
+      "builderLayoutId": "hockey-arena",
+      "builderUrl": "/environment-builder.html?layout=hockey-arena",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "format": "builder-layout",
+      "visibility": "public",
+      "description": "Regulation ice hockey with AI players and referees. Customize rules, jerseys and tournament format.",
+      "image": "/public/images/hockey.svg"
     }
   ]
 }

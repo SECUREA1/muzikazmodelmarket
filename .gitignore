@@ -5,3 +5,6 @@ dist/
 
 # Generated from data/land-worlds.json by npm run build:land-data.
 /data/land-worlds.sqlite
+
+# Local scratch files and runtime fixtures.
+/work/

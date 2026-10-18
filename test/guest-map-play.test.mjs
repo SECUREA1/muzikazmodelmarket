@@ -26,5 +26,16 @@ test('guest passes publish solo and multiplayer maps and join shared gameplay wi
  const joined2=await call('/api/rooms/guest-map/gameplay',headers2,{action:'join',requestId:'second-join'});assert.equal(joined2.status,200);assert.equal(Object.keys(joined2.body.data.players).length,2);
  assert.equal((await call('/api/custom-maps',headers2,{scene})).status,409,'guest cannot overwrite another creator');
  const solo=await call('/api/custom-maps',headers,{scene:{...scene,id:'guest-solo',gameplay:{multiplayer:false}}});assert.equal(solo.status,201);assert.equal(solo.body.data.multiplayer,false);assert.match(solo.body.data.playUrl,/mode=solo/);
+ const hockey=await call('/api/custom-maps',headers,{scene:{id:'guest-hockey',name:'Guest Hockey',layout:'hockey-arena',objects:[],gameplay:{multiplayer:true,hockey:{mode:'tournament',difficulty:'normal',periodSeconds:60,icing:false}}}});
+ assert.equal(hockey.status,201);assert.match(hockey.body.data.playUrl,/^hockey.html\?/);assert.equal(hockey.body.data.builderScene.gameplay.hockey.difficulty,'normal');
+ assert.equal((await call('/api/rooms/guest-hockey/hockey',{cookie},{action:'join'})).status,401,'hockey requires CSRF proof');
+ const hockeyJoin=await call('/api/rooms/guest-hockey/hockey',headers,{action:'join'});assert.equal(hockeyJoin.status,200);assert.equal(hockeyJoin.body.data.state.players.length,12);assert.equal(hockeyJoin.body.data.state.config.mode,'tournament');assert.equal(hockeyJoin.body.data.state.config.icing,false);
+ const hockeyOther=await call('/api/rooms/guest-hockey/hockey',headers2,{action:'join'});assert.equal(hockeyOther.status,200);assert.equal(hockeyOther.body.data.state.players.filter(p=>p.human).length,2);assert.notEqual(hockeyJoin.body.data.selfId,hockeyOther.body.data.selfId);
+ const hockeyInput=await call('/api/rooms/guest-hockey/hockey',headers,{action:'input',input:{x:1000,z:1000},score:[99,0],puck:{x:3000}});assert.deepEqual(hockeyInput.body.data.state.score,[0,0]);assert.equal(hockeyInput.body.data.state.players.find(p=>p.human===hockeyInput.body.data.selfId).input.x,1);
+ assert.equal((await call('/api/rooms/guest-map/hockey',headers,{action:'join'})).status,404,'ordinary maps cannot start hockey');
+ const third=await call('/api/access/guest',{},{}),cookie3=third.headers['set-cookie'].split(';')[0],session3=await call('/api/market/session',{cookie:cookie3}),headers3={cookie:cookie3,'x-csrf-token':session3.body.data.csrfToken};
+ const watching=await call('/api/rooms/guest-hockey/hockey',headers3,{action:'spectate'});assert.equal(watching.status,200);assert.equal(watching.body.data.role,'spectator');assert.equal(watching.body.data.state.players.filter(p=>p.human).length,2);
+ assert.equal((await call('/api/rooms/guest-hockey/hockey',headers3,{action:'input',input:{x:1}})).status,403);assert.equal((await call('/api/rooms/guest-hockey/hockey',headers3,{action:'rematch'})).status,403);
+ const list=await call('/api/environments');assert.equal(list.body.data.find(e=>e.id==='guest-hockey').playerCount,2);assert.ok(list.body.data.some(e=>e.id==='hockey-tournament'));assert.equal(list.body.data.find(e=>e.id==='guest-hockey').spectatorCount,1);
  }finally{for(const key of Object.keys(process.env))if(!(key in previous))delete process.env[key];Object.assign(process.env,previous);await rm(dir,{recursive:true,force:true});}
 });
