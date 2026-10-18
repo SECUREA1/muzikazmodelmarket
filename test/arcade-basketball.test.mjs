@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBasketballMatch} from '../public/js/basketball-rules.js';
+import {createBasketballMatch} from '../public/js/arcade-basketball-rules.js';
 import {ArcadeRooms} from '../arcade-rooms.mjs';
 const advance=(match,seconds)=>{for(let t=0;t<seconds;t+=.05)match.step(.05);};
 test('full basketball supports team movement, passing, shooting and 2/3-point scores',()=>{const match=createBasketballMatch({teamSize:3,aiFill:false,periodSeconds:30});assert.equal(match.snapshot().basketball.players.length,6);advance(match,1);const before=match.snapshot().basketball.players[0];match.input({moveY:-1},0);advance(match,1.1);const after=match.snapshot().basketball.players[0];assert.ok(after.y<before.y);match.input({moveY:0,aimX:220,aimY:270},0);assert.equal(match.action(0,'pass'),true);const receiver=match.snapshot().basketball.owner;assert.notEqual(receiver,0);assert.equal(match.action(receiver),true);advance(match,1);assert.equal(match.snapshot().attempts,1);assert.equal(match.snapshot().shot,null);assert.ok(match.snapshot().basketball.owner!==null);assert.ok(match.snapshot().basketball.teamScore.every(Number.isFinite));});

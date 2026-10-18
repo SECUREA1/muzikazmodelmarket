@@ -1,4 +1,4 @@
-import {createBasketballMatch} from './basketball-rules.js';
+import {createBasketballMatch} from './arcade-basketball-rules.js';
 import {arcadePointer,arcadePhysicsSteps,basketballPosition,basketballRelease} from './arcade-runtime.js';
 export function createArcadeMatch(i,gameConfig={roundSeconds:45,difficulty:'easy'}) {
  if(i===2&&gameConfig.basketballMode!=='shooting')return createBasketballMatch(gameConfig);
