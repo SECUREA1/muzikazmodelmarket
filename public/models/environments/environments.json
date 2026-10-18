@@ -1,5 +1,34 @@
 [
   {
+    "id": "basketball-arena",
+    "name": "MUZIKAZ Basketball Arena",
+    "label": "Live basketball stadium",
+    "category": "Sports",
+    "levelOrder": 0,
+    "playable": true,
+    "multiplayer": true,
+    "publicDestination": true,
+    "basketball": true,
+    "description": "Free public basketball: a regulation 94 × 50 foot hardwood court, two 10 foot baskets, live animated scoreboard and shared matches in a professional indoor stadium. Join a team, wear your jersey and play together.",
+    "proceduralLand": true,
+    "builderScene": {
+      "layout": "basketball-stadium",
+      "mapSize": 62,
+      "objects": [],
+      "gameplay": { "multiplayer": true, "friendlyFire": false }
+    },
+    "spawn": { "x": 0, "y": 0.02, "z": 7, "rotationY": 0 },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 62,
+    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository",
+    "roomId": "basketball-arena",
+    "playUrl": "model-explorer.html?environment=basketball-arena&house=basketball-arena&autoplay=1"
+  },
+  {
     "id": "muzikaz-main",
     "name": "MUZIKAZ Main Floor",
     "label": "Interior level",

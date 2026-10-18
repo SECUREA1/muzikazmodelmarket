@@ -2,11 +2,14 @@ import {applyBuilderBaseTransform} from './builder-base.js';
 import {addFiringRangeDressing} from './layout-firing-range.js';
 import {finishLayoutArchitecture} from './layout-details.js';
 import {layoutHeight,createLayoutTerrain,createLayoutMaterial} from './layout-terrain.js';
+import {isBasketballEnvironment} from '../basketball-rules.js';
 import {createServerStreets} from './server-streets.js';
+import {createBasketballStadium} from '../basketball-stadium.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
 export function createBuilderLand(environment) {
     const built = environment.builderScene || {};
     const layout = built.layout || environment.layout || 'grand-floor';
+    if (isBasketballEnvironment(environment)) return createBasketballStadium(THREE, environment);
     const meta = built.layoutMeta || environment.layoutMeta || {};
     const heightAt=(x,z)=>layoutHeight(layout,x,z);
     const geometry=createLayoutTerrain(layout,built.mapSize,Number(meta.color)||0x315b32);

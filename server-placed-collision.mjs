@@ -1,3 +1,4 @@
+import {isBasketball} from './public/js/basketball.js';
 import {createSolidPaint} from './public/js/solid-paint.js';
 import * as THREE from './public/vendor/three/three.module.min.js';
 import {createBuildingBlock,buildingMaterial} from './public/js/building-materials.js';
@@ -18,7 +19,7 @@ export function placedCollisionWorld(actors={},objects={}){
   add(createBuildingBlock(THREE,object.materialId),vector(object.position),vector(object.rotation),vector(object.scale),false,object.id);
  }
  for(const actor of Object.values(actors)){
-  if(!actor.spawned||actor.active===false||actor.holderId||actor.loot)continue;
+  if(!actor.spawned||actor.active===false||actor.holderId||actor.loot||isBasketball(actor))continue;
   const asset=actor.asset||{},settings=asset.configuration||{};let model;
   if(asset.renderKind==='paint-stroke')model=createSolidPaint(THREE,asset);
   else if(asset.buildAssetId)model=createBuilderModel(asset.buildAssetId);

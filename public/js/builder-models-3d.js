@@ -8,6 +8,8 @@ import {createEnterableBuilding} from './enterable-building-models.js';
 import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {createInteractiveDevice} from './interactive-device-models.js';
 import * as THREE from '../vendor/three/three.module.min.js';
+import {createBasketballHoop} from './basketball-stadium.js';
+import {createBasketballJersey} from './basketball-jerseys.js';
 
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
@@ -20,6 +22,10 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   'estate-yard':['Estate Yard','Open lawn with paths, planting and a wide entrance.',[24,1.1,22]],
   'drive-in-garage':['Drive-in Garage','Double garage with a wide open vehicle bay and work area.',[14,4,12]],
   'open-office':['Open Office','Enterable office with workstations and a meeting room.',[20,3.6,16]],
+  basketball: ['Basketball', 'Free regulation size ball for tossing, catching and scoring.', [.24,.24,.24]],
+  'basketball-hoop': ['Basketball Hoop & Net', 'Regulation 3.05 metre rim, woven white net, glass backboard and padded support.', [1.873,3.991,2.777]],
+  'basketball-jersey-home': ['Home Basketball Jersey', 'Free sleeveless teal MUZIKAZ team uniform attached to your avatar torso.', [.72,.73,.45]],
+  'basketball-jersey-away': ['Away Basketball Jersey', 'Free sleeveless coral MUZIKAZ team uniform attached to your avatar torso.', [.72,.73,.45]],
   'grand-floor': ['Grand Build Floor', 'A playable foundation tile that expands the walkable world directly from the Backpack.', [8, .24, 8]],
   'open-studio': ['Open Studio', 'An open-sided playable studio room with a floor, feature wall and neon columns.', [6, 2.8, 5]],
   'connected-suite': ['Connected Suite', 'A playable connected room with two doorways and a raised floor.', [6, 2.8, 5]],
@@ -253,6 +259,9 @@ export function createBuilderModel(id) {
   else if(ENTERABLE_BUILDINGS[id])return finishGameItem(THREE,createEnterableBuilding(THREE,id));
   else if(INTERACTIVE_DEVICES[id])return createInteractiveDevice(THREE,id);
   else if(['estate-house','estate-yard','drive-in-garage','open-office'].includes(id))root=estateModule(id);
+  else if(id==='basketball'){root=new THREE.Group();root.add(mesh(new THREE.SphereGeometry(.12,24,16),material(0xd96b20,.9),[0,.12,0]));for(const rotation of [[0,0,0],[Math.PI/2,0,0],[0,Math.PI/2,0]])root.add(mesh(new THREE.TorusGeometry(.1205,.003,6,48),material(0x24180f,.9),[0,.12,0],rotation));}
+  else if(id==='basketball-hoop')root=createBasketballHoop(THREE);
+  else if(id==='basketball-jersey-home'||id==='basketball-jersey-away')root=createBasketballJersey(THREE,id.endsWith('home')?'home':'away');
   else if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
   else if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);
   else if(GAMEPLAY_ITEMS[id]) return gameplayItem(id);

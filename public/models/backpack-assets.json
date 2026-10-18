@@ -1871,7 +1871,7 @@
     },
     {
       "id": "backpack-courtyard-cafe",
-      "name": "Courtyard Café",
+      "name": "Courtyard Caf\u00e9",
       "owner": "MUZIKAZ",
       "type": "props",
       "buildAssetId": "courtyard-cafe",
@@ -2344,6 +2344,89 @@
         "behavior": "interact",
         "prompt": "Play Pixel Maze Quest"
       }
+    },
+    {
+      "id": "basketball",
+      "name": "Basketball",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball",
+      "builderCategory": "prop",
+      "behavior": "pickup",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball.svg",
+      "description": "Free regulation basketball. Catch nearby with E, toss with T, or play a full match at MUZIKAZ Arena."
+    },
+    {
+      "id": "basketball-hoop",
+      "name": "Basketball Hoop & Net",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-hoop",
+      "builderCategory": "prop",
+      "format": "procedural-3d",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-hoop.svg",
+      "description": "Free regulation basketball hoop with a glass backboard, orange rim, white woven net and padded support. Place it in game and shoot with your basketball."
+    },
+    {
+      "id": "basketball-jersey-home",
+      "name": "MUZIKAZ Home Basketball Jersey",
+      "owner": "MUZIKAZ",
+      "type": "wearables",
+      "buildAssetId": "basketball-jersey-home",
+      "format": "procedural-3d",
+      "basketballTeam": "home",
+      "attachment": {
+        "socket": "torso",
+        "fit": "avatar",
+        "slot": "basketball-jersey"
+      },
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-jersey-home.svg",
+      "description": "Free teal number 24 sleeveless jersey. Equips on your current avatar and joins the Home team on the basketball court."
+    },
+    {
+      "id": "basketball-jersey-away",
+      "name": "MUZIKAZ Away Basketball Jersey",
+      "owner": "MUZIKAZ",
+      "type": "wearables",
+      "buildAssetId": "basketball-jersey-away",
+      "format": "procedural-3d",
+      "basketballTeam": "away",
+      "attachment": {
+        "socket": "torso",
+        "fit": "avatar",
+        "slot": "basketball-jersey"
+      },
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-jersey-away.svg",
+      "description": "Free coral number 08 sleeveless jersey. Equips on your current avatar and joins the Away team on the basketball court."
+    },
+    {
+      "id": "basketball-arena",
+      "name": "MUZIKAZ Basketball Arena",
+      "owner": "MUZIKAZ",
+      "type": "lands",
+      "environmentId": "basketball-arena",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "Free shared basketball stadium: regulation hardwood court, two hoops, animated live scoreboard and a Start Match console. All players can enter, choose jerseys, catch, pass and shoot."
     }
   ]
 }

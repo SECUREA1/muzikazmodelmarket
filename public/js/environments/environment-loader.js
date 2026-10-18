@@ -1,4 +1,5 @@
 import {builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn} from './builder-base.js';
+import {isBasketballEnvironment} from '../basketball-rules.js';
 import {createSlimeFloor,collectSlimeFloorMeshes} from './slime-floor.js';
 import {replaceServerStreets} from './server-streets.js';
 import {createBuilderLand} from './builder-land.js';
@@ -22,8 +23,8 @@ export class EnvironmentLoader {
   }
   disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture) value.dispose(); material.dispose?.(); }
   clearFloorEffects() { this.floorSlime?.dispose(); this.floorSlime=null; }
-  refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
-  updateEffects(elapsed, reducedMotion=false) { this.floorSlime?.update(elapsed,reducedMotion); }
+  refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world&&!isBasketballEnvironment(this.activeEnvironment)?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
+  updateEffects(elapsed, reducedMotion=false) { this.floorSlime?.update(elapsed,reducedMotion); this.world?.userData.updateBasketballEffects?.(elapsed,reducedMotion); }
   unload({cancelPending=true} = {}) { if(cancelPending)this.token+=1; this.clearFloorEffects(); this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
   async loadOne(url, index, count) {
     let lastError;
@@ -77,7 +78,7 @@ export class EnvironmentLoader {
     const nextWorld = new THREE.Group(); nextWorld.name = `WORLD_${environment.id}`; const baseScale = Number(environment.scale) || 1; let spaceScale = Number(environment.spaceScale) || 1; nextWorld.userData.baseScale = baseScale; nextWorld.scale.setScalar(baseScale * spaceScale); nextWorld.rotation.set(environment.rotation?.x || 0, environment.rotation?.y || 0, environment.rotation?.z || 0);
     const nextMixers = [];
     try {
-      if (builderLand) {const land=this.createBuilderLand(environment);nextWorld.add(land);nextWorld.userData.streetHeightAt=land.userData.streetHeightAt;}
+      if (builderLand) {const land=this.createBuilderLand(environment);nextWorld.add(land);nextWorld.userData.streetHeightAt=land.userData.streetHeightAt;for(const key of ['basketball','updateBasketballScoreboard','setBasketballState','updateBasketballEffects'])if(land.userData[key])nextWorld.userData[key]=land.userData[key];}
       else if (!urls.length) throw new Error('This environment has neither a 3D model nor a playable builder land definition.');
       for (let i = 0; i < urls.length; i += 1) {
         const gltf = await this.loadOne(urls[i], i, urls.length); if (token !== this.token) { nextWorld.add(gltf.scene); this.disposeWorld(nextWorld,nextMixers); return null; }
@@ -89,7 +90,7 @@ export class EnvironmentLoader {
       const authoredSize = authoredBounds.getSize(new THREE.Vector3());
       const authoredFootprint = Math.max(authoredSize.x, authoredSize.z);
       const playableSize = Number(environment.playableSize);
-      if (playableSize > 0 && authoredFootprint > 0) {
+      if (!isBasketballEnvironment(environment) && playableSize > 0 && authoredFootprint > 0) {
         const normalization = THREE.MathUtils.clamp(playableSize / authoredFootprint, 0.01, 100);
         spaceScale *= normalization;
         nextWorld.scale.setScalar(baseScale * spaceScale);
