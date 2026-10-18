@@ -1586,7 +1586,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       const origin={x:playerRig.position.x,y:playerRig.position.y+(previewPass?1.2:1.8),z:playerRig.position.z};
       const hoop=basketballHoopForTeam(self?.basketballTeam||'home'),target={...hoop,y:hoop.y-.12};
       try{solution=basketballShotSolution(origin,target,camera.getWorldDirection(new THREE.Vector3()),{...options,mode:previewPass?'manual':options.mode});}catch{}
-      if(solution){const predict=arena?predictBasketballShotPath:predictBasketballTrajectory,points=predict(solution,{duration:Math.min(6,Math.max(3,(solution.flightTime||2)+1)),step:1/30,floor:0}).slice(0,256),attribute=flightGeometry.getAttribute('position');points.forEach((point,index)=>attribute.setXYZ(index,point.x,point.y+.12,point.z));attribute.needsUpdate=true;flightGeometry.setDrawRange(0,points.length);flightPreview.material.color.setHex(solution.reachable===false?0xff8866:0xffdc94);}
+      if(solution){const predict=arena?predictBasketballShotPath:predictBasketballTrajectory,points=predict(solution,{duration:Math.min(6,Math.max(3,(solution.flightTime||2)+1)),step:1/30,floor:0}).slice(0,256),attribute=flightGeometry.getAttribute('position');points.forEach((point,index)=>attribute.setXYZ(index,point.x,point.y+.12,point.z));attribute.needsUpdate=true;flightGeometry.setDrawRange(0,points.length);flightPreview.material.color.setHex(solution.aimAligned===false||solution.reachable===false?0xff8866:0xffdc94);}
     }
     flightPreview.visible=Boolean(held&&!spectator&&solution);
     basketballAim.render({enabled:arena||held,held,spectator,solution});

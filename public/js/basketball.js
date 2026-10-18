@@ -6,6 +6,7 @@ export function basketballJerseyTeam(actor){
   return ['home','away'].includes(actor?.asset?.basketballTeam)?actor.asset.basketballTeam:null;
 }
 export const BASKETBALL_LAUNCH_DEFAULTS=Object.freeze({power:.7,angle:55,mode:'assisted'});
+export const BASKETBALL_ASSIST_TOLERANCE=.13;
 const launchError=message=>{throw Object.assign(new Error(message),{statusCode:422});};
 export function basketballLaunchOptions(options={}){
   if(!options||typeof options!=='object'||Array.isArray(options))launchError('Choose valid basketball launch controls.');
@@ -19,25 +20,28 @@ function flatDirection(direction={x:0,z:-1}){
   if(Array.isArray(direction)&&(direction.length!==3||!direction.every(Number.isFinite))||!Array.isArray(direction)&&direction?.y!==undefined&&!Number.isFinite(direction.y))launchError('Choose a valid basketball aim direction.');
   const x=Array.isArray(direction)?direction[0]:direction?.x,z=Array.isArray(direction)?direction[2]:direction?.z;
   if(!Number.isFinite(x)||!Number.isFinite(z))launchError('Choose a valid basketball aim direction.');
-  const length=Math.hypot(x,z);return length>.001?{x:x/length,z:z/length}:{x:0,z:-1};
+  const length=Math.hypot(x,z);return length>.001?{x:x/length,z:z/length,hasHeading:true}:{x:0,z:-1,hasHeading:false};
 }
-/** Ball-bottom origin and target; 70% assisted power calibrates the chosen arc. */
+/** Ball-bottom origin and target; assist requires lateral aim error <= 13% of forward distance. */
 export function basketballShotSolution(origin,target,direction={x:0,z:-1},options={}){
   const controls=basketballLaunchOptions(options);
   if(!origin||!['x','y','z'].every(axis=>Number.isFinite(origin[axis])))launchError('Choose a valid basketball release position.');
   const angle=controls.angle*Math.PI/180,cos=Math.cos(angle),sin=Math.sin(angle);
-  let aim=flatDirection(direction),speed=4+14*controls.power,calibratedSpeed=speed,flightTime=null,reachable=true;
+  let aim=flatDirection(direction),speed=4+14*controls.power,calibratedSpeed=speed,flightTime=null,reachable=true,aimAligned=null,assistApplied=false,aimError=null;
   if(controls.mode==='assisted'){
     if(!target||!['x','y','z'].every(axis=>Number.isFinite(target[axis])))launchError('A basketball hoop is required for assisted aim.');
     const dx=target.x-origin.x,dz=target.z-origin.z,range=Math.hypot(dx,dz),height=target.y-origin.y,denominator=2*cos*cos*(range*Math.tan(angle)-height);
+    const forward=dx*aim.x+dz*aim.z,lateral=Math.abs(dx*aim.z-dz*aim.x);
+    aimError=aim.hasHeading&&forward>0?lateral/forward:null;
+    aimAligned=aim.hasHeading&&forward>0&&lateral<=forward*BASKETBALL_ASSIST_TOLERANCE+1e-10;
     if(range>.05&&denominator>.001){
-      aim={x:dx/range,z:dz/range};calibratedSpeed=Math.sqrt(9.8*range*range/denominator);
+      calibratedSpeed=Math.sqrt(9.8*range*range/denominator);
       reachable=Number.isFinite(calibratedSpeed)&&calibratedSpeed<=32&&Math.tan(angle)>2*height/range;
-      if(calibratedSpeed<=32){speed=calibratedSpeed*(.5+.5*controls.power/.7);flightTime=range/(speed*cos);}
+      if(aimAligned&&calibratedSpeed<=32){aim={x:dx/range,z:dz/range};assistApplied=true;speed=calibratedSpeed*(.5+.5*controls.power/.7);flightTime=range/(speed*cos);}
     }else reachable=false;
   }
   const velocity={x:aim.x*speed*cos,y:speed*sin,z:aim.z*speed*cos};
-  return {position:{...origin},velocity,flightTime,calibratedSpeed,speed,reachable,...controls};
+  return {position:{...origin},velocity,flightTime,calibratedSpeed,speed,reachable,...controls,aimAligned,assistApplied,aimError};
 }
 /** Samples the same gravity and bounce integrator used by the server. */
 export function predictBasketballTrajectory(solution,{duration=3,step=1/30,floor=0}={}){

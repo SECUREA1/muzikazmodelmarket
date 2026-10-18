@@ -48,7 +48,7 @@ for (const angle of [20, 55, 75]) {
     for (const distance of [8, 14, 20]) {
       const origin = {x: 1.25, y: 1.8, z: 3};
       const target = {x: origin.x + distance * .6, y: 3.05 - .12, z: origin.z - distance * .8};
-      const solution = basketballShotSolution(origin, target, {x: 0, y: 0, z: -1}, {power: .7, angle, mode: 'assisted'});
+      const solution = basketballShotSolution(origin, target, {x: .6, y: 0, z: -.8}, {power: .7, angle, mode: 'assisted'});
       const crossing = crossingAtTarget(solution, target);
       near(crossing.x, target.x, .001);
       near(crossing.y, target.y, .001);

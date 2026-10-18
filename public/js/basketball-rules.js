@@ -170,8 +170,8 @@ export function shootBasketball(sim,player,now,options={}) {
  const span=Math.hypot(target.x-origin.x,target.z-origin.z);if(span>29||Math.abs(player.position.x)>BASKETBALL_COURT.width/2||Math.abs(player.position.z)>BASKETBALL_COURT.length/2)error('Step onto the court before shooting.');
  const direction=options.direction||{x:-Math.sin(player.yaw||0),y:0,z:-Math.cos(player.yaw||0)};
  const solution=basketballShotSolution(origin,{...target,y:target.y-BASKETBALL_COURT.ballRadius},direction,options);
- ball.position=solution.position;ball.ballFloor=0;ball.ballVelocity=solution.velocity;ball.ballLaunch={power:solution.power,angle:solution.angle,mode:solution.mode,reachable:solution.reachable};ball.holderId=null;delete ball.ballCatchSegment;player.heldId=null;
- registerBasketballRelease(sim,ball,player,now);return ball;
+ ball.position=solution.position;ball.ballFloor=0;ball.ballVelocity=solution.velocity;ball.ballLaunch={power:solution.power,angle:solution.angle,mode:solution.mode,reachable:solution.reachable,aimAligned:solution.aimAligned,assistApplied:solution.assistApplied,aimError:solution.aimError};ball.holderId=null;delete ball.ballCatchSegment;player.heldId=null;
+ registerBasketballRelease(sim,ball,player,now);ball.basketballShot.aimMiss=solution.mode==='assisted'&&!solution.aimAligned;return ball;
 }
 
 export function basketballShotPoints(origin,hoop) {
@@ -181,7 +181,7 @@ export function basketballShotPoints(origin,hoop) {
 
 function scoreCrossing(sim,ball,previous,next,now) {
  const match=sim.basketball,shot=ball.basketballShot;
- if(!ball.basketballMatchBall||!shot||shot.scored||match.state!=='live')return false;
+ if(!ball.basketballMatchBall||!shot||shot.scored||shot.aimMiss||match.state!=='live')return false;
  const from=previous.y+BASKETBALL_COURT.ballRadius,to=next.y+BASKETBALL_COURT.ballRadius;
  if(from<=BASKETBALL_COURT.rimHeight||to>BASKETBALL_COURT.rimHeight||to>=from)return false;
  const t=(from-BASKETBALL_COURT.rimHeight)/(from-to),x=previous.x+(next.x-previous.x)*t,z=previous.z+(next.z-previous.z)*t;

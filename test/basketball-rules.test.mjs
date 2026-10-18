@@ -330,6 +330,7 @@ for (const [team, z, points, step] of [
     f.start();
     const shooter = f.players.find(player => player.basketballTeam === team);
     f.hold(shooter, {x: 0, y: 0, z});
+    shooter.yaw = team === 'away' ? Math.PI : 0;
     const ball = shootBasketball(f.sim, shooter, f.now);
     const shot = ball.basketballShot;
     assert.equal(shooter.heldId, null);
