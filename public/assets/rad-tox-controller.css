@@ -10,3 +10,8 @@ body:has(.muzikaz-controller) #camera-toggle{bottom:240px}
 #game-lobby summary{cursor:pointer;color:#caff69;font-weight:700;padding:3px;list-style-position:inside}#game-lobby:not([open]){width:auto;max-width:calc(100vw - 20px);padding:8px 12px;overflow:visible;max-height:none}
 body:has(#rink):has(.muzikaz-controller){padding-bottom:220px}body:has(.muzikaz-controller) #rink{height:max(260px,calc(100dvh - 370px))}#match-controls{padding:8px 12px;margin:0 12px 8px;border:1px solid #486a2d;border-radius:8px;background:#102009}#match-controls summary{cursor:pointer;color:#caff69;font-size:12px}#match-controls footer{padding:10px 0}#match-controls button,#match-controls select{border-color:#9cff00;color:#efffd7;background:#102b12}
 @media(max-width:760px),(pointer:coarse){body:has(.muzikaz-controller) #rink{height:max(220px,calc(100dvh - 420px))}#game-lobby:not([open]){bottom:205px}.muzikaz-controller:has(.rad-controller-button:nth-child(8)){grid-template-columns:88px minmax(0,1fr) 88px}}
+/* Park attraction cards must remain clickable above the dual sticks. */
+body:not(.playing):not(.riding):has(.muzikaz-controller) #attractions{bottom:195px}
+body:not(.playing):not(.riding):has(.muzikaz-controller) .map-tip{bottom:335px}
+body:not(.playing):not(.riding):has(.muzikaz-controller) #walkhud{bottom:195px}
+@media(max-width:760px),(pointer:coarse){body:not(.playing):not(.riding):has(.muzikaz-controller) #attractions{bottom:165px}body:not(.playing):not(.riding):has(.muzikaz-controller) .map-tip{bottom:285px}body:not(.playing):not(.riding):has(.muzikaz-controller) #walkhud{bottom:280px}}

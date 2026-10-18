@@ -1,5 +1,7 @@
+import {createBasketballMatch} from './basketball-rules.js';
 import {arcadePointer,arcadePhysicsSteps,basketballPosition,basketballRelease} from './arcade-runtime.js';
 export function createArcadeMatch(i,gameConfig={roundSeconds:45,difficulty:'easy'}) {
+ if(i===2&&gameConfig.basketballMode!=='shooting')return createBasketballMatch(gameConfig);
  let game,score,remaining,gameElapsed,ended,attempts,shot,pointer,puck,balls,targets,feedback='Ready. Make it count.',opponent=null;
  const pressed=new Set(),beep=()=>{};
  function award(n,msg){score+=n;feedback=msg;}function finish(){ended=true;feedback='Round complete! '+score+' points.';}

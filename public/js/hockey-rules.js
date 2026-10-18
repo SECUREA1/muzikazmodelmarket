@@ -5,7 +5,7 @@ export const RINK=Object.freeze({length:60.96,width:25.908,corner:8.534,goalX:27
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0)),dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 export function hockeySettings(raw={}){
  const c=raw&&typeof raw==='object'?raw:{};
- return {difficulty:HOCKEY_TIERS[c.difficulty]?c.difficulty:'easy',periodSeconds:clamp(c.periodSeconds||180,30,1200),icing:c.icing!==false,offside:c.offside!==false,penalties:c.penalties!==false,
+ return {aiFill:c.aiFill!==false,difficulty:HOCKEY_TIERS[c.difficulty]?c.difficulty:'easy',periodSeconds:clamp(c.periodSeconds||180,30,1200),icing:c.icing!==false,offside:c.offside!==false,penalties:c.penalties!==false,
   icingMode:c.icingMode==='automatic'?'automatic':'hybrid',offsideMode:c.offsideMode==='immediate'?'immediate':'delayed',overtime:c.mode==='tournament'||c.overtime==='playoff'?'playoff':'regular',
   mode:c.mode==='tournament'?'tournament':'exhibition',homeColor:/^#[\da-f]{6}$/i.test(c.homeColor)?c.homeColor:'#237ad4',awayColor:/^#[\da-f]{6}$/i.test(c.awayColor)?c.awayColor:'#dc3c56'};
 }
@@ -86,6 +86,7 @@ export function stepHockey(s,delta){
   const goalie=p.goalie&&!s.goaliesPulled[p.team],d=attackDirection(s,p.team),controlled=p.human&&!p.ejected&&p.misconduct<=0&&!p.queuedReplacement;let i=controlled?p.input:{},tx=p.x,tz=p.z,shoot=i.shoot,pass=i.pass;
   p.shiftTime+=dt;p.stamina=clamp(p.stamina-(Math.hypot(p.vx,p.vz)>2?.0018:.0005)*dt,.5,1);
   if(!controlled){
+   if(!goalie&&!s.config.aiFill){p.vx=p.vz=0;p.animation='idle';continue;}
    if(goalie){tx=-d*(RINK.goalX-.7);tz=clamp(puck.z*.4,-.85,.85);}
    else if(owner===p){tx=d*24;tz=Math.sin(s.elapsed+p.slot)*2;shoot=p.x*d>16;pass=!shoot&&Math.sin(s.elapsed*1.7+p.slot)>.995;}
    else if(chasers[p.team]===p){tx=puck.x;tz=puck.z;}

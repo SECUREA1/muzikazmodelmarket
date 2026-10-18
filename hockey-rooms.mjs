@@ -11,9 +11,10 @@ export class HockeyRooms {
  }
  command(id,environment,identity,command={}){
   const actor='account:'+identity.accountId;let room=this.rooms.get(id);
-  if(!room){if(!['join','spectate'].includes(command.action))throw Object.assign(Error('Join the hockey match first.'),{statusCode:409});room={state:createHockey({...environment.builderScene?.gameplay?.hockey||environment.hockey,...(command.action==='join'&&command.settings?{difficulty:command.settings.difficulty,mode:command.settings.mode}:{})}),at:this.now(),seen:new Map(),sequence:0,started:false};this.rooms.set(id,room);}
+  if(!room){if(!['join','spectate'].includes(command.action))throw Object.assign(Error('Join the hockey match first.'),{statusCode:409});room={state:createHockey({...environment.builderScene?.gameplay?.hockey||environment.hockey,...(command.action==='join'&&command.settings?{difficulty:command.settings.difficulty,mode:command.settings.mode,periodSeconds:command.settings.periodSeconds,aiFill:command.settings.aiFill}:{})}),at:this.now(),seen:new Map(),sequence:0,started:false};this.rooms.set(id,room);}
   const s=room.state;
   if(command.action==='join'){
+   if(!room.started&&command.settings){const spectators=s.spectators;Object.assign(s,createHockey({...s.config,...command.settings}));s.spectators=spectators;}
    joinHockey(s,actor,identity.username,command.slot||null);room.started=true;s.spectators=s.spectators.filter(p=>p.id!==actor);room.seen.set(actor,this.now());
   }else if(command.action==='spectate'){
    if(!s.spectators.some(p=>p.id===actor)&&s.spectators.length>=64)throw Object.assign(Error('All spectator places are occupied.'),{statusCode:409});

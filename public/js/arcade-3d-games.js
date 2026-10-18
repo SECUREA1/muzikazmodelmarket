@@ -222,6 +222,8 @@ function basketballGame(root, h) {
   h.ring('COURT_FREE_THROW_CIRCLE', 0, .674, -1.85, .7, .016, '#f7e4be');
   const hoop = h.equipment('basketball-hoop', 'LIVE_BASKETBALL_HOOP');
   hoop.position.set(0, .62, -3.3); hoop.scale.setScalar(1.2);
+  const oppositeHoop=h.equipment('basketball-hoop','OPPOSITE_BASKETBALL_HOOP');oppositeHoop.position.set(0,.62,3.3);oppositeHoop.rotation.y=Math.PI;oppositeHoop.scale.setScalar(1.2);oppositeHoop.visible=false;
+  const teamPlayers=Array.from({length:10},(_,i)=>avatar(h,root,'TEAM_BASKETBALL_'+i,i<5?'#6ac9ef':'#ef897a'));teamPlayers.forEach(p=>p.root.visible=false);
   const ball = h.equipment('basketball-ball', 'LIVE_BASKETBALL');
   ball.scale.setScalar(.72);
   // Builder equipment is floor-anchored. Center this reusable ball before spin
@@ -234,6 +236,9 @@ function basketballGame(root, h) {
   h.linePoints(alignment, a, b);
   const net = hoop.getObjectByName('ARCADE_EQUIPMENT_BASKETBALL_HOOP')?.children.find(node => node.isMesh && node.geometry.type === 'CylinderGeometry');
   return state => {
+    const full=state.basketball;oppositeHoop.visible=!!full;
+    if(full){player.root.visible=false;alignment.visible=false;teamPlayers.forEach((rig,i)=>{const p=full.players.find(p=>p.team===Math.floor(i/5)&&p.id%full.config.teamSize===i%5);rig.root.visible=!!p;if(!p)return;rig.root.position.set((p.x-400)*.008,.62,(p.y-230)*.018);rig.root.rotation.y=Math.atan2(p.vx,p.vy);const hidden=state.cameraMode==='first-person'&&p.id===full.selfSlot;rig.root.traverse(node=>{if(node.isMesh)node.visible=!hidden||/GLOVE/.test(node.name);});rig.left.position.y=rig.right.position.y=1.1+Math.sin(finite(state.gameElapsed)*10)*.08;});ball.position.set((full.ball.x-400)*.008,.62+full.ball.height,(full.ball.y-230)*.018);ball.rotation.y=finite(state.gameElapsed)*4;return;}
+    player.root.visible=true;teamPlayers.forEach(p=>p.root.visible=false);
     const elapsed = finite(state.gameElapsed), shot = state.shot;
     const movingX = basketballPosition(elapsed), startX = (finite(shot?.x, movingX) - 400) * .008;
     const p = shot ? clamp(finite(shot.p), 0, 1) : 0;
@@ -376,6 +381,7 @@ export function arcadeGameCameraPose(game, mode = 'first-person', {aspect = 1.6,
   }
   const eye = [...definition.eye], target = [...definition.target], fov = 76;
   if (id === 'basketball') {
+    if(state.basketball){const full=state.basketball,p=full.players[full.selfSlot??0],direction=p?.team===1?1:-1,x=(finite(p?.x,400)-400)*.008,z=(finite(p?.y,230)-230)*.018;return {mode:'first-person',eye:[x-.25,2.15,z-direction*.32],target:[x,1.9,z+direction*5],up:[0,1,0],fov:85,width:definition.width,depth:definition.depth};}
     const movingX = finite(state.shot?.x, basketballPosition(finite(state.gameElapsed)));
     eye[0] = (movingX - 400) * .008 - .55;
   }
@@ -524,7 +530,7 @@ export function createArcadeGamePresentation({scene, park, config = {}} = {}) {
     const objects = [];
     active.root.updateWorldMatrix(true, true);
     active.root.traverse(node => {
-      if (!(node.isMesh || node.isGroup) || !/^(LIVE_|PLAYER_|AI_|RANGE_CROSSHAIR)/.test(node.name)) return;
+      if (!(node.isMesh || node.isGroup) || !/^(LIVE_|PLAYER_|AI_|TEAM_|OPPOSITE_|RANGE_CROSSHAIR)/.test(node.name)) return;
       const world = node.getWorldPosition(new T.Vector3());
       let visible = true, ancestor = node;
       while (ancestor) {visible = visible && ancestor.visible; ancestor = ancestor.parent;}

@@ -1,6 +1,6 @@
 # Tiered ice hockey
 
-The game map list includes **Ice Hockey Arena**, the Rookie tournament, **Silver Club Cup**, **Gold Pro Cup**, and **Platinum Elite Cup**. The hockey land in the Backpack opens the playable arena. Each map supports solo play, live players, and spectators. **Customize arena** opens the hockey layout in the Environment Builder.
+The game map list contains one **Ice Hockey Arena**. Its lobby selects exhibition or tournament format, Rookie/Club/Pro/Elite difficulty, period length, solo AI, AI-only viewing, live players, and whether AI fills unclaimed skater positions (goalies stay AI). The hockey land in the Backpack opens the playable arena. Each map supports solo play, live players, and spectators. **Customize arena** opens the hockey layout in the Environment Builder.
 
 ## Difficulty and competitions
 

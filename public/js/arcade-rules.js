@@ -47,13 +47,13 @@ export function arcadeSettings(value={}){
  const placements=Object.fromEntries(ARCADE_ATTRACTIONS.slice(0,5).map(a=>{const p=c.placements?.[a.id]||{},part=c.parts?.[a.id]||{};return [a.id,{x:bounded(p.x??part.x,-18,18,a.x),z:bounded(p.z??part.z,-11,11,a.z),rotation:bounded(p.rotation??part.rotation,-180,180,0),scale:bounded(p.scale??part.scale,.5,1.75,1),color:color(p.color??part.color,a.color)}];}));
  for(const a of ARCADE_ATTRACTIONS.slice(0,5))Object.assign(parts[a.id],placements[a.id]);
  const enabled=Array.isArray(c.enabled)?[...new Set(c.enabled.filter(id=>ARCADE_ATTRACTIONS.some(a=>a.id===id)))]:ARCADE_ATTRACTIONS.map(a=>a.id);
- return {roundSeconds:bounded(c.roundSeconds,15,180,45),trainLapSeconds:bounded(c.trainLapSeconds,20,120,55),coasterLapSeconds:bounded(c.coasterLapSeconds,15,90,32),coasterPeak:bounded(c.coasterPeak,6,22,13),trainRadiusX:bounded(c.trainRadiusX,18,32,24),trainRadiusZ:bounded(c.trainRadiusZ,12,23,16),coasterWidth:bounded(c.coasterWidth,30,58,39),coasterDepth:bounded(c.coasterDepth,20,40,27),difficulty:c.difficulty==='normal'?'normal':'easy',enabled:enabled.filter(id=>parts[id].enabled),placements,parts};
+ return {basketballMode:c.basketballMode==='shooting'?'shooting':'full',teamSize:Math.round(bounded(c.teamSize,1,5,3)),periodSeconds:bounded(c.periodSeconds,15,600,60),aiFill:c.aiFill!==false,roundSeconds:bounded(c.roundSeconds,15,180,45),trainLapSeconds:bounded(c.trainLapSeconds,20,120,55),coasterLapSeconds:bounded(c.coasterLapSeconds,15,90,32),coasterPeak:bounded(c.coasterPeak,6,22,13),trainRadiusX:bounded(c.trainRadiusX,18,32,24),trainRadiusZ:bounded(c.trainRadiusZ,12,23,16),coasterWidth:bounded(c.coasterWidth,30,58,39),coasterDepth:bounded(c.coasterDepth,20,40,27),difficulty:c.difficulty==='normal'?'normal':'easy',enabled:enabled.filter(id=>parts[id].enabled),placements,parts};
 }
 export const isArcadeMap=(map={})=>map.game==='arcade'||(map.builderScene?.layout||map.layout)==='arcade-park';
 export function arcadeAttractions(config={}){const c=arcadeSettings(config);return ARCADE_ATTRACTIONS.map(a=>({...a,...c.placements[a.id],enabled:c.enabled.includes(a.id)}));}
 export function createArcadeSession(config={}){return {config:arcadeSettings(config),mode:'explore',attraction:null,ride:null,visited:[],points:0,lastRide:null};}
 export function enterArcadeAttraction(s,id){
- if(s.mode==='ride'||!s.config.enabled.includes(id))return false;const index=ARCADE_ATTRACTIONS.findIndex(a=>a.id===id);if(index<0)return false;
+ if(s.mode!=='explore'||!s.config.enabled.includes(id))return false;const index=ARCADE_ATTRACTIONS.findIndex(a=>a.id===id);if(index<0)return false;
  s.attraction=id;if(!s.visited.includes(id))s.visited.push(id);
  if(index>=5){s.mode='ride';s.ride={type:id,elapsed:0,progress:0,duration:id==='train'?s.config.trainLapSeconds:s.config.coasterLapSeconds,locked:true};}else{s.mode='game';s.ride=null;}return true;
 }

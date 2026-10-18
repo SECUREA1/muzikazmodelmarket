@@ -411,7 +411,7 @@
       "y": 1,
       "z": 0
     },
-    "description": "Basketball \u2014 join a shared round, take an available player spot, or spectate. First person and Top down views.",
+    "description": "Full-court basketball: 1\u20135 players per team, four quarters, overtime, passing, steals, rebounds and 2/3-point scoring. Solo against AI, live players with AI filling empty spots, or watch AI play. Shooting challenge also available.",
     "arcade": {
       "roundSeconds": 45,
       "trainLapSeconds": 55,
@@ -420,7 +420,11 @@
       "difficulty": "easy",
       "enabled": [
         "basketball"
-      ]
+      ],
+      "basketballMode": "full",
+      "teamSize": 3,
+      "periodSeconds": 60,
+      "aiFill": true
     },
     "playUrl": "arcade.html?environment=basketball&attraction=basketball&mode=multiplayer"
   },
@@ -516,5 +520,34 @@
       ]
     },
     "playUrl": "arcade.html?environment=billiards&attraction=billiards&mode=multiplayer"
+  },
+  {
+    "id": "firing-range",
+    "name": "Firing Range \u2014 Force Training",
+    "label": "Training \u00b7 live targets",
+    "category": "Sports",
+    "game": "firing-range",
+    "layout": "firing-range",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0.65,
+      "y": 0,
+      "z": 11.1
+    },
+    "description": "Full walkable force-training range with five firing points, live silhouette targets, free play, timed qualification and tournament courses. Play solo or join live players using the green RAD-TOX controller.",
+    "playUrl": "model-explorer.html?environment=firing-range&house=firing-range&mode=multiplayer&autoplay=1",
+    "builderScene": {
+      "layout": "firing-range",
+      "mapSize": 80,
+      "objects": [],
+      "gameplay": {
+        "multiplayer": true
+      }
+    }
   }
 ]
