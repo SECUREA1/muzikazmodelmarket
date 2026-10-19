@@ -32,6 +32,15 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
     .basketball-scored .basketball-score-strip{animation:basketball-score-flash .7s ease-out}
     @keyframes basketball-score-flash{0%{box-shadow:0 0 50px #ffd47fbd;transform:scale(1.035)}100%{box-shadow:0 12px 40px #0007;transform:scale(1)}}
     @media(max-width:600px){.basketball-hud{top:8px;width:calc(100% - 16px)}.basketball-team-score{padding:7px 9px}.basketball-team-score strong{font-size:28px}.basketball-score-strip{grid-template-columns:1fr 86px 1fr}.basketball-game-actions{gap:4px}.basketball-game-actions button{padding:6px 8px;font-size:10px}.basketball-caption{font-size:10px}}
+    .basketball-hud.basketball-hud-docked{position:relative;inset:auto;transform:none;width:100%;box-sizing:border-box;padding:6px 8px;background:#0c1b08;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;align-items:center}
+    .basketball-hud-docked .basketball-score-strip{grid-template-columns:1fr 78px 1fr;box-shadow:none;border-radius:6px}
+    .basketball-hud-docked .basketball-team-score{padding:5px 7px;gap:5px}
+    .basketball-hud-docked .basketball-team-score strong{font-size:24px}
+    .basketball-hud-docked .basketball-team-score span{font-size:9px;letter-spacing:0}
+    .basketball-hud-docked .basketball-clock{padding:3px}.basketball-hud-docked .basketball-clock b{font-size:17px}
+    .basketball-hud-docked .basketball-match-toggle{margin:0;max-width:100px;min-height:44px;font-size:11px}
+    .basketball-hud-docked .basketball-caption,.basketball-hud-docked .basketball-role{grid-column:1/-1;max-width:100%;margin:0;font-size:11px;padding:2px 4px}
+    .basketball-hud-docked.is-playing .basketball-role{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%)}
     @media(prefers-reduced-motion:reduce){.basketball-scored .basketball-score-strip{animation:none}}
   `;
   document.head.append(style);
@@ -54,7 +63,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
   stage.append(root);
   const screenBar=document.createElement('div');screenBar.className='game-screen-actions basketball-screen-actions';screenBar.hidden=true;screenBar.setAttribute('role','group');screenBar.setAttribute('aria-label','Basketball gameplay actions');
   for(const action of ['basketball-shoot','toss','catch','basketball-steal'])screenBar.append(root.querySelector(`[data-basketball-action="${action}"]`));
-  actionParent.prepend(screenBar);
+  actionParent.prepend(root,screenBar);root.classList.add('basketball-hud-docked');
   const rules = document.createElement('dialog');rules.className='basketball-rules';rules.setAttribute('aria-labelledby','basketball-rules-title');
   rules.innerHTML='<form><h2 id="basketball-rules-title">Quick match tuner</h2><p>Choose team size, human players and AI difficulty, then start. Both teams stay equal; AI fills every empty spot at tip-off.</p><button type="button" data-solo-setup>Solo vs AI</button><div class="basketball-rules-fields"><label>Players per team<select name="teamSize"><option value="1">1 vs 1</option><option value="2">2 vs 2</option><option value="3">3 vs 3</option><option value="4">4 vs 4</option><option value="5">5 vs 5</option></select></label><label>AI difficulty<select name="aiDifficulty"><option value="1">Tier 1 · Rookie</option><option value="2">Tier 2 · Amateur</option><option value="3">Tier 3 · Pro</option><option value="4">Tier 4 · All-Star</option><option value="5">Tier 5 · Legend</option></select></label><label>Home human slots<input name="homeHumans" type="number" min="0" max="5" step="1" required></label><label>Away human slots<input name="awayHumans" type="number" min="0" max="5" step="1" required></label></div><details><summary>Competition rules · timing &amp; scoring</summary><div class="basketball-rules-fields"><label>Minutes per period<input type="number" name="quarterMinutes" min="1" max="12" step="1" required></label><label>Number of periods<input type="number" name="quarters" min="1" max="4" step="1" required></label><label>Shot clock (seconds)<input type="number" name="shotClockSeconds" min="5" max="60" step="1" required></label><label>Score to win (0 = timed)<input type="number" name="scoreLimit" min="0" max="200" step="1" required></label><label>Win by points<input type="number" name="winBy" min="1" max="10" step="1" required></label></div></details><p data-roster-preview role="status" aria-live="polite"></p><p>Playing with friends? Save to lobby, let everyone join Home or Away, then start. AI wears numbered team jerseys. Late arrivals watch until the next game.</p><p data-rules-status role="status"></p><footer><button type="submit" name="start" value="true" data-start-match>Start game</button><button type="submit" name="save" data-save-rules>Save to lobby</button><button type="button" data-close-rules>Back to court</button></footer></form>';
   stage.append(rules);
@@ -104,7 +113,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
   root.addEventListener('click',handleAction);screenBar.addEventListener('click',handleAction);
   return {
     render(game, player, enabled, players={}) {
-      root.hidden = !enabled;screenBar.hidden=!enabled;
+      root.hidden = !enabled;screenBar.hidden=!enabled;root.classList.toggle('is-playing',game?.state==='live');
       stage.classList.toggle('basketball-world', Boolean(enabled));
       ready = Boolean(player);
       currentGame=game;currentPlayer=player;currentPlayers=players;

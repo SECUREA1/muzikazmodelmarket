@@ -7,15 +7,16 @@ export function mountBasketballAim({stage}){
   const style=document.createElement('style');
   style.textContent=`
     .basketball-aim[hidden]{display:none!important}
-    .basketball-aim{position:absolute;right:14px;bottom:104px;z-index:24;width:min(290px,calc(100% - 28px));padding:0;border:1px solid #d8b27580;border-radius:10px;background:#0c1728ee;color:#f5ead9;font:12px system-ui;box-shadow:0 8px 25px #0004}
-    .basketball-aim summary{padding:12px 14px;cursor:pointer;min-height:20px;font-weight:700;list-style-position:inside}
+    .basketball-aim{position:absolute;right:8px;bottom:8px;z-index:24;width:max-content;max-width:calc(100% - 16px);padding:0;border:1px solid #d8b27580;border-radius:10px;background:#0c1728ee;color:#f5ead9;font:12px system-ui;box-shadow:0 8px 25px #0004}
+    .basketball-aim summary{padding:10px 12px;cursor:pointer;min-height:44px;box-sizing:border-box;display:flex;align-items:center;gap:5px;font-weight:700;list-style-position:inside}
+    .basketball-aim[open]{width:min(290px,calc(100% - 16px));max-height:calc(100% - 70px);overflow-y:auto;overscroll-behavior:contain}
     .basketball-aim-body{padding:0 14px 13px;display:grid;gap:11px}
     .basketball-aim label{display:grid;gap:5px;font-size:12px}.basketball-aim label span{display:flex;justify-content:space-between}.basketball-aim [data-summary],.basketball-aim [data-power-output],.basketball-aim [data-angle-output]{font-variant-numeric:tabular-nums;color:#ffd58f}
-    .basketball-aim input[type=range]{width:100%;min-height:30px;accent-color:#e9ba72;touch-action:pan-x;margin:0}
-    .basketball-aim select{width:100%;border:1px solid #50617a;border-radius:5px;padding:8px;background:#111f34;color:#fff;min-height:36px}
+    .basketball-aim input[type=range]{width:100%;min-height:44px;accent-color:#e9ba72;touch-action:pan-x;margin:0}
+    .basketball-aim select{width:100%;border:1px solid #50617a;border-radius:5px;padding:8px;background:#111f34;color:#fff;min-height:44px;font-size:16px}
     .basketball-aim p{margin:0;font-size:10px;line-height:1.4;color:#c1cfdf}.basketball-aim [data-flight]{color:#efc783}
-    .basketball-aim button{width:auto!important;min-height:34px;border:1px solid #d8b27577;border-radius:5px;background:#1e314a;color:white;font:700 11px system-ui;padding:6px 10px;cursor:pointer}
-    @media(max-width:600px){.basketball-aim{bottom:92px;right:10px;width:min(270px,calc(100% - 20px))}.basketball-aim summary{padding:10px 12px}}
+    .basketball-aim button{width:auto!important;min-height:44px;border:1px solid #d8b27577;border-radius:5px;background:#1e314a;color:white;font:700 11px system-ui;padding:6px 10px;cursor:pointer}
+    @media(max-width:600px){.basketball-aim{bottom:8px;right:8px;font-size:11px}.basketball-aim summary{padding:10px 12px}}
   `;
   document.head.append(style);
   const root=document.createElement('details');root.className='basketball-aim';root.hidden=true;
@@ -41,7 +42,7 @@ export function mountBasketballAim({stage}){
     options:()=>({...state}),
     previewAction:()=>root.querySelector('[name="basketball-preview"]').value,
     render({enabled,spectator,held,solution}){
-      root.hidden=!enabled||spectator;
+      root.hidden=!enabled||spectator;if(root.hidden)root.open=false;
       const label=root.querySelector('[data-flight]');
       const speed=solution?Math.hypot(solution.velocity.x,solution.velocity.y,solution.velocity.z):0;
       const message=!held?'Catch a ball to see its predicted flight.':solution?.aimAligned===false?'Aim miss: outside 13% hoop alignment. Line up with the net before shooting.':solution?.reachable===false?'This angle cannot reach the hoop on a descending arc. Raise it or move closer.':solution?`${speed.toFixed(1)} m/s · ${solution.mode==='assisted'?'Hoop assist':'Free aim'} · dotted line previews your throw`:'This arc cannot reach the hoop from here. Raise the angle or move closer.';
