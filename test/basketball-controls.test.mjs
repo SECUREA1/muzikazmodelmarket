@@ -304,11 +304,29 @@ test('server movement keeps spectators outside while players can enter the playi
     assert.equal(basketballSpectatorRestricted(state.players['account:viewer'].position, {basketball: state.basketball}), false);
   }
   assert.ok(state.players['account:viewer'].position.x >= 8.12);
-  await f.place('alice', {x: 8.5, y: 0, z: 5});
+  // Players use the authored central gate. z=5 is a solid courtside rail,
+  // which a continuous movement sweep must no longer tunnel through.
+  await f.place('alice', {x: 8.5, y: 0, z: 0});
   await f.send('alice', 'input', {input: {side: -1, yaw: 0}});
   f.advance(250);
   state = await f.runtime.snapshot(f.map.id, f.map);
   assert.ok(state.players['account:alice'].position.x < 8.12);
+});
+
+test('the authored courtside rail stops player entry while retaining a free slide', async t => {
+  const f = await roomFixture(t);
+  await f.send('alice', 'join'); await f.send('alice', 'basketball-start');
+  await f.place('alice', {x: 8.8, y: .02, z: 5});
+  await f.send('alice', 'input', {input: {side: -1, yaw: 0}});
+  f.advance(250);
+  let state = await f.runtime.snapshot(f.map.id, f.map);
+  const contact = state.players['account:alice'].position;
+  assert.ok(contact.x > 8.6, 'full movement cannot tunnel through the visible rail');
+  await f.send('alice', 'input', {input: {side: -1, forward: 1, yaw: 0}});
+  f.advance(250);
+  state = await f.runtime.snapshot(f.map.id, f.map);
+  assert.ok(Math.abs(state.players['account:alice'].position.x - contact.x) < .001, 'contact does not eject or recoil the player');
+  assert.ok(state.players['account:alice'].position.z < contact.z - .5, 'the unblocked tangent continues along the rail');
 });
 
 test('spectators cannot teleport or use court seats and vehicles to bypass the boundary', async t => {

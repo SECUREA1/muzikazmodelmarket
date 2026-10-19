@@ -12,7 +12,7 @@ import {ServerBuilderCollision} from './server-builder-collision.mjs';
 import {RANGED_WEAPONS} from './public/js/game-weapons.js';
 import {UTILITY_TOOLS} from './public/js/game-utilities.js';
 import {compileBuilderScene} from './public/js/builder-gameplay-pipeline.js';
-import {buildingDimensions,buildingMaterial} from './public/js/building-materials.js';
+import {buildingDimensions} from './public/js/building-materials.js';
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,Number(value)||0));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 const copy=value=>JSON.parse(JSON.stringify(value));
@@ -71,25 +71,32 @@ export class AuthoritativeRooms {
    const bench=sim.actors[player.seatedId];if(bench?.basketballSpectatorSeat){player.position={...bench.position};player.floor=bench.position.y;player.velocityY=0;player.grounded=true;player.input={};continue;}
    if(now-player.lastSeen>15000){for(const key of ['heldId','seatedId','vehicleId']){const actor=sim.actors[player[key]];if(actor?.holderId)actor.holderId=null;player[key]=null;}player.input={};}if(player.health<=0){for(const key of ['heldId','seatedId','vehicleId']){const held=sim.actors[player[key]];if(held?.holderId===player.actorId)held.holderId=null;player[key]=null;}player.input={};continue;}if(player.replacedByRoom||now-player.lastSeen>1000)continue;
    const input=player.input||{},forward=clamp(input.forward,-1,1),side=clamp(input.side,-1,1),length=Math.max(1,Math.hypot(forward,side));
+   const hasGeometry=Boolean(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length);
+   const boundControl=(current,target)=>hasGeometry?target:clamp(target,Math.min(current,-half),Math.max(current,half));
    let speed=player.vehicleId?12:input.sprint?6:4;
    if(player.seatedId) speed=0;
-   const next={...player.position,x:clamp(player.position.x+(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*side)*speed*dt/length,-half,half),z:clamp(player.position.z+(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*side)*speed*dt/length,-half,half)};
-   const floor=environment.builderScene||environment.proceduralLand?-100:Number(player.floor)||0;
+   const next={...player.position,x:boundControl(player.position.x,player.position.x+(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*side)*speed*dt/length),z:boundControl(player.position.z,player.position.z+(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*side)*speed*dt/length)};
+   const floor=hasGeometry?-100:Number(player.floor)||0;
    if(input.jump&&player.grounded){player.velocityY=6;player.grounded=false;}
    player.velocityY=(player.velocityY||0)-18*dt;next.y=Math.max(floor,next.y+player.velocityY*dt);player.grounded=next.y<=floor;if(player.grounded)player.velocityY=0;
-   let blocked=false;
-   for(const object of Object.values(room.objects)){
-    if(object.deleted||object.open||buildingMaterial(object.materialId).solid===false)continue;
-    const size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]),[x,y,z]=object.position;
-    // Conservative world-space footprint for rotated pieces, resolved on server.
-    const rotation=object.rotation[1],w=Math.abs(Math.cos(rotation))*size[0]+Math.abs(Math.sin(rotation))*size[2],d=Math.abs(Math.sin(rotation))*size[0]+Math.abs(Math.cos(rotation))*size[2];
-    if(Math.abs(next.x-x)<w/2+.3&&Math.abs(next.z-z)<d/2+.3&&next.y<y+size[1]/2&&next.y+1.7>y-size[1]/2){
-     if(player.position.y>=y+size[1]/2-.35){next.y=y+size[1]/2;player.velocityY=0;player.grounded=true;}else blocked=true;
-    }
+   // One swept resolver handles map geometry and placed solids together.
+   // A wall removes only the blocked control component; it never ejects the
+   // player or cancels a valid slide along its surface.
+   const resolved=this.collision.resolve(environment,player.position,next,sim.actors,room.objects);
+   // Native resolvers explicitly report missing support as null. A custom
+   // horizontal-only resolver keeps the legacy flat floor until it supplies
+   // its own support data; this must not pin real elevated platforms.
+   const ownsSupport=Object.hasOwn(resolved,'floorY');
+   const floorY=ownsSupport?resolved.floorY:Number(player.floor)||0,blockedCeiling=resolved.blockedCeiling;
+   if(!ownsSupport&&resolved.y<floorY)resolved.y=floorY;
+   delete resolved.floorY;delete resolved.blockedCeiling;
+   player.position=constrainBasketballSpectator(player.position,resolved,sim,player);
+   if(Number.isFinite(floorY)){
+    player.floor=floorY;
+    if(player.position.y<=floorY+.001&&player.velocityY<=0){player.grounded=true;player.velocityY=0;}
    }
-   if(!blocked){player.position=constrainBasketballSpectator(player.position,this.collision.resolve(environment,player.position,next,sim.actors),sim,player);if(Number.isFinite(player.position.floorY)){player.floor=player.position.floorY;delete player.position.floorY;if(player.position.y<=player.floor+.03){player.grounded=true;player.velocityY=0;}}}
+   if(blockedCeiling&&player.velocityY>0)player.velocityY=0;
    const street=(environment.streets||[]).map(street=>{const dx=street.to.x-street.from.x,dz=street.to.z-street.from.z,t=Math.max(0,Math.min(1,((player.position.x-street.from.x)*dx+(player.position.z-street.from.z)*dz)/Math.max(.01,dx*dx+dz*dz)));return {street,distance:Math.hypot(player.position.x-street.from.x-dx*t,player.position.z-street.from.z-dz*t)};}).filter(hit=>hit.distance<=hit.street.width/2+2).sort((a,b)=>a.distance-b.distance)[0];player.locationName=street?.street.name||player.meetingName||environment.name;
-   if(player.position.y>next.y){player.velocityY=0;player.grounded=true;}
    if(player.vehicleId){const vehicle=sim.actors[player.vehicleId];if(vehicle){vehicle.position={...player.position};vehicle.rotation.y=player.yaw;}}
    if(player.heldId){const held=sim.actors[player.heldId];if(held)held.position={x:player.position.x-Math.sin(player.yaw),y:player.position.y+1,z:player.position.z-Math.cos(player.yaw)};}
   }
@@ -122,7 +129,7 @@ export class AuthoritativeRooms {
   const {sim,manifest}=this.step(room,environment),now=this.now(),actorId='account:'+identity.accountId;
   const requestId=String(command.requestId||'');if(!/^[\w-]{1,100}$/.test(requestId))fail('A command request ID is required.');
   sim.receipts ||= {};const receiptKey=actorId+':'+requestId;if(sim.receipts[receiptKey]){if(sim.receipts[receiptKey].action!==requestedAction)fail('Request ID already used.',409);return {...this.view(room),selfId:actorId,result:sim.receipts[receiptKey].result};}
-  let player=sim.players[actorId],result={};const basketballLateArrival=sim.basketball?.state==='live'&&(!player||player.basketballRole==='spectator'||now-player.lastSeen>=15000||player.replacedByRoom);
+  let player=sim.players[actorId],result={};const priorCommandPosition=player?{...player.position}:null,priorMovementRevision=player?.movementRevision||0;const basketballLateArrival=sim.basketball?.state==='live'&&(!player||player.basketballRole==='spectator'||now-player.lastSeen>=15000||player.replacedByRoom);
   if(command.action==='join'){
    const active=Object.entries(sim.players).filter(([id,p])=>id!==actorId&&!p.basketballAI&&now-p.lastSeen<15000);if(active.length>=(environment.publicDestination?128:this.capacity))fail('This multiplayer room is full.',409);
    const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);let spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects):this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2});
@@ -292,6 +299,7 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
    }else fail('This action has no server handler. It was not run locally.',422);
   }
   if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(player.position,sim)){player.position=constrainBasketballSpectator(player.position,player.position,sim,player);player.input={};player.movementRevision=(player.movementRevision||0)+1;}
+  if(priorCommandPosition&&requestedAction!=='input'&&distance(priorCommandPosition,player.position)>.001&&(player.movementRevision||0)===priorMovementRevision)player.movementRevision=priorMovementRevision+1;
   if(command.action==='input'&&player.health>0)await this.collectNearbyLoot(sim,player,identity,id,now,null,result);
   this.prepareEncounter(sim,environment);
   checkTeamDefeat(sim,now);
