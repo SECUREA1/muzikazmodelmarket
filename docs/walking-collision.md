@@ -31,7 +31,7 @@ the entire map for every player on every tick. Walking never calls the spawn
 search to repair a contact.
 
 The browser displays only accepted server positions through `ServerMotion`, with
-a 125 ms interpolation buffer that adapts to recent delivery gaps, and no extrapolation. Playback speed adjusts gently without rewinding or jumping beyond accepted positions. A second local movement
+a fixed 50 ms interpolation buffer and no extrapolation. The local camera does not adapt playback speed or apply movement prediction. A second local movement
 predictor must not run alongside it: that would move the view through walls and
 require a later correction. Ordinary snapshots do not reset the view based on
 distance. Deliberate relocations use `movementRevision`/explicit resets.
@@ -71,8 +71,20 @@ recalibrated once on their next join using floor version 3. Walking itself does
 not run spawn searches or reposition players at wall contact.
 
 Encounter placement version 2 requires verified floor, side clearance, the same
-storey, line of sight and at least four metres from every present player. Failed
+storey, line of sight and four metres from present players when space permits, with a 2.5 metre minimum in compact rooms. Failed
 placements remain pending and retry once per second rather than spawning on the
 player. Pending enemies are neither rendered nor combat targets; their wave
 remains active. Spawn protection also prevents enemy pursuit and firing, giving
 players time to leave the entry before combat begins.
+
+## Fast RAD-TOX combat flow
+
+The server confirms one-hit kills for RAD-TOX enemies and bosses, including
+encounters saved before this rule changed. Player health and authored Builder
+objects retain their existing damage rules. RAD-TOX combat tools accept shots
+every 100 ms; an in-flight shot can retain one subsequent trigger press. Local
+shot feedback appears immediately, with server events deduplicated on arrival.
+
+Waves transition after one second and level results after three seconds. Results
+remain available from the dashboard without opening a modal at wave or level
+completion. Living players can keep walking during the results countdown. All three regular waves and the boss still run on the server.

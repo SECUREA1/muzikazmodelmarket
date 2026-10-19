@@ -164,3 +164,7 @@ test('enemy placement keeps distance and never falls back onto the player',()=>f
  for(let i=0;i<8;i++){const enemy=collision.encounterSpawn(environment,player,player,occupied,{enemy:true,players:[player]});assert.ok(enemy);near(enemy.y,.02);assert.ok(Math.hypot(enemy.x,enemy.z)>=4);assert.ok(occupied.every(p=>Math.hypot(p.x-enemy.x,p.z-enemy.z)>=.65));occupied.push(enemy);}
  const old=collision.groundAt;collision.groundAt=()=>null;assert.equal(collision.encounterSpawn(environment,player,player,[],{enemy:true}),null);collision.groundAt=old;
 }));
+
+test('compact rooms still receive enemies without placing them on the player',()=>fixture([], (collision,environment)=>{
+ const player={x:0,y:.02,z:0},enemy=collision.encounterSpawn(environment,player,player,[],{enemy:true});assert.ok(enemy);assert.ok(Math.hypot(enemy.x,enemy.z)>=2.5);near(enemy.y,.02);
+},{floorVertices:floor.map(value=>value/4)}));

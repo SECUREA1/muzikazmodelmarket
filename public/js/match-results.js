@@ -20,7 +20,7 @@ export function mountMatchResults({dock,onOpen=()=>{},onNext,onRespawn}){
   if(!wave&&openedWave){openedWave=null;if(dialog.open)dialog.close();}
   if(!finished&&openedEnd&&openedEnd!==latest.id){openedEnd=null;if(dialog.open)dialog.close();}
   const deathToken=latest.id+':'+(self?.combat?.deaths||0);
-  const needsOpening=(wave&&openedWave!==waveKey)||(finished&&openedEnd!==latest.id)||(!finished&&self?.health<=0&&openedDeath!==deathToken);
+  const needsOpening=!finished&&self?.health<=0&&openedDeath!==deathToken;
   if(!dialog.open&&!needsOpening)return;
   const rows=wave?snapshot.radTox.transition.results:latest.results;
   const key=JSON.stringify([latest.id,latest.state,waveKey,wave,rows]);
@@ -29,9 +29,9 @@ export function mountMatchResults({dock,onOpen=()=>{},onNext,onRespawn}){
    const body=dialog.querySelector('tbody');body.replaceChildren();for(const row of rows){const tr=document.createElement('tr');if(row.id===selfId)tr.className='is-self';for(const [field]of columns){const cell=document.createElement(field==='username'?'th':'td');if(field==='username'){cell.scope='row';cell.title=row.id;}cell.textContent=field==='username'?`${row.username}${row.id===selfId?' (you)':''}${row.connected?'':' · disconnected'}`:field==='items'?(row.items?.join(', ')||'None'):field==='accuracy'?`${row.accuracy}%`:String(row[field]??0);tr.append(cell);}body.append(tr);}
   }
   next.hidden=!finished;next.textContent=latest.outcome==='victory'?'Start next level together':'Retry this level together';respawn.hidden=finished||!self||self.health>0;
-  if(wave){dialog.querySelector('h2').textContent=`Wave ${snapshot.radTox.wave} complete`;dialog.querySelector('[data-results-summary]').textContent='Level totals so far · everyone continues together.';if(openedWave!==waveKey){openedWave=waveKey;open();}}
+  if(wave){openedWave=waveKey;dialog.querySelector('h2').textContent=`Wave ${snapshot.radTox.wave} complete`;dialog.querySelector('[data-results-summary]').textContent='Level totals so far · everyone continues together.';}
   countdown();
-  if(finished&&openedEnd!==latest.id){openedEnd=latest.id;open();}
+  if(finished&&openedEnd!==latest.id){openedEnd=latest.id;}
   else if(!finished&&self?.health<=0){const token=latest.id+':'+(self.combat?.deaths||0);if(openedDeath!==token){openedDeath=token;open();}}
   else if(!finished&&openedEnd&&openedEnd!==latest.id){openedEnd=null;if(dialog.open)dialog.close();}
  }};

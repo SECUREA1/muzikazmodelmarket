@@ -138,12 +138,12 @@ export class ServerBuilderCollision {
  encounterSpawn(environment,point,center,occupied=[],{enemy=false,players=[center]}={}) {
   if(!enemy&&!builderBaseEnvironment(environment)&&!environment.modelUrl&&!environment.modelUrls?.length)return point;
   const candidates=[point];
-  for(const radius of (enemy?[5,6,8,4,10,12]:[3,4,2,5,1.6,6]))for(let index=0;index<24;index++){
+  for(const radius of (enemy?[5,6,8,4,10,12,3,2.5]:[3,4,2,5,1.6,6]))for(let index=0;index<24;index++){
    const angle=index*Math.PI/12;candidates.push({x:center.x+Math.sin(angle)*radius,y:center.y,z:center.z+Math.cos(angle)*radius});
   }
-  for(const candidate of candidates){
+  for(const minDistance of (enemy?[4,2.5]:[1]))for(const candidate of candidates){
    const floor=this.groundAt(environment,{...candidate,y:center.y});if(!floor)continue;
-   if(enemy&&(players.some(player=>Math.hypot(player.x-floor.x,player.z-floor.z)<4)||Math.abs(floor.y-center.y)>.6||!this.hasBodyClearance(environment,floor,.45)))continue;
+   if(enemy&&(players.some(player=>Math.hypot(player.x-floor.x,player.z-floor.z)<minDistance)||Math.abs(floor.y-center.y)>.6||!this.hasBodyClearance(environment,floor,.45)))continue;
    if(occupied.some(other=>Math.hypot(other.x-floor.x,other.z-floor.z)<.65))continue;
    const origin={x:floor.x,y:floor.y+.9,z:floor.z},delta=[center.x-origin.x,center.y+.9-origin.y,center.z-origin.z],length=Math.hypot(...delta);
    if(length<1||this.blocksShot(environment,origin,delta.map(value=>value/length),length))continue;

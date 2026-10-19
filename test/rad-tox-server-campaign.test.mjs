@@ -1,3 +1,4 @@
+import {RAD_TOX_WAVE_PAUSE_MS,RAD_TOX_RESULTS_PAUSE_MS} from '../public/js/rad-tox-rules.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';
@@ -48,10 +49,10 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
     now+=250;state=await send('fire',{tool:'laser',direction});
    }
    now+=1;state=await send('input',{input:{}});assert.equal(state.radTox.state,wave===4?'finished':'cleared');
-   if(wave<4){now+=9999;state=await send('input',{input:{}});assert.equal(state.radTox.wave,wave,'countdown cannot be skipped');now+=1;await send('input',{input:{}});state=await runtime.snapshot(environment.id,environment);}
+   if(wave<4){now+=RAD_TOX_WAVE_PAUSE_MS-1;state=await send('input',{input:{}});assert.equal(state.radTox.wave,wave,'countdown cannot be skipped');now+=1;await send('input',{input:{}});state=await runtime.snapshot(environment.id,environment);}
   }
   assert.equal(state.match.state,'finished');assert.equal(state.match.outcome,'victory');assert.equal(state.match.results.length,2);
-  const completed=state.match.id;await assert.rejects(send('next-rad-tox',{matchId:completed}),{statusCode:409});now+=10000;state=await send('next-rad-tox',{matchId:completed});assert.equal(state.radTox.level,2);assert.equal(state.radTox.wave,1);assert.ok(state.radTox.remaining>0);
+  const completed=state.match.id;await assert.rejects(send('next-rad-tox',{matchId:completed}),{statusCode:409});now+=RAD_TOX_RESULTS_PAUSE_MS;state=await send('next-rad-tox',{matchId:completed});assert.equal(state.radTox.level,2);assert.equal(state.radTox.wave,1);assert.ok(state.radTox.remaining>0);
   assert.ok((await store.get(environment.id)).simulation.matchHistory[0].results.find(row=>row.id==='account:alice').score>0);assert.ok(rewards.some(args=>args[1]==='defeat'));
   const reloaded=new AuthoritativeRooms({store:new SharedRoomStore(file),now:()=>now});
   // Input snapshots are intentionally transient; persist the current encounter with a start command.
@@ -90,5 +91,21 @@ test('loading players are protected until all resources are ready and do not res
  state=await send('start-rad-tox');assert.equal(state.match.id,match);assert.equal(state.players['account:alice'].radToxReady,true);assert.ok(state.match.participants['account:alice']);assert.equal(state.players['account:alice'].spawnProtectedUntil,now+3000);
  now+=250;state=await send('input',{input:{}});assert.deepEqual(Object.values(state.actors).filter(a=>a.radTox).map(a=>a.position),positions,'spawn protection gives the player room to move before lock-on');
  now+=3000;state=await send('input',{input:{}});assert.notDeepEqual(Object.values(state.actors).filter(a=>a.radTox).map(a=>a.position),positions,'the server runs combat after spawn protection');
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
+
+test('one server-confirmed hit kills regular enemies and a previously saved high-health boss',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'rad-tox-one-hit-'));let now=100000,n=0;
+ try{
+  const store=new SharedRoomStore(join(dir,'rooms.json')),runtime=new AuthoritativeRooms({store,now:()=>now});
+  runtime.collision.safeSpawn=(_,p)=>p;runtime.collision.encounterSpawn=(_,p)=>p;runtime.collision.resolve=(_,previous)=>({...previous});runtime.collision.blocksShot=()=>false;
+  const map={id:'one-hit',modelUrl:'/public/models/environments/muzimakzmain.glb',spawn:{x:0,y:1,z:0}},identity={accountId:'alice',username:'Alice',stats:{health:100}};
+  const send=(action,fields={})=>runtime.command(map.id,map,identity,{action,requestId:'shot-'+ ++n,...fields});
+  await send('join');
+  for(const kind of ['toxic','ghost','snake','brain','boss']){
+   await store.update(map.id,room=>{const sim=room.simulation;sim.machineRetryAt=now+100000;sim.actors={target:{id:'target',radTox:true,spawnVersion:2,active:true,kind,position:{x:0,y:1,z:-4},rotation:{y:0},health:999,maxHealth:999,definition:{objectId:'target',position:{x:0,y:1,z:-4},gameplay:{behavior:'hostile',health:999,damage:0},movement:{speed:0},ai:{detectionRange:0}}}};sim.radTox.state='active';sim.radTox.nextWaveAt=null;sim.radTox.wave=1;});
+   now+=100;const state=await send('fire',{tool:'laser',direction:[0,-.5,-4]});
+   assert.equal(state.actors.target.health,0,kind+' dies in one hit');assert.equal(state.actors.target.active,false);
+  }
  }finally{await rm(dir,{recursive:true,force:true});}
 });

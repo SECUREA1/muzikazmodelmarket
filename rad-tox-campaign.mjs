@@ -1,7 +1,8 @@
+import {RAD_TOX_WAVE_PAUSE_MS,RAD_TOX_RESULTS_PAUSE_MS} from './public/js/rad-tox-rules.js';
 import {isCleanSportsEnvironment} from './public/js/sports-worlds.js';
 import {ENEMY_BEHAVIORS} from './server-enemy-combat.mjs';
 import {damagePlayer,openMatch,finishMatch,healPlayer,matchRows} from './rpg-match.mjs';
-export const ROUND_COUNTDOWN_MS=10000;
+export const ROUND_COUNTDOWN_MS=RAD_TOX_RESULTS_PAUSE_MS;
 // Shared encounters are owned by the room, never by a client's local enemy list.
 export function supportsRadTox(environment) {
  return environment.playable!==false && !isCleanSportsEnvironment(environment) && Boolean(environment.builderScene || environment.proceduralLand || environment.modelUrl || environment.modelUrls?.length);
@@ -20,7 +21,7 @@ export function spawnRadToxWave(sim, now, center) {
   const radius=boss?8:5+index%3;
   const position={x:center.x+Math.sin(angle)*radius,y:center.y,z:center.z-Math.cos(angle)*radius};
   const id=`rad-tox-${campaign.level}-${campaign.wave}-${index}`;
-  const health=boss?160+campaign.level*20:kind==='snake'?20:40;
+  const health=1;
   const definition={objectId:id,position:{...position},movement:{speed:ENEMY_BEHAVIORS[kind].moveSpeed},ai:{detectionRange:40},gameplay:{behavior:'hostile',health,damage:boss?12:kind==='snake'?4:6}};
   sim.actors[id]={id,spawnId:(sim.match?.id||String(now))+':'+id,spawnedAt:now,attackStartedAt:now,radTox:true,kind,position,rotation:{y:0},health,maxHealth:health,active:true,velocity:{x:0,y:0,z:0},definition};
  }
@@ -48,7 +49,7 @@ export function advanceRadTox(sim,now,environment) {
  const players=Object.values(sim.players).filter(player=>player.radToxReady!==false&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
  if(campaign.remaining || !players.length)return;
  if(campaign.wave===4){finishMatch(sim,'victory',now);campaign.transition={kind:'level',at:now+ROUND_COUNTDOWN_MS};return;}
- if(!campaign.nextWaveAt){campaign.state='cleared';campaign.nextWaveAt=now+ROUND_COUNTDOWN_MS;campaign.transition={kind:'wave',at:campaign.nextWaveAt,results:matchRows(sim,now)};return;}
+ if(!campaign.nextWaveAt){campaign.state='cleared';campaign.nextWaveAt=now+RAD_TOX_WAVE_PAUSE_MS;campaign.transition={kind:'wave',at:campaign.nextWaveAt,results:matchRows(sim,now)};return;}
  if(now<campaign.nextWaveAt)return;
  campaign.wave++;
  for(const player of players){player.ammo=120;player.fuel=100;healPlayer(player,15);}

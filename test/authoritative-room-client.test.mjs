@@ -242,3 +242,18 @@ test('resource readiness survives a room rejoin without returning to the loading
   assert.ok(joins.length>=2);assert.notEqual(joins[1].deferRadTox,true);assert.equal(client.ready,true);
  },{deferRadTox:true});
 });
+
+test('RAD-TOX trigger gives immediate feedback and queues a press while its first shot is in flight',async()=>{
+ let sequence=0,shots=0,release;const feedback=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='fire'&&++shots===1)return new Promise(resolve=>{release=()=>resolve(response({...confirmed(++sequence),radTox:{state:'active'}}));});
+  return response({...confirmed(++sequence),radTox:{state:'active'}});
+ },async client=>{
+  await client.whenReady();await client.send('start-rad-tox');
+  const first=client.send('fire',{tool:'laser',direction:[0,0,-1]},'first');assert.equal(feedback.length,1,'feedback happens before the server response');
+  await pause(120);const second=client.send('fire',{tool:'laser',direction:[1,0,0]},'second');
+  release();await Promise.all([first,second]);assert.equal(shots,2);assert.equal(feedback.length,2);assert.equal(feedback[1].requestId,'second');
+ },{onShot:shot=>feedback.push(shot)});
+});

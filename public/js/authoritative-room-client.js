@@ -1,12 +1,13 @@
+import {RAD_TOX_SHOT_INTERVAL_MS} from './rad-tox-rules.js';
 import {RANGED_WEAPONS} from './game-weapons.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
 import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory.js';
 
-export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,onError,deferRadTox=false}) {
+export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,onError,deferRadTox=false,onShot=()=>{}}) {
  const api = new SharedGameInventory();
  let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0, inputRequested=false,fireBusy=false;
  let radToxStarted=false;
- let fireRequest=null,inputSequence=0,inputEpoch=null,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
+ let fireRequest=null,queuedFire=null,inputSequence=0,inputEpoch=null,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
  const waiters=new Set(),collected=new Set();
  function firstPickup(id){if(collected.has(id))return false;collected.add(id);if(collected.size>1024)collected.delete(collected.values().next().value);return true;}
  function settle(error) {
@@ -43,10 +44,10 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   },
   async send(action,fields={},requestId=crypto.randomUUID()) {
    if(stopped)throw failure||Error('Room closed.');
-   if(action==='fire'&&fireRequest)return fireRequest;
+   if(action==='fire'&&fireRequest){if(!radToxStarted)return fireRequest;if(!queuedFire)queuedFire=fireRequest.then(()=>client.send(action,fields,requestId)).finally(()=>{queuedFire=null;});return queuedFire;}
    const fireTool=String(fields.tool||'laser');if(action==='fire'&&performance.now()<(nextFireAt.get(fireTool)||0))return null;
-   const sentAt=performance.now(),fireInterval=(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
-   if(action==='fire')nextFireAt.set(fireTool,sentAt+fireInterval);
+   const sentAt=performance.now(),fireInterval=radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
+   if(action==='fire'){nextFireAt.set(fireTool,sentAt+fireInterval);if(radToxStarted)onShot({requestId,tool:fireTool,direction:fields.direction});}
    const perform=async()=>{
     const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(action==='input'?{inputSequence:++inputSequence,...(inputEpoch?{inputEpoch}:{})}:{}),action,requestId});
     if(stopped)return;

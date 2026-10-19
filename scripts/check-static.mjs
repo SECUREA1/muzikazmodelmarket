@@ -282,7 +282,7 @@ for (const requiredToxinFeature of ["data-rad-tool=\"toxin\"", 'createToxinModel
     throw new Error(`RAD-TOX is missing its illuminated MZK toxins thrower feature: ${requiredToxinFeature}`);
   }
 }
-for (const requiredBossFeature of ['AirborneHoneyBee', 'bossConfigForLevel()', 'spawnEndBoss()', 'completeLevelIfReady()', 'All other targets cleared', 'takeDamage(1)']) {
+for (const requiredBossFeature of ['AirborneHoneyBee', 'bossConfigForLevel()', 'spawnEndBoss()', 'completeLevelIfReady()', 'All other targets cleared', 'takeDamage(boss.health)']) {
   if (!houseExplorer.includes(requiredBossFeature)) {
     throw new Error(`RAD-TOX is missing its required end-boss feature: ${requiredBossFeature}`);
   }

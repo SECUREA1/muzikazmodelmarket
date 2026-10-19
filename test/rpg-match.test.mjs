@@ -1,3 +1,4 @@
+import {RAD_TOX_RESULTS_PAUSE_MS} from '../public/js/rad-tox-rules.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';
@@ -62,7 +63,7 @@ test('level results include disconnected participants, remain frozen, survive re
  const frozen=JSON.stringify(state.match.results);await assert.rejects(send('alice','fire',{tool:'laser',direction:[1,0,0]}),{statusCode:409});
  await send('bob','join');state=await send('alice','input',{input:{}});assert.equal(JSON.stringify(state.match.results),frozen,'joining after completion cannot rewrite results');
  await store.flush();const restored=new AuthoritativeRooms({store:new SharedRoomStore(store.file),now});restored.collision.resolve=(_,previous,next)=>next;const snapshot=await restored.snapshot(map.id,map);assert.equal(JSON.stringify(snapshot.match.results),frozen);
- await assert.rejects(send('alice','next-rad-tox',{matchId:id}),{statusCode:409});advance(9999);state=await send('alice','input',{input:{}});assert.equal(state.match.id,id);advance(1);
+ await assert.rejects(send('alice','next-rad-tox',{matchId:id}),{statusCode:409});advance(RAD_TOX_RESULTS_PAUSE_MS-1);state=await send('alice','input',{input:{}});assert.equal(state.match.id,id);advance(1);
  state=await send('alice','next-rad-tox',{matchId:id});const nextId=state.match.id;assert.notEqual(nextId,id);assert.equal(state.match.level,2);assert.equal(state.players['account:alice'].combat.shots,0);
  state=await send('bob','next-rad-tox',{matchId:id});assert.equal(state.match.id,nextId);assert.equal(state.match.level,2,'simultaneous next requests cannot skip a level');
 }));
@@ -71,7 +72,7 @@ test('a team wipe finishes the level and records each death once',()=>arena(asyn
  await send('alice','join');await send('bob','join');advance(3100);
  await store.update(map.id,room=>{for(const player of Object.values(room.simulation.players)){player.lastSeen=now();for(let i=0;i<45;i++)damagePlayer(player,now());}});
  const state=await send('alice','input',{input:{}});assert.equal(state.match.outcome,'defeat');assert.equal(state.match.results.length,2);assert.ok(state.match.results.every(row=>row.deaths===1&&row.hitsTaken===45));
- await assert.rejects(send('alice','next-rad-tox',{matchId:state.match.id}),{statusCode:409});advance(10000);
+ await assert.rejects(send('alice','next-rad-tox',{matchId:state.match.id}),{statusCode:409});advance(RAD_TOX_RESULTS_PAUSE_MS);
  const retry=await send('alice','next-rad-tox',{matchId:state.match.id});assert.equal(retry.match.level,1);assert.equal(retry.players['account:alice'].hitsRemaining,45);
 }));
 
@@ -121,4 +122,12 @@ test('defeat releases held objects for teammates',()=>arena(async({send,store,ma
  });
  advance(50);const state=await send('bob','input',{input:{}});
  assert.equal(state.actors.held.holderId,null);assert.equal(state.players['account:alice'].heldId,null);
+}));
+
+test('living players keep walking through the results countdown',()=>arena(async({send,advance,store,map,now})=>{
+ await send('alice','join');
+ await store.update(map.id,room=>{const sim=room.simulation;sim.radTox.wave=4;for(const actor of Object.values(sim.actors))if(actor.radTox){actor.active=false;actor.health=0;}finishMatch(sim,'victory',now());});
+ let state=await send('alice','input',{input:{forward:1,yaw:0}});const z=state.players['account:alice'].position.z;
+ advance(100);state=await send('alice','input',{input:{forward:1,yaw:0}});
+ assert.equal(state.match.state,'finished');assert.ok(state.players['account:alice'].position.z<z,'results do not lock movement');
 }));

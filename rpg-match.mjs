@@ -35,7 +35,7 @@ export function finishMatch(sim,outcome,now){
  sim.match.state='finished';sim.match.outcome=outcome;sim.match.endedAt=now;sim.match.results=matchRows(sim,now);
  if(sim.radTox){sim.radTox.state='finished';sim.radTox.nextWaveAt=null;}
  sim.matchHistory ||= [];sim.matchHistory.push(structuredClone(sim.match));sim.matchHistory=sim.matchHistory.slice(-5);
- for(const player of Object.values(sim.players))player.input={};
+ for(const player of Object.values(sim.players))if(player.health<=0)player.input={};
 }
 export function checkTeamDefeat(sim,now){
  if(sim.match?.state!=='active')return;

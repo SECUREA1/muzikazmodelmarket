@@ -36,3 +36,5 @@ body.model-explorer-page .explorer-options__toggle>span:last-child{position:stat
 body.model-explorer-page .explorer-options__panel{position:absolute;inset:calc(100% + 6px) auto auto 0;width:min(380px,100%);max-height:calc(100dvh - 170px);margin:0;overflow-y:auto;overscroll-behavior:contain;}
 body.model-explorer-page .explorer-options__panel ul{max-height:none;}
 @media(max-height:500px){body.model-explorer-page .explorer-options__panel{max-height:70dvh;}}
+
+.rad-tox-fire-trigger{position:absolute;right:18px;bottom:20px;z-index:19;display:grid;place-items:center;width:64px;height:64px;padding:12px;border:2px solid #caff49;border-radius:50%;background:#091b10ed;color:#efffd7;box-shadow:0 4px 18px #0008;touch-action:none;user-select:none;cursor:pointer}.rad-tox-fire-trigger[hidden]{display:none}.rad-tox-fire-trigger:active{background:#caff49;color:#091b10}.rad-tox-fire-trigger:focus-visible{outline:3px solid #fff;outline-offset:3px}
