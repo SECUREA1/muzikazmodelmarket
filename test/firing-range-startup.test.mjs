@@ -33,7 +33,7 @@ test('a pending combat start cannot send its command to a newly selected range',
  const begin=new Function('commands','openFiringRangeSession','isFiringRangeEnvironment',`
   let worldLoadGeneration=1,authoritativeClient={ready:true,send:async action=>commands.push(action)};
   const activeEnvironment={id:'ordinary-world',builderScene:{layout:'grand-floor'}},liveRangeSnapshot=null;
-  const serverHostedRoom=true,isBasketballEnvironment=()=>false;
+  const serverHostedRoom=true,radToxEnabled=true,isBasketballEnvironment=()=>false;
   const toxicBubbleSystem={initAudio(){},async ensureResources(){worldLoadGeneration++;authoritativeClient={ready:true,send:async action=>commands.push('range:'+action)};}};
   ${await beginSource()}
   return toxicBubbleSystem.begin;
