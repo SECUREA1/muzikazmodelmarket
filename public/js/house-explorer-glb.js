@@ -1508,7 +1508,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const localBasketballs=[];let heldBasketball=null,basketballSnapshot=null,basketballSelf=null,basketballPlayers={},basketballMatchViewId=null,localJerseyTeam=null;
   const localBasketballPlayer={actorId:'local',lastSeen:Date.now(),position:{x:0,y:0,z:0},yaw:0,health:100,heldId:null,basketballTeam:'home',inventory:[]};
   let localBasketballSim={actors:{},players:{local:localBasketballPlayer},events:[]};
-  const basketballHud=mountBasketballHud({stage,onAction:basketballAction,announce:setStatus});
+  const basketballHud=mountBasketballHud({stage,actionParent:controlDock,onAction:basketballAction,announce:setStatus});
   const basketballAim=mountBasketballAim({stage});
   const flightGeometry=new THREE.BufferGeometry();flightGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(256*3),3));flightGeometry.setDrawRange(0,0);
   const flightPreview=new THREE.Points(flightGeometry,new THREE.PointsMaterial({color:0xffdc94,size:.065,transparent:true,opacity:.8,depthWrite:false}));flightPreview.name='BASKETBALL_THROW_PREVIEW';flightPreview.frustumCulled=false;flightPreview.visible=false;scene.add(flightPreview);
@@ -1760,6 +1760,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   flameFireButton.addEventListener('pointerdown',event=>{event.preventDefault();safelyCapturePointer(flameFireButton,event.pointerId);toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())});shootAtReticle();});
   flameFireButton.addEventListener('lostpointercapture',()=>{toxicBubbleSystem.flameTrigger=null;});
   function shootAtReticle() { if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active)return basketballAction('basketball-shoot');if(ownedPlacement.active)return ownedPlacement.confirm();const rangeHit=handleRangeShot({centre:true});if(rangeHit!==null)return;const tool=toxicBubbleSystem.tool, shot=toxicBubbleSystem.handlePointerInteraction({}, { centre: true }); if(UTILITY_TOOLS[tool]||tool==='jetpack')return shot;if(tool==='dynamite'&&shot){setStatus('Dynamite lit, tossed, and live — watch it bounce, then clear the full blast radius.');return;} setStatus(shot ? `${RANGE_WEAPONS[tool] ? `${RANGE_WEAPONS[tool].label} fired` : 'Tool fired'}.` : 'No action at the reticle. Move or look, then use the shoot button again.'); }
+  const rangeActionBar=document.createElement('div');rangeActionBar.className='game-screen-actions';rangeActionBar.hidden=true;rangeActionBar.setAttribute('role','group');rangeActionBar.setAttribute('aria-label','Firing range gameplay actions');
+  for(const [label,run] of [['Shoot',shootAtReticle],['Range settings',()=>showRangeOps(true)]]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=()=>safelyInteract(label,run);rangeActionBar.append(button);}controlDock.prepend(rangeActionBar);
   function setFullscreen() { if (document.fullscreenElement) { document.exitFullscreen?.(); return; } const request = stage.requestFullscreen?.(); if (request?.catch) request.catch(() => setStatus('Fullscreen is unavailable in this browser.')); else setStatus('Fullscreen is unavailable in this browser.'); }
   // Anchor walking to the initial touch; the 8px tap zone stays neutral.
   function setupThumbstick(name) { const stick = document.querySelector(`[data-thumbstick="${name}"] .thumbstick-base`); const knob = stick?.querySelector('.thumbstick-knob'); if (!stick || !knob) return; let pointerId = null; let startX = 0; let startY = 0; let moved = false; let stickRect; const write = (event) => { const rect = stickRect; const radius = rect.width * .29; let x = THREE.MathUtils.clamp(event.clientX - startX, -radius, radius); let y = THREE.MathUtils.clamp(event.clientY - startY, -radius, radius); const length = Math.hypot(x, y); if (length > radius) { x = x / length * radius; y = y / length * radius; } knob.style.transform = `translate(${x}px, ${y}px)`; const wasNeutral=thumbInput.leftX===0&&thumbInput.leftY===0; const axes=walkingStick(x/radius,y/radius,Math.min(.9,8/radius));thumbInput[`${name}X`] = axes.x; thumbInput[`${name}Y`] = axes.y; moved ||= Math.hypot(event.clientX - startX, event.clientY - startY) > 8; if(name==='left')authoritativeClient?.requestInput(wasNeutral !== (axes.x===0&&axes.y===0)); };
@@ -1850,6 +1852,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     lastFrameTime = targetFrameMs ? time - ((time - lastFrameTime) % targetFrameMs) : time;
     const delta = Math.min(.05, clock.getDelta());
     xrGameControls?.update(delta);
+    rangeActionBar.hidden=rangeOpsButton.hidden||renderer.xr.isPresenting;
     const menuOpen=Boolean(xrGameControls?.menuOpen||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'));
     // Bound collision steps on slower frames while retaining elapsed-time movement.
     if(!serverHostedRoom&&!menuOpen&&!vehicleController.update(delta)) {

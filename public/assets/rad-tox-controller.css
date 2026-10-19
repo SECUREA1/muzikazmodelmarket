@@ -28,3 +28,15 @@ body:not(.playing):not(.riding):has(.muzikaz-controller) #walkhud{bottom:195px}
 .rad-controller-actions .rad-controller-button{min-height:44px;min-width:64px;touch-action:manipulation}
 .rad-controller-menu button,.rad-sports-menu button,.rad-sports-menu select,.rad-sports-menu input{min-height:44px}
 @media(max-width:760px),(pointer:coarse){.rad-controller-menu,.rad-sports-menu{font-size:16px}.basketball-rules input,.basketball-rules select{font-size:16px}}
+
+/* Gameplay actions sit above the existing toolbar and dual sticks. */
+.game-screen-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:10px;box-sizing:border-box;width:100%;background:#0c1b08;border-bottom:1px solid #9cff0066;pointer-events:auto}
+.game-screen-actions[hidden]{display:none!important}
+.game-screen-actions button{flex:1 1 85px;min-width:64px;min-height:48px;margin:0;padding:10px 8px;border:1px solid #b8ed62;border-radius:10px;background:#203e0f;color:#efffd7;font:bold 13px system-ui;touch-action:manipulation;cursor:pointer}
+.game-screen-actions button:first-child{background:#35621c}
+.game-screen-actions button:disabled{opacity:.45;cursor:default}
+.game-screen-actions button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.game-screen-actions button:active{background:#528d00}
+.muzikaz-controller.has-screen-actions{grid-template-areas:'gameplay gameplay' 'toolbar toolbar' 'left right'}
+.has-screen-actions>.game-screen-actions{grid-area:gameplay}
+@media(max-width:520px){.game-screen-actions{gap:6px;padding:8px}.game-screen-actions button{font-size:12px;flex-basis:75px}}

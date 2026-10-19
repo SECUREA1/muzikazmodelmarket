@@ -3,7 +3,7 @@ const clock = milliseconds => {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 };
 
-export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
+export function mountBasketballHud({ stage, actionParent=stage.parentElement, onAction, announce = () => {} }) {
   const style = document.createElement('style');
   style.textContent = `
     .basketball-match-toggle{pointer-events:auto;min-height:38px;background:#142305;color:#c4ff5b;border:1px solid #91ba42;border-radius:8px;margin:6px auto;display:block;padding:6px 12px;font-weight:bold}.basketball-match-menu{pointer-events:auto}.basketball-match-menu .basketball-game-actions{display:flex!important}.basketball-match-menu::backdrop{background:#000b}\n    .basketball-hud[hidden]{display:none!important}
@@ -52,6 +52,9 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
   const matchButton=document.createElement('button');matchButton.type='button';matchButton.className='basketball-match-toggle';matchButton.textContent='Match · join / watch / start';matchButton.onclick=()=>{document.exitPointerLock?.();match.showModal();};actions.replaceWith(matchButton);match.insertBefore(actions,match.querySelector('[data-close-match]'));root.append(match);
   match.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();match.close();}});
   stage.append(root);
+  const screenBar=document.createElement('div');screenBar.className='game-screen-actions basketball-screen-actions';screenBar.hidden=true;screenBar.setAttribute('role','group');screenBar.setAttribute('aria-label','Basketball gameplay actions');
+  for(const action of ['basketball-shoot','toss','catch','basketball-steal'])screenBar.append(root.querySelector(`[data-basketball-action="${action}"]`));
+  actionParent.prepend(screenBar);
   const rules = document.createElement('dialog');rules.className='basketball-rules';rules.setAttribute('aria-labelledby','basketball-rules-title');
   rules.innerHTML='<form><h2 id="basketball-rules-title">Quick match tuner</h2><p>Choose team size, human players and AI difficulty, then start. Both teams stay equal; AI fills every empty spot at tip-off.</p><button type="button" data-solo-setup>Solo vs AI</button><div class="basketball-rules-fields"><label>Players per team<select name="teamSize"><option value="1">1 vs 1</option><option value="2">2 vs 2</option><option value="3">3 vs 3</option><option value="4">4 vs 4</option><option value="5">5 vs 5</option></select></label><label>AI difficulty<select name="aiDifficulty"><option value="1">Tier 1 · Rookie</option><option value="2">Tier 2 · Amateur</option><option value="3">Tier 3 · Pro</option><option value="4">Tier 4 · All-Star</option><option value="5">Tier 5 · Legend</option></select></label><label>Home human slots<input name="homeHumans" type="number" min="0" max="5" step="1" required></label><label>Away human slots<input name="awayHumans" type="number" min="0" max="5" step="1" required></label></div><details><summary>Competition rules · timing &amp; scoring</summary><div class="basketball-rules-fields"><label>Minutes per period<input type="number" name="quarterMinutes" min="1" max="12" step="1" required></label><label>Number of periods<input type="number" name="quarters" min="1" max="4" step="1" required></label><label>Shot clock (seconds)<input type="number" name="shotClockSeconds" min="5" max="60" step="1" required></label><label>Score to win (0 = timed)<input type="number" name="scoreLimit" min="0" max="200" step="1" required></label><label>Win by points<input type="number" name="winBy" min="1" max="10" step="1" required></label></div></details><p data-roster-preview role="status" aria-live="polite"></p><p>Playing with friends? Save to lobby, let everyone join Home or Away, then start. AI wears numbered team jerseys. Late arrivals watch until the next game.</p><p data-rules-status role="status"></p><footer><button type="submit" name="start" value="true" data-start-match>Start game</button><button type="submit" name="save" data-save-rules>Save to lobby</button><button type="button" data-close-rules>Back to court</button></footer></form>';
   stage.append(rules);
@@ -87,7 +90,7 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
   });
   const blocked=button=>!ready||pending.has(button)||(currentPlayer?.basketballRole==='spectator'&&['catch','toss','basketball-shoot','basketball-steal','basketball-start'].includes(button.dataset.basketballAction));
   const pending = new Set();
-  root.addEventListener('click', async event => {
+  const handleAction=async event => {
     const button = event.target.closest('[data-basketball-action]');
     if (!button || button.disabled) return;
     event.stopPropagation();
@@ -97,14 +100,15 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
     try { await onAction(button.dataset.basketballAction, button.dataset.team ? { team: button.dataset.team } : {}); }
     catch (error) { announce(error.message); }
     finally { pending.delete(button);button.disabled = blocked(button); }
-  });
+  };
+  root.addEventListener('click',handleAction);screenBar.addEventListener('click',handleAction);
   return {
     render(game, player, enabled, players={}) {
-      root.hidden = !enabled;
+      root.hidden = !enabled;screenBar.hidden=!enabled;
       stage.classList.toggle('basketball-world', Boolean(enabled));
       ready = Boolean(player);
       currentGame=game;currentPlayer=player;currentPlayers=players;
-      for(const button of root.querySelectorAll('button'))button.disabled=blocked(button);
+      for(const button of [...root.querySelectorAll('button'),...screenBar.querySelectorAll('button')])button.disabled=blocked(button);
       if(!enabled&&rules.open)rules.close();
       if (!enabled || !game) return;
       if(rules.open){previewRoster();if(game.state==='live'){for(const input of rules.querySelectorAll('input,select,[type=submit],[data-solo-setup]'))input.disabled=true;rules.querySelector('[data-rules-status]').textContent='Match started. Settings are locked until the final buzzer.';}}
