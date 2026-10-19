@@ -1,3 +1,5 @@
+import {INTERACTIVE_DEVICES} from './interactive-devices.js';
+import {mountDeviceDemo} from './device-demos.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function safePreviewUrl(value){
  if(typeof value!=='string'||!value.trim())return '';
@@ -9,7 +11,7 @@ export function safePreviewUrl(value){
 export function previewDescriptor(record={}){
  const item=record.asset||record.model||record,config=item.function_data||{},name=item.name||item.itemName||record.name||'Market item';
  const modelUrl=item.modelUrl||item.glb_url;
- const descriptor={name,image:safePreviewUrl(item.thumbnailUrl||item.thumbnail_url||item.thumbnail||item.previewUrl||item.imageUrl||item.image_url||item.image||record.preview||(/\.(?:png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(modelUrl||'')?modelUrl:'')),model:safePreviewUrl(/\.(?:png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(modelUrl||'')?'':modelUrl),buildAssetId:item.buildAssetId||config.buildAssetId||config.modelId,materialId:item.materialId,toolId:item.toolId,category:item.builder_category||item.category||item.itemType||item.type||item.kind||'Item',icon:item.icon||'',color:/^#[\da-f]{6}$/i.test(item.color)?item.color:'#9cff69',entries:item.entries?.slice(0,8).map(entry=>({name:entry.name,quantity:entry.quantity||1}))};
+ const descriptor={name,image:safePreviewUrl(item.thumbnailUrl||item.thumbnail_url||item.thumbnail||item.previewUrl||item.imageUrl||item.image_url||item.image||record.preview||(/\.(?:png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(modelUrl||'')?modelUrl:'')),model:safePreviewUrl(/\.(?:png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(modelUrl||'')?'':modelUrl),buildAssetId:item.buildAssetId||config.buildAssetId||config.modelId,deviceId:config.device||item.functionalSettings?.device||item.device,materialId:item.materialId,toolId:item.toolId,category:item.builder_category||item.category||item.itemType||item.type||item.kind||'Item',icon:item.icon||'',color:/^#[\da-f]{6}$/i.test(item.color)?item.color:'#9cff69',entries:item.entries?.slice(0,8).map(entry=>({name:entry.name,quantity:entry.quantity||1}))};
  if(descriptor.model&&/brand_name|logo|placeholder/i.test(descriptor.image))descriptor.image='';
  return descriptor;
 }
@@ -42,8 +44,16 @@ function displayImage(figure,url,label,onError){
  img.alt=label;img.decoding='async';img.onload=()=>{clearTimeout(timer);if(settled)return;settled=true;if(figure.isConnected){figure.querySelector('svg,img')?.replaceWith(img);figure.querySelector('figcaption').textContent=label;}};
  img.onerror=()=>{clearTimeout(timer);if(!settled){settled=true;onError();}};img.src=url;
 }
+const deviceDemoPreviews=new Map();let demoObserver;
+function addDevicePreview(figure,item){
+ const profile=INTERACTIVE_DEVICES[item.deviceId||item.buildAssetId];if(!profile)return;
+ if(!document.querySelector('#device-demo-preview-styles')){const link=document.createElement('link');link.id='device-demo-preview-styles';link.rel='stylesheet';link.href='/public/css/interactive-devices.css';document.head.append(link);}
+ deviceDemoPreviews.set(figure,mountDeviceDemo(figure,profile));
+ demoObserver ||= new MutationObserver(()=>{for(const [node,preview]of deviceDemoPreviews)if(!node.isConnected){preview.dispose();deviceDemoPreviews.delete(node);}});
+ demoObserver.observe(document.body,{childList:true,subtree:true});
+}
 function loadPreview(figure){
- if(figure.dataset.previewMounted)return;figure.dataset.previewMounted='true';const item=JSON.parse(figure.dataset.itemPreview);if(item.entries?.length&&!item.image)return;
+ if(figure.dataset.previewMounted)return;figure.dataset.previewMounted='true';const item=JSON.parse(figure.dataset.itemPreview);addDevicePreview(figure,item);if(item.entries?.length&&!item.image)return;
  const model=()=>{if(!(item.model||item.buildAssetId||item.materialId)){figure.querySelector('figcaption').textContent='Illustration · '+item.category;return;}
   const key=JSON.stringify([item.model,item.buildAssetId,item.materialId]);let task=snapshots.get(key);if(!task){task=queue.then(()=>modelSnapshot(item));snapshots.set(key,task);queue=task.catch(()=>{});if(snapshots.size>150)snapshots.delete(snapshots.keys().next().value);}
   task.then(url=>{if(figure.isConnected)displayImage(figure,url,item.name+' · 3D preview',()=>{});}).catch(()=>{if(figure.isConnected)figure.querySelector('figcaption').textContent='3D preview unavailable · illustration shown';snapshots.delete(key);});

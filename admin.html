@@ -37,6 +37,17 @@
         <div><p class="eyebrow">Live operational overview</p><h1>Everything in one place.</h1><p id="last-updated">Loading the latest server snapshot…</p></div>
         <div class="hero-actions"><button id="refresh" type="button">Refresh data</button><button id="export-sheet" type="button">Export spreadsheet</button><button id="print" type="button">Print view</button><button id="export" type="button">Export JSON</button></div>
       </div>
+      <section class="access-panel master-state-panel" aria-labelledby="master-state-title">
+        <p class="eyebrow">Server memory · portable recovery</p><h2 id="master-state-title">Master server backup &amp; restore</h2>
+        <p>Download accounts, land, builds, Backpack items, MZK balances, marketplace and crypto payment records, saved matches, atlas locations, and locally uploaded assets in one editable JSON file.</p>
+        <p>This private file includes account credentials and member data. Keep it secure. External asset links, blockchain state, unsaved browser games, server code, and deployment secrets are not copied.</p>
+        <div class="hero-actions"><button id="master-download" type="button">Download master server file</button><button id="show-member-list" type="button">Member list</button><button id="show-land-list" type="button">Land list</button><button id="show-build-list" type="button">Saved builds</button></div>
+        <label>Upload master state JSON<input id="master-upload" type="file" accept=".json,application/json"></label>
+        <p id="master-file-summary">Select a master file to validate and preview its contents.</p>
+        <label class="master-confirm"><input id="master-confirm" type="checkbox"> Replace the entire server state with this file, including balances and ownership. Records added after this backup will be removed. A recovery copy is saved first.</label>
+        <button id="master-restore" type="button" disabled>Restore selected master state</button>
+        <p id="master-status" role="status" aria-live="polite"></p>
+      </section>
       <section class="access-panel" aria-labelledby="member-title">
         <h2 id="member-title">Member accounts &amp; Backpack</h2>
         <label>Choose member<select id="member-select"><option value="">Select a member…</option></select></label>

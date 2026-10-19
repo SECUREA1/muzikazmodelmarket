@@ -119,6 +119,16 @@ test('dead players continue heartbeats without automatic firing',async()=>{
  {input:()=>({firing:true,tool:'flamethrower',direction:[0,0,-1]})});
 });
 
+test('held fire carries the current camera height so scoped range shots keep the same origin',async()=>{
+ let sequence=0;const shots=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);if(command.action==='fire')shots.push(command);
+  const state=confirmed(++sequence);state.players[state.selfId].health=100;return response(state);
+ },async client=>{await client.whenReady();await pause(160);assert.ok(shots.length>=1);assert.equal(shots[0].eyeHeight,1.25);},
+ {input:()=>({firing:true,tool:'marksman',direction:[0,0,-1],eyeHeight:1.25})});
+});
+
 test('an expired room presence rejoins while ordinary conflicts do not',async()=>{
  let joins=0,inputs=0;
  await withRoom(async(path,options)=>{
@@ -162,4 +172,58 @@ test('intermediate drag bursts use the heartbeat while neutral edges flush immed
   await pause(70);assert.equal(received.at(-1),.99,'heartbeat uses the latest drag state');
   side=0;client.requestInput();await pause(5);assert.equal(received.at(-1),0,'release bypasses the heartbeat');
  },{input:()=>({side})});
+});
+
+test('a confirmed MZK token refreshes the wallet and plays pickup feedback only once',async()=>{
+ const previousEvent=globalThis.CustomEvent;globalThis.CustomEvent=class extends Event{constructor(type,options){super(type);this.detail=options.detail;}};
+ let refreshes=0,pickups=0;
+ try{
+  await withRoom(async path=>{window.dispatchEvent=event=>{if(event.type==='muzikaz:pickup-confirmed')pickups++;};window.MZKWallet={refreshShared:async()=>{refreshes++;}};return path==='/api/game/room-session'?response({csrfToken:'proof'}):response({...confirmed(1),result:{loot:{id:'coin-once',currency:'MZK',amount:1},message:'+1 MZK'}});},async client=>{
+   await client.whenReady();await client.send('collect');await client.send('collect');assert.equal(pickups,1);assert.equal(refreshes,1);
+  },{render:()=>{}});
+ }finally{globalThis.CustomEvent=previousEvent;}
+});
+
+test('a confirmed portal arrival is sent once and automatic reconnect uses the saved room position',async()=>{
+ const joins=[];let sequence=0,inputs=0;
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);if(command.action==='join')joins.push(command);
+  if(command.action==='input'&&++inputs===1)return response({message:'Rejoin',code:'ROOM_JOIN_REQUIRED'},409);
+  return response(confirmed(++sequence));
+ },async client=>{await client.whenReady();await pause(250);assert.ok(joins.length>=2);assert.equal(joins[0].travelFrom,'public-commons');assert.equal(joins[0].travelToken,'server-ticket');assert.equal(joins[1].travelToken,undefined);},{arrival:{from:'public-commons',token:'server-ticket'}});
+});
+
+test('a transient network error resumes input without replaying a meeting join',async()=>{
+ let sequence=0,failed=false;const commands=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);commands.push(command);
+  if(command.action==='input'&&!failed){failed=true;throw Error('temporary network interruption');}
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();await pause(1250);assert.equal(failed,true);assert.equal(client.ready,true);assert.equal(commands.filter(c=>c.action==='join').length,1);assert.ok(commands.filter(c=>c.action==='input').length>1);
+ },{meetingId:'commons-entry'});
+});
+test('an expired room rejoin preserves position by omitting the consumed arrival and meeting',async()=>{
+ let sequence=0,expired=false;const commands=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);commands.push(command);
+  if(command.action==='input'&&!expired){expired=true;return response({message:'Rejoin required',code:'ROOM_JOIN_REQUIRED'},409);}
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();await pause(220);const joins=commands.filter(c=>c.action==='join');assert.equal(joins.length,2);assert.equal(joins[0].meetingId,'commons-entry');assert.equal(joins[0].travelToken,'proof');assert.equal(joins[1].meetingId,undefined);assert.equal(joins[1].travelToken,undefined);assert.equal(client.ready,true);
+ },{meetingId:'commons-entry',arrival:{from:'previous-room',token:'proof'}});
+});
+
+test('single-flight fire returns a fully processed state and confirms a late shot once without rewinding snapshots',async()=>{
+ let sequence=0,release,shots=0;const renders=[],events=[];
+ await withRoom(async(path,options)=>{if(path==='/api/game/room-session')return response({csrfToken:'proof'});const command=JSON.parse(options.body);if(command.action==='fire'){shots++;return new Promise(resolve=>{release=()=>{const state=confirmed(2);state.serverTime=1000;state.result={origin:{x:0,y:1,z:0},direction:[0,0,-1],firedAt:1000};resolve(response(state));};});}return response(confirmed(++sequence));},async client=>{window.dispatchEvent=event=>events.push(event);await client.whenReady();const first=client.send('fire',{tool:'laser'}),second=client.send('fire',{tool:'laser'});while(!release)await pause(1);sequence=10;await client.send('interact');release();const [a,b]=await Promise.all([first,second]);assert.equal(a,b);assert.equal(shots,1);assert.equal(events.filter(e=>e.type==='muzikaz:shot-confirmed').length,1);assert.equal(renders.at(-1),11);},{render:state=>renders.push(state.sequence)});
+});
+test('fire pacing is per tool and does not hold up input heartbeats',async()=>{
+ let sequence=0;const commands=[];await withRoom(async(path,options)=>{if(path==='/api/game/room-session')return response({csrfToken:'proof'});commands.push(JSON.parse(options.body));return response(confirmed(++sequence));},async client=>{await client.whenReady();await client.send('fire',{tool:'medkit'});await client.send('fire',{tool:'laser'});assert.equal(await client.send('fire',{tool:'laser'}),null);await pause(120);assert.equal(commands.filter(c=>c.action==='fire').length,2);const inputs=commands.filter(c=>c.action==='input');assert.ok(inputs.length>=1);assert.ok(inputs.every((c,i)=>i===0||c.inputSequence>inputs[i-1].inputSequence));});
+});
+test('held-fire cooldown responses do not spam connection status or rejoin',async()=>{
+ let sequence=0,shots=0,joins=0;const statuses=[];await withRoom(async(path,options)=>{if(path==='/api/game/room-session')return response({csrfToken:'proof'});const {action}=JSON.parse(options.body);if(action==='join')joins++;if(action==='fire'){shots++;return response({message:'Tool is cooling down.'},429);}const state=confirmed(++sequence);state.players[state.selfId].health=100;return response(state);},async client=>{await client.whenReady();await pause(460);assert.ok(shots>=1&&shots<=3);assert.equal(joins,1);assert.ok(!statuses.includes('Tool is cooling down.'));assert.equal(client.ready,true);},{input:()=>({firing:true,tool:'laser',direction:[0,0,-1]}),onStatus:message=>statuses.push(message)});
 });

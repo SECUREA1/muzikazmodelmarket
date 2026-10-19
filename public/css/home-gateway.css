@@ -1,0 +1,67 @@
+/* Homepage presentation uses the existing MUZIKAZ wordmark and electric lime. */
+.muzikaz-home { --home-line:#34452c; --home-muted:#b5c0ab; }
+.muzikaz-home .skip-link { z-index:2000; }
+.muzikaz-home .hero-primary-action span { font-family:Arial,sans-serif; }
+.muzikaz-home :is(.hero-signal b,.hero-mode-switcher b) { font-family:Bangers,Impact,sans-serif; }
+body.muzikaz-home .hero { gap:clamp(24px,4vw,64px); min-height:auto; padding:clamp(40px,6vw,88px) clamp(20px,5vw,80px) 64px; grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); }
+body.muzikaz-home .hero:before { background:radial-gradient(ellipse at 15% 40%,#5b8c182e,transparent 55%),linear-gradient(125deg,#10170c,#020502 70%); transform:none; }
+body.muzikaz-home .hero h1 { font-family:Bangers,Impact,"Arial Black",sans-serif; font-size:clamp(58px,6.8vw,108px); line-height:.94; letter-spacing:0; }
+body.muzikaz-home .hero-copy { min-width:0; }
+body.muzikaz-home .hero-logo { width:min(320px,72vw); }
+body.muzikaz-home .hero-poster { width:min(420px,100%); justify-self:center; }
+body.muzikaz-home .hero-poster>img:first-of-type { border-radius:20px; clip-path:none; }
+body.muzikaz-home .hero-signal { border-radius:12px; right:-8px; }
+body.muzikaz-home .hero-signal b { font-size:18px; }
+body.muzikaz-home .hero-actions { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:24px; }
+body.muzikaz-home .hero-actions .btn { border-radius:10px; }
+body.muzikaz-home .hero-mode-switcher { border:1px solid var(--home-line); border-radius:12px; overflow:hidden; }
+body.muzikaz-home .hero-mode-switcher button,body.muzikaz-home .hero-mode-switcher button:first-child { padding:16px 12px; min-height:64px; }
+.muzikaz-home :is(#world-map,#essential-links,#models,#merch) { scroll-margin-top:calc(var(--global-header-height,72px) + 20px); }
+.muzikaz-home .home-gateway { width:min(1380px,calc(100% - 40px)); margin:0 auto; padding:40px 0 56px; }
+.home-gateway__heading { display:flex; align-items:end; justify-content:space-between; gap:24px; margin-bottom:24px; }
+.home-gateway__heading .kicker { color:var(--lime,#9cff00); font:800 11px/1.5 Inter,sans-serif; letter-spacing:.16em; margin:0 0 10px; text-transform:uppercase; }
+.home-gateway__heading h2 { margin:0; font:400 clamp(32px,4vw,52px)/1.1 Bangers, sans-serif; color:#f4f8eb; }
+.home-gateway__heading>p { max-width:340px; margin:0; color:var(--home-muted); font-size:14px; line-height:1.6; }
+.home-gateway__tiles { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.home-gateway__tile { position:relative; display:flex; flex-direction:column; align-items:start; gap:14px; min-width:0; padding:24px; border:1px solid var(--home-line); border-radius:16px; background:linear-gradient(145deg,#16220e,#080d07 75%); color:#f4f8eb; text-decoration:none; transition:border-color .18s,background .18s; }
+.home-gateway__tile:hover { border-color:var(--lime,#9cff00); background:#16220e; }
+.home-gateway__tile svg { width:32px; height:32px; fill:none; stroke:var(--lime,#9cff00); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; margin-bottom:10px; }
+.home-gateway__tile .home-gateway__number { font-size:10px; font-weight:800; letter-spacing:.14em; color:#c0e995; }
+.home-gateway__tile strong { font-size:19px; line-height:1.25; }
+.home-gateway__tile>span:not(.home-gateway__number) { font-size:13px; line-height:1.6; color:var(--home-muted); }
+.home-gateway__tile>b svg { width:20px; height:20px; margin:0; }
+.home-gateway__tile>b { position:absolute; right:22px; top:24px; font-size:22px; color:var(--lime,#9cff00); }
+.home-essentials { margin-top:16px; border:1px solid var(--home-line); border-radius:14px; background:#0a1008; }
+.home-essentials summary { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px 22px; min-height:56px; box-sizing:border-box; cursor:pointer; list-style:none; color:#f4f8eb; font-weight:800; }
+.home-essentials summary::-webkit-details-marker { display:none; }
+.home-essentials summary small { display:inline-block; margin-left:14px; color:var(--home-muted); font-size:12px; font-weight:400; }
+.home-essentials__toggle { color:var(--lime,#9cff00); font-size:24px; }
+.home-essentials[open] .home-essentials__toggle { transform:rotate(45deg); }
+.home-essentials nav { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; padding:0 16px 16px; }
+.home-essentials nav a { display:flex; flex-direction:column; gap:7px; min-height:64px; padding:14px; border-radius:8px; color:#e8f2df; text-decoration:none; font-size:13px; font-weight:700; overflow-wrap:anywhere; }
+.home-essentials nav a:hover { background:#1b2b12; }
+.home-essentials nav a span { color:var(--home-muted); font-size:12px; font-weight:400; line-height:1.5; }
+.muzikaz-home :is(.home-gateway a,.home-essentials summary,.hero-actions a,.hero-mode-switcher button):focus-visible { outline:2px solid #c7ff69; outline-offset:4px; }
+@media(max-width:1000px) { .home-gateway__tiles,.home-essentials nav { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:950px) { body.muzikaz-home .hero { grid-template-columns:minmax(0,1fr); } body.muzikaz-home .hero-poster { width:min(340px,76vw); margin:24px 0; } }
+@media(max-width:600px) {
+ body.muzikaz-home .hero { padding:32px 20px 40px; }
+ body.muzikaz-home .hero h1 { font-family:Bangers,Impact,"Arial Black",sans-serif; font-size:clamp(50px,14vw,80px); }
+ body.muzikaz-home .hero-live { flex-wrap:wrap; font-size:9px; letter-spacing:.1em; }
+ body.muzikaz-home .hero-mode-switcher { grid-template-columns:repeat(3,minmax(0,1fr)); }
+ body.muzikaz-home .hero-mode-switcher button { display:flex; flex-direction:column; align-items:start; gap:6px; padding:12px; }
+ body.muzikaz-home .hero-mode-switcher button span { font-size:10px; }
+ .home-gateway__heading { display:block; }
+ .home-gateway__heading>p { margin-top:12px; }
+ .home-gateway__tile { padding:18px; gap:12px; }
+ .home-gateway__tile strong { font-size:16px; }
+ .home-gateway__tile>b svg { width:20px; height:20px; margin:0; }
+.home-gateway__tile>b { right:16px; top:16px; }
+ .home-essentials summary small { display:block; margin:6px 0 0; line-height:1.5; }
+ .home-essentials nav { grid-template-columns:minmax(0,1fr); }
+}
+@media(max-width:359px) { .home-gateway__tiles { grid-template-columns:minmax(0,1fr); } }
+@media(prefers-reduced-motion:reduce) { .home-gateway__tile { transition:none; } }
+
+.muzikaz-home .hero-character:not(:defined) { visibility:hidden; }
+.muzikaz-home .home-gateway :is(p,small,.home-gateway__tile>span:not(.home-gateway__number),.home-essentials nav a span) { text-transform:none; }

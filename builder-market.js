@@ -2,8 +2,8 @@
   'use strict';
   const {marketItemPreview,hydrateMarketPreviews,openMarketPreview}=await import('./public/js/market-item-preview.js');
   const categories = ['WORLD','BUILDINGS','PROPS','TERRAIN','NPC','AI','VEHICLES','GAME SYSTEMS','FUNCTIONS','AUDIO','EFFECTS','SCRIPTS','INTERACTIVE','UTILITIES'];
-  const roomStyles = [{ id:'loft', name:'Open Studio', label:'Flexible creative loft', color:'#ff5ba7', walls:'l' }, { id:'suite', name:'Connected Suite', label:'Three linked rooms', color:'#61e7ff', walls:'h' }, { id:'courtyard', name:'Garden Courtyard', label:'Indoor / outdoor flow', color:'#b5ff55', walls:'u' }];
-  const builderModels = [['canopy-tree','Canopy Tree','landscape'],['pine-tree','Pine Tree','landscape'],['flower-bed','Flower Bed','landscape'],['hedge-corner','Hedge Corner','landscape'],['garden-rocks','Garden Rocks','landscape'],['pond','Reflecting Pond','landscape'],['path-tile','Path Tile','landscape'],['hill','Soft Hill','landscape'],['lamp-post','Lamp Post','landscape'],['planter','Tall Planter','landscape'],['pillow-ring','Pillow Ring Seat','interior'],['sofa','Cloud Sofa','interior'],['armchair','Accent Chair','interior'],['coffee-table','Coffee Table','interior'],['bookshelf','Bookshelf','interior'],['floor-lamp','Floor Lamp','interior'],['room-divider','Room Divider','interior'],['kitchen-island','Kitchen Island','interior'],['spiral-stairs','Spiral Stairs','interior'],['archway','Archway','interior'],['art-wall','Art Wall','interior']];
+  let roomStyles = [{ id:'loft', name:'Open Studio', label:'Flexible creative loft', color:'#ff5ba7', walls:'l' }, { id:'suite', name:'Connected Suite', label:'Three linked rooms', color:'#61e7ff', walls:'h' }, { id:'courtyard', name:'Garden Courtyard', label:'Indoor / outdoor flow', color:'#b5ff55', walls:'u' }];
+  let builderModels = [['canopy-tree','Canopy Tree','landscape'],['pine-tree','Pine Tree','landscape'],['flower-bed','Flower Bed','landscape'],['hedge-corner','Hedge Corner','landscape'],['garden-rocks','Garden Rocks','landscape'],['pond','Reflecting Pond','landscape'],['path-tile','Path Tile','landscape'],['hill','Soft Hill','landscape'],['lamp-post','Lamp Post','landscape'],['planter','Tall Planter','landscape'],['pillow-ring','Pillow Ring Seat','interior'],['sofa','Cloud Sofa','interior'],['armchair','Accent Chair','interior'],['coffee-table','Coffee Table','interior'],['bookshelf','Bookshelf','interior'],['floor-lamp','Floor Lamp','interior'],['room-divider','Room Divider','interior'],['kitchen-island','Kitchen Island','interior'],['spiral-stairs','Spiral Stairs','interior'],['archway','Archway','interior'],['art-wall','Art Wall','interior']];
   const $ = (selector) => document.querySelector(selector); let state = { permissions:{}, land:[], assets:[], listings:[], placements:[], csrf:'' };
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' })[character]);
   const status = (message, error = false) => { $('#builder-status').textContent = message; $('#builder-status').classList.toggle('error', error); };
@@ -17,9 +17,37 @@
     return `<article class="builder-card">${marketItemPreview(asset)}<small>${escapeHtml(asset.builder_category)} · v${escapeHtml(asset.version)}</small><h3>${escapeHtml(asset.name)}</h3><p>${escapeHtml(asset.description || 'Reusable MUZIKAZ builder component.')}</p>${functional ? '<div class="builder-card__meta"><span>CONFIGURABLE FUNCTION</span></div>' : ''}${body}<div class="builder-actions">${actions}</div></article>`;
   }
   const button = (label, action, id, allowed = true) => allowed ? `<button type="button" data-action="${action}" data-id="${escapeHtml(id)}">${label}</button>` : '';
-  function renderBuilderPack(filter = 'all') {
-    $('#room-style-grid').innerHTML = roomStyles.map((room) => `<button type="button" class="room-style" data-room-style="${room.id}" style="--room-color:${room.color}"><span class="room-style__plan room-style__plan--${room.walls}" aria-hidden="true"><i></i><b></b></span><strong>${room.name}</strong><small>${room.label}</small></button>`).join('');
-    $('#builder-model-grid').innerHTML = builderModels.filter(([, , type]) => filter === 'all' || type === filter).map(([id, name, type], index) => `<button type="button" class="builder-model" data-builder-model="${id}" data-model-name="${name}"><span class="builder-model__number">${String(index + 1).padStart(2, '0')}</span><img src="public/images/builder-pack/${id}.svg" alt="" loading="lazy"><span><strong>${name}</strong><small>${type.toUpperCase()}</small></span><b aria-hidden="true">＋</b></button>`).join('');
+  let packFilter = 'all';
+  const trayKey = 'muzikaz.builder.buildTray';
+  function readTray() { try { const tray = JSON.parse(localStorage.getItem(trayKey) || '[]'); return Array.isArray(tray) ? tray : []; } catch { return []; } }
+  function renderBuilderPack(filter = packFilter) {
+    packFilter = filter;
+    const selected = new Set(readTray().map(item => item.id));
+    document.querySelector('[data-pack-count]').textContent = `${builderModels.length} models`;
+    document.querySelector('[data-pack-filter="all"]').textContent = `ALL ${builderModels.length}`;
+    $('#room-style-grid').innerHTML = roomStyles.map((room) => `<button type="button" class="room-style" data-room-style="${escapeHtml(room.id)}" style="--room-color:${room.color}"><span class="room-style__plan room-style__plan--${room.walls}" aria-hidden="true"><i></i><b></b></span><strong>${escapeHtml(room.name)}</strong><small>${escapeHtml(room.label)}</small></button>`).join('');
+    $('#builder-model-grid').innerHTML = builderModels.filter(([, , type]) => filter === 'all' || type === filter).map(([id, name, type, thumbnail], index) => `<button type="button" class="builder-model ${selected.has(id) ? 'selected' : ''}" aria-pressed="${selected.has(id)}" data-builder-model="${escapeHtml(id)}" data-model-name="${escapeHtml(name)}"><span class="builder-model__number">${String(index + 1).padStart(2, '0')}</span><img src="${escapeHtml(thumbnail || `public/images/builder-pack/${id}.svg`)}" alt="" loading="lazy"><span><strong>${escapeHtml(name)}</strong><small>${escapeHtml(type.toUpperCase())}</small></span><b aria-hidden="true">＋</b></button>`).join('');
+  }
+  async function loadCompletePack() {
+    try {
+      const response = await fetch('public/models/backpack-assets.json', { cache:'no-cache' });
+      if (!response.ok) throw new Error('Builder catalog could not be loaded.');
+      const catalog = await response.json();
+      if (!Array.isArray(catalog.assets)) throw new Error('Builder catalog is invalid.');
+      const models = catalog.assets.filter(item => item.buildAssetId);
+      const layouts = catalog.assets.filter(item => item.builderLayoutId);
+      if (!models.length || !layouts.length) throw new Error('Builder catalog is empty.');
+      builderModels = models.map(item => [item.buildAssetId, item.name, item.builderCategory, item.thumbnailUrl]);
+      roomStyles = layouts.filter(item => item.builderLayoutId !== 'grand-floor').map(item => ({id:item.builderLayoutId,name:item.name,label:item.description || 'Editable world layout',color:'#61e7ff',walls:'l'}));
+      document.querySelector('[data-layout-count]').textContent = `${roomStyles.length} layouts`;
+      const filters = document.querySelector('.builder-library__filters');
+      for (const category of new Set(builderModels.map(item => item[2]))) {
+        if ([...filters.querySelectorAll('[data-pack-filter]')].some(control => control.dataset.packFilter === category)) continue;
+        const control = document.createElement('button'); control.type = 'button'; control.dataset.packFilter = category; control.textContent = category.toUpperCase(); filters.append(control);
+      }
+      renderBuilderPack();
+      setPackStatus(`${models.length} models and ${layouts.length} world templates available. Select pieces for your build tray.`);
+    } catch (error) { setPackStatus(`${error.message} Showing the core pack. Reload to retry the complete catalog.`); }
   }
   function setPackStatus(message) { $('#builder-pack-status').textContent = message; }
   function render() {
@@ -30,8 +58,20 @@
     $('#builder-placements').innerHTML = state.placements.length ? state.placements.map((placement) => { const asset = state.assets.find((item) => item.id === placement.asset_id) || { name:placement.asset_id, builder_category:'WORLD', version:placement.asset_version }; return card(asset, `<div class="builder-card__meta"><span>${escapeHtml(placement.world_id)}</span><span>${escapeHtml(placement.placement_id)}</span></div>`, button('CONFIGURE','configure-placement',placement.placement_id,state.permissions['builder.asset.configure']) + button('REMOVE FROM WORLD','remove-placement',placement.placement_id,state.permissions['builder.world.edit'])); }).join('') : '<p class="builder-empty">Nothing has been placed in your worlds.</p>';
   }
   async function refresh() {
-    const [profile, backpack, listings] = await Promise.all([api('/api/builder/permissions'), api('/api/builder/backpack'), api(`/api/builder/market?category=${encodeURIComponent($('#builder-category').value)}`)]);
-    Object.assign(state, { permissions:profile.permissions, land:profile.land, balance:profile.mzk_balance, assets:backpack.assets, placements:backpack.placements, listings }); $('#builder-account').textContent = profile.account_id; render(); hydrateMarketPreviews(document); status('Builder account verified. Prices, ownership and permissions are validated by MUZIKAZ servers.');
+    const category = $('#builder-category').value;
+    const results = await Promise.allSettled([api('/api/builder/permissions'), api('/api/builder/backpack'), api(`/api/builder/market?category=${encodeURIComponent(category)}`)]);
+    if (category !== $('#builder-category').value) return;
+    const [profile, backpack, listings] = results;
+    if (profile.status === 'fulfilled') { Object.assign(state, { permissions:profile.value.permissions, land:profile.value.land, balance:profile.value.mzk_balance }); $('#builder-account').textContent = profile.value.account_id; }
+    else { Object.assign(state, {permissions:{},land:[],balance:0}); $('#builder-account').textContent = 'Account unavailable'; }
+    Object.assign(state, {assets:backpack.status === 'fulfilled' ? backpack.value.assets : [], placements:backpack.status === 'fulfilled' ? backpack.value.placements : [], listings:listings.status === 'fulfilled' ? listings.value : []});
+    render(); hydrateMarketPreviews(document);
+    const unavailable = '<p class="builder-empty">Unable to load this section. Refresh to retry, or sign in through <a href="members.html">Members</a>.</p>';
+    if (profile.status === 'rejected') $('#builder-worlds').innerHTML = unavailable;
+    if (backpack.status === 'rejected') { $('#builder-assets').innerHTML = unavailable; $('#builder-placements').innerHTML = unavailable; }
+    if (listings.status === 'rejected') $('#builder-listings').innerHTML = unavailable;
+    const errors = results.filter(result => result.status === 'rejected');
+    status(errors.length ? errors.map(result => result.reason.message).join(' ') : 'Builder account verified. Prices, ownership and permissions are validated by MUZIKAZ servers.', errors.length > 0);
   }
   function openDialog(title, fields, submit) { $('#builder-dialog-title').textContent = title; $('#builder-form-fields').innerHTML = fields; $('#builder-dialog-status').textContent = ''; $('#builder-form').onsubmit = async (event) => { event.preventDefault(); $('#builder-dialog-submit').disabled = true; try { await submit(new FormData(event.currentTarget)); $('#builder-dialog').close(); await refresh(); } catch (error) { $('#builder-dialog-status').textContent = error.message; } finally { $('#builder-dialog-submit').disabled = false; } }; $('#builder-dialog').showModal(); }
   const json = (value) => { if (!String(value || '').trim()) return {}; try { return JSON.parse(value); } catch (_) { throw new Error('Configuration must be valid JSON.'); } };
@@ -52,11 +92,16 @@
   if (categories.includes(requestedCategory)) $('#builder-category').value = requestedCategory;
   $('#builder-category').addEventListener('change', () => refresh().catch((error) => status(error.message, true))); $('#open-create-asset').addEventListener('click', createAsset);
   renderBuilderPack();
-  document.querySelectorAll('[data-pack-filter]').forEach((control) => control.addEventListener('click', () => { document.querySelectorAll('[data-pack-filter]').forEach((item) => item.classList.toggle('active', item === control)); renderBuilderPack(control.dataset.packFilter); setPackStatus(`${control.textContent.trim()} shapes shown.`); }));
+  loadCompletePack();
+  document.querySelector('.builder-library__filters').addEventListener('click', event => { const control = event.target.closest('[data-pack-filter]'); if (!control) return; document.querySelectorAll('[data-pack-filter]').forEach(item => item.classList.toggle('active', item === control)); renderBuilderPack(control.dataset.packFilter); setPackStatus(`${control.textContent.trim()} shapes shown.`); });
   $('#room-style-grid').addEventListener('click', (event) => { const room = event.target.closest('[data-room-style]'); if (!room) return; location.href = `environment-builder.html?layout=${encodeURIComponent(room.dataset.roomStyle)}`; });
-  $('#builder-model-grid').addEventListener('click', (event) => { const model = event.target.closest('[data-builder-model]'); if (!model) return; model.classList.toggle('selected'); setPackStatus(`${model.dataset.modelName} ${model.classList.contains('selected') ? 'added to' : 'removed from'} your build tray.`); });
+  $('#builder-model-grid').addEventListener('click', (event) => { const model = event.target.closest('[data-builder-model]'); if (!model) return; const tray = readTray(), index = tray.findIndex(item => item.id === model.dataset.builderModel);
+    if (index >= 0) tray.splice(index, 1); else { const [id,name,type,thumbnailUrl] = builderModels.find(item => item[0] === model.dataset.builderModel); tray.push({id,name,type,thumbnailUrl,addedAt:new Date().toISOString()}); }
+    try { localStorage.setItem(trayKey, JSON.stringify(tray)); } catch { setPackStatus('Your build tray could not be saved. Check browser storage and try again.'); return; }
+    renderBuilderPack(); setPackStatus(`${model.dataset.modelName} ${index < 0 ? 'added to' : 'removed from'} your build tray.`); });
   document.querySelector('[data-pack-template]').addEventListener('click', (event) => { location.href = `environment-builder.html?layout=${encodeURIComponent(event.currentTarget.dataset.packTemplate)}`; });
   const requestedTab = location.hash.slice(1); if (['market','backpack','worlds'].includes(requestedTab)) document.querySelector(`[data-builder-tab="${requestedTab}"]`)?.click();
   import('./public/js/shared-game-inventory.js').then(sync=>{window.MuzikazInventorySync=sync;sync.watchInventoryChange(()=>refresh().catch(error=>status(error.message,true)));});
-  api('/api/account/bootstrap').then((bootstrap) => { state.csrf = bootstrap.csrfToken || ''; return refresh(); }).catch((error) => { status(`${error.message} Sign in through Members to use the Builder Market.`, true); $('#builder-account').textContent = 'Authentication required'; });
+  api('/api/account/bootstrap').then((bootstrap) => { state.csrf = bootstrap.csrfToken || ''; return refresh(); }).catch(async (error) => { await refresh(); status(`${error.message} Sign in through Members to use account features.`, true); });
 }());
+

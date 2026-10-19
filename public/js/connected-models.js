@@ -1,3 +1,4 @@
+import './ar-camera-preview.js';
 const CATALOG_URL = 'public/models/glb-models.json';
 
 const aliases = {

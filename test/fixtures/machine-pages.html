@@ -1,0 +1,13 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Machine pages verification</title><link rel="stylesheet" href="/styles.css"><body style="margin:0;background:#080d18"><script type="module">
+import {mountInteractiveDevices} from '/public/js/interactive-device-ui.js';
+import {INTERACTIVE_DEVICES} from '/public/js/interactive-devices.js';
+import * as THREE from '/public/vendor/three/three.module.min.js';
+import {newArcadeGame,projectArcadeDevices} from '/public/js/arcade-rules.js';
+let live;
+window.commands=[];window.machineIds=Object.keys(INTERACTIVE_DEVICES);
+const ui=mountInteractiveDevices({THREE,stage:document.body,getRoots:()=>[],getPosition:()=>({x:0,y:0,z:0}),market:()=>window.marketOpened=true,upload:async()=>({url:'/uploads/media/demo.mp4'}),announce:message=>window.announcement=message,send:async(action,fields)=>{window.commands.push(fields);live.devices.m.revision++;ui.snapshot({...live,devices:projectArcadeDevices(live.devices)},'alice');return {ok:true};}});
+window.openMachine=id=>{const profile=INTERACTIVE_DEVICES[id],gamer={name:'Alice',credits:100,hand:[1,15,28,42,12],phase:'hold',question:['Choose an answer',['One','Two']]};if(profile.game)gamer.game=newArcadeGame(profile.game,n=>0);live={serverTime:Date.now(),devices:{m:{...profile,revision:1,activePlayerId:'alice',gamers:{alice:gamer},queue:Array.from({length:20},(_,i)=>({title:'Shared media item '+i,addedBy:'Alice'})),text:profile.kind==='board'?'Community notice '.repeat(60):'',author:'Alice'}},actors:{}};ui.snapshot({...live,devices:projectArcadeDevices(live.devices)},'alice');ui.open('m',profile.kind);};
+window.openMachineDemo=id=>ui.openDemo(id);
+window.refreshMachine=()=>{live.devices.m.queue.push({title:'New server item',addedBy:'Bob'});ui.snapshot({...live,devices:projectArcadeDevices(live.devices)},'alice');};
+window.ready=true;
+</script></body></html>

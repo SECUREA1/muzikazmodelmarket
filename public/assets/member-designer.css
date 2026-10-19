@@ -21,3 +21,31 @@
 .members-page .layer-stack button{width:100%;min-height:44px;text-align:left;}
 @media(max-width:850px){.members-page #designer .designer-layout{grid-template-columns:minmax(0,1fr);}.members-page #designer .designer-preview{position:static;}.members-page #designer .mockup{max-height:460px;aspect-ratio:1;}.members-page .member-design-actions>*{flex:1 1 130px;}.members-page .member-draft-list,.members-page #owned-assets-grid{grid-template-columns:minmax(0,1fr);}}
 .members-page .member-draft-card>img{display:block;width:100%;height:130px;object-fit:contain;background:#0b130e;border-radius:8px;}
+
+/* Restored merch workspace: a product reference and one editable composition. */
+.members-page #designer .designer-callout{padding:18px;background:#101a13;border:1px solid #496442;border-radius:14px}
+.members-page #designer .designer-callout h3{font-size:clamp(22px,3vw,34px);margin:6px 0}
+.members-page #designer .designer-preview{top:100px;border:1px solid #38503b;border-radius:16px;background:#0b130e;gap:12px}
+.members-page #designer .mockup{position:relative;overflow:hidden;border-radius:12px;background:radial-gradient(circle at 50% 35%,#26332c,#0c120f);box-shadow:none}
+.members-page #designer .mockup::before,.members-page #designer .mockup::after{display:none}
+.members-page #designer .mockup>.product-template-art{inset:3%;width:94%;height:94%;opacity:1;object-fit:contain;filter:none;z-index:0}
+.members-page #designer .mockup .sticker-sheet-stage{position:absolute;inset:16% 18%;width:auto;height:auto;min-height:0;border-radius:12px;background:rgba(156,255,0,.08);background:color-mix(in srgb,var(--design-color,#9cff00) 18%,transparent);box-shadow:none;border:1px dashed #d9ffc680;overflow:hidden;z-index:1}
+.members-page #designer .mockup .sticker-sheet-stage::before{display:none}
+.members-page #designer .mockup[data-product-template=hoodie] .sticker-sheet-stage{inset:28% 29% 24%;border-radius:4px}
+.members-page #designer .mockup[data-product-template=cap] .sticker-sheet-stage{inset:36% 29% 36%;border-radius:12px}
+.members-page #designer .mockup .safe-area-guide{inset:5%;border:1px dashed #d9ffc665;pointer-events:none;z-index:0}
+.members-page #designer .mockup .safe-area-guide span{font-size:8px}
+.members-page #designer .mockup .main-character{position:absolute;left:20%;top:8%;width:60%;height:38%;padding:0;border:0;border-radius:0;background:transparent!important;box-shadow:none;object-fit:contain;touch-action:none;user-select:none;cursor:grab;z-index:3!important}
+.members-page #designer .mockup .logo-sticker{left:10%;top:49%;right:auto;bottom:auto;width:80%;height:15%;padding:2px;font-size:clamp(9px,2vw,22px);line-height:1.1;overflow:hidden;text-overflow:ellipsis}
+.members-page #designer .mockup .number-sticker{left:35%;top:68%;right:auto;bottom:auto;width:30%;height:16%;padding:2px;font-size:clamp(10px,2.5vw,26px);line-height:1}
+.members-page #designer .mockup .sleeve-sticker{display:flex;left:8%;top:87%;right:auto;bottom:auto;width:84%;height:9%;padding:1px;font-size:clamp(7px,1vw,12px);line-height:1;overflow:hidden}
+.members-page #designer .print-template-label{position:absolute;top:8px;left:8px;right:8px;text-align:center;font-size:10px;z-index:5;pointer-events:none}
+.members-page #designer .sticker-cutline{touch-action:none;user-select:none;cursor:grab}
+.members-page #designer .uploaded-design-layer{max-width:none;touch-action:none;cursor:grab}
+.members-page #designer .designer-drag-help{font-size:12px;line-height:1.5;color:#b8cbb6;margin:0}
+.members-page #designer .preview-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.members-page #designer :is(button,input,select){min-height:44px}
+.members-page #designer .studio-tabs{position:static}
+.members-page #designer .studio-tabs .button-group{display:flex;gap:6px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px}
+.members-page #designer .studio-tabs button{flex:0 0 auto;white-space:nowrap;padding:8px 12px}
+@media(max-width:850px){.members-page #designer .designer-preview{position:static;top:auto}.members-page #designer .mockup{width:min(100%,460px);max-height:none;margin-inline:auto}.members-page #designer .designer-layout{gap:12px}.members-page #designer .studio-controls{width:100%}}

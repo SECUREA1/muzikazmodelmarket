@@ -1,10 +1,13 @@
+import {RANGED_WEAPONS} from './game-weapons.js';
+import {UTILITY_TOOLS} from './game-utilities.js';
 import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory.js';
 
-export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,onError}) {
+export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,onError}) {
  const api = new SharedGameInventory();
  let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0, inputRequested=false,fireBusy=false;
- let fireRequest=null;
+ let fireRequest=null,inputSequence=0,inputEpoch=null,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
  const waiters=new Set(),collected=new Set();
+ function firstPickup(id){if(collected.has(id))return false;collected.add(id);if(collected.size>1024)collected.delete(collected.values().next().value);return true;}
  function settle(error) {
   for (const waiter of waiters) { clearTimeout(waiter.timer); error ? waiter.reject(error) : waiter.resolve(client); }
   waiters.clear();
@@ -38,19 +41,25 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    });
   },
   async send(action,fields={},requestId=crypto.randomUUID()) {
-   if (stopped) throw failure || Error('Room closed.');
+   if(stopped)throw failure||Error('Room closed.');
    if(action==='fire'&&fireRequest)return fireRequest;
-   const sentAt=performance.now();
-   const pending=post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,action,requestId});
-   if(action==='fire')fireRequest=pending;
-   let state;try{state=await pending;}finally{if(fireRequest===pending)fireRequest=null;}
-   if (stopped) return;
-   const selfId=state?.selfId || client.selfId;
-   if (!selfId || !state?.players?.[selfId]) throw Error('The server has not confirmed your player in this room.');
-   client.selfId=selfId;
-   if(state.result?.loot&&!collected.has(state.result.loot.id)){collected.add(state.result.loot.id);signalInventoryChange();onStatus?.(state.result.message);}
-   if (state.sequence>sequence) { render(state,selfId,{sentAt,receivedAt:performance.now()}); sequence=state.sequence; }
-   client.ready=true; settle(); return state;
+   const fireTool=String(fields.tool||'laser');if(action==='fire'&&performance.now()<(nextFireAt.get(fireTool)||0))return null;
+   const sentAt=performance.now(),fireInterval=(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
+   if(action==='fire')nextFireAt.set(fireTool,sentAt+fireInterval);
+   const perform=async()=>{
+    const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(action==='input'?{inputSequence:++inputSequence,...(inputEpoch?{inputEpoch}:{})}:{}),action,requestId});
+    if(stopped)return;
+    const selfId=state?.selfId||client.selfId;
+    if(!selfId||!state?.players?.[selfId])throw Error('The server has not confirmed your player in this room.');
+    client.selfId=selfId;if(action==='join'){inputEpoch=state.result?.inputEpoch||null;inputSequence=0;}
+    if(state.result?.loot&&firstPickup(state.result.loot.id)){signalInventoryChange();window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.loot}));if(state.result.loot.currency==='MZK')window.MZKWallet?.refreshShared?.().catch(()=>{});onStatus?.(state.result.message);}
+    if(state.result?.pickup&&firstPickup(state.result.pickup.id)){window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.pickup}));}
+    if(state.sequence>sequence){render(state,selfId,{sentAt,receivedAt:performance.now()});sequence=state.sequence;}
+    if(action==='fire'&&state.result?.origin&&state.result?.direction){const event=state.events?.find(event=>event.id===requestId&&event.actorId===selfId)||{...state.result,id:requestId,actorId:selfId,action:'fire',at:state.result.firedAt??state.serverTime};window.dispatchEvent(new CustomEvent('muzikaz:shot-confirmed',{detail:{roomId,event,serverTime:state.serverTime}}));}
+    if(['respawn','next-rad-tox'].includes(action))nextFireAt.clear();client.ready=true;settle();return state;
+   };
+   const pending=perform();if(action==='fire')fireRequest=pending;
+   try{return await pending;}catch(error){if(action==='fire'&&error.status===429)nextFireAt.set(fireTool,Math.max(nextFireAt.get(fireTool)||0,performance.now()+fireInterval));throw error;}finally{if(fireRequest===pending)fireRequest=null;}
   },
   async object(command) {
    if (!client.ready) throw Error('Waiting for the server. Placement preview has not been saved.');
@@ -70,13 +79,13 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    if (error.code==='ROOM_SWITCHED' || error.status===401 || (!joined && [400,403,404,409,422].includes(error.status))) {
     close(error); onStatus?.(error.message); onError?.(error);
    } else if (joined && error.code==='ROOM_JOIN_REQUIRED') {
-    client.ready=false;joined=false;
+    client.ready=false;joined=false;nextFireAt.clear();
     onStatus?.('Rejoining the shared room…');
    } else if (joined && [400,403,409,422,429].includes(error.status)) {
     onStatus?.(error.message);
    } else {
     const wasReady=client.ready;
-    client.ready=false; joined=false; session=null; retryAt=Date.now()+1000;
+    client.ready=false; session=null; retryAt=Date.now()+1000;
     if(wasReady)client.whenReady().catch(()=>{});
     onStatus?.('Server connection required: '+error.message);
    }
@@ -86,10 +95,11 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   busy=true;
   try {
    if (!joined) {
-    const arrival=await client.send('join',meetingId?{meetingId}:{});
+    const joinedState=await client.send('join',{...(meetingPending?{meetingId:meetingPending}:{}),...(arrivalPending?{travelFrom:arrivalPending.from,travelToken:arrivalPending.token}:{})});
+    arrivalPending=null;meetingPending=null;
     if (stopped) return;
     joined=true;
-    onStatus?.(arrival?.result?.message || 'Connected. Gameplay is ready.');
+    onStatus?.(joinedState?.result?.message || 'Connected. Gameplay is ready.');
    } else {
     const controls=document.hidden?{}:input();
     const state=await client.send('input',{input:controls});
@@ -97,8 +107,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     if (!stopped && !fireBusy && state?.players?.[client.selfId]?.health>0 && state?.match?.state!=='finished' && firingControls.firing) {
      fireBusy=true;
      // A slow weapon response must not stall movement or room snapshots.
-     void client.send('fire',{tool:firingControls.tool,direction:firingControls.direction,color:firingControls.color})
-      .catch(handleError).finally(()=>{fireBusy=false;});
+     void client.send('fire',{tool:firingControls.tool,direction:firingControls.direction,color:firingControls.color,...(Number.isFinite(firingControls.eyeHeight)?{eyeHeight:firingControls.eyeHeight}:{})})
+      .catch(error=>{if(error.status!==429)handleError(error);}).finally(()=>{fireBusy=false;});
     }
    }
   } catch (error) { handleError(error);
@@ -124,4 +134,3 @@ export function projectSharedBuildings({THREE,system,records,create}){
  system.bricks=system.bricks.filter(root=>{if(root.userData.sharedId&&!active.has(root.userData.sharedId)&&system.buildEditor.pending?.root!==root){root.removeFromParent();return false;}return true;});
 }
 export function buildingCommand(root){const paint=[];root.traverse(mesh=>{if(mesh.isMesh&&mesh.material?.color)paint.push(mesh.material.color.getHex());});return {id:root.userData.sharedId||crypto.randomUUID(),revision:root.userData.sharedRevision||0,object:{materialId:root.userData.materialId,position:root.position.toArray(),rotation:[root.rotation.x,root.rotation.y,root.rotation.z],scale:root.scale.toArray(),paint,open:!!root.userData.open}};}
-

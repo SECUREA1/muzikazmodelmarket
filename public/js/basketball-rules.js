@@ -108,6 +108,7 @@ export function takeBasketballSpot(sim,player,now,team){
  fillBasketballTeams(sim,now);return team;
 }
 
+
 export function assignBasketballTeam(sim,player,now,requestedTeam) {
  if(requestedTeam!==undefined&&!teams.includes(requestedTeam))error('Choose the Home or Away team.');
  if(sim.basketball?.state==='live'&&(!isBasketballPlayer(player)||!player.basketballTeam))error('Spectators can choose a team before the next tip-off. Late arrivals watch the current game.');

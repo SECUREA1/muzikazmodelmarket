@@ -1,6 +1,7 @@
+import {BUILDER_SECTIONS} from '../public/js/builder-library.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import {readFile} from 'node:fs/promises';
 
 test('environment builder exposes layout, placement and editing controls', async () => {
   const [html, script, launcher] = await Promise.all([
@@ -93,8 +94,9 @@ test('responsive customization sheet includes commercial FPS and training scenes
   assert.match(css, /\.mobile-selection-button/);
   assert.match(css, /\.inspector-open \.object-inspector/);
   assert.match(script, /Force Training Range/);
-  assert.match(script, /reactiveTarget=true/);
-  assert.match(script, /rangeTrainee=true/);
+  const range=await readFile(new URL('../public/js/environments/layout-firing-range.js',import.meta.url),'utf8');
+  assert.match(range, /reactiveTarget=true/);
+  assert.match(range, /rangeTrainee=true/);
   assert.match(html, /ACTIVE TARGETS ONLINE/);
   assert.match(html, /Tournament · 3 rounds/);
   assert.match(html, /id="range-result"/);
@@ -107,7 +109,7 @@ test('responsive customization sheet includes commercial FPS and training scenes
 test('playable firing range supports unlimited free play and real desktop, mobile, and VR target hits', async () => {
   const [game, loader, index] = await Promise.all([
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
-    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
+    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8'),readFile(new URL('../public/js/environments/layout-terrain.js',import.meta.url),'utf8'),readFile(new URL('../public/js/environments/layout-firing-range.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
     readFile(new URL('../index.html', import.meta.url), 'utf8')
   ]);
   assert.match(game, /data-range-mode="freeplay"/);
@@ -136,11 +138,11 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   for (const zone of ['outer','body','bullseye']) assert.match(loader, new RegExp(`'${zone}'`));
 });
 
-test('builder maze group is playable, grounded, and only recovers true world falls', async () => {
+test('builder maze group is playable and walking uses continuous physical support', async () => {
   const [html, builder, loader, game] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
-    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
+    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8'),readFile(new URL('../public/js/environments/layout-terrain.js',import.meta.url),'utf8'),readFile(new URL('../public/js/environments/layout-firing-range.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
   assert.match(html, /optgroup label="MAZE WORLDS"/);
@@ -149,13 +151,14 @@ test('builder maze group is playable, grounded, and only recovers true world fal
     assert.match(builder, new RegExp(`'${maze}'`));
     assert.match(loader, new RegExp(`'${maze}'`));
   }
-  assert.match(builder, /mazeSegments/);
+  assert.match(loader, /mazeSegments/);
   assert.match(loader, /BUILDER_WALKABLE_FLOOR_/);
   assert.match(loader, /terrain\.userData\.colliderShape = 'mesh'/);
-  assert.match(builder, /feetLockedToFloor=true/);
+  assert.match(loader, /feetLockedToFloor = true/);
   assert.match(game, /visualFeet/);
   assert.match(game, /droppedFeet/);
-  assert.match(game, /fellThroughWorld=base\.y<mapFloorLimit/);
+  assert.match(game, /moveWalkingCapsule\(playerCollider,move/);
+  assert.doesNotMatch(game, /fellThroughWorld|lastSafePlayerPosition/, 'walking never relocates players to a cached point');
   assert.doesNotMatch(game, /safeFloorLimit/, 'ordinary jumps and terrain steps must not trigger a respawn');
 });
 
@@ -167,7 +170,7 @@ test('environment builder supports custom role-play actors and interactions', as
   for (const control of ['open-item-maker', 'item-maker', 'custom-item-name', 'custom-item-type', 'custom-item-color', 'custom-item-behavior', 'object-color', 'object-behavior']) {
     assert.match(html, new RegExp(`id="${control}"`));
   }
-  for (const category of ['avatar', 'enemy', 'interactive']) assert.match(html, new RegExp(`data-library-filter="${category}"`));
+  for (const category of ['characters', 'creatures', 'interactive']) assert.ok(BUILDER_SECTIONS.some(([id])=>id===category));
   for (const behavior of ['talk', 'quest', 'hostile', 'patrol', 'pickup', 'door', 'heal']) assert.match(html, new RegExp(`value="${behavior}"`));
   assert.match(script, /muzikaz\.environmentBuilder\.customItems\.v1/);
   assert.match(script, /data-delete-group/);
@@ -290,16 +293,17 @@ test('environment builder places grounded 3D assets and persists complete runtim
   assert.match(script, /model\.procedural\?template\.clone\(true\):cloneSkeleton/);
 });
 
-test('builder maps use resilient linked textures and a tabletop presentation', async () => {
+test('builder maps use shared procedural textures and a tabletop presentation', async () => {
   const [html, script, css] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
     readFile(new URL('../environment-builder.css', import.meta.url), 'utf8')
   ]);
   assert.match(html, /id="texture-credit"/);
-  assert.match(script, /cdn\.jsdelivr\.net\/gh\/mrdoob\/three\.js@r180\/examples\/textures/);
-  for (const feature of ['terrainTextureSets', 'applyTerrainTexture', 'RepeatWrapping', 'TABLETOP_MAP_BASE', 'TABLETOP_BRASS_RIM']) assert.match(script, new RegExp(feature));
-  assert.match(script, /Procedural texture fallback/);
+  const surface=await readFile(new URL('../public/js/environments/layout-terrain.js',import.meta.url),'utf8');
+  assert.match(surface,/THREE.DataTexture/);assert.match(surface,/RepeatWrapping/);
+  for(const feature of ['createLayoutMaterial','TABLETOP_MAP_BASE','TABLETOP_BRASS_RIM'])assert.match(script,new RegExp(feature));
+  assert.match(script,/Shared procedural surface/);
   assert.match(css, /\.texture-credit\.ready/);
 });
 
@@ -340,7 +344,7 @@ test('in-game Builder Map menu opens the environment builder and restores playab
 
 test('builder lands and placed items retain verified collision floors', async () => {
   const [loader, game, server] = await Promise.all([
-    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
+    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8'),readFile(new URL('../public/js/environments/layout-terrain.js',import.meta.url),'utf8'),readFile(new URL('../public/js/environments/layout-firing-range.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
     readFile(new URL('../server.mjs', import.meta.url), 'utf8')
   ]);
@@ -351,21 +355,21 @@ test('builder lands and placed items retain verified collision floors', async ()
   assert.match(loader, /BUILDER_TEMPLATE_\$\{layout\}/, 'the playable map reconstructs the template set dressing instead of loading an empty terrain');
   assert.match(loader, /root\.add\(mesh\)/, 'template buildings and props join the world root and its collision pass');
   assert.match(loader, /buildCollision\(nextWorld, environment\.collisionMode,\[\],\{buildOctree:!this\.serverAuthoritative\(\)\}\)/, 'procedural terrain enters the normal collision pipeline');
-  assert.match(loader, /resolveSafeSpawn\(nextWorld, collision\.floorMeshes, environment\.spawn\)/, 'the initial player position is resolved against verified collision floors');
+  assert.match(loader, /resolveSafeSpawn\(nextWorld, collision\.floorMeshes, \(builderLand\?builderBaseSpawn\(environment\):environment\.spawn\)\)/, 'the initial player position is resolved against verified collision floors');
   assert.match(game, /const spawn=builderRuntime\?\.worldSpawn\|\|result\.spawn;activeWorldSpawn=\{position:spawn\.position\.clone\(\),rotationY:Number\(spawn\.rotationY\)\|\|0\};resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\)/, 'map loading places the player directly at an authored or safe resolved spawn');
   assert.match(loader, /setSupplementalCollisionRoots\(roots = \[\]\)/, 'the loader can safely include placed Builder items in its collision octree');
   assert.match(game, /function refreshBuilderCollision\(\)/, 'placed Builder items batch their collision refresh instead of rebuilding once per asset');
   assert.match(game, /window\.setTimeout/, 'collision rebuilding yields to the browser so the map can open first');
-  assert.match(game, /worldX=center\.x\+x,worldZ=center\.z\+z,ground=floorPointAt/, 'every placed object is grounded at its authored horizontal position');
+  assert.match(game, /worldX=center\.x\+x,worldZ=center\.z\+z,ground=authored\?\{y:Number\(item\.position\.y\)\|\|0\}:floorPointAt/, 'authored positions preserve interior floor heights while legacy placements resolve their floor');
   assert.match(game, /spawnFloor\.y\+FLOOR_ENTRY_OFFSET/, 'the player spawn begins just above the verified floor with the full body capsule above it');
   assert.match(server, /proceduralLand:true/);
   assert.match(server, /modelUrl:'', modelUrls:\[\]/, 'published builder maps no longer borrow a repository GLB');
 });
 
-test('collision floors protect spawn, teleport and low-frame-rate falls', async () => {
+test('collision floors protect spawn, teleport and continuous walking', async () => {
   const [collision, loader, game] = await Promise.all([
     readFile(new URL('../public/js/environments/environment-collision.js', import.meta.url), 'utf8'),
-    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
+    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8'),readFile(new URL('../public/js/environments/layout-terrain.js',import.meta.url),'utf8'),readFile(new URL('../public/js/environments/layout-firing-range.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
   assert.match(collision, /\(COLLIDER\|COLLISION\|NAVMESH\)/, 'standard collider names are recognized anywhere in exported node names');
@@ -377,15 +381,20 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
   assert.match(loader, /this\.floorMeshes = collision\.floorMeshes/g, 'floor references survive loading and world scaling');
   assert.match(game, /teleportRay\.intersectObjects\(envLoader\.floorMeshes/, 'teleporting verifies a collision floor');
   assert.match(game, /alignPointAboveFloor\(spawn\.clone\(\), envLoader\.floorMeshes/, 'spawn and respawn align to collision floors');
-  assert.match(game, /const previousFootY=playerCollider\.start\.y-player\.radius/);
-  assert.match(game, /floorSweepRay\.intersectObjects\(envLoader\.floorMeshes,true\)/, 'a downward frame sweep catches thin floors crossed during a fall');
+  assert.match(game, /moveWalkingCapsule\(playerCollider,move/, 'one swept controller handles map and placed-object contacts');
+  assert.match(game, /triangleGroups:walkingSurfaces\(\)/, 'placed solids participate in the same movement query');
   assert.doesNotMatch(game, /PLAYER_ENTRY_DROP_HEIGHT|dropIntoMap/, 'map entry never adds an aerial offset above the resolved floor');
   assert.doesNotMatch(game, /playerDropRecoveryActive|groundedRecoveryFrames/, 'the drop is not re-armed from the animation loop');
   assert.match(game, /const lastSafePlayerPosition = new THREE\.Vector3\(\)/, 'every map shares a last-known-good floor position');
   assert.match(game, /const fellThroughWorld=base\.y<mapFloorLimit/, 'recovery only begins after the player has fallen below the complete world bounds');
   assert.doesNotMatch(game, /safeFloorLimit/, 'jumping or walking down to a lower valid floor cannot be mistaken for falling through the world');
-  assert.match(game, /playerCollider\.start\.set\(recovery\.x,recovery\.y\+player\.radius,recovery\.z\)/, 'a missed floor collider restores the capsule to safe ground');
+  assert.match(game, /setPlayerCapsuleFeet\(recovery\)/, 'a missed floor collider restores the capsule to safe ground');
   assert.match(game, /floorLockCooldown=\.35/, 'floor recovery is rate limited instead of repeatedly resetting each frame');
+  assert.doesNotMatch(game, /resolveBrickCollisions|collision\.normal\.multiplyScalar/, 'walking never applies a second depenetration push');
+  assert.doesNotMatch(game, /lastSafePlayerPosition|floorLockCooldown|fellThroughWorld/, 'walking never silently teleports to a previous floor position');
+  assert.match(game, /maxExtrapolation:0/, 'the live view cannot extrapolate beyond accepted wall contact');
+  assert.doesNotMatch(game, /walkingMotion\.sample/, 'shared walking has a single authoritative presentation path');
+
   for (const layout of ['blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio']) assert.match(loader, new RegExp(`'${layout}'`));
 });
 
@@ -432,7 +441,7 @@ test('expanded asset library covers deployable worlds, weapons, ghosts, slime an
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/js/builder-models-3d.js', import.meta.url), 'utf8')
   ]);
-  for (const category of ['terrain','plants','buildings','props','weapons','characters','creatures','interactive']) assert.match(html, new RegExp(`data-library-filter="${category}"`));
+  for (const category of ['terrain','plants','buildings','props','weapons','characters','creatures','interactive']) assert.ok(BUILDER_SECTIONS.some(([id])=>id===category));
   for (const asset of ['terrain-cliff','ancient-oak','timber-cabin','supply-crate','plasma-sword','spectral-ghost','emerald-slime','teleport-pad']) {
     assert.match(script, new RegExp(asset), `${asset} is selectable`);
     assert.match(models, new RegExp(asset), `${asset} has complete procedural geometry`);

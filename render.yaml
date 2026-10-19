@@ -1,6 +1,7 @@
 services:
   - type: web
     name: muzikaz-model-market
+    branch: main
     runtime: node
     plan: starter
     buildCommand: npm ci && npm run build
@@ -8,6 +9,8 @@ services:
     healthCheckPath: /api/health
     autoDeployTrigger: commit
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: PORT
         value: 10000
       - key: PUBLIC_BASE_URL

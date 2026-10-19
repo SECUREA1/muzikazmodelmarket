@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {populateMapMachine} from '../server-map-machine.mjs';
+import {hasMapMachine} from '../public/js/map-machine.js';
+import {compileBuilderScene} from '../public/js/builder-gameplay-pipeline.js';
+import {ServerBuilderCollision} from '../server-builder-collision.mjs';
+import {deviceCommand} from '../server-interactive-devices.mjs';
+test('every repository map and empty builder map gets exactly one playable floor-supported arcade',async()=>{
+ const maps=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url)));maps.push({id:'aligned-base-map',builderScene:{layout:'repository-base',baseEnvironment:maps[0],baseTransform:{x:120,y:5,z:-80,rotation:90,scale:1.1},mapSize:80,objects:[]}});maps.push({id:'empty-map',builderScene:{layout:'grand-floor',mapSize:80,objects:[]}});
+ const collision=new ServerBuilderCollision();
+ for(const map of maps){const sim={actors:{}},manifest=compileBuilderScene(map.builderScene||{}),before=JSON.stringify(map);
+  populateMapMachine(sim,manifest,map,collision,100000);const machines=Object.values(sim.actors);assert.equal(machines.length,1,map.id);const actor=machines[0];assert.ok(actor.runtimeMachine);assert.ok(collision.groundAt(map,actor.position));
+  populateMapMachine(sim,manifest,map,collision,100100);assert.equal(Object.keys(sim.actors).length,1);assert.equal(JSON.stringify(map),before,'authored maps stay unchanged');
+  const gameplay={actors:[actor.definition]},player={username:'Test',position:{...actor.position}};
+  deviceCommand(sim,gameplay,player,'test',{entityId:actor.id,operation:'open'},100000);deviceCommand(sim,gameplay,player,'test',{entityId:actor.id,operation:'start',revision:0},100100);
+  assert.equal(sim.devices[actor.id].gamers.test.game.type,'tictactoe');deviceCommand(sim,gameplay,player,'test',{entityId:actor.id,operation:'cell',index:0,revision:1},100300);assert.equal(sim.devices[actor.id].gamers.test.game.moves,1);
+ }
+});
+test('existing authored or player-deployed machines prevent and replace the automatic fixture',()=>{
+ const collision=new ServerBuilderCollision(),map={id:'has-machine',builderScene:{layout:'grand-floor',objects:[]}},sim={actors:{}},manifest=compileBuilderScene({objects:[]});
+ populateMapMachine(sim,manifest,map,collision,100000);const fallback=Object.values(sim.actors)[0];assert.ok(fallback);
+ sim.actors.owned={id:'owned',active:true,spawned:true,asset:{buildAssetId:'market-atm'},position:{x:8,y:0,z:8}};populateMapMachine(sim,manifest,map,collision,100100);
+ assert.equal(sim.actors[fallback.id],undefined);assert.ok(sim.actors.owned);
+ assert.ok(hasMapMachine([{modelId:'custom',functionalSettings:{device:'retro-pong-cabinet'}}]));
+});
+test('moving irrelevant loot never rebuilds placed solid collision geometry',()=>{
+ const collision=new ServerBuilderCollision(),actors={coin:{id:'coin',spawned:true,active:true,position:{x:0,y:0,z:0},loot:{currency:'MZK'}}};const before=collision.placedWorld(actors);actors.coin.position.x=1;assert.equal(collision.placedWorld(actors),before);
+});
+
+test('an existing authored interactive machine suppresses fallback placement',()=>{const environment={id:'authored',builderScene:{layout:'grand-floor'}},manifest=compileBuilderScene({objects:[{id:'jukebox',modelId:'shared-jukebox',position:{x:0,y:0,z:0},functionalSettings:{behavior:'interact'}}]}),sim={actors:{jukebox:{id:'jukebox',modelId:'shared-jukebox',active:true,position:{x:0,y:0,z:0}}}};populateMapMachine(sim,manifest,environment,{},100000);assert.deepEqual(Object.keys(sim.actors),['jukebox']);});

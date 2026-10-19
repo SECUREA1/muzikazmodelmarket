@@ -1,5 +1,5 @@
-import { readFile, readdir, stat } from 'node:fs/promises';
-import { join } from 'node:path';
+import {readFile,readdir,stat} from 'node:fs/promises';
+import {join} from 'node:path';
 
 const manifestPath = 'public/models/environments/environments.json';
 const records = JSON.parse(await readFile(manifestPath, 'utf8'));
@@ -39,6 +39,7 @@ for (const file of categorizedFiles.filter((path) => path.startsWith('avatars/')
 for (const record of records) {
   const urls = (record.modelUrls || [record.modelUrl]).filter(Boolean);
   const procedural = record.proceduralLand && (record.builderScene?.layout || record.layout);
+
   if (!record.id || !record.name || (!urls.length && !procedural)) throw new Error(`Invalid environment record: ${record.id || 'unknown'}`);
   if (record.basketball && (!procedural || record.builderScene.layout !== 'basketball-stadium' || record.spaceScale !== 1 || !record.publicDestination)) throw new Error('The basketball arena must be a public regulation-scale procedural stadium.');
   for (const url of urls) {

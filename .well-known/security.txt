@@ -1,0 +1,5 @@
+Contact: mailto:jodelchad@chaines.io
+Expires: 2027-10-16T23:59:59Z
+Preferred-Languages: en
+Canonical: https://muzikaz.com/.well-known/security.txt
+Policy: https://muzikaz.com/security.html

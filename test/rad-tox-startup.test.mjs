@@ -48,12 +48,12 @@ test('multiplayer Begin starts a rendered RAD-TOX encounter instead of stopping 
  const blocked=game.match(/const legacyGameplayMethods=\[([^\]]+)\]/)?.[1]||'';
  assert.doesNotMatch(blocked,/'begin'/,'the multiplayer Begin action must not be replaced with a no-op');
  assert.match(game,/authoritativeClient\.send\('start-rad-tox'\)/);
- assert.match(game,/renderServerRadTox\(snapshot\);/);
+ assert.match(game,/renderServerRadTox\(snapshot,selfId\);/);
  assert.match(game,/!snapshot\.radTox\)throw new Error/,'an old server cannot be mistaken for an active encounter');
 });
 
-test('walking prediction exists before any game startup callback',async()=>{
+test('map changes do not reference the removed walking predictor',async()=>{
  const game=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
- assert.equal((game.match(/walkingMotion\s*=\s*new WalkingMotion/g)||[]).length,1);
- assert.ok(game.indexOf('const walkingMotion = new WalkingMotion()')<game.indexOf('const canvas = legacyCanvas.cloneNode'));
+ assert.doesNotMatch(game,/\bwalkingMotion\b/);
+ assert.match(game,/serverMotion\.reset\(\)/);
 });

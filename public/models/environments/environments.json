@@ -1,5 +1,154 @@
 [
   {
+    "id": "firing-range",
+    "name": "MUZIKAZ Live Firing Range",
+    "label": "Live multiplayer tournament range",
+    "category": "Sports",
+    "game": "firing-range",
+    "layout": "firing-range",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 64,
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 16.2,
+      "rotationY": 0
+    },
+    "description": "Permanent shared firing range with server-scored multiplayer tournaments, timed challenges, moving targets, lane selection, adjustable scopes and a live competition board. Practice, compete or spectate from the safe firing-line lobby.",
+    "playUrl": "model-explorer.html?environment=firing-range&house=firing-range&mode=multiplayer&autoplay=1",
+    "builderScene": {
+      "layout": "firing-range",
+      "mapSize": 64,
+      "objects": [],
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false
+      }
+    },
+    "spaceScale": 1,
+    "scale": 1,
+    "levelOrder": 0,
+    "publicDestination": true,
+    "permanent": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "thumbnailUrl": "/public/images/backpack/firing-range.svg",
+    "firingRange": true,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "roomId": "firing-range"
+  },
+  {
+    "id": "force-training-range",
+    "name": "Firing Range — Force Training",
+    "label": "Classic five-lane qualification range",
+    "category": "Sports",
+    "levelOrder": 0,
+    "playable": true,
+    "multiplayer": true,
+    "publicDestination": true,
+    "permanent": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "thumbnailUrl": "/public/images/backpack/force-training-range.svg",
+    "firingRange": true,
+    "description": "Original five-point Force Training course with protected full-length booths, layered scoring plates, reactive silhouettes, timed qualification and shared practice. Enhanced materials, shot impacts and recoil.",
+    "proceduralLand": true,
+    "builderScene": {
+      "layout": "firing-range",
+      "mapSize": 80,
+      "objects": [],
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false
+      },
+      "rangeStyle": "force-training"
+    },
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 16.2,
+      "rotationY": 0
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 80,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository",
+    "roomId": "force-training-range",
+    "playUrl": "model-explorer.html?environment=force-training-range&house=force-training-range&mode=multiplayer&autoplay=1",
+    "rangeStyle": "force-training"
+  },
+  {
+    "id": "basketball-arena",
+    "name": "MUZIKAZ Basketball Arena",
+    "label": "Live basketball stadium",
+    "category": "Sports",
+    "levelOrder": 0,
+    "playable": true,
+    "multiplayer": true,
+    "publicDestination": true,
+    "permanent": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+    "basketball": true,
+    "description": "Permanent public basketball stadium: regulation hardwood court, glass-backboard hoops, live scoreboard, team jerseys and shared matches. Join a team to play, or watch from the spectator benches and accessible stands.",
+    "proceduralLand": true,
+    "builderScene": {
+      "layout": "basketball-stadium",
+      "mapSize": 62,
+      "objects": [],
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false
+      }
+    },
+    "spawn": {
+      "x": 8.8,
+      "y": 0.02,
+      "z": 0,
+      "rotationY": 1.5707963267948966
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 62,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository",
+    "roomId": "basketball-arena",
+    "playUrl": "model-explorer.html?environment=basketball-arena&house=basketball-arena&autoplay=1",
+    "sourceCommit": "2d6ff8b201d0bd149312a1ca213c86385be35490",
+    "aliases": [
+      "basketball"
+    ]
+  },
+  {
     "id": "muzikaz-main",
     "name": "MUZIKAZ Main Floor",
     "label": "Interior level",
@@ -342,7 +491,7 @@
   {
     "id": "hockey-arena",
     "name": "Ice Hockey Arena",
-    "label": "Sports \u00b7 hockey",
+    "label": "Sports · hockey",
     "category": "Sports",
     "game": "hockey",
     "layout": "hockey-arena",
@@ -369,8 +518,8 @@
   },
   {
     "id": "neon-junction",
-    "name": "Neon Junction \u2014 Arcade Park",
-    "label": "Arcade \u00b7 games and rides",
+    "name": "Neon Junction — Arcade Park",
+    "label": "Arcade · games and rides",
     "category": "Arcade & rides",
     "game": "arcade",
     "layout": "arcade-park",
@@ -396,87 +545,5 @@
     "playUrl": "arcade.html?environment=neon-junction&mode=multiplayer",
     "spaceScale": 1,
     "scale": 1
-  },
-  {
-    "id": "firing-range",
-    "name": "Firing Range \u2014 Force Training",
-    "label": "Training \u00b7 live targets",
-    "category": "Sports",
-    "game": "firing-range",
-    "layout": "firing-range",
-    "proceduralLand": true,
-    "playable": true,
-    "multiplayer": true,
-    "visibility": "public",
-    "source": "repository",
-    "playableSize": 80,
-    "spawn": {
-      "x": 0.65,
-      "y": 0,
-      "z": 11.1
-    },
-    "description": "Full walkable force-training range with five firing points, live silhouette targets, free play, timed qualification and tournament courses. Play solo or join live players using the green RAD-TOX controller.",
-    "playUrl": "model-explorer.html?environment=firing-range&house=firing-range&mode=multiplayer&autoplay=1",
-    "builderScene": {
-      "layout": "firing-range",
-      "mapSize": 80,
-      "objects": [],
-      "gameplay": {
-        "multiplayer": true
-      }
-    },
-    "spaceScale": 1,
-    "scale": 1
-  },
-  {
-    "id": "basketball-arena",
-    "name": "MUZIKAZ Basketball Arena",
-    "label": "Live basketball stadium",
-    "category": "Sports",
-    "levelOrder": 0,
-    "playable": true,
-    "multiplayer": true,
-    "publicDestination": true,
-    "permanent": true,
-    "canDelete": false,
-    "canEdit": false,
-    "ownerId": "muzikaz",
-    "ownerName": "MUZIKAZ",
-    "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
-    "basketball": true,
-    "description": "Permanent public basketball stadium: regulation hardwood court, glass-backboard hoops, live scoreboard, team jerseys and shared matches. Join a team to play, or watch from the spectator benches and accessible stands.",
-    "proceduralLand": true,
-    "builderScene": {
-      "layout": "basketball-stadium",
-      "mapSize": 62,
-      "objects": [],
-      "gameplay": {
-        "multiplayer": true,
-        "friendlyFire": false
-      }
-    },
-    "spawn": {
-      "x": 8.8,
-      "y": 0.02,
-      "z": 0,
-      "rotationY": 1.5707963267948966
-    },
-    "scale": 1,
-    "spaceScale": 1,
-    "playableSize": 62,
-    "rotation": {
-      "x": 0,
-      "y": 0,
-      "z": 0
-    },
-    "collisionMode": "auto",
-    "visibility": "public",
-    "source": "repository",
-    "roomId": "basketball-arena",
-    "playUrl": "model-explorer.html?environment=basketball-arena&house=basketball-arena&autoplay=1",
-    "sourceCommit": "2d6ff8b201d0bd149312a1ca213c86385be35490",
-    "aliases": [
-      "basketball"
-    ]
   }
 ]
