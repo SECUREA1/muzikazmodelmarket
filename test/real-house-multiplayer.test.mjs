@@ -16,7 +16,7 @@ test('real house multiplayer enemies spawn in sight, move, shoot, damage and sur
   const send=(name,action,fields={})=>runtime.command(map.id,map,{accountId:name,username:name,stats:{health:100}},{action,requestId:`${name}-${action}-${now}`,...fields});
   await send('alice','join');let snapshot=await send('bob','join');
   const initial=structuredClone(snapshot.actors),player=snapshot.players['account:alice'];
-  for(const actor of Object.values(initial)){
+  for(const actor of Object.values(initial).filter(actor=>actor.radTox)){
    const origin={...actor.position,y:actor.position.y+.9},delta=[player.position.x-origin.x,player.position.y+.9-origin.y,player.position.z-origin.z],length=Math.hypot(...delta);
    assert.equal(runtime.collision.blocksShot(map,origin,delta.map(n=>n/length),length),false,`${actor.kind} spawns in the same visible room`);
    assert.equal(actor.spawnVersion,1);
@@ -28,14 +28,14 @@ test('real house multiplayer enemies spawn in sight, move, shoot, damage and sur
    for(const projectile of Object.values(sim.projectiles||{}))projectiles.add(projectile.kind);
   }
   snapshot=await runtime.snapshot(map.id,map);
-  for(const actor of Object.values(snapshot.actors))assert.ok(Math.hypot(actor.position.x-initial[actor.id].position.x,actor.position.z-initial[actor.id].position.z)>.1,`${actor.kind} moves on autonomous server ticks`);
+  for(const actor of Object.values(snapshot.actors).filter(actor=>actor.radTox))assert.ok(Math.hypot(actor.position.x-initial[actor.id].position.x,actor.position.z-initial[actor.id].position.z)>.1,`${actor.kind} moves on autonomous server ticks`);
   for(const kind of ['ghost','brain']){assert.ok(attacks.has(kind));assert.ok(projectiles.has(kind));}
   assert.ok(Object.values(snapshot.players).some(player=>player.health<100),'actual server projectiles/contact attacks cause damage');
   const second=await send('bob','input',{input:{}});assert.deepEqual(second.actors,snapshot.actors,'both clients observe the same enemies');
   await store.update(map.id,room=>{const sim=room.simulation;sim.radTox.wave=4;spawnRadToxWave(sim,now,sim.players['account:alice'].position);});
-  now+=100;await runtime.tickActive();const bossStart=Object.values((await store.get(map.id)).simulation.actors)[0].position;
+  now+=100;await runtime.tickActive();const bossStart=Object.values((await store.get(map.id)).simulation.actors).find(actor=>actor.radTox&&actor.kind==='boss').position;
   for(let index=0;index<20;index++){now+=100;await runtime.tickActive();}
-  const sim=(await store.get(map.id)).simulation,boss=Object.values(sim.actors)[0];
+  const sim=(await store.get(map.id)).simulation,boss=Object.values(sim.actors).find(actor=>actor.radTox&&actor.kind==='boss');
   assert.ok(Math.hypot(boss.position.x-bossStart.x,boss.position.z-bossStart.z)>.1,'boss moves');
   assert.ok(sim.events.some(event=>event.action==='enemy-attack'&&event.kind==='boss'),'boss fires');
   await store.flush();const restored=new AuthoritativeRooms({store:new SharedRoomStore(store.file),now:()=>now});

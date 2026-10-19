@@ -11,7 +11,7 @@ import {ServerBuilderCollision} from './server-builder-collision.mjs';
 import {RANGED_WEAPONS} from './public/js/game-weapons.js';
 import {UTILITY_TOOLS} from './public/js/game-utilities.js';
 import {compileBuilderScene} from './public/js/builder-gameplay-pipeline.js';
-import {buildingDimensions,buildingMaterial} from './public/js/building-materials.js';
+import {buildingDimensions} from './public/js/building-materials.js';
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,Number(value)||0));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 const copy=value=>JSON.parse(JSON.stringify(value));
@@ -76,17 +76,11 @@ export class AuthoritativeRooms {
    const floor=environment.builderScene||environment.proceduralLand?-100:Number(player.floor)||0;
    if(input.jump&&player.grounded){player.velocityY=6;player.grounded=false;}
    player.velocityY=(player.velocityY||0)-18*dt;next.y=Math.max(floor,next.y+player.velocityY*dt);player.grounded=next.y<=floor;if(player.grounded)player.velocityY=0;
-   let blocked=false;
-   for(const object of Object.values(room.objects)){
-    if(object.deleted||object.open||buildingMaterial(object.materialId).solid===false)continue;
-    const size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]),[x,y,z]=object.position;
-    // Conservative world-space footprint for rotated pieces, resolved on server.
-    const rotation=object.rotation[1],w=Math.abs(Math.cos(rotation))*size[0]+Math.abs(Math.sin(rotation))*size[2],d=Math.abs(Math.sin(rotation))*size[0]+Math.abs(Math.cos(rotation))*size[2];
-    if(Math.abs(next.x-x)<w/2+.3&&Math.abs(next.z-z)<d/2+.3&&next.y<y+size[1]/2&&next.y+1.7>y-size[1]/2){
-     if(player.position.y>=y+size[1]/2-.35){next.y=y+size[1]/2;player.velocityY=0;player.grounded=true;}else blocked=true;
-    }
-   }
-   if(!blocked){player.position=constrainBasketballSpectator(player.position,this.collision.resolve(environment,player.position,next,sim.actors),sim,player);if(Number.isFinite(player.position.floorY)){player.floor=player.position.floorY;delete player.position.floorY;if(player.position.y<=player.floor+.03){player.grounded=true;player.velocityY=0;}}}
+   const resolved=this.collision.resolve(environment,player.position,next,sim.actors,room.objects);
+   player.collisionNormals=resolved.collisionNormals||[];delete resolved.collisionNormals;
+   if(Number.isFinite(resolved.ceilingY)){player.velocityY=0;player.grounded=false;}delete resolved.ceilingY;
+   player.position=constrainBasketballSpectator(player.position,resolved,sim,player);
+   if(Number.isFinite(player.position.floorY)){player.floor=player.position.floorY;delete player.position.floorY;if(player.position.y<=player.floor+.03){player.grounded=true;player.velocityY=0;}}
    const street=(environment.streets||[]).map(street=>{const dx=street.to.x-street.from.x,dz=street.to.z-street.from.z,t=Math.max(0,Math.min(1,((player.position.x-street.from.x)*dx+(player.position.z-street.from.z)*dz)/Math.max(.01,dx*dx+dz*dz)));return {street,distance:Math.hypot(player.position.x-street.from.x-dx*t,player.position.z-street.from.z-dz*t)};}).filter(hit=>hit.distance<=hit.street.width/2+2).sort((a,b)=>a.distance-b.distance)[0];player.locationName=street?.street.name||player.meetingName||environment.name;
    if(player.position.y>next.y){player.velocityY=0;player.grounded=true;}
    if(player.vehicleId){const vehicle=sim.actors[player.vehicleId];if(vehicle){vehicle.position={...player.position};vehicle.rotation.y=player.yaw;}}
@@ -115,7 +109,7 @@ export class AuthoritativeRooms {
   this.prepareEncounter(sim,environment);
   sim.sequence++;return {sim,manifest};
  }
- view(room){const sim=room.simulation,now=this.now();return {authoritative:true,basketball:sim.basketball?copy(sim.basketball):null,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,basketballRole:p.basketballRole||'player',basketballTeam:p.basketballTeam||null,basketballJersey:p.basketballJersey||null,basketballPoints:p.basketballPoints||0,basketballAI:Boolean(p.basketballAI),basketballNumber:p.basketballNumber||null,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
+ view(room){const sim=room.simulation,now=this.now();return {authoritative:true,basketball:sim.basketball?copy(sim.basketball):null,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,collisionNormals:p.collisionNormals||[],input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,basketballRole:p.basketballRole||'player',basketballTeam:p.basketballTeam||null,basketballJersey:p.basketballJersey||null,basketballPoints:p.basketballPoints||0,basketballAI:Boolean(p.basketballAI),basketballNumber:p.basketballNumber||null,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
  snapshot(id,environment){return this.store.update(id,room=>{this.step(room,environment);return this.view(room);},{persist:false,roomOnly:true});}
  command(id,environment,identity,command){this.activeWorlds.set(id,environment);return this.store.update(id,async (room,allRooms)=>{
   const {sim,manifest}=this.step(room,environment),now=this.now(),actorId='account:'+identity.accountId;

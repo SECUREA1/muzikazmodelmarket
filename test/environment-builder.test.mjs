@@ -118,7 +118,8 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   assert.match(game, /handleRangeShot\(\{centre:true\}\)/, 'pointer-lock and mobile shoot controls use the reticle');
   assert.match(game, /radToxStickMarkup/, 'firing range uses the shared RAD-TOX controller');
   assert.match(await readFile(new URL('../public/js/rad-tox-controller.js',import.meta.url),'utf8'), /Move \/ shoot/, 'shared movement stick retains tap-to-shoot');
-  assert.match(game, /if \(name === 'left'\) shootAtReticle\(\)/, 'tapping the movement stick shoots the range reticle');
+  assert.match(game, /if\(name==='left'\)triggerSelectedGameAction\(\)/, 'tapping the movement stick dispatches its gameplay action');
+  assert.match(game, /safelyInteract\('Controller shoot',shootAtReticle\)/, 'the range movement stick shoots the reticle');
   assert.doesNotMatch(game, /data-mobile-(?:fire|jump)/, 'the replacement Fire and Jump buttons stay removed');
   assert.doesNotMatch(game, /data-mobile-action=/, 'duplicate action buttons are not rendered beneath the thumbsticks');
   for (const control of ['house-world-button','house-fullscreen','house-begin-reset']) assert.match(index, new RegExp(`id="${control}"`), 'library, fullscreen, and begin/reset remain available in the main controls');
@@ -364,7 +365,7 @@ test('builder lands and placed items retain verified collision floors', async ()
 
 test('collision floors protect spawn, teleport and low-frame-rate falls', async () => {
   const [collision, loader, game] = await Promise.all([
-    readFile(new URL('../public/js/environments/environment-collision.js', import.meta.url), 'utf8'),
+    Promise.all(['environment-collision.js','collision-policy.js'].map(file=>readFile(new URL('../public/js/environments/'+file, import.meta.url),'utf8'))).then(parts=>parts.join('\n')),
     Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
@@ -377,8 +378,8 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
   assert.match(loader, /this\.floorMeshes = collision\.floorMeshes/g, 'floor references survive loading and world scaling');
   assert.match(game, /teleportRay\.intersectObjects\(envLoader\.floorMeshes/, 'teleporting verifies a collision floor');
   assert.match(game, /alignPointAboveFloor\(spawn\.clone\(\), envLoader\.floorMeshes/, 'spawn and respawn align to collision floors');
-  assert.match(game, /const previousFootY=playerCollider\.start\.y-player\.radius/);
-  assert.match(game, /floorSweepRay\.intersectObjects\(envLoader\.floorMeshes,true\)/, 'a downward frame sweep catches thin floors crossed during a fall');
+  assert.match(game, /movePlayerCapsule\(playerCollider/, 'walking uses the swept capsule solver');
+  assert.match(game, /floorSweepRay\.intersectObjects\(envLoader\.floorMeshes,false\)/, 'a downward frame sweep catches thin floors without reintroducing nonphysical mesh children');
   assert.doesNotMatch(game, /PLAYER_ENTRY_DROP_HEIGHT|dropIntoMap/, 'map entry never adds an aerial offset above the resolved floor');
   assert.doesNotMatch(game, /playerDropRecoveryActive|groundedRecoveryFrames/, 'the drop is not re-armed from the animation loop');
   assert.match(game, /const lastSafePlayerPosition = new THREE\.Vector3\(\)/, 'every map shares a last-known-good floor position');
@@ -391,7 +392,7 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
 
 test('world ground and solid scenery always participate in gameplay collision', async () => {
   const [collision, game] = await Promise.all([
-    readFile(new URL('../public/js/environments/environment-collision.js', import.meta.url), 'utf8'),
+    Promise.all(['environment-collision.js','collision-policy.js'].map(file=>readFile(new URL('../public/js/environments/'+file, import.meta.url),'utf8'))).then(parts=>parts.join('\n')),
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8')
   ]);
   const excluded = collision.match(/const EXCLUDE_RE = \/\(([^\n]+)\)\/i/)?.[1] || '';

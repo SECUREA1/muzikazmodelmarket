@@ -1,12 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Octree.js/+esm';
-
-const COLLISION_RE = /(^|[_ .-])(COLLIDER|COLLISION|NAVMESH)([_ .-]|$)/i;
-// Only effects with no physical surface are excluded.  In particular, do not
-// exclude foliage, bushes, lamps, transparent fences, or glass: those are
-// visible world props and players expect both themselves and dropped objects
-// to stop against them.
-const EXCLUDE_RE = /(SKY|PARTICLE|VFX|GRASS_BLADE|WATER|HELPER|AVATAR)/i;
+import {COLLISION_RE,isDedicatedCollider,isRenderedMesh,collisionIsDisabled,isCollisionMesh} from './collision-policy.js';
 const NON_SPAWN_FLOOR_RE = /(CEILING|ROOF|CANOPY|AWNING|SKY|WALL|WINDOW|DOOR|RAIL|FENCE|LIGHT|LAMP)/i;
 const FLOOR_NAME_RE = /(FLOOR|GROUND|TERRAIN|PLATFORM|NAVMESH|WALK|STAGE|ROAD|PATH)/i;
 const SPAWN_PRIORITY = ['SPAWN_PLAYER', 'SPAWN_DEFAULT'];
@@ -19,7 +13,7 @@ const CONTAINMENT_THICKNESS = 0.2;
 
 function isWalkableFloorHit(hit) {
   if (!hit?.face) return true;
-  const normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
+  const normal = hit.face.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld));
   return normal.y >= WALKABLE_FLOOR_NORMAL_Y;
 }
 
@@ -28,28 +22,15 @@ function isSpawnFloorObject(object) {
   return !NON_SPAWN_FLOOR_RE.test(name);
 }
 
-function isDedicatedCollider(object) {
-  return COLLISION_RE.test(object?.name || '') || object?.userData?.collider === true || object?.userData?.collision === true || object?.userData?.colliderShape === 'mesh';
-}
-
-function isRenderedMesh(object) {
-  for (let current = object; current; current = current.parent) {
-    if (current.visible === false) return false;
-  }
-  const materials = Array.isArray(object.material) ? object.material : [object.material];
-  return materials.some((material) => material?.visible !== false);
-}
-
-function collisionIsDisabled(object) {
-  for (let current = object; current; current = current.parent) {
-    if (current.userData?.collisionDisabled === true || current.userData?.collider === false || current.userData?.collision === false) return true;
-  }
-  return false;
-}
-
 function createMapContainment(meshes) {
   const bounds = new THREE.Box3();
-  meshes.forEach((mesh) => bounds.expandByObject(mesh));
+  meshes.forEach((mesh) => {
+    mesh.updateWorldMatrix(true, false);
+    if (mesh.isInstancedMesh) mesh.computeBoundingBox();
+    else if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+    const localBounds = mesh.isInstancedMesh ? mesh.boundingBox : mesh.geometry.boundingBox;
+    if (localBounds && !localBounds.isEmpty()) bounds.union(localBounds.clone().applyMatrix4(mesh.matrixWorld));
+  });
   if (bounds.isEmpty()) return { root: null, floor: null, bounds };
   const size = bounds.getSize(new THREE.Vector3());
   if (!(size.x > 0) || !(size.z > 0)) return { root: null, floor: null, bounds };
@@ -90,7 +71,7 @@ function floorHitScore(hit) {
 function findWalkableFloorHit(meshes, point, bounds, playerHeight = 1.65) {
   const rayOriginY = Number.isFinite(bounds?.max?.y) ? bounds.max.y + playerHeight + 8 : point.y + playerHeight + 8;
   const raycaster = new THREE.Raycaster(new THREE.Vector3(point.x, rayOriginY, point.z), new THREE.Vector3(0, -1, 0));
-  return raycaster.intersectObjects(meshes, true).find((item) => isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
+  return raycaster.intersectObjects(meshes, false).find((item) => isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
 }
 
 export function alignPointAboveFloor(point, meshes, bounds, playerHeight = 1.65, floorGap = FLOOR_ENTRY_OFFSET) {
@@ -125,7 +106,7 @@ function chooseLargestSampledFloor(meshes, bounds, playerHeight = 1.65) {
     for (let zi = 0; zi < samplesPerAxis; zi += 1) {
       const z = THREE.MathUtils.lerp(bounds.min.z, bounds.max.z, (zi + 0.5) / samplesPerAxis);
       raycaster.ray.origin.set(x, rayOriginY, z);
-      const hit = raycaster.intersectObjects(meshes, true).find((item) => isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
+      const hit = raycaster.intersectObjects(meshes, false).find((item) => isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
       if (hit) samples[xi][zi] = hit.point.clone();
     }
   }
@@ -182,8 +163,10 @@ export function findSpawnNode(root) {
 export function buildCollision(root, mode = 'auto', supplementalRoots = [], {buildOctree=true} = {}) {
   const visibleMeshes = [];
   const collisionMeshes = [];
+  const collected = new Set();
   const collect = (object) => {
-    if (!object.isMesh || !object.geometry) return;
+    if (!object.isMesh || !object.geometry || collected.has(object)) return;
+    collected.add(object);
     if (collisionIsDisabled(object)) return;
     const name = object.name || '';
     if (isDedicatedCollider(object)) {
@@ -194,12 +177,11 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
       collisionMeshes.push(object);
       return;
     }
-    visibleMeshes.push(object);
-    const material = Array.isArray(object.material) ? object.material[0] : object.material;
+    if (isRenderedMesh(object)) visibleMeshes.push(object);
     // A playable world always needs physical geometry.  `none` is retained as
     // import metadata for backwards compatibility, but it must not be allowed
     // to turn off the ground (or other obvious solid scenery) at runtime.
-    if (!EXCLUDE_RE.test(name) && object.visible !== false && material?.visible !== false) collisionMeshes.push(object);
+    if (isCollisionMesh(object)) collisionMeshes.push(object);
   };
   root.traverse(collect);
   // Map guides must be based on the authored world, never a movable item. A
@@ -207,13 +189,25 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
   const containment = createMapContainment(collisionMeshes);
   supplementalRoots.filter(Boolean).forEach((supplementalRoot) => supplementalRoot.traverse(collect));
   const source = new THREE.Group();
-  if(buildOctree)collisionMeshes.forEach((mesh) => {
-    const clone = mesh.clone(false);
-    clone.geometry = mesh.geometry;
-    clone.material = mesh.material;
-    mesh.updateWorldMatrix(true, false);
-    clone.applyMatrix4(mesh.matrixWorld);
+  const addSourceMesh = (mesh, matrix) => {
+    const clone = new THREE.Mesh(mesh.geometry, mesh.material);
+    clone.name = mesh.name;
+    // Use the exact world transform. Cloning and then applying matrixWorld on
+    // top applies the local transform twice and creates displaced ghost walls.
+    clone.matrixAutoUpdate = false;
+    clone.matrix.copy(matrix);
     source.add(clone);
+  };
+  if(buildOctree)collisionMeshes.forEach((mesh) => {
+    mesh.updateWorldMatrix(true, false);
+    if (!mesh.isInstancedMesh) { addSourceMesh(mesh, mesh.matrixWorld); return; }
+    // Octree.fromGraphNode reads base geometry but does not apply instance
+    // matrices. Bake each real instance instead of a phantom prop at the origin.
+    const instance = new THREE.Matrix4(), world = new THREE.Matrix4();
+    for (let index = 0; index < mesh.count; index++) {
+      mesh.getMatrixAt(index, instance);
+      addSourceMesh(mesh, world.multiplyMatrices(mesh.matrixWorld, instance));
+    }
   });
   if (containment.root) source.add(containment.root);
   const octree = new Octree();

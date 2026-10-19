@@ -5,6 +5,7 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
+import * as THREE from '../public/vendor/three/three.module.min.js';
 test('server room controls movement, interactions, health, cooldowns, replay and durable state',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'authoritative-room-'));let now=100000;const charged=[],recorded=[],rewards=[];
  try{const store=new SharedRoomStore(join(dir,'rooms.json')),runtime=new AuthoritativeRooms({store,now:()=>now,charge:async(...args)=>charged.push(args),telemetry:async(...args)=>recorded.push(args),reward:async(...args)=>rewards.push(args)});
@@ -25,4 +26,27 @@ test('server room controls movement, interactions, health, cooldowns, replay and
  now+=20000;await assert.rejects(send('input',{input:{}},'expired'),{statusCode:409});
  assert.equal((await runtime.snapshot('other',{id:'other',spawn:{x:0,y:0,z:0}})).players['account:alice'],undefined);
  }finally{await rm(dir,{recursive:true,force:true});}
+});
+
+test('multiplayer wall sliding exposes trusted contacts without leaking collision metadata into positions',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'authoritative-wall-'));let now=100000,sequence=0;
+ const store=new SharedRoomStore(join(dir,'rooms.json')),runtime=new AuthoritativeRooms({store,now:()=>now});
+ const map={id:'contact-room',spawn:{x:0,y:0,z:.7},builderScene:{layout:'grand-floor',mapSize:40,objects:[]}};
+ const root=new THREE.Group(),floor=new THREE.Mesh(new THREE.BoxGeometry(30,.2,30),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));floor.name='BUILDER_WALKABLE_FLOOR_grand-floor';floor.position.y=-.1;root.add(floor);root.updateMatrixWorld(true);
+ runtime.collision.cache.set(map.id+':',{root,glb:false,floors:[floor],walls:[],bounds:new THREE.Box3().setFromObject(root)});
+ const identity={accountId:'alice',username:'Alice',stats:{health:100}},send=input=>runtime.command(map.id,map,identity,{action:'input',requestId:'wall-'+(++sequence),input});
+ try{
+  await runtime.command(map.id,map,identity,{action:'join',requestId:'join-wall'});
+  await store.update(map.id,room=>{room.objects.wall={materialId:'wall',position:[0,1.2,0],rotation:[0,0,0],scale:[5,1,1]};});
+  let state;
+  for(let tick=0;tick<20;tick++){now+=50;state=await send({forward:1,side:1,yaw:0});}
+  const self=state.players['account:alice'];
+  assert.ok(self.position.x>2,'diagonal input preserves travel along a placed wall');
+  assert.ok(self.position.z>=.399,'the capsule stays outside the physical wall');
+  assert.ok(self.collisionNormals.some(normal=>normal.z>.9),'snapshots expose the outward wall contact for camera prediction');
+  assert.equal('collisionNormals' in self.position,false);assert.equal('ceilingY' in self.position,false);
+  for(let tick=0;tick<4;tick++){now+=50;state=await send({forward:-1,yaw:0});}
+  assert.ok(state.players['account:alice'].position.z>.7,'turning away releases the wall');
+  assert.deepEqual(state.players['account:alice'].collisionNormals,[]);
+ }finally{floor.geometry.dispose();floor.material.dispose();await rm(dir,{recursive:true,force:true});}
 });

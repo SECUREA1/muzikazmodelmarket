@@ -63,3 +63,42 @@ test('a delayed snapshot eases walking down instead of cutting velocity at 300 m
  const stopped=out.x;motion.sample(1010,.01,{side:1},4,out);
  assert.ok(out.x-stopped<.00001,'long outages still stop prediction');
 });
+
+test('confirmed wall contacts keep the predicted camera outside the wall while sliding along it',()=>{
+ for(const fps of [30,60,120]){
+  const motion=new WalkingMotion(),out={};
+  motion.reconcile({x:0,z:0},{serverTime:0,receivedAt:0,collisionNormals:[{x:-1,z:0}]});
+  let previousZ=0;
+  for(let frame=1;frame<=fps;frame++){
+   const now=frame*1000/fps;
+   if(frame%Math.max(1,Math.round(fps/20))===0)motion.reconcile({x:0,z:-Math.SQRT2*2*now/1000},{serverTime:now,receivedAt:now,collisionNormals:[{x:-1,z:0}]});
+   motion.sample(now,1/fps,{side:1,forward:1},4,out);
+   assert.ok(out.x<=1e-9,'pushing into a wall cannot repeatedly predict through it');
+   assert.ok(out.z<=previousZ+1e-9,'the tangential direction does not snap backward');previousZ=out.z;
+  }
+  assert.ok(out.z<-2,'wall contact retains useful sideways travel');
+ }
+});
+
+test('wall feedback removes an existing overshoot and releases as soon as the player moves away',()=>{
+ const motion=new WalkingMotion(),out={};snapshot(motion,0,0);
+ motion.sample(50,.05,{side:1},4,out);assert.ok(out.x>0);
+ motion.reconcile({x:0,z:0},{serverTime:50,receivedAt:50,collisionNormals:[{x:-1,z:0}]});
+ motion.sample(66,.016,{side:1},4,out);assert.equal(out.x,0);
+ motion.sample(82,.016,{side:-1},4,out);assert.ok(out.x<0,'the outward direction is never pinned by a previous contact');
+ motion.reconcile({x:0,z:0},{serverTime:100,receivedAt:100,collisionNormals:[]});
+ for(let frame=1;frame<=10;frame++)motion.sample(100+frame*16,.016,{side:1},4,out);
+ assert.ok(out.x>.2,'a cleared contact allows movement through the old contact plane');
+ motion.reset();assert.deepEqual(motion.collisionNormals,[]);assert.equal(motion.contactPoint,null);
+});
+
+test('corner contacts constrain both blocked directions and rotated wall contacts retain their tangent',()=>{
+ const corner=new WalkingMotion(),out={};corner.reconcile({x:0,z:0},{serverTime:0,receivedAt:0,collisionNormals:[{x:-1,z:0},{x:0,z:1}]});
+ for(let frame=1;frame<=20;frame++)corner.sample(frame*16,.016,{side:1,forward:1},4,out);
+ assert.equal(out.x,0);assert.equal(out.z,0);
+ const wall=new WalkingMotion(),normal={x:-Math.SQRT1_2,z:Math.SQRT1_2};
+ wall.reconcile({x:0,z:0},{serverTime:0,receivedAt:0,collisionNormals:[normal]});
+ for(let frame=1;frame<=20;frame++)wall.sample(frame*16,.016,{side:1},4,out);
+ assert.ok(out.x>.3&&out.z>.3,'the rotated wall permits diagonal travel along its surface');
+ assert.ok(out.x*normal.x+out.z*normal.z>=-1e-9);
+});

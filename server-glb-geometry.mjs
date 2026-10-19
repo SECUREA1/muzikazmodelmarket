@@ -19,15 +19,40 @@ function glbGeometry(url){
  function accessor(index,components){
   const a=json.accessors[index],b=json.bufferViews[a.bufferView];
   if(a.sparse||b.buffer!==0)throw Error('Unsupported collision accessor.');
-  const readers={5121:['getUint8',1],5123:['getUint16',2],5125:['getUint32',4],5126:['getFloat32',4]},reader=readers[a.componentType];if(!reader)throw Error('Unsupported collision component.');
+  const readers={5120:['getInt8',1],5121:['getUint8',1],5122:['getInt16',2],5123:['getUint16',2],5125:['getUint32',4],5126:['getFloat32',4]},reader=readers[a.componentType];if(!reader)throw Error('Unsupported collision component.');
   const out=components===1?new Uint32Array(a.count):new Float32Array(a.count*components),stride=b.byteStride||reader[1]*components,offset=(b.byteOffset||0)+(a.byteOffset||0);
-  for(let i=0;i<a.count;i++)for(let c=0;c<components;c++)out[i*components+c]=view[reader[0]](offset+i*stride+c*reader[1],true);
+  for(let i=0;i<a.count;i++)for(let c=0;c<components;c++){
+   let value=view[reader[0]](offset+i*stride+c*reader[1],true);
+   if(a.normalized&&a.componentType!==5126){const signed=a.componentType===5120||a.componentType===5122;value=signed?Math.max(-1,value/(2**(reader[1]*8-1)-1)):value/(2**(reader[1]*8)-1);}
+   out[i*components+c]=value;
+  }
   return out;
  }
  function node(index){
-  const source=json.nodes[index],root=new THREE.Group();root.name=source.name||'';
+  const source=json.nodes[index],root=new THREE.Group();root.name=source.name||'';root.userData={...source.extras};
   if(source.matrix)root.applyMatrix4(new THREE.Matrix4().fromArray(source.matrix));else{if(source.translation)root.position.fromArray(source.translation);if(source.rotation)root.quaternion.fromArray(source.rotation);if(source.scale)root.scale.fromArray(source.scale);}
-  if(source.mesh!==undefined)for(const primitive of json.meshes[source.mesh].primitives){if(primitive.mode!==undefined&&primitive.mode!==4)continue;const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(accessor(primitive.attributes.POSITION,3),3));if(primitive.indices!==undefined)geometry.setIndex(new THREE.BufferAttribute(accessor(primitive.indices,1),1));geometry.computeBoundingBox();geometry.computeBoundingSphere();const mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));mesh.name=source.name||json.meshes[source.mesh].name||'';root.add(mesh);}
+  const instanceAttributes=source.extensions?.EXT_mesh_gpu_instancing?.attributes;
+  const instanceCount=instanceAttributes?json.accessors[Object.values(instanceAttributes)[0]]?.count:0;
+  const instanceTransforms=instanceAttributes?Object.fromEntries([['TRANSLATION',3],['ROTATION',4],['SCALE',3]].filter(([name])=>instanceAttributes[name]!==undefined).map(([name,components])=>[name,accessor(instanceAttributes[name],components)])):null;
+  if(source.mesh!==undefined)for(const primitive of json.meshes[source.mesh].primitives){
+   if(primitive.mode!==undefined&&primitive.mode!==4)continue;
+   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(accessor(primitive.attributes.POSITION,3),3));if(primitive.indices!==undefined)geometry.setIndex(new THREE.BufferAttribute(accessor(primitive.indices,1),1));geometry.computeBoundingBox();geometry.computeBoundingSphere();
+   const authoredMaterial=json.materials?.[primitive.material],alpha=authoredMaterial?.pbrMetallicRoughness?.baseColorFactor?.[3];
+   // Match the browser loader's physical metadata and fully transparent meshes.
+   // Explicit invisible colliders remain eligible through their authored flags.
+   const material=new THREE.MeshBasicMaterial({side:THREE.DoubleSide,transparent:authoredMaterial?.alphaMode==='BLEND',opacity:authoredMaterial?.alphaMode==='BLEND'&&Number.isFinite(alpha)?alpha:1});
+   material.userData={...authoredMaterial?.extras};
+   const mesh=new THREE.Mesh(geometry,material);mesh.name=source.name||json.meshes[source.mesh].name||'';mesh.userData={...json.meshes[source.mesh].extras,...source.extras,...primitive.extras};
+   if(instanceTransforms){
+    for(let instance=0;instance<instanceCount;instance++){
+     const placed=mesh.clone(false);
+     if(instanceTransforms.TRANSLATION)placed.position.fromArray(instanceTransforms.TRANSLATION,instance*3);
+     if(instanceTransforms.ROTATION)placed.quaternion.fromArray(instanceTransforms.ROTATION,instance*4).normalize();
+     if(instanceTransforms.SCALE)placed.scale.fromArray(instanceTransforms.SCALE,instance*3);
+     root.add(placed);
+    }
+   }else root.add(mesh);
+  }
   for(const child of source.children||[])root.add(node(child));return root;
  }
  const group=new THREE.Group();for(const index of json.scenes[json.scene||0].nodes||[])group.add(node(index));return group;
