@@ -13,7 +13,7 @@ const manifest = JSON.parse(await readFile(new URL('../public/models/backpack-as
 const items = manifest.assets || manifest.items || manifest;
 const script = await readFile(new URL('../environment-builder.js', import.meta.url), 'utf8');
 const definitions = script.slice(script.indexOf('const gameplayModels='), script.indexOf('// A broad, metre-scaled deployment library.'));
-const starterModels = vm.runInNewContext(`${definitions}\ngameplayModels;`);
+const starterModels = vm.runInNewContext(`${definitions}\ngameplayModels;`, {HOCKEY_ITEMS:[],ARCADE_PARTS:[]});
 
 test('the map builder offers free functional basketball items before any catalog request', () => {
   for (const id of ['basketball', 'basketball-hoop', 'basketball-jersey-home', 'basketball-jersey-away']) {

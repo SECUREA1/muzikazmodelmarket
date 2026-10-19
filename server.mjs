@@ -6,29 +6,34 @@ import {DeviceMediaUploads} from './device-media-uploads.mjs';
 import {deviceDefinition} from './public/js/interactive-devices.js';
 import {MasterServerState} from './master-server-state.mjs';
 import {synchronizeWorldDirectory} from './world-directory.mjs';
+import {ArcadeRooms} from './arcade-rooms.mjs';
+import {isArcadeMap} from './public/js/arcade-rules.js';
+import {HockeyRooms} from './hockey-rooms.mjs';
+import {isHockeyMap} from './public/js/hockey-rules.js';
+
 import {LAND_VALUES} from './public/js/game-item-pricing.js';
 import {resolveAccountProof,recoverRoomSession} from './room-session.mjs';
 import {readJsonInput,memberWalletPatch} from './request-validation.mjs';
 import {backpackPackage,ownedPackageItem} from './backpack-files.mjs';
-import { resolveStoreCart } from './store-catalog.mjs';
-import { EthereumMemberAuth } from './ethereum-member-auth.mjs';
-import { ServerBackups } from './server-backups.mjs';
+import {resolveStoreCart} from './store-catalog.mjs';
+import {EthereumMemberAuth} from './ethereum-member-auth.mjs';
+import {ServerBackups} from './server-backups.mjs';
 import {WorldAtlas,attachAtlas} from './world-atlas.mjs';
-import { AuthoritativeRooms } from './authoritative-room.mjs';
-import { memberPlotEnvironment, plotSpaceId, plotPlayUrl } from './member-plots.mjs';
-import { SharedRoomStore } from './shared-room-store.mjs';
-import { GAME_ECONOMY, economyItem, ownsEconomyItem, economyInventory, economyBundles } from './game-economy.mjs';
-import { createServer } from 'node:http';
-import { readFile, writeFile, mkdir, stat, lstat, unlink, rename } from 'node:fs/promises';
-import { createReadStream, createWriteStream } from 'node:fs';
-import { extname, join, normalize } from 'node:path';
-import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
-import { normalizePlayerPreferences } from './public/js/player-preferences.js';
-import { UserJsonDatabase, cleanWallet } from './user-json-database.mjs';
-import { LoadoutCodeStore } from './loadout-code-store.mjs';
-import { PaymentOrderStore, MUZIKAZ_PAYMENT_NETWORKS } from './payment-order-store.mjs';
-import { verifyPaymentTransaction } from './payment-verifier.mjs';
-import { DurableSessionStore } from './session-store.mjs';
+import {AuthoritativeRooms} from './authoritative-room.mjs';
+import {memberPlotEnvironment,plotSpaceId,plotPlayUrl} from './member-plots.mjs';
+import {SharedRoomStore} from './shared-room-store.mjs';
+import {GAME_ECONOMY,economyItem,ownsEconomyItem,economyInventory,economyBundles} from './game-economy.mjs';
+import {createServer} from 'node:http';
+import {readFile,writeFile,mkdir,stat,lstat,unlink,rename} from 'node:fs/promises';
+import {createReadStream,createWriteStream} from 'node:fs';
+import {extname,join,normalize} from 'node:path';
+import {createHash,createHmac,randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
+import {normalizePlayerPreferences} from './public/js/player-preferences.js';
+import {UserJsonDatabase,cleanWallet} from './user-json-database.mjs';
+import {LoadoutCodeStore} from './loadout-code-store.mjs';
+import {PaymentOrderStore,MUZIKAZ_PAYMENT_NETWORKS} from './payment-order-store.mjs';
+import {verifyPaymentTransaction} from './payment-verifier.mjs';
+import {DurableSessionStore} from './session-store.mjs';
 
 const root = process.cwd();
 const LAND_PRODUCTS=[['volt-city','Volt City'],['skyline-deck','Skyline Deck'],['echo-gardens','Echo Gardens'],['crew-plaza','Crew Plaza'],['studio-ridge','Studio Ridge'],['neon-docks','Neon Docks'],['bassline-badlands','Bassline Badlands'],['pixel-peaks','Pixel Peaks']];
@@ -190,12 +195,17 @@ async function snapshotServer() {
   await Promise.all([sharedRooms.flush(), userDatabase.queue, loadoutCodeStore.queue, paymentOrderStore.queue, accountSessionStore.queue, gameSessionStore.queue, ethereumAuth.queue, customMapWriteQueue, deviceMediaUploads.queue]);
   return serverBackups.snapshot();
 }
+const hockeyRooms=new HockeyRooms();
+const arcadeRooms=new ArcadeRooms();
+setInterval(()=>arcadeRooms.tick(),50).unref();
+setInterval(()=>hockeyRooms.tick(),50).unref();
 const authoritativeRooms=new AuthoritativeRooms({store:sharedRooms,capacity:maxHouseUsers,resolveDestination:async id=>Boolean(await roomEnvironment(id)),collectCoin:(identity,requestId)=>userDatabase.grantMzkCoin(identity.walletId,requestId),collectLoot:(identity,itemId,requestId)=>userDatabase.grantRpgLoot(identity.walletId,itemId,requestId),reward:(identity,event,requestId)=>userDatabase.memberReward(identity.walletId,'progress',{scope:'field',event,requestId}),resolveAsset:async(identity,command)=>{const state=await userDatabase.get(identity.walletId),catalog=economyItem(command.sku);if(catalog&&ownsEconomyItem(state,catalog)&&catalog.kind==='asset')return catalog;const purchased=state.items.find(item=>item.id===command.itemId&&['mzk-store','verified-store'].includes(item.source)&&item.modelUrl);if(purchased)return {...purchased,behavior:'decor',targetHeight:['avatar','avatars'].includes(purchased.assetType||purchased.type)?1.8:undefined};const custom=state.items.find(item=>item.id===command.itemId&&item.type==='custom-item');if(custom)return {...custom,behavior:custom.configuration?.behavior||'decor'};const item=state.items.find(item=>item.id===command.itemId&&(item.modelUrl||item.buildAssetId));if(!item){const pack=await userDatabase.builderBackpack(identity.walletId),owned=pack.assets.find(asset=>asset.id===command.itemId);if(!owned)return null;const config=owned.function_data||{};if(!owned.glb_url&&!config.buildAssetId&&!config.modelId)return null;return {id:owned.id,name:owned.name,modelUrl:owned.glb_url||null,buildAssetId:config.buildAssetId||config.modelId||null,assetType:owned.asset_type||'props',behavior:config.behavior||'decor'};}const canonical=GAME_ECONOMY.find(asset=>asset.kind==='asset'&&(asset.modelUrl&&asset.modelUrl===item.modelUrl||asset.buildAssetId&&asset.buildAssetId===item.buildAssetId));return canonical&&ownsEconomyItem(state,canonical)?canonical:null;},charge:(identity,sku,requestId)=>userDatabase.economyAction(identity.walletId,'use',sku,'room:'+requestId),telemetry:(walletId,sample)=>userDatabase.recordRpgTelemetry(walletId,sample)});
 setInterval(()=>backgroundJob(()=>sharedRooms.flush()),1000).unref();
 setInterval(()=>backgroundJob(()=>authoritativeRooms.tickActive()),50).unref();
+
 let roomEnvironmentCache=null,roomEnvironmentCachedAt=0;
 async function roomEnvironment(id){if(!roomEnvironmentCache||Date.now()-roomEnvironmentCachedAt>3000){roomEnvironmentCache=await combinedEnvironments();roomEnvironmentCachedAt=Date.now();}return roomEnvironmentCache.find(env=>env.id===id);}
-function liveRoomMetadata(map,rooms={}){const roomId=map.roomId||map.id;const members=new Set(activePresence().filter(user=>{if(user.roomId!==roomId)return false;const player=rooms[roomId]?.simulation?.players['account:'+user.accountId];return !player||Date.now()-player.lastSeen<15000;}).map(user=>user.accountId?'account:'+user.accountId:user.sessionId));for(const [id,player]of Object.entries(rooms[roomId]?.simulation?.players||{}))if(Date.now()-player.lastSeen<15000)members.add(id);const playerCount=members.size;return {...map,roomId,playerCount,live:playerCount>0,playUrl:map.playUrl||`model-explorer.html?environment=${encodeURIComponent(map.id)}&house=${encodeURIComponent(roomId)}&autoplay=1`};}
+function liveRoomMetadata(map,rooms={}){const roomId=map.roomId||map.id;const members=new Set(activePresence().filter(user=>{if(user.roomId!==roomId)return false;const player=rooms[roomId]?.simulation?.players['account:'+user.accountId];return !player||Date.now()-player.lastSeen<15000;}).map(user=>user.accountId?'account:'+user.accountId:user.sessionId));for(const [id,player]of Object.entries(rooms[roomId]?.simulation?.players||{}))if(Date.now()-player.lastSeen<15000)members.add(id);if(isHockeyMap(map))for(const player of hockeyRooms.rooms.get(roomId)?.state.players||[])if(player.human)members.add(player.human);if(isArcadeMap(map))for(const slot of arcadeRooms.rooms.get(roomId)?.slots||[])if(slot.actor)members.add(slot.actor);const playerCount=members.size;return {...map,roomId,playerCount,spectatorCount:isHockeyMap(map)?(hockeyRooms.rooms.get(roomId)?.state.spectators.length||0):isArcadeMap(map)?[...(arcadeRooms.rooms.get(roomId)?.members.values()||[])].filter(m=>m.role==='spectator').length:0,live:playerCount>0,playUrl:map.playUrl||`model-explorer.html?environment=${encodeURIComponent(map.id)}&house=${encodeURIComponent(roomId)}&autoplay=1`};}
 async function combinedEnvironments() {
   const [repo, uploaded, customMaps] = await Promise.all([readRepositoryEnvironments(), readUploadedEnvironments(), readCustomMaps()]);
   const liveMaps = customMaps.map((map) => ({ ...map, modelUrl:'', modelUrls:[], proceduralLand:true, spawn:{x:0,y:1,z:2,rotationY:0}, scale:1, spaceScale:1, rotation:{x:0,y:0,z:0}, collisionMode:'auto', canDelete:false, canEdit:false }));
@@ -501,7 +511,7 @@ function broadcastTo(sessionId, type, data) { const payload = `event: ${type}\nd
 function corsHeaders(extra = {}, origin = '') {
   const configured = String(process.env.MUZIKAZ_CORS_ORIGINS || process.env.MUZIKAZ_CORS_ORIGIN || '').split(',').map((item) => item.trim()).filter(Boolean);
   const development = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/.test(origin);
-  const production = /^https:\/\/(?:www\.)?muzikaz\.com$/.test(origin) || origin === 'https://muzikazmodelmarket.onrender.com';
+  const production = /^https:\/\/(?:www\.)?muzikaz\.com$/.test(origin) || origin === 'https://muzikazmodelmarket.onrender.com' || origin === 'https://neon-junction-arcade-park.teal-dune-4573.chatgpt.site';
   const allowedOrigin = origin && (configured.includes(origin) || development || production) ? origin : '';
   return { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin, 'Access-Control-Allow-Credentials': 'true' } : {}), Vary: 'Origin', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-CSRF-Token,X-Game-Session,X-Idempotency-Key,X-Wallet-Address,X-MUZIKAZ-Session,X-User-Id,X-User-Role,X-User-Name,X-Admin-Token,X-MUZIKAZ-Land-Asset,X-Master-Restore,Range', 'Cross-Origin-Resource-Policy': 'cross-origin', 'Cache-Control': 'no-store', ...extra };
 }
@@ -897,6 +907,25 @@ const server = createServer(async (req, res) => {
       if(!player||Date.now()-player.lastSeen>15000||!actor||actor.active===false||!profile||!['audio','video','image'].includes(profile.kind)||Math.hypot(actor.position.x-player.position.x,actor.position.y-player.position.y,actor.position.z-player.position.z)>5)return sendJson(res,409,{success:false,message:'Stand beside a media device before uploading.'});
       return sendJson(res,201,assetResponse(await deviceMediaUploads.upload(req,identity,id)));
     }
+    const arcadeRoom=url.pathname.match(/^\/api\/rooms\/([^/]+)\/arcade$/);
+    if(arcadeRoom&&req.method==='POST'){
+      const id=decodeURIComponent(arcadeRoom[1]),environment=await roomEnvironment(id);
+      if(!environment||!isArcadeMap(environment))return sendJson(res,404,{message:'Arcade map not found.'});
+      const command=await bodyJson(req,2000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;
+      const snapshot=arcadeRooms.command(id,environment,identity,command);
+      if(command.action==='join')for(const [roomId,room] of hockeyRooms.rooms){const actor='account:'+identity.accountId;if(room.seen.has(actor))hockeyRooms.command(roomId,environment,identity,{action:'leave'});}
+      return sendJson(res,200,assetResponse(snapshot));
+    }
+    const hockeyRoom=url.pathname.match(/^\/api\/rooms\/([^/]+)\/hockey$/);
+    if(hockeyRoom&&req.method==='POST'){
+      const id=decodeURIComponent(hockeyRoom[1]),environment=await roomEnvironment(id);
+      if(!environment||!isHockeyMap(environment))return sendJson(res,404,{message:'Hockey arena not found.'});
+      const command=await bodyJson(req,2000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;
+      const snapshot=hockeyRooms.command(id,environment,identity,command);
+      if(command.action==='join'){arcadeRooms.leave('account:'+identity.accountId);for(const [roomId,room]of hockeyRooms.rooms)if(roomId!==id&&room.seen.has('account:'+identity.accountId))hockeyRooms.command(roomId,environment,identity,{action:'leave'});}
+      return sendJson(res,200,assetResponse(snapshot));
+
+    }
     const roomGameplay=url.pathname.match(/^\/api\/rooms\/([^/]+)\/gameplay$/);
     if(roomGameplay&&['GET','POST'].includes(req.method)){const id=decodeURIComponent(roomGameplay[1]),environment=await roomEnvironment(id);if(!environment)return sendJson(res,404,{message:'Room not found.'});if(req.method==='GET')return sendJson(res,200,assetResponse(await authoritativeRooms.snapshot(id,environment)));const command=await bodyJson(req,16000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;const snapshot=await authoritativeRooms.command(id,environment,identity,command);broadcast('room-gameplay-updated',{roomId:id,sequence:snapshot.sequence});return sendJson(res,200,assetResponse(snapshot));}
     const sharedRoom=url.pathname.match(/^\/api\/rooms\/([^/]+)\/objects$/);
@@ -905,8 +934,9 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/custom-maps' && req.method === 'POST') {
       const input = await bodyJson(req,2_000_000); const serialized = JSON.stringify(input);
       if (serialized.length > 2_000_000) return sendJson(res, 413, { success: false, code: 'MAP_TOO_LARGE', message: 'Custom maps must be smaller than 2 MB.' });
-      const context=await memberContext(req,res,true);if(!context)return;const ownerId=`account:${context.account.accountId}`;const record=customMapRecord(input,ownerId);record.ownerName=context.account.username||context.account.displayName||'MUZIKAZ Builder';record.roomId=record.id;record.playUrl=`model-explorer.html?environment=${encodeURIComponent(record.id)}&house=${encodeURIComponent(record.id)}&autoplay=1&mode=multiplayer`;
+      const context=await memberContext(req,res,true);if(!context)return;const ownerId=`account:${context.account.accountId}`;const record=customMapRecord(input,ownerId);record.ownerName=context.account.username||context.account.displayName||'MUZIKAZ Builder';record.roomId=record.id;record.playUrl=`${isHockeyMap(record)?'hockey.html':isArcadeMap(record)?'arcade.html':'model-explorer.html'}?environment=${encodeURIComponent(record.id)}&house=${encodeURIComponent(record.id)}&autoplay=1&mode=multiplayer`;
       if((await readRepositoryEnvironments()).some(map=>map.id===record.id)||record.id.startsWith('plot-deed-')||record.id==='public-commons'||record.id.startsWith('district-')||record.id.startsWith('world-district-'))return authorizationError(res,409,'MAP_ID_RESERVED','Choose a unique builder map ID.','map');
+
       const result = await updateCustomMaps((records) => { const index = records.findIndex((map) => map.id === record.id); if (index >= 0 && records[index].ownerId !== ownerId) throw Object.assign(new Error('That map id belongs to another creator.'), { statusCode: 409, code: 'MAP_ID_CONFLICT' }); if (index >= 0) records[index] = { ...record, createdAt: records[index].createdAt }; else records.unshift(record); return { created: index < 0, record: index >= 0 ? records[index] : record }; });
       const directory=await combinedEnvironments(),published=directory.find(map=>map.id===result.record.id);roomEnvironmentCache=directory;roomEnvironmentCachedAt=Date.now();broadcast('world-atlas-updated',{mapId:result.record.id});broadcast('custom-map-live',published);return sendJson(res,result.created?201:200,assetResponse(published));
     }

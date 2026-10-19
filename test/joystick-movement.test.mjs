@@ -32,13 +32,13 @@ test('tap still shoots and right look and jump retain their response', () => {
   assert.equal(right.jumps(), 1);
 });
 test('analog movement covers the same distance at 30, 60, and 120 FPS', () => {
-  const movement = source.slice(source.indexOf('move.copy(forward).multiplyScalar(input.y)'), source.indexOf('const previousFootY=playerCollider.start.y-player.radius;', source.indexOf('  function updatePlayer(delta)')));
+  const movement = source.slice(source.indexOf('move.copy(forward).multiplyScalar(input.y)'), source.indexOf('    if(!player.onGround&&!jetpackThrust)', source.indexOf('  function updatePlayer(delta)')));
   const vector = (x=0,y=0,z=0) => ({x,y,z,copy(v){this.x=v.x;this.y=v.y;this.z=v.z;return this;},multiplyScalar(s){this.x*=s;this.y*=s;this.z*=s;return this;},addScaledVector(v,s){this.x+=v.x*s;this.y+=v.y*s;this.z+=v.z*s;return this;},lengthSq(){return this.x**2+this.y**2+this.z**2;}});
   for (const fps of [30,60,120]) {
     let distance = 0;
     const context = vm.createContext({walkingSprint,stickSprinting:false,touchSprint:false,keys:new Set(),thumbInput:{leftX:0,leftY:-.25},move:vector(),forward:vector(0,0,-1),right:vector(1),input:{x:0,y:.25},delta:1/fps,player:{speed:4},useJetpack:()=>false,playerCollider:{translate(v){distance-=v.z;}}});
     const step = new vm.Script(`{${movement}}`);
-    for(let frame=0;frame<fps;frame++) step.runInContext(context);
+    for(let frame=0;frame<fps;frame++){step.runInContext(context);distance-=context.move.z;}
     assert.ok(Math.abs(distance-1)<1e-10, `${fps} FPS: ${distance}`);
   }
 });

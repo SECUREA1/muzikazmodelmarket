@@ -11,7 +11,9 @@ test('VibeVerse exposes a compact searchable function menu', async () => {
 
   assert.match(html, /id="explorer-options-toggle"[^>]+aria-expanded="false"/);
   assert.match(html, /id="explorer-options-search"[^>]+type="search"/);
-  assert.equal((html.match(/data-option-keywords=/g) || []).length, 9);
+  assert.equal((html.match(/data-option-keywords=/g) || []).length, 14);
+  assert.match(html, /href="arcade\.html\?environment=neon-junction&amp;mode=solo"/);
+  assert.match(html, /Customize Neon Junction/);
   assert.match(script, /terms\.every\(\(term\) => searchableText\.includes\(term\)\)/);
   assert.equal((html.match(/data-explorer-workspace(?=[ >])/g) || []).length, 4);
   assert.equal((html.match(/data-explorer-view=/g) || []).length, 8);

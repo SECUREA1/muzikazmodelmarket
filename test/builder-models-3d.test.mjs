@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import {readFile} from 'node:fs/promises';
 
 test('play mode replaces every Builder Pack thumbnail with a described, scaled 3D model', async () => {
   const [models, game] = await Promise.all([
@@ -15,6 +15,8 @@ test('play mode replaces every Builder Pack thumbnail with a described, scaled 3
   assert.match(models, /updateBuilderModels/);
   // Saved items may resolve a registered buildAssetId before their modelId.
   assert.match(game, /createBuilderModel\([^;\n]*item\.modelId\)/);
+  assert.match(game, /createBuilderModel\(item\.asset\?\.buildAssetId\|\|definition\?\.buildAssetId\|\|item\.modelId\)/);
+
   assert.match(game, /updateBuilderModels\(builderDecor, clock\.elapsedTime\)/);
   assert.doesNotMatch(game, /new THREE\.PlaneGeometry\(flat\?2\.4/);
 });

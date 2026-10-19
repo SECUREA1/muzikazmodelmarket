@@ -32,6 +32,14 @@ function isDedicatedCollider(object) {
   return COLLISION_RE.test(object?.name || '') || object?.userData?.collider === true || object?.userData?.collision === true || object?.userData?.colliderShape === 'mesh';
 }
 
+function isRenderedMesh(object) {
+  for (let current = object; current; current = current.parent) {
+    if (current.visible === false) return false;
+  }
+  const materials = Array.isArray(object.material) ? object.material : [object.material];
+  return materials.some((material) => material?.visible !== false);
+}
+
 function collisionIsDisabled(object) {
   for (let current = object; current; current = current.parent) {
     if (current.userData?.collisionDisabled === true || current.userData?.collider === false || current.userData?.collision === false) return true;
@@ -174,36 +182,50 @@ export function findSpawnNode(root) {
 export function buildCollision(root, mode = 'auto', supplementalRoots = [], {buildOctree=true} = {}) {
   const visibleMeshes = [];
   const collisionMeshes = [];
+  const collectedMeshes = new Set();
   const collect = (object) => {
-    if (!object.isMesh || !object.geometry) return;
+    if (!object.isMesh || !object.geometry || collectedMeshes.has(object)) return;
+    collectedMeshes.add(object);
     if (collisionIsDisabled(object)) return;
     const name = object.name || '';
     if (isDedicatedCollider(object)) {
-      // A visible terrain mesh can also be an explicit collider. Only helper
-      // meshes named COLLIDER/COLLISION/NAVMESH are hidden from rendering.
+      // Explicit physical metadata also belongs on visible authored geometry,
+      // including Builder terrain. Only named helper colliders are hidden.
       if (COLLISION_RE.test(name)) object.visible = false;
-      else if (object.visible !== false && [].concat(object.material || []).some(material => material.visible !== false)) visibleMeshes.push(object);
-      collisionMeshes.push(object); return;
+      if (isRenderedMesh(object)) visibleMeshes.push(object);
+      collisionMeshes.push(object);
+      return;
     }
+    // Hidden scenery is not a physical wall. Explicit collider meshes above
+    // remain physical even when their helpers or materials are hidden.
+    if (!isRenderedMesh(object)) return;
+
     visibleMeshes.push(object);
-    const material = Array.isArray(object.material) ? object.material[0] : object.material;
     // A playable world always needs physical geometry.  `none` is retained as
     // import metadata for backwards compatibility, but it must not be allowed
     // to turn off the ground (or other obvious solid scenery) at runtime.
-    if (!EXCLUDE_RE.test(name) && object.visible !== false && material?.visible !== false) collisionMeshes.push(object);
+    if (!EXCLUDE_RE.test(name)) collisionMeshes.push(object);
   };
+  root.updateWorldMatrix(true, true);
   root.traverse(collect);
   // Map guides must be based on the authored world, never a movable item. A
   // dropped prop outside the boundary must not silently enlarge the world.
   const containment = createMapContainment(collisionMeshes);
-  supplementalRoots.filter(Boolean).forEach((supplementalRoot) => supplementalRoot.traverse(collect));
+  supplementalRoots.filter(Boolean).forEach((supplementalRoot) => {
+    supplementalRoot.updateWorldMatrix(true, true);
+    supplementalRoot.traverse(collect);
+  });
   const source = new THREE.Group();
   if(buildOctree)collisionMeshes.forEach((mesh) => {
     const clone = mesh.clone(false);
     clone.geometry = mesh.geometry;
     clone.material = mesh.material;
     mesh.updateWorldMatrix(true, false);
-    clone.applyMatrix4(mesh.matrixWorld);
+    // clone() already carries the local transform. Applying matrixWorld to it
+    // would transform the collider twice and put walls beside their visuals.
+    // Copy the exact matrix, including shear from scaled, rotated ancestors.
+    clone.matrixAutoUpdate = false;
+    clone.matrix.copy(mesh.matrixWorld);
     source.add(clone);
   });
   if (containment.root) source.add(containment.root);
@@ -238,4 +260,3 @@ export function resolveSafeSpawn(root, floorMeshes, metadataSpawn = {}, playerHe
   else candidate.copy(alignPointAboveFloor(candidate, floorMeshes, box, playerHeight));
   return { position: candidate, rotationY: spawnNode ? spawnNode.rotation.y : Number(metadataSpawn.rotationY || 0), bounds: box };
 }
-

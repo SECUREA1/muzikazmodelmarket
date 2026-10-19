@@ -3,7 +3,7 @@ import {catalogItemPrice} from './public/js/game-item-pricing.js';
 import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {BUILDING_MATERIALS} from './public/js/building-materials.js';
-import {EXTRA_WEAPONS, RANGED_WEAPONS} from './public/js/game-weapons.js';
+import {EXTRA_WEAPONS,RANGED_WEAPONS} from './public/js/game-weapons.js';
 import {UTILITY_TOOLS} from './public/js/game-utilities.js';
 const json=async path=>JSON.parse(await readFile(new URL(path,import.meta.url),'utf8'));
 const backpack=(await json('./public/models/backpack-assets.json')).assets;
@@ -19,6 +19,7 @@ const raw=[
  ...Object.entries(tools).map(([id,name])=>({sku:'tool:'+id,id,name,category:UTILITY_TOOLS[id]?'Utility tools':'Weapons & gear',kind:'tool',basic:basicTools.has(id),priceMzk:toolCosts[id]?.[0]||200,useCostMzk:toolCosts[id]?.[1]||1,toolId:id})),
  ...BUILDING_MATERIALS.map(item=>({sku:'material:'+item.id,id:item.id,name:item.name,category:'Building materials',kind:'material',basic:basicMaterials.has(item.id),priceMzk:item.shape?120:60,useCostMzk:1,materialId:item.id})),
  ...backpack.filter(item=>item.visibility!=='private').map(item=>({...item,sku:'backpack:'+item.id,category:['arcade','poker','slots','trivia'].includes(INTERACTIVE_DEVICES[item.buildAssetId]?.kind)?'Arcade & card machines':'Backpack · '+item.type,kind:'asset',assetType:item.type,basic:item.basic===true||item.id==='backpack-dax',priceMzk:item.type==='vehicles'?500:item.type==='avatars'?300:item.type==='lands'?400:100,useCostMzk:item.type==='avatars'?0:item.type==='vehicles'?5:1})),
+
  ...models.filter(item=>item.visibility!=='private'&&item.modelUrl).map(item=>({...item,sku:'repository:'+item.id,category:'Models',kind:'asset',assetType:item.assetType||'props',priceMzk:Math.round(Number(item.price||25)*100),useCostMzk:item.assetType==='avatar'?0:2}))
 ];
 export const GAME_ECONOMY=raw.map(item=>{const priceMzk=catalogItemPrice(item);return {...item,priceMzk,priceUsd:priceMzk/100,...(item.kind==='material'?{unitPriceMzk:item.basic?0:priceMzk}:{}),useCostMzk:item.basic?0:item.kind==='material'?priceMzk:item.useCostMzk};});

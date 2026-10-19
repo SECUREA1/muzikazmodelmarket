@@ -1,9 +1,11 @@
 import {builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn} from './builder-base.js';
-import {isBasketballEnvironment} from '../basketball-rules.js';
-import {isFiringRangeEnvironment} from '../firing-range.js';
+import { isBasketballEnvironment } from '../basketball-rules.js';
+import { isFiringRangeEnvironment } from '../firing-range.js';
+import { isCleanSportsEnvironment } from '../sports-worlds.js';
+
 import {createSlimeFloor,collectSlimeFloorMeshes} from './slime-floor.js';
-import {replaceServerStreets} from './server-streets.js';
-import {createBuilderLand} from './builder-land.js';
+import { replaceServerStreets } from './server-streets.js';
+import { createBuilderLand } from './builder-land.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
 import { DRACOLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/DRACOLoader.js/+esm';
@@ -11,7 +13,7 @@ import { KTX2Loader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/
 import { MeshoptDecoder } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/meshopt_decoder.module.js/+esm';
 import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Octree.js/+esm';
 import { applyWorldQuality } from './environment-quality.js';
-import { buildCollision, resolveSafeSpawn } from './environment-collision.js';
+import {buildCollision,resolveSafeSpawn} from './environment-collision.js';
 
 export class EnvironmentLoader {
   constructor({ scene, renderer, camera = null, onProgress = () => {}, serverAuthoritative = () => false }) {
@@ -22,9 +24,9 @@ export class EnvironmentLoader {
     const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/basis/'); ktx2.detectSupport(renderer); this.loader.setKTX2Loader(ktx2);
     this.loader.setMeshoptDecoder(MeshoptDecoder);
   }
-  disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture) value.dispose(); material.dispose?.(); }
+  disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture && !value.userData.sportsSurfaceShared) value.dispose(); material.dispose?.(); }
   clearFloorEffects() { this.floorSlime?.dispose(); this.floorSlime=null; }
-  refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world&&!isBasketballEnvironment(this.activeEnvironment)&&!isFiringRangeEnvironment(this.activeEnvironment)?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
+  refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world&&!isCleanSportsEnvironment(this.activeEnvironment)&&!isFiringRangeEnvironment(this.activeEnvironment)?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
   updateEffects(elapsed, reducedMotion=false) { this.floorSlime?.update(elapsed,reducedMotion); this.world?.userData.updateBasketballEffects?.(elapsed,reducedMotion); }
   unload({cancelPending=true} = {}) { if(cancelPending)this.token+=1; this.clearFloorEffects(); this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
   async loadOne(url, index, count) {
@@ -45,6 +47,7 @@ export class EnvironmentLoader {
     }
     throw lastError;
   }
+
 
   createBuilderLand(environment){const root=createBuilderLand(environment);replaceServerStreets(root,environment.streets||environment.builderScene?.streets||[],{labels:true});return root;}
 
@@ -77,9 +80,11 @@ export class EnvironmentLoader {
     const base=builderBaseEnvironment(environment);if(base)environment={...base,...environment,modelUrl:base.modelUrl,modelUrls:base.modelUrls,scale:base.scale,spaceScale:base.spaceScale,rotation:base.rotation,playableSize:base.playableSize,spawn:builderBaseSpawn(environment)};
     const token = ++this.token; const builderLand = Boolean(!base&&(environment.builderScene || environment.proceduralLand)); const urls = builderLand ? [] : (environment.modelUrls?.length ? environment.modelUrls : [environment.modelUrl].filter(Boolean));
     const nextWorld = new THREE.Group(); nextWorld.name = `WORLD_${environment.id}`; const baseScale = Number(environment.scale) || 1; let spaceScale = Number(environment.spaceScale) || 1; nextWorld.userData.baseScale = baseScale; nextWorld.scale.setScalar(baseScale * spaceScale); nextWorld.rotation.set(environment.rotation?.x || 0, environment.rotation?.y || 0, environment.rotation?.z || 0);
+    nextWorld.userData.cleanSportsWorld=isCleanSportsEnvironment(environment);
     const nextMixers = [];
     try {
       if (builderLand) {const land=this.createBuilderLand(environment);nextWorld.add(land);nextWorld.userData.streetHeightAt=land.userData.streetHeightAt;for(const key of ['basketball','updateBasketballScoreboard','setBasketballState','updateBasketballEffects'])if(land.userData[key])nextWorld.userData[key]=land.userData[key];}
+
       else if (!urls.length) throw new Error('This environment has neither a 3D model nor a playable builder land definition.');
       for (let i = 0; i < urls.length; i += 1) {
         const gltf = await this.loadOne(urls[i], i, urls.length); if (token !== this.token) { nextWorld.add(gltf.scene); this.disposeWorld(nextWorld,nextMixers); return null; }
@@ -113,4 +118,3 @@ export class EnvironmentLoader {
     } catch (error) { this.disposeWorld(nextWorld,nextMixers); if(token!==this.token)return null; throw error; }
   }
 }
-

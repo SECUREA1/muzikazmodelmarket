@@ -2,11 +2,25 @@ import {applyBuilderBaseTransform} from './builder-base.js';
 import {addFiringRangeDressing,createFiringRangeFloorMaterial} from './layout-firing-range.js';
 import {finishLayoutArchitecture} from './layout-details.js';
 import {layoutHeight,createLayoutTerrain,createLayoutMaterial} from './layout-terrain.js';
+import {isCleanSportsEnvironment} from '../sports-worlds.js';
+import {createArcadePark} from '../arcade-park.js';
+import {createHockeyArena} from '../hockey-models.js';
+import {applySportsSurfaces} from '../sports-surfaces.js';
+
 import {isBasketballEnvironment} from '../basketball-rules.js';
 import {createServerStreets} from './server-streets.js';
 import {createBasketballStadium} from '../basketball-stadium.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
+function sportsLand(root,theme) {
+    // Loading a world never waits for vector finishes. The procedural materials
+    // remain playable if SVG rasterization is unavailable.
+    void applySportsSurfaces(root,{theme,maxResolution:2048}).catch(error=>console.warn('[builder-land-surfaces]',error.message));
+    root.userData.cleanSportsWorld=true;return root;
+}
 export function createBuilderLand(environment) {
+    if(isBasketballEnvironment(environment)){const root=createBasketballStadium(THREE,environment);root.userData.cleanSportsWorld=true;return root;}
+    if((environment.builderScene?.layout||environment.layout)==='arcade-park')return sportsLand(createArcadePark(environment.builderScene?.gameplay?.arcade||environment.arcade).root,'arcade');
+    if((environment.builderScene?.layout||environment.layout)==='hockey-arena')return sportsLand(createHockeyArena(),'hockey');
     const built = environment.builderScene || {};
     const layout = built.layout || environment.layout || 'grand-floor';
     if (isBasketballEnvironment(environment)) return createBasketballStadium(THREE, environment);
@@ -44,7 +58,9 @@ export function createBuilderLand(environment) {
     else if(layout==='firing-range')addFiringRangeDressing(root,add,heightAt,{style:built.rangeStyle||environment.rangeStyle});
     else if(layout==='movie-studio'){[[-11,-10],[10,-10],[-11,10],[10,10]].forEach(([x,z],i)=>add([8,4,7],x,z,i%2?0x52475a:0x45535b));add([3,.3,16],0,0,0xb65b48,.15)}
     finishLayoutArchitecture(root);
-    if(!root.userData.firingRange)root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));
+    root.userData.cleanSportsWorld=isCleanSportsEnvironment(environment);applySportsSurfaces(root,layout);
+    if(!root.userData.firingRange&&!root.userData.cleanSportsWorld)root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));
     applyBuilderBaseTransform(root,built.baseTransform);
+
     return root;
   }

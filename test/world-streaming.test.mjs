@@ -1,3 +1,7 @@
+import {builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn} from '../public/js/environments/builder-base.js';
+import {isFiringRangeEnvironment} from '../public/js/firing-range.js';
+import {isBasketballEnvironment} from '../public/js/basketball-rules.js';
+import {isCleanSportsEnvironment} from '../public/js/sports-worlds.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -7,7 +11,7 @@ const source=readFileSync(new URL('../public/js/environments/environment-loader.
 function fixture(compileAsync){
  const created=[],scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera();
  class AssetLoader{setDecoderPath(){return this;}setTranscoderPath(){return this;}detectSupport(){return this;}setDRACOLoader(){}setKTX2Loader(){}setMeshoptDecoder(){}}
- const context=vm.createContext({THREE,GLTFLoader:AssetLoader,DRACOLoader:AssetLoader,KTX2Loader:AssetLoader,MeshoptDecoder:{},Octree:class{},createBuilderLand(){const mesh=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial());let disposed=0;mesh.geometry.addEventListener('dispose',()=>disposed++);created.push({mesh,disposed:()=>disposed});return mesh;},replaceServerStreets(){},applyWorldQuality:()=>({}),buildCollision:()=>({visibleMeshes:[{}],collisionMeshes:[],floorMeshes:[],octree:{}}),resolveSafeSpawn:()=>({bounds:new THREE.Box3()}),collectSlimeFloorMeshes:()=>[],createSlimeFloor:()=>({dispose(){},update(){}})});
+ const context=vm.createContext({THREE,builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn,isFiringRangeEnvironment,isBasketballEnvironment,isCleanSportsEnvironment,GLTFLoader:AssetLoader,DRACOLoader:AssetLoader,KTX2Loader:AssetLoader,MeshoptDecoder:{},Octree:class{},createBuilderLand(){const mesh=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial());let disposed=0;mesh.geometry.addEventListener('dispose',()=>disposed++);created.push({mesh,disposed:()=>disposed});return mesh;},replaceServerStreets(){},applyWorldQuality:()=>({}),buildCollision:()=>({visibleMeshes:[{}],collisionMeshes:[],floorMeshes:[],octree:{}}),resolveSafeSpawn:()=>({bounds:new THREE.Box3()}),collectSlimeFloorMeshes:()=>[],createSlimeFloor:()=>({dispose(){},update(){}})});
  vm.runInContext(source,context);
  const renderer={compileAsync};const loader=new context.Loader({scene,renderer,camera});
  return {loader,scene,camera,created};

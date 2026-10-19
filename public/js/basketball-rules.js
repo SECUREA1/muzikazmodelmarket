@@ -75,6 +75,40 @@ export function ensureBasketballGame(sim,environment,now) {
  return sim.basketball;
 }
 
+// Joining a live roster is explicit: entering the room still starts as a spectator.
+export function stealBasketball(sim,player,now,{visible=()=>true}={}){
+ requireBasketballPlayer(sim,player);
+ if(sim.basketball?.state!=='live')error('Start the basketball game before attempting a steal.');
+ if(player.heldId)error('Pass or shoot your held ball first.');
+ if(now-(player.basketballStealAt??-Infinity)<800)error('Recover before attempting another steal.');
+ const ball=basketballGameBall(sim),holder=Object.values(sim.players).find(p=>(p.actorId||p.id)===ball?.holderId);
+ if(!holder||holder===player||holder.basketballTeam===player.basketballTeam||!isBasketballPlayer(holder))error('Move close to an opponent holding the basketball.');
+ if(Math.hypot(holder.position.x-player.position.x,holder.position.z-player.position.z)>1.7||Math.abs(holder.position.y-player.position.y)>1.5||!visible(player,holder,ball))error('Move within reach of the visible ball carrier to steal.');
+ holder.heldId=null;player.heldId=ball.id;ball.holderId=player.actorId||player.id;
+ ball.position={x:player.position.x,y:player.position.y+1,z:player.position.z};delete ball.ballVelocity;delete ball.ballCatchSegment;delete ball.basketballShot;
+ player.basketballStealAt=now;player.basketballSteals=(player.basketballSteals||0)+1;
+ touchBasketball(sim,ball,player,now);sim.basketball.lastPlay=`${player.username||'Player'} stole the ball.`;return ball;
+}
+
+export function takeBasketballSpot(sim,player,now,team){
+ if(!sim.basketball)error('Enter Basketball Arena to choose a player spot.');
+ if(!teams.includes(team))error('Choose the Home or Away team.');
+ if(sim.basketball.state!=='live')return assignBasketballTeam(sim,player,now,team);
+ if(isBasketballPlayer(player)&&player.basketballTeam){if(player.basketballTeam===team)return team;error('Watch the game before taking a spot on another team.');}
+ const humans=online(sim,now).filter(p=>!p.basketballAI&&p!==player&&p.basketballTeam===team);
+ if(humans.length>=sim.basketball.settings.teamSize)error('That team is full. Watch or choose the other team.');
+ const bot=Object.values(sim.players).filter(p=>p.basketballAI&&p.basketballTeam===team).at(-1);
+ releaseBasketballSeatAndVehicle(sim,player);
+ player.basketballRole='player';player.basketballTeam=team;player.basketballJersey=team;
+ player.position=bot?{...bot.position}:{x:0,y:.02,z:team==='home'?5:-5};player.yaw=bot?.yaw??(team==='home'?0:Math.PI);
+ player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.lastSeen=now;
+ if(bot){player.basketballNumber=bot.basketballNumber;const ball=sim.actors[bot.heldId];if(ball){player.heldId=ball.id;ball.holderId=player.actorId||player.id;}delete sim.players[bot.actorId];}
+ player.movementRevision=(player.movementRevision||0)+1;
+ sim.basketball.lastPlay=`${player.username||'Player'} joined ${team} · play continues.`;
+ fillBasketballTeams(sim,now);return team;
+}
+
+
 export function assignBasketballTeam(sim,player,now,requestedTeam) {
  if(requestedTeam!==undefined&&!teams.includes(requestedTeam))error('Choose the Home or Away team.');
  if(sim.basketball?.state==='live'&&(!isBasketballPlayer(player)||!player.basketballTeam))error('Spectators can choose a team before the next tip-off. Late arrivals watch the current game.');

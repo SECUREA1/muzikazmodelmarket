@@ -15,6 +15,7 @@ const requiredFiles = [
   'dist/builder-market.css',
   'dist/environment-builder.js',
   'dist/environment-builder.css',
+  ...['arcade.html','public/assets/arcade.css','public/images/arcade.svg','public/js/arcade-game.js','public/js/arcade-park.js','public/js/arcade-rules.js','public/js/arcade-runtime.js','public/js/arcade-builder-runtime.js','public/js/arcade-3d-games.js','public/js/arcade-navigation.js','public/js/sports-surfaces.js','public/js/hockey-camera.js','public/js/game-camera.js','public/js/explorer-camera.js','public/assets/sports-surfaces/ice.svg','public/assets/sports-surfaces/wood.svg','public/assets/sports-surfaces/felt.svg','public/assets/sports-surfaces/court.svg','public/assets/sports-surfaces/metal.svg','public/assets/sports-surfaces/paving.svg'].map(file => `dist/${file}`),
   'dist/admin.html',
   'dist/admin.js',
   'dist/public/js/rad-tox-launcher.js',
@@ -271,7 +272,7 @@ if (!server.includes('avatarAssetId: asset?.id||null, modelUrl: asset?.modelUrl|
 if (houseExplorer.includes('await this.initAudio()')) {
   throw new Error('RAD-TOX startup must not wait for iOS Web Audio resume permission.');
 }
-for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarget]", 'this.spawnSnakes()', "controller.userData.handedness === 'left'", "gameEconomy?.items", 'webXrAvailable', "isSessionSupported('immersive-vr')", 'createXRAimRay()', 'teleportFromController(controller)', 'camera.position.set(0, 0, 0)']) {
+for (const requiredGameFeature of ["['toxic',toxicTarget]", "['ghost',ghostTarget]", 'this.spawnSnakes()', "gameEconomy?.items", 'webXrAvailable', 'teleportFromController(controller)', 'camera.position.set(0,0,0)']) {
   if (!houseExplorer.includes(requiredGameFeature)) {
     throw new Error(`RAD-TOX is missing its required mixed-level or always-on controls feature: ${requiredGameFeature}`);
   }
@@ -470,3 +471,7 @@ for (const page of [['index.html', mainHtml], ['model-market.html', modelMarketH
   }
 }
 
+
+const sharedXR=await readFile('dist/public/js/xr-game-controls.js','utf8');
+for(const feature of ["isSessionSupported('immersive-vr')","requestSession('immersive-vr'",'selectstart','squeezestart','xrStick','MUZIKAZ_VR_GAME_MENU'])if(!sharedXR.includes(feature))throw Error('Shared VR game controls missing '+feature);
+for(const file of ['hockey-game.js','arcade-game.js','house-explorer-glb.js'])if(!(await readFile('dist/public/js/'+file,'utf8')).includes('mountXRGameControls'))throw Error('Game missing shared VR controls: '+file);

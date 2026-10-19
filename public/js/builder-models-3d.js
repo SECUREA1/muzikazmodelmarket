@@ -7,6 +7,10 @@ import {ENTERABLE_BUILDINGS} from './building-districts.js';
 import {createEnterableBuilding} from './enterable-building-models.js';
 import {INTERACTIVE_DEVICES} from './interactive-devices.js';
 import {createInteractiveDevice} from './interactive-device-models.js';
+import {ARCADE_PARTS} from './arcade-rules.js';
+import {createArcadePart,animateArcadePark} from './arcade-park.js';
+import {createHockeyItem} from './hockey-models.js';
+
 import * as THREE from '../vendor/three/three.module.min.js';
 import {createBasketballHoop} from './basketball-stadium.js';
 import {createBasketballJersey} from './basketball-jerseys.js';
@@ -26,6 +30,11 @@ export const BUILDER_MODEL_INFO = Object.freeze({
   'basketball-hoop': ['Basketball Hoop & Net', 'Regulation 3.05 metre rim, woven white net, glass backboard and padded support.', [1.873,3.991,2.777]],
   'basketball-jersey-home': ['Home Basketball Jersey', 'Free sleeveless teal MUZIKAZ team uniform attached to your avatar torso.', [.72,.73,.45]],
   'basketball-jersey-away': ['Away Basketball Jersey', 'Free sleeveless coral MUZIKAZ team uniform attached to your avatar torso.', [.72,.73,.45]],
+  'basketball-jersey-away': ['Away Basketball Jersey', 'Free sleeveless coral MUZIKAZ team uniform attached to your avatar torso.', [.72,.73,.45]],
+  'basketball-jersey-home': ['Home Basketball Jersey', 'Free sleeveless teal MUZIKAZ team uniform attached to your avatar torso.', [.72,.73,.45]],
+  'basketball-hoop': ['Basketball Hoop & Net', 'Regulation 3.05 metre rim, woven white net, glass backboard and padded support.', [1.873,3.991,2.777]],
+  basketball: ['Basketball', 'Free regulation size ball for tossing, catching and scoring.', [.24,.24,.24]],
+
   'grand-floor': ['Grand Build Floor', 'A playable foundation tile that expands the walkable world directly from the Backpack.', [8, .24, 8]],
   'open-studio': ['Open Studio', 'An open-sided playable studio room with a floor, feature wall and neon columns.', [6, 2.8, 5]],
   'connected-suite': ['Connected Suite', 'A playable connected room with two doorways and a raised floor.', [6, 2.8, 5]],
@@ -158,7 +167,7 @@ function gameplayItem(id){
  }else if(id==='portal-door'){
   for(const x of [-.67,.67])add(new THREE.BoxGeometry(.18,2.45,.28),metal,[x,1.225,0]);add(new THREE.BoxGeometry(1.5,.18,.28),metal,[0,2.41,0]);
   for(const x of [-.55,.55])add(new THREE.BoxGeometry(.025,2.15,.03),glow,[x,1.23,-.16]);
-  const field=add(new THREE.PlaneGeometry(1.08,2.15),material(color,.3,.03,{emissive:color,emissiveIntensity:.35,transparent:true,opacity:.3,side:THREE.DoubleSide}),[0,1.22,0]);field.userData.collisionDisabled=true;
+  const field=add(new THREE.PlaneGeometry(1.08,2.15),material(color,.3,.03,{emissive:color,emissiveIntensity:.35,transparent:true,opacity:.3,side:THREE.DoubleSide}),[0,1.22,0]);field.userData.collisionDisabled=false;field.userData.collider=true;
   add(new THREE.BoxGeometry(1.5,.09,.38),dark,[0,.045,0]);
  }else if(id==='campfire'){
   const stone=material(0x626b70,.95),wood=material(0x60412e,.93);for(let i=0;i<8;i++){const angle=i/8*Math.PI*2;add(new THREE.DodecahedronGeometry(.14),stone,[Math.cos(angle)*.42,.12,Math.sin(angle)*.42]);}
@@ -252,14 +261,18 @@ function estateModule(id){
  root.userData.placementSurface=true;return root;
 }
 
-export function createBuilderModel(id) {
+export function createBuilderModel(id,options={}) {
+  if(id.startsWith('arcade-part-')){if(!ARCADE_PARTS.some(part=>part.id===id.slice(12)))return null;const root=createArcadePart(id.slice(12),options);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
+  if(id.startsWith('hockey-')){const root=createHockeyItem(id);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
+
   let root;
   if(LAYOUT_SCENE_INFO[id])root=createLayoutSceneModel(THREE,id);
   else if(CAMP_MODEL_INFO[id])root=createCampModel(THREE,id);
   else if(ENTERABLE_BUILDINGS[id])return finishGameItem(THREE,createEnterableBuilding(THREE,id));
   else if(INTERACTIVE_DEVICES[id])return createInteractiveDevice(THREE,id);
   else if(['estate-house','estate-yard','drive-in-garage','open-office'].includes(id))root=estateModule(id);
-  else if(id==='basketball'){root=new THREE.Group();root.add(mesh(new THREE.SphereGeometry(.12,24,16),material(0xd96b20,.9),[0,.12,0]));for(const rotation of [[0,0,0],[Math.PI/2,0,0],[0,Math.PI/2,0]])root.add(mesh(new THREE.TorusGeometry(.1205,.003,6,48),material(0x24180f,.9),[0,.12,0],rotation));}
+  else if(id==='basketball'){root=new THREE.Group();const ball=mesh(new THREE.SphereGeometry(.12,32,24),material(0xd96b20,.88),[0,.12,0]);ball.name='REGULATION_BASKETBALL';root.add(ball);for(const rotation of [[0,0,0],[Math.PI/2,0,0],[0,Math.PI/2,0]]){const seam=mesh(new THREE.TorusGeometry(.1203,.0017,5,64),material(0x26170e,.95),[0,.12,0],rotation);seam.name='BASKETBALL_SEAM';root.add(seam);}}
+
   else if(id==='basketball-hoop')root=createBasketballHoop(THREE);
   else if(id==='basketball-jersey-home'||id==='basketball-jersey-away')root=createBasketballJersey(THREE,id.endsWith('home')?'home':'away');
   else if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
@@ -296,5 +309,6 @@ export function createGeneratedAsset(model) {
 }
 
 export function updateBuilderModels(group, elapsed) {
-  group.children.forEach(root=>{root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  group.children.forEach(root=>{if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+
 }

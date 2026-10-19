@@ -1,7 +1,7 @@
 import {BUILDER_SECTIONS} from '../public/js/builder-library.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import {readFile} from 'node:fs/promises';
 
 test('environment builder exposes layout, placement and editing controls', async () => {
   const [html, script, launcher] = await Promise.all([
@@ -36,7 +36,10 @@ test('multiplayer map list pins live user maps with a flashing status', async ()
   assert.match(game, /b\.count-a\.count/);
   assert.match(game, /multiplayer-live-count/);
   const picker=await readFile(new URL('../public/js/world-map-picker.js',import.meta.url),'utf8');
-  assert.match(picker, /\$\{count\} live/);
+  assert.match(picker, /mapWheelSvg/);
+  const {mapWheelSvg}=await import('../public/js/map-wheel-svg.js');
+  const wheel=mapWheelSvg([{env:{id:'live-world',name:'Live world'},count:3}],'live-world');
+  assert.match(wheel,/3 LIVE/);assert.match(wheel,/has-players/);
   assert.match(game, /@keyframes multiplayerLiveFlash/);
   assert.match(server, /presence' && req\.method === 'GET'/);
   assert.match(rust, /method == "GET"/);
@@ -115,7 +118,8 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   assert.match(game, /rangeRaycaster\.intersectObject\(envLoader\.world,true\)/, 'range scoring raycasts the actual loaded world');
   assert.match(game, /handleRangeShot\(\{event\}\)/, 'touch and unlocked-pointer shots use their screen position');
   assert.match(game, /handleRangeShot\(\{centre:true\}\)/, 'pointer-lock and mobile shoot controls use the reticle');
-  assert.match(game, /Move \/ shoot/, 'the original mobile controller keeps tap-to-shoot on the movement stick');
+  assert.match(game, /radToxStickMarkup/, 'firing range uses the shared RAD-TOX controller');
+  assert.match(await readFile(new URL('../public/js/rad-tox-controller.js',import.meta.url),'utf8'), /Move \/ shoot/, 'shared movement stick retains tap-to-shoot');
   assert.match(game, /if \(name === 'left'\) shootAtReticle\(\)/, 'tapping the movement stick shoots the range reticle');
   assert.doesNotMatch(game, /data-mobile-(?:fire|jump)/, 'the replacement Fire and Jump buttons stay removed');
   assert.doesNotMatch(game, /data-mobile-action=/, 'duplicate action buttons are not rendered beneath the thumbsticks');
@@ -134,7 +138,7 @@ test('playable firing range supports unlimited free play and real desktop, mobil
   for (const zone of ['outer','body','bullseye']) assert.match(loader, new RegExp(`'${zone}'`));
 });
 
-test('builder maze group is playable, grounded, and only recovers true world falls', async () => {
+test('builder maze group is playable and walking uses continuous physical support', async () => {
   const [html, builder, loader, game] = await Promise.all([
     readFile(new URL('../environment-builder.html', import.meta.url), 'utf8'),
     readFile(new URL('../environment-builder.js', import.meta.url), 'utf8'),
@@ -153,7 +157,8 @@ test('builder maze group is playable, grounded, and only recovers true world fal
   assert.match(loader, /feetLockedToFloor = true/);
   assert.match(game, /visualFeet/);
   assert.match(game, /droppedFeet/);
-  assert.match(game, /fellThroughWorld=base\.y<mapFloorLimit/);
+  assert.match(game, /moveWalkingCapsule\(playerCollider,move/);
+  assert.doesNotMatch(game, /fellThroughWorld|lastSafePlayerPosition/, 'walking never relocates players to a cached point');
   assert.doesNotMatch(game, /safeFloorLimit/, 'ordinary jumps and terrain steps must not trigger a respawn');
 });
 
@@ -361,7 +366,7 @@ test('builder lands and placed items retain verified collision floors', async ()
   assert.match(server, /modelUrl:'', modelUrls:\[\]/, 'published builder maps no longer borrow a repository GLB');
 });
 
-test('collision floors protect spawn, teleport and low-frame-rate falls', async () => {
+test('collision floors protect spawn, teleport and continuous walking', async () => {
   const [collision, loader, game] = await Promise.all([
     readFile(new URL('../public/js/environments/environment-collision.js', import.meta.url), 'utf8'),
     Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8'),readFile(new URL('../public/js/environments/layout-terrain.js',import.meta.url),'utf8'),readFile(new URL('../public/js/environments/layout-firing-range.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
@@ -376,8 +381,8 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
   assert.match(loader, /this\.floorMeshes = collision\.floorMeshes/g, 'floor references survive loading and world scaling');
   assert.match(game, /teleportRay\.intersectObjects\(envLoader\.floorMeshes/, 'teleporting verifies a collision floor');
   assert.match(game, /alignPointAboveFloor\(spawn\.clone\(\), envLoader\.floorMeshes/, 'spawn and respawn align to collision floors');
-  assert.match(game, /const previousFootY=playerCollider\.start\.y-player\.radius/);
-  assert.match(game, /floorSweepRay\.intersectObjects\(envLoader\.floorMeshes,true\)/, 'a downward frame sweep catches thin floors crossed during a fall');
+  assert.match(game, /moveWalkingCapsule\(playerCollider,move/, 'one swept controller handles map and placed-object contacts');
+  assert.match(game, /triangleGroups:walkingSurfaces\(\)/, 'placed solids participate in the same movement query');
   assert.doesNotMatch(game, /PLAYER_ENTRY_DROP_HEIGHT|dropIntoMap/, 'map entry never adds an aerial offset above the resolved floor');
   assert.doesNotMatch(game, /playerDropRecoveryActive|groundedRecoveryFrames/, 'the drop is not re-armed from the animation loop');
   assert.match(game, /const lastSafePlayerPosition = new THREE\.Vector3\(\)/, 'every map shares a last-known-good floor position');
@@ -385,6 +390,11 @@ test('collision floors protect spawn, teleport and low-frame-rate falls', async 
   assert.doesNotMatch(game, /safeFloorLimit/, 'jumping or walking down to a lower valid floor cannot be mistaken for falling through the world');
   assert.match(game, /setPlayerCapsuleFeet\(recovery\)/, 'a missed floor collider restores the capsule to safe ground');
   assert.match(game, /floorLockCooldown=\.35/, 'floor recovery is rate limited instead of repeatedly resetting each frame');
+  assert.doesNotMatch(game, /resolveBrickCollisions|collision\.normal\.multiplyScalar/, 'walking never applies a second depenetration push');
+  assert.doesNotMatch(game, /lastSafePlayerPosition|floorLockCooldown|fellThroughWorld/, 'walking never silently teleports to a previous floor position');
+  assert.match(game, /maxExtrapolation:0/, 'the live view cannot extrapolate beyond accepted wall contact');
+  assert.doesNotMatch(game, /walkingMotion\.sample/, 'shared walking has a single authoritative presentation path');
+
   for (const layout of ['blacksite','cargo-yard','neon-arena','desert-outpost','mega-mall','office-tower','firing-range','movie-studio']) assert.match(loader, new RegExp(`'${layout}'`));
 });
 

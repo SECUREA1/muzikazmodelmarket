@@ -304,7 +304,8 @@ test('server movement keeps spectators outside while players can enter the playi
     assert.equal(basketballSpectatorRestricted(state.players['account:viewer'].position, {basketball: state.basketball}), false);
   }
   assert.ok(state.players['account:viewer'].position.x >= 8.12);
-  await f.place('alice', {x: 8.5, y: 0, z: 5});
+  // Enter through the centre-court opening, rather than walking through a solid rail.
+  await f.place('alice', {x: 8.5, y: 0, z: 0});
   await f.send('alice', 'input', {input: {side: -1, yaw: 0}});
   f.advance(250);
   state = await f.runtime.snapshot(f.map.id, f.map);

@@ -146,3 +146,22 @@ test('solo setup replicates AI identities, jerseys and movement while reserving 
  assert.equal(Object.values(state.players).filter(p=>p.basketballRole!=='spectator').length,4);
  assert.equal(state.basketball.settings.aiDifficulty,4);
 }));
+
+
+test('a live spectator explicitly takes an AI spot without resetting the match',()=>fixture(async({send,runtime,map,advance})=>{
+ await send('alice','join');await send('alice','basketball-start');
+ let state=await send('viewer','join');assert.equal(state.players['account:viewer'].basketballRole,'spectator');
+ const matchId=state.basketball.matchId,score=[state.basketball.homeScore,state.basketball.awayScore];
+ state=await send('viewer','basketball-join-spot',{team:'away'});
+ assert.equal(state.players['account:viewer'].basketballTeam,'away');assert.equal(state.players['account:viewer'].basketballRole,'player');
+ assert.equal(Object.values(state.players).filter(p=>p.basketballAI&&p.basketballTeam==='away').length,4);
+ assert.equal(state.basketball.matchId,matchId);assert.deepEqual([state.basketball.homeScore,state.basketball.awayScore],score);
+ await send('viewer','basketball-watch');advance(40);state=await runtime.snapshot(map.id,map);
+ assert.equal(Object.values(state.players).filter(p=>p.basketballAI&&p.basketballTeam==='away').length,5);
+}));
+
+test('a player steals the AI-held game ball through the authoritative command',()=>fixture(async({send,store,map})=>{
+ await send('alice','join');await send('alice','basketball-start');
+ let botId,ballId;await store.update(map.id,room=>{const sim=room.simulation,player=sim.players['account:alice'],bot=Object.values(sim.players).find(p=>p.basketballAI&&p.basketballTeam!==player.basketballTeam);botId=bot.actorId;ballId=sim.basketball.ballId;for(const p of Object.values(sim.players))p.heldId=null;player.position={x:0,y:0,z:0};bot.position={x:1,y:0,z:0};bot.heldId=ballId;sim.actors[ballId].holderId=botId;sim.actors[ballId].position={x:1,y:1,z:0};});
+ const state=await send('alice','basketball-steal');assert.equal(state.actors[ballId].holderId,'account:alice');assert.equal(state.players[botId].heldId,null);assert.equal(state.players['account:alice'].heldId,ballId);assert.equal(state.basketball.possession,'home');
+}));

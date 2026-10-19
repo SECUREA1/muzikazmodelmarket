@@ -7,8 +7,18 @@ import {FIRING_RANGE_WEAPONS,firingRangeLocationAt,firingRangeLocations,isFiring
 import {mountBasketballAim} from './basketball-aim.js';
 import {mountBasketballHud} from './basketball-hud.js';
 import {setBasketballJersey} from './basketball-jerseys.js';
-import {ensureBasketballGame,assignBasketballTeam,configureBasketballGame,watchBasketballGame,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,isBasketballEnvironment,basketballHoopForTeam,constrainBasketballSpectator,predictBasketballShotPath} from './basketball-rules.js';
+import {ensureBasketballGame,assignBasketballTeam,configureBasketballGame,watchBasketballGame,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,isBasketballEnvironment,basketballHoopForTeam,constrainBasketballSpectator,predictBasketballShotPath,takeBasketballSpot,stealBasketball} from './basketball-rules.js';
 import {isBasketball,basketballJerseyTeam,tossBasketball,stepBasketball,basketballShotSolution,predictBasketballTrajectory,basketballCatchPosition} from './basketball.js';
+import {mountXRGameControls,xrStick} from './xr-game-controls.js';
+import {isCleanSportsEnvironment,canonicalWorldId} from './sports-worlds.js';
+import {resolveBasketballAction,BASKETBALL_TRIGGER_MODES} from './basketball-actions.js';
+import {radToxStickMarkup,loadRadToxControllerStyles} from './rad-tox-controller.js';
+import {isArcadeMap,ARCADE_PARTS} from './arcade-rules.js';
+import {createArcadePart} from './arcade-park.js';
+import {isHockeyMap} from './hockey-rules.js';
+import {readGameCameraMode,writeGameCameraMode,nextGameCameraMode,isGameCameraToggleKey} from './game-camera.js';
+import {explorerMovementInput,explorerAimAngles,explorerTopDownPose} from './explorer-camera.js';
+
 import {updateVoiceOverlay,disposeVoiceOverlay} from './voice-avatar-overlay.js';
 import {ServerMotion} from './server-motion.js';
 import {selectedWorldId,outsideDestination,outsideLabel} from './world-navigation.js';
@@ -16,44 +26,46 @@ import {ensurePlayAccess,choosePlayAccess} from './play-access.js';
 import {OwnedItemPlacement} from './owned-item-placement.js';
 import {WalkingMotion,walkingStick,walkingSprint} from './walking-motion.js';
 import {animateSharedEnemy,playSharedEnemyAttack} from './shared-enemy-animation.js';
+import {moveWalkingCapsule} from './walking-capsule.js';
+
 import {createSharedEnemyEffects} from './shared-enemy-effects.js';
 import {loadSvgGameTexture} from './svg-game-texture.js';
 import {anchorServerAsset,targetServerPlayer,interpolateServerPlayer,targetServerEnemy,interpolateServerEnemy,disposeServerEnemyProjection,syncServerAvatar,projectServerActor,disposeProjection} from './server-scene-projection.js';
 import {hitsRemaining,healthAfterHit} from './rpg-combat-rules.js';
 import {mountMatchResults} from './match-results.js';
 import {replaceServerStreets} from './environments/server-streets.js';
-import { connectAuthoritativeRoom, projectSharedBuildings, buildingCommand } from './authoritative-room-client.js';
-import { GameEconomy } from './game-economy-client.js';
+import {connectAuthoritativeRoom,projectSharedBuildings,buildingCommand} from './authoritative-room-client.js';
+import {GameEconomy} from './game-economy-client.js';
 let gameEconomy=null;
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
-import { Flamethrower, FLAME_SVG, FLAME_CONFIG } from './flamethrower.js';
-import { EXTRA_WEAPONS, RANGED_WEAPONS, fireWeapon } from './game-weapons.js';
-import { UTILITY_TOOLS, UtilityKit } from './game-utilities.js';
-import { validTool, canActivateTool } from './game-tool-rules.js';
-import { SharedGameInventory, ownedBuilderModel, watchInventoryChange } from './shared-game-inventory.js';
-import { PLAYER_DEFAULTS } from './player-preferences.js';
-import { mountSettingsExplorerMenu } from './settings-explorer-menu.js';
-import { mountWorldMapPicker } from './world-map-picker.js';
-import { mountPlayerSettings } from './player-settings.js';
-import { CareEffects } from './care-effects.js';
-import { createGameMarketplace } from './in-game-market.js';
-import { fullscreenPanel, organizeToolPicker } from './fullscreen-panels.js';
-import { BuildingEditor, BuildingPreview, applyDropSettings } from './building-editor.js';
-import { BUILDING_MATERIALS, buildingMaterial, buildingDimensions, createBuildingBlock, toggleBuildingObject, buildingIcon, BUILDING_TYPES, matchesBuildingItem } from './building-materials.js';
-import { Capsule } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Capsule.js/+esm';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
-import { normalizeEnvironmentList, EnvironmentRegistry } from './environments/environment-registry.js';
-import { EnvironmentLoader } from './environments/environment-loader.js';
-import { configureRenderer } from './environments/environment-quality.js';
-import { logEnvironment } from './environments/environment-api.js';
-import { FLOOR_ENTRY_OFFSET, alignPointAboveFloor } from './environments/environment-collision.js';
-import { fetchGitHubGlbFiles, mergeGitHubAvatarFiles } from './github-glb-discovery.js';
-import { AirborneHoneyBee, BEE_CONFIG, AAPE_BOSS_CONFIG, BEEDUCK_BOSS_CONFIG } from './enemies/airborne-honey-bee.js';
-import { NeonBrainBug, BRAIN_BUG_SVG } from './enemies/neon-brain-bug.js';
-import { pinchScaleFactor, pinchZoomFov, pointerAngle, pointerDistance, shortestAngleDelta } from './pinch-scale.js';
-import { BUILDER_MODEL_INFO, createBuilderModel, createGeneratedAsset, updateBuilderModels } from './builder-models-3d.js';
-import { BuilderVehicleController } from './builder-vehicle-controller.js';
-import { BuilderGameplayRuntime, compileBuilderScene } from './builder-gameplay-pipeline.js';
+import {Flamethrower,FLAME_SVG,FLAME_CONFIG} from './flamethrower.js';
+import {EXTRA_WEAPONS,RANGED_WEAPONS,fireWeapon} from './game-weapons.js';
+import {UTILITY_TOOLS,UtilityKit} from './game-utilities.js';
+import {validTool,canActivateTool} from './game-tool-rules.js';
+import {SharedGameInventory,ownedBuilderModel,watchInventoryChange} from './shared-game-inventory.js';
+import {PLAYER_DEFAULTS} from './player-preferences.js';
+import {mountSettingsExplorerMenu} from './settings-explorer-menu.js';
+import {mountWorldMapPicker} from './world-map-picker.js';
+import {mountPlayerSettings} from './player-settings.js';
+import {CareEffects} from './care-effects.js';
+import {createGameMarketplace} from './in-game-market.js';
+import {fullscreenPanel,organizeToolPicker} from './fullscreen-panels.js';
+import {BuildingEditor,BuildingPreview,applyDropSettings} from './building-editor.js';
+import {BUILDING_MATERIALS,buildingMaterial,buildingDimensions,createBuildingBlock,toggleBuildingObject,buildingIcon,BUILDING_TYPES,matchesBuildingItem} from './building-materials.js';
+import {Capsule} from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Capsule.js/+esm';
+import {GLTFLoader} from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
+import {normalizeEnvironmentList,EnvironmentRegistry} from './environments/environment-registry.js';
+import {EnvironmentLoader} from './environments/environment-loader.js';
+import {configureRenderer} from './environments/environment-quality.js';
+import {logEnvironment} from './environments/environment-api.js';
+import {FLOOR_ENTRY_OFFSET,alignPointAboveFloor} from './environments/environment-collision.js';
+import {fetchGitHubGlbFiles,mergeGitHubAvatarFiles} from './github-glb-discovery.js';
+import {AirborneHoneyBee,BEE_CONFIG,AAPE_BOSS_CONFIG,BEEDUCK_BOSS_CONFIG} from './enemies/airborne-honey-bee.js';
+import {NeonBrainBug,BRAIN_BUG_SVG} from './enemies/neon-brain-bug.js';
+import {pinchScaleFactor,pinchZoomFov,pointerAngle,pointerDistance,shortestAngleDelta} from './pinch-scale.js';
+import {BUILDER_MODEL_INFO,createBuilderModel,createGeneratedAsset,updateBuilderModels} from './builder-models-3d.js';
+import {BuilderVehicleController} from './builder-vehicle-controller.js';
+import {BuilderGameplayRuntime,compileBuilderScene} from './builder-gameplay-pipeline.js';
 
 const SPRAY_COLORS = Object.freeze([{name:'Neon pink',hex:0xff3d9a},{name:'Electric blue',hex:0x36bfff},{name:'Acid lime',hex:0xb9ff36},{name:'Sunset orange',hex:0xff762e},{name:'Royal violet',hex:0x9b5cff}]);
 const legacyCanvas = document.querySelector('#house-explorer-canvas');
@@ -113,14 +125,15 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     scheduleGameResize();
   }
   document.querySelector('#hand-toggle')?.setAttribute('hidden', ''); document.querySelector('.camera-preview-panel')?.setAttribute('hidden', '');
-  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: jump · Jetpack: hold to rise</span><span>Main controls: mouse-look</span><span>Drag/touch: look</span><span>Pinch screen: zoom · twist: turn</span><span>Two fingers on a dropped model: resize</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
+  hud.querySelector('.hud-pill-grid').innerHTML = '<span>WASD / arrows: walk</span><span>Space: jump · Jetpack: hold to rise</span><span>V / View: First person or Top down</span><span>Main controls: mouse-look</span><span>Drag/touch: look</span><span>Pinch screen: zoom · twist: turn</span><span>Two fingers on a dropped model: resize</span><span>Mobile left stick: strafe · tap: shoot</span><span>Mobile right stick: rotate · tap: jump</span><span>Wheel or zoom buttons: zoom in/out</span><span>Scroll toggle: page vs view</span><span>Q / E: eye height</span><span>VR: left stick move, right stick snap-turn</span>';
 
   function rebuildMobileController() {
     const mobilePad = document.querySelector('.mobile-move-pad');
     if (!mobilePad) return;
     mobilePad.className = 'mobile-move-pad mobile-move-pad-glb';
     mobilePad.setAttribute('aria-label', 'Unified mobile game controller');
-    mobilePad.innerHTML = `<div class="thumbstick-control" data-thumbstick="left" role="group" aria-label="Left thumbstick: move forward, reverse, strafe left, or strafe right. Tap the stick to shoot the target at the reticle."><span class="thumbstick-label">Move / shoot</span><button class="thumbstick-base" type="button" aria-label="Left thumbstick. Drag up to move forward, down to reverse, or sideways to strafe. Tap to shoot."><span class="thumbstick-knob"></span></button><small>Drag to move · tap to shoot</small></div><div class="thumbstick-control" data-thumbstick="right" role="group" aria-label="Right thumbstick: look up, look down, turn left, or turn right. Tap the stick to jump."><span class="thumbstick-label">Look / turn</span><button class="thumbstick-base" type="button" aria-label="Right thumbstick. Drag up or down to look, or sideways to turn. Tap to jump."><span class="thumbstick-knob"></span></button><small>Drag to look · tap to jump</small></div>`;
+    loadRadToxControllerStyles();
+    mobilePad.innerHTML = radToxStickMarkup({rightTap:'jump'});
   }
 
   rebuildMobileController();
@@ -211,7 +224,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const builderActionHint=builderActionButton.querySelector('small');
   const placementAdjustButton=document.createElement('button');placementAdjustButton.type='button';placementAdjustButton.className='building-adjust-button';placementAdjustButton.textContent='XYZ';placementAdjustButton.title='Position, rotation and scale';placementAdjustButton.setAttribute('aria-label','Adjust position, rotation and scale');placementAdjustButton.hidden=true;stage.append(placementAdjustButton);
   const rangeOpsButton=document.createElement('button');rangeOpsButton.type='button';rangeOpsButton.className='range-ops-button';rangeOpsButton.hidden=true;rangeOpsButton.setAttribute('aria-live','polite');rangeOpsButton.textContent='◎ Range ops';stage.append(rangeOpsButton);
-  const rangeOpsPanel=document.createElement('section');rangeOpsPanel.className='range-ops-panel';rangeOpsPanel.hidden=true;rangeOpsPanel.setAttribute('role','dialog');rangeOpsPanel.setAttribute('aria-modal','true');rangeOpsPanel.setAttribute('aria-labelledby','range-ops-title');rangeOpsPanel.innerHTML=`<header><div><small>MUZIKAZ FORCE TRAINING</small><h2 id="range-ops-title">Range console</h2><p>Free Play never times out. Courses score actual target hits from mouse, touch, mobile controls, or either VR trigger.</p></div><button class="range-ops-close" type="button" aria-label="Close range console">×</button></header><div class="range-mode-grid" role="group" aria-label="Training course"><button class="range-mode" type="button" data-range-mode="freeplay" aria-pressed="true"><strong>FREE PLAY</strong><small>Unlimited time · unlimited shots</small></button><button class="range-mode" type="button" data-range-mode="precision" aria-pressed="false"><strong>PRECISION</strong><small>12 shots · 45 seconds</small></button><button class="range-mode" type="button" data-range-mode="rapid" aria-pressed="false"><strong>RAPID RESPONSE</strong><small>20 shots · 30 seconds</small></button><button class="range-mode" type="button" data-range-mode="endurance" aria-pressed="false"><strong>ENDURANCE</strong><small>40 shots · 90 seconds</small></button></div><div class="range-armory" role="group" aria-label="Range weapon"><button type="button" data-range-weapon="laser" aria-pressed="true">LASER<small>Balanced</small></button><button type="button" data-range-weapon="pulse-rifle" aria-pressed="false">PULSE RIFLE<small>Fast tactical beam</small></button><button type="button" data-range-weapon="flamethrower" aria-pressed="false">FLASH IGNITER<small>Instant target fire · 10s burn</small></button><button type="button" data-range-weapon="rail-cannon" aria-pressed="false">RAIL CANNON<small>1.5× precision score</small></button></div><div class="range-readout"><div><small>COURSE</small><strong data-range-course>Free Play</strong></div><div><small>TIME</small><strong data-range-time>∞</strong></div><div><small>HITS / SHOTS</small><strong data-range-shots>0 / 0</strong></div><div><small>PERSONAL BEST</small><strong data-range-best>0</strong></div></div><button class="range-start" type="button">ENTER FREE PLAY</button>`;stage.append(rangeOpsPanel);
+  const rangeOpsPanel=document.createElement('section');rangeOpsPanel.className='range-ops-panel';rangeOpsPanel.hidden=true;rangeOpsPanel.setAttribute('role','dialog');rangeOpsPanel.setAttribute('aria-modal','true');rangeOpsPanel.setAttribute('aria-labelledby','range-ops-title');rangeOpsPanel.innerHTML=`<header><div><small>MUZIKAZ FORCE TRAINING</small><h2 id="range-ops-title">Range console</h2><p>Free Play never times out. Courses score actual target hits from mouse, touch, mobile controls, or either VR trigger. Your course score is individual in both solo and shared worlds.</p><label>World mode <select id="range-world-mode"><option value="solo">Solo practice</option><option value="multiplayer">Live players · shared world</option></select></label><button id="range-apply-world" type="button">Open selected world mode</button></div><button class="range-ops-close" type="button" aria-label="Close range console">×</button></header><div class="range-mode-grid" role="group" aria-label="Training course"><button class="range-mode" type="button" data-range-mode="freeplay" aria-pressed="true"><strong>FREE PLAY</strong><small>Unlimited time · unlimited shots</small></button><button class="range-mode" type="button" data-range-mode="precision" aria-pressed="false"><strong>PRECISION</strong><small>12 shots · 45 seconds</small></button><button class="range-mode" type="button" data-range-mode="rapid" aria-pressed="false"><strong>RAPID RESPONSE</strong><small>20 shots · 30 seconds</small></button><button class="range-mode" type="button" data-range-mode="endurance" aria-pressed="false"><strong>ENDURANCE</strong><small>40 shots · 90 seconds</small></button></div><div class="range-armory" role="group" aria-label="Range weapon"><button type="button" data-range-weapon="laser" aria-pressed="true">LASER<small>Balanced</small></button><button type="button" data-range-weapon="pulse-rifle" aria-pressed="false">PULSE RIFLE<small>Fast tactical beam</small></button><button type="button" data-range-weapon="flamethrower" aria-pressed="false">FLASH IGNITER<small>Instant target fire · 10s burn</small></button><button type="button" data-range-weapon="rail-cannon" aria-pressed="false">RAIL CANNON<small>1.5× precision score</small></button></div><div class="range-readout"><div><small>COURSE</small><strong data-range-course>Free Play</strong></div><div><small>TIME</small><strong data-range-time>∞</strong></div><div><small>HITS / SHOTS</small><strong data-range-shots>0 / 0</strong></div><div><small>PERSONAL BEST</small><strong data-range-best>0</strong></div></div><button class="range-start" type="button">ENTER FREE PLAY</button>`;stage.append(rangeOpsPanel);
+  rangeOpsPanel.querySelector('#range-world-mode').value=guestSolo?'solo':'multiplayer';rangeOpsPanel.querySelector('#range-apply-world').onclick=()=>{const target=new URL(location.href);target.searchParams.set('mode',rangeOpsPanel.querySelector('#range-world-mode').value);target.searchParams.set('autoplay','1');location.assign(target.href);};
   const rangeCourses={freeplay:{label:'Free Play',shots:Infinity,seconds:Infinity},precision:{label:'Precision',shots:12,seconds:45},rapid:{label:'Rapid response',shots:20,seconds:30},endurance:{label:'Endurance',shots:40,seconds:90}};
   const RANGE_WEAPONS=Object.freeze({...EXTRA_WEAPONS,laser:{label:'Laser',score:1,color:0xff173d,rays:1,spread:0},'pulse-rifle':{label:'Pulse Rifle',score:1,color:0x43d8ff,rays:2,spread:.012},'flamethrower':{label:'Flash Igniter',score:1,color:0xff751f},'rail-cannon':{label:'Rail Cannon',score:1.5,color:0xc66bff,rays:2,spread:.004}}),RANGE_BEST_KEY='muzikaz.range.records.v1';
   rangeOpsPanel.querySelector('.range-armory').insertAdjacentHTML('beforeend',Object.entries(EXTRA_WEAPONS).map(([id,weapon])=>`<button type="button" data-range-weapon="${id}" aria-pressed="false">${weapon.label}<small>${weapon.description}</small></button>`).join(''));
@@ -227,18 +241,17 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   rangeOpsButton.setAttribute('aria-expanded','false');rangeOpsButton.addEventListener('click',()=>showRangeOps(true));rangeOpsPanel.querySelector('.range-ops-close').addEventListener('click',()=>showRangeOps(false));
   rangeOpsPanel.querySelector('.range-armory').addEventListener('click',event=>{const button=event.target.closest('[data-range-weapon]');if(!button||rangeActive)return;toxicBubbleSystem.setTool(button.dataset.rangeWeapon);rangeOpsPanel.querySelectorAll('[data-range-weapon]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));setStatus(`${RANGE_WEAPONS[button.dataset.rangeWeapon].label} equipped for the range and the regular game.`);});
   rangeOpsPanel.querySelector('.range-mode-grid').addEventListener('click',event=>{const button=event.target.closest('[data-range-mode]');if(!button||rangeActive)return;rangeMode=button.dataset.rangeMode;rangeOpsPanel.querySelectorAll('[data-range-mode]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));resetRangeReadout();});
-  rangeStart.addEventListener('click',()=>{if(serverHostedRoom){serverCommand('interact');return;}if(rangeActive){stopRangeCourse();resetRangeReadout();return;}resetRangeReadout();rangeActive=true;rangeOpsPanel.classList.add('is-live');rangeStart.textContent='END SESSION';showRangeOps(false);const course=rangeCourses[rangeMode];setStatus(rangeMode==='freeplay'?'Free Play live — explore every lane and fire without a timer or shot limit.':`${course.label} qualification live — land as many target hits as you can.`);if(Number.isFinite(course.seconds))rangeTimer=window.setInterval(()=>{if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return;rangeRemaining-=1;updateRangeReadout();if(rangeRemaining<=0){stopRangeCourse('RUN COURSE AGAIN');saveRangeResult();setStatus(`${course.label} complete — ${rangeHits}/${rangeShots} hits, ${rangeScore} points.`);showRangeOps(true);}},1000);});
+  rangeStart.addEventListener('click',async()=>{if(!gameplayStarted){await startRadToxGame();if(!gameplayStarted)return;}if(rangeActive){stopRangeCourse();resetRangeReadout();return;}resetRangeReadout();rangeActive=true;rangeOpsPanel.classList.add('is-live');rangeStart.textContent='END SESSION';showRangeOps(false);const course=rangeCourses[rangeMode];setStatus(rangeMode==='freeplay'?'Free Play live — explore every lane and fire without a timer or shot limit.':`${course.label} qualification live — land as many target hits as you can.`);if(Number.isFinite(course.seconds))rangeTimer=window.setInterval(()=>{if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return;rangeRemaining-=1;updateRangeReadout();if(rangeRemaining<=0){stopRangeCourse('RUN COURSE AGAIN');saveRangeResult();setStatus(`${course.label} complete — ${rangeHits}/${rangeShots} hits, ${rangeScore} points.`);showRangeOps(true);}},1000);});
 
   const setStatus = (message) => { if (status) status.textContent = message; };
   const rangeRaycaster=new THREE.Raycaster();
   function handleRangeShot({event=null,centre=false,origin=null,direction=null}={}){
-    if(serverHostedRoom)return null;
     if(!rangeActive||!envLoader.world)return null;if(!RANGED_WEAPONS[toxicBubbleSystem.tool]&&!UTILITY_TOOLS[toxicBubbleSystem.tool]&&toxicBubbleSystem.tool!=='flamethrower')return null;
     if(origin&&direction)rangeRaycaster.set(origin,direction.clone().normalize());
     else if(centre)rangeRaycaster.setFromCamera(new THREE.Vector2(0,0),camera);
-    else if(event){const rect=canvas.getBoundingClientRect();rangeRaycaster.setFromCamera(new THREE.Vector2(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1),camera);}
+    else if(event){const rect=canvas.getBoundingClientRect(),pointer=new THREE.Vector2(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1);if(isTopDownView()){aimTopDownPointer(pointer);pointer.set(0,0);}rangeRaycaster.setFromCamera(pointer,camera);}
     else return null;
-    if(UTILITY_TOOLS[toxicBubbleSystem.tool])return toxicBubbleSystem.useUtility(rangeRaycaster.ray.origin,rangeRaycaster.ray.direction);if(RANGED_WEAPONS[toxicBubbleSystem.tool])return toxicBubbleSystem.fireExtraWeapon(rangeRaycaster.ray.origin,rangeRaycaster.ray.direction);if(toxicBubbleSystem.tool==='flamethrower')return toxicBubbleSystem.fireFlame(rangeRaycaster.ray.origin,rangeRaycaster.ray.direction);
+    if(UTILITY_TOOLS[toxicBubbleSystem.tool])return toxicBubbleSystem.useUtility(rangeRaycaster.ray.origin,rangeRaycaster.ray.direction);/* Training scores are per visitor, including in a shared live world. */
     rangeShots+=1;
     const hit=rangeRaycaster.intersectObjects([envLoader.world,builderDecor],true).find(item=>item.object.userData.rangeTarget);
     toxicBubbleSystem.showWeaponShot(toxicBubbleSystem.tool,rangeRaycaster.ray.origin,rangeRaycaster.ray.direction,hit?.point);
@@ -331,6 +344,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   questPanel.addEventListener('click',async event=>{if(event.target.closest('[data-quest-close]'))return toggleGameQuests(false);const id=event.target.closest('[data-quest-claim]')?.dataset.questClaim,q=GAME_QUESTS.find(item=>item.id===id);if(!q)return;const state=readQuestState(),item=state[id];if(!item||item.claimed||item.progress<q.goal)return;try{await window.MZKWallet.claimReward('field:'+id);}catch(error){setStatus(error.message);return;}item.claimed=new Date().toISOString();localStorage.setItem(questStorageKey(),JSON.stringify(state));showQuestToast(q,true);renderGameQuests();});
 
   const BUILD_ASSETS = Object.freeze([
+    ...ARCADE_PARTS.map(part=>[`arcade-part-${part.id}`,`Neon Junction · ${part.name}`,part.attraction?'interactive':'landscape',part.attraction?'interact':'decor']),
     ['grand-floor','Grand Build Floor','map'],['open-studio','Open Studio','room'],['connected-suite','Connected Suite','room'],['garden-courtyard','Garden Courtyard','room'],
     ...['canopy-tree|Canopy Tree|landscape','pillow-ring|Pillow Ring Seat|interior','pine-tree|Pine Tree|landscape','flower-bed|Flower Bed|landscape','hedge-corner|Hedge Corner|landscape','garden-rocks|Garden Rocks|landscape','pond|Reflecting Pond|landscape','path-tile|Path Tile|landscape','hill|Soft Hill|landscape','lamp-post|Lamp Post|landscape','planter|Tall Planter|landscape','sofa|Cloud Sofa|interior','armchair|Accent Chair|interior','coffee-table|Coffee Table|interior','bookshelf|Bookshelf|interior','floor-lamp|Floor Lamp|interior','room-divider|Room Divider|interior','kitchen-island|Kitchen Island|interior','spiral-stairs|Spiral Stairs|interior','archway|Archway|interior','art-wall|Art Wall|interior','studio-desk|Producer Studio Desk|interior','recording-booth|Recording Booth|interior','modular-wall|Modular Building Wall|interior','glass-door|Glass Entry Door|interior','loft-bed|Loft Bed|interior','wardrobe|Walk-in Wardrobe|interior','bathroom-vanity|Bathroom Vanity|interior','dining-set|Dining Set|interior','fireplace|Modern Fireplace|interior','elevator|Working Elevator|interior',
     'corsair-aircraft|Blackwing Corsair|vehicles','dune-quad|Nightcrawler Dune Quad|vehicles','hero-spawn|Hero Spawn|avatar','scout-avatar|AAPE Scout|avatar','wolf-guardian|Volt Guardian|avatar','rad-tox|RAD-TOX Mutant|enemy','void-wolf|Void Wolf|enemy','ember-dragon|Ember Dragon|enemy','rogue-bot|Rogue Bot|enemy','quest-scroll|Quest Scroll|interactive','treasure-crystal|Energy Crystal|interactive','healing-potion|Healing Potion|interactive','portal-door|Portal Door|interactive','campfire|Campfire|interactive','friendly-ghost|Friendly Ghost|interactive','green-bubbles|Green Bubble Field|interactive',
@@ -397,6 +411,33 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050807); scene.fog = new THREE.Fog(0x050807, 36, performanceMode ? 95 : 180);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !performanceMode, alpha: false, powerPreference: 'high-performance' }); renderer.xr.enabled = webXrAvailable; let quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');
   const camera = new THREE.PerspectiveCamera(68, 16 / 9, 0.05, 700); const playerRig = new THREE.Group(); playerRig.name = 'MUZIKAZ_PLAYER_RIG'; playerRig.add(camera); scene.add(playerRig);
+  const overviewCamera = new THREE.PerspectiveCamera(58, 16 / 9, .05, 700); overviewCamera.name='MUZIKAZ_TOP_DOWN_CAMERA'; scene.add(overviewCamera);
+  let gameCameraMode=readGameCameraMode(),topDownAimTarget=null,lastTopDownAimAt=-Infinity;
+  const overviewCutaway=new THREE.Plane(new THREE.Vector3(0,-1,0),2.6),overviewRay=new THREE.Raycaster(),overviewGround=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+  const playerIndicator=new THREE.Group();playerIndicator.name='MUZIKAZ_LOCAL_PLAYER_INDICATOR';
+  const indicatorMaterial=new THREE.MeshStandardMaterial({color:0xcaff49,emissive:0x5b8c13,emissiveIntensity:.35,roughness:.6});
+  const indicatorBody=new THREE.Mesh(new THREE.CapsuleGeometry(.24,.65,3,8),indicatorMaterial);indicatorBody.position.y=.8;
+  const indicatorHead=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),indicatorMaterial);indicatorHead.position.y=1.5;
+  const indicatorNose=new THREE.Mesh(new THREE.ConeGeometry(.15,.45,3),new THREE.MeshBasicMaterial({color:0xffffff}));indicatorNose.rotation.x=-Math.PI/2;indicatorNose.position.set(0,1.52,-.38);
+  const indicatorRing=new THREE.Mesh(new THREE.RingGeometry(.45,.54,28),new THREE.MeshBasicMaterial({color:0xcaff49,side:THREE.DoubleSide,transparent:true,opacity:.85}));indicatorRing.rotation.x=-Math.PI/2;indicatorRing.position.y=.03;
+  playerIndicator.add(indicatorBody,indicatorHead,indicatorNose,indicatorRing);playerIndicator.visible=false;scene.add(playerIndicator);
+  const cameraToggle=document.createElement('button');cameraToggle.id='house-camera-toggle';cameraToggle.type='button';cameraToggle.className='game-camera-toggle';cameraToggle.setAttribute('aria-keyshortcuts','V');stage.append(cameraToggle);
+  const cameraStyle=document.createElement('style');cameraStyle.textContent='.house-stage .game-camera-toggle{position:absolute;top:var(--game-camera-top,76px);left:10px;z-index:19;min-height:44px;max-width:calc(100% - 24px);padding:8px 12px;border:1px solid #caff49;border-radius:9px;background:#091b10ed;color:#efffd7;font:800 12px/1.25 system-ui;cursor:pointer;box-shadow:0 3px 12px #0008}.house-stage .game-camera-toggle:focus-visible{outline:3px solid #fff;outline-offset:3px}.house-stage .game-camera-toggle:disabled{opacity:.65;cursor:default}.house-stage[data-game-camera-mode="top-down"] #house-explorer-canvas{cursor:crosshair}.house-stage[data-game-camera-mode="top-down"] .house-reticle{visibility:hidden}@media(max-width:760px),(pointer:coarse){body .house-explorer-shell[data-touch-game-fit]{height:var(--touch-game-height)!important;max-height:var(--touch-game-height)!important;gap:0!important}body .house-explorer-shell[data-touch-game-fit] .mobile-move-pad.mobile-move-pad-glb{box-sizing:border-box;left:auto;transform:none;width:100%;margin:0;padding:8px 12px;gap:8px}body .house-explorer-shell[data-touch-game-fit] .thumbstick-base{width:80px!important;height:80px!important;min-height:80px!important;padding:0!important}body .house-explorer-shell[data-touch-game-fit] .thumbstick-control{gap:3px}body .house-explorer-shell[data-touch-game-fit] .thumbstick-control small{min-height:0;font-size:9px}body .house-explorer-shell[data-touch-game-fit] .thumbstick-label{font-size:10px}.house-stage .game-camera-toggle{width:max-content!important}}';document.head.append(cameraStyle);
+  // The status rows grow when map names wrap or a mobile row is expanded.
+  // Keep the camera control beneath their actual height in either layout.
+  function positionCameraToggle(){const minimum=matchMedia('(max-width:760px)').matches?64:76;stage.style.setProperty('--game-camera-top',Math.max(minimum,toxicHud.offsetTop+toxicHud.offsetHeight+8)+'px');}
+  if(window.ResizeObserver)new ResizeObserver(positionCameraToggle).observe(toxicHud);
+  window.addEventListener('resize',positionCameraToggle);positionCameraToggle();
+  function isTopDownView(){return gameCameraMode==='top-down'&&!renderer.xr.isPresenting;}
+  function displayCamera(){return isTopDownView()?overviewCamera:camera;}
+  function syncCameraToggle(){const top=isTopDownView();stage.dataset.gameCameraMode=top?'top-down':'first-person';cameraToggle.dataset.gameCameraMode=gameCameraMode;cameraToggle.textContent='View: '+(top?'Top down':'First person');cameraToggle.setAttribute('aria-pressed',String(top));cameraToggle.title=renderer.xr.isPresenting?'First person during VR':`Switch to ${top?'First person':'Top down'} (V)`;cameraToggle.disabled=renderer.xr.isPresenting;}
+  function setGameCameraMode(mode,{announce=true}={}){gameCameraMode=writeGameCameraMode(mode);topDownAimTarget=null;if(isTopDownView()&&document.pointerLockElement===canvas)document.exitPointerLock?.();syncCameraToggle();updateGameCamera();if(announce)setStatus(isTopDownView()?'Top down · WASD / arrows or left stick move across the screen. Point to aim; tap or click to use your tool. V changes view.':'First person · drag to look, use Main controls for mouse-look, or use the right stick. V changes view.');}
+  function updateGameCamera(){const top=isTopDownView();camera.visible=!top;playerIndicator.visible=top;if(top){const pose=explorerTopDownPose(playerRig.position,camera.aspect,Number(camera.fov)||68);overviewCamera.position.fromArray(pose.position);overviewCamera.up.fromArray(pose.up);overviewCamera.lookAt(...pose.target);overviewCamera.updateMatrixWorld(true);overviewCutaway.constant=pose.cutHeight;renderer.clippingPlanes=[overviewCutaway];playerIndicator.position.copy(playerRig.position);playerIndicator.rotation.y=playerRig.rotation.y;}else renderer.clippingPlanes=[];}
+  function visibleOverviewHit(hit){const material=Array.isArray(hit.object.material)?hit.object.material[hit.face?.materialIndex||0]:hit.object.material;if(material?.visible===false||hit.point.y>overviewCutaway.constant+.03)return false;for(let root=hit.object;root;root=root.parent){if(!root.visible||root===playerIndicator||root===playerRig||root.userData.localPlayerAvatar)return false;}return true;}
+  function aimTopDownPointer(pointer,{throttle=false}={}){if(!isTopDownView()||vehicleController.active)return false;const now=performance.now();if(throttle&&now-lastTopDownAimAt<50)return false;lastTopDownAimAt=now;updateGameCamera();scene.updateMatrixWorld(true);overviewRay.setFromCamera(pointer,overviewCamera);const roots=[...envLoader.meshes,builderDecor,placedAvatars,toxicBubbleSystem.group,toxicBubbleSystem.lootBlockGroup,toxicBubbleSystem.brickGroup,...serverRadToxRoots.values(),...serverPlayerRoots.values()];const hit=overviewRay.intersectObjects(roots,true).find(visibleOverviewHit);overviewGround.constant=-(playerRig.position.y+.9);const target=hit?.point.clone()||overviewRay.ray.intersectPlane(overviewGround,new THREE.Vector3());if(!target)return false;topDownAimTarget=target;applyTopDownAim();return true;}
+  function applyTopDownAim(){if(!isTopDownView()||!topDownAimTarget||vehicleController.active)return;const origin=camera.getWorldPosition(new THREE.Vector3()),angles=explorerAimAngles(origin,topDownAimTarget,player.yaw);player.yaw=angles.yaw;player.pitch=angles.pitch;playerRig.rotation.y=player.yaw;camera.rotation.order='YXZ';camera.rotation.set(player.pitch,0,0);camera.updateWorldMatrix(true,false);}
+  cameraToggle.addEventListener('click',()=>{setGameCameraMode(nextGameCameraMode(gameCameraMode));canvas.focus({preventScroll:true});});
+  syncCameraToggle();
   const hemi = new THREE.HemisphereLight(0xe6f7ff, 0x26321b, 1.75); scene.add(hemi); const fill = new THREE.DirectionalLight(0xbfe7ff, mobileQualityMode ? .55 : .8); fill.position.set(-10, 9, -12); scene.add(fill); const sun = new THREE.DirectionalLight(0xfff4dc, mobileQualityMode ? 1.75 : 2.45); sun.position.set(12, 18, 8); sun.castShadow = quality.shadows; sun.shadow.mapSize.set(quality.shadowSize, quality.shadowSize); sun.shadow.camera.near = .5; sun.shadow.camera.far = 120; sun.shadow.camera.left = -45; sun.shadow.camera.right = 45; sun.shadow.camera.top = 45; sun.shadow.camera.bottom = -45; scene.add(sun);
   // PMREM generation is an expensive GPU pass with no gameplay benefit on the
   // performance renderer. Skipping it keeps the first mobile frame responsive.
@@ -410,6 +451,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function applyBuilderObject(object,item,index,center,floor,clips=[]){const authored=item.position&&typeof item.position==='object',x=authored?Number(item.position.x)||0:(Number(item.x)-50)*.4,z=authored?Number(item.position.z)||0:(Number(item.y)-50)*.4,rawScale=authored?Number(item.scale?.x):Number(item.scale),scale=Math.max(.04,Math.min(20,rawScale||1)),groundOffset=Number(item.groundOffset)||0,worldX=center.x+x,worldZ=center.z+z,ground=floorPointAt(new THREE.Vector3(worldX,Number(item.position?.y)||floor,worldZ));object.name=`Builder_${item.modelId}_${index}`;object.position.set(worldX,ground.y+groundOffset,worldZ);object.rotation.set(authored?(Number(item.rotation?.x)||0):0,authored?(Number(item.rotation?.y)||0):THREE.MathUtils.degToRad(Number(item.rotation)||0),authored?(Number(item.rotation?.z)||0):0);const sy=Math.max(.04,Math.min(20,Number(item.scale?.y)||scale)),sz=Math.max(.04,Math.min(20,Number(item.scale?.z)||scale));object.scale.multiply(new THREE.Vector3(scale,sy,sz));object.updateMatrixWorld(true);const visualFeet=new THREE.Box3().setFromObject(object).min.y;if(Number.isFinite(visualFeet))object.position.y+=ground.y+groundOffset-visualFeet;object.userData.serverRenderOffset={x:object.position.x-x,y:object.position.y-(Number(item.position?.y)||0),z:object.position.z-z};object.userData.feetLockedToFloor=true;object.userData.authoredScale={x:scale,y:sy,z:sz};object.userData.groundOffset=groundOffset;object.userData.functionalSettings=item.functionalSettings||null;object.userData.animationState=item.animationState||null;object.userData.builderObjectId=item.id;if(item.vehicleSettings||item.functionalSettings?.vehicle)object.userData.vehicle={...(object.userData.vehicle||{}),...(item.vehicleSettings||item.functionalSettings.vehicle)};let mixer=null,activeAction=null;if(clips.length&&item.animationState?.enabled!==false){mixer=new THREE.AnimationMixer(object);const requested=item.animationState?.clip;const clip=requested?clips.find(value=>value.name===requested):item.animationState?.autoplay===false?null:clips[0];if(clip){activeAction=mixer.clipAction(clip);activeAction.timeScale=Math.max(0,Number(item.animationState?.speed)||1);activeAction.setLoop(item.animationState?.loop===false?THREE.LoopOnce:THREE.LoopRepeat,item.animationState?.loop===false?1:Infinity);activeAction.clampWhenFinished=item.animationState?.loop===false;activeAction.play();}}object.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;if(item.materialSettings?.useAccent&&child.material?.color)child.material.color.lerp(new THREE.Color(item.materialSettings.accent),.38);}});if(item.atlasDestination){object.userData.worldGateway={name:item.name||item.atlasDestination};object.add(liveLabel(object,{username:item.name||item.atlasDestination,message:'Enter shared world · E / Use'}));}builderDecor.add(object);if(!serverHostedRoom&&isBasketball(item)){registerLocalBasketball(object,{...item.asset,buildAssetId:'basketball'});if(isBasketballEnvironment(activeEnvironment))ensureBasketballGame(localBasketballSim,activeEnvironment,Date.now());object.traverse(child=>{if(child.isMesh)child.userData.collisionDisabled=true;});}const release=(position=null)=>{builderDecor.attach(object);if(object.userData.preHoldScale)object.scale.copy(object.userData.preHoldScale);const target=position||playerRig.position,ground=floorPointAt(new THREE.Vector3(Number(target.x)||0,Number(target.y)||floor,Number(target.z)||0));object.position.set(ground.x,ground.y+groundOffset,ground.z);object.rotation.set(0,player.yaw,0);object.updateMatrixWorld(true);const droppedFeet=new THREE.Box3().setFromObject(object).min.y;if(Number.isFinite(droppedFeet))object.position.y+=ground.y+groundOffset-droppedFeet;object.visible=true;refreshBuilderCollision();};builderGameplay.register(item.id,{getPosition:()=>object.getWorldPosition(new THREE.Vector3()),setActive:active=>{object.visible=active;object.traverse(child=>{if(child.isMesh)child.userData.collisionDisabled=!active;});refreshBuilderCollision();},setHeld:held=>{if(held){object.userData.preHoldScale=object.scale.clone();playerRig.attach(object);object.position.set(.42,1.15,-.72);object.rotation.set(0,0,0);object.scale.copy(object.userData.preHoldScale).multiplyScalar(.55);object.traverse(child=>{if(child.isMesh)child.userData.collisionDisabled=true;});refreshBuilderCollision();}else{object.traverse(child=>{if(child.isMesh)child.userData.collisionDisabled=false;});release();}},setDropped:position=>release(position),setSeated:(seated,playerState,actor)=>{if(seated){seatedBuilderObject=object;const offset=actor?.gameplay?.seatOffset||[0,.65,0],seat=object.localToWorld(new THREE.Vector3(Number(offset[0])||0,Number(offset[1])||.65,Number(offset[2])||0));playerRig.position.copy(seat);playerRig.rotation.y=object.rotation.y;playerCollider.start.copy(seat).add(new THREE.Vector3(0,player.radius,0));playerCollider.end.copy(seat).add(new THREE.Vector3(0,player.height,0));player.velocity.set(0,0,0);setPlayerAvatarVisible(true);}else{const exitOffset=actor?.gameplay?.exitOffset||[1.15,0,0],side=new THREE.Vector3(Number(exitOffset[0])||1.15,Number(exitOffset[1])||0,Number(exitOffset[2])||0).applyQuaternion(object.quaternion),exit=object.getWorldPosition(new THREE.Vector3()).add(side);seatedBuilderObject=null;playerCollider.start.copy(exit).add(new THREE.Vector3(0,player.radius,0));playerCollider.end.copy(exit).add(new THREE.Vector3(0,player.height,0));playerRig.position.copy(exit);}},setSwitched:on=>{object.userData.switched=on;object.traverse(child=>{if(child.isMesh&&child.material?.emissive)child.material.emissiveIntensity=on?1.5:.1;});},use:()=>{object.userData.lastUsedAt=performance.now();},setDoorOpen:open=>{object.rotation.y+=(open?-1:1)*Math.PI*.5;object.traverse(child=>{if(child.isMesh)child.userData.collisionDisabled=open;});refreshBuilderCollision();},updateMixer:delta=>mixer?.update(delta),playClip:name=>{if(!name||!mixer)return;const clip=clips.find(value=>value.name===name);if(!clip)return;activeAction?.fadeOut(.12);activeAction=mixer.clipAction(clip).reset().fadeIn(.12).play();},moveToward:(target,speed,delta)=>{const goal=new THREE.Vector3(target.x,object.position.y,target.z),step=Math.min(1,speed*delta/Math.max(.001,object.position.distanceTo(goal)));object.position.lerp(goal,step);object.lookAt(goal.x,object.position.y,goal.z);}});}
   function prepareAuthoredBuilderModel(root,definition){const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3());if(definition?.targetHeight&&size.y>0){const authoredScale=Number(definition.targetHeight)/size.y;root.scale.multiplyScalar(authoredScale);bounds.setFromObject(root);}root.position.y-=bounds.min.y;return root;}
   function loadBuilderDecor(environment){clearBuilderDecor();const built=environment?.builderScene;if(!built?.objects?.length){envLoader.setSupplementalCollisionRoots([]);return null;}const bounds=envLoader.bounds,center=bounds.getCenter(new THREE.Vector3()),floor=Number.isFinite(bounds.min.y)?bounds.min.y:0,customModels=new Map((built.customModels||[]).map(model=>[model.id,model])),placedModels=new Map([...(built.catalogModels||[]),...(built.placedModels||[])].map(model=>[model.id,model])),manifest=compileBuilderScene(built);const teleport=(portal)=>{if(portal.destinationType==='map'){if(portal.targetMapId)loadById(portal.targetMapId);return;}const target=manifest.objects.find(item=>item.objectId===portal.targetObjectId);if(!target)return;const x=center.x+target.transform.position.x,z=center.z+target.transform.position.z,ground=floorPointAt(new THREE.Vector3(x,target.transform.position.y,z));resetPlayer(new THREE.Vector3(x,ground.y+FLOOR_ENTRY_OFFSET,z),target.transform.rotation.y);};builderGameplay=new BuilderGameplayRuntime({manifest,feedback:message=>setStatus(message),effects:{teleport}});const localInteract=builderGameplay.interact.bind(builderGameplay);builderGameplay.interact=(key,position)=>{if(!serverHostedRoom){const actor=builderGameplay.nearest(position,key)?.actor;if(isBasketball(actor))return basketballAction('catch');const team=basketballJerseyTeam(actor);if(team){assignBasketballTeam(localBasketballSim,localBasketballPlayer,Date.now(),team);localJerseyTeam=team;setStatus(`${team==='home'?'Home':'Away'} basketball jersey equipped.`);return {actor,handled:true};}}return localInteract(key,position);};builderDecor.userData.builderScene=built;builderDecor.userData.runtimeManifest=manifest;builderDecor.userData.weather=built.weather||'clear';built.objects.forEach((item,index)=>{const customModel=customModels.get(item.modelId),definition=placedModels.get(item.modelId);let object=customModel?createSavedCustomModel(customModel):createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.generated&&definition.generator){try{object=createGeneratedAsset(definition);}catch(error){console.warn('[MUZIKAZ Builder] Unable to rebuild generated model',item.modelId,error);}}if(!object&&definition?.modelUrl){avatarLoader.load(definition.modelUrl,gltf=>{if(gltf.scene){applyBuilderObject(prepareAuthoredBuilderModel(gltf.scene,definition),item,index,center,floor,gltf.animations||[]);refreshBuilderCollision();}},undefined,error=>console.warn('[MUZIKAZ Builder] Unable to load exact placed model',definition.modelUrl,error));return;}if(!object){console.warn('[MUZIKAZ Builder] No saved model definition for placed object',item.modelId);return;}applyBuilderObject(object,item,index,center,floor);});refreshBuilderCollision();if(!manifest.spawn)return manifest;const spawnX=center.x+manifest.spawn.position.x,spawnZ=center.z+manifest.spawn.position.z,spawnFloor=floorPointAt(new THREE.Vector3(spawnX,manifest.spawn.position.y,spawnZ));manifest.worldSpawn={position:new THREE.Vector3(spawnX,spawnFloor.y+FLOOR_ENTRY_OFFSET,spawnZ),rotationY:manifest.spawn.rotationY};return manifest;}
+
   const avatarLoader = new GLTFLoader(); const avatarRaycaster = new THREE.Raycaster(); const avatarPointer = new THREE.Vector2(); const placedAvatars = new THREE.Group(); placedAvatars.name = 'MUZIKAZ_PLACED_AVATARS'; scene.add(placedAvatars);
   const liveAvatars = new THREE.Group(); liveAvatars.name = 'MUZIKAZ_LIVE_PLAYERS'; scene.add(liveAvatars);
   const liveAvatarRoots = new Map(); const pendingLiveAvatars = new Map();
@@ -605,13 +647,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
 
   let viewActive = true; let lastFrameTime = 0; const targetFrameMs = 0;
   let playerCollider = new Capsule(new THREE.Vector3(0, player.radius, 2), new THREE.Vector3(0, player.height, 2), player.radius); let dragPointer = null; let avatarDrag = null; let avatarPinch = null; let cameraGesture = null; const activeTouchPointers = new Map(); let turnReady = true; let activeEnvironment = null;
-  // Every environment uses the same last-known-good floor lock.  This is kept
-  // outside map metadata so repository GLBs, uploaded spaces, Builder lands
-  // and combat arenas all get identical protection from thin/missing floor
-  // triangles and low-frame-rate collision tunnelling.
-  const lastSafePlayerPosition = new THREE.Vector3();
-  let hasSafePlayerPosition = false;
-  let floorLockCooldown = 0;
+  let localGroundViewY = null;
+  const walkingSurfaceCache = new WeakMap();
   const toxicBubbleSystem = new ToxicBubbleSystem({ scene, camera, canvas, loader: envLoader, getEnvironment: () => activeEnvironment, getPlayerPosition: () => playerRig.position.clone(), advanceEnvironment: () => loadNextEnvironment() });
   // Opening or closing the pack never changes the game state.
   const toolsButton = document.querySelector('[data-house-tools]'); const closeTools = () => { toxicBubbleSystem.closeInventory(); toggleBuildMenu(false); toggleGameQuests(false); sprayTools.hidden=true; toolsToggle.setAttribute('aria-expanded','false'); toolsButton?.setAttribute('aria-expanded','false'); toolsButton?.focus(); }; const openTools = () => { gameEconomy?.decorate(); syncToolsPortal(); sprayTools.hidden=false; toolsToggle.setAttribute('aria-expanded','true'); toolsButton?.setAttribute('aria-expanded','true'); sprayTools.querySelector('[data-rad-tool]')?.focus(); }; const toggleTools = () => sprayTools.hidden ? openTools() : closeTools();
@@ -622,7 +659,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   weaponsPopup.addEventListener('click',event=>{if(event.target.closest('[data-weapons-close]')){weaponsPopup.close();return;}const tool=event.target.closest('[data-rad-tool]')?.dataset.radTool;if(tool){toxicBubbleSystem.setTool(tool);weaponsPopup.close();closeTools();}});
   weaponsPopup.addEventListener('close',()=>{if(!document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))document.documentElement.classList.remove('game-menu-open');sprayTools.querySelector('[data-weapons-category]')?.focus();}); sprayTools.addEventListener('click',(event)=>{if(event.target.closest('[data-game-care]')){closeTools();gameMarketplace.open('care');return;}if(event.target.closest('[data-game-market]')){closeTools();gameMarketplace.open();return;}if(event.target.closest('[data-utility-category]')){keys.clear();toxicBubbleSystem.flameTrigger=null;if(document.pointerLockElement)document.exitPointerLock();(document.fullscreenElement||document.body).append(utilityPopup);utilityPopup.querySelector('[data-utility-stock]').textContent=Object.entries(UTILITY_TOOLS).filter(([,tool])=>tool.charges).map(([id,tool])=>`${tool.label}: ${tool.charges-(toxicBubbleSystem.utilityKit.used.get(id)||0)} uses left`).join(' · ');utilityPopup.showModal();document.documentElement.classList.add('game-menu-open');return;}if(event.target.closest('[data-weapons-category]')){keys.clear();toxicBubbleSystem.flameTrigger=null;if(document.pointerLockElement)document.exitPointerLock();buildingPopup.hidden=true;(document.fullscreenElement||document.body).append(weaponsPopup);weaponsPopup.showModal();document.documentElement.classList.add('game-menu-open');return;}if(event.target.closest('[data-rad-tools-toggle]')){closeTools();return;}const tool=event.target.closest('[data-rad-tool]')?.dataset.radTool,color=event.target.closest('[data-spray-color]')?.dataset.sprayColor,brickColor=event.target.closest('[data-brick-color]')?.dataset.brickColor,paintMode=event.target.closest('[data-paint-mode]')?.dataset.paintMode;if(event.target.closest('[data-rad-pack-toggle]'))toxicBubbleSystem.toggleInventory();if(event.target.closest('[data-rad-quests-toggle]'))toggleGameQuests();if(event.target.closest('[data-rad-build-toggle]'))toggleBuildMenu();if(event.target.closest('[data-rad-seats-toggle]'))toggleBuildMenu(true,'seats');if(tool)toxicBubbleSystem.setTool(tool);if(paintMode)toxicBubbleSystem.setSprayMode(paintMode);if(event.target.closest('[data-drawing-undo]'))toxicBubbleSystem.undoDrawing();if(event.target.closest('[data-drawing-clear]'))toxicBubbleSystem.clearDrawing();if(color!==undefined)toxicBubbleSystem.setSprayColor(Number(color));if(brickColor!==undefined)toxicBubbleSystem.setBrickColor(Number(brickColor));const material=event.target.closest('[data-brick-material]')?.dataset.brickMaterial;if(material)toxicBubbleSystem.setBrickMaterial(material);if(event.target.closest('[data-building-close]'))buildingPopup.hidden=true;if(event.target.closest('[data-building-rotate]'))toxicBubbleSystem.rotateBuilding();if(event.target.closest('[data-building-undo]'))toxicBubbleSystem.undoBuilding();if(event.target.closest('[data-building-toggle]'))toxicBubbleSystem.toggleAimedBuilding();}); inventoryPack.addEventListener('click',(event)=>{if(event.target.closest('[data-rad-pack-market]')){toxicBubbleSystem.closeInventory();gameMarketplace.open('upgrades');return;}if(event.target.closest('[data-rad-pack-bundles]')){toxicBubbleSystem.closeInventory();gameMarketplace.open('bundles');return;}if(event.target.closest('[data-rad-pack-care]')){closeTools();gameMarketplace.open('care');return;}if(event.target.closest('[data-rad-pack-close]'))toxicBubbleSystem.closeInventory();if(event.target.closest('[data-rad-pack-builder]')){toxicBubbleSystem.toggleInventory(false);toggleBuildMenu(true);}}); buildMenu.addEventListener('click',(event)=>{if(event.target.closest('[data-build-market]')){toggleBuildMenu(false);gameMarketplace.open('upgrades');return;}if(event.target.closest('[data-build-bundles]')){toggleBuildMenu(false);gameMarketplace.open('bundles');return;}if(event.target.closest('[data-rad-build-close]')){toggleBuildMenu(false);return;}const filter=event.target.closest('[data-build-filter]')?.dataset.buildFilter;if(filter){renderBuildMenu(filter);return;}const id=event.target.closest('[data-build-asset]')?.dataset.buildAsset;if(!id)return;const [assetId,name,type]=BUILD_ASSETS.find(item=>item[0]===id)||[];if(!assetId)return;const upgrade=gameEconomy?.items.find(item=>item.buildAssetId===assetId);if(!upgrade||!gameEconomy.require(upgrade.sku))return;const tray=readBuildTray(),index=tray.findIndex(item=>item.id===assetId);if(index>=0)tray.splice(index,1);else tray.push({id:assetId,name,type,thumbnailUrl:builderAssetThumbnail(assetId,type),addedAt:new Date().toISOString()});localStorage.setItem(buildTrayKey,JSON.stringify(tray));renderBuildMenu();setStatus(`${name} ${index>=0?'removed from':'added to'} your build inventory. Open Pack to review it.`);}); document.addEventListener('keydown',(event)=>{if(event.key!=='Escape')return;if(ownedPlacement.active){ownedPlacement.cancel();return;}if(!questPanel.hidden){toggleGameQuests(false);return;}if(!buildMenu.hidden){toggleBuildMenu(false);return;}if(!inventoryPack.hidden){toxicBubbleSystem.closeInventory();return;}if(!sprayTools.hidden)closeTools();}); document.addEventListener('muzikaz:rad-tox-tools-request',openTools);
   organizeToolPicker(weaponsPopup);organizeToolPicker(utilityPopup);
-  const keys = new Set(); const mobile = new Set(); const thumbInput = { leftX: 0, leftY: 0, rightX: 0, rightY: 0 }; const forward = new THREE.Vector3(); const right = new THREE.Vector3(); const move = new THREE.Vector3(); const teleportRay = new THREE.Raycaster(); const floorSweepRay = new THREE.Raycaster();
+  const keys = new Set(); const mobile = new Set(); const thumbInput = { leftX: 0, leftY: 0, rightX: 0, rightY: 0 }; const forward = new THREE.Vector3(); const right = new THREE.Vector3(); const move = new THREE.Vector3(); const teleportRay = new THREE.Raycaster();
   window.addEventListener('blur',()=>{keys.clear();mobile.clear();thumbInput.leftX=thumbInput.leftY=thumbInput.rightX=thumbInput.rightY=0;});
   const lockMenuInput=()=>{keys.clear();mobile.clear();thumbInput.leftX=thumbInput.leftY=thumbInput.rightX=thumbInput.rightY=0;toxicBubbleSystem.flameTrigger=null;if(document.pointerLockElement)document.exitPointerLock();};
   window.addEventListener('muzikaz:chat-panel',event=>{if(event.detail?.open)lockMenuInput();});
@@ -630,9 +667,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const careEffects=new CareEffects({apply:effect=>{if(serverHostedRoom)return;if(!toxicBubbleSystem.active||!effect)return;if(effect.stat==='health'||effect.stat==='all'){toxicBubbleSystem.health=effect.stat==='all'?TOXIC_BUBBLE_CONFIG.maxHealth:Math.min(TOXIC_BUBBLE_CONFIG.maxHealth,toxicBubbleSystem.health+effect.amount);toxicBubbleSystem.updateHud();}setStatus('IonCore care applied. Your member body stats are recorded.');}});
   function serverCommand(action,fields={}){if(!authoritativeClient?.ready){setStatus('Waiting for the shared server. No local gameplay action was applied.');return Promise.resolve(false);}return authoritativeClient.send(action,fields).then(async state=>{if(state?.result?.message)setStatus(state.result.message);if(state?.result?.destination){if(!registry.find(state.result.destination))await registry.refresh();await loadById(state.result.destination);}return state;}).catch(error=>{setStatus(error.message);return false;});}
   let stickSprinting=false;
-  function serverInput(){if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return {side:0,forward:0,yaw:player.yaw,jump:false,sprint:false,firing:false};const input=getInput();return {side:input.x,forward:input.y,yaw:player.yaw,jump:keys.has(' ')||mobile.has('jump'),sprint:keys.has('shift')||stickSprinting,firing:!ownedPlacement.active&&!!toxicBubbleSystem.flameTrigger,tool:toxicBubbleSystem.tool,eyeHeight:player.eyeHeight,direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex};}
+  function serverInput(){if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return {side:0,forward:0,yaw:player.yaw,jump:false,sprint:false,firing:false};const input=getMovementInput();return {side:input.x,forward:input.y,yaw:player.yaw,jump:keys.has(' ')||mobile.has('jump'),sprint:keys.has('shift')||stickSprinting,firing:!ownedPlacement.active&&!!toxicBubbleSystem.flameTrigger,tool:toxicBubbleSystem.tool,eyeHeight:player.eyeHeight,direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex};}
+
   const serverAssetRetryAt=new Map();
-  const serverAssetLoads=new Set(),serverPlayerRoots=new Map(),serverPlayerTarget=new THREE.Vector3();const serverMotion=new ServerMotion({delay:0,maxExtrapolation:100}),walkingMotion=new WalkingMotion();let serverPlayerInitialized=false;let serverSnapshotAt=0,serverMovementSpeed=4;const serverViewTarget=new THREE.Vector3();let renderedStreetRevision=-1;let serverActors={};
+  const serverAssetLoads=new Set(),serverPlayerRoots=new Map(),serverPlayerTarget=new THREE.Vector3();const serverMotion=new ServerMotion({delay:75,maxExtrapolation:0,snapDistance:Infinity,resetGap:Infinity});let serverPlayerInitialized=false,serverMovementRevision=null;const serverViewTarget=new THREE.Vector3();let renderedStreetRevision=-1;let serverActors={};
   const matchResults=mountMatchResults({dock:dockActions,onOpen:()=>{keys.clear();mobile.clear();document.exitPointerLock?.();},onNext:matchId=>authoritativeClient.send('next-rad-tox',{matchId}),onRespawn:()=>authoritativeClient.send('respawn')});
   const enemyEffects=createSharedEnemyEffects({THREE,scene,resources:()=>toxicBubbleSystem.resources});
   const serverRadToxRoots=new Map(),serverShotEvents=new Set();
@@ -716,10 +754,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     toxicBubbleSystem.updateVisualEffects(delta,elapsed);
   }
   let requestedBackpackDeployment=false;
-  function renderServerRoom(snapshot,selfId,timing={}){if(!serverHostedRoom)return;serverActors=snapshot.actors;connectionBadge.textContent=`Live · ${Object.keys(snapshot.players).length} players · ${activeEnvironment?.name||'Shared world'}`;const requestedItem=new URL(location.href).searchParams.get('useItem');if(requestedItem&&!requestedBackpackDeployment&&snapshot.players[selfId]){requestedBackpackDeployment=true;setTimeout(()=>serverCommand('spawn',{itemId:requestedItem}).catch(error=>setStatus(error.message)),0);const clean=new URL(location.href);clean.searchParams.delete('useItem');history.replaceState({},'',clean);}if(snapshot.mapRevision!==renderedStreetRevision&&envLoader.world){envLoader.clearFloorEffects();if(activeEnvironment?.builderScene||activeEnvironment?.proceduralLand)replaceServerStreets(envLoader.world,snapshot.streets||[],{labels:true});envLoader.refreshFloorEffects();renderedStreetRevision=snapshot.mapRevision;}const onlineCount=document.querySelector('#crib-online-count');if(onlineCount)onlineCount.textContent=Object.keys(snapshot.players).length+' online';const self=snapshot.players[selfId];if(self){serverSnapshotAt=performance.now();serverMotion.push(self.position,serverSnapshotAt);walkingMotion.reconcile(self.position,{serverTime:snapshot.serverTime,simulationTime:snapshot.simulationTime,...timing,receivedAt:timing.receivedAt??serverSnapshotAt});serverMovementSpeed=self.seatedId||self.health<=0||snapshot.match?.state==='finished'?0:self.vehicleId?12:4;serverPlayerTarget.set(self.position.x,self.position.y,self.position.z);if(!serverPlayerInitialized||playerRig.position.distanceTo(serverPlayerTarget)>5){playerRig.position.copy(serverPlayerTarget);serverPlayerInitialized=true;}playerCollider.start.copy(serverPlayerTarget).add(new THREE.Vector3(0,player.radius,0));playerCollider.end.copy(serverPlayerTarget).add(new THREE.Vector3(0,player.height,0));player.velocity.set(0,0,0);player.onGround=self.grounded;toxicBubbleSystem.state=self.health>0?RAD_TOX_STATES.ACTIVE:RAD_TOX_STATES.CLEARED;toxicBubbleSystem.serverLocationName=self.locationName;toxicBubbleSystem.health=self.health;toxicBubbleSystem.score=self.score;toxicBubbleSystem.ammo=self.ammo;toxicBubbleSystem.flameSystem.fuel=self.fuel;toxicBubbleSystem.totalPopped=self.progress?.defeat||0;builderGameplay.player.health=self.health;builderGameplay.player.inventory=self.inventory;builderGameplay.player.quests=self.quests;for(const quest of GAME_QUESTS)serverQuestState[quest.id]={...serverQuestState[quest.id],progress:self.progress?.[quest.event]||0};if(!questPanel.hidden)renderGameQuests();}
+  function renderServerRoom(snapshot,selfId,timing={}){if(!serverHostedRoom)return;serverActors=snapshot.actors;connectionBadge.textContent=`Live · ${Object.keys(snapshot.players).length} players · ${activeEnvironment?.name||'Shared world'}`;const requestedItem=new URL(location.href).searchParams.get('useItem');if(requestedItem&&!requestedBackpackDeployment&&snapshot.players[selfId]){requestedBackpackDeployment=true;setTimeout(()=>serverCommand('spawn',{itemId:requestedItem}).catch(error=>setStatus(error.message)),0);const clean=new URL(location.href);clean.searchParams.delete('useItem');history.replaceState({},'',clean);}if(snapshot.mapRevision!==renderedStreetRevision&&envLoader.world){envLoader.clearFloorEffects();if(activeEnvironment?.builderScene||activeEnvironment?.proceduralLand)replaceServerStreets(envLoader.world,snapshot.streets||[],{labels:true});envLoader.refreshFloorEffects();renderedStreetRevision=snapshot.mapRevision;}const onlineCount=document.querySelector('#crib-online-count');if(onlineCount)onlineCount.textContent=Object.keys(snapshot.players).length+' online';const self=snapshot.players[selfId];if(self){const relocation=!serverPlayerInitialized||serverMovementRevision!==(self.movementRevision||0);serverMotion.push(self.position,timing.receivedAt??performance.now(),{serverTime:snapshot.simulationTime??snapshot.serverTime,teleport:relocation});serverMovementRevision=self.movementRevision||0;serverPlayerTarget.set(self.position.x,self.position.y,self.position.z);if(relocation){playerRig.position.copy(serverPlayerTarget);serverPlayerInitialized=true;}playerCollider.start.copy(serverPlayerTarget).add(new THREE.Vector3(0,player.radius,0));playerCollider.end.copy(serverPlayerTarget).add(new THREE.Vector3(0,player.height,0));player.velocity.set(0,0,0);player.onGround=self.grounded;toxicBubbleSystem.state=self.health>0?RAD_TOX_STATES.ACTIVE:RAD_TOX_STATES.CLEARED;toxicBubbleSystem.serverLocationName=self.locationName;toxicBubbleSystem.health=self.health;toxicBubbleSystem.score=self.score;toxicBubbleSystem.ammo=self.ammo;toxicBubbleSystem.flameSystem.fuel=self.fuel;toxicBubbleSystem.totalPopped=self.progress?.defeat||0;builderGameplay.player.health=self.health;builderGameplay.player.inventory=self.inventory;builderGameplay.player.quests=self.quests;for(const quest of GAME_QUESTS)serverQuestState[quest.id]={...serverQuestState[quest.id],progress:self.progress?.[quest.event]||0};if(!questPanel.hidden)renderGameQuests();}
     basketballSnapshot=snapshot.basketball||null;basketballSelf=snapshot.players[selfId];basketballPlayers=snapshot.players;if(basketballSnapshot?.matchId&&basketballMatchViewId!==basketballSnapshot.matchId){basketballMatchViewId=basketballSnapshot.matchId;if(basketballSelf?.basketballRole!=='spectator'){player.yaw=basketballSelf?.basketballTeam==='away'?Math.PI:0;player.pitch=0;}}localJerseyTeam=basketballSelf?.basketballJersey||null;
-    renderLiveFiringRange(snapshot,selfId);
-    renderServerRadTox(snapshot,selfId);toxicBubbleSystem.updateHud();matchResults.render(snapshot,selfId);
+    renderLiveFiringRange(snapshot,selfId);renderServerRadTox(snapshot,selfId);toxicBubbleSystem.updateHud();matchResults.render(snapshot,selfId);
+
     const visiblePlayers=new Set();for(const [id,peer]of Object.entries(snapshot.players)){if(id===selfId)continue;visiblePlayers.add(id);let root=serverPlayerRoots.get(id);if(!root){root=new THREE.Group();const body=peer.basketballAI?createBasketballAIAvatar(THREE,peer.basketballNumber):new THREE.Mesh(new THREE.CapsuleGeometry(.3,1.1,4,8),new THREE.MeshStandardMaterial({color:0x63eaff}));if(!peer.basketballAI)body.position.y=.85;root.add(body);root.add(liveLabel(root,{username:peer.username,message:peer.health+' health'}));scene.add(root);serverPlayerRoots.set(id,root);root.userData.serverBody=body;}const generation=worldLoadGeneration;syncServerAvatar({THREE,root,peer,loader:avatarLoader,prepare:prepareAuthoredBuilderModel,isCurrent:()=>generation===worldLoadGeneration&&serverPlayerRoots.get(id)===root});targetServerPlayer(root,peer);setBasketballJersey(THREE,root,peer.basketballJersey||null,{body:peer.basketballAI?root.userData.serverBody:undefined,number:peer.basketballNumber});root.userData.basketballAI=peer.basketballAI;root.userData.basketballWalking=Boolean(peer.input?.forward);const labelText=isBasketballEnvironment(activeEnvironment)?peer.basketballRole==='spectator'?'Spectator':`${peer.basketballTeam==='away'?'Away':'Home'} · ${peer.basketballPoints||0} pts`:peer.health<=0?'DEFEATED':`${Math.ceil(peer.health)}% · ${peer.hitsRemaining??hitsRemaining(peer.health)}/45 hits left`;if(root.userData.serverHealthLabel!==labelText){const old=root.getObjectByName('Live_player_label');if(old){old.removeFromParent();old.material.map?.dispose();old.material.dispose();}root.add(liveLabel(root,{username:peer.username,message:labelText,color:peer.health<=0?'#ff637d':'#9cff00'}));root.userData.serverHealthLabel=labelText;}}
     for(const [id,root]of serverPlayerRoots)if(!visiblePlayers.has(id)){disposeProjection(root);serverPlayerRoots.delete(id);}
     projectSharedBuildings({THREE,system:toxicBubbleSystem,records:snapshot.objects,create:id=>createBuildingBlock(THREE,id)});
@@ -773,6 +811,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       return generation===worldLoadGeneration&&client===authoritativeClient;
     }
     if(isBasketballEnvironment(activeEnvironment)){toxicBubbleSystem.active=false;toxicBubbleSystem.state=RAD_TOX_STATES.ACTIVE;setStatus('Basketball Arena ready — choose a team and press Start game.');return true;}
+
     if(!serverHostedRoom)return soloBegin();
     if(!authoritativeClient?.ready)throw new Error('Join the game server before starting RAD-TOX.');
     toxicBubbleSystem.initAudio();
@@ -786,7 +825,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     toxicBubbleSystem.active=true;
     toxicBubbleSystem.updateHud();
   };
-  for(const name of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt']){const original=toxicBubbleSystem[name]?.bind(toxicBubbleSystem);if(original)toxicBubbleSystem[name]=(...args)=>{if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active)return basketballAction('basketball-shoot');if(!serverHostedRoom)return original(...args);if(toxicBubbleSystem.tool==='brick')return toxicBubbleSystem.placeBrick();if(ownedPlacement.active)return ownedPlacement.confirm();return serverCommand('fire',{tool:toxicBubbleSystem.tool,direction:sharedRangeAim(name,args),eyeHeight:player.eyeHeight,color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex});};}
+  for(const name of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt']){const original=toxicBubbleSystem[name]?.bind(toxicBubbleSystem);if(original)toxicBubbleSystem[name]=(...args)=>{if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active){if(!['handlePointerInteraction','handleXRInteraction'].includes(name))return false;if(name==='handlePointerInteraction'&&isTopDownView()&&!args[1]?.centre){const event=args[0],rect=canvas.getBoundingClientRect();if(Number.isFinite(event?.clientX)&&Number.isFinite(event?.clientY))aimTopDownPointer(new THREE.Vector2(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1));}return basketballTrigger();}if(name==='handlePointerInteraction'&&isTopDownView()&&!args[1]?.centre){const event=args[0],rect=canvas.getBoundingClientRect();if(Number.isFinite(event?.clientX)&&Number.isFinite(event?.clientY))aimTopDownPointer(new THREE.Vector2(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1));args=[{},{centre:true}];}if(!serverHostedRoom)return original(...args);if(toxicBubbleSystem.tool==='brick')return toxicBubbleSystem.placeBrick();if(ownedPlacement.active)return ownedPlacement.confirm();const direction=name==='handleXRInteraction'&&args[0]?new THREE.Vector3(0,0,-1).applyQuaternion(args[0].getWorldQuaternion(new THREE.Quaternion())):camera.getWorldDirection(new THREE.Vector3());return serverCommand('fire',{tool:toxicBubbleSystem.tool,direction:sharedRangeAim(name,args),eyeHeight:player.eyeHeight,color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex});};}
+
   async function createOwnedPreview(asset){
     let root;
     if(asset.materialId)root=createBuildingBlock(THREE,asset.materialId);
@@ -799,7 +839,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     return anchorServerAsset(THREE,root);
   }
   const ownedPlacement=new OwnedItemPlacement({THREE,scene,canvas,stage,createPreview:createOwnedPreview,announce:setStatus,
-    pointAt:pointer=>{const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(pointer.x,pointer.y),camera);const surfaces=envLoader.floorMeshes?.length?envLoader.floorMeshes:toxicBubbleSystem.environmentSurfaces();const hit=ray.intersectObjects(surfaces,true).find(hit=>hit.distance<=18&&(!hit.face||hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y>.45));if(hit)return hit.point.clone().add(new THREE.Vector3(0,.02,0));const origin=camera.getWorldPosition(new THREE.Vector3()),direction=camera.getWorldDirection(new THREE.Vector3());return floorPointAt(origin.addScaledVector(direction,3));},
+    pointAt:pointer=>{const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(pointer.x,pointer.y),displayCamera());const surfaces=envLoader.floorMeshes?.length?envLoader.floorMeshes:toxicBubbleSystem.environmentSurfaces();const hit=ray.intersectObjects(surfaces,true).find(hit=>(isTopDownView()?hit.point.distanceTo(playerRig.position):hit.distance)<=18&&(!isTopDownView()||visibleOverviewHit(hit))&&(!hit.face||hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y>.45));if(hit)return hit.point.clone().add(new THREE.Vector3(0,.02,0));const origin=camera.getWorldPosition(new THREE.Vector3()),direction=camera.getWorldDirection(new THREE.Vector3());return floorPointAt(origin.addScaledVector(direction,3));},
     save:async(asset,placement,existing,preview,requestId)=>{
       if(serverHostedRoom){
         if(!authoritativeClient?.ready)throw Error('Reconnect to the multiplayer room before locking this item.');
@@ -907,7 +947,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const XR_TOOL_ORDER = Object.freeze(['laser', 'pulse-rifle', 'flamethrower', 'rail-cannon', 'spray', 'bat', 'taser', 'toxin', 'dynamite', 'brick', ...Object.keys(EXTRA_WEAPONS),...Object.keys(UTILITY_TOOLS)]);
   function pulseXRController(controller, strength = .35, duration = 40) { controller.userData.inputSource?.gamepad?.hapticActuators?.[0]?.pulse?.(strength, duration).catch?.(() => {}); }
   function createXRAimRay() { const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -7)]); const material = new THREE.LineBasicMaterial({ color: 0xcaff49, transparent: true, opacity: .82, depthTest: false }); const ray = new THREE.Line(geometry, material); ray.name = 'MUZIKAZ_XR_AIM_RAY'; ray.renderOrder = 50; return ray; }
-  function movePlayerTo(point) { const aligned = alignSpawnToCurrentFloor(point.clone()); player.velocity.set(0, 0, 0); player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(aligned.x, aligned.y + player.radius, aligned.z), new THREE.Vector3(aligned.x, aligned.y + player.height, aligned.z), player.radius); playerRig.position.copy(aligned); updateLandingFrame(aligned); }
+  function movePlayerTo(point) { const aligned = alignSpawnToCurrentFloor(point.clone()); player.velocity.set(0, 0, 0); player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(aligned.x, aligned.y + player.radius, aligned.z), new THREE.Vector3(aligned.x, aligned.y + player.height, aligned.z), player.radius); playerRig.position.copy(aligned); localGroundViewY=aligned.y; updateLandingFrame(aligned); }
   function teleportFromController(controller) {if(serverHostedRoom){setStatus('Use movement controls; unrestricted local teleport is disabled in shared rooms.');return false;} if (!envLoader.world || !envLoader.floorMeshes.length) return false; const origin = controller.getWorldPosition(new THREE.Vector3()); const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.getWorldQuaternion(new THREE.Quaternion())).normalize(); teleportRay.set(origin, direction); const hit = teleportRay.intersectObjects(envLoader.floorMeshes, true).find(item => { const normal = item.face?.normal.clone().transformDirection(item.object.matrixWorld); return normal?.y > .5; }); if (!hit) { setStatus('Teleport aim needs a verified collision floor. Point the right controller at the ground and squeeze.'); pulseXRController(controller, .15, 25); return false; } movePlayerTo(hit.point.add(XR_TELEPORT_OFFSET)); pulseXRController(controller, .55, 55); setStatus('Teleported. Aim with either controller trigger to use the selected RAD-TOX tool.'); return true; }
   function cycleXRTool(controller) { const next = XR_TOOL_ORDER[(XR_TOOL_ORDER.indexOf(toxicBubbleSystem.tool) + 1) % XR_TOOL_ORDER.length]; toxicBubbleSystem.setTool(next); pulseXRController(controller, .25, 25); setStatus(`${next === 'spray' ? 'Paint gun' : next === 'bat' ? 'Baseball bat' : next === 'taser' ? 'Taser' : next === 'toxin' ? 'Toxins Thrower' : next === 'dynamite' ? 'Dynamite' : next === 'brick' ? 'Brick Layer' : 'Laser'} selected. Use either controller trigger to aim and use it.`); }
 
@@ -915,13 +955,32 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function syncZoomControls() { viewControls.querySelector('output').textContent = `Zoom ${zoomPercent()}%`; }
   function setZoom(fov, announce = true) { player.zoom = THREE.MathUtils.clamp(Number(fov) || player.zoom, 32, 92); camera.fov = firingRangeScopeFov(player.zoom,liveRangeHud?.scope()); camera.updateProjectionMatrix(); syncZoomControls(); if (announce) setStatus(`Zoom ${zoomPercent()}% · ${scrollZoomEnabled ? 'scroll wheel zooms' : 'scroll wheel passes through'} the GLB house view.`); }
   function applyZoom(deltaY) { setZoom(player.zoom + Math.sign(deltaY) * 2); }
-  function applySpaceScale(scale, { keepPlayer = true } = {}) { if(serverHostedRoom){setStatus('Shared world size is fixed for every player.');return;} const next = THREE.MathUtils.clamp(Math.round((Number(scale) || 1) * 10) / 10, 0.1, 100); if (!envLoader.world) return; const previous = currentSpaceScale || 1; const ratio = next / previous; const base = playerCollider.end.clone(); base.y -= player.height; const result = envLoader.setSpaceScale(next); if (!result) return; currentSpaceScale = result.scale; if (activeEnvironment) activeEnvironment.spaceScale = currentSpaceScale; if (keepPlayer) { const nextBase = base.multiplyScalar(ratio); playerCollider.translate(nextBase.sub(playerRig.position)); playerRig.position.copy(nextBase.add(new THREE.Vector3(0, 0, 0))); } scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; setStatus(`Space size set to ${currentSpaceScale.toFixed(1)}x. Use +/− for 0.1x steps, up to 100x.`); toxicBubbleSystem.handleSpaceScaleChanged(); }
+  function applySpaceScale(scale, { keepPlayer = true } = {}) {
+    if(serverHostedRoom){setStatus('Shared world size is fixed for every player.');return;}
+    const next=THREE.MathUtils.clamp(Math.round((Number(scale)||1)*10)/10,.1,100);
+    if(!envLoader.world)return;
+    const previous=currentSpaceScale||1,ratio=next/previous;
+    const base=playerCollider.start.clone();base.y-=player.radius;
+    const result=envLoader.setSpaceScale(next);
+    if(!result)return;
+    currentSpaceScale=result.scale;
+    if(activeEnvironment)activeEnvironment.spaceScale=currentSpaceScale;
+    if(keepPlayer){
+      const nextBase=base.clone().multiplyScalar(ratio),translation=nextBase.clone().sub(base);
+      playerCollider.translate(translation);playerRig.position.copy(nextBase);localGroundViewY=nextBase.y;
+    }
+    scaleControl.querySelector('input').value=currentSpaceScale.toFixed(1);
+    scaleControl.querySelector('output').textContent=`${currentSpaceScale.toFixed(1)}x`;
+    setStatus(`Space size set to ${currentSpaceScale.toFixed(1)}x. Use +/− for 0.1x steps, up to 100x.`);
+    toxicBubbleSystem.handleSpaceScaleChanged();
+  }
   function alignSpawnToCurrentFloor(spawn) { return envLoader.floorMeshes.length ? alignPointAboveFloor(spawn.clone(), envLoader.floorMeshes, envLoader.bounds, player.height, FLOOR_ENTRY_OFFSET) : spawn.clone(); }
   function updateLandingFrame(spawn) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); landingFrame.clear(); const ring = new THREE.Mesh(new THREE.RingGeometry(.52, .72, 48), new THREE.MeshBasicMaterial({ color: 0x9cff00, side: THREE.DoubleSide, transparent: true, opacity: .88 })); ring.rotation.x = -Math.PI / 2; ring.position.set(alignedSpawn.x, alignedSpawn.y + .018, alignedSpawn.z); const grid = new THREE.GridHelper(1.55, 4, 0x9cff00, 0x477400); grid.position.set(alignedSpawn.x, alignedSpawn.y + .022, alignedSpawn.z); grid.material.transparent = true; grid.material.opacity = .62; landingFrame.add(ring, grid); }
-  function resetPlayer(spawn = player.spawn, rotationY = player.yaw) { const alignedSpawn = alignSpawnToCurrentFloor(spawn); player.spawn.copy(alignedSpawn); lastSafePlayerPosition.copy(alignedSpawn); hasSafePlayerPosition = true; floorLockCooldown = .35; player.velocity.set(0,0,0); player.yaw = rotationY || 0; player.pitch = 0; player.eyeHeight = player.height; player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.radius, alignedSpawn.z), new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.height, alignedSpawn.z), player.radius); playerRig.position.copy(alignedSpawn); playerRig.rotation.set(0, player.yaw, 0); camera.position.set(0, renderer.xr.isPresenting ? 0 : player.eyeHeight, 0); camera.rotation.set(0,0,0); updateLandingFrame(alignedSpawn); }
+  function resetPlayer(spawn = player.spawn, rotationY = player.yaw) { topDownAimTarget=null; const alignedSpawn = alignSpawnToCurrentFloor(spawn); player.spawn.copy(alignedSpawn); localGroundViewY=alignedSpawn.y; player.velocity.set(0,0,0); player.yaw = rotationY || 0; player.pitch = 0; player.eyeHeight = player.height; player.onGround = false; playerCollider = new Capsule(new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.radius, alignedSpawn.z), new THREE.Vector3(alignedSpawn.x, alignedSpawn.y + player.height, alignedSpawn.z), player.radius); playerRig.position.copy(alignedSpawn); playerRig.rotation.set(0, player.yaw, 0); camera.position.set(0, renderer.xr.isPresenting ? 0 : player.eyeHeight, 0); camera.rotation.set(0,0,0); updateLandingFrame(alignedSpawn); }
   async function loadNextEnvironment() { if(activeEnvironment?.memberPlot||activeEnvironment?.builderScene)return loadById(activeEnvironment.id);const worlds = registry.all(); if (!worlds.length) return; const scriptedWorld = registry.find(LEVEL_WORLD_IDS[toxicBubbleSystem.level]); const currentIndex = Math.max(0, worlds.findIndex((world) => world.id === activeEnvironment?.id)); const next = scriptedWorld || worlds[(currentIndex + 1) % worlds.length]; setStatus(`Environment clear — traveling to ${next.name}.`); await loadById(next.id); }
 
-  async function loadById(id, { meetingId=null } = {}) { const env = registry.find(id); if (!env) throw new Error('The selected map is unavailable. Retry or choose a map from the world menu.');if(meetingId){const target=new URL(location.href);target.searchParams.set('meet',meetingId);history.replaceState({},'',target);}ownedPlacement.reset();liveRangeHud?.setScope({active:false});liveRangeHud?.close();liveRangeHud?.render(null,null,false);liveRangeSnapshot=null;liveRangeSelfId=null;liveRangeViewKey=null;stage.classList.remove('firing-range-active-area');rangeScenes.clear();rangeFeedback.reset();if(gameEconomy&&!gameEconomy.owns('tool:'+toxicBubbleSystem.tool))toxicBubbleSystem.setTool('laser');authoritativeClient?.stop();authoritativeClient=null;if(activeEnvironment&&activeEnvironment.id!==env.id){const nextUrl=new URL(location.href);if(meetingId)nextUrl.searchParams.set('meet',meetingId);else nextUrl.searchParams.delete('meet');history.replaceState({},'',nextUrl);}for(const root of serverPlayerRoots.values())disposeProjection(root);serverPlayerRoots.clear();clearServerRadTox();serverPlayerInitialized=false;serverMotion.reset();walkingMotion.reset();stickSprinting=false;camera.position.x=camera.position.z=0;renderedStreetRevision=-1;serverAssetLoads.clear();serverAssetRetryAt.clear();serverActors={};if(isFiringRangeEnvironment(env))guestSolo=false;serverHostedRoom=!guestSolo; const loadGeneration=++worldLoadGeneration; multiplayerWorldLoading=true;envLoader.unload();clearBuilderDecor(); seatedBuilderObject=null; builderGameplay.player.seatedObjectId=null; stopRangeCourse();rangeOpsButton.hidden=true;showRangeOps(false); const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete ${env.builderScene||env.proceduralLand?'builder land':'GLB world'}…`); try { const result = await envLoader.load(env); if (!result || loadGeneration !== worldLoadGeneration) return; activeEnvironment=env;resetBasketballWorld(env);const hubButton=document.querySelector('#house-outside-button');if(hubButton){const label=outsideLabel(env.id,outsideReturnId);hubButton.querySelector('span').textContent=label;hubButton.title=label;hubButton.setAttribute('aria-label',label);}const builderRuntime=loadBuilderDecor(env);rangeScenes.refresh();if(serverHostedRoom){toxicBubbleSystem.clearBricks();toxicBubbleSystem.toggleSharedDoor=root=>toggleBuildingObject(root);} currentSpaceScale = result.scale; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; const spawn=builderRuntime?.worldSpawn||result.spawn;activeWorldSpawn={position:spawn.position.clone(),rotationY:Number(spawn.rotationY)||0};resetPlayer(activeWorldSpawn.position,activeWorldSpawn.rotationY); const previousRoom=window.MUZIKAZ_HOUSE_TRACKING?.roomId; window.MUZIKAZ_HOUSE_TRACKING={...(window.MUZIKAZ_HOUSE_TRACKING||{}),roomId:env.id,position:{x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z},rotation:{y:player.yaw}}; localStorage.setItem('muzikazMultiplayerWorld',env.id); if(previousRoom!==env.id)window.dispatchEvent(new CustomEvent('muzikaz:multiplayer-world-change',{detail:{roomId:env.id,name:env.name}})); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. ${builderRuntime?`${builderRuntime.objectCount} builder objects and ${builderRuntime.actorCount} gameplay actors deployed. `:''}Press Start game or click the canvas to walk.`); const isFiringRange=firingRangeLocations(env).length>0;rangeOpsButton.hidden=serverHostedRoom||!isFiringRange;if(isFiringRange&&!serverHostedRoom){resetRangeReadout();showRangeOps(true);} const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source, builderRuntime }); if(gameplayStarted){await startRoomGameplay();await toxicBubbleSystem.begin();} await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { if(loadGeneration!==worldLoadGeneration)return;console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); throw error; } finally { if(loadGeneration===worldLoadGeneration)multiplayerWorldLoading=false; } }
+  async function loadById(id, { meetingId=null } = {}) { id=canonicalWorldId(id);const env = registry.find(id); if (!env) throw new Error('The selected map is unavailable. Retry or choose a map from the world menu.');if(isArcadeMap(env)){const arcadeUrl=new URL('arcade.html',location.href);arcadeUrl.searchParams.set('environment',env.id);arcadeUrl.searchParams.set('mode',new URL(location.href).searchParams.get('mode')||'multiplayer');const only=env.arcade?.enabled;if(only?.length===1)arcadeUrl.searchParams.set('attraction',only[0]);location.assign(arcadeUrl.href);return;}if(isHockeyMap(env)){const hockeyUrl=new URL('hockey.html',location.href);hockeyUrl.searchParams.set('environment',env.id);hockeyUrl.searchParams.set('mode',new URL(location.href).searchParams.get('mode')||'multiplayer');location.assign(hockeyUrl.href);return;}if(meetingId){const target=new URL(location.href);target.searchParams.set('meet',meetingId);history.replaceState({},'',target);}ownedPlacement.reset();liveRangeHud?.setScope({active:false});liveRangeHud?.close();liveRangeHud?.render(null,null,false);liveRangeSnapshot=null;liveRangeSelfId=null;liveRangeViewKey=null;stage.classList.remove('firing-range-active-area');rangeScenes.clear();rangeFeedback.reset();if(gameEconomy&&!gameEconomy.owns('tool:'+toxicBubbleSystem.tool))toxicBubbleSystem.setTool('laser');authoritativeClient?.stop();authoritativeClient=null;if(activeEnvironment&&activeEnvironment.id!==env.id){const nextUrl=new URL(location.href);if(meetingId)nextUrl.searchParams.set('meet',meetingId);else nextUrl.searchParams.delete('meet');history.replaceState({},'',nextUrl);}for(const root of serverPlayerRoots.values())disposeProjection(root);serverPlayerRoots.clear();clearServerRadTox();serverPlayerInitialized=false;serverMotion.reset();walkingMotion.reset();stickSprinting=false;camera.position.x=camera.position.z=0;renderedStreetRevision=-1;serverAssetLoads.clear();serverAssetRetryAt.clear();serverActors={};if(isFiringRangeEnvironment(env))guestSolo=false;serverHostedRoom=!guestSolo; const loadGeneration=++worldLoadGeneration; multiplayerWorldLoading=true;envLoader.unload();clearBuilderDecor(); seatedBuilderObject=null; builderGameplay.player.seatedObjectId=null; stopRangeCourse();rangeOpsButton.hidden=true;showRangeOps(false); const level = toxicBubbleSystem.level; showLevelLoader(level, `Loading ${env.name} and staging the next encounter…`); toxicBubbleSystem.handleEnvironmentWillChange(); currentSpaceScale = THREE.MathUtils.clamp(Number(env.spaceScale) || 1, 0.1, 100); loadingMeter.hidden = false; setStatus(`Loading ${env.name} as a complete ${env.builderScene||env.proceduralLand?'builder land':'GLB world'}…`); try { const result = await envLoader.load(env); if (!result || loadGeneration !== worldLoadGeneration) return; activeEnvironment=env;resetBasketballWorld(env);const hubButton=document.querySelector('#house-outside-button');if(hubButton){const label=outsideLabel(env.id,outsideReturnId);hubButton.querySelector('span').textContent=label;hubButton.title=label;hubButton.setAttribute('aria-label',label);}const builderRuntime=loadBuilderDecor(env);rangeScenes.refresh();if(serverHostedRoom){toxicBubbleSystem.clearBricks();toxicBubbleSystem.toggleSharedDoor=root=>toggleBuildingObject(root);} currentSpaceScale = result.scale; updateLevelLoader(92, 'Placing you at the safe entry point…'); scaleControl.querySelector('input').value = currentSpaceScale.toFixed(1); scaleControl.querySelector('output').textContent = `${currentSpaceScale.toFixed(1)}x`; loadingMeter.hidden = true; const spawn=builderRuntime?.worldSpawn||result.spawn;activeWorldSpawn={position:spawn.position.clone(),rotationY:Number(spawn.rotationY)||0};resetPlayer(activeWorldSpawn.position,activeWorldSpawn.rotationY); const previousRoom=window.MUZIKAZ_HOUSE_TRACKING?.roomId; window.MUZIKAZ_HOUSE_TRACKING={...(window.MUZIKAZ_HOUSE_TRACKING||{}),roomId:env.id,position:{x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z},rotation:{y:player.yaw}}; localStorage.setItem('muzikazMultiplayerWorld',env.id); if(previousRoom!==env.id)window.dispatchEvent(new CustomEvent('muzikaz:multiplayer-world-change',{detail:{roomId:env.id,name:env.name}})); walkButton.textContent = 'Game ready'; walkButton.setAttribute('aria-pressed', 'true'); setStatus(`Ready: ${env.name}. ${builderRuntime?`${builderRuntime.objectCount} builder objects and ${builderRuntime.actorCount} gameplay actors deployed. `:''}Press Start game or click the canvas to walk.`); const isFiringRange=firingRangeLocations(env).length>0;rangeOpsButton.hidden=serverHostedRoom||!isFiringRange;if(isFiringRange&&!serverHostedRoom){resetRangeReadout();showRangeOps(true);} const url = new URL(location.href); url.searchParams.set('environment', env.id); url.searchParams.set('house', env.id); history.replaceState({}, '', url); renderLibrary(); logEnvironment('Loaded world', { id: env.id, source: env.source, builderRuntime }); if(gameplayStarted){await startRoomGameplay();await toxicBubbleSystem.begin();} await toxicBubbleSystem.handleEnvironmentReady(env); hideLevelLoader(); } catch (error) { if(loadGeneration!==worldLoadGeneration)return;console.error('[MUZIKAZ Environment]', error); loadingMeter.hidden = true; if (levelLoaderMessage) levelLoaderMessage.textContent = error.message || 'Unable to load this level.'; window.setTimeout(hideLevelLoader, 900); setStatus(error.message || `Unable to load ${env.name}.`); throw error; } finally { if(loadGeneration===worldLoadGeneration)multiplayerWorldLoading=false; } }
+
   let cachedAvatars = [];
   let cachedCatalogModels = [];
   let backpackAssets = [];
@@ -1149,7 +1208,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if(asset?.materialId){toxicBubbleSystem.setBrickMaterial(asset.materialId);return stageOwnedItem(asset);}
     if(asset&&!asset.basic&&!asset.customItem&&!asset.ownedBuilder){const sku=gameEconomy?.skuForAsset(asset);if(!sku){setStatus('Purchase this item in the Marketplace before using it.');return false;}const payment=await gameEconomy.use(sku);if(!payment.ok)return false;}
     if (!asset?.id) { setStatus('This Backpack item is missing its game identity and could not be used.'); return false; }
-    if (asset.type === 'lands') { closeBackpack(); rememberActiveBackpackItem(asset); if (asset.builderLayoutId) { deployPlayableLandLayout(asset); setStatus(`${asset.name} opened inside ${activeEnvironment?.name||'the current environment'} as a walkable 3D map.`); return true; } await loadById(asset.environmentId || asset.id); return true; }
+    if (asset.type === 'lands') { closeBackpack(); rememberActiveBackpackItem(asset); if(asset.builderLayoutId==='arcade-park'){await loadById('neon-junction');return true;}if(asset.builderLayoutId==='hockey-arena'){await loadById('hockey-arena');return true;} if (asset.builderLayoutId) { deployPlayableLandLayout(asset); setStatus(`${asset.name} opened inside ${activeEnvironment?.name||'the current environment'} as a walkable 3D map.`); return true; } await loadById(asset.environmentId || asset.id); return true; }
     if (asset.petId && asset.consumable) { feedTreatToPet(asset); return; }
     if (asset.id === 'rad-tox-dynamite') { closeBackpack(); toxicBubbleSystem.setTool('dynamite'); openTools(); rememberActiveBackpackItem(asset); setStatus('RAD-TOX Dynamite is open and visible in your hand — click, tap, or squeeze the trigger to toss it. Each throw costs 25 MZK.'); return true; }
     if (asset.buildAssetId) { closeBackpack(); deployPlayableBuilderAsset(asset); rememberActiveBackpackItem(asset); setStatus(`${asset.name} popped out of your Backpack and is now playable in ${activeEnvironment?.name||'the game'}.`); return true; }
@@ -1291,7 +1350,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function normalizeAvatarRecord(raw = {}) { const modelUrl = raw.modelUrl || raw.model_url || raw.fileUrl || raw.file_url || raw.assetUrl || raw.asset_url || raw.avatarUrl || raw.publicUrl || ''; const id = raw.id || raw.avatarId || raw.modelId || btoa(unescape(encodeURIComponent(modelUrl || raw.name || Date.now()))).replace(/=+$/,''); return { id, name: raw.name || raw.avatarName || raw.title || 'GLB Avatar', owner: raw.owner || raw.creatorName || raw.creator || raw.username || 'MUZIKAZ', modelUrl:modelUrl?new URL(modelUrl, window.location.origin).href:'', format: String(raw.format || raw.fileType || raw.type || modelUrl.split('?')[0].split('.').pop() || '').toLowerCase(), type: raw.type || '', placementType: raw.placementType || raw.placement_type || '', category: raw.category || '', visibility: raw.visibility || 'public', status: raw.status || 'active', scale: Number(raw.scale) || 1, rotation: raw.rotation }; }
   function isActiveGlbAvatar(avatar) { const type=String(avatar.placementType).toLowerCase(); const category=String(avatar.category).toLowerCase(); return avatar.modelUrl && ['glb','gltf'].includes(avatar.format) && (!type || type === 'avatar') && !category.includes('map') && avatar.visibility !== 'private' && !['archived','rejected','disabled','inactive'].includes(String(avatar.status).toLowerCase()); }
   async function fetchActiveAvatarModels() { const sources = [fetch(new URL('public/models/glb-models.json', window.location.origin), { cache:'no-store' }).then(r => r.ok ? r.json() : null).then(j => Array.isArray(j) ? j : (j?.models || [])), fetch('/api/models', { cache:'no-store' }).then(r => r.ok ? r.json() : null).then(j => Array.isArray(j) ? j : (j?.data || j?.models || [])).catch(() => [])]; const lists = await Promise.all(sources.map(p => p.catch(() => []))); let records = lists.flat(); try { records = mergeGitHubAvatarFiles(records, await fetchGitHubGlbFiles()); } catch (error) { console.info('[MUZIKAZ GitHub GLB] Avatar discovery unavailable; using catalog and API models.', error.message); } const allByModel = new Map(); records.filter(record=>record?.modelUrl).forEach(record=>allByModel.set(modelIdentity(record.modelUrl),record)); cachedCatalogModels=[...allByModel.values()]; const byId = new Map(); records.filter(record=>backpackType(record)==='avatars').map(normalizeAvatarRecord).filter(isActiveGlbAvatar).forEach(a => byId.set(a.id, a)); return [...byId.values()]; }
-  function setAvatarPointerFromEvent(event) { const rect = canvas.getBoundingClientRect(); avatarPointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1; avatarPointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1; avatarRaycaster.setFromCamera(avatarPointer, camera); return avatarRaycaster.intersectObjects(envLoader.meshes, true)[0]?.point || playerRig.position.clone().add(forward.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).multiplyScalar(2)); }
+  function setAvatarPointerFromEvent(event) { const rect = canvas.getBoundingClientRect(); avatarPointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1; avatarPointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1; avatarRaycaster.setFromCamera(avatarPointer, displayCamera()); return avatarRaycaster.intersectObjects(envLoader.meshes, true).find(hit=>!isTopDownView()||visibleOverviewHit(hit))?.point || playerRig.position.clone().add(forward.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).multiplyScalar(2)); }
   function floorPointAt(point) { const bounds = envLoader.bounds; const rayOriginY = Number.isFinite(bounds.max.y) ? bounds.max.y + player.height + 8 : point.y + player.height + 8; avatarRaycaster.set(new THREE.Vector3(point.x, rayOriginY, point.z), new THREE.Vector3(0, -1, 0)); return avatarRaycaster.intersectObjects(envLoader.floorMeshes, true).find((item) => { const normal=item.face?.normal.clone().transformDirection(item.object.matrixWorld); return !normal || normal.y > .5; })?.point || point; }
   function floorPointFromPointer(event) { return setAvatarPointerFromEvent(event).clone(); }
   function avatarVisualBounds(root) {
@@ -1333,7 +1392,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char])); }
   function avatarDisplayName(root) { const id = root?.userData?.avatar?.id || root?.name?.replace(/^Avatar_/, '') || 'avatar'; return root?.userData?.avatar?.name || id; }
   function openAvatarMenu(root) {if(serverHostedRoom){setStatus('Shared items are managed by server interactions.');return;} if (!root) return; avatarMenu.innerHTML = `<strong>${escapeHtml(avatarDisplayName(root))}</strong><small>Double-clicked avatar menu. Use these controls to size, rotate, raise, lower, or remove this GLB avatar.</small><div class="glb-avatar-menu-grid"><button type="button" data-avatar-action="scale" data-amount="0.1">Bigger</button><button type="button" data-avatar-action="scale" data-amount="-0.1">Smaller</button><button type="button" data-avatar-action="rotate" data-amount="-0.2">Rotate Left</button><button type="button" data-avatar-action="rotate" data-amount="0.2">Rotate Right</button><button type="button" data-avatar-action="height" data-amount="0.12">Raise</button><button type="button" data-avatar-action="height" data-amount="-0.12">Lower</button></div><button type="button" class="secondary" data-avatar-action="remove">Remove avatar</button><button type="button" class="secondary" data-avatar-action="close">Close menu</button>`; avatarMenu.hidden = false; avatarMenu.onclick = (event) => { const button = event.target.closest('button[data-avatar-action]'); if (!button) return; const amount = Number(button.dataset.amount) || 0; if (button.dataset.avatarAction === 'scale') { const floorPoint = root.position.clone(); floorPoint.y -= root.userData.floorLiftOffset ?? FLOOR_ENTRY_OFFSET; root.scale.multiplyScalar(THREE.MathUtils.clamp(1 + amount, .1, 3)); liftObjectAboveFloor(root, floorPoint); addAvatarCollider(root); } if (button.dataset.avatarAction === 'rotate') root.rotation.y += amount; if (button.dataset.avatarAction === 'height') { root.position.y += amount; root.userData.floorLiftOffset = (root.userData.floorLiftOffset || FLOOR_ENTRY_OFFSET) + amount; } if (button.dataset.avatarAction === 'remove') { placedAvatars.remove(root); closeAvatarMenu(); } if (button.dataset.avatarAction === 'close') closeAvatarMenu(); }; setStatus(`${avatarDisplayName(root)} menu open. Adjust it or close the menu to keep walking.`); }
-  function findPlacedAvatarFromEvent(event) {if(serverHostedRoom)return null; setAvatarPointerFromEvent(event); const hit = avatarRaycaster.intersectObjects(placedAvatars.children, true)[0]; if (!hit) return null; let root = hit.object; while (root?.parent && root.parent !== placedAvatars) root = root.parent; return root?.parent === placedAvatars ? { root, point: hit.point } : null; }
+  function findPlacedAvatarFromEvent(event) {if(serverHostedRoom)return null; setAvatarPointerFromEvent(event); const hit = avatarRaycaster.intersectObjects(placedAvatars.children, true).find(hit=>!isTopDownView()||visibleOverviewHit(hit)); if (!hit) return null; let root = hit.object; while (root?.parent && root.parent !== placedAvatars) root = root.parent; return root?.parent === placedAvatars ? { root, point: hit.point } : null; }
   function choosePetDestination(root) {
     const visitors = [...liveAvatarRoots.values()];
     const cycle = root.userData.petTravel.cycle++ % 4;
@@ -1423,10 +1482,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     }
     return { worlds, avatars, worldError: worldResult.reason, avatarError: avatarResult.reason };
   }
-  window.MuzikazHouseExplorer = { checkForUpdates: checkForHouseUpdates };
+  window.MuzikazHouseExplorer = { checkForUpdates: checkForHouseUpdates, snapshot:()=>({cameraMode:isTopDownView()?'top-down':'first-person',preferredCameraMode:gameCameraMode,player:{position:playerRig.position.toArray(),yaw:player.yaw,pitch:player.pitch},roomId:activeEnvironment?.id||null,serverHostedRoom,gameplayStarted,serverReady:Boolean(authoritativeClient?.ready),serverSelfId:authoritativeClient?.selfId||null,serverPlayerInitialized,vehicleActive:Boolean(vehicleController.active),seated:Boolean(seatedBuilderObject||builderGameplay.player.seatedObjectId),xrPresenting:renderer.xr.isPresenting,renderCamera:{position:displayCamera().getWorldPosition(new THREE.Vector3()).toArray(),direction:displayCamera().getWorldDirection(new THREE.Vector3()).toArray()},indicatorVisible:playerIndicator.visible,cutaway:renderer.clippingPlanes.length>0,aim:topDownAimTarget?.toArray()||null,world:{cleanSportsWorld:Boolean(envLoader.world?.userData.cleanSportsWorld),slimeFloor:Boolean(envLoader.floorSlime),streets:Boolean(envLoader.world?.getObjectByName('SERVER_STREETS')),basketballSourceCommit:activeEnvironment?.sourceCommit||null},range:{active:rangeActive,mode:rangeMode,shots:rangeShots,hits:rangeHits,score:rangeScore,remaining:rangeRemaining},tool:toxicBubbleSystem.tool,health:toxicBubbleSystem.health,score:toxicBubbleSystem.score}) };
   window.addEventListener('muzikaz:asset-published', () => checkForHouseUpdates().catch((error) => console.info('[MUZIKAZ Integration]', 'Automatic world/avatar refresh failed', error)));
 
-  function getInput() { stickSprinting=walkingSprint(stickSprinting,Math.hypot(thumbInput.leftX,thumbInput.leftY)); const input = new THREE.Vector2(); if (keys.has('w')||keys.has('arrowup')||mobile.has('forward')) input.y += 1; if (keys.has('s')||keys.has('arrowdown')||mobile.has('back')) input.y -= 1; if (keys.has('a')||keys.has('arrowleft')||mobile.has('left')) input.x -= 1; if (keys.has('d')||keys.has('arrowright')||mobile.has('right')) input.x += 1; input.x += thumbInput.leftX; input.y -= thumbInput.leftY; const session = renderer.xr.getSession(); if (session) for (const source of session.inputSources) { const axes = source.gamepad?.axes || []; const ax = Number(axes[2] ?? axes[0] ?? 0), ay = Number(axes[3] ?? axes[1] ?? 0); if (source.handedness === 'left') { input.x += Math.abs(ax) > .15 ? ax : 0; input.y += Math.abs(ay) > .15 ? -ay : 0; } if (source.handedness === 'right') { if (Math.abs(ax) > .72 && turnReady) { player.yaw -= Math.sign(ax) * Math.PI / 6; turnReady = false; } else if (Math.abs(ax) < .25) turnReady = true; } } return input.lengthSq() > 1 ? input.normalize() : input; }
+  function getMovementInput(){const input=getInput(),adjusted=explorerMovementInput(input,player.yaw,isTopDownView());return input.set(adjusted.x,adjusted.y);}
+  function getInput() { if(xrGameControls?.menuOpen)return new THREE.Vector2();stickSprinting=walkingSprint(stickSprinting,Math.hypot(thumbInput.leftX,thumbInput.leftY)); const input = new THREE.Vector2(); if (keys.has('w')||keys.has('arrowup')||mobile.has('forward')) input.y += 1; if (keys.has('s')||keys.has('arrowdown')||mobile.has('back')) input.y -= 1; if (keys.has('a')||keys.has('arrowleft')||mobile.has('left')) input.x -= 1; if (keys.has('d')||keys.has('arrowright')||mobile.has('right')) input.x += 1; input.x += thumbInput.leftX; input.y -= thumbInput.leftY; const session = renderer.xr.getSession(); if (session) for (const [index,source] of [...session.inputSources].entries()) { const {x:ax,y:ay}=xrStick(source),hand=source.handedness||(index?'right':'left'); if (hand === 'left') { input.x += ax; input.y -= ay; } if (hand === 'right') { if (Math.abs(ax) > .72 && turnReady) { player.yaw -= Math.sign(ax) * Math.PI / 6; turnReady = false; } else if (Math.abs(ax) < .25) turnReady = true; } } return input.lengthSq() > 1 ? input.normalize() : input; }
   // The right look stick is deliberately 25% gentler than its previous turn/look rates.
   const RIGHT_THUMBSTICK_SENSITIVITY = 0.75;
   let jetpackPaidSecondsRemaining = 0;
@@ -1446,48 +1506,71 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     else player.velocity.y = Math.max(player.velocity.y, .8);
     return true;
   }
-  function resolveBrickCollisions(delta) {
-    const bottom = playerCollider.start.y - player.radius;
-    const previousBottom = bottom - player.velocity.y * delta;
-    for (const brick of [...toxicBubbleSystem.bricks, ...toxicBubbleSystem.drawingStrokes]) {
-      if(brick.userData.solid===false)continue;
-      const pieces=[];if(brick.userData.structure)brick.traverse(mesh=>{if(mesh.isMesh&&mesh.visible&&!mesh.userData.collisionDisabled)pieces.push(mesh);});else pieces.push(brick);
-      for(const piece of pieces){
-      const bottom=playerCollider.start.y-player.radius,previousBottom=bottom-player.velocity.y*delta;
-      const box = new THREE.Box3().setFromObject(piece);
-      const x = playerCollider.start.x;
-      const z = playerCollider.start.z;
-      const insideFootprint = x >= box.min.x - player.radius && x <= box.max.x + player.radius && z >= box.min.z - player.radius && z <= box.max.z + player.radius;
-      if (brick.userData.structure&&insideFootprint&&box.max.y-bottom>=0&&box.max.y-bottom<=.32&&player.velocity.y<=0){playerCollider.translate(new THREE.Vector3(0,box.max.y-bottom+.002,0));player.velocity.y=0;player.onGround=true;continue;}
-      if (!insideFootprint || playerCollider.end.y + player.radius < box.min.y || bottom > box.max.y + .12) continue;
-      if (player.velocity.y <= 0 && previousBottom >= box.max.y - .12) {
-        playerCollider.translate(new THREE.Vector3(0, box.max.y - bottom + .002, 0));
-        player.velocity.y = 0;
-        player.onGround = true;
-        continue;
-      }
-      const left = Math.abs(x - (box.min.x - player.radius));
-      const rightEdge = Math.abs((box.max.x + player.radius) - x);
-      const front = Math.abs(z - (box.min.z - player.radius));
-      const back = Math.abs((box.max.z + player.radius) - z);
-      const nearest = Math.min(left, rightEdge, front, back);
-      if (nearest === left) playerCollider.translate(new THREE.Vector3((box.min.x - player.radius) - x, 0, 0));
-      else if (nearest === rightEdge) playerCollider.translate(new THREE.Vector3((box.max.x + player.radius) - x, 0, 0));
-      else if (nearest === front) playerCollider.translate(new THREE.Vector3(0, 0, (box.min.z - player.radius) - z));
-      else playerCollider.translate(new THREE.Vector3(0, 0, (box.max.z + player.radius) - z));
-      }
+  // Map triangles and placed solids feed one controller. Cache transformed
+  // faces until the piece changes; full object boxes would block openings and
+  // create invisible corners around rotated props.
+  function walkingSurfaces(){
+    const groups=[];
+    for(const root of [...toxicBubbleSystem.bricks,...toxicBubbleSystem.drawingStrokes]){
+      if(root.userData.solid===false)continue;
+      root.updateWorldMatrix(true,true);
+      root.traverse(piece=>{
+        const geometry=piece.geometry,positions=geometry?.attributes?.position;
+        if(!piece.isMesh||!positions)return;
+        for(let node=piece;node;node=node.parent)if(!node.visible||node.userData.collisionDisabled||node.userData.solid===false)return;
+        const elements=piece.matrixWorld.elements,cached=walkingSurfaceCache.get(piece),index=geometry.index;
+        if(cached&&cached.geometry===geometry&&cached.version===positions.version&&cached.indexVersion===index?.version&&cached.drawStart===geometry.drawRange.start&&cached.drawCount===geometry.drawRange.count&&elements.every((value,i)=>value===cached.matrix[i])){groups.push(cached.group);return;}
+        const count=index?index.count:positions.count,triangles=[];
+        const end=Math.min(count,geometry.drawRange.start+geometry.drawRange.count);
+        const point=i=>new THREE.Vector3().fromBufferAttribute(positions,index?index.getX(i):i).applyMatrix4(piece.matrixWorld);
+        for(let i=geometry.drawRange.start;i+2<end;i+=3)triangles.push(new THREE.Triangle(point(i),point(i+1),point(i+2)));
+        if(!geometry.boundingBox||cached?.version!==positions.version)geometry.computeBoundingBox();
+        const group={bounds:geometry.boundingBox.clone().applyMatrix4(piece.matrixWorld),triangles};
+        walkingSurfaceCache.set(piece,{matrix:[...elements],geometry,version:positions.version,indexVersion:index?.version,drawStart:geometry.drawRange.start,drawCount:geometry.drawRange.count,group});groups.push(group);
+      });
     }
+    return groups;
   }
-  function updatePlayer(delta) { if(seatedBuilderObject){const seat=playerRig.position;playerCollider.start.copy(seat).add(new THREE.Vector3(0,player.radius,0));playerCollider.end.copy(seat).add(new THREE.Vector3(0,player.height,0));camera.position.set(0,Math.max(.95,player.eyeHeight*.72),0);return;} floorLockCooldown=Math.max(0,floorLockCooldown-delta); player.yaw -= thumbInput.rightX * delta * 2.5 * RIGHT_THUMBSTICK_SENSITIVITY * playerPreferences.touchSensitivity; player.pitch = THREE.MathUtils.clamp(player.pitch - thumbInput.rightY * delta * 1.9 * RIGHT_THUMBSTICK_SENSITIVITY * playerPreferences.touchSensitivity * (playerPreferences.invertLook?-1:1), -1.25, 1.15); const input = getInput(); forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw)); right.set(Math.cos(player.yaw),0,-Math.sin(player.yaw)); move.copy(forward).multiplyScalar(input.y).addScaledVector(right,input.x); const jetpackThrust=useJetpack(delta,input); if (move.lengthSq()) move.multiplyScalar((jetpackThrust&&input.y>0?TOXIC_BUBBLE_CONFIG.jetpackForwardSpeed:walkingSprint(stickSprinting,Math.hypot(thumbInput.leftX,thumbInput.leftY))?6:player.speed) * delta); playerCollider.translate(move); const previousFootY=playerCollider.start.y-player.radius; if (!player.onGround && !jetpackThrust) player.velocity.y -= 18 * delta; playerCollider.translate(new THREE.Vector3(0, player.velocity.y * delta, 0)); const collision = envLoader.octree.capsuleIntersect(playerCollider); player.onGround = false; if (collision) { player.onGround = collision.normal.y > 0; if (player.onGround) player.velocity.y = 0; playerCollider.translate(collision.normal.multiplyScalar(collision.depth)); } if(!player.onGround&&player.velocity.y<=0&&envLoader.floorMeshes.length){const currentFootY=playerCollider.start.y-player.radius,sweepDistance=previousFootY-currentFootY;if(sweepDistance>0){floorSweepRay.set(new THREE.Vector3(playerCollider.start.x,previousFootY+.02,playerCollider.start.z),new THREE.Vector3(0,-1,0));floorSweepRay.far=sweepDistance+.04;const floorHit=floorSweepRay.intersectObjects(envLoader.floorMeshes,true).find(item=>{const normal=item.face?.normal.clone().transformDirection(item.object.matrixWorld);return !normal||normal.y>.5;});if(floorHit){playerCollider.translate(new THREE.Vector3(0,floorHit.point.y+FLOOR_ENTRY_OFFSET-currentFootY,0));player.velocity.y=0;player.onGround=true;}}} resolveBrickCollisions(delta); const base = playerCollider.end.clone(); base.y -= player.height; if(player.onGround){lastSafePlayerPosition.copy(base);hasSafePlayerPosition=true;} const mapFloorLimit=(Number.isFinite(envLoader.bounds.min.y)?envLoader.bounds.min.y:-30)-Math.max(player.height*2,3);const fellThroughWorld=base.y<mapFloorLimit;if(fellThroughWorld&&floorLockCooldown<=0){const recovery=hasSafePlayerPosition?lastSafePlayerPosition:player.spawn;playerCollider.start.set(recovery.x,recovery.y+player.radius,recovery.z);playerCollider.end.set(recovery.x,recovery.y+player.height,recovery.z);player.velocity.set(0,0,0);player.onGround=false;floorLockCooldown=.35;base.copy(recovery);} playerRig.position.copy(base); playerRig.rotation.y = player.yaw; if (!renderer.xr.isPresenting) { camera.position.set(0, player.eyeHeight, 0); camera.rotation.order = 'YXZ'; camera.rotation.set(player.pitch,0,0); } }
+  function updatePlayer(delta) {
+    if(seatedBuilderObject){
+      const seat=playerRig.position;
+      playerCollider.start.copy(seat).add(new THREE.Vector3(0,player.radius,0));
+      playerCollider.end.copy(seat).add(new THREE.Vector3(0,player.height,0));
+      localGroundViewY=seat.y;camera.position.set(0,Math.max(.95,player.eyeHeight*.72),0);return;
+    }
+    if(Math.abs(thumbInput.rightX)+Math.abs(thumbInput.rightY)>.05)topDownAimTarget=null;
+    player.yaw-=thumbInput.rightX*delta*2.5*RIGHT_THUMBSTICK_SENSITIVITY*playerPreferences.touchSensitivity;
+    player.pitch=THREE.MathUtils.clamp(player.pitch-thumbInput.rightY*delta*1.9*RIGHT_THUMBSTICK_SENSITIVITY*playerPreferences.touchSensitivity*(playerPreferences.invertLook?-1:1),-1.25,1.15);
+    const input=getMovementInput();
+    forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw));right.set(Math.cos(player.yaw),0,-Math.sin(player.yaw));
+    move.copy(forward).multiplyScalar(input.y).addScaledVector(right,input.x);
+    const jetpackThrust=useJetpack(delta,input);
+    if(move.lengthSq())move.multiplyScalar((jetpackThrust&&input.y>0?TOXIC_BUBBLE_CONFIG.jetpackForwardSpeed:walkingSprint(stickSprinting,Math.hypot(thumbInput.leftX,thumbInput.leftY))?6:player.speed)*delta);
+    if(!player.onGround&&!jetpackThrust)player.velocity.y-=18*delta;
+    move.y=player.velocity.y*delta;
+    const contact=moveWalkingCapsule(playerCollider,move,{octree:envLoader.octree,triangleGroups:walkingSurfaces(),grounded:player.onGround,verticalVelocity:player.velocity.y,maxStepHeight:.26,floorGap:FLOOR_ENTRY_OFFSET});
+    player.onGround=contact.onGround;player.velocity.y=contact.velocityY;
+    const base=playerCollider.end.clone();base.y-=player.height;
+    // Smooth supported stair height only. The collision capsule stays on the
+    // actual surface; jumps and falls retain their requested vertical motion.
+    if(localGroundViewY===null||!player.onGround||Math.abs(base.y-localGroundViewY)>.35)localGroundViewY=base.y;
+    else localGroundViewY+=(base.y-localGroundViewY)*(1-Math.exp(-20*delta));
+    playerRig.position.set(base.x,localGroundViewY,base.z);playerRig.rotation.y=player.yaw;
+    if(!renderer.xr.isPresenting){camera.position.set(0,player.eyeHeight,0);camera.rotation.order='YXZ';camera.rotation.set(player.pitch,0,0);}
+  }
+
 
   const isTypingTarget = (target) => target instanceof Element && Boolean(target.closest('input, textarea, select, [contenteditable="true"], [role="textbox"]'));
   const setPlayerAvatarVisible=(visible)=>placedAvatars.children.forEach(root=>{if(root.userData.localPlayerAvatar)root.visible=visible;});
-  const vehicleController=new BuilderVehicleController({THREE,vehicles:builderDecor,playerRig,camera,keys,input:()=>({throttle:(mobile.has('forward')?1:0)-(mobile.has('back')?1:0)-thumbInput.leftY,steering:(mobile.has('left')?1:0)-(mobile.has('right')?1:0)-thumbInput.leftX,lift:mobile.has('jump')?1:0}),status:setStatus,onEnter:()=>setPlayerAvatarVisible(false),onExit:(position)=>{setPlayerAvatarVisible(true);playerCollider.start.copy(position);playerCollider.end.copy(position).add(new THREE.Vector3(0,player.height,0));player.velocity.set(0,0,0);}});
+  const vehicleController=new BuilderVehicleController({THREE,vehicles:builderDecor,playerRig,camera,keys,input:()=>({throttle:(mobile.has('forward')?1:0)-(mobile.has('back')?1:0)-thumbInput.leftY,steering:(mobile.has('left')?1:0)-(mobile.has('right')?1:0)-thumbInput.leftX,lift:mobile.has('jump')?1:0}),status:setStatus,onEnter:()=>setPlayerAvatarVisible(false),onExit:(position)=>{setPlayerAvatarVisible(true);playerCollider.start.copy(position).add(new THREE.Vector3(0,player.radius,0));playerCollider.end.copy(position).add(new THREE.Vector3(0,player.height,0));playerRig.position.copy(position);player.velocity.set(0,0,0);player.onGround=false;localGroundViewY=position.y;}});
+
   const localBasketballAIRoots=new Map();
   const localBasketballs=[];let heldBasketball=null,basketballSnapshot=null,basketballSelf=null,basketballPlayers={},basketballMatchViewId=null,localJerseyTeam=null;
   const localBasketballPlayer={actorId:'local',lastSeen:Date.now(),position:{x:0,y:0,z:0},yaw:0,health:100,heldId:null,basketballTeam:'home',inventory:[]};
   let localBasketballSim={actors:{},players:{local:localBasketballPlayer},events:[]};
-  const basketballHud=mountBasketballHud({stage,onAction:basketballAction,announce:setStatus});
+  let basketballTriggerMode='auto',basketballTriggerPending=false,basketballTriggerCheckedAt=-Infinity;
+  const basketballActionRay=new THREE.Raycaster();
+  const basketballHud=mountBasketballHud({stage,onAction:basketballAction,announce:setStatus,onTriggerMode:setBasketballTriggerMode});
   const basketballAim=mountBasketballAim({stage});
   const rangeFeedback=createFiringRangeFeedback({THREE,scene,camera,canvas,reducedMotion,getVolume:()=>playerPreferences.effectsVolume/100,getReducedMotion:()=>reducedMotion||playerPreferences.reducedMotion});
   const rangeScenes=createFiringRangeSceneBridge({THREE,getRoots:()=>[envLoader.world,builderDecor]});
@@ -1533,6 +1616,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   window.addEventListener('keydown',event=>{if(!liveRangeSnapshot||event.repeat||isTypingTarget(event.target)||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return;if(event.key.toLowerCase()==='v'){event.preventDefault();liveRangeHud.setScope({active:!liveRangeHud.scope().active});}});
   canvas.addEventListener('contextmenu',event=>{if(!liveRangeSnapshot)return;event.preventDefault();liveRangeHud.setScope({active:!liveRangeHud.scope().active});});
+
   const flightGeometry=new THREE.BufferGeometry();flightGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(256*3),3));flightGeometry.setDrawRange(0,0);
   const flightPreview=new THREE.Points(flightGeometry,new THREE.PointsMaterial({color:0xffdc94,size:.065,transparent:true,opacity:.8,depthWrite:false}));flightPreview.name='BASKETBALL_THROW_PREVIEW';flightPreview.frustumCulled=false;flightPreview.visible=false;scene.add(flightPreview);
 
@@ -1553,10 +1637,48 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   const ballControls=document.createElement('div');ballControls.className='basketball-controls';ballControls.style.cssText='position:absolute;bottom:140px;right:18px;z-index:30;display:flex;gap:8px';ballControls.hidden=true;
   for(const [action,label] of [['catch','Catch basketball (E)'],['toss','Toss basketball (T)']]){const button=document.createElement('button');button.type='button';button.textContent=label;button.addEventListener('click',()=>safelyInteract('Basketball',()=>basketballAction(action)));ballControls.append(button);}stage.append(ballControls);
+  function basketballDirection(){
+    return !renderer.xr.isPresenting&&isTopDownView()?new THREE.Vector3(-Math.sin(player.yaw),0,-Math.cos(player.yaw)):(renderer.xr.isPresenting?renderer.xr.getCamera():camera).getWorldDirection(new THREE.Vector3());
+  }
+  function basketballVisible(from,to){
+    const origin=new THREE.Vector3(from.x,from.y,from.z),offset=new THREE.Vector3(to.x,to.y,to.z).sub(origin),distance=offset.length();
+    if(distance<.05)return true;
+    basketballActionRay.set(origin,offset.multiplyScalar(1/distance));
+    return !basketballActionRay.intersectObjects(toxicBubbleSystem.environmentSurfaces(),false).some(hit=>hit.distance<distance-.15);
+  }
+  function basketballTriggerChoice(direction=basketballDirection(),forced=basketballTriggerMode){
+    const self=serverHostedRoom?basketballSelf:localBasketballPlayer;
+    return resolveBasketballAction({game:serverHostedRoom?basketballSnapshot:localBasketballSim.basketball,player:self?{...self,position:{x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z},yaw:player.yaw}:null,players:serverHostedRoom?basketballPlayers:localBasketballSim.players,balls:serverHostedRoom?serverActors:localBasketballs,direction:direction.toArray(),options:basketballAim.options(),forced,visible:basketballVisible});
+  }
+  function setBasketballTriggerMode(mode){
+    basketballTriggerMode=BASKETBALL_TRIGGER_MODES.includes(mode)?mode:'auto';basketballTriggerCheckedAt=-Infinity;
+    basketballHud.setTriggerAction?.(basketballTriggerChoice().label,basketballTriggerMode);
+    setStatus(basketballTriggerMode==='auto'?'Auto trigger: grab, steal, shoot, pass or toss when available.':`Trigger locked to ${basketballTriggerMode}. Choose Auto to restore automatic actions.`);
+  }
+  async function basketballTrigger(direction=basketballDirection(),forced=basketballTriggerMode){
+    if(basketballTriggerPending)return false;
+    const choice=basketballTriggerChoice(direction,forced);
+    basketballHud.setTriggerAction?.(choice.label,forced);
+    // The server resolves Auto again after advancing the simulation, so a
+    // possession change in flight cannot turn a steal into a stale shot.
+    if(serverHostedRoom&&forced==='auto'){
+      basketballTriggerPending=true;
+      try{return await serverCommand('basketball-auto',{...basketballAim.options(),direction:direction.toArray()});}
+      finally{basketballTriggerPending=false;}
+    }
+    if(!choice.action){setStatus(choice.label);return false;}
+    basketballTriggerPending=true;
+    try{return await basketballAction(choice.action,{direction:direction.toArray(),...choice.fields});}
+    finally{basketballTriggerPending=false;}
+  }
+  function localPlayerFeet(){return {x:playerCollider.start.x,y:playerCollider.start.y-player.radius,z:playerCollider.start.z};}
   function basketballAction(action,fields={}){
-    if(['basketball-shoot','toss'].includes(action))fields={...basketballAim.options(),direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),...fields};
+    if(['basketball-shoot','toss'].includes(action))fields={...basketballAim.options(),direction:basketballDirection().toArray(),...fields};
     if(serverHostedRoom)return serverCommand(action,{pitch:-player.pitch,...fields}).then(state=>{if(state&&action==='basketball-watch'){player.yaw=Math.PI/2;player.pitch=0;}return state;});
-    const now=Date.now();localBasketballPlayer.position={x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z};localBasketballPlayer.yaw=player.yaw;
+    const now=Date.now();localBasketballPlayer.position=localPlayerFeet();localBasketballPlayer.yaw=player.yaw;
+    if(action==='basketball-steal'){const ball=stealBasketball(localBasketballSim,localBasketballPlayer,now);heldBasketball=localBasketballs.find(item=>item.id===ball.id)||null;setStatus('Basketball stolen — pass or shoot.');return;}
+    if(action==='basketball-join-spot'){takeBasketballSpot(localBasketballSim,localBasketballPlayer,now,fields.team);localJerseyTeam=localBasketballPlayer.basketballTeam;syncLocalBasketballPlayer();return;}
+
     if(action==='basketball-team'){assignBasketballTeam(localBasketballSim,localBasketballPlayer,now,fields.team);localBasketballPlayer.basketballJersey=fields.team;localJerseyTeam=fields.team;return;}
     if(action==='basketball-settings')return configureBasketballGame(localBasketballSim,fields.settings,now);
     if(action==='basketball-watch'){watchBasketballGame(localBasketballSim,localBasketballPlayer,now);player.yaw=Math.PI/2;player.pitch=0;localJerseyTeam=null;syncLocalBasketballPlayer();return true;}
@@ -1565,26 +1687,47 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if(action==='basketball-shoot'){const result=shootBasketball(localBasketballSim,localBasketballPlayer,now,fields);heldBasketball=null;return result;}
     if(action==='toss'){
       if(!heldBasketball){setStatus('Catch a basketball first.');return;}
-      registerBasketballRelease(localBasketballSim,heldBasketball,localBasketballPlayer,now);tossBasketball(heldBasketball,playerRig.position,camera.getWorldDirection(new THREE.Vector3()),{...fields,mode:'manual'});heldBasketball=null;localBasketballPlayer.heldId=null;setStatus('Basketball tossed — move close and press E to catch.');
+      registerBasketballRelease(localBasketballSim,heldBasketball,localBasketballPlayer,now);tossBasketball(heldBasketball,playerRig.position,fields.direction||basketballDirection(),{...fields,mode:'manual'});heldBasketball=null;localBasketballPlayer.heldId=null;setStatus('Basketball tossed — move close and press E to catch.');
     }else{
       if(heldBasketball||builderGameplay.heldActor()){setStatus('Release your held item first.');return;}
-      const ball=localBasketballs.map(ball=>({ball,reach:ball.root.parent&&basketballCatchPosition(ball,playerRig.position,{now})})).filter(hit=>hit.reach).sort((a,b)=>a.reach.distance-b.reach.distance)[0]?.ball;
+      const ball=localBasketballs.filter(ball=>!fields.entityId||ball.id===fields.entityId).map(ball=>({ball,reach:ball.root.parent&&basketballCatchPosition(ball,playerRig.position,{now})})).filter(hit=>hit.reach).sort((a,b)=>a.reach.distance-b.reach.distance)[0]?.ball;
+
       if(!ball){setStatus('Move within 3 metres of a basketball to catch it.');return;}
       heldBasketball=ball;ball.holderId='local';delete ball.ballVelocity;delete ball.ballCatchSegment;localBasketballPlayer.heldId=ball.id;touchBasketball(localBasketballSim,ball,localBasketballPlayer,now);setStatus('Basketball caught — R to shoot, T to pass.');
     }
   }
   function syncLocalBasketballPlayer(){
     heldBasketball=localBasketballs.find(ball=>ball.id===localBasketballPlayer.heldId)||null;
-    const position=localBasketballPlayer.position;
-    if(position&&playerRig.position.distanceTo(new THREE.Vector3(position.x,position.y,position.z))>.001){
-      playerRig.position.set(position.x,position.y,position.z);playerCollider.start.set(position.x,position.y+player.radius,position.z);playerCollider.end.set(position.x,position.y+player.height,position.z);player.velocity.set(0,0,0);
+    const position=localBasketballPlayer.position,feet=localPlayerFeet();
+    // Game transitions may relocate a player. Compare against accepted feet,
+    // never against stair/camera easing, which must not alter the capsule.
+    if(position&&Math.hypot(position.x-feet.x,position.y-feet.y,position.z-feet.z)>.001){
+      playerCollider.start.set(position.x,position.y+player.radius,position.z);
+      playerCollider.end.set(position.x,position.y+player.height,position.z);
+      playerRig.position.set(position.x,position.y,position.z);localGroundViewY=position.y;player.velocity.set(0,0,0);
+
     }
   }
   function updateBasketballs(delta){
     const arena=isBasketballEnvironment(activeEnvironment);
+    const leftStick=document.querySelector('.mobile-move-pad [data-thumbstick="left"]');
+    if(leftStick&&leftStick.dataset.sportControls!==String(arena)){
+      leftStick.dataset.sportControls=String(arena);
+      leftStick.querySelector('.thumbstick-label').textContent=arena?'Move / action':'Move / shoot';
+      leftStick.querySelector('small').textContent=arena?'Drag to move · tap for selected action':'Drag to move · tap to shoot';
+      leftStick.setAttribute('aria-label',arena?'Left controller: move; tap for Auto or selected trigger action':'Left controller: move; tap to shoot');
+      leftStick.querySelector('button').setAttribute('aria-label',arena?'Left thumbstick: drag to move, tap for Auto or selected trigger action':'Left thumbstick: drag to move, tap to shoot');
+    }
     for(const root of serverPlayerRoots.values())if(root.userData.basketballAI)animateBasketballAIAvatar(root.userData.serverBody,root.userData.basketballWalking,clock.elapsedTime);
-    if(!serverHostedRoom&&arena){const constrained=constrainBasketballSpectator(localBasketballPlayer.position,{x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z},localBasketballSim,localBasketballPlayer);playerRig.position.set(constrained.x,constrained.y,constrained.z);playerCollider.start.set(constrained.x,constrained.y+player.radius,constrained.z);playerCollider.end.set(constrained.x,constrained.y+player.height,constrained.z);}
-    localBasketballPlayer.position={x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z};localBasketballPlayer.yaw=player.yaw;localBasketballPlayer.lastSeen=Date.now();
+    if(!serverHostedRoom&&arena){
+      const feet=localPlayerFeet(),constrained=constrainBasketballSpectator(localBasketballPlayer.position,feet,localBasketballSim,localBasketballPlayer);
+      if(constrained.x!==feet.x||constrained.z!==feet.z){
+        playerCollider.start.x=playerCollider.end.x=constrained.x;playerCollider.start.z=playerCollider.end.z=constrained.z;
+        playerRig.position.x=constrained.x;playerRig.position.z=constrained.z;
+      }
+    }
+    localBasketballPlayer.position=localPlayerFeet();localBasketballPlayer.yaw=player.yaw;localBasketballPlayer.lastSeen=Date.now();
+
     if(!serverHostedRoom&&arena){stepBasketballGame(localBasketballSim,Date.now(),delta);syncLocalBasketballPlayer();
       const visible=new Set();for(const bot of Object.values(localBasketballSim.players).filter(p=>p.basketballAI)){visible.add(bot.actorId);let root=localBasketballAIRoots.get(bot.actorId);if(!root){root=createBasketballAIAvatar(THREE,bot.basketballNumber);root.add(liveLabel(root,{username:bot.username,message:'AI · '+bot.basketballTeam}));setBasketballJersey(THREE,root,bot.basketballJersey,{number:bot.basketballNumber});scene.add(root);localBasketballAIRoots.set(bot.actorId,root);}root.position.set(bot.position.x,bot.position.y,bot.position.z);root.rotation.y=bot.yaw;animateBasketballAIAvatar(root,Boolean(bot.input?.forward),clock.elapsedTime);}
       for(const [id,root]of localBasketballAIRoots)if(!visible.has(id)){disposeProjection(root);localBasketballAIRoots.delete(id);}}
@@ -1595,6 +1738,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const hasBall=serverHostedRoom?Object.values(serverActors).some(isBasketball):localBasketballs.length>0;ballControls.hidden=!hasBall||arena;ballControls.style.display=hasBall&&!arena?'flex':'none';
     const game=serverHostedRoom?basketballSnapshot:localBasketballSim.basketball,self=serverHostedRoom?basketballSelf:localBasketballPlayer;
     basketballHud.render(game,self,arena,serverHostedRoom?basketballPlayers:localBasketballSim.players);
+    if(arena&&performance.now()-basketballTriggerCheckedAt>120){basketballTriggerCheckedAt=performance.now();basketballHud.setTriggerAction?.(basketballTriggerChoice().label,basketballTriggerMode);}
+
     let solution=null;
     const held=serverHostedRoom?isBasketball(serverActors[self?.heldId]):Boolean(heldBasketball);
     const spectator=arena&&self?.basketballRole==='spectator';
@@ -1602,7 +1747,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       const options=basketballAim.options(),previewPass=!arena||basketballAim.previewAction()==='toss';
       const origin={x:playerRig.position.x,y:playerRig.position.y+(previewPass?1.2:1.8),z:playerRig.position.z};
       const hoop=basketballHoopForTeam(self?.basketballTeam||'home'),target={...hoop,y:hoop.y-.12};
-      try{solution=basketballShotSolution(origin,target,camera.getWorldDirection(new THREE.Vector3()),{...options,mode:previewPass?'manual':options.mode});}catch{}
+      try{solution=basketballShotSolution(origin,target,basketballDirection(),{...options,mode:previewPass?'manual':options.mode});}catch{}
+
       if(solution){const predict=arena?predictBasketballShotPath:predictBasketballTrajectory,points=predict(solution,{duration:Math.min(6,Math.max(3,(solution.flightTime||2)+1)),step:1/30,floor:0}).slice(0,256),attribute=flightGeometry.getAttribute('position');points.forEach((point,index)=>attribute.setXYZ(index,point.x,point.y+.12,point.z));attribute.needsUpdate=true;flightGeometry.setDrawRange(0,points.length);flightPreview.material.color.setHex(solution.aimAligned===false||solution.reachable===false?0xff8866:0xffdc94);}
     }
     flightPreview.visible=Boolean(held&&!spectator&&solution);
@@ -1612,7 +1758,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const team=serverHostedRoom?localJerseyTeam:localBasketballPlayer.basketballJersey;setBasketballJersey(THREE,localJerseyAnchor,team,{firstPerson:true});
     placedAvatars.children.forEach(root=>{if(root.userData.localPlayerAvatar)setBasketballJersey(THREE,root,team);});
   }
-  window.addEventListener('keydown',event=>{if(event.repeat||isTypingTarget(event.target)||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return;const key=event.key.toLowerCase(),hasBall=serverHostedRoom?Object.values(serverActors).some(isBasketball):localBasketballs.length>0;if(hasBall&&(key==='t'||key==='e'||(key==='r'&&isBasketballEnvironment(activeEnvironment)))){if(key==='e'&&isBasketballEnvironment(activeEnvironment)&&(serverHostedRoom?basketballSelf?.basketballRole:localBasketballPlayer.basketballRole)==='spectator')return;if(key==='e'&&(heldBasketball||(serverHostedRoom?!Object.values(serverActors).some(ball=>basketballCatchPosition(ball,playerRig.position)):!localBasketballs.some(ball=>basketballCatchPosition(ball,playerRig.position)))))return;event.preventDefault();event.stopImmediatePropagation();safelyInteract('Basketball',()=>basketballAction(key==='t'?'toss':key==='r'?'basketball-shoot':'catch'));}},true);
+  window.addEventListener('keydown',event=>{if(event.repeat||isTypingTarget(event.target)||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return;const key=event.key.toLowerCase();if(key==='q'&&isBasketballEnvironment(activeEnvironment)){event.preventDefault();event.stopImmediatePropagation();safelyInteract('Steal basketball',()=>basketballAction('basketball-steal'));return;}const hasBall=serverHostedRoom?Object.values(serverActors).some(isBasketball):localBasketballs.length>0;if(hasBall&&(key==='t'||key==='e'||(key==='r'&&isBasketballEnvironment(activeEnvironment)))){if(key==='e'&&isBasketballEnvironment(activeEnvironment)&&(serverHostedRoom?basketballSelf?.basketballRole:localBasketballPlayer.basketballRole)==='spectator')return;if(key==='e'&&(heldBasketball||(serverHostedRoom?!Object.values(serverActors).some(ball=>basketballCatchPosition(ball,playerRig.position)):!localBasketballs.some(ball=>basketballCatchPosition(ball,playerRig.position)))))return;event.preventDefault();event.stopImmediatePropagation();safelyInteract('Basketball',()=>basketballAction(key==='t'?'toss':key==='r'?'basketball-shoot':'catch'));}},true);
+
   function dropHeldBuilderItem(){const forward=camera.getWorldDirection(new THREE.Vector3());forward.y=0;forward.normalize();return builderGameplay.dropHeld(playerRig.position.clone().addScaledVector(forward,1.5));}
   let nearbyAction={kind:'none',prompt:'',label:'',title:'',hint:'',vehicleActive:false};
   let nearbyActionCheckedAt=-Infinity;
@@ -1669,15 +1816,16 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   builderActionButton.addEventListener('pointerup',(event)=>{
     if(event.pointerType==='touch')activateNearbyAction(event);
   });
-  window.addEventListener('keydown', (e) => { if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])')){keys.clear();return;}if (isTypingTarget(e.target)) { keys.clear(); return; } const key = e.key.toLowerCase(); keys.add(key); if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) e.preventDefault(); if (key === 'f' && !e.repeat) { e.preventDefault(); safelyInteract('Vehicle interaction',()=>vehicleController.toggle()); } if (key === 'e' && !e.repeat) { e.preventDefault(); safelyInteract('Item interaction',()=>{const result=builderGameplay.interact('e',playerRig.position);if(!result)setStatus('No Builder object is close enough to interact with.');return result;}); } if (key === 'g' && !e.repeat) { e.preventDefault(); safelyInteract('Drop interaction',()=>{if(!dropHeldBuilderItem())setStatus('Pick up a Builder item before dropping it.');}); } if (key === ' ') { e.preventDefault(); if (!vehicleController.active && player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } } if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08); if (key === 'r') safelyInteract('Reset interaction',resetPlayer); if (key === 'i') { e.preventDefault(); safelyInteract('Inventory interaction',()=>toxicBubbleSystem.toggleInventory()); } }); window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase())); window.addEventListener('blur', lockMenuInput);
+  window.addEventListener('keydown', (e) => { if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])')){keys.clear();return;}if (isTypingTarget(e.target)) { keys.clear(); return; } if(isGameCameraToggleKey(e)){e.preventDefault();if(!renderer.xr.isPresenting)setGameCameraMode(nextGameCameraMode(gameCameraMode));return;} const key = e.key.toLowerCase(); keys.add(key); if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) e.preventDefault(); if (key === 'f' && !e.repeat) { e.preventDefault(); safelyInteract('Vehicle interaction',()=>vehicleController.toggle()); } if (key === 'e' && !e.repeat) { e.preventDefault(); safelyInteract('Item interaction',()=>{const result=builderGameplay.interact('e',playerRig.position);if(!result)setStatus('No Builder object is close enough to interact with.');return result;}); } if (key === 'g' && !e.repeat) { e.preventDefault(); safelyInteract('Drop interaction',()=>{if(!dropHeldBuilderItem())setStatus('Pick up a Builder item before dropping it.');}); } if (key === ' ') { e.preventDefault(); if (!vehicleController.active && player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; } } if (key === 'q') player.eyeHeight = Math.max(1.1, player.eyeHeight - .08); if (key === 'r') safelyInteract('Reset interaction',resetPlayer); if (key === 'i') { e.preventDefault(); safelyInteract('Inventory interaction',()=>toxicBubbleSystem.toggleInventory()); } }); window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase())); window.addEventListener('blur', lockMenuInput);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)lockMenuInput();});
   const pointerLockSupported = Boolean(canvas.requestPointerLock);
   document.addEventListener('pointerlockchange', () => {
     const locked = document.pointerLockElement === canvas;
+    if(locked&&isTopDownView()){document.exitPointerLock?.();return;}
     walkButton.textContent = locked ? 'Exit pointer lock' : (envLoader.world ? 'Start game' : 'Start game');
     walkButton.setAttribute('aria-pressed', String(locked || !pointerLockSupported));
   });
-  document.addEventListener('mousemove', (e) => { if (document.pointerLockElement !== canvas) return; player.yaw -= e.movementX * .0025 * playerPreferences.mouseSensitivity; player.pitch = THREE.MathUtils.clamp(player.pitch - e.movementY * .002 * playerPreferences.mouseSensitivity * (playerPreferences.invertLook?-1:1), -1.25, 1.15); });
+  document.addEventListener('mousemove', (e) => { if (document.pointerLockElement !== canvas || isTopDownView()) return; topDownAimTarget=null; player.yaw -= e.movementX * .0025 * playerPreferences.mouseSensitivity; player.pitch = THREE.MathUtils.clamp(player.pitch - e.movementY * .002 * playerPreferences.mouseSensitivity * (playerPreferences.invertLook?-1:1), -1.25, 1.15); });
   scaleControl.querySelector('input').addEventListener('input', (e) => applySpaceScale(e.target.value)); scaleControl.querySelectorAll('[data-space-scale]').forEach((button) => button.addEventListener('click', () => applySpaceScale(currentSpaceScale + (button.dataset.spaceScale === 'up' ? .1 : -.1)))); viewControls.querySelectorAll('[data-zoom]').forEach((button) => button.addEventListener('click', () => applyZoom(button.dataset.zoom === 'in' ? -1 : 1))); syncZoomControls();
   environmentSelect?.addEventListener('change', (event) => { if (event.target.value) loadById(event.target.value); });
   environmentListToggle?.addEventListener('click',()=>{const open=environmentList.hidden;environmentList.hidden=!open;environmentListToggle.setAttribute('aria-expanded',String(open));environmentListToggle.textContent=open?'Close maps':'Browse maps';if(open)environmentList.querySelector('[aria-selected="true"]')?.scrollIntoView({block:'center'});});
@@ -1686,7 +1834,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   let toxicTap = null; let toxicConsumedClick = false;
   canvas.addEventListener('click', (event) => { if (!toxicConsumedClick) return; toxicConsumedClick=false; event.preventDefault(); event.stopImmediatePropagation(); }, true);
   toolsButton?.addEventListener('click', (event) => { event.preventDefault(); toggleTools(); setStatus(`RAD-TOX tools ${sprayTools.hidden ? 'closed' : 'open'}. Choose Laser, Paint Gun, Bat, Taser, Dynamite, Brick Layer, Jetpack, Seats, Build Map, Pack, or a paint color.`); });
-  canvas.addEventListener('pointerdown', (event) => { if (event.pointerType==='mouse'&&event.button!==0)return; if (document.pointerLockElement === canvas && event.button === 0) { if(toxicBubbleSystem.tool==='flamethrower')toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())}); const rangeHit=handleRangeShot({centre:true});if(rangeHit===null)toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
+  canvas.addEventListener('pointerdown', (event) => { if (event.pointerType==='mouse'&&event.button!==0)return; if (document.pointerLockElement === canvas && event.button === 0) { if(!isBasketballEnvironment(activeEnvironment)&&toxicBubbleSystem.tool==='flamethrower')toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())}); const rangeHit=handleRangeShot({centre:true});if(rangeHit===null)toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
+
   window.addEventListener('pointerup',()=>{toxicBubbleSystem.flameTrigger=null;});
   window.addEventListener('pointercancel',()=>{toxicBubbleSystem.flameTrigger=null;});
   window.addEventListener('blur',()=>{toxicBubbleSystem.flameTrigger=null;});
@@ -1718,6 +1867,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       setStatus(`Pinch ${avatarDisplayName(root)} with two fingers to stretch or shrink it.`);
     } else if (e.pointerType === 'touch' && !avatarDrag && activeTouchPointers.size >= 2) {
       const points = [...activeTouchPointers.entries()].slice(-2);
+      topDownAimTarget=null;
       cameraGesture = {
         ids:points.map(([id]) => id),
         startDistance:pointerDistance(points[0][1], points[1][1]),
@@ -1733,6 +1883,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   });
   canvas.addEventListener('pointermove', (e) => {
     if (document.pointerLockElement === canvas) return;
+    if(isTopDownView()&&!avatarDrag&&!avatarPinch&&!cameraGesture){const rect=canvas.getBoundingClientRect();aimTopDownPointer(new THREE.Vector2(((e.clientX-rect.left)/rect.width)*2-1,-((e.clientY-rect.top)/rect.height)*2+1),{throttle:true});if(e.pointerType!=='touch'||!activeTouchPointers.size)return;}
     if (e.pointerType === 'touch' && activeTouchPointers.has(e.pointerId)) activeTouchPointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
     if (cameraGesture?.ids.includes(e.pointerId)) {
       e.preventDefault();
@@ -1754,7 +1905,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     }
     if (avatarDrag?.id === e.pointerId) { e.preventDefault(); const floorPoint = floorPointFromPointer(e); avatarDrag.root.position.x = floorPoint.x; avatarDrag.root.position.z = floorPoint.z; avatarDrag.root.position.y = floorPoint.y + (avatarDrag.root.userData.floorLiftOffset ?? FLOOR_ENTRY_OFFSET); return; }
     if (!dragPointer || dragPointer.id !== e.pointerId) return;
-    e.preventDefault(); player.yaw -= (e.clientX - dragPointer.x) * .006; player.pitch = THREE.MathUtils.clamp(player.pitch - (e.clientY - dragPointer.y) * .005, -1.25, 1.15); dragPointer.x = e.clientX; dragPointer.y = e.clientY;
+    e.preventDefault(); if(isTopDownView()){dragPointer.x=e.clientX;dragPointer.y=e.clientY;return;} topDownAimTarget=null; player.yaw -= (e.clientX - dragPointer.x) * .006; player.pitch = THREE.MathUtils.clamp(player.pitch - (e.clientY - dragPointer.y) * .005, -1.25, 1.15); dragPointer.x = e.clientX; dragPointer.y = e.clientY;
   });
   const release = (e) => {
     activeTouchPointers.delete(e.pointerId);
@@ -1782,9 +1933,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.querySelectorAll('[data-mobile-zoom-toggle]').forEach((oldButton) => { const button = oldButton.cloneNode(true); oldButton.replaceWith(button); let zoomHold = 0; const setDirection = (direction) => { button.dataset.mobileZoomToggle = direction; button.setAttribute('aria-pressed', String(direction === 'in')); button.querySelector('b').textContent = direction === 'in' ? '+' : '−'; button.querySelector('span').textContent = direction === 'in' ? 'Zoom in' : 'Zoom out'; button.setAttribute('aria-label', direction === 'in' ? 'Zoom in' : 'Zoom out'); }; const step = () => applyZoom(button.dataset.mobileZoomToggle === 'in' ? -1 : 1); const stop = () => { clearInterval(zoomHold); zoomHold = 0; button.classList.remove('is-active'); }; button.addEventListener('pointerdown', (e) => { e.preventDefault(); step(); button.classList.add('is-active'); zoomHold = window.setInterval(step, 120); }); button.addEventListener('pointerup', stop); button.addEventListener('pointercancel', stop); button.addEventListener('pointerleave', stop); button.addEventListener('dblclick', (e) => { e.preventDefault(); setDirection(button.dataset.mobileZoomToggle === 'in' ? 'out' : 'in'); setStatus(`${button.getAttribute('aria-label')} selected. Hold the zoom button to keep zooming.`); }); setDirection(button.dataset.mobileZoomToggle || 'out'); });
   function jump() { if (toxicBubbleSystem.tool === 'jetpack') { jetpackTapThrustRemaining = .35; setStatus('Jetpack thrust activated · 1 MZK per powered second.'); return; } if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; setStatus('Jump activated.'); } }
   const flameFireButton=sprayTools.querySelector('[data-flame-fire]');
-  flameFireButton.addEventListener('pointerdown',event=>{event.preventDefault();safelyCapturePointer(flameFireButton,event.pointerId);toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())});shootAtReticle();});
+  flameFireButton.addEventListener('pointerdown',event=>{event.preventDefault();safelyCapturePointer(flameFireButton,event.pointerId);if(!isBasketballEnvironment(activeEnvironment))toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())});shootAtReticle();});
   flameFireButton.addEventListener('lostpointercapture',()=>{toxicBubbleSystem.flameTrigger=null;});
-  function shootAtReticle() { if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active)return basketballAction('basketball-shoot');if(ownedPlacement.active)return ownedPlacement.confirm();const rangeHit=handleRangeShot({centre:true});if(rangeHit!==null)return;const tool=toxicBubbleSystem.tool, shot=toxicBubbleSystem.handlePointerInteraction({}, { centre: true }); if(UTILITY_TOOLS[tool]||tool==='jetpack')return shot;if(tool==='dynamite'&&shot){setStatus('Dynamite lit, tossed, and live — watch it bounce, then clear the full blast radius.');return;} setStatus(shot ? `${RANGE_WEAPONS[tool] ? `${RANGE_WEAPONS[tool].label} fired` : 'Tool fired'}.` : 'No action at the reticle. Move or look, then use the shoot button again.'); }
+  function shootAtReticle() { if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active)return basketballTrigger();if(ownedPlacement.active)return ownedPlacement.confirm();const rangeHit=handleRangeShot({centre:true});if(rangeHit!==null)return;const tool=toxicBubbleSystem.tool, shot=toxicBubbleSystem.handlePointerInteraction({}, { centre: true }); if(UTILITY_TOOLS[tool]||tool==='jetpack')return shot;if(tool==='dynamite'&&shot){setStatus('Dynamite lit, tossed, and live — watch it bounce, then clear the full blast radius.');return;} setStatus(shot ? `${RANGE_WEAPONS[tool] ? `${RANGE_WEAPONS[tool].label} fired` : 'Tool fired'}.` : 'No action at the reticle. Move or look, then use the shoot button again.'); }
+
   function setFullscreen() { if (document.fullscreenElement) { document.exitFullscreen?.(); return; } const request = stage.requestFullscreen?.(); if (request?.catch) request.catch(() => setStatus('Fullscreen is unavailable in this browser.')); else setStatus('Fullscreen is unavailable in this browser.'); }
   // Anchor walking to the initial touch; the 8px tap zone stays neutral.
   function setupThumbstick(name) { const stick = document.querySelector(`[data-thumbstick="${name}"] .thumbstick-base`); const knob = stick?.querySelector('.thumbstick-knob'); if (!stick || !knob) return; let pointerId = null; let startX = 0; let startY = 0; let moved = false; let stickRect; const write = (event) => { const rect = stickRect; const radius = rect.width * .29; let x = THREE.MathUtils.clamp(event.clientX - (name === 'left' ? startX : rect.left + rect.width / 2), -radius, radius); let y = THREE.MathUtils.clamp(event.clientY - (name === 'left' ? startY : rect.top + rect.height / 2), -radius, radius); const length = Math.hypot(x, y); if (length > radius) { x = x / length * radius; y = y / length * radius; } knob.style.transform = `translate(${x}px, ${y}px)`; const wasNeutral=thumbInput.leftX===0&&thumbInput.leftY===0; const axes=name==='left'?walkingStick(x/radius,y/radius,Math.min(.9,8/radius)):{x:x/radius,y:y/radius};thumbInput[`${name}X`] = axes.x; thumbInput[`${name}Y`] = axes.y; moved ||= Math.hypot(event.clientX - startX, event.clientY - startY) > 8; if(name==='left')authoritativeClient?.requestInput(wasNeutral !== (axes.x===0&&axes.y===0)); };
@@ -1794,55 +1946,59 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   setupThumbstick('left'); setupThumbstick('right');
   fullscreenButton?.addEventListener('click', setFullscreen);
   beginResetButton?.addEventListener('click', () => {if(serverHostedRoom){serverCommand('respawn');return;} resetPlayer(activeWorldSpawn.position, activeWorldSpawn.rotationY); toxicBubbleSystem.begin(); setStatus('RAD-TOX begin or reset requested.'); });
-  async function setupVRControls() {
-    if (!renderer.xr.enabled || !webXrAvailable) return;
-    if (!(await navigator.xr.isSessionSupported('immersive-vr'))) return;
-    const [{ VRButton }, { XRControllerModelFactory }] = await Promise.all([
-      import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/VRButton.js/+esm'),
-      import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/XRControllerModelFactory.js/+esm')
-    ]);
-    const controllerFactory = new XRControllerModelFactory();
-    for (let i = 0; i < 2; i += 1) {
-      const controller = renderer.xr.getController(i);
-      controller.addEventListener('connected', (event) => {
-        controller.userData.handedness = event.data.handedness || (i === 0 ? 'left' : 'right');
-        controller.userData.inputSource = event.data;
-        controller.userData.aimRay ??= createXRAimRay();
-        controller.add(controller.userData.aimRay);
-      });
-      controller.addEventListener('disconnected', () => {if(toxicBubbleSystem.flameController===controller)toxicBubbleSystem.flameTrigger=null; controller.userData.inputSource = null; controller.userData.aimRay?.removeFromParent(); });
-      // Both triggers always aim and use the currently selected tool. This prevents
-      // a missed shot from unexpectedly moving the player across the map.
-      controller.addEventListener('selectend',()=>{if(toxicBubbleSystem.flameController===controller){toxicBubbleSystem.flameTrigger=null;toxicBubbleSystem.flameController=null;}});
-      controller.addEventListener('selectstart', () => {
-        if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return;
-        if(toxicBubbleSystem.tool==='flamethrower'){toxicBubbleSystem.flameController=controller;toxicBubbleSystem.flameTrigger=()=>({origin:controller.getWorldPosition(new THREE.Vector3()),direction:new THREE.Vector3(0,0,-1).applyQuaternion(controller.getWorldQuaternion(new THREE.Quaternion()))});}
-        const origin=controller.getWorldPosition(new THREE.Vector3()),direction=new THREE.Vector3(0,0,-1).applyQuaternion(controller.getWorldQuaternion(new THREE.Quaternion()));
-        const rangeHit=handleRangeShot({origin,direction});
-        const hit = rangeHit===null?toxicBubbleSystem.handleXRInteraction(controller):rangeHit;
-        pulseXRController(controller, hit ? .55 : .18, hit ? 45 : 18);
-        if (!hit && rangeHit===null && toxicBubbleSystem.state === RAD_TOX_STATES.ACTIVE) setStatus('Shot missed — keep aiming with the controller ray and try again.');
-      });
-      // Grip gestures provide the non-combat actions without sacrificing a trigger:
-      // left grip changes weapon; right grip teleports to the aimed walkable floor.
-      controller.addEventListener('squeezeend', () => {
-        if (controller.userData.handedness === 'left' || (i === 0 && !controller.userData.handedness)) cycleXRTool(controller);
-        else teleportFromController(controller);
-      });
-      const grip = renderer.xr.getControllerGrip(i);
-      grip.add(controllerFactory.createControllerModel(grip));
-      playerRig.add(controller, grip);
-    }
-    const vrButton = VRButton.createButton(renderer, { requiredFeatures: ['local-floor'], optionalFeatures: ['bounded-floor', 'hand-tracking'] });
-    vrButton.classList.add('house-vr-button');
-    stage.append(vrButton);
-    renderer.xr.addEventListener('sessionstart', () => { camera.position.set(0, 0, 0); quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto'); setStatus('WebXR ready. Left stick walks, right stick snap-turns, either trigger aims and uses your tool, left grip changes tool, and right grip teleports.'); });
-    renderer.xr.addEventListener('sessionend', () => { camera.position.set(0, player.eyeHeight, 0); quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto'); setStatus(activeEnvironment ? `Ready: ${activeEnvironment.name}. WebXR session ended.` : 'WebXR session ended.'); });
+  let xrGameControls=null;
+  function xrBasketballInteract(){return basketballTrigger(basketballDirection(),'auto');}
+  async function setupVRControls(){
+    if(!renderer.xr.enabled||!webXrAvailable)return;
+    xrGameControls=mountXRGameControls({renderer,scene,camera,rig:playerRig,parent:stage,pollMovement:false,status:setStatus,
+      onEnter:()=>{if(!gameplayStarted)throw Error('Start the world and choose guest access or sign in before entering VR.');},
+      onExit:()=>{syncCameraToggle();updateGameCamera();camera.position.set(0,player.eyeHeight,0);keys.clear();},
+      onTrigger:(hand,{origin,direction},controller)=>{
+        if(isBasketballEnvironment(activeEnvironment))return basketballTrigger(direction);
+        const rangeHit=handleRangeShot({origin,direction});if(rangeHit!==null)return rangeHit;
+        return toxicBubbleSystem.handleXRInteraction(controller);
+      },
+      onGrip:(hand,ray,controller)=>isBasketballEnvironment(activeEnvironment)?(hand==='left'?xrBasketballInteract():basketballAction('toss',{direction:ray.direction.toArray()})):hand==='left'?cycleXRTool(controller):teleportFromController(controller),
+      onAction:()=>{if(isBasketballEnvironment(activeEnvironment))return xrBasketballInteract();},
+      menuItems:()=>isBasketballEnvironment(activeEnvironment)?[
+        {label:'Start basketball · current setup + AI',run:()=>basketballAction('basketball-start')},
+        {label:'Join Home · take an AI spot',run:()=>basketballAction('basketball-join-spot',{team:'home'})},
+        {label:'Join Away · take an AI spot',run:()=>basketballAction('basketball-join-spot',{team:'away'})},
+        {label:'Watch game',run:()=>basketballAction('basketball-watch')},
+        {label:'Team size · cycle 1–5',run:()=>{const rules=(serverHostedRoom?basketballSnapshot:localBasketballSim.basketball).settings,size=rules.teamSize%5+1;return basketballAction('basketball-settings',{settings:{teamSize:size,homeHumans:Math.min(rules.homeHumans,size),awayHumans:Math.min(rules.awayHumans,size)}});}},{label:'AI difficulty · cycle tiers',run:()=>{const rules=(serverHostedRoom?basketballSnapshot:localBasketballSim.basketball).settings;return basketballAction('basketball-settings',{settings:{aiDifficulty:rules.aiDifficulty%5+1}});}},
+        {label:'Auto action · '+basketballTriggerChoice().label,run:()=>basketballTrigger(basketballDirection(),'auto')},
+        ...BASKETBALL_TRIGGER_MODES.map(mode=>({label:`${mode===basketballTriggerMode?'✓ ':''}Trigger: ${mode==='auto'?'Auto · best available action':mode}`,run:()=>setBasketballTriggerMode(mode)})),
+        {label:'Shoot',run:()=>basketballAction('basketball-shoot')},{label:'Pass',run:()=>basketballAction('toss')},
+        {label:'Solo world · re-enter VR',run:()=>openXRWorldMode('solo')},{label:'Live world · re-enter VR',run:()=>openXRWorldMode('multiplayer')},
+        {label:'Exit VR',run:()=>xrGameControls.endSession()}
+      ]:isCleanSportsEnvironment(activeEnvironment)?[
+        {label:rangeActive?'End training course':'Start training course',run:()=>rangeStart.click()},
+        ...Object.entries(rangeCourses).map(([mode,course])=>({label:'Course: '+course.label,run:()=>{stopRangeCourse();rangeMode=mode;resetRangeReadout();rangeStart.click();}})),
+        ...['laser','pulse-rifle','flamethrower','rail-cannon'].map(tool=>({label:'Weapon: '+tool,run:()=>toxicBubbleSystem.setTool(tool)})),
+        {label:'Solo world · re-enter VR',run:()=>openXRWorldMode('solo')},{label:'Live world · re-enter VR',run:()=>openXRWorldMode('multiplayer')},
+        {label:'Exit VR',run:()=>xrGameControls.endSession()}
+      ]:[{label:'Next weapon',run:()=>cycleXRTool(xrGameControls.controllers[0])},{label:'Teleport · solo worlds',run:()=>teleportFromController(xrGameControls.controllers[1])},{label:'Exit VR',run:()=>xrGameControls.endSession()}]});
+    renderer.xr.addEventListener('sessionstart',()=>{topDownAimTarget=null;keys.clear();syncCameraToggle();camera.position.set(0,0,0);camera.rotation.set(0,0,0);setStatus('VR ready. Left stick moves; right stick snap-turns. X/B opens the in-VR game menu.');});
   }
+  async function openXRWorldMode(mode){await xrGameControls.endSession();const url=new URL(location.href);url.searchParams.set('mode',mode);url.searchParams.set('autoplay','1');location.assign(url.href);}
   setupVRControls().catch((error) => console.warn('[MUZIKAZ VR]', error));
   const visibilityObserver = window.IntersectionObserver ? new IntersectionObserver(([entry]) => { viewActive = Boolean(entry?.isIntersecting); }, { threshold: 0.05 }) : null; visibilityObserver?.observe(stage); document.addEventListener('visibilitychange', () => { viewActive = !document.hidden; });
   let renderWidth=0,renderHeight=0,renderPixelRatio=0;
+  function fitTouchGameLayout(){
+    const shell=stage.closest('.house-explorer-shell');if(!shell)return;
+    const touchLayout=matchMedia('(max-width:760px), (pointer:coarse)').matches;
+    if(!gameplayStarted||!touchLayout){shell.removeAttribute('data-touch-game-fit');return;}
+    // Budget from the visible game position, rather than assuming the header is
+    // outside the viewport. The dock and both sticks share this flex column.
+    const viewport=window.visualViewport,viewportTop=viewport?.offsetTop||0;
+    const bottom=viewportTop+(viewport?.height||window.innerHeight);
+    const available=Math.floor(bottom-Math.max(viewportTop,shell.getBoundingClientRect().top)-12);
+    if(available<240)return;
+    const height=available+'px';if(shell.style.getPropertyValue('--touch-game-height')!==height)shell.style.setProperty('--touch-game-height',height);
+    shell.dataset.touchGameFit='';
+  }
   function resize() {
+    fitTouchGameLayout();
     const width = Math.max(1, Math.floor(stage.clientWidth || stage.offsetWidth || document.documentElement.clientWidth || window.innerWidth || 320));
     const height = Math.max(1, Math.floor(stage.clientHeight || stage.offsetHeight || document.documentElement.clientHeight || window.innerHeight || 480));
     const pixelRatio=Math.min(window.devicePixelRatio || 1, performanceMode ? 1 : quality.pixelRatio);
@@ -1850,8 +2006,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     renderWidth=width;renderHeight=height;renderPixelRatio=pixelRatio;
     renderer.setPixelRatio(pixelRatio);
     renderer.setSize(width, height, false);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
+    camera.aspect = overviewCamera.aspect = width / height;
+    camera.updateProjectionMatrix();overviewCamera.updateProjectionMatrix();
   }
   let resizeTimer = 0, resizeFrame = 0;
   function scheduleGameResize() {
@@ -1864,28 +2020,27 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   window.addEventListener('orientationchange', scheduleGameResize);
   if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleGameResize);
   document.addEventListener('muzikaz:rad-tox-stage', scheduleGameResize);
+  document.addEventListener('muzikaz:gameplay-ready',scheduleGameResize);
   scheduleGameResize();
   renderer.setAnimationLoop((time = 0) => {
     if ((!viewActive || document.hidden) && !renderer.xr.isPresenting) { clock.getDelta(); return; }
     if (targetFrameMs && !renderer.xr.isPresenting && time - lastFrameTime < targetFrameMs) return;
     lastFrameTime = targetFrameMs ? time - ((time - lastFrameTime) % targetFrameMs) : time;
     const delta = Math.min(.05, clock.getDelta());
-    const menuOpen=Boolean(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'));
+    xrGameControls?.update(delta);
+    const menuOpen=Boolean(xrGameControls?.menuOpen||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'));
     // Bound collision steps on slower frames while retaining elapsed-time movement.
     if(!serverHostedRoom&&!menuOpen&&!vehicleController.update(delta)) {
       const steps = Math.max(1, Math.ceil(delta / (1 / 60)));
       for (let step = 0; step < steps; step++) updatePlayer(delta / steps);
     }else if(serverHostedRoom){if(serverPlayerInitialized){
-      const age=(performance.now()-serverSnapshotAt)/1000;
-      const controls=!menuOpen&&authoritativeClient?.ready&&age<.3?serverInput():{yaw:player.yaw};
-      const speed=serverMovementSpeed===4&&controls.sprint?6:serverMovementSpeed;
+      // Display accepted server motion once. No free-running prediction can
+      // move the view into a wall and then pull it back on the next snapshot.
       serverMotion.sample(performance.now(),serverViewTarget);
-      walkingMotion.sample(performance.now(),delta,controls,speed,serverViewTarget);
-      if(isBasketballEnvironment(activeEnvironment)&&basketballSelf?.basketballRole==='spectator'){const next=constrainBasketballSpectator(playerRig.position,serverViewTarget,{basketball:basketballSnapshot},basketballSelf);serverViewTarget.set(next.x,next.y,next.z);}
-      playerRig.position.x=serverViewTarget.x;playerRig.position.z=serverViewTarget.z;
-      playerRig.position.y+=(serverViewTarget.y-playerRig.position.y)*(1-Math.exp(-25*delta));
+      playerRig.position.copy(serverViewTarget);
+
       if(!renderer.xr.isPresenting)camera.position.x=camera.position.z=0;
-    }if(!menuOpen){player.yaw-=thumbInput.rightX*delta*2.5*RIGHT_THUMBSTICK_SENSITIVITY*playerPreferences.touchSensitivity;player.pitch=THREE.MathUtils.clamp(player.pitch-thumbInput.rightY*delta*1.9*RIGHT_THUMBSTICK_SENSITIVITY*playerPreferences.touchSensitivity*(playerPreferences.invertLook?-1:1),-1.25,1.15);}playerRig.rotation.y=player.yaw;if(!renderer.xr.isPresenting){camera.position.y=player.eyeHeight;camera.rotation.order='YXZ';camera.rotation.set(player.pitch,0,0);}}
+    }if(!menuOpen){if(Math.abs(thumbInput.rightX)+Math.abs(thumbInput.rightY)>.05)topDownAimTarget=null;player.yaw-=thumbInput.rightX*delta*2.5*RIGHT_THUMBSTICK_SENSITIVITY*playerPreferences.touchSensitivity;player.pitch=THREE.MathUtils.clamp(player.pitch-thumbInput.rightY*delta*1.9*RIGHT_THUMBSTICK_SENSITIVITY*playerPreferences.touchSensitivity*(playerPreferences.invertLook?-1:1),-1.25,1.15);}playerRig.rotation.y=player.yaw;if(!renderer.xr.isPresenting){camera.position.y=player.eyeHeight;camera.rotation.order='YXZ';camera.rotation.set(player.pitch,0,0);}}
     envLoader.updateEffects(clock.elapsedTime,reducedMotion);
     updateRoomVoice();
     enemyEffects.update(delta);
@@ -1895,17 +2050,21 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (!performanceMode || renderer.xr.isPresenting) envLoader.mixers.forEach((m) => m.update(delta));
     toxicBubbleSystem.updateBuildingEditor(delta);
     toxicBubbleSystem.updateBrickPreview();ownedPlacement.update();if(ownedPlacement.active&&toxicBubbleSystem.brickPreview)toxicBubbleSystem.brickPreview.visible=false;
-    if(!serverHostedRoom&&!menuOpen&&!isBasketballEnvironment(activeEnvironment))toxicBubbleSystem.update(delta,clock.elapsedTime);
+    if(!serverHostedRoom&&!menuOpen&&!isCleanSportsEnvironment(activeEnvironment))toxicBubbleSystem.update(delta,clock.elapsedTime);
     if(serverHostedRoom)updateServerEnemyVisuals(delta,clock.elapsedTime);
     updateBasketballs(delta);
     if(liveRangeSnapshot)rangeScenes.update(liveRangeServerTime+performance.now()-liveRangeReceivedAt);
+
     if(!serverHostedRoom)builderGameplay.update(delta,playerRig.position);
     refreshNearbyAction();
     if(serverHostedRoom)builderDecor.children.forEach(root=>{if(root.visible)root.userData.serverMixer?.update(delta);});
     updateBuilderModels(builderDecor, clock.elapsedTime);
     updateBuilderModels(placedAvatars, clock.elapsedTime);
+    applyTopDownAim();
+    updateGameCamera();
     rangeFeedback.update(delta,Boolean(liveRangeSnapshot)&&!menuOpen&&!renderer.xr.isPresenting);
-    renderer.render(scene, camera);
+    renderer.render(scene, displayCamera());
+
   });
   // This is the launch-critical half of checkForHouseUpdates({ startup: true }).
   // Do not make the player's Start action wait for the avatar feed (which can
@@ -2056,7 +2215,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     // Mouse capture is opt-in: only the visible Main controls button may lock
     // a desktop pointer. Canvas clicks, Begin, and keyboard activation remain
     // non-capturing so the page never takes over the user's mouse unexpectedly.
-    if (!mobileQualityMode && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
+    if (!mobileQualityMode && !isTopDownView() && document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
     openHouseMap().catch((error) => setStatus(error.message || 'Unable to open the MUZIKAZ map.'));
   });
   canvas.addEventListener('keydown', (event) => {
@@ -2075,14 +2234,3 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     // monopolize memory on mobile browsers before the visitor is ready to play.
   }
 }
-
-
-
-
-
-
-
-
-
-
-

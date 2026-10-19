@@ -1,6 +1,7 @@
 services:
   - type: web
     name: muzikaz-model-market
+    branch: main
     runtime: node
     plan: starter
     buildCommand: npm ci && npm run build

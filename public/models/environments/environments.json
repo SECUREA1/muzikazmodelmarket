@@ -4,9 +4,34 @@
     "name": "MUZIKAZ Live Firing Range",
     "label": "Live multiplayer tournament range",
     "category": "Sports",
-    "levelOrder": 0,
+    "game": "firing-range",
+    "layout": "firing-range",
+    "proceduralLand": true,
     "playable": true,
     "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 64,
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 16.2,
+      "rotationY": 0
+    },
+    "description": "Permanent shared firing range with server-scored multiplayer tournaments, timed challenges, moving targets, lane selection, adjustable scopes and a live competition board. Practice, compete or spectate from the safe firing-line lobby.",
+    "playUrl": "model-explorer.html?environment=firing-range&house=firing-range&mode=multiplayer&autoplay=1",
+    "builderScene": {
+      "layout": "firing-range",
+      "mapSize": 64,
+      "objects": [],
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false
+      }
+    },
+    "spaceScale": 1,
+    "scale": 1,
+    "levelOrder": 0,
     "publicDestination": true,
     "permanent": true,
     "canDelete": false,
@@ -15,24 +40,13 @@
     "ownerName": "MUZIKAZ",
     "thumbnailUrl": "/public/images/backpack/firing-range.svg",
     "firingRange": true,
-    "description": "Permanent shared firing range with server-scored multiplayer tournaments, timed challenges, moving targets, lane selection, adjustable scopes and a live competition board. Practice, compete or spectate from the safe firing-line lobby.",
-    "proceduralLand": true,
-    "builderScene": {
-      "layout": "firing-range",
-      "mapSize": 64,
-      "objects": [],
-      "gameplay": { "multiplayer": true, "friendlyFire": false }
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
     },
-    "spawn": { "x": 0, "y": 0.02, "z": 16.2, "rotationY": 0 },
-    "scale": 1,
-    "spaceScale": 1,
-    "playableSize": 64,
-    "rotation": { "x": 0, "y": 0, "z": 0 },
     "collisionMode": "auto",
-    "visibility": "public",
-    "source": "repository",
-    "roomId": "firing-range",
-    "playUrl": "model-explorer.html?environment=firing-range&house=firing-range&mode=multiplayer&autoplay=1"
+    "roomId": "firing-range"
   },
   {
     "id": "force-training-range",
@@ -105,18 +119,34 @@
       "layout": "basketball-stadium",
       "mapSize": 62,
       "objects": [],
-      "gameplay": { "multiplayer": true, "friendlyFire": false }
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false
+      }
     },
-    "spawn": { "x": 8.8, "y": 0.02, "z": 0, "rotationY": 1.5707963267948966 },
+    "spawn": {
+      "x": 8.8,
+      "y": 0.02,
+      "z": 0,
+      "rotationY": 1.5707963267948966
+    },
     "scale": 1,
     "spaceScale": 1,
     "playableSize": 62,
-    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
     "collisionMode": "auto",
     "visibility": "public",
     "source": "repository",
     "roomId": "basketball-arena",
-    "playUrl": "model-explorer.html?environment=basketball-arena&house=basketball-arena&autoplay=1"
+    "playUrl": "model-explorer.html?environment=basketball-arena&house=basketball-arena&autoplay=1",
+    "sourceCommit": "2d6ff8b201d0bd149312a1ca213c86385be35490",
+    "aliases": [
+      "basketball"
+    ]
   },
   {
     "id": "muzikaz-main",
@@ -457,5 +487,63 @@
     "visibility": "public",
     "source": "repository",
     "combined": true
+  },
+  {
+    "id": "hockey-arena",
+    "name": "Ice Hockey Arena",
+    "label": "Sports · hockey",
+    "category": "Sports",
+    "game": "hockey",
+    "layout": "hockey-arena",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "description": "Full regulation ice hockey stadium with a real ice surface, animated skaters, solo AI, live multiplayer, mixed player/AI teams and spectator views.",
+    "hockey": {
+      "mode": "exhibition",
+      "difficulty": "easy",
+      "periodSeconds": 180
+    },
+    "playUrl": "hockey.html?environment=hockey-arena&mode=multiplayer",
+    "spaceScale": 1,
+    "scale": 1
+  },
+  {
+    "id": "neon-junction",
+    "name": "Neon Junction — Arcade Park",
+    "label": "Arcade · games and rides",
+    "category": "Arcade & rides",
+    "game": "arcade",
+    "layout": "arcade-park",
+    "proceduralLand": true,
+    "playable": true,
+    "multiplayer": true,
+    "visibility": "public",
+    "source": "repository",
+    "playableSize": 80,
+    "spawn": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "description": "Walk through a 3D park and play hockey, shooting arcade, basketball, air hockey and billiards in their physical stations; board the perimeter train and elevated coaster. Customize 15 park assemblies and 34 reusable builder items. Shared multiplayer rounds with player slots and spectators.",
+    "arcade": {
+      "roundSeconds": 45,
+      "trainLapSeconds": 55,
+      "coasterLapSeconds": 32,
+      "coasterPeak": 13,
+      "difficulty": "easy"
+    },
+    "playUrl": "arcade.html?environment=neon-junction&mode=multiplayer",
+    "spaceScale": 1,
+    "scale": 1
   }
 ]

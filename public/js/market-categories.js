@@ -32,7 +32,8 @@ export function marketCategory(item={},section='upgrades'){
  if(/land|world|environment|map|terrain/.test(value))return 'lands';
  if(/furniture|interior|room/.test(value))return 'furniture';
  if(/outdoor|plant|nature/.test(value))return 'outdoors';
- if(/prop|model|building|plant/.test(value)||item.modelUrl||item.glb_url||item.buildAssetId)return 'props';
+ if(/prop|model|building|plant|interactive|arcade/.test(value)||item.modelUrl||item.glb_url||item.buildAssetId)return 'props';
+
  return 'other';
 }
 export function marketCategoryOptions(items,section){

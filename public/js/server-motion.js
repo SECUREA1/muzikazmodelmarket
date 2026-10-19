@@ -1,21 +1,34 @@
 // Presentation only: interpolate a short snapshot buffer at render frequency.
 // Collisions, health and movement remain server controlled.
 export class ServerMotion {
- constructor({delay=100,maxExtrapolation=75,teleportDistance=2.5,maxGap=500}={}){
-  this.delay=delay;this.maxExtrapolation=maxExtrapolation;this.teleportDistance=teleportDistance;this.maxGap=maxGap;this.reset();
+ constructor({delay=100,maxExtrapolation=75,teleportDistance=2.5,maxGap=500,snapDistance=teleportDistance,resetGap=maxGap}={}){
+  this.delay=delay;this.maxExtrapolation=maxExtrapolation;this.snapDistance=snapDistance;this.resetGap=resetGap;this.reset();
+
  }
- reset(){this.snapshots=[];this.position=null;this.receivedAt=0;}
- push(position,now){
+ reset(){this.snapshots=[];this.position=null;this.receivedAt=0;this.serverTimeOffset=null;}
+ push(position,now,{serverTime,teleport=false}={}){
+  if(!Number.isFinite(now)||!['x','y','z'].every(axis=>Number.isFinite(position?.[axis])))return false;
   const previous=this.snapshots.at(-1);
-  if(previous&&now<previous.time)return;
+  const hasServerTime=Number.isFinite(serverTime);
+  if(previous&&(now<this.receivedAt||hasServerTime&&Number.isFinite(previous.serverTime)&&serverTime<previous.serverTime))return false;
   const distance=previous?Math.hypot(position.x-previous.position.x,position.y-previous.position.y,position.z-previous.position.z):0;
-  if(distance>this.teleportDistance||previous&&now-previous.time>this.maxGap)this.reset();
-  const snapshot={position:{...position},time:now};
-  if(this.snapshots.at(-1)?.time===now)this.snapshots.pop();
+  if(teleport||distance>this.snapDistance||previous&&now-this.receivedAt>this.resetGap)this.reset();
+  // A stable source timeline removes arrival jitter without re-timing earlier
+  // frames whenever latency changes. Callers may keep using arrival time only.
+  let time=now;
+  if(hasServerTime){
+   if(this.serverTimeOffset===null)this.serverTimeOffset=now-serverTime;
+   time=serverTime+this.serverTimeOffset;
+  }
+  if(this.snapshots.at(-1)?.time>time)return false;
+  const snapshot={position:{...position},time,serverTime:hasServerTime?serverTime:undefined};
+  if(this.snapshots.at(-1)?.time===time)this.snapshots.pop();
+
   this.snapshots.push(snapshot);
   // Keep enough history for uneven HTTP delivery without growing indefinitely.
   while(this.snapshots.length>32)this.snapshots.shift();
   this.position={...position};this.receivedAt=now;
+  return true;
  }
  sample(now,target){
   const frames=this.snapshots;if(!frames.length)return target;

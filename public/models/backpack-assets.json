@@ -1535,6 +1535,578 @@
       "description": "Sky Ray from the Environment Builder, ready to drop into the running game."
     },
     {
+      "id": "builder-land-hockey-arena",
+      "name": "Ice Hockey Arena",
+      "owner": "MUZIKAZ",
+      "type": "lands",
+      "builderLayoutId": "hockey-arena",
+      "builderUrl": "/environment-builder.html?layout=hockey-arena",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "format": "builder-layout",
+      "visibility": "public",
+      "description": "Regulation ice hockey with AI players and referees. Customize rules, jerseys and tournament format.",
+      "image": "/public/images/hockey.svg"
+    },
+    {
+      "id": "builder-land-arcade-park",
+      "name": "Neon Junction Arcade Park",
+      "owner": "MUZIKAZ",
+      "type": "lands",
+      "builderLayoutId": "arcade-park",
+      "builderUrl": "/environment-builder.html?layout=arcade-park",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "builder-layout",
+      "visibility": "public",
+      "description": "Complete seven-attraction park with editable games, rides, tracks, paths, trees, lighting, fountain, seating, station and signs. Includes a reusable 34-part 3D kit."
+    },
+    {
+      "id": "builder-arcade-part-hockey",
+      "name": "Neon Junction \u00b7 Ice hockey",
+      "owner": "MUZIKAZ",
+      "type": "interactive",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-hockey",
+      "description": "Complete interactive arcade station.",
+      "interactions": [
+        "interact"
+      ],
+      "function_data": {
+        "behavior": "interact",
+        "action": "arcade",
+        "value": "hockey"
+      }
+    },
+    {
+      "id": "builder-arcade-part-shooting",
+      "name": "Neon Junction \u00b7 Shooting arcade",
+      "owner": "MUZIKAZ",
+      "type": "interactive",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-shooting",
+      "description": "Complete interactive arcade station.",
+      "interactions": [
+        "interact"
+      ],
+      "function_data": {
+        "behavior": "interact",
+        "action": "arcade",
+        "value": "shooting"
+      }
+    },
+    {
+      "id": "builder-arcade-part-basketball",
+      "name": "Neon Junction \u00b7 Basketball",
+      "owner": "MUZIKAZ",
+      "type": "interactive",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-basketball",
+      "description": "Complete interactive arcade station.",
+      "interactions": [
+        "interact"
+      ],
+      "function_data": {
+        "behavior": "interact",
+        "action": "arcade",
+        "value": "basketball"
+      }
+    },
+    {
+      "id": "builder-arcade-part-air-hockey",
+      "name": "Neon Junction \u00b7 Air hockey",
+      "owner": "MUZIKAZ",
+      "type": "interactive",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-air-hockey",
+      "description": "Complete interactive arcade station.",
+      "interactions": [
+        "interact"
+      ],
+      "function_data": {
+        "behavior": "interact",
+        "action": "arcade",
+        "value": "air-hockey"
+      }
+    },
+    {
+      "id": "builder-arcade-part-billiards",
+      "name": "Neon Junction \u00b7 Billiards",
+      "owner": "MUZIKAZ",
+      "type": "interactive",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-billiards",
+      "description": "Complete interactive arcade station.",
+      "interactions": [
+        "interact"
+      ],
+      "function_data": {
+        "behavior": "interact",
+        "action": "arcade",
+        "value": "billiards"
+      }
+    },
+    {
+      "id": "builder-arcade-part-train",
+      "name": "Neon Junction \u00b7 Park express",
+      "owner": "MUZIKAZ",
+      "type": "interactive",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-train",
+      "description": "Closed perimeter track, locomotive and three passenger carriages.",
+      "interactions": [
+        "interact"
+      ],
+      "function_data": {
+        "behavior": "interact",
+        "action": "arcade",
+        "value": "train"
+      }
+    },
+    {
+      "id": "builder-arcade-part-coaster",
+      "name": "Neon Junction \u00b7 Skyline coaster",
+      "owner": "MUZIKAZ",
+      "type": "interactive",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-coaster",
+      "description": "Elevated closed track, supports, safety restraint and animated car.",
+      "interactions": [
+        "interact"
+      ],
+      "function_data": {
+        "behavior": "interact",
+        "action": "arcade",
+        "value": "coaster"
+      }
+    },
+    {
+      "id": "builder-arcade-part-ground",
+      "name": "Neon Junction \u00b7 Park foundation",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-ground",
+      "description": "Two tier park foundation."
+    },
+    {
+      "id": "builder-arcade-part-paths",
+      "name": "Neon Junction \u00b7 Walkway network",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-paths",
+      "description": "Crossing paths and perimeter walkways."
+    },
+    {
+      "id": "builder-arcade-part-trees",
+      "name": "Neon Junction \u00b7 Tree planting",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-trees",
+      "description": "Named tree instances around the courts."
+    },
+    {
+      "id": "builder-arcade-part-lamps",
+      "name": "Neon Junction \u00b7 Park lighting",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-lamps",
+      "description": "Eight named lamps with glowing globes."
+    },
+    {
+      "id": "builder-arcade-part-fountain",
+      "name": "Neon Junction \u00b7 Central fountain",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-fountain",
+      "description": "Raised central fountain and water."
+    },
+    {
+      "id": "builder-arcade-part-benches",
+      "name": "Neon Junction \u00b7 Park seating",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-benches",
+      "description": "Seating beside the walkways."
+    },
+    {
+      "id": "builder-arcade-part-train-station",
+      "name": "Neon Junction \u00b7 Train station",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-train-station",
+      "description": "Covered passenger platform."
+    },
+    {
+      "id": "builder-arcade-part-signs",
+      "name": "Neon Junction \u00b7 Park entrance sign",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-signs",
+      "description": "Neon Junction entrance sign."
+    },
+    {
+      "id": "builder-arcade-part-tree",
+      "name": "Neon Junction \u00b7 Individual tree",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-tree",
+      "description": "One tree to place anywhere."
+    },
+    {
+      "id": "builder-arcade-part-lamp",
+      "name": "Neon Junction \u00b7 Individual lamp",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-lamp",
+      "description": "One park lamp."
+    },
+    {
+      "id": "builder-arcade-part-bench",
+      "name": "Neon Junction \u00b7 Individual bench",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-bench",
+      "description": "One park bench."
+    },
+    {
+      "id": "builder-arcade-part-path",
+      "name": "Neon Junction \u00b7 Path tile",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-path",
+      "description": "One modular walkway tile."
+    },
+    {
+      "id": "builder-arcade-part-sign",
+      "name": "Neon Junction \u00b7 Arcade sign",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-sign",
+      "description": "One park direction sign."
+    },
+    {
+      "id": "builder-arcade-part-train-carriage",
+      "name": "Neon Junction \u00b7 Train passenger carriage",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-train-carriage",
+      "description": "Passenger carriage prop; use Park express for the running ride."
+    },
+    {
+      "id": "builder-arcade-part-coaster-car",
+      "name": "Neon Junction \u00b7 Coaster car",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-coaster-car",
+      "description": "Restrained coaster car prop; use Skyline coaster for the running ride."
+    },
+    {
+      "id": "builder-arcade-part-basketball-hoop",
+      "name": "Neon Junction \u00b7 Basketball hoop",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-basketball-hoop",
+      "description": "Backboard, ring, net and upright prop; play through the complete Basketball station."
+    },
+    {
+      "id": "builder-arcade-part-basketball-ball",
+      "name": "Neon Junction \u00b7 Basketball ball",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-basketball-ball",
+      "description": "Seamed basketball equipment prop."
+    },
+    {
+      "id": "builder-arcade-part-hockey-goal",
+      "name": "Neon Junction \u00b7 Hockey goal",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-hockey-goal",
+      "description": "Framed hockey goal with a visible net; play through the complete Ice hockey station."
+    },
+    {
+      "id": "builder-arcade-part-hockey-puck",
+      "name": "Neon Junction \u00b7 Hockey puck",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-hockey-puck",
+      "description": "Low profile ice hockey puck equipment prop."
+    },
+    {
+      "id": "builder-arcade-part-air-hockey-mallet",
+      "name": "Neon Junction \u00b7 Air hockey mallet",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-air-hockey-mallet",
+      "description": "Table mallet with grip and round striking base."
+    },
+    {
+      "id": "builder-arcade-part-billiard-cue",
+      "name": "Neon Junction \u00b7 Billiard cue",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-billiard-cue",
+      "description": "Wooden cue with ferrule and dark tip."
+    },
+    {
+      "id": "builder-arcade-part-billiard-balls",
+      "name": "Neon Junction \u00b7 Billiard ball set",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-billiard-balls",
+      "description": "Six colored balls and one white cue ball."
+    },
+    {
+      "id": "builder-arcade-part-arcade-target",
+      "name": "Neon Junction \u00b7 Arcade target",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-arcade-target",
+      "description": "Standing bullseye target equipment prop."
+    },
+    {
+      "id": "builder-arcade-part-train-engine",
+      "name": "Neon Junction \u00b7 Train locomotive",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-train-engine",
+      "description": "Locomotive equipment prop; use Park express for the running ride."
+    },
+    {
+      "id": "builder-arcade-part-rail-segment",
+      "name": "Neon Junction \u00b7 Straight rail segment",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-rail-segment",
+      "description": "A short pair of rails with sleepers; the running train follows its complete route."
+    },
+    {
+      "id": "builder-arcade-part-coaster-support",
+      "name": "Neon Junction \u00b7 Coaster support",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-coaster-support",
+      "description": "Upright support with foundation and track crossbeam."
+    },
+    {
+      "id": "builder-arcade-part-safety-bar",
+      "name": "Neon Junction \u00b7 Coaster safety restraint",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/arcade.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "arcade",
+      "buildAssetId": "arcade-part-safety-bar",
+      "description": "Passenger safety bar equipment prop."
+    },
+    {
+      "id": "basketball",
+      "name": "Basketball",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball",
+      "builderCategory": "prop",
+      "behavior": "pickup",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball.svg",
+      "description": "Free regulation basketball. Catch nearby with E, toss with T, or play a full match at MUZIKAZ Arena."
+    },
+    {
+      "id": "basketball-hoop",
+      "name": "Basketball Hoop & Net",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-hoop",
+      "builderCategory": "prop",
+      "format": "procedural-3d",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-hoop.svg",
+      "description": "Free regulation basketball hoop with a glass backboard, orange rim, white woven net and padded support. Place it in game and shoot with your basketball."
+    },
+    {
+      "id": "basketball-jersey-home",
+      "name": "MUZIKAZ Home Basketball Jersey",
+      "owner": "MUZIKAZ",
+      "type": "wearables",
+      "buildAssetId": "basketball-jersey-home",
+      "format": "procedural-3d",
+      "basketballTeam": "home",
+      "attachment": {
+        "socket": "torso",
+        "fit": "avatar",
+        "slot": "basketball-jersey"
+      },
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-jersey-home.svg",
+      "description": "Free teal number 24 sleeveless jersey. Equips on your current avatar and joins the Home team on the basketball court."
+    },
+    {
+      "id": "basketball-jersey-away",
+      "name": "MUZIKAZ Away Basketball Jersey",
+      "owner": "MUZIKAZ",
+      "type": "wearables",
+      "buildAssetId": "basketball-jersey-away",
+      "format": "procedural-3d",
+      "basketballTeam": "away",
+      "attachment": {
+        "socket": "torso",
+        "fit": "avatar",
+        "slot": "basketball-jersey"
+      },
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-jersey-away.svg",
+      "description": "Free coral number 08 sleeveless jersey. Equips on your current avatar and joins the Away team on the basketball court."
+    },
+    {
+      "id": "basketball-arena",
+      "name": "MUZIKAZ Basketball Arena",
+      "owner": "MUZIKAZ",
+      "type": "lands",
+      "environmentId": "basketball-arena",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "Free shared basketball stadium: regulation hardwood court, two hoops, animated live scoreboard and a Start Match console. All players can enter, choose jerseys, catch, pass and shoot."
+    },
+    {
       "id": "backpack-market-atm",
       "name": "MZK Market ATM",
       "owner": "MUZIKAZ",
@@ -2344,89 +2916,6 @@
         "behavior": "interact",
         "prompt": "Play Pixel Maze Quest"
       }
-    },
-    {
-      "id": "basketball",
-      "name": "Basketball",
-      "owner": "MUZIKAZ",
-      "type": "props",
-      "buildAssetId": "basketball",
-      "builderCategory": "prop",
-      "behavior": "pickup",
-      "basic": true,
-      "priceMzk": 0,
-      "useCostMzk": 0,
-      "visibility": "public",
-      "thumbnailUrl": "/public/images/backpack/basketball.svg",
-      "description": "Free regulation basketball. Catch nearby with E, toss with T, or play a full match at MUZIKAZ Arena."
-    },
-    {
-      "id": "basketball-hoop",
-      "name": "Basketball Hoop & Net",
-      "owner": "MUZIKAZ",
-      "type": "props",
-      "buildAssetId": "basketball-hoop",
-      "builderCategory": "prop",
-      "format": "procedural-3d",
-      "basic": true,
-      "priceMzk": 0,
-      "useCostMzk": 0,
-      "visibility": "public",
-      "thumbnailUrl": "/public/images/backpack/basketball-hoop.svg",
-      "description": "Free regulation basketball hoop with a glass backboard, orange rim, white woven net and padded support. Place it in game and shoot with your basketball."
-    },
-    {
-      "id": "basketball-jersey-home",
-      "name": "MUZIKAZ Home Basketball Jersey",
-      "owner": "MUZIKAZ",
-      "type": "wearables",
-      "buildAssetId": "basketball-jersey-home",
-      "format": "procedural-3d",
-      "basketballTeam": "home",
-      "attachment": {
-        "socket": "torso",
-        "fit": "avatar",
-        "slot": "basketball-jersey"
-      },
-      "basic": true,
-      "priceMzk": 0,
-      "useCostMzk": 0,
-      "visibility": "public",
-      "thumbnailUrl": "/public/images/backpack/basketball-jersey-home.svg",
-      "description": "Free teal number 24 sleeveless jersey. Equips on your current avatar and joins the Home team on the basketball court."
-    },
-    {
-      "id": "basketball-jersey-away",
-      "name": "MUZIKAZ Away Basketball Jersey",
-      "owner": "MUZIKAZ",
-      "type": "wearables",
-      "buildAssetId": "basketball-jersey-away",
-      "format": "procedural-3d",
-      "basketballTeam": "away",
-      "attachment": {
-        "socket": "torso",
-        "fit": "avatar",
-        "slot": "basketball-jersey"
-      },
-      "basic": true,
-      "priceMzk": 0,
-      "useCostMzk": 0,
-      "visibility": "public",
-      "thumbnailUrl": "/public/images/backpack/basketball-jersey-away.svg",
-      "description": "Free coral number 08 sleeveless jersey. Equips on your current avatar and joins the Away team on the basketball court."
-    },
-    {
-      "id": "basketball-arena",
-      "name": "MUZIKAZ Basketball Arena",
-      "owner": "MUZIKAZ",
-      "type": "lands",
-      "environmentId": "basketball-arena",
-      "basic": true,
-      "priceMzk": 0,
-      "useCostMzk": 0,
-      "visibility": "public",
-      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
-      "description": "Free shared basketball stadium: regulation hardwood court, two hoops, animated live scoreboard and a Start Match console. All players can enter, choose jerseys, catch, pass and shoot."
     }
   ]
 }

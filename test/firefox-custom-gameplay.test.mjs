@@ -48,7 +48,7 @@ test('builder uses self-contained ESM dependencies and the completed cross-origi
   assert.match(builder, /from '\.\/public\/vendor\/three\/three\.module\.min\.js'/);
   assert.equal((builder.match(/from 'https:\/\//g) || []).length, 0);
   assert.equal((builder.match(/import \* as THREE/g) || []).length, 1);
-  assert.doesNotMatch(builder, /window\.MUZIKAZ_API\?\.fetch/);
+  assert.match(builder, /window\.MUZIKAZ_API\.fetch\('\/api\/environments',\{timeout:/);
   assert.doesNotMatch(builder, /apiFetch\('\/api\/custom-maps'/);
   assert.match(builder, /typeof structuredClone==='function'/);
   assert.match(environments, /apiFetch\('\/api\/environments'/);
