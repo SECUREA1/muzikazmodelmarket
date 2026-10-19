@@ -11,12 +11,12 @@ const event=(sim,value)=>{sim.events.push(value);sim.events=sim.events.slice(-10
 export function stepEnemyCombat(sim,{now,dt,environment,collision}){
  sim.projectiles ||= {};
  if(sim.match?.state==='finished'||sim.radTox?.state==='cleared'){sim.projectiles={};return;}
- const players=Object.entries(sim.players).filter(([,player])=>player.radToxReady!==false&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
+ const players=Object.entries(sim.players).filter(([,player])=>player.radToxReady!==false&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0&&now>=(player.spawnProtectedUntil||0));
  const blocked=(origin,direction,length)=>collision.blocksShot(environment,origin,direction,length,sim.actors);
  const hit=(actor,id,player,origin)=>{if(damagePlayer(player,now))event(sim,{id:'enemy-hit-'+ ++sim.enemySequence,action:'enemy-hit',actorId:actor,targetId:id,origin,at:now});};
  sim.enemySequence ||= 0;
  for(const actor of Object.values(sim.actors)){
-  const config=ENEMY_BEHAVIORS[actor.kind];if(!actor.radTox||!actor.active||actor.health<=0||!config)continue;
+  const config=ENEMY_BEHAVIORS[actor.kind];if(!actor.radTox||!actor.active||actor.pendingSpawn||actor.health<=0||!config)continue;
   const nearest=players.reduce((best,row)=>!best||distance(actor.position,row[1].position)<distance(actor.position,best[1].position)?row:best,null);
   const current=players.find(([id])=>id===actor.movementTargetId);
   const target=current&&nearest&&distance(actor.position,current[1].position)<=distance(actor.position,nearest[1].position)*1.25+.5?current:nearest;

@@ -150,3 +150,17 @@ test('map collider caches invalidate when the content revision changes',()=>{
  const spawn=collision.safeSpawn(environment,{x:3,y:0,z:3});near(spawn.y,.02);
  const idle=collision.resolve(environment,spawn,{...spawn,y:spawn.y-.02});near(idle.y,spawn.y);
 });
+
+test('startup spawn clears corner walls and keeps calibrated feet on the floor',()=>fixture([
+ ...box([.2,3,20],[0,1.5,0]),...box([20,3,.2],[0,1.5,0])
+],(collision,environment)=>{
+ const spawn=collision.safeSpawn(environment,{x:.2,y:1,z:.2});
+ near(spawn.y,.02);assert.ok(collision.hasBodyClearance(environment,spawn,.8));
+ for(let i=0;i<8;i++){const angle=i*Math.PI/4,step=collision.resolve(environment,spawn,{x:spawn.x+Math.cos(angle)*.5,y:spawn.y-.05,z:spawn.z+Math.sin(angle)*.5});assert.ok(Math.hypot(step.x-spawn.x,step.z-spawn.z)>.45,'the player can immediately move in every direction');}
+}));
+
+test('enemy placement keeps distance and never falls back onto the player',()=>fixture([], (collision,environment)=>{
+ const player={x:0,y:.02,z:0},occupied=[];
+ for(let i=0;i<8;i++){const enemy=collision.encounterSpawn(environment,player,player,occupied,{enemy:true,players:[player]});assert.ok(enemy);near(enemy.y,.02);assert.ok(Math.hypot(enemy.x,enemy.z)>=4);assert.ok(occupied.every(p=>Math.hypot(p.x-enemy.x,p.z-enemy.z)>=.65));occupied.push(enemy);}
+ const old=collision.groundAt;collision.groundAt=()=>null;assert.equal(collision.encounterSpawn(environment,player,player,[],{enemy:true}),null);collision.groundAt=old;
+}));

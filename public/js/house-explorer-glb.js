@@ -714,7 +714,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     toxicBubbleSystem.level=snapshot.radTox?.level||1;
     const active=new Set();
     for(const actor of Object.values(snapshot.actors||{})) {
-      if(!actor.radTox || !actor.active || actor.health<=0)continue;
+      if(!actor.radTox || !actor.active || actor.pendingSpawn || actor.health<=0)continue;
       active.add(actor.id);
       let root=serverRadToxRoots.get(actor.id);
       if(!root){root=createServerEnemy(actor);serverRadToxRoots.set(actor.id,root);}

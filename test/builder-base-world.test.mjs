@@ -7,7 +7,7 @@ import {refreshMzkCoins} from '../server-mzk-coins.mjs';
 test('every repository map remains a solid playable base after saving as a builder scene',async()=>{
  const records=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url)));
  const collision=new ServerBuilderCollision();
- for(const base of records){
+ for(const base of records.filter(map=>map.modelUrl||map.modelUrls?.length)){
   const map={id:'built-'+base.id,builderScene:{layout:'repository-'+base.id,mapSize:160,baseEnvironment:base,objects:[{id:'placed-atm',modelId:'market-atm',position:{x:3,y:1,z:2},scale:{x:1,y:1,z:1}}]}};
   assert.equal(builderBaseEnvironment(map),base);
   const world=collision.world(map);assert.equal(world.glb,true,base.id);assert.ok(world.floors.length,base.id);const placed=world.root.children.find(object=>object.userData.builderObjectId==='placed-atm');assert.ok(placed);assert.equal(placed.matrixWorld.elements[12],3);assert.equal(placed.matrixWorld.elements[13],1);

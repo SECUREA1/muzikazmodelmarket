@@ -26,6 +26,7 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
   assert.deepEqual(new Set(enemies.map(actor=>actor.kind)),new Set(['toxic','ghost','snake','brain']));
   await send('join',{},bob);state=await send('start-rad-tox',{},bob);
   assert.equal(Object.values(state.actors).filter(actor=>actor.radTox).length,8,'a second player shares the existing wave');
+  await store.update(environment.id,room=>{for(const player of Object.values(room.simulation.players))player.spawnProtectedUntil=0;});
   const first=state.actors[enemies[0].id],before=first.position.z;
   now+=250;state=await runtime.snapshot(environment.id,environment);
   assert.ok(state.actors[first.id].position.z>before,'enemies actively chase the player');
@@ -87,6 +88,7 @@ test('loading players are protected until all resources are ready and do not res
  assert.deepEqual(Object.values(state.actors).filter(a=>a.radTox).map(a=>a.position),positions,'enemies do not attack a loading player');
  await assert.rejects(send('fire',{tool:'laser',direction:[0,0,-1]}),{code:'GAME_NOT_READY'});
  state=await send('start-rad-tox');assert.equal(state.match.id,match);assert.equal(state.players['account:alice'].radToxReady,true);assert.ok(state.match.participants['account:alice']);assert.equal(state.players['account:alice'].spawnProtectedUntil,now+3000);
- now+=250;state=await send('input',{input:{}});assert.notDeepEqual(Object.values(state.actors).filter(a=>a.radTox).map(a=>a.position),positions,'the server runs combat after readiness');
+ now+=250;state=await send('input',{input:{}});assert.deepEqual(Object.values(state.actors).filter(a=>a.radTox).map(a=>a.position),positions,'spawn protection gives the player room to move before lock-on');
+ now+=3000;state=await send('input',{input:{}});assert.notDeepEqual(Object.values(state.actors).filter(a=>a.radTox).map(a=>a.position),positions,'the server runs combat after spawn protection');
  }finally{await rm(dir,{recursive:true,force:true});}
 });

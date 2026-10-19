@@ -19,7 +19,7 @@ test('ghost gas, brain spray and boss projectiles attack the same players on the
 test('projectiles respect walls, can be dodged, and cannot bypass spawn protection',()=>{
  const wall=arena('ghost',true);for(let i=0;i<20;i++)wall.tick();assert.equal(wall.player.health,100);assert.equal(Object.keys(wall.sim.projectiles).length,0);
  const dodge=arena();dodge.tick();dodge.player.position.x=8;for(let i=0;i<10;i++)dodge.tick();assert.equal(dodge.player.health,100);
- const shield=arena();shield.player.spawnProtectedUntil=110000;for(let i=0;i<10;i++)shield.tick();assert.equal(shield.player.health,100);
+ const shield=arena();shield.player.spawnProtectedUntil=110000;for(let i=0;i<10;i++)shield.tick();assert.equal(shield.player.health,100);assert.equal(shield.sim.events.length,0,'protected spawns are not locked onto or fired at');
 });
 test('snake and toxic contact attacks keep cooldowns and the 45-hit health rule',()=>{
  for(const kind of ['snake','toxic']){const {player,tick}=arena(kind);tick();const first=player.health;tick();assert.equal(player.health,first);for(let i=0;i<44;i++)tick(1201);assert.equal(player.health,0);assert.equal(player.combat.hitsTaken,45);assert.equal(player.combat.deaths,1);}

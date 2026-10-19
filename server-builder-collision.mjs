@@ -116,6 +116,15 @@ export class ServerBuilderCollision {
   if([...world.walls,...dynamic].some(({box,objectId})=>{const actor=actors[objectId];return !(actor&&(actor.open||!actor.active||actor.holderId))&&floor.x>box.min.x-.3&&floor.x<box.max.x+.3&&floor.z>box.min.z-.3&&floor.z<box.max.z+.3&&floor.y<box.max.y-.03&&floor.y+1.7>box.min.y+.03;}))reject();
   return floor;
  }
+ hasBodyClearance(environment,point,radius=PLAYER_RADIUS+.08){
+  const world=this.world(environment);
+  const triangles=nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius);
+  for(const triangle of triangles)for(const {a,b} of triangleWallSegments(triangle,point.y+.1,point.y+PLAYER_HEIGHT)){
+   const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.z-a.z)*dz)/Math.max(1e-12,dx*dx+dz*dz)));
+   if(Math.hypot(point.x-a.x-t*dx,point.z-a.z-t*dz)<radius)return false;
+  }
+  return true;
+ }
  safeSpawn(environment,point){
   if(!builderBaseEnvironment(environment)&&(environment.builderScene||environment.proceduralLand))return this.meetingPosition(environment,point);
   if(!builderBaseEnvironment(environment)&&!environment.modelUrl&&!environment.modelUrls?.length)return point;
@@ -123,23 +132,24 @@ export class ServerBuilderCollision {
   const named=world.root.getObjectByName('SPAWN_PLAYER')||world.root.getObjectByName('SPAWN_DEFAULT');
   const anchor=named?named.getWorldPosition(new THREE.Vector3()):point;
   const candidates=[anchor,{x:center.x,y:point.y,z:center.z}];for(let r=1;r<=6;r++)for(let i=0;i<8;i++)candidates.push({x:anchor.x+Math.cos(i*Math.PI/4)*r,y:anchor.y,z:anchor.z+Math.sin(i*Math.PI/4)*r});
-  for(const candidate of candidates){const floor=this.groundAt(environment,candidate,{entry:true});if(floor)return floor;}
+  for(const clearance of [.8,PLAYER_RADIUS+.08])for(const candidate of candidates){const floor=this.groundAt(environment,candidate,{entry:true});if(floor&&this.hasBodyClearance(environment,floor,clearance))return floor;}
   throw Object.assign(Error('This map has no safe ground-floor entry.'),{statusCode:409});
  }
- encounterSpawn(environment,point,center,occupied=[]) {
-  if(!builderBaseEnvironment(environment)&&!environment.modelUrl&&!environment.modelUrls?.length)return point;
+ encounterSpawn(environment,point,center,occupied=[],{enemy=false,players=[center]}={}) {
+  if(!enemy&&!builderBaseEnvironment(environment)&&!environment.modelUrl&&!environment.modelUrls?.length)return point;
   const candidates=[point];
-  for(const radius of [3,4,2,5,1.6,6])for(let index=0;index<24;index++){
+  for(const radius of (enemy?[5,6,8,4,10,12]:[3,4,2,5,1.6,6]))for(let index=0;index<24;index++){
    const angle=index*Math.PI/12;candidates.push({x:center.x+Math.sin(angle)*radius,y:center.y,z:center.z+Math.cos(angle)*radius});
   }
   for(const candidate of candidates){
    const floor=this.groundAt(environment,{...candidate,y:center.y});if(!floor)continue;
+   if(enemy&&(players.some(player=>Math.hypot(player.x-floor.x,player.z-floor.z)<4)||Math.abs(floor.y-center.y)>.6||!this.hasBodyClearance(environment,floor,.45)))continue;
    if(occupied.some(other=>Math.hypot(other.x-floor.x,other.z-floor.z)<.65))continue;
    const origin={x:floor.x,y:floor.y+.9,z:floor.z},delta=[center.x-origin.x,center.y+.9-origin.y,center.z-origin.z],length=Math.hypot(...delta);
    if(length<1||this.blocksShot(environment,origin,delta.map(value=>value/length),length))continue;
    return floor;
   }
-  return {...center};
+  return enemy?null:{...center};
  }
  meetingPosition(environment,point,actors={},objects={}){
   if(builderBaseEnvironment(environment)||!environment.builderScene&&!environment.proceduralLand)return this.safeSpawn(environment,point);

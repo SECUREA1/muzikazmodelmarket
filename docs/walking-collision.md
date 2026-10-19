@@ -62,3 +62,17 @@ server keeps that player outside enemy targeting and team defeat until
 participants continue their encounter. Start is idempotent; all three regular
 waves and the boss must finish before victory can advance to the next level,
 with the results countdown enforced by the server.
+
+## Clear startup entries and encounter placement
+
+Entries require overhead clearance and 0.8 metres of space beside walls when
+available, with a capsule-width fallback for narrow maps. Existing players are
+recalibrated once on their next join using floor version 3. Walking itself does
+not run spawn searches or reposition players at wall contact.
+
+Encounter placement version 2 requires verified floor, side clearance, the same
+storey, line of sight and at least four metres from every present player. Failed
+placements remain pending and retry once per second rather than spawning on the
+player. Pending enemies are neither rendered nor combat targets; their wave
+remains active. Spawn protection also prevents enemy pursuit and firing, giving
+players time to leave the entry before combat begins.

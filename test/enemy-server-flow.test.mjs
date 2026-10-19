@@ -169,7 +169,7 @@ test('two users share one server encounter with stable enemy spawns, attacks and
   const environment={id:'shared-enemies',modelUrl:'/public/models/environments/muzimakzmain.glb',playable:true,spawn:{x:0,y:1,z:2}};
   const send=(accountId,action='input')=>runtime.command(environment.id,environment,{accountId,username:accountId,stats:{health:100}},{action,input:{},requestId:'flow-'+ ++request});
   const first=structuredClone(await send('alice','join'));await send('bob','join');
-  await store.update(environment.id,room=>{for(const player of Object.values(room.simulation.players))player.spawnProtectedUntil=now+10000;});
+  await store.update(environment.id,room=>{for(const player of Object.values(room.simulation.players)){player.spawnProtectedUntil=0;player.shieldUntil=now+10000;};});
   for(let tick=0;tick<60;tick++){
    now+=[50,50,80,35,250][tick%5];
    const alice=structuredClone(await send('alice')),bob=structuredClone(await send('bob'));
