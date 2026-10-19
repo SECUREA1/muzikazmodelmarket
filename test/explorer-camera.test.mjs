@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../public/vendor/three/three.module.min.js';
-import {explorerMovementInput,explorerAimAngles,explorerTopDownPose,explorerBroadcastPose} from '../public/js/explorer-camera.js';
+import {explorerMovementInput,explorerAimAngles,explorerTopDownPose,explorerBroadcastPose,explorerWalkingYaw} from '../public/js/explorer-camera.js';
 
 const close=(actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-8,`${actual} ≠ ${expected}`);
 
@@ -51,4 +51,9 @@ test('broadcast zoom and orbit preserve the player target',()=>{
  close(-Math.sin(yaw)*controls.y+Math.cos(yaw)*controls.x,-Math.sin(viewYaw));
  close(-Math.cos(yaw)*controls.y-Math.sin(yaw)*controls.x,-Math.cos(viewYaw));
  }
+});
+
+test('walking follows headset gaze without changing heading when looking vertically',()=>{
+ for(const yaw of [0,.5,-2,Math.PI])close(explorerWalkingYaw({x:-Math.sin(yaw),y:.7,z:-Math.cos(yaw)}),yaw);
+ close(explorerWalkingYaw({x:0,y:1,z:0},.9),.9);
 });

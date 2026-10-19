@@ -6,7 +6,7 @@ export function newCombatStats(){return {shots:0,hits:0,misses:0,enemyHits:0,pla
 export function combatStats(player){return player.combat ||= newCombatStats();}
 export function healPlayer(player,amount){player.health=Math.min(100,Math.max(0,player.health)+amount);return player.health;}
 export function damagePlayer(player,now,attacker=null){
- if(player.health<=0 || now<(player.shieldUntil||0) || now<(player.spawnProtectedUntil||0))return false;
+ if(player.radToxReady===false || player.health<=0 || now<(player.shieldUntil||0) || now<(player.spawnProtectedUntil||0))return false;
  const before=player.health;player.health=Number(healthAfterHit(before).toFixed(6));
  const damage=before-player.health,taken=combatStats(player);taken.hitsTaken++;taken.damageTaken+=damage;
  if(attacker){combatStats(attacker).damageDealt+=damage;player.lastDamager=attacker.actorId;}
@@ -15,7 +15,7 @@ export function damagePlayer(player,now,attacker=null){
 }
 export function openMatch(sim,level,now){
  const match=sim.match={id:randomUUID(),level,startedAt:now,state:'active',participants:{},endedAt:null,outcome:null,results:null};
- for(const [id,player]of Object.entries(sim.players))if(now-player.lastSeen<15000)registerParticipant(sim,id,player,now,true);
+ for(const [id,player]of Object.entries(sim.players))if(player.radToxReady!==false&&now-player.lastSeen<15000)registerParticipant(sim,id,player,now,true);
  return match;
 }
 export function registerParticipant(sim,id,player,now,reset=false){
@@ -39,7 +39,7 @@ export function finishMatch(sim,outcome,now){
 }
 export function checkTeamDefeat(sim,now){
  if(sim.match?.state!=='active')return;
- const online=Object.keys(sim.match.participants).map(id=>sim.players[id]).filter(player=>player&&!player.replacedByRoom&&now-player.lastSeen<15000);
+ const online=Object.keys(sim.match.participants).map(id=>sim.players[id]).filter(player=>player&&player.radToxReady!==false&&!player.replacedByRoom&&now-player.lastSeen<15000);
  if(online.length && online.every(player=>player.health<=0))finishMatch(sim,'defeat',now);
 }
 export function matchView(sim,now){if(!sim.match)return null;return {...sim.match,results:sim.match.results||matchRows(sim,now)};}

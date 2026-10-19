@@ -145,3 +145,20 @@ test('invalid snapshots cannot poison movement interpolation',()=>{
  assert.equal(motion.push({x:0,y:0,z:0},Infinity),false);
  assert.deepEqual(motion.sample(1200,target),{x:1,y:2,z:3});
 });
+
+test('adaptive walking never predicts or reverses when delivery slows or recovers',()=>{
+ for(const fps of [30,60,120]){
+  const motion=new ServerMotion({delay:125,maxExtrapolation:0,snapDistance:Infinity,resetGap:Infinity,adaptive:true}),target={};
+  const packets=Array.from({length:51},(_,i)=>({source:i*50,arrival:i*50+(i<12?20:i<30?90:25)})).sort((a,b)=>a.arrival-b.arrival);
+  let next=0,previous=0,accepted=0;
+  for(let now=0;now<3000;now+=1000/fps){
+   while(next<packets.length&&packets[next].arrival<=now){const p=packets[next++];if(motion.push({x:p.source*.004,y:0,z:0},p.arrival,{serverTime:p.source}))accepted=p.source*.004;}
+   motion.sample(now,target);if(!Number.isFinite(target.x))continue;
+   assert.ok(target.x>=previous-1e-9,'no backward camera correction');
+   assert.ok(target.x<=accepted+1e-9,'no prediction beyond accepted positions');
+   assert.ok(target.x-previous<=4.4/fps+1e-8,'no catch-up jump after late packets');previous=target.x;
+  }
+  assert.equal(target.x,10,'movement stops when snapshots stop');
+  motion.push({x:30,y:1,z:2},3100,{serverTime:3100,teleport:true});assert.deepEqual(motion.sample(3100,target),{x:30,y:1,z:2});
+ }
+});

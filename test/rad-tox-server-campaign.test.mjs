@@ -36,6 +36,8 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
   for(let wave=1;wave<=4;wave++) {
    state=await runtime.snapshot(environment.id,environment);
    assert.equal(state.radTox.wave,wave);
+   const runningMatch=state.match.id;state=await send('start-rad-tox');assert.equal(state.match.id,runningMatch);assert.equal(state.radTox.wave,wave,'Start cannot reset an active wave');
+   await assert.rejects(send('next-rad-tox',{matchId:runningMatch}),{statusCode:409});
    if(wave===4)assert.equal(Object.values(state.actors).find(actor=>actor.radTox&&actor.active).kind,'boss');
    // Fire actual authoritative laser commands; never submit a client hit ID or damage.
    for(const id of Object.values(state.actors).filter(actor=>actor.radTox).map(actor=>actor.id))while(state.actors[id]?.active) {
@@ -70,3 +72,21 @@ test('Builder rooms receive the shared RAD-TOX campaign',async()=>{
  }finally{await rm(dir,{recursive:true,force:true});}
 });
 
+
+test('loading players are protected until all resources are ready and do not restart the server encounter',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'rad-tox-ready-'));let now=100000,n=0;
+ try{
+ const store=new SharedRoomStore(join(dir,'rooms.json')),runtime=new AuthoritativeRooms({store,now:()=>now});
+ runtime.collision.encounterSpawn=(_,point)=>point;runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.resolve=(_,previous,next)=>({...next,y:0,floorY:0});
+ const map={id:'ready-map',modelUrl:'/public/models/environments/muzimakzmain.glb',spawn:{x:0,y:0,z:0}},identity={accountId:'alice',username:'Alice',stats:{health:100}};
+ const send=(action,fields={})=>runtime.command(map.id,map,identity,{action,requestId:'ready-'+ ++n,...fields});
+ let state=await send('join',{deferRadTox:true});const match=state.match.id,positions=Object.values(state.actors).filter(a=>a.radTox).map(a=>a.position);
+ assert.equal(state.players['account:alice'].radToxReady,false);assert.deepEqual(state.match.participants,{});
+ for(let i=0;i<48;i++){now+=250;state=await send('input',{input:{}});await runtime.tickActive();}
+ assert.equal(state.players['account:alice'].health,100);assert.equal(state.radTox.wave,1);assert.equal(state.match.state,'active');
+ assert.deepEqual(Object.values(state.actors).filter(a=>a.radTox).map(a=>a.position),positions,'enemies do not attack a loading player');
+ await assert.rejects(send('fire',{tool:'laser',direction:[0,0,-1]}),{code:'GAME_NOT_READY'});
+ state=await send('start-rad-tox');assert.equal(state.match.id,match);assert.equal(state.players['account:alice'].radToxReady,true);assert.ok(state.match.participants['account:alice']);assert.equal(state.players['account:alice'].spawnProtectedUntil,now+3000);
+ now+=250;state=await send('input',{input:{}});assert.notDeepEqual(Object.values(state.actors).filter(a=>a.radTox).map(a=>a.position),positions,'the server runs combat after readiness');
+ }finally{await rm(dir,{recursive:true,force:true});}
+});

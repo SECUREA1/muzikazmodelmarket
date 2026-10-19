@@ -1,11 +1,11 @@
 // Presentation only: interpolate a short snapshot buffer at render frequency.
 // Collisions, health and movement remain server controlled.
 export class ServerMotion {
- constructor({delay=100,maxExtrapolation=75,teleportDistance=2.5,maxGap=500,snapDistance=teleportDistance,resetGap=maxGap}={}){
-  this.delay=delay;this.maxExtrapolation=maxExtrapolation;this.snapDistance=snapDistance;this.resetGap=resetGap;this.reset();
+ constructor({delay=100,maxExtrapolation=75,teleportDistance=2.5,maxGap=500,snapDistance=teleportDistance,resetGap=maxGap,adaptive=false}={}){
+  this.adaptive=adaptive;this.baseDelay=delay;this.delay=delay;this.maxExtrapolation=maxExtrapolation;this.snapDistance=snapDistance;this.resetGap=resetGap;this.reset();
 
  }
- reset(){this.snapshots=[];this.position=null;this.receivedAt=0;this.serverTimeOffset=null;}
+ reset(){this.snapshots=[];this.position=null;this.receivedAt=0;this.serverTimeOffset=null;this.playoutTime=null;this.sampledAt=null;this.arrivalGaps=[];this.delay=this.baseDelay;}
  push(position,now,{serverTime,teleport=false}={}){
   if(!Number.isFinite(now)||!['x','y','z'].every(axis=>Number.isFinite(position?.[axis])))return false;
   const previous=this.snapshots.at(-1);
@@ -21,6 +21,11 @@ export class ServerMotion {
    time=serverTime+this.serverTimeOffset;
   }
   if(this.snapshots.at(-1)?.time>time)return false;
+  if(this.adaptive&&this.snapshots.length&&previous&&time>previous.time){
+   this.arrivalGaps.push(Math.max(0,now-this.receivedAt));
+   if(this.arrivalGaps.length>12)this.arrivalGaps.shift();
+   this.delay=Math.max(this.baseDelay,Math.min(250,Math.max(...this.arrivalGaps)*1.25));
+  }
   const snapshot={position:{...position},time,serverTime:hasServerTime?serverTime:undefined};
   if(this.snapshots.at(-1)?.time===time)this.snapshots.pop();
 
@@ -32,7 +37,18 @@ export class ServerMotion {
  }
  sample(now,target){
   const frames=this.snapshots;if(!frames.length)return target;
-  const time=now-this.delay;
+  let time=now-this.delay;
+  if(this.adaptive){
+   // Change playback speed gently when delivery cadence changes. Never rewind
+   // the view or extrapolate past an accepted server position.
+   if(this.playoutTime===null)this.playoutTime=Math.min(time,frames.at(-1).time);
+   else {
+    const elapsed=Math.max(0,now-this.sampledAt),gap=time-this.playoutTime;
+    const rate=gap>elapsed+20?1.1:gap<elapsed-20?.9:1;
+    this.playoutTime=Math.min(frames.at(-1).time,this.playoutTime+elapsed*rate);
+   }
+   this.sampledAt=now;time=this.playoutTime;
+  }
   while(frames.length>2&&frames[1].time<=time)frames.shift();
   const first=frames[0];
   if(time<=first.time||frames.length===1){Object.assign(target,first.position);return target;}
@@ -45,7 +61,7 @@ export class ServerMotion {
    }
   }
   const last=frames.at(-1),previous=frames.at(-2),dt=last.time-previous.time;
-  const ahead=Math.max(0,Math.min(this.maxExtrapolation,time-last.time));
+  const ahead=this.adaptive?0:Math.max(0,Math.min(this.maxExtrapolation,time-last.time));
   const distance=Math.hypot(...['x','y','z'].map(axis=>last.position[axis]-previous.position[axis]));
   const limit=distance?Math.min(1,15*dt/1000/distance):1;
   for(const axis of ['x','y','z'])target[axis]=last.position[axis]+(dt>=25?(last.position[axis]-previous.position[axis])*ahead/dt*limit:0);

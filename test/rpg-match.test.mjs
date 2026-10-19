@@ -10,7 +10,7 @@ import {healthAfterHit} from '../public/js/rpg-combat-rules.js';
 
 async function arena(run){
  const dir=await mkdtemp(join(tmpdir(),'rpg-match-'));let now=100000,number=0;
- const store=new SharedRoomStore(join(dir,'rooms.json')),map={id:'arena',playable:true,modelUrl:'/fixture.glb',spawn:{x:0,y:0,z:0}};
+ const store=new SharedRoomStore(join(dir,'rooms.json')),map={id:'arena',playable:true,modelUrl:'/public/models/environments/muzimakzmain.glb',spawn:{x:0,y:0,z:0}};
  const runtime=new AuthoritativeRooms({store,now:()=>now});runtime.collision.encounterSpawn=(_,point)=>point;runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.blocksShot=()=>false;runtime.collision.resolve=(_,previous,next)=>next;
  const identity=name=>({accountId:name,username:name,walletId:name,stats:{health:100}});
  const send=(name,action,fields={},requestId='rpg-'+ ++number)=>runtime.command(map.id,map,identity(name),{action,requestId,...fields});
@@ -56,7 +56,7 @@ test('level results include disconnected participants, remain frozen, survive re
  await send('alice','join');await send('bob','join');await arrange();advance(3100);
  let state=await send('alice','fire',{tool:'laser',direction:[1,0,0]});
  advance(16000);await send('alice','join');
- await store.update(map.id,room=>finishMatch(room.simulation,'victory',now()));
+ await store.update(map.id,room=>{const sim=room.simulation;sim.radTox.wave=4;for(const actor of Object.values(sim.actors))if(actor.radTox){actor.active=false;actor.health=0;}finishMatch(sim,'victory',now());});
  state=await send('alice','input',{input:{}});const id=state.match.id;assert.equal(state.match.state,'finished');assert.equal(state.match.results.length,2);
  const bob=state.match.results.find(row=>row.id==='account:bob');assert.equal(bob.connected,false);const alice=state.match.results.find(row=>row.id==='account:alice');assert.equal(alice.shots,1);assert.equal(alice.misses,1);
  const frozen=JSON.stringify(state.match.results);await assert.rejects(send('alice','fire',{tool:'laser',direction:[1,0,0]}),{statusCode:409});
@@ -81,7 +81,7 @@ test('enemy kills credit the final attacker and give the other contributor an as
  let state=await send('alice','fire',{tool:'laser',direction:[0,-.1,-1]});assert.equal(state.actors.target.health,50);
  advance(250);state=await send('bob','fire',{tool:'laser',direction:[-2,-.5,-5]});assert.equal(state.actors.target.health,0);
  assert.equal(state.players['account:alice'].combat.assists,1);assert.equal(state.players['account:alice'].score,5);assert.equal(state.players['account:bob'].combat.enemyKills,1);assert.equal(state.players['account:bob'].score,10);
- await store.update(map.id,room=>finishMatch(room.simulation,'victory',now()));
+ await store.update(map.id,room=>{const sim=room.simulation;sim.radTox.wave=4;for(const actor of Object.values(sim.actors))if(actor.radTox){actor.active=false;actor.health=0;}finishMatch(sim,'victory',now());});
  state=await send('alice','input',{input:{}});assert.equal(state.match.results[0].username,'bob');assert.equal(state.match.results[1].assists,1);assert.ok(state.match.results.every(row=>row.shots===row.hits+row.misses));
 }));
 

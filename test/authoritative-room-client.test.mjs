@@ -227,3 +227,18 @@ test('fire pacing is per tool and does not hold up input heartbeats',async()=>{
 test('held-fire cooldown responses do not spam connection status or rejoin',async()=>{
  let sequence=0,shots=0,joins=0;const statuses=[];await withRoom(async(path,options)=>{if(path==='/api/game/room-session')return response({csrfToken:'proof'});const {action}=JSON.parse(options.body);if(action==='join')joins++;if(action==='fire'){shots++;return response({message:'Tool is cooling down.'},429);}const state=confirmed(++sequence);state.players[state.selfId].health=100;return response(state);},async client=>{await client.whenReady();await pause(460);assert.ok(shots>=1&&shots<=3);assert.equal(joins,1);assert.ok(!statuses.includes('Tool is cooling down.'));assert.equal(client.ready,true);},{input:()=>({firing:true,tool:'laser',direction:[0,0,-1]}),onStatus:message=>statuses.push(message)});
 });
+
+test('resource readiness survives a room rejoin without returning to the loading state',async()=>{
+ let sequence=0,started=false,expired=false;const joins=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);if(command.action==='join')joins.push(command);
+  if(command.action==='start-rad-tox')started=true;
+  if(started&&command.action==='input'&&!expired){expired=true;return response({message:'Rejoin required',code:'ROOM_JOIN_REQUIRED'},409);}
+  return response({...confirmed(++sequence),radTox:{state:'active',wave:1}});
+ },async client=>{
+  await client.whenReady();assert.equal(joins[0].deferRadTox,true);
+  await client.send('start-rad-tox');await pause(300);
+  assert.ok(joins.length>=2);assert.notEqual(joins[1].deferRadTox,true);assert.equal(client.ready,true);
+ },{deferRadTox:true});
+});

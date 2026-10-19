@@ -17,7 +17,7 @@ import {isArcadeMap,ARCADE_PARTS} from './arcade-rules.js';
 import {createArcadePart} from './arcade-park.js';
 import {isHockeyMap} from './hockey-rules.js';
 import {readGameCameraMode,writeGameCameraMode,nextGameCameraMode,isGameCameraToggleKey} from './game-camera.js';
-import {explorerMovementInput,explorerAimAngles,explorerTopDownPose,explorerBroadcastPose} from './explorer-camera.js';
+import {explorerMovementInput,explorerAimAngles,explorerTopDownPose,explorerBroadcastPose,explorerWalkingYaw} from './explorer-camera.js';
 import {updateVoiceOverlay,disposeVoiceOverlay} from './voice-avatar-overlay.js';
 import {ServerMotion} from './server-motion.js';
 import {selectedWorldId,outsideDestination,outsideLabel} from './world-navigation.js';
@@ -677,10 +677,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const careEffects=new CareEffects({apply:effect=>{if(serverHostedRoom)return;if(!toxicBubbleSystem.active||!effect)return;if(effect.stat==='health'||effect.stat==='all'){toxicBubbleSystem.health=effect.stat==='all'?TOXIC_BUBBLE_CONFIG.maxHealth:Math.min(TOXIC_BUBBLE_CONFIG.maxHealth,toxicBubbleSystem.health+effect.amount);toxicBubbleSystem.updateHud();}setStatus('IonCore care applied. Your member body stats are recorded.');}});
   function serverCommand(action,fields={}){if(!authoritativeClient?.ready){setStatus('Waiting for the shared server. No local gameplay action was applied.');return Promise.resolve(false);}return authoritativeClient.send(action,fields).then(async state=>{if(state?.result?.message)setStatus(state.result.message);if(state?.result?.destination){if(!registry.find(state.result.destination))await registry.refresh();await loadById(state.result.destination);}return state;}).catch(error=>{setStatus(error.message);return false;});}
   let stickSprinting=false;
-  function serverInput(){if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return {side:0,forward:0,yaw:player.yaw,jump:false,sprint:false,firing:false};const input=getMovementInput();return {side:input.x,forward:input.y,yaw:player.yaw,jump:keys.has(' ')||mobile.has('jump'),sprint:keys.has('shift')||stickSprinting,firing:!ownedPlacement.active&&!!toxicBubbleSystem.flameTrigger,tool:toxicBubbleSystem.tool,eyeHeight:player.eyeHeight,direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex};}
+  function serverInput(){if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return {side:0,forward:0,yaw:player.yaw,jump:false,sprint:false,firing:false};const input=getMovementInput(),gaze=(renderer.xr.isPresenting?renderer.xr.getCamera(camera):camera).getWorldDirection(new THREE.Vector3()),heading=renderer.xr.isPresenting?explorerWalkingYaw(gaze,player.yaw):player.yaw;return {side:input.x,forward:input.y,yaw:heading,jump:keys.has(' ')||mobile.has('jump'),sprint:keys.has('shift')||stickSprinting,firing:!ownedPlacement.active&&!!toxicBubbleSystem.flameTrigger,tool:toxicBubbleSystem.tool,eyeHeight:player.eyeHeight,direction:gaze.toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex};}
 
   const serverAssetRetryAt=new Map();
-  const serverAssetLoads=new Set(),serverPlayerRoots=new Map(),serverPlayerTarget=new THREE.Vector3();const serverMotion=new ServerMotion({delay:75,maxExtrapolation:0,snapDistance:Infinity,resetGap:Infinity});let serverPlayerInitialized=false,serverMovementRevision=null;const serverViewTarget=new THREE.Vector3();let renderedStreetRevision=-1;let serverActors={};
+  const serverAssetLoads=new Set(),serverPlayerRoots=new Map(),serverPlayerTarget=new THREE.Vector3();const serverMotion=new ServerMotion({delay:125,maxExtrapolation:0,snapDistance:Infinity,resetGap:Infinity,adaptive:true});let serverPlayerInitialized=false,serverMovementRevision=null;const serverViewTarget=new THREE.Vector3();let renderedStreetRevision=-1;let serverActors={};
   const matchResults=mountMatchResults({dock:dockActions,onOpen:()=>{keys.clear();mobile.clear();document.exitPointerLock?.();},onNext:matchId=>authoritativeClient.send('next-rad-tox',{matchId}),onRespawn:()=>authoritativeClient.send('respawn')});
   const enemyEffects=createSharedEnemyEffects({THREE,scene,resources:()=>toxicBubbleSystem.resources});
   const serverRadToxRoots=new Map(),serverShotEvents=new Set();
@@ -831,7 +831,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if(generation!==worldLoadGeneration||client!==authoritativeClient)return false;
     const snapshot=await authoritativeClient.send('start-rad-tox');
     if(generation!==worldLoadGeneration||client!==authoritativeClient)return false;
-    if(!activeEnvironment.builderScene&&!activeEnvironment.proceduralLand&&!snapshot.radTox)throw new Error('This game server has not started the RAD-TOX encounter. Select Try again.');
+    if(!snapshot.radTox)throw new Error('This game server has not started the RAD-TOX encounter. Select Try again.');
     toxicBubbleSystem.active=true;
     toxicBubbleSystem.updateHud();
   };
@@ -1552,7 +1552,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     player.yaw-=thumbInput.rightX*delta*2.5*RIGHT_THUMBSTICK_SENSITIVITY*playerPreferences.touchSensitivity;
     player.pitch=THREE.MathUtils.clamp(player.pitch-thumbInput.rightY*delta*1.9*RIGHT_THUMBSTICK_SENSITIVITY*playerPreferences.touchSensitivity*(playerPreferences.invertLook?-1:1),-1.25,1.15);
     const input=getMovementInput();
-    forward.set(-Math.sin(player.yaw),0,-Math.cos(player.yaw));right.set(Math.cos(player.yaw),0,-Math.sin(player.yaw));
+    const walkingYaw=renderer.xr.isPresenting?explorerWalkingYaw(renderer.xr.getCamera(camera).getWorldDirection(new THREE.Vector3()),player.yaw):player.yaw;
+    forward.set(-Math.sin(walkingYaw),0,-Math.cos(walkingYaw));right.set(Math.cos(walkingYaw),0,-Math.sin(walkingYaw));
     move.copy(forward).multiplyScalar(input.y).addScaledVector(right,input.x);
     const jetpackThrust=useJetpack(delta,input);
     if(move.lengthSq())move.multiplyScalar((jetpackThrust&&input.y>0?TOXIC_BUBBLE_CONFIG.jetpackForwardSpeed:walkingSprint(stickSprinting,Math.hypot(thumbInput.leftX,thumbInput.leftY))?6:player.speed)*delta);
@@ -2146,7 +2147,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (!serverHostedRoom) return;
     if (!authoritativeClient || !authoritativeClient.ready) {
       authoritativeClient?.stop();
-      authoritativeClient=connectAuthoritativeRoom({roomId:activeEnvironment.id,meetingId:new URL(location.href).searchParams.get('meet'),input:serverInput,render:renderServerRoom,onStatus:setStatus,onError:showConnectionFailure});
+      authoritativeClient=connectAuthoritativeRoom({roomId:activeEnvironment.id,deferRadTox:true,meetingId:new URL(location.href).searchParams.get('meet'),input:serverInput,render:renderServerRoom,onStatus:setStatus,onError:showConnectionFailure});
     }
     connectionBadge.textContent='Connecting to live server…';
     publishGameStage('connecting-room', 'Joining the game server…');

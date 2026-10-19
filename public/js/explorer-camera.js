@@ -26,3 +26,7 @@ export function explorerBroadcastPose(position, aspect = 1, zoom = 1, yaw = 0) {
   const distance = 28 * Math.max(.35, Math.min(4, Number(zoom) || 1)) / Math.min(1, Math.max(.45, aspect));
   return {position: [position.x + Math.sin(yaw)*distance, position.y + distance*.85, position.z + Math.cos(yaw)*distance], target: [position.x, position.y+1, position.z], up: [0,1,0], cutHeight: Infinity};
 }
+
+export function explorerWalkingYaw(direction, fallback = 0) {
+  return Math.hypot(direction?.x || 0, direction?.z || 0) > .001 ? Math.atan2(-direction.x,-direction.z) : fallback;
+}

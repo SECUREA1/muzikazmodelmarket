@@ -31,7 +31,7 @@ the entire map for every player on every tick. Walking never calls the spawn
 search to repair a contact.
 
 The browser displays only accepted server positions through `ServerMotion`, with
-a 75 ms interpolation buffer and no extrapolation. A second local movement
+a 125 ms interpolation buffer that adapts to recent delivery gaps, and no extrapolation. Playback speed adjusts gently without rewinding or jumping beyond accepted positions. A second local movement
 predictor must not run alongside it: that would move the view through walls and
 require a later correction. Ordinary snapshots do not reset the view based on
 distance. Deliberate relocations use `movementRevision`/explicit resets.
@@ -53,3 +53,12 @@ initial overlaps, rotated objects, openings, steps, thin floors, ceilings,
 platform descent and stationary snapshots. The room tests exercise real
 authoritative commands; browser smoke also uses the native Three Octree/Capsule
 and the game page.
+
+## RAD-TOX readiness
+
+The explorer joins with `deferRadTox` while its map and enemy resources load. The
+server keeps that player outside enemy targeting and team defeat until
+`start-rad-tox` confirms readiness. Loading players cannot fire. Existing
+participants continue their encounter. Start is idempotent; all three regular
+waves and the boss must finish before victory can advance to the next level,
+with the results countdown enforced by the server.
