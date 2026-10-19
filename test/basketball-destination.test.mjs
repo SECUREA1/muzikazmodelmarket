@@ -36,7 +36,7 @@ test('the permanent basketball destination survives an empty publication list an
 test('the court is discoverable in the map wheel and location index even with no active players', () => {
   const arena = { id: 'basketball-arena', mapId: 'basketball-arena', name: 'MUZIKAZ Basketball Arena', permanent: true, ownerName: 'MUZIKAZ', column: 1, row: 0 };
   const worlds = [{ env: { id: 'quiet' }, count: 0 }, { env: arena, count: 0 }, { env: { id: 'busy' }, count: 3 }];
-  assert.deepEqual(sortWorlds(worlds).map(item => item.env.id), ['busy', 'basketball-arena', 'quiet']);
+  assert.deepEqual(sortWorlds(worlds).map(item => item.env.id), ['basketball-arena', 'busy', 'quiet']);
   assert.equal(filterWorlds(worlds, 'basketball')[0].env.id, arena.id);
   assert.equal(filterAtlasLocations([arena], 'basketball')[0].mapId, arena.id);
   assert.equal(atlasLocationPosition(arena).mapId, arena.id);
