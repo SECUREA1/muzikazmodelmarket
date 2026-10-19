@@ -33,7 +33,7 @@
       return;
     }
     var module = document.createElement('script');
-    module.type = 'module'; module.src = 'public/js/house-explorer-glb.js?v=live-range-entry-2';
+    module.type = 'module'; module.src = 'public/js/house-explorer-glb.js?v=sports-actions-3';
     module.onerror = function () { showError('The game engine could not be loaded.'); };
     document.body.appendChild(module);
     loadTimer = window.setTimeout(showStall, 30000);
