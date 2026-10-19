@@ -2,6 +2,7 @@ import {mountXRGameControls,xrStick} from './xr-game-controls.js';
 import {isCleanSportsEnvironment,canonicalWorldId} from './sports-worlds.js';
 import {createBasketballAIAvatar,animateBasketballAIAvatar} from './basketball-ai-avatar.js';
 import {mountBasketballAim} from './basketball-aim.js';
+import {resolveBasketballAction,BASKETBALL_TRIGGER_MODES} from './basketball-actions.js';
 import {mountBasketballHud} from './basketball-hud.js';
 import {setBasketballJersey} from './basketball-jerseys.js';
 import {ensureBasketballGame,assignBasketballTeam,takeBasketballSpot,stealBasketball,configureBasketballGame,watchBasketballGame,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,isBasketballEnvironment,basketballHoopForTeam,constrainBasketballSpectator,predictBasketballShotPath} from './basketball-rules.js';
@@ -806,7 +807,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     toxicBubbleSystem.active=true;
     toxicBubbleSystem.updateHud();
   };
-  for(const name of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt']){const original=toxicBubbleSystem[name]?.bind(toxicBubbleSystem);if(original)toxicBubbleSystem[name]=(...args)=>{if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active)return basketballAction('basketball-shoot');if(name==='handlePointerInteraction'&&isTopDownView()&&!args[1]?.centre){const event=args[0],rect=canvas.getBoundingClientRect();if(Number.isFinite(event?.clientX)&&Number.isFinite(event?.clientY))aimTopDownPointer(new THREE.Vector2(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1));args=[{},{centre:true}];}if(!serverHostedRoom)return original(...args);if(toxicBubbleSystem.tool==='brick')return toxicBubbleSystem.placeBrick();if(ownedPlacement.active)return ownedPlacement.confirm();const direction=name==='handleXRInteraction'&&args[0]?new THREE.Vector3(0,0,-1).applyQuaternion(args[0].getWorldQuaternion(new THREE.Quaternion())):camera.getWorldDirection(new THREE.Vector3());return serverCommand('fire',{tool:toxicBubbleSystem.tool,direction:direction.toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex});};}
+  for(const name of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt']){const original=toxicBubbleSystem[name]?.bind(toxicBubbleSystem);if(original)toxicBubbleSystem[name]=(...args)=>{if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active){if(!['handlePointerInteraction','handleXRInteraction'].includes(name))return false;if(name==='handlePointerInteraction'&&isTopDownView()&&!args[1]?.centre){const event=args[0],rect=canvas.getBoundingClientRect();if(Number.isFinite(event?.clientX)&&Number.isFinite(event?.clientY))aimTopDownPointer(new THREE.Vector2(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1));}return basketballTrigger();}if(name==='handlePointerInteraction'&&isTopDownView()&&!args[1]?.centre){const event=args[0],rect=canvas.getBoundingClientRect();if(Number.isFinite(event?.clientX)&&Number.isFinite(event?.clientY))aimTopDownPointer(new THREE.Vector2(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1));args=[{},{centre:true}];}if(!serverHostedRoom)return original(...args);if(toxicBubbleSystem.tool==='brick')return toxicBubbleSystem.placeBrick();if(ownedPlacement.active)return ownedPlacement.confirm();const direction=name==='handleXRInteraction'&&args[0]?new THREE.Vector3(0,0,-1).applyQuaternion(args[0].getWorldQuaternion(new THREE.Quaternion())):camera.getWorldDirection(new THREE.Vector3());return serverCommand('fire',{tool:toxicBubbleSystem.tool,direction:direction.toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex});};}
   async function createOwnedPreview(asset){
     let root;
     if(asset.materialId)root=createBuildingBlock(THREE,asset.materialId);
@@ -1508,7 +1509,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const localBasketballs=[];let heldBasketball=null,basketballSnapshot=null,basketballSelf=null,basketballPlayers={},basketballMatchViewId=null,localJerseyTeam=null;
   const localBasketballPlayer={actorId:'local',lastSeen:Date.now(),position:{x:0,y:0,z:0},yaw:0,health:100,heldId:null,basketballTeam:'home',inventory:[]};
   let localBasketballSim={actors:{},players:{local:localBasketballPlayer},events:[]};
-  const basketballHud=mountBasketballHud({stage,onAction:basketballAction,announce:setStatus});
+  let basketballTriggerMode='auto',basketballTriggerPending=false,basketballTriggerCheckedAt=-Infinity;
+  const basketballActionRay=new THREE.Raycaster();
+  const basketballHud=mountBasketballHud({stage,onAction:basketballAction,announce:setStatus,onTriggerMode:setBasketballTriggerMode});
   const basketballAim=mountBasketballAim({stage});
   const flightGeometry=new THREE.BufferGeometry();flightGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(256*3),3));flightGeometry.setDrawRange(0,0);
   const flightPreview=new THREE.Points(flightGeometry,new THREE.PointsMaterial({color:0xffdc94,size:.065,transparent:true,opacity:.8,depthWrite:false}));flightPreview.name='BASKETBALL_THROW_PREVIEW';flightPreview.frustumCulled=false;flightPreview.visible=false;scene.add(flightPreview);
@@ -1530,8 +1533,42 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   const ballControls=document.createElement('div');ballControls.className='basketball-controls';ballControls.style.cssText='position:absolute;bottom:140px;right:18px;z-index:30;display:flex;gap:8px';ballControls.hidden=true;
   for(const [action,label] of [['catch','Catch basketball (E)'],['toss','Toss basketball (T)']]){const button=document.createElement('button');button.type='button';button.textContent=label;button.addEventListener('click',()=>safelyInteract('Basketball',()=>basketballAction(action)));ballControls.append(button);}stage.append(ballControls);
+  function basketballDirection(){
+    return !renderer.xr.isPresenting&&isTopDownView()?new THREE.Vector3(-Math.sin(player.yaw),0,-Math.cos(player.yaw)):(renderer.xr.isPresenting?renderer.xr.getCamera():camera).getWorldDirection(new THREE.Vector3());
+  }
+  function basketballVisible(from,to){
+    const origin=new THREE.Vector3(from.x,from.y,from.z),offset=new THREE.Vector3(to.x,to.y,to.z).sub(origin),distance=offset.length();
+    if(distance<.05)return true;
+    basketballActionRay.set(origin,offset.multiplyScalar(1/distance));
+    return !basketballActionRay.intersectObjects(toxicBubbleSystem.environmentSurfaces(),false).some(hit=>hit.distance<distance-.15);
+  }
+  function basketballTriggerChoice(direction=basketballDirection(),forced=basketballTriggerMode){
+    const self=serverHostedRoom?basketballSelf:localBasketballPlayer;
+    return resolveBasketballAction({game:serverHostedRoom?basketballSnapshot:localBasketballSim.basketball,player:self?{...self,position:{x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z},yaw:player.yaw}:null,players:serverHostedRoom?basketballPlayers:localBasketballSim.players,balls:serverHostedRoom?serverActors:localBasketballs,direction:direction.toArray(),options:basketballAim.options(),forced,visible:basketballVisible});
+  }
+  function setBasketballTriggerMode(mode){
+    basketballTriggerMode=BASKETBALL_TRIGGER_MODES.includes(mode)?mode:'auto';basketballTriggerCheckedAt=-Infinity;
+    basketballHud.setTriggerAction?.(basketballTriggerChoice().label,basketballTriggerMode);
+    setStatus(basketballTriggerMode==='auto'?'Auto trigger: grab, steal, shoot, pass or toss when available.':`Trigger locked to ${basketballTriggerMode}. Choose Auto to restore automatic actions.`);
+  }
+  async function basketballTrigger(direction=basketballDirection(),forced=basketballTriggerMode){
+    if(basketballTriggerPending)return false;
+    const choice=basketballTriggerChoice(direction,forced);
+    basketballHud.setTriggerAction?.(choice.label,forced);
+    // The server resolves Auto again after advancing the simulation, so a
+    // possession change in flight cannot turn a steal into a stale shot.
+    if(serverHostedRoom&&forced==='auto'){
+      basketballTriggerPending=true;
+      try{return await serverCommand('basketball-auto',{...basketballAim.options(),direction:direction.toArray()});}
+      finally{basketballTriggerPending=false;}
+    }
+    if(!choice.action){setStatus(choice.label);return false;}
+    basketballTriggerPending=true;
+    try{return await basketballAction(choice.action,{direction:direction.toArray(),...choice.fields});}
+    finally{basketballTriggerPending=false;}
+  }
   function basketballAction(action,fields={}){
-    if(['basketball-shoot','toss'].includes(action))fields={...basketballAim.options(),direction:(renderer.xr.isPresenting?renderer.xr.getCamera():camera).getWorldDirection(new THREE.Vector3()).toArray(),...fields};
+    if(['basketball-shoot','toss'].includes(action))fields={...basketballAim.options(),direction:basketballDirection().toArray(),...fields};
     if(serverHostedRoom)return serverCommand(action,{pitch:-player.pitch,...fields}).then(state=>{if(state&&action==='basketball-watch'){player.yaw=Math.PI/2;player.pitch=0;}return state;});
     const now=Date.now();localBasketballPlayer.position={x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z};localBasketballPlayer.yaw=player.yaw;
     if(action==='basketball-steal'){const ball=stealBasketball(localBasketballSim,localBasketballPlayer,now);heldBasketball=localBasketballs.find(item=>item.id===ball.id)||null;setStatus('Basketball stolen — pass or shoot.');return;}
@@ -1544,10 +1581,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if(action==='basketball-shoot'){const result=shootBasketball(localBasketballSim,localBasketballPlayer,now,fields);heldBasketball=null;return result;}
     if(action==='toss'){
       if(!heldBasketball){setStatus('Catch a basketball first.');return;}
-      registerBasketballRelease(localBasketballSim,heldBasketball,localBasketballPlayer,now);tossBasketball(heldBasketball,playerRig.position,camera.getWorldDirection(new THREE.Vector3()),{...fields,mode:'manual'});heldBasketball=null;localBasketballPlayer.heldId=null;setStatus('Basketball tossed — move close and press E to catch.');
+      registerBasketballRelease(localBasketballSim,heldBasketball,localBasketballPlayer,now);tossBasketball(heldBasketball,playerRig.position,fields.direction||basketballDirection(),{...fields,mode:'manual'});heldBasketball=null;localBasketballPlayer.heldId=null;setStatus('Basketball tossed — move close and press E to catch.');
     }else{
       if(heldBasketball||builderGameplay.heldActor()){setStatus('Release your held item first.');return;}
-      const ball=localBasketballs.map(ball=>({ball,reach:ball.root.parent&&basketballCatchPosition(ball,playerRig.position,{now})})).filter(hit=>hit.reach).sort((a,b)=>a.reach.distance-b.reach.distance)[0]?.ball;
+      const ball=localBasketballs.filter(ball=>!fields.entityId||ball.id===fields.entityId).map(ball=>({ball,reach:ball.root.parent&&basketballCatchPosition(ball,playerRig.position,{now})})).filter(hit=>hit.reach).sort((a,b)=>a.reach.distance-b.reach.distance)[0]?.ball;
       if(!ball){setStatus('Move within 3 metres of a basketball to catch it.');return;}
       heldBasketball=ball;ball.holderId='local';delete ball.ballVelocity;delete ball.ballCatchSegment;localBasketballPlayer.heldId=ball.id;touchBasketball(localBasketballSim,ball,localBasketballPlayer,now);setStatus('Basketball caught — R to shoot, T to pass.');
     }
@@ -1561,6 +1598,14 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   }
   function updateBasketballs(delta){
     const arena=isBasketballEnvironment(activeEnvironment);
+    const leftStick=document.querySelector('.mobile-move-pad [data-thumbstick="left"]');
+    if(leftStick&&leftStick.dataset.sportControls!==String(arena)){
+      leftStick.dataset.sportControls=String(arena);
+      leftStick.querySelector('.thumbstick-label').textContent=arena?'Move / action':'Move / shoot';
+      leftStick.querySelector('small').textContent=arena?'Drag to move · tap for selected action':'Drag to move · tap to shoot';
+      leftStick.setAttribute('aria-label',arena?'Left controller: move; tap for Auto or selected trigger action':'Left controller: move; tap to shoot');
+      leftStick.querySelector('button').setAttribute('aria-label',arena?'Left thumbstick: drag to move, tap for Auto or selected trigger action':'Left thumbstick: drag to move, tap to shoot');
+    }
     for(const root of serverPlayerRoots.values())if(root.userData.basketballAI)animateBasketballAIAvatar(root.userData.serverBody,root.userData.basketballWalking,clock.elapsedTime);
     if(!serverHostedRoom&&arena){const constrained=constrainBasketballSpectator(localBasketballPlayer.position,{x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z},localBasketballSim,localBasketballPlayer);playerRig.position.set(constrained.x,constrained.y,constrained.z);playerCollider.start.set(constrained.x,constrained.y+player.radius,constrained.z);playerCollider.end.set(constrained.x,constrained.y+player.height,constrained.z);}
     localBasketballPlayer.position={x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z};localBasketballPlayer.yaw=player.yaw;localBasketballPlayer.lastSeen=Date.now();
@@ -1574,6 +1619,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const hasBall=serverHostedRoom?Object.values(serverActors).some(isBasketball):localBasketballs.length>0;ballControls.hidden=!hasBall||arena;ballControls.style.display=hasBall&&!arena?'flex':'none';
     const game=serverHostedRoom?basketballSnapshot:localBasketballSim.basketball,self=serverHostedRoom?basketballSelf:localBasketballPlayer;
     basketballHud.render(game,self,arena,serverHostedRoom?basketballPlayers:localBasketballSim.players);
+    if(arena&&performance.now()-basketballTriggerCheckedAt>120){basketballTriggerCheckedAt=performance.now();basketballHud.setTriggerAction?.(basketballTriggerChoice().label,basketballTriggerMode);}
     let solution=null;
     const held=serverHostedRoom?isBasketball(serverActors[self?.heldId]):Boolean(heldBasketball);
     const spectator=arena&&self?.basketballRole==='spectator';
@@ -1581,7 +1627,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       const options=basketballAim.options(),previewPass=!arena||basketballAim.previewAction()==='toss';
       const origin={x:playerRig.position.x,y:playerRig.position.y+(previewPass?1.2:1.8),z:playerRig.position.z};
       const hoop=basketballHoopForTeam(self?.basketballTeam||'home'),target={...hoop,y:hoop.y-.12};
-      try{solution=basketballShotSolution(origin,target,camera.getWorldDirection(new THREE.Vector3()),{...options,mode:previewPass?'manual':options.mode});}catch{}
+      try{solution=basketballShotSolution(origin,target,basketballDirection(),{...options,mode:previewPass?'manual':options.mode});}catch{}
       if(solution){const predict=arena?predictBasketballShotPath:predictBasketballTrajectory,points=predict(solution,{duration:Math.min(6,Math.max(3,(solution.flightTime||2)+1)),step:1/30,floor:0}).slice(0,256),attribute=flightGeometry.getAttribute('position');points.forEach((point,index)=>attribute.setXYZ(index,point.x,point.y+.12,point.z));attribute.needsUpdate=true;flightGeometry.setDrawRange(0,points.length);flightPreview.material.color.setHex(solution.aimAligned===false||solution.reachable===false?0xff8866:0xffdc94);}
     }
     flightPreview.visible=Boolean(held&&!spectator&&solution);
@@ -1659,7 +1705,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   let toxicTap = null; let toxicConsumedClick = false;
   canvas.addEventListener('click', (event) => { if (!toxicConsumedClick) return; toxicConsumedClick=false; event.preventDefault(); event.stopImmediatePropagation(); }, true);
   toolsButton?.addEventListener('click', (event) => { event.preventDefault(); toggleTools(); setStatus(`RAD-TOX tools ${sprayTools.hidden ? 'closed' : 'open'}. Choose Laser, Paint Gun, Bat, Taser, Dynamite, Brick Layer, Jetpack, Seats, Build Map, Pack, or a paint color.`); });
-  canvas.addEventListener('pointerdown', (event) => { if (document.pointerLockElement === canvas && event.button === 0) { if(toxicBubbleSystem.tool==='flamethrower')toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())}); const rangeHit=handleRangeShot({centre:true});if(rangeHit===null)toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
+  canvas.addEventListener('pointerdown', (event) => { if (document.pointerLockElement === canvas && event.button === 0) { if(!isBasketballEnvironment(activeEnvironment)&&toxicBubbleSystem.tool==='flamethrower')toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())}); const rangeHit=handleRangeShot({centre:true});if(rangeHit===null)toxicBubbleSystem.handlePointerInteraction(event,{centre:true}); return; } if (document.pointerLockElement !== canvas) toxicTap={id:event.pointerId,x:event.clientX,y:event.clientY,avatar:Boolean(findPlacedAvatarFromEvent(event))}; });
   window.addEventListener('pointerup',()=>{toxicBubbleSystem.flameTrigger=null;});
   window.addEventListener('pointercancel',()=>{toxicBubbleSystem.flameTrigger=null;});
   window.addEventListener('blur',()=>{toxicBubbleSystem.flameTrigger=null;});
@@ -1757,9 +1803,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   document.querySelectorAll('[data-mobile-zoom-toggle]').forEach((oldButton) => { const button = oldButton.cloneNode(true); oldButton.replaceWith(button); let zoomHold = 0; const setDirection = (direction) => { button.dataset.mobileZoomToggle = direction; button.setAttribute('aria-pressed', String(direction === 'in')); button.querySelector('b').textContent = direction === 'in' ? '+' : '−'; button.querySelector('span').textContent = direction === 'in' ? 'Zoom in' : 'Zoom out'; button.setAttribute('aria-label', direction === 'in' ? 'Zoom in' : 'Zoom out'); }; const step = () => applyZoom(button.dataset.mobileZoomToggle === 'in' ? -1 : 1); const stop = () => { clearInterval(zoomHold); zoomHold = 0; button.classList.remove('is-active'); }; button.addEventListener('pointerdown', (e) => { e.preventDefault(); step(); button.classList.add('is-active'); zoomHold = window.setInterval(step, 120); }); button.addEventListener('pointerup', stop); button.addEventListener('pointercancel', stop); button.addEventListener('pointerleave', stop); button.addEventListener('dblclick', (e) => { e.preventDefault(); setDirection(button.dataset.mobileZoomToggle === 'in' ? 'out' : 'in'); setStatus(`${button.getAttribute('aria-label')} selected. Hold the zoom button to keep zooming.`); }); setDirection(button.dataset.mobileZoomToggle || 'out'); });
   function jump() { if (toxicBubbleSystem.tool === 'jetpack') { jetpackTapThrustRemaining = .35; setStatus('Jetpack thrust activated · 1 MZK per powered second.'); return; } if (player.onGround) { player.velocity.y = player.jumpVelocity; player.onGround = false; setStatus('Jump activated.'); } }
   const flameFireButton=sprayTools.querySelector('[data-flame-fire]');
-  flameFireButton.addEventListener('pointerdown',event=>{event.preventDefault();safelyCapturePointer(flameFireButton,event.pointerId);toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())});shootAtReticle();});
+  flameFireButton.addEventListener('pointerdown',event=>{event.preventDefault();safelyCapturePointer(flameFireButton,event.pointerId);if(!isBasketballEnvironment(activeEnvironment))toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())});shootAtReticle();});
   flameFireButton.addEventListener('lostpointercapture',()=>{toxicBubbleSystem.flameTrigger=null;});
-  function shootAtReticle() { if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active)return basketballAction('basketball-shoot');if(ownedPlacement.active)return ownedPlacement.confirm();const rangeHit=handleRangeShot({centre:true});if(rangeHit!==null)return;const tool=toxicBubbleSystem.tool, shot=toxicBubbleSystem.handlePointerInteraction({}, { centre: true }); if(UTILITY_TOOLS[tool]||tool==='jetpack')return shot;if(tool==='dynamite'&&shot){setStatus('Dynamite lit, tossed, and live — watch it bounce, then clear the full blast radius.');return;} setStatus(shot ? `${RANGE_WEAPONS[tool] ? `${RANGE_WEAPONS[tool].label} fired` : 'Tool fired'}.` : 'No action at the reticle. Move or look, then use the shoot button again.'); }
+  function shootAtReticle() { if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active)return basketballTrigger();if(ownedPlacement.active)return ownedPlacement.confirm();const rangeHit=handleRangeShot({centre:true});if(rangeHit!==null)return;const tool=toxicBubbleSystem.tool, shot=toxicBubbleSystem.handlePointerInteraction({}, { centre: true }); if(UTILITY_TOOLS[tool]||tool==='jetpack')return shot;if(tool==='dynamite'&&shot){setStatus('Dynamite lit, tossed, and live — watch it bounce, then clear the full blast radius.');return;} setStatus(shot ? `${RANGE_WEAPONS[tool] ? `${RANGE_WEAPONS[tool].label} fired` : 'Tool fired'}.` : 'No action at the reticle. Move or look, then use the shoot button again.'); }
   function setFullscreen() { if (document.fullscreenElement) { document.exitFullscreen?.(); return; } const request = stage.requestFullscreen?.(); if (request?.catch) request.catch(() => setStatus('Fullscreen is unavailable in this browser.')); else setStatus('Fullscreen is unavailable in this browser.'); }
   // Anchor walking to the initial touch; the 8px tap zone stays neutral.
   function setupThumbstick(name) { const stick = document.querySelector(`[data-thumbstick="${name}"] .thumbstick-base`); const knob = stick?.querySelector('.thumbstick-knob'); if (!stick || !knob) return; let pointerId = null; let startX = 0; let startY = 0; let moved = false; let stickRect; const write = (event) => { const rect = stickRect; const radius = rect.width * .29; let x = THREE.MathUtils.clamp(event.clientX - (name === 'left' ? startX : rect.left + rect.width / 2), -radius, radius); let y = THREE.MathUtils.clamp(event.clientY - (name === 'left' ? startY : rect.top + rect.height / 2), -radius, radius); const length = Math.hypot(x, y); if (length > radius) { x = x / length * radius; y = y / length * radius; } knob.style.transform = `translate(${x}px, ${y}px)`; const wasNeutral=thumbInput.leftX===0&&thumbInput.leftY===0; const axes=name==='left'?walkingStick(x/radius,y/radius,Math.min(.9,8/radius)):{x:x/radius,y:y/radius};thumbInput[`${name}X`] = axes.x; thumbInput[`${name}Y`] = axes.y; moved ||= Math.hypot(event.clientX - startX, event.clientY - startY) > 8; if(name==='left')authoritativeClient?.requestInput(wasNeutral !== (axes.x===0&&axes.y===0)); };
@@ -1770,14 +1816,14 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   fullscreenButton?.addEventListener('click', setFullscreen);
   beginResetButton?.addEventListener('click', () => {if(serverHostedRoom){serverCommand('respawn');return;} resetPlayer(activeWorldSpawn.position, activeWorldSpawn.rotationY); toxicBubbleSystem.begin(); setStatus('RAD-TOX begin or reset requested.'); });
   let xrGameControls=null;
-  function xrBasketballInteract(){const self=serverHostedRoom?authoritativeClient?.selfId:'local',balls=serverHostedRoom?Object.values(serverActors):localBasketballs;const held=balls.some(ball=>isBasketball(ball)&&ball.holderId&&ball.holderId!==self);return basketballAction(held?'basketball-steal':'catch');}
+  function xrBasketballInteract(){return basketballTrigger(basketballDirection(),'auto');}
   async function setupVRControls(){
     if(!renderer.xr.enabled||!webXrAvailable)return;
     xrGameControls=mountXRGameControls({renderer,scene,camera,rig:playerRig,parent:stage,pollMovement:false,status:setStatus,
       onEnter:()=>{if(!gameplayStarted)throw Error('Start the world and choose guest access or sign in before entering VR.');},
       onExit:()=>{syncCameraToggle();updateGameCamera();camera.position.set(0,player.eyeHeight,0);keys.clear();},
       onTrigger:(hand,{origin,direction},controller)=>{
-        if(isBasketballEnvironment(activeEnvironment))return hand==='left'?xrBasketballInteract():basketballAction('basketball-shoot',{direction:direction.toArray()});
+        if(isBasketballEnvironment(activeEnvironment))return basketballTrigger(direction);
         const rangeHit=handleRangeShot({origin,direction});if(rangeHit!==null)return rangeHit;
         return toxicBubbleSystem.handleXRInteraction(controller);
       },
@@ -1789,7 +1835,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         {label:'Join Away · take an AI spot',run:()=>basketballAction('basketball-join-spot',{team:'away'})},
         {label:'Watch game',run:()=>basketballAction('basketball-watch')},
         {label:'Team size · cycle 1–5',run:()=>{const rules=(serverHostedRoom?basketballSnapshot:localBasketballSim.basketball).settings,size=rules.teamSize%5+1;return basketballAction('basketball-settings',{settings:{teamSize:size,homeHumans:Math.min(rules.homeHumans,size),awayHumans:Math.min(rules.awayHumans,size)}});}},{label:'AI difficulty · cycle tiers',run:()=>{const rules=(serverHostedRoom?basketballSnapshot:localBasketballSim.basketball).settings;return basketballAction('basketball-settings',{settings:{aiDifficulty:rules.aiDifficulty%5+1}});}},
-        {label:'Catch / steal basketball',run:xrBasketballInteract},
+        {label:'Auto action · '+basketballTriggerChoice().label,run:()=>basketballTrigger(basketballDirection(),'auto')},
+        ...BASKETBALL_TRIGGER_MODES.map(mode=>({label:`${mode===basketballTriggerMode?'✓ ':''}Trigger: ${mode==='auto'?'Auto · best available action':mode}`,run:()=>setBasketballTriggerMode(mode)})),
         {label:'Shoot',run:()=>basketballAction('basketball-shoot')},{label:'Pass',run:()=>basketballAction('toss')},
         {label:'Solo world · re-enter VR',run:()=>openXRWorldMode('solo')},{label:'Live world · re-enter VR',run:()=>openXRWorldMode('multiplayer')},
         {label:'Exit VR',run:()=>xrGameControls.endSession()}

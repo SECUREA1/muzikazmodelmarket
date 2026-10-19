@@ -1,4 +1,5 @@
-import {isBasketball,basketballCatchPosition,basketballJerseyTeam,tossBasketball,stepBasketball} from './public/js/basketball.js';
+import {isBasketball,basketballCatchPosition,basketballJerseyTeam,basketballLaunchOptions,basketballShotSolution,tossBasketball,stepBasketball} from './public/js/basketball.js';
+import {resolveBasketballAction} from './public/js/basketball-actions.js';
 import {isBasketballEnvironment,ensureBasketballGame,assignBasketballTeam,takeBasketballSpot,stealBasketball,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,configureBasketballGame,watchBasketballGame,requireBasketballPlayer,constrainBasketballSpectator,basketballSpectatorRestricted,BASKETBALL_BALL_ID} from './public/js/basketball-rules.js';
 import {refreshRpgLoot,dropRpgLoot} from './server-rpg-loot.mjs';
 import {validateOwnedPlacement} from './owned-item-placement.mjs';
@@ -115,12 +116,12 @@ export class AuthoritativeRooms {
   this.prepareEncounter(sim,environment);
   sim.sequence++;return {sim,manifest};
  }
- view(room){const sim=room.simulation,now=this.now();return {authoritative:true,basketball:sim.basketball?copy(sim.basketball):null,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,basketballRole:p.basketballRole||'player',basketballTeam:p.basketballTeam||null,basketballJersey:p.basketballJersey||null,basketballPoints:p.basketballPoints||0,basketballAI:Boolean(p.basketballAI),basketballNumber:p.basketballNumber||null,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
+ view(room){const sim=room.simulation,now=this.now();return {authoritative:true,basketball:sim.basketball?copy(sim.basketball):null,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,basketballRole:p.basketballRole||'player',basketballTeam:p.basketballTeam||null,basketballJersey:p.basketballJersey||null,basketballPoints:p.basketballPoints||0,basketballStealAt:p.basketballStealAt??null,basketballAI:Boolean(p.basketballAI),basketballNumber:p.basketballNumber||null,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
  snapshot(id,environment){return this.store.update(id,room=>{this.step(room,environment);return this.view(room);},{persist:false,roomOnly:true});}
- command(id,environment,identity,command){this.activeWorlds.set(id,environment);return this.store.update(id,async (room,allRooms)=>{
+ command(id,environment,identity,command){const requestedAction=command.action;this.activeWorlds.set(id,environment);return this.store.update(id,async (room,allRooms)=>{
   const {sim,manifest}=this.step(room,environment),now=this.now(),actorId='account:'+identity.accountId;
   const requestId=String(command.requestId||'');if(!/^[\w-]{1,100}$/.test(requestId))fail('A command request ID is required.');
-  sim.receipts ||= {};const receiptKey=actorId+':'+requestId;if(sim.receipts[receiptKey]){if(sim.receipts[receiptKey].action!==command.action)fail('Request ID already used.',409);return {...this.view(room),selfId:actorId,result:sim.receipts[receiptKey].result};}
+  sim.receipts ||= {};const receiptKey=actorId+':'+requestId;if(sim.receipts[receiptKey]){if(sim.receipts[receiptKey].action!==requestedAction)fail('Request ID already used.',409);return {...this.view(room),selfId:actorId,result:sim.receipts[receiptKey].result};}
   let player=sim.players[actorId],result={};const basketballLateArrival=sim.basketball?.state==='live'&&(!player||player.basketballRole==='spectator'||now-player.lastSeen>=15000||player.replacedByRoom);
   if(command.action==='join'){
    const active=Object.entries(sim.players).filter(([id,p])=>id!==actorId&&!p.basketballAI&&now-p.lastSeen<15000);if(active.length>=(environment.publicDestination?128:this.capacity))fail('This multiplayer room is full.',409);
@@ -135,7 +136,20 @@ export class AuthoritativeRooms {
   }else{
    if(player?.replacedByRoom)fail('This account joined another destination. Reload to rejoin this room.',409,'ROOM_SWITCHED');if(!player||now-player.lastSeen>15000)fail('Join this room before sending gameplay commands.',409,'ROOM_JOIN_REQUIRED');
    player.lastSeen=now;player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;
+   if(requestedAction==='basketball-auto'){
+    requireBasketballPlayer(sim,player);if(player.health<=0)fail('Respawn before acting.',409);
+    const options=basketballLaunchOptions(Object.fromEntries(['power','angle','mode'].filter(key=>command[key]!==undefined).map(key=>[key,command[key]])));
+    const direction=command.direction===undefined?[-Math.sin(player.yaw||0),0,-Math.cos(player.yaw||0)]:command.direction;
+    basketballShotSolution({x:0,y:0,z:0},null,direction,{...options,mode:'manual'});
+    const selection=resolveBasketballAction({game:sim.basketball,player,players:sim.players,balls:Object.values(sim.actors),direction,options,now,visible:(from,to,target)=>{
+     const span=distance(from,to),actors=isBasketball(target)?{...sim.actors,[target.id]:{...target,holderId:actorId}}:sim.actors;
+     return span<.05||!this.collision.blocksShot(environment,from,[(to.x-from.x)/span,(to.y-from.y)/span,(to.z-from.z)/span],span,actors);
+    }});
+    result.resolvedAction=selection.action;result.actionLabel=selection.label;
+    command={...command,...selection.fields,action:selection.action||'basketball-wait'};
+   }
    if(command.action==='input'){const input=command.input||{};player.input=player.health<=0||sim.match?.state==='finished'?{}:{forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}
+   else if(command.action==='basketball-wait'){result.message=result.actionLabel||'Move closer to the basketball or its carrier.';}
    else if(command.action==='basketball-jersey'){
     if(command.team!==null&&!['home','away'].includes(command.team))fail('Choose the Home or Away jersey.',400);
     if(command.team&&sim.basketball)assignBasketballTeam(sim,player,now,command.team);player.basketballJersey=command.team;result.message=command.team?(command.team==='home'?'Home':'Away')+' jersey equipped.':'Basketball jersey removed.';
@@ -166,7 +180,7 @@ export class AuthoritativeRooms {
     const ball=sim.actors[player.heldId];if(!isBasketball(ball))fail('Hold a basketball before tossing.',409);
     const pitch=clamp(command.pitch,-1.25,1.15),direction={x:-Math.sin(player.yaw)*Math.cos(pitch),y:Math.sin(pitch),z:-Math.cos(player.yaw)*Math.cos(pitch)};
     const tuning=['power','angle','mode'].some(key=>command[key]!==undefined)?Object.fromEntries(['power','angle','mode'].filter(key=>command[key]!==undefined).map(key=>[key,command[key]])):undefined;
-    if(!tossBasketball(ball,player.position,command.direction||direction,tuning))fail('Choose a valid basketball aim direction.',422);registerBasketballRelease(sim,ball,player,now);player.heldId=null;result.message='Basketball tossed — E to catch nearby.';
+    if(!tossBasketball(ball,player.position,command.direction||direction,tuning))fail('Choose a valid basketball aim direction.',422);registerBasketballRelease(sim,ball,player,now);player.heldId=null;result.message=requestedAction==='basketball-auto'&&/^pass\b/i.test(result.actionLabel)?'Basketball passed.':'Basketball tossed — E to catch nearby.';
    }
    else if(command.action==='catch'){
     requireBasketballPlayer(sim,player);
@@ -282,10 +296,10 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
   this.prepareEncounter(sim,environment);
   checkTeamDefeat(sim,now);
   if(now-(player.lastTelemetry||0)>5000&&!this.telemetryPending.has(identity.walletId)){const sample={health:player.health,world:id};player.lastTelemetry=now;this.telemetryPending.add(identity.walletId);Promise.resolve().then(()=>this.telemetry(identity.walletId,sample)).catch(error=>console.error('Gameplay telemetry failed:',error.message)).finally(()=>this.telemetryPending.delete(identity.walletId));}
-  if(command.action!=='input'){sim.events.push({id:requestId,actorId,action:command.action,...result,at:now});sim.events=sim.events.slice(-100);}
-  sim.receipts[receiptKey]={action:command.action,result};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
+  if(requestedAction!=='input'){sim.events.push({id:requestId,actorId,action:requestedAction,...result,at:now});sim.events=sim.events.slice(-100);}
+  sim.receipts[receiptKey]={action:requestedAction,result};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
   return {...this.view(room),selfId:actorId,result};
- },{persist:command.action!=='input'});}
+ },{persist:requestedAction!=='input'});}
  async collectNearbyLoot(sim,player,identity,roomId,now,entityId,result){
   if(!entityId&&now<(player.lootRetryAt||0))return;
   const loot=Object.values(sim.actors).find(actor=>actor.loot&&actor.active&&(!entityId||actor.id===entityId)&&distance(actor.position,player.position)<=1.8);

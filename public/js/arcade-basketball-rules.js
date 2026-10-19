@@ -1,3 +1,4 @@
+import {resolveArcadeBasketballAction} from './arcade-basketball-actions.js';
 /** Full-court basketball simulation shared by solo and server rooms. */
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,Number(n)||0));
 export function basketballConfig(raw={}){return {teamSize:Math.round(clamp(raw.teamSize||3,1,5)),periodSeconds:clamp(raw.periodSeconds||raw.roundSeconds||60,15,600),difficulty:raw.difficulty==='normal'?'normal':'easy',aiFill:raw.aiFill!==false};}
@@ -10,9 +11,10 @@ export function createBasketballMatch(raw={}){
  inbound(0,'Tip-off · Home ball.');
  function input(value={},slot=0){const p=players[slot];if(!p)return;p.input={moveX:clamp(value.moveX,-1,1),moveY:clamp(value.moveY,-1,1),aimX:clamp(value.aimX??value.x??400,100,700),aimY:clamp(value.aimY??value.y??230,50,410)};}
  function action(slot=0,kind='shoot'){const p=players[slot];if(!p||ended||stoppage>0||p.cooldown>0)return false;
+ const choice=resolveArcadeBasketballAction({players,owner,shot,shotClock,ended,stoppage},slot,kind);if(!choice)return false;kind=choice.kind;
  if(kind==='steal'){p.cooldown=.65;const carrier=players[owner];if(carrier&&carrier.team!==p.team&&distance(p,carrier)<38&&!shot){if(rng()<.55){owner=p.id;shotClock=24;p.steals++;lastPass=null;feedback=p.name+' steals possession.';}else feedback='Steal missed.';}return true;}
  if(owner!==slot||shot)return false;
- if(kind==='pass'){const mates=players.filter(q=>q.team===p.team&&q.id!==p.id);if(!mates.length)return false;const target={x:p.input.aimX??400,y:p.input.aimY??goal(p.team).y};mates.sort((a,b)=>distance(a,target)-distance(b,target));owner=mates[0].id;lastPass=p.id;p.cooldown=.25;feedback=p.name+' passes to '+mates[0].name;return true;}
+ if(kind==='pass'){const mates=players.filter(q=>q.team===p.team&&q.id!==p.id);if(!mates.length)return false;const target=players[choice.target]||{x:p.input.aimX??400,y:p.input.aimY??goal(p.team).y};mates.sort((a,b)=>distance(a,target)-distance(b,target));owner=mates[0].id;lastPass=p.id;p.cooldown=.25;feedback=p.name+' passes to '+mates[0].name;return true;}
  const rim=goal(p.team),d=distance(p,rim),defenders=players.filter(q=>q.team!==p.team&&distance(q,p)<50).length,points=d>175?3:2;
  const chance=clamp(.92-d/650-defenders*.16,.12,.94);shot={x:p.x,y:p.y,tx:rim.x,ty:rim.y,p:0,team:p.team,shooter:slot,points,scored:rng()<chance};attempts++;p.cooldown=1.1;owner=null;feedback=p.name+' shoots for '+points+'.';return true;}
  function stepOnce(dt){if(ended)return;elapsed+=dt;if(stoppage>0){stoppage=Math.max(0,stoppage-dt);return;}remaining=Math.max(0,remaining-dt);shotClock=Math.max(0,shotClock-dt);
@@ -31,5 +33,5 @@ export function createBasketballMatch(raw={}){
  if(shotClock<=0&&!shot){const team=players[owner]?.team??0;inbound(1-team,'Shot-clock violation · turnover.');}
  if(remaining<=0&&!shot){if(period<4){period++;remaining=config.periodSeconds;inbound(period%2,'Quarter '+period+' · inbound.');}else if(teamScore[0]===teamScore[1]){period++;remaining=60;inbound(period%2,'Overtime · tied game.');}else{ended=true;feedback=(teamScore[0]>teamScore[1]?'HOME':'VISITORS')+' WIN · '+teamScore.join(' — ');}}
  }
- return {config,input,action,opponent(){},setRoster(slots=[]){players.forEach((p,i)=>{p.human=slots[i]?.actor||null;p.name=slots[i]?.name||(p.human?'Player':'AI');if(!p.human)p.input={};});},step(delta){let left=clamp(delta,0,.5);while(left>1e-8){const dt=Math.min(1/60,left);stepOnce(dt);left-=dt;}},snapshot(){return structuredClone({game:2,score:teamScore[0]+teamScore[1],remaining,gameElapsed:elapsed,ended,attempts,shot,pointer:{x:ball.x,y:ball.y},puck:null,balls:[],targets:[],opponent:null,feedback,basketball:{config,players,ball,owner,teamScore,period,shotClock,shot,ended,feedback}});}};
+ return {config,input,action,opponent(){},setRoster(slots=[]){players.forEach((p,i)=>{p.human=slots[i]?.actor||null;p.name=slots[i]?.name||(p.human?'Player':'AI');if(!p.human)p.input={};});},step(delta){let left=clamp(delta,0,.5);while(left>1e-8){const dt=Math.min(1/60,left);stepOnce(dt);left-=dt;}},snapshot(){return structuredClone({game:2,score:teamScore[0]+teamScore[1],remaining,gameElapsed:elapsed,ended,attempts,shot,pointer:{x:ball.x,y:ball.y},puck:null,balls:[],targets:[],opponent:null,feedback,basketball:{config,players,ball,owner,teamScore,period,shotClock,stoppage,shot,ended,feedback}});}};
 }
