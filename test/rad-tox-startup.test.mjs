@@ -49,7 +49,7 @@ test('multiplayer Begin starts a rendered RAD-TOX encounter instead of stopping 
  assert.doesNotMatch(blocked,/'begin'/,'the multiplayer Begin action must not be replaced with a no-op');
  assert.match(game,/authoritativeClient\.send\('start-rad-tox'\)/);
  assert.match(game,/renderServerRadTox\(snapshot\);/);
- assert.match(game,/!snapshot\.radTox\)throw new Error/,'an old server cannot be mistaken for an active encounter');
+ assert.match(game,/isLocalRadToxEnvironment\(activeEnvironment\)&&!isLocalRadToxCampaign\(snapshot\.radTox\)\)throw new Error/,'an old server cannot be mistaken for a compatible local encounter');
 });
 
 test('a stalled startup offers a working reload while the original engine can still finish',async()=>{

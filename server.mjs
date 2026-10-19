@@ -1,3 +1,4 @@
+import {staticAssetCacheControl} from './static-asset-cache.mjs';
 import {listGameMatches} from './game-match-directory.mjs';
 import {ArcadeRooms} from './arcade-rooms.mjs';
 import {isArcadeMap} from './public/js/arcade-rules.js';
@@ -999,7 +1000,7 @@ const server = createServer(async (req, res) => {
     }
     if (!filePath) throw new Error('Not found');
     const extension = extname(filePath).toLowerCase();
-    const cacheControl = extension === '.glb' || extension === '.usdz' ? 'public, max-age=31536000, immutable' : extension === '.json' ? 'no-cache' : 'public, max-age=3600';
+    const cacheControl = staticAssetCacheControl(extension);
     res.writeHead(200, corsHeaders({ 'Content-Type': mimeTypes[extension] || 'application/octet-stream', 'Cache-Control': cacheControl }));
     createReadStream(filePath).pipe(res);
   } catch (error) { if (!res.headersSent) sendJson(res, error.statusCode || (url.pathname.startsWith('/api/') ? 500 : 404), { success: false, code: error.code || (url.pathname.startsWith('/api/') ? 'API_REQUEST_FAILED' : 'NOT_FOUND'), message: error.message || 'Not found', stage: error.stage || (error.statusCode === 409 ? 'account-state' : 'request') }); }

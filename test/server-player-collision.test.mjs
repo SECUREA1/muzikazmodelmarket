@@ -78,3 +78,31 @@ test('a double-sided ceiling plane blocks the head even when its authored normal
   ceiling.material.dispose();
  }finally{f.close();}
 });
+
+test('a doorway floor seam narrower than the capsule stays traversable without clipping the jambs',()=>{
+ const f=fixture();try{
+  const oldFloor=f.root.children.find(mesh=>mesh.name==='FLOOR');oldFloor.geometry.dispose();oldFloor.removeFromParent();
+  f.add('FLOOR_BEFORE',[12,.2,5.78],[0,-.1,3.11]);f.add('FLOOR_AFTER',[12,.2,5.78],[0,-.1,-3.11]);
+  f.add('LEFT_JAMB',[4,3,.2],[-2.5,1.5,0]);f.add('RIGHT_JAMB',[4,3,.2],[2.5,1.5,0]);f.add('LINTEL',[1,.3,.2],[0,2.25,0]);f.install();
+  let current={x:0,y:.02,z:1};for(let step=0;step<50;step++){const result=move(f,current,{...current,z:current.z-.05,y:current.y-.01});current={x:result.x,y:result.y,z:result.z};assert.ok(Math.abs(current.x)<.201);assert.ok(current.y>=-.001&&current.y<.03,'a narrow mesh crack does not make the floor jump');}
+  assert.ok(current.z<-1.45,'the complete capsule can step across a 44cm scan seam in an open doorway');
+ }finally{f.close();}
+});
+
+test('full-width doorways and shallow thresholds work in both directions and walls stay solid',()=>{
+ const f=fixture();try{
+  f.add('LEFT_JAMB',[4,3,.2],[-2.4,1.5,0]);f.add('RIGHT_JAMB',[4,3,.2],[2.4,1.5,0]);f.add('LINTEL',[.8,.3,.2],[0,2.45,0]);f.add('THRESHOLD',[.8,.25,.3],[0,.125,0]);f.install();
+  let current={x:0,y:.02,z:1};for(let step=0;step<50;step++){const result=move(f,current,{...current,z:current.z-.05,y:current.y-.01});current={x:result.x,y:result.y,z:result.z};}
+  assert.ok(current.z<-1.45);for(let step=0;step<50;step++){const result=move(f,current,{...current,z:current.z+.05,y:current.y-.01});current={x:result.x,y:result.y,z:result.z};}assert.ok(current.z>.9,'backing through the doorway must remain possible');
+  const blocked=move(f,{x:.8,y:.02,z:1},{x:.8,y:.02,z:-1});assert.ok(blocked.z>=.399,'solid jambs are never mistaken for the doorway');
+ }finally{f.close();}
+});
+
+test('floor support around the body cannot bridge an opening wider than the player',()=>{
+ const f=fixture();try{
+  const oldFloor=f.root.children.find(mesh=>mesh.name==='FLOOR');oldFloor.geometry.dispose();oldFloor.removeFromParent();
+  f.add('FLOOR_BEFORE',[12,.2,5.6],[0,-.1,3.2]);f.add('FLOOR_AFTER',[12,.2,5.6],[0,-.1,-3.2]);f.install();
+  let current={x:0,y:.02,z:1};for(let step=0;step<50;step++){const result=move(f,current,{...current,z:current.z-.05,y:current.y-.01});current={x:result.x,y:result.y,z:result.z};}
+  assert.ok(current.z>.1,'an 80cm missing floor cannot be treated as a doorway seam');assert.ok(current.y<.03&&current.y>=0);
+ }finally{f.close();}
+});

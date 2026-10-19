@@ -88,6 +88,7 @@ test('joining a shared GLB room starts clocks without server enemy simulation or
   const identity={accountId:'alice',username:'Alice',stats:{health:100}};
   let state=await runtime.command(environment.id,environment,identity,{action:'join',requestId:'join'});const phase=state.radTox.phaseId;
   assert.equal(state.radTox.combatMode,'local');assert.equal(Object.values(state.actors).filter(actor=>actor.radTox).length,0);
+  await assert.rejects(runtime.command(environment.id,environment,identity,{action:'fire',tool:'laser',direction:[0,0,-1],requestId:'legacy-shot'}),error=>error.statusCode===409&&error.code==='RAD_TOX_CLIENT_UPDATE_REQUIRED'&&/Reload this page/.test(error.message),'an old cached engine receives a clear recovery instruction');
   now+=5000;state=await runtime.command(environment.id,environment,identity,{action:'input',requestId:'keep-alive',input:{}});
   assert.equal(state.radTox.phaseId,phase);assert.equal(state.players['account:alice'].health,100);assert.deepEqual(state.projectiles,{});
  }finally{await rm(dir,{recursive:true,force:true});}

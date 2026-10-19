@@ -6,7 +6,7 @@ import {createBuilderLand} from '../public/js/environments/builder-land.js';
 
 const three = new URL('../public/vendor/three/three.module.min.js', import.meta.url).href;
 const source = (await readFile(new URL('../public/js/environments/environment-collision.js', import.meta.url), 'utf8'))
-  .replace("'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm'", JSON.stringify(three))
+  .replace("'../../vendor/three/three.module.min.js'", JSON.stringify(three))
   .replace("'./collision-policy.js'",JSON.stringify(new URL('../public/js/environments/collision-policy.js',import.meta.url).href))
   .replace(/import \{ Octree \} from [^;]+;/, 'class Octree { fromGraphNode(root) { this.source = root; } }');
 const {buildCollision, resolveSafeSpawn, FLOOR_ENTRY_OFFSET} = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));

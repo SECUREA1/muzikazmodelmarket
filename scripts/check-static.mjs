@@ -1,4 +1,8 @@
+import {validateStaticRelease} from './static-release.mjs';
 import { access, readFile } from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+
+const staticRelease=await validateStaticRelease(fileURLToPath(new URL('../dist/',import.meta.url)));
 
 const htmlPages = ['index.html', 'index.htm', 'model-market.html', 'builder-market.html', 'environment-builder.html', 'avatar-whitepaper.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html', 'checkout.html', 'model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
 const requiredFiles = [
@@ -223,10 +227,10 @@ for (const removed2dFeature of ['startCompatibility', 'rad-tox-compat-game', 'da
 if (!launcher.includes('if (requested) return') || !launcher.includes("{ once: true }")) throw new Error('RAD-TOX launcher must guard against duplicate initialization and listeners.');
 if (launcher.includes('data-radtox-retry') || launcher.includes('supportsModern')) throw new Error('RAD-TOX launcher must not add recovery or compatibility gates.');
 
-if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
+if (/<script\s+type="module"\s+src="public\/js\/house-explorer-glb\.js(?:\?[^"]*)?"/.test(mainHtml)) {
   throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
 }
-if (!launcher.includes("module.src = 'public/js/house-explorer-glb.js'") || !launcher.includes('function begin()')) {
+if (!launcher.includes(`module.src = 'public/js/house-explorer-glb.js?release=${staticRelease.revision}'`) || !launcher.includes('function begin()')) {
   throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
 }
 

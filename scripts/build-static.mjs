@@ -1,5 +1,7 @@
+import {releaseStaticAssets} from './static-release.mjs';
 import { cp, mkdir, readdir, rm, stat } from 'node:fs/promises';
 import { extname } from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 const root = new URL('..', import.meta.url);
 const dist = new URL('../dist/', import.meta.url);
@@ -42,4 +44,5 @@ for (const directory of requiredDirectories) {
 
 await cp(new URL('index.html', dist), new URL('index.htm', dist));
 
-console.log('Built optimized static site into dist/.');
+const release=await releaseStaticAssets(fileURLToPath(dist));
+console.log(`Built optimized static site into dist/ (release ${release.revision}).`);

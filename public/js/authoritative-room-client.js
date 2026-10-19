@@ -16,7 +16,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
  // ambiguous response cannot apply a gameplay action twice.
  async function post(path,body) {
   session ||= await api.roomSession();
-  const request=()=>{if(stopped)throw failure || Error('Room closed.');return api.api(path,{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify(body)});};
+  const request=()=>{if(stopped)throw failure || Error('Room closed.');return api.api(path,{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify(body),...(body.action==='join'?{timeout:30000}:{})});};
   try { return await request(); }
   catch (error) {
    if (error.code!=='CSRF_INVALID') throw error;
@@ -26,7 +26,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
  }
  const client={
   ready:false, selfId:null,
-  whenReady(timeoutMs=15000) {
+  whenReady(timeoutMs=45000) {
    if (client.ready) return Promise.resolve(client);
    if (stopped) return Promise.reject(failure || Error('Room closed.'));
    return new Promise((resolve,reject)=>{

@@ -6,17 +6,21 @@ import {buildingDimensions,buildingMaterial,createBuildingBlock} from './public/
 import * as THREE from './public/vendor/three/three.module.min.js';
 import {createBuilderLand} from './public/js/environments/builder-land.js';
 import {createBuilderModel} from './public/js/builder-models-3d.js';
+const FLOOR_SUPPORT_PROBES=[[-.18,0],[.18,0],[0,-.18],[0,.18]];
+const FLOOR_RIM_PROBES=Array.from({length:8},(_,index)=>{const angle=index*Math.PI/4;return [Math.cos(angle)*PLAYER_RADIUS*.9,Math.sin(angle)*PLAYER_RADIUS*.9];});
 // Server and browser use the same procedural meshes. Collision results never
 // depend on a client-provided floor height, hit point or claimed position.
 export class ServerBuilderCollision {
  constructor(){this.cache=new Map();this.dynamicCache=new Map();}
  world(environment){
-  const key=environment.id+':'+(environment.updatedAt||'');if(this.cache.has(key))return this.cache.get(key);
+  const key=environment.id+':'+(environment.updatedAt||''),signature=JSON.stringify([environment.modelUrl,environment.modelUrls,environment.scale,environment.spaceScale,environment.playableSize,environment.rotation,environment.contentUpdatedAt,environment.collisionMode]);
+  const cached=this.cache.get(key);if(cached&&(!cached.signature||cached.signature===signature))return cached;
+  if(cached){cached.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(key);}
   const glb=!environment.builderScene&&!environment.proceduralLand&&Boolean(environment.modelUrl||environment.modelUrls?.length);const root=glb?environmentGeometry(environment):createBuilderLand(environment),walls=[];
   for(const item of environment.builderScene?.objects||[]){let object;try{object=createBuilderModel(item.asset?.buildAssetId||item.modelId);}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);object.userData.builderObjectId=item.id;root.add(object);}
   root.updateMatrixWorld(true);const floors=[];
   root.traverse(mesh=>{if(!mesh.isMesh||!isCollisionMesh(mesh)||mesh.userData.streetVisual)return;let parent=mesh;while(parent&&!parent.userData.builderObjectId)parent=parent.parent;mesh.userData.serverCollisionObjectId=parent?.userData.builderObjectId;floors.push(mesh);if(!glb&&!mesh.name.startsWith('BUILDER_WALKABLE_FLOOR'))walls.push({box:new THREE.Box3().setFromObject(mesh),objectId:parent?.userData.builderObjectId});});
-  const world={root,walls,floors,glb,capsuleTree:playerCollisionTree(floors),bounds:new THREE.Box3().setFromObject(root)};this.cache.set(key,world);while(this.cache.size>20||this.cache.size>1&&[...this.cache.values()].reduce((sum,item)=>sum+(item.capsuleTree?.triangleCount||0),0)>350000){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
+  const world={root,walls,floors,glb,signature,capsuleTree:playerCollisionTree(floors),bounds:new THREE.Box3().setFromObject(root)};this.cache.set(key,world);while(this.cache.size>20||this.cache.size>1&&[...this.cache.values()].reduce((sum,item)=>sum+(item.capsuleTree?.triangleCount||0),0)>350000){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
  }
  blocksShot(environment,origin,direction,distance,actors={}){
   if(!environment.builderScene&&!environment.proceduralLand&&!environment.modelUrl&&!environment.modelUrls?.length)return false;
@@ -104,7 +108,17 @@ export class ServerBuilderCollision {
   if(!world&&dynamic){const hit=new THREE.Raycaster(new THREE.Vector3(resolved.x,Math.max(previous.y,next.y)+.4,resolved.z),new THREE.Vector3(0,-1,0),0,1000).intersectObjects(dynamic.floors,false).find(hit=>hit.face?.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld)).y>.55&&this.headroom(floors,hit.point));if(hit)floor={y:hit.point.y+.02};}
   // Feet can straddle a mesh seam or the edge of a step. Keep support from a
   // nearby part of the capsule instead of freezing on a narrow floor crack.
-  if(world&&(!floor||floor.y<previous.y-.02))for(const [x,z]of [[-.18,0],[.18,0],[0,-.18],[0,.18]]){const candidate=this.groundAt(environment,{x:resolved.x+x,y:Math.max(previous.y,next.y),z:resolved.z+z},{actors,objects});if(candidate&&(!floor||candidate.y>floor.y))floor=candidate;}
+  if(world&&(!floor||floor.y<previous.y-.02)){
+   const probeSupport=probes=>{for(const [x,z]of probes){
+    const candidate=this.groundAt(environment,{x:resolved.x+x,y:Math.max(previous.y,next.y),z:resolved.z+z},{actors,objects});
+    if(candidate&&candidate.y<=previous.y+PLAYER_STEP+.02&&(!floor||candidate.y>floor.y)&&!playerCapsuleOverlaps(tree,{x:resolved.x,y:candidate.y,z:resolved.z},actors))floor=candidate;
+   }};
+   probeSupport(FLOOR_SUPPORT_PROBES);
+   // Scanned doorways can contain a narrow floor crack. Probe the actual body
+   // footprint only when center/seam probes found no support; larger holes
+   // remain blocked, and a raised candidate must fit the complete capsule.
+   if(!floor)probeSupport(FLOOR_RIM_PROBES);
+  }
   if(world?.glb&&!floor){const span=Math.hypot(next.x-previous.x,next.z-previous.z),normal=span?{x:(previous.x-next.x)/span,z:(previous.z-next.z)/span}:null;return {...previous,y:Math.max(previous.y,next.y),collisionNormals:normal?[normal]:[]};}
   if(floor){
    const clearance=world?.glb||isBasketballEnvironment(environment)?.02:0,ground=floor.y-.02+clearance;

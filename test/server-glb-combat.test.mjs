@@ -27,8 +27,22 @@ test('GLB room shots stop at actual wall triangles and safe spawns use the rende
  assert.equal(collision.world(map),collision.world(map),'decoded collision geometry is cached');
 }));
 
+test('changing a GLB map transform invalidates its collision cache even when the map ID stays the same',()=>collisionFixture(async map=>{
+ const collision=new ServerBuilderCollision(),first=collision.world(map),origin={x:1,y:1.5,z:2};
+ assert.equal(collision.blocksShot(map,origin,[0,0,-1],4),true);
+ const rotated={...map,rotation:{x:0,y:Math.PI/2,z:0}},updated=collision.world(rotated);
+ assert.notEqual(updated,first,'newly rendered transforms cannot keep the old wall collider');
+ assert.equal(collision.blocksShot(rotated,origin,[0,0,-1],4),false,'the old doorway direction is now clear');
+ assert.equal(collision.blocksShot(rotated,{x:2,y:1.5,z:1},[-1,0,0],4),true,'the rotated wall remains solid at its rendered position');
+ assert.equal(collision.world(rotated),updated,'the unchanged version reuses the collision tree');
+}));
+
 test('the bundled main house has a safe server entry and valid collision triangles',()=>{
  const collision=new ServerBuilderCollision(),map={id:'main-floor',modelUrl:'/public/models/environments/muzimakzmain.glb',playableSize:32,spawn:{x:0,y:1,z:2}};
  const roofSpawn=collision.safeSpawn(map,{x:0,y:100,z:2});assert.ok(Number.isFinite(roofSpawn.y));
  const spawn=collision.safeSpawn(map,map.spawn);assert.ok([spawn.x,spawn.y,spawn.z].every(Number.isFinite));assert.ok(collision.world(map).floors.length>0);
+ let position=collision.groundAt(map,{x:-1.5,y:spawn.y,z:2});assert.ok(position);
+ for(let step=0;step<60;step++){const next=collision.resolve(map,position,{...position,z:position.z+.06,y:position.y-.01});assert.ok(Math.abs(next.y-position.y)<.15,'crossing the scanned doorway keeps a stable floor');position={x:next.x,y:next.y,z:next.z};}
+ assert.ok(position.z>5.5,'the actual main-floor doorway can be crossed');
+ for(let step=0;step<60;step++){const next=collision.resolve(map,position,{...position,z:position.z-.06,y:position.y-.01});position={x:next.x,y:next.y,z:next.z};}assert.ok(position.z<2.1,'the actual doorway can also be exited');
 });

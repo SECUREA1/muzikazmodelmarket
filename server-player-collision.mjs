@@ -1,6 +1,6 @@
 import * as THREE from './public/vendor/three/three.module.min.js';
-import {PLAYER_BODY_RADIUS,PLAYER_BODY_HEIGHT} from './public/js/player-collision.js';
-export const PLAYER_RADIUS=PLAYER_BODY_RADIUS,PLAYER_HEIGHT=PLAYER_BODY_HEIGHT,PLAYER_STEP=.35;
+import {PLAYER_BODY_RADIUS,PLAYER_BODY_HEIGHT,PLAYER_STEP_HEIGHT} from './public/js/player-collision.js';
+export const PLAYER_RADIUS=PLAYER_BODY_RADIUS,PLAYER_HEIGHT=PLAYER_BODY_HEIGHT,PLAYER_STEP=PLAYER_STEP_HEIGHT;
 const EPS=1e-5;
 /** Static world-space triangles, indexed once for capsule contacts and small steps. */
 export function playerCollisionTree(meshes){

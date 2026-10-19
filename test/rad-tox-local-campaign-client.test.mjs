@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import * as THREE from '../public/vendor/three/three.module.min.js';
 import {healthAfterHit} from '../public/js/rpg-combat-rules.js';
-import {RadToxLocalCampaign,radToxWaveSeconds} from '../public/js/rad-tox-local-campaign.js';
+import {RadToxLocalCampaign,isLocalRadToxCampaign,isLocalRadToxEnvironment,radToxWaveSeconds} from '../public/js/rad-tox-local-campaign.js';
 
 const snapshot=(phaseId='wave-1',changes={})=>({serverTime:100000,match:{id:'level-1'},radTox:{combatMode:'local',phaseId,phaseKind:'wave',state:'active',startedAt:100000,endsAt:220000,wave:1,...changes}});
 
@@ -38,6 +38,23 @@ test('boss waits for local combat completion rather than a wave timer',async()=>
   await local.sync(snapshot('boss',{phaseKind:'boss',wave:5,state:'finished',endsAt:null}));
   assert.equal(local.active,false);assert.equal(starts,1);
   assert.equal(radToxWaveSeconds(null,0),null);
+});
+
+test('a transient preparation failure retries the same shared phase without waiting two minutes',async()=>{
+  let now=0,attempts=0,starts=0;
+  const local=new RadToxLocalCampaign({now:()=>now,retryMs:1500,prepare:()=>{if(++attempts===1)throw Error('Temporary artwork decoding failure');},start:()=>starts++});
+  await assert.rejects(local.sync(snapshot()),/artwork/);
+  assert.equal(local.active,false);assert.equal(attempts,1);
+  now=500;await assert.rejects(local.sync(snapshot()),/artwork/);assert.equal(attempts,1);
+  now=1500;assert.equal(await local.sync(snapshot()),true);
+  assert.equal(attempts,2);assert.equal(starts,1);assert.equal(local.active,true);
+});
+
+test('a partial spawning failure clears the failed deployment before retrying',async()=>{
+  let now=0,starts=0;const enemies=[];
+  const local=new RadToxLocalCampaign({now:()=>now,stop:()=>{enemies.length=0;},start:()=>{enemies.push('enemy');if(++starts===1)throw Error('Temporary placement failure');}});
+  await assert.rejects(local.sync(snapshot()),/placement/);assert.equal(enemies.length,0);
+  now=1600;await local.sync(snapshot());assert.deepEqual(enemies,['enemy']);
 });
 
 const game=readFileSync(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
@@ -84,10 +101,26 @@ test('all multiplayer RAD-TOX attacks execute locally while ordinary shared buil
   const calls=[],network=[];let local=true;
   const system=Object.fromEntries(names.map(name=>[name,()=>{calls.push(name);return true;}]));system.tool='laser';
   const wrapper=game.slice(game.indexOf("  for(const name of ['handlePointerInteraction'"),game.indexOf('  async function createOwnedPreview'));
-  runInNewContext(wrapper,{toxicBubbleSystem:system,isBasketballEnvironment:()=>false,activeEnvironment:{},ownedPlacement:{active:false},isExternalView:()=>false,serverHostedRoom:true,usesLocalRadTox:()=>local,camera:{getWorldDirection:()=>({toArray:()=>[0,0,-1]})},THREE:{Vector3:class{}},serverCommand:(...args)=>network.push(args),SPRAY_COLORS:[{hex:0xffffff}]});
+  const environment={};
+  runInNewContext(wrapper,{toxicBubbleSystem:system,isBasketballEnvironment:()=>false,isCleanSportsEnvironment:()=>false,isLocalRadToxEnvironment,activeEnvironment:environment,ownedPlacement:{active:false},isExternalView:()=>false,serverHostedRoom:true,usesLocalRadTox:()=>local,setStatus(){},camera:{getWorldDirection:()=>({toArray:()=>[0,0,-1]})},THREE:{Vector3:class{}},serverCommand:(...args)=>network.push(args),SPRAY_COLORS:[{hex:0xffffff}]});
   for(const name of names)assert.equal(system[name](),true);
   assert.deepEqual(calls,names);assert.equal(network.length,0);
   local=false;system.handlePointerInteraction();assert.equal(network.length,1);assert.equal(network[0][0],'fire');
+  environment.modelUrl='house.glb';assert.equal(system.handlePointerInteraction(),false);
+  assert.equal(network.length,1,'a GLB campaign awaiting metadata cannot fall back to server enemy firing');
+});
+
+test('Begin adopts authoritative local combat metadata even when the room renderer coalesces the response',async()=>{
+  const state=snapshot();state.radTox.environmentId='house';let deployed=0;
+  const system={health:100,serverEncounter:null,initAudio(){},async ensureResources(){},updateHud(){}};
+  const local=new RadToxLocalCampaign({start:()=>{assert.equal(system.serverEncounter,state.radTox);deployed++;}});
+  const begin=game.slice(game.indexOf('  toxicBubbleSystem.begin=async()=>{'),game.indexOf("  for(const name of ['handlePointerInteraction'"));
+  const render=game.slice(game.indexOf('  function renderServerRadTox(snapshot)'),game.indexOf('  async function followRadToxDestination'));
+  runInNewContext(render+begin,{toxicBubbleSystem:system,localCampaign:local,isLocalRadToxCampaign,isLocalRadToxEnvironment,
+    activeEnvironment:{id:'house',modelUrl:'house.glb'},serverHostedRoom:true,isCleanSportsEnvironment:()=>false,
+    authoritativeClient:{ready:true,send:async action=>{assert.equal(action,'start-rad-tox');return state;}},setStatus(){}});
+  await system.begin();assert.equal(deployed,1);assert.equal(system.serverEncounter.combatMode,'local');
+  assert.equal(system.active,true);
 });
 
 test('enemy placement yields to rendering and cancels stale wave spawning',async()=>{

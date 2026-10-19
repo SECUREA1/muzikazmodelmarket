@@ -1,4 +1,5 @@
-const CACHE = 'muzikaz-world-v2.3.4';
+const RELEASE = 'development';
+const CACHE = 'muzikaz-world-runtime-v3-' + RELEASE;
 const BRAND_SHELL = [
   '/favicon.ico', '/public/assets/app-icons/icon-192.png', '/public/assets/app-icons/icon-512.png',
   '/public/assets/app-icons/icon-maskable-512.png', '/public/assets/app-icons/apple-touch-icon.png',
@@ -9,7 +10,7 @@ const BRAND_SHELL = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(BRAND_SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(BRAND_SHELL.map(url=>new Request(url,{cache:'reload'})))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
@@ -17,11 +18,16 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url=new URL(event.request.url);
   // Account, inventory and telemetry responses must never enter offline caches.
-  if (new URL(event.request.url).pathname.startsWith('/api/')) return;
-  if (event.request.method !== 'GET' || new URL(event.request.url).origin !== location.origin) return;
-  event.respondWith(fetch(event.request).then((response) => {
-    if (response.ok) caches.open(CACHE).then((cache) => cache.put(event.request, response.clone()));
+  if (url.pathname.startsWith('/api/')) return;
+  if (event.request.method !== 'GET' || url.origin !== location.origin) return;
+  const runtimeCode=/\.(?:m?js|css)$/i.test(url.pathname);
+  const documentRequest=event.request.mode==='navigate'||/\.html?$/i.test(url.pathname);
+  event.respondWith(fetch(event.request,{cache:runtimeCode||documentRequest?'no-cache':'default'}).then((response) => {
+    // An unavailable engine should show a connection error, never silently run
+    // a cached client against a newer live game protocol.
+    if (response.ok&&!runtimeCode) caches.open(CACHE).then((cache) => cache.put(event.request, response.clone()));
     return response;
-  }).catch(() => caches.match(event.request).then((cached) => cached || (event.request.mode === 'navigate' ? caches.match('/index.html') : Response.error()))));
+  }).catch(() => runtimeCode?Response.error():caches.match(event.request).then((cached) => cached || (documentRequest ? caches.match('/index.html') : Response.error()))));
 });

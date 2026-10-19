@@ -4,6 +4,7 @@ const SUPPORT_DISTANCE = 0.045;
 export const PLAYER_BODY_HEIGHT = 1.7;
 export const PLAYER_BODY_RADIUS = 0.3;
 export const PLAYER_EYE_HEIGHT = 1.65;
+export const PLAYER_STEP_HEIGHT = 0.35;
 
 /** The vertical player capsule against a solid box, including its rounded corners. */
 export function capsuleBoxContact(capsule, box) {
@@ -33,7 +34,7 @@ function eachOctreeContact(octree, capsule, visit) {
     octree.getCapsuleTriangles(capsule, triangles);
     for (const triangle of triangles) {
       const contact = octree.triangleCapsuleIntersect(capsule, triangle);
-      if (contact) visit(contact);
+      if (contact) visit(contact, triangle);
     }
   } else {
     const contact = octree?.capsuleIntersect(capsule);
@@ -62,15 +63,35 @@ export function movePlayerCapsule(capsule, {
     if (!flying) velocity.y -= gravity * stepTime;
 
     function settle() {
+      const stepOnto = (top, maximumRise) => {
+        const rise = top - previousFootY;
+        if (!wasGrounded || flying || velocity.y > 0 || rise <= CONTACT_SKIN || rise > maximumRise) return false;
+        const lift = top + CONTACT_SKIN - (capsule.start.y - capsule.radius);
+        if (!(lift > CONTACT_SKIN)) return false;
+        const raised = capsule.clone();
+        raised.translate(shift.set(0, lift, 0));
+        let blocked = false;
+        eachOctreeContact(octree, raised, hit => { if (hit.depth > CONTACT_SKIN) blocked = true; });
+        if (!blocked) blocked = boxes.some(other => (capsuleBoxContact(raised, other.box || other)?.depth || 0) > CONTACT_SKIN);
+        if (blocked) return false;
+        capsule.translate(shift.set(0, lift, 0));
+        grounded = true;
+        velocity.y = 0;
+        return true;
+      };
       for (let pass = 0; pass < 4; pass++) {
         let corrected = false;
-        const apply = contact => {
+        const apply = (contact, triangle) => {
           const {depth, normal} = contact;
           const length = Math.hypot(normal?.x, normal?.y, normal?.z);
           if (!(depth > 1e-7) || !Number.isFinite(depth) || !(length > 1e-8)) return;
           const nx = normal.x / length, ny = normal.y / length, nz = normal.z / length;
           const distance = depth + CONTACT_SKIN;
           if (Math.abs(ny) < WALKABLE_NORMAL_Y) {
+            // GLB door sills and stairs are triangles, not placed-object boxes.
+            // Lift over a low face only after the complete raised body clears
+            // nearby walls and the lintel. Tall furniture still blocks travel.
+            if (triangle?.a && stepOnto(Math.max(triangle.a.y, triangle.b.y, triangle.c.y), PLAYER_STEP_HEIGHT)) { corrected = true; return; }
             // Resolve steep surfaces sideways, instead of lifting a player up
             // the rounded edge of a wall or repeatedly pinning them to it.
             const horizontal = nx * nx + nz * nz;
@@ -86,16 +107,7 @@ export function movePlayerCapsule(capsule, {
           const box = entry.box || entry;
           const contact = capsuleBoxContact(capsule, box);
           if (!contact) continue;
-          const rise = box.max.y - previousFootY;
-          if (wasGrounded && velocity.y <= 0 && entry.stepHeight && rise > CONTACT_SKIN && rise <= entry.stepHeight) {
-            const raised = capsule.clone();
-            const lift = box.max.y + CONTACT_SKIN - (capsule.start.y - capsule.radius);
-            raised.translate(shift.set(0, lift, 0));
-            let blocked = false;
-            eachOctreeContact(octree, raised, hit => { if (hit.depth > CONTACT_SKIN) blocked = true; });
-            if (!blocked) blocked = boxes.some(other => other !== entry && (capsuleBoxContact(raised, other.box || other)?.depth || 0) > CONTACT_SKIN);
-            if (!blocked) { capsule.translate(shift.set(0, lift, 0)); grounded = true; velocity.y = 0; corrected = true; continue; }
-          }
+          if (entry.stepHeight && stepOnto(box.max.y, entry.stepHeight)) { corrected = true; continue; }
           apply(contact);
         }
         if (!corrected) break;

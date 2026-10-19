@@ -200,3 +200,14 @@ test('basketball entry fields and meeting selection reach initial joins and reco
   assert.equal(joins[0].basketballRole,'spectator');assert.equal(joins[1].basketballRole,undefined,'a player who joined a team is not forced back into spectating on reconnect');
  },{joinFields:()=>({basketballEntry:'menu',...(role?{basketballRole:role}:{})}),meetingId:'courtside'});
 });
+
+test('joining a cold game room allows geometry preparation without extending regular movement requests',async()=>{
+ const calls=[];let sequence=0;
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  calls.push({body:JSON.parse(options.body),timeout:options.timeout});return response(confirmed(++sequence));
+ },async client=>{await client.whenReady();await client.send('input',{input:{side:1}});
+  assert.equal(calls.find(call=>call.body.action==='join').timeout,30000);
+  assert.equal(calls.find(call=>call.body.action==='input').timeout,8000);
+ });
+});

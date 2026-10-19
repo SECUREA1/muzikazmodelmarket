@@ -21,7 +21,7 @@ import {ensurePlayAccess,choosePlayAccess} from './play-access.js';
 import {OwnedItemPlacement} from './owned-item-placement.js';
 import {WalkingMotion,walkingStick,walkingSprint} from './walking-motion.js';
 import {movePlayerCapsule,PLAYER_BODY_HEIGHT,PLAYER_BODY_RADIUS,PLAYER_EYE_HEIGHT} from './player-collision.js';
-import {RadToxLocalCampaign,isLocalRadToxCampaign} from './rad-tox-local-campaign.js';
+import {RadToxLocalCampaign,isLocalRadToxCampaign,isLocalRadToxEnvironment} from './rad-tox-local-campaign.js';
 import {RadToxScoreReporter} from './rad-tox-score-reporter.js';
 import {loadSvgGameTexture} from './svg-game-texture.js';
 import {anchorServerAsset,targetServerPlayer,interpolateServerPlayer,syncServerAvatar,projectServerActor,disposeProjection} from './server-scene-projection.js';
@@ -46,7 +46,7 @@ import { createGameMarketplace } from './in-game-market.js';
 import { fullscreenPanel, organizeToolPicker } from './fullscreen-panels.js';
 import { BuildingEditor, BuildingPreview, applyDropSettings } from './building-editor.js';
 import { BUILDING_MATERIALS, buildingMaterial, buildingDimensions, createBuildingBlock, toggleBuildingObject, buildingIcon, BUILDING_TYPES, matchesBuildingItem } from './building-materials.js';
-import { Capsule } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Capsule.js/+esm';
+import { Capsule } from '../vendor/three/addons/math/Capsule.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
 import { normalizeEnvironmentList, EnvironmentRegistry } from './environments/environment-registry.js';
 import { EnvironmentLoader } from './environments/environment-loader.js';
@@ -733,6 +733,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage) {
   window.addEventListener('blur',()=>{keys.clear();mobile.clear();thumbInput.leftX=thumbInput.leftY=thumbInput.rightX=thumbInput.rightY=0;});
   const lockMenuInput=()=>{keys.clear();mobile.clear();thumbInput.leftX=thumbInput.leftY=thumbInput.rightX=thumbInput.rightY=0;toxicBubbleSystem.flameTrigger=null;if(document.pointerLockElement)document.exitPointerLock();};
   window.addEventListener('muzikaz:chat-panel',event=>{if(event.detail?.open)lockMenuInput();});
+  const loadGameResources=toxicBubbleSystem.ensureResources.bind(toxicBubbleSystem);
+  let gameResourcesPending=null;
+  toxicBubbleSystem.ensureResources=()=>{if(toxicBubbleSystem.resources.ready)return Promise.resolve();if(!gameResourcesPending)gameResourcesPending=loadGameResources().finally(()=>{gameResourcesPending=null;});return gameResourcesPending;};
   const sharedInventory=new SharedGameInventory();
   const localScores=new RadToxScoreReporter();
   let localReportPending=false,localReportDamage=0,uncreditedLocalShots=0,localAttack=null;
@@ -810,7 +813,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage) {
   const careEffects=new CareEffects({apply:effect=>{if(serverHostedRoom)return;if(!toxicBubbleSystem.active||!effect)return;if(effect.stat==='health'||effect.stat==='all'){toxicBubbleSystem.health=effect.stat==='all'?TOXIC_BUBBLE_CONFIG.maxHealth:Math.min(TOXIC_BUBBLE_CONFIG.maxHealth,toxicBubbleSystem.health+effect.amount);toxicBubbleSystem.updateHud();}setStatus('IonCore care applied. Your member body stats are recorded.');}});
   function serverCommand(action,fields={}){if(!authoritativeClient?.ready){setStatus('Waiting for the shared server. No local gameplay action was applied.');return Promise.resolve(false);}return authoritativeClient.send(action,fields).then(async state=>{if(state?.result?.message)setStatus(state.result.message);if(state?.result?.destination){if(!registry.find(state.result.destination))await registry.refresh();await loadById(state.result.destination);}return state;}).catch(error=>{setStatus(error.message);return false;});}
   let stickSprinting=false;
-  function serverInput(){if(inputMenuOpen()||(usesLocalRadTox()&&toxicBubbleSystem.health<=0))return {side:0,forward:0,yaw:player.yaw,jump:false,sprint:false,firing:false};const input=getMovementInput();return {side:input.x,forward:input.y,yaw:player.yaw,jump:keys.has(' ')||mobile.has('jump'),sprint:keys.has('shift')||stickSprinting,firing:!usesLocalRadTox()&&!ownedPlacement.active&&!!toxicBubbleSystem.flameTrigger,tool:toxicBubbleSystem.tool,direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex};}
+  function serverInput(){if(inputMenuOpen()||(usesLocalRadTox()&&toxicBubbleSystem.health<=0))return {side:0,forward:0,yaw:player.yaw,jump:false,sprint:false,firing:false};const input=getMovementInput();return {side:input.x,forward:input.y,yaw:player.yaw,jump:keys.has(' ')||mobile.has('jump'),sprint:keys.has('shift')||stickSprinting,firing:!usesLocalRadTox()&&!isLocalRadToxEnvironment(activeEnvironment)&&!ownedPlacement.active&&!!toxicBubbleSystem.flameTrigger,tool:toxicBubbleSystem.tool,direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex};}
   const serverAssetRetryAt=new Map();
   const serverAssetLoads=new Set(),serverPlayerRoots=new Map(),serverPlayerTarget=new THREE.Vector3();const serverMotion=new ServerMotion({delay:0,maxExtrapolation:100}),walkingMotion=new WalkingMotion();let serverPlayerInitialized=false;let serverSnapshotAt=0,serverMovementSpeed=4;const serverViewTarget=new THREE.Vector3();let renderedStreetRevision=-1;let serverActors={},serverMatchState=null;
   const matchResults=mountMatchResults({dock:dockActions,onOpen:()=>{keys.clear();mobile.clear();document.exitPointerLock?.();},onNext:matchId=>authoritativeClient.send('next-rad-tox',{matchId}),onRespawn:()=>authoritativeClient.send('respawn')});
@@ -889,12 +892,15 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage) {
     await toxicBubbleSystem.ensureResources();
     if(toxicBubbleSystem.health<=0&&!toxicBubbleSystem.serverEncounter)await authoritativeClient.send('respawn');
     const snapshot=await authoritativeClient.send('start-rad-tox');
-    if(!activeEnvironment.builderScene&&!activeEnvironment.proceduralLand&&!snapshot.radTox)throw new Error('This game server has not started the RAD-TOX encounter. Select Try again.');
+    if(isLocalRadToxEnvironment(activeEnvironment)&&!isLocalRadToxCampaign(snapshot.radTox))throw new Error('This game server has not started a compatible local RAD-TOX encounter. Refresh the game and select Try again.');
+    // The command response is authoritative even when the room client has
+    // already rendered another response with the same sequence number.
+    renderServerRadTox(snapshot);
     toxicBubbleSystem.active=true;
     if(isLocalRadToxCampaign(snapshot.radTox)&&(!snapshot.radTox.environmentId||snapshot.radTox.environmentId===activeEnvironment.id))await localCampaign.sync(snapshot);
     toxicBubbleSystem.updateHud();
   };
-  for(const name of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt']){const original=toxicBubbleSystem[name]?.bind(toxicBubbleSystem);if(original)toxicBubbleSystem[name]=(...args)=>{if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active)return basketballAction('basketball-shoot');if(name==='handlePointerInteraction'&&isExternalView()&&!args[1]?.centre){const event=args[0],rect=canvas.getBoundingClientRect();if(Number.isFinite(event?.clientX)&&Number.isFinite(event?.clientY))aimTopDownPointer(new THREE.Vector2(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1));args=[{},{centre:true}];}if(!serverHostedRoom||usesLocalRadTox())return original(...args);if(toxicBubbleSystem.tool==='brick')return toxicBubbleSystem.placeBrick();if(ownedPlacement.active)return ownedPlacement.confirm();const direction=name==='handleXRInteraction'&&args[0]?new THREE.Vector3(0,0,-1).applyQuaternion(args[0].getWorldQuaternion(new THREE.Quaternion())):camera.getWorldDirection(new THREE.Vector3());return serverCommand('fire',{tool:toxicBubbleSystem.tool,direction:direction.toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex});};}
+  for(const name of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt']){const original=toxicBubbleSystem[name]?.bind(toxicBubbleSystem);if(original)toxicBubbleSystem[name]=(...args)=>{if(isBasketballEnvironment(activeEnvironment)&&!ownedPlacement.active)return basketballAction('basketball-shoot');if(name==='handlePointerInteraction'&&isExternalView()&&!args[1]?.centre){const event=args[0],rect=canvas.getBoundingClientRect();if(Number.isFinite(event?.clientX)&&Number.isFinite(event?.clientY))aimTopDownPointer(new THREE.Vector2(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1));args=[{},{centre:true}];}if(!serverHostedRoom||usesLocalRadTox())return original(...args);if(!isCleanSportsEnvironment(activeEnvironment)&&isLocalRadToxEnvironment(activeEnvironment)){setStatus('Preparing local combat. Start the game or select Try again before firing.');return false;}if(toxicBubbleSystem.tool==='brick')return toxicBubbleSystem.placeBrick();if(ownedPlacement.active)return ownedPlacement.confirm();const direction=name==='handleXRInteraction'&&args[0]?new THREE.Vector3(0,0,-1).applyQuaternion(args[0].getWorldQuaternion(new THREE.Quaternion())):camera.getWorldDirection(new THREE.Vector3());return serverCommand('fire',{tool:toxicBubbleSystem.tool,direction:direction.toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex});};}
   async function createOwnedPreview(asset){
     let root;
     if(asset.materialId)root=createBuildingBlock(THREE,asset.materialId);

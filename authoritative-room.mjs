@@ -231,7 +231,7 @@ export class AuthoritativeRooms {
     }
    }
    else if(command.action==='fire'){
-    if(sim.radTox?.combatMode==='local')fail('RAD-TOX enemies and attacks run on your device. Send batched progress instead.',409);
+    if(sim.radTox?.combatMode==='local')fail('The game has been updated. Reload this page to load enemies and shooting controls.',409,'RAD_TOX_CLIENT_UPDATE_REQUIRED');
     if(sim.basketball)fail('Basketball Arena is a sports court. Catch, pass or shoot the basketball.',409);
     const tool=String(command.tool||'laser'),utility=UTILITY_TOOLS[tool],profile=RANGED_WEAPONS[tool],cooldown=utility?utility.cooldown*1000:profile?profile.interval*1000:tool==='dynamite'?1200:250;if(!utility&&!profile&&!['bat','taser','toxin','flamethrower','spray','jetpack'].includes(tool))fail('This tool has no server action.',422);
     player.toolReady ||= {};if(now<(player.toolReady[tool]||0))fail('Tool is cooling down.',429);if(utility?.charges&&(player.toolUses?.[tool]||0)>=utility.charges)fail('Utility depleted until respawn.',409);

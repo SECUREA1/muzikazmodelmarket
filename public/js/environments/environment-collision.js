@@ -1,5 +1,5 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
-import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Octree.js/+esm';
+import * as THREE from '../../vendor/three/three.module.min.js';
+import { Octree } from '../../vendor/three/addons/math/Octree.js';
 import {COLLISION_RE,isDedicatedCollider,isRenderedMesh,collisionIsDisabled,isCollisionMesh} from './collision-policy.js';
 const NON_SPAWN_FLOOR_RE = /(CEILING|ROOF|CANOPY|AWNING|SKY|WALL|WINDOW|DOOR|RAIL|FENCE|LIGHT|LAMP)/i;
 const FLOOR_NAME_RE = /(FLOOR|GROUND|TERRAIN|PLATFORM|NAVMESH|WALK|STAGE|ROAD|PATH)/i;
