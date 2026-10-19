@@ -1,112 +1,113 @@
-import {ENEMY_BEHAVIORS} from './server-enemy-combat.mjs';
-import {damagePlayer,openMatch,finishMatch,healPlayer,matchRows} from './rpg-match.mjs';
+import {randomUUID} from 'node:crypto';
+import {openMatch,finishMatch,healPlayer,matchRows} from './rpg-match.mjs';
+import {captureRadToxScorePhase} from './rad-tox-local-score.mjs';
 export const ROUND_COUNTDOWN_MS=10000;
-// Shared encounters are owned by the room, never by a client's local enemy list.
+export const RAD_TOX_WAVE_MS=120000;
+export const RAD_TOX_NORMAL_WAVES=4;
+export const RAD_TOX_BOSS_WAVE=RAD_TOX_NORMAL_WAVES+1;
+const onlinePlayers=(sim,now)=>Object.entries(sim.players).filter(([,player])=>!player.basketballAI&&!player.replacedByRoom&&now-player.lastSeen<15000);
+
 export function supportsRadTox(environment) {
  return environment.playable!==false && !environment.builderScene && !environment.proceduralLand && Boolean(environment.modelUrl || environment.modelUrls?.length);
 }
-export function spawnRadToxWave(sim, now, center) {
- for (const [id,actor] of Object.entries(sim.actors)) if (actor.radTox) delete sim.actors[id];
+export function radToxWorldForLevel(level,fallback='muzikaz-main'){
+ return level>=3?'sheepbase':level===2?'muzikaz-upper':fallback;
+}
+export function radToxWaveTargetCount(level,wave){
+ if(wave>RAD_TOX_NORMAL_WAVES)return 1;
+ const base=level===2?12:Math.min(18,8+(level-1)*2),snakes=level===2?3:2+(level>=3?2:0);
+ return (base+snakes)*(wave===1?1:2)+2;
+}
+function removeServerEncounter(sim){
+ for(const [id,actor]of Object.entries(sim.actors))if(actor.radTox)delete sim.actors[id];
  sim.projectiles={};
- const campaign=sim.radTox;
- campaign.state='active';campaign.nextWaveAt=null;campaign.transition=null;
- const boss=campaign.wave===4;
- const count=boss?1:Math.min(16,6+campaign.level*2);
- const kinds=['toxic','ghost','snake','brain'];
- for(let index=0;index<count;index++) {
-  const kind=boss?'boss':kinds[index%kinds.length];
-  const angle=index/count*Math.PI*2;
-  const radius=boss?5:3+index%3;
-  const position={x:center.x+Math.sin(angle)*radius,y:center.y,z:center.z-Math.cos(angle)*radius};
-  const id=`rad-tox-${campaign.level}-${campaign.wave}-${index}`;
-  const health=boss?160+campaign.level*20:kind==='snake'?20:40;
-  const definition={objectId:id,position:{...position},movement:{speed:ENEMY_BEHAVIORS[kind].moveSpeed},ai:{detectionRange:40},gameplay:{behavior:'hostile',health,damage:boss?12:kind==='snake'?4:6}};
-  sim.actors[id]={id,radTox:true,kind,position,rotation:{y:0},health,maxHealth:health,active:true,definition};
- }
- campaign.targetCount=count;campaign.remaining=count;campaign.startedAt=now;
+ if(sim.events?.some(event=>['enemy-attack','enemy-hit'].includes(event.action)))sim.events=sim.events.filter(event=>!['enemy-attack','enemy-hit'].includes(event.action));
 }
-export function startRadTox(sim,environment,now,center) {
+
+// The room owns stage clocks and score receipts. Each browser owns its enemy
+// meshes, movement, attacks and damage; no enemy actors cross the room channel.
+export function spawnRadToxWave(sim,now,_center){
+ captureRadToxScorePhase(sim,now);
+ removeServerEncounter(sim);
+ const campaign=sim.radTox,boss=campaign.wave===RAD_TOX_BOSS_WAVE;
+ Object.assign(campaign,{combatMode:'local',state:'active',nextWaveAt:null,transition:null,
+  phaseId:randomUUID(),phaseKind:boss?'boss':'wave',normalWaveCount:RAD_TOX_NORMAL_WAVES,
+  bossKind:boss?({1:'bee',2:'aape'})[campaign.level]||'beeduck':null,
+  targetCount:radToxWaveTargetCount(campaign.level,campaign.wave),
+  startedAt:now,endsAt:boss?null:now+RAD_TOX_WAVE_MS,
+  participants:onlinePlayers(sim,now).map(([id])=>id),localProgress:{}});
+ campaign.remaining=campaign.targetCount;
+ captureRadToxScorePhase(sim,now);
+}
+
+export function seedRadToxLevel(sim,environment,now,level=1){
  if(!supportsRadTox(environment))return false;
- if(sim.radTox&&!sim.match)openMatch(sim,sim.radTox.level||1,now);
- if(!sim.radTox) {
-  sim.radTox={level:1,wave:1,state:'active',remaining:0,targetCount:0};
-  openMatch(sim,1,now);
-  spawnRadToxWave(sim,now,center);
- }
- return true;
+ captureRadToxScorePhase(sim,now);
+ sim.radTox={level:Math.max(1,Math.trunc(Number(level)||1)),wave:1,combatMode:'local',state:'active',environmentId:environment.id};
+ openMatch(sim,sim.radTox.level,now);spawnRadToxWave(sim,now,environment.spawn);return true;
 }
-export function advanceRadTox(sim,now,environment) {
+export function startRadTox(sim,environment,now,center){
+ if(!supportsRadTox(environment))return false;
+ if(!sim.radTox)return seedRadToxLevel(sim,environment,now);
+ // Saved rooms from the former authoritative-enemy mode migrate on entry.
+ if(sim.radTox.combatMode!=='local'){
+  const campaign=sim.radTox;campaign.wave=campaign.wave===4?RAD_TOX_BOSS_WAVE:Math.max(1,Math.min(RAD_TOX_NORMAL_WAVES,campaign.wave||1));
+  campaign.environmentId ||= environment.id;
+  if(!sim.match)openMatch(sim,campaign.level||1,now);
+  spawnRadToxWave(sim,now,center);
+ }else if(!sim.match){openMatch(sim,sim.radTox.level||1,now);spawnRadToxWave(sim,now,center);}
+ removeServerEncounter(sim);return true;
+}
+function levelTransition(sim,environment,now){
+ const victory=sim.match.outcome==='victory',nextLevel=sim.radTox.level+(victory?1:0);
+ return {kind:victory?'level':'retry',at:now+ROUND_COUNTDOWN_MS,nextLevel,
+  environmentId:victory?radToxWorldForLevel(nextLevel,environment?.id):environment?.id||sim.radTox.environmentId};
+}
+export function advanceRadTox(sim,now,environment){
  if(!sim.radTox)return;
- const campaign=sim.radTox;
+ if(sim.radTox.combatMode!=='local'){
+  if(!environment)return;
+  startRadTox(sim,environment,now,environment.spawn);
+ }
+ const campaign=sim.radTox,online=onlinePlayers(sim,now);
+ removeServerEncounter(sim);
  if(sim.match?.state==='finished'){
-  campaign.transition ||= {kind:sim.match.outcome==='victory'?'level':'retry',at:sim.match.endedAt+ROUND_COUNTDOWN_MS};
-  if(environment&&now>=campaign.transition.at&&Object.values(sim.players).some(player=>!player.replacedByRoom&&now-player.lastSeen<15000))nextRadToxLevel(sim,environment,now,sim.match.id);
+  if(!['level','retry'].includes(campaign.transition?.kind))campaign.transition=levelTransition(sim,environment,sim.match.endedAt);
+  if(environment&&now>=campaign.transition.at&&online.length)nextRadToxLevel(sim,environment,now,sim.match.id);
   return;
  }
- campaign.remaining=Object.values(sim.actors).filter(actor=>actor.radTox&&actor.active&&actor.health>0).length;
- const players=Object.values(sim.players).filter(player=>!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
- if(campaign.remaining || !players.length)return;
- if(campaign.wave===4){finishMatch(sim,'victory',now);campaign.transition={kind:'level',at:now+ROUND_COUNTDOWN_MS};return;}
- if(!campaign.nextWaveAt){campaign.state='cleared';campaign.nextWaveAt=now+ROUND_COUNTDOWN_MS;campaign.transition={kind:'wave',at:campaign.nextWaveAt,results:matchRows(sim,now)};return;}
- if(now<campaign.nextWaveAt)return;
+ if(environment&&campaign.environmentId!==environment.id)return;
+ if(!online.length)return;
+ if(campaign.phaseKind==='boss'){
+  const required=(campaign.participants||[]).filter(id=>online.some(([onlineId])=>onlineId===id));
+  // A late arrival can finish an abandoned boss stage, but cannot hold up the
+  // players who were already fighting when that stage began.
+  const participants=required.length?required:online.map(([id])=>id);
+  if(!participants.every(id=>campaign.localProgress?.[id]?.phaseId===campaign.phaseId&&campaign.localProgress[id].bossDefeated))return;
+  captureRadToxScorePhase(sim,now);campaign.remaining=0;finishMatch(sim,'victory',now);
+  campaign.transition=levelTransition(sim,environment,now);return;
+ }
+ if(campaign.state==='active'){
+  if(now<campaign.endsAt)return;
+  captureRadToxScorePhase(sim,now);campaign.remaining=0;campaign.state='cleared';
+  // Start the results clock when the timeout is processed. A sleeping room
+  // never silently skips waves when somebody returns.
+  campaign.nextWaveAt=now+ROUND_COUNTDOWN_MS;
+  campaign.transition={kind:'wave',at:campaign.nextWaveAt,results:matchRows(sim,now)};return;
+ }
+ if(campaign.state!=='cleared'||now<campaign.nextWaveAt)return;
  campaign.wave++;
- for(const player of players){player.ammo=120;player.fuel=100;healPlayer(player,15);}
- spawnRadToxWave(sim,now,players[0].position);
+ for(const [,player]of online){player.ammo=120;player.fuel=100;healPlayer(player,15);}
+ spawnRadToxWave(sim,now,online[0][1].position);
 }
 
-export function nextRadToxLevel(sim,environment,now,expectedMatchId) {
+export function nextRadToxLevel(sim,environment,now,expectedMatchId){
  if(!supportsRadTox(environment)||!sim.match||sim.match.state!=='finished'||sim.match.id!==expectedMatchId)return false;
+ const transition=sim.radTox.transition||levelTransition(sim,environment,sim.match.endedAt);
+ if(now<transition.at)return false;
  const level=sim.match.outcome==='victory'?sim.radTox.level+1:sim.radTox.level;
- const center=Object.values(sim.players).find(player=>!player.replacedByRoom&&now-player.lastSeen<15000)?.position||environment.spawn||{x:0,y:0,z:2};
- sim.radTox={level,wave:1,state:'active',remaining:0,targetCount:0};
- openMatch(sim,level,now);spawnRadToxWave(sim,now,center);return true;
-}
-
-// Only the server advances attack clocks or applies damage. Clients animate
-// these phases and replay the resulting events without running enemy AI.
-export function stepRadToxEnemy(sim,actor,players,now,dt,blocksShot=()=>false,resolveMovement=(_previous,next)=>next,applyAttack=true) {
- const rangeTo=player=>Math.hypot(player.position.x-actor.position.x,player.position.z-actor.position.z);
- const nearest=players.reduce((best,player)=>!best||rangeTo(player)<rangeTo(best)?player:best,null);
- const current=players.find(player=>(player.actorId||player.id)===actor.movementTargetId);
- // Keep pursuing the same player until another is substantially closer.
- const target=current&&nearest&&rangeTo(current)<=rangeTo(nearest)*1.25+.5?current:nearest;
- actor.movementTargetId=target?.actorId||target?.id||null;
- if(!target){actor.attack=null;return;}
- const dx=target.position.x-actor.position.x,dz=target.position.z-actor.position.z,span=Math.hypot(dx,dz);
- const config=ENEMY_BEHAVIORS[actor.kind]||ENEMY_BEHAVIORS.toxic;
- const {range,cooldown}=config;
- actor.rotation.y=Math.atan2(dx,dz);
- // Ranged enemies keep circling and retreat after firing instead of freezing
- // as soon as their initial spawn happens to be inside attack range.
- const speed=Math.max(0,Number(actor.radTox ? config.moveSpeed : actor.definition?.movement?.speed ?? config.moveSpeed)||0);
- let mx=0,mz=0;
- if(span>.001){
-  const dxn=dx/span,dzn=dz/span,ranged=Boolean(config.speed);
-  const retreat=ranged&&(span<2.15||(now-(actor.lastAttack||0)<900&&span<4.6));
-  const approach=!ranged||span>4.5;
-  if(retreat){mx=-dxn;mz=-dzn;}
-  else if(approach){mx=dxn;mz=dzn;}
-  else {const side=actor.id.charCodeAt(actor.id.length-1)%2?1:-1;mx=-dzn*side;mz=dxn*side;}
-  if(!ranged&&span<config.range*.7){mx=0;mz=0;}
- }
- const previous={...actor.position},amount=speed*dt;
- // Try sliding first, then a consistent lateral step around a blocking corner.
- const side=actor.id.charCodeAt(actor.id.length-1)%2?1:-1;
- const proposals=[{x:mx,z:mz},{x:mx,z:0},{x:0,z:mz},
-  {x:-mz*side,z:mx*side},{x:mz*side,z:-mx*side}];
- for(const direction of proposals){
-  if(!direction.x&&!direction.z)continue;
-  const next=resolveMovement(previous,{...previous,x:previous.x+direction.x*amount,z:previous.z+direction.z*amount});
-  if(Math.hypot(next.x-previous.x,next.z-previous.z)>1e-6){actor.position={x:next.x,y:next.y,z:next.z};break;}
- }
- actor.attackStartedAt ??= now;
- const readyAt=(actor.lastAttack??actor.attackStartedAt)+cooldown;
- const inRange=span<range;
- actor.attack={phase:inRange&&now>=readyAt-Math.min(480,cooldown*.35)?'tell':'idle',targetId:target.actorId||target.id,readyAt};
- if(!applyAttack||!inRange||now<readyAt)return;
- const origin={...actor.position,y:actor.position.y+(actor.kind==='snake'?.2:1)},aim={x:target.position.x-origin.x,y:target.position.y+1-origin.y,z:target.position.z-origin.z},length=Math.hypot(aim.x,aim.y,aim.z);
- if(blocksShot(origin,[aim.x/length,aim.y/length,aim.z/length],length))return;
- damagePlayer(target,now);actor.lastAttack=now;actor.attack.phase='attack';
- sim.events.push({id:`${actor.id}:attack:${now}`,action:'enemy-attack',actorId:actor.id,kind:actor.kind,origin,target:{...target.position},targetId:target.actorId||target.id,at:now});
- sim.events=sim.events.slice(-100);
+ seedRadToxLevel(sim,environment,now,level);
+ sim.radTox.environmentId=transition.environmentId||environment.id;
+ if(sim.radTox.environmentId!==environment.id)sim.radTox.transferId=sim.radTox.phaseId;
+ return true;
 }

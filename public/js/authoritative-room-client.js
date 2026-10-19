@@ -97,7 +97,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     const controls=document.hidden?{}:input();
     const state=await client.send('input',{input:controls});
     const firingControls=document.hidden?{}:input();
-    if (!stopped && !fireBusy && state?.players?.[client.selfId]?.health>0 && state?.match?.state!=='finished' && firingControls.firing) {
+    if (!stopped && !fireBusy && state?.radTox?.combatMode!=='local' && state?.players?.[client.selfId]?.health>0 && state?.match?.state!=='finished' && firingControls.firing) {
      fireBusy=true;
      // A slow weapon response must not stall movement or room snapshots.
      void client.send('fire',{tool:firingControls.tool,direction:firingControls.direction,color:firingControls.color})

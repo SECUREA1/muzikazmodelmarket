@@ -46,9 +46,19 @@ test('ranged weapons always render distinct shot feedback, including misses', as
 test('tools use GLB, procedural, and Builder layout surfaces through one interaction set', async () => {
   const script = await readFile('public/js/house-explorer-glb.js', 'utf8');
 
-  assert.match(script, /environmentSurfaces\(\)\{const surfaces=\[\.\.\.\(this\.loader\.meshes\|\|\[\]\),\.\.\.\(this\.loader\.collisionMeshes\|\|\[\]\),\.\.\.\(this\.loader\.floorMeshes\|\|\[\]\)\]/, 'tool surfaces include visible GLB meshes, procedural colliders, Builder objects, and verified floors');
-  assert.match(script, /if\(node\.userData\?\.collisionDisabled===true\)return false/, 'held, hidden, and open Builder objects do not remain targetable surfaces');
-  assert.match(script, /floorAt\(x,z\)[\s\S]{0,300}intersectObjects\(this\.environmentSurfaces\(\),true\)/, 'enemy, pickup, dynamite, and brick floor queries work on every environment type');
+  const source=script.split('\n').find(line=>line.trimStart().startsWith('environmentSurfaces(){'));
+  assert.ok(source,'the shared surface collector exists');
+  const collect=new Function(`return ({${source.trim()}}).environmentSurfaces`)();
+  const mesh=(uuid,parent=null)=>({uuid,isMesh:true,parent,userData:{}}),glb=mesh('glb'),collider=mesh('collider'),floor=mesh('floor'),held=mesh('held',{userData:{collisionDisabled:true}});
+  const state={environmentGeneration:1,loader:{meshes:[glb,held,{uuid:'group',isMesh:false}],collisionMeshes:[collider,glb],floorMeshes:[floor]}};
+  assert.deepEqual(collect.call(state).map(item=>item.uuid),['glb','collider','floor'],'tool surfaces combine all three mesh lists, deduplicate and omit disabled descendants');
+  const brick=mesh('new-builder-object');state.loader.meshes.push(brick);
+  assert.ok(collect.call(state).includes(brick),'adding Builder geometry invalidates the cached candidate list');
+  collider.userData.collisionDisabled=true;
+  assert.ok(!collect.call(state).includes(collider),'an object held or opened after caching immediately stops blocking tool queries');
+  collider.userData.collisionDisabled=false;
+  assert.ok(collect.call(state).includes(collider),'releasing or closing an object restores tool queries');
+  assert.match(script, /floorAt\(x,z\)[\s\S]{0,300}intersectObjects\(this\.environmentSurfaces\(\),false\)/, 'enemy, pickup, dynamite, and brick floor queries work on every environment type');
   assert.match(script, /drawAt\(pointer,origin=null,direction=null\)[\s\S]{0,650}this\.environmentSurfaces\(\)/, '3D drawing can hit procedural and Builder layout surfaces');
   assert.match(script, /surfaceAt\(pointer,origin=null,direction=null\)[\s\S]{0,300}this\.environmentSurfaces\(\)/, 'paintballs can hit procedural and Builder layout surfaces');
   assert.match(script, /brickSurfaceAt\(pointer,origin=null,direction=null\)[\s\S]{0,300}this\.environmentSurfaces\(\)/, 'brick laying can target procedural and Builder layout surfaces');

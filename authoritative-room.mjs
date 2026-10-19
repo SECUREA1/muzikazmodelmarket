@@ -2,9 +2,10 @@ import {isBasketball,basketballCatchPosition,basketballJerseyTeam,tossBasketball
 import {isBasketballEnvironment,ensureBasketballGame,assignBasketballTeam,enterBasketballGame,takeBasketballSpot,stealBasketball,startBasketballGame,shootBasketball,touchBasketball,registerBasketballRelease,stepBasketballGame,configureBasketballGame,watchBasketballGame,requireBasketballPlayer,constrainBasketballSpectator,basketballSpectatorRestricted,BASKETBALL_BALL_ID} from './public/js/basketball-rules.js';
 import {refreshRpgLoot,dropRpgLoot} from './server-rpg-loot.mjs';
 import {validateOwnedPlacement} from './owned-item-placement.mjs';
-import {ENEMY_BEHAVIORS,stepEnemyCombat} from './server-enemy-combat.mjs';
-import {combatStats,damagePlayer,registerParticipant,checkTeamDefeat,matchView,SPAWN_PROTECTION_MS,PLAYER_HIT_CAPACITY} from './rpg-match.mjs';
-import {startRadTox,advanceRadTox,nextRadToxLevel,stepRadToxEnemy} from './rad-tox-campaign.mjs';
+import {combatStats,damagePlayer,registerParticipant,checkTeamDefeat,matchView,tournamentView,SPAWN_PROTECTION_MS,PLAYER_HIT_CAPACITY} from './rpg-match.mjs';
+import {startRadTox,advanceRadTox,nextRadToxLevel,supportsRadTox} from './rad-tox-campaign.mjs';
+import {applyRadToxProgress,hasRadToxScorePhase,captureRadToxScorePhase} from './rad-tox-local-score.mjs';
+import {syncRadToxTournament,transferRadToxPlayer} from './rad-tox-room-transfer.mjs';
 import {rayBoxDistance} from './server-combat-ray.mjs';
 import {createHash} from 'node:crypto';
 import {ServerBuilderCollision} from './server-builder-collision.mjs';
@@ -21,22 +22,17 @@ export class AuthoritativeRooms {
  constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,collectLoot,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();}
  async tickActive(){
   if(this.ticking)return;this.ticking=true;
-  try{for(const [id,environment]of this.activeWorlds)await this.store.update(id,room=>{
+  try{for(const [id,environment]of this.activeWorlds)await this.store.update(id,(room,allRooms)=>{
    if(!Object.values(room.simulation?.players||{}).some(player=>!player.basketballAI&&!player.replacedByRoom&&this.now()-player.lastSeen<15000)){this.activeWorlds.delete(id);return;}
-   this.step(room,environment);
+   if(room.simulation)syncRadToxTournament(room.simulation,allRooms);
+   this.step(room,environment);syncRadToxTournament(room.simulation,allRooms);
   },{persist:false});}finally{this.ticking=false;}
  }
  prepareEncounter(sim,environment){
-  if(!sim.radTox)return;
-  const player=Object.values(sim.players).find(player=>!player.basketballAI&&!player.replacedByRoom&&this.now()-player.lastSeen<15000);
-  if(!player)return;
-  const occupied=Object.values(sim.actors).filter(actor=>actor.radTox&&actor.spawnVersion===1).map(actor=>actor.position);
-  for(const actor of Object.values(sim.actors))if(actor.radTox&&actor.active&&actor.spawnVersion!==1){
-   actor.position=this.collision.encounterSpawn(environment,actor.position,player.position,occupied);
-   actor.definition ||= {objectId:actor.id,gameplay:{behavior:'hostile',health:actor.maxHealth||actor.health,damage:6},ai:{detectionRange:40}};
-   actor.definition.movement ||= {};actor.definition.position={...actor.position};actor.definition.movement.speed=ENEMY_BEHAVIORS[actor.kind]?.moveSpeed||.9;
-   actor.spawnVersion=1;occupied.push(actor.position);
-  }
+  if(!supportsRadTox(environment))return;
+  if(sim.radTox)startRadTox(sim,environment,this.now(),environment.spawn);
+  for(const [id,actor]of Object.entries(sim.actors))if(actor.radTox)delete sim.actors[id];
+  sim.projectiles={};
  }
  initialize(room,environment){
   const manifestKey=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'');let base=this.manifestCache.get(manifestKey);if(!base){base=compileBuilderScene(environment.builderScene||{});this.manifestCache.set(manifestKey,base);if(this.manifestCache.size>32)this.manifestCache.delete(this.manifestCache.keys().next().value);}const manifest={...base,actors:[...base.actors]};
@@ -56,7 +52,7 @@ export class AuthoritativeRooms {
    manifest.actors=manifest.actors.filter(actor=>!['hostile','patrol','hazard'].includes(actor.gameplay?.behavior));
   }else{
    if(sim.basketball){delete sim.basketball;delete sim.actors[BASKETBALL_BALL_ID];}
-   this.prepareEncounter(sim,environment);refreshRpgLoot(sim,environment,this.now(),position=>this.collision.safeSpawn(environment,position));
+   this.prepareEncounter(sim,environment);if(!supportsRadTox(environment))refreshRpgLoot(sim,environment,this.now(),position=>this.collision.safeSpawn(environment,position));
   }
   manifest.actors.push(...Object.values(sim.actors).filter(actor=>actor.definition&&(!sim.basketball||!['hostile','patrol','hazard'].includes(actor.definition.gameplay?.behavior))).map(actor=>actor.definition));
   sim.streets=environment.streets||[];sim.mapRevision=environment.atlas?.revision||0;
@@ -88,14 +84,14 @@ export class AuthoritativeRooms {
   }
   const active=Object.values(sim.players).filter(player=>!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
   for(const definition of sim.match?.state==='finished'?[]:manifest.actors){const actor=sim.actors[definition.objectId];if(!actor?.active||actor.health<=0||actor.holderId)continue;
-   if(actor.radTox){stepRadToxEnemy(sim,actor,active,now,dt,(origin,ray,span)=>this.collision.blocksShot(environment,origin,ray,span,sim.actors),(previous,next)=>this.collision.resolve(environment,previous,next,sim.actors),false);continue;}
+   if(actor.radTox)continue;
    const kind=definition.gameplay.behavior;
    if(kind==='hostile'||kind==='patrol'){
     const target=active.slice().sort((a,b)=>distance(actor.position,a.position)-distance(actor.position,b.position))[0];
     const chase=kind==='hostile'&&target&&distance(actor.position,target.position)<clamp(definition.ai?.detectionRange||9,1,50);
     const goal=chase?target.position:{x:definition.position.x+Math.sin(now/1000)*3,y:definition.position.y,z:definition.position.z+Math.cos(now/1000)*3};
-    const span=distance(actor.position,goal),step=Math.min(1,dt*clamp(definition.movement.speed||2,0,10)/Math.max(.001,span));if(!actor.radTox||!['ghost','brain','boss'].includes(actor.kind)||span>3){const next={...actor.position,x:actor.position.x+(goal.x-actor.position.x)*step,z:actor.position.z+(goal.z-actor.position.z)*step};actor.position=actor.radTox?this.collision.resolve(environment,actor.position,next,sim.actors):next;delete actor.position.floorY;}actor.rotation.y=Math.atan2(goal.x-actor.position.x,goal.z-actor.position.z);
-    if(!actor.radTox&&chase&&span<1.5&&now-(actor.lastAttack||0)>1000){if(definition.gameplay.damage>0)damagePlayer(target,now);actor.lastAttack=now;}
+    const span=distance(actor.position,goal),step=Math.min(1,dt*clamp(definition.movement.speed||2,0,10)/Math.max(.001,span));actor.position={...actor.position,x:actor.position.x+(goal.x-actor.position.x)*step,z:actor.position.z+(goal.z-actor.position.z)*step};actor.rotation.y=Math.atan2(goal.x-actor.position.x,goal.z-actor.position.z);
+    if(chase&&span<1.5&&now-(actor.lastAttack||0)>1000){if(definition.gameplay.damage>0)damagePlayer(target,now);actor.lastAttack=now;}
    }
    if(kind==='hazard')for(const target of active)if(distance(target.position,actor.position)<1.5&&now-(actor.lastAttack||0)>1000){if(definition.gameplay.damage>0)damagePlayer(target,now);actor.lastAttack=now;}
   }
@@ -104,19 +100,20 @@ export class AuthoritativeRooms {
    if(!sim.basketball){const previous=isBasketball(actor)&&!actor.holderId&&actor.ballVelocity?{...actor.position}:null;stepBasketball(actor,dt);if(previous)actor.ballCatchSegment={from:previous,to:{...actor.position},at:now};}
   }
   if(sim.basketball)stepBasketballGame(sim,now,dt);
-  else stepEnemyCombat(sim,{now,dt,environment,collision:this.collision});
   checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);
   this.prepareEncounter(sim,environment);
   sim.sequence++;return {sim,manifest};
  }
- view(room){const sim=room.simulation,now=this.now();return {authoritative:true,basketball:sim.basketball?copy(sim.basketball):null,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,collisionNormals:p.collisionNormals||[],input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,basketballRole:p.basketballRole||'player',basketballTeam:p.basketballTeam||null,basketballJersey:p.basketballJersey||null,basketballPoints:p.basketballPoints||0,basketballAI:Boolean(p.basketballAI),basketballNumber:p.basketballNumber||null,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
- snapshot(id,environment){return this.store.update(id,room=>{this.step(room,environment);return this.view(room);},{persist:false,roomOnly:true});}
+ view(room){const sim=room.simulation,now=this.now();return {authoritative:true,basketball:sim.basketball?copy(sim.basketball):null,match:matchView(sim,now),tournament:tournamentView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,lifeRevision:p.lifeRevision||0,localScoreAck:p.localScoreAck||null,tournamentScore:p.tournamentScore||0,collisionNormals:p.collisionNormals||[],input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,basketballRole:p.basketballRole||'player',basketballTeam:p.basketballTeam||null,basketballJersey:p.basketballJersey||null,basketballPoints:p.basketballPoints||0,basketballAI:Boolean(p.basketballAI),basketballNumber:p.basketballNumber||null,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
+ snapshot(id,environment){return this.store.update(id,(room,allRooms)=>{if(room.simulation)syncRadToxTournament(room.simulation,allRooms);this.step(room,environment);syncRadToxTournament(room.simulation,allRooms);return this.view(room);},{persist:false});}
  command(id,environment,identity,command){this.activeWorlds.set(id,environment);return this.store.update(id,async (room,allRooms)=>{
-  const {sim,manifest}=this.step(room,environment),now=this.now(),actorId='account:'+identity.accountId;
+  if(room.simulation)syncRadToxTournament(room.simulation,allRooms);
+  const {sim,manifest}=this.step(room,environment),now=this.now(),actorId='account:'+identity.accountId;syncRadToxTournament(sim,allRooms);
   const requestId=String(command.requestId||'');if(!/^[\w-]{1,100}$/.test(requestId))fail('A command request ID is required.');
   sim.receipts ||= {};const receiptKey=actorId+':'+requestId;if(sim.receipts[receiptKey]){if(sim.receipts[receiptKey].action!==command.action)fail('Request ID already used.',409);return {...this.view(room),selfId:actorId,result:sim.receipts[receiptKey].result};}
   let player=sim.players[actorId],result={};const basketballLateArrival=sim.basketball?.state==='live'&&(!player||player.basketballRole==='spectator'||now-player.lastSeen>=15000||player.replacedByRoom);
   if(command.action==='join'){
+   transferRadToxPlayer(sim,allRooms,environment,actorId,command,now);
    const returning=Boolean(player);
    const active=Object.entries(sim.players).filter(([id,p])=>id!==actorId&&!p.basketballAI&&now-p.lastSeen<15000);if(active.length>=(environment.publicDestination?128:this.capacity))fail('This multiplayer room is full.',409);
    const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);let spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects):this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2});
@@ -125,7 +122,7 @@ export class AuthoritativeRooms {
    if(!player)player=sim.players[actorId]={username:identity.username,position:{x:Number(spawn.x)||0,y:Number(spawn.y)||0,z:Number(spawn.z)||0},floor:Number(spawn.y)||0,floorVersion:2,yaw:0,velocityY:0,grounded:true,ammo:120,fuel:100,health:clamp(identity.stats?.health??100,0,100),stats:identity.stats||{},score:0,inventory:[],quests:{},cooldowns:{},lastSeen:now};
    for(const [otherId,otherRoom]of Object.entries(allRooms)){if(otherId===id)continue;const previous=otherRoom.simulation?.players[actorId];if(!previous)continue;previous.lastSeen=0;previous.replacedByRoom=id;previous.input={};for(const key of ['heldId','seatedId','vehicleId']){const held=otherRoom.simulation.actors[previous[key]];if(held)held.holderId=null;previous[key]=null;}}
    if(meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;player.actorId=actorId;
-   if(sim.basketball){player.health=100;enterBasketballGame(sim,player,now,{role:command.basketballRole,team:command.basketballTeam,menu:command.basketballEntry==='menu',returning,lateArrival:basketballLateArrival});}else{startRadTox(sim,environment,now,player.position);registerParticipant(sim,actorId,player,now);}
+   if(sim.basketball){player.health=100;enterBasketballGame(sim,player,now,{role:command.basketballRole,team:command.basketballTeam,menu:command.basketballEntry==='menu',returning,lateArrival:basketballLateArrival});}else{startRadTox(sim,environment,now,player.position);registerParticipant(sim,actorId,player,now);captureRadToxScorePhase(sim,now);syncRadToxTournament(sim,allRooms);}
    result.message='Joined '+player.locationName;
   }else{
    if(player?.replacedByRoom)fail('This account joined another destination. Reload to rejoin this room.',409,'ROOM_SWITCHED');if(!player||now-player.lastSeen>15000)fail('Join this room before sending gameplay commands.',409,'ROOM_JOIN_REQUIRED');
@@ -144,9 +141,14 @@ export class AuthoritativeRooms {
    else if(command.action==='basketball-shoot'){const ball=shootBasketball(sim,player,now,Object.fromEntries(['power','angle','mode','direction'].filter(key=>command[key]!==undefined).map(key=>[key,command[key]])));result.message=ball.basketballShot.aimMiss?'Aim miss: outside 13% hoop alignment. Line up with the net.':'Shot released!';}
    else if(sim.basketball&&['start-rad-tox','next-rad-tox'].includes(command.action))fail('Basketball Arena runs shared basketball games.',409);
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position))result.message='RAD-TOX encounter active.';else result.message='Builder gameplay active.';}
+   else if(command.action==='rad-tox-progress'){
+    const source=hasRadToxScorePhase(sim,command,actorId)?sim:Object.values(allRooms).map(other=>other.simulation).find(other=>other&&other.players?.[actorId]&&hasRadToxScorePhase(other,command,actorId));
+    if(!source)fail('This RAD-TOX phase does not belong to this player.',409);
+    syncRadToxTournament(source,allRooms);const accepted=applyRadToxProgress(source,actorId,command,now);syncRadToxTournament(source,allRooms);player.localScoreAck=accepted.ack;result.localScoreAck=accepted.ack;
+   }
    else if(command.action==='next-rad-tox'){if(sim.radTox?.transition&&now<sim.radTox.transition.at)fail('The next round starts after the 10-second results countdown.',409);if(nextRadToxLevel(sim,environment,now,command.matchId)){for(const [index,participantId] of Object.keys(sim.match.participants).entries()){const participant=sim.players[participantId],entry=environment.spawn||{x:0,y:0,z:2};participant.position=this.collision.safeSpawn(environment,{...entry,x:entry.x+(index%4)*1.2,z:entry.z+Math.floor(index/4)*1.2});participant.floor=participant.position.y;participant.velocityY=0;participant.grounded=true;participant.shieldUntil=0;participant.input={};participant.toolReady={};participant.toolUses={};}result.message='Next shared level started.';}else if(sim.match?.id===command.matchId)fail('Complete the current level before starting another.',409);}
    else if(sim.match?.state==='finished'&&command.action!=='input')fail('This level has ended. Review the results and start the next level.',409);
-   else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
+   else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.lifeRevision=(player.lifeRevision||0)+1;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
    else if(player.health<=0)fail('Respawn before acting.',409);
    else if(command.action==='drop'){const held=sim.actors[player.heldId];if(held){held.holderId=null;held.position={...player.position};player.heldId=null;}}
    else if(command.action==='collect'){await this.collectNearbyLoot(sim,player,identity,id,now,command.entityId,result);}
@@ -229,6 +231,7 @@ export class AuthoritativeRooms {
     }
    }
    else if(command.action==='fire'){
+    if(sim.radTox?.combatMode==='local')fail('RAD-TOX enemies and attacks run on your device. Send batched progress instead.',409);
     if(sim.basketball)fail('Basketball Arena is a sports court. Catch, pass or shoot the basketball.',409);
     const tool=String(command.tool||'laser'),utility=UTILITY_TOOLS[tool],profile=RANGED_WEAPONS[tool],cooldown=utility?utility.cooldown*1000:profile?profile.interval*1000:tool==='dynamite'?1200:250;if(!utility&&!profile&&!['bat','taser','toxin','flamethrower','spray','jetpack'].includes(tool))fail('This tool has no server action.',422);
     player.toolReady ||= {};if(now<(player.toolReady[tool]||0))fail('Tool is cooling down.',429);if(utility?.charges&&(player.toolUses?.[tool]||0)>=utility.charges)fail('Utility depleted until respawn.',409);
@@ -275,12 +278,12 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
   if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(player.position,sim)){player.position=constrainBasketballSpectator(player.position,player.position,sim,player);player.input={};player.movementRevision=(player.movementRevision||0)+1;}
   if(command.action==='input'&&player.health>0)await this.collectNearbyLoot(sim,player,identity,id,now,null,result);
   this.prepareEncounter(sim,environment);
-  checkTeamDefeat(sim,now);
+  checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);syncRadToxTournament(sim,allRooms);
   if(now-(player.lastTelemetry||0)>5000&&!this.telemetryPending.has(identity.walletId)){const sample={health:player.health,world:id};player.lastTelemetry=now;this.telemetryPending.add(identity.walletId);Promise.resolve().then(()=>this.telemetry(identity.walletId,sample)).catch(error=>console.error('Gameplay telemetry failed:',error.message)).finally(()=>this.telemetryPending.delete(identity.walletId));}
-  if(command.action!=='input'){sim.events.push({id:requestId,actorId,action:command.action,...result,at:now});sim.events=sim.events.slice(-100);}
+  if(!['input','rad-tox-progress'].includes(command.action)){sim.events.push({id:requestId,actorId,action:command.action,...result,at:now});sim.events=sim.events.slice(-100);}
   sim.receipts[receiptKey]={action:command.action,result};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
   return {...this.view(room),selfId:actorId,result};
- },{persist:command.action!=='input'});}
+ },{persist:!['input','rad-tox-progress'].includes(command.action)});}
  async collectNearbyLoot(sim,player,identity,roomId,now,entityId,result){
   if(!entityId&&now<(player.lootRetryAt||0))return;
   const loot=Object.values(sim.actors).find(actor=>actor.loot&&actor.active&&(!entityId||actor.id===entityId)&&distance(actor.position,player.position)<=1.8);
@@ -292,7 +295,7 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
   result.loot={id:loot.id,catalogId:loot.loot.catalogId,receiptId:receipt?.id};result.message=loot.loot.name+' added to Backpack · Care supplies';
  }
  async player(id,actorId){return (await this.store.get(id)).simulation?.players[actorId];}
- async care(actorId,receipt){const rooms=await this.store.read();for(const [id,room] of Object.entries(rooms)){if(!room.simulation?.players[actorId])continue;await this.store.update(id,current=>{const player=current.simulation.players[actorId];player.careReceipts ||= [];if(player.careReceipts.includes(receipt.id))return;const effect=receipt.effect;player.stats ||= {};if(effect?.stat==='all')for(const key of Object.keys(player.stats))player.stats[key]=key==='toxicity'?0:100;else if(effect?.stat&&effect.stat!=='health')player.stats[effect.stat]=Math.max(0,Math.min(100,(player.stats[effect.stat]||0)+Number(effect.amount||0)));if(effect?.stat==='health'||effect?.stat==='all')player.health=effect.stat==='all'?100:Math.min(100,player.health+Number(effect.amount||0));player.careReceipts.push(receipt.id);player.careReceipts=player.careReceipts.slice(-100);});}}
+ async care(actorId,receipt){const rooms=await this.store.read();for(const [id,room] of Object.entries(rooms)){if(!room.simulation?.players[actorId])continue;await this.store.update(id,current=>{const player=current.simulation.players[actorId];player.careReceipts ||= [];if(player.careReceipts.includes(receipt.id))return;const effect=receipt.effect;player.stats ||= {};if(effect?.stat==='all')for(const key of Object.keys(player.stats))player.stats[key]=key==='toxicity'?0:100;else if(effect?.stat&&effect.stat!=='health')player.stats[effect.stat]=Math.max(0,Math.min(100,(player.stats[effect.stat]||0)+Number(effect.amount||0)));if(effect?.stat==='health'||effect?.stat==='all'){player.health=effect.stat==='all'?100:Math.min(100,player.health+Number(effect.amount||0));player.lifeRevision=(player.lifeRevision||0)+1;}player.careReceipts.push(receipt.id);player.careReceipts=player.careReceipts.slice(-100);});}}
 }
 
 

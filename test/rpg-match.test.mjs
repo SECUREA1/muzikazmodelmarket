@@ -5,15 +5,22 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
-import {damagePlayer,newCombatStats,finishMatch} from '../rpg-match.mjs';
+import {damagePlayer,newCombatStats,finishMatch,openMatch,registerParticipant,healPlayer,recordTournamentScore,tournamentView} from '../rpg-match.mjs';
 import {healthAfterHit} from '../public/js/rpg-combat-rules.js';
 
-async function arena(run){
+async function arena(run,{radTox=true}={}){
  const dir=await mkdtemp(join(tmpdir(),'rpg-match-'));let now=100000,number=0;
- const store=new SharedRoomStore(join(dir,'rooms.json')),map={id:'arena',playable:true,modelUrl:'/fixture.glb',spawn:{x:0,y:0,z:0}};
+ const store=new SharedRoomStore(join(dir,'rooms.json')),map={id:'arena',playable:true,...(radTox?{modelUrl:'/fixture.glb'}:{builderScene:{objects:[]}}),spawn:{x:0,y:0,z:0}};
  const runtime=new AuthoritativeRooms({store,now:()=>now});runtime.collision.encounterSpawn=(_,point)=>point;runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.blocksShot=()=>false;runtime.collision.resolve=(_,previous,next)=>next;
  const identity=name=>({accountId:name,username:name,walletId:name,stats:{health:100}});
- const send=(name,action,fields={},requestId='rpg-'+ ++number)=>runtime.command(map.id,map,identity(name),{action,requestId,...fields});
+ const send=async(name,action,fields={},requestId='rpg-'+ ++number)=>{
+  const state=await runtime.command(map.id,map,identity(name),{action,requestId,...fields});
+  if(!radTox&&action==='join'){
+   await store.update(map.id,room=>{const sim=room.simulation;if(!sim.match)openMatch(sim,1,now);else registerParticipant(sim,'account:'+name,sim.players['account:'+name],now);});
+   return runtime.snapshot(map.id,map);
+  }
+  return state;
+ };
  const refresh=()=>runtime.snapshot(map.id,map);
  const advance=ms=>{now+=ms;};
  async function arrange(){await store.update(map.id,room=>{for(const actor of Object.values(room.simulation.actors))actor.position={x:1000,y:0,z:1000};const players=room.simulation.players;if(players['account:alice'])players['account:alice'].position={x:0,y:0,z:0};if(players['account:bob'])players['account:bob'].position={x:0,y:0,z:-5};if(players['account:charlie'])players['account:charlie'].position={x:5,y:0,z:-5};});}
@@ -29,6 +36,28 @@ test('full health takes exactly 45 damaging hits; shields, spawn protection and 
  let health=100;for(let i=0;i<45;i++)health=healthAfterHit(health);assert.equal(health,0,'browser health uses the same 45-hit rule');
 });
 
+test('tournament standings retain accepted combat totals across levels and reconnects',()=>{
+ const now=100000,sim={players:{alice:{username:'Alice',lastSeen:now,health:100},bob:{username:'Bob',lastSeen:now,health:100}},radTox:{combatMode:'local',level:1}};
+ openMatch(sim,1,now);const id=sim.tournament.id;
+ recordTournamentScore(sim,'alice',{score:30,enemyKills:3,shots:8,hits:5,misses:3,damageDealt:250},now);
+ recordTournamentScore(sim,'bob',{score:30,enemyKills:2,shots:4,hits:2,misses:2},now);
+ let view=tournamentView(sim,now);assert.equal(view.results[0].id,'alice');assert.equal(view.results[0].accuracy,62.5);assert.equal(view.results[0].damageDealt,250);
+ openMatch(sim,2,now+100);assert.equal(sim.tournament.id,id);assert.equal(sim.players.alice.score,0);assert.equal(sim.players.alice.tournamentScore,30);
+ recordTournamentScore(sim,'alice',{score:10,enemyKills:1,shots:2,hits:2},now+100);
+ sim.players.alice.username='Alice renamed';recordTournamentScore(sim,'alice',{},now+100);
+ sim.players.bob.replacedByRoom='another-map';view=tournamentView(sim,now+100);
+ assert.equal(view.results[0].score,40);assert.equal(view.results[0].enemyKills,4);assert.equal(view.results[0].shots,10);assert.equal(view.results[0].hits,7);assert.equal(view.results[0].username,'Alice renamed');assert.equal(view.results[1].connected,false);
+ recordTournamentScore(sim,'alice',{score:-999,enemyKills:NaN},now+100);assert.equal(tournamentView(sim,now+100).results[0].score,40);
+});
+
+test('explicit resets and resupply advance life revisions without changing scores',()=>{
+ const now=100000,player={username:'Alice',lastSeen:now,health:100},sim={players:{alice:player},radTox:{combatMode:'local'}};
+ openMatch(sim,1,now);assert.equal(player.lifeRevision,1);player.score=20;
+ healPlayer(player,15);assert.equal(player.lifeRevision,2);assert.equal(player.health,100);assert.equal(player.score,20);
+ player.health=50;healPlayer(player,15);assert.equal(player.lifeRevision,3);assert.equal(player.health,65);
+ openMatch(sim,2,now+100);assert.equal(player.lifeRevision,4);assert.equal(player.health,100);
+});
+
 test('every join enters the same active game; late joins and reconnects preserve established scores',()=>arena(async({send,advance,store})=>{
  const alice=await send('alice','join');const bob=await send('bob','join');assert.equal(alice.match.id,bob.match.id);assert.equal(bob.match.results.length,2);assert.ok(bob.radTox.remaining>0);assert.equal(bob.players['account:bob'].hitsRemaining,45);
  await store.update('arena',room=>{room.simulation.players['account:alice'].score=10;room.simulation.players['account:alice'].combat.score=10;});
@@ -36,7 +65,7 @@ test('every join enters the same active game; late joins and reconnects preserve
  const charlie=await send('charlie','join');assert.equal(charlie.match.id,alice.match.id);assert.equal(charlie.match.results.length,3);
 }));
 
-test('PvP records accepted shots, misses, hits, kills and deaths exactly once without trusting claimed hits',()=>arena(async({send,advance,arrange,runtime,store,refresh})=>{
+test('Builder PvP records accepted shots, misses, hits, kills and deaths exactly once without trusting claimed hits',()=>arena(async({send,advance,arrange,runtime,store,refresh})=>{
  await send('alice','join');await send('bob','join');await arrange();advance(3100);await send('bob','input',{input:{}});
  let state=await send('alice','fire',{tool:'laser',direction:[0,0,-1],damage:100000,hitId:'account:bob',score:999},'first-shot');
  assert.equal(state.players['account:bob'].hitsRemaining,44);assert.equal(state.players['account:alice'].combat.shots,1);assert.equal(state.players['account:alice'].score,0);
@@ -49,12 +78,12 @@ test('PvP records accepted shots, misses, hits, kills and deaths exactly once wi
  await assert.rejects(send('bob','fire',{tool:'laser',direction:[0,0,1]}),{statusCode:409});
  state=await send('bob','respawn');assert.equal(state.players['account:bob'].hitsRemaining,45);assert.equal(state.players['account:bob'].combat.deaths,1);
  advance(250);state=await send('alice','fire',{tool:'laser',direction:[0,-.1,0.1]});assert.equal(state.players['account:bob'].health,100,'respawned players are protected');
- runtime.collision.blocksShot=()=>true;advance(3100);await send('bob','input',{input:{}});state=await send('alice','fire',{tool:'laser',direction:[0,0,-1]});assert.equal(state.players['account:alice'].combat.misses,2,'occluded attacks do not count as hits');
-}));
+ const missesBeforeWall=state.players['account:alice'].combat.misses;runtime.collision.blocksShot=()=>true;advance(3100);await send('bob','input',{input:{}});state=await send('alice','fire',{tool:'laser',direction:[0,0,-1]});assert.equal(state.players['account:alice'].combat.misses,missesBeforeWall+1,'occluded attacks do not count as hits');
+},{radTox:false}));
 
 test('level results include disconnected participants, remain frozen, survive restart and advance only once',()=>arena(async({send,advance,arrange,store,runtime,map,now})=>{
- await send('alice','join');await send('bob','join');await arrange();advance(3100);
- let state=await send('alice','fire',{tool:'laser',direction:[1,0,0]});
+ let state=await send('alice','join');await send('bob','join');await arrange();advance(3100);
+ state=await send('alice','rad-tox-progress',{matchId:state.match.id,phaseId:state.radTox.phaseId,sequence:1,stats:{shots:1,misses:1}});
  advance(16000);await send('alice','join');
  await store.update(map.id,room=>finishMatch(room.simulation,'victory',now()));
  state=await send('alice','input',{input:{}});const id=state.match.id;assert.equal(state.match.state,'finished');assert.equal(state.match.results.length,2);
@@ -75,7 +104,7 @@ test('a team wipe finishes the level and records each death once',()=>arena(asyn
  const retry=await send('alice','next-rad-tox',{matchId:state.match.id});assert.equal(retry.match.level,1);assert.equal(retry.players['account:alice'].hitsRemaining,45);
 }));
 
-test('enemy kills credit the final attacker and give the other contributor an assist',()=>arena(async({send,advance,arrange,store,map,now})=>{
+test('Builder enemy kills credit the final attacker and give the other contributor an assist',()=>arena(async({send,advance,arrange,store,map,now})=>{
  await send('alice','join');await send('bob','join');await arrange();advance(3100);
  await store.update(map.id,room=>{const sim=room.simulation;sim.players['account:bob'].position={x:2,y:0,z:0};sim.actors.target={id:'target',position:{x:0,y:0,z:-5},active:true,health:100};});
  let state=await send('alice','fire',{tool:'laser',direction:[0,-.1,-1]});assert.equal(state.actors.target.health,50);
@@ -83,7 +112,7 @@ test('enemy kills credit the final attacker and give the other contributor an as
  assert.equal(state.players['account:alice'].combat.assists,1);assert.equal(state.players['account:alice'].score,5);assert.equal(state.players['account:bob'].combat.enemyKills,1);assert.equal(state.players['account:bob'].score,10);
  await store.update(map.id,room=>finishMatch(room.simulation,'victory',now()));
  state=await send('alice','input',{input:{}});assert.equal(state.match.results[0].username,'bob');assert.equal(state.match.results[1].assists,1);assert.ok(state.match.results.every(row=>row.shots===row.hits+row.misses));
-}));
+},{radTox:false}));
 
 test('respawn clears falling momentum, shield and tool cooldowns without erasing match statistics',()=>arena(async({send,store,map,advance,arrange})=>{
  await send('alice','join');await send('bob','join');await arrange();

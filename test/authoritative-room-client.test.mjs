@@ -119,6 +119,16 @@ test('dead players continue heartbeats without automatic firing',async()=>{
  {input:()=>({firing:true,tool:'flamethrower',direction:[0,0,-1]})});
 });
 
+test('local RAD-TOX attacks never send automatic server fire while movement stays synchronized',async()=>{
+ let fires=0,inputs=0;
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const {action}=JSON.parse(options.body);if(action==='fire')fires++;if(action==='input')inputs++;
+  const state=confirmed(inputs+1);state.players[state.selfId].health=100;state.radTox={combatMode:'local'};return response(state);
+ },async client=>{await client.whenReady();await pause(160);assert.ok(inputs>=2);assert.equal(fires,0);assert.equal(client.ready,true);},
+ {input:()=>({side:1,firing:true,tool:'laser',direction:[0,0,-1]})});
+});
+
 test('an expired room presence rejoins while ordinary conflicts do not',async()=>{
  let joins=0,inputs=0;
  await withRoom(async(path,options)=>{

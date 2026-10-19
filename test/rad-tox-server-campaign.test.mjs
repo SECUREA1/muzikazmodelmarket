@@ -5,66 +5,100 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
+import {startRadTox,advanceRadTox,spawnRadToxWave,nextRadToxLevel,radToxWaveTargetCount,RAD_TOX_WAVE_MS,ROUND_COUNTDOWN_MS} from '../rad-tox-campaign.mjs';
+import {finishMatch,recordTournamentScore,tournamentView} from '../rpg-match.mjs';
 
-test('starting RAD-TOX in a GLB house creates one shared encounter with enemies, combat and progressing waves',async()=>{
- const dir=await mkdtemp(join(tmpdir(),'rad-tox-server-'));let now=100000,request=0;
- try {
-  const file=join(dir,'rooms.json'),store=new SharedRoomStore(file),rewards=[];
-  const runtime=new AuthoritativeRooms({store,now:()=>now,reward:async(...args)=>rewards.push(args)});
-  runtime.collision.encounterSpawn=(_,point)=>point;runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.blocksShot=()=>false;runtime.collision.resolve=(_,previous,next)=>next;
-  const environment={id:'muzikaz-main',name:'House',modelUrl:'/house.glb',playable:true,spawn:{x:0,y:1,z:2}};
-  const alice={accountId:'alice',walletId:'alice',username:'Alice',stats:{health:100}};
-  const bob={...alice,accountId:'bob',walletId:'bob',username:'Bob'};
-  const send=async(action,fields={},identity=alice)=>{
-   try{return await runtime.command(environment.id,environment,identity,{action,requestId:'campaign-'+ ++request,...fields});}
-   catch(error){if(error.message!=='Respawn before acting.'||action==='respawn')throw error;await runtime.command(environment.id,environment,identity,{action:'respawn',requestId:'respawn-'+ ++request});return runtime.command(environment.id,environment,identity,{action,requestId:'campaign-'+ ++request,...fields});}
-  };
-  let state=await send('join');assert.equal(state.radTox.state,'active','everyone joins the same running encounter');
-  state=await send('start-rad-tox');assert.equal(state.radTox.level,1);assert.equal(state.radTox.wave,1);
-  const enemies=Object.values(state.actors).filter(actor=>actor.radTox);
-  assert.equal(enemies.length,8);assert.ok(enemies.every(actor=>actor.active&&actor.health>0));
-  assert.deepEqual(new Set(enemies.map(actor=>actor.kind)),new Set(['toxic','ghost','snake','brain']));
-  await send('join',{},bob);state=await send('start-rad-tox',{},bob);
-  assert.equal(Object.values(state.actors).filter(actor=>actor.radTox).length,8,'a second player shares the existing wave');
-  const first=state.actors[enemies[0].id],before=first.position.z;
-  now+=250;state=await runtime.snapshot(environment.id,environment);
-  assert.ok(state.actors[first.id].position.z>before,'enemies actively chase the player');
-  const initialHealth=state.players['account:alice'].health;
-  for(let tick=0;tick<28;tick++){now+=250;state=await send('input',{input:{}});}
-  assert.ok(state.players['account:alice'].health<initialHealth,'nearby enemies damage the player on the server');
-  for(let wave=1;wave<=4;wave++) {
-   state=await runtime.snapshot(environment.id,environment);
-   assert.equal(state.radTox.wave,wave);
-   if(wave===4)assert.equal(Object.values(state.actors).find(actor=>actor.radTox&&actor.active).kind,'boss');
-   // Fire actual authoritative laser commands; never submit a client hit ID or damage.
-   for(const id of Object.values(state.actors).filter(actor=>actor.radTox).map(actor=>actor.id))while(state.actors[id]?.active) {
-    if(state.players['account:alice'].health<=0)state=await send('respawn');
-    const target=state.actors[id],player=state.players['account:alice'];
-    const direction=[target.position.x-player.position.x,target.position.y+1-(player.position.y+1.5),target.position.z-player.position.z];
-    now+=250;state=await send('fire',{tool:'laser',direction});
-   }
-   now+=1;state=await send('input',{input:{}});assert.equal(state.radTox.state,wave===4?'finished':'cleared');
-   if(wave<4){now+=9999;state=await send('input',{input:{}});assert.equal(state.radTox.wave,wave,'countdown cannot be skipped');now+=1;await send('input',{input:{}});state=await runtime.snapshot(environment.id,environment);}
-  }
-  assert.equal(state.match.state,'finished');assert.equal(state.match.outcome,'victory');assert.equal(state.match.results.length,2);
-  const completed=state.match.id;await assert.rejects(send('next-rad-tox',{matchId:completed}),{statusCode:409});now+=10000;state=await send('next-rad-tox',{matchId:completed});assert.equal(state.radTox.level,2);assert.equal(state.radTox.wave,1);assert.ok(state.radTox.remaining>0);
-  assert.ok((await store.get(environment.id)).simulation.matchHistory[0].results.find(row=>row.id==='account:alice').score>0);assert.ok(rewards.some(args=>args[1]==='defeat'));
-  const reloaded=new AuthoritativeRooms({store:new SharedRoomStore(file),now:()=>now});
-  // Input snapshots are intentionally transient; persist the current encounter with a start command.
-  await send('start-rad-tox');
-  reloaded.collision.resolve=(_,previous,next)=>next;const restored=await reloaded.snapshot(environment.id,environment);
-  assert.equal(restored.radTox.level,2);assert.equal(restored.radTox.targetCount,state.radTox.targetCount);
- } finally {await rm(dir,{recursive:true,force:true});}
+const environment={id:'muzikaz-main',name:'House',modelUrl:'/house.glb',playable:true,spawn:{x:0,y:0,z:2}};
+function fixture(now=100000){
+ const player=id=>({actorId:id,username:id,position:{x:0,y:0,z:2},lastSeen:now,health:100,score:0});
+ return {actors:{},players:{alice:player('alice'),bob:player('bob')},events:[],projectiles:{}};
+}
+function online(sim,now){for(const player of Object.values(sim.players))if(!player.replacedByRoom)player.lastSeen=now;}
+function reachBoss(sim,now){
+ for(let wave=1;wave<=4;wave++){
+  assert.equal(sim.radTox.wave,wave);const phase=sim.radTox.phaseId;
+  now=sim.radTox.endsAt-1;online(sim,now);advanceRadTox(sim,now,environment);assert.equal(sim.radTox.state,'active');
+  now++;online(sim,now);advanceRadTox(sim,now,environment);assert.equal(sim.radTox.state,'cleared');assert.equal(sim.radTox.transition.at,now+ROUND_COUNTDOWN_MS);
+  now+=ROUND_COUNTDOWN_MS-1;online(sim,now);advanceRadTox(sim,now,environment);assert.equal(sim.radTox.phaseId,phase);
+  now++;online(sim,now);advanceRadTox(sim,now,environment);assert.notEqual(sim.radTox.phaseId,phase);
+ }
+ assert.equal(sim.radTox.wave,5);assert.equal(sim.radTox.phaseKind,'boss');assert.equal(sim.radTox.endsAt,null);return now;
+}
+
+test('four synchronized two-minute waves run locally before the required end boss',()=>{
+ let now=100000;const sim=fixture(now);startRadTox(sim,environment,now,environment.spawn);
+ assert.equal(sim.radTox.combatMode,'local');assert.equal(sim.radTox.phaseKind,'wave');assert.equal(sim.radTox.normalWaveCount,4);
+ assert.equal(sim.radTox.endsAt-now,RAD_TOX_WAVE_MS);assert.equal(sim.radTox.targetCount,12);
+ assert.deepEqual(sim.radTox.participants,['alice','bob']);assert.deepEqual(sim.actors,{});assert.deepEqual(sim.projectiles,{});
+ const phase=sim.radTox.phaseId;now+=1000;online(sim,now);sim.radTox.remaining=0;advanceRadTox(sim,now,environment);
+ assert.equal(sim.radTox.phaseId,phase,'local kills cannot skip the shared wave clock');assert.equal(sim.radTox.state,'active');
+ now=reachBoss(sim,now);assert.equal(sim.radTox.bossKind,'bee');assert.deepEqual(sim.actors,{});
+ const completed=sim.match.id;sim.radTox.localProgress.alice={phaseId:sim.radTox.phaseId,bossDefeated:true};advanceRadTox(sim,now,environment);
+ assert.equal(sim.match.state,'active','one player cannot finish a connected teammate’s boss');
+ sim.radTox.localProgress.bob={phaseId:'stale-phase',bossDefeated:true};advanceRadTox(sim,now,environment);assert.equal(sim.match.state,'active');
+ recordTournamentScore(sim,'alice',{score:120,enemyKills:12,shots:20,hits:15,misses:5},now);
+ sim.radTox.localProgress.bob={phaseId:sim.radTox.phaseId,bossDefeated:true};advanceRadTox(sim,now,environment);
+ assert.equal(sim.match.outcome,'victory');assert.deepEqual(sim.radTox.transition,{kind:'level',at:now+10000,nextLevel:2,environmentId:'muzikaz-upper'});
+ assert.equal(nextRadToxLevel(sim,environment,now,completed),false);
+ now+=10000;online(sim,now);assert.equal(nextRadToxLevel(sim,environment,now,completed),true);assert.equal(sim.radTox.level,2);assert.equal(sim.radTox.wave,1);assert.equal(sim.radTox.environmentId,'muzikaz-upper');
+ const transfer=sim.radTox.transferId;assert.equal(transfer,sim.radTox.phaseId);
+ now+=RAD_TOX_WAVE_MS+1000;online(sim,now);advanceRadTox(sim,now,environment);assert.equal(sim.radTox.transferId,transfer);assert.equal(sim.radTox.state,'active','the source room waits for the destination map without running another wave');
+ assert.equal(sim.players.alice.score,0,'each level receives a fresh score');assert.equal(tournamentView(sim,now).results[0].score,120,'the tournament survives level resets');
+ assert.equal(nextRadToxLevel(sim,environment,now,completed),false,'replayed next-level commands cannot skip a level');
+});
+
+test('disconnected players and late arrivals cannot hold up the boss roster',()=>{
+ let now=100000;const sim=fixture(now);startRadTox(sim,environment,now,environment.spawn);now=reachBoss(sim,now);
+ sim.players.charlie={actorId:'charlie',username:'charlie',position:{x:0,y:0,z:2},lastSeen:now,health:100};
+ sim.radTox.localProgress.alice={phaseId:sim.radTox.phaseId,bossDefeated:true};sim.players.bob.lastSeen=now-15001;
+ advanceRadTox(sim,now,environment);assert.equal(sim.match.outcome,'victory','only the still-connected starting roster gates completion');
+});
+
+test('a late arrival can complete a boss after every original participant leaves',()=>{
+ let now=100000;const sim=fixture(now);startRadTox(sim,environment,now,environment.spawn);now=reachBoss(sim,now);
+ for(const player of Object.values(sim.players))player.lastSeen=now-15001;
+ sim.players.charlie={actorId:'charlie',username:'charlie',position:{x:0,y:0,z:2},lastSeen:now,health:100};
+ advanceRadTox(sim,now,environment);assert.equal(sim.match.state,'active');
+ sim.radTox.localProgress.charlie={phaseId:sim.radTox.phaseId,bossDefeated:true};advanceRadTox(sim,now,environment);assert.equal(sim.match.outcome,'victory');
+});
+
+test('persisted authoritative encounters migrate without leaving server enemies or projectiles',()=>{
+ const now=100000,sim=fixture(now);sim.actors={'old-enemy':{id:'old-enemy',radTox:true},table:{id:'table',active:true}};sim.projectiles={old:{actorId:'old-enemy'}};
+ sim.radTox={level:2,wave:4,state:'active',remaining:1};startRadTox(sim,environment,now,environment.spawn);
+ assert.equal(sim.radTox.wave,5);assert.equal(sim.radTox.phaseKind,'boss');assert.equal(sim.radTox.bossKind,'aape');assert.deepEqual(Object.keys(sim.actors),['table']);assert.deepEqual(sim.projectiles,{});
+ const restored=structuredClone(sim),phase=restored.radTox.phaseId;startRadTox(restored,environment,now+50,environment.spawn);assert.equal(restored.radTox.phaseId,phase,'reconnects preserve the running stage');
+});
+
+test('empty rooms do not race through unplayed stages and defeats retain the current map',()=>{
+ let now=100000;const sim=fixture(now);startRadTox(sim,environment,now,environment.spawn);
+ now+=RAD_TOX_WAVE_MS*10;advanceRadTox(sim,now,environment);assert.equal(sim.radTox.wave,1);assert.equal(sim.radTox.state,'active');
+ online(sim,now);advanceRadTox(sim,now,environment);assert.equal(sim.radTox.state,'cleared');assert.equal(sim.radTox.transition.at,now+10000);
+ finishMatch(sim,'defeat',now);advanceRadTox(sim,now,environment);assert.equal(sim.radTox.transition.kind,'retry');assert.equal(sim.radTox.transition.nextLevel,1);assert.equal(sim.radTox.transition.environmentId,'muzikaz-main');
+});
+
+test('authored enemy budgets retain mixed waves, repopulations and one boss',()=>{
+ assert.deepEqual([1,2,3,4,5].map(wave=>radToxWaveTargetCount(1,wave)),[12,22,22,22,1]);
+ assert.deepEqual([radToxWaveTargetCount(2,1),radToxWaveTargetCount(2,2),radToxWaveTargetCount(3,1),radToxWaveTargetCount(3,2)],[17,32,18,34]);
+});
+
+test('joining a shared GLB room starts clocks without server enemy simulation or damage',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'rad-tox-local-room-'));let now=100000;
+ try{
+  const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),now:()=>now});runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.resolve=(_,previous,next)=>next;
+  const identity={accountId:'alice',username:'Alice',stats:{health:100}};
+  let state=await runtime.command(environment.id,environment,identity,{action:'join',requestId:'join'});const phase=state.radTox.phaseId;
+  assert.equal(state.radTox.combatMode,'local');assert.equal(Object.values(state.actors).filter(actor=>actor.radTox).length,0);
+  now+=5000;state=await runtime.command(environment.id,environment,identity,{action:'input',requestId:'keep-alive',input:{}});
+  assert.equal(state.radTox.phaseId,phase);assert.equal(state.players['account:alice'].health,100);assert.deepEqual(state.projectiles,{});
+ }finally{await rm(dir,{recursive:true,force:true});}
 });
 
 test('Builder rooms keep their authored gameplay instead of receiving a house campaign',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'rad-tox-builder-'));
- try {
+ try{
   const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json'))});
   const map={id:'builder',builderScene:{objects:[]}},identity={accountId:'alice',stats:{health:100}};
   await runtime.command(map.id,map,identity,{action:'join',requestId:'join'});
-  const state=await runtime.command(map.id,map,identity,{action:'start-rad-tox',requestId:'start'});
-  assert.equal(state.radTox,null);assert.deepEqual(state.actors,{});
+  const state=await runtime.command(map.id,map,identity,{action:'start-rad-tox',requestId:'start'});assert.equal(state.radTox,null);assert.deepEqual(state.actors,{});
  }finally{await rm(dir,{recursive:true,force:true});}
 });
-

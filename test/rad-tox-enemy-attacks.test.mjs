@@ -1,57 +1,44 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {stepRadToxEnemy} from '../rad-tox-campaign.mjs';
+import {readFile} from 'node:fs/promises';
+import * as THREE from '../public/vendor/three/three.module.min.js';
 
-test('brain ranged attack has an authoritative tell, damage and one replayable event',()=>{
- const target={id:'alice',position:{x:0,y:0,z:5},health:100};
- const actor={id:'brain-1',kind:'brain',position:{x:0,y:0,z:0},rotation:{y:0},definition:{movement:{speed:0}}};
- const sim={events:[]};
- stepRadToxEnemy(sim,actor,[target],1000,.1);
- assert.equal(target.health,100);
- stepRadToxEnemy(sim,actor,[target],2200,.1);
- assert.equal(actor.attack.phase,'tell');assert.equal(sim.events.length,0);
- stepRadToxEnemy(sim,actor,[target],2600,.1);
- assert.ok(target.health<100);assert.equal(sim.events.length,1);
- assert.equal(sim.events[0].kind,'brain');assert.deepEqual(sim.events[0].target,target.position);
- stepRadToxEnemy(sim,actor,[target],2650,.1);assert.equal(sim.events.length,1);
+// Use the shipped browser enemy and Three geometry. Only texture loading is
+// substituted because this test does not have a browser image element.
+const vendor=new URL('../public/vendor/three/three.module.min.js',import.meta.url).href;
+const moduleUrl=source=>'data:text/javascript;base64,'+Buffer.from(source).toString('base64');
+const three=moduleUrl(`import * as THREE from '${vendor}';export * from '${vendor}';export class TextureLoader{load(){return new THREE.Texture();}}`);
+const effect=moduleUrl((await readFile(new URL('../public/js/effects/animated-svg-effect.js',import.meta.url),'utf8')).replace('https://cdn.jsdelivr.net/npm/three@0.160.0/+esm',three));
+const source=(await readFile(new URL('../public/js/enemies/neon-brain-bug.js',import.meta.url),'utf8')).replace('https://cdn.jsdelivr.net/npm/three@0.160.0/+esm',three).replace('../effects/animated-svg-effect.js',effect);
+const {NeonBrainBug}=await import(moduleUrl(source));
+
+test('local brain bugs pursue, show an attack tell and spray without a server update',()=>{
+ const sprays=[],bug=new NeonBrainBug({position:new THREE.Vector3(0,.5,0),onSpray:(origin,target)=>sprays.push({origin,target})});
+ const player=new THREE.Vector3(0,.5,5);
+ try{
+  bug.update(.1,100,player);assert.ok(bug.root.position.z>0,'the local update pursues the player');assert.equal(sprays.length,0);
+  bug.update(.1,101.1,player);assert.equal(bug.attackTell.active,true);assert.equal(sprays.length,0);
+  bug.update(.1,101.5,player);assert.equal(sprays.length,1);assert.equal(bug.attackTell.active,false);assert.equal(bug.attackFlash.active,true);
+  assert.deepEqual(sprays[0].target.toArray(),player.toArray());assert.ok(sprays[0].origin.distanceTo(bug.root.position)<.2);
+  bug.update(.1,101.6,player);assert.equal(sprays.length,1,'the browser attack cooldown prevents duplicate hits');
+ }finally{bug.dispose();}
 });
 
-test('walls block ranged enemy damage and events',()=>{
- const target={id:'alice',position:{x:0,y:0,z:4},health:100};
- const actor={id:'ghost',kind:'ghost',lastAttack:1,position:{x:0,y:0,z:0},rotation:{y:0},definition:{movement:{speed:0}}};
- const sim={events:[]};stepRadToxEnemy(sim,actor,[target],2000,.1,()=>true);
- assert.equal(target.health,100);assert.equal(sim.events.length,0);
- stepRadToxEnemy(sim,actor,[],2100,.1);assert.equal(actor.attack,null);
+test('local brain bugs retreat at close range, then resume their attack cycle',()=>{
+ const sprays=[],bug=new NeonBrainBug({position:new THREE.Vector3(0,.5,0),onSpray:()=>sprays.push(true)}),player=new THREE.Vector3(0,.5,1);
+ try{
+  bug.update(.1,100,player);assert.ok(bug.root.position.z<0,'close-range enemies retreat instead of overlapping the player');
+  bug.update(.1,101.5,player);assert.equal(sprays.length,1);
+  const before=bug.root.position.z;bug.update(.1,101.6,player);assert.ok(bug.root.position.z<before,'the firing enemy retreats locally');
+  bug.update(.1,103.1,player);assert.equal(sprays.length,2,'the next local attack does not depend on network frames');
+ }finally{bug.dispose();}
 });
 
-test('enemy movement uses server collision resolution and real player identity',()=>{
- const target={actorId:'account:alice',position:{x:0,y:0,z:10},health:100};
- const actor={id:'brain',kind:'brain',position:{x:0,y:0,z:0},rotation:{y:0},definition:{movement:{speed:2}}};
- let resolutions=0;const sim={events:[]};
- stepRadToxEnemy(sim,actor,[target],1000,.25,()=>false,(previous,next)=>{resolutions++;assert.ok(Math.hypot(next.x-previous.x,next.z-previous.z)>0);return {...previous,floorY:0};});
- assert.ok(resolutions>=1);assert.deepEqual(actor.position,{x:0,y:0,z:0});assert.equal(actor.attack.targetId,'account:alice');
-});
-
-test('projectile combat can own attacks without duplicate direct damage',()=>{
- const target={actorId:'account:alice',position:{x:0,y:0,z:4},health:100};
- const actor={id:'brain',kind:'brain',lastAttack:1,position:{x:0,y:0,z:0},rotation:{y:0},definition:{movement:{speed:0}}};
- const sim={events:[]};
- stepRadToxEnemy(sim,actor,[target],2000,.1,()=>false,(_previous,next)=>next,false);
- assert.equal(target.health,100);assert.equal(actor.lastAttack,1);assert.equal(sim.events.length,0);assert.equal(actor.attack.phase,'tell');
-});
-
-test('enemies flank an obstacle when forward and axis slides are blocked',()=>{
- const target={actorId:'account:alice',position:{x:0,y:0,z:10},health:100};
- const actor={id:'toxic-1',kind:'toxic',position:{x:0,y:0,z:0},rotation:{y:0},definition:{movement:{speed:2}}};
- stepRadToxEnemy({events:[]},actor,[target],1000,.1,()=>false,(previous,next)=>next.z>0?previous:next,false);
- assert.ok(Math.abs(actor.position.x)>.1,'steps sideways around the obstruction');
- assert.equal(actor.position.z,0,'does not move through the wall');
-});
-
-test('enemy defaults pursue actively without authored movement settings',()=>{
- for(const kind of ['toxic','snake','ghost','brain','boss']){
-  const actor={id:kind,kind,position:{x:0,y:0,z:0},rotation:{y:0},definition:{}};
-  stepRadToxEnemy({events:[]},actor,[{id:'alice',position:{x:0,y:0,z:10},health:100}],1000,.1,()=>false,(_previous,next)=>next,false);
-  assert.ok(actor.position.z>=.19,kind+' closes distance every simulation step');
- }
+test('local brain bugs stop attack tells and do not spray at distant players',()=>{
+ const sprays=[],bug=new NeonBrainBug({position:new THREE.Vector3(0,.5,0),onSpray:()=>sprays.push(true)}),player=new THREE.Vector3(0,.5,5);
+ try{
+  bug.update(.1,100,player);bug.update(.1,101.1,player);assert.equal(bug.attackTell.active,true);
+  player.z=30;bug.update(.1,101.6,player);assert.equal(bug.attackTell.active,false);assert.equal(sprays.length,0);
+  for(let frame=0;frame<10;frame++)bug.update(.1,102+frame,player);assert.equal(sprays.length,0);
+ }finally{bug.dispose();}
 });

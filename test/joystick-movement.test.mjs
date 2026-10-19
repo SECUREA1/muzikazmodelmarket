@@ -44,13 +44,18 @@ test('tap still shoots and right look and jump retain their response', () => {
 
 test('right-stick jump reaches multiplayer input and repeated taps cannot leave jump held',()=>{
   const timers=new Map(),mobile=new Set(),sent=[];let timerId=0;
-  const context=vm.createContext({serverHostedRoom:true,mobile,authoritativeClient:{requestInput:()=>sent.push(context.serverInput().jump)},window:{clearTimeout:id=>timers.delete(id),setTimeout:(fn,delay)=>{assert.equal(delay,180);timers.set(++timerId,fn);return timerId;}},inputMenuOpen:()=>false,getMovementInput:()=>({x:0,y:0}),keys:new Set(),player:{yaw:0},stickSprinting:false,ownedPlacement:{active:false},toxicBubbleSystem:{flameTrigger:null,tool:'laser',sprayColorIndex:0},camera:{getWorldDirection:()=>({toArray:()=>[0,0,-1]})},THREE:{Vector3:class{}},SPRAY_COLORS:[{hex:0xffffff}]});
+  const context=vm.createContext({serverHostedRoom:true,usesLocalRadTox:()=>false,mobile,authoritativeClient:{requestInput:()=>sent.push(context.serverInput().jump)},window:{clearTimeout:id=>timers.delete(id),setTimeout:(fn,delay)=>{assert.equal(delay,180);timers.set(++timerId,fn);return timerId;}},inputMenuOpen:()=>false,getMovementInput:()=>({x:0,y:0}),keys:new Set(),player:{yaw:0},stickSprinting:false,ownedPlacement:{active:false},toxicBubbleSystem:{flameTrigger:null,tool:'laser',sprayColorIndex:0},camera:{getWorldDirection:()=>({toArray:()=>[0,0,-1]})},THREE:{Vector3:class{}},SPRAY_COLORS:[{hex:0xffffff}]});
   const inputLine=source.split('\n').find(line=>line.startsWith('  function serverInput()'));
   vm.runInContext(inputLine,context);
   vm.runInContext(source.slice(source.indexOf('  let jumpTapTimer=0;'),source.indexOf('  const flameFireButton=')),context);
   context.jump();assert.deepEqual(sent,[true]);assert.equal(context.serverInput().jump,true);
   context.jump();assert.equal(timers.size,1,'a repeated tap replaces the release timer');
   [...timers.values()][0]();assert.deepEqual(sent,[true,true,false]);assert.equal(context.serverInput().jump,false);
+  context.usesLocalRadTox=()=>true;context.toxicBubbleSystem.health=0;
+  mobile.add('jump');context.keys.add('shift');
+  assert.equal(context.serverInput().jump,false,'a locally defeated player cannot keep jump input held');
+  assert.equal(context.serverInput().sprint,false,'local defeat blocks movement before the server receives the health report');
+  context.toxicBubbleSystem.health=100;assert.equal(context.serverInput().jump,true,'controls return after local respawn');
 });
 test('analog movement covers the same distance at 30, 60, and 120 FPS', () => {
   const movementStart=source.indexOf('move.copy(forward).multiplyScalar(input.y)',source.indexOf('  function updatePlayer(delta)'));
