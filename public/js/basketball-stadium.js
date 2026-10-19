@@ -17,6 +17,37 @@ export const BASKETBALL_SPECTATOR_SEATS = Object.freeze([-1, 1].flatMap(side => 
   rotationY: side > 0 ? Math.PI / 2 : -Math.PI / 2, kind: 'bench'
 }))));
 
+// The Builder, Backpack and model factories share one complete arena parts list.
+// Every component below is built from the same geometry as the public stadium.
+export const BASKETBALL_BUILDER_ITEMS = Object.freeze([
+  ['basketball-stadium', 'Complete Basketball Stadium', 'The full professional indoor arena: regulation court, both baskets, spectator stands, benches, live jumbotron, lighting and roof.', [46, 17.5, 62]],
+  ['basketball-court', 'Regulation Basketball Court', 'A complete 94 × 50 foot hardwood court, clear safety apron and two regulation baskets with woven nets.', [18.2, 4.291, 33]],
+  ['basketball-court-floor', 'Basketball Hardwood Floor', 'The stadium’s regulation hardwood playing surface with painted keys, three-point lines and centre circle; add baskets separately.', [15.24, .3, 28.65]],
+  ['basketball-bleachers', 'Basketball Sideline Bleachers', 'Eleven concrete seating tiers with batched stadium seats and three climbable spectator aisles.', [10.6175, 5.99, 42]],
+  ['basketball-end-bleachers', 'Basketball End Bleachers', 'Nine concrete end-court seating tiers with stadium seats and a clear central aisle.', [20.3, 5.19, 9.46]],
+  ['basketball-aisle-stairs', 'Stadium Aisle Stairs', 'Twenty-three low-rise concrete steps and an illuminated entrance for walking into the seating bowl.', [10.5975, 5.47, 1.2]],
+  ['basketball-team-bench', 'Basketball Team Bench', 'A full courtside team bench with padded seating and an illuminated team-colour back.', [.75, .96, 5.5]],
+  ['basketball-spectator-bench', 'Basketball Spectator Bench', 'A three-seat courtside viewing bench with metal legs, padded seat and back.', [.74, 1.005, 2.75]],
+  ['basketball-scorers-table', 'Basketball Scorer’s Table', 'The courtside officials’ table with a bright LED front panel.', [.83, .85, 5.4]],
+  ['basketball-scoreboard', 'Live Basketball Jumbotron', 'The stadium’s four-sided hanging scoreboard with home/away scores, period, game clock and shot clock.', [7.05, 8.9, 7.05]],
+  ['basketball-shot-clock', 'Basketball Shot Clock', 'A compact live shot-clock display for mounting above a backboard or courtside.', [.7, .5, .161]],
+  ['basketball-arena-light', 'Basketball Broadcast Light', 'An overhead arena floodlight with a bright panel and a real court light.', [2.6, .16, .75]],
+  ['basketball-roof-truss', 'Basketball Roof Truss', 'A pair of metal roof braces spanning one side of the indoor arena.', [22.0532, 5.8857, .24]],
+  ['basketball-access-rail', 'Basketball Courtside Rail', 'A metal sideline barrier section with end posts and space for an entry gate.', [.07, .835, 10.26]],
+  ['basketball-arena-column', 'Basketball Arena Column', 'A full-height structural metal column supporting the arena roof.', [.65, 11, .65]],
+  ['basketball-aisle-handrail', 'Basketball Aisle Handrail', 'The sloped metal handrail running beside a spectator seating aisle.', [9.7824, 5.162, .07]],
+  ['basketball-arena-wall', 'Basketball Arena Wall', 'A full-height exterior wall section from the indoor basketball stadium.', [.28, 9.1, 61.8]],
+  ['basketball-arena-roof', 'Basketball Arena Roof', 'The complete indoor stadium roof panel; scenery stays clear of player movement.', [46, .2, 62]],
+  ['basketball-suite-glass', 'Basketball Suite Glass', 'A transparent stadium suite window panel.', [.1, 1.55, 6]],
+  ['basketball-championship-banner', 'Basketball Championship Banner', 'An illuminated team banner and suspension cable from the arena rafters.', [1.6, 4.05, .08]],
+  ['basketball-led-fascia', 'Basketball LED Fascia', 'An illuminated stadium ribbon board for the front of a seating section.', [.16, .55, 43]]
+].map(([id, name, description, dimensions]) => Object.freeze({
+  id, buildAssetId: id, name, description, dimensions: Object.freeze(dimensions),
+  category: 'basketball', type: ['basketball-stadium', 'basketball-court', 'basketball-court-floor'].includes(id) ? 'landscape' : 'interior',
+  procedural: true, basic: true, priceMzk: 0, behavior: 'decor',
+  image: 'public/images/backpack/basketball-arena.svg', color: '#20c8f1'
+})));
+
 const HOME = 0x20c8f1;
 const AWAY = 0xe9597b;
 
@@ -168,10 +199,12 @@ function scoreboard(THREE, arena) {
   box([7.05, .08, 7.05], accent, [0, -1.78, 0], 'ARENA_LED_JUMBOTRON_TRIM', true);
   box([7.05, .08, 7.05], accent, [0, 1.78, 0], 'ARENA_LED_JUMBOTRON_TRIM', true);
   for (const x of [-2.7, 2.7]) for (const z of [-2.7, 2.7]) tube([x, 1.9, z], [x, 7, z], .035, dark, 'ARENA_JUMBOTRON_CABLE', true);
+  group.userData.basketballScoreboard = true;
   let state = { state: 'ready', homeScore: 0, awayScore: 0, quarter: 1, clockMs: 720000, shotClockMs: 24000, possession: 'home', lastPlay: 'Start a game • All players welcome' }, lastKey = '';
   const clock = milliseconds => { const seconds = Math.max(0, Math.ceil((Number(milliseconds) || 0) / 1000)); return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`; };
   function update(next = null, elapsed = 0, reducedMotion = false) {
     if (next) state = { ...state, ...next };
+    if (next || !group.userData.scoreboardState) group.userData.scoreboardState = { ...state };
     const phase = reducedMotion ? 0 : Math.floor(elapsed * 3) % 2;
     const key = [state.state, state.homeScore, state.awayScore, state.quarter, clock(state.clockMs), Math.ceil(state.shotClockMs / 1000), state.possession, state.lastPlay, phase].join('|');
     if (!display || key === lastKey) return; lastKey = key;
@@ -200,7 +233,9 @@ function scoreboard(THREE, arena) {
 }
 
 /** A public professional arena with a regulation 94 × 50 foot playing floor. */
-export function createBasketballStadium(THREE, environment = {}) {
+function createBasketballArenaGeometry(THREE, part = null) {
+  const includes = id => part === null || part === id;
+  const fullCourt = part === null || part === 'basketball-court';
   const root = new THREE.Group(); root.name = 'MUZIKAZ_BASKETBALL_ARENA';
   const { material, box, tube } = helpers(THREE, root);
   const navy = material(0x091523, { roughness: .72 });
@@ -223,13 +258,15 @@ export function createBasketballStadium(THREE, environment = {}) {
       floorSection(innerWidth,(outerLength-innerLength)/2,0,side*(outerLength+innerLength)/4,mat,area);
     }
   };
-  floorRing(BASKETBALL_COURT.arenaWidth,BASKETBALL_COURT.arenaLength,18.2,33,concrete,'concourse');
-  floorRing(18.2,33,BASKETBALL_COURT.width,BASKETBALL_COURT.length,navy,'apron');
-  const hardwood = courtTexture(THREE);
-  const floorMat = material(0xe1b878, { ...(hardwood ? { map: hardwood.texture, color: 0xffffff } : {}), roughness: .34, metalness: .02 });
-  floorSection(BASKETBALL_COURT.width,BASKETBALL_COURT.length,0,0,floorMat,'court');
+  if (part === null) floorRing(BASKETBALL_COURT.arenaWidth,BASKETBALL_COURT.arenaLength,18.2,33,concrete,'concourse');
+  if (fullCourt) floorRing(18.2,33,BASKETBALL_COURT.width,BASKETBALL_COURT.length,navy,'apron');
+  if (fullCourt || includes('basketball-court-floor')) {
+    const hardwood = courtTexture(THREE);
+    const floorMat = material(0xe1b878, { ...(hardwood ? { map: hardwood.texture, color: 0xffffff } : {}), roughness: .34, metalness: .02 });
+    floorSection(BASKETBALL_COURT.width,BASKETBALL_COURT.length,0,0,floorMat,'court');
+  }
   const hoops = [];
-  for (const side of [-1, 1]) {
+  if (fullCourt) for (const side of [-1, 1]) {
     const hoop = createBasketballHoop(THREE, { team: side < 0 ? 'home' : 'away' });
     hoop.position.z = side * BASKETBALL_COURT.hoopDistance; if (side > 0) hoop.rotation.y = Math.PI;
     root.add(hoop); hoops.push(hoop);
@@ -238,32 +275,36 @@ export function createBasketballStadium(THREE, environment = {}) {
   // steps. Each rise is below the player step height; the seating bowl is a
   // usable viewing area rather than an unreachable backdrop.
   const spectatorSeats = BASKETBALL_SPECTATOR_SEATS.map(seat => ({ ...seat }));
-  for (const side of [-1, 1]) {
-    for (const z of [-10, 0, 10]) {
-      for (let step = 0; step < 23; step++) {
-        const height = .19 + step * .24;
-        box([.47, height, 1.2], concrete, [side * (9.99 + step * .46), height / 2, z], 'ARENA_SPECTATOR_AISLE_STEP');
+  for (const side of part === null ? [-1, 1] : [1]) {
+    if (includes('basketball-aisle-stairs') || includes('basketball-bleachers')) {
+      for (const z of part === 'basketball-aisle-stairs' ? [0] : [-10, 0, 10]) {
+        for (let step = 0; step < 23; step++) {
+          const height = .19 + step * .24;
+          box([.47, height, 1.2], concrete, [side * (9.99 + step * .46), height / 2, z], 'ARENA_SPECTATOR_AISLE_STEP');
+        }
+        box([.045, .012, 1.2], side < 0 ? ledBlue : ledOrange, [side * 9.77, .197, z], 'ARENA_SPECTATOR_AISLE_LIGHT', true);
       }
-      box([.045, .012, 1.2], side < 0 ? ledBlue : ledOrange, [side * 9.77, .197, z], 'ARENA_SPECTATOR_AISLE_LIGHT', true);
     }
-    const bench = new THREE.Group(); bench.name = side < 0 ? 'ARENA_SPECTATOR_BENCH_WEST' : 'ARENA_SPECTATOR_BENCH_EAST';
-    bench.position.set(side * BASKETBALL_SPECTATOR_AREA.benchX, 0, BASKETBALL_SPECTATOR_AREA.benchZ);
-    bench.userData.spectatorBench = true; bench.userData.basketballSpectatorBench = true;
-    root.add(bench);
-    const parts = helpers(THREE, bench);
-    parts.box([.72, .12, 2.75], navy, [0, .41, 0], 'ARENA_SPECTATOR_BENCH_SEAT');
-    parts.box([.12, .55, 2.75], side < 0 ? ledBlue : ledOrange, [side * .32, .73, 0], 'ARENA_SPECTATOR_BENCH_BACK');
-    for (const z of [-1.1, 1.1]) parts.box([.56, .35, .1], metal, [0, .175, z], 'ARENA_SPECTATOR_BENCH_LEG');
-    box([.5, .22, 2.75], concrete, [side * 9.1, .11, BASKETBALL_SPECTATOR_AREA.benchZ], 'ARENA_SPECTATOR_BENCH_ACCESS_STEP');
-    bench.userData.seatPositions = spectatorSeats.filter(seat => Math.sign(seat.x) === side);
+    if (includes('basketball-spectator-bench')) {
+      const bench = new THREE.Group(); bench.name = side < 0 ? 'ARENA_SPECTATOR_BENCH_WEST' : 'ARENA_SPECTATOR_BENCH_EAST';
+      bench.position.set(side * BASKETBALL_SPECTATOR_AREA.benchX, 0, BASKETBALL_SPECTATOR_AREA.benchZ);
+      bench.userData.spectatorBench = true; bench.userData.basketballSpectatorBench = true;
+      root.add(bench);
+      const parts = helpers(THREE, bench);
+      parts.box([.72, .12, 2.75], navy, [0, .41, 0], 'ARENA_SPECTATOR_BENCH_SEAT');
+      parts.box([.12, .55, 2.75], side < 0 ? ledBlue : ledOrange, [side * .32, .73, 0], 'ARENA_SPECTATOR_BENCH_BACK');
+      for (const z of [-1.1, 1.1]) parts.box([.56, .35, .1], metal, [0, .175, z], 'ARENA_SPECTATOR_BENCH_LEG');
+      if (part === null) box([.5, .22, 2.75], concrete, [side * 9.1, .11, BASKETBALL_SPECTATOR_AREA.benchZ], 'ARENA_SPECTATOR_BENCH_ACCESS_STEP');
+      bench.userData.seatPositions = spectatorSeats.filter(seat => Math.sign(seat.x) === side);
+    }
     // Clear openings at centre court and both baselines let participants enter
     // without climbing a rail. The server controls live court admission.
-    for (const [start, end] of [[-15.7, -13.4], [-11.6, -1.4], [1.4, 11.6], [13.4, 15.7]]) {
+    if (includes('basketball-access-rail')) for (const [start, end] of part === null ? [[-15.7, -13.4], [-11.6, -1.4], [1.4, 11.6], [13.4, 15.7]] : [[-5.1, 5.1]]) {
       tube([side * 8.35, .8, start], [side * 8.35, .8, end], .035, metal, 'ARENA_COURTSIDE_ACCESS_RAIL');
       for (const z of [start, end]) tube([side * 8.35, 0, z], [side * 8.35, .8, z], .03, metal, 'ARENA_COURTSIDE_ACCESS_RAIL');
     }
   }
-  const accessSign = canvasTexture(THREE, 1024, 256, ctx => {
+  const accessSign = part === null && canvasTexture(THREE, 1024, 256, ctx => {
     ctx.fillStyle = '#081b2d'; ctx.fillRect(0, 0, 1024, 256);
     ctx.fillStyle = '#20c8f1'; ctx.fillRect(0, 0, 1024, 12);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -281,8 +322,8 @@ export function createBasketballStadium(THREE, environment = {}) {
   // Lower and upper seating bowls have real concrete tiers and batched seats.
   // Instancing keeps several thousand seats to a handful of GPU draw calls.
   const seats = [], backs = [];
-  for (const side of [-1, 1]) {
-    for (let tier = 0; tier < 11; tier++) {
+  for (const side of part === null ? [-1, 1] : [1]) {
+    if (includes('basketball-bleachers')) for (let tier = 0; tier < 11; tier++) {
       const x = side * (10.7 + tier * .92), y = .38 + tier * .48;
       box([.93, y, 42], concrete, [x, y / 2, 0], 'ARENA_SEATING_TIER');
       for (let index = 0; index < 52; index++) {
@@ -292,7 +333,7 @@ export function createBasketballStadium(THREE, environment = {}) {
         backs.push([x + side * .27, y + .57, z, side < 0 ? Math.PI / 2 : -Math.PI / 2, tier < 6 ? 0 : 1]);
       }
     }
-    for (let tier = 0; tier < 9; tier++) {
+    if (includes('basketball-end-bleachers')) for (let tier = 0; tier < 9; tier++) {
       const z = side * (18.4 + tier * 1.05), y = .38 + tier * .5;
       box([20.3, y, 1.06], concrete, [0, y / 2, z], 'ARENA_SEATING_END_TIER');
       for (let index = 0; index < 25; index++) {
@@ -306,54 +347,70 @@ export function createBasketballStadium(THREE, environment = {}) {
   const dummy = new THREE.Object3D();
   for (let color = 0; color < 2; color++) for (const [points, dimensions, label] of [[seats, [.59, .13, .58], 'SEATS'], [backs, [.59, .48, .12], 'SEAT_BACKS']]) {
     const selected = points.filter(point => point[4] === color);
+    if (!selected.length) continue;
     const instances = new THREE.InstancedMesh(new THREE.BoxGeometry(...dimensions), seatMaterials[color], selected.length);
     instances.name = `ARENA_DECORATIVE_${label}`; instances.userData.collisionDisabled = true; instances.castShadow = instances.receiveShadow = true;
     selected.forEach(([x, y, z, rotation], index) => { dummy.position.set(x, y, z); dummy.rotation.y = rotation; dummy.updateMatrix(); instances.setMatrixAt(index, dummy.matrix); });
     instances.instanceMatrix.needsUpdate = true; root.add(instances);
   }
-  // Continuous animated LED fascia, suite glazing, banners and roof trusses
-  // make the court read as a complete indoor stadium from every spawn point.
-  for (const side of [-1, 1]) {
-    box([.16, .55, 43], side < 0 ? ledBlue : ledOrange, [side * 20.65, 6.25, 0], 'ARENA_LED_FASCIA', true);
-    box([20.6, .55, .16], side < 0 ? ledBlue : ledOrange, [0, 5.5, side * 27.6], 'ARENA_LED_FASCIA', true);
-    box([.28, 9.1, 61.8], navy, [side * 22.7, 4.55, 0], 'ARENA_EXTERIOR_WALL');
-    box([45.6, 9.1, .28], navy, [0, 4.55, side * 30.7], 'ARENA_EXTERIOR_WALL');
-    for (const z of [-22, -11, 0, 11, 22]) {
-      box([.65, 11, .65], metal, [side * 22, 5.5, z], 'ARENA_COLUMN');
-      tube([side * 22, 11, z], [0, 16, z], .12, metal, 'ARENA_ROOF_TRUSS', true);
-      tube([side * 22, 10.3, z], [0, 14.7, z], .07, metal, 'ARENA_ROOF_TRUSS', true);
-      box([.1, 1.55, 6], material(0x67a9c5, { transparent: true, opacity: .3, roughness: .12 }), [side * 21.5, 7.8, z], 'ARENA_SUITE_GLASS', true);
+  // The full arena and standalone parts use the same structural recipes.
+  for (const side of part === null ? [-1, 1] : [1]) {
+    if (includes('basketball-led-fascia')) {
+      box([.16, .55, 43], side < 0 ? ledBlue : ledOrange, [side * 20.65, 6.25, 0], 'ARENA_LED_FASCIA', true);
+      if (part === null) box([20.6, .55, .16], side < 0 ? ledBlue : ledOrange, [0, 5.5, side * 27.6], 'ARENA_LED_FASCIA', true);
     }
-    for (const x of [-7.3, 7.3]) {
+    if (includes('basketball-arena-wall')) {
+      box([.28, 9.1, 61.8], navy, [side * 22.7, 4.55, 0], 'ARENA_EXTERIOR_WALL');
+      if (part === null) box([45.6, 9.1, .28], navy, [0, 4.55, side * 30.7], 'ARENA_EXTERIOR_WALL');
+    }
+    for (const z of part === null ? [-22, -11, 0, 11, 22] : [0]) {
+      if (includes('basketball-arena-column')) box([.65, 11, .65], metal, [side * 22, 5.5, z], 'ARENA_COLUMN');
+      if (includes('basketball-roof-truss')) {
+        tube([side * 22, 11, z], [0, 16, z], .12, metal, 'ARENA_ROOF_TRUSS', true);
+        tube([side * 22, 10.3, z], [0, 14.7, z], .07, metal, 'ARENA_ROOF_TRUSS', true);
+      }
+      if (includes('basketball-suite-glass')) box([.1, 1.55, 6], material(0x67a9c5, { transparent: true, opacity: .3, roughness: .12 }), [side * 21.5, 7.8, z], 'ARENA_SUITE_GLASS', true);
+    }
+    if (includes('basketball-championship-banner')) for (const x of part === null ? [-7.3, 7.3] : [0]) {
       box([1.6, 2.3, .08], x < 0 ? ledBlue : ledOrange, [x, 8.3, side * 28], 'ARENA_CHAMPIONSHIP_BANNER', true);
       tube([x, 9.5, side * 28], [x, 11.2, side * 28], .025, metal, 'ARENA_BANNER_CABLE', true);
     }
-    // Courtside benches and scorer's table sit outside the touchlines.
-    box([.72, .38, 5.5], navy, [side * 9.4, .19, -7.3], 'ARENA_TEAM_BENCH');
-    box([.12, .62, 5.5], side < 0 ? ledBlue : ledOrange, [side * 9.73, .65, -7.3], 'ARENA_TEAM_BENCH_BACK');
-    box([.8, .85, 5.4], navy, [side * 9.4, .425, 4.6], 'ARENA_SCORERS_TABLE');
-    box([.03, .46, 5.1], side < 0 ? ledBlue : ledOrange, [side * 8.985, .54, 4.6], 'ARENA_LED_SCORERS_TABLE', true);
-    for (const z of [-19, -9, 9, 19]) tube([side * 10.15, .9, z], [side * 19.9, 6, z], .035, metal, 'ARENA_AISLE_HANDRAIL');
+    if (includes('basketball-team-bench')) {
+      box([.72, .38, 5.5], navy, [side * 9.4, .19, -7.3], 'ARENA_TEAM_BENCH');
+      box([.12, .62, 5.5], side < 0 ? ledBlue : ledOrange, [side * 9.73, .65, -7.3], 'ARENA_TEAM_BENCH_BACK');
+    }
+    if (includes('basketball-scorers-table')) {
+      box([.8, .85, 5.4], navy, [side * 9.4, .425, 4.6], 'ARENA_SCORERS_TABLE');
+      box([.03, .46, 5.1], side < 0 ? ledBlue : ledOrange, [side * 8.985, .54, 4.6], 'ARENA_LED_SCORERS_TABLE', true);
+    }
+    if (includes('basketball-aisle-handrail')) for (const z of part === null ? [-19, -9, 9, 19] : [0]) tube([side * 10.15, .9, z], [side * 19.9, 6, z], .035, metal, 'ARENA_AISLE_HANDRAIL');
   }
-  // Roof panels are non-colliding scenic surfaces. They cannot be mistaken for
-  // a floor by the spawn raycast, and remain high above the playable basket.
-  box([46, .2, 62], material(0x071019, { roughness: .95 }), [0, 16.8, 0], 'ARENA_ROOF_CEILING', true);
-  const lightMat = new THREE.MeshBasicMaterial({ color: 0xe9f4ff, toneMapped: false });
-  for (const x of [-7, 7]) for (const z of [-12, -4, 4, 12]) {
-    box([2.6, .16, .75], lightMat, [x, 13.6, z], 'ARENA_BROADCAST_LIGHT', true);
+  // Roof panels remain scenic surfaces, clear of player movement and floor rays.
+  if (includes('basketball-arena-roof')) box([46, .2, 62], material(0x071019, { roughness: .95 }), [0, 16.8, 0], 'ARENA_ROOF_CEILING', true);
+  if (includes('basketball-arena-light')) {
+    const lightMat = new THREE.MeshBasicMaterial({ color: 0xe9f4ff, toneMapped: false });
+    for (const x of part === null ? [-7, 7] : [0]) for (const z of part === null ? [-12, -4, 4, 12] : [0]) box([2.6, .16, .75], lightMat, [x, 13.6, z], 'ARENA_BROADCAST_LIGHT', true);
+    if (part === null) {
+      const ambient = new THREE.HemisphereLight(0xd8edff, 0x463520, 1.55); ambient.name = 'ARENA_AMBIENT_LIGHT'; root.add(ambient);
+      for (const z of [-9, 9]) {
+        const light = new THREE.PointLight(0xf4f7ff, 95, 34, 2); light.position.set(0, 11, z); light.name = 'ARENA_COURT_LIGHT'; root.add(light);
+      }
+    } else {
+      const light = new THREE.PointLight(0xf4f7ff, 28, 18, 2); light.position.set(0, 13.45, 0); light.name = 'ARENA_COURT_LIGHT'; root.add(light);
+    }
   }
-  const ambient = new THREE.HemisphereLight(0xd8edff, 0x463520, 1.55); ambient.name = 'ARENA_AMBIENT_LIGHT'; root.add(ambient);
-  for (const z of [-9, 9]) {
-    const light = new THREE.PointLight(0xf4f7ff, 95, 34, 2); light.position.set(0, 11, z); light.name = 'ARENA_COURT_LIGHT'; root.add(light);
+  const display = includes('basketball-scoreboard') ? scoreboard(THREE, root) : { update() {} };
+  if (part === null) {
+    const spawn = new THREE.Object3D(); spawn.name = 'SPAWN_PLAYER'; spawn.position.set(BASKETBALL_SPECTATOR_AREA.arrival.x, BASKETBALL_SPECTATOR_AREA.arrival.y, BASKETBALL_SPECTATOR_AREA.arrival.z); spawn.rotation.y = BASKETBALL_SPECTATOR_AREA.arrival.rotationY; root.add(spawn);
   }
-  const display = scoreboard(THREE, root);
-  const spawn = new THREE.Object3D(); spawn.name = 'SPAWN_PLAYER'; spawn.position.set(BASKETBALL_SPECTATOR_AREA.arrival.x, BASKETBALL_SPECTATOR_AREA.arrival.y, BASKETBALL_SPECTATOR_AREA.arrival.z); spawn.rotation.y = BASKETBALL_SPECTATOR_AREA.arrival.rotationY; root.add(spawn);
   let elapsed = 0, lastScoreAt = null;
-  root.userData.proceduralLand = true;
-  root.userData.streetHeightAt = () => 0;
-  root.userData.layout = 'basketball-stadium';
-  root.userData.basketball = { ...BASKETBALL_COURT, hoops: [{ x: 0, y: 3.05, z: -12.75 }, { x: 0, y: 3.05, z: 12.75 }], spectatorArea: BASKETBALL_SPECTATOR_AREA, spectatorSeats };
-  root.userData.updateBasketballScoreboard = state => {
+  if (part === null) {
+    root.userData.proceduralLand = true;
+    root.userData.streetHeightAt = () => 0;
+    root.userData.layout = 'basketball-stadium';
+  }
+  if (fullCourt) root.userData.basketball = { ...BASKETBALL_COURT, hoops: [{ x: 0, y: 3.05, z: -12.75 }, { x: 0, y: 3.05, z: 12.75 }], spectatorArea: BASKETBALL_SPECTATOR_AREA, spectatorSeats };
+  if (fullCourt || includes('basketball-scoreboard')) root.userData.updateBasketballScoreboard = state => {
     display.update(state, elapsed);
     if (state?.lastScore?.at && state.lastScore.at !== lastScoreAt) {
       lastScoreAt = state.lastScore.at;
@@ -362,11 +419,64 @@ export function createBasketballStadium(THREE, environment = {}) {
       hoops.forEach(hoop => hoop.userData.swish(elapsed));
     }
   };
-  root.userData.setBasketballState = root.userData.updateBasketballScoreboard;
-  root.userData.updateBasketballEffects = (time, reducedMotion = false) => {
+  if (root.userData.updateBasketballScoreboard) root.userData.setBasketballState = root.userData.updateBasketballScoreboard;
+  if (fullCourt || includes('basketball-scoreboard') || includes('basketball-led-fascia')) root.userData.updateBasketballEffects = (time, reducedMotion = false) => {
     elapsed = Number(time) || 0; display.update(null, elapsed, reducedMotion);
     hoops.forEach(hoop => hoop.userData.updateBasketballEffects(elapsed, reducedMotion));
     ledBlue.emissiveIntensity = ledOrange.emissiveIntensity = reducedMotion ? 1 : 1.2 + Math.sin(elapsed * 1.5) * .18;
   };
+  return root;
+}
+
+
+/** A public professional arena with a regulation 94 × 50 foot playing floor. */
+export function createBasketballStadium(THREE, environment = {}) {
+  return createBasketballArenaGeometry(THREE);
+}
+
+function createBasketballShotClock(THREE) {
+  const root = new THREE.Group(); root.name = 'BASKETBALL_SHOT_CLOCK';
+  const { material, box, add } = helpers(THREE, root);
+  box([.7, .5, .16], material(0x080f1b), [0, .25, 0], 'BASKETBALL_SHOT_CLOCK_HOUSING');
+  const display = canvasTexture(THREE, 256, 160);
+  add(new THREE.PlaneGeometry(.65, .43), new THREE.MeshBasicMaterial({ color: display ? 0xffffff : 0xe9597b, ...(display ? { map: display.texture } : {}), toneMapped: false }), [0, .25, .081], 'BASKETBALL_SHOT_CLOCK_SCREEN', true);
+  let seconds = 24;
+  const update = state => {
+    const next = Math.max(0, Math.ceil((Number(state?.shotClockMs) || 0) / 1000));
+    if (state) seconds = next;
+    root.userData.shotClockSeconds = seconds;
+    if (display) {
+      const ctx = display.context; ctx.fillStyle = '#03070c'; ctx.fillRect(0, 0, 256, 160);
+      ctx.fillStyle = '#ff674b'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '900 126px monospace'; ctx.fillText(String(seconds).padStart(2, '0'), 128, 84);
+      display.texture.needsUpdate = true;
+    }
+  };
+  root.userData.setBasketballState = root.userData.updateBasketballScoreboard = update;
+  root.userData.shotClock = true; update();
+  return root;
+}
+
+/** Reusable, metre-scaled pieces of the same authored professional arena. */
+export function createBasketballBuilderItem(THREE, id) {
+  const item = BASKETBALL_BUILDER_ITEMS.find(value => value.id === id);
+  if (!item) return null;
+  if (id === 'basketball-stadium') {
+    const root = createBasketballStadium(THREE); root.userData.preservePlacementOrigin = true; return root;
+  }
+  const root = id === 'basketball-shot-clock' ? createBasketballShotClock(THREE) : createBasketballArenaGeometry(THREE, id);
+  root.updateMatrixWorld(true);
+  const bounds = new THREE.Box3().setFromObject(root), center = bounds.getCenter(new THREE.Vector3());
+  // Court surfaces stay at Y=0, matching player, rim and ball physics. Props
+  // rest on local ground, rather than retaining their in-arena mounting height.
+  const surface = id === 'basketball-court' || id === 'basketball-court-floor';
+  const offset = new THREE.Vector3(-center.x, surface ? 0 : -bounds.min.y, -center.z);
+  for (const child of root.children) child.position.add(offset);
+  root.userData.basketballBuilderPart = id;
+  if (surface) { root.userData.placementSurface = true; root.userData.basketballCourtSurface = true; root.userData.preservePlacementOrigin = true; }
+  if (id === 'basketball-spectator-bench') {
+    const bench = root.children.find(child => child.userData.basketballSpectatorBench);
+    bench.userData.seatPositions = [-.85, 0, .85].map((z, index) => ({ id: `basketball-spectator-seat-${index + 1}`, x: 0, y: .47, z, rotationY: Math.PI / 2, kind: 'bench' }));
+  }
+  root.updateMatrixWorld(true);
   return root;
 }

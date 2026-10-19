@@ -2029,14 +2029,24 @@
       "owner": "MUZIKAZ",
       "type": "props",
       "buildAssetId": "basketball",
-      "builderCategory": "prop",
+      "builderCategory": "basketball",
       "behavior": "pickup",
       "basic": true,
       "priceMzk": 0,
       "useCostMzk": 0,
       "visibility": "public",
       "thumbnailUrl": "/public/images/backpack/basketball.svg",
-      "description": "Free regulation basketball. Catch nearby with E, toss with T, or play a full match at MUZIKAZ Arena."
+      "description": "Regulation basketball. Catch, pass and shoot on your custom court.",
+      "format": "procedural-3d",
+      "dimensions": [
+        0.24,
+        0.24,
+        0.24
+      ],
+      "function_data": {
+        "prompt": "Basketball \u00b7 E catch \u00b7 T pass \u00b7 R shoot",
+        "damage": 0
+      }
     },
     {
       "id": "basketball-hoop",
@@ -2044,18 +2054,24 @@
       "owner": "MUZIKAZ",
       "type": "props",
       "buildAssetId": "basketball-hoop",
-      "builderCategory": "prop",
+      "builderCategory": "basketball",
       "format": "procedural-3d",
       "basic": true,
       "priceMzk": 0,
       "useCostMzk": 0,
       "visibility": "public",
       "thumbnailUrl": "/public/images/backpack/basketball-hoop.svg",
-      "description": "Free regulation basketball hoop with a glass backboard, orange rim, white woven net and padded support. Place it in game and shoot with your basketball."
+      "description": "Regulation rim, woven net, glass backboard and padded support.",
+      "behavior": "decor",
+      "dimensions": [
+        1.873,
+        3.991,
+        2.777
+      ]
     },
     {
       "id": "basketball-jersey-home",
-      "name": "MUZIKAZ Home Basketball Jersey",
+      "name": "Home Basketball Jersey",
       "owner": "MUZIKAZ",
       "type": "wearables",
       "buildAssetId": "basketball-jersey-home",
@@ -2071,11 +2087,22 @@
       "useCostMzk": 0,
       "visibility": "public",
       "thumbnailUrl": "/public/images/backpack/basketball-jersey-home.svg",
-      "description": "Free teal number 24 sleeveless jersey. Equips on your current avatar and joins the Home team on the basketball court."
+      "description": "Equip the Home jersey to join that basketball team.",
+      "builderCategory": "basketball",
+      "behavior": "interact",
+      "dimensions": [
+        0.72,
+        0.73,
+        0.45
+      ],
+      "function_data": {
+        "prompt": "Equip Home basketball jersey",
+        "damage": 0
+      }
     },
     {
       "id": "basketball-jersey-away",
-      "name": "MUZIKAZ Away Basketball Jersey",
+      "name": "Away Basketball Jersey",
       "owner": "MUZIKAZ",
       "type": "wearables",
       "buildAssetId": "basketball-jersey-away",
@@ -2091,7 +2118,18 @@
       "useCostMzk": 0,
       "visibility": "public",
       "thumbnailUrl": "/public/images/backpack/basketball-jersey-away.svg",
-      "description": "Free coral number 08 sleeveless jersey. Equips on your current avatar and joins the Away team on the basketball court."
+      "description": "Equip the Away jersey to join that basketball team.",
+      "builderCategory": "basketball",
+      "behavior": "interact",
+      "dimensions": [
+        0.72,
+        0.73,
+        0.45
+      ],
+      "function_data": {
+        "prompt": "Equip Away basketball jersey",
+        "damage": 0
+      }
     },
     {
       "id": "basketball-arena",
@@ -2104,7 +2142,1353 @@
       "useCostMzk": 0,
       "visibility": "public",
       "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
-      "description": "Free shared basketball stadium: regulation hardwood court, two hoops, animated live scoreboard and a Start Match console. All players can enter, choose jerseys, catch, pass and shoot."
+      "description": "Free shared basketball stadium: regulation hardwood court, two hoops, animated live scoreboard and a Start Match console. All players can enter, choose jerseys, catch, pass and shoot.",
+      "builderLayoutId": "basketball-stadium",
+      "builderUrl": "/environment-builder.html?layout=basketball-stadium"
+    },
+    {
+      "id": "basketball-stadium",
+      "name": "Complete Basketball Stadium",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-stadium",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "The full professional indoor arena: regulation court, both baskets, spectator stands, benches, live jumbotron, lighting and roof.",
+      "dimensions": [
+        46,
+        17.5,
+        62
+      ]
+    },
+    {
+      "id": "basketball-court",
+      "name": "Regulation Basketball Court",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-court",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "A complete 94 \u00d7 50 foot hardwood court, clear safety apron and two regulation baskets with woven nets.",
+      "dimensions": [
+        18.2,
+        4.291,
+        33
+      ]
+    },
+    {
+      "id": "basketball-court-floor",
+      "name": "Basketball Hardwood Floor",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-court-floor",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "The stadium\u2019s regulation hardwood playing surface with painted keys, three-point lines and centre circle; add baskets separately.",
+      "dimensions": [
+        15.24,
+        0.3,
+        28.65
+      ]
+    },
+    {
+      "id": "basketball-bleachers",
+      "name": "Basketball Sideline Bleachers",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-bleachers",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "Eleven concrete seating tiers with batched stadium seats and three climbable spectator aisles.",
+      "dimensions": [
+        10.6175,
+        5.99,
+        42
+      ]
+    },
+    {
+      "id": "basketball-end-bleachers",
+      "name": "Basketball End Bleachers",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-end-bleachers",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "Nine concrete end-court seating tiers with stadium seats and a clear central aisle.",
+      "dimensions": [
+        20.3,
+        5.19,
+        9.46
+      ]
+    },
+    {
+      "id": "basketball-aisle-stairs",
+      "name": "Stadium Aisle Stairs",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-aisle-stairs",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "Twenty-three low-rise concrete steps and an illuminated entrance for walking into the seating bowl.",
+      "dimensions": [
+        10.5975,
+        5.47,
+        1.2
+      ]
+    },
+    {
+      "id": "basketball-team-bench",
+      "name": "Basketball Team Bench",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-team-bench",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "A full courtside team bench with padded seating and an illuminated team-colour back.",
+      "dimensions": [
+        0.75,
+        0.96,
+        5.5
+      ]
+    },
+    {
+      "id": "basketball-spectator-bench",
+      "name": "Basketball Spectator Bench",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-spectator-bench",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "A three-seat courtside viewing bench with metal legs, padded seat and back.",
+      "dimensions": [
+        0.74,
+        1.005,
+        2.75
+      ]
+    },
+    {
+      "id": "basketball-scorers-table",
+      "name": "Basketball Scorer\u2019s Table",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-scorers-table",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "The courtside officials\u2019 table with a bright LED front panel.",
+      "dimensions": [
+        0.83,
+        0.85,
+        5.4
+      ]
+    },
+    {
+      "id": "basketball-scoreboard",
+      "name": "Live Basketball Jumbotron",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-scoreboard",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "The stadium\u2019s four-sided hanging scoreboard with home/away scores, period, game clock and shot clock.",
+      "dimensions": [
+        7.05,
+        8.9,
+        7.05
+      ]
+    },
+    {
+      "id": "basketball-shot-clock",
+      "name": "Basketball Shot Clock",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-shot-clock",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "A compact live shot-clock display for mounting above a backboard or courtside.",
+      "dimensions": [
+        0.7,
+        0.5,
+        0.161
+      ]
+    },
+    {
+      "id": "basketball-arena-light",
+      "name": "Basketball Broadcast Light",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-arena-light",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "An overhead arena floodlight with a bright panel and a real court light.",
+      "dimensions": [
+        2.6,
+        0.16,
+        0.75
+      ]
+    },
+    {
+      "id": "basketball-roof-truss",
+      "name": "Basketball Roof Truss",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-roof-truss",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "A pair of metal roof braces spanning one side of the indoor arena.",
+      "dimensions": [
+        22.0532,
+        5.8857,
+        0.24
+      ]
+    },
+    {
+      "id": "basketball-access-rail",
+      "name": "Basketball Courtside Rail",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-access-rail",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "A metal sideline barrier section with end posts and space for an entry gate.",
+      "dimensions": [
+        0.07,
+        0.835,
+        10.26
+      ]
+    },
+    {
+      "id": "basketball-arena-wall",
+      "name": "Basketball Arena Wall",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-arena-wall",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "A full-height exterior wall section from the indoor basketball stadium.",
+      "dimensions": [
+        0.28,
+        9.1,
+        61.8
+      ]
+    },
+    {
+      "id": "basketball-arena-roof",
+      "name": "Basketball Arena Roof",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-arena-roof",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "The complete indoor stadium roof panel; scenery stays clear of player movement.",
+      "dimensions": [
+        46,
+        0.2,
+        62
+      ]
+    },
+    {
+      "id": "basketball-suite-glass",
+      "name": "Basketball Suite Glass",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-suite-glass",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "A transparent stadium suite window panel.",
+      "dimensions": [
+        0.1,
+        1.55,
+        6
+      ]
+    },
+    {
+      "id": "basketball-championship-banner",
+      "name": "Basketball Championship Banner",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-championship-banner",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "An illuminated team banner and suspension cable from the arena rafters.",
+      "dimensions": [
+        1.6,
+        4.05,
+        0.08
+      ]
+    },
+    {
+      "id": "basketball-led-fascia",
+      "name": "Basketball LED Fascia",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-led-fascia",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "An illuminated stadium ribbon board for the front of a seating section.",
+      "dimensions": [
+        0.16,
+        0.55,
+        43
+      ]
+    },
+    {
+      "id": "hockey-stick",
+      "name": "Hockey Stick",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-stick",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "hockey",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Hockey equipment and match role; active in hockey arenas.",
+      "dimensions": [
+        0.035,
+        1.368,
+        0.723
+      ]
+    },
+    {
+      "id": "hockey-skates",
+      "name": "Ice Skates",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-skates",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "hockey",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Hockey equipment and match role; active in hockey arenas.",
+      "dimensions": [
+        0.43,
+        0.255,
+        0.35
+      ]
+    },
+    {
+      "id": "hockey-puck",
+      "name": "Hockey Puck",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-puck",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "hockey",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Hockey equipment and match role; active in hockey arenas.",
+      "dimensions": [
+        0.0762,
+        0.0254,
+        0.0762
+      ]
+    },
+    {
+      "id": "hockey-net",
+      "name": "Regulation Hockey Net",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-net",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "hockey",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Hockey equipment and match role; active in hockey arenas.",
+      "dimensions": [
+        1.043,
+        1.24,
+        1.879
+      ]
+    },
+    {
+      "id": "hockey-player",
+      "name": "AI Hockey Skater",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-player",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "hockey",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Hockey equipment and match role; active in hockey arenas.",
+      "dimensions": [
+        0.94,
+        1.83,
+        0.723
+      ]
+    },
+    {
+      "id": "hockey-goalie",
+      "name": "AI Goaltender",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-goalie",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "hockey",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Hockey equipment and match role; active in hockey arenas.",
+      "dimensions": [
+        0.94,
+        1.83,
+        0.723
+      ]
+    },
+    {
+      "id": "hockey-referee",
+      "name": "AI Referee",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-referee",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "hockey",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Hockey equipment and match role; active in hockey arenas.",
+      "dimensions": [
+        0.92,
+        1.83,
+        0.455
+      ]
+    },
+    {
+      "id": "hockey-linesman",
+      "name": "AI Linesman",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-linesman",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "hockey",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Hockey equipment and match role; active in hockey arenas.",
+      "dimensions": [
+        0.92,
+        1.83,
+        0.455
+      ]
+    },
+    {
+      "id": "hockey-arena",
+      "name": "Complete Hockey Stadium",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-arena",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Regulation rink, goals, glass, benches, penalty boxes, seating, fans, concourses, scoreboard and arena lighting.",
+      "dimensions": [
+        96,
+        19,
+        77
+      ]
+    },
+    {
+      "id": "hockey-rink",
+      "name": "Complete Regulation Hockey Rink",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-rink",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Regulation 200 \u00d7 85 ft rounded ice with markings, boards, safety glass and two goals.",
+      "dimensions": [
+        61.081,
+        2.27,
+        26.029
+      ]
+    },
+    {
+      "id": "hockey-ice-surface",
+      "name": "Regulation Ice Surface",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-ice-surface",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Rounded regulation ice floor, ready for custom boards and rink markings.",
+      "dimensions": [
+        60.96,
+        0.01,
+        25.908
+      ]
+    },
+    {
+      "id": "hockey-rink-markings",
+      "name": "Complete Hockey Rink Markings",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-rink-markings",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Red and blue lines, all faceoff circles and dots, and both goal creases.",
+      "dimensions": [
+        54.375,
+        0.018,
+        24.908
+      ]
+    },
+    {
+      "id": "hockey-rink-boards",
+      "name": "Complete Rounded Rink Boards",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-rink-boards",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Full regulation rounded rink perimeter without glass.",
+      "dimensions": [
+        61.081,
+        1.07,
+        26.029
+      ]
+    },
+    {
+      "id": "hockey-rink-glass",
+      "name": "Complete Rink Safety Glass",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-rink-glass",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Transparent safety glass perimeter matching the regulation rink boards.",
+      "dimensions": [
+        60.985,
+        1.2,
+        25.933
+      ]
+    },
+    {
+      "id": "hockey-board-section",
+      "name": "Hockey Board Section",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-board-section",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Two-metre board section for custom ice boundaries.",
+      "dimensions": [
+        2,
+        1.07,
+        0.12
+      ]
+    },
+    {
+      "id": "hockey-glass-panel",
+      "name": "Hockey Safety Glass Panel",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-glass-panel",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Transparent two-metre safety glass section to position above rink boards.",
+      "dimensions": [
+        2,
+        1.2,
+        0.025
+      ]
+    },
+    {
+      "id": "hockey-faceoff-circle",
+      "name": "Hockey Faceoff Circle",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-faceoff-circle",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Regulation faceoff circle and centre dot.",
+      "dimensions": [
+        9.144,
+        0.002,
+        9.144
+      ]
+    },
+    {
+      "id": "hockey-goal-crease",
+      "name": "Hockey Goal Crease",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-goal-crease",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Regulation blue half-circle crease with a red perimeter.",
+      "dimensions": [
+        1.8288,
+        0.011,
+        3.6576
+      ]
+    },
+    {
+      "id": "hockey-home-bench",
+      "name": "Home Team Bench",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-home-bench",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Home bench with reserves, gate, glass partitions, spare sticks and bottles.",
+      "dimensions": [
+        13.08,
+        2.6,
+        2.47
+      ]
+    },
+    {
+      "id": "hockey-away-bench",
+      "name": "Away Team Bench",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-away-bench",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Away bench with reserves, gate, glass partitions, spare sticks and bottles.",
+      "dimensions": [
+        13.08,
+        2.6,
+        2.47
+      ]
+    },
+    {
+      "id": "hockey-home-penalty-box",
+      "name": "Home Penalty Box",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-home-penalty-box",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Home penalty seating with transparent partitions and an ice gate.",
+      "dimensions": [
+        4.07,
+        2.555,
+        2.57
+      ]
+    },
+    {
+      "id": "hockey-away-penalty-box",
+      "name": "Away Penalty Box",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-away-penalty-box",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Away penalty seating with transparent partitions and an ice gate.",
+      "dimensions": [
+        4.07,
+        2.555,
+        2.57
+      ]
+    },
+    {
+      "id": "hockey-scorers-table",
+      "name": "Official Scorer\u2019s Table",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-scorers-table",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Scorer\u2019s desk and official scorekeeper sign.",
+      "dimensions": [
+        4,
+        2.28,
+        1.65
+      ]
+    },
+    {
+      "id": "hockey-locker-tunnel",
+      "name": "Player Locker Room Tunnel",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-locker-tunnel",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Player access tunnel and locker-room sign.",
+      "dimensions": [
+        3,
+        3.4,
+        7.1
+      ]
+    },
+    {
+      "id": "hockey-seating-section",
+      "name": "Lower Bowl Seating Section",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-seating-section",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Six-row lower spectator stand with seats, aisle gaps and a guard rail.",
+      "dimensions": [
+        68,
+        5.4,
+        7.185
+      ]
+    },
+    {
+      "id": "hockey-upper-seating-section",
+      "name": "Upper Bowl Seating Section",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-upper-seating-section",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Five-row upper spectator stand with seats, aisle gaps and a guard rail.",
+      "dimensions": [
+        68,
+        5.7,
+        6.335
+      ]
+    },
+    {
+      "id": "hockey-end-seating-section",
+      "name": "End Bowl Seating Section",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-end-seating-section",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Six-row end stand for a complete seating bowl.",
+      "dimensions": [
+        6.95,
+        4.615,
+        31
+      ]
+    },
+    {
+      "id": "hockey-seat",
+      "name": "Arena Spectator Seat",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-seat",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Individual matching arena seat for custom spectator layouts.",
+      "dimensions": [
+        0.46,
+        0.625,
+        0.475
+      ]
+    },
+    {
+      "id": "hockey-concourse",
+      "name": "Arena Concourse Platform",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-concourse",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Upper-level walkway platform around stadium seating.",
+      "dimensions": [
+        90,
+        0.35,
+        3
+      ]
+    },
+    {
+      "id": "hockey-entry-tunnel",
+      "name": "Spectator Entry Tunnel",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-entry-tunnel",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Spectator access tunnel with an entrance sign.",
+      "dimensions": [
+        3,
+        3.58,
+        4.1
+      ]
+    },
+    {
+      "id": "hockey-scoreboard",
+      "name": "Center-Ice Scoreboard",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-scoreboard",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Suspended centre-ice jumbotron matching the live hockey arena.",
+      "dimensions": [
+        6,
+        2,
+        3.52
+      ]
+    },
+    {
+      "id": "hockey-light-bank",
+      "name": "Arena Light Bank",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-light-bank",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Emissive arena light bank and its supporting truss.",
+      "dimensions": [
+        8,
+        0.335,
+        1
+      ]
+    },
+    {
+      "id": "hockey-roof-truss",
+      "name": "Arena Roof Truss",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-roof-truss",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Full-width overhead truss with five emissive lighting strips.",
+      "dimensions": [
+        3.4,
+        0.4175,
+        68
+      ]
+    },
+    {
+      "id": "hockey-arena-wall",
+      "name": "Arena Enclosure Wall",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-arena-wall",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Full-width stadium enclosure wall.",
+      "dimensions": [
+        94,
+        19,
+        0.6
+      ]
+    },
+    {
+      "id": "hockey-arena-floor",
+      "name": "Arena Foundation Floor",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-arena-floor",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Metal stadium foundation for a full hockey arena.",
+      "dimensions": [
+        96,
+        0.2,
+        77
+      ]
+    },
+    {
+      "id": "hockey-led-ribbon",
+      "name": "Arena LED Ribbon",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-led-ribbon",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Emissive arena ribbon panel.",
+      "dimensions": [
+        90,
+        0.38,
+        0.06
+      ]
+    },
+    {
+      "id": "hockey-water-bottle",
+      "name": "Hockey Bench Water Bottle",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-water-bottle",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Matching water bottle for player benches.",
+      "dimensions": [
+        0.08,
+        0.22,
+        0.08
+      ]
+    },
+    {
+      "id": "hockey-crowd-section",
+      "name": "Arena Spectator Crowd",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-crowd-section",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Instanced lower-bowl spectator crowd with team-colour jerseys.",
+      "dimensions": [
+        59.49,
+        4.225,
+        6.02
+      ]
+    },
+    {
+      "id": "basketball-arena-column",
+      "name": "Basketball Arena Column",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-arena-column",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "A full-height structural metal column supporting the arena roof.",
+      "dimensions": [
+        0.65,
+        11,
+        0.65
+      ]
+    },
+    {
+      "id": "basketball-aisle-handrail",
+      "name": "Basketball Aisle Handrail",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "basketball-aisle-handrail",
+      "builderCategory": "basketball",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/backpack/basketball-arena.svg",
+      "description": "The sloped metal handrail running beside a spectator seating aisle.",
+      "dimensions": [
+        9.7824,
+        5.162,
+        0.07
+      ]
+    },
+    {
+      "id": "hockey-center-circle",
+      "name": "Hockey Center-Ice Circle",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-center-circle",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Regulation blue centre-ice faceoff circle and dot.",
+      "dimensions": [
+        9.144,
+        0.002,
+        9.144
+      ]
+    },
+    {
+      "id": "hockey-faceoff-dot",
+      "name": "Hockey Faceoff Dot",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-faceoff-dot",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Regulation red faceoff spot for custom rink layouts.",
+      "dimensions": [
+        0.6096,
+        0.001,
+        0.6096
+      ]
+    },
+    {
+      "id": "hockey-blue-line",
+      "name": "Hockey Blue Line",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-blue-line",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Regulation blue zone line for custom rink layouts.",
+      "dimensions": [
+        0.3,
+        0.012,
+        24.908
+      ]
+    },
+    {
+      "id": "hockey-red-line",
+      "name": "Hockey Red Line",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-red-line",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Red centre or goal line for custom rink layouts.",
+      "dimensions": [
+        0.12,
+        0.012,
+        24.908
+      ]
+    },
+    {
+      "id": "hockey-guard-rail",
+      "name": "Arena Tier Guard Rail",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "buildAssetId": "hockey-guard-rail",
+      "builderCategory": "hockey",
+      "format": "procedural-3d",
+      "behavior": "decor",
+      "basic": true,
+      "priceMzk": 0,
+      "useCostMzk": 0,
+      "visibility": "public",
+      "thumbnailUrl": "/public/images/hockey.svg",
+      "description": "Full-width guard rail matching the spectator tiers.",
+      "dimensions": [
+        68,
+        1,
+        0.07
+      ]
     }
   ]
 }

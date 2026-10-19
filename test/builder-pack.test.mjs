@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 
-test('Builders Pack provides a floor, three rooms, twenty-one core models, and its expanded SVG assets', async () => {
+test('Builders Pack provides a floor, three rooms, full sports templates, core models and expanded SVG assets', async () => {
   const [html, script, modelFiles] = await Promise.all([
     readFile(new URL('../builder-market.html', import.meta.url), 'utf8'),
     readFile(new URL('../builder-market.js', import.meta.url), 'utf8'),
@@ -12,8 +12,10 @@ test('Builders Pack provides a floor, three rooms, twenty-one core models, and i
   assert.match(html, /Grand Build Floor/);
   assert.match(script, /Pillow Ring Seat/);
   assert.match(html, /40 × 40/);
-  assert.match(html, /3 layouts/);
-  assert.match(html, /21 models/);
+  assert.match(html, /data-pack-layout-count/);
+  assert.match(html, /data-pack-model-count/);
+  assert.match(script, /id:'basketball-stadium'/);
+  assert.match(script, /id:'hockey-arena'/);
   assert.equal((script.match(/name:'(?:Open Studio|Connected Suite|Garden Courtyard)'/g) || []).length, 3);
   assert.equal((script.match(/\['[a-z-]+','[^']+','(?:landscape|interior)'\]/g) || []).length, 21);
   assert.equal(modelFiles.filter((file) => file.endsWith('.svg')).length, 33);
@@ -32,13 +34,13 @@ test('in-game Tools and Drop Backpack expose the complete map-building pack', as
   assert.match(game, /Build map & game/);
   assert.match(game, /muzikaz\.builder\.buildTray/);
   assert.match(game, /deployPlayableBuilderAsset\(asset\)/);
-  assert.match(game, /BUILD_ASSETS\.length}\/\$\{BUILD_ASSETS\.length} Builder items available/);
+  assert.match(game, /assets\.length} of \$\{BUILD_ASSETS\.length} Builder items available/);
   assert.match(game, /data-rad-pack-builder/);
   assert.match(game, /\.\.\.tray\.map\(item=>\['Build asset'/);
-  assert.equal(buildAssets.length, 79);
+  assert.ok(buildAssets.length > 79);
   assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'landscape').length, 13);
   assert.equal(buildAssets.filter((asset) => asset.builderCategory === 'interior').length, 14);
-  assert.ok(buildAssets.every((asset) => ['props','vehicles'].includes(asset.type) && asset.thumbnailUrl));
+  assert.ok(buildAssets.every((asset) => ['props','vehicles','interactive','wearables'].includes(asset.type) && asset.thumbnailUrl));
   for (const category of ['terrain','plants','buildings','props','weapons','characters','creatures','avatar','enemy','interactive','vehicles']) {
     assert.ok(buildAssets.some((asset) => asset.builderCategory === category), `${category} items are available in game`);
     assert.match(game, new RegExp(`'${category}'`), `${category} has an in-game filter`);

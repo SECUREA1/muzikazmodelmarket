@@ -2,12 +2,13 @@ import {ARCADE_PARTS} from './arcade-rules.js';
 import {createArcadePart,animateArcadePark} from './arcade-park.js';
 import {createHockeyItem} from './hockey-models.js';
 import * as THREE from '../vendor/three/three.module.min.js';
-import {createBasketballHoop} from './basketball-stadium.js';
+import {BASKETBALL_BUILDER_ITEMS,createBasketballBuilderItem,createBasketballHoop} from './basketball-stadium.js';
 import {createBasketballJersey} from './basketball-jerseys.js';
 
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  ...Object.fromEntries(BASKETBALL_BUILDER_ITEMS.map(item => [item.id, [item.name, item.description, item.dimensions]])),
   'basketball-jersey-away': ['Away Basketball Jersey', 'Free sleeveless coral MUZIKAZ team uniform attached to your avatar torso.', [.72,.73,.45]],
   'basketball-jersey-home': ['Home Basketball Jersey', 'Free sleeveless teal MUZIKAZ team uniform attached to your avatar torso.', [.72,.73,.45]],
   'basketball-hoop': ['Basketball Hoop & Net', 'Regulation 3.05 metre rim, woven white net, glass backboard and padded support.', [1.873,3.991,2.777]],
@@ -186,6 +187,7 @@ export function createBuilderModel(id,options={}) {
   if(id.startsWith('hockey-')){const root=createHockeyItem(id);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
   let root;
   if(id==='basketball'){root=new THREE.Group();const ball=mesh(new THREE.SphereGeometry(.12,32,24),material(0xd96b20,.88),[0,.12,0]);ball.name='REGULATION_BASKETBALL';root.add(ball);for(const rotation of [[0,0,0],[Math.PI/2,0,0],[0,Math.PI/2,0]]){const seam=mesh(new THREE.TorusGeometry(.1203,.0017,5,64),material(0x26170e,.95),[0,.12,0],rotation);seam.name='BASKETBALL_SEAM';root.add(seam);}}
+  else if(BASKETBALL_BUILDER_ITEMS.some(item=>item.id===id))root=createBasketballBuilderItem(THREE,id);
   else if(id==='basketball-hoop')root=createBasketballHoop(THREE);
   else if(id==='basketball-jersey-home'||id==='basketball-jersey-away')root=createBasketballJersey(THREE,id.endsWith('home')?'home':'away');
   else if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
@@ -193,7 +195,7 @@ export function createBuilderModel(id,options={}) {
   else if(GAMEPLAY_ITEMS[id]) return gameplayItem(id);
   else if(EXPANDED[id]) return expandedModel(id);
   else if(id==='pillow-ring'){root=new THREE.Group();root.add(mesh(new THREE.TorusGeometry(.58,.24,16,32),material(0x9cff00,.92),[0,.25,0],[Math.PI/2,0,0]));root.add(cylinder(.34,.38,.16,material(0x075b59,.88),[0,.18,0],24));} else if(id==='canopy-tree'||id==='pine-tree') root=plant(id); else if(id==='flower-bed')root=flowerBed(); else if(id==='hedge-corner')root=hedge(); else if(id==='garden-rocks')root=rocks(); else if(id==='pond')root=pond(); else if(id==='path-tile')root=box([2.2,.12,1.2],material(0xa39b8c,.95),[0,.06,0]); else if(id==='hill'){root=mesh(new THREE.SphereGeometry(2.1,24,12,0,Math.PI*2,0,Math.PI/2),material(0x4f9a45,.95),[0,0,0]);root.scale.z=.86;} else if(id==='lamp-post')root=lamp(true); else if(id==='planter')root=planter(); else if(id==='sofa'||id==='armchair')root=seating(id==='armchair'); else if(id==='coffee-table')root=coffeeTable(); else if(id==='bookshelf')root=bookshelf(); else if(id==='floor-lamp')root=lamp(false); else if(id==='room-divider')root=divider(); else if(id==='kitchen-island')root=island(); else if(id==='spiral-stairs')root=stairs(); else if(id==='archway')root=arch(); else if(id==='art-wall')root=artWall(); else if(BUILDER_MODEL_INFO[id])root=detailedInterior(id); else return null;
-  const [name,description,dimensions]=BUILDER_MODEL_INFO[id];root.name=name;root.userData={...root.userData,builderObject:true,modelId:id,label:name,description,dimensions,animated:['canopy-tree','pine-tree','pond','lamp-post','floor-lamp'].includes(id)};
+  const [name,description,dimensions]=BUILDER_MODEL_INFO[id];root.name=name;root.userData={...root.userData,builderObject:true,modelId:id,label:name,description,dimensions,animated:!!root.userData.updateBasketballEffects||['canopy-tree','pine-tree','pond','lamp-post','floor-lamp'].includes(id)};
   root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;child.userData.builderRoot=root;}});return root;
 }
 
@@ -222,5 +224,5 @@ export function createGeneratedAsset(model) {
 }
 
 export function updateBuilderModels(group, elapsed) {
-  group.children.forEach(root=>{if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  group.children.forEach(root=>{root.userData.updateBasketballEffects?.(elapsed);if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 }
