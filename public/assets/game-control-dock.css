@@ -15,14 +15,17 @@ body .house-control-dock .house-bottom-controls{display:block;width:100%;height:
 body .house-explorer-shell{min-width:0;min-height:0;max-width:100%;height:min(900px,calc(100svh - 24px));max-height:calc(100svh - 24px);}
 body .house-explorer-shell>.house-stage{flex:1 1 0;min-height:0!important;max-height:none;}
 body .house-explorer-shell .mobile-move-pad{flex:0 0 auto;}
-/* Give the court the full viewport, with actions and controls below it. */
-body.basketball-play-active>.site-header{position:relative!important;top:auto!important;}
-body .house-explorer.is-basketball-play{padding:0!important;}
-body .house-explorer.is-basketball-play>.section-title{display:none;}
-body .house-explorer-shell[data-basketball-play]{display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:none;gap:0;margin:0;height:var(--basketball-play-height,calc(100dvh - 4px));max-height:var(--basketball-play-height,calc(100dvh - 4px));border-radius:0;}
-body .house-explorer-shell[data-basketball-play]>.house-stage{width:100%;border-radius:0;}
-body .house-explorer-shell[data-basketball-play] .mobile-move-pad-glb::before{display:none;}
-body .house-explorer-shell[data-basketball-play] .mobile-move-pad.mobile-move-pad-glb{grid-template-areas:'left right'!important;max-width:none;padding:4px 12px;}
+/* Give active games the full viewport, with controls below the scene. */
+body.game-play-active>.site-header{position:relative!important;top:auto!important;}
+body .house-explorer.is-game-play{padding:0!important;}
+body .house-explorer.is-game-play>.section-title{display:none;}
+body .house-explorer-shell[data-game-play]{display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:none;gap:0;margin:0;height:var(--game-play-height,calc(100dvh - 4px));max-height:var(--game-play-height,calc(100dvh - 4px));border-radius:0;}
+body .house-explorer-shell[data-game-play]>.house-stage{width:100%;border-radius:0;}
+body .house-explorer-shell[data-game-play]>.house-control-dock{order:2;}
+body .house-explorer-shell[data-game-play] .mobile-move-pad-glb::before{display:none;}
+body .house-explorer-shell[data-game-play] .mobile-move-pad.mobile-move-pad-glb{order:3;grid-template-areas:'left right'!important;max-width:none;padding:4px 12px;}
+@media(max-width:760px),(pointer:coarse){body .house-explorer-shell[data-touch-game-fit] .mobile-move-pad.mobile-move-pad-glb{display:grid;}}
+body .basketball-world .builder-nearby-action{bottom:54px;}
 /* Explorer options use the same controls without crowding the footer. */
 .game-view-options .game-dock-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:12px;}
 .game-view-options .game-dock-summary>*{min-width:0;box-sizing:border-box;}

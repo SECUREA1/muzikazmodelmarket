@@ -25,3 +25,10 @@
 [data-game-camera-toggle]{border-color:#5fc0d4;color:#a5eeff}[data-game-camera-mode="top-down"]{background:#24576a}@media(pointer:coarse){#touch-toggle-camera{grid-area:view;font-size:10px;line-height:1.15;padding:4px 1px}}
 
 .hockey-waiting-room{padding:10px 0}.hockey-waiting-room h3{margin:6px 0}.hockey-lobby-roster{display:grid;grid-template-columns:1fr 1fr;gap:12px}.hockey-lobby-roster ul{padding-left:18px;line-height:1.7;font-size:13px}.hockey-lobby-actions{display:flex;flex-wrap:wrap;gap:8px}.hockey-lobby-actions button{min-height:44px;flex:1 1 120px}[data-hockey-host-start]{background:#32704c;font-weight:800}
+
+/* Keep the camera switch small while preserving a full touch target. */
+.hockey-view-toggle,.rad-sports-shell #toggle-camera.hockey-view-toggle{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:9px;touch-action:manipulation}
+.hockey-view-icon{display:block;width:24px;height:24px;flex:none;pointer-events:none}
+.rad-sports-shell .hockey-access-bar{gap:8px;padding:6px 8px}
+.rad-sports-shell .hockey-access-bar>button{min-height:44px}
+.rad-sports-shell.is-playing .hockey-access-bar .xr-controls-help,.rad-sports-shell.is-playing .hockey-access-bar .xr-support-status{display:none}

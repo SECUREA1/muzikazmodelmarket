@@ -136,8 +136,9 @@ export class BuilderGameplayRuntime {
   register(objectId, adapter) { this.instances.set(String(objectId), adapter); return adapter; }
   actor(id) { return this.manifest.actors.find(item => item.objectId === String(id)); }
   position(actor) { return this.instances.get(actor.objectId)?.getPosition?.() || actor.transform.position; }
-  nearest(playerPosition, key = 'e') {
+  nearest(playerPosition, key = 'e', entityId = null) {
     return this.manifest.actors.reduce((best, actor) => {
+      if (entityId !== null && String(actor.objectId) !== String(entityId)) return best;
       if (actor.gameplay.interactionKey !== key || this.instances.get(actor.objectId)?.active === false) return best;
       const next = distance(playerPosition, this.position(actor));
       return next <= actor.gameplay.interactionDistance && (!best || next < best.distance) ? { actor, distance: next } : best;
@@ -165,7 +166,7 @@ export class BuilderGameplayRuntime {
     this.feedback(message, actor);
     return { actor, handled: true, message, position: position ? vector(position) : null };
   }
-  interact(key, playerPosition) {
+  interact(key, playerPosition, entityId = null) {
     if (this.player.seatedObjectId && String(key).toLowerCase() === 'e') {
       const actor = this.actor(this.player.seatedObjectId), instance = this.instances.get(this.player.seatedObjectId);
       this.player.seatedObjectId = null;
@@ -174,7 +175,7 @@ export class BuilderGameplayRuntime {
       const message = 'Stood up'; this.feedback(message, actor);
       return { actor, handled: true, message, seated: false };
     }
-    const hit = this.nearest(playerPosition, String(key).toLowerCase());
+    const hit = this.nearest(playerPosition, String(key).toLowerCase(), entityId);
     if (!hit) return null;
     const actor = hit.actor, config = actor.gameplay, current = this.now(), ready = this.cooldowns.get(actor.objectId) || 0;
     if (current < ready) return { actor, handled: false, reason: 'cooldown', remaining: (ready-current)/1000 };

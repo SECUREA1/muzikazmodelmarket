@@ -8,7 +8,7 @@ function controller(name) {
   const handlers = {}, knob = {style: {}}, input = {leftX:0,leftY:0}, flushes = [];
   let shots = 0, jumps = 0;
   const stick = {querySelector: () => knob, getBoundingClientRect: () => ({left: 0, top: 0, width: 100, height: 100}), classList: {add(){}, remove(){}}, addEventListener(type, fn){handlers[type] = fn;}};
-  const context = vm.createContext({walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(){}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, safelyCapturePointer(){}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
+  const context = vm.createContext({walkingStick, actionEnabled:()=>true,triggerSelectedGameAction:()=>shots++,authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(){}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, safelyCapturePointer(){}, safelyInteract: (_,fn) => fn(), jump: () => jumps++});
   vm.runInContext(source.slice(source.indexOf('  function setupThumbstick(name)'), source.indexOf("  setupThumbstick('left')")), context);
   context.setupThumbstick(name);
   return {input, flushes, send: (type,x,y) => handlers[type]({type, pointerId: 1, clientX: x, clientY: y, preventDefault(){}}), shots: () => shots, jumps: () => jumps};
@@ -33,9 +33,24 @@ test('tap still shoots and right look and jump retain their response', () => {
   assert.equal(left.shots(), 1);
   const right = controller('right');
   right.send('pointerdown', 50, 35.5);
+  assert.equal(right.input.rightY,0,'touching off-center starts the look stick in neutral');
+  right.send('pointermove',50,17);
   assert.ok(Math.abs(right.input.rightY + .5) < 1e-10);
-  right.send('pointerup', 50, 35.5);
+  right.send('pointerup', 50, 17);
+  assert.equal(right.jumps(),0,'looking does not also jump');
+  right.send('pointerdown',50,35.5);right.send('pointerup',50,35.5);
   assert.equal(right.jumps(), 1);
+});
+
+test('right-stick jump reaches multiplayer input and repeated taps cannot leave jump held',()=>{
+  const timers=new Map(),mobile=new Set(),sent=[];let timerId=0;
+  const context=vm.createContext({serverHostedRoom:true,mobile,authoritativeClient:{requestInput:()=>sent.push(context.serverInput().jump)},window:{clearTimeout:id=>timers.delete(id),setTimeout:(fn,delay)=>{assert.equal(delay,180);timers.set(++timerId,fn);return timerId;}},inputMenuOpen:()=>false,getMovementInput:()=>({x:0,y:0}),keys:new Set(),player:{yaw:0},stickSprinting:false,ownedPlacement:{active:false},toxicBubbleSystem:{flameTrigger:null,tool:'laser',sprayColorIndex:0},camera:{getWorldDirection:()=>({toArray:()=>[0,0,-1]})},THREE:{Vector3:class{}},SPRAY_COLORS:[{hex:0xffffff}]});
+  const inputLine=source.split('\n').find(line=>line.startsWith('  function serverInput()'));
+  vm.runInContext(inputLine,context);
+  vm.runInContext(source.slice(source.indexOf('  let jumpTapTimer=0;'),source.indexOf('  const flameFireButton=')),context);
+  context.jump();assert.deepEqual(sent,[true]);assert.equal(context.serverInput().jump,true);
+  context.jump();assert.equal(timers.size,1,'a repeated tap replaces the release timer');
+  [...timers.values()][0]();assert.deepEqual(sent,[true,true,false]);assert.equal(context.serverInput().jump,false);
 });
 test('analog movement covers the same distance at 30, 60, and 120 FPS', () => {
   const movement = source.slice(source.indexOf('move.copy(forward).multiplyScalar(input.y)'), source.indexOf('const previousFootY=playerCollider.start.y-player.radius;', source.indexOf('  function updatePlayer(delta)')));
