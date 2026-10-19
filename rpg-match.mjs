@@ -10,16 +10,46 @@ export function recordTournamentScore(sim,playerId,delta,now){
  const tournament=sim.tournament ||= {id:randomUUID(),startedAt:now,participants:{}};tournament.participants ||= {};
  const row=tournament.participants[playerId] ||= {id:playerId,username:player.username,joinedAt:now,...Object.fromEntries(TOURNAMENT_STATS.map(key=>[key,0]))};
  row.username=player.username;
+ row.earnedMzk ||= 0;row.rewardCount ||= 0;row.rewards ||= {mzk:0,supplies:{},catalog:{}};row.itemsCollected ||= [];
  for(const key of TOURNAMENT_STATS){const value=Number(delta?.[key]);if(Number.isFinite(value)&&value>0)row[key]=(Number(row[key])||0)+value;}
  player.tournamentScore=row.score;
+ return row;
+}
+// Canonical wallet receipts are the source of tournament earnings. A room
+// retry, reconnect, or lost database response cannot add a pickup twice.
+export function recordTournamentRewards(sim,playerId,phase,receipts,now){
+ const row=recordTournamentScore(sim,playerId,{},now);if(!row)return null;
+ const ledger=sim.tournament.rewardPhases ||= {},key=phase.matchId+':'+phase.phaseId;
+ const claims=(ledger[key] ||= {})[playerId] ||= {};
+ const addReceipt=(target,receipt)=>{
+  target.earnedMzk=(target.earnedMzk||0)+(Number(receipt.amountMzk)||0);target.rewardCount=(target.rewardCount||0)+1;
+  const previous=target.rewards||{};const rewards=target.rewards={mzk:(Number(previous.mzk)||0)+(Number(receipt.amountMzk)||0),supplies:{...previous.supplies},catalog:{...previous.catalog}};
+  if(receipt.resource&&Number.isFinite(receipt.amount))rewards.supplies[receipt.resource]=(rewards.supplies[receipt.resource]||0)+receipt.amount;
+  if(receipt.catalogId)rewards.catalog[receipt.catalogId]=(rewards.catalog[receipt.catalogId]||0)+1;
+ };
+ for(const receipt of receipts){
+  if(!receipt?.claimId||claims[receipt.claimId])continue;
+  claims[receipt.claimId]=true;
+  addReceipt(row,receipt);
+  if(receipt.catalogId&&!row.itemsCollected.includes(receipt.catalogId))row.itemsCollected.push(receipt.catalogId);
+  const player=sim.players[playerId];
+  if(player?.matchId===phase.matchId)addReceipt(combatStats(player),receipt);
+  for(const match of new Set([sim.match,...(sim.matchHistory||[])])){
+   if(match?.id!==phase.matchId||!match.results)continue;
+   const result=match.results.find(entry=>entry.id===playerId);if(result)addReceipt(result,receipt);
+  }
+ }
+ const active=sim.tournament.coordinator?.scoreLedger?.phases;
+ if(active)for(const old of Object.keys(ledger))if(!active[old])delete ledger[old];
  return row;
 }
 export function tournamentView(sim,now){
  if(!sim.tournament)return null;
  const results=Object.values(sim.tournament.participants||{}).map(row=>{
-  const player=sim.players[row.id];return {...row,kills:(row.enemyKills||0)+(row.playerKills||0),accuracy:row.shots?Number((100*row.hits/row.shots).toFixed(1)):0,connected:Boolean(player&&!player.replacedByRoom&&now-player.lastSeen<15000)};
+  const player=sim.players[row.id],connection=sim.tournament.connectedPlayers?.[row.id];return {...row,kills:(row.enemyKills||0)+(row.playerKills||0),accuracy:row.shots?Number((100*row.hits/row.shots).toFixed(1)):0,connected:connection?Boolean(!connection.replaced&&now-connection.lastSeen<15000):Boolean(player&&!player.replacedByRoom&&now-player.lastSeen<15000)};
  }).sort((a,b)=>b.score-a.score||b.kills-a.kills||a.id.localeCompare(b.id));
- return {id:sim.tournament.id,startedAt:sim.tournament.startedAt,results};
+ const tournament=sim.tournament;
+ return {id:tournament.id,startedAt:tournament.startedAt,status:tournament.status||'active',currentLevel:tournament.currentLevel??sim.radTox?.level??1,phaseId:tournament.phaseId??sim.radTox?.phaseId,phaseKind:tournament.phaseKind??sim.radTox?.phaseKind,phaseState:tournament.phaseState??sim.radTox?.state,wave:tournament.wave??sim.radTox?.wave,environmentId:tournament.environmentId??sim.radTox?.environmentId,phaseStartedAt:tournament.phaseStartedAt??sim.radTox?.startedAt,phaseEndsAt:tournament.phaseEndsAt??sim.radTox?.endsAt,nextPhaseAt:tournament.nextPhaseAt??sim.radTox?.transition?.at??null,endedAt:tournament.endedAt??null,serverTime:now,results};
 }
 export function healPlayer(player,amount){player.health=Math.min(100,Math.max(0,player.health)+amount);player.lifeRevision=(player.lifeRevision||0)+1;return player.health;}
 export function damagePlayer(player,now,attacker=null){
@@ -44,7 +74,9 @@ export function registerParticipant(sim,id,player,now,reset=false){
 }
 export function matchRows(sim,now){
  return Object.values(sim.match?.participants||{}).map(participant=>{
-  const player=sim.players[participant.id],stats={...newCombatStats(),...(player?.combat||{})};
+  const player=sim.players[participant.id],saved=sim.match?.results?.find(row=>row.id===participant.id);
+  if(!player||player.matchId!==sim.match.id){if(saved)return {...saved,connected:Boolean(player&&!player.replacedByRoom&&now-player.lastSeen<15000)};}
+  const stats={...newCombatStats(),earnedMzk:0,rewardCount:0,rewards:{mzk:0,supplies:{},catalog:{}},...(player?.combat||{})};
   return {...participant,...stats,score:player?.score||0,items:[...(stats.itemsCollected||[])],kills:stats.enemyKills+stats.playerKills,accuracy:stats.shots?Number((100*stats.hits/stats.shots).toFixed(1)):0,damageDealt:Number(stats.damageDealt.toFixed(2)),damageTaken:Number(stats.damageTaken.toFixed(2)),health:player?.health||0,connected:Boolean(player&&!player.replacedByRoom&&now-player.lastSeen<15000)};
  }).sort((a,b)=>b.score-a.score||b.kills-a.kills||a.id.localeCompare(b.id));
 }
@@ -56,7 +88,7 @@ export function finishMatch(sim,outcome,now){
  for(const player of Object.values(sim.players))player.input={};
 }
 export function checkTeamDefeat(sim,now){
- if(sim.match?.state!=='active')return;
+ if(sim.match?.state!=='active'||sim.radTox?.combatMode==='local')return;
  const online=Object.keys(sim.match.participants).map(id=>sim.players[id]).filter(player=>player&&!player.replacedByRoom&&now-player.lastSeen<15000);
  if(online.length && online.every(player=>player.health<=0))finishMatch(sim,'defeat',now);
 }

@@ -57,10 +57,10 @@ function glbGeometry(url){
  }
  const group=new THREE.Group();for(const index of json.scenes[json.scene||0].nodes||[])group.add(node(index));return group;
 }
-export function environmentGeometry(environment){
+export function environmentGeometry(environment,{accelerate=true}={}){
  const root=new THREE.Group();for(const url of environment.modelUrls?.length?environment.modelUrls:[environment.modelUrl])root.add(glbGeometry(url));
  root.scale.setScalar((Number(environment.scale)||1)*(Number(environment.spaceScale)||1));root.rotation.set(environment.rotation?.x||0,environment.rotation?.y||0,environment.rotation?.z||0);root.updateMatrixWorld(true);
  const size=new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()),footprint=Math.max(size.x,size.z);
- if(environment.playableSize>0&&footprint>0)root.scale.multiplyScalar(THREE.MathUtils.clamp(environment.playableSize/footprint,.01,100));root.updateMatrixWorld(true);root.traverse(mesh=>{if(mesh.isMesh)accelerateStaticRaycast(mesh);});return root;
+ if(environment.playableSize>0&&footprint>0)root.scale.multiplyScalar(THREE.MathUtils.clamp(environment.playableSize/footprint,.01,100));root.updateMatrixWorld(true);if(accelerate)root.traverse(mesh=>{if(mesh.isMesh)accelerateStaticRaycast(mesh);});return root;
 }
 

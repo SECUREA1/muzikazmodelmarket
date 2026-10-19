@@ -7,7 +7,11 @@ export class SharedRoomStore {
  async read(){if(!this.data){try{this.data=JSON.parse(await readFile(this.file,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;this.data={};}}return structuredClone(this.data);}
  async save(data){await mkdir(dirname(this.file),{recursive:true});const temporary=this.file+'.'+randomUUID()+'.tmp';await writeFile(temporary,JSON.stringify(data));await rename(temporary,this.file);this.data=structuredClone(data);this.dirty=false;}
  update(id,change,{persist=true}={}){
-  const operation=this.queue.then(async()=>{const data=await this.read(),room=data[id]||{revision:0,objects:{}};const result=await change(room,data);data[id]=room;if(persist)await this.save(data);else{this.data=structuredClone(data);this.dirty=true;}return result;});
+  const operation=this.queue.then(async()=>{const data=await this.read(),room=data[id]||{revision:0,objects:{}};
+   // Persist an identity before an external reward transaction without waiting
+   // on this update's own queue (which would deadlock through flush()).
+   const checkpoint=async()=>{data[id]=room;await this.save(data);};
+   const result=await change(room,data,{checkpoint});data[id]=room;if(persist)await this.save(data);else{this.data=structuredClone(data);this.dirty=true;}return result;});
   this.queue=operation.catch(()=>{});return operation;
  }
  flush(){const operation=this.queue.then(async()=>{if(this.dirty)await this.save(this.data);});this.queue=operation.catch(()=>{});return operation;}

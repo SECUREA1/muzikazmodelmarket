@@ -65,7 +65,7 @@ const prototype=runInNewContext(game.slice(game.indexOf('  class ToxicBubbleSyst
   usesLocalRadTox:()=>true,healthAfterHit,
   RAD_TOX_STATES:{ACTIVE:'active',CLEARED:'cleared'},
   BEE_CONFIG:{id:'bee',maxHealth:20},AAPE_BOSS_CONFIG:{id:'aape',maxHealth:20},BEEDUCK_BOSS_CONFIG:{id:'beeduck',maxHealth:20},
-  THREE,recordLocalCombat:(stats,status)=>bossReports.push({stats,status}),recordLocalEnemyDamage(){},populateLocalRewards(){},claimLocalBossRewards(){},localBossRewardPhase:null,flushLocalCombat(){},
+  THREE,recordLocalCombat:(stats,status)=>bossReports.push({stats,status}),recordLocalEnemyDamage(){},saveLocalInstance(){},populateLocalRewards(){},claimLocalBossRewards(){},localBossRewardPhase:null,flushLocalCombat(){},
   AirborneHoneyBee:class {
     constructor(options){this.options=options;this.health=20;this.root=new THREE.Group();}
     async load(){} setSpawnFromGround(){}
@@ -135,12 +135,20 @@ test('enemy placement yields to rendering and cancels stale wave spawning',async
   const system={localEnemyKills:0};
   const campaign={phaseId:'one',level:1,wave:1,targetCount:36,population:radToxWavePopulation(1,1)};
   assert.equal(await spawn(system,campaign,()=>current),true);
-  assert.equal(system.levelTarget,36);assert.equal(yielded,12);
-  assert.equal(calls.filter(kind=>kind==='ghost').length,4);
+  assert.equal(system.levelTarget,36);assert.equal(yielded,9);
+  assert.equal(calls.filter(kind=>kind==='ghost').length,12);assert.equal(population.alive,36);
   calls.length=0;yielded=0;
   population.spawn=kind=>{calls.push(kind);if(calls.length===2)current=false;return {userData:{}};};
   assert.equal(await spawn(system,{...campaign,phaseId:'two'},()=>current),false);
-  assert.equal(calls.length,2);assert.equal(yielded,1);
+  assert.equal(calls.length,2);assert.equal(yielded,0);
+});
+
+test('a phase cannot become playable with a configured enemy type missing',async()=>{
+  const source=game.slice(game.indexOf('  async function spawnTimedLocalWave'),game.indexOf('  const localCampaign=new'));
+  const population=new LocalEnemyPopulation({spawn:kind=>kind==='brain'?null:{userData:{}},yieldFrame:async()=>{}});
+  const spawn=runInNewContext(source+'\nspawnTimedLocalWave;',{radToxWavePopulation,localPopulation:population});
+  await assert.rejects(spawn({localEnemyKills:0},{phaseId:'missing-brains',level:1,wave:1,targetCount:36,population:radToxWavePopulation(1,1)},()=>true),/Unable to place 6 enemies/);
+  assert.equal(population.ready,false);assert.equal(population.alive,30);assert.equal(population.slots.filter(slot=>slot.kind==='brain'&&slot.state==='active').length,0);
 });
 
 test('tournament ranged accuracy counts enemies while building hits cannot earn a streak',()=>{

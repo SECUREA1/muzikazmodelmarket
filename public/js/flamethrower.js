@@ -1,3 +1,5 @@
+import {MeshContactQueries, meshWorldBounds} from './static-mesh-queries.js';
+
 export const FLAME_CONFIG = Object.freeze({
   tank: 100, fuelPerBurst: 1, interval: .08, range: 12,
   muzzleOffset: .55,
@@ -41,12 +43,10 @@ export class Flamethrower {
     this.flames = [];
     this.burnPool = [];
     this.flashMesh = null;
-    this.ray = new THREE.Raycaster();
     this.geometry = new THREE.IcosahedronGeometry(.16, 1);
-    this.sphere = new THREE.Sphere();
-    this.box = new THREE.Box3();
-    this.triangle = new THREE.Triangle();
-    this.closest = new THREE.Vector3();
+    this.queries = new MeshContactQueries();
+    this.bounds = new Map();
+    this.boundsPool = new WeakMap();
   }
 
   createHeldModel() {
@@ -128,15 +128,7 @@ export class Flamethrower {
     this.flash = { root: flash, age: 0 };
     // Resolve the first real surface immediately, without a travelling fire effect.
     const targets = this.colliders().filter(t => t.root?.parent);
-    this.bounds = new Map();
-    for (const target of targets) {
-      target.meshes = this.meshes(target);
-      for (const mesh of target.meshes) {
-        mesh.updateWorldMatrix(true, false);
-        if (mesh.isSkinnedMesh) mesh.computeBoundingBox();
-        this.bounds.set(mesh, new T.Box3().setFromObject(mesh));
-      }
-    }
+    this.refreshBounds(targets);
     const hit = this.sweep(origin, origin.clone().addScaledVector(aim, FLAME_CONFIG.range), targets);
     if (!hit || this.flames.length >= FLAME_CONFIG.maxFlames) return true;
     const root = this.burnPool.pop() || new T.Group();
@@ -171,68 +163,39 @@ export class Flamethrower {
     return meshes;
   }
 
+  refreshBounds(targets) {
+    if (!this.bounds) this.bounds = new Map();
+    else this.bounds.clear();
+    for (const target of targets) {
+      target.meshes = this.meshes(target);
+      for (const mesh of target.meshes) {
+        let box = this.boundsPool.get(mesh);
+        if (!box) { box = new this.THREE.Box3(); this.boundsPool.set(mesh, box); }
+        this.bounds.set(mesh, meshWorldBounds(mesh, box));
+      }
+    }
+  }
+
   // Bounding boxes only reject distant meshes. Triangle contact decides whether
   // flames really touch floors, irregular GLBs, or animated character surfaces.
   touching(target, point, radius = FLAME_CONFIG.radius) {
     if (target.touches) return target.touches(point);
-    this.sphere.set(point, radius);
     for (const mesh of this.meshes(target)) {
-      if (!this.bounds?.has(mesh)) mesh.updateWorldMatrix(true, false);
-      this.box.copy(this.bounds?.get(mesh) || new this.THREE.Box3().setFromObject(mesh));
-      if (!this.box.intersectsSphere(this.sphere)) continue;
-      const insideRay = !target.surfaceOnly && this.box.containsPoint(point)
-        ? new this.THREE.Ray(point, new this.THREE.Vector3(1, .371, .217).normalize()) : null;
-      const crossings = new Set();
-      const positions = mesh.geometry.attributes.position, index = mesh.geometry.index;
-      const count = index ? index.count : positions.count;
-      for (let i = 0; i + 2 < count; i += 3) {
-        for (let j = 0; j < 3; j++) {
-          const vertex = [this.triangle.a, this.triangle.b, this.triangle.c][j];
-          const vertexIndex = index ? index.getX(i + j) : i + j;
-          mesh.getVertexPosition(vertexIndex, vertex);
-          vertex.applyMatrix4(mesh.matrixWorld);
-        }
-        this.triangle.closestPointToPoint(point, this.closest);
-        if (this.closest.distanceToSquared(point) <= radius ** 2) return true;
-        if (insideRay?.intersectTriangle(this.triangle.a, this.triangle.b, this.triangle.c, false, this.closest)) {
-          crossings.add(Math.round(point.distanceTo(this.closest) * 1e6));
-        }
-      }
-      if (crossings.size % 2 === 1) return true;
+      if (this.queries.touching(mesh, point, radius, Boolean(target.surfaceOnly), this.bounds?.get(mesh))) return true;
     }
     return false;
   }
 
   sweep(start, end, targets) {
-    const T = this.THREE, travel = end.clone().sub(start), distance = travel.length();
+    const travel = end.clone().sub(start), distance = travel.length();
     if (!distance) return null;
     const direction = travel.normalize();
     let nearest = null;
     for (const target of targets) {
       if (target.projectiles === false) continue;
       for (const mesh of this.meshes(target)) {
-        if (!this.bounds?.has(mesh)) mesh.updateWorldMatrix(true, false);
-        this.box.copy(this.bounds?.get(mesh) || new T.Box3().setFromObject(mesh)).expandByScalar(.16);
-        this.ray.set(start, direction);
-        const entry = this.ray.ray.intersectBox(this.box, this.closest);
-        if (!this.box.containsPoint(start) && (!entry || entry.distanceTo(start) > distance)) continue;
-        // Test both sides of triangles, including floors approached from below.
-        const positions = mesh.geometry.attributes.position, index = mesh.geometry.index;
-        const count = index ? index.count : positions.count;
-        this.ray.set(start, direction);
-        for (let i = 0; i + 2 < count; i += 3) {
-          for (let j = 0; j < 3; j++) {
-            const vertex = [this.triangle.a, this.triangle.b, this.triangle.c][j];
-            mesh.getVertexPosition(index ? index.getX(i + j) : i + j, vertex);
-            vertex.applyMatrix4(mesh.matrixWorld);
-          }
-          const point = this.ray.ray.intersectTriangle(this.triangle.a, this.triangle.b, this.triangle.c, false, this.closest);
-          if (!point) continue;
-          const hitDistance = point.distanceTo(start);
-          if (hitDistance <= distance && (!nearest || hitDistance < nearest.distance)) {
-            nearest = { point: point.clone(), distance: hitDistance, target, normal: this.triangle.getNormal(new T.Vector3()) };
-          }
-        }
+        const hit = this.queries.segment(mesh, start, direction, distance, this.bounds?.get(mesh));
+        if (hit && (!nearest || hit.distance < nearest.distance)) nearest = { ...hit, target };
       }
 
     }
@@ -248,15 +211,7 @@ export class Flamethrower {
     }
     if (!this.flames.length) return;
     const targets = this.colliders().filter(t => t.root?.parent);
-    this.bounds = new Map();
-    for (const target of targets) {
-      target.meshes = this.meshes(target);
-      for (const mesh of target.meshes) {
-        mesh.updateWorldMatrix(true, false);
-        if (mesh.isSkinnedMesh) mesh.computeBoundingBox();
-        this.bounds.set(mesh, new this.THREE.Box3().setFromObject(mesh));
-      }
-    }
+    this.refreshBounds(targets);
     for (const flame of [...this.flames]) {
       const { root } = flame;
       const burnDelta = delta;

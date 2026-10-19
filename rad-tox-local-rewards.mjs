@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
-import {RAD_TOX_REPORT_GRACE_MS} from './rad-tox-local-score.mjs';
-import {combatStats,matchRows} from './rpg-match.mjs';
+import {RAD_TOX_REPORT_GRACE_MS,applyRadToxProgress} from './rad-tox-local-score.mjs';
+import {combatStats,matchRows,recordTournamentRewards} from './rpg-match.mjs';
+import {RAD_TOX_SCORE_FIELDS,emptyRadToxScore} from './public/js/rad-tox-score-reporter.js';
 
 const MAX_CLAIMS = 64;
 export const RAD_TOX_REWARD_PROGRESS_FIELDS=Object.freeze(['enemyKills','hits','sprayActions','taserHits','blastHits']);
@@ -57,7 +58,18 @@ export function validateRadToxRewardGrant(input) {
   if([...RAD_TOX_REWARD_PROGRESS_FIELDS,'shots'].some(key=>!Number.isSafeInteger(progress[key])||progress[key]<0||progress[key]>100000)||progress.enemyKills>phase.targetCount||progress.hits>progress.shots||progress.taserHits>progress.shots||progress.blastHits>progress.shots)fail('Invalid server RAD-TOX reward progress.');
   if(typeof progress.bossDefeated!=='boolean'||progress.bossDefeated&&(phase.phaseKind!=='boss'||progress.enemyKills<1))fail('Invalid server RAD-TOX boss reward progress.');
   for(const entry of claims)if(entry.requiresKills>progress.enemyKills||entry.requiresBoss&&!progress.bossDefeated)fail('Defeat the required enemies before collecting this reward.',409);
-  return {playerId:input.playerId,phase,claims,progress};
+  let resume;
+  if(input.resume!==undefined){
+    const value=input.resume,stats={...emptyRadToxScore(),...value?.stats};
+    if(!Number.isSafeInteger(value?.sequence)||value.sequence<1||RAD_TOX_SCORE_FIELDS.some(key=>!Number.isFinite(stats[key])||stats[key]<0||stats[key]>10000000||(!['damageDealt','damageTaken'].includes(key)&&!Number.isSafeInteger(stats[key])))||[...RAD_TOX_REWARD_PROGRESS_FIELDS,'shots'].some(key=>stats[key]!==progress[key]))fail('Invalid durable RAD-TOX combat receipt.');
+    if(stats.score>stats.enemyKills*10+stats.hits*(stats.hits+1)/2||stats.bossKills>(phase.phaseKind==='boss'?1:0)||stats.bossKills>stats.enemyKills||stats.misses+stats.hits>stats.shots)fail('Invalid durable RAD-TOX combat receipt.');
+    const status={};for(const [key,max]of [['health',100],['ammo',10000],['fuel',100],['spray',80],['lifeRevision',Number.MAX_SAFE_INTEGER]]){
+      const amount=value.status?.[key];if(amount===undefined)continue;
+      if(!Number.isFinite(amount)||amount<0||amount>max||key==='lifeRevision'&&!Number.isSafeInteger(amount))fail('Invalid durable RAD-TOX player status.');status[key]=amount;
+    }
+    resume={sequence:value.sequence,stats:Object.fromEntries(RAD_TOX_SCORE_FIELDS.map(key=>[key,stats[key]])),status,bossDefeated:progress.bossDefeated};
+  }
+  return {playerId:input.playerId,phase,claims,progress,...(resume?{resume}:{})};
 }
 
 export function validateRadToxRewardClaims(sim,playerId,report,now,{acceptedOnly=false}={}) {
@@ -84,6 +96,7 @@ export function radToxLocalRewardView(sim,playerId) {
   const receipts=Object.values(phase.rewardClaims?.[playerId]||{});
   return {matchId:phase.matchId,phaseId:phase.phaseId,manifest:radToxRewardManifest(phase,playerId),claimedIds:receipts.map(receipt=>receipt.claimId),
     progress:phase.rewardProgress?.[playerId]||{enemyKills:0,hits:0},
+    resume:phase.players[playerId]?{sequence:phase.players[playerId].sequence,stats:{...phase.players[playerId].stats},bossDefeated:phase.players[playerId].bossDefeated,status:{...phase.players[playerId].status}}:null,
     ...(Number.isFinite(sim.players[playerId]?.localRewardBalance)?{balanceAfterMzk:sim.players[playerId].localRewardBalance}:{})};
 }
 
@@ -115,20 +128,56 @@ export async function claimRadToxRewards(sim,playerId,report,now,grant) {
   phase.rewardProgress ||= {};
   const previousProgress=phase.rewardProgress[playerId]||{enemyKills:0,hits:0};
   const hasProgress=RAD_TOX_REWARD_PROGRESS_FIELDS.some(key=>progress[key]>(previousProgress[key]||0))||progress.bossDefeated&&!previousProgress.bossDefeated;
+  phase.rewardResumes ||= {};const priorResume=phase.rewardResumes[playerId];
+  const hasResume=!priorResume||RAD_TOX_SCORE_FIELDS.some(key=>accepted.stats[key]!==priorResume.stats?.[key])||JSON.stringify(accepted.status||{})!==JSON.stringify(priorResume.status||{})||Boolean(accepted.bossDefeated)!==Boolean(priorResume.bossDefeated);
   let result=null;
-  if(pending.length||hasProgress) {
+  if(pending.length||hasProgress||hasResume) {
     if(typeof grant!=='function')fail('RAD-TOX Backpack rewards are temporarily unavailable.',503);
-    result=await grant({playerId,phase:rewardPhase(phase),claimIds:pending.map(entry=>entry.id),progress});
+    result=await grant({playerId,phase:rewardPhase(phase),claimIds:pending.map(entry=>entry.id),progress,resume:{sequence:accepted.sequence,stats:accepted.stats,status:accepted.status,bossDefeated:accepted.bossDefeated}});
     const receipts=new Map((result?.receipts||[]).map(receipt=>[receipt.claimId,receipt]));
     if(pending.some(entry=>!receipts.has(entry.id)))fail('RAD-TOX Backpack did not confirm every pickup.',503);
     for(const entry of pending)stored[entry.id]=receipts.get(entry.id);
     if(hasProgress)phase.rewardProgress[playerId]={...Object.fromEntries([...RAD_TOX_REWARD_PROGRESS_FIELDS,'shots'].map(key=>[key,Math.max(previousProgress[key]||0,Number(result?.progress?.[key])||0)])),bossDefeated:Boolean(previousProgress.bossDefeated||result?.progress?.bossDefeated)};
+    if(result.resume)phase.rewardResumes[playerId]=result.resume;
     if(Number.isFinite(result.balanceAfterMzk))sim.players[playerId].localRewardBalance=result.balanceAfterMzk;
   }
   const receipts=claims.map(entry=>stored[entry.id]);
   recordCollectedItems(sim,phase,playerId,receipts,now);
+  recordTournamentRewards(sim,playerId,phase,receipts,now);
   return {matchId:phase.matchId,phaseId:phase.phaseId,claimedIds:claims.map(entry=>entry.id),receipts,progress:phase.rewardProgress[playerId]||{enemyKills:0,hits:0},
     amountMzk:receipts.reduce((sum,receipt)=>sum+(receipt.amountMzk||0),0),
     ...(Number.isFinite(result?.balanceAfterMzk??sim.players[playerId]?.localRewardBalance)?{balanceAfterMzk:result?.balanceAfterMzk??sim.players[playerId].localRewardBalance}:{}),
     items:receipts.flatMap(receipt=>receipt.item?[receipt.item]:[])};
+}
+
+
+// This accepts only data read from the account database through a server-owned
+// callback. Replaying a durable cumulative receipt repairs a room-save crash;
+// it never creates a second combat delta or wallet grant.
+export async function hydrateRadToxRewards(sim,playerId,now,load){
+  const campaign=sim.radTox,ledger=sim.radToxScoreLedger,currentKey=`${sim.match?.id}:${campaign?.phaseId}`,currentPhase=ledger?.phases?.[currentKey];
+  if(campaign?.combatMode!=='local'||!currentPhase?.participants.includes(playerId)||typeof load!=='function')return null;
+  const phases=(ledger.order||Object.keys(ledger.phases)).slice(-24).map(key=>ledger.phases[key]).filter(phase=>phase?.participants.includes(playerId));
+  const saved=await load({playerId,phase:rewardPhase(currentPhase),phases:phases.map(rewardPhase)});if(!saved)return null;
+  const states=Array.isArray(saved.phases)?saved.phases:[{...saved,phase:rewardPhase(currentPhase)}];
+  const allowedPhases=new Map(phases.map(phase=>[phase.matchId+':'+phase.phaseId,phase]));
+  for(const durable of states){
+    const phase=allowedPhases.get(durable.phase?.matchId+':'+durable.phase?.phaseId);if(!phase)continue;
+    const validated=validateRadToxRewardGrant({playerId,phase,claimIds:durable.claimedIds||[],progress:durable.progress,...(durable.resume?{resume:durable.resume}:{})});
+    if(validated.resume&&validated.resume.sequence>(phase.players[playerId]?.sequence||0)){
+      const player=sim.players[playerId],lifeRevision=validated.resume.status.lifeRevision;
+      if(phase.key===currentKey&&Number.isSafeInteger(lifeRevision)&&lifeRevision>(player.lifeRevision||0))player.lifeRevision=lifeRevision;
+      applyRadToxProgress(sim,playerId,{matchId:phase.matchId,phaseId:phase.phaseId,...validated.resume,...validated.resume.status},now,{trustedReplay:true});
+    }
+    const allowed=new Set(validated.claims.map(entry=>entry.id)),receipts=(durable.receipts||[]).filter(receipt=>allowed.has(receipt.claimId));
+    if(receipts.length!==allowed.size)fail('RAD-TOX saved pickup receipts are incomplete.',503);
+    phase.rewardClaims ||= {};const stored=phase.rewardClaims[playerId] ||= {};
+    for(const receipt of receipts)stored[receipt.claimId]=receipt;
+    phase.rewardResumes ||= {};if(validated.resume)phase.rewardResumes[playerId]=validated.resume;
+    phase.rewardProgress ||= {};const prior=phase.rewardProgress[playerId]||{};
+    phase.rewardProgress[playerId]={...Object.fromEntries([...RAD_TOX_REWARD_PROGRESS_FIELDS,'shots'].map(key=>[key,Math.max(prior[key]||0,validated.progress[key])])),bossDefeated:Boolean(prior.bossDefeated||validated.progress.bossDefeated)};
+    if(Number.isFinite(durable.balanceAfterMzk))sim.players[playerId].localRewardBalance=durable.balanceAfterMzk;
+    recordCollectedItems(sim,phase,playerId,receipts,now);recordTournamentRewards(sim,playerId,phase,receipts,now);
+  }
+  return radToxLocalRewardView(sim,playerId);
 }

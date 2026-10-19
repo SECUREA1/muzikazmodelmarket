@@ -1,9 +1,9 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 
 export const QUALITY_PRESETS = {
-  performance: { pixelRatio: 1, shadows: false, exposure: 0.95, shadowSize: 512 },
-  balanced: { pixelRatio: 1.5, shadows: true, exposure: 1.05, shadowSize: 1024 },
-  high: { pixelRatio: 2, shadows: true, exposure: 1.12, shadowSize: 2048 }
+  performance: { pixelRatio: 1, shadows: false, exposure: 0.95, shadowSize: 512, effects: 0 },
+  balanced: { pixelRatio: 1.5, shadows: true, exposure: 1.05, shadowSize: 1024, effects: 1 },
+  high: { pixelRatio: 2, shadows: true, exposure: 1.12, shadowSize: 2048, effects: 2 }
 };
 
 export function chooseQualityPreset(name = 'auto', renderer = null) {

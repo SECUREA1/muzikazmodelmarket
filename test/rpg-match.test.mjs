@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import {damagePlayer,newCombatStats,finishMatch,openMatch,registerParticipant,healPlayer,recordTournamentScore,tournamentView} from '../rpg-match.mjs';
+import {syncRadToxTournament} from '../rad-tox-room-transfer.mjs';
 import {healthAfterHit} from '../public/js/rpg-combat-rules.js';
 
 async function arena(run,{radTox=true}={}){
@@ -85,7 +86,7 @@ test('level results include disconnected participants, remain frozen, survive re
  let state=await send('alice','join');await send('bob','join');await arrange();advance(3100);
  state=await send('alice','rad-tox-progress',{matchId:state.match.id,phaseId:state.radTox.phaseId,sequence:1,stats:{shots:1,misses:1}});
  advance(16000);await send('alice','join');
- await store.update(map.id,room=>finishMatch(room.simulation,'victory',now()));
+ await store.update(map.id,(room,rooms)=>{syncRadToxTournament(room.simulation,rooms,{environment:map,now:now()});finishMatch(room.simulation,'victory',now());});
  state=await send('alice','input',{input:{}});const id=state.match.id;assert.equal(state.match.state,'finished');assert.equal(state.match.results.length,2);
  const bob=state.match.results.find(row=>row.id==='account:bob');assert.equal(bob.connected,false);const alice=state.match.results.find(row=>row.id==='account:alice');assert.equal(alice.shots,1);assert.equal(alice.misses,1);
  const frozen=JSON.stringify(state.match.results);await assert.rejects(send('alice','fire',{tool:'laser',direction:[1,0,0]}),{statusCode:409});
@@ -96,12 +97,12 @@ test('level results include disconnected participants, remain frozen, survive re
  state=await send('bob','next-rad-tox',{matchId:id});assert.equal(state.match.id,nextId);assert.equal(state.match.level,2,'simultaneous next requests cannot skip a level');
 }));
 
-test('a team wipe finishes the level and records each death once',()=>arena(async({send,advance,store,map,now})=>{
- await send('alice','join');await send('bob','join');advance(3100);
+test('local player defeats preserve the shared level and independent respawns',()=>arena(async({send,advance,store,map,now})=>{
+ const original=await send('alice','join');await send('bob','join');advance(3100);
  await store.update(map.id,room=>{for(const player of Object.values(room.simulation.players)){player.lastSeen=now();for(let i=0;i<45;i++)damagePlayer(player,now());}});
- const state=await send('alice','input',{input:{}});assert.equal(state.match.outcome,'defeat');assert.equal(state.match.results.length,2);assert.ok(state.match.results.every(row=>row.deaths===1&&row.hitsTaken===45));
- await assert.rejects(send('alice','next-rad-tox',{matchId:state.match.id}),{statusCode:409});advance(10000);
- const retry=await send('alice','next-rad-tox',{matchId:state.match.id});assert.equal(retry.match.level,1);assert.equal(retry.players['account:alice'].hitsRemaining,45);
+ const state=await send('alice','input',{input:{}});assert.equal(state.match.state,'active');assert.equal(state.match.outcome,null);assert.equal(state.match.results.length,2);assert.ok(state.match.results.every(row=>row.deaths===1&&row.hitsTaken===45));
+ const respawned=await send('alice','respawn');assert.equal(respawned.match.id,original.match.id);assert.equal(respawned.radTox.phaseId,original.radTox.phaseId);assert.equal(respawned.radTox.endsAt,original.radTox.endsAt);
+ assert.equal(respawned.players['account:alice'].hitsRemaining,45);assert.equal(respawned.players['account:bob'].health,0,'one respawn does not revive another local player');
 }));
 
 test('Builder enemy kills credit the final attacker and give the other contributor an assist',()=>arena(async({send,advance,arrange,store,map,now})=>{
@@ -110,7 +111,7 @@ test('Builder enemy kills credit the final attacker and give the other contribut
  let state=await send('alice','fire',{tool:'laser',direction:[0,-.1,-1]});assert.equal(state.actors.target.health,50);
  advance(250);state=await send('bob','fire',{tool:'laser',direction:[-2,-.5,-5]});assert.equal(state.actors.target.health,0);
  assert.equal(state.players['account:alice'].combat.assists,1);assert.equal(state.players['account:alice'].score,5);assert.equal(state.players['account:bob'].combat.enemyKills,1);assert.equal(state.players['account:bob'].score,10);
- await store.update(map.id,room=>finishMatch(room.simulation,'victory',now()));
+ await store.update(map.id,(room,rooms)=>{syncRadToxTournament(room.simulation,rooms,{environment:map,now:now()});finishMatch(room.simulation,'victory',now());});
  state=await send('alice','input',{input:{}});assert.equal(state.match.results[0].username,'bob');assert.equal(state.match.results[1].assists,1);assert.ok(state.match.results.every(row=>row.shots===row.hits+row.misses));
 },{radTox:false}));
 

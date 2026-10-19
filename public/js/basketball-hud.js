@@ -27,6 +27,14 @@ export function basketballLobbySummary(game={}, players={}) {
   });
 }
 
+/** Only displayed state invalidates the HUD; moving athletes do not rebuild it. */
+export function basketballHudRevision(game,player,enabled,players={},ui={}){
+ const board=enabled&&game?basketballScoreboardState(game,{freeplay:ui.freeplay}):null;
+ return JSON.stringify([Boolean(enabled),board,game?.state,game?.matchId,game?.hostId,game?.hostName,game?.settings,game?.lastPlay,
+  player&&[player.actorId,player.id,player.basketballRole,player.basketballTeam],
+  Object.entries(players).map(([id,member])=>[id,member.username,member.name,Boolean(member.basketballAI),member.basketballRole,member.basketballTeam]),ui]);
+}
+
 /** Keep the arrival menu open until a server-confirmed entry choice succeeds. */
 export function createBasketballEntryFlow({open=()=>{},close=()=>{},choose,onChange=()=>{},onStatus=()=>{}}={}) {
   let active=false,opened=false,request=null,generation=0;
@@ -147,7 +155,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
   rules.innerHTML='<form><h2 id="basketball-rules-title">Quick match tuner</h2><p>Choose team size, human players and AI difficulty, then start. Both teams stay equal; AI fills every empty spot at tip-off.</p><button type="button" data-solo-setup>Solo vs AI</button><div class="basketball-rules-fields"><label>Players per team<select name="teamSize"><option value="1">1 vs 1</option><option value="2">2 vs 2</option><option value="3">3 vs 3</option><option value="4">4 vs 4</option><option value="5">5 vs 5</option></select></label><label>AI difficulty<select name="aiDifficulty"><option value="1">Tier 1 · Rookie</option><option value="2">Tier 2 · Amateur</option><option value="3">Tier 3 · Pro</option><option value="4">Tier 4 · All-Star</option><option value="5">Tier 5 · Legend</option></select></label><label>Home human slots<input name="homeHumans" type="number" min="0" max="5" step="1" required></label><label>Away human slots<input name="awayHumans" type="number" min="0" max="5" step="1" required></label></div><details><summary>Competition rules · timing &amp; scoring</summary><div class="basketball-rules-fields"><label>Minutes per period<input type="number" name="quarterMinutes" min="1" max="12" step="1" required></label><label>Number of periods<input type="number" name="quarters" min="1" max="4" step="1" required></label><label>Shot clock (seconds)<input type="number" name="shotClockSeconds" min="5" max="60" step="1" required></label><label>Score to win (0 = timed)<input type="number" name="scoreLimit" min="0" max="200" step="1" required></label><label>Win by points<input type="number" name="winBy" min="1" max="10" step="1" required></label></div></details><p data-roster-preview role="status" aria-live="polite"></p><p>Playing with friends? Save to lobby, let everyone join Home or Away, then start. AI wears numbered team jerseys. Late arrivals watch until the next game.</p><p data-rules-status role="status"></p><footer><button type="submit" name="start" value="true" data-start-match>Start game</button><button type="submit" name="save" data-save-rules>Save to lobby</button><button type="button" data-close-rules>Back to court</button></footer></form>';
   stage.append(rules);
   let score = '0:0', ready = false, currentGame = null, currentPlayer = null, currentPlayers = {};
-  let savingSetup=false,actionContext='',startingMatch=null,worldOpening=false;
+  let savingSetup=false,actionContext='',startingMatch=null,worldOpening=false,lastRenderRevision=null;
   const entry=createBasketballEntryFlow({
     open:openMatch,close:()=>match.close(),onChange:pending=>{onEntryChange(pending);syncEntryButtons();},
     onStatus:message=>{match.querySelector('[data-entry-status]').textContent=message;},
@@ -254,10 +262,16 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
     triggerSelected:()=>selection.trigger(),
     selectedAction:()=>selection.selected,
     render(game, player, enabled, players={}) {
+      // Keep callbacks on the newest state even when only positions or hidden
+      // clock milliseconds changed. Updating the DOM on every render repeatedly
+      // invalidated layout for controls and delayed the next gameplay frame.
+      ready=Boolean(player);currentGame=game;currentPlayer=player;currentPlayers=players;
+      const practicing=Boolean(enabled&&game&&freeplay()&&game.state==='ready');
+      const revision=basketballHudRevision(game,player,enabled,players,{freeplay:practicing,entryPending:entry.pending,entryBusy:entry.busy,worldOpening,savingSetup,rulesOpen:rules.open,matchOpen:match.open,selected:selection.selected?.id,pending:[...pending].map(button=>button.dataset.basketballAction)});
+      if(revision===lastRenderRevision)return;
+      lastRenderRevision=revision;
       root.hidden = !enabled;scoreboard.hidden=!enabled||!game;screenBar.hidden=!enabled;root.classList.toggle('is-playing',game?.state==='live');
       stage.classList.toggle('basketball-world', Boolean(enabled));
-      ready = Boolean(player);
-      currentGame=game;currentPlayer=player;currentPlayers=players;
       const context=`${enabled}:${game?.matchId||game?.state||''}:${player?.basketballRole||''}`;if(context!==actionContext){actionContext=context;selection.reset();}
       for(const button of [...root.querySelectorAll('button'),...screenBar.querySelectorAll('button')])if(!button.closest('.game-match-browser'))button.disabled=blocked(button);
       if(!enabled&&rules.open)rules.close();
@@ -266,7 +280,6 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
       syncEntryButtons();
       if (!enabled || !game) return;
       if(rules.open){previewRoster();if(game.state==='live'||!isHost()){for(const input of rules.querySelectorAll('input,select,[type=submit],[data-solo-setup]'))input.disabled=true;rules.querySelector('[data-rules-status]').textContent=game.state==='live'?'Match started. Settings are locked until the final buzzer.':`${game.hostName||'The host'} controls match setup.`;}}
-      const practicing=freeplay()&&game.state==='ready';
       const board=basketballScoreboardState(game,{freeplay:practicing});
       scoreboard.querySelector('[data-home]').textContent=board.home;
       scoreboard.querySelector('[data-away]').textContent=board.away;

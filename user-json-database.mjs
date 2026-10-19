@@ -551,8 +551,28 @@ export class UserJsonDatabase {
     return this.transaction(data=>{const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');const previous=user.memory.ioncoreRpg||{};user.memory.ioncoreRpg={stats:{...RPG_DEFAULT_STATS,...previous.stats,health},history:[...(previous.history||[]),{health,stats:{...RPG_DEFAULT_STATS,...previous.stats,health},reason:'gameplay',world:String(input.world||'').slice(0,140),recordedAt:new Date().toISOString()}].slice(-100)};user.updatedAt=new Date().toISOString();user.revision++;return user.memory.ioncoreRpg;});
   }
 
+  async radToxRewardState(walletId,input){
+    const wallet=cleanWallet(walletId),requested=input?.phases||[input?.phase];
+    if(!Array.isArray(requested)||requested.length>24)throw Object.assign(new Error('Invalid saved RAD-TOX phases.'),{statusCode:422});
+    const phases=requested.map(phase=>validateRadToxRewardGrant({playerId:input.playerId,phase,claimIds:[],progress:{}}).phase);
+    const playerId=input.playerId;
+    await this.queue;await this.initialize();const data=await this.read(),user=data.users[wallet];
+    if(!user)throw new Error('Member Backpack not found.');
+    if(user.memory?.account?.accountId&&playerId!=='account:'+user.memory.account.accountId)throw Object.assign(new Error('RAD-TOX rewards belong to another account.'),{statusCode:403});
+    const byPhase=new Map(phases.map(phase=>[phase.matchId+':'+phase.phaseId,[]]));
+    for(const entry of data.transactions||[]){
+      if(entry.type!=='RAD_TOX_LOCAL_REWARD'||entry.walletId!==wallet||entry.playerId!==playerId)continue;
+      byPhase.get(entry.matchId+':'+entry.phaseId)?.push(entry);
+    }
+    const states=phases.map(phase=>{
+      const receipts=byPhase.get(phase.matchId+':'+phase.phaseId),progress=user.memory?.radToxRewards?.phases?.[phase.matchId+':'+phase.phaseId]||{enemyKills:0,hits:0};
+      return {phase,claimedIds:receipts.map(receipt=>receipt.claimId),receipts,balanceAfterMzk:Number(user.tokens.MZK)||0,progress,...(progress.resume?{resume:progress.resume}:{})};
+    });
+    return input.phases?{phases:states,balanceAfterMzk:Number(user.tokens.MZK)||0}:states[0];
+  }
+
   grantRadToxRewards(walletId,input){
-    const wallet=cleanWallet(walletId),{playerId,phase,claims,progress}=validateRadToxRewardGrant(input);
+    const wallet=cleanWallet(walletId),{playerId,phase,claims,progress,resume}=validateRadToxRewardGrant(input);
     return this.transaction(data=>{
       const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');
       const accountId=user.memory?.account?.accountId;
@@ -571,9 +591,9 @@ export class UserJsonDatabase {
       const prior=rewards.phases[phaseKey]||{enemyKills:0,hits:0};
       const accepted=Object.fromEntries([...RAD_TOX_REWARD_PROGRESS_FIELDS,'shots'].map(key=>[key,Math.max(prior[key]||0,progress[key])]));
       const deltas=Object.fromEntries(RAD_TOX_REWARD_PROGRESS_FIELDS.map(key=>[key,accepted[key]-(prior[key]||0)]));
-      const hasProgress=Object.values(deltas).some(value=>value>0);
+      const hasProgress=Object.values(deltas).some(value=>value>0),hasResume=resume&&resume.sequence>(prior.resume?.sequence||0);
       const bossDefeated=Boolean(prior.bossDefeated||progress.bossDefeated);
-      rewards.phases[phaseKey]={...accepted,bossDefeated,recordedAt:now};
+      rewards.phases[phaseKey]={...accepted,bossDefeated,...(resume||prior.resume?{resume:resume&&resume.sequence>(prior.resume?.sequence||0)?resume:prior.resume}:{}),recordedAt:now};
       const phaseKeys=Object.keys(rewards.phases);for(const key of phaseKeys.slice(0,Math.max(0,phaseKeys.length-2048)))delete rewards.phases[key];
       if(hasProgress){
         user.memory.memberRewards ||= {};
@@ -596,9 +616,9 @@ export class UserJsonDatabase {
           kind:claim.kind,amountMzk:claim.amountMzk||0,balanceAfterMzk:user.tokens.MZK,...(claim.resource?{resource:claim.resource,amount:claim.amount}:{}),...(item?{item,catalogId:claim.catalogId}:{})});
         existing.set(claim.id,receipt);
       }
-      if(pending.length||hasProgress){user.revision++;user.updatedAt=now;}
+      if(pending.length||hasProgress||hasResume){user.revision++;user.updatedAt=now;}
       const receipts=claims.map(claim=>existing.get(claim.id));
-      return {claimedIds:claims.map(claim=>claim.id),receipts,amountMzk,balanceAfterMzk:user.tokens.MZK,items:receipts.flatMap(receipt=>receipt.item?[receipt.item]:[]),progress:{...accepted,bossDefeated}};
+      return {claimedIds:claims.map(claim=>claim.id),receipts,amountMzk,balanceAfterMzk:user.tokens.MZK,items:receipts.flatMap(receipt=>receipt.item?[receipt.item]:[]),progress:{...accepted,bossDefeated},...(rewards.phases[phaseKey].resume?{resume:rewards.phases[phaseKey].resume}:{})};
     });
   }
 

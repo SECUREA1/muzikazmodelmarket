@@ -172,3 +172,13 @@ test('browser retries and late wave flushing round-trip through the authoritativ
   assert.equal(sim.players.alice.health, 100);
   assert.equal(reporter.pending, false);
 });
+
+
+test('the tournament ending closes an untimed boss report window without renewing it on reconnect',()=>{
+ const {sim,now}=encounter();sim.radTox={...sim.radTox,phaseKind:'boss',phaseId:'final-boss',wave:5,targetCount:1,endsAt:null};captureRadToxScorePhase(sim,now);
+ const packet=progress(sim,{enemyKills:1,bossKills:1,score:10},{bossDefeated:true});finishMatch(sim,'victory',now+1000);
+ applyRadToxProgress(sim,'alice',packet,now+2000);
+ const key=packet.matchId+':'+packet.phaseId;assert.equal(sim.radToxScoreLedger.phases[key].closedAt,now+1000);
+ assert.throws(()=>applyRadToxProgress(sim,'bob',packet,now+1000+RAD_TOX_REPORT_GRACE_MS+1),{statusCode:409,code:'RAD_TOX_PHASE_EXPIRED'});
+ assert.equal(sim.radToxScoreLedger.phases[key].closedAt,now+1000,'reconnecting does not reopen the final report window');
+});

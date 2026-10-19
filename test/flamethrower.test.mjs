@@ -171,3 +171,13 @@ test('direct ignition misses off-aim targets without running droplet contact sca
   assert.equal(system.flames.length, 0);
   system.dispose(); target.geometry.dispose(); target.material.dispose();
 });
+
+test('line of sight invalidates stale bounds safely before the next ignition or contact update',()=>{
+  const target=new THREE.Mesh(new THREE.BoxGeometry(2,2,1,8,8,8),new THREE.MeshBasicMaterial());target.position.z=-4;
+  const {scene,system}=setup(()=>[{root:target}]);scene.add(target);system.bounds=null;
+  const origin=new THREE.Vector3(),direction=new THREE.Vector3(0,0,-1);
+  assert.equal(system.sweep(origin,new THREE.Vector3(0,0,-8),[{root:target}]).target.root,target);
+  assert.equal(system.fire(origin,direction),true);system.bounds=null;system.update(.1,.1);
+  assert.equal(system.flames.length,1);assert.ok(system.bounds instanceof Map);
+  system.dispose();target.geometry.dispose();target.material.dispose();
+});

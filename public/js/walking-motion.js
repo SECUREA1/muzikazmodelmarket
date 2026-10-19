@@ -53,7 +53,9 @@ export class WalkingMotion {
  }
  sample(now,delta,input,speed,target){
   if(!this.position)return target;
-  const dt=Math.max(0,Math.min(.05,delta));
+  // Preserve elapsed movement during a slow render frame. The analytic easing
+  // is stable without substeps; a quarter-second cap bounds resumed-tab jumps.
+  const dt=Number.isFinite(delta)?Math.max(0,Math.min(.25,delta)):0;
   const forward=Math.max(-1,Math.min(1,Number(input.forward)||0)),side=Math.max(-1,Math.min(1,Number(input.side)||0));
   const yaw=Number(input.yaw)||0,fade=Math.max(0,Math.min(1,(500-(now-this.receivedAt))/200)),scale=speed*fade/Math.max(1,Math.hypot(forward,side));
   const desired=this.projectMotion({x:(-Math.sin(yaw)*forward+Math.cos(yaw)*side)*scale,z:(-Math.cos(yaw)*forward-Math.sin(yaw)*side)*scale});

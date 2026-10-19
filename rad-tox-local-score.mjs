@@ -36,6 +36,7 @@ export function captureRadToxScorePhase(sim, now) {
     ledger.order.push(key);
     while (ledger.order.length > MAX_PHASES) delete ledger.phases[ledger.order.shift()];
   }
+  if(match.state==='finished'&&phase.closedAt===null)phase.closedAt=Number.isFinite(match.endedAt)?match.endedAt:now;
   for (const [id, player] of Object.entries(sim.players || {})) {
     if (player.matchId === phase.matchId && !player.replacedByRoom && now - player.lastSeen < 15000 && !phase.participants.includes(id)) {
       phase.participants.push(id);
@@ -72,7 +73,7 @@ function updateHistoricalResults(sim, phase, playerId, delta) {
   }
 }
 
-export function applyRadToxProgress(sim, playerId, report, now) {
+export function applyRadToxProgress(sim, playerId, report, now, {trustedReplay=false}={}) {
   const player = sim.players?.[playerId];
   if (!player || !sim.radTox || sim.radTox.combatMode !== 'local') fail('There is no local RAD-TOX encounter in this room.', 409);
   captureRadToxScorePhase(sim, now);
@@ -87,7 +88,7 @@ export function applyRadToxProgress(sim, playerId, report, now) {
     return {accepted: true, duplicate: true, ack, delta: emptyRadToxScore()};
   }
   const deadline = phase.closedAt === null ? phase.endsAt : Math.min(phase.closedAt, phase.endsAt ?? Infinity);
-  if (deadline !== null && now > deadline + RAD_TOX_REPORT_GRACE_MS) fail('The final RAD-TOX report window has ended.', 409, 'RAD_TOX_PHASE_EXPIRED');
+  if (!trustedReplay && deadline !== null && now > deadline + RAD_TOX_REPORT_GRACE_MS) fail('The final RAD-TOX report window has ended.', 409, 'RAD_TOX_PHASE_EXPIRED');
   const stats = readStats(report.stats), oldStats = previous?.stats || emptyRadToxScore();
   for (const field of RAD_TOX_SCORE_FIELDS) if (stats[field] + 1e-6 < oldStats[field]) fail(`RAD-TOX ${field} cannot go backwards.`);
   const elapsedMs = Math.max(0, Math.min(now, phase.endsAt ?? now, phase.closedAt ?? now) - phase.startedAt);
@@ -121,7 +122,8 @@ export function applyRadToxProgress(sim, playerId, report, now) {
   } else updateHistoricalResults(sim, phase, playerId, delta);
   recordTournamentScore(sim, playerId, delta, now);
   const bossDefeated = Boolean(previous?.bossDefeated || report.bossDefeated);
-  phase.players[playerId] = {sequence: report.sequence, stats, bossDefeated};
+  phase.players[playerId] = {sequence: report.sequence, stats, bossDefeated,
+    status:{...previous?.status,...Object.fromEntries(['health','ammo','fuel','spray','lifeRevision'].flatMap(field=>Number.isFinite(report[field])?[[field,report[field]]]:[]))}};
   const current = sim.match?.id === phase.matchId && sim.radTox.phaseId === phase.phaseId;
   if (current) {
     sim.radTox.localProgress ||= {};

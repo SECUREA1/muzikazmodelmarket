@@ -85,12 +85,22 @@ export function stepBasketball(actor, delta, floor = actor.ballFloor ?? 0, onSte
   if (!isBasketball(actor) || actor.holderId || !actor.ballVelocity) return;
   // Analytic gravity inside small sweeps keeps assisted arcs and rim crossings
   // accurate at every rendering rate. A callback can stop after a scored goal.
-  for(let remaining=Math.min(.25,Math.max(0,delta));remaining>0;){
+  for(let remaining=Number.isFinite(delta)?Math.min(.25,Math.max(0,delta)):0;remaining>1e-10;){
     const velocity=actor.ballVelocity;if(!velocity||actor.holderId)break;
-    const dt=Math.min(remaining,1/60);remaining-=dt;
-    const previous={...actor.position};
+    // Resolve floor impact at its actual time, then simulate the unused part
+    // of this frame. Applying restitution at the next frame lost flight time
+    // and made bounce height and ball settling depend on display frequency.
+    actor.position.y=Math.max(floor,actor.position.y);
+    const height=actor.position.y-floor;
+    let dt=Math.min(remaining,1/60);
+    const impact=(velocity.y+Math.sqrt(velocity.y*velocity.y+19.6*height))/9.8;
+    const lands=impact>=0&&impact<=dt;
+    if(lands)dt=impact;
+    const previous=onStep?{...actor.position}:null;
     actor.position.x+=velocity.x*dt;actor.position.y+=velocity.y*dt-4.9*dt*dt;actor.position.z+=velocity.z*dt;velocity.y-=9.8*dt;
+    remaining-=dt;
+    if(lands)actor.position.y=floor;
     if(onStep?.(previous,actor.position)===false)break;
-    if(actor.position.y<floor){actor.position.y=floor;velocity.y=Math.abs(velocity.y)*.72;velocity.x*=.82;velocity.z*=.82;if(velocity.y<.3){delete actor.ballVelocity;break;}}
+    if(lands){velocity.y=Math.abs(velocity.y)*.72;velocity.x*=.82;velocity.z*=.82;if(velocity.y<.3){delete actor.ballVelocity;break;}}
   }
 }

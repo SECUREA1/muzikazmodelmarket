@@ -9,6 +9,7 @@ const policy=new URL('../public/js/environments/collision-policy.js',import.meta
 const source=(await readFile(new URL('../public/js/environments/environment-collision.js',import.meta.url),'utf8'))
  .replace("'../../vendor/three/three.module.min.js'",JSON.stringify(three))
  .replace("'./collision-policy.js'",JSON.stringify(policy))
+ .replace("'../static-mesh-queries.js'",JSON.stringify(new URL('../public/js/static-mesh-queries.js',import.meta.url).href))
  .replace(/import \{ Octree \} from [^;]+;/,'class Octree {fromGraphNode(root){root.updateMatrixWorld(true);this.source=root;}}');
 const {buildCollision,alignPointAboveFloor,FLOOR_ENTRY_OFFSET}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 const box=(name,size=[1,1,1])=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(...size),new THREE.MeshBasicMaterial());mesh.name=name;return mesh;};

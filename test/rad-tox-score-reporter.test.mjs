@@ -126,3 +126,93 @@ test('a deferred wallet from an old wave cannot starve current multiplayer score
  reporter.acknowledge({...reporter.phases.get('level-1:wave-1').pending.report,rewardsPending:true});
  assert.equal(reporter.flush(6002),null,'closed-wave account retries retain the batched interval');
 });
+
+function memoryStorage(){const values=new Map();return {getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value),values};}
+const persistence=storage=>({storage,accountId:'account:alice',tournamentId:'tournament-1'});
+
+test('durable local outbox restores unsent combat, claimed pickups and the exact compatible local instance',()=>{
+ const storage=memoryStorage(),first=new RadToxScoreReporter({persistence:persistence(storage)});
+ first.begin(identity,{health:100,ammo:120,lifeRevision:1});
+ first.record({shots:2,hits:2,enemyKills:1,score:13},{health:85,ammo:118,claimIds:['own-coin']});
+ first.saveLocalState({version:1,enemies:[{slotId:'ghost-1',health:17,position:[1,0,2]}]});first.checkpoint();
+ const resumed=new RadToxScoreReporter({persistence:persistence(storage)});
+ resumed.begin(identity,{health:100,ammo:120,lifeRevision:1},{sequence:0,stats:{}});
+ assert.equal(resumed.current.stats.enemyKills,1);assert.equal(resumed.current.status.health,85);
+ assert.deepEqual(resumed.current.localState,{version:1,enemies:[{slotId:'ghost-1',health:17,position:[1,0,2]}]});
+ const report=resumed.report(0);assert.equal(report.sequence,1);assert.equal(report.stats.score,13);assert.deepEqual(report.claimIds,['own-coin']);
+ first.dispose();resumed.dispose();
+});
+
+test('reload after a lost receipt merges accepted counters and retains newer unsent local actions once',()=>{
+ const storage=memoryStorage(),first=new RadToxScoreReporter({persistence:persistence(storage)});
+ first.begin(identity,{health:100,lifeRevision:1});first.record({enemyKills:1,score:10},{claimIds:['coin-a']});
+ const accepted=first.report(0);first.record({enemyKills:1,score:10},{claimIds:['coin-b']});first.checkpoint();
+ const resumed=new RadToxScoreReporter({persistence:persistence(storage)});
+ resumed.begin(identity,{health:100,lifeRevision:1},{sequence:accepted.sequence,stats:accepted.stats,claimedIds:['coin-a']});
+ const final=resumed.report(0);assert.equal(final.sequence,2);assert.equal(final.stats.score,20);assert.equal(final.stats.enemyKills,2);
+ assert.deepEqual(final.claimIds,['coin-a','coin-b']);resumed.acknowledge({...final,claimedIds:final.claimIds});assert.equal(resumed.pending,false);
+ resumed.checkpoint();const again=new RadToxScoreReporter({persistence:persistence(storage)});again.begin(identity,{}, {sequence:2,stats:final.stats,claimedIds:final.claimIds});
+ assert.equal(again.current.stats.score,20);assert.equal(again.current.confirmedClaims.size,2);
+ first.dispose();resumed.dispose();again.dispose();
+});
+
+test('persisted final reports survive a phase advance but never leak into another account or tournament',()=>{
+ const storage=memoryStorage(),first=new RadToxScoreReporter({persistence:persistence(storage)});
+ first.begin(identity);first.record({enemyKills:1,score:10},{claimIds:['alice-coin']});const pending=first.report(0);first.checkpoint();
+ const resumed=new RadToxScoreReporter({persistence:persistence(storage)});resumed.begin({...identity,phaseId:'wave-2'});
+ assert.deepEqual(resumed.report(0),pending);assert.equal(resumed.current.stats.score,0);
+ resumed.setPersistence({storage,accountId:'account:bob',tournamentId:'tournament-1'});resumed.begin(identity);
+ assert.equal(resumed.report(0).stats.score,0);assert.equal(resumed.current.claimIds.size,0);
+ resumed.setPersistence({storage,accountId:'account:alice',tournamentId:'another-tournament'});resumed.begin(identity);
+ assert.equal(resumed.current.stats.score,0);assert.equal(resumed.current.claimIds.size,0);
+ first.dispose();resumed.dispose();
+});
+
+test('a server respawn overrides stale saved local vitals while retaining previously earned combat',()=>{
+ const storage=memoryStorage(),first=new RadToxScoreReporter({persistence:persistence(storage)});
+ first.begin(identity,{health:1,ammo:1,lifeRevision:1});first.record({enemyKills:1,score:10});first.checkpoint();
+ const resumed=new RadToxScoreReporter({persistence:persistence(storage)});
+ resumed.begin(identity,{health:100,ammo:120,lifeRevision:2},{sequence:0,stats:{},status:{health:0,ammo:0,lifeRevision:1}});
+ assert.equal(resumed.current.status.health,100);assert.equal(resumed.current.status.ammo,120);assert.equal(resumed.current.status.lifeRevision,2);assert.equal(resumed.current.stats.score,10);
+ first.dispose();resumed.dispose();
+});
+
+test('storage failures and malformed saved data cannot block local combat',()=>{
+ const broken={getItem(){throw Error('private mode');},setItem(){throw Error('quota');}};
+ const reporter=new RadToxScoreReporter({persistence:persistence(broken)});reporter.begin(identity);reporter.record({enemyKills:1,score:10});
+ assert.equal(reporter.checkpoint(),false);assert.equal(reporter.report(0).stats.score,10);reporter.dispose();
+ const malformed=memoryStorage();malformed.setItem('saved','{"version":1,"scope":"wrong account","phases":[]}');
+ const other=new RadToxScoreReporter({persistence:{...persistence(malformed),key:'saved'}});other.begin(identity);assert.equal(other.current.stats.score,0);other.dispose();
+});
+
+
+test('unchanged network retries reuse the durable outbox without repeated browser storage writes',()=>{
+ const storage=memoryStorage();let writes=0;const put=storage.setItem;storage.setItem=(key,value)=>{writes++;put(key,value);};
+ const reporter=new RadToxScoreReporter({persistence:persistence(storage)});reporter.begin(identity);reporter.record({enemyKills:1,score:10});reporter.report(0);
+ assert.equal(writes,1);reporter.report(1500);reporter.report(3000);reporter.checkpoint();assert.equal(writes,1);
+ reporter.record({shots:1});reporter.report(4500);assert.equal(writes,2,'newer unsent actions still become durable when retrying the pending request');reporter.dispose();
+});
+
+
+test('changing accounts clears local ownership even when browser storage access is denied',()=>{
+ const storage=memoryStorage(),reporter=new RadToxScoreReporter({persistence:persistence(storage)}),descriptor=Object.getOwnPropertyDescriptor(globalThis,'localStorage');
+ try{
+  reporter.begin(identity);reporter.record({enemyKills:1,score:10},{claimIds:['alice-only-coin']});
+  Object.defineProperty(globalThis,'localStorage',{configurable:true,get(){throw Error('SecurityError');}});
+  assert.equal(reporter.setPersistence({accountId:'account:bob',tournamentId:'tournament-1'}),false);reporter.begin(identity);
+  assert.equal(reporter.current.stats.score,0);assert.equal(reporter.current.claimIds.size,0);
+  reporter.record({score:0},{claimIds:['bob-only-coin']});
+  assert.equal(reporter.setPersistence({accountId:'account:carol',tournamentId:'tournament-1'}),false);reporter.begin(identity);assert.equal(reporter.current.claimIds.size,0);
+ }finally{if(descriptor)Object.defineProperty(globalThis,'localStorage',descriptor);else delete globalThis.localStorage;reporter.dispose();}
+});
+
+
+test('temporarily unavailable storage never replaces newer in-memory progress when storage returns',()=>{
+ const storage=memoryStorage(),reporter=new RadToxScoreReporter({persistence:persistence(storage)}),descriptor=Object.getOwnPropertyDescriptor(globalThis,'localStorage');
+ try{
+  reporter.begin(identity);reporter.record({enemyKills:1,score:10});reporter.checkpoint();reporter.record({enemyKills:1,score:10});
+  Object.defineProperty(globalThis,'localStorage',{configurable:true,get(){throw Error('SecurityError');}});
+  assert.equal(reporter.setPersistence({accountId:'account:alice',tournamentId:'tournament-1'}),false);reporter.record({enemyKills:1,score:10});
+  reporter.setPersistence(persistence(storage));assert.equal(reporter.current.stats.score,30);assert.equal(reporter.report(0).stats.enemyKills,3);
+ }finally{if(descriptor)Object.defineProperty(globalThis,'localStorage',descriptor);else delete globalThis.localStorage;reporter.dispose();}
+});

@@ -42,3 +42,31 @@ test('local brain bugs stop attack tells and do not spray at distant players',()
   for(let frame=0;frame<10;frame++)bug.update(.1,102+frame,player);assert.equal(sprays.length,0);
  }finally{bug.dispose();}
 });
+
+test('full mobile brain waves avoid dynamic lights and per-frame vector clones',()=>{
+ const bug=new NeonBrainBug({position:new THREE.Vector3(0,3,0),mobile:true}),player=new THREE.Vector3(500,3,500);
+ let clones=0;const originalClone=THREE.Vector3.prototype.clone;
+ try{
+  assert.equal(bug.root.children.some(child=>child.isPointLight),false);
+  THREE.Vector3.prototype.clone=function(){clones++;return originalClone.call(this);};
+  for(let frame=0;frame<600;frame++){
+   bug.update(1/60,frame/60,player);
+   assert.ok(Math.abs(bug.root.position.y-3)<=.018751,'the hover stays anchored instead of accumulating vertical drift');
+  }
+  assert.equal(clones,0,'chasing and animating a distant player allocate no temporary direction vectors');
+ }finally{THREE.Vector3.prototype.clone=originalClone;bug.dispose();}
+});
+
+test('brain chase speed and hover animation match across display refresh rates',()=>{
+ const positions=[];
+ for(const fps of [30,60,120]){
+  const bug=new NeonBrainBug({position:new THREE.Vector3(0,3,0),mobile:true}),player=new THREE.Vector3(0,3,500);
+  try{
+   bug.phase=0;
+   for(let frame=1;frame<=fps;frame++)bug.update(1/fps,frame/fps,player);
+   positions.push(bug.root.position.clone());
+   assert.ok(Math.abs(bug.root.position.z-2.65)<1e-10,'the intended chase speed is preserved');
+  }finally{bug.dispose();}
+ }
+ for(const position of positions)assert.ok(position.distanceTo(positions[0])<1e-10);
+});

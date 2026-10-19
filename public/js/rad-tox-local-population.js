@@ -1,48 +1,74 @@
 const SPECIES = ['toxic', 'ghost', 'snake', 'brain'];
 const count = value => Math.max(0, Math.min(180, Math.trunc(Number(value) || 0)));
 
-/** A finite, per-player enemy budget with a separate live-mesh limit. */
+/** Stable per-player slots: every undefeated enemy is deployed before play. */
 export class LocalEnemyPopulation {
-  constructor({spawn, dispose = root => root?.removeFromParent?.(), yieldFrame = () => new Promise(resolve => requestAnimationFrame(resolve)), now = () => performance.now()} = {}) {
+  constructor({spawn, dispose = root => root?.removeFromParent?.(), yieldFrame = () => new Promise(resolve => requestAnimationFrame(resolve)), now = () => performance.now(), batchSize = 4, frameBudgetMs = 6} = {}) {
     this.spawn = spawn;
     this.dispose = dispose;
     this.yieldFrame = yieldFrame;
     this.now = now;
+    this.batchSize = batchSize;
+    this.frameBudgetMs = frameBudgetMs;
     this.generation = 0;
     this.slots = [];
     this.concurrent = {};
     this.pending = null;
     this.retryAt = 0;
+    this.activeCount = 0;
+    this.defeatedCount = 0;
+    this.roots = new WeakMap();
   }
 
-  begin(phaseId, population, defeated = 0) {
+  begin(phaseId, population, defeated = 0, saved = null) {
     this.clear();
+    this.phaseId = phaseId;
     const left = Object.fromEntries(SPECIES.map(kind => [kind, count(population?.budget?.[kind])]));
-    this.concurrent = Object.fromEntries(SPECIES.map(kind => [kind, Math.min(left[kind], count(population?.concurrent?.[kind]))]));
-    let index = 0;
+    this.concurrent = {...left};
+    const restored = new Map(saved?.phaseId === phaseId ? (saved.slots || []).map(slot => [slot.id, slot]) : []);
+    let index = 0, restoredKills = 0;
     while (SPECIES.some(kind => left[kind] > 0)) {
       for (const kind of SPECIES) if (left[kind]-- > 0) {
-        this.slots.push({id:`${phaseId}:${index}`,index:index++,kind,state:'pending',attempts:0,root:null});
+        const id=`${phaseId}:${index}`,previous=restored.get(id);
+        const wasDefeated=previous?.defeated&&restoredKills<count(defeated);if(wasDefeated)restoredKills++;
+        this.slots.push({id,index:index++,kind,state:wasDefeated?'defeated':'pending',attempts:0,root:null,saved:previous});
       }
     }
-    for (const slot of this.slots.slice(0, count(defeated))) slot.state = 'defeated';
+    // Accepted aggregate kills win over an older checkpoint. Preserve exact
+    // defeated identities when available, and only fill the missing difference.
+    this.defeatedCount = this.slots.filter(slot => slot.state === 'defeated').length;
+    for (const slot of this.slots) {
+      if (this.defeatedCount >= count(defeated)) break;
+      if (slot.state !== 'defeated') {slot.state='defeated';this.defeatedCount++;}
+    }
   }
 
   clear() {
     ++this.generation;
+    for(const slot of this.slots)if(slot.root)this.dispose(slot.root);
     this.slots = [];
     this.pending = null;
     this.retryAt = 0;
+    this.activeCount = 0;
+    this.defeatedCount = 0;
+    this.roots = new WeakMap();
   }
 
-  get alive() { return this.slots.filter(slot => slot.state === 'active').length; }
-  get defeated() { return this.slots.filter(slot => slot.state === 'defeated').length; }
+  get alive() { return this.activeCount; }
+  get defeated() { return this.defeatedCount; }
   get remaining() { return this.slots.length - this.defeated; }
+  get ready() { return this.alive === this.remaining; }
+
+  snapshot() {
+    return {phaseId:this.phaseId,slots:this.slots.map(slot=>({id:slot.id,defeated:slot.state==='defeated',
+      ...(slot.root?{health:Number(slot.root.userData?.health??100),position:slot.root.position.toArray?.()}:slot.saved?.position?{health:slot.saved.health,position:slot.saved.position}:{})}))};
+  }
 
   defeat(root) {
-    const slot = this.slots.find(item => item.root === root && item.state === 'active');
-    if (!slot) return false;
+    const slot = root && this.roots.get(root);
+    if (!slot || slot.state !== 'active') return false;
     slot.state = 'defeated';slot.root = null;
+    this.activeCount--;this.defeatedCount++;
     return true;
   }
 
@@ -53,10 +79,9 @@ export class LocalEnemyPopulation {
     const current = () => generation === this.generation && isCurrent();
     const work = (async () => {
       const attempted = new Set();
-      const limit = Math.max(8, Object.values(this.concurrent).reduce((sum, value) => sum + value, 0) * 2);
-      for (let attempt = 0; attempt < limit && current(); attempt++) {
-        const active = Object.fromEntries(SPECIES.map(kind => [kind, this.slots.filter(slot => slot.kind === kind && slot.state === 'active').length]));
-        const slot = this.slots.find(item => item.state === 'pending' && !attempted.has(item.id) && active[item.kind] < this.concurrent[item.kind]);
+      let batch=0,batchStarted=this.now();
+      for (let attempt = 0; attempt < this.slots.length && current(); attempt++) {
+        const slot = this.slots.find(item => item.state === 'pending' && !attempted.has(item.id));
         if (!slot) break;
         attempted.add(slot.id);slot.attempts++;slot.state = 'spawning';
         let root;
@@ -64,8 +89,10 @@ export class LocalEnemyPopulation {
         catch (error) { if (current()) slot.state = 'pending';throw error; }
         if (!current()) { if (root) this.dispose(root);return this.alive; }
         slot.root = root || null;slot.state = root ? 'active' : 'pending';
-        if (root?.userData) root.userData.localPopulationId = slot.id;
-        await this.yieldFrame();
+        if (root) {this.activeCount++;this.roots.set(root,slot);if(root.userData)root.userData.localPopulationId=slot.id;}
+        if (++batch >= this.batchSize || this.now()-batchStarted >= this.frameBudgetMs) {
+          await this.yieldFrame();batch=0;batchStarted=this.now();
+        }
       }
       if (current()) this.retryAt = this.now() + 1000;
       return this.alive;

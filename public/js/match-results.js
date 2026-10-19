@@ -1,11 +1,28 @@
-const columns=[['username','Player'],['score','Level score'],['shots','Shots'],['hits','Hits'],['misses','Misses'],['accuracy','Accuracy'],['kills','Total kills'],['enemyKills','Enemy kills'],['playerKills','Player kills'],['assists','Assists'],['deaths','Deaths'],['hitsTaken','Hits taken'],['damageDealt','Damage dealt'],['damageTaken','Damage taken'],['items','Items collected']];
-const tournamentColumns=[['rank','Rank'],['username','Player'],['score','Tournament total'],['kills','Total kills'],['bossKills','Boss kills'],['shots','Shots'],['hits','Hits'],['misses','Misses'],['accuracy','Accuracy'],['assists','Assists'],['deaths','Deaths'],['damageDealt','Damage dealt']];
+const columns=[['username','Player'],['score','Level score'],['earnedMzk','MZK earned'],['rewardCount','Rewards'],['phaseProgress','Phase progress'],['shots','Shots'],['hits','Hits'],['misses','Misses'],['accuracy','Accuracy'],['kills','Total kills'],['enemyKills','Enemy kills'],['playerKills','Player kills'],['assists','Assists'],['deaths','Deaths'],['hitsTaken','Hits taken'],['damageDealt','Damage dealt'],['damageTaken','Damage taken'],['items','Items collected']];
+const tournamentColumns=[['rank','Rank'],['username','Player'],['score','Tournament total'],['earnedMzk','MZK earned'],['rewardCount','Rewards'],['phaseProgress','Current phase'],['kills','Total kills'],['bossKills','Boss kills'],['shots','Shots'],['hits','Hits'],['misses','Misses'],['accuracy','Accuracy'],['assists','Assists'],['deaths','Deaths'],['damageDealt','Damage dealt']];
 const nonnegative=value=>Number.isFinite(Number(value))?Math.max(0,Number(value)):0;
 const clock=seconds=>`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
+const tournamentFinished=snapshot=>snapshot?.tournament?.status==='finished'||snapshot?.radTox?.transition?.kind==='tournament';
+
+/** Use each player's accepted current-phase report, never their level kill total. */
+export function playerPhaseProgress(snapshot,playerId){
+ const campaign=snapshot?.radTox,target=Math.trunc(nonnegative(campaign?.targetCount));
+ if(!campaign?.phaseId||!target)return '—';
+ const accepted=campaign.localProgress?.[playerId],current=accepted?.phaseId===campaign.phaseId?accepted:null;
+ if(campaign.phaseKind==='boss')return current?.bossDefeated?'Boss defeated':'Boss active';
+ return `${Math.min(target,Math.trunc(nonnegative(current?.enemyKills)))}/${target}`;
+}
+
+function rewardDescription(row){
+ const rewards=row.rewards||{},parts=[];
+ for(const [name,amount]of Object.entries(rewards.supplies||{}))if(nonnegative(amount)>0)parts.push(`${name}: ${nonnegative(amount)}`);
+ for(const [name,count]of Object.entries(rewards.catalog||{}))if(nonnegative(count)>0)parts.push(`${name}: ${nonnegative(count)}`);
+ return 'Confirmed account rewards'+(parts.length?' · '+parts.join(' · '):'');
+}
 
 export function roundCountdown(snapshot,elapsedMs=0){
  const transition=snapshot?.radTox?.transition;
- if(!transition||!Number.isFinite(transition.at)||!Number.isFinite(snapshot.serverTime))return null;
+ if(!transition||transition.kind==='tournament'||!Number.isFinite(transition.at)||!Number.isFinite(snapshot.serverTime))return null;
  return {kind:transition.kind,seconds:Math.max(0,Math.ceil((transition.at-snapshot.serverTime-nonnegative(elapsedMs))/1000))};
 }
 
@@ -21,11 +38,12 @@ export function waveCountdown(snapshot,elapsedMs=0){
 export function tournamentStandings(snapshot){
  return (Array.isArray(snapshot?.tournament?.results)?snapshot.tournament.results:[]).filter(row=>row&&typeof row.id==='string').map(row=>{
   const shots=nonnegative(row.shots),hits=nonnegative(row.hits);
-  return {...row,score:nonnegative(row.score),kills:Number.isFinite(row.kills)?nonnegative(row.kills):nonnegative(row.enemyKills)+nonnegative(row.playerKills),shots,hits,accuracy:Number.isFinite(row.accuracy)?Math.min(100,nonnegative(row.accuracy)):shots?Number(Math.min(100,hits/shots*100).toFixed(1)):0};
+  return {...row,score:nonnegative(row.score),earnedMzk:nonnegative(row.earnedMzk),rewardCount:Math.trunc(nonnegative(row.rewardCount)),kills:Number.isFinite(row.kills)?nonnegative(row.kills):nonnegative(row.enemyKills)+nonnegative(row.playerKills),shots,hits,accuracy:Number.isFinite(row.accuracy)?Math.min(100,nonnegative(row.accuracy)):shots?Number(Math.min(100,hits/shots*100).toFixed(1)):0};
  }).sort((a,b)=>b.score-a.score||b.kills-a.kills||a.id.localeCompare(b.id)).map((row,index)=>({...row,rank:index+1}));
 }
 
 export function radToxPhaseStatus(snapshot,elapsedMs=0){
+ if(tournamentFinished(snapshot))return 'Tournament complete';
  const campaign=snapshot?.radTox;if(!campaign)return '';
  const transition=roundCountdown(snapshot,elapsedMs);
  if(transition){
@@ -52,6 +70,7 @@ export function mountMatchResults({dock,onOpen=()=>{},onNext,onRespawn}){
   const elapsed=Date.now()-receivedAt,status=radToxPhaseStatus(currentSnapshot,elapsed),phase=dialog.querySelector('[data-results-phase]');
   if(phase.textContent!==status)phase.textContent=status;
   button.title=status?`Match results · ${status}`:'Match results';
+  if(tournamentFinished(currentSnapshot)){next.hidden=false;next.disabled=true;next.textContent='Tournament complete';return;}
   const remaining=roundCountdown(currentSnapshot,elapsed);if(!remaining)return;
   next.hidden=false;next.disabled=true;
   const label=remaining.kind==='wave'?(currentSnapshot.radTox.wave===4?'Boss battle':'Next wave'):remaining.kind==='retry'?'Level retry':'Next level';
@@ -68,7 +87,9 @@ export function mountMatchResults({dock,onOpen=()=>{},onNext,onRespawn}){
    const tr=document.createElement('tr');if(row.id===selfId)tr.className='is-self';
    for(const [field]of fields){
     const cell=document.createElement(field==='username'?'th':'td');if(field==='username'){cell.scope='row';cell.title=row.id;}
-    cell.textContent=field==='username'?`${row.username||'Player'}${row.id===selfId?' (you)':''}${row.connected?'':' · disconnected'}`:field==='items'?(Array.isArray(row.items)&&row.items.length?row.items.join(', '):'None'):field==='accuracy'?`${row.accuracy??0}%`:field==='damageDealt'||field==='damageTaken'?String(Number(nonnegative(row[field]).toFixed(2))):String(row[field]??0);
+    cell.textContent=field==='username'?`${row.username||'Player'}${row.id===selfId?' (you)':''}${row.connected?'':' · disconnected'}`:field==='phaseProgress'?playerPhaseProgress(currentSnapshot,row.id):field==='earnedMzk'?String(nonnegative(row.earnedMzk)):field==='rewardCount'?String(Math.trunc(nonnegative(row.rewardCount))):field==='items'?(Array.isArray(row.items)&&row.items.length?row.items.join(', '):'None'):field==='accuracy'?`${row.accuracy??0}%`:field==='damageDealt'||field==='damageTaken'?String(Number(nonnegative(row[field]).toFixed(2))):String(row[field]??0);
+    if(field==='earnedMzk')cell.title='MZK confirmed by the server and credited to this player';
+    if(field==='rewardCount')cell.title=rewardDescription(row);
     tr.append(cell);
    }
    body.append(tr);
@@ -87,10 +108,10 @@ export function mountMatchResults({dock,onOpen=()=>{},onNext,onRespawn}){
    const needsOpening=(wave&&openedWave!==waveKey)||(finished&&openedEnd!==latest.id)||(!finished&&self?.health<=0&&openedDeath!==deathToken);
    if(!dialog.open&&!needsOpening)return;
    const rows=(wave?snapshot.radTox.transition.results||latest.results:latest.results)||[],standings=tournamentStandings(snapshot);
-   const key=JSON.stringify([latest.id,latest.level,latest.state,latest.outcome,waveKey,wave,rows,standings]);
+   const key=JSON.stringify([latest.id,latest.level,latest.state,latest.outcome,waveKey,wave,rows,standings,rows.map(row=>playerPhaseProgress(snapshot,row.id)),standings.map(row=>playerPhaseProgress(snapshot,row.id)),tournamentFinished(snapshot)]);
    if(key!==renderKey){
-    renderKey=key;dialog.querySelector('h2').textContent=finished?`Level ${latest.level} · ${latest.outcome==='victory'?'Victory':'Team defeated'}`:`Level ${latest.level} · Live standings`;
-    dialog.querySelector('[data-results-summary]').textContent=finished?`Final level results · ${Math.max(0,Math.round((latest.endedAt-latest.startedAt)/1000))} seconds · ${rows.length} players`:'Your enemies and combat are local. Everyone follows the same server level and wave clock. Level score resets each level; tournament totals continue across maps.';
+    renderKey=key;dialog.querySelector('h2').textContent=tournamentFinished(snapshot)?'Tournament complete':finished?`Level ${latest.level} · ${latest.outcome==='victory'?'Victory':'Team defeated'}`:`Level ${latest.level} · Live standings`;
+    dialog.querySelector('[data-results-summary]').textContent=finished?`Final level results · ${Math.max(0,Math.round((latest.endedAt-latest.startedAt)/1000))} seconds · ${rows.length} players · MZK and rewards are confirmed account earnings`:'Your enemies and combat are local. Everyone follows the same server level and wave clock. Level score resets each level; tournament totals and confirmed MZK and rewards continue across maps.';
     renderRows('[data-level-body]',rows,columns);
     dialog.querySelector('[data-results-tournament]').hidden=!standings.length;
     renderRows('[data-tournament-body]',standings,tournamentColumns);

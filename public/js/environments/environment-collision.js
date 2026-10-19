@@ -1,6 +1,7 @@
 import * as THREE from '../../vendor/three/three.module.min.js';
 import { Octree } from '../../vendor/three/addons/math/Octree.js';
 import {COLLISION_RE,isDedicatedCollider,isRenderedMesh,collisionIsDisabled,isCollisionMesh} from './collision-policy.js';
+import {accelerateStaticMeshes} from '../static-mesh-queries.js';
 const NON_SPAWN_FLOOR_RE = /(CEILING|ROOF|CANOPY|AWNING|SKY|WALL|WINDOW|DOOR|RAIL|FENCE|LIGHT|LAMP)/i;
 const FLOOR_NAME_RE = /(FLOOR|GROUND|TERRAIN|PLATFORM|NAVMESH|WALK|STAGE|ROAD|PATH)/i;
 const SPAWN_PRIORITY = ['SPAWN_PLAYER', 'SPAWN_DEFAULT'];
@@ -214,6 +215,7 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
   if(buildOctree)octree.fromGraphNode(source);
   const floorMeshes = collisionMeshes.filter((mesh) => isSpawnFloorObject(mesh));
   if (containment.floor) floorMeshes.push(containment.floor);
+  accelerateStaticMeshes([...visibleMeshes, ...collisionMeshes]);
   return { octree, visibleMeshes, collisionMeshes, floorMeshes, containment, dedicatedCollisionCount: collisionMeshes.filter(isDedicatedCollider).length };
 }
 

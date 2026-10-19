@@ -313,7 +313,7 @@ export function stepBasketballGame(sim,now,dt) {
   stepBasketball(ball,dt,0,(previous,next)=>{
    if(scoreCrossing(sim,ball,previous,next,now))return false;
    // Regulation transparent backboards: a bank shot reflects at the board.
-   if(ball.ballVelocity)for(const sign of [-1,1]){const plane=sign*13.131;if((previous.z-plane)*(next.z-plane)<=0&&Math.abs(next.x)<.9145&&next.y+BASKETBALL_COURT.ballRadius>2.9&&next.y+BASKETBALL_COURT.ballRadius<3.969){ball.ballVelocity.z*=-.7;next.z=plane-sign*.025;}}
+   reflectBasketballBackboard(ball,previous,next);
   });
   if(dt>0&&!ball.holderId)ball.ballCatchSegment={from:catchFrom,to:{...ball.position},at:now};
   if(!ball.basketballMatchBall||sim.basketball.state!=='live'||ball.holderId)continue;
@@ -324,13 +324,20 @@ export function stepBasketballGame(sim,now,dt) {
  if(holder&&sim.basketball.state==='live'&&(Math.abs(holder.position.x)>BASKETBALL_COURT.width/2||Math.abs(holder.position.z)>BASKETBALL_COURT.length/2)){const team=other(holder.basketballTeam||sim.basketball.possession);resetPossession(sim,team,now,`Out of bounds · ${team==='home'?'Home':'Away'} ball.`);}
 }
 
+function reflectBasketballBackboard(ball,previous,next){
+ if(!ball.ballVelocity||Math.abs(next.x)>=.9145||next.y+BASKETBALL_COURT.ballRadius<=2.9||next.y+BASKETBALL_COURT.ballRadius>=3.969)return;
+ for(const sign of [-1,1]){const plane=sign*13.131;if((previous.z-plane)*(next.z-plane)<=0){ball.ballVelocity.z*=-.7;next.z=plane-sign*.025;}}
+}
+
 /** Preview arena board collisions with the identical flight and bounce rules. */
 export function predictBasketballShotPath(solution,{duration=3,step=1/30,floor=0}={}){
  if(!solution?.position||!solution?.velocity)return [];
  const ball={id:'basketball-preview',modelId:'basketball',position:{...solution.position},ballVelocity:{...solution.velocity},ballFloor:floor};
- const sim={basketball:{state:'ready',updatedAt:0,settings:{...BASKETBALL_DEFAULT_SETTINGS}},actors:{[ball.id]:ball},players:{},events:[]};
+ // A preview has no players, clock, possession or score. Run only the shared
+ // ball sweeps and backboards, rather than a whole match for every trail dot.
+ const reflect=(previous,next)=>reflectBasketballBackboard(ball,previous,next);
  const seconds=Math.max(0,Math.min(6,Number(duration)||0)),dt=Math.max(1/120,Math.min(.1,Number(step)||1/30)),points=[{...ball.position,t:0}];
- for(let elapsed=0;elapsed<seconds-1e-8;){const span=Math.min(dt,seconds-elapsed);elapsed+=span;stepBasketballGame(sim,elapsed*1000,span);points.push({...ball.position,t:elapsed});if(!ball.ballVelocity)break;}
+ for(let elapsed=0;elapsed<seconds-1e-8;){const span=Math.min(dt,seconds-elapsed);elapsed+=span;stepBasketball(ball,span,floor,reflect);points.push({...ball.position,t:elapsed});if(!ball.ballVelocity)break;}
  return points;
 }
 
@@ -359,22 +366,24 @@ export function fillBasketballTeams(sim,now){
 }
 function stepBasketballAI(sim,now,dt){
  const match=sim.basketball,ball=basketballGameBall(sim);if(!ball)return;
- const tier=match.settings.aiDifficulty||3,players=online(sim,now),bots=players.filter(p=>p.basketballAI);
+ const tier=match.settings.aiDifficulty||3,players=online(sim,now),bots=[],rosters={home:[],away:[]},chasers={home:null,away:null};
+ for(const member of players){if(rosters[member.basketballTeam])rosters[member.basketballTeam].push(member);if(member.basketballAI)bots.push(member);}
+ if(!ball.holderId)for(const team of teams){let nearest=Infinity;for(const member of rosters[team]){const dx=member.position.x-ball.position.x,dz=member.position.z-ball.position.z,distance=dx*dx+dz*dz;if(distance<nearest){nearest=distance;chasers[team]=member;}}}
  for(const bot of bots){
   const hoop=basketballHoopForTeam(bot.basketballTeam),holder=sim.players[ball.holderId],hasBall=ball.holderId===bot.actorId;
-  const teammates=players.filter(p=>p.basketballTeam===bot.basketballTeam),index=teammates.indexOf(bot);
+  const teammates=rosters[bot.basketballTeam],opponents=rosters[other(bot.basketballTeam)],index=teammates.indexOf(bot);
   let goal;
   if(hasBall)goal={x:0,z:hoop.z-Math.sign(hoop.z)*(3.5+(5-tier)*.4)};
-  else if(!holder){const chaser=teammates.slice().sort((a,b)=>Math.hypot(a.position.x-ball.position.x,a.position.z-ball.position.z)-Math.hypot(b.position.x-ball.position.x,b.position.z-ball.position.z))[0];goal=chaser===bot?ball.position:{x:(index%3-1)*4,z:hoop.z*.45};}
+  else if(!holder){goal=chasers[bot.basketballTeam]===bot?ball.position:{x:(index%3-1)*4,z:hoop.z*.45};}
   else if(holder.basketballTeam===bot.basketballTeam)goal={x:(index%3-1)*4,z:hoop.z*.55};
-  else {const opponents=players.filter(p=>p.basketballTeam!==bot.basketballTeam),mark=opponents[index%opponents.length]||holder;goal={x:mark.position.x*.8,z:mark.position.z-Math.sign(hoop.z)*1.3};}
+  else {const mark=opponents[index%opponents.length]||holder;goal={x:mark.position.x*.8,z:mark.position.z-Math.sign(hoop.z)*1.3};}
   const dx=goal.x-bot.position.x,dz=goal.z-bot.position.z,span=Math.hypot(dx,dz),step=Math.min(span,(2.5+tier*.3)*Math.min(.25,dt));
   if(span>.15){bot.yaw=Math.atan2(-dx,-dz);bot.position.x+=dx/span*step;bot.position.z+=dz/span*step;bot.input={forward:1};}else bot.input={};
   bot.position.x=Math.max(-7,Math.min(7,bot.position.x));bot.position.z=Math.max(-13.6,Math.min(13.6,bot.position.z));
   if(hasBall){
    ball.position={x:bot.position.x,y:1,z:bot.position.z};
    if(now<bot.aiNextAction)continue;
-   const defenders=players.filter(p=>p.basketballTeam!==bot.basketballTeam),pressured=defenders.some(p=>Math.hypot(p.position.x-bot.position.x,p.position.z-bot.position.z)<1.8);
+   const pressured=opponents.some(p=>Math.hypot(p.position.x-bot.position.x,p.position.z-bot.position.z)<1.8);
    const receiver=teammates.find(p=>p!==bot&&!p.heldId&&Math.hypot(p.position.x-bot.position.x,p.position.z-bot.position.z)>2&&Math.abs(p.position.z-hoop.z)<Math.abs(bot.position.z-hoop.z));
    if(pressured&&receiver){registerBasketballRelease(sim,ball,bot,now);tossBasketball(ball,bot.position,{x:receiver.position.x-bot.position.x,y:0,z:receiver.position.z-bot.position.z},{mode:'manual',power:.24,angle:20});bot.heldId=null;ball.holderId=null;bot.aiNextAction=now+1000;}
    else if(Math.hypot(bot.position.x-hoop.x,bot.position.z-hoop.z)<6||match.shotClockMs<3500){

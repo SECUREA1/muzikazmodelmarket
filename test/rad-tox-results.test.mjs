@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mountMatchResults,radToxPhaseStatus,roundCountdown,tournamentStandings,waveCountdown} from '../public/js/match-results.js';
+import {mountMatchResults,playerPhaseProgress,radToxPhaseStatus,roundCountdown,tournamentStandings,waveCountdown} from '../public/js/match-results.js';
 
 test('wave clock uses server time and advances locally without changing phase authority',()=>{
  const snapshot={serverTime:10000,radTox:{state:'active',phaseKind:'wave',wave:2,normalWaveCount:4,endsAt:130000}};
@@ -33,6 +33,24 @@ test('tournament standings rank cumulative totals independently of new level sco
  assert.deepEqual(snapshot,before);assert.deepEqual(tournamentStandings({}),[]);
 });
 
+test('phase progress uses only accepted reports for the current shared phase',()=>{
+ const snapshot={radTox:{phaseId:'wave-2',phaseKind:'wave',targetCount:36,localProgress:{
+  a:{phaseId:'wave-2',enemyKills:7},b:{phaseId:'wave-1',enemyKills:36},c:{phaseId:'wave-2',enemyKills:100}
+ }}};
+ const before=structuredClone(snapshot);
+ assert.equal(playerPhaseProgress(snapshot,'a'),'7/36');assert.equal(playerPhaseProgress(snapshot,'b'),'0/36');
+ assert.equal(playerPhaseProgress(snapshot,'new'),'0/36');assert.equal(playerPhaseProgress(snapshot,'c'),'36/36');
+ assert.equal(playerPhaseProgress({},'a'),'—');assert.deepEqual(snapshot,before);
+ const boss={radTox:{phaseId:'boss',phaseKind:'boss',targetCount:1,localProgress:{a:{phaseId:'boss',enemyKills:1,bossDefeated:true},b:{phaseId:'wave-2',bossDefeated:true}}}};
+ assert.equal(playerPhaseProgress(boss,'a'),'Boss defeated');assert.equal(playerPhaseProgress(boss,'b'),'Boss active');
+});
+
+test('tournament ending has no next-phase countdown or implied restart',()=>{
+ const snapshot={serverTime:500000,tournament:{status:'finished',endedAt:500000},radTox:{state:'finished',transition:{kind:'tournament',at:500000}}};
+ assert.equal(roundCountdown(snapshot),null);assert.equal(radToxPhaseStatus(snapshot),'Tournament complete');
+ assert.equal(radToxPhaseStatus({...snapshot,tournament:null}),'Tournament complete');
+});
+
 class Element {
  constructor(tag='div'){this.tagName=tag.toUpperCase();this.children=[];this.listeners={};this.hidden=false;this.open=false;this.disabled=false;this.className='';this.textContent='';}
  set innerHTML(value){
@@ -59,12 +77,17 @@ test('results show separate level and tournament scores, tick locally and auto-o
  let api;
  try{
   api=mountMatchResults({dock,onNext(){},onRespawn(){}});
-  const dialog=body.children[0],button=dock.children[0],levelRow={id:'self',username:'You',connected:true,score:10,shots:4,hits:2,accuracy:50,kills:1,items:['Shield']};
-  const snapshot={serverTime:1000,players:{self:{health:100,combat:{deaths:0}}},match:{id:'level-2',level:2,state:'active',startedAt:1000,results:[levelRow]},radTox:{state:'active',phaseKind:'wave',wave:1,normalWaveCount:4,endsAt:121000},tournament:{id:'season',results:[{...levelRow,score:50},{id:'other',username:'Leader',connected:false,score:90,kills:9}]}};
+  const dialog=body.children[0],button=dock.children[0],levelRow={id:'self',username:'You',connected:true,score:10,earnedMzk:5,rewardCount:3,rewards:{mzk:5,supplies:{ammo:24},catalog:{'plasma-water':1}},shots:4,hits:2,accuracy:50,kills:1,items:['Shield']};
+  const snapshot={serverTime:1000,players:{self:{health:100,combat:{deaths:0}}},match:{id:'level-2',level:2,state:'active',startedAt:1000,results:[levelRow]},radTox:{state:'active',phaseKind:'wave',phaseId:'wave-1',targetCount:36,localProgress:{self:{phaseId:'wave-1',enemyKills:1}},wave:1,normalWaveCount:4,endsAt:121000},tournament:{id:'season',results:[{...levelRow,score:50,earnedMzk:30,rewardCount:8},{id:'other',username:'Leader',connected:false,score:90,kills:9}]}};
   api.render(snapshot,'self');assert.equal(dialog.open,false);button.click();assert.equal(dialog.open,true);
   assert.equal(dialog.querySelector('[data-level-head]').children[1].textContent,'Level score');assert.equal(dialog.querySelector('[data-tournament-head]').children[2].textContent,'Tournament total');
   const level=dialog.querySelector('[data-level-body]').children[0],tournament=dialog.querySelector('[data-tournament-body]').children;
-  assert.equal(level.children[1].textContent,'10');assert.equal(level.children[14].textContent,'Shield');assert.equal(tournament[0].children[2].textContent,'90');assert.equal(tournament[1].children[2].textContent,'50');assert.equal(tournament[1].className,'is-self');assert.match(tournament[0].children[1].textContent,/disconnected/);
+  assert.equal(level.children[1].textContent,'10');assert.equal(level.children[17].textContent,'Shield');assert.equal(tournament[0].children[2].textContent,'90');assert.equal(tournament[1].children[2].textContent,'50');assert.equal(tournament[1].className,'is-self');assert.match(tournament[0].children[1].textContent,/disconnected/);
+  assert.equal(level.children[2].textContent,'5');assert.equal(level.children[3].textContent,'3');assert.equal(level.children[4].textContent,'1/36');
+  assert.match(level.children[3].title,/ammo: 24/);assert.match(level.children[3].title,/plasma-water: 1/);
+  assert.equal(tournament[1].children[3].textContent,'30');assert.equal(tournament[1].children[4].textContent,'8');assert.equal(tournament[0].children[3].textContent,'0');
+  api.render({...snapshot,radTox:{...snapshot.radTox,localProgress:{self:{phaseId:'wave-1',enemyKills:2}}}},'self');
+  assert.equal(dialog.querySelector('[data-level-body]').children[0].children[4].textContent,'2/36','accepted phase changes refresh even when score rows are unchanged');
   assert.match(dialog.querySelector('[data-results-summary]').textContent,/enemies and combat are local/);
   now+=60000;timer();assert.equal(dialog.querySelector('[data-results-phase]').textContent,'Wave 1 / 4 · 1:00 remaining');
   dialog.querySelector('[data-results-close]').click();assert.equal(dialog.open,false);
@@ -74,6 +97,9 @@ test('results show separate level and tournament scores, tick locally and auto-o
   const boss={...snapshot,radTox:{state:'active',wave:5,phaseKind:'boss',endsAt:null}};api.render(boss,'self');assert.equal(dialog.open,false);assert.match(dialog.querySelector('[data-results-phase]').textContent,/Boss battle/);
   const final={...boss,match:{...snapshot.match,state:'finished',outcome:'victory',endedAt:181000},radTox:{...boss.radTox,state:'finished',transition:{kind:'level',at:11000}}};
   api.render(final,'self');assert.equal(dialog.open,true);assert.equal(dialog.shown,3);assert.equal(dialog.querySelector('h2').textContent,'Level 2 · Victory');assert.match(dialog.querySelector('[data-results-next]').textContent,/Next level in 10s/);
+  const completed={...final,tournament:{...final.tournament,status:'finished',endedAt:181000},radTox:{...final.radTox,transition:{kind:'tournament',at:181000}}};
+  api.render(completed,'self');assert.equal(dialog.querySelector('h2').textContent,'Tournament complete');assert.equal(dialog.querySelector('[data-results-phase]').textContent,'Tournament complete');
+  assert.equal(dialog.querySelector('[data-results-next]').disabled,true);assert.equal(dialog.querySelector('[data-results-next]').textContent,'Tournament complete');
  }finally{api?.destroy();Date.now=oldNow;Object.assign(globalThis,previous);}
  assert.equal(cleared,true);
 });

@@ -21,15 +21,17 @@ export class NeonBrainBug {
     this.lastSprayAt = -Infinity;
     this.attackClockStarted = false;
     this.attackTellStarted = false;
+    this.toPlayer = new THREE.Vector3();
+    this.baseY = position.y;
     this.texture = svgTexture();
     const segments = mobile ? 10 : 16;
     const brainMaterial = new THREE.MeshStandardMaterial({ color: 0xff4cab, emissive: 0xff087c, emissiveIntensity: 1.45, roughness: .34, metalness: .15 });
     const left = new THREE.Mesh(new THREE.SphereGeometry(.42, segments, segments - 3), brainMaterial);
-    const right = new THREE.Mesh(new THREE.SphereGeometry(.42, segments, segments - 3), brainMaterial.clone());
+    const right = new THREE.Mesh(left.geometry, brainMaterial);
     left.scale.set(1.08, .78, .88); right.scale.set(1.08, .78, .88); left.position.x = -.25; right.position.x = .25;
     const detail = new THREE.Mesh(new THREE.PlaneGeometry(1.12, .82), new THREE.MeshBasicMaterial({ map: this.texture, transparent: true, depthWrite: false, side: THREE.DoubleSide }));
     detail.position.set(0, .04, .43);
-    const aura = new THREE.Mesh(new THREE.SphereGeometry(.72, segments, segments - 3), new THREE.MeshBasicMaterial({ color: 0xff2ca0, transparent: true, opacity: .13, blending: THREE.AdditiveBlending, depthWrite: false }));
+    const aura = this.aura = new THREE.Mesh(new THREE.SphereGeometry(.72, segments, segments - 3), new THREE.MeshBasicMaterial({ color: 0xff2ca0, transparent: true, opacity: .13, blending: THREE.AdditiveBlending, depthWrite: false }));
     const legMaterial = new THREE.MeshStandardMaterial({ color: 0x7a0a57, emissive: 0xff128e, emissiveIntensity: .7, roughness: .28 });
     this.legs = [];
     for (let side of [-1, 1]) for (let index = 0; index < 4; index++) {
@@ -40,21 +42,25 @@ export class NeonBrainBug {
       lower.position.set(side * (.26 + index * .025), -.45, -.05 + index * .08); lower.rotation.z = side * (-.62 - index * .06);
       leg.add(upper, lower); leg.position.set(side * .28, -.13, (index - 1.5) * .17); this.legs.push(leg); this.root.add(leg);
     }
-    const light = new THREE.PointLight(0xff3da5, 1.8, 4); light.position.set(0, .2, .35);
+    // Emissive art already lights the brain itself. Avoid adding a dynamic
+    // scene light for every mobile enemy as a full wave populates.
+    const light = mobile ? null : new THREE.PointLight(0xff3da5, 1.8, 4);
+    if (light) { light.position.set(0, .2, .35); this.root.add(light); }
     this.attackTell = new AnimatedSvgEffect({ svg: ATTACK_TELL_SVG, size: 1.22, duration: .48, reducedMotion: mobile });
     this.attackTell.sprite.position.set(0, .1, .55);
     this.attackFlash = new AnimatedSvgEffect({ svg: ATTACK_FLASH_SVG, size: .88, duration: .3, reducedMotion: mobile });
     this.attackFlash.sprite.position.set(0, .1, .68);
-    this.root.add(left, right, detail, aura, light, this.attackTell.sprite, this.attackFlash.sprite);
+    this.root.add(left, right, detail, aura, this.attackTell.sprite, this.attackFlash.sprite);
     this.root.position.copy(position);
     this.root.userData = { toxicBubble: true, brainBug: true, health: 100, hovered: false, actor: this };
   }
 
   update(delta, elapsed, playerPosition) {
+    if (!Number.isFinite(delta) || delta <= 0) return;
     this.attackTell.update(delta);
     this.attackFlash.update(delta);
     if (!this.attackClockStarted) { this.lastSprayAt = elapsed; this.attackClockStarted = true; }
-    const toPlayer = playerPosition.clone().sub(this.root.position); toPlayer.y = 0;
+    const toPlayer = this.toPlayer.subVectors(playerPosition, this.root.position); toPlayer.y = 0;
     const distance = toPlayer.length();
     if (distance > .01) {
       toPlayer.normalize();
@@ -63,9 +69,9 @@ export class NeonBrainBug {
       this.root.position.addScaledVector(toPlayer, (retreating ? -1.95 : 2.65) * delta);
       this.root.rotation.y = Math.atan2(toPlayer.x, toPlayer.z);
     }
-    this.root.position.y = Math.max(.28, this.root.position.y + Math.sin(elapsed * 4 + this.phase) * delta * .075);
+    this.root.position.y = this.baseY + Math.sin(elapsed * 4 + this.phase) * .01875;
     this.legs.forEach((leg, index) => { leg.rotation.y = Math.sin(elapsed * 10 + this.phase + index) * .22; });
-    this.root.children.find(child => child.isMesh && child.material?.opacity === .13)?.scale.setScalar(1 + Math.sin(elapsed * 5 + this.phase) * .08);
+    this.aura.scale.setScalar(1 + Math.sin(elapsed * 5 + this.phase) * .08);
     const sprayCooldown = elapsed - this.lastSprayAt;
     if (distance < 7.4 && sprayCooldown > .97 && sprayCooldown <= 1.45 && !this.attackTellStarted) {
       this.attackTellStarted = true;
@@ -77,10 +83,11 @@ export class NeonBrainBug {
       this.attackTellStarted = false;
       this.attackTell.stop();
       this.attackFlash.play();
-      this.onSpray?.(this.root.position.clone().add(new THREE.Vector3(0, .12, 0)), playerPosition.clone());
+      const origin = this.root.position.clone(); origin.y += .12;
+      this.onSpray?.(origin, playerPosition.clone());
     }
   }
 
-  dispose() { this.attackTell.dispose(); this.attackFlash.dispose(); this.root.traverse(object => { object.geometry?.dispose?.(); if (object.material) (Array.isArray(object.material) ? object.material : [object.material]).forEach(material => material.dispose?.()); }); this.texture.dispose(); }
+  dispose() { this.attackTell.dispose(); this.attackFlash.dispose(); const geometries = new Set(), materials = new Set(); this.root.traverse(object => { if(object.geometry)geometries.add(object.geometry); if (object.material) (Array.isArray(object.material) ? object.material : [object.material]).forEach(material => materials.add(material)); }); geometries.forEach(geometry=>geometry.dispose()); materials.forEach(material=>material.dispose()); this.texture.dispose(); }
 }
 

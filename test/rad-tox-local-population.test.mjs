@@ -4,20 +4,41 @@ import * as THREE from '../public/vendor/three/three.module.min.js';
 import {LocalEnemyPopulation,LocalRewardField} from '../public/js/rad-tox-local-population.js';
 import {radToxWavePopulation} from '../public/js/rad-tox-wave-rules.js';
 
-test('local enemies refill through a finite wave budget without exceeding the mobile live cap',async()=>{
+test('all configured enemies are active before a mobile wave starts without latent replacements',async()=>{
   let now=0,created=0,highest=0;
   const plan=radToxWavePopulation(3,2,{mobile:true});
   const population=new LocalEnemyPopulation({now:()=>now,yieldFrame:async()=>{},spawn:kind=>{created++;return {kind,userData:{}};}});
   population.begin('phase',plan);
-  await population.fill();assert.equal(population.alive,plan.concurrent.total);
+  await population.fill();assert.equal(population.alive,plan.budget.total);assert.equal(population.ready,true);
   while(population.remaining){
     highest=Math.max(highest,population.alive);
     for(const slot of population.slots.filter(item=>item.state==='active'))assert.equal(population.defeat(slot.root),true);
     now+=1100;await population.fill();
   }
-  assert.equal(highest,plan.concurrent.total);assert.ok(highest<=14);
+  assert.equal(highest,plan.budget.total);assert.deepEqual(plan,radToxWavePopulation(3,2));
   assert.equal(created,plan.budget.total);assert.equal(population.defeated,plan.budget.total);
   now+=2000;await population.fill();assert.equal(population.alive,0);assert.equal(created,plan.budget.total);
+});
+
+test('every level and normal wave deploy the full authored species mix on every device',async()=>{
+  for(const level of [1,2,3,6,12])for(const wave of [1,2,3,4]){
+    const plan=radToxWavePopulation(level,wave),created=[];
+    const population=new LocalEnemyPopulation({spawn:kind=>{created.push(kind);return {userData:{}};},yieldFrame:async()=>{}});
+    population.begin(`level-${level}-wave-${wave}`,plan);await population.fill();
+    assert.equal(population.ready,true);assert.equal(population.alive,plan.budget.total);
+    for(const kind of ['toxic','ghost','snake','brain'])assert.equal(created.filter(value=>value===kind).length,plan.budget[kind]);
+    assert.deepEqual(plan,radToxWavePopulation(level,wave,{mobile:true}));
+  }
+});
+
+test('reloading a phase restores exact defeated slots and surviving enemy damage without duplicates',async()=>{
+  const make=()=>new LocalEnemyPopulation({spawn:(_kind,slot)=>{const root=new THREE.Group();root.position.set(slot.index,1,2);root.userData.health=slot.saved?.health??100;return root;},yieldFrame:async()=>{}});
+  const first=make(),plan=radToxWavePopulation(2,2);first.begin('phase',plan);await first.fill();
+  const defeatedIds=[first.slots[7],first.slots[19]].map(slot=>{const id=slot.id;first.defeat(slot.root);return id;});
+  first.slots[21].root.userData.health=32;const checkpoint=first.snapshot(),second=make();second.begin('phase',plan,2,checkpoint);await second.fill();
+  assert.deepEqual(second.slots.filter(slot=>slot.state==='defeated').map(slot=>slot.id),defeatedIds);
+  assert.equal(second.slots[21].root.userData.health,32);assert.equal(second.alive,plan.budget.total-2);assert.equal(second.ready,true);
+  await second.fill();assert.equal(second.alive,plan.budget.total-2,'polls cannot clone active slots');
 });
 
 test('failed placements retry while successful enemies and accepted kills keep their quota',async()=>{

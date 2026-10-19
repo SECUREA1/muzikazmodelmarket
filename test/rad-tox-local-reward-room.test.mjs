@@ -11,11 +11,11 @@ import {RadToxScoreReporter} from '../public/js/rad-tox-score-reporter.js';
 const map={id:'local-reward-room',name:'Local rewards',modelUrl:'/test-house.glb',spawn:{x:0,y:0,z:2}};
 const alice={accountId:'alice',walletId:'wallet-alice',username:'Alice',stats:{health:100}},bob={accountId:'bob',walletId:'wallet-bob',username:'Bob',stats:{health:100}};
 async function fixture(run){
- const dir=await mkdtemp(join(tmpdir(),'rad-local-reward-room-')),db=new UserJsonDatabase(join(dir,'users.json'));let now=100000,request=0,unavailable=false,lostGrant=false;
+ const dir=await mkdtemp(join(tmpdir(),'rad-local-reward-room-')),db=new UserJsonDatabase(join(dir,'users.json'));let now=100000,request=0,unavailable=false,lostGrant=false,recoveryUnavailable=false;
  for(const user of [alice,bob])await db.put(user.walletId,{tokens:{MZK:0},items:[],memory:{account:{accountId:user.accountId}}});
  const store=new SharedRoomStore(join(dir,'rooms.json'));
  const createRuntime=current=>{
-  const runtime=new AuthoritativeRooms({store:current,now:()=>now,grantLocalRewards:async(identity,grant)=>{
+  const runtime=new AuthoritativeRooms({store:current,now:()=>now,loadLocalRewards:(identity,input)=>{if(recoveryUnavailable)throw Error('Account recovery is temporarily unavailable');return db.radToxRewardState(identity.walletId,input);},grantLocalRewards:async(identity,grant)=>{
    if(unavailable)throw Error('Temporary account storage outage');
    const receipt=await db.grantRadToxRewards(identity.walletId,grant);
    if(lostGrant){lostGrant=false;throw Error('Lost wallet response after commit');}return receipt;
@@ -25,7 +25,7 @@ async function fixture(run){
  let runtime=createRuntime(store);
  const send=(user,action,fields={})=>runtime.command(map.id,map,user,{action,requestId:'reward-room-'+(++request),...fields});
  const report=(user,state,stats={},extra={})=>send(user,'rad-tox-progress',{matchId:state.match.id,phaseId:state.radTox.phaseId,sequence:1,stats,lifeRevision:state.players['account:'+user.accountId].lifeRevision,...extra});
- try{await run({db,store,send,report,get runtime(){return runtime;},set unavailable(value){unavailable=value;},set lostGrant(value){lostGrant=value;},async restart(){await store.flush();runtime=createRuntime(new SharedRoomStore(store.file));},advance(ms){now+=ms;}});}finally{await rm(dir,{recursive:true,force:true});}
+ try{await run({db,store,send,report,get runtime(){return runtime;},set unavailable(value){unavailable=value;},set recoveryUnavailable(value){recoveryUnavailable=value;},set lostGrant(value){lostGrant=value;},async restart(){await store.flush();runtime=createRuntime(new SharedRoomStore(store.file));},crash(){runtime=createRuntime(new SharedRoomStore(store.file));},advance(ms){now+=ms;}});}finally{await rm(dir,{recursive:true,force:true});}
 }
 const kill={shots:1,hits:1,enemyHits:1,enemyKills:1,score:11};
 
@@ -71,4 +71,37 @@ test('storage outages and a lost grant response preserve scores and retry wallet
  assert.equal(state.result.localScoreAck.rewardsPending,true);assert.equal((await f.db.get(alice.walletId)).tokens.MZK,5,'the wallet committed even though its acknowledgement was lost');
  const retry=reporter.report(2000);state=await f.send(alice,'rad-tox-progress',retry);reporter.acknowledge(state.result.localScoreAck);
  assert.equal(state.result.localScoreAck.rewardsPending,false);assert.equal(reporter.pending,false);assert.equal((await f.db.get(alice.walletId)).tokens.MZK,5);assert.equal(state.players['account:alice'].score,11);
+}));
+
+test('the first account grant durably checkpoints a new phase before a crash can orphan its identity',async()=>fixture(async f=>{
+ await f.send(alice,'join');f.advance(120000);await f.send(alice,'join');
+ f.advance(10000);let state=await f.send(alice,'input',{input:{}});
+ assert.equal(state.radTox.wave,2);const phaseId=state.radTox.phaseId,coin=state.radToxRewards.manifest.find(entry=>entry.slot==='field-coin-0');
+ state=await f.report(alice,state,kill,{claimIds:[coin.id]});
+ assert.equal((await f.db.get(alice.walletId)).tokens.MZK,5);
+ f.crash();state=await f.send(alice,'join');
+ assert.equal(state.radTox.phaseId,phaseId,'the new phase exists on disk before the wallet transaction');
+ assert.equal(state.players['account:alice'].score,11);assert.equal(state.tournament.results.find(row=>row.id==='account:alice').earnedMzk,5);
+ assert.ok(state.radToxRewards.claimedIds.includes(coin.id),'a committed coin never reappears after room recovery');
+ state=await f.report(alice,state,kill,{sequence:2,claimIds:[coin.id]});
+ assert.equal((await f.db.get(alice.walletId)).tokens.MZK,5);assert.equal(state.players['account:alice'].score,11);
+}));
+
+test('a failed phase checkpoint defers account grants and retries without skipping durability',async()=>fixture(async f=>{
+ let state=await f.send(alice,'join');const coin=state.radToxRewards.manifest.find(entry=>entry.slot==='field-coin-0'),save=f.store.save.bind(f.store);let attempts=0;
+ f.store.save=async data=>{if(++attempts===1)throw Error('Temporary room disk failure');return save(data);};
+ state=await f.report(alice,state,kill,{claimIds:[coin.id]});
+ assert.equal(state.result.localScoreAck.rewardsPending,true);assert.equal((await f.db.get(alice.walletId)).tokens.MZK,0);
+ state=await f.report(alice,state,kill,{sequence:2,claimIds:[coin.id]});
+ assert.equal(attempts,2);assert.equal(state.result.localScoreAck.rewardsPending,false);assert.equal((await f.db.get(alice.walletId)).tokens.MZK,5);
+}));
+
+test('recovery outages retry before fresh reports can overwrite durable accepted progress',async()=>fixture(async f=>{
+ let state=await f.send(alice,'join');const coin=state.radToxRewards.manifest.find(entry=>entry.slot==='field-coin-0');
+ state=await f.report(alice,state,kill,{claimIds:[coin.id]});f.crash();f.recoveryUnavailable=true;
+ await assert.rejects(f.send(alice,'join'),{statusCode:503,code:'RAD_TOX_RECOVERY_PENDING'});
+ await assert.rejects(f.report(alice,state,{}, {sequence:2}),{statusCode:503,code:'RAD_TOX_RECOVERY_PENDING'});
+ f.recoveryUnavailable=false;state=await f.send(alice,'join');
+ assert.equal(state.players['account:alice'].score,11);assert.equal(state.tournament.results.find(row=>row.id==='account:alice').earnedMzk,5);
+ assert.ok(state.radToxRewards.claimedIds.includes(coin.id));assert.equal((await f.db.get(alice.walletId)).tokens.MZK,5);
 }));
