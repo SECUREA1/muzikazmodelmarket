@@ -1,6 +1,6 @@
 import { access, readFile } from 'node:fs/promises';
 
-const htmlPages = ['index.html', 'model-market.html', 'builder-market.html', 'environment-builder.html', 'avatar-whitepaper.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html', 'checkout.html', 'model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
+const htmlPages = ['index.html', 'index.htm', 'model-market.html', 'builder-market.html', 'environment-builder.html', 'avatar-whitepaper.html', 'index0.html', 'index1.html', 'members.html', 'originals.html', 'legends.html', 'beasts.html', 'crew-market.html', 'chaos.html', 'brand-kit.html', 'new-legends.html', 'trait-avatars.html', 'online-events.html', 'checkout.html', 'model-explorer.html', 'token-mixer.html', 'voice-changer.html', 'quest-board.html'];
 const requiredFiles = [
   ...htmlPages.map((page) => `dist/${page}`),
   'dist/styles.css',

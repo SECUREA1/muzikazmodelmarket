@@ -40,4 +40,6 @@ for (const directory of requiredDirectories) {
   await copyRequiredDirectory(directory);
 }
 
+await cp(new URL('index.html', dist), new URL('index.htm', dist));
+
 console.log('Built optimized static site into dist/.');
