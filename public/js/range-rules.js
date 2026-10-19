@@ -1,4 +1,5 @@
 import {RANGED_WEAPONS} from './game-weapons.js';
+import {FIRING_RANGE_ROOM_WALLS} from './firing-range-model.js';
 
 export const RANGE_COURSES=Object.freeze({
  freeplay:Object.freeze({seconds:null,shots:null}),
@@ -21,7 +22,7 @@ export const RANGE_TARGETS=Object.freeze([-14,-7,0,7,14].flatMap((x,lane)=>[
  box([.85,1.25,.16],x,1.35,-15.45,{lane,zone:'body',points:60}),
  box([1.4,.28,.16],x,1.72,-15.45,{lane,zone:'body',points:60}),
 ]));
-const obstacles=[box([39,3.5,.5],0,1.75,-19),...[-19,19].map(x=>box([.5,3.5,38],x,1.75,0))];
+const obstacles=[box([39,3.5,.5],0,1.75,-19),...[-19,19].map(x=>box([.5,3.5,38],x,1.75,0)),...FIRING_RANGE_ROOM_WALLS.map(({size,x,y,z})=>box(size,x,y,z))];
 for(let z=-14;z<=10;z+=6)obstacles.push(box([38,.28,1.1],0,3.3,z));
 for(const x of [-14,-7,0,7,14]){if(x<14)obstacles.push(box([.18,2.35,15],x+3.5,1.175,5));obstacles.push(box([4.6,.85,1.05],x,.425,12.5));}
 export function rangeRayDistance(origin,direction,target){
@@ -32,7 +33,7 @@ export function rangeRayDistance(origin,direction,target){
 export function scoreRangeRay(origin,direction,weapon='laser'){
  const miss={hit:false,zone:null,lane:null,points:0},profile=RANGE_WEAPONS[weapon];
  if(!profile||![origin,direction].every(vector=>vector&&['x','y','z'].every(axis=>Number.isFinite(vector[axis]))))return miss;
- if(Math.abs(origin.x)>18.75||origin.y<.1||origin.y>3.5||origin.z< -18.75||origin.z>19)return miss;
+ if(Math.abs(origin.x)>18.75||origin.y<.1||origin.y>3.5||origin.z< -18.75||origin.z>27.2)return miss;
  const length=Math.hypot(direction.x,direction.y,direction.z);if(length<1e-6)return miss;
  const aim=Object.fromEntries(['x','y','z'].map(axis=>[axis,direction[axis]/length]));
  let nearest=profile.range,hit=null;

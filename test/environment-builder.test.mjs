@@ -94,7 +94,7 @@ test('responsive customization sheet includes commercial FPS and training scenes
   assert.match(css, /\.inspector-open \.object-inspector/);
   assert.match(script, /Force Training Range/);
   assert.match(script, /reactiveTarget=true/);
-  assert.match(script, /rangeTrainee=true/);
+  assert.match(await readFile(new URL('../public/js/firing-range-model.js', import.meta.url), 'utf8'), /rangeTrainee=true/);
   assert.match(html, /ACTIVE TARGETS ONLINE/);
   assert.match(html, /Tournament · 3 rounds/);
   assert.match(html, /id="range-result"/);
@@ -107,7 +107,7 @@ test('responsive customization sheet includes commercial FPS and training scenes
 test('playable firing range supports unlimited free play and real desktop, mobile, and VR target hits', async () => {
   const [game, loader, index] = await Promise.all([
     readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8'),
-    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
+    Promise.all([readFile(new URL('../public/js/environments/environment-loader.js', import.meta.url), 'utf8'),readFile(new URL('../public/js/environments/builder-land.js',import.meta.url),'utf8'),readFile(new URL('../public/js/firing-range-model.js',import.meta.url),'utf8')]).then(parts=>parts.join('\n')),
     readFile(new URL('../index.html', import.meta.url), 'utf8')
   ]);
   assert.match(game, /data-range-mode="freeplay"/);
