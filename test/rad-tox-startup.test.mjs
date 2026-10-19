@@ -51,3 +51,15 @@ test('multiplayer Begin starts a rendered RAD-TOX encounter instead of stopping 
  assert.match(game,/renderServerRadTox\(snapshot\);/);
  assert.match(game,/!snapshot\.radTox\)throw new Error/,'an old server cannot be mistaken for an active encounter');
 });
+
+test('a stalled startup offers a working reload while the original engine can still finish',async()=>{
+ const {runInNewContext}=await import('node:vm');const source=await readFile(new URL('../public/js/rad-tox-launcher.js',import.meta.url),'utf8');
+ const handlers=new Map(),timers=[];let click,reloads=0;
+ const button={disabled:false,addEventListener:(_,callback)=>{click=callback;}},status={},overlay={classList:{add(){},remove(){}}};
+ const document={querySelector:()=>button,getElementById:id=>id==='house-game-start'?overlay:status,body:{dataset:{},appendChild(){}},createElement:()=>({}),addEventListener:(name,callback)=>handlers.set(name,callback),dispatchEvent(){}};
+ const window={location:{search:'',reload:()=>reloads++},setTimeout:callback=>{timers.push(callback);return timers.length;},clearTimeout(){}};
+ runInNewContext(source,{document,window,URLSearchParams,CustomEvent:class {constructor(name){this.type=name;}}});
+ click({preventDefault(){}});assert.equal(button.disabled,true);timers[0]();assert.equal(button.disabled,false);assert.equal(button.textContent,'Reload game');
+ click({preventDefault(){}});assert.equal(reloads,1);
+ handlers.get('muzikaz:rad-tox-engine-ready')();assert.equal(button.textContent,'Connecting…');assert.equal(button.disabled,true);
+});

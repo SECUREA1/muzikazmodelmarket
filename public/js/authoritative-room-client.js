@@ -86,6 +86,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   busy=true;
   try {
    if (!joined) {
+    // A restarted server begins a new sequence; accept its first confirmed state.
+    sequence=-1;
     const arrival=await client.send('join',meetingId?{meetingId}:{});
     if (stopped) return;
     joined=true;

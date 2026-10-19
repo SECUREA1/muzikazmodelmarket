@@ -52,3 +52,14 @@ test('saved ride animation flags and speed share one bounded time multiplier', (
   assert.equal(arcadeAnimationSpeed(true, 30), 3);
   assert.equal(arcadeAnimationSpeed(true, NaN), 1);
 });
+
+test('live roster heartbeats preserve an open player selector until the roster changes',async()=>{
+ const {readFile}=await import('node:fs/promises');const {runInNewContext}=await import('node:vm');
+ const source=await readFile(new URL('../public/js/arcade-game.js',import.meta.url),'utf8');
+ const code=source.split('\n').find(line=>line.startsWith('function refreshPlayerSlots('));
+ let replacements=0;const select={value:'1',options:[],replaceChildren(...options){replacements++;this.options=options;},add(option){this.options.push(option);}};
+ const context={game:2,$:selector=>selector==='#game-slot'?select:{value:'3'},Option:class {constructor(text,value){this.text=text;this.value=value;}}};
+ runInNewContext(code,context);const slots=[{actor:'a',name:'You'},{actor:null,name:'AI'}];
+ context.refreshPlayerSlots(slots);context.refreshPlayerSlots(structuredClone(slots));assert.equal(replacements,1);assert.equal(select.value,'1');
+ context.refreshPlayerSlots([{actor:'a',name:'You'},{actor:'b',name:'New player'}]);assert.equal(replacements,2);assert.equal(select.value,'1');
+});

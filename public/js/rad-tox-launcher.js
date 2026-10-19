@@ -4,6 +4,7 @@
   var requested = false;
   var engineReady = false;
   var loadTimer = 0;
+  var stalled = false;
   var button = document.querySelector('[data-house-start]');
   var overlay = document.getElementById('house-game-start');
   var status = document.getElementById('house-game-load-status');
@@ -18,9 +19,12 @@
     if (button) { button.disabled = false; button.textContent = 'Try again'; }
   }
   function showStall() {
-    if (status) status.textContent = 'The game engine is still loading. Check your connection; this screen will continue automatically.';
+    stalled = true;
+    if (status) status.textContent = 'Loading is taking longer than expected. Keep waiting, or reload the game to reconnect.';
+    if (button) { button.disabled = false; button.textContent = 'Reload game'; }
   }
   function begin() {
+    if (stalled) { window.location.reload(); return; }
     if (requested) return;
     requested = true;
     document.body.dataset.gameControls='loading';
@@ -39,7 +43,7 @@
     loadTimer = window.setTimeout(showStall, 30000);
   }
   if (button) button.addEventListener('click', function (click) { click.preventDefault(); begin(); });
-  document.addEventListener('muzikaz:rad-tox-engine-ready', function () { engineReady = true; clearLoadTimer(); document.dispatchEvent(event('muzikaz:rad-tox-request')); }, { once: true });
+  document.addEventListener('muzikaz:rad-tox-engine-ready', function () { engineReady = true; stalled = false; if (button) { button.disabled = true; button.textContent = 'Connecting…'; } clearLoadTimer(); document.dispatchEvent(event('muzikaz:rad-tox-request')); }, { once: true });
   document.addEventListener('muzikaz:gameplay-ready', function () { clearLoadTimer(); document.body.dataset.gameControls='ready'; });
   document.addEventListener('muzikaz:rad-tox-stage', function (stage) { if (stage.detail && stage.detail.message && status) status.textContent = stage.detail.message; });
   document.addEventListener('muzikaz:rad-tox-native-error', function (failure) { showError((failure.detail && failure.detail.message) || 'The playable world could not be initialized.'); });

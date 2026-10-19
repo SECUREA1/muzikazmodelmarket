@@ -163,3 +163,14 @@ test('intermediate drag bursts use the heartbeat while neutral edges flush immed
   side=0;client.requestInput();await pause(5);assert.equal(received.at(-1),0,'release bypasses the heartbeat');
  },{input:()=>({side})});
 });
+
+test('rejoining a restarted server renders its reset sequence instead of freezing the old world',async()=>{
+ let joins=0,inputs=0;const rendered=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const {action}=JSON.parse(options.body);
+  if(action==='join')return response(confirmed(++joins===1?100:1));
+  if(action==='input'&&++inputs===1)return response({message:'Join again',code:'ROOM_JOIN_REQUIRED'},409);
+  return response(confirmed(inputs+1));
+ },async client=>{await client.whenReady();await pause(250);assert.equal(joins,2);assert.ok(rendered.includes(100));assert.ok(rendered.includes(1));assert.equal(client.ready,true);},{render:state=>rendered.push(state.sequence)});
+});
