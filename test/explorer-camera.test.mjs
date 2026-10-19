@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../public/vendor/three/three.module.min.js';
-import {explorerMovementInput,explorerAimAngles,explorerTopDownPose} from '../public/js/explorer-camera.js';
+import {explorerMovementInput,explorerAimAngles,explorerTopDownPose,explorerBroadcastPose} from '../public/js/explorer-camera.js';
 
 const close=(actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-8,`${actual} ≠ ${expected}`);
 
@@ -39,4 +39,16 @@ test('portrait and landscape overhead cameras remain north-up and expose the pla
     close(centre.x,0);close(centre.y,0);assert.ok(north.y>centre.y);assert.ok(east.x>centre.x);
     assert.ok(pose.cutHeight>player.y+1.65);assert.ok(pose.position[1]>pose.cutHeight);
   }
+});
+
+test('broadcast zoom and orbit preserve the player target',()=>{
+ const player={x:3,y:2,z:8},base=explorerBroadcastPose(player,1,1,0),rotated=explorerBroadcastPose(player,1,1,Math.PI/2),zoom=explorerBroadcastPose(player,1,2,0);
+ assert.deepEqual(base.target,rotated.target);assert.deepEqual(base.target,zoom.target);
+ close(rotated.position[0]-player.x,base.position[2]-player.z);
+ close(zoom.position[2]-player.z,2*(base.position[2]-player.z));
+ for(const yaw of [0,1,2])for(const viewYaw of [0,1,2]){
+ const controls=explorerMovementInput({x:0,y:1},yaw,true,viewYaw);
+ close(-Math.sin(yaw)*controls.y+Math.cos(yaw)*controls.x,-Math.sin(viewYaw));
+ close(-Math.cos(yaw)*controls.y-Math.sin(yaw)*controls.x,-Math.cos(viewYaw));
+ }
 });

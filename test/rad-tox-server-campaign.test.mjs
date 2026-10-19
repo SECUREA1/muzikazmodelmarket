@@ -57,14 +57,15 @@ test('starting RAD-TOX in a GLB house creates one shared encounter with enemies,
  } finally {await rm(dir,{recursive:true,force:true});}
 });
 
-test('Builder rooms keep their authored gameplay instead of receiving a house campaign',async()=>{
+test('Builder rooms receive the shared RAD-TOX campaign',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'rad-tox-builder-'));
  try {
   const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json'))});
   const map={id:'builder',builderScene:{objects:[]}},identity={accountId:'alice',stats:{health:100}};
   await runtime.command(map.id,map,identity,{action:'join',requestId:'join'});
   const state=await runtime.command(map.id,map,identity,{action:'start-rad-tox',requestId:'start'});
-  assert.equal(state.radTox,null);assert.deepEqual(state.actors,{});
+  assert.equal(state.radTox.state,'active');assert.equal(state.radTox.wave,1);
+  assert.deepEqual(new Set(Object.values(state.actors).map(actor=>actor.kind)),new Set(['toxic','ghost','snake','brain']));
  }finally{await rm(dir,{recursive:true,force:true});}
 });
 

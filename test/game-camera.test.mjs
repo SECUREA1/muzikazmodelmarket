@@ -17,7 +17,10 @@ test('camera preference survives runtime travel and rejects stale modes', () => 
     values.set(camera.GAME_CAMERA_STORAGE_KEY, 'invalid');
     assert.equal(camera.readGameCameraMode('top-down'), 'top-down');
     assert.equal(camera.writeGameCameraMode('invalid'), 'first-person');
-    assert.equal(camera.nextGameCameraMode(camera.nextGameCameraMode('top-down')), 'top-down');
+    assert.equal(camera.nextGameCameraMode('top-down'), 'broadcast');
+    assert.equal(camera.nextGameCameraMode('broadcast'), 'first-person');
+    camera.writeGameCameraMode('broadcast');
+    assert.equal(camera.readGameCameraMode(), 'broadcast');
   } finally {
     if (previous) Object.defineProperty(globalThis, 'localStorage', previous);
     else delete globalThis.localStorage;

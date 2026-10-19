@@ -51,3 +51,9 @@ test('multiplayer Begin starts a rendered RAD-TOX encounter instead of stopping 
  assert.match(game,/renderServerRadTox\(snapshot\);/);
  assert.match(game,/!snapshot\.radTox\)throw new Error/,'an old server cannot be mistaken for an active encounter');
 });
+
+test('walking prediction exists before any game startup callback',async()=>{
+ const game=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
+ assert.equal((game.match(/walkingMotion\s*=\s*new WalkingMotion/g)||[]).length,1);
+ assert.ok(game.indexOf('const walkingMotion = new WalkingMotion()')<game.indexOf('const canvas = legacyCanvas.cloneNode'));
+});
