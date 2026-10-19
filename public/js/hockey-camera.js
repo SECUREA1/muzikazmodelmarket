@@ -2,8 +2,8 @@
 const number=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 export const HOCKEY_PLAYER_VIEWS=Object.freeze(['chase','ice','top-down']);
-export const hockeyViewForGameCamera=mode=>mode==='top-down'?'top-down':'ice';
-export const hockeyGameCameraForView=view=>view==='ice'?'first-person':view==='top-down'?'top-down':null;
+export const hockeyViewForGameCamera=mode=>mode==='top-down'?'top-down':mode==='broadcast'?'broadcast':'ice';
+export const hockeyGameCameraForView=view=>view==='ice'?'first-person':view==='top-down'?'top-down':view==='broadcast'?'broadcast':null;
 export function hockeyViewHeading(attack=1){return attack<0?-Math.PI/2:Math.PI/2;}
 export function hockeySkateVector(right,forward,heading=Math.PI){
  right=clamp(number(right),-1,1);forward=clamp(number(forward),-1,1);heading=number(heading,Math.PI);

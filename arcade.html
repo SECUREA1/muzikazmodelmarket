@@ -10,7 +10,7 @@
 <body>
 <div id="world">
 </div>
-<button id="camera-toggle" aria-keyshortcuts="V" data-game-camera-mode="first-person" title="Switch to Top down (V)" aria-label="Switch to Top down (V)">View: First person</button>
+<button id="camera-toggle" class="game-camera-menu-toggle" aria-keyshortcuts="V" data-game-camera-mode="first-person" title="Camera views and zoom" aria-label="Camera views and zoom"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h4l2-3h4l2 3h4v13H4z"/><circle cx="12" cy="13" r="4"/></svg></button>
 <header>
 <a class="brand" href="./">
 <span class="mark">N<span>J</span>
@@ -33,7 +33,7 @@
 <em>Endless play.</em>
 </h1>
 <p>Your next high score is just around the corner.<br>Choose a game, find your team, and make your next play.</p>
-<div class="view-controls">
+<div class="view-controls" hidden>
 <button id="explore" class="primary" aria-pressed="true">First person</button>
 <button id="overview" aria-pressed="false">Top down</button>
 </div>

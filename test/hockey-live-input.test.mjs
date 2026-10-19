@@ -77,6 +77,21 @@ test('opening the headset menu immediately clears pending actions and held skati
  assert.deepEqual(inputs.snapshot(),{keys:[],pending:[]});assert.equal(context.controllerMove.x,0);assert.equal(context.controllerMove.y,0);
 });
 
+test('a delayed camera dialog close event preserves fresh skating and action taps',()=>{
+ const inputs=createHockeyInputs();let options;
+ const context=vm.createContext({
+  hockeyCameraMenu:null,hockeyViewport:{},$:()=>({}),
+  mountGameCameraMenu:value=>{options=value;return {};},
+  resetHockeyInput:()=>inputs.reset(),restoreHockeyFocus(){}
+ });
+ vm.runInContext(section('hockeyCameraMenu=mountGameCameraMenu(','const extraCameraViews='),context);
+ inputs.press('w');inputs.tap('shoot');options.onOpenChange(true);
+ assert.deepEqual(inputs.snapshot(),{keys:[],pending:[]});
+ // The dialog open attribute clears before the native close event is delivered.
+ inputs.press('s');inputs.tap('f');options.onOpenChange(false);
+ assert.deepEqual(inputs.snapshot(),{keys:['s'],pending:['f']});
+});
+
 function roleChangeFixture(action){
  const waits=[],cleared=[],started=[],requests=[],accepted=[],nodes=new Map();let finishRequest,failRequest,resets=0,cameras=0;
  const response=new Promise((resolve,reject)=>{finishRequest=resolve;failRequest=reject;});

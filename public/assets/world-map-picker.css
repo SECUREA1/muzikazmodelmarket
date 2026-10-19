@@ -1,0 +1,49 @@
+/* Keep the navigator focused on the map pie, model preview and entry action. */
+.world-map-picker.world-lobby>header{padding-bottom:6px}
+.world-map-picker.world-lobby>header h3{font-size:clamp(24px,3.5vw,32px)}
+.world-map-toolbar{position:relative;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px 0 18px;z-index:5}
+.world-map-toolbar .world-lobby-stats{margin:0;gap:7px 14px}
+.world-map-options{position:relative;flex:none}
+.world-map-options>summary{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:7px 12px;box-sizing:border-box;border:1px solid #47633d;border-radius:12px;background:#16271b;color:#d1e4bf;font:650 12px/1.4 system-ui;list-style:none;cursor:pointer;touch-action:manipulation}
+.world-map-options>summary::-webkit-details-marker{display:none}
+.world-map-options>summary svg{width:20px;height:20px;flex:none}
+.world-map-options[open]>summary,.world-map-options>summary.has-filter{border-color:#c2ef7e;background:#273b21;color:#e5ffc4}
+.world-map-options:not([open])>.world-map-options-panel{display:none}
+.world-map-options-panel{position:absolute;right:0;top:calc(100% + 9px);z-index:12;box-sizing:border-box;width:min(390px,calc(100vw - 64px));max-height:min(520px,65dvh);overflow:auto;overscroll-behavior:contain;padding:16px;border:1px solid #799c59;border-radius:16px;background:#102218;box-shadow:0 18px 50px #0009;text-align:left}
+.world-map-options-panel .world-map-search{display:grid;gap:7px}
+.world-map-options-panel .world-map-search input{box-sizing:border-box;width:100%;min-width:0}
+.world-map-options-panel .world-lobby-filters{gap:7px;margin-bottom:8px}
+.world-map-options-panel .world-lobby-list{margin-top:12px}
+.world-map-options-panel .world-lobby-atlas{margin-top:8px;padding:0;border:0;border-top:1px solid #354d32;border-radius:0;background:transparent}
+.world-map-options-panel .world-lobby-card{gap:9px;min-height:70px;padding:10px!important}
+.world-map-options-panel .world-lobby-card-icon{flex-basis:32px;height:34px;font-size:20px}
+.world-map-options-panel .world-lobby-card-copy strong{font-size:12px}
+.world-map-picker.world-lobby .world-lobby-layout{grid-template-columns:minmax(0,1.1fr) minmax(260px,1fr);gap:26px;align-items:center}
+.world-map-picker.world-lobby .world-lobby-results{margin-bottom:10px}
+.world-map-picker.world-lobby .world-map-detail{padding:15px;border-color:#47633d;background:linear-gradient(145deg,#192d1d,#102017)}
+.world-map-picker.world-lobby [data-world-preview]{margin-bottom:14px}
+.world-map-picker.world-lobby .world-preview-viewport{height:clamp(230px,27vw,320px)}
+.world-map-destination-heading>small{font-size:9px;font-weight:800;letter-spacing:.12em;color:#b8cf9b}
+.world-map-picker.world-lobby .world-map-destination-heading h3{margin:7px 0 9px;font-size:24px;line-height:1.2}
+.world-map-destination-heading .world-lobby-presence{margin:0 0 7px;font-size:11px;line-height:1.5;color:#cce9ac}
+.world-map-destination-info{margin-top:12px;border-top:1px solid #344d30}
+.world-map-destination-info>summary{display:list-item;min-height:44px;align-content:center;margin-left:14px;cursor:pointer;font:12px/1.5 system-ui;color:#b6cca5}
+.world-map-destination-info>p{font-size:12px;line-height:1.6;color:#b6c9ac}
+.world-map-destination-info .world-lobby-meta{margin:14px 0}
+.world-map-picker.world-lobby .world-map-destination-info .world-lobby-next{margin-bottom:4px}
+.world-map-picker.world-lobby .world-map-pages{gap:12px;margin-top:15px}
+@media(max-width:720px){
+  .world-map-picker.world-lobby .world-lobby-layout{grid-template-columns:minmax(0,1fr);gap:18px}
+  .world-map-picker.world-lobby>header h3{font-size:25px}
+  .world-map-picker.world-lobby>header p{font-size:11px}
+  .world-map-toolbar{gap:8px;margin:9px 0 15px}
+  .world-map-toolbar .world-lobby-stats{gap:6px 10px;font-size:10px}
+  .world-map-options>summary{padding:7px 9px;font-size:11px;gap:6px}
+  .world-map-options-panel{padding:12px}
+  .world-map-picker.world-lobby .world-preview-viewport{height:230px}
+  .world-map-picker.world-lobby .world-map-destination-heading h3{font-size:22px}
+}
+@media(max-width:350px){
+  .world-map-toolbar .world-lobby-stats{display:grid;gap:3px}
+  .world-map-picker.world-lobby .world-preview-viewport{height:200px}
+}

@@ -45,6 +45,7 @@
     <meta name="msapplication-TileColor" content="#05070a">
   <link rel="stylesheet" href="public/assets/game-control-dock.css">
   <link rel="stylesheet" href="public/assets/game-menus.css">
+  <link rel="stylesheet" href="public/assets/world-map-picker.css" data-world-map-picker-style>
 </head>
 <body class="model-explorer-page" data-game-controls="pending" data-game-launcher>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MUZIKAZ","url":"https://muzikaz.com/","logo":"https://muzikaz.com/logo_symbol_crop_2x_transparent.png","image":"https://muzikaz.com/brand_name_tagline_panel_2x_transparent.png","description":"Interactive MUZIKAZ 3D model explorer for publishing live character models with photos, descriptions, links, and creator metadata.","sameAs":["https://muzikaz.com/"]}</script>
@@ -91,6 +92,16 @@
         <input id="explorer-options-search" type="search" autocomplete="off" placeholder="Find a function…" aria-controls="explorer-options-list" />
       </label>
       <p class="explorer-options__count" id="explorer-options-count" role="status" aria-live="polite">9 options</p>
+      <nav class="game-panel-navigation explorer-workspace-navigation" aria-label="Select explorer panel">
+        <button type="button" id="explorer-panel-back" disabled>← Back</button>
+        <select id="explorer-panel-select" aria-label="Explorer panel">
+          <option value="#house-explorer-canvas">Game</option>
+          <option value="#custom-item-toolkit">Build an item</option>
+          <option value="#custom-item-library">Item library</option>
+          <option value="#publish-model">Publish a model</option>
+          <option value="#live-published-models">Live 3D packs</option>
+        </select>
+      </nav>
       <ul id="explorer-options-list">
         <li data-option-keywords="play game enter crib house"><a href="#house-explorer-canvas" data-explorer-view="house-explorer"><span aria-hidden="true">▶</span><b>Enter the crib</b><small>Start or return to gameplay</small></a></li>
         <li data-option-keywords="basketball arena original 3d stadium multiplayer ai"><a href="model-explorer.html?environment=basketball-arena&amp;house=basketball-arena&amp;autoplay=1"><span aria-hidden="true">🏀</span><b>3D Basketball Arena</b><small>Original stadium · solo, live players and AI</small></a></li>
@@ -111,16 +122,6 @@
     </div>
   </nav>
 
-  <nav class="game-panel-navigation explorer-workspace-navigation" aria-label="Select explorer panel">
-    <button type="button" id="explorer-panel-back" disabled>← Back</button>
-    <select id="explorer-panel-select" aria-label="Explorer panel">
-      <option value="#house-explorer-canvas">Game</option>
-      <option value="#custom-item-toolkit">Build an item</option>
-      <option value="#custom-item-library">Item library</option>
-      <option value="#publish-model">Publish a model</option>
-      <option value="#live-published-models">Live 3D packs</option>
-    </select>
-  </nav>
   <main id="home">
     <section class="section-block house-explorer" id="house-explorer" data-explorer-workspace aria-labelledby="house-explorer-title">
       <div class="section-title game-section-heading"><span aria-hidden="true"></span><div><p class="game-section-eyebrow">MUZIKAZ · PLAY TOGETHER</p><h2 id="house-explorer-title">VIBE CRIB LIVE</h2><p class="game-section-subtitle">Find your people. Explore your world. Create your story.</p></div><a href="#house-explorer-canvas">Enter your world</a></div>

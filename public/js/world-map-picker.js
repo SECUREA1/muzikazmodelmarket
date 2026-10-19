@@ -31,22 +31,59 @@ export function mountWorldMapPicker(root, worlds, options) {
   const focusedWorldId = root.contains(document.activeElement) ? document.activeElement?.dataset.worldCard : null;
   let category = root.dataset.worldCategory || 'all';
   if (!['all', 'live', 'games', 'basketball', 'hockey', 'range', 'world'].includes(category)) category = 'all';
+  if (!document.querySelector('[data-world-map-picker-style]')) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = new URL('../assets/world-map-picker.css', import.meta.url).href;
+    link.dataset.worldMapPickerStyle = '';
+    document.head.append(link);
+  }
   root.innerHTML = `<section class="world-map-picker world-lobby" aria-label="Game and server lobby">
-    <header><div><small>MUZIKAZ • WORLD NAVIGATOR</small><h3>Choose your game world</h3><p>Select a slice, preview the map in 3D, and enter your next game.</p></div><button type="button" class="world-lobby-close" data-world-close aria-label="Close game and server lobby">×</button></header>
-    <div class="world-lobby-stats"><span><i aria-hidden="true"></i><strong data-world-online></strong> players online</span><span><strong data-world-total></strong> destinations</span><span>Solo &amp; multiplayer</span></div>
-    <label class="world-map-search"><span>Find a game or server</span><input type="search" data-world-search placeholder="Search hockey, basketball, maps, or creators…" autocomplete="off"></label>
-    <div class="world-lobby-filters" role="group" aria-label="Filter destinations"><button type="button" data-world-filter="all">All spaces</button><button type="button" data-world-filter="live">● Live now</button><button type="button" data-world-filter="basketball">Basketball</button><button type="button" data-world-filter="hockey">Ice hockey</button><button type="button" data-world-filter="range">Firing ranges</button><button type="button" data-world-filter="games">All games</button><button type="button" data-world-filter="world">Explore worlds</button></div>
+    <header><div><small>MUZIKAZ • WORLD NAVIGATOR</small><h3>Find your next world</h3><p>Choose a slice. Explore the model. Play.</p></div><button type="button" class="world-lobby-close" data-world-close aria-label="Close game and server lobby">×</button></header>
+    <div class="world-map-toolbar"><div class="world-lobby-stats"><span><i aria-hidden="true"></i><strong data-world-online></strong> online</span><span><strong data-world-total></strong> maps</span></div>
+      <details class="world-map-options" data-world-options><summary aria-label="Find and filter maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="currentColor"/><circle cx="15" cy="12" r="2" fill="currentColor"/><circle cx="9" cy="18" r="2" fill="currentColor"/></svg><span data-world-filter-label>Find &amp; filter</span></summary>
+        <div class="world-map-options-panel" data-world-options-panel>
+          <label class="world-map-search"><span>Find a game or server</span><input type="search" data-world-search placeholder="Search maps, games, or creators…" autocomplete="off"></label>
+          <div class="world-lobby-filters" role="group" aria-label="Filter destinations"><button type="button" data-world-filter="all">All spaces</button><button type="button" data-world-filter="live">● Live now</button><button type="button" data-world-filter="basketball">Basketball</button><button type="button" data-world-filter="hockey">Ice hockey</button><button type="button" data-world-filter="range">Firing ranges</button><button type="button" data-world-filter="games">All games</button><button type="button" data-world-filter="world">Explore worlds</button></div>
+          <details class="world-lobby-list"><summary>Map list for this pie</summary><div class="world-lobby-cards" data-world-cards></div></details>
+          <div data-world-atlas-slot></div>
+        </div>
+      </details>
+    </div>
     <div class="world-lobby-layout"><div class="world-lobby-browse"><div class="world-lobby-results"><h4 data-world-pie-title>Priority maps</h4><span data-world-count role="status"></span></div>
       <div class="world-map-wheel" role="group" aria-label="World map pie"><div class="world-map-center"><strong>MUZIKAZ</strong><span data-world-page></span></div><div data-world-sectors></div></div>
       <div class="world-lobby-empty" data-world-empty hidden><strong>No matches yet</strong><p>Try a different name, or clear the search and choose All spaces.</p><button type="button" data-world-reset>Show all spaces</button></div>
       <div class="world-map-pages"><button type="button" data-world-prev aria-label="Previous map pie">← Previous</button><span data-world-page-label></span><button type="button" data-world-next aria-label="Next map pie">Next →</button></div>
-      <details class="world-lobby-list"><summary>Map list for this pie</summary><div class="world-lobby-cards" data-world-cards></div></details></div>
-    <aside class="world-map-detail world-lobby-detail"><div data-world-preview></div><small data-world-kind></small><h3 data-world-name></h3><p data-world-description></p><p class="world-lobby-presence" data-world-live></p><dl class="world-lobby-meta"><div><dt>Server / room</dt><dd data-world-room></dd></div><div><dt>Play access</dt><dd data-world-access></dd></div></dl><button type="button" class="world-lobby-join" data-world-join>Join destination →</button><p class="world-lobby-next" data-world-next-step></p><p class="world-lobby-error" data-world-error role="status"></p></aside></div>
+      </div>
+    <aside class="world-map-detail world-lobby-detail"><div data-world-preview></div><div class="world-map-destination-heading"><small data-world-kind></small><h3 data-world-name></h3><p class="world-lobby-presence" data-world-live></p></div><button type="button" class="world-lobby-join" data-world-join>Join destination →</button><details class="world-map-destination-info"><summary>World &amp; server details</summary><p data-world-description></p><dl class="world-lobby-meta"><div><dt>Server / room</dt><dd data-world-room></dd></div><div><dt>Play access</dt><dd data-world-access></dd></div></dl><p class="world-lobby-next" data-world-next-step></p></details><p class="world-lobby-error" data-world-error role="status"></p></aside></div>
   </section>`;
   const search = root.querySelector('[data-world-search]');
   const sectors = root.querySelector('[data-world-sectors]');
   const cards = root.querySelector('[data-world-cards]');
   const join = root.querySelector('[data-world-join]');
+  const mapOptions = root.querySelector('[data-world-options]');
+  const mapOptionsSummary = mapOptions.querySelector('summary');
+  mapOptions.open = searchFocused || root.dataset.worldOptionsOpen === 'true';
+  const closeOptions = (restoreFocus = false) => {
+    mapOptions.open = false;
+    root.dataset.worldOptionsOpen = 'false';
+    if (restoreFocus) mapOptionsSummary.focus({preventScroll:true});
+  };
+  const onOutsideClick = event => {if (!mapOptions.contains(event.target)) closeOptions();};
+  const onOptionsKeydown = event => {
+    if (event.key === 'Escape' && mapOptions.open) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeOptions(true);
+    }
+  };
+  mapOptions.addEventListener('toggle', () => {
+    root.dataset.worldOptionsOpen = String(mapOptions.open);
+    mapOptionsSummary.setAttribute('aria-expanded', String(mapOptions.open));
+  });
+  mapOptionsSummary.setAttribute('aria-expanded', String(mapOptions.open));
+  root.addEventListener('keydown', onOptionsKeydown);
+  document.addEventListener('click', onOutsideClick);
   let selected = worlds.find(({env}) => env.id === selectedBefore) || worlds[0];
   let page = Math.max(0, Number(root.dataset.worldPage) || 0);
   let joining = false;
@@ -68,7 +105,7 @@ export function mountWorldMapPicker(root, worlds, options) {
     root.querySelector('[data-world-kind]').textContent = kindNames[kind];
     const previewRoot = root.querySelector('[data-world-preview]');
     previewRoot.hidden = !env;
-    if (env) preview = mountWorldPreview(previewRoot, env);
+    if (env) preview = mountWorldPreview(previewRoot, env, {auto3d:true});
     else {preview?.dispose(); preview = null; previewRoot.replaceChildren();}
     root.querySelector('[data-world-next-step]').textContent = !env ? '' : ['basketball', 'hockey'].includes(kind) ? 'Next: choose your side, tune the match, and start playing.' : kind === 'arcade' ? 'Next: choose a game and play solo or with friends.' : kind === 'range' ? 'Next: practice, enter a tournament, or visit the armory and market.' : 'Enter the world to explore, meet players, and play.';
     join.disabled = !selected || joining;
@@ -80,7 +117,9 @@ export function mountWorldMapPicker(root, worlds, options) {
     selected = worlds.find(item => item.env.id === id);
     root.querySelector('[data-world-error]').textContent = '';
     render();
-    if (focusSelector) [...root.querySelectorAll(focusSelector)].find(button => (button.dataset.worldId || button.dataset.worldCard) === id)?.focus({preventScroll:true});
+    closeOptions();
+    // The optional list closes with the menu; keep focus on its visible slice.
+    if (focusSelector) [...sectors.querySelectorAll('[data-world-id]')].find(button => button.dataset.worldId === id)?.focus({preventScroll:true});
   }
 
   function render() {
@@ -116,6 +155,9 @@ export function mountWorldMapPicker(root, worlds, options) {
       });
     }
     for (const button of root.querySelectorAll('[data-world-filter]')) button.setAttribute('aria-pressed', String(button.dataset.worldFilter === category));
+    const activeFilter = root.querySelector(`[data-world-filter="${category}"]`).textContent.replace('● ', '');
+    root.querySelector('[data-world-filter-label]').textContent = category !== 'all' ? activeFilter : search.value.trim() ? 'Search active' : 'Find & filter';
+    mapOptionsSummary.classList.toggle('has-filter', category !== 'all' || !!search.value.trim());
     root.querySelector('[data-world-page]').textContent = `PIE ${page + 1} / ${pages}`;
     root.querySelector('[data-world-page-label]').textContent = `Pie ${page + 1} of ${pages}`;
     root.querySelector('[data-world-count]').textContent = `${list.length} destination${list.length === 1 ? '' : 's'}`;
@@ -128,10 +170,11 @@ export function mountWorldMapPicker(root, worlds, options) {
   for (const button of root.querySelectorAll('[data-world-filter]')) button.addEventListener('click', () => {category = button.dataset.worldFilter; root.dataset.worldCategory = category; page = 0; render();});
   root.querySelector('[data-world-prev]').addEventListener('click', () => {page--; render();});
   root.querySelector('[data-world-next]').addEventListener('click', () => {page++; render();});
-  root.querySelector('[data-world-reset]').addEventListener('click', () => {search.value = ''; root.dataset.worldQuery = ''; category = 'all'; root.dataset.worldCategory = category; page = 0; render(); search.focus();});
+  root.querySelector('[data-world-reset]').addEventListener('click', () => {search.value = ''; root.dataset.worldQuery = ''; category = 'all'; root.dataset.worldCategory = category; page = 0; render(); mapOptions.open ? search.focus() : mapOptionsSummary.focus();});
   root.querySelector('[data-world-close]').addEventListener('click', () => {controller.dispose(); onClose();});
   join.addEventListener('click', async () => {
     if (!selected || joining) return;
+    closeOptions();
     joining = true;
     details();
     try {await onJoin(selected.env);}
@@ -141,10 +184,10 @@ export function mountWorldMapPicker(root, worlds, options) {
   const atlas = document.createElement('details');
   atlas.className = 'world-lobby-atlas';
   const summary = document.createElement('summary');
-  summary.textContent = 'Public streets, live activity & meeting locations';
+  summary.textContent = 'Public atlas & meeting locations';
   const atlasRoot = document.createElement('section');
   atlas.append(summary, atlasRoot);
-  root.querySelector('.world-map-picker').append(atlas);
+  root.querySelector('[data-world-atlas-slot]').append(atlas);
   atlas.addEventListener('toggle', () => {
     if (atlas.open) mountWorldAtlas(atlasRoot, {onTravel:async url => {
       const destination = new URL(url, location.href);
@@ -176,6 +219,8 @@ export function mountWorldMapPicker(root, worlds, options) {
       preview?.dispose();
       preview = null;
       dialog?.removeEventListener('close', onDialogClose);
+      root.removeEventListener('keydown', onOptionsKeydown);
+      document.removeEventListener('click', onOutsideClick);
       mounted.delete(root);
     }
   };

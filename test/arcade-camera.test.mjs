@@ -28,14 +28,14 @@ test('standing camera follows basketball release position without changing the p
  assert.deepEqual(state,before);
 });
 
-test('both camera modes preserve transformed world-space aiming for all five games and aspect ratios',()=>{
+test('all camera modes preserve transformed world-space aiming for all five games and aspect ratios',()=>{
  for(const id of ids){
   const scene=new T.Scene(),parent=new T.Group(),station=createArcadePart(id),presentation=createArcadeGamePresentation({scene});
   parent.position.set(9,2,-6);parent.rotation.set(.08,.7,-.06);parent.scale.set(1.3,.85,1.1);scene.add(parent);parent.add(station);
   presentation.activate(id,{anchor:station});
   const state={gameElapsed:.4,pointer:{x:525,y:185},puck:{x:500,y:100},balls:[{x:220,y:240,vx:0,vy:0}],targets:[{dx:525,dy:185,r:24}]};presentation.update(state);
   try{
-   for(const aspect of [.45,1.6])for(const mode of ['first-person','top-down']){
+   for(const aspect of [.45,1.6])for(const mode of ['first-person','top-down','broadcast']){
     const camera=new T.PerspectiveCamera(43,aspect,.1,250);assert.equal(presentation.setCamera(camera,mode),true);
     const world=presentation.root.localToWorld(arcadeGamePoint(id,525,185));
     const xrPointer=presentation.rayPointer(camera.position.clone(),world.clone().sub(camera.position).normalize());
@@ -76,4 +76,21 @@ test('the raised basketball rim stays clear of the top HUD in the overhead view'
    assert.ok(top>120,`the complete physical rim clears the 95px desktop HUD: ${top}`);
   }
  }finally{presentation.dispose();dispose(scene);}
+});
+
+
+test('independent camera scales zoom each view without changing arcade play state',()=>{
+ const state={gameElapsed:.5,pointer:{x:525,y:185},shot:{x:400,p:.3}},before=structuredClone(state);
+ for(const id of ids)for(const mode of ['first-person','top-down','broadcast']){
+  const wide=arcadeGameCameraPose(id,mode,{state,scale:.6}),base=arcadeGameCameraPose(id,mode,{state}),zoomed=arcadeGameCameraPose(id,mode,{state,scale:1.6});
+  assert.deepEqual(wide.target,base.target);assert.deepEqual(zoomed.target,base.target);
+  if(mode==='first-person'){
+   assert.deepEqual(wide.eye,base.eye);assert.deepEqual(zoomed.eye,base.eye);assert.ok(wide.fov>base.fov&&base.fov>zoomed.fov);
+  }else{
+   const distance=pose=>new T.Vector3(...pose.eye).distanceTo(new T.Vector3(...pose.target));
+   assert.ok(distance(wide)>distance(base)&&distance(base)>distance(zoomed));assert.equal(wide.fov,zoomed.fov);
+  }
+  assert.equal(base.mode,mode);assert.ok([...zoomed.eye,...zoomed.target,zoomed.fov].every(Number.isFinite));
+ }
+ assert.deepEqual(state,before);
 });

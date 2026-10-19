@@ -1,3 +1,4 @@
+import {normalizeGameCameraScale,scaleGameCameraFov} from './game-camera.js';
 import * as T from '../vendor/three/three.module.min.js';
 import {createArcadePart} from './arcade-park.js';
 import {basketballPosition, basketballRelease} from './arcade-runtime.js';
@@ -363,25 +364,31 @@ const cameraDefinitions = {
  * The range uses an elevated oblique view so its vertical targets remain aimable.
  * Standing views widen and move back on narrow screens without gaining height.
  */
-export function arcadeGameCameraPose(game, mode = 'first-person', {aspect = 1.6, state = {}} = {}) {
+export function arcadeGameCameraPose(game, mode = 'first-person', {aspect = 1.6, state = {}, scale = 1} = {}) {
   const id = gameId(game), definition = cameraDefinitions[id];
   if (!definition) return null;
   const ratio = Math.max(.3, finite(aspect, 1.6));
+  const scaled=pose=>{const zoom=normalizeGameCameraScale(scale);if(pose.mode==='first-person')pose.fov=scaleGameCameraFov(pose.fov,zoom);else pose.eye=pose.eye.map((value,index)=>pose.target[index]+(value-pose.target[index])/zoom);return pose;};
+  if(mode==='broadcast'){
+    const y=id==='shooting'?1.9:id==='hockey'||id==='basketball'?.72:1.55;
+    const height=Math.max(10,definition.depth*.8,definition.width/(2*Math.tan(26*Math.PI/180)*ratio));
+    return scaled({mode,eye:[0,y+height*.72,height*.7],target:[0,y,0],up:[0,1,0],fov:52,width:definition.width,depth:definition.depth});
+  }
   if (mode === 'top-down') {
     if (id === 'shooting') {
       const target = [0, 1.9, -1.5], eye = [0, 11.5, 6.8], distance = Math.hypot(9.6, 8.3);
       const scale = Math.max(1, definition.width / (2 * distance * Math.tan(26 * Math.PI / 180) * ratio));
       eye[1] = target[1] + (eye[1] - target[1]) * scale;eye[2] = target[2] + (eye[2] - target[2]) * scale;
-      return {mode, eye, target, up: [0, 1, 0], fov: 52, width: definition.width, depth: definition.depth};
+      return scaled({mode, eye, target, up: [0, 1, 0], fov: 52, width: definition.width, depth: definition.depth});
     }
     const height = Math.max(id === 'basketball' ? 13.5 : 10, definition.depth / (2 * Math.tan(26 * Math.PI / 180)), definition.width / (2 * Math.tan(26 * Math.PI / 180) * ratio));
     const y = id === 'hockey' || id === 'basketball' ? .72 : 1.55;
-    return {mode, eye: [0, y + height, 0], target: [0, y, 0], up: [0, 0, -1], fov: 52,
-      width: definition.width, depth: definition.depth};
+    return scaled({mode, eye: [0, y + height, 0], target: [0, y, 0], up: [0, 0, -1], fov: 52,
+      width: definition.width, depth: definition.depth});
   }
   const eye = [...definition.eye], target = [...definition.target], fov = 76;
   if (id === 'basketball') {
-    if(state.basketball){const full=state.basketball,p=full.players[full.selfSlot??0],direction=p?.team===1?1:-1,x=(finite(p?.x,400)-400)*.008,z=(finite(p?.y,230)-230)*.018;return {mode:'first-person',eye:[x-.25,2.15,z-direction*.32],target:[x,1.9,z+direction*5],up:[0,1,0],fov:85,width:definition.width,depth:definition.depth};}
+    if(state.basketball){const full=state.basketball,p=full.players[full.selfSlot??0],direction=p?.team===1?1:-1,x=(finite(p?.x,400)-400)*.008,z=(finite(p?.y,230)-230)*.018;return scaled({mode:'first-person',eye:[x-.25,2.15,z-direction*.32],target:[x,1.9,z+direction*5],up:[0,1,0],fov:85,width:definition.width,depth:definition.depth});}
     const movingX = finite(state.shot?.x, basketballPosition(finite(state.gameElapsed)));
     eye[0] = (movingX - 400) * .008 - .55;
   }
@@ -393,7 +400,7 @@ export function arcadeGameCameraPose(game, mode = 'first-person', {aspect = 1.6,
     const scale = needed / horizontal;
     eye[0] = target[0] + dx * scale; eye[2] = target[2] + dz * scale;
   }
-  return {mode: 'first-person', eye, target, up: [0, 1, 0], fov, width: definition.width, depth: definition.depth};
+  return scaled({mode: 'first-person', eye, target, up: [0, 1, 0], fov, width: definition.width, depth: definition.depth});
 }
 
 function occlusionSamples(id) {
@@ -498,9 +505,9 @@ export function createArcadeGamePresentation({scene, park, config = {}} = {}) {
       }
     }
   }
-  function setCamera(camera, mode = 'first-person') {
+  function setCamera(camera, mode = 'first-person', scale = 1) {
     if (!active || !camera) return false;
-    const pose = arcadeGameCameraPose(active.id, mode, {aspect: camera.aspect, state: active.state});
+    const pose = arcadeGameCameraPose(active.id, mode, {aspect: camera.aspect, state: active.state, scale});
     active.cameraMode = pose.mode;
     eye.fromArray(pose.eye); target.fromArray(pose.target); up.fromArray(pose.up);
     active.root.updateWorldMatrix(true, false);

@@ -19,22 +19,36 @@ function overview(world){
  add('circle',{cx:px(world.spawn?.x),cy:pz(world.spawn?.z),r:4,fill:'#d5ff98',stroke:'#10241a','stroke-width':2});return svg;
 }
 function disposeObject(root){root?.traverse(node=>{node.geometry?.dispose();for(const material of Array.isArray(node.material)?node.material:[node.material]){if(!material)continue;for(const value of Object.values(material))if(value?.isTexture&&!value.userData.sportsSurfaceShared)value.dispose();material.dispose();}});}
-export function mountWorldPreview(root,world,{resolve=true}={}){
+export function mountWorldPreview(root,world,{resolve=true,auto3d=false}={}){
  const key=previewWorldId(world)+':'+(world.updatedAt||'');if(mounted.get(root)?.key===key)return mounted.get(root);
  mounted.get(root)?.dispose();root.replaceChildren();root.classList.add('world-destination-preview');
+ root.classList.toggle('is-auto-preview',auto3d);
  if(!document.querySelector('[data-world-preview-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('../assets/world-destination-preview.css',import.meta.url).href;link.dataset.worldPreviewStyle='';document.head.append(link);}
  const viewport=document.createElement('div');viewport.className='world-preview-viewport';const poster=document.createElement('div');poster.className='world-preview-poster';viewport.append(poster);
  const footer=document.createElement('div');footer.className='world-preview-footer';const status=document.createElement('span');status.setAttribute('role','status');const button=document.createElement('button');button.type='button';button.textContent='View 3D';footer.append(status,button);root.append(viewport,footer);
- let current=world,destroyed=false,stop3d=null,loading=false,generation=0;
+ let current=world,destroyed=false,stop3d=null,loading=false,generation=0,paused=false,previewStatus='',autoObserver=null,autoVisible=false,autoReady=auto3d;
+ const setButton=playing=>{
+  if(!auto3d){button.textContent=playing?'Close 3D':'View 3D';return;}
+  const label=playing?'Pause 3D preview':'Resume 3D preview';button.setAttribute('aria-label',label);button.title=label;
+  button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">'+(playing?'<path d="M8 5v14M16 5v14"/>':'<path d="m8 5 11 7-11 7Z"/>')+'</svg>';
+ };
+ setButton(false);
  const setPoster=record=>{const data=worldPreviewData(record);poster.replaceChildren();if(data.image){const image=document.createElement('img');image.src=data.image;image.alt=data.name+' destination artwork';image.loading='lazy';image.addEventListener('error',()=>poster.replaceChildren(overview(record)),{once:true});poster.append(image);status.textContent='Destination artwork';}else{poster.append(overview(record));status.textContent=data.procedural?'Saved map overview':'Explore the destination in 3D';}};
  setPoster(current);
- const result={key,dispose(){if(destroyed)return;destroyed=true;stop3d?.();generation++;if(mounted.get(root)===result)mounted.delete(root);}};mounted.set(root,result);
+ const maybeStartAuto=()=>{
+  if(!autoReady||!autoVisible||destroyed||document.hidden||!root.isConnected)return;
+  const dialog=root.closest('dialog');if(dialog&&!dialog.open)return;
+  autoReady=false;autoObserver?.disconnect();document.removeEventListener('visibilitychange',maybeStartAuto);void togglePreview();
+ };
+ const result={key,dispose(){if(destroyed)return;destroyed=true;autoObserver?.disconnect();if(auto3d)document.removeEventListener('visibilitychange',maybeStartAuto);stop3d?.();generation++;if(mounted.get(root)===result)mounted.delete(root);}};mounted.set(root,result);
  if(resolve)fetchWorld(world).then(record=>{if(!destroyed&&root.isConnected){current=record;if(!stop3d&&!loading)setPoster(record);}}).catch(()=>{if(!destroyed)status.textContent='Preview available when the server reconnects';});
- button.addEventListener('click',async event=>{
-  event.preventDefault();event.stopPropagation();if(loading||destroyed)return;if(stop3d){stop3d();return;}
+ async function togglePreview(){
+  if(loading||destroyed)return;
+  if(stop3d){if(auto3d){paused=!paused;setButton(!paused);status.textContent=paused?'3D preview paused':previewStatus;}else stop3d();return;}
+  paused=false;
   active?.();loading=true;button.disabled=true;status.textContent='Loading destination preview…';const request=++generation;const abort=new AbortController();const mixers=[],dialog=root.closest('dialog');let renderer,scene,controls,resizeObserver,visibilityObserver,lifecycleObserver,frame=0,visible=true;
   const onDialogClose=()=>{if(!dialog.open)stop();};
-  const stop=()=>{if(request!==generation)return;generation++;abort.abort();cancelAnimationFrame(frame);resizeObserver?.disconnect();visibilityObserver?.disconnect();lifecycleObserver?.disconnect();dialog?.removeEventListener('close',onDialogClose);controls?.dispose();mixers.forEach(mixer=>mixer.stopAllAction());disposeObject(scene);renderer?.dispose();renderer?.forceContextLoss();renderer?.domElement.remove();poster.hidden=false;loading=false;stop3d=null;delete root.dataset.worldPreviewActive;if(active===stop)active=null;button.disabled=false;button.textContent='View 3D';if(!destroyed)setPoster(current);};
+  const stop=()=>{if(request!==generation)return;generation++;abort.abort();cancelAnimationFrame(frame);resizeObserver?.disconnect();visibilityObserver?.disconnect();lifecycleObserver?.disconnect();dialog?.removeEventListener('close',onDialogClose);controls?.dispose();mixers.forEach(mixer=>mixer.stopAllAction());disposeObject(scene);renderer?.dispose();renderer?.forceContextLoss();renderer?.domElement.remove();poster.hidden=false;loading=false;stop3d=null;delete root.dataset.worldPreviewActive;if(active===stop)active=null;button.disabled=false;setButton(false);if(!destroyed)setPoster(current);};
   dialog?.addEventListener('close',onDialogClose);
   active=stop;stop3d=stop;root.dataset.worldPreviewActive='true';if(typeof MutationObserver!=='undefined'){lifecycleObserver=new MutationObserver(()=>{if(!root.isConnected)stop();});lifecycleObserver.observe(document.body,{childList:true,subtree:true});}
   try{
@@ -56,8 +70,15 @@ export function mountWorldPreview(root,world,{resolve=true}={}){
    controls=new OrbitControls(camera,renderer.domElement);controls.target.copy(data.basketball&&!data.base?new THREE.Vector3(0,2,0):rangeLocation?rangeLocalToWorld(rangeLocation,{x:0,y:1,z:-2}):center);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=radius*.2;controls.maxDistance=radius*4;controls.update();
    const resize=()=>{const width=Math.max(1,viewport.clientWidth),height=Math.max(1,viewport.clientHeight);renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();};resize();resizeObserver=new ResizeObserver(resize);resizeObserver.observe(viewport);
    if(typeof IntersectionObserver!=='undefined'){visibilityObserver=new IntersectionObserver(([entry])=>{visible=entry.isIntersecting;});visibilityObserver.observe(root);}
-   let last=0;const draw=time=>{if(request!==generation)return;if(!root.isConnected){stop();return;}frame=requestAnimationFrame(draw);if(document.hidden||!visible||!viewport.clientWidth||root.closest('dialog')&&!root.closest('dialog').open||time-last<33)return;const delta=last?Math.min(.1,(time-last)/1000):0;last=time;controls.update();mixers.forEach(mixer=>mixer.update(delta));content.traverse(node=>{if(data.basketball)node.userData.updateBasketballEffects?.(time/1000);if(data.firingRange)node.userData.updateFiringRangeEffects?.(time);if(node.userData.arcadePark)animateArcadePark(node,time/1000);});renderer.render(scene,camera);};frame=requestAnimationFrame(draw);
-   loading=false;button.disabled=false;button.textContent='Close 3D';status.textContent=(data.models.length>1?`${data.models.length} GLB models`:data.model?'GLB sample':'3D scene sample')+' · drag to orbit · pinch to zoom';
+   let last=0;const draw=time=>{if(request!==generation)return;if(!root.isConnected){stop();return;}frame=requestAnimationFrame(draw);if(paused||document.hidden||!visible||!viewport.clientWidth||root.closest('dialog')&&!root.closest('dialog').open||time-last<33)return;const delta=last?Math.min(.1,(time-last)/1000):0;last=time;controls.update();mixers.forEach(mixer=>mixer.update(delta));content.traverse(node=>{if(data.basketball)node.userData.updateBasketballEffects?.(time/1000);if(data.firingRange)node.userData.updateFiringRangeEffects?.(time);if(node.userData.arcadePark)animateArcadePark(node,time/1000);});renderer.render(scene,camera);};frame=requestAnimationFrame(draw);
+   loading=false;button.disabled=false;setButton(true);previewStatus=(data.models.length>1?`${data.models.length} GLB models`:data.model?'GLB sample':'3D scene sample')+' · drag to orbit · pinch to zoom';status.textContent=previewStatus;
   }catch(error){if(request===generation){stop();status.textContent='3D preview unavailable · you can still enter this world';}}
- });return result;
+ }
+ button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();autoReady=false;autoObserver?.disconnect();if(auto3d)document.removeEventListener('visibilitychange',maybeStartAuto);void togglePreview();});
+ if(auto3d){
+  document.addEventListener('visibilitychange',maybeStartAuto);
+  if(typeof IntersectionObserver!=='undefined'){autoObserver=new IntersectionObserver(([entry])=>{autoVisible=entry.isIntersecting;maybeStartAuto();});autoObserver.observe(root);}
+  else Promise.resolve().then(()=>{autoVisible=true;maybeStartAuto();});
+ }
+ return result;
 }
