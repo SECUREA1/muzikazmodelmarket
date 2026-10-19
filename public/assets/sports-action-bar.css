@@ -4,3 +4,19 @@
 
 .rad-tox-game-toggle[hidden]{display:none!important}.house-stage .game-camera-toggle{width:44px!important;min-width:44px;min-height:44px;padding:8px!important}.game-camera-toggle svg{width:24px;height:24px}
 @media(min-width:640px){.sports-action-bar{display:flex;align-items:center;gap:8px}.sports-action-modes{flex:0 1 auto;min-width:0}.sports-action-tools{flex:1;min-width:0;padding-top:0}.house-stage .basketball-hud:has(.sports-action-bar),.hockey-sports-bar:has(.sports-action-bar){max-width:760px}}
+.sports-actions-popup{box-sizing:border-box;width:min(480px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:18px;border:1px solid #91ba42;border-radius:14px;background:#091321;color:#efffd7;overscroll-behavior:contain;}
+.sports-actions-popup::backdrop{background:#000a;}
+.sports-actions-popup h2{margin:0 0 10px;font:700 20px system-ui;}
+.sports-actions-popup p{font:14px/1.5 system-ui;white-space:normal;}
+.sports-actions-popup .sports-action-modes{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;overflow:visible;margin:14px 0;}
+.sports-actions-popup .sports-action-modes button{width:100%!important;min-height:70px!important;font-size:12px;}
+.sports-actions-popup>button{width:auto!important;min-height:44px;padding:10px 14px!important;}
+/* Keep the reference layout: action choices above the primary trigger row. */
+.house-stage .sports-action-bar,.rad-sports-viewport .sports-action-bar{display:block;}
+.sports-action-bar>.sports-action-modes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;overflow:visible;}
+.sports-action-bar>.sports-action-modes button{width:100%!important;min-width:0;min-height:46px!important;}
+.sports-action-bar>.sports-action-tools{display:flex;flex-wrap:wrap;gap:4px;padding-top:4px;}
+.sports-action-bar .sports-primary-trigger{min-width:100px;}
+.sports-action-bar.is-collapsed>.sports-action-modes{display:none;}
+.sports-action-bar .sports-actions-popup:not([open]){display:none;}
+.sports-action-bar .rad-tox-game-toggle[aria-pressed=true]{background:#c7f36a;color:#10200b;border-color:#e0ffa5;}

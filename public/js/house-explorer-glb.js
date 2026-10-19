@@ -1583,7 +1583,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   let localBasketballSim={actors:{},players:{local:localBasketballPlayer},events:[]};
   let basketballTriggerMode='auto',basketballTriggerPending=false,basketballTriggerCheckedAt=-Infinity;
   const basketballActionRay=new THREE.Raycaster();
-  const basketballHud=mountBasketballHud({stage,onAction:basketballAction,announce:setStatus,onTriggerMode:setBasketballTriggerMode,onTrigger:()=>safelyInteract('Basketball trigger',()=>basketballTrigger())});
+  const basketballHud=mountBasketballHud({stage,radToxToggle:radToggle,onAction:basketballAction,announce:setStatus,onTriggerMode:setBasketballTriggerMode,onOverride:mode=>safelyInteract('Basketball override',()=>basketballTrigger(basketballDirection(),mode)),onTrigger:()=>safelyInteract('Basketball trigger',()=>basketballTrigger())});
   const basketballAim=mountBasketballAim({stage});
   const rangeFeedback=createFiringRangeFeedback({THREE,scene,camera,canvas,reducedMotion,getVolume:()=>playerPreferences.effectsVolume/100,getReducedMotion:()=>reducedMotion||playerPreferences.reducedMotion});
   const rangeScenes=createFiringRangeSceneBridge({THREE,getRoots:()=>[envLoader.world,builderDecor]});
