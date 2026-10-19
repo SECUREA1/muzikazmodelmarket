@@ -33,6 +33,12 @@ test('matchmaking lets two players reserve spots before a host starts',async()=>
   directory=await call('/api/matches');match=directory.body.data.matches.find(match=>match.mapId==='neon-junction');assert.equal(match.gameIndex,4);assert.equal(match.status,'waiting');assert.equal(match.players,2);assert.ok(match.joinUrl.includes('attraction=billiards'));assert.equal((await call(arcade,accounts[1],{action:'start'})).status,403);assert.equal((await call(arcade,accounts[0],{action:'start'})).body.data.started,true);
   const court='/api/rooms/basketball-arena/gameplay';const courtOne=await call(court,accounts[0],{action:'join',requestId:'court-host'}),courtTwo=await call(court,accounts[1],{action:'join',requestId:'court-guest'});assert.equal(courtOne.status,200);assert.equal(courtTwo.status,200);assert.equal(courtTwo.body.data.basketball.state,'ready');assert.equal(courtTwo.body.data.basketball.clockMs,courtOne.body.data.basketball.clockMs);
   directory=await call('/api/matches');match=directory.body.data.matches.find(match=>match.mapId==='basketball-arena');assert.equal(match.status,'waiting');assert.equal(match.players,2);assert.ok(match.openSlots>0);
+  const courtWatch=await call(court,accounts[1],{action:'basketball-watch',requestId:'court-guest-watch'});assert.equal(courtWatch.status,200);
+  const courtBegin=await call(court,accounts[0],{action:'basketball-start',requestId:'court-host-begin-alone'});
+  assert.equal(courtBegin.status,200);assert.equal(courtBegin.body.data.basketball.state,'live');
+  const courtRoster=Object.values(courtBegin.body.data.players).filter(player=>player.basketballRole!=='spectator'&&player.basketballTeam);
+  assert.equal(courtRoster.length,10,'the host can begin with every reserved human spot still empty');
+  assert.equal(courtRoster.filter(player=>player.basketballAI).length,9,'AI fills all spots beside the lone host');
   const range='/api/rooms/firing-range/range';
   assert.equal((await call(range,{}, {action:'join'})).status,401,'range commands require a signed-in game session');
   assert.equal((await call('/api/rooms/hockey-arena/range',accounts[0],{action:'join'})).status,404,'range commands cannot open another game runtime');

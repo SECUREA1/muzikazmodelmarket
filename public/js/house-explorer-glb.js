@@ -1561,7 +1561,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage) {
     basketballShell?.toggleAttribute('data-basketball-play',enabled);
     if(beginResetButton){
       if(!existingBeginResetButton)beginResetButton.hidden=!enabled;
-      const label='Basketball match · join / watch / start';
+      const label='Begin / basketball match menu · AI fills empty spots';
       beginResetButton.setAttribute('aria-label',enabled?label:beginResetLabel.aria||beginResetLabel.text||'Begin / reset');
       beginResetButton.title=enabled?label:beginResetLabel.title;
       const text=beginResetButton.querySelector('span');if(text)text.textContent=enabled?label:beginResetLabel.text;
@@ -1842,7 +1842,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage) {
   }
   setupThumbstick('left'); setupThumbstick('right');
   fullscreenButton?.addEventListener('click', setFullscreen);
-  beginResetButton?.addEventListener('click', () => {if(isBasketballEnvironment(activeEnvironment)){basketballHud.openMatch();return;}if(serverHostedRoom){serverCommand('respawn');return;} resetPlayer(activeWorldSpawn.position, activeWorldSpawn.rotationY); toxicBubbleSystem.begin(); setStatus('RAD-TOX begin or reset requested.'); });
+  beginResetButton?.addEventListener('click', () => {if(isBasketballEnvironment(activeEnvironment)){basketballHud.beginMatch();return;}if(serverHostedRoom){serverCommand('respawn');return;} resetPlayer(activeWorldSpawn.position, activeWorldSpawn.rotationY); toxicBubbleSystem.begin(); setStatus('RAD-TOX begin or reset requested.'); });
   let xrGameControls=null;
   function xrBasketballInteract(){const self=serverHostedRoom?authoritativeClient?.selfId:'local',balls=serverHostedRoom?Object.values(serverActors):localBasketballs;const held=balls.some(ball=>isBasketball(ball)&&ball.holderId&&ball.holderId!==self);return basketballAction(held?'basketball-steal':'catch');}
   async function setupVRControls(){

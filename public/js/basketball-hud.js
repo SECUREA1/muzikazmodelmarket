@@ -84,7 +84,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
   root.querySelector('.basketball-game-actions').insertAdjacentHTML('beforeend','<button type="button" data-basketball-action="basketball-steal">Steal · Q</button>');
   const actions=root.querySelector('.basketball-game-actions');
   const match=document.createElement('dialog');match.className='basketball-rules basketball-match-menu';match.setAttribute('aria-label','Basketball match and players');
-  match.innerHTML='<h2>Basketball match lobby</h2><p class="basketball-lobby-status" data-lobby-status role="status" aria-live="polite">Waiting for players · join a team before tip-off.</p><div class="basketball-lobby-roster"><section class="basketball-lobby-team"><h3 data-lobby-home-count>Home</h3><p data-lobby-home-roster></p></section><section class="basketball-lobby-team"><h3 data-lobby-away-count>Away</h3><p data-lobby-away-roster></p></section></div><p class="basketball-lobby-help">Choose Home or Away and let friends join this lobby. The host sets up the match and presses Start match when everyone is here. AI fills empty places at tip-off.</p><label>World mode<select data-basketball-world-mode><option value="solo">Solo vs AI</option><option value="multiplayer">Live multiplayer · players and AI</option></select></label><button type="button" data-open-world>Open selected mode</button><p>Watch game leaves your spot for another player or AI.</p><section data-game-match-browser></section><button type="button" data-close-match>Return to court</button>';
+  match.innerHTML='<h2>Basketball match lobby</h2><p class="basketball-lobby-status" data-lobby-status role="status" aria-live="polite">Lobby open · choose a team, then begin whenever you are ready.</p><div class="basketball-lobby-roster"><section class="basketball-lobby-team"><h3 data-lobby-home-count>Home</h3><p data-lobby-home-roster></p></section><section class="basketball-lobby-team"><h3 data-lobby-away-count>Away</h3><p data-lobby-away-roster></p></section></div><p class="basketball-lobby-help">The host can press Begin now with any number of players. AI fills every empty spot immediately. Keep the lobby open if you want friends to join first.</p><label>World mode<select data-basketball-world-mode><option value="solo">Solo vs AI</option><option value="multiplayer">Live multiplayer · players and AI</option></select></label><button type="button" data-open-world>Open selected mode</button><p>Watch game leaves your spot for another player or AI.</p><section data-game-match-browser></section><button type="button" data-close-match>Return to court</button>';
   const mode=match.querySelector('[data-basketball-world-mode]');mode.value=new URL(location.href).searchParams.get('mode')==='solo'?'solo':'multiplayer';
   match.querySelector('[data-open-world]').onclick=()=>{const url=new URL(location.href);url.searchParams.set('mode',mode.value);url.searchParams.set('autoplay','1');location.assign(url.href);};
   match.querySelector('[data-close-match]').onclick=()=>match.close();
@@ -100,7 +100,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
   rules.innerHTML='<form><h2 id="basketball-rules-title">Quick match tuner</h2><p>Choose team size, human players and AI difficulty, then start. Both teams stay equal; AI fills every empty spot at tip-off.</p><button type="button" data-solo-setup>Solo vs AI</button><div class="basketball-rules-fields"><label>Players per team<select name="teamSize"><option value="1">1 vs 1</option><option value="2">2 vs 2</option><option value="3">3 vs 3</option><option value="4">4 vs 4</option><option value="5">5 vs 5</option></select></label><label>AI difficulty<select name="aiDifficulty"><option value="1">Tier 1 · Rookie</option><option value="2">Tier 2 · Amateur</option><option value="3">Tier 3 · Pro</option><option value="4">Tier 4 · All-Star</option><option value="5">Tier 5 · Legend</option></select></label><label>Home human slots<input name="homeHumans" type="number" min="0" max="5" step="1" required></label><label>Away human slots<input name="awayHumans" type="number" min="0" max="5" step="1" required></label></div><details><summary>Competition rules · timing &amp; scoring</summary><div class="basketball-rules-fields"><label>Minutes per period<input type="number" name="quarterMinutes" min="1" max="12" step="1" required></label><label>Number of periods<input type="number" name="quarters" min="1" max="4" step="1" required></label><label>Shot clock (seconds)<input type="number" name="shotClockSeconds" min="5" max="60" step="1" required></label><label>Score to win (0 = timed)<input type="number" name="scoreLimit" min="0" max="200" step="1" required></label><label>Win by points<input type="number" name="winBy" min="1" max="10" step="1" required></label></div></details><p data-roster-preview role="status" aria-live="polite"></p><p>Playing with friends? Save to lobby, let everyone join Home or Away, then start. AI wears numbered team jerseys. Late arrivals watch until the next game.</p><p data-rules-status role="status"></p><footer><button type="submit" name="start" value="true" data-start-match>Start game</button><button type="submit" name="save" data-save-rules>Save to lobby</button><button type="button" data-close-rules>Back to court</button></footer></form>';
   stage.append(rules);
   let score = '0:0', ready = false, currentGame = null, currentPlayer = null, currentPlayers = {};
-  let savingSetup=false,actionContext='';
+  let savingSetup=false,actionContext='',startingMatch=null;
   const selection=bindGameActionSelection(screenBar,{selector:'[data-basketball-action]',defaultAction:'basketball-shoot',enabled:()=>ready&&Boolean(currentPlayer)&&!screenBar.hidden&&currentPlayer.basketballRole!=='spectator',onChange:onTriggerChange});
   const solo=()=>new URL(location.href).searchParams.get('mode')==='solo';
   const isHost=()=>{
@@ -108,6 +108,25 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
     const selfId=currentPlayer.actorId||currentPlayer.id||Object.entries(currentPlayers).find(([,player])=>player===currentPlayer)?.[0];
     return currentGame?.hostId?currentGame.hostId===selfId:solo();
   };
+  function beginMatch({setupSaved=false}={}){
+    if(startingMatch)return startingMatch;
+    if(!ready||!currentGame||currentGame.state==='live'||!isHost()){openMatch();return Promise.resolve(false);}
+    const button=root.querySelector('[data-basketball-action="basketball-start"]');
+    pending.add(button);button.disabled=true;
+    startingMatch=Promise.resolve().then(async()=>{
+      try{
+        if(solo()&&!setupSaved){
+          const configured=await onAction('basketball-settings',{settings:basketballSoloSettings(currentGame.settings,currentPlayer?.basketballTeam)});
+          if(configured===false){announce('The basketball setup could not be saved. Try Begin again.');if(!rules.open)openMatch();return false;}
+        }
+        const result=await onAction('basketball-start',{});
+        if(result===false){announce('The basketball match could not begin. Check your player spot and try again.');if(!rules.open)openMatch();return false;}
+        match.close();rules.close();return result??true;
+      }catch(error){announce(error.message);if(!rules.open)openMatch();return false;}
+      finally{pending.delete(button);button.disabled=blocked(button);startingMatch=null;selection.sync();}
+    });
+    return startingMatch;
+  }
   const defaults={quarterMinutes:12,quarters:4,shotClockSeconds:24,scoreLimit:0,winBy:1,teamSize:5,homeHumans:5,awayHumans:5,aiDifficulty:3};
   function previewRoster(){const size=Number(rules.querySelector('[name=teamSize]').value);for(const name of ['homeHumans','awayHumans']){const input=rules.querySelector(`[name=${name}]`);input.max=size;}const members=Object.values(currentPlayers).filter(p=>!p.basketballAI&&p.basketballRole!=='spectator');rules.querySelector('[data-roster-preview]').textContent=['home','away'].map(team=>{const count=members.filter(p=>p.basketballTeam===team).length;const slots=Number(rules.querySelector(`[name=${team}Humans]`).value);return `${team==='home'?'Home':'Away'}: ${slots} human slots + ${Math.max(0,size-slots)} AI · ${count} joined · ${Math.max(0,size-count)} AI at tip-off`;}).join('\n');}
   rules.addEventListener('input',event=>{if(event.target.name==='teamSize'){for(const name of ['homeHumans','awayHumans']){const input=rules.querySelector(`[name=${name}]`);input.value=Math.min(Number(input.value),Number(event.target.value));}}previewRoster();});
@@ -116,7 +135,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
     const settings=solo()?basketballSoloSettings(currentGame?.settings,currentPlayer?.basketballTeam):{...defaults,...currentGame?.settings},locked=currentGame?.state==='live'||!isHost();
     for(const [key,value] of Object.entries(settings)){const input=rules.querySelector(`[name="${key}"]`);if(input){input.value=value;input.disabled=locked||(solo()&&['homeHumans','awayHumans'].includes(key));}}
     for(const button of rules.querySelectorAll('[type=submit],[data-solo-setup]'))button.disabled=locked||savingSetup;
-    rules.querySelector('[data-rules-status]').textContent=currentGame?.state==='live'?'These rules are locked until the final buzzer.':!isHost()?`${currentGame?.hostName||'The host'} controls match setup. Join a team and wait for tip-off.`:solo()?'Solo mode reserves your spot; all other players are AI. Adjust the difficulty to suit your game.':'Save the setup to keep this lobby open, then press Start match when everyone has joined.';
+    rules.querySelector('[data-rules-status]').textContent=currentGame?.state==='live'?'These rules are locked until the final buzzer.':!isHost()?`${currentGame?.hostName||'The host'} controls match setup. Join a team and wait for tip-off.`:solo()?'Solo mode reserves your spot; all other players are AI. Adjust the difficulty to suit your game.':'Save to keep the lobby open for friends, or begin immediately with AI in every empty spot.';
     previewRoster();if(!rules.open)rules.showModal();
   };
   root.querySelector('[data-basketball-rules]').addEventListener('click',openSetup);
@@ -133,7 +152,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
       const settings=solo()?basketballSoloSettings(values,currentPlayer?.basketballTeam):values;
       const result=await onAction('basketball-settings',{settings});
       if(result===false){status.textContent='Setup could not be saved. Check the team slots and try again.';return;}
-      if(startNow){const started=await onAction('basketball-start',{});if(started===false){status.textContent='Game could not start. Choose a team and try again.';return;}}
+      if(startNow){const started=await beginMatch({setupSaved:true});if(started===false){status.textContent='Game could not start. Choose a team and try again.';return;}}
       rules.close();
     }catch(error){status.textContent=error.message;}
     finally{savingSetup=false;for(const button of rules.querySelectorAll('[type=submit],[data-solo-setup]'))button.disabled=currentGame?.state==='live'||!isHost();}
@@ -144,13 +163,10 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
     const button = event.target.closest('[data-basketball-action]');
     if (!button || button.disabled) return;
     event.stopPropagation();
+    if(button.dataset.basketballAction==='basketball-start'){await beginMatch();return;}
     match.close();
     pending.add(button);button.disabled = true;
     try {
-      if(button.dataset.basketballAction==='basketball-start'&&solo()){
-        const configured=await onAction('basketball-settings',{settings:basketballSoloSettings(currentGame?.settings,currentPlayer?.basketballTeam)});
-        if(configured===false)return;
-      }
       await onAction(button.dataset.basketballAction, button.dataset.team ? { team: button.dataset.team } : {});
     }
     catch (error) { announce(error.message); }
@@ -159,6 +175,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
   root.addEventListener('click',handleAction);screenBar.addEventListener('click',handleAction);
   return {
     openMatch,
+    beginMatch,
     triggerSelected:()=>selection.trigger(),
     selectedAction:()=>selection.selected,
     render(game, player, enabled, players={}) {
@@ -186,11 +203,13 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
       const periods=game.settings?.quarters||4;
       const start = root.querySelector('[data-basketball-action="basketball-start"]');
       start.hidden = game.state === 'live';
-      start.textContent = game.state === 'finished' ? 'Host · start new match' : isHost()?`Start match · ${Object.values(players).filter(member=>!member.basketballAI&&member.basketballRole!=='spectator'&&member.basketballTeam).length} joined`:'Waiting for host';
+      const joined=Object.values(players).filter(member=>!member.basketballAI&&member.basketballRole!=='spectator'&&member.basketballTeam).length,aiAtStart=Math.max(0,(game.settings?.teamSize||5)*2-joined);
+      start.textContent = game.state === 'finished' ? 'Begin next match' : isHost()?`Begin now${aiAtStart?' · '+aiAtStart+' AI':''}`:'Waiting for host';
+      start.setAttribute('aria-label',`Begin basketball match now with ${joined} human ${joined===1?'player':'players'} and ${aiAtStart} AI players.`);
       start.disabled=blocked(start);
       const lobby=basketballLobbySummary(game,players);
       const lobbyStatus=match.querySelector('[data-lobby-status]');
-      const lobbyMessage=game.state==='live'?'Game in progress · open human spots can be joined; watch to spectate.':game.state==='finished'?`Final buzzer · join a team for the next match. ${game.hostName||'The host'} starts when players are ready.`:solo()?'Solo lobby ready · one human player with AI teammates and opponents. Press Start match when ready.':`${game.hostName?game.hostName+' is hosting':'Lobby open'} · waiting for players before tip-off. ${isHost()?'You start the match when everyone is here.':'Join a side and wait for the host to start.'}`;
+      const lobbyMessage=game.state==='live'?'Game in progress · open human spots can be joined; watch to spectate.':game.state==='finished'?`Final buzzer · join a team for the next match. ${game.hostName||'The host'} can begin immediately with AI.`:solo()?'Solo lobby ready · one human player with AI teammates and opponents. Press Begin now to play.':`${game.hostName?game.hostName+' is hosting':'Lobby open'}. ${isHost()?'Begin now to fill every empty spot with AI, or keep waiting for friends.':'Join a side; the host can begin at any time with AI filling empty spots.'}`;
       if(lobbyStatus.textContent!==lobbyMessage)lobbyStatus.textContent=lobbyMessage;
       for(const team of lobby){
         const heading=match.querySelector(`[data-lobby-${team.team}-count]`),roster=match.querySelector(`[data-lobby-${team.team}-roster]`);

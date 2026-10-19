@@ -193,3 +193,21 @@ test('solo basketball setup reserves one real player and fills both equal teams 
  for(const team of ['home','away'])assert.equal(Object.values(state.players).filter(player=>player.basketballTeam===team).length,3);
  assert.deepEqual({home:basketballSoloSettings(settings,'away').homeHumans,away:basketballSoloSettings(settings,'away').awayHumans},{home:0,away:1});
 }));
+
+test('a lone multiplayer host begins immediately with all nine unclaimed human positions filled by AI',()=>fixture(async({send,advance,runtime,map})=>{
+ let state=await send('host','join');
+ assert.equal(state.basketball.state,'ready');assert.equal(state.basketball.hostId,'account:host');
+ assert.equal(state.basketball.settings.homeHumans,5);assert.equal(state.basketball.settings.awayHumans,5);
+ const clock=state.basketball.clockMs;
+ advance(5000);state=await send('host','input',{input:{}});assert.equal(state.basketball.clockMs,clock,'the host can keep waiting without starting');
+ state=await send('host','basketball-start',{},'single-host-begin');
+ assert.equal(state.basketball.state,'live');assert.equal(state.basketball.clockMs,clock);
+ const roster=Object.values(state.players);assert.equal(roster.filter(player=>player.basketballAI).length,9);assert.equal(roster.filter(player=>!player.basketballAI&&player.basketballRole!=='spectator').length,1);
+ for(const team of ['home','away'])assert.equal(roster.filter(player=>player.basketballTeam===team).length,5);
+ assert.equal(state.basketball.settings.homeHumans,5,'Begin preserves the selected lobby setup');assert.equal(state.basketball.settings.awayHumans,5);
+ const matchId=state.basketball.matchId;
+ state=await send('host','basketball-start',{},'single-host-begin');assert.equal(state.basketball.matchId,matchId,'a retried Begin does not create another match');
+ advance(1000);state=await runtime.snapshot(map.id,map);assert.ok(state.basketball.clockMs<clock,'play advances immediately with one human');
+ state=await send('visitor','join');assert.equal(state.players['account:visitor'].basketballRole,'spectator');
+ assert.equal(Object.values(state.players).filter(player=>player.basketballRole!=='spectator').length,10,'late arrival does not enlarge either team');
+}));

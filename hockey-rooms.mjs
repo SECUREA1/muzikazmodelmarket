@@ -34,6 +34,9 @@ export class HockeyRooms {
     if(command.action==='start'){
      if(s.host!==actor)fail('Only the host can start the hockey match.',403);
      if(room.started)fail('This hockey match has already started.');
+     // Begin always produces two playable teams, even when the host is the
+     // only human or the lobby was configured without automatic AI fill.
+     s.config.aiFill=true;
      // Lobby input must never become a queued shot or check on opening faceoff.
      for(const player of s.players){player.input={};player.vx=player.vz=0;}
      room.started=true;room.at=this.now();

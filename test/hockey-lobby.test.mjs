@@ -82,3 +82,21 @@ test('quick hockey button releases survive until the next server tick without re
  player.cooldown=0;state.puck.owner=player.id;at(100);rooms.tick();
  assert.equal(state.puck.owner,player.id,'consumed tap must not make another pass on a later tick');
 });
+
+test('a lone hockey host can begin immediately with active AI filling all remaining positions',()=>{
+ const {rooms,at,command}=lobby();const joined=command(host,{action:'join',slot:'1-3',settings:{aiFill:false}});
+ assert.equal(joined.started,false);assert.equal(joined.state.config.aiFill,false);
+ at(3000);rooms.tick();assert.equal(command(host,{action:'watch'}).state.elapsed,0,'the host can still leave the lobby open for friends');
+ const started=command(host,{action:'start'});
+ assert.equal(started.started,true);assert.equal(started.state.config.aiFill,true);
+ assert.equal(started.state.players.filter(player=>player.human).length,1);
+ assert.equal(started.state.players.find(player=>player.human===started.selfId).id,'1-3');
+ assert.equal(started.state.players.filter(player=>!player.human).length,11);
+ for(const team of [0,1])assert.equal(started.state.players.filter(player=>player.team===team&&player.onIce).length,6);
+ const positions=new Map(started.state.players.map(player=>[player.id,{x:player.x,z:player.z}]));
+ for(let now=3500;now<=7000;now+=500){at(now);rooms.tick();command(host,{action:'watch'});}
+ const playing=command(host,{action:'watch'});
+ assert.equal(playing.state.phase,'playing');assert.ok(playing.state.remaining<started.state.remaining);
+ assert.ok(playing.state.players.some(player=>!player.human&&!player.goalie&&Math.hypot(player.x-positions.get(player.id).x,player.z-positions.get(player.id).z)>.2),'AI skaters take part after opening faceoff');
+ const replacement=command(guest,{action:'join',slot:'0-2'});assert.equal(replacement.started,true);assert.equal(replacement.state.players.filter(player=>player.human).length,2,'a friend can still take over an AI skater after Begin');
+});
