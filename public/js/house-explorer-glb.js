@@ -68,7 +68,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const oldStatus = document.querySelector('#house-status');
   const status = oldStatus?.cloneNode(true); if (oldStatus && status) oldStatus.replaceWith(status);
   const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
-  const resetButton = document.querySelector('#house-reset')?.cloneNode(true); document.querySelector('#house-reset')?.replaceWith(resetButton);
+  const resetButton = document.querySelector('#house-reset')?.cloneNode(true) || document.createElement('button'); resetButton.id='house-reset'; resetButton.type='button'; document.querySelector('#house-reset')?.replaceWith(resetButton);
   const fullscreenButton = document.querySelector('#house-fullscreen')?.cloneNode(true); document.querySelector('#house-fullscreen')?.replaceWith(fullscreenButton);
   const beginResetButton = document.querySelector('#house-begin-reset')?.cloneNode(true); document.querySelector('#house-begin-reset')?.replaceWith(beginResetButton);
   const bottomControls = document.querySelector('.house-bottom-controls');

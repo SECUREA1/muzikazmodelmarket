@@ -7,8 +7,9 @@ test('the index directory includes all server maps and searches districts, creat
  assert.equal(filterAtlasLocations(maps).length,166);assert.equal(filterAtlasLocations(maps,'alice neon').length,165);assert.equal(filterAtlasLocations(maps,'deed-77')[0].mapId,'plot-deed-77');
  for(const map of maps){const position=atlasLocationPosition(map);assert.equal(position.mapId,map.mapId);assert.ok(position.x>=0&&position.x<=100);assert.ok(position.y>=0&&position.y<=100);}
 });
-test('the illustrated map form and live atlas styles have independent scopes',async()=>{
+test('the index mounts the shared live atlas with scoped styles',async()=>{
  const [html,css,source]=await Promise.all([readFile(new URL('../index.html',import.meta.url),'utf8'),readFile(new URL('../public/assets/world-atlas.css',import.meta.url),'utf8'),readFile(new URL('../public/js/world-atlas.js',import.meta.url),'utf8')]);
- for(const id of ['world-destination-search','world-live-destination','world-live-locations','world-destinations-refresh'])assert.ok(html.includes('id="'+id+'"'));
+ assert.ok(html.includes('id="world-map" data-world-atlas'));
+ for(const control of ['data-atlas-search','data-atlas-destination','data-atlas-locations','data-atlas-refresh','data-atlas-enter'])assert.ok(source.includes(control));
  assert.ok(css.includes('.world-atlas-live-panel'));assert.ok(!/\.world-atlas(?![\w-])/.test(css));assert.match(source,/classList.add\('world-atlas-live-panel'\)/);
 });

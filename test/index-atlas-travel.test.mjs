@@ -27,7 +27,7 @@ test('named districts open without a deed lookup and failed resolution never inv
 });
 test('index uses live destination controls and shared API connection',async()=>{
  const html=await readFile(new URL('../index.html',import.meta.url),'utf8'),script=await readFile(new URL('../script.js',import.meta.url),'utf8');
- assert.match(html,/public\/js\/api-connection.js/);assert.match(script,/resolveIndexDestination\(inventory,chosen,asset\)/);assert.match(script,/mountWorldAtlas\(liveDirectory\)/);assert.ok(!script.includes("assetAction.textContent = 'Browse world market'"));
+ assert.match(html,/public\/js\/api-connection.js/);assert.match(html,/id="world-map" data-world-atlas/);assert.match(html,/type="module" src="public\/js\/world-atlas.js"/);assert.ok(!script.includes('function initWorldAtlas()'));
 });
 
 test('saved map pins take priority over nearby coordinates and district display names',async()=>{
