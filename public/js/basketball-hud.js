@@ -8,11 +8,12 @@ const clock=value=>{
   if(remaining>0&&remaining<60000){const tenths=Math.min(599,Math.ceil(remaining/100));return `0:${String(Math.floor(tenths/10)).padStart(2,'0')}.${tenths%10}`;}
   const seconds=Math.ceil(remaining/1000);return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
 };
-export function basketballScoreboardState(game={}){
+export function basketballScoreboardState(game={}, {freeplay=false}={}){
   const quarters=Math.max(1,Math.floor(Number(game.settings?.quarters)||4)),quarter=Math.max(1,Math.floor(Number(game.quarter)||1)),overtime=Math.max(0,quarter-quarters);
-  const phase=game.state==='ready'?'PRE GAME':game.state==='finished'?(overtime?`FINAL · OT ${overtime}`:'FINAL'):overtime?`OT ${overtime}`:`Q${quarter}`;
+  const practice=freeplay&&game.state==='ready';
+  const phase=practice?'FREE PLAY':game.state==='ready'?'PRE GAME':game.state==='finished'?(overtime?`FINAL · OT ${overtime}`:'FINAL'):overtime?`OT ${overtime}`:`Q${quarter}`;
   const shot=milliseconds(game.shotClockMs),score=value=>Number.isFinite(value)?Math.max(0,Math.floor(value)):0;
-  return {home:score(game.homeScore),away:score(game.awayScore),phase,gameClock:clock(game.clockMs),shotClock:shot>0&&shot<5000?(Math.ceil(shot/100)/10).toFixed(1):String(Math.ceil(shot/1000)),possession:['home','away'].includes(game.possession)?game.possession:null};
+  return {home:score(game.homeScore),away:score(game.awayScore),phase,gameClock:practice?'—':clock(game.clockMs),shotClock:practice?'—':shot>0&&shot<5000?(Math.ceil(shot/100)/10).toFixed(1):String(Math.ceil(shot/1000)),possession:['home','away'].includes(game.possession)?game.possession:null};
 }
 
 export function basketballLobbySummary(game={}, players={}) {
@@ -26,7 +27,39 @@ export function basketballLobbySummary(game={}, players={}) {
   });
 }
 
-export function mountBasketballHud({ stage, actionParent=stage.parentElement, onAction, onTriggerChange=()=>{}, announce = () => {} }) {
+/** Keep the arrival menu open until a server-confirmed entry choice succeeds. */
+export function createBasketballEntryFlow({open=()=>{},close=()=>{},choose,onChange=()=>{},onStatus=()=>{}}={}) {
+  let active=false,opened=false,request=null,generation=0;
+  const changed=()=>onChange(active);
+  return {
+    begin(){generation++;active=true;opened=false;request=null;onStatus('Choose Free play, Join game or Spectate to enter the court.');changed();},
+    reset(){generation++;active=false;opened=false;request=null;changed();},
+    sync(ready){if(active&&!opened&&ready){opened=true;open();}},
+    release(){active=false;opened=false;onStatus('');changed();close();},
+    choose(choice){
+      if(request)return request;
+      const version=generation;
+      onStatus(choice==='freeplay'?'Opening free play…':choice==='spectate'?'Joining the spectators…':'Joining the game…');
+      request=Promise.resolve().then(()=>choose(choice)).then(result=>{
+        if(version!==generation)return false;
+        if(result===false){onStatus('That choice could not be completed. Please try again.');return false;}
+        this.release();return result??true;
+      }).catch(error=>{if(version===generation)onStatus(error?.message||'Unable to enter the court. Please try again.');return false;}).finally(()=>{if(version===generation){request=null;changed();}});
+      changed();return request;
+    },
+    get pending(){return active;},
+    get busy(){return Boolean(request);}
+  };
+}
+
+export function basketballEntryTeam(game={},player={},players={},preferred='any') {
+  const teams=basketballLobbySummary(game,players);
+  const joined=player.basketballRole!=='spectator'&&['home','away'].includes(player.basketballTeam)?player.basketballTeam:null;
+  const available=team=>team.team===joined||team.open>0;
+  return (preferred==='home'||preferred==='away'?teams.find(team=>team.team===preferred&&available(team)):teams.find(team=>team.team===joined)||teams.filter(available).sort((a,b)=>a.humans-b.humans)[0])?.team||null;
+}
+
+export function mountBasketballHud({ stage, actionParent=stage.parentElement, onAction, onWorldMode=null, onEntryChange=()=>{}, onTriggerChange=()=>{}, announce = () => {} }) {
   const style = document.createElement('style');
   style.textContent = `
     .basketball-match-toggle{pointer-events:auto;min-height:38px;background:#142305;color:#c4ff5b;border:1px solid #91ba42;border-radius:8px;margin:6px auto;display:block;padding:6px 12px;font-weight:bold}.basketball-match-menu{pointer-events:auto}.basketball-match-menu .basketball-game-actions{display:flex!important}.basketball-match-menu::backdrop{background:#000b}\n    .basketball-hud[hidden]{display:none!important}
@@ -60,6 +93,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
     .basketball-rules::backdrop{background:#000a}.basketball-rules h2{margin:0 0 10px;color:#f8f4eb}.basketball-rules p{font-size:12px;line-height:1.5;color:#c0cbd9}
     .basketball-rules-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.basketball-rules label{display:grid;gap:5px;font-size:12px}.basketball-rules input,.basketball-rules select{width:100%;box-sizing:border-box;min-height:44px;padding:9px;border:1px solid #50617a;border-radius:6px;background:#08101e;color:white}
     .basketball-rules details{margin-top:16px}.basketball-rules summary{cursor:pointer;padding:10px 0;color:#ead2a4}.basketball-rules [data-roster-preview]{padding:12px;border-radius:8px;background:#08101e;white-space:pre-line}.basketball-rules button{min-height:44px}.basketball-rules footer{flex-wrap:wrap;display:flex;gap:8px;margin-top:18px}.basketball-rules button{width:auto!important;padding:9px 16px;border:1px solid #d8b275;border-radius:6px;background:#e9ba72;color:#172034;cursor:pointer}
+    .basketball-entry-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.basketball-entry-options button{width:100%!important;min-width:0;padding:10px 6px}.basketball-entry-options button:disabled{opacity:.5}.basketball-entry-status{min-height:1.5em;color:#ffdb94!important}.basketball-entry-team{margin-bottom:14px}.basketball-entry-team select{max-width:100%}
     .basketball-lobby-status{padding:10px;border:1px solid #91ba4270;border-radius:8px;background:#142305;color:#d9f5b4!important;font-weight:600}.basketball-lobby-roster{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.basketball-lobby-team{min-width:0;padding:10px;border:1px solid #50617a;border-radius:8px;background:#08101e}.basketball-lobby-team h3{margin:0;font-size:13px}.basketball-lobby-team p{margin:6px 0 0;font-size:11px;overflow-wrap:anywhere;white-space:pre-line}.basketball-lobby-help{margin:10px 0}
     .basketball-scored .basketball-score-strip{animation:basketball-score-flash .7s ease-out}
     @keyframes basketball-score-flash{0%{box-shadow:0 0 50px #ffd47fbd;transform:scale(1.035)}100%{box-shadow:0 12px 40px #0007;transform:scale(1)}}
@@ -84,15 +118,28 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
   root.querySelector('.basketball-game-actions').insertAdjacentHTML('beforeend','<button type="button" data-basketball-action="basketball-steal">Steal · Q</button>');
   const actions=root.querySelector('.basketball-game-actions');
   const match=document.createElement('dialog');match.className='basketball-rules basketball-match-menu';match.setAttribute('aria-label','Basketball match and players');
-  match.innerHTML='<h2>Basketball match lobby</h2><p class="basketball-lobby-status" data-lobby-status role="status" aria-live="polite">Lobby open · choose a team, then begin whenever you are ready.</p><div class="basketball-lobby-roster"><section class="basketball-lobby-team"><h3 data-lobby-home-count>Home</h3><p data-lobby-home-roster></p></section><section class="basketball-lobby-team"><h3 data-lobby-away-count>Away</h3><p data-lobby-away-roster></p></section></div><p class="basketball-lobby-help">The host can press Begin now with any number of players. AI fills every empty spot immediately. Keep the lobby open if you want friends to join first.</p><label>World mode<select data-basketball-world-mode><option value="solo">Solo vs AI</option><option value="multiplayer">Live multiplayer · players and AI</option></select></label><button type="button" data-open-world>Open selected mode</button><p>Watch game leaves your spot for another player or AI.</p><section data-game-match-browser></section><button type="button" data-close-match>Return to court</button>';
-  const mode=match.querySelector('[data-basketball-world-mode]');mode.value=new URL(location.href).searchParams.get('mode')==='solo'?'solo':'multiplayer';
-  match.querySelector('[data-open-world]').onclick=()=>{const url=new URL(location.href);url.searchParams.set('mode',mode.value);url.searchParams.set('autoplay','1');location.assign(url.href);};
-  match.querySelector('[data-close-match]').onclick=()=>match.close();
-  const openMatch=()=>{if(root.hidden)return;document.exitPointerLock?.();if(!match.open)match.showModal();};
+  match.innerHTML='<h2>Basketball server lobby</h2><p class="basketball-entry-status" data-entry-status role="status" aria-live="polite">Choose Free play, Join game or Spectate.</p><div class="basketball-entry-options" role="group" aria-label="Enter basketball"><button type="button" data-basketball-entry="freeplay">Free play</button><button type="button" data-basketball-entry="join">Join game</button><button type="button" data-basketball-entry="spectate">Spectate</button></div><label class="basketball-entry-team">Join a team<select data-entry-team><option value="any">Any open spot</option><option value="home">Home</option><option value="away">Away</option></select></label><p class="basketball-lobby-status" data-lobby-status role="status" aria-live="polite">Lobby open · choose a team, then begin whenever you are ready.</p><div class="basketball-lobby-roster"><section class="basketball-lobby-team"><h3 data-lobby-home-count>Home</h3><p data-lobby-home-roster></p></section><section class="basketball-lobby-team"><h3 data-lobby-away-count>Away</h3><p data-lobby-away-roster></p></section></div><p class="basketball-lobby-help">The host can press Begin now with any number of players. AI fills every empty spot immediately. Keep the lobby open if you want friends to join first.</p><label>World mode<select data-basketball-world-mode><option value="freeplay">Free play · untimed practice</option><option value="solo">Solo vs AI</option><option value="multiplayer">Live multiplayer · players and AI</option></select></label><button type="button" data-open-world>Open selected mode</button><p>Watch game leaves your spot for another player or AI.</p><section data-game-match-browser></section><button type="button" data-close-match>Return to court</button>';
+  const freeplay=()=>{const params=new URL(location.href).searchParams;return params.get('mode')==='solo'&&params.get('basketballMode')==='freeplay';};
+  const changeWorldMode=async value=>{
+    if(onWorldMode)return onWorldMode(value);
+    const url=new URL(location.href);url.searchParams.set('mode',value==='freeplay'?'solo':value);url.searchParams.set('autoplay','1');
+    if(value==='freeplay')url.searchParams.set('basketballMode','freeplay');else url.searchParams.delete('basketballMode');
+    location.assign(url.href);return true;
+  };
+  const mode=match.querySelector('[data-basketball-world-mode]');mode.value=freeplay()?'freeplay':new URL(location.href).searchParams.get('mode')==='solo'?'solo':'multiplayer';
+  match.querySelector('[data-open-world]').onclick=async()=>{
+    if(worldOpening||entry.busy||pending.size)return;worldOpening=true;syncEntryButtons();
+    try{const result=await changeWorldMode(mode.value);if(result===false){match.querySelector('[data-entry-status]').textContent='That mode could not be opened. Please try again.';return;}entry.release();}
+    catch(error){match.querySelector('[data-entry-status]').textContent=error.message;}
+    finally{worldOpening=false;syncEntryButtons();}
+  };
+  match.querySelector('[data-close-match]').onclick=()=>{if(!entry.pending&&!entry.busy)match.close();};
+  const openMatch=()=>{if(root.hidden)return;document.exitPointerLock?.();if(!match.open)match.showModal();matchBrowser.refresh();};
   const matchButton=document.createElement('button');matchButton.type='button';matchButton.className='basketball-match-toggle';matchButton.textContent='Match · join / watch / start';matchButton.onclick=openMatch;actions.replaceWith(matchButton);match.insertBefore(actions,match.querySelector('[data-game-match-browser]'));root.append(match);
-  match.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();match.close();}});
+  match.addEventListener('cancel',event=>{if(entry.pending||entry.busy)event.preventDefault();});
+  match.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();if(!entry.pending&&!entry.busy)match.close();}});
   stage.append(root);
-  mountGameMatchBrowser(match.querySelector('[data-game-match-browser]'),{game:'basketball',currentMapId:()=>new URL(location.href).searchParams.get('environment')||new URL(location.href).searchParams.get('house')});
+  const matchBrowser=mountGameMatchBrowser(match.querySelector('[data-game-match-browser]'),{game:'basketball',currentMapId:()=>new URL(location.href).searchParams.get('environment')||new URL(location.href).searchParams.get('house')});
   const screenBar=document.createElement('div');screenBar.className='game-screen-actions basketball-screen-actions';screenBar.hidden=true;screenBar.setAttribute('role','group');screenBar.setAttribute('aria-label','Basketball gameplay actions');
   for(const action of ['basketball-shoot','toss','catch','basketball-steal'])screenBar.append(root.querySelector(`[data-basketball-action="${action}"]`));
   const bottomControls=actionParent.querySelector('.house-bottom-controls');if(bottomControls)actionParent.insertBefore(screenBar,bottomControls);else actionParent.append(screenBar);actionParent.prepend(root);root.classList.add('basketball-hud-docked');
@@ -100,7 +147,29 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
   rules.innerHTML='<form><h2 id="basketball-rules-title">Quick match tuner</h2><p>Choose team size, human players and AI difficulty, then start. Both teams stay equal; AI fills every empty spot at tip-off.</p><button type="button" data-solo-setup>Solo vs AI</button><div class="basketball-rules-fields"><label>Players per team<select name="teamSize"><option value="1">1 vs 1</option><option value="2">2 vs 2</option><option value="3">3 vs 3</option><option value="4">4 vs 4</option><option value="5">5 vs 5</option></select></label><label>AI difficulty<select name="aiDifficulty"><option value="1">Tier 1 · Rookie</option><option value="2">Tier 2 · Amateur</option><option value="3">Tier 3 · Pro</option><option value="4">Tier 4 · All-Star</option><option value="5">Tier 5 · Legend</option></select></label><label>Home human slots<input name="homeHumans" type="number" min="0" max="5" step="1" required></label><label>Away human slots<input name="awayHumans" type="number" min="0" max="5" step="1" required></label></div><details><summary>Competition rules · timing &amp; scoring</summary><div class="basketball-rules-fields"><label>Minutes per period<input type="number" name="quarterMinutes" min="1" max="12" step="1" required></label><label>Number of periods<input type="number" name="quarters" min="1" max="4" step="1" required></label><label>Shot clock (seconds)<input type="number" name="shotClockSeconds" min="5" max="60" step="1" required></label><label>Score to win (0 = timed)<input type="number" name="scoreLimit" min="0" max="200" step="1" required></label><label>Win by points<input type="number" name="winBy" min="1" max="10" step="1" required></label></div></details><p data-roster-preview role="status" aria-live="polite"></p><p>Playing with friends? Save to lobby, let everyone join Home or Away, then start. AI wears numbered team jerseys. Late arrivals watch until the next game.</p><p data-rules-status role="status"></p><footer><button type="submit" name="start" value="true" data-start-match>Start game</button><button type="submit" name="save" data-save-rules>Save to lobby</button><button type="button" data-close-rules>Back to court</button></footer></form>';
   stage.append(rules);
   let score = '0:0', ready = false, currentGame = null, currentPlayer = null, currentPlayers = {};
-  let savingSetup=false,actionContext='',startingMatch=null;
+  let savingSetup=false,actionContext='',startingMatch=null,worldOpening=false;
+  const entry=createBasketballEntryFlow({
+    open:openMatch,close:()=>match.close(),onChange:pending=>{onEntryChange(pending);syncEntryButtons();},
+    onStatus:message=>{match.querySelector('[data-entry-status]').textContent=message;},
+    choose:async choice=>{
+      if(!ready||!currentGame||worldOpening||pending.size)throw new Error('The server is still connecting. Please wait, then try again.');
+      if(choice==='freeplay')return changeWorldMode('freeplay');
+      if(choice==='spectate')return onAction('basketball-watch',{});
+      const team=basketballEntryTeam(currentGame,currentPlayer,currentPlayers,match.querySelector('[data-entry-team]').value);
+      if(!team)throw new Error('There are no open player spots on that team. Choose another team or Spectate.');
+      if(currentGame.state==='live'&&currentPlayer.basketballRole!=='spectator'&&currentPlayer.basketballTeam===team)return true;
+      return onAction(currentGame.state==='live'?'basketball-join-spot':'basketball-team',{team});
+    }
+  });
+  function syncEntryButtons(){
+    for(const button of match.querySelectorAll('[data-basketball-entry]'))button.disabled=!ready||entry.busy||worldOpening||pending.size>0;
+    match.querySelector('[data-entry-team]').disabled=!ready||entry.busy||worldOpening||pending.size>0;
+    mode.disabled=!ready||entry.busy||worldOpening||pending.size>0;
+    match.querySelector('[data-open-world]').disabled=!ready||entry.busy||worldOpening||pending.size>0;
+    match.querySelector('[data-close-match]').hidden=entry.pending;
+  }
+  for(const button of match.querySelectorAll('[data-basketball-entry]'))button.onclick=()=>entry.choose(button.dataset.basketballEntry);
+
   const selection=bindGameActionSelection(screenBar,{selector:'[data-basketball-action]',defaultAction:'basketball-shoot',enabled:()=>ready&&Boolean(currentPlayer)&&!screenBar.hidden&&currentPlayer.basketballRole!=='spectator',onChange:onTriggerChange});
   const solo=()=>new URL(location.href).searchParams.get('mode')==='solo';
   const isHost=()=>{
@@ -109,6 +178,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
     return currentGame?.hostId?currentGame.hostId===selfId:solo();
   };
   function beginMatch({setupSaved=false}={}){
+    if(entry.pending){openMatch();return Promise.resolve(false);}
     if(startingMatch)return startingMatch;
     if(!ready||!currentGame||currentGame.state==='live'||!isHost()){openMatch();return Promise.resolve(false);}
     const button=root.querySelector('[data-basketball-action="basketball-start"]');
@@ -140,7 +210,8 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
   };
   root.querySelector('[data-basketball-rules]').addEventListener('click',openSetup);
   rules.querySelector('[data-solo-setup]').onclick=()=>{if(currentGame?.state==='live'||!isHost())return;const team=currentPlayer?.basketballTeam||'home';for(const side of ['home','away'])rules.querySelector(`[name=${side}Humans]`).value=side===team?1:0;previewRoster();};
-  rules.querySelector('[data-close-rules]').onclick=()=>rules.close();
+  rules.querySelector('[data-close-rules]').onclick=()=>{rules.close();if(entry.pending)openMatch();};
+  rules.addEventListener('close',()=>{if(entry.pending&&!root.hidden)openMatch();});
   rules.querySelector('form').addEventListener('submit',async event=>{
     event.preventDefault();if(currentGame?.state==='live'||savingSetup||!isHost())return;
     const startNow=event.submitter?.name!=='save';
@@ -157,24 +228,28 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
     }catch(error){status.textContent=error.message;}
     finally{savingSetup=false;for(const button of rules.querySelectorAll('[type=submit],[data-solo-setup]'))button.disabled=currentGame?.state==='live'||!isHost();}
   });
-  const blocked=button=>!ready||pending.has(button)||(button.dataset.basketballAction==='basketball-start'&&!isHost())||(currentPlayer?.basketballRole==='spectator'&&['catch','toss','basketball-shoot','basketball-steal','basketball-start'].includes(button.dataset.basketballAction));
+  const blocked=button=>!ready||pending.has(button)||entry.busy||worldOpening||(button.dataset.basketballAction==='basketball-start'&&(!isHost()||entry.pending))||(currentPlayer?.basketballRole==='spectator'&&['catch','toss','basketball-shoot','basketball-steal','basketball-start'].includes(button.dataset.basketballAction));
   const pending = new Set();
   const handleAction=async event => {
     const button = event.target.closest('[data-basketball-action]');
-    if (!button || button.disabled) return;
+    if (!button || button.disabled || entry.busy || worldOpening) return;
     event.stopPropagation();
     if(button.dataset.basketballAction==='basketball-start'){await beginMatch();return;}
-    match.close();
-    pending.add(button);button.disabled = true;
+    pending.add(button);button.disabled = true;syncEntryButtons();
     try {
-      await onAction(button.dataset.basketballAction, button.dataset.team ? { team: button.dataset.team } : {});
+      const result=await onAction(button.dataset.basketballAction, button.dataset.team ? { team: button.dataset.team } : {});
+      if(result===false){match.querySelector('[data-entry-status]').textContent='That action could not be completed. Please try again.';return;}
+      if(['basketball-team','basketball-join-spot','basketball-watch'].includes(button.dataset.basketballAction))entry.release();else match.close();
     }
-    catch (error) { announce(error.message); }
-    finally { pending.delete(button);button.disabled = blocked(button);selection.sync(); }
+    catch (error) { match.querySelector('[data-entry-status]').textContent=error.message;announce(error.message); }
+    finally { pending.delete(button);button.disabled = blocked(button);syncEntryButtons();selection.sync(); }
   };
   root.addEventListener('click',handleAction);screenBar.addEventListener('click',handleAction);
   return {
     openMatch,
+    beginEntry:()=>entry.begin(),
+    resetEntry:()=>entry.reset(),
+    get entryPending(){return entry.pending;},
     beginMatch,
     triggerSelected:()=>selection.trigger(),
     selectedAction:()=>selection.selected,
@@ -188,9 +263,11 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
       if(!enabled&&rules.open)rules.close();
       if(!enabled&&match.open)match.close();
       selection.sync();
+      syncEntryButtons();
       if (!enabled || !game) return;
       if(rules.open){previewRoster();if(game.state==='live'||!isHost()){for(const input of rules.querySelectorAll('input,select,[type=submit],[data-solo-setup]'))input.disabled=true;rules.querySelector('[data-rules-status]').textContent=game.state==='live'?'Match started. Settings are locked until the final buzzer.':`${game.hostName||'The host'} controls match setup.`;}}
-      const board=basketballScoreboardState(game);
+      const practicing=freeplay()&&game.state==='ready';
+      const board=basketballScoreboardState(game,{freeplay:practicing});
       scoreboard.querySelector('[data-home]').textContent=board.home;
       scoreboard.querySelector('[data-away]').textContent=board.away;
       scoreboard.querySelector('[data-clock]').textContent=board.gameClock;
@@ -199,7 +276,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
       scoreboard.dataset.state=game.state;scoreboard.dataset.possession=board.possession||'';
       const teamScores=scoreboard.querySelectorAll('.basketball-team-score');teamScores[0].classList.toggle('has-possession',board.possession==='home');teamScores[1].classList.toggle('has-possession',board.possession==='away');
       scoreboard.querySelector('[data-home]').setAttribute('aria-label',`Home score ${board.home}`);scoreboard.querySelector('[data-away]').setAttribute('aria-label',`Away score ${board.away}`);
-      scoreboard.querySelector('[data-clock]').setAttribute('aria-label',`Game clock ${board.gameClock}`);scoreboard.querySelector('[data-shot]').setAttribute('aria-label',`Shot clock ${board.shotClock} seconds`);
+      scoreboard.querySelector('[data-clock]').setAttribute('aria-label',practicing?'Untimed free play':`Game clock ${board.gameClock}`);scoreboard.querySelector('[data-shot]').setAttribute('aria-label',practicing?'No shot clock in free play':`Shot clock ${board.shotClock} seconds`);
       const periods=game.settings?.quarters||4;
       const start = root.querySelector('[data-basketball-action="basketball-start"]');
       start.hidden = game.state === 'live';
@@ -209,7 +286,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
       start.disabled=blocked(start);
       const lobby=basketballLobbySummary(game,players);
       const lobbyStatus=match.querySelector('[data-lobby-status]');
-      const lobbyMessage=game.state==='live'?'Game in progress · open human spots can be joined; watch to spectate.':game.state==='finished'?`Final buzzer · join a team for the next match. ${game.hostName||'The host'} can begin immediately with AI.`:solo()?'Solo lobby ready · one human player with AI teammates and opponents. Press Begin now to play.':`${game.hostName?game.hostName+' is hosting':'Lobby open'}. ${isHost()?'Begin now to fill every empty spot with AI, or keep waiting for friends.':'Join a side; the host can begin at any time with AI filling empty spots.'}`;
+      const lobbyMessage=practicing?'Free play · untimed practice. Use Match setup and Begin now when you want a solo match with AI.':game.state==='live'?'Game in progress · open human spots can be joined; watch to spectate.':game.state==='finished'?`Final buzzer · join a team for the next match. ${game.hostName||'The host'} can begin immediately with AI.`:solo()?'Solo lobby ready · one human player with AI teammates and opponents. Press Begin now to play.':`${game.hostName?game.hostName+' is hosting':'Lobby open'}. ${isHost()?'Begin now to fill every empty spot with AI, or keep waiting for friends.':'Join a side; the host can begin at any time with AI filling empty spots.'}`;
       if(lobbyStatus.textContent!==lobbyMessage)lobbyStatus.textContent=lobbyMessage;
       for(const team of lobby){
         const heading=match.querySelector(`[data-lobby-${team.team}-count]`),roster=match.querySelector(`[data-lobby-${team.team}-roster]`);
@@ -223,12 +300,13 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
       }
       const spectator=player?.basketballRole==='spectator';
       root.querySelector('[data-basketball-action="basketball-watch"]').setAttribute('aria-pressed',String(spectator));
-      root.querySelector('[data-role]').textContent=spectator?(game.state==='live'?'WATCHING LIVE · STANDS & BENCHES ONLY · E TO SIT / STAND':'SPECTATOR · WATCH OR CHOOSE A SIDE'):`PLAYING ${player?.basketballTeam==='away'?'AWAY':'HOME'} · ${game.settings?.scoreLimit?`FIRST TO ${game.settings.scoreLimit} · WIN BY ${game.settings.winBy}`:`${periods} × ${game.settings?.quarterMinutes||12} MIN`}`;
+      root.querySelector('[data-role]').textContent=practicing?'FREE PLAY · UNTIMED PRACTICE':spectator?(game.state==='live'?'WATCHING LIVE · STANDS & BENCHES ONLY · E TO SIT / STAND':'SPECTATOR · WATCH OR CHOOSE A SIDE'):`PLAYING ${player?.basketballTeam==='away'?'AWAY':'HOME'} · ${game.settings?.scoreLimit?`FIRST TO ${game.settings.scoreLimit} · WIN BY ${game.settings.winBy}`:`${periods} × ${game.settings?.quarterMinutes||12} MIN`}`;
       const audience=Object.values(players),watching=audience.filter(member=>member.basketballRole==='spectator').length;root.querySelector('[data-role]').textContent+=` · ${audience.filter(p=>!p.basketballAI&&p.basketballRole!=='spectator').length} HUMANS + ${audience.filter(p=>p.basketballAI).length} AI / ${watching} WATCHING`;
-      const caption = root.querySelector('[data-play]'), play = game.lastPlay || 'Choose Home, Away or Watch. Game rules can be changed before tip-off.';
+      const caption = root.querySelector('[data-play]'), play = practicing?'Free play · shoot, pass and catch. Begin a match from the Match menu.':game.lastPlay || 'Choose Home, Away or Watch. Game rules can be changed before tip-off.';
       if(caption.textContent!==play)caption.textContent=play;
       const nextScore = `${board.home}:${board.away}`;
       if (nextScore !== score) { scoreboard.classList.remove('basketball-scored'); void scoreboard.offsetWidth; scoreboard.classList.add('basketball-scored'); score = nextScore; }
+      entry.sync(Boolean(player));
     }
   };
 }

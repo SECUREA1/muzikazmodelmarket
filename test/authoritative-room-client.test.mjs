@@ -174,3 +174,19 @@ test('rejoining a restarted server renders its reset sequence instead of freezin
   return response(confirmed(inputs+1));
  },async client=>{await client.whenReady();await pause(250);assert.equal(joins,2);assert.ok(rendered.includes(100));assert.ok(rendered.includes(1));assert.equal(client.ready,true);},{render:state=>rendered.push(state.sequence)});
 });
+
+test('basketball entry fields and meeting selection reach initial joins and reconnects',async()=>{
+ const joins=[];let inputs=0,sequence=0,role='spectator';
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const body=JSON.parse(options.body);
+  if(body.action==='join')joins.push(body);
+  if(body.action==='input'&&++inputs===1)return response({message:'Join again',code:'ROOM_JOIN_REQUIRED'},409);
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();role=null;await pause(200);
+  assert.equal(joins.length,2);
+  for(const join of joins){assert.equal(join.basketballEntry,'menu');assert.equal(join.meetingId,'courtside');}
+  assert.equal(joins[0].basketballRole,'spectator');assert.equal(joins[1].basketballRole,undefined,'a player who joined a team is not forced back into spectating on reconnect');
+ },{joinFields:()=>({basketballEntry:'menu',...(role?{basketballRole:role}:{})}),meetingId:'courtside'});
+});

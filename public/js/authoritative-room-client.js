@@ -1,6 +1,6 @@
 import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory.js';
 
-export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,onError}) {
+export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,joinFields={},onError}) {
  const api = new SharedGameInventory();
  let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0, inputRequested=false,fireBusy=false;
  let fireRequest=null;
@@ -88,7 +88,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    if (!joined) {
     // A restarted server begins a new sequence; accept its first confirmed state.
     sequence=-1;
-    const arrival=await client.send('join',meetingId?{meetingId}:{});
+    const fields=typeof joinFields==='function'?joinFields():joinFields;
+    const arrival=await client.send('join',{...fields,...(meetingId?{meetingId}:{})});
     if (stopped) return;
     joined=true;
     onStatus?.(arrival?.result?.message || 'Connected. Gameplay is ready.');

@@ -30,6 +30,52 @@ test('every arena player shares free court, teams, jerseys and one server-owned 
  assert.equal((await runtime.snapshot(map.id,map)).players['account:bob'].basketballJersey,'away');
 }));
 
+test('opening the basketball server menu does not claim a team or host until Join is chosen',()=>fixture(async({send,advance,runtime,map})=>{
+ let state=await send('viewer','join',{basketballEntry:'menu'});
+ assert.equal(state.players['account:viewer'].basketballRole,'spectator');
+ assert.equal(state.players['account:viewer'].basketballTeam,null);
+ assert.equal(state.basketball.hostId,null);
+ const clock=state.basketball.clockMs;
+ advance(5000);state=await send('viewer','input',{input:{}});
+ assert.equal(state.basketball.state,'ready');assert.equal(state.basketball.clockMs,clock);
+ await assert.rejects(send('viewer','basketball-start'),/Spectators/);
+ state=await send('host','join',{basketballEntry:'menu'});
+ assert.equal(state.basketball.hostId,null);
+ state=await send('host','basketball-team',{team:'home'});
+ assert.equal(state.basketball.hostId,'account:host');
+ state=await send('host','basketball-start');
+ assert.equal(state.basketball.state,'live');
+ assert.equal(Object.values(state.players).filter(player=>player.basketballAI).length,9);
+ assert.equal(state.players['account:viewer'].basketballRole,'spectator');
+ const matchId=state.basketball.matchId;
+ await assert.rejects(send('viewer','join',{basketballRole:'player',basketballTeam:'away'}),/Late arrivals/);
+ state=await runtime.snapshot(map.id,map);assert.equal(state.basketball.matchId,matchId);assert.equal(state.players['account:viewer'].basketballRole,'spectator');
+ state=await send('viewer','basketball-join-spot',{team:'away'});
+ assert.equal(state.players['account:viewer'].basketballTeam,'away');assert.equal(state.basketball.matchId,matchId);
+ assert.equal(Object.values(state.players).filter(player=>player.basketballAI).length,8);
+}));
+
+test('basketball menu reconnects preserve the chosen role and explicit Join and Spectate remain authoritative',()=>fixture(async({send,runtime,map})=>{
+ let state=await send('host','join');
+ state=await send('viewer','join',{basketballRole:'spectator'});
+ assert.equal(state.basketball.hostId,'account:host');assert.equal(state.players['account:viewer'].basketballTeam,null);
+ const watchingPosition={...state.players['account:viewer'].position};
+ for(const fields of [{basketballEntry:'menu'},{}]){
+  state=await send('viewer','join',fields);
+  assert.equal(state.players['account:viewer'].basketballRole,'spectator');
+  assert.deepEqual(state.players['account:viewer'].position,watchingPosition);
+  assert.equal(state.basketball.hostId,'account:host');
+ }
+ state=await send('viewer','join',{basketballRole:'player',basketballTeam:'away'});
+ assert.equal(state.players['account:viewer'].basketballRole,'player');assert.equal(state.players['account:viewer'].basketballTeam,'away');
+ state=await send('viewer','join',{basketballEntry:'menu'});
+ assert.equal(state.players['account:viewer'].basketballRole,'player');assert.equal(state.players['account:viewer'].basketballTeam,'away');
+ state=await send('host','join',{basketballRole:'spectator'});
+ assert.equal(state.players['account:host'].basketballRole,'spectator');assert.equal(state.basketball.hostId,'account:viewer');
+ for(const fields of [{basketballRole:'free-play'},{basketballRole:'player',basketballTeam:'other'}])await assert.rejects(send('new','join',fields),{statusCode:422});
+ state=await runtime.snapshot(map.id,map);assert.equal(state.players['account:new'],undefined);
+}));
+
 test('shared catch and assisted shot are authoritative and a repeated request cannot shoot or score twice',()=>fixture(async({send,store,runtime,map,advance})=>{
  await send('alice','join');await send('bob','join');await send('alice','basketball-start');
  // Authoritative fixture placement is a test setup; commands cannot choose a position or award points.
@@ -108,6 +154,28 @@ test('a player can watch during play and releases the shared ball for remaining 
  state=await send('bob','toss',{pitch:0});
  assert.equal(state.players['account:bob'].heldId,null);
  assert.ok(state.actors[BASKETBALL_BALL_ID].ballVelocity);
+ assert.equal((await runtime.snapshot(map.id,map)).basketball.state,'live');
+}));
+
+test('the last human can spectate a continuing full AI match and take a player spot again',()=>fixture(async({send,runtime,map,advance})=>{
+ await send('host','join');await send('host','basketball-start');await send('host','catch');
+ let state=await send('host','basketball-watch');
+ const matchId=state.basketball.matchId,clock=state.basketball.clockMs;
+ const positions=Object.fromEntries(Object.values(state.players).filter(player=>player.basketballAI).map(player=>[player.id,{...player.position}]));
+ for(let tick=0;tick<5;tick++){advance(100);state=await send('host','input',{input:{}});}
+ assert.equal(state.players['account:host'].basketballRole,'spectator');assert.equal(state.players['account:host'].heldId,null);
+ assert.equal(state.basketball.hostId,null);assert.equal(state.basketball.matchId,matchId);assert.ok(state.basketball.clockMs<clock);
+ const bots=Object.values(state.players).filter(player=>player.basketballAI);
+ assert.equal(bots.length,10);
+ for(const team of ['home','away'])assert.equal(bots.filter(player=>player.basketballTeam===team).length,5);
+ assert.ok(bots.some(bot=>positions[bot.id]&&Math.hypot(bot.position.x-positions[bot.id].x,bot.position.z-positions[bot.id].z)>.01));
+ assert.ok(state.players[state.actors[BASKETBALL_BALL_ID].holderId]?.basketballAI,'an AI retains live possession when the last human watches');
+ for(const action of ['catch','interact','basketball-shoot','basketball-steal'])await assert.rejects(send('host',action,{entityId:BASKETBALL_BALL_ID}),/Spectators/);
+ const beforeJoinClock=state.basketball.clockMs;
+ state=await send('host','basketball-join-spot',{team:'home'});
+ assert.equal(state.players['account:host'].basketballRole,'player');assert.equal(state.players['account:host'].basketballTeam,'home');
+ assert.equal(Object.values(state.players).filter(player=>player.basketballAI).length,9);
+ assert.equal(state.basketball.matchId,matchId);assert.equal(state.basketball.clockMs,beforeJoinClock);
  assert.equal((await runtime.snapshot(map.id,map)).basketball.state,'live');
 }));
 

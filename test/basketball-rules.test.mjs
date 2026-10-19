@@ -161,18 +161,27 @@ test('watching a game opts out, releases the held ball, and preserves spectators
   assert.ok(f.players.slice(0, 2).every(player => player.basketballRole === 'player'));
 });
 
-test('players can watch a live game and spectators do not keep its clocks running', () => {
+test('spectators keep a live AI game running and an empty room pauses it', () => {
   const f = fixture();
   f.start();
   f.hold(f.players[0]);
   for (const player of f.players) watchBasketballGame(f.sim, player, f.now);
   const clock = f.match.clockMs;
   const shotClock = f.match.shotClockMs;
-  f.advance(30000);
+  f.advance(1000);
   assert.equal(f.match.state, 'live');
-  assert.equal(f.match.clockMs, clock);
-  assert.equal(f.match.shotClockMs, shotClock);
-  assert.equal(f.ball.holderId, null);
+  assert.equal(f.match.clockMs, clock - 1000);
+  assert.equal(f.match.shotClockMs, shotClock - 1000);
+  assert.equal(Object.values(f.sim.players).filter(player => player.basketballAI).length, 10);
+  assert.ok(f.sim.players[f.ball.holderId]?.basketballAI);
+  const pausedClock = f.match.clockMs, pausedShotClock = f.match.shotClockMs;
+  const botPositions = Object.fromEntries(Object.entries(f.sim.players).filter(([, player]) => player.basketballAI).map(([id, player]) => [id, {...player.position}]));
+  const ballPosition = {...f.ball.position};
+  stepBasketballGame(f.sim, f.now + 15001, .25);
+  assert.equal(f.match.clockMs, pausedClock);
+  assert.equal(f.match.shotClockMs, pausedShotClock);
+  for (const [id, position] of Object.entries(botPositions)) assert.deepEqual(f.sim.players[id].position, position);
+  assert.deepEqual(f.ball.position, ballPosition);
 });
 
 test('a game needs an active participant and spectators can opt into a team before starting', () => {

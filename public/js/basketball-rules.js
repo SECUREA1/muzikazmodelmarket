@@ -14,6 +14,7 @@ export function basketballSoloSettings(settings={},team='home'){
 }
 export const isBasketballPlayer=player=>player?.basketballRole!=='spectator';
 const online=(sim,now)=>Object.values(sim.players||{}).filter(player=>isBasketballPlayer(player)&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
+const hasOnlineHuman=(sim,now)=>Object.values(sim.players||{}).some(player=>!player.basketballAI&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
 export function refreshBasketballHost(sim,now){
  const match=sim.basketball;if(!match)return null;
  const members=Object.entries(sim.players||{}).filter(([,player])=>!player.basketballAI&&isBasketballPlayer(player)&&teams.includes(player.basketballTeam)&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
@@ -145,6 +146,21 @@ export function assignBasketballTeam(sim,player,now,requestedTeam) {
  return player.basketballTeam;
 }
 
+/** Enter the server menu without claiming a roster spot until Join is chosen. */
+export function enterBasketballGame(sim,player,now,{role,team,menu=false,returning=false,lateArrival=false}={}){
+ if(role!==undefined&&!['player','spectator'].includes(role))throw Object.assign(new Error('Choose a basketball player or spectator role.'),{statusCode:422});
+ if(team!==undefined&&!teams.includes(team))throw Object.assign(new Error('Choose the Home or Away team.'),{statusCode:422});
+ if(role==='spectator')return watchBasketballGame(sim,player,now);
+ if(role==='player'){
+  if(lateArrival)error('Late arrivals watch the current game. Choose an available player spot to join play.');
+  assignBasketballTeam(sim,player,now,team);return player;
+ }
+ // A reconnect must not turn a spectator into a player or claim the host slot.
+ if(returning&&player.basketballRole==='spectator'){evacuateBasketballSpectators(sim);refreshBasketballHost(sim,now);return player;}
+ if(lateArrival||menu&&!returning)return watchBasketballGame(sim,player,now);
+ assignBasketballTeam(sim,player,now);return player;
+}
+
 function releaseBall(sim,ball) {
  for(const player of Object.values(sim.players))if(player.heldId===ball.id)player.heldId=null;
  ball.holderId=null;delete ball.ballVelocity;delete ball.basketballShot;
@@ -185,7 +201,7 @@ export function watchBasketballGame(sim,player,now){
  const held=sim.actors[player.heldId],team=player.basketballTeam;releaseBasketballSeatAndVehicle(sim,player);
  player.basketballRole='spectator';player.basketballTeam=null;player.input={};
  if(isBasketball(held)){releaseBall(sim,held);held.position={x:0,y:0,z:0};held.ballFloor=0;if(held.basketballMatchBall&&sim.basketball.state==='live')resetPossession(sim,other(team||sim.basketball.possession),now,'Player moved to the sideline · play continues.');}
- if(!online(sim,now).some(p=>!p.basketballAI))releaseBall(sim,basketballGameBall(sim));
+ if(!hasOnlineHuman(sim,now))releaseBall(sim,basketballGameBall(sim));
  player.position={x:8.8,y:0,z:0};player.yaw=Math.PI/2;player.floor=0;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;
  refreshBasketballHost(sim,now);
  return player;
@@ -271,7 +287,7 @@ function scoreCrossing(sim,ball,previous,next,now) {
 
 function advanceClock(sim,now) {
  const match=sim.basketball,elapsed=Math.max(0,now-match.updatedAt);match.updatedAt=now;
- if(match.state!=='live'||!online(sim,now).some(p=>!p.basketballAI))return;
+ if(match.state!=='live'||!hasOnlineHuman(sim,now))return;
  let remaining=elapsed;
  while(remaining>0&&match.state==='live'){
   const span=Math.min(remaining,match.clockMs,match.shotClockMs);match.clockMs-=span;match.shotClockMs-=span;remaining-=span;
@@ -286,9 +302,11 @@ function advanceClock(sim,now) {
 export function stepBasketballGame(sim,now,dt) {
  if(!sim.basketball)return;
  refreshBasketballHost(sim,now);
- if(sim.basketball.state==='live'&&Object.values(sim.players).some(p=>!p.basketballAI&&isBasketballPlayer(p)&&!p.replacedByRoom&&now-p.lastSeen<15000)){fillBasketballTeams(sim,now);if(dt>0)stepBasketballAI(sim,now,dt);}
+ const observed=hasOnlineHuman(sim,now);
+ if(sim.basketball.state==='live'&&observed){fillBasketballTeams(sim,now);if(dt>0)stepBasketballAI(sim,now,dt);}
  evacuateBasketballSpectators(sim);
  advanceClock(sim,now);
+ if(sim.basketball.state==='live'&&!observed)return;
  for(const ball of Object.values(sim.actors)){
   if(!isBasketball(ball)||ball.holderId||!ball.ballVelocity)continue;
   const catchFrom={...ball.position};
