@@ -15,7 +15,7 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
     .basketball-clock{padding:7px 4px;background:#141d2e;display:grid;gap:0}.basketball-clock b{font-size:23px;font-variant-numeric:tabular-nums;color:#ffdb94}.basketball-clock small{font-size:9px;letter-spacing:1px;color:#c0cbd9}
     .basketball-game-actions{pointer-events:auto;display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin:7px 0}
     .basketball-game-actions button[hidden],.house-stage .basketball-game-actions button[hidden]{display:none!important}
-    .basketball-game-actions button{min-height:34px;border:1px solid #ffffff35;border-radius:7px;padding:6px 11px;font:bold 11px system-ui;background:#101b2eeb;color:white;cursor:pointer}
+    .basketball-game-actions button{min-height:44px;touch-action:manipulation;border:1px solid #ffffff35;border-radius:7px;padding:6px 11px;font:bold 11px system-ui;background:#101b2eeb;color:white;cursor:pointer}
     .house-stage .basketball-game-actions button{width:auto!important;flex:0 0 auto!important;display:inline-flex!important;align-items:center;justify-content:center}
     .basketball-game-actions [data-basketball-action="basketball-start"]{background:#e9ba72;color:#172034;border-color:#ffe0ad}
     .basketball-game-actions button[aria-pressed="true"]{outline:2px solid #e9ba72;outline-offset:1px}
@@ -92,6 +92,7 @@ export function mountBasketballHud({ stage, onAction, announce = () => {} }) {
     if (!button || button.disabled) return;
     event.stopPropagation();
     if(button.dataset.basketballAction==='basketball-start'){openSetup();return;}
+    match.close();
     pending.add(button);button.disabled = true;
     try { await onAction(button.dataset.basketballAction, button.dataset.team ? { team: button.dataset.team } : {}); }
     catch (error) { announce(error.message); }
