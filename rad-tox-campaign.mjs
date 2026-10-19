@@ -26,12 +26,12 @@ export function spawnRadToxWave(sim, now, center) {
  }
  campaign.targetCount=count;campaign.remaining=count;campaign.startedAt=now;
 }
-export function startRadTox(sim,environment,now,center) {
+export function startRadTox(sim,environment,now,center,options) {
  if(!supportsRadTox(environment))return false;
- if(sim.radTox&&!sim.match)openMatch(sim,sim.radTox.level||1,now);
+ if(sim.radTox&&!sim.match)openMatch(sim,sim.radTox.level||1,now,options);
  if(!sim.radTox) {
   sim.radTox={level:1,wave:1,state:'active',remaining:0,targetCount:0};
-  openMatch(sim,1,now);
+  openMatch(sim,1,now,options);
   spawnRadToxWave(sim,now,center);
  }
  return true;
@@ -41,11 +41,11 @@ export function advanceRadTox(sim,now,environment) {
  const campaign=sim.radTox;
  if(sim.match?.state==='finished'){
   campaign.transition ||= {kind:sim.match.outcome==='victory'?'level':'retry',at:sim.match.endedAt+ROUND_COUNTDOWN_MS};
-  if(environment&&now>=campaign.transition.at&&Object.values(sim.players).some(player=>!player.replacedByRoom&&now-player.lastSeen<15000))nextRadToxLevel(sim,environment,now,sim.match.id);
+  if(environment&&now>=campaign.transition.at&&Object.values(sim.players).some(player=>player.radToxEnabled!==false&&!player.replacedByRoom&&now-player.lastSeen<15000))nextRadToxLevel(sim,environment,now,sim.match.id);
   return;
  }
  campaign.remaining=Object.values(sim.actors).filter(actor=>actor.radTox&&actor.active&&actor.health>0).length;
- const players=Object.values(sim.players).filter(player=>!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
+ const players=Object.values(sim.players).filter(player=>player.radToxEnabled!==false&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
  if(campaign.remaining || !players.length)return;
  if(campaign.wave===4){finishMatch(sim,'victory',now);campaign.transition={kind:'level',at:now+ROUND_COUNTDOWN_MS};return;}
  if(!campaign.nextWaveAt){campaign.state='cleared';campaign.nextWaveAt=now+ROUND_COUNTDOWN_MS;campaign.transition={kind:'wave',at:campaign.nextWaveAt,results:matchRows(sim,now)};return;}
@@ -58,7 +58,7 @@ export function advanceRadTox(sim,now,environment) {
 export function nextRadToxLevel(sim,environment,now,expectedMatchId) {
  if(!supportsRadTox(environment)||!sim.match||sim.match.state!=='finished'||sim.match.id!==expectedMatchId)return false;
  const level=sim.match.outcome==='victory'?sim.radTox.level+1:sim.radTox.level;
- const center=Object.values(sim.players).find(player=>!player.replacedByRoom&&now-player.lastSeen<15000)?.position||environment.spawn||{x:0,y:0,z:2};
+ const center=Object.values(sim.players).find(player=>player.radToxEnabled!==false&&!player.replacedByRoom&&now-player.lastSeen<15000)?.position||environment.spawn||{x:0,y:0,z:2};
  sim.radTox={level,wave:1,state:'active',remaining:0,targetCount:0};
  openMatch(sim,level,now);spawnRadToxWave(sim,now,center);return true;
 }
@@ -66,9 +66,10 @@ export function nextRadToxLevel(sim,environment,now,expectedMatchId) {
 // Only the server advances attack clocks or applies damage. Clients animate
 // these phases and replay the resulting events without running enemy AI.
 export function stepRadToxEnemy(sim,actor,players,now,dt,blocksShot=()=>false,resolveMovement=(_previous,next)=>next,applyAttack=true) {
+ const targets=players.filter(player=>player.radToxEnabled!==false);
  const rangeTo=player=>Math.hypot(player.position.x-actor.position.x,player.position.z-actor.position.z);
- const nearest=players.reduce((best,player)=>!best||rangeTo(player)<rangeTo(best)?player:best,null);
- const current=players.find(player=>(player.actorId||player.id)===actor.movementTargetId);
+ const nearest=targets.reduce((best,player)=>!best||rangeTo(player)<rangeTo(best)?player:best,null);
+ const current=targets.find(player=>(player.actorId||player.id)===actor.movementTargetId);
  // Keep pursuing the same player until another is substantially closer.
  const target=current&&nearest&&rangeTo(current)<=rangeTo(nearest)*1.25+.5?current:nearest;
  actor.movementTargetId=target?.actorId||target?.id||null;

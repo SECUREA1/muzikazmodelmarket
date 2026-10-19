@@ -45,7 +45,7 @@ export class AuthoritativeRooms {
  }
  prepareEncounter(sim,environment){
   if(!sim.radTox)return;
-  const player=Object.values(sim.players).find(player=>!player.basketballAI&&!player.replacedByRoom&&this.now()-player.lastSeen<15000);
+  const player=Object.values(sim.players).find(player=>player.radToxEnabled!==false&&!player.basketballAI&&!player.replacedByRoom&&this.now()-player.lastSeen<15000);
   if(!player)return;
   const occupied=Object.values(sim.actors).filter(actor=>actor.radTox&&actor.spawnVersion===1).map(actor=>actor.position);
   for(const actor of Object.values(sim.actors))if(actor.radTox&&actor.active&&actor.spawnVersion!==1){
@@ -132,12 +132,12 @@ export class AuthoritativeRooms {
    if(player.vehicleId){const vehicle=sim.actors[player.vehicleId];if(vehicle){vehicle.position={...player.position};vehicle.rotation.y=player.yaw;}}
    if(player.heldId){const held=sim.actors[player.heldId];if(held)held.position={x:player.position.x-Math.sin(player.yaw),y:player.position.y+1,z:player.position.z-Math.cos(player.yaw)};}
   }
-  const active=Object.values(sim.players).filter(player=>!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0&&!firingRangeLocationAt(sim.firingRange?.locations,player.position));
+  const active=Object.values(sim.players).filter(player=>!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0&&!firingRangeLocationAt(sim.firingRange?.locations,player.position)),combatants=active.filter(player=>player.radToxEnabled!==false);
   for(const definition of sim.match?.state==='finished'?[]:manifest.actors){const actor=sim.actors[definition.objectId];if(!actor?.active||actor.health<=0||actor.holderId)continue;
    if(actor.radTox){stepRadToxEnemy(sim,actor,active,now,dt,(origin,ray,span)=>this.collision.blocksShot(environment,origin,ray,span,sim.actors,room.objects),(previous,next)=>this.collision.resolve(environment,previous,next,sim.actors,room.objects),false);continue;}
    const kind=definition.gameplay.behavior;
    if(kind==='hostile'||kind==='patrol'){
-    const target=active.slice().sort((a,b)=>distance(actor.position,a.position)-distance(actor.position,b.position))[0];
+    const target=combatants.slice().sort((a,b)=>distance(actor.position,a.position)-distance(actor.position,b.position))[0];
     const chase=kind==='hostile'&&target&&distance(actor.position,target.position)<clamp(definition.ai?.detectionRange||9,1,50);
     const goal=chase?target.position:{x:definition.position.x+Math.sin(now/1000)*3,y:definition.position.y,z:definition.position.z+Math.cos(now/1000)*3};
     const span=distance(actor.position,goal),step=Math.min(1,dt*clamp(definition.movement.speed||2,0,10)/Math.max(.001,span));
@@ -149,7 +149,7 @@ export class AuthoritativeRooms {
      if(!this.collision.blocksShot(environment,origin,aim.map(value=>value/Math.max(.001,length)),length,sim.actors,room.objects)){if(definition.gameplay.damage>0)damagePlayer(target,now);actor.lastAttack=now;}
     }
    }
-   if(kind==='hazard')for(const target of active)if(distance(target.position,actor.position)<1.5&&now-(actor.lastAttack||0)>1000){if(definition.gameplay.damage>0)damagePlayer(target,now);actor.lastAttack=now;}
+   if(kind==='hazard')for(const target of combatants)if(distance(target.position,actor.position)<1.5&&now-(actor.lastAttack||0)>1000){if(definition.gameplay.damage>0)damagePlayer(target,now);actor.lastAttack=now;}
   }
   for(const actor of Object.values(sim.actors)){
    if(isBasketball(actor)&&actor.holderId){const holder=sim.players[actor.holderId];if(holder)actor.position=this.collision.heldBallPosition(environment,{x:holder.position.x,y:holder.position.y+1,z:holder.position.z},{x:holder.position.x-Math.sin(holder.yaw)*.65,y:holder.position.y+1,z:holder.position.z-Math.cos(holder.yaw)*.65},sim.actors,room.objects);}
@@ -163,12 +163,24 @@ export class AuthoritativeRooms {
   this.prepareEncounter(sim,environment);
   sim.sequence++;return {sim,manifest};
  }
- view(room){const sim=room.simulation,now=this.now();return {authoritative:true,firingRange:sim.firingRange?copy(sim.firingRange):null,basketball:sim.basketball?copy(sim.basketball):null,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,devices:projectArcadeDevices(sim.devices||{}),players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,basketballAI:Boolean(p.basketballAI),basketballNumber:p.basketballNumber||null,basketballRole:p.basketballRole||'player',basketballTeam:p.basketballTeam||null,basketballJersey:p.basketballJersey||null,basketballPoints:p.basketballPoints||0,basketballStealAt:p.basketballStealAt??null,firingRangeRole:p.firingRangeRole||null,firingRangeLane:p.firingRangeLane??null,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
+ view(room){const sim=room.simulation,now=this.now();return {authoritative:true,firingRange:sim.firingRange?copy(sim.firingRange):null,basketball:sim.basketball?copy(sim.basketball):null,match:matchView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,devices:projectArcadeDevices(sim.devices||{}),players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,radToxEnabled:p.radToxEnabled!==false,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,basketballAI:Boolean(p.basketballAI),basketballNumber:p.basketballNumber||null,basketballRole:p.basketballRole||'player',basketballTeam:p.basketballTeam||null,basketballJersey:p.basketballJersey||null,basketballPoints:p.basketballPoints||0,basketballStealAt:p.basketballStealAt??null,firingRangeRole:p.firingRangeRole||null,firingRangeLane:p.firingRangeLane??null,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
  snapshot(id,environment){return this.store.update(id,room=>{this.step(room,environment);return this.view(room);},{persist:false,roomOnly:true});}
  command(id,environment,identity,command){const requestedAction=command.action;this.activeWorlds.set(id,environment);return this.store.update(id,async (room,allRooms)=>{
-  const {sim,manifest}=this.step(room,environment),now=this.now(),actorId='account:'+identity.accountId;
+  const now=this.now(),actorId='account:'+identity.accountId;
   const requestId=String(command.requestId||'');if(!/^[\w-]{1,100}$/.test(requestId))fail('A command request ID is required.');
-  sim.receipts ||= {};const receiptKey=actorId+':'+requestId;if(sim.receipts[receiptKey]){if(sim.receipts[receiptKey].action!==requestedAction)fail('Request ID already used.',409);return {...this.view(room),selfId:actorId,result:sim.receipts[receiptKey].result};}
+  const receiptKey=actorId+':'+requestId,previousReceipt=room.simulation?.receipts?.[receiptKey];
+  if(previousReceipt&&previousReceipt.action!==requestedAction)fail('Request ID already used.',409);
+  const preference=requestedAction==='set-rad-tox'?command.enabled:requestedAction==='join'?command.radToxEnabled:undefined;
+  if((requestedAction==='set-rad-tox'||preference!==undefined)&&typeof preference!=='boolean')fail('RAD-TOX preference must be true or false.',422);
+  const existingPlayer=room.simulation?.players?.[actorId];
+  // Opt out before advancing enemy clocks, including a projectile already in
+  // flight. Replayed requests never change the player's current preference.
+  if(!previousReceipt&&preference===false&&existingPlayer&&(requestedAction==='join'||!existingPlayer.replacedByRoom&&now-existingPlayer.lastSeen<=15000)){
+   existingPlayer.radToxEnabled=false;
+   if(room.simulation.match)delete room.simulation.match.participants[actorId];
+  }
+  const {sim,manifest}=this.step(room,environment);
+  sim.receipts ||= {};if(previousReceipt)return {...this.view(room),selfId:actorId,result:previousReceipt.result};
   let player=sim.players[actorId],result={};const priorCommandPosition=player?{...player.position}:null,priorMovementRevision=player?.movementRevision||0;const basketballLateArrival=sim.basketball?.state==='live'&&(!player||player.basketballRole==='spectator'||now-player.lastSeen>=15000||player.replacedByRoom);
   const rangeWasActive=Boolean(player&&!player.replacedByRoom&&now-player.lastSeen<15000);
   if(command.action==='join'){
@@ -187,7 +199,9 @@ export class AuthoritativeRooms {
    for(const [otherId,otherRoom]of Object.entries(allRooms)){if(otherId===id)continue;const previous=otherRoom.simulation?.players[actorId];if(!previous)continue;previous.lastSeen=0;previous.replacedByRoom=id;previous.input={};for(const key of ['heldId','seatedId','vehicleId']){const held=otherRoom.simulation.actors[previous[key]];if(held)held.holderId=null;previous[key]=null;}}
    if(travel){player.lastPortalArrival=travel;delete travelSource.pendingTravel;}
    if(meeting||travel){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.inputEpoch=randomUUID();player.lastInputSequence=-1;player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;player.actorId=actorId;
-   if(sim.basketball){player.health=100;if(basketballLateArrival)watchBasketballGame(sim,player,now);else assignBasketballTeam(sim,player,now);}else if(!isDedicatedFiringRange(environment)){startRadTox(sim,environment,now,player.position);registerParticipant(sim,actorId,player,now);}
+   if(command.radToxEnabled!==undefined)player.radToxEnabled=command.radToxEnabled;else player.radToxEnabled ??= true;
+   if(player.radToxEnabled===false&&sim.match)delete sim.match.participants[actorId];
+   if(sim.basketball){player.health=100;if(basketballLateArrival)watchBasketballGame(sim,player,now);else assignBasketballTeam(sim,player,now);}else if(!isDedicatedFiringRange(environment)&&player.radToxEnabled!==false){startRadTox(sim,environment,now,player.position);registerParticipant(sim,actorId,player,now);}
    if(sim.firingRange){if(isDedicatedFiringRange(environment))player.health=100;registerFiringRangeArrival(sim,player,now,rangeWasActive);}
    result.message='Joined '+player.locationName;result.inputEpoch=player.inputEpoch;
   }else{
@@ -205,7 +219,22 @@ export class AuthoritativeRooms {
     result.resolvedAction=selection.action;result.actionLabel=selection.label;
     command={...command,...selection.fields,action:selection.action||'basketball-wait'};
    }
-   if(command.action==='input'){const input=command.input||{},inputSequence=command.inputSequence;if(inputSequence!==undefined&&(!Number.isSafeInteger(inputSequence)||inputSequence<0))fail('Invalid input sequence.',422);if((command.inputEpoch===undefined||command.inputEpoch===player.inputEpoch)&&(inputSequence===undefined||inputSequence>(player.lastInputSequence??-1))){if(inputSequence!==undefined)player.lastInputSequence=inputSequence;player.input=player.health<=0||sim.match?.state==='finished'?{}:{forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}}
+   if(command.action==='input'){const input=command.input||{},inputSequence=command.inputSequence;if(inputSequence!==undefined&&(!Number.isSafeInteger(inputSequence)||inputSequence<0))fail('Invalid input sequence.',422);if((command.inputEpoch===undefined||command.inputEpoch===player.inputEpoch)&&(inputSequence===undefined||inputSequence>(player.lastInputSequence??-1))){if(inputSequence!==undefined)player.lastInputSequence=inputSequence;player.input=player.health<=0||(player.radToxEnabled!==false&&sim.match?.state==='finished')?{}:{forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}}
+   else if(command.action==='set-rad-tox'){
+    player.radToxEnabled=command.enabled;
+    if(!command.enabled){
+     if(sim.match)delete sim.match.participants[actorId];
+     for(const enemy of Object.values(sim.actors))if(enemy.radTox||['hostile','patrol','hazard'].includes(enemy.definition?.gameplay?.behavior)){
+      if(enemy.movementTargetId===actorId)enemy.movementTargetId=null;
+      if(enemy.attackTargetId===actorId)enemy.attackTargetId=null;
+      if(enemy.attack?.targetId===actorId)enemy.attack=null;
+     }
+    }else if(!sim.basketball&&!isDedicatedFiringRange(environment)){
+     startRadTox(sim,environment,now,player.position,{preservePlayers:true});
+     if(sim.match?.state==='active'){player.matchId=sim.match.id;registerParticipant(sim,actorId,player,now);}
+    }
+    result.radToxEnabled=command.enabled;result.message=command.enabled?'RAD-TOX on.':'RAD-TOX off. Explore freely.';
+   }
    else if(command.action==='range-ready'||isDedicatedFiringRange(environment)&&['start-rad-tox','next-rad-tox'].includes(command.action)){if(!sim.firingRange)fail('This map has no live firing range.',409);result.message='Firing range ready. Choose Quick practice, join a lane, or watch the live range.';}
    else if(command.action==='range-practice'){startFiringRangePractice(sim,player,now,command);result.message='Open practice is live. Join any free lane; training ammunition is free.';}
    else if(command.action==='range-join'){joinFiringRange(sim,player,now,command);result.message='Lane selected. Training ammunition is free.';}
@@ -228,9 +257,10 @@ export class AuthoritativeRooms {
    else if(command.action==='basketball-start'){startBasketballGame(sim,now);result.message='Tip-off! The shared basketball game has started.';}
    else if(command.action==='basketball-shoot'){const ball=shootBasketball(sim,player,now,Object.fromEntries(['power','angle','mode','direction'].filter(key=>command[key]!==undefined).map(key=>[key,command[key]])));result.message=ball.basketballShot.aimMiss?'Aim miss: outside 13% hoop alignment. Line up with the net.':'Shot released!';}
    else if(sim.basketball&&['start-rad-tox','next-rad-tox'].includes(command.action))fail('Basketball Arena runs shared basketball games.',409);
+   else if(['start-rad-tox','next-rad-tox'].includes(command.action)&&player.radToxEnabled===false){result.message='RAD-TOX off. Explore freely.';}
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position))result.message='RAD-TOX encounter active.';else result.message='Builder gameplay active.';}
    else if(command.action==='next-rad-tox'){if(sim.radTox?.transition&&now<sim.radTox.transition.at)fail('The next round starts after the 10-second results countdown.',409);if(nextRadToxLevel(sim,environment,now,command.matchId)){for(const [index,participantId] of Object.keys(sim.match.participants).entries()){const participant=sim.players[participantId],entry=environment.spawn||{x:0,y:0,z:2};participant.position=this.collision.safeSpawn(environment,{...entry,x:entry.x+(index%4)*1.2,z:entry.z+Math.floor(index/4)*1.2});participant.floor=participant.position.y;participant.velocityY=0;participant.grounded=true;participant.shieldUntil=0;participant.input={};participant.toolReady={};participant.toolUses={};}result.message='Next shared level started.';}else if(sim.match?.id===command.matchId)fail('Complete the current level before starting another.',409);}
-   else if(sim.match?.state==='finished'&&!['input','interact'].includes(command.action))fail('This level has ended. Review the results and start the next level.',409);
+   else if(player.radToxEnabled!==false&&sim.match?.state==='finished'&&!['input','interact'].includes(command.action))fail('This level has ended. Review the results and start the next level.',409);
    else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
    else if(player.health<=0&&command.action!=='interact')fail('Respawn before acting.',409);
    else if(command.action==='teleport-floor'){
@@ -266,7 +296,7 @@ export class AuthoritativeRooms {
      const target=manifest.actors.filter(a=>(!command.entityId||a.objectId===command.entityId)&&(!['hostile','patrol','decor'].includes(a.gameplay.behavior)||(a.gameplay.action&&a.gameplay.action!=='none'))&&sim.actors[a.objectId]?.active&&(command.entityId||!sim.actors[a.objectId].basketballSpectatorSeat||!sim.actors[a.objectId].holderId||sim.actors[a.objectId].holderId===actorId)&&distance(sim.actors[a.objectId].position,player.position)<=Math.min(5,a.gameplay.interactionDistance)).sort((a,b)=>distance(sim.actors[a.objectId].position,player.position)-distance(sim.actors[b.objectId].position,player.position))[0];
      if(!target)fail('No usable item is within reach.',409);const entity=sim.actors[target.objectId],config=target.gameplay;
      if(isBasketball(entity))requireBasketballPlayer(sim,player);
-     if(config.action!=='teleport'||config.portal?.destinationType!=='map'){if(sim.match?.state==='finished')fail('This level has ended.',409);if(player.health<=0)fail('Respawn before acting.',409);}
+     if(config.action!=='teleport'||config.portal?.destinationType!=='map'){if(player.radToxEnabled!==false&&sim.match?.state==='finished')fail('This level has ended.',409);if(player.health<=0)fail('Respawn before acting.',409);}
      if(entity.holderId&&entity.holderId!==actorId)fail('Another player is using this item.',409);
      if(now-(player.cooldowns[target.objectId]||0)<config.cooldown*1000)fail('Item is cooling down.',429);player.cooldowns[target.objectId]=now;
      if(deviceDefinition(target.modelId,config)){Object.assign(result,deviceCommand(sim,manifest,player,actorId,{entityId:entity.id,operation:'open'},now));}
@@ -321,7 +351,7 @@ export class AuthoritativeRooms {
     for(const stroke of command.lastOnly?strokes.slice(0,1):strokes)delete sim.actors[stroke.id];player.lastPaintPoint=null;result.message='Solid paint removed.';
    }
    else if(command.action==='draw-paint'){
-    if(player.health<=0||sim.match?.state==='finished')fail('Join an active game before drawing.',409);
+    if(player.health<=0||(player.radToxEnabled!==false&&sim.match?.state==='finished'))fail('Join an active game before drawing.',409);
     player.toolReady ||= {};if(now<(player.toolReady.spray||0))fail('Paint tool is cooling down.',429);
     if(Object.values(sim.actors).filter(actor=>actor.asset?.renderKind==='paint-stroke').length>=300)fail('Clear old solid paint before drawing more.',409);
     const direction=command.direction;if(!Array.isArray(direction)||direction.length!==3||!direction.every(Number.isFinite)||Math.hypot(...direction)<.1)fail('Invalid paint direction.');
@@ -341,7 +371,9 @@ export class AuthoritativeRooms {
     const direction=command.direction;if(!Array.isArray(direction)||direction.length!==3||!direction.every(Number.isFinite))fail('Invalid aim direction.');const length=Math.hypot(...direction);if(length<.1)fail('Invalid aim direction.');const ray=direction.map(n=>n/length);
     await this.charge(identity,'tool:'+tool,createHash('sha256').update('shot:'+id+':'+actorId+':'+requestId).digest('hex'));if(tool==='flamethrower')player.fuel=(player.fuel??100)-5;if(profile)player.ammo=(player.ammo??120)-1;player.lastShot=now;player.toolReady[tool]=now+cooldown;player.toolUses ||= {};player.toolUses[tool]=(player.toolUses[tool]||0)+1;
     const origin={...player.position,y:player.position.y+1.5},targets=[];
-    for(const entity of Object.values(sim.actors)){if(entity.loot||entity.rangeTarget||!entity.active||entity.health<=0)continue;const offset=[entity.position.x-origin.x,entity.position.y+1-origin.y,entity.position.z-origin.z],along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along));if(along>0&&along<(tool==='bat'?3:40)&&perpendicular<1)targets.push({entity,along});}
+    // A peaceful player's hidden enemies cannot take or block their shots.
+    const shotActors=player.radToxEnabled===false?Object.fromEntries(Object.entries(sim.actors).filter(([,entity])=>!entity.radTox)):sim.actors;
+    for(const entity of Object.values(shotActors)){if(entity.loot||entity.rangeTarget||!entity.active||entity.health<=0)continue;const offset=[entity.position.x-origin.x,entity.position.y+1-origin.y,entity.position.z-origin.z],along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along));if(along>0&&along<(tool==='bat'?3:40)&&perpendicular<1)targets.push({entity,along});}
     const range=tool==='bat'?3:tool==='taser'?4:tool==='toxin'?9:tool==='flamethrower'?12:Math.min(40,profile?.range||40);
     for(const [targetId,target]of Object.entries(sim.players)){
      if(targetId===actorId||target.health<=0||target.replacedByRoom||now-target.lastSeen>15000||firingRangeLocationAt(sim.firingRange?.locations,target.position))continue;
@@ -349,8 +381,8 @@ export class AuthoritativeRooms {
      if(along!==null&&along<range)targets.push({entity:target,along,playerId:targetId});
     }
     const blocks=[];for(const object of Object.values(room.objects)){if(object.deleted||object.open)continue;const offset=object.position.map((n,i)=>n-[origin.x,origin.y,origin.z][i]),along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along)),size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);if(along>0&&along<40&&perpendicular<Math.max(...size)/2)blocks.push({object,along});}
-    let blocker=blocks.sort((a,b)=>a.along-b.along)[0];if(blocker&&this.collision.blocksShot(environment,origin,ray,blocker.along,sim.actors,room.objects,blocker.object.id))blocker=null;let hit=targets.filter(target=>target.along<range).sort((a,b)=>a.along-b.along)[0];
-    if(hit&&this.collision.blocksShot(environment,origin,ray,hit.along,sim.actors,room.objects,hit.playerId?null:hit.entity.id))hit=null;if(blocker&&(!hit||blocker.along<hit.along)){hit=null;const object=blocker.object;if(tool==='spray')object.paint=object.paint.map(()=>clamp(command.color,0,0xffffff));else if(!utility){object.hits=(object.hits||0)+1;if(object.hits>=5)object.deleted=true;}object.revision=++room.revision;}
+    let blocker=blocks.sort((a,b)=>a.along-b.along)[0];if(blocker&&this.collision.blocksShot(environment,origin,ray,blocker.along,shotActors,room.objects,blocker.object.id))blocker=null;let hit=targets.filter(target=>target.along<range).sort((a,b)=>a.along-b.along)[0];
+    if(hit&&this.collision.blocksShot(environment,origin,ray,hit.along,shotActors,room.objects,hit.playerId?null:hit.entity.id))hit=null;if(blocker&&(!hit||blocker.along<hit.along)){hit=null;const object=blocker.object;if(tool==='spray')object.paint=object.paint.map(()=>clamp(command.color,0,0xffffff));else if(!utility){object.hits=(object.hits||0)+1;if(object.hits>=5)object.deleted=true;}object.revision=++room.revision;}
 if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else if(tool==='shield-kit')player.shieldUntil=now+6000;else if(tool==='scanner')result.message='Scanner: '+targets.length+' targets in your aim path';else if(tool==='recycler'||tool==='repair-tool'){const candidates=Object.values(room.objects).filter(object=>!object.deleted&&object.ownerId===actorId&&distance({x:object.position[0],y:object.position[1],z:object.position[2]},player.position)<8).sort((a,b)=>distance({x:a.position[0],y:a.position[1],z:a.position[2]},player.position)-distance({x:b.position[0],y:b.position[1],z:b.position[2]},player.position));const target=candidates[0];if(target){if(tool==='recycler')target.deleted=true;target.hits=0;target.revision=++room.revision;}}else if(tool==='beacon')result.message='Waypoint beacon shared in room events';else if(tool==='supply-kit'){player.fuel=100;player.ammo=Math.min(120,(player.ammo??120)+12);}}
     else if(tool==='jetpack'){player.velocityY=8;player.grounded=false;}
     else if(tool==='spray'){if(hit&&!hit.playerId)hit.entity.paint=clamp(command.color,0,0xffffff);}
@@ -391,7 +423,7 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
  },{persist:requestedAction!=='input',roomOnly:requestedAction!=='join'});}
 
  async collectNearbyLoot(sim,player,identity,roomId,now,entityId,result){
-  if(player.health<=0||sim.match?.state==='finished')return;
+  if(player.health<=0||(player.radToxEnabled!==false&&sim.match?.state==='finished'))return;
   if(!entityId&&now<(player.lootRetryAt||0))return;
   const loot=Object.values(sim.actors).find(actor=>actor.loot&&actor.active&&(!entityId||actor.id===entityId)&&distance(actor.position,player.position)<=(actor.loot.currency?1.1:1.8));
   if(!loot){if(entityId)fail('Supply is unavailable or out of reach.',409);return;}

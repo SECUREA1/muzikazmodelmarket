@@ -174,6 +174,139 @@ test('intermediate drag bursts use the heartbeat while neutral edges flush immed
  },{input:()=>({side})});
 });
 
+test('press, reversal and release pass a slow neutral heartbeat without rewinding accepted snapshots',async()=>{
+ let side=0,sequence=0,releaseHeartbeat,heartbeatStarted;
+ const heartbeatReady=new Promise(resolve=>{heartbeatStarted=resolve;}),received=[],renders=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body),state=confirmed(++sequence);
+  state.players[state.selfId].position.x=sequence*.1;
+  if(command.action==='join')state.result={inputEpoch:'current-connection'};
+  if(command.action==='input'){
+   received.push(command);
+   if(received.length===1)return new Promise(resolve=>{releaseHeartbeat=()=>resolve(response(state));heartbeatStarted();});
+  }
+  return response(state);
+ },async client=>{
+  await client.whenReady();await heartbeatReady;
+  assert.equal(received[0].input.side,0);
+  side=1;client.requestInput();await pause(5);
+  assert.equal(received.at(-1).input.side,1,'a directional press reaches the server before the slow heartbeat returns');
+  side=-1;client.requestInput();await pause(5);
+  assert.equal(received.at(-1).input.side,-1,'reversal also passes the pending neutral response');
+  side=0;client.requestInput();await pause(5);
+  assert.equal(received.at(-1).input.side,0,'release does not wait for the original heartbeat');
+  assert.equal(received.length,4);
+  assert.ok(received.every((command,index)=>command.inputEpoch==='current-connection'&&(index===0||command.inputSequence>received[index-1].inputSequence)),'the server can reject any late older input');
+  const latest=renders.at(-1),count=renders.length;
+  releaseHeartbeat();await pause(5);
+  assert.equal(renders.length,count,'an old response cannot replay a previously accepted pose');
+  assert.equal(renders.at(-1),latest);
+ },{input:()=>({side}),render:state=>renders.push(state.sequence)});
+});
+
+test('urgent input is bounded to one extra flight and coalesces edge bursts into fresh controls',async()=>{
+ let side=0,yaw=0,sequence=0,active=0,maxActive=0,releaseHeartbeat,releaseUrgent,heartbeatStarted;
+ const heartbeatReady=new Promise(resolve=>{heartbeatStarted=resolve;}),received=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body),state=confirmed(++sequence);
+  if(command.action!=='input')return response(state);
+  received.push(command);active++;maxActive=Math.max(maxActive,active);
+  if(received.length===1)return new Promise(resolve=>{releaseHeartbeat=()=>{active--;resolve(response(state));};heartbeatStarted();});
+  if(received.length===2)return new Promise(resolve=>{releaseUrgent=()=>{active--;resolve(response(state));};});
+  active--;return response(state);
+ },async client=>{
+  await client.whenReady();await heartbeatReady;
+  side=1;client.requestInput();await pause(5);
+  assert.ok(releaseUrgent,'one urgent request passes the slow heartbeat');
+  for(let index=0;index<100;index++){side=index%2?-1:1;client.requestInput();}
+  await pause(5);
+  assert.equal(received.length,2,'edge bursts cannot create more requests while both lanes are occupied');
+  side=.375;yaw=1.25;releaseUrgent();await pause(5);
+  assert.equal(received.length,3,'only one latest edge follows the urgent flight');
+  assert.deepEqual(received.at(-1).input,{side:.375,yaw:1.25},'dispatch samples the current controls rather than retaining a stale drag');
+  assert.equal(maxActive,2,'a normal heartbeat and one urgent edge are the full input concurrency limit');
+  client.stop();releaseHeartbeat();await pause(5);
+ },{input:()=>({side,yaw})});
+});
+
+test('the urgent lane receives the next accepted movement on the heartbeat cadence before an old poll returns',async()=>{
+ let side=0,sequence=0,releaseHeartbeat,heartbeatStarted;
+ const heartbeatReady=new Promise(resolve=>{heartbeatStarted=resolve;}),received=[],renders=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body),state=confirmed(++sequence);
+  if(command.action==='input'){
+   received.push({...command,at:performance.now()});
+   if(received.length===1)return new Promise(resolve=>{releaseHeartbeat=()=>resolve(response(state));heartbeatStarted();});
+   // The server advances its simulation before applying this command, so the
+   // initial directional response still shows the old accepted position.
+   if(received.length>2)state.players[state.selfId].position.x=.2;
+  }
+  return response(state);
+ },async client=>{
+  await client.whenReady();await heartbeatReady;
+  side=1;const pressedAt=performance.now();client.requestInput();await pause(10);
+  assert.equal(received.length,2,'the edge has passed the outstanding neutral poll');
+  assert.equal(renders.at(-1).players['account:test'].position.x,0,'the initial input confirms the previous server pose');
+  await pause(65);
+  assert.ok(received.length>=3,'the free urgent lane polls again without waiting for the old neutral response');
+  assert.equal(renders.at(-1).players['account:test'].position.x,.2,'accepted movement reaches the view while the old heartbeat is still pending');
+  assert.ok(received[2].at-pressedAt<120,'confirmation remains on the regular input cadence');
+  assert.ok(received[2].at-received[1].at>=25,'the confirmation is cadenced rather than an immediate request loop');
+  client.stop();releaseHeartbeat();await pause(5);
+ },{input:()=>({side}),render:state=>renders.push(state)});
+});
+
+test('release and reversal use a free normal lane while an older urgent input is slow',async()=>{
+ let side=0,sequence=0,releaseHeartbeat,releaseUrgent,heartbeatStarted;
+ const heartbeatReady=new Promise(resolve=>{heartbeatStarted=resolve;}),received=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body),state=confirmed(++sequence);
+  if(command.action==='input'){
+   received.push(command);
+   if(received.length===1)return new Promise(resolve=>{releaseHeartbeat=()=>resolve(response(state));heartbeatStarted();});
+   if(received.length===2)return new Promise(resolve=>{releaseUrgent=()=>resolve(response(state));});
+  }
+  return response(state);
+ },async client=>{
+  await client.whenReady();await heartbeatReady;
+  side=1;client.requestInput();await pause(5);
+  assert.ok(releaseUrgent);
+  releaseHeartbeat();await pause(5);
+  side=-1;client.requestInput();await pause(5);
+  assert.equal(received.at(-1).input.side,-1,'reversal uses the now-free normal lane rather than waiting for the older urgent request');
+  side=0;client.requestInput();await pause(5);
+  assert.equal(received.at(-1).input.side,0,'release also reaches the server while the older urgent request remains pending');
+  assert.equal(received.length,4);
+  client.stop();releaseUrgent();await pause(5);
+ },{input:()=>({side})});
+});
+
+test('a pending urgent edge reads hidden-page neutral controls and is discarded when stopped',async()=>{
+ let side=0,sequence=0,releaseHeartbeat,releaseUrgent,heartbeatStarted;
+ const heartbeatReady=new Promise(resolve=>{heartbeatStarted=resolve;}),received=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body),state=confirmed(++sequence);
+  if(command.action!=='input')return response(state);
+  received.push(command);
+  if(received.length===1)return new Promise(resolve=>{releaseHeartbeat=()=>resolve(response(state));heartbeatStarted();});
+  return new Promise(resolve=>{releaseUrgent=()=>resolve(response(state));});
+ },async client=>{
+  await client.whenReady();await heartbeatReady;
+  side=1;client.requestInput();await pause(5);
+  side=-1;client.requestInput();globalThis.document.hidden=true;
+  releaseUrgent();await pause(5);
+  assert.deepEqual(received.at(-1).input,{},'a queued edge cannot restore movement after the page becomes hidden');
+  assert.equal(received.length,3);
+  client.requestInput();client.stop();releaseUrgent();releaseHeartbeat();await pause(5);
+  assert.equal(received.length,3,'closing the room discards the coalesced edge instead of issuing another request');
+ },{input:()=>({side})});
+});
+
 test('a confirmed MZK token refreshes the wallet and plays pickup feedback only once',async()=>{
  const previousEvent=globalThis.CustomEvent;globalThis.CustomEvent=class extends Event{constructor(type,options){super(type);this.detail=options.detail;}};
  let refreshes=0,pickups=0;
@@ -226,4 +359,105 @@ test('fire pacing is per tool and does not hold up input heartbeats',async()=>{
 });
 test('held-fire cooldown responses do not spam connection status or rejoin',async()=>{
  let sequence=0,shots=0,joins=0;const statuses=[];await withRoom(async(path,options)=>{if(path==='/api/game/room-session')return response({csrfToken:'proof'});const {action}=JSON.parse(options.body);if(action==='join')joins++;if(action==='fire'){shots++;return response({message:'Tool is cooling down.'},429);}const state=confirmed(++sequence);state.players[state.selfId].health=100;return response(state);},async client=>{await client.whenReady();await pause(460);assert.ok(shots>=1&&shots<=3);assert.equal(joins,1);assert.ok(!statuses.includes('Tool is cooling down.'));assert.equal(client.ready,true);},{input:()=>({firing:true,tool:'laser',direction:[0,0,-1]}),onStatus:message=>statuses.push(message)});
+});
+
+test('a discrete fire tap keeps only the latest pending aim without stalling movement or bypassing weapon cadence',async()=>{
+ let sequence=0,side=0,aim=[0,0,-1],release;const shots=[],inputs=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='input')inputs.push(command.input.side);
+  if(command.action==='fire'){
+   shots.push({...command,at:performance.now()});
+   if(shots.length===1)return new Promise(resolve=>{release=()=>resolve(response(confirmed(++sequence)));});
+  }
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();
+  const first=client.triggerFire({tool:'laser',direction:aim});
+  while(!release)await pause(1);
+  const superseded=client.triggerFire({tool:'laser',direction:[-1,0,0]});
+  const latest=client.triggerFire(()=>({tool:'laser',direction:aim}));
+  assert.equal(await superseded,null,'extra taps replace one bounded pending tap');
+  side=1;client.requestInput();await pause(10);
+  side=-1;client.requestInput();await pause(10);
+  side=0;client.requestInput();await pause(10);
+  assert.deepEqual(inputs.slice(-3),[1,-1,0],'the pending shot does not hold up stick input');
+  aim=[1,0,0];release();await first;await latest;
+  assert.equal(shots.length,2);assert.deepEqual(shots[1].direction,[1,0,0],'queued aim is sampled when the shot is sent');
+  assert.ok(shots[1].at-shots[0].at>=195,'a tap does not bypass the laser interval');
+ },{input:()=>({side})});
+});
+
+test('discrete fire is canceled by a failed gameplay guard, explicit cancellation, or a hidden page',async()=>{
+ let sequence=0,allowed=true,release;const shots=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='fire'){
+   shots.push(command);
+   return new Promise(resolve=>{release=()=>resolve(response(confirmed(++sequence)));});
+  }
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();const first=client.send('fire',{tool:'laser'});
+  while(!release)await pause(1);
+  const guarded=client.triggerFire({tool:'laser'},{canFire:()=>allowed});
+  allowed=false;await pause(70);assert.equal(await guarded,null);
+  allowed=true;
+  const canceled=client.triggerFire({tool:'laser'});client.cancelTriggerFire();assert.equal(await canceled,null);
+  const hidden=client.triggerFire({tool:'laser'});document.hidden=true;await pause(70);assert.equal(await hidden,null);
+  document.hidden=false;release();await first;await pause(220);
+  assert.equal(shots.length,1,'canceled taps cannot fire after the room becomes playable again');
+ });
+});
+
+test('a delayed weapon response cannot release an expired tap, and stopping clears pending fire',async()=>{
+ let sequence=0,release,fires=0;
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='fire'){fires++;return new Promise(resolve=>{release=()=>resolve(response(confirmed(++sequence)));});}
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();const first=client.send('fire',{tool:'laser'});
+  while(!release)await pause(1);
+  const expired=client.triggerFire({tool:'laser'});await pause(1250);assert.equal(await expired,null);
+  const stopped=client.triggerFire({tool:'laser'});client.stop();assert.equal(await stopped,null);
+  release();await first;await pause(20);assert.equal(fires,1);
+  await assert.rejects(client.triggerFire({tool:'laser'}),/Room closed/);
+ });
+});
+
+test('a rejected fire tap is not retried and later taps respect the server cooldown',async()=>{
+ let sequence=0,release,rejectedAt;const shots=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='fire'){
+   shots.push({...command,at:performance.now()});
+   if(shots.length===1)return new Promise(resolve=>{release=()=>{rejectedAt=performance.now();resolve(response({message:'Tool is cooling down.'},429));};});
+  }
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();const first=assert.rejects(client.triggerFire({tool:'laser'}),error=>error.status===429);
+  while(!release)await pause(1);
+  const latest=client.triggerFire({tool:'laser'});release();await first;await latest;await pause(60);
+  assert.equal(shots.length,2);assert.notEqual(shots[0].requestId,shots[1].requestId);
+  assert.ok(shots[1].at-rejectedAt>=195,'a later tap waits out the rejected shot interval');assert.equal(client.ready,true);
+ });
+});
+
+test('room joins send the current Rad Tox preference before gameplay and rejoin with its latest value',async()=>{
+ let sequence=0,enabled=false,expired=false;const joins=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='join')joins.push(command);
+  if(command.action==='input'&&!expired){expired=true;enabled=true;return response({message:'Rejoin required',code:'ROOM_JOIN_REQUIRED'},409);}
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();assert.equal(joins[0].radToxEnabled,false);
+  await pause(220);assert.equal(joins.length,2);assert.equal(joins[1].radToxEnabled,true);assert.equal(client.ready,true);
+ },{radToxEnabled:()=>enabled});
 });

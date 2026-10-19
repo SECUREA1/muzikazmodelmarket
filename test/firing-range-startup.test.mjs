@@ -8,7 +8,7 @@ import {isFiringRangeEnvironment} from '../public/js/firing-range.js';
 async function beginSource(){
  const source=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
  const start=source.indexOf('toxicBubbleSystem.begin=async()=>{');
- const end=source.indexOf("\n  for(const name of ['handlePointerInteraction'",start);
+ const end=source.indexOf("\n  function syncRadToxPresentation",start);
  assert.ok(start>0&&end>start);
  return source.slice(start,end);
 }
@@ -20,6 +20,7 @@ test('opening the range confirms its lobby without waiting for unrelated combat 
  const begin=new Function('context','openFiringRangeSession','isFiringRangeEnvironment',`
   const worldLoadGeneration=1,authoritativeClient=context.client,activeEnvironment=context.environment,liveRangeSnapshot=context.snapshot;
   const toxicBubbleSystem=context.system,liveRangeHud=context.hud,setStatus=context.status,RAD_TOX_STATES={ACTIVE:'active'};
+  const radToxEnabled=true,syncRadToxPresentation=()=>{};
   ${await beginSource()}
   return toxicBubbleSystem.begin;
  `)(context,openFiringRangeSession,isFiringRangeEnvironment);
@@ -35,6 +36,7 @@ test('a pending combat start cannot send its command to a newly selected range',
   const activeEnvironment={id:'ordinary-world',builderScene:{layout:'grand-floor'}},liveRangeSnapshot=null;
   const serverHostedRoom=true,isBasketballEnvironment=()=>false;
   const toxicBubbleSystem={initAudio(){},async ensureResources(){worldLoadGeneration++;authoritativeClient={ready:true,send:async action=>commands.push('range:'+action)};}};
+  const radToxEnabled=true,syncRadToxPresentation=()=>{};
   ${await beginSource()}
   return toxicBubbleSystem.begin;
  `)(commands,openFiringRangeSession,isFiringRangeEnvironment);

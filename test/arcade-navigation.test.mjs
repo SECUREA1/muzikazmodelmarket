@@ -41,3 +41,12 @@ test('nearby interactions respect disabled attractions and choose nearest', () =
   assert.equal(nearestArcadeInteraction(walker, interactions).id, 'table');
   assert.equal(nearestArcadeInteraction(walker, interactions, .5), null);
 });
+
+
+test('fine analog walking keeps its requested strength and reverses without momentum',()=>{
+ const fine=createArcadeWalker({x:0,z:0}),full=createArcadeWalker({x:0,z:0});
+ stepArcadeWalker(fine,.1,{forward:.06,right:.04});stepArcadeWalker(full,.1,{forward:.6,right:.4});
+ assert.ok(Math.abs(fine.x-full.x*.1)<1e-12);assert.ok(Math.abs(fine.z-full.z*.1)<1e-12);assert.ok(fine.x>0&&fine.z<0);
+ stepArcadeWalker(fine,.1,{forward:-.06,right:-.04});assert.ok(Math.hypot(fine.x,fine.z)<1e-12);
+ const stopped={...fine};stepArcadeWalker(fine,.2,{});assert.deepEqual(fine,stopped);
+});

@@ -76,7 +76,7 @@ class Capsule {
  clone(){return new Capsule(this.start.clone(),this.end.clone(),this.radius);}
 }
 const source=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
-const localMethod=source.slice(source.indexOf('    moveEnemy(root,previous,delta,'),source.indexOf('    update(delta,elapsed){',source.indexOf('    moveEnemy(root,previous,delta,')));
+const localMethod=source.slice(source.indexOf('    moveEnemy(root,previous,delta,'),source.indexOf('    update(delta,elapsed,',source.indexOf('    moveEnemy(root,previous,delta,')));
 const LocalEnemyMotion=new Function('THREE','Capsule','enemyBodyRadius','steerEnemyApart','enemyStepKeepsSpace','moveWalkingCapsule','walkingSurfaces','FLOOR_ENTRY_OFFSET','builderDecor','builderGameplay',`return class {${localMethod}}`)(THREE,Capsule,enemyBodyRadius,steerEnemyApart,enemyStepKeepsSpace,moveWalkingCapsule,()=>[],.02,{children:[]},{actor:()=>null});
 
 function localWorld(triangles=[]){

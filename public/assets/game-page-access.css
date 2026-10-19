@@ -1,0 +1,26 @@
+/* Compact access icons stay outside the sticks and the gameplay surface. */
+.game-page-access{display:flex;flex:0 0 auto;align-items:center;gap:6px;min-width:0}
+.game-page-access button,.game-rad-toggle{position:relative;display:inline-grid;place-items:center;box-sizing:border-box;flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px;margin:0;padding:9px;border:1px solid #587657;border-radius:9px;background:#14281b;color:#d9f4c7;cursor:pointer;touch-action:manipulation}
+.game-page-access svg,.game-rad-toggle svg{display:block;width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.game-rad-toggle>b{display:grid;place-items:center;font-weight:normal}
+.game-page-access button>span,.game-rad-toggle>span{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.game-rad-toggle:after{position:absolute;right:4px;bottom:4px;content:"";width:6px;height:6px;border:1px solid #19351f;border-radius:50%;background:#c3f181}
+.game-rad-toggle[data-rad-tox-enabled=false]{color:#8ca38a;background:#152018}
+.game-rad-toggle[data-rad-tox-enabled=false]:after{background:#687668}
+.game-page-access button:hover,.game-rad-toggle:hover{border-color:#c5f19b;background:#294329;transform:none}
+.game-page-access button:focus-visible,.game-rad-toggle:focus-visible{outline:3px solid #d5ff9d;outline-offset:2px}
+.game-page-map-dialog{box-sizing:border-box;position:fixed;inset:0;width:min(1140px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);height:auto;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;margin:auto;padding:clamp(14px,2.5vw,28px);border:1px solid #71965b;border-radius:18px;background:#101f15;color:#edf6e8;font:14px/1.4 system-ui,sans-serif;box-shadow:0 24px 90px #000b}
+.game-page-map-dialog:not([open]){display:none}
+.game-page-map-dialog::backdrop{background:#020b05c9;backdrop-filter:blur(4px)}
+.game-page-map-dialog .world-map-picker>header{position:static;inset:auto;display:flex;width:auto;height:auto;min-height:0;margin:0;border:0;background:transparent;transform:none}
+.game-page-map-dialog .world-map-detail{position:relative;inset:auto;width:auto;min-width:0;margin:0;text-align:left;transform:none}
+.game-page-map-dialog .world-map-picker button{letter-spacing:normal;text-transform:none}
+.game-page-map-dialog .world-map-picker h3,.game-page-map-dialog .world-map-picker h4,.game-page-map-dialog .world-map-picker p{position:static;inset:auto;transform:none}
+.game-page-map-dialog .world-map-picker .world-map-center strong{font-size:clamp(9px,1vw,13px);font-weight:800;color:#dcffb8}
+.game-page-map-loading{min-height:160px;color:#d6ebc8}
+.game-page-map-loading button{min-width:44px;min-height:44px;border:1px solid #71965b;border-radius:9px;background:#1c3422;color:#eaf7e1;font:inherit;cursor:pointer}
+.game-page-map-loading [data-map-loading-close]{float:right;font-size:26px}
+.hockey-access-bar>.game-page-access{order:-1}
+.rad-controller-toolbar>.arcade-page-access{display:contents}
+.rad-controller-toolbar>.arcade-page-access button{flex:0 1 44px;border:0;background:transparent;padding:6px}
+@media(max-width:640px){.game-page-map-dialog{width:calc(100vw - 16px);max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:13px;border-radius:14px}}

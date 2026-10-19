@@ -145,3 +145,68 @@ test('invalid snapshots cannot poison movement interpolation',()=>{
  assert.equal(motion.push({x:0,y:0,z:0},Infinity),false);
  assert.deepEqual(motion.sample(1200,target),{x:1,y:2,z:3});
 });
+
+test('an adaptive controlled clock clears a stalled join while the accepted player is idle',()=>{
+ const motion=new ServerMotion({delay:50,maxExtrapolation:0,snapDistance:Infinity,resetGap:Infinity,adaptiveClockOffset:true}),target={};
+ motion.push({x:0,y:0,z:0},119,{serverTime:10000});
+ motion.sample(119,target);
+ const joinOffset=motion.serverTimeOffset;
+ motion.push({x:0,y:0,z:0},128,{serverTime:10120});
+ assert.equal(motion.serverTimeOffset,joinOffset-111,'the first fast idle response removes the slow join from the clock');
+ assert.deepEqual(motion.sample(128,target),{x:0,y:0,z:0},'clock calibration never repositions an idle player');
+ motion.push({x:.2,y:0,z:0},178,{serverTime:10170});
+ assert.ok(Math.abs(motion.sample(194,target).x-.064)<1e-10,'accepted walking starts without replaying the slow join delay');
+ assert.deepEqual(motion.sample(10000,target),{x:.2,y:0,z:0},'clock correction never extrapolates beyond an accepted position');
+});
+
+test('adaptive clock changes preserve source cadence and bound moving catch-up to one and a half speed',()=>{
+ const motion=new ServerMotion({delay:50,maxExtrapolation:0,snapDistance:Infinity,resetGap:Infinity,adaptiveClockOffset:true}),target={};
+ const packets=Array.from({length:21},(_,index)=>{
+  const sourceTime=index*50;
+  return {sourceTime,receivedAt:sourceTime+(sourceTime<=100?100:sourceTime===150?60:20)};
+ });
+ let next=0,previous=null,accepted=0;
+ for(let now=100;now<=1000;now+=10){
+  while(next<packets.length&&packets[next].receivedAt<=now){
+   const packet=packets[next++];accepted=packet.sourceTime*.004;
+   motion.push({x:accepted,y:0,z:0},packet.receivedAt,{serverTime:10000+packet.sourceTime});
+  }
+  motion.sample(now,target);
+  assert.ok(target.x<=accepted+1e-10,'catch-up stays inside the accepted server path');
+  if(previous!==null){
+   assert.ok(target.x>=previous-1e-10,'a clock change never reverses the displayed walk');
+   assert.ok(target.x-previous<=.06+1e-10,'clock correction adds at most half a frame of source motion');
+   if(now>=400)assert.ok(Math.abs(target.x-previous-.04)<1e-10,'the original source cadence resumes after bounded catch-up');
+  }
+  previous=target.x;
+ }
+ assert.equal(motion.serverTimeOffset,-9980);
+});
+
+test('adaptive clock catch-up cannot pass through a wall or recoil from its accepted contact',()=>{
+ const motion=new ServerMotion({delay:50,maxExtrapolation:0,snapDistance:Infinity,resetGap:Infinity,adaptiveClockOffset:true}),target={};
+ const packets=Array.from({length:17},(_,index)=>({sourceTime:index*50,receivedAt:index*50+(index<3?100:index===3?60:20)}));
+ let next=0,previousX=0,previousZ=0,latest={x:0,y:0,z:0};
+ for(let now=100;now<=1100;now+=10){
+  while(next<packets.length&&packets[next].receivedAt<=now){
+   const packet=packets[next++];latest={x:Math.min(.4,packet.sourceTime*.004),y:0,z:packet.sourceTime*.003};
+   motion.push(latest,packet.receivedAt,{serverTime:10000+packet.sourceTime});
+  }
+  motion.sample(now,target);
+  assert.ok(target.x>=previousX&&target.x<=.4,'the accepted wall contact cannot overshoot or recoil');
+  assert.ok(target.z>=previousZ&&target.z<=latest.z,'the accepted tangent keeps sliding without prediction');
+  assert.ok(target.z-previousZ<=.045+1e-10,'the tangent also obeys bounded clock catch-up');
+  previousX=target.x;previousZ=target.z;
+ }
+ assert.deepEqual(target,latest,'a stopped or disconnected player settles exactly at the last accepted pose');
+});
+
+test('adaptive clock adjustment is opt-in and does not retime ordinary remote snapshots',()=>{
+ const motion=new ServerMotion({delay:50,maxExtrapolation:0}),target={};
+ motion.push({x:0,y:0,z:0},119,{serverTime:10000});
+ const joinOffset=motion.serverTimeOffset;
+ motion.push({x:0,y:0,z:0},128,{serverTime:10120});
+ motion.push({x:.2,y:0,z:0},178,{serverTime:10170});
+ assert.equal(motion.serverTimeOffset,joinOffset,'existing remote timelines retain their fixed origin');
+ assert.deepEqual(motion.sample(194,target),{x:0,y:0,z:0});
+});

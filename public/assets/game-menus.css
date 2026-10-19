@@ -176,6 +176,7 @@ dialog.tools-pouch-screen .rad-tox-tools__content>.rad-tool-choice[hidden],dialo
 .player-settings [data-settings-history] p{padding:8px;border-top:1px solid #354d32;}
 .house-stage .house-reticle{color:var(--player-reticle-color,#caff49);font-size:var(--player-reticle-size,20px);}
 .house-stage .rad-tox-hud{font-size:var(--player-hud-size,12px);}
+.house-stage.rad-tox-disabled .rad-tox-hud{display:none;}
 .house-stage.player-reduced-motion .rad-tox-spend,.house-stage.player-reduced-motion .multiplayer-live-count{animation:none!important;transition:none!important;}
 @media(max-width:600px){.player-settings-grid,.player-settings-metrics{grid-template-columns:minmax(0,1fr);}.player-settings>section{padding:10px;}.player-settings input[type=range]{min-height:44px;}}
 

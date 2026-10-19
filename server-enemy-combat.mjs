@@ -11,7 +11,7 @@ const event=(sim,value)=>{sim.events.push(value);sim.events=sim.events.slice(-10
 export function stepEnemyCombat(sim,{now,dt,environment,collision,objects={}}){
  sim.projectiles ||= {};
  if(sim.match?.state==='finished'||sim.radTox?.state==='cleared'){sim.projectiles={};return;}
- const players=Object.entries(sim.players).filter(([,player])=>!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
+ const players=Object.entries(sim.players).filter(([,player])=>player.radToxEnabled!==false&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
  const blocked=(origin,direction,length)=>collision.blocksShot(environment,origin,direction,length,sim.actors,objects);
  const hit=(actor,id,player,origin)=>{if(damagePlayer(player,now))event(sim,{id:'enemy-hit-'+ ++sim.enemySequence,action:'enemy-hit',actorId:actor,targetId:id,origin,at:now});};
  sim.enemySequence ||= 0;
