@@ -1,5 +1,5 @@
 import {applyBuilderBaseTransform} from './builder-base.js';
-import {addFiringRangeDressing} from './layout-firing-range.js';
+import {addFiringRangeDressing,createFiringRangeFloorMaterial} from './layout-firing-range.js';
 import {finishLayoutArchitecture} from './layout-details.js';
 import {layoutHeight,createLayoutTerrain,createLayoutMaterial} from './layout-terrain.js';
 import {isBasketballEnvironment} from '../basketball-rules.js';
@@ -13,7 +13,7 @@ export function createBuilderLand(environment) {
     const meta = built.layoutMeta || environment.layoutMeta || {};
     const heightAt=(x,z)=>layoutHeight(layout,x,z);
     const geometry=createLayoutTerrain(layout,built.mapSize,Number(meta.color)||0x315b32);
-    const terrain=new THREE.Mesh(geometry,createLayoutMaterial(layout,built.mapSize));
+    const terrain=new THREE.Mesh(geometry,layout==='firing-range'?createFiringRangeFloorMaterial(built.mapSize):createLayoutMaterial(layout,built.mapSize));
     terrain.name = `BUILDER_WALKABLE_FLOOR_${layout}`; terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; terrain.userData.colliderShape = 'mesh';
     const root = new THREE.Group(); root.name = `PROCEDURAL_${environment.id}`; root.add(terrain); root.userData.proceduralLand = true; root.userData.layout = layout;root.userData.streetHeightAt=heightAt;
     // Recreate the complete template, not merely its terrain plane. Every mesh
@@ -41,7 +41,7 @@ export function createBuilderLand(environment) {
     else if(layout==='desert-outpost'){[[-12,-10],[11,-9],[-10,10],[12,9]].forEach(([x,z],i)=>add([6,2.8,5],x,z,i%2?0x8d7654:0x71624c));add([3,5,3],0,0,0x5a5549)}
     else if(layout==='mega-mall'){[-13,-6,6,13].forEach((x,i)=>add([5,3.2,8],x,10,i%2?0x54707a:0x79566d));add([9,.5,9],0,0,0x8ba8a1,.25)}
     else if(layout==='office-tower'){add([7,5,7],0,0,0x566a73);[-13,13].forEach(x=>add([5,3,10],x,4,0x40525a));add([18,.15,2],0,-10,0x83a0a7)}
-    else if(layout==='firing-range')addFiringRangeDressing(root,add,heightAt);
+    else if(layout==='firing-range')addFiringRangeDressing(root,add,heightAt,{style:built.rangeStyle||environment.rangeStyle});
     else if(layout==='movie-studio'){[[-11,-10],[10,-10],[-11,10],[10,10]].forEach(([x,z],i)=>add([8,4,7],x,z,i%2?0x52475a:0x45535b));add([3,.3,16],0,0,0xb65b48,.15)}
     finishLayoutArchitecture(root);
     if(!root.userData.firingRange)root.add(createServerStreets(environment.streets||built.streets||[],{heightAt}));

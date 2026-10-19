@@ -12,7 +12,7 @@ const vector=(value,fallback=0)=>({x:finite(value?.x,fallback),y:finite(value?.y
 const rotate=(point,axis,angle)=>{const c=Math.cos(angle),s=Math.sin(angle),p={...point};if(axis==='x'){p.y=point.y*c-point.z*s;p.z=point.y*s+point.z*c;}if(axis==='y'){p.x=point.x*c+point.z*s;p.z=-point.x*s+point.z*c;}if(axis==='z'){p.x=point.x*c-point.y*s;p.y=point.x*s+point.y*c;}return p;};
 export function rangeLocalToWorld(location,point){const t=location?.transform||{},scale=vector(t.scale,1),r=vector(t.rotation),o=vector(t.position);let p={x:point.x*scale.x,y:point.y*scale.y,z:point.z*scale.z};for(const axis of ['z','y','x'])p=rotate(p,axis,r[axis]);return {x:p.x+o.x,y:p.y+o.y,z:p.z+o.z};}
 export function rangeWorldToLocal(location,point){const t=location?.transform||{},s=vector(t.scale,1),r=vector(t.rotation),o=vector(t.position);let p={x:point.x-o.x,y:point.y-o.y,z:point.z-o.z};for(const axis of ['x','y','z'])p=rotate(p,axis,-r[axis]);return {x:p.x/(s.x||1),y:p.y/(s.y||1),z:p.z/(s.z||1)};}
-export function isDedicatedFiringRange(environment={}){return environment.id==='firing-range'||(environment.builderScene?.layout||environment.layout)==='firing-range';}
+export function isDedicatedFiringRange(environment={}){return environment.id==='firing-range'||environment.id==='force-training-range'||(environment.builderScene?.layout||environment.layout)==='firing-range';}
 export const isFiringRangeEnvironment=isDedicatedFiringRange;
 export function firingRangeLocations(environment={}){
  const result=[],scene=environment.builderScene||environment.placementScene||{};

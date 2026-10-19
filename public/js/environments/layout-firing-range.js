@@ -4,8 +4,19 @@ import {FIRING_RANGE_LANES,FIRING_RANGE_TARGETS,FIRING_RANGE_DEFAULTS,firingRang
 const clockLabel=milliseconds=>{const seconds=Math.max(0,Math.ceil((Number(milliseconds)||0)/1000));return `${Math.floor(seconds/60).toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`;};
 const text=value=>String(value??'').replace(/[\r\n\t]/g,' ').slice(0,24);
 
+export function createFiringRangeFloorMaterial(size=64) {
+ const pixels=new Uint8Array(128*128*4);
+ for(let y=0;y<128;y++)for(let x=0;x<128;x++){
+  const offset=(y*128+x)*4,grain=((x*73+y*151+(x*y)%37)%17)-8,joint=x<2||y<2,shade=joint?42:91+grain;
+  pixels[offset]=shade;pixels[offset+1]=shade+2;pixels[offset+2]=shade+3;pixels[offset+3]=255;
+ }
+ const texture=new THREE.DataTexture(pixels,128,128,THREE.RGBAFormat);texture.colorSpace=THREE.SRGBColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(size/4,size/4);texture.needsUpdate=true;
+ return new THREE.MeshStandardMaterial({color:0xb3b0a7,map:texture,roughness:.94,metalness:.05});
+}
+
 /** The authored range is also the server's geometry: all target centers and motion use the shared rules. */
-export function addFiringRangeDressing(root,add,ground=()=>0){
+export function addFiringRangeDressing(root,add,ground=()=>0,{style='live'}={}){
+ const training=style==='force-training';root.userData.rangeStyle=training?'force-training':'live';
  const materials={
   steel:new THREE.MeshStandardMaterial({color:0x57666d,roughness:.34,metalness:.78}),
   dark:new THREE.MeshStandardMaterial({color:0x17262d,roughness:.86}),
@@ -17,6 +28,8 @@ export function addFiringRangeDressing(root,add,ground=()=>0){
   black:new THREE.MeshStandardMaterial({color:0x20262a,roughness:.82})
  };
  const targets=new Map(),lights=[],interactions=[];
+ const impactGeometry=new THREE.CircleGeometry(.027,12),impactMaterial=new THREE.MeshBasicMaterial({color:0x16110c,side:THREE.DoubleSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+ let lastImpactKey='',impactMatch=null;
  root.userData.firingRange={lanes:FIRING_RANGE_LANES,targets:FIRING_RANGE_TARGETS};
  root.userData.rangeInteractions=interactions;
  const part=(geometry,material,x,y,z,name='RANGE_DETAIL',decorative=false,rotation=[0,0,0])=>{
@@ -52,22 +65,33 @@ export function addFiringRangeDressing(root,add,ground=()=>0){
  FIRING_RANGE_LANES.forEach(({x,index})=>{
   box([5.8,.015,27.6],materials.dark,x,.012,-.4,'RANGE_LANE_FLOOR',true);
   [-2.9,2.9].forEach(offset=>box([.055,.02,27.6],materials.steel,x+offset,.025,-.4,'RANGE_LANE_BOUNDARY',true));
-  if(index<FIRING_RANGE_LANES.length-1)structure([.2,2.45,3.6],x+3.5,12.6,0x33454b,1.225,'RANGE_SHOOTING_BAY_PARTITION');
+  if(index<FIRING_RANGE_LANES.length-1)structure([.2,2.45,training?15:3.6],x+3.5,training?5:12.6,training?0x3c443c:0x33454b,1.225,'RANGE_SHOOTING_BAY_PARTITION');
   structure([4.6,.85,.9],x,12.5,0x26353c,.425,'RANGE_SHOOTING_BENCH');
   box([4.7,.065,1.03],materials.rubber,x,.883,12.5,'RANGE_PADDED_FIRING_BENCH',true);
+  if(training){box([.58,.72,.3],materials.dark,x,1.2,11.55,'RANGE_CLASSIC_LANE_CONSOLE',true);box([.5,.32,.025],materials.cyan,x,1.32,11.72,'RANGE_CLASSIC_LANE_MONITOR',true);}
   sign(`LANE ${String(index+1).padStart(2,'0')}  /  27.5 M`,x,1.1,13.03,3.5,{height:.28});
   box([5.9,.02,.19],materials.amber,x,.033,11.2,'RANGE_FIRING_LINE',true);
   // Rails make the target carrier's actual travel envelope visible.
   box([5.25,.06,.08],materials.steel,x,.06,-15.45,'RANGE_MOVING_TARGET_TRACK',true);
  });
+ // Warm task lighting, acoustic panels and target carrier rails are cosmetic.
+ for(const side of [-1,1])for(let z=-16;z<=12;z+=3){
+  box([.08,2.3,1.8],materials.rubber,side*18.94,1.6,z,'RANGE_ACOUSTIC_PANEL',true);
+  box([.11,.08,1.8],materials.amber,side*18.87,2.8,z,'RANGE_WALL_TASK_LIGHT',true);
+ }
+ for(const {x} of FIRING_RANGE_LANES){
+  box([.1,.1,28],materials.steel,x,3.3,-.6,'RANGE_OVERHEAD_CARRIER_RAIL',true);
+  for(const z of [-10,2,10])box([2.4,.035,.22],training?materials.amber:materials.cyan,x,3.42,z,'RANGE_DIFFUSED_LUMINAIRE',true);
+  for(let z=-12;z<12;z+=4)box([5.7,.008,.018],materials.steel,x,.023,z,'RANGE_FLOOR_EXPANSION_JOINT',true);
+ }
  // Distance labels reflect the fixed 13.8 m firing position, rather than
  // decorative labels that disagree with the live target geometry.
  for(const distance of [10,15,20,25]){
   const z=13.8-distance;box([37.8,.012,.055],distance===20?materials.amber:materials.steel,0,.034,z,'RANGE_DISTANCE_LINE',true);
   [-17.6,17.6].forEach(x=>sign(`${distance} M`,x,.18,z,1.25,{height:.32}));
  }
- sign('LIVE RANGE  /  EYES & EARS  /  FIRE FROM YOUR BAY',0,4.08,-18.61,12.5,{height:.48});
- sign('SAFE ZONE  /  MULTIPLAYER LOBBY',0,2.82,18.3,8.2,{height:.48,rotation:Math.PI});
+ sign(training?'FORCE TRAINING  /  FIVE-POINT QUALIFICATION':'LIVE RANGE  /  EYES & EARS  /  FIRE FROM YOUR BAY',0,4.08,-18.61,12.5,{height:.48});
+ sign(training?'FORCE TRAINING  /  READY AREA':'SAFE ZONE  /  MULTIPLAYER LOBBY',0,2.82,18.3,8.2,{height:.48,rotation:Math.PI});
 
  for(const definition of FIRING_RANGE_TARGETS){
   const group=new THREE.Group();group.name=`RANGE_TARGET_${definition.id}`;group.position.set(definition.position.x,definition.position.y,definition.position.z);group.userData.collisionDisabled=true;group.userData.rangeTargetId=definition.id;group.userData.rangeLane=definition.lane;root.add(group);
@@ -76,7 +100,8 @@ export function addFiringRangeDressing(root,add,ground=()=>0){
   if(definition.kind==='paper'){
    // Circle faces are on the exact server ray plane; rings differ by only a
    // texture-depth offset to avoid z fighting, never by target size or center.
-   mount(new THREE.CircleGeometry(definition.radius,48),materials.paper,[0,0,0],'outer');
+   mount(training?new THREE.PlaneGeometry(1.55,1.55):new THREE.CircleGeometry(definition.radius,48),materials.paper,[0,0,0],'outer');
+   for(const radius of [.22,.38,.56,.74])mount(new THREE.RingGeometry(radius-.006,radius,48),materials.steel,[0,0,.006],'scoring-ring');
    [[.56,materials.black],[.38,materials.paper],[.22,materials.black],[.09,hitMaterial]].forEach(([radius,material],index)=>mount(new THREE.CircleGeometry(radius,40),material,[0,0,.001*(index+1)],index===3?'bullseye':'body'));
    box([.07,1.08,.07],materials.steel,definition.position.x,2.85,definition.position.z-.07,'RANGE_PAPER_CARRIER',true);
   }else{
@@ -86,7 +111,7 @@ export function addFiringRangeDressing(root,add,ground=()=>0){
    const support=new THREE.Mesh(new THREE.BoxGeometry(.07,.66,.07),materials.steel);support.position.y=.36;group.add(support);
    const base=new THREE.Mesh(new THREE.BoxGeometry(.6,.12,.4),materials.dark);base.position.y=.08;group.add(base);
   }
-  targets.set(definition.id,{definition,group,hitMaterial,baseColor:hitMaterial.color.clone(),baseEmissive:hitMaterial.emissive.clone()});
+  targets.set(definition.id,{definition,group,hitMaterial,impacts:[],baseColor:hitMaterial.color.clone(),baseEmissive:hitMaterial.emissive.clone()});
  }
 
  // Equipment remains in the safe zone, leaving every firing position clear.
@@ -134,7 +159,7 @@ export function addFiringRangeDressing(root,add,ground=()=>0){
   const {context:ctx,canvas,texture}=display,w=canvas.width,h=canvas.height;
   ctx.fillStyle='#07151e';ctx.fillRect(0,0,w,h);ctx.fillStyle='#102b35';ctx.fillRect(0,0,w,83);
   ctx.strokeStyle=pulse?'#f1d56e':'#41dbe9';ctx.lineWidth=7;ctx.strokeRect(7,7,w-14,h-14);
-  ctx.fillStyle='#74e9f3';ctx.font='800 37px monospace';ctx.textAlign='left';ctx.fillText('MUZIKAZ  //  LIVE RANGE',32,56);
+  ctx.fillStyle='#74e9f3';ctx.font='800 37px monospace';ctx.textAlign='left';ctx.fillText(training?'MUZIKAZ  //  FORCE TRAINING':'MUZIKAZ  //  LIVE RANGE',32,56);
   ctx.font='700 28px monospace';ctx.textAlign='right';ctx.fillStyle=state==='LIVE'?'#b7f26e':'#ecc76b';ctx.fillText(`${state}  ·  ${mode}`,w-32,54);
   ctx.textAlign='left';ctx.fillStyle='#f2fbff';ctx.font='900 108px monospace';ctx.fillText(clock,32,205);
   ctx.font='700 29px monospace';ctx.fillStyle='#8daebf';ctx.fillText(`ROUND ${snapshot.round || '—'} / ${snapshot.rounds}`,37,256);
@@ -147,7 +172,7 @@ export function addFiringRangeDressing(root,add,ground=()=>0){
   texture.needsUpdate=true;
  };
  root.userData.setFiringRangeState=(state={},options={})=>{
-  liveState=state.firingRange||state;locationId=String(options.locationId||locationId);serverTime=Number(options.serverTime??liveState.serverTime)||serverTime;draw(serverTime,true);root.userData.updateFiringRangeEffects(serverTime);
+  liveState=state.firingRange||state;if(impactMatch!==liveState.matchId){impactMatch=liveState.matchId;lastImpactKey='';for(const target of targets.values()){for(const mark of target.impacts)mark.visible=false;target.nextImpact=0;}}locationId=String(options.locationId||locationId);serverTime=Number(options.serverTime??liveState.serverTime)||serverTime;draw(serverTime,true);root.userData.updateFiringRangeEffects(serverTime);
  };
  root.userData.updateFiringRangeEffects=(now=serverTime)=>{
   serverTime=Number(now)||serverTime;
@@ -157,6 +182,11 @@ export function addFiringRangeDressing(root,add,ground=()=>0){
    hitMaterial.color.copy(baseColor);hitMaterial.emissive.copy(baseEmissive);
    if(hit){hitMaterial.color.setHex(0xffde78);hitMaterial.emissive.setHex(0xa05a0b);}hitMaterial.emissiveIntensity=hit?1.1:.35;
    group.userData.lastHit=hit;
+  }
+  const shot=liveState.lastShot,key=shot?`${shot.playerId}:${shot.at}`:'';
+  if(key&&key!==lastImpactKey&&shot.impact&&(!shot.locationId||shot.locationId===locationId)){
+   lastImpactKey=key;const target=targets.get(shot.targetId);
+   if(target){let mark;if(target.impacts.length<24){mark=new THREE.Mesh(impactGeometry,impactMaterial);mark.name='RANGE_SHOT_IMPACT';mark.userData.collisionDisabled=true;target.group.add(mark);target.impacts.push(mark);}else mark=target.impacts[(target.nextImpact||0)%24];target.nextImpact=(target.nextImpact||0)+1;mark.visible=true;mark.position.set(shot.impact.x,shot.impact.y,target.definition.kind==='paper'?.014:.075);}
   }
   const live=liveState.state==='live',countdown=liveState.state==='countdown';
   for(const lamp of lights){lamp.material.color.setHex(live?0xff5264:countdown?0xf1c668:0x47dce5);lamp.material.emissive.setHex(live?0x65131d:countdown?0x78510c:0x12616b);}

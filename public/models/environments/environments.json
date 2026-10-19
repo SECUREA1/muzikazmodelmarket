@@ -35,6 +35,55 @@
     "playUrl": "model-explorer.html?environment=firing-range&house=firing-range&mode=multiplayer&autoplay=1"
   },
   {
+    "id": "force-training-range",
+    "name": "Firing Range — Force Training",
+    "label": "Classic five-lane qualification range",
+    "category": "Sports",
+    "levelOrder": 0,
+    "playable": true,
+    "multiplayer": true,
+    "publicDestination": true,
+    "permanent": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "thumbnailUrl": "/public/images/backpack/force-training-range.svg",
+    "firingRange": true,
+    "description": "Original five-point Force Training course with protected full-length booths, layered scoring plates, reactive silhouettes, timed qualification and shared practice. Enhanced materials, shot impacts and recoil.",
+    "proceduralLand": true,
+    "builderScene": {
+      "layout": "firing-range",
+      "mapSize": 80,
+      "objects": [],
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false
+      },
+      "rangeStyle": "force-training"
+    },
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 16.2,
+      "rotationY": 0
+    },
+    "scale": 1,
+    "spaceScale": 1,
+    "playableSize": 80,
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "collisionMode": "auto",
+    "visibility": "public",
+    "source": "repository",
+    "roomId": "force-training-range",
+    "playUrl": "model-explorer.html?environment=force-training-range&house=force-training-range&mode=multiplayer&autoplay=1",
+    "rangeStyle": "force-training"
+  },
+  {
     "id": "basketball-arena",
     "name": "MUZIKAZ Basketball Arena",
     "label": "Live basketball stadium",

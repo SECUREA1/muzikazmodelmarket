@@ -21,6 +21,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--origin", default="http://127.0.0.1:3000")
     parser.add_argument("--chromium", default="/usr/bin/chromium")
+    parser.add_argument("--range", choices=["firing-range", "force-training-range"], default="firing-range")
     parser.add_argument(
         "--artifacts", type=Path, default=Path("work/firing-range-entry-browser")
     )
@@ -32,12 +33,12 @@ def create_guest(context, origin):
     assert response.ok, f"Guest access failed: HTTP {response.status}"
 
 
-def range_command(context, origin, action):
+def range_command(context, origin, action, range_id="firing-range"):
     session = context.request.get(f"{origin}/api/game/room-session")
     assert session.ok, f"Room session failed: HTTP {session.status}"
     csrf_token = session.json()["data"]["csrfToken"]
     response = context.request.post(
-        f"{origin}/api/rooms/firing-range/gameplay",
+        f"{origin}/api/rooms/{range_id}/gameplay",
         data={"action": action, "requestId": str(uuid.uuid4())},
         headers={"X-CSRF-Token": csrf_token},
     )
@@ -90,7 +91,7 @@ def main():
 
             def record_range_command(request):
                 if (
-                    request.url.endswith("/api/rooms/firing-range/gameplay")
+                    request.url.endswith(f"/api/rooms/{args.range}/gameplay")
                     and request.method == "POST"
                 ):
                     commands.append(json.loads(request.post_data)["action"])
@@ -102,12 +103,12 @@ def main():
             )
             desktop.wait_for_function(
                 "document.querySelector('.game-live-connection')"
-                "?.textContent.includes('Basketball Arena')",
+                "?.textContent.toLowerCase().includes('basketball arena')",
                 timeout=45000,
             )
             wait_for_game_start(desktop)
             desktop.locator("#house-world-button").click()
-            desktop.locator("[data-world-search]").fill("firing")
+            desktop.locator("[data-world-search]").fill("Force Training" if args.range == "force-training-range" else "MUZIKAZ Live Firing Range")
             desktop.locator("[data-world-join]").click()
             desktop.wait_for_selector(".firing-range-hud:not([hidden])", timeout=45000)
             if not desktop.locator(".firing-range-panel").is_visible():
@@ -138,8 +139,8 @@ def main():
             wait_for_score_increase(desktop, desktop_before)
             desktop_score = score(desktop)
 
-            legacy_start = range_command(desktop_context, origin, "start-rad-tox")
-            legacy_next = range_command(desktop_context, origin, "next-rad-tox")
+            legacy_start = range_command(desktop_context, origin, "start-rad-tox", args.range)
+            legacy_next = range_command(desktop_context, origin, "next-rad-tox", args.range)
             assert legacy_start["firingRange"]["matchId"] == legacy_next["firingRange"]["matchId"]
             assert legacy_start["firingRange"]["leaderboard"][0]["score"] > 0
             assert legacy_start["firingRange"]["leaderboard"] == legacy_next["firingRange"]["leaderboard"]
@@ -156,7 +157,7 @@ def main():
             mobile.on("pageerror", lambda error: browser_errors.append(str(error)))
             # Old solo links must still enter the dedicated map's shared practice.
             mobile.goto(
-                f"{origin}/model-explorer.html?environment=firing-range&mode=solo&autoplay=1",
+                f"{origin}/model-explorer.html?environment={args.range}&mode=solo&autoplay=1",
                 wait_until="domcontentloaded",
             )
             mobile.wait_for_selector(".firing-range-hud:not([hidden])", timeout=45000)
