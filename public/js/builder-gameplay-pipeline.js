@@ -220,11 +220,13 @@ export class BuilderGameplayRuntime {
     return { actor, handled: true, message, ...(config.behavior === 'seat' ? { seated: true } : {}) };
   }
   update(delta, playerPosition) {
-    this.elapsed += Math.max(0, finite(delta));
+    // Suspended tabs resume at normal walking speed instead of teleporting AI.
+    delta = Math.max(0, Math.min(.1, finite(delta)));
+    this.elapsed += delta;
     for (const actor of this.manifest.actors) {
       const instance = this.instances.get(actor.objectId), behavior = actor.gameplay.behavior;
       instance?.updateMixer?.(delta);
-      if (!instance || !['hostile','patrol'].includes(behavior)) continue;
+      if (!instance || instance.active === false || !['hostile','patrol'].includes(behavior)) continue;
       const origin = actor.transform.position, current = this.position(actor), detection = finite(actor.ai?.detectionRange, 9);
       let target;
       if (behavior === 'hostile' && playerPosition && distance(current, playerPosition) <= detection) target = playerPosition;

@@ -134,24 +134,30 @@ export class AuthoritativeRooms {
   }
   const active=Object.values(sim.players).filter(player=>!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0&&!firingRangeLocationAt(sim.firingRange?.locations,player.position));
   for(const definition of sim.match?.state==='finished'?[]:manifest.actors){const actor=sim.actors[definition.objectId];if(!actor?.active||actor.health<=0||actor.holderId)continue;
-   if(actor.radTox){stepRadToxEnemy(sim,actor,active,now,dt,(origin,ray,span)=>this.collision.blocksShot(environment,origin,ray,span,sim.actors),(previous,next)=>this.collision.resolve(environment,previous,next,sim.actors),false);continue;}
+   if(actor.radTox){stepRadToxEnemy(sim,actor,active,now,dt,(origin,ray,span)=>this.collision.blocksShot(environment,origin,ray,span,sim.actors,room.objects),(previous,next)=>this.collision.resolve(environment,previous,next,sim.actors,room.objects),false);continue;}
    const kind=definition.gameplay.behavior;
    if(kind==='hostile'||kind==='patrol'){
     const target=active.slice().sort((a,b)=>distance(actor.position,a.position)-distance(actor.position,b.position))[0];
     const chase=kind==='hostile'&&target&&distance(actor.position,target.position)<clamp(definition.ai?.detectionRange||9,1,50);
     const goal=chase?target.position:{x:definition.position.x+Math.sin(now/1000)*3,y:definition.position.y,z:definition.position.z+Math.cos(now/1000)*3};
-    const span=distance(actor.position,goal),step=Math.min(1,dt*clamp(definition.movement.speed||2,0,10)/Math.max(.001,span));if(!actor.radTox||!['ghost','brain','boss'].includes(actor.kind)||span>3){const next={...actor.position,x:actor.position.x+(goal.x-actor.position.x)*step,z:actor.position.z+(goal.z-actor.position.z)*step};actor.position=this.collision.resolve(environment,actor.position,next,sim.actors);delete actor.position.floorY;}actor.rotation.y=Math.atan2(goal.x-actor.position.x,goal.z-actor.position.z);
-    if(!actor.radTox&&chase&&span<1.5&&now-(actor.lastAttack||0)>1000){if(definition.gameplay.damage>0)damagePlayer(target,now);actor.lastAttack=now;}
+    const span=distance(actor.position,goal),step=Math.min(1,dt*clamp(definition.movement.speed||2,0,10)/Math.max(.001,span));
+    if(chase)stepRadToxEnemy(sim,actor,active,now,dt,()=>false,(previous,next)=>this.collision.resolve(environment,previous,next,sim.actors,room.objects),false);
+    else{const next={...actor.position,x:actor.position.x+(goal.x-actor.position.x)*step,z:actor.position.z+(goal.z-actor.position.z)*step};actor.position=this.collision.resolve(environment,actor.position,next,sim.actors,room.objects);delete actor.position.floorY;}
+    actor.rotation.y=Math.atan2(goal.x-actor.position.x,goal.z-actor.position.z);
+    if(chase&&distance(actor.position,target.position)<1.5&&now-(actor.lastAttack||0)>1000){
+     const origin={...actor.position,y:actor.position.y+.8},aim=[target.position.x-origin.x,target.position.y+.9-origin.y,target.position.z-origin.z],length=Math.hypot(...aim);
+     if(!this.collision.blocksShot(environment,origin,aim.map(value=>value/Math.max(.001,length)),length,sim.actors,room.objects)){if(definition.gameplay.damage>0)damagePlayer(target,now);actor.lastAttack=now;}
+    }
    }
    if(kind==='hazard')for(const target of active)if(distance(target.position,actor.position)<1.5&&now-(actor.lastAttack||0)>1000){if(definition.gameplay.damage>0)damagePlayer(target,now);actor.lastAttack=now;}
   }
   for(const actor of Object.values(sim.actors)){
-   if(isBasketball(actor)&&actor.holderId){const holder=sim.players[actor.holderId];if(holder)actor.position={x:holder.position.x-Math.sin(holder.yaw)*.65,y:holder.position.y+1,z:holder.position.z-Math.cos(holder.yaw)*.65};}
-   if(!sim.basketball){const previous=isBasketball(actor)&&!actor.holderId&&actor.ballVelocity?{...actor.position}:null;stepBasketball(actor,dt);if(previous)actor.ballCatchSegment={from:previous,to:{...actor.position},at:now};}
+   if(isBasketball(actor)&&actor.holderId){const holder=sim.players[actor.holderId];if(holder)actor.position=this.collision.heldBallPosition(environment,{x:holder.position.x,y:holder.position.y+1,z:holder.position.z},{x:holder.position.x-Math.sin(holder.yaw)*.65,y:holder.position.y+1,z:holder.position.z-Math.cos(holder.yaw)*.65},sim.actors,room.objects);}
+   if(!sim.basketball){const previous=isBasketball(actor)&&!actor.holderId&&actor.ballVelocity?{...actor.position}:null;stepBasketball(actor,dt,undefined,(from,to)=>this.collision.moveBall(environment,actor,from,to,sim.actors,room.objects));if(previous)actor.ballCatchSegment={from:previous,to:{...actor.position},at:now};}
   }
   stepFiringRange(sim,now);
-  if(sim.basketball)stepBasketballGame(sim,now,dt);
-  else if(!isDedicatedFiringRange(environment))stepEnemyCombat(sim,{now,dt,environment,collision:this.collision});
+  if(sim.basketball)stepBasketballGame(sim,now,dt,{onBallStep:(ball,from,to)=>{this.collision.moveBall(environment,ball,from,to,sim.actors,room.objects);}});
+  else if(!isDedicatedFiringRange(environment))stepEnemyCombat(sim,{now,dt,environment,collision:this.collision,objects:room.objects});
 
   checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);
   this.prepareEncounter(sim,environment);
@@ -194,7 +200,7 @@ export class AuthoritativeRooms {
     basketballShotSolution({x:0,y:0,z:0},null,direction,{...options,mode:'manual'});
     const selection=resolveBasketballAction({game:sim.basketball,player,players:sim.players,balls:Object.values(sim.actors),direction,options,now,visible:(from,to,target)=>{
      const span=distance(from,to),actors=isBasketball(target)?{...sim.actors,[target.id]:{...target,holderId:actorId}}:sim.actors;
-     return span<.05||!this.collision.blocksShot(environment,from,[(to.x-from.x)/span,(to.y-from.y)/span,(to.z-from.z)/span],span,actors);
+     return span<.05||!this.collision.blocksShot(environment,from,[(to.x-from.x)/span,(to.y-from.y)/span,(to.z-from.z)/span],span,actors,room.objects);
     }});
     result.resolvedAction=selection.action;result.actionLabel=selection.label;
     command={...command,...selection.fields,action:selection.action||'basketball-wait'};
@@ -215,7 +221,7 @@ export class AuthoritativeRooms {
    }
    else if(command.action==='basketball-settings'){configureBasketballGame(sim,command.settings,now);result.message='Shared basketball settings updated.';}
    else if(command.action==='basketball-watch'){watchBasketballGame(sim,player,now);result.message='Watching from the sideline. Choose a side before the next game.';}
-   else if(command.action==='basketball-steal'){const ball=stealBasketball(sim,player,now,{visible:(from,to)=>{const origin={...from.position,y:from.position.y+1},target={...to.position,y:to.position.y+1},span=distance(origin,target);return span<.05||!this.collision.blocksShot(environment,origin,[(target.x-origin.x)/span,(target.y-origin.y)/span,(target.z-origin.z)/span],span,sim.actors);}});result.caughtId=ball.id;result.message='Basketball stolen.';}
+   else if(command.action==='basketball-steal'){const ball=stealBasketball(sim,player,now,{visible:(from,to)=>{const origin={...from.position,y:from.position.y+1},target={...to.position,y:to.position.y+1},span=distance(origin,target);return span<.05||!this.collision.blocksShot(environment,origin,[(target.x-origin.x)/span,(target.y-origin.y)/span,(target.z-origin.z)/span],span,sim.actors,room.objects);}});result.caughtId=ball.id;result.message='Basketball stolen.';}
    else if(command.action==='basketball-join-spot'){takeBasketballSpot(sim,player,now,command.team);result.message='Player spot joined.';}
 
    else if(command.action==='basketball-team'){if(!sim.basketball)fail('Enter Basketball Arena to choose a team.',409);assignBasketballTeam(sim,player,now,command.team);result.message=(player.basketballTeam==='home'?'Home':'Away')+' team selected.';}
@@ -246,9 +252,9 @@ export class AuthoritativeRooms {
     if(player.heldId)fail('Release the held item before catching.',409);
     const hand={x:player.position.x,y:player.position.y+1,z:player.position.z};
     const nearby=Object.values(sim.actors).filter(actor=>!command.entityId||actor.id===command.entityId).map(ball=>({ball,catch:basketballCatchPosition(ball,player.position,{now})})).filter(hit=>hit.catch).sort((a,b)=>a.catch.distance-b.catch.distance);
-    const hit=nearby.find(({ball,catch:reach})=>{const target={...reach.position,y:reach.position.y+.12},span=distance(hand,target);return span<.05||!this.collision.blocksShot(environment,hand,[(target.x-hand.x)/span,(target.y-hand.y)/span,(target.z-hand.z)/span],span,{...sim.actors,[ball.id]:{...ball,holderId:actorId}});});
+    const hit=nearby.find(({ball,catch:reach})=>{const target={...reach.position,y:reach.position.y+.12},span=distance(hand,target);return span<.05||!this.collision.blocksShot(environment,hand,[(target.x-hand.x)/span,(target.y-hand.y)/span,(target.z-hand.z)/span],span,{...sim.actors,[ball.id]:{...ball,holderId:actorId}},room.objects);});
     if(!hit)fail('Move within 3 metres of a visible basketball to catch it.',409);
-    const ball=hit.ball;ball.holderId=actorId;delete ball.ballVelocity;delete ball.ballCatchSegment;player.heldId=ball.id;ball.position={x:player.position.x-Math.sin(player.yaw)*.65,y:player.position.y+1,z:player.position.z-Math.cos(player.yaw)*.65};touchBasketball(sim,ball,player,now);result.caughtId=ball.id;result.rewound=hit.catch.rewound;result.message='Basketball caught — T to toss.';
+    const ball=hit.ball;ball.holderId=actorId;delete ball.ballVelocity;delete ball.ballCatchSegment;player.heldId=ball.id;ball.position=this.collision.heldBallPosition(environment,{x:player.position.x,y:player.position.y+1,z:player.position.z},{x:player.position.x-Math.sin(player.yaw)*.65,y:player.position.y+1,z:player.position.z-Math.cos(player.yaw)*.65},sim.actors,room.objects);touchBasketball(sim,ball,player,now);result.caughtId=ball.id;result.rewound=hit.catch.rewound;result.message='Basketball caught — T to toss.';
    }
    else if(command.action==='drop'){const held=sim.actors[player.heldId];if(held){held.holderId=null;held.position={...player.position};player.heldId=null;}}
    else if(command.action==='collect'){await this.collectNearbyLoot(sim,player,identity,id,now,command.entityId,result);}
@@ -325,7 +331,7 @@ export class AuthoritativeRooms {
     sim.actors[entityId]={id:entityId,spawned:true,ownerId:actorId,active:true,health:100,createdAt:now,placementRevision:1,position:{x:(start.x+point.x)/2,y:Math.min(start.y,point.y)-.18,z:(start.z+point.z)/2},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},asset:{id:entityId,name:'Solid paint',renderKind:'paint-stroke',strokeDelta:delta,color:clamp(command.color,0,0xffffff)}};
     player.lastPaintPoint={x:point.x,y:point.y,z:point.z};player.lastPaintAt=now;player.toolReady.spray=now+250;result.message='Solid paint placed for everyone.';
    }
-   else if(command.action==='fire'&&rangeHandlesFire(sim,player)){result=fireFiringRange(sim,player,command,now,{blocksShot:(origin,ray,distance)=>this.collision.blocksShot(environment,origin,ray,distance,sim.actors)});}
+   else if(command.action==='fire'&&rangeHandlesFire(sim,player)){result=fireFiringRange(sim,player,command,now,{blocksShot:(origin,ray,distance)=>this.collision.blocksShot(environment,origin,ray,distance,sim.actors,room.objects)});}
    else if(command.action==='fire'){
     if(sim.basketball)fail('Basketball Arena is a sports court. Catch, pass or shoot the basketball.',409);
     const tool=String(command.tool||'laser'),utility=UTILITY_TOOLS[tool],profile=RANGED_WEAPONS[tool],cooldown=utility?utility.cooldown*1000:profile?profile.interval*1000:tool==='dynamite'?1200:250;if(!utility&&!profile&&!['bat','taser','toxin','flamethrower','spray','jetpack'].includes(tool))fail('This tool has no server action.',422);
@@ -343,8 +349,8 @@ export class AuthoritativeRooms {
      if(along!==null&&along<range)targets.push({entity:target,along,playerId:targetId});
     }
     const blocks=[];for(const object of Object.values(room.objects)){if(object.deleted||object.open)continue;const offset=object.position.map((n,i)=>n-[origin.x,origin.y,origin.z][i]),along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along)),size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);if(along>0&&along<40&&perpendicular<Math.max(...size)/2)blocks.push({object,along});}
-    const blocker=blocks.sort((a,b)=>a.along-b.along)[0];let hit=targets.filter(target=>target.along<range).sort((a,b)=>a.along-b.along)[0];
-    if(hit&&this.collision.blocksShot(environment,origin,ray,hit.along,sim.actors))hit=null;if(blocker&&(!hit||blocker.along<hit.along)){hit=null;const object=blocker.object;if(tool==='spray')object.paint=object.paint.map(()=>clamp(command.color,0,0xffffff));else if(!utility){object.hits=(object.hits||0)+1;if(object.hits>=5)object.deleted=true;}object.revision=++room.revision;}
+    let blocker=blocks.sort((a,b)=>a.along-b.along)[0];if(blocker&&this.collision.blocksShot(environment,origin,ray,blocker.along,sim.actors,room.objects,blocker.object.id))blocker=null;let hit=targets.filter(target=>target.along<range).sort((a,b)=>a.along-b.along)[0];
+    if(hit&&this.collision.blocksShot(environment,origin,ray,hit.along,sim.actors,room.objects,hit.playerId?null:hit.entity.id))hit=null;if(blocker&&(!hit||blocker.along<hit.along)){hit=null;const object=blocker.object;if(tool==='spray')object.paint=object.paint.map(()=>clamp(command.color,0,0xffffff));else if(!utility){object.hits=(object.hits||0)+1;if(object.hits>=5)object.deleted=true;}object.revision=++room.revision;}
 if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else if(tool==='shield-kit')player.shieldUntil=now+6000;else if(tool==='scanner')result.message='Scanner: '+targets.length+' targets in your aim path';else if(tool==='recycler'||tool==='repair-tool'){const candidates=Object.values(room.objects).filter(object=>!object.deleted&&object.ownerId===actorId&&distance({x:object.position[0],y:object.position[1],z:object.position[2]},player.position)<8).sort((a,b)=>distance({x:a.position[0],y:a.position[1],z:a.position[2]},player.position)-distance({x:b.position[0],y:b.position[1],z:b.position[2]},player.position));const target=candidates[0];if(target){if(tool==='recycler')target.deleted=true;target.hits=0;target.revision=++room.revision;}}else if(tool==='beacon')result.message='Waypoint beacon shared in room events';else if(tool==='supply-kit'){player.fuel=100;player.ammo=Math.min(120,(player.ammo??120)+12);}}
     else if(tool==='jetpack'){player.velocityY=8;player.grounded=false;}
     else if(tool==='spray'){if(hit&&!hit.playerId)hit.entity.paint=clamp(command.color,0,0xffffff);}

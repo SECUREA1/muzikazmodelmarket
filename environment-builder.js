@@ -1,3 +1,4 @@
+import {sportsEnvironmentKind,sportsEnvironmentSettings} from './public/js/sports-worlds.js';
 import {isInlayMapObject,retainedInlayMaps} from './public/js/builder-map-lists.js';
 import {installBuilderCatalogDrag} from './public/js/builder-catalog-drag.js';
 import {mountBuilderPanelPages} from './public/js/builder-panel-pages.js';
@@ -554,7 +555,7 @@ function clearBaseWorld(){
 }
 function syncBaseControls(){
  syncSceneLayerControls();
- const fixedCourt=sceneData.layout==='basketball-stadium';for(const key of ['x','y','z','rotation','scale'])$('#world-base-'+key).disabled=fixedCourt;for(const id of ['world-base-move','world-base-center','world-base-reset'])$('#'+id).disabled=fixedCourt;
+ const fixedCourt=['basketball','hockey'].includes(sportsEnvironmentKind({builderScene:sceneData}));for(const key of ['x','y','z','rotation','scale'])$('#world-base-'+key).disabled=fixedCourt;for(const id of ['world-base-move','world-base-center','world-base-reset'])$('#'+id).disabled=fixedCourt;
  $('#world-alignment').hidden=false;
  const transform=normalizedBaseTransform(sceneData.baseTransform);
  for(const key of ['x','y','z','rotation','scale'])$('#world-base-'+key).value=transform[key];$('#world-base-angle').textContent=transform.rotation+'°';
@@ -568,7 +569,7 @@ function setBuilderLayerVisibility(layer,visible){sceneData.editorSettings={...s
 function clampBuildCoordinate(value,axis){const box=(baseWorld||proceduralWorld).userData.buildBounds;return THREE.MathUtils.clamp(value,box?box.min[axis]+.5:-sceneData.mapSize/2+.5,box?box.max[axis]-.5:sceneData.mapSize/2-.5);}
 function preserveSceneHeights(anchors){if(!baseWorld)for(const object of sceneData.objects){const y=anchors?.get(object.id);if(Number.isFinite(y))object.groundOffset=y-groundAt(object.position.x,object.position.z,y+100);}}
 function alignBase(transform){
- if(sceneData.layout==='basketball-stadium'){syncBaseControls();return;}
+ if(['basketball','hockey'].includes(sportsEnvironmentKind({builderScene:sceneData}))){syncBaseControls();return;}
  const layer=baseWorld||proceduralWorld;
  const anchors=worldDrag?.anchors||new Map([...runtime].map(([id,rt])=>[id,new THREE.Box3().setFromObject(rt.root).min.y]));if(worldDrag)worldDrag.anchors=anchors;
  sceneData.baseTransform=applyBuilderBaseTransform(layer,transform);layer.userData.buildBounds=new THREE.Box3().setFromObject(layer);
@@ -615,15 +616,16 @@ async function showRepositoryMap(layout){
  const meta=layouts[layout],generation=++baseLoadGeneration,root=new THREE.Group();
  $('#save-state').textContent='Loading editable '+meta.name+'…';
  try{
-  const base=meta.baseEnvironment,urls=base.modelUrls?.length?base.modelUrls:[base.modelUrl];
-  for(const url of urls){const gltf=await loadBuilderGlb(url);root.add(gltf.scene);}
+  const base=meta.baseEnvironment,urls=base.modelUrls?.length?base.modelUrls:[base.modelUrl].filter(Boolean);
+  if(!urls.length&&(base.builderScene||base.proceduralLand||base.layout))root.add(createBuilderLand(base));
+  else for(const url of urls){const gltf=await loadBuilderGlb(url);root.add(gltf.scene);}
   if(generation!==baseLoadGeneration){root.traverse(node=>{node.geometry?.dispose();for(const material of [].concat(node.material||[]))material.dispose?.();});return;}
   root.scale.setScalar((Number(base.scale)||1)*(Number(base.spaceScale)||1));root.rotation.set(base.rotation?.x||0,base.rotation?.y||0,base.rotation?.z||0);root.updateMatrixWorld(true);
   const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3()),span=Math.max(size.x,size.z);
   if(!Number.isFinite(span)||span<=0)throw Error('Selected map has no buildable geometry.');
-  if(base.playableSize>0){root.scale.multiplyScalar(THREE.MathUtils.clamp(base.playableSize/span,.01,100));root.updateMatrixWorld(true);}
+  if(base.playableSize>0&&!['basketball','hockey','range'].includes(sportsEnvironmentKind(base))){root.scale.multiplyScalar(THREE.MathUtils.clamp(base.playableSize/span,.01,100));root.updateMatrixWorld(true);}
   clearBaseWorld();$('#world-base-ghost').checked=false;baseWorld=root;world.add(root);terrain.visible=false;worldDressing.visible=false;
-  sceneData.baseEnvironment=cloneData(base);sceneData.layout=layout;applyBuilderBaseTransform(baseWorld,sceneData.baseTransform);baseWorld.userData.buildBounds=new THREE.Box3().setFromObject(baseWorld);syncBaseControls();
+  sceneData.baseEnvironment=cloneData(base);sceneData.layout=layout;syncBasketballScene();applyBuilderBaseTransform(baseWorld,sceneData.baseTransform);baseWorld.userData.buildBounds=new THREE.Box3().setFromObject(baseWorld);syncBaseControls();
   applyMapSize([40,80,120,160,240,320].find(value=>value>=Math.max(...new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).toArray()))||320);
   updateLayout(layout);sceneData.objects.forEach(updateTransform);persist(meta.name+' loaded · place items directly on its floors');resetBuildView();
  }catch(error){root.traverse(node=>{node.geometry?.dispose();for(const material of [].concat(node.material||[]))material.dispose?.();});if(generation===baseLoadGeneration){$('#layout-select').value=sceneData.layout;showToast(error.message);$('#save-state').textContent='Map load failed · select again to retry';}}
@@ -646,7 +648,7 @@ function selectLayout(layout){
  if(URBAN_LAYOUTS[layout]||BUILDING_DISTRICTS[layout]||CAMP_LAYOUTS[layout])generateUrbanWorld(layout);
  else {clearBaseWorld();delete sceneData.baseEnvironment;updateLayout(layout);resetBuildView();}
 }
-function syncBasketballScene(){const basketball=sceneData.layout==='basketball-stadium';sceneData.basketballCourt=basketball;sceneData.environmentSettings={...(sceneData.environmentSettings||{}),basketballCourt:basketball};if(basketball){sceneData.baseTransform={};sceneData.mapSize=62;sceneData.gameplay={...(sceneData.gameplay||{}),friendlyFire:false,basketball:true};}}
+function syncBasketballScene(){const kind=sportsEnvironmentKind({builderScene:sceneData}),basketball=kind==='basketball';sceneData.basketballCourt=basketball;sceneData.environmentSettings={...(sceneData.environmentSettings||{}),basketballCourt:basketball};if(['basketball','hockey'].includes(kind))sceneData.baseTransform={};if(basketball){sceneData.mapSize=62;sceneData.gameplay={...(sceneData.gameplay||{}),friendlyFire:false,basketball:true};}else if(sceneData.gameplay?.basketball)sceneData.gameplay={...sceneData.gameplay,basketball:false};}
 const arcadeStationIds=ARCADE_ATTRACTIONS.slice(0,5).map(part=>part.id);
 function updateLayout(layout){sceneData.layout=layouts[layout]?.canonicalLayout||(layouts[layout]?layout:'grand-floor');syncBasketballScene();if(sceneData.layout==='basketball-stadium')applyMapSize(62);const meta=layouts[sceneData.layout];$('#layout-select').value=sceneData.layout;$('#layout-label').textContent=meta.name.toUpperCase();$('#layout-description').textContent=meta.description;$('#land-canvas').className=`land-canvas layout-${sceneData.layout}`;$('#land-canvas').setAttribute('aria-label',`${meta.name} 3D editor. Select an item then click the terrain to place it.`);shapeTerrain();sceneData.objects.forEach(updateTransform);syncHockeySettings();syncArcadeSettings();syncBaseControls();renderAtlas();markChanged()}
 $('#generate-world').addEventListener('click',generateWorld);$('#generator-theme').addEventListener('change',event=>{if(layouts[event.target.value])selectLayout(event.target.value);});$('#online-model-form').addEventListener('submit',importOnlineModel);
@@ -944,8 +946,8 @@ new ResizeObserver(()=>$('#inspector-panel').style.setProperty('--inspector-head
 
 builderPanelPages=mountBuilderPanelPages({onMode:setInspectorTab,onGenerateCamp:selectLayout,onAddCampScene:addSummerCampScene,getScene:()=>sceneData,getSelectedId:()=>selectedId,onPlaceLayoutScene:id=>{setBuilderLayerVisibility('layoutScenes',true);beginPlacement(id);},onSelectLayoutScene:id=>{setBuilderLayerVisibility('layoutScenes',true);selectObject(id,{openInspector:false});if(selected())frameObjects([selected()]);},onTuneLayoutScene:tuneLayoutScene,onPlaceInlay:id=>{setBuilderLayerVisibility('inlays',true);beginPlacement(id,{inlay:true});},onSelectInlay:id=>{setBuilderLayerVisibility('inlays',true);selectObject(id,{openInspector:true});if(selected())frameObjects([selected()]);},onLayerVisibility:setBuilderLayerVisibility,onInlayChoice:id=>{sceneData.editorSettings={...sceneData.editorSettings,inlayMapId:id};markChanged();}});
 function syncHockeySettings(){
- const panel=$('#hockey-settings');if(!panel)return;panel.hidden=sceneData.layout!=='hockey-arena';
- const config=hockeySettings(sceneData.gameplay?.hockey);for(const [key,value]of Object.entries(config)){const input=panel.querySelector('[name="'+key+'"]');if(input){if(input.type==='checkbox')input.checked=value;else input.value=value;}}
+ const panel=$('#hockey-settings');if(!panel)return;panel.hidden=sportsEnvironmentKind({builderScene:sceneData})!=='hockey';
+ const config=hockeySettings(sportsEnvironmentSettings({builderScene:sceneData},'hockey'));for(const [key,value]of Object.entries(config)){const input=panel.querySelector('[name="'+key+'"]');if(input){if(input.type==='checkbox')input.checked=value;else input.value=value;}}
 }
 $('#hockey-settings').addEventListener('change',()=>{const raw={};for(const input of $('#hockey-settings').querySelectorAll('[name]'))raw[input.name]=input.type==='checkbox'?input.checked:input.value;sceneData.gameplay={...sceneData.gameplay,hockey:hockeySettings(raw)};markChanged();});
 syncHockeySettings();
@@ -953,8 +955,8 @@ syncHockeySettings();
 
 function arcadePartTransform(config,id){return arcadeStationIds.includes(id)?config.placements[id]:config.parts[id];}
 function syncArcadeSettings(){
- const panel=$('#arcade-settings');panel.hidden=sceneData.layout!=='arcade-park';$('#play-mode').disabled=false;
- const config=arcadeSettings(sceneData.gameplay?.arcade);for(const input of panel.querySelectorAll('[name]'))input.value=config[input.name]??'';
+ const panel=$('#arcade-settings');panel.hidden=sportsEnvironmentKind({builderScene:sceneData})!=='arcade';$('#play-mode').disabled=false;
+ const config=arcadeSettings(sportsEnvironmentSettings({builderScene:sceneData},'arcade'));for(const input of panel.querySelectorAll('[name]'))input.value=config[input.name]??'';
  for(const input of panel.querySelectorAll('[data-arcade-enable]'))input.checked=config.enabled.includes(input.dataset.arcadeEnable);
  for(const input of panel.querySelectorAll('[data-arcade-station]'))input.value=config.placements[input.dataset.arcadeStation][input.dataset.axis];
  const opened=new Set([...panel.querySelectorAll('[data-arcade-part-details][open]')].map(part=>part.dataset.arcadePartDetails));

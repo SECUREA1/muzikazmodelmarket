@@ -1,5 +1,6 @@
 /** Deterministic hockey simulation shared by solo play and the authoritative server. */
 import {HOCKEY_TIERS,initializeOfficials,recordHockeyEvent,assessPenalty,enforceDelayedPenalties,stepPenaltyClocks,updateHockeyLineup,releasePowerPlayPenalty,pendingOffside,startHockeyShootout,shootoutDecision,sanitizeHockeyInput} from './hockey-officials.js';
+import {sportsEnvironmentKind} from './sports-worlds.js';
 export {HOCKEY_TIERS,PENALTY_RULES,assessPenalty,changeHockeyLine,toggleHockeyGoalie,switchHockeyPlayer,requestHockeyTimeout} from './hockey-officials.js';
 export const RINK=Object.freeze({length:60.96,width:25.908,corner:8.534,goalX:27.1272,goalWidth:1.8288,goalHeight:1.2192,blue:7.62});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0)),dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
@@ -9,7 +10,7 @@ export function hockeySettings(raw={}){
   icingMode:c.icingMode==='automatic'?'automatic':'hybrid',offsideMode:c.offsideMode==='immediate'?'immediate':'delayed',overtime:c.mode==='tournament'||c.overtime==='playoff'?'playoff':'regular',
   mode:c.mode==='tournament'?'tournament':'exhibition',homeColor:/^#[\da-f]{6}$/i.test(c.homeColor)?c.homeColor:'#237ad4',awayColor:/^#[\da-f]{6}$/i.test(c.awayColor)?c.awayColor:'#dc3c56'};
 }
-export const isHockeyMap=(e={})=>(e.builderScene?.layout||e.layout)==='hockey-arena'||e.game==='hockey';
+export const isHockeyMap=environment=>sportsEnvironmentKind(environment)==='hockey';
 export const attackDirection=(s,t)=>(t===0?1:-1)*(s.period%2===0?-1:1);
 export function createHockey(raw={}){
  const config=hockeySettings(raw),players=[];

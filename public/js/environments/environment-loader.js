@@ -1,4 +1,4 @@
-import {builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn} from './builder-base.js';
+import {builderBaseAlignment,builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn} from './builder-base.js';
 import { isBasketballEnvironment } from '../basketball-rules.js';
 import { isFiringRangeEnvironment } from '../firing-range.js';
 import { isCleanSportsEnvironment } from '../sports-worlds.js';
@@ -14,6 +14,7 @@ import { MeshoptDecoder } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examp
 import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Octree.js/+esm';
 import { applyWorldQuality } from './environment-quality.js';
 import {buildCollision,resolveSafeSpawn} from './environment-collision.js';
+import {prepareSphereSurfaces} from '../sphere-surface-collision.js';
 
 export class EnvironmentLoader {
   constructor({ scene, renderer, camera = null, onProgress = () => {}, serverAuthoritative = () => false }) {
@@ -104,13 +105,14 @@ export class EnvironmentLoader {
         nextWorld.userData.authoredFootprint = authoredFootprint;
         nextWorld.updateMatrixWorld(true);
       }
-      if(base)applyBuilderBaseTransform(nextWorld,environment.builderScene.baseTransform);
+      if(base)applyBuilderBaseTransform(nextWorld,builderBaseAlignment(environment));
       const quality = applyWorldQuality(nextWorld, this.renderer);
       // Prepare streamed materials before the world becomes visible. Three uses
       // parallel shader compilation when the browser supports it.
       if(this.camera&&this.renderer.compileAsync)await this.renderer.compileAsync(nextWorld,this.camera,this.scene);
       if(token!==this.token){this.disposeWorld(nextWorld,nextMixers);return null;}
       const collision = buildCollision(nextWorld, environment.collisionMode,[],{buildOctree:!this.serverAuthoritative()});
+      prepareSphereSurfaces(collision.collisionMeshes);
       if (!collision.visibleMeshes.length) throw new Error('Missing meshes: the environment loaded, but no renderable world meshes were found.');
       const spawn = resolveSafeSpawn(nextWorld, collision.floorMeshes, (builderLand?builderBaseSpawn(environment):environment.spawn));
       this.unload({cancelPending:false}); this.baseScale=baseScale; this.spaceScale=spaceScale; this.world = nextWorld; this.activeEnvironment = environment; this.mixers = nextMixers; this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree; this.bounds = spawn.bounds; this.scene.add(nextWorld); this.refreshFloorEffects(); this.onProgress(100);

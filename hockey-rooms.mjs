@@ -1,4 +1,5 @@
 import {createHockey,joinHockey,leaveHockey,hockeyInput,nextHockeyGame,restartHockey,stepHockey,changeHockeyLine,toggleHockeyGoalie,switchHockeyPlayer,requestHockeyTimeout} from './public/js/hockey-rules.js';
+import {sportsEnvironmentSettings} from './public/js/sports-worlds.js';
 /** One authoritative simulation per arena. Routes supply authenticated identities. */
 export class HockeyRooms {
  constructor({now=Date.now}={}){this.now=now;this.rooms=new Map();}
@@ -11,7 +12,7 @@ export class HockeyRooms {
  }
  command(id,environment,identity,command={}){
   const actor='account:'+identity.accountId;let room=this.rooms.get(id);
-  if(!room){if(!['join','spectate'].includes(command.action))throw Object.assign(Error('Join the hockey match first.'),{statusCode:409});room={state:createHockey({...environment.builderScene?.gameplay?.hockey||environment.hockey,...(command.action==='join'&&command.settings?{difficulty:command.settings.difficulty,mode:command.settings.mode,periodSeconds:command.settings.periodSeconds,aiFill:command.settings.aiFill}:{})}),at:this.now(),seen:new Map(),sequence:0,started:false};this.rooms.set(id,room);}
+  if(!room){if(!['join','spectate'].includes(command.action))throw Object.assign(Error('Join the hockey match first.'),{statusCode:409});room={state:createHockey({...sportsEnvironmentSettings(environment,'hockey'),...(command.action==='join'&&command.settings?{difficulty:command.settings.difficulty,mode:command.settings.mode,periodSeconds:command.settings.periodSeconds,aiFill:command.settings.aiFill}:{})}),at:this.now(),seen:new Map(),sequence:0,started:false};this.rooms.set(id,room);}
   const s=room.state;
   if(command.action==='join'){
    if(!room.started&&command.settings){const spectators=s.spectators;Object.assign(s,createHockey({...s.config,...command.settings}));s.spectators=spectators;}

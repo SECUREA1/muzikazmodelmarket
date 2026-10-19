@@ -1,11 +1,8 @@
+import {sportsEnvironmentKind} from './sports-worlds.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const icons={basketball:'<circle r="13"/><path d="M-13 0h26M0-13v26M-9-9Q7 0-9 9M9-9Q-7 0 9 9"/>',hockey:'<path d="m-10-13 13 24h10v-5H6L-6-15m16 2L-3 11h-10V6h7L6-15"/>',range:'<circle r="14"/><circle r="9"/><circle r="3"/><path d="M0-19v9M0 10v9M-19 0h9M10 0h9"/>',arcade:'<circle cy="-3" r="12"/><path d="M0-15V9M-12-3h24M-9-12 9 6M9-12-9 6M0 9l-8 9m8-9 8 9M-10 18h20"/>',world:'<path d="M-14 0 0-12 14 0M-10-3v17h20V-3M-3 14V4h6v10"/>'};
 export function mapSectorKind(env = {}) {
- const layout=env.builderScene?.layout||env.layout;
- return env.basketball===true||env.basketballCourt===true||env.id==='basketball-arena'||['basketball-arena','basketball-stadium'].includes(layout)?'basketball'
-  :env.game==='hockey'||env.id==='hockey-arena'||layout==='hockey-arena'?'hockey'
-  :env.game==='firing-range'||env.firingRange===true||['firing-range','force-training-range'].includes(env.id)||layout==='firing-range'?'range'
-  :env.game==='arcade'||env.id==='neon-junction'||['arcade','arcade-park','neon-junction'].includes(layout)?'arcade':'world';
+ return sportsEnvironmentKind(env)||'world';
 }
 const priorityLabels={'muzikaz-full-house':'MUZIKAZ House','basketball-arena':'Basketball','hockey-arena':'Ice Hockey','firing-range':'Firing Range','force-training-range':'Force Training','neon-junction':'Neon Junction'};
 export function wheelSectorPath(index,count=6){const point=(angle,radius)=>[200+Math.cos(angle)*radius,200+Math.sin(angle)*radius].map(v=>v.toFixed(3)).join(' '),start=(index*360/count-120+1.5)*Math.PI/180,end=((index+1)*360/count-120-1.5)*Math.PI/180;return `M${point(start,184)} A184 184 0 0 1 ${point(end,184)} L${point(end,78)} A78 78 0 0 0 ${point(start,78)} Z`;}

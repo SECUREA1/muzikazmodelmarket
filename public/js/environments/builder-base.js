@@ -1,3 +1,4 @@
+import {sportsEnvironmentKind} from '../sports-worlds.js';
 // A builder scene may extend an authored world without turning it into terrain.
 export function builderBaseEnvironment(environment) {
   const base = environment.builderScene?.baseEnvironment;
@@ -9,6 +10,8 @@ export function normalizedBaseTransform(value = {}) {
   const number = (value, fallback, min, max) => Number.isFinite(Number(value)) ? Math.min(max, Math.max(min, Number(value))) : fallback;
   return {x:number(value.x,0,-1000,1000),y:number(value.y,0,-1000,1000),z:number(value.z,0,-1000,1000),rotation:number(value.rotation,0,-360,360),scale:number(value.scale,1,.1,4)};
 }
+// Court/ice rules use regulation world coordinates on every client and server.
+export const builderBaseAlignment=environment=>['basketball','hockey'].includes(sportsEnvironmentKind(environment))?{}:environment?.builderScene?.baseTransform||{};
 // Apply alignment after authored normalization; repeated edits never accumulate.
 export function applyBuilderBaseTransform(root, value) {
   const transform=normalizedBaseTransform(value);
@@ -22,8 +25,8 @@ export function applyBuilderBaseTransform(root, value) {
 }
 
 export function builderBaseSpawn(environment) {
-  const base=builderBaseEnvironment(environment);if(!base&&!environment.builderScene)return null;
-  const point=(base||environment).spawn||{x:0,y:0,z:2},t=normalizedBaseTransform(environment.builderScene.baseTransform),angle=t.rotation*Math.PI/180;
+  const base=builderBaseEnvironment(environment)||environment.builderScene?.baseEnvironment;if(!base&&!environment.builderScene)return null;
+  const point=(base||environment).spawn||{x:0,y:0,z:2},t=normalizedBaseTransform(builderBaseAlignment(environment)),angle=t.rotation*Math.PI/180;
   const x=(Number(point.x)||0)*t.scale,z=(Number(point.z)||0)*t.scale;
   return {x:x*Math.cos(angle)+z*Math.sin(angle)+t.x,y:(Number(point.y)||0)*t.scale+t.y,z:-x*Math.sin(angle)+z*Math.cos(angle)+t.z,rotationY:(Number(point.rotationY)||0)+angle};
 }

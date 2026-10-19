@@ -1,5 +1,6 @@
 import {BASKETBALL_SPECTATOR_SEATS} from './basketball-stadium.js';
 import {isBasketball,stepBasketball,basketballShotSolution,basketballCatchPosition,tossBasketball} from './basketball.js';
+import {sportsEnvironmentKind} from './sports-worlds.js';
 
 // Metres, regulation NBA court and hoop dimensions. Ball positions refer to
 // the bottom of the model; scoring tests use its physical centre.
@@ -15,7 +16,7 @@ const quarterMs=match=>(match.settings?.quarterMinutes||12)*60000;
 const regulationQuarters=match=>match.settings?.quarters||4;
 export function requireBasketballPlayer(sim,player){if(sim.basketball&&!isBasketballPlayer(player))error('Spectators can watch this game. Choose a team before the next tip-off.');}
 const event=(sim,action,now,fields={})=>{sim.events ||= [];sim.events.push({id:`${action}-${now}-${sim.basketball?.playSequence||0}`,action,at:now,...fields});sim.events=sim.events.slice(-100);};
-export const isBasketballEnvironment=environment=>environment?.id==='basketball-arena'||environment?.basketballCourt===true||environment?.basketball===true||['basketball-arena','basketball-stadium'].includes(environment?.builderScene?.layout);
+export const isBasketballEnvironment=environment=>sportsEnvironmentKind(environment)==='basketball';
 export const basketballGameBall=sim=>sim.actors?.[sim.basketball?.ballId||BASKETBALL_BALL_ID];
 export const basketballHoopForTeam=team=>({x:0,y:BASKETBALL_COURT.rimHeight,z:team==='away'?BASKETBALL_COURT.rimZ:-BASKETBALL_COURT.rimZ});
 
@@ -261,7 +262,7 @@ function advanceClock(sim,now) {
  }
 }
 
-export function stepBasketballGame(sim,now,dt) {
+export function stepBasketballGame(sim,now,dt,{onBallStep}={}) {
  if(!sim.basketball)return;
  if(sim.basketball.state==='live'&&Object.values(sim.players).some(p=>!p.basketballAI&&isBasketballPlayer(p)&&!p.replacedByRoom&&now-p.lastSeen<15000)){fillBasketballTeams(sim,now);if(dt>0)stepBasketballAI(sim,now,dt);}
  evacuateBasketballSpectators(sim);
@@ -270,6 +271,7 @@ export function stepBasketballGame(sim,now,dt) {
   if(!isBasketball(ball)||ball.holderId||!ball.ballVelocity)continue;
   const catchFrom={...ball.position};
   stepBasketball(ball,dt,0,(previous,next)=>{
+   if(onBallStep?.(ball,previous,next)===false)return false;
    if(scoreCrossing(sim,ball,previous,next,now))return false;
    // Regulation transparent backboards: a bank shot reflects at the board.
    if(ball.ballVelocity)for(const sign of [-1,1]){const plane=sign*13.131;if((previous.z-plane)*(next.z-plane)<=0&&Math.abs(next.x)<.9145&&next.y+BASKETBALL_COURT.ballRadius>2.9&&next.y+BASKETBALL_COURT.ballRadius<3.969){ball.ballVelocity.z*=-.7;next.z=plane-sign*.025;}}

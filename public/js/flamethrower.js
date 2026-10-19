@@ -1,3 +1,5 @@
+import {collisionIsDisabled,isSolidSurface,raycastSolidSurfaces} from './collision-surfaces.js';
+
 export const FLAME_CONFIG = Object.freeze({
   tank: 100, fuelPerBurst: 1, interval: .08, range: 12,
   muzzleOffset: .55,
@@ -163,9 +165,7 @@ export class Flamethrower {
     const meshes = [];
     target.root.traverse(o => {
       if (!o.isMesh || !o.geometry?.attributes?.position) return;
-      for (let node = o; node; node = node.parent) {
-        if ((!target.includeInvisible && node.visible === false) || node.userData?.collisionDisabled) return;
-      }
+      if (collisionIsDisabled(o) || !isSolidSurface(o, {includeInvisible: target.includeInvisible})) return;
       meshes.push(o);
     });
     return meshes;
@@ -204,39 +204,28 @@ export class Flamethrower {
   }
 
   sweep(start, end, targets) {
-    const T = this.THREE, travel = end.clone().sub(start), distance = travel.length();
+    const travel = end.clone().sub(start), distance = travel.length();
     if (!distance) return null;
     const direction = travel.normalize();
     let nearest = null;
+    this.ray.set(start, direction);
+    this.ray.near = 0;
+    this.ray.far = distance;
     for (const target of targets) {
       if (target.projectiles === false) continue;
-      for (const mesh of this.meshes(target)) {
-        if (!this.bounds?.has(mesh)) mesh.updateWorldMatrix(true, false);
-        this.box.copy(this.bounds?.get(mesh) || new T.Box3().setFromObject(mesh)).expandByScalar(.16);
-        this.ray.set(start, direction);
-        const entry = this.ray.ray.intersectBox(this.box, this.closest);
-        if (!this.box.containsPoint(start) && (!entry || entry.distanceTo(start) > distance)) continue;
-        // Test both sides of triangles, including floors approached from below.
-        const positions = mesh.geometry.attributes.position, index = mesh.geometry.index;
-        const count = index ? index.count : positions.count;
-        this.ray.set(start, direction);
-        for (let i = 0; i + 2 < count; i += 3) {
-          for (let j = 0; j < 3; j++) {
-            const vertex = [this.triangle.a, this.triangle.b, this.triangle.c][j];
-            mesh.getVertexPosition(index ? index.getX(i + j) : i + j, vertex);
-            vertex.applyMatrix4(mesh.matrixWorld);
-          }
-          const point = this.ray.ray.intersectTriangle(this.triangle.a, this.triangle.b, this.triangle.c, false, this.closest);
-          if (!point) continue;
-          const hitDistance = point.distanceTo(start);
-          if (hitDistance <= distance && (!nearest || hitDistance < nearest.distance)) {
-            nearest = { point: point.clone(), distance: hitDistance, target, normal: this.triangle.getNormal(new T.Vector3()) };
-          }
-        }
-      }
-
+      const hit = raycastSolidSurfaces(this.ray, this.meshes(target), false, {includeInvisible: target.includeInvisible})[0];
+      if (!hit || (nearest && hit.distance >= nearest.distance)) continue;
+      const normal = hit.solidNormal || hit.face?.normal.clone().transformDirection(hit.object.matrixWorld) || direction.clone().negate();
+      if (normal.dot(direction) > 0) normal.negate();
+      nearest = {point: hit.point, distance: hit.distance, target, normal};
     }
     return nearest;
+  }
+
+  contactVisible(flame, target, targets) {
+    const point = new this.THREE.Box3().setFromObject(target.root).getCenter(new this.THREE.Vector3());
+    const hit = this.sweep(flame.root.position, point, targets);
+    return !hit || hit.target.root === target.root;
   }
 
   update(delta, elapsed) {
@@ -264,7 +253,7 @@ export class Flamethrower {
       if (flame.landed) {
         if (!flame.anchor.parent) { this.remove(flame); continue; }
         root.position.copy(flame.anchor.localToWorld(flame.localPoint.clone()));
-        const contacts = targets.filter(t => t.root === flame.anchor || this.touching(t, root.position)).map(t => t.root);
+        const contacts = targets.filter(t => t.root === flame.anchor || (this.touching(t, root.position) && this.contactVisible(flame, t, targets))).map(t => t.root);
         const opacity = flame.clock.update(burnDelta, contacts, (target, amount) => this.damage(target, amount, flame));
         if (opacity <= 0) { this.remove(flame); continue; }
         const pulse = this.reducedMotion ? 1 : 1 + Math.sin(elapsed * 12 + root.id) * .12;

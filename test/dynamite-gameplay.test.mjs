@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import * as THREE from '../public/vendor/three/three.module.min.js';
+import {raycastSolidSurfaces} from '../public/js/collision-surfaces.js';
 
 test('RAD-TOX dynamite equips, tosses, lands, and releases animated gas', async () => {
   const script = await readFile('public/js/house-explorer-glb.js', 'utf8');
@@ -10,7 +12,22 @@ test('RAD-TOX dynamite equips, tosses, lands, and releases animated gas', async 
   assert.match(script, /if\(this\.tool==='dynamite'\)return this\.throwDynamite\(\)/, 'the pointer trigger tosses the selected dynamite');
   assert.match(script, /if\(this\.tool==='dynamite'\)return this\.throwDynamite\(origin,direction\)/, 'an XR trigger tosses the selected dynamite');
   assert.match(script, /dynamiteModel\.position\.set/, 'the held dynamite has a first-person hand pose');
-  assert.match(script, /stick\.userData\.landed=true/, 'the tossed stick settles after bouncing on the floor');
+  const classSource = script.slice(script.indexOf('  class ToxicBubbleSystem {'), script.indexOf('  let viewActive'));
+  const System = new Function('THREE', 'raycastSolidSurfaces', 'builderDecor', 'playerRig', classSource + ';return ToxicBubbleSystem;')(THREE, raycastSolidSurfaces, new THREE.Group(), new THREE.Group());
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.MeshBasicMaterial());
+  floor.rotation.x = -Math.PI / 2;
+  const system = Object.create(System.prototype);
+  Object.assign(system, {loader: {floorMeshes: [floor]}, bricks: [], drawingStrokes: [], surfaceRaycaster: new THREE.Raycaster()});
+  const stick = {position: new THREE.Vector3(0, 1, 0), userData: {velocity: new THREE.Vector3(0, -5, 0), bounces: 0, landed: false}};
+  system.moveThrownProjectile(stick, .3, .12, true);
+  assert.equal(stick.userData.phase, 'bounce');
+  assert.equal(stick.userData.bounces, 1);
+  assert.ok(stick.position.y >= .12, 'a fast toss stays above the physical floor');
+  assert.ok(stick.userData.velocity.y > 0, 'a falling stick bounces upward');
+  stick.userData.velocity.set(0, -1, 0);
+  system.moveThrownProjectile(stick, .1, .12, true);
+  assert.equal(stick.userData.landed, true, 'a slow rebound settles without further motion');
+  assert.equal(stick.userData.velocity.length(), 0);
   assert.match(script, /createDynamiteGas\(position,radius\)/, 'the animated explosion emits a green gas cloud');
   assert.match(script, /toxicGas:true/, 'gas particles use their rising, expanding animation path');
   assert.match(script, /dynamiteModel\.visible=false/, 'throwing releases the held first-person stick');
@@ -19,7 +36,6 @@ test('RAD-TOX dynamite equips, tosses, lands, and releases animated gas', async 
   assert.match(script, /function shootAtReticle/, 'the existing shoot control activates the equipped tool');
   assert.match(script, /data-demo-mzk-balance/, 'free guests see a compact in-game MZK balance');
   assert.doesNotMatch(script, /data-guest-mzk-burn/, 'the removed burn-and-spend panel does not return');
-  assert.match(script, /userData.phase='bounce'/, 'the live dynamite records its bounce phase before detonation');
   assert.match(script, /DYNAMITE_FUSE_SPARK/, 'the tossed dynamite carries a visibly animated lit fuse');
   assert.match(script, /playerHit=this\.getPlayerPosition\(\)\.distanceTo\(position\)<=radius/, 'the blast can hurt the throwing player');
   assert.match(script, /avatarHealth=Math\.max/, 'the blast damages avatars inside its radius');

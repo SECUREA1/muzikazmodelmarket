@@ -8,7 +8,7 @@ import {environmentGeometry} from './server-glb-geometry.mjs';
 export function placedCollisionWorld(actors={},objects={}){
  const root=new THREE.Group(),boxes=[],meshes=[];
  const add=(model,position,rotation,scale,anchor=false,id)=>{
-  if(!model)return;const wrapper=new THREE.Group();
+  if(!model)return;const wrapper=new THREE.Group();wrapper.userData.builderObjectId=id;
   if(anchor){model.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(model);if(!bounds.isEmpty())model.position.y-=bounds.min.y;}
   wrapper.add(model);wrapper.position.set(position.x||0,position.y||0,position.z||0);wrapper.rotation.set(rotation?.x||0,rotation?.y||0,rotation?.z||0);wrapper.scale.set(scale?.x||1,scale?.y||1,scale?.z||1);root.add(wrapper);wrapper.updateMatrixWorld(true);
   wrapper.traverse(mesh=>{if(!mesh.isMesh||mesh.userData.collisionDisabled||mesh.userData.brickPaintPart==='stud')return;const box=new THREE.Box3().setFromObject(mesh);box.objectId=id;boxes.push(box);meshes.push(mesh);});

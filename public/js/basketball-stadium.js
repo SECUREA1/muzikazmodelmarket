@@ -73,6 +73,10 @@ export function createBasketballHoop(THREE, options = {}) {
   box([.14, .08, .18], rimMaterial, [0, 3.05, -.29], 'BASKETBALL_BREAKAWAY_MOUNT');
   const rim = add(new THREE.TorusGeometry(BASKETBALL_COURT.rimRadius, .013, 10, 48), rimMaterial, [0, 3.05, 0], 'BASKETBALL_RIM');
   rim.rotation.x = Math.PI / 2;
+  // The court's regulation rim crossing owns scoring for calibrated shots at
+  // every supported launch angle. Do not bounce a second time off the visual
+  // torus before that rule runs; walls, glass and support hardware stay solid.
+  rim.userData.ballCollisionDisabled = true;
   const net = new THREE.Group(); net.name = 'BASKETBALL_ANIMATED_NET'; net.position.y = 3.045;
   net.userData.collisionDisabled = true; root.add(net);
   const netHelpers = helpers(THREE, net);

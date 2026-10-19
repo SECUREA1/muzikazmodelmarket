@@ -1,5 +1,6 @@
 import {extraGameIds,newExtraGame,moveExtraGame,projectExtraGame} from './extra-arcade-games.js';
 import {arcadeGameIds} from './arcade-games.js';
+import {sportsEnvironmentKind} from './sports-worlds.js';
 const fail=message=>{throw Object.assign(Error(message),{statusCode:409});};
 const shuffle=(values,rng)=>{for(let i=values.length-1;i>0;i--){const j=rng(i+1);[values[i],values[j]]=[values[j],values[i]];}return values;};
 const draw=game=>{if(!game.deck.length)fail('Deck is empty. Start a new game.');return game.deck.pop();};
@@ -128,7 +129,7 @@ export function arcadeSettings(value={}){
  const enabled=Array.isArray(c.enabled)?[...new Set(c.enabled.filter(id=>ARCADE_ATTRACTIONS.some(a=>a.id===id)))]:ARCADE_ATTRACTIONS.map(a=>a.id);
  return {basketballMode:c.basketballMode==='shooting'?'shooting':'full',teamSize:Math.round(bounded(c.teamSize,1,5,3)),periodSeconds:bounded(c.periodSeconds,15,600,60),aiFill:c.aiFill!==false,roundSeconds:bounded(c.roundSeconds,15,180,45),trainLapSeconds:bounded(c.trainLapSeconds,20,120,55),coasterLapSeconds:bounded(c.coasterLapSeconds,15,90,32),coasterPeak:bounded(c.coasterPeak,6,22,13),trainRadiusX:bounded(c.trainRadiusX,18,32,24),trainRadiusZ:bounded(c.trainRadiusZ,12,23,16),coasterWidth:bounded(c.coasterWidth,30,58,39),coasterDepth:bounded(c.coasterDepth,20,40,27),difficulty:c.difficulty==='normal'?'normal':'easy',enabled:enabled.filter(id=>parts[id].enabled),placements,parts};
 }
-export const isArcadeMap=(map={})=>map.game==='arcade'||(map.builderScene?.layout||map.layout)==='arcade-park';
+export const isArcadeMap=environment=>sportsEnvironmentKind(environment)==='arcade';
 export function arcadeAttractions(config={}){const c=arcadeSettings(config);return ARCADE_ATTRACTIONS.map(a=>({...a,...c.placements[a.id],enabled:c.enabled.includes(a.id)}));}
 export function createArcadeSession(config={}){return {config:arcadeSettings(config),mode:'explore',attraction:null,ride:null,visited:[],points:0,lastRide:null};}
 export function enterArcadeAttraction(s,id){

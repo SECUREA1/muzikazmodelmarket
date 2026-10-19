@@ -1,8 +1,8 @@
-import {applyBuilderBaseTransform} from './builder-base.js';
+import {applyBuilderBaseTransform,builderBaseAlignment} from './builder-base.js';
 import {addFiringRangeDressing,createFiringRangeFloorMaterial} from './layout-firing-range.js';
 import {finishLayoutArchitecture} from './layout-details.js';
 import {layoutHeight,createLayoutTerrain,createLayoutMaterial} from './layout-terrain.js';
-import {isCleanSportsEnvironment} from '../sports-worlds.js';
+import {isCleanSportsEnvironment,sportsEnvironmentSettings} from '../sports-worlds.js';
 import {createArcadePark} from '../arcade-park.js';
 import {createHockeyArena} from '../hockey-models.js';
 import {applySportsSurfaces} from '../sports-surfaces.js';
@@ -18,12 +18,18 @@ function sportsLand(root,theme) {
     root.userData.cleanSportsWorld=true;return root;
 }
 export function createBuilderLand(environment) {
+    const savedBase=environment.builderScene?.baseEnvironment;
+    if(savedBase&&!savedBase.modelUrl&&!savedBase.modelUrls?.length&&(savedBase.builderScene||savedBase.proceduralLand||savedBase.layout)){
+      const baseScene=savedBase.builderScene||{};
+      const root=createBuilderLand({...savedBase,builderScene:{...baseScene,gameplay:{...baseScene.gameplay,...environment.builderScene.gameplay}}});
+      applyBuilderBaseTransform(root,builderBaseAlignment(environment));
+      return root;
+    }
     if(isBasketballEnvironment(environment)){const root=createBasketballStadium(THREE,environment);root.userData.cleanSportsWorld=true;return root;}
-    if((environment.builderScene?.layout||environment.layout)==='arcade-park')return sportsLand(createArcadePark(environment.builderScene?.gameplay?.arcade||environment.arcade).root,'arcade');
+    if((environment.builderScene?.layout||environment.layout)==='arcade-park')return sportsLand(createArcadePark(sportsEnvironmentSettings(environment,'arcade')).root,'arcade');
     if((environment.builderScene?.layout||environment.layout)==='hockey-arena')return sportsLand(createHockeyArena(),'hockey');
     const built = environment.builderScene || {};
     const layout = built.layout || environment.layout || 'grand-floor';
-    if (isBasketballEnvironment(environment)) return createBasketballStadium(THREE, environment);
     const meta = built.layoutMeta || environment.layoutMeta || {};
     const heightAt=(x,z)=>layoutHeight(layout,x,z);
     const geometry=createLayoutTerrain(layout,built.mapSize,Number(meta.color)||0x315b32);

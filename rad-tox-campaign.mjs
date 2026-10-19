@@ -1,5 +1,6 @@
 import {ENEMY_BEHAVIORS} from './server-enemy-combat.mjs';
 import {damagePlayer,openMatch,finishMatch,healPlayer,matchRows} from './rpg-match.mjs';
+import {enemyBodyRadius,steerEnemyApart,enemyStepKeepsSpace} from './public/js/enemy-spacing.js';
 export const ROUND_COUNTDOWN_MS=10000;
 // Shared encounters are owned by the room, never by a client's local enemy list.
 export function supportsRadTox(environment) {
@@ -90,10 +91,15 @@ export function stepRadToxEnemy(sim,actor,players,now,dt,blocksShot=()=>false,re
    if(retreat){mx=-dxn;mz=-dzn;}else if(approach){mx=dxn;mz=dzn;}
    else {const side=actor.id.charCodeAt(actor.id.length-1)%2?1:-1;mx=-dzn*side;mz=dxn*side;}
   }else{
-   const hold=span<config.range*.7||(previousMode==='hold'&&span<config.range*.95);
-   actor.movementMode=hold?'hold':'approach';if(!hold){mx=dxn;mz=dzn;}
+   const afterAttack=now-(actor.lastAttack??-Infinity)<650;
+   const retreat=span<enemyBodyRadius(actor.kind)+.43||(afterAttack&&span<range*1.65);
+   const hold=!retreat&&(span<range*.7||(previousMode==='hold'&&span<range*.95));
+   actor.movementMode=retreat?'retreat':hold?'hold':'approach';
+   if(retreat){mx=-dxn;mz=-dzn;}else if(!hold){mx=dxn;mz=dzn;}
   }
- }
+ }else actor.movementMode='retreat';
+ const spacing={id:actor.id,radius:enemyBodyRadius(actor.kind),players,enemies:Object.values(sim.actors||{}).filter(other=>other.radTox||['hostile','patrol'].includes(other.definition?.gameplay?.behavior))};
+ ({x:mx,z:mz}=steerEnemyApart({...spacing,position:actor.position,desired:{x:mx,z:mz}}));
  const duration=Math.max(0,Math.min(.25,Number(dt)||0)),steps=Math.max(1,Math.ceil(duration/.05)),slice=duration/steps;
  const originPosition={...actor.position};
  actor.velocity ||= {x:mx*speed,y:0,z:mz*speed};
@@ -108,6 +114,7 @@ export function stepRadToxEnemy(sim,actor,players,now,dt,blocksShot=()=>false,re
    if(!slice||Math.hypot(direction.x,direction.z)<.0001)continue;
    const next=resolveMovement(previous,{...previous,x:previous.x+direction.x*slice,z:previous.z+direction.z*slice});
    if(!next||!['x','y','z'].every(axis=>Number.isFinite(next[axis])))continue;
+   if(!enemyStepKeepsSpace(previous,next,spacing))continue;
    if(Math.hypot(next.x-previous.x,next.z-previous.z)>1e-6){actor.position={x:next.x,y:next.y,z:next.z};actor.velocity={x:(next.x-previous.x)/slice,y:0,z:(next.z-previous.z)/slice};moved=true;break;}
   }
   if(!moved)actor.velocity={x:0,y:0,z:0};

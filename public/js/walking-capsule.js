@@ -3,6 +3,7 @@ import {boxWallSegments, triangleHeightAt, triangleNormalY, triangleWallSegments
 
 const EPSILON = 1e-7;
 const WALKABLE_NORMAL_Y = .55;
+const backfaces = new WeakMap();
 
 function moveY(capsule, amount) {
   capsule.start.y += amount;
@@ -34,6 +35,15 @@ function contactsAt(capsule, triangles, boxes, octree) {
   if (octree?.triangleCapsuleIntersect) for (const triangle of triangles) {
     const hit = octree.triangleCapsuleIntersect(capsule, triangle);
     if (hit && hit.depth > EPSILON) contacts.push({...hit, surface: triangle});
+    // Octree contacts follow authored winding. A physical single-sided GLB
+    // ceiling also blocks a jump from its back face, without changing renders.
+    if (triangle.clone && triangle.set) {
+      let reversed = backfaces.get(triangle);
+      if (!reversed) { reversed = triangle.clone(); backfaces.set(triangle, reversed); }
+      reversed.set(triangle.a, triangle.c, triangle.b);
+      const back = octree.triangleCapsuleIntersect(capsule, reversed);
+      if (back && back.depth > EPSILON) contacts.push({...back, surface: triangle});
+    }
   }
   for (const box of boxes) {
     const hit = boxCapsuleContact(capsule, box);
@@ -45,7 +55,7 @@ function contactsAt(capsule, triangles, boxes, octree) {
 function floorAt(x, z, min, max, triangles, boxes) {
   let height = null;
   for (const triangle of triangles) {
-    if (triangleNormalY(triangle) < WALKABLE_NORMAL_Y) continue;
+    if (Math.abs(triangleNormalY(triangle)) < WALKABLE_NORMAL_Y) continue;
     const y = triangleHeightAt(x, z, triangle);
     if (y !== null && y >= min - EPSILON && y <= max + EPSILON && (height === null || y > height)) height = y;
   }

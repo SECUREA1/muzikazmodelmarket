@@ -1,5 +1,5 @@
 import {worldPreviewData,safeWorldMedia} from './world-preview-data.js';
-import {applyBuilderBaseTransform} from './environments/builder-base.js';
+import {applyBuilderBaseTransform,builderBaseAlignment} from './environments/builder-base.js';
 
 // Saved objects already use world coordinates. Keep them beside the map group
 // so normalizing or aligning an authored base never transforms objects twice.
@@ -12,7 +12,7 @@ export async function populateWorldPreviewContent(content,THREE,world,{loadModel
  base.rotation.set(Number(source.rotation?.x)||0,Number(source.rotation?.y)||0,Number(source.rotation?.z)||0);
  const size=new THREE.Box3().setFromObject(base).getSize(new THREE.Vector3()),footprint=Math.max(size.x,size.z),playableSize=Number(source.playableSize);
  if(!data.basketball&&playableSize>0&&footprint>0)base.scale.multiplyScalar(THREE.MathUtils.clamp(playableSize/footprint,.01,100));
- if(data.base)applyBuilderBaseTransform(base,world.builderScene.baseTransform);
+ if(data.base)applyBuilderBaseTransform(base,builderBaseAlignment(world));
  const scene=world.builderScene||world.placementScene;
  const definitions=new Map([...(scene?.catalogModels||[]),...(scene?.placedModels||[])].map(model=>[model.id,model]));
  const overlays=new THREE.Group();overlays.name='WORLD_PREVIEW_OBJECTS';content.add(overlays);

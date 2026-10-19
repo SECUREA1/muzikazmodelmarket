@@ -42,8 +42,23 @@ Collider clones receive the authored world matrix exactly once. Overlapping
 supplemental roots do not register the same mesh twice. Ordinary invisible
 scenery is excluded; explicitly authored hidden colliders remain physical.
 Pickup, door and collision-disabled state still control whether an object is
-solid. Dynamic geometry is cached by its transform; map content revisions
-invalidate the authoritative map cache.
+solid. Moving hostile/patrol projections remain selectable by weapons but never
+leave their body baked into the static Octree. Dynamic geometry is cached by its
+transform; map content revisions invalidate the authoritative map cache.
+
+GLB triangle strips/fans, sparse and normalized positions, node collision extras
+and GPU instance transforms contribute their authored faces on the server.
+Client instanced walls expand into aligned static triangles. Physical queries
+use both faces regardless of a GLB render material's winding; floor normals use
+the inverse transpose under nonuniform transforms.
+
+Basketballs use a shared continuous sphere sweep against real face, edge and
+vertex geometry before scoring and catch traces. This preserves door openings
+and rim holes, reflects wall contacts, and clips held balls without moving their
+holder. Compact per-geometry triangle indices are prepared during map loading;
+ordinary ball frames only visit nearby spatial nodes. A full-house fixture with
+roughly 498,000 faces completes warm ball queries in under a millisecond on the
+local development environment (timing depends on hardware).
 
 ## Regression checks
 

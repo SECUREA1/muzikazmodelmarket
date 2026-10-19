@@ -28,7 +28,7 @@ test('saved priority sports bases retain their actual layout plus placed models'
   const data=worldPreviewData(world);assert.equal(data.base,base,id);assert.equal(data.procedural,true,id);assert.deepEqual(data.models,[],id);
   const built=await populateWorldPreviewContent(new THREE.Group(),THREE,world,{loadModel:async()=>{throw Error('Procedural base requested a GLB');},createBuilderLand:environment=>{seen.push(environment);return mesh(20,1,20);},createBuilderModel:()=>mesh()});
   assert.deepEqual(seen,[base],id);
-  assert.equal(built.base.position.x,5,id);
+  assert.equal(built.base.position.x,['basketball-arena','hockey-arena'].includes(id)?0:5,id);
   assert.equal(built.overlays.children.length,1,id);
   assert.deepEqual(built.overlays.children[0].getWorldPosition(new THREE.Vector3()).toArray(),[4,3,-6],id);
  }

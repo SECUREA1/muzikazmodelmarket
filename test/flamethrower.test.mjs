@@ -66,6 +66,35 @@ test('enclosing room interiors do not ignite; the first wall blocks targets behi
   system.dispose(); room.geometry.dispose(); room.material.dispose(); target.geometry.dispose(); target.material.dispose();
 });
 
+test('back-facing thin walls keep ignition and burn damage on the firing side', () => {
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), new THREE.MeshBasicMaterial());
+  wall.position.z = -2;
+  wall.rotation.y = Math.PI;
+  const target = new THREE.Mesh(new THREE.BoxGeometry(.2, .2, .2), new THREE.MeshBasicMaterial());
+  target.position.z = -2.15; // Within burn radius, but behind the wall.
+  let behindWallDamage = 0;
+  const {scene, system} = setup(() => [{root: wall, surfaceOnly: true}, {root: target}], hit => {if (hit === target) behindWallDamage++;});
+  scene.add(wall, target);
+  system.fire(new THREE.Vector3(), new THREE.Vector3(0, 0, -1));
+  assert.equal(system.flames[0].anchor, wall);
+  assert.ok(system.flames[0].root.position.z > -2, 'fire stays on the visible side of a back-facing wall');
+  system.update(1, 1);
+  assert.equal(behindWallDamage, 0);
+  assert.equal(wall.material.side, THREE.FrontSide);
+  system.dispose();
+});
+
+test('instanced wall meshes intercept weapon sweeps at their actual instance transform', () => {
+  const wall = new THREE.InstancedMesh(new THREE.PlaneGeometry(4, 4), new THREE.MeshBasicMaterial(), 1);
+  wall.setMatrixAt(0, new THREE.Matrix4().makeTranslation(0, 0, -3));
+  const {scene, system} = setup(() => [{root: wall, surfaceOnly: true}]);
+  scene.add(wall);
+  system.fire(new THREE.Vector3(), new THREE.Vector3(0, 0, -1));
+  assert.equal(system.flames[0].anchor, wall);
+  assert.ok(Math.abs(system.flames[0].root.position.z + 2.975) < .00001);
+  system.dispose();
+});
+
 test('reset removes the flash and target fires, while cooldown prevents repeated clicks', () => {
   const { system } = setup();
   const origin = new THREE.Vector3(), aim = new THREE.Vector3(0, 0, -1);

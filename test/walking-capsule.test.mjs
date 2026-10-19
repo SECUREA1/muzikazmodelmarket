@@ -158,3 +158,24 @@ test('dynamic mesh triangles preserve door openings and broad-cull distant geome
   move(blocked, {x: 0, y: 0, z: -4}, options);
   near(blocked.start.z, .402); near(blocked.start.x, 1.5);
 });
+
+
+test('reversed and mirrored single-face floor winding still supports the capsule without raising an idle pose', () => {
+ const reversed=floor().map(triangle=>new THREE.Triangle(triangle.a.clone(),triangle.c.clone(),triangle.b.clone()));
+ const capsule=new Capsule(0,2),octree=world(reversed);
+ const landed=move(capsule,{x:0,y:-3,z:0},{octree,grounded:false,verticalVelocity:-20});
+ near(foot(capsule),.02);assert.equal(landed.onGround,true);
+ const accepted=capsule.start.clone();move(capsule,{}, {octree});assert.deepEqual(capsule.start.toArray(),accepted.toArray());
+});
+
+test('one-sided Octree ceiling contacts also stop the back face of an authored floor panel', () => {
+ const floorTriangles=floor(),ceiling=floor(2.08),native=world([...floorTriangles,...ceiling]);
+ // Emulate Octree front-face contacts: the authored upper face is otherwise
+ // invisible to an upward head moving beneath the zero-thickness panel.
+ const octree={getCapsuleTriangles:native.getCapsuleTriangles.bind(native),triangleCapsuleIntersect(capsule,triangle){
+  const normal=triangle.getNormal(new THREE.Vector3()),distance=normal.dot(capsule.end.clone().sub(triangle.a));
+  if(distance<0)return null;return native.triangleCapsuleIntersect(capsule,triangle);
+ }};
+ const capsule=new Capsule(),result=move(capsule,{x:0,y:1,z:0},{octree,grounded:false,verticalVelocity:8});
+ assert.ok(capsule.end.y+capsule.radius<=2.08);assert.ok(capsule.end.y+capsule.radius>2.07);assert.equal(result.velocityY,0);
+});

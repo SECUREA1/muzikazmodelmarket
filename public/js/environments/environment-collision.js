@@ -1,5 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
 import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Octree.js/+esm';
+import {collisionIsDisabled,isDedicatedCollider,raycastSolidSurfaces} from '../collision-surfaces.js';
+export {raycastSolidSurfaces} from '../collision-surfaces.js';
 
 const COLLISION_RE = /(^|[_ .-])(COLLIDER|COLLISION|NAVMESH)([_ .-]|$)/i;
 // Only effects with no physical surface are excluded.  In particular, do not
@@ -19,17 +21,13 @@ const CONTAINMENT_THICKNESS = 0.2;
 
 function isWalkableFloorHit(hit) {
   if (!hit?.face) return true;
-  const normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
-  return normal.y >= WALKABLE_FLOOR_NORMAL_Y;
+  const normal = hit.face.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld));
+  return Math.abs(normal.y) >= WALKABLE_FLOOR_NORMAL_Y;
 }
 
 function isSpawnFloorObject(object) {
   const name = object?.name || '';
   return !NON_SPAWN_FLOOR_RE.test(name);
-}
-
-function isDedicatedCollider(object) {
-  return COLLISION_RE.test(object?.name || '') || object?.userData?.collider === true || object?.userData?.collision === true || object?.userData?.colliderShape === 'mesh';
 }
 
 function isRenderedMesh(object) {
@@ -38,13 +36,6 @@ function isRenderedMesh(object) {
   }
   const materials = Array.isArray(object.material) ? object.material : [object.material];
   return materials.some((material) => material?.visible !== false);
-}
-
-function collisionIsDisabled(object) {
-  for (let current = object; current; current = current.parent) {
-    if (current.userData?.collisionDisabled === true || current.userData?.collider === false || current.userData?.collision === false) return true;
-  }
-  return false;
 }
 
 function createMapContainment(meshes) {
@@ -84,13 +75,13 @@ function createMapContainment(meshes) {
 
 function floorHitScore(hit) {
   const name = hit?.object?.name || '';
-  return (FLOOR_NAME_RE.test(name) ? 2 : 1) * Math.max(0.1, hit.face?.normal?.y || 1);
+  return (FLOOR_NAME_RE.test(name) ? 2 : 1) * Math.max(0.1, Math.abs(hit.face?.normal?.y || 1));
 }
 
 function findWalkableFloorHit(meshes, point, bounds, playerHeight = 1.65) {
   const rayOriginY = Number.isFinite(bounds?.max?.y) ? bounds.max.y + playerHeight + 8 : point.y + playerHeight + 8;
   const raycaster = new THREE.Raycaster(new THREE.Vector3(point.x, rayOriginY, point.z), new THREE.Vector3(0, -1, 0));
-  return raycaster.intersectObjects(meshes, true).find((item) => isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
+  return raycastSolidSurfaces(raycaster, meshes, true).find((item) => isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
 }
 
 export function alignPointAboveFloor(point, meshes, bounds, playerHeight = 1.65, floorGap = FLOOR_ENTRY_OFFSET) {
@@ -125,7 +116,7 @@ function chooseLargestSampledFloor(meshes, bounds, playerHeight = 1.65) {
     for (let zi = 0; zi < samplesPerAxis; zi += 1) {
       const z = THREE.MathUtils.lerp(bounds.min.z, bounds.max.z, (zi + 0.5) / samplesPerAxis);
       raycaster.ray.origin.set(x, rayOriginY, z);
-      const hit = raycaster.intersectObjects(meshes, true).find((item) => isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
+      const hit = raycastSolidSurfaces(raycaster, meshes, true).find((item) => isSpawnFloorObject(item.object) && isWalkableFloorHit(item));
       if (hit) samples[xi][zi] = hit.point.clone();
     }
   }
@@ -188,6 +179,13 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
     collectedMeshes.add(object);
     if (collisionIsDisabled(object)) return;
     const name = object.name || '';
+    // Moving actors remain available for weapon selection/render projections,
+    // but baking their current body into the static Octree would leave a ghost
+    // wall behind them and make an enemy collide with its own old position.
+    for (let parent = object; parent; parent = parent.parent) if (parent.userData?.dynamicEnemy) {
+      if (isRenderedMesh(object)) visibleMeshes.push(object);
+      return;
+    }
     if (isDedicatedCollider(object)) {
       // Explicit physical metadata also belongs on visible authored geometry,
       // including Builder terrain. Only named helper colliders are hidden.
@@ -217,16 +215,25 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
   });
   const source = new THREE.Group();
   if(buildOctree)collisionMeshes.forEach((mesh) => {
-    const clone = mesh.clone(false);
-    clone.geometry = mesh.geometry;
-    clone.material = mesh.material;
     mesh.updateWorldMatrix(true, false);
-    // clone() already carries the local transform. Applying matrixWorld to it
-    // would transform the collider twice and put walls beside their visuals.
-    // Copy the exact matrix, including shear from scaled, rotated ancestors.
-    clone.matrixAutoUpdate = false;
-    clone.matrix.copy(mesh.matrixWorld);
-    source.add(clone);
+    const addCollider = (matrix) => {
+      // The Octree reads ordinary Mesh vertices; an InstancedMesh must be
+      // expanded with each instance matrix or only its untransformed template
+      // becomes solid. Keep the exact world matrix, including parent shear.
+      const clone = new THREE.Mesh(mesh.geometry, mesh.material);
+      clone.name = mesh.name;
+      clone.userData = mesh.userData;
+      clone.matrixAutoUpdate = false;
+      clone.matrix.copy(matrix);
+      source.add(clone);
+    };
+    if (mesh.isInstancedMesh) {
+      const instance = new THREE.Matrix4(), matrix = new THREE.Matrix4();
+      for (let i = 0; i < mesh.count; i++) {
+        mesh.getMatrixAt(i, instance);
+        addCollider(matrix.multiplyMatrices(mesh.matrixWorld, instance));
+      }
+    } else addCollider(mesh.matrixWorld);
   });
   if (containment.root) source.add(containment.root);
   const octree = new Octree();

@@ -1,3 +1,4 @@
+import {sportsEnvironmentSettings} from './sports-worlds.js';
 import {mountXRGameControls} from './xr-game-controls.js';
 import {legacyArcadeDestination} from './sports-worlds.js';
 import {mountRadToxController} from './rad-tox-controller.js';
@@ -29,7 +30,7 @@ async function loadMap(){
   const part=requestedPart&&map.builderScene?.objects?.find(object=>String(object.id)===requestedPart&&/^arcade-part-(hockey|shooting|basketball|air-hockey|billiards|train|coaster)$/.test(object.modelId));
   if(requestedPart&&!part)throw Error('This placed arcade attraction is unavailable. Open its map again.');
   if(!isArcadeMap(map)&&!part)throw Error('This arcade map is unavailable. Choose another game map.');
-  loaded=part?.arcadeSettings||map.builderScene?.gameplay?.arcade||map.arcade||{};
+  loaded=part?.arcadeSettings||sportsEnvironmentSettings(map,'arcade');
   builderScene=map.builderScene||null;if(part){builderScene={...builderScene,objects:[part]};launchPartId=String(part.id);autoAttraction=part.modelId.slice('arcade-part-'.length);}
   mapName=map.name||mapName;
  }catch(error){

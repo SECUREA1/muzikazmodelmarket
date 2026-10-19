@@ -8,11 +8,11 @@ export const ENEMY_BEHAVIORS=Object.freeze({
 });
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 const event=(sim,value)=>{sim.events.push(value);sim.events=sim.events.slice(-100);};
-export function stepEnemyCombat(sim,{now,dt,environment,collision}){
+export function stepEnemyCombat(sim,{now,dt,environment,collision,objects={}}){
  sim.projectiles ||= {};
  if(sim.match?.state==='finished'||sim.radTox?.state==='cleared'){sim.projectiles={};return;}
  const players=Object.entries(sim.players).filter(([,player])=>!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
- const blocked=(origin,direction,length)=>collision.blocksShot(environment,origin,direction,length,sim.actors);
+ const blocked=(origin,direction,length)=>collision.blocksShot(environment,origin,direction,length,sim.actors,objects);
  const hit=(actor,id,player,origin)=>{if(damagePlayer(player,now))event(sim,{id:'enemy-hit-'+ ++sim.enemySequence,action:'enemy-hit',actorId:actor,targetId:id,origin,at:now});};
  sim.enemySequence ||= 0;
  for(const actor of Object.values(sim.actors)){

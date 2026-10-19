@@ -2,6 +2,7 @@ import {memberPlotEnvironment} from './member-plots.mjs';
 import {WORLD_DISTRICTS,districtMapId} from './world-districts.mjs';
 import {attachAtlas} from './world-atlas.mjs';
 import {readFileSync} from 'node:fs';
+import {sportsEnvironmentKind} from './public/js/sports-worlds.js';
 const permanentWorlds=JSON.parse(readFileSync(new URL('./public/models/environments/environments.json',import.meta.url),'utf8')).filter(map=>map.permanent===true).map(map=>({...map,source:'repository',visibility:'public',playable:true,multiplayer:true,canDelete:false,canEdit:false}));
 // One authoritative catalogue for the registry, SVG atlas and physical gateways.
 export async function synchronizeWorldDirectory(atlas,published,deeds=[]){
@@ -16,7 +17,8 @@ export async function synchronizeWorldDirectory(atlas,published,deeds=[]){
  const all=[...new Map([...generated,...maps,...plots].map(map=>[map.id,attachAtlas(map,state)])).values()],byId=new Map(all.map(map=>[map.id,map]));
  for(const map of all){
   const region=WORLD_DISTRICTS.find(region=>districtMapId(region.id)===map.id);if(region)map.aliases=[...new Set([...(map.aliases||[]),region.id,'space-'+region.id,'district-'+region.id])];
-  map.sharedWorld=true;map.multiplayer=true;map.roomId=map.id;map.playUrl='model-explorer.html?environment='+encodeURIComponent(map.id)+'&house='+encodeURIComponent(map.id)+'&mode=multiplayer&autoplay=1';
+  const game=sportsEnvironmentKind(map),page=game==='hockey'?'hockey.html':game==='arcade'?'arcade.html':'model-explorer.html';
+  map.sharedWorld=true;map.multiplayer=true;map.roomId=map.id;map.playUrl=page+'?environment='+encodeURIComponent(map.id)+'&house='+encodeURIComponent(map.id)+'&mode=multiplayer&autoplay=1';
   if(map.source!=='community-atlas'){
    map.portalTargets=[...new Set([map.districtId,'public-commons'].filter(id=>id&&id!==map.id&&byId.has(id)))];
    map.travelPortals=map.portalTargets.map(id=>({mapId:id,name:byId.get(id).name,color:byId.get(id).districtColor}));
