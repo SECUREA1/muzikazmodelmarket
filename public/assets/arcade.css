@@ -73,3 +73,22 @@ body.top-down nav button .icon{font-size:19px;margin-bottom:7px}
  body.top-down .view-controls button{padding:10px;font-size:10px}
 }
 #game-lobby{position:absolute;z-index:3;right:24px;top:115px;width:min(370px,calc(100vw - 48px));max-height:calc(100dvh - 230px);overflow:auto;padding:14px;border:1px solid #708d7659;border-radius:12px;background:#102326ee;pointer-events:auto;font-size:12px}#game-lobby label{display:block;margin:6px 0}#game-lobby select{max-width:100%;padding:7px;background:#172325;color:#fff;border:1px solid #708d76;border-radius:5px}#game-lobby button{padding:8px;margin:3px}#game-lobby p{margin:6px 0;font-size:11px}#game-touch{display:flex;flex-wrap:wrap}#game-lobby button:disabled{opacity:.45;cursor:default}.play-access-dialog{z-index:20;background:#102326;color:#fff;max-width:440px}.play-access-dialog label{display:block;margin:12px}.play-access-dialog input{display:block;width:100%;padding:8px}.play-access-dialog::backdrop{background:#000a}@media(max-width:760px){#game-lobby{top:auto;bottom:80px;right:10px;max-height:28dvh;width:min(330px,calc(100vw - 20px));padding:8px}}
+
+.arcade-lobby-roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin:8px 0}.arcade-lobby-roster p{padding:7px;margin:0;border:1px solid #65963d;border-radius:7px;font-size:12px}.rad-sports-menu [data-arcade-match-directory]{min-width:0}
+
+/* Keep the table / court unobstructed while actions stay above the toolbar. */
+body.arcade-round-live #instructions,body.arcade-round-live #game-lobby:not([open]),body.playing #camera-toggle{display:none!important}
+body.arcade-round-live #game .game-head{right:auto;max-width:44%;padding:8px 12px;background:#102326b8}
+body.arcade-round-live #game .game-head .eyebrow{display:none}
+body.arcade-round-live #game .game-head h2{font-size:16px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.arcade-round-live #game .game-head #closegame{display:none}
+body.arcade-round-live #game .scorebar{top:14px;right:10px;left:auto;padding:8px 12px;max-width:54%;font-size:11px;gap:10px;background:#102326d9;border-radius:10px;flex-wrap:wrap;justify-content:flex-end}
+body.playing:has(.muzikaz-controller) #game .game-bottom{bottom:var(--arcade-controller-height,310px);left:12px;right:auto;max-width:calc(100vw - 200px);padding:7px 11px;line-height:1.4;background:#102326bd;font-size:11px;pointer-events:none}
+body.playing #game .game-bottom button{display:none}body.playing #game.round-ended .game-bottom button{display:block}
+.arcade-shot-options{position:absolute;z-index:4;right:12px;bottom:calc(var(--arcade-controller-height,310px) + 3px);width:min(245px,calc(100vw - 24px));max-height:40dvh;overflow:auto;padding:10px 12px;border:1px solid #8db763;border-radius:10px;background:#102326ed;pointer-events:auto;font-size:12px}
+.arcade-shot-options:not([open]){width:auto}.arcade-shot-options summary{cursor:pointer;font-weight:bold;color:#dcfa70}.arcade-shot-options label{display:grid;gap:8px;margin-top:12px}.arcade-shot-options input{width:100%;min-height:44px;accent-color:#dcfa70}.arcade-shot-options p{font-size:11px;margin:6px 0}
+body.playing #game-lobby[open]{top:74px;right:12px;bottom:auto;max-height:calc(100dvh - var(--arcade-controller-height,260px) - 92px);width:min(450px,calc(100vw - 24px));padding:12px}
+body.playing #game-lobby button,body.playing #game-lobby select{min-height:44px;font-size:14px}body.playing #game-lobby input{min-height:38px}
+@media(max-width:760px),(pointer:coarse){body.arcade-round-live #game .game-head{top:10px;left:10px;padding:8px}body.arcade-round-live #game .game-head h2{font-size:12px}body.arcade-round-live #game .scorebar{top:8px;font-size:10px;gap:4px 10px;padding:7px 8px}body.playing:has(.muzikaz-controller) #game .game-bottom{font-size:10px;max-width:calc(100vw - 145px);left:8px;padding:7px}.arcade-shot-options{right:8px;font-size:11px;padding:9px}body.playing #game-lobby[open]{max-height:calc(100dvh - var(--arcade-controller-height,230px) - 80px);top:60px}body.playing #game-lobby select,body.playing #game-lobby input{font-size:16px}}
+
+#game:has(#game-lobby[open]) #instructions{display:none}#close-game-setup{float:right;margin-bottom:8px!important}#game-lobby[open]>summary{min-height:32px;max-width:calc(100% - 130px)}

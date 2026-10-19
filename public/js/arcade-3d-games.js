@@ -297,12 +297,16 @@ function billiardsGame(root, h) {
     arcadeGamePoint('billiards', x, y, point);
     h.disc('BILLIARD_POCKET_' + index, point.x, 1.543, point.z, .175, .018, '#101e25');
   }
-  const colors = ['#f2f1df', '#eabd5f', '#b09ae0', '#e78d99', '#79c8cf', '#d2e881', '#eea06e'];
+  const colors = ['#f2f1df', '#eabd5f', '#6092da', '#e17979', '#a18aca', '#ea9d57', '#75a987', '#9d6658', '#20252a', '#eabd5f', '#6092da', '#e17979', '#a18aca', '#ea9d57', '#75a987', '#9d6658'];
   const balls = colors.map((color, index) => {
     const ball = h.ball('LIVE_BILLIARD_BALL_' + index, 0, 1.64, 0, .102, color);
     if (index) {
       const stripe = h.disc('BILLIARD_NUMBER_PATCH_' + index, 0, .1, 0, .047, .005, '#f1f0e0', ball);
       stripe.scale.divideScalar(.102); stripe.position.y = .97;
+    }
+    if (index > 8) {
+      const stripe = h.ring('BILLIARD_STRIPE_' + index, 0, 0, 0, .099, .016, '#f1f0e0', ball);
+      stripe.scale.divideScalar(.102);
     }
     return ball;
   });

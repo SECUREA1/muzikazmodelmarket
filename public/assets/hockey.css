@@ -23,3 +23,5 @@
 }
 
 [data-game-camera-toggle]{border-color:#5fc0d4;color:#a5eeff}[data-game-camera-mode="top-down"]{background:#24576a}@media(pointer:coarse){#touch-toggle-camera{grid-area:view;font-size:10px;line-height:1.15;padding:4px 1px}}
+
+.hockey-waiting-room{padding:10px 0}.hockey-waiting-room h3{margin:6px 0}.hockey-lobby-roster{display:grid;grid-template-columns:1fr 1fr;gap:12px}.hockey-lobby-roster ul{padding-left:18px;line-height:1.7;font-size:13px}.hockey-lobby-actions{display:flex;flex-wrap:wrap;gap:8px}.hockey-lobby-actions button{min-height:44px;flex:1 1 120px}[data-hockey-host-start]{background:#32704c;font-weight:800}

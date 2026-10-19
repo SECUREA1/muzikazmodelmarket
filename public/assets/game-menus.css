@@ -312,4 +312,4 @@ html.game-menu-open { overflow:hidden; }
 
 .world-map-picker{font-family:system-ui,sans-serif}
 
-.world-map-detail [data-world-preview]{display:block;width:100%;height:150px;object-fit:contain;border-radius:8px;background:#08131a}.world-map-detail [data-world-preview][hidden]{display:none}
+.world-map-detail [data-world-preview]{margin:12px 0}

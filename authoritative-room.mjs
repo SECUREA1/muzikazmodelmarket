@@ -140,12 +140,12 @@ export class AuthoritativeRooms {
     if(command.team!==null&&!['home','away'].includes(command.team))fail('Choose the Home or Away jersey.',400);
     if(command.team&&sim.basketball)assignBasketballTeam(sim,player,now,command.team);player.basketballJersey=command.team;result.message=command.team?(command.team==='home'?'Home':'Away')+' jersey equipped.':'Basketball jersey removed.';
    }
-   else if(command.action==='basketball-settings'){configureBasketballGame(sim,command.settings,now);result.message='Shared basketball settings updated.';}
+   else if(command.action==='basketball-settings'){configureBasketballGame(sim,command.settings,now,player);result.message='Shared basketball settings updated.';}
    else if(command.action==='basketball-watch'){watchBasketballGame(sim,player,now);result.message='Watching from the sideline. Choose a side before the next game.';}
    else if(command.action==='basketball-steal'){const ball=stealBasketball(sim,player,now,{visible:(from,to)=>{const origin={...from.position,y:from.position.y+1},target={...to.position,y:to.position.y+1},span=distance(origin,target);return span<.05||!this.collision.blocksShot(environment,origin,[(target.x-origin.x)/span,(target.y-origin.y)/span,(target.z-origin.z)/span],span,sim.actors);}});result.caughtId=ball.id;result.message='Basketball stolen.';}
    else if(command.action==='basketball-join-spot'){takeBasketballSpot(sim,player,now,command.team);result.message='Player spot joined.';}
    else if(command.action==='basketball-team'){if(!sim.basketball)fail('Enter Basketball Arena to choose a team.',409);assignBasketballTeam(sim,player,now,command.team);result.message=(player.basketballTeam==='home'?'Home':'Away')+' team selected.';}
-   else if(command.action==='basketball-start'){startBasketballGame(sim,now);result.message='Tip-off! The shared basketball game has started.';}
+   else if(command.action==='basketball-start'){startBasketballGame(sim,now,player);result.message='Tip-off! The shared basketball game has started.';}
    else if(command.action==='basketball-shoot'){const ball=shootBasketball(sim,player,now,Object.fromEntries(['power','angle','mode','direction'].filter(key=>command[key]!==undefined).map(key=>[key,command[key]])));result.message=ball.basketballShot.aimMiss?'Aim miss: outside 13% hoop alignment. Line up with the net.':'Shot released!';}
    else if(sim.basketball&&['start-rad-tox','next-rad-tox'].includes(command.action))fail('Basketball Arena runs shared basketball games.',409);
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position))result.message='RAD-TOX encounter active.';else result.message='Builder gameplay active.';}

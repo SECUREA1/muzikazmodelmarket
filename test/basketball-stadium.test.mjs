@@ -40,6 +40,34 @@ test('both arena baskets retain regulation rim height and position at world scal
   near(bounds.x, 46); near(bounds.z, 62);
 });
 
+test('court, apron and concourse form one continuous floor without overlapping rendered faces', () => {
+  const arena = createBasketballStadium(THREE,environment), surfaces = [];
+  arena.traverse(object => { if (object.userData.basketballSurface) surfaces.push(object); });
+  arena.updateMatrixWorld(true);
+  assert.equal(surfaces.length,9);
+  const court = surfaces.find(object => object.userData.basketballSurface === 'court');
+  const bounds = new THREE.Box3().setFromObject(court), size = bounds.getSize(new THREE.Vector3());
+  near(size.x,BASKETBALL_COURT.width); near(size.z,BASKETBALL_COURT.length); near(bounds.max.y,0);
+  assert.notEqual(court.userData.collisionDisabled,true,'hardwood is the actual playing surface');
+  // A second floor under the court can win the mobile depth test even when
+  // it sits a few millimetres lower. No interior point should hit two slabs.
+  const ray = new THREE.Raycaster(new THREE.Vector3(),new THREE.Vector3(0,-1,0));
+  for (const x of [-22,-10,-9.05,-8.4,-7.7,-7.6,-2.3,.5,7.6,8.4,9.05,10,22]) {
+    for (const z of [-30,-18,-16.4,-15,-14,-1,.4,14,15,16.4,18,30]) {
+      ray.ray.origin.set(x,1,z);
+      const hits = ray.intersectObjects(surfaces), objects = new Set(hits.map(hit => hit.object));
+      assert.equal(objects.size,1,`exactly one floor section at ${x}, ${z}`);
+      near(hits[0].point.y,0);
+    }
+  }
+  const rectangles = surfaces.map(mesh => new THREE.Box3().setFromObject(mesh));
+  for (let a=0;a<rectangles.length;a++) for (let b=a+1;b<rectangles.length;b++) {
+    const overlapX = Math.min(rectangles[a].max.x,rectangles[b].max.x)-Math.max(rectangles[a].min.x,rectangles[b].min.x);
+    const overlapZ = Math.min(rectangles[a].max.z,rectangles[b].max.z)-Math.max(rectangles[a].min.z,rectangles[b].min.z);
+    assert.ok(overlapX < .00001 || overlapZ < .00001,'floor section interiors never overlap');
+  }
+});
+
 test('Backpack baskets include an open rim and cord net that reacts to a score', () => {
   const hoop = createBasketballHoop(THREE, { team: 'away' });
   assert.deepEqual(hoop.userData.basketballHoop.rim, [0, 3.05, 0]);

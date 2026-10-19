@@ -17,3 +17,8 @@ test('tap actions run after the menu closes without requiring pointer events',()
  const events=[];runControllerAction({close:()=>events.push('closed')},{tap:()=>events.push('shot')});
  assert.deepEqual(events,['closed','shot']);
 });
+test('a completed hold is released once even when the controller subsequently resets',()=>{
+ const events=[];let finish;
+ const release=runControllerAction({close(){}},{hold:value=>events.push(value)},{schedule:callback=>{finish=callback;return 7;},cancel(){}});
+ finish();release();release();assert.deepEqual(events,[true,false]);
+});

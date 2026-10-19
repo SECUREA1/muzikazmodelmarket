@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import {AuthoritativeRooms} from '../authoritative-room.mjs';
-import {BASKETBALL_BALL_ID} from '../public/js/basketball-rules.js';
+import {BASKETBALL_BALL_ID,basketballSoloSettings} from '../public/js/basketball-rules.js';
 
 async function fixture(run){
  const dir=await mkdtemp(join(tmpdir(),'basketball-arena-'));let now=100000,sequence=0;const store=new SharedRoomStore(join(dir,'rooms.json'));
@@ -21,7 +21,8 @@ test('every arena player shares free court, teams, jerseys and one server-owned 
  assert.equal(Object.values(state.actors).some(actor=>actor.loot),false,'the sports court has no generic combat loot or coin pickups');
  state=await send('bob','join');assert.equal(state.players['account:bob'].basketballTeam,'away');
  await assert.rejects(send('eve','basketball-start'),/Join this room/);
- state=await send('bob','basketball-start');assert.equal(state.basketball.state,'live');assert.equal(state.basketball.quarter,1);assert.equal(state.basketball.clockMs,720000);
+ await assert.rejects(send('bob','basketball-start'),{statusCode:403});
+ state=await send('alice','basketball-start');assert.equal(state.basketball.state,'live');assert.equal(state.basketball.quarter,1);assert.equal(state.basketball.clockMs,720000);
  await assert.rejects(send('alice','basketball-start'),/already running/);
  await assert.rejects(send('alice','basketball-team',{team:'away'}),/Change teams/);
  await assert.rejects(send('alice','fire',{tool:'laser',direction:[0,0,-1]}),/sports court/);
@@ -123,7 +124,7 @@ test('shared basketball settings validate atomically, control tip-off and lock d
  assert.deepEqual(state.basketball.settings,settings);
  const peer=await send('bob','input',{input:{}});
  assert.deepEqual(peer.basketball.settings,settings);
- state=await send('bob','basketball-start');
+ state=await send('alice','basketball-start');
  assert.equal(state.basketball.clockMs,240000);
  assert.equal(state.basketball.shotClockMs,10000);
  await assert.rejects(send('alice','basketball-settings',{settings:{quarterMinutes:1}}),/before|live|running|started/i);
@@ -164,4 +165,31 @@ test('a player steals the AI-held game ball through the authoritative command',(
  await send('alice','join');await send('alice','basketball-start');
  let botId,ballId;await store.update(map.id,room=>{const sim=room.simulation,player=sim.players['account:alice'],bot=Object.values(sim.players).find(p=>p.basketballAI&&p.basketballTeam!==player.basketballTeam);botId=bot.actorId;ballId=sim.basketball.ballId;for(const p of Object.values(sim.players))p.heldId=null;player.position={x:0,y:0,z:0};bot.position={x:1,y:0,z:0};bot.heldId=ballId;sim.actors[ballId].holderId=botId;sim.actors[ballId].position={x:1,y:1,z:0};});
  const state=await send('alice','basketball-steal');assert.equal(state.actors[ballId].holderId,'account:alice');assert.equal(state.players[botId].heldId,null);assert.equal(state.players['account:alice'].heldId,ballId);assert.equal(state.basketball.possession,'home');
+}));
+
+test('native basketball keeps the pregame lobby paused and reserves setup and start for its host',()=>fixture(async({send,advance})=>{
+ const first=await send('alice','join');let state=await send('bob','join');
+ assert.equal(state.basketball.hostId,'account:alice');assert.equal(state.basketball.hostName,'alice');
+ advance(8000);state=await send('bob','input',{input:{}});
+ assert.equal(state.basketball.state,'ready');assert.equal(state.basketball.clockMs,first.basketball.clockMs);
+ await assert.rejects(send('bob','basketball-start'),{statusCode:403});
+ await assert.rejects(send('bob','basketball-settings',{settings:{aiDifficulty:5}}),{statusCode:403});
+ state=await send('alice','basketball-watch');assert.equal(state.basketball.hostId,'account:bob');assert.equal(state.basketball.hostName,'bob');
+ await assert.rejects(send('alice','basketball-start'),/Spectators/);
+ state=await send('bob','basketball-settings',{settings:{quarterMinutes:2}});assert.equal(state.basketball.state,'ready');
+ state=await send('bob','basketball-start');assert.equal(state.basketball.state,'live');assert.equal(state.basketball.clockMs,120000);
+}));
+
+test('an expired basketball host transfers to a connected player before tip-off',()=>fixture(async({send,advance})=>{
+ await send('alice','join');await send('bob','join');advance(14000);await send('bob','input',{input:{}});advance(2000);
+ const state=await send('bob','basketball-start');assert.equal(state.basketball.hostId,'account:bob');assert.equal(state.basketball.state,'live');
+ assert.equal(state.players['account:alice'],undefined);assert.equal(Object.values(state.players).filter(player=>player.basketballAI).length,9);
+}));
+
+test('solo basketball setup reserves one real player and fills both equal teams with AI',()=>fixture(async({send})=>{
+ let state=await send('alice','join');const settings=basketballSoloSettings({...state.basketball.settings,teamSize:3,aiDifficulty:4},'home');
+ state=await send('alice','basketball-settings',{settings});assert.equal(state.basketball.settings.homeHumans,1);assert.equal(state.basketball.settings.awayHumans,0);
+ state=await send('alice','basketball-start');assert.equal(Object.values(state.players).filter(player=>player.basketballAI).length,5);
+ for(const team of ['home','away'])assert.equal(Object.values(state.players).filter(player=>player.basketballTeam===team).length,3);
+ assert.deepEqual({home:basketballSoloSettings(settings,'away').homeHumans,away:basketballSoloSettings(settings,'away').awayHumans},{home:0,away:1});
 }));

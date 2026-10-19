@@ -37,6 +37,8 @@ body:not(.playing):not(.riding):has(.muzikaz-controller) #walkhud{bottom:195px}
 .game-screen-actions button:disabled{opacity:.45;cursor:default}
 .game-screen-actions button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .game-screen-actions button:active{background:#528d00}
+.game-screen-actions button.is-selected,.game-screen-actions button[aria-pressed=true]{border-color:#edffbc!important;background:#9fdb36!important;color:#112005!important;box-shadow:inset 0 0 0 1px #e2ff9f,0 0 12px #9cff0033;font-weight:900}
+.game-screen-actions button.is-selected::after{content:'✓';margin-left:6px;font-size:12px;font-weight:900}
 .muzikaz-controller.has-screen-actions{grid-template-areas:'gameplay gameplay' 'toolbar toolbar' 'left right'}
 .has-screen-actions>.game-screen-actions{grid-area:gameplay}
 @media(max-width:520px){.game-screen-actions{gap:6px;padding:8px}.game-screen-actions button{font-size:12px;flex-basis:75px}}

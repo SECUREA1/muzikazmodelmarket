@@ -1,7 +1,10 @@
+import {listGameMatches} from './game-match-directory.mjs';
 import {ArcadeRooms} from './arcade-rooms.mjs';
 import {isArcadeMap} from './public/js/arcade-rules.js';
 import {HockeyRooms} from './hockey-rooms.mjs';
 import {isHockeyMap} from './public/js/hockey-rules.js';
+import {RangeRooms} from './range-rooms.mjs';
+import {isRangeMap} from './public/js/range-rules.js';
 import {LAND_VALUES} from './public/js/game-item-pricing.js';
 import {resolveAccountProof,recoverRoomSession} from './room-session.mjs';
 import {readJsonInput,memberWalletPatch} from './request-validation.mjs';
@@ -161,14 +164,26 @@ async function snapshotServer() {
 }
 const hockeyRooms=new HockeyRooms();
 const arcadeRooms=new ArcadeRooms();
+const rangeRooms=new RangeRooms();
 setInterval(()=>arcadeRooms.tick(),50).unref();
 setInterval(()=>hockeyRooms.tick(),50).unref();
+setInterval(()=>rangeRooms.tick(),50).unref();
 const authoritativeRooms=new AuthoritativeRooms({store:sharedRooms,capacity:maxHouseUsers,collectLoot:(identity,itemId,requestId)=>userDatabase.grantRpgLoot(identity.walletId,itemId,requestId),reward:(identity,event,requestId)=>userDatabase.memberReward(identity.walletId,'progress',{scope:'field',event,requestId}),resolveAsset:async(identity,command)=>{const state=await userDatabase.get(identity.walletId),catalog=economyItem(command.sku);if(catalog&&ownsEconomyItem(state,catalog)&&catalog.kind==='asset')return catalog;const purchased=state.items.find(item=>item.id===command.itemId&&['mzk-store','verified-store'].includes(item.source)&&item.modelUrl);if(purchased)return {...purchased,behavior:'decor',targetHeight:['avatar','avatars'].includes(purchased.assetType||purchased.type)?1.8:undefined};const custom=state.items.find(item=>item.id===command.itemId&&item.type==='custom-item');if(custom)return {...custom,behavior:'decor'};const item=state.items.find(item=>item.id===command.itemId&&(item.modelUrl||item.buildAssetId));if(!item){const pack=await userDatabase.builderBackpack(identity.walletId),owned=pack.assets.find(asset=>asset.id===command.itemId);if(!owned)return null;const config=owned.function_data||{};if(!owned.glb_url&&!config.buildAssetId&&!config.modelId)return null;return {id:owned.id,name:owned.name,modelUrl:owned.glb_url||null,buildAssetId:config.buildAssetId||config.modelId||null,assetType:owned.asset_type||'props',behavior:config.behavior||'decor'};}const canonical=GAME_ECONOMY.find(asset=>asset.kind==='asset'&&(asset.modelUrl&&asset.modelUrl===item.modelUrl||asset.buildAssetId&&asset.buildAssetId===item.buildAssetId));return canonical&&ownsEconomyItem(state,canonical)?canonical:null;},charge:(identity,sku,requestId)=>userDatabase.economyAction(identity.walletId,'use',sku,'room:'+requestId),telemetry:(walletId,sample)=>userDatabase.recordRpgTelemetry(walletId,sample)});
 setInterval(()=>sharedRooms.flush().catch(error=>console.error('Room checkpoint failed',error)),1000).unref();
 setInterval(()=>authoritativeRooms.tickActive().catch(error=>console.error('Room simulation failed',error)),50).unref();
 let roomEnvironmentCache=null,roomEnvironmentCachedAt=0;
 async function roomEnvironment(id){if(!roomEnvironmentCache||Date.now()-roomEnvironmentCachedAt>3000){roomEnvironmentCache=await combinedEnvironments();roomEnvironmentCachedAt=Date.now();}return roomEnvironmentCache.find(env=>env.id===id);}
-function liveRoomMetadata(map,rooms={}){const roomId=map.roomId||map.id;const members=new Set(activePresence().filter(user=>{if(user.roomId!==roomId)return false;const player=rooms[roomId]?.simulation?.players['account:'+user.accountId];return !player||Date.now()-player.lastSeen<15000;}).map(user=>user.accountId?'account:'+user.accountId:user.sessionId));for(const [id,player]of Object.entries(rooms[roomId]?.simulation?.players||{}))if(Date.now()-player.lastSeen<15000)members.add(id);if(isHockeyMap(map))for(const player of hockeyRooms.rooms.get(roomId)?.state.players||[])if(player.human)members.add(player.human);if(isArcadeMap(map))for(const slot of arcadeRooms.rooms.get(roomId)?.slots||[])if(slot.actor)members.add(slot.actor);const playerCount=members.size;return {...map,roomId,playerCount,spectatorCount:isHockeyMap(map)?(hockeyRooms.rooms.get(roomId)?.state.spectators.length||0):isArcadeMap(map)?[...(arcadeRooms.rooms.get(roomId)?.members.values()||[])].filter(m=>m.role==='spectator').length:0,live:playerCount>0,playUrl:map.playUrl||`model-explorer.html?environment=${encodeURIComponent(map.id)}&house=${encodeURIComponent(roomId)}&autoplay=1`};}
+function liveRoomMetadata(map,rooms={}){
+ const roomId=map.roomId||map.id,now=Date.now();
+ const members=new Set(activePresence().filter(user=>{if(user.roomId!==roomId)return false;const player=rooms[roomId]?.simulation?.players['account:'+user.accountId];return !player||now-player.lastSeen<15000;}).map(user=>user.accountId?'account:'+user.accountId:user.sessionId));
+ for(const [id,player]of Object.entries(rooms[roomId]?.simulation?.players||{}))if(now-player.lastSeen<15000)members.add(id);
+ if(isHockeyMap(map))for(const player of hockeyRooms.rooms.get(roomId)?.state.players||[])if(player.human)members.add(player.human);
+ if(isArcadeMap(map))for(const slot of arcadeRooms.rooms.get(roomId)?.slots||[])if(slot.actor)members.add(slot.actor);
+ const rangeMembers=isRangeMap(map)?[...(rangeRooms.rooms.get(roomId)?.members.entries()||[])].filter(([,member])=>now-member.at<15000):[];
+ for(const [actor,member]of rangeMembers)if(member.role==='player')members.add(actor);
+ const playerCount=members.size,spectatorCount=isHockeyMap(map)?(hockeyRooms.rooms.get(roomId)?.state.spectators.length||0):isArcadeMap(map)?[...(arcadeRooms.rooms.get(roomId)?.members.values()||[])].filter(m=>m.role==='spectator').length:isRangeMap(map)?rangeMembers.filter(([,member])=>member.role==='spectator').length:0;
+ return {...map,roomId,playerCount,spectatorCount,live:playerCount>0,playUrl:map.playUrl||`model-explorer.html?environment=${encodeURIComponent(map.id)}&house=${encodeURIComponent(roomId)}&autoplay=1`};
+}
 async function combinedEnvironments() {
   const [repo, uploaded, customMaps] = await Promise.all([readRepositoryEnvironments(), readUploadedEnvironments(), readCustomMaps()]);
   const liveMaps = customMaps.map((map) => ({ ...map, modelUrl:'', modelUrls:[], proceduralLand:true, spawn:{x:0,y:1,z:2,rotationY:0}, scale:1, spaceScale:1, rotation:{x:0,y:0,z:0}, collisionMode:'auto', canDelete:false, canEdit:false }));
@@ -820,6 +835,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/market/messages' && req.method === 'POST') { const body = await bodyJson(req); return sendJson(res, 201, assetResponse(await userDatabase.message({ from: requestWallet(req), to: body.to, text: body.text }))); }
     if (url.pathname === '/api/market/activity' && req.method === 'GET') return sendJson(res, 200, assetResponse(await userDatabase.activity(requestWallet(req), url.searchParams.get('peer') || '')));
 
+    if(url.pathname==='/api/matches'&&req.method==='GET'){const environments=await combinedEnvironments(),rooms=await sharedRooms.read();return sendJson(res,200,assetResponse({matches:listGameMatches({environments,hockeyRooms,arcadeRooms,rangeRooms,sharedRooms:rooms})}));}
     if (url.pathname === '/api/environments' && req.method === 'GET') return sendJson(res, 200, assetResponse(await combinedEnvironments()));
     if(url.pathname==='/api/world-atlas'&&req.method==='GET'){const environments=await combinedEnvironments(),atlas=await worldAtlas.read(),rooms=await sharedRooms.read();const locations=Object.values(atlas.cells).map(cell=>{const environment=environments.find(map=>map.id===cell.mapId);if(!environment)return null;const room=rooms[cell.mapId],event=[room?.simulation?.events?.at(-1),room?.lastBuild].filter(Boolean).sort((a,b)=>b.at-a.at)[0],player=event&&room?.simulation?.players[event.actorId];return {mapId:cell.mapId,name:environment.name,basketball:!!environment.basketball,layout:environment.builderScene?.layout||environment.layout,thumbnailUrl:environment.thumbnailUrl||'',ownerName:environment.ownerName||cell.ownerName,ownerId:cell.ownerId,column:cell.column,row:cell.row,size:cell.size,publicDestination:cell.publicDestination,roomId:cell.mapId,streets:environment.streets||[],meetingPoints:cell.meetings,playerCount:environment.playerCount,playUrl:environment.playUrl,updatedAt:cell.updatedAt,activity:event?{action:event.action,username:player?.username||'Member',at:event.at}:null,occupants:Object.values(room?.simulation?.players||{}).filter(player=>Date.now()-player.lastSeen<15000).map(player=>({username:player.username,locationName:player.locationName,x:player.position.x,z:player.position.z})),buildingCount:Object.values(room?.objects||{}).filter(object=>!object.deleted).length};}).filter(Boolean).sort((a,b)=>b.playerCount-a.playerCount);return sendJson(res,200,assetResponse({revision:atlas.revision,cellSize:256,commonsId:'public-commons',locations}));}
     if(url.pathname==='/api/world-atlas/resolve'&&req.method==='POST'){const authentication=await roomAuthentication(req,res,true);if(!authentication)return;const account=await loadoutCodeStore.getAccount(authentication.accountId);if(!account)return authorizationError(res,401,'ACCOUNT_NOT_FOUND','The game account no longer exists.','account');const context={account},destinations=await combinedEnvironments();const body=await bodyJson(req,4000),result=await worldAtlas.resolve(body.x,body.z,{accountId:context.account.accountId,username:context.account.username||'Member'});const destination=destinations.find(map=>map.id===result.cell.mapId);if(destination?.playUrl){const target=new URL(destination.playUrl,'http://atlas.local/');target.searchParams.set('meet',result.meeting.id);target.searchParams.set('autoplay','1');result.playUrl=target.pathname.slice(1)+target.search;}roomEnvironmentCache=null;broadcast('world-atlas-updated',{revision:result.revision,mapId:result.cell.mapId});return sendJson(res,result.created?201:200,assetResponse(result));}
@@ -830,7 +846,7 @@ const server = createServer(async (req, res) => {
       if(!environment||!isArcadeMap(environment))return sendJson(res,404,{message:'Arcade map not found.'});
       const command=await bodyJson(req,2000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;
       const snapshot=arcadeRooms.command(id,environment,identity,command);
-      if(command.action==='join')for(const [roomId,room] of hockeyRooms.rooms){const actor='account:'+identity.accountId;if(room.seen.has(actor))hockeyRooms.command(roomId,environment,identity,{action:'leave'});}
+      if(command.action==='join'){rangeRooms.leave('account:'+identity.accountId);for(const [roomId,room] of hockeyRooms.rooms){const actor='account:'+identity.accountId;if(room.seen.has(actor))hockeyRooms.command(roomId,environment,identity,{action:'leave'});}}
       return sendJson(res,200,assetResponse(snapshot));
     }
     const hockeyRoom=url.pathname.match(/^\/api\/rooms\/([^/]+)\/hockey$/);
@@ -839,7 +855,19 @@ const server = createServer(async (req, res) => {
       if(!environment||!isHockeyMap(environment))return sendJson(res,404,{message:'Hockey arena not found.'});
       const command=await bodyJson(req,2000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;
       const snapshot=hockeyRooms.command(id,environment,identity,command);
-      if(command.action==='join'){arcadeRooms.leave('account:'+identity.accountId);for(const [roomId,room]of hockeyRooms.rooms)if(roomId!==id&&room.seen.has('account:'+identity.accountId))hockeyRooms.command(roomId,environment,identity,{action:'leave'});}
+      if(command.action==='join'){rangeRooms.leave('account:'+identity.accountId);arcadeRooms.leave('account:'+identity.accountId);for(const [roomId,room]of hockeyRooms.rooms)if(roomId!==id&&room.seen.has('account:'+identity.accountId))hockeyRooms.command(roomId,environment,identity,{action:'leave'});}
+      return sendJson(res,200,assetResponse(snapshot));
+    }
+    const rangeRoom=url.pathname.match(/^\/api\/rooms\/([^/]+)\/range$/);
+    if(rangeRoom&&req.method==='POST'){
+      const id=decodeURIComponent(rangeRoom[1]),environment=await roomEnvironment(id);
+      if(!environment||!isRangeMap(environment))return sendJson(res,404,{message:'Firing range not found.'});
+      const command=await bodyJson(req,2000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;
+      const snapshot=rangeRooms.command(id,environment,identity,command);
+      if(command.action==='join'){
+        arcadeRooms.leave('account:'+identity.accountId);
+        for(const [roomId,room]of hockeyRooms.rooms)if(room.seen.has('account:'+identity.accountId))hockeyRooms.command(roomId,environment,identity,{action:'leave'});
+      }
       return sendJson(res,200,assetResponse(snapshot));
     }
     const roomGameplay=url.pathname.match(/^\/api\/rooms\/([^/]+)\/gameplay$/);

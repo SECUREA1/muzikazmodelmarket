@@ -8,8 +8,26 @@ export const BASKETBALL_BALL_ID='basketball-game-ball';
 const teams=['home','away'],other=team=>team==='home'?'away':'home';
 const error=message=>{throw Object.assign(new Error(message),{statusCode:409});};
 export const BASKETBALL_DEFAULT_SETTINGS=Object.freeze({quarterMinutes:12,quarters:4,shotClockSeconds:24,scoreLimit:0,winBy:1,allowLateJoin:false,teamSize:5,homeHumans:5,awayHumans:5,aiDifficulty:3});
+export function basketballSoloSettings(settings={},team='home'){
+ const side=team==='away'?'away':'home';
+ return {...BASKETBALL_DEFAULT_SETTINGS,...settings,homeHumans:side==='home'?1:0,awayHumans:side==='away'?1:0,allowLateJoin:false};
+}
 export const isBasketballPlayer=player=>player?.basketballRole!=='spectator';
 const online=(sim,now)=>Object.values(sim.players||{}).filter(player=>isBasketballPlayer(player)&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
+export function refreshBasketballHost(sim,now){
+ const match=sim.basketball;if(!match)return null;
+ const members=Object.entries(sim.players||{}).filter(([,player])=>!player.basketballAI&&isBasketballPlayer(player)&&teams.includes(player.basketballTeam)&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
+ const host=members.find(([id,player])=>(player.actorId||player.id||id)===match.hostId)||members[0];
+ match.hostId=host?(host[1].actorId||host[1].id||host[0]):null;
+ match.hostName=host?String(host[1].username||host[1].name||'Player').slice(0,32):'';
+ return match.hostId;
+}
+export function requireBasketballHost(sim,player,now){
+ requireBasketballPlayer(sim,player);
+ const hostId=refreshBasketballHost(sim,now),actorId=player?.actorId||player?.id||Object.entries(sim.players||{}).find(([,member])=>member===player)?.[0];
+ if(!hostId||hostId!==actorId)throw Object.assign(new Error('Only the basketball host can change setup or start the match. Wait for the host or join a team to host an empty lobby.'),{statusCode:403});
+ return hostId;
+}
 const shotClockMs=match=>(match.settings?.shotClockSeconds||24)*1000;
 const quarterMs=match=>(match.settings?.quarterMinutes||12)*60000;
 const regulationQuarters=match=>match.settings?.quarters||4;
@@ -63,6 +81,7 @@ export function ensureBasketballGame(sim,environment,now) {
  sim.actors ||= {};sim.players ||= {};sim.events ||= [];
  sim.basketball ||= {state:'ready',matchId:null,homeScore:0,awayScore:0,quarter:1,clockMs:BASKETBALL_COURT.quarterMs,shotClockMs:BASKETBALL_COURT.shotClockMs,possession:'home',lastPlay:'Pick a team and start the game.',lastScore:null,startedAt:null,updatedAt:now,playSequence:0};
  sim.basketball.settings={...BASKETBALL_DEFAULT_SETTINGS,...sim.basketball.settings,allowLateJoin:false};
+ refreshBasketballHost(sim,now);
  for(const seat of BASKETBALL_SPECTATOR_SEATS)if(!sim.actors[seat.id]){const position={x:seat.x,y:seat.y,z:seat.z},rotation={x:0,y:seat.rotationY,z:0};sim.actors[seat.id]={id:seat.id,modelId:'basketball-spectator-seat',basketballManaged:true,basketballSpectatorSeat:true,active:true,health:100,position,rotation,scale:{x:1,y:1,z:1},definition:{objectId:seat.id,modelId:'basketball-spectator-seat',position:{...position},gameplay:{behavior:'seat',health:100,damage:0,interactionDistance:2.5,cooldown:0,action:'none',prompt:'Sit on spectator bench',seatOffset:[0,0,0]},movement:{speed:0}}};}
  const current=basketballGameBall(sim),authored=Object.values(sim.actors).find(ball=>isBasketball(ball)&&!ball.basketballManaged&&!ball.spawned&&ball.active!==false);
  if(authored&&(!current||current.basketballManaged&&sim.basketball.state!=='live')){
@@ -105,7 +124,7 @@ export function takeBasketballSpot(sim,player,now,team){
  if(bot){player.basketballNumber=bot.basketballNumber;const ball=sim.actors[bot.heldId];if(ball){player.heldId=ball.id;ball.holderId=player.actorId||player.id;}delete sim.players[bot.actorId];}
  player.movementRevision=(player.movementRevision||0)+1;
  sim.basketball.lastPlay=`${player.username||'Player'} joined ${team} · play continues.`;
- fillBasketballTeams(sim,now);return team;
+ fillBasketballTeams(sim,now);refreshBasketballHost(sim,now);return team;
 }
 
 export function assignBasketballTeam(sim,player,now,requestedTeam) {
@@ -122,6 +141,7 @@ export function assignBasketballTeam(sim,player,now,requestedTeam) {
  player.basketballRole='player';
  player.basketballTeam=requestedTeam||(teams.includes(player.basketballTeam)?player.basketballTeam:counts.home<=counts.away?'home':'away');
  player.basketballJersey=player.basketballTeam;
+ refreshBasketballHost(sim,now);
  return player.basketballTeam;
 }
 
@@ -139,9 +159,10 @@ function resetPossession(sim,team,now,message) {
 }
 
 
-export function configureBasketballGame(sim,settings,now){
+export function configureBasketballGame(sim,settings,now,player){
  const match=sim.basketball;if(!match)error('Enter Basketball Arena to configure a basketball game.');
  if(match.state==='live')error('Change basketball settings before tip-off or after the final buzzer.');
+ if(player)requireBasketballHost(sim,player,now);
  const invalid=()=>{throw Object.assign(new Error('Invalid basketball settings: use 1–12 minute quarters, 1–4 quarters, a 5–60 second shot clock, a 0–200 point limit and win by 1–10. Late arrivals must watch. Team size is 1–5, human slots 0–5 per side and AI tier 1–5.'),{statusCode:422});};
  if(!settings||typeof settings!=='object'||Array.isArray(settings))invalid();
  const limits={quarterMinutes:[1,12],quarters:[1,4],shotClockSeconds:[5,60],scoreLimit:[0,200],winBy:[1,10],teamSize:[1,5],homeHumans:[0,5],awayHumans:[0,5],aiDifficulty:[1,5]};
@@ -166,6 +187,7 @@ export function watchBasketballGame(sim,player,now){
  if(isBasketball(held)){releaseBall(sim,held);held.position={x:0,y:0,z:0};held.ballFloor=0;if(held.basketballMatchBall&&sim.basketball.state==='live')resetPossession(sim,other(team||sim.basketball.possession),now,'Player moved to the sideline · play continues.');}
  if(!online(sim,now).some(p=>!p.basketballAI))releaseBall(sim,basketballGameBall(sim));
  player.position={x:8.8,y:0,z:0};player.yaw=Math.PI/2;player.floor=0;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;
+ refreshBasketballHost(sim,now);
  return player;
 }
 function finishBasketballGame(sim,now,winner,message){
@@ -173,9 +195,10 @@ function finishBasketballGame(sim,now,winner,message){
  releaseBall(sim,basketballGameBall(sim));event(sim,'basketball-finish',now,{winner});
 }
 
-export function startBasketballGame(sim,now) {
+export function startBasketballGame(sim,now,player) {
  const match=sim.basketball;if(!match)error('Enter Basketball Arena to start a basketball game.');
  if(match.state==='live')error('This shared basketball game is already running.');
+ if(player)requireBasketballHost(sim,player,now);
  for(const [id,p]of Object.entries(sim.players))if(p.basketballAI)delete sim.players[id];
  let participants=online(sim,now);if(!participants.length)error('Choose a team before starting. At least one player must be on the court.');
  for(const player of participants)assignBasketballTeam(sim,player,now);
@@ -262,6 +285,7 @@ function advanceClock(sim,now) {
 
 export function stepBasketballGame(sim,now,dt) {
  if(!sim.basketball)return;
+ refreshBasketballHost(sim,now);
  if(sim.basketball.state==='live'&&Object.values(sim.players).some(p=>!p.basketballAI&&isBasketballPlayer(p)&&!p.replacedByRoom&&now-p.lastSeen<15000)){fillBasketballTeams(sim,now);if(dt>0)stepBasketballAI(sim,now,dt);}
  evacuateBasketballSpectators(sim);
  advanceClock(sim,now);

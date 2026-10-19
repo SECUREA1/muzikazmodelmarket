@@ -26,6 +26,7 @@ test('building paint remains editable before equip and menus block background ga
  assert.ok(source.includes("buildingPopup.hidden=true;closeTools()"));
  assert.ok(!source.includes("this.setTool('brick');buildingPopup.hidden=true"));
  assert.ok(source.includes('keys.clear();mobile.clear()'));
- assert.ok(source.includes("const menuOpen=Boolean(xrGameControls?.menuOpen||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))"));
+ assert.ok(source.includes("const menuOpen=Boolean(xrGameControls?.menuOpen||inputMenuOpen())"));
+ assert.ok(source.includes("function inputMenuOpen(){return !rangeOpsPanel.hidden||Boolean(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'));}"));
  assert.ok(source.includes('if(!serverHostedRoom&&!menuOpen&&!isCleanSportsEnvironment(activeEnvironment))toxicBubbleSystem.update'));
 });

@@ -208,15 +208,26 @@ export function createBasketballStadium(THREE, environment = {}) {
   const metal = material(0x536376, { roughness: .37, metalness: .8 });
   const ledBlue = material(HOME, { emissive: HOME, emissiveIntensity: 1.3, roughness: .3 });
   const ledOrange = material(AWAY, { emissive: AWAY, emissiveIntensity: 1.3, roughness: .3 });
-  // All surfaces share floor Y=0 so authoritative ball physics and players
-  // agree on the regulation rim height without any world-scale normalization.
-  box([46, .3, 62], concrete, [0, -.15, 0], 'BUILDER_WALKABLE_FLOOR_BASKETBALL_ARENA');
-  box([18.2, .08, 33], navy, [0, -.04, 0], 'BUILDER_WALKABLE_FLOOR_BASKETBALL_APRON');
+  // Tile the floor instead of stacking a concrete slab, apron and hardwood
+  // decal. Coplanar slab tops and millimetre-scale decals fight for the depth
+  // buffer on mobile and from the map overview, obscuring the court in dark
+  // triangles. Adjacent physical sections keep a single surface at Y=0 for
+  // rendering, player movement and authoritative ball/rim heights.
+  const floorSection = (width,length,x,z,mat,area) => {
+    const section = box([width,.3,length],mat,[x,-.15,z],`BUILDER_WALKABLE_FLOOR_BASKETBALL_${area.toUpperCase()}`);
+    section.userData.basketballSurface = area; return section;
+  };
+  const floorRing = (outerWidth,outerLength,innerWidth,innerLength,mat,area) => {
+    for (const side of [-1,1]) {
+      floorSection((outerWidth-innerWidth)/2,outerLength,side*(outerWidth+innerWidth)/4,0,mat,area);
+      floorSection(innerWidth,(outerLength-innerLength)/2,0,side*(outerLength+innerLength)/4,mat,area);
+    }
+  };
+  floorRing(BASKETBALL_COURT.arenaWidth,BASKETBALL_COURT.arenaLength,18.2,33,concrete,'concourse');
+  floorRing(18.2,33,BASKETBALL_COURT.width,BASKETBALL_COURT.length,navy,'apron');
   const hardwood = courtTexture(THREE);
   const floorMat = material(0xe1b878, { ...(hardwood ? { map: hardwood.texture, color: 0xffffff } : {}), roughness: .34, metalness: .02 });
-  const court = new THREE.Mesh(new THREE.PlaneGeometry(BASKETBALL_COURT.width, BASKETBALL_COURT.length), floorMat);
-  court.name = 'BASKETBALL_COURT_HARDWOOD_DECAL'; court.rotation.x = -Math.PI / 2; court.position.y = .004; court.receiveShadow = true;
-  court.userData.collisionDisabled = true; root.add(court);
+  floorSection(BASKETBALL_COURT.width,BASKETBALL_COURT.length,0,0,floorMat,'court');
   const hoops = [];
   for (const side of [-1, 1]) {
     const hoop = createBasketballHoop(THREE, { team: side < 0 ? 'home' : 'away' });

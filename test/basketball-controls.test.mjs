@@ -389,7 +389,7 @@ test('virtual benches keep spectators seated and release participants and their 
   state = await f.send('alice', 'interact', {entityId: seat.id});
   assert.equal(state.players['account:alice'].seatedId, seat.id);
   assert.equal(state.players['account:alice'].heldId, BASKETBALL_BALL_ID);
-  state = await f.send('bob', 'basketball-start');
+  state = await f.send('alice', 'basketball-start');
   assert.equal(state.players['account:alice'].seatedId ?? null, null);
   assert.equal(state.players['account:alice'].vehicleId ?? null, null);
   assert.equal(state.players['account:alice'].heldId, null);

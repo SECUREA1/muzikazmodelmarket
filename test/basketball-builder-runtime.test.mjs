@@ -130,7 +130,7 @@ for (const jerseyBehavior of ['pickup', 'interact']) {
     assert.equal(state.actors['catalog-away'].active, true);
     assert.equal(state.actors['catalog-away'].holderId ?? null, null);
 
-    await f.send('bob', 'basketball-start');
+    await f.send('alice', 'basketball-start');
     await f.relocate('alice', 'catalog-home');
     await assert.rejects(f.send('alice', 'interact', {entityId: 'catalog-home'}), /Change teams/);
   });
@@ -165,7 +165,7 @@ test('a custom Builder stadium uses its authored basketball for tip-off, scoring
   await f.relocate('alice', ballId);
   state = await f.send('alice', 'catch');
   assert.equal(state.players['account:alice'].heldId, ballId);
-  state = await f.send('bob', 'basketball-start');
+  state = await f.send('alice', 'basketball-start');
   assert.equal(state.basketball.ballId, ballId);
   assert.equal(state.players['account:alice'].heldId, null);
   assert.equal(state.actors[ballId].holderId, null);
