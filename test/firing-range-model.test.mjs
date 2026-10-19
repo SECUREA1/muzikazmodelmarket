@@ -67,6 +67,9 @@ test('the rear room checker finish uses a single noncolliding textured mesh',()=
 test('the published map and Builder dressing use the complete shared range with all five playable lanes',async()=>{
   const script=await readFile(new URL('../environment-builder.js',import.meta.url),'utf8');
   const start=script.indexOf('function addFiringRangeDressing('),end=script.indexOf('// Rasterize the reusable SVG finishes',start);
+  const heightSource=script.slice(script.indexOf('const terrainHeight='),script.indexOf('\n',script.indexOf('const terrainHeight=')));
+  const editorHeight=new Function('sceneData',heightSource+';return terrainHeight;')({layout:'firing-range'});
+  for(const [x,z]of [[0,0],[-13,23.5],[13,23.5],[0,24.5],[-7,19.7]])assert.ok(Math.abs(editorHeight(x,z)-.28*Math.sin(x*.31)*Math.cos(z*.27)*.18)<1e-9,'Builder terrain matches the published range');
   const worldDressing=new THREE.Group();
   const createBuilderDressing=new Function('THREE','createFiringRange','sceneData','worldDressing',script.slice(start,end)+'\naddFiringRangeDressing(null,()=>0);return worldDressing;');
   const editor=createBuilderDressing(THREE,createFiringRange,{gameplay:{}},worldDressing);
