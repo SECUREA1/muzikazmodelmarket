@@ -1,3 +1,4 @@
+import {mapSectorKind} from '../public/js/map-wheel-svg.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {filterWorlds} from '../public/js/world-map-picker.js';
@@ -7,4 +8,9 @@ test('world map filtering keeps full registry results and matches all search ter
  assert.equal(filterWorlds(worlds,'CITY neon')[0].env.id,'neon');
  assert.equal(filterWorlds(worlds,'neon nature').length,0);
  assert.equal(filterWorlds([], 'anything').length,0);
+});
+
+test('basketball is identified consistently in atlas records, aliases and authored maps',()=>{
+ for(const map of [{mapId:'basketball-arena'},{id:'basketball'},{id:'custom-court',builderScene:{layout:'basketball-stadium'}},{id:'court',basketball:true}])assert.equal(mapSectorKind(map),'basketball');
+ assert.equal(mapSectorKind({id:'muzikaz-main'}),'world');
 });

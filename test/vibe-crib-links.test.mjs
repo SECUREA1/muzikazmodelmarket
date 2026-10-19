@@ -27,3 +27,12 @@ test('Vibe Crib entry links launch the stable muzikaz-main game environment', as
   const gallery = await source('public/js/model-gallery-core.js');
   assert.match(gallery, /model-explorer\.html\?environment=muzikaz-main&house=muzikaz-main&autoplay=1&localFallback=1&sandbox=1/);
 });
+
+test('Vibe Crib uses only the native controller and retires the old canvas controls',async()=>{
+ const [classic,native]=await Promise.all([source('script.js'),source('public/js/house-explorer-glb.js')]);
+ assert.doesNotMatch(classic,/function initHouseExplorer\(|mobileControlState|function applyMobileControl/);
+ assert.doesNotMatch(native,/querySelectorAll\('\[data-mobile-(?:move|zoom|zoom-toggle)\]'/);
+ assert.match(native,/legacyHud\?\.remove\(\)/);
+ assert.match(native,/radToxStickMarkup\(\{rightTap:'jump'\}\)/);
+ assert.match(native,/Vibe Crib gameplay actions/);
+});

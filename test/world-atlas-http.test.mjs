@@ -24,14 +24,15 @@ test('live atlas lists built-in destinations, accurate roads and canonical entry
     const place=atlas.body.data.locations.find(place=>place.mapId===id);assert.ok(place,id+' is indexed');
     const target=new URL(place.playUrl,'http://localhost');assert.equal(target.searchParams.get('environment'),id);
     assert.equal(target.pathname,id==='hockey-arena'?'/hockey.html':id==='neon-junction'?'/arcade.html':'/model-explorer.html');
-    const environment=(await call('/api/environments/'+id)).body.data;assert.deepEqual(place.streets,environment.streets);
+    const environment=(await call('/api/environments/'+id)).body.data;assert.deepEqual(place.streets,environment.streets);if(id==='basketball-arena'){assert.equal(place.layout,'basketball-stadium');assert.equal(place.basketball,true);assert.match(place.thumbnailUrl,/basketball-arena/);}
   }
   const login=await call('/api/access/free-play',{}, {username:'AtlasPlayer',password:'atlas-test-password'});assert.equal(login.status,200);
   const headers={authorization:'Bearer '+login.body.data.sessionToken};
-  for(const id of ['hockey-arena','neon-junction','public-commons']){
+  for(const id of ['hockey-arena','neon-junction','basketball-arena','public-commons']){
     const place=atlas.body.data.locations.find(place=>place.mapId===id);
     const resolved=await call('/api/world-atlas/resolve',headers,{x:place.column*256,z:place.row*256});assert.equal(resolved.status,200);
     const target=new URL(resolved.body.data.playUrl,'http://localhost');assert.equal(target.pathname,new URL(place.playUrl,'http://localhost').pathname);assert.equal(target.searchParams.get('environment'),id);assert.ok(target.searchParams.get('meet'));
+    if(id==='basketball-arena'){const arrival=await call('/api/rooms/'+id+'/gameplay',headers,{action:'join',requestId:'basketball-court-entry'});assert.equal(arrival.status,200);assert.ok(arrival.body.data.basketball);assert.ok(arrival.body.data.actors['basketball-game-ball']);}
     if(id==='public-commons'){
       const arrival=await call('/api/rooms/'+id+'/gameplay',headers,{action:'join',requestId:'atlas-entry',meetingId:target.searchParams.get('meet')});assert.equal(arrival.status,200);assert.ok(arrival.body.data.players['account:'+login.body.data.account.accountId]);
     }
