@@ -58,12 +58,14 @@ function availableAttractionIds(){const ids=new Set(config.enabled);for(const in
 function selectFromMenu(index){const interaction=!config.enabled.includes(attractions[index]?.id)?[...(builderObjects?.interactions.values()||[])].find(item=>item.index===index&&(index<5||instanceRideSpeed(item.rideRuntime)>0)):null;return select(index,interaction);}
 function refreshAttractionButtons(){const available=availableAttractionIds();for(const [index,button] of [...document.querySelectorAll('#attractions button')].entries()){button.disabled=session.mode==='ride'||!available.has(button.dataset.attraction);button.querySelector('small').textContent=available.has(button.dataset.attraction)?(index>4?'RIDE':'PLAY')+' · FREE':'CLOSED';}}
 for(const button of document.querySelectorAll('#attractions button'))button.disabled=true;
-$('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=true;update();
+const broadcastButton=document.createElement('button');broadcastButton.id='broadcast-view';broadcastButton.textContent='Broadcast';broadcastButton.disabled=true;broadcastButton.setAttribute('aria-pressed','false');$('#overview').after(broadcastButton);
+$('#overview').disabled=$('#explore').disabled=$('#broadcast-view').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=true;update();
 await applySportsSurfaces(park.root,{theme:'arcade',renderer});
 if(builderObjects)await applySportsSurfaces(builderObjects.root,{theme:'arcade',renderer});
 const presentation=createArcadeGamePresentation({scene,park,config});
 const walker=createArcadeWalker();
-let cameraMode=readGameCameraMode('first-person'),explorationMode=cameraMode==='top-down'?'overview':'walk',nearby=null,activeInteraction=null;
+const explorationForCamera=mode=>mode==='top-down'?'overview':mode==='broadcast'?'broadcast':'walk',cameraLabel=mode=>mode==='top-down'?'Top down':mode==='broadcast'?'Broadcast':'First person';
+let cameraMode=readGameCameraMode('first-person'),explorationMode=explorationForCamera(cameraMode),nearby=null,activeInteraction=null;
 let yaw=.62,pitch=.78,distance=61,drag=false,lastX,lastY,moved=0,ride=null,rideRuntime=null,rideConfig=null,ridePhase=null,trainT=0,coasterT=0,parkTime=0,lastParkRender=-Infinity;
 const center=new T.Vector3(0,0,0),desired=new T.Vector3(),frameClock=createArcadeClock(performance.now());
 const walkKeys=new Set(),touchKeys=new Set(),collisionBoxes=[],walkInteractions=[],walkSurfaces=[];
@@ -101,33 +103,33 @@ function updateWalkerGround(){
  walker.ground=height;
 }
 function syncCameraControls(){
- const label=cameraMode==='top-down'?'Top down':'First person',next=cameraMode==='top-down'?'First person':'Top down',button=$('#camera-toggle');
+ const label=cameraLabel(cameraMode),next=cameraLabel(nextGameCameraMode(cameraMode)),button=$('#camera-toggle');
  button.textContent='View: '+label;button.title='Switch to '+next+' (V)';button.setAttribute('aria-label',button.title);button.dataset.gameCameraMode=cameraMode;
  button.disabled=ride!==null;if(ride!==null){button.title='Camera locked during ride';button.setAttribute('aria-label',button.title);}
- $('#explore').setAttribute('aria-pressed',String(cameraMode==='first-person'));$('#overview').setAttribute('aria-pressed',String(cameraMode==='top-down'));
- $('#walk-help').textContent=cameraMode==='top-down'?'WASD / arrows to move · Scroll to zoom · V to change view':'WASD / arrows · Drag to look · Shift to run · V to change view';
+ $('#broadcast-view').setAttribute('aria-pressed',String(cameraMode==='broadcast'));$('#explore').setAttribute('aria-pressed',String(cameraMode==='first-person'));$('#overview').setAttribute('aria-pressed',String(cameraMode==='top-down'));
+ $('#walk-help').textContent=cameraMode==='top-down'?'WASD / arrows to move · Scroll to zoom · V changes view':cameraMode==='broadcast'?'Broadcast · WASD / arrows to move · Drag to orbit · V changes view':'WASD / arrows · Drag to look · Shift to run · V changes view';
 }
 function setExploration(mode){
  explorationMode=mode;drag=false;walkKeys.clear();touchKeys.clear();
- document.body.classList.toggle('walking',mode==='walk');document.body.classList.toggle('top-down',mode==='overview');
+ document.body.classList.toggle('walking',mode==='walk');document.body.classList.toggle('top-down',mode!=='walk');document.body.classList.toggle('broadcast',mode==='broadcast');
  $('#walkhud').hidden=ride!==null||game!==null;syncCameraControls();lastParkRender=-Infinity;
 }
 function setCameraMode(mode){
  if(ride!==null)return false;
  cameraMode=normalizeGameCameraMode(mode);writeGameCameraMode(cameraMode);
- setExploration(cameraMode==='top-down'?'overview':'walk');
+ setExploration(explorationForCamera(cameraMode));
  if(game!==null)presentation.setCamera(camera,cameraMode);
  return true;
 }
 function reset(reason='exit'){
  exitArcadeAttraction(session,reason);ride=null;rideRuntime=null;rideConfig=null;ridePhase=null;drag=false;
  refreshAttractionButtons();
- $('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=false;
+ $('#overview').disabled=$('#explore').disabled=$('#broadcast-view').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=false;
  document.body.classList.remove('riding');$('#ridehud').hidden=true;
- camera.up.set(0,1,0);setExploration(cameraMode==='top-down'?'overview':'walk');
+ camera.up.set(0,1,0);setExploration(explorationForCamera(cameraMode));
 }
 $('#camera-toggle').onclick=()=>setCameraMode(nextGameCameraMode(cameraMode));
-$('#overview').onclick=()=>setCameraMode('top-down');
+$('#overview').onclick=()=>setCameraMode('top-down');broadcastButton.onclick=()=>setCameraMode('broadcast');
 $('#explore').onclick=()=>{if(setCameraMode('first-person'))toast('WASD or arrows to walk. Drag to look. Press E near an attraction.');};
 let toastTimer;function toast(s){clearTimeout(toastTimer);$('#toast').textContent=s;$('#toast').style.opacity=1;toastTimer=setTimeout(()=>$('#toast').style.opacity=0,3500)}
 if(savedObjectsMessage)toast(savedObjectsMessage);if(startupError)toast(startupError);
@@ -142,7 +144,7 @@ function select(i,interaction=null){
  if(i<5){startGame(i);return true;}
  ride=i;rideRuntime=instanceRuntime;rideConfig=attractionConfig;drag=false;pressed.clear();
  for(const b of document.querySelectorAll('#attractions button'))b.disabled=true;
- $('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=true;
+ $('#overview').disabled=$('#explore').disabled=$('#broadcast-view').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=true;
  document.body.classList.add('riding');$('#ridehud').hidden=false;$('#walkhud').hidden=true;$('#ridename').textContent=items[i][0];
  $('#rideinfo').textContent=i===5?'A full lap around the arcade park.':'Restraints locked. Get ready for the climb.';
  $('#ridetype').textContent=i===5?'SCENIC TOUR • ON BOARD':'THRILL RIDE • CAMERA LOCKED';syncCameraControls();
@@ -178,7 +180,7 @@ renderer.domElement.onpointerup=e=>{
  }
 };
 renderer.domElement.onpointercancel=()=>{drag=false;};
-renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();if(ride===null&&game===null&&explorationMode==='overview')distance=Math.max(28,Math.min(85,distance+e.deltaY*.04))},{passive:false});
+renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();if(ride===null&&game===null&&explorationMode!=='walk')distance=Math.max(28,Math.min(85,distance+e.deltaY*.04))},{passive:false});
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);lastParkRender=-Infinity;});
 let slowDraws=0,quality='high';
 function animate(now){
@@ -190,14 +192,14 @@ function animate(now){
  if(game!==null)updateGame(dt);
  if(ride===null&&game===null){
   const down=(...keys)=>keys.some(key=>walkKeys.has(key)||touchKeys.has(key)||controllerWalkKeys.has(key));
-  const walkingYaw=walker.yaw;if(cameraMode==='top-down')walker.yaw=0;
+  const walkingYaw=walker.yaw;if(cameraMode==='top-down')walker.yaw=0;else if(cameraMode==='broadcast')walker.yaw=-yaw;
   stepArcadeWalker(walker,dt,{forward:Number(down('KeyW','ArrowUp','forward'))-Number(down('KeyS','ArrowDown','back')),right:Number(down('KeyD','ArrowRight','right'))-Number(down('KeyA','ArrowLeft','left')),sprint:down('ShiftLeft','ShiftRight'),bounds,colliders:collisionBoxes});walker.yaw=walkingYaw;
   updateWalkerGround();nearby=nearestArcadeInteraction(walker,walkInteractions);
   $('#interact').hidden=!nearby;if(nearby)$('#interact').textContent=(nearby.index>=5?'Board ':'Play ')+attractions[nearby.index].name;$('#nearby').textContent=nearby?'Enter / E · '+attractions[nearby.index].name:'Walk to an attraction';
  }
  if(ride!==null){let elapsed=dt*instanceRideSpeed(rideRuntime);while(elapsed>0&&session.ride){const step=Math.min(elapsed,.1);elapsed-=step;if(stepArcadeRide(session,step)){reset('complete');toast('Ride complete. Welcome back to the park!');break;}}}
  if(!renderer.xr.isPresenting&&now-lastParkRender<1000/30)return;lastParkRender=now;
- visitorMarker.visible=game===null&&ride===null&&cameraMode==='top-down';visitorMarker.position.set(walker.x,walker.ground+.04,walker.z);
+ visitorMarker.visible=game===null&&ride===null&&cameraMode!=='first-person';visitorMarker.position.set(walker.x,walker.ground+.04,walker.z);
  const phases=animateArcadePark(park.root,parkTime,config);trainT=phases.trainT;coasterT=phases.coasterT;
  for(const part of builderObjects?.rideParts||[]){const speed=arcadeAnimationSpeed(part.userData.arcadeAnimationEnabled,part.userData.arcadeAnimationSpeed);if(speed>0)animateArcadePark(part,parkTime*speed);}
  if(game!==null){
@@ -213,6 +215,11 @@ function animate(now){
   if(camera.fov!==65){camera.fov=65;camera.updateProjectionMatrix();}
   camera.up.set(0,1,0);camera.position.set(walker.x,walker.ground+walker.eyeHeight,walker.z);
   desired.set(walker.x+Math.sin(walker.yaw)*Math.cos(walker.pitch),camera.position.y+Math.sin(walker.pitch),walker.z-Math.cos(walker.yaw)*Math.cos(walker.pitch));camera.lookAt(desired);
+ }else if(explorationMode==='broadcast'){
+  if(camera.fov!==52){camera.fov=52;camera.updateProjectionMatrix();}
+  const radius=Math.max(18,distance*.62,14/Math.max(.35,camera.aspect)),height=Math.max(10,radius*Math.sin(pitch));
+  camera.up.set(0,1,0);camera.position.set(walker.x+Math.sin(yaw)*radius,walker.ground+height,walker.z+Math.cos(yaw)*radius);
+  desired.set(walker.x,walker.ground+1,walker.z);camera.lookAt(desired);
  }else{
   if(camera.fov!==52){camera.fov=52;camera.updateProjectionMatrix();}
   const height=Math.max(13,distance*.42,10/Math.max(.35,camera.aspect));
@@ -276,9 +283,9 @@ $('#close-game-setup').onclick=()=>{lobby.open=false;canvas.focus();};
 $('#join-game').onclick=()=>lobbyOperation(()=>joinSharedGame());$('#spectate-game').onclick=()=>lobbyOperation(()=>joinSharedGame(true));$('#start-round').onclick=()=>lobbyOperation(()=>startRound());
 for(const button of document.querySelectorAll('[data-game-key]')){button.onpointerdown=e=>{e.preventDefault();button.setPointerCapture(e.pointerId);pressed.add(button.dataset.gameKey);};button.onpointerup=button.onpointercancel=()=>pressed.delete(button.dataset.gameKey);}
 
-refreshAttractionButtons();$('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=false;
+refreshAttractionButtons();$('#overview').disabled=$('#explore').disabled=$('#broadcast-view').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=false;
 window.NeonJunction=Object.freeze({snapshot:()=>({mode:session.mode,attraction:session.attraction,ride:session.ride?{...session.ride}:null,game,score,remaining,gameElapsed,ended,attempts,pointer:{...pointer},shot:shot?{...shot}:null,basketball:basketballState,points:total,visited:[...seen],camera:camera.position.toArray(),cameraUp:camera.up.toArray(),cameraQuaternion:camera.quaternion.toArray(),cameraFov:camera.fov,cameraAspect:camera.aspect,trainT,coasterT,ridePhase,viewMode:game!==null?'game':ride!==null?'ride':explorationMode,cameraMode,cameraLocked:ride!==null,playerPosition:[walker.x,walker.ground+walker.eyeHeight,walker.z],walking:{...walker,nearby:nearby?.id||null,colliders:collisionBoxes.length},presentation:presentation.snapshot(),graphics:{park:park.root.userData.sportsSurfaceStatus||null,builder:builderObjects?.root.userData.sportsSurfaceStatus||null,game:presentation.root?.userData.sportsSurfaceStatus||null},render:{fps:30,pixelRatio:renderer.getPixelRatio(),quality,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles},puck:puck?{...puck}:null,balls:balls.map(b=>({...b})),targets:targets.map(t=>({...t}))}),ready:true});
-setExploration(cameraMode==='top-down'?'overview':'walk');
+setExploration(explorationForCamera(cameraMode));
 const autoIndex=attractions.findIndex(attraction=>attraction.id===autoAttraction);
 if(autoIndex>=0&&!startupError){const interaction=launchPartId?[...(builderObjects?.interactions.values()||[])].find(item=>item.objectId===launchPartId):null;if(interaction)select(autoIndex,interaction);else selectFromMenu(autoIndex);if(launchParams.get('matchmaking')==='1')queueMicrotask(()=>lobbyOperation(()=>joinSharedGame($('#game-mode').value==='spectator')));}
 const vrRig=new T.Group();scene.add(vrRig);vrRig.add(camera);

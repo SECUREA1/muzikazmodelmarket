@@ -2,8 +2,9 @@
 const number=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 export const HOCKEY_PLAYER_VIEWS=Object.freeze(['chase','ice','top-down']);
-export const hockeyViewForGameCamera=mode=>mode==='top-down'?'top-down':'ice';
-export const hockeyGameCameraForView=view=>view==='ice'?'first-person':view==='top-down'?'top-down':null;
+export const HOCKEY_AIM_VIEWS=Object.freeze(['top-down','broadcast']);
+export const hockeyViewForGameCamera=mode=>mode==='broadcast'?'broadcast':mode==='top-down'?'top-down':'ice';
+export const hockeyGameCameraForView=view=>view==='ice'?'first-person':view==='top-down'||view==='broadcast'?view:null;
 export function hockeyViewHeading(attack=1){return attack<0?-Math.PI/2:Math.PI/2;}
 export function hockeySkateVector(right,forward,heading=Math.PI){
  right=clamp(number(right),-1,1);forward=clamp(number(forward),-1,1);heading=number(heading,Math.PI);
@@ -12,6 +13,13 @@ export function hockeySkateVector(right,forward,heading=Math.PI){
 }
 export function hockeyCameraPose(view,{player,puck,attack=1,heading=hockeyViewHeading(attack),pitch=.3,aspect=1.6}={}){
  const narrow=number(aspect,1.6)<1.2,staticViews={broadcast:[0,narrow?65:43,narrow?58:38],lower:[0,7,23],upper:[0,19,34],end:[39,9,0],free:[0,24,34]};
+ if(view==='broadcast'){
+  const ratio=clamp(number(aspect,1.6),.25,4),base=staticViews.broadcast,distance=Math.hypot(base[1],base[2]),up=base[1]/distance,forward=base[2]/distance,tangent=Math.tan(24*Math.PI/180);
+  // Fit both ends and the boards with room around the rink. A fixed spectator
+  // distance clips the goals on narrow mobile screens.
+  const fitted=Math.max(distance,31.5/(tangent*ratio*.91)+14*forward+2*up,(14*up+2*forward)/(tangent*.91)+14*forward+2*up);
+  return {position:[0,up*fitted,forward*fitted],target:[0,0,0],up:[0,1,0],fov:48,heading:Math.PI,immersive:false};
+ }
  if(view==='top-down'){
   const x=number(player?.x,number(puck?.x)),z=number(player?.z,number(puck?.z)),angle=number(heading,hockeyViewHeading(attack));
   // Stay below the suspended scoreboard and lights; this is a vertical player-following
@@ -30,5 +38,5 @@ export function hockeyAimPoint(origin,direction,fallback={x:27,z:0}){
  const ox=number(origin?.x),oy=number(origin?.y),oz=number(origin?.z),dx=number(direction?.x),dy=number(direction?.y),dz=number(direction?.z);
  // Ignore sky/horizon rays rather than sending extreme aim coordinates to the server.
  if(dy>=-.002||oy<=0)return {x:number(fallback.x,27),z:number(fallback.z)};
- const t=clamp(-oy/dy,0,90);return {x:clamp(ox+dx*t,-45,45),z:clamp(oz+dz*t,-28,28)};
+ const t=clamp(-oy/dy,0,600);return {x:clamp(ox+dx*t,-45,45),z:clamp(oz+dz*t,-28,28)};
 }

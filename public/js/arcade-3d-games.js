@@ -371,6 +371,27 @@ export function arcadeGameCameraPose(game, mode = 'first-person', {aspect = 1.6,
   const id = gameId(game), definition = cameraDefinitions[id];
   if (!definition) return null;
   const ratio = Math.max(.3, finite(aspect, 1.6));
+  if (mode === 'broadcast') {
+    const floor = id === 'hockey' || id === 'basketball' ? .65 : id === 'shooting' ? .7 : 1.55;
+    const ceiling = id === 'basketball' ? 5.6 : id === 'shooting' ? 5.3 : floor + 2.2;
+    const target = [0, (floor + ceiling) / 2, 0], fov = 52;
+    // A fixed elevated sideline reveals the court/table in perspective. Fit its
+    // complete playable bounds to the narrower screen dimension on phones.
+    const back = new T.Vector3(1, .82, .7).normalize();
+    const right = new T.Vector3(back.z, 0, -back.x).normalize();
+    const up = new T.Vector3().crossVectors(back, right);
+    const tangent = Math.tan(fov * Math.PI / 360);
+    let distance = 6;
+    for (const x of [-definition.width / 2, definition.width / 2])
+      for (const z of [-definition.depth / 2, definition.depth / 2])
+        for (const y of [floor - target[1], ceiling - target[1]]) {
+          const depth = x * back.x + y * back.y + z * back.z;
+          distance = Math.max(distance, depth + Math.abs(x * right.x + z * right.z) / (tangent * ratio * .84),
+            depth + Math.abs(x * up.x + y * up.y + z * up.z) / (tangent * .72));
+        }
+    return {mode, eye: target.map((coordinate, index) => coordinate + distance * back.getComponent(index)),
+      target, up: [0, 1, 0], fov, width: definition.width, depth: definition.depth};
+  }
   if (mode === 'top-down') {
     if (id === 'shooting') {
       const target = [0, 1.9, -1.5], eye = [0, 11.5, 6.8], distance = Math.hypot(9.6, 8.3);

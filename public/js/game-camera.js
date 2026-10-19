@@ -1,5 +1,5 @@
 // The view belongs to this player, so it follows map travel without changing a room.
-export const GAME_CAMERA_MODES = Object.freeze(['first-person', 'top-down']);
+export const GAME_CAMERA_MODES = Object.freeze(['first-person', 'top-down', 'broadcast']);
 export const GAME_CAMERA_STORAGE_KEY = 'muzikazGameCameraMode';
 
 export function normalizeGameCameraMode(mode, fallback = 'first-person') {
@@ -18,7 +18,7 @@ export function writeGameCameraMode(mode) {
 }
 
 export function nextGameCameraMode(mode) {
-  return normalizeGameCameraMode(mode) === 'first-person' ? 'top-down' : 'first-person';
+  return GAME_CAMERA_MODES[(GAME_CAMERA_MODES.indexOf(normalizeGameCameraMode(mode)) + 1) % GAME_CAMERA_MODES.length];
 }
 
 export function isGameCameraToggleKey(event) {

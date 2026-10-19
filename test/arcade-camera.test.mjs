@@ -24,18 +24,18 @@ test('standing camera follows basketball release position without changing the p
  const state={gameElapsed:.5,shot:{x:600,p:.4,endX:400,scored:true}},before=structuredClone(state);
  const pose=arcadeGameCameraPose('basketball','first-person',{state});
  assert.ok(Math.abs(pose.eye[0]-(1.6-.55))<1e-8);
- arcadeGameCameraPose('basketball','top-down',{state});
+ arcadeGameCameraPose('basketball','top-down',{state});arcadeGameCameraPose('basketball','broadcast',{state});
  assert.deepEqual(state,before);
 });
 
-test('both camera modes preserve transformed world-space aiming for all five games and aspect ratios',()=>{
+test('all camera modes preserve transformed world-space aiming for all five games and aspect ratios',()=>{
  for(const id of ids){
   const scene=new T.Scene(),parent=new T.Group(),station=createArcadePart(id),presentation=createArcadeGamePresentation({scene});
   parent.position.set(9,2,-6);parent.rotation.set(.08,.7,-.06);parent.scale.set(1.3,.85,1.1);scene.add(parent);parent.add(station);
   presentation.activate(id,{anchor:station});
   const state={gameElapsed:.4,pointer:{x:525,y:185},puck:{x:500,y:100},balls:[{x:220,y:240,vx:0,vy:0}],targets:[{dx:525,dy:185,r:24}]};presentation.update(state);
   try{
-   for(const aspect of [.45,1.6])for(const mode of ['first-person','top-down']){
+   for(const aspect of [.45,1.6])for(const mode of ['first-person','top-down','broadcast']){
     const camera=new T.PerspectiveCamera(43,aspect,.1,250);assert.equal(presentation.setCamera(camera,mode),true);
     const world=presentation.root.localToWorld(arcadeGamePoint(id,525,185));
     const xrPointer=presentation.rayPointer(camera.position.clone(),world.clone().sub(camera.position).normalize());
@@ -57,6 +57,7 @@ test('a first-person avatar cannot block its own camera and returns for the elev
   try{
    presentation.setCamera(camera,'first-person');assert.equal(head.visible,false);
    presentation.setCamera(camera,'top-down');assert.equal(head.visible,true);
+   presentation.setCamera(camera,'broadcast');assert.equal(head.visible,true);
    presentation.setCamera(camera,'first-person');assert.equal(head.visible,false);
   }finally{presentation.dispose();dispose(scene);}
  }
@@ -76,4 +77,16 @@ test('the raised basketball rim stays clear of the top HUD in the overhead view'
    assert.ok(top>120,`the complete physical rim clears the 95px desktop HUD: ${top}`);
   }
  }finally{presentation.dispose();dispose(scene);}
+});
+
+test('broadcast frames every station from an elevated sideline on portrait and wide screens',()=>{
+ for(const id of ids)for(const aspect of [.4,.75,1.6,2.2]){
+  const pose=arcadeGameCameraPose(id,'broadcast',{aspect}),top=arcadeGameCameraPose(id,'top-down',{aspect});
+  assert.equal(pose.mode,'broadcast');assert.ok(pose.eye[0]>pose.target[0]+3);assert.ok(pose.eye[1]>pose.target[1]+3);assert.notDeepEqual(pose.eye,top.eye);assert.deepEqual(pose.up,[0,1,0]);
+  const camera=new T.PerspectiveCamera(pose.fov,aspect,.1,250);camera.position.fromArray(pose.eye);camera.up.fromArray(pose.up);camera.lookAt(new T.Vector3().fromArray(pose.target));camera.updateMatrixWorld(true);
+  const floor=id==='hockey'||id==='basketball'?.65:id==='shooting'?.7:1.55,ceiling=id==='basketball'?5.6:id==='shooting'?5.3:floor+2.2;
+  for(const x of [-pose.width/2,pose.width/2])for(const z of [-pose.depth/2,pose.depth/2])for(const y of [floor,ceiling]){
+   const corner=new T.Vector3(x,y,z).project(camera);assert.ok(Math.abs(corner.x)<=.841&&Math.abs(corner.y)<=.721,`${id} ${aspect} full station stays inside the sideline frame`);
+  }
+ }
 });

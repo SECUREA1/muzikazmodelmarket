@@ -15,7 +15,7 @@ test('player cameras follow the controlled player and keep chase eyes clear of s
  const player={x:28,z:12},chase=hockeyCameraPose('chase',{player,heading:-Math.PI/2}),eye=hockeyCameraPose('ice',{player,heading:Math.PI/2});
  assert.equal(chase.immersive,true);assert.ok(chase.position[0]<=29.2&&chase.position[2]<=11.8);assert.equal(chase.position[1],4.1);assert.equal(eye.position[1],1.48);assert.ok(eye.position[0]>player.x);assert.ok(eye.target[0]>player.x);assert.equal(eye.fov,76);
  const down=hockeyCameraPose('ice',{player,pitch:.8});assert.ok(down.target[1]<eye.target[1]);
- const spectator=hockeyCameraPose('chase');assert.equal(spectator.immersive,false);assert.equal(spectator.position[1],43);assert.equal(hockeyCameraPose('broadcast',{aspect:.7}).position[1],65);
+ const spectator=hockeyCameraPose('chase');assert.equal(spectator.immersive,false);assert.equal(spectator.position[1],43);assert.ok(hockeyCameraPose('broadcast',{aspect:.7}).position[1]>65);
 });
 test('bad camera inputs and sky rays never produce nonfinite world aim or movement',()=>{
  for(const view of ['chase','ice','top-down','broadcast','unknown']){const pose=hockeyCameraPose(view,{player:{x:Infinity,z:NaN},heading:NaN,pitch:Infinity});assert.ok([...pose.position,...pose.target,pose.fov].every(Number.isFinite));}
@@ -59,5 +59,19 @@ test('Top down follows the skater vertically below arena overheads and preserves
 });
 test('hockey maps canonical shared camera preferences without changing match state',async()=>{
  const {readGameCameraMode,writeGameCameraMode}=await import('../public/js/game-camera.js'),before=globalThis.localStorage,storage=new Map();globalThis.localStorage={getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
- try{const state=createHockey(),snapshot=JSON.stringify(state);for(const mode of ['first-person','top-down']){writeGameCameraMode(mode);const view=hockeyViewForGameCamera(readGameCameraMode());assert.equal(hockeyGameCameraForView(view),mode);const player=state.players[0];hockeyCameraPose(view,{player});assert.equal(JSON.stringify(state),snapshot);}assert.equal(hockeyGameCameraForView('chase'),null);assert.equal(hockeyGameCameraForView('broadcast'),null);}finally{if(before===undefined)delete globalThis.localStorage;else globalThis.localStorage=before;}
+ try{const state=createHockey(),snapshot=JSON.stringify(state);for(const mode of ['first-person','top-down','broadcast']){writeGameCameraMode(mode);const view=hockeyViewForGameCamera(readGameCameraMode());assert.equal(hockeyGameCameraForView(view),mode);const player=state.players[0];hockeyCameraPose(view,{player});assert.equal(JSON.stringify(state),snapshot);}assert.equal(hockeyGameCameraForView('chase'),null);assert.equal(hockeyGameCameraForView('broadcast'),'broadcast');}finally{if(before===undefined)delete globalThis.localStorage;else globalThis.localStorage=before;}
+});
+
+test('broadcast fits both goals and the rink boards on mobile and keeps movement and aiming screen relative',()=>{
+ for(const aspect of [.35,.46,.7,1,1.6,2.4]){
+  const pose=hockeyCameraPose('broadcast',{player:{x:26,z:11},puck:{x:-27,z:-12},heading:Math.PI/2,aspect}),camera=new PerspectiveCamera(pose.fov,aspect,.035,400);
+  camera.position.fromArray(pose.position);camera.up.fromArray(pose.up);camera.lookAt(...pose.target);camera.updateMatrixWorld(true);
+  assert.equal(pose.immersive,false);assert.deepEqual(pose.target,[0,0,0]);
+  for(const x of [-31.5,31.5])for(const z of [-14,14])for(const y of [0,1.5]){
+   const point=new Vector3(x,y,z).project(camera);assert.ok(Math.abs(point.x)<.93&&Math.abs(point.y)<.93&&point.z<1,`aspect ${aspect}: ${point.toArray()}`);
+  }
+  const forward=hockeySkateVector(0,1,pose.heading),right=hockeySkateVector(1,0,pose.heading),ahead=new Vector3(forward.x*3,0,forward.z*3).project(camera),side=new Vector3(right.x*3,0,right.z*3).project(camera);
+  assert.ok(ahead.y>0);near(ahead.x,0);assert.ok(side.x>0);near(side.y,0);
+  const ray=new Raycaster();ray.setFromCamera(new Vector2(.1,.1),camera);const aim=hockeyAimPoint(ray.ray.origin,ray.ray.direction);assert.ok(aim.x>0&&aim.z<0,'pointing above and right of center aims up and right on the rink');
+ }
 });

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../public/vendor/three/three.module.min.js';
-import {explorerMovementInput,explorerAimAngles,explorerTopDownPose} from '../public/js/explorer-camera.js';
+import {explorerMovementInput,explorerAimAngles,explorerTopDownPose,explorerBroadcastPose} from '../public/js/explorer-camera.js';
 
 const close=(actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-8,`${actual} ≠ ${expected}`);
 
@@ -39,4 +39,26 @@ test('portrait and landscape overhead cameras remain north-up and expose the pla
     close(centre.x,0);close(centre.y,0);assert.ok(north.y>centre.y);assert.ok(east.x>centre.x);
     assert.ok(pose.cutHeight>player.y+1.65);assert.ok(pose.position[1]>pose.cutHeight);
   }
+});
+
+test('broadcast shows the whole basketball court from an elevated sideline in portrait and landscape',()=>{
+ for(const aspect of [.35,.46,1,1.7,2.4]){
+  const pose=explorerBroadcastPose({x:4,y:0,z:10},aspect,68,{court:true});
+  const view=new THREE.PerspectiveCamera(58,aspect,.05,700);view.position.fromArray(pose.position);view.up.fromArray(pose.up);view.lookAt(...pose.target);view.updateMatrixWorld(true);
+  for(const x of [-7.62,7.62])for(const z of [-14.326,14.326])for(const y of [0,3.05]){
+   const point=new THREE.Vector3(x,y,z).project(view);assert.ok(Math.abs(point.x)<1&&Math.abs(point.y)<1&&point.z<1,`court corner remains visible at ${aspect}`);
+  }
+  assert.ok(pose.position[0]>0&&pose.position[1]>3.05);assert.ok(pose.cutHeight>10&&pose.cutHeight<16.8,'roof is cut away while ball and hoops remain visible');
+  assert.deepEqual(pose.target,[0,1.5,0],'court broadcast stays centered as the player moves');
+ }
+});
+
+test('broadcast movement follows the sideline screen independently of player aim',()=>{
+ for(const yaw of [0,.7,Math.PI,-1.4])for(const viewYaw of [-1.2,.6,1.4])for(const input of [{x:0,y:1},{x:1,y:0},{x:-.6,y:.8}]){
+  const controls=explorerMovementInput(input,yaw,true,viewYaw);
+  const worldX=-Math.sin(yaw)*controls.y+Math.cos(yaw)*controls.x,worldZ=-Math.cos(yaw)*controls.y-Math.sin(yaw)*controls.x;
+  close(worldX,-Math.sin(viewYaw)*input.y+Math.cos(viewYaw)*input.x);close(worldZ,-Math.cos(viewYaw)*input.y-Math.sin(viewYaw)*input.x);
+ }
+ const follow=explorerBroadcastPose({x:20,y:4,z:-10},1.6);
+ assert.deepEqual(follow.target,[20,5,-10]);assert.ok(follow.position[0]>20&&follow.position[1]>5&&follow.position[2]>-10);
 });

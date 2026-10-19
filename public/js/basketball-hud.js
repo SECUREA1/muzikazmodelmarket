@@ -2,10 +2,18 @@ import {mountGameMatchBrowser} from './game-match-browser.js';
 import {basketballSoloSettings} from './basketball-rules.js';
 import {bindGameActionSelection} from './rad-tox-controller.js';
 
-const clock = milliseconds => {
-  const seconds = Math.max(0, Math.ceil((milliseconds || 0) / 1000));
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+const milliseconds=value=>Number.isFinite(value)?Math.max(0,value):0;
+const clock=value=>{
+  const remaining=milliseconds(value);
+  if(remaining>0&&remaining<60000){const tenths=Math.min(599,Math.ceil(remaining/100));return `0:${String(Math.floor(tenths/10)).padStart(2,'0')}.${tenths%10}`;}
+  const seconds=Math.ceil(remaining/1000);return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
 };
+export function basketballScoreboardState(game={}){
+  const quarters=Math.max(1,Math.floor(Number(game.settings?.quarters)||4)),quarter=Math.max(1,Math.floor(Number(game.quarter)||1)),overtime=Math.max(0,quarter-quarters);
+  const phase=game.state==='ready'?'PRE GAME':game.state==='finished'?(overtime?`FINAL · OT ${overtime}`:'FINAL'):overtime?`OT ${overtime}`:`Q${quarter}`;
+  const shot=milliseconds(game.shotClockMs),score=value=>Number.isFinite(value)?Math.max(0,Math.floor(value)):0;
+  return {home:score(game.homeScore),away:score(game.awayScore),phase,gameClock:clock(game.clockMs),shotClock:shot>0&&shot<5000?(Math.ceil(shot/100)/10).toFixed(1):String(Math.ceil(shot/1000)),possession:['home','away'].includes(game.possession)?game.possession:null};
+}
 
 export function basketballLobbySummary(game={}, players={}) {
   const size=Math.max(1,Math.min(5,Number(game.settings?.teamSize)||5));
@@ -22,12 +30,16 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
   const style = document.createElement('style');
   style.textContent = `
     .basketball-match-toggle{pointer-events:auto;min-height:38px;background:#142305;color:#c4ff5b;border:1px solid #91ba42;border-radius:8px;margin:6px auto;display:block;padding:6px 12px;font-weight:bold}.basketball-match-menu{pointer-events:auto}.basketball-match-menu .basketball-game-actions{display:flex!important}.basketball-match-menu::backdrop{background:#000b}\n    .basketball-hud[hidden]{display:none!important}
-    .basketball-hud{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:24;width:min(520px,calc(100% - 28px));color:#f8f4eb;font-family:system-ui,sans-serif;pointer-events:none}
-    .basketball-score-strip{display:grid;grid-template-columns:1fr 100px 1fr;background:#09101fed;border:1px solid #d8b27580;box-shadow:0 12px 40px #0007;border-radius:12px;overflow:hidden;text-align:center}
-    .basketball-team-score{padding:10px 12px;border-top:3px solid #27b8ff;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .basketball-hud{color:#f8f4eb;font-family:system-ui,sans-serif;pointer-events:none}
+    .basketball-world{--basketball-scoreboard-height:56px}
+    .basketball-scoreboard{position:absolute;top:var(--basketball-scoreboard-top,8px);left:50%;transform:translateX(-50%);z-index:24;width:min(460px,calc(100% - 16px));height:var(--basketball-scoreboard-height,56px);color:#f8f4eb;font-family:system-ui,sans-serif;pointer-events:none}
+    .basketball-scoreboard[hidden]{display:none!important}
+    .basketball-score-strip{box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 108px minmax(0,1fr);height:100%;background:#09101ff2;border:1px solid #d8b27580;box-shadow:0 3px 12px #0006;border-radius:8px;overflow:hidden;text-align:center}
+    .basketball-team-score{min-width:0;padding:5px 10px;border-top:3px solid #27b8ff;display:flex;align-items:center;justify-content:space-between;gap:8px}
     .basketball-team-score:last-child{border-color:#ff5a46;flex-direction:row-reverse}
-    .basketball-team-score span{font-size:11px;letter-spacing:2px;font-weight:800}.basketball-team-score strong{font-size:36px;line-height:1;font-variant-numeric:tabular-nums}
-    .basketball-clock{padding:7px 4px;background:#141d2e;display:grid;gap:0}.basketball-clock b{font-size:23px;font-variant-numeric:tabular-nums;color:#ffdb94}.basketball-clock small{font-size:9px;letter-spacing:1px;color:#c0cbd9}
+    .basketball-team-score span{font-size:11px;letter-spacing:1px;font-weight:800}.basketball-team-score strong{font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+    .basketball-team-score.has-possession span{color:#ffdb94}
+    .basketball-clock{padding:3px 4px;background:#141d2e;display:grid;align-content:center;gap:0;line-height:1.1}.basketball-clock b{font-size:20px;font-variant-numeric:tabular-nums;color:#ffdb94;white-space:nowrap}.basketball-clock small{font-size:9px;letter-spacing:.6px;color:#c0cbd9}.basketball-clock [data-shot]{font-variant-numeric:tabular-nums;color:#ffdb94;font-weight:800}
     .basketball-game-actions{pointer-events:auto;display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin:7px 0}
     .basketball-game-actions button[hidden],.house-stage .basketball-game-actions button[hidden]{display:none!important}
     .basketball-game-actions button{min-height:44px;touch-action:manipulation;border:1px solid #ffffff35;border-radius:7px;padding:6px 11px;font:bold 11px system-ui;background:#101b2eeb;color:white;cursor:pointer}
@@ -47,15 +59,11 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
     .basketball-lobby-status{padding:10px;border:1px solid #91ba4270;border-radius:8px;background:#142305;color:#d9f5b4!important;font-weight:600}.basketball-lobby-roster{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.basketball-lobby-team{min-width:0;padding:10px;border:1px solid #50617a;border-radius:8px;background:#08101e}.basketball-lobby-team h3{margin:0;font-size:13px}.basketball-lobby-team p{margin:6px 0 0;font-size:11px;overflow-wrap:anywhere;white-space:pre-line}.basketball-lobby-help{margin:10px 0}
     .basketball-scored .basketball-score-strip{animation:basketball-score-flash .7s ease-out}
     @keyframes basketball-score-flash{0%{box-shadow:0 0 50px #ffd47fbd;transform:scale(1.035)}100%{box-shadow:0 12px 40px #0007;transform:scale(1)}}
-    @media(max-width:600px){.basketball-hud{top:8px;width:calc(100% - 16px)}.basketball-team-score{padding:7px 9px}.basketball-team-score strong{font-size:28px}.basketball-score-strip{grid-template-columns:1fr 86px 1fr}.basketball-game-actions{gap:4px}.basketball-game-actions button{padding:6px 8px;font-size:10px}.basketball-caption{font-size:10px}}
+    @media(max-width:600px){.basketball-world{--basketball-scoreboard-height:50px}.basketball-team-score{padding:4px 7px;gap:5px}.basketball-team-score strong{font-size:26px}.basketball-team-score span{font-size:10px;letter-spacing:.5px}.basketball-score-strip{grid-template-columns:minmax(0,1fr) 96px minmax(0,1fr)}.basketball-clock b{font-size:18px}.basketball-clock small{font-size:8px}.basketball-game-actions{gap:4px}.basketball-game-actions button{padding:6px 8px;font-size:10px}.basketball-caption{font-size:10px}}
     .basketball-hud.basketball-hud-docked{position:relative;inset:auto;transform:none;width:100%;box-sizing:border-box;padding:6px 8px;background:#0c1b08;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;align-items:center}
-    .basketball-hud-docked .basketball-score-strip{grid-template-columns:1fr 78px 1fr;box-shadow:none;border-radius:6px}
-    .basketball-hud-docked .basketball-team-score{padding:5px 7px;gap:5px}
-    .basketball-hud-docked .basketball-team-score strong{font-size:24px}
-    .basketball-hud-docked .basketball-team-score span{font-size:9px;letter-spacing:0}
-    .basketball-hud-docked .basketball-clock{padding:3px}.basketball-hud-docked .basketball-clock b{font-size:17px}
-    .basketball-hud-docked .basketball-match-toggle{margin:0;max-width:100px;min-height:44px;font-size:11px}
-    .basketball-hud-docked .basketball-caption,.basketball-hud-docked .basketball-role{grid-column:1/-1;max-width:100%;margin:0;font-size:11px;padding:2px 4px}
+    .basketball-hud-docked .basketball-match-toggle{grid-column:2;grid-row:1;margin:0;max-width:140px;min-height:44px;font-size:11px}
+    .basketball-hud-docked .basketball-caption{grid-column:1;grid-row:1;max-width:100%;margin:0;font-size:11px;padding:2px 4px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .basketball-hud-docked .basketball-role{grid-column:1/-1;max-width:100%;margin:0;font-size:11px;padding:2px 4px}
     .basketball-hud-docked.is-playing .basketball-role{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%)}
     @media(prefers-reduced-motion:reduce){.basketball-scored .basketball-score-strip{animation:none}}
   `;
@@ -63,8 +71,9 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
   const root = document.createElement('section');
   root.className = 'basketball-hud';
   root.hidden = true;
-  root.setAttribute('aria-label', 'Basketball game scoreboard and controls');
+  root.setAttribute('aria-label', 'Basketball match controls and status');
   root.innerHTML = `<div class="basketball-score-strip"><div class="basketball-team-score"><span>HOME</span><strong data-home>0</strong></div><div class="basketball-clock"><small data-period>PRE GAME</small><b data-clock>12:00</b><small>SHOT <span data-shot>24</span></small></div><div class="basketball-team-score"><span>AWAY</span><strong data-away>0</strong></div></div><div class="basketball-game-actions"><button type="button" data-basketball-action="basketball-start">Start game</button><button type="button" data-basketball-action="basketball-team" data-team="home" aria-pressed="false">Join Home</button><button type="button" data-basketball-action="basketball-team" data-team="away" aria-pressed="false">Join Away</button><button type="button" data-basketball-action="catch">Catch · E</button><button type="button" data-basketball-action="basketball-shoot">Shoot · R</button><button type="button" data-basketball-action="toss">Pass · T</button></div><p class="basketball-caption" role="status" aria-live="polite" data-play>Choose a team and start a game. Everyone can join.</p>`;
+  const scoreboard=document.createElement('section');scoreboard.className='basketball-scoreboard';scoreboard.hidden=true;scoreboard.setAttribute('aria-label','Basketball scoreboard');scoreboard.append(root.querySelector('.basketball-score-strip'));stage.append(scoreboard);
   root.querySelector('.basketball-game-actions').insertAdjacentHTML('beforeend','<button type="button" data-basketball-action="basketball-watch" aria-pressed="false">Watch game</button><button type="button" data-basketball-rules>Match setup</button>');
   root.insertAdjacentHTML('beforeend','<p class="basketball-role" data-role></p>');
   root.querySelector('.basketball-game-actions').insertAdjacentHTML('beforeend','<button type="button" data-basketball-action="basketball-steal">Steal · Q</button>');
@@ -148,7 +157,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
     triggerSelected:()=>selection.trigger(),
     selectedAction:()=>selection.selected,
     render(game, player, enabled, players={}) {
-      root.hidden = !enabled;screenBar.hidden=!enabled;root.classList.toggle('is-playing',game?.state==='live');
+      root.hidden = !enabled;scoreboard.hidden=!enabled||!game;screenBar.hidden=!enabled;root.classList.toggle('is-playing',game?.state==='live');
       stage.classList.toggle('basketball-world', Boolean(enabled));
       ready = Boolean(player);
       currentGame=game;currentPlayer=player;currentPlayers=players;
@@ -159,12 +168,17 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
       selection.sync();
       if (!enabled || !game) return;
       if(rules.open){previewRoster();if(game.state==='live'||!isHost()){for(const input of rules.querySelectorAll('input,select,[type=submit],[data-solo-setup]'))input.disabled=true;rules.querySelector('[data-rules-status]').textContent=game.state==='live'?'Match started. Settings are locked until the final buzzer.':`${game.hostName||'The host'} controls match setup.`;}}
-      root.querySelector('[data-home]').textContent = game.homeScore || 0;
-      root.querySelector('[data-away]').textContent = game.awayScore || 0;
-      root.querySelector('[data-clock]').textContent = clock(game.clockMs);
-      root.querySelector('[data-shot]').textContent = Math.ceil(Math.max(0,game.shotClockMs || 0)/1000);
+      const board=basketballScoreboardState(game);
+      scoreboard.querySelector('[data-home]').textContent=board.home;
+      scoreboard.querySelector('[data-away]').textContent=board.away;
+      scoreboard.querySelector('[data-clock]').textContent=board.gameClock;
+      scoreboard.querySelector('[data-shot]').textContent=board.shotClock;
+      scoreboard.querySelector('[data-period]').textContent=board.phase;
+      scoreboard.dataset.state=game.state;scoreboard.dataset.possession=board.possession||'';
+      const teamScores=scoreboard.querySelectorAll('.basketball-team-score');teamScores[0].classList.toggle('has-possession',board.possession==='home');teamScores[1].classList.toggle('has-possession',board.possession==='away');
+      scoreboard.querySelector('[data-home]').setAttribute('aria-label',`Home score ${board.home}`);scoreboard.querySelector('[data-away]').setAttribute('aria-label',`Away score ${board.away}`);
+      scoreboard.querySelector('[data-clock]').setAttribute('aria-label',`Game clock ${board.gameClock}`);scoreboard.querySelector('[data-shot]').setAttribute('aria-label',`Shot clock ${board.shotClock} seconds`);
       const periods=game.settings?.quarters||4;
-      root.querySelector('[data-period]').textContent = game.state === 'ready' ? 'PRE GAME' : game.state === 'finished' ? 'FINAL' : game.quarter > periods ? `OT ${game.quarter-periods}` : `PERIOD ${game.quarter}`;
       const start = root.querySelector('[data-basketball-action="basketball-start"]');
       start.hidden = game.state === 'live';
       start.textContent = game.state === 'finished' ? 'Host · start new match' : isHost()?`Start match · ${Object.values(players).filter(member=>!member.basketballAI&&member.basketballRole!=='spectator'&&member.basketballTeam).length} joined`:'Waiting for host';
@@ -189,8 +203,8 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
       const audience=Object.values(players),watching=audience.filter(member=>member.basketballRole==='spectator').length;root.querySelector('[data-role]').textContent+=` · ${audience.filter(p=>!p.basketballAI&&p.basketballRole!=='spectator').length} HUMANS + ${audience.filter(p=>p.basketballAI).length} AI / ${watching} WATCHING`;
       const caption = root.querySelector('[data-play]'), play = game.lastPlay || 'Choose Home, Away or Watch. Game rules can be changed before tip-off.';
       if(caption.textContent!==play)caption.textContent=play;
-      const nextScore = `${game.homeScore}:${game.awayScore}`;
-      if (nextScore !== score) { root.classList.remove('basketball-scored'); void root.offsetWidth; root.classList.add('basketball-scored'); score = nextScore; }
+      const nextScore = `${board.home}:${board.away}`;
+      if (nextScore !== score) { scoreboard.classList.remove('basketball-scored'); void scoreboard.offsetWidth; scoreboard.classList.add('basketball-scored'); score = nextScore; }
     }
   };
 }
