@@ -33,3 +33,10 @@ export function intersectFiringRangeTarget(location,target,origin,direction,serv
  return head?{distance:along,zone:'bullseye',score:100}:body||arms?{distance:along,zone:'body',score:60}:null;
 }
 export function firingRangeLeaderboard(participants={}){return Object.values(participants).filter(p=>p.role==='player'||p.enrolled).map(p=>({...p,accuracy:p.shots?Math.round(p.hits/p.shots*100):0})).sort((a,b)=>b.score-a.score||b.bullseyes-a.bullseyes||(b.shots?b.hits/b.shots:0)-(a.shots?a.hits/a.shots:0)||a.name.localeCompare(b.name)).map((p,index)=>({...p,rank:index+1}));}
+export function firingRangeRoundLeaderboard(participants={}){
+ const entries=Object.entries(participants).filter(([,p])=>p.roundEnrolled!==false).map(([id,p])=>[id,{...p,totalScore:finite(p.score),score:finite(p.roundScore),hits:finite(p.roundHits),shots:finite(p.roundShots),bullseyes:finite(p.roundBullseyes)}]);
+ return firingRangeLeaderboard(Object.fromEntries(entries));
+}
+export function firingRangeTeamScores(participants={}){
+ const teams={red:0,blue:0};for(const p of Object.values(participants))if((p.role==='player'||p.enrolled)&&(p.team==='red'||p.team==='blue'))teams[p.team]+=finite(p.score);return teams;
+}

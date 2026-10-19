@@ -70,6 +70,8 @@ export function addFiringRangeDressing(root,add,ground=()=>0,{style='live'}={}){
   box([4.7,.065,1.03],materials.rubber,x,.883,12.5,'RANGE_PADDED_FIRING_BENCH',true);
   if(training){box([.58,.72,.3],materials.dark,x,1.2,11.55,'RANGE_CLASSIC_LANE_CONSOLE',true);box([.5,.32,.025],materials.cyan,x,1.32,11.72,'RANGE_CLASSIC_LANE_MONITOR',true);}
   sign(`LANE ${String(index+1).padStart(2,'0')}  /  27.5 M`,x,1.1,13.03,3.5,{height:.28});
+  sign('PAPER  /  PRECISION',x,2.95,-13.78,3.35,{height:.28});
+  sign('STEEL  /  MOVING DRILLS',x,2.95,-16.18,3.75,{height:.28,color:'#74e9f3'});
   box([5.9,.02,.19],materials.amber,x,.033,11.2,'RANGE_FIRING_LINE',true);
   // Rails make the target carrier's actual travel envelope visible.
   box([5.25,.06,.08],materials.steel,x,.06,-15.45,'RANGE_MOVING_TARGET_TRACK',true);
@@ -123,10 +125,19 @@ export function addFiringRangeDressing(root,add,ground=()=>0,{style='live'}={}){
   box([.3,.11,.13],index%2?materials.cyan:materials.amber,x+.1,1.5,17.86,'RANGE_ARMORY_SCOPE',true);
  });
  sign('ARMORY  /  ADJUSTABLE OPTICS',-12,2.43,17.86,6.4,{height:.4});
+ interactive('range-backpack','Backpack & equipment',-16.7,16.3,materials.amber);
  interactive('range-armory','Armory & optics',-12,16.2);
+ interactive('range-market','Buy & sell market',-7,16.3,materials.amber);
  interactive('range-start','Join / start round',-3,16.1);
  interactive('range-settings','Tournament rules',0,17.15,materials.amber);
  interactive('range-watch','Watch live match',7,16.1);
+ // Low floor markings and overhead signs guide arrivals without adding another
+ // obstacle to the continuous path behind the firing bays.
+ box([36.4,.012,.065],materials.cyan,0,.043,14.65,'RANGE_SAFE_LOBBY_GUIDE',true);
+ sign('GEAR  /  OPTICS  /  MARKET',-12,2.86,18.62,9.4,{height:.4,rotation:Math.PI});
+ sign('JOIN  /  TOURNAMENT RULES',-.6,2.15,18.62,7.6,{height:.4,rotation:Math.PI});
+ sign('ALL FIVE LANES  /  EVERY GAME MODE',0,3.05,13.05,8.6,{height:.35});
+ sign('OPEN PRACTICE  /  PRECISION  /  RAPID  /  ENDURANCE  /  MOVING',0,2.57,13.05,12.3,{height:.34});
  for(const z of [16.9,18.2]){
   box([7,.12,.7],materials.steel,12,.48,z,'RANGE_SPECTATOR_BENCH');
   box([7,.65,.12],materials.dark,12,.87,z+.36,'RANGE_SPECTATOR_BACKREST');
@@ -150,7 +161,7 @@ export function addFiringRangeDressing(root,add,ground=()=>0,{style='live'}={}){
  let liveState={state:'lobby',settings:{...FIRING_RANGE_DEFAULTS},round:0,participants:{},leaderboard:[],remainingMs:FIRING_RANGE_DEFAULTS.durationSeconds*1000},locationId='main',serverTime=0,lastDisplayKey='',lastDraw=-Infinity;
  const draw=(now=serverTime,force=false)=>{
   const deadline=liveState.state==='countdown'?Number(liveState.startsAt):liveState.state==='live'?Number(liveState.endsAt):0;
-  const clock=liveState.state==='live'&&liveState.settings?.mode==='freeplay'?'OPEN':clockLabel(deadline?deadline-now:liveState.remainingMs??liveState.settings?.durationSeconds*1000),participants=Object.values(liveState.participants||{}),leaders=(liveState.leaderboard||[]).filter(player=>player.role!=='spectator').slice(0,4),mode=text(liveState.settings?.mode||'precision').toUpperCase(),state=text(liveState.state||'lobby').toUpperCase();
+  const clock=liveState.state==='live'&&liveState.settings?.mode==='freeplay'?'OPEN':clockLabel(deadline?deadline-now:liveState.remainingMs??liveState.settings?.durationSeconds*1000),participants=Object.values(liveState.participants||{}),leaders=(liveState.leaderboard||[]).filter(player=>player.role!=='spectator'||player.enrolled).slice(0,4),mode=text(liveState.settings?.mode||'precision').toUpperCase(),state=text(liveState.state||'lobby').toUpperCase();
   const snapshot={state,mode,clock,round:Number(liveState.round)||0,rounds:Number(liveState.settings?.rounds)||1,players:participants.filter(player=>player.role==='player'&&player.online!==false).length,spectators:participants.filter(player=>player.role==='spectator'&&player.online!==false).length,leaders:leaders.map((entry,index)=>({rank:Number(entry.rank)||index+1,name:text(entry.name||'Player'),score:Number(entry.score)||0,accuracy:Number(entry.accuracy)||0})),locationId};
   root.userData.rangeDisplay=snapshot;
   const key=JSON.stringify(snapshot),pulse=now-(Number(liveState.lastShot?.at)||-10000)<450;

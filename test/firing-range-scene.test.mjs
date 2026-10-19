@@ -86,7 +86,7 @@ test('lobby arrivals and shooting positions remain clear while real walls and be
 
 test('lobby consoles expose real interaction intents and safe local positions for transformed maps',()=>{
  const range=createBuilderLand(environment),entries=range.userData.rangeInteractions;
- assert.deepEqual(entries.map(entry=>entry.intent).sort(),['range-armory','range-settings','range-start','range-watch']);
- assert.equal(new Set(entries.map(entry=>entry.id)).size,4);
+ assert.deepEqual(entries.map(entry=>entry.intent).sort(),['range-armory','range-backpack','range-market','range-settings','range-start','range-watch']);
+ assert.equal(new Set(entries.map(entry=>entry.id)).size,6);
  for(const entry of entries){assert.ok(entry.position.z>15);assert.ok(entry.radius>=2);const meshes=[];range.traverse(part=>{if(part.userData.rangeInteraction===entry)meshes.push(part);});assert.equal(meshes.length,1);}
 });

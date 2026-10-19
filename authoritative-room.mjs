@@ -203,7 +203,7 @@ export class AuthoritativeRooms {
    else if(command.action==='range-ready'||isDedicatedFiringRange(environment)&&['start-rad-tox','next-rad-tox'].includes(command.action)){if(!sim.firingRange)fail('This map has no live firing range.',409);result.message='Firing range ready. Choose Quick practice, join a lane, or watch the live range.';}
    else if(command.action==='range-practice'){startFiringRangePractice(sim,player,now,command);result.message='Open practice is live. Join any free lane; training ammunition is free.';}
    else if(command.action==='range-join'){joinFiringRange(sim,player,now,command);result.message='Lane selected. Training ammunition is free.';}
-   else if(command.action==='range-watch'){watchFiringRange(sim,player,now);result.message='Watching the live firing range from the safe lobby.';}
+   else if(command.action==='range-watch'){watchFiringRange(sim,player,now,command);result.message='Watching the live firing range from the safe lobby.';}
    else if(command.action==='range-settings'){configureFiringRange(sim,player,command.settings,now);result.message='Shared firing range settings updated.';}
    else if(command.action==='range-start'){startFiringRange(sim,player,now);result.message='Range tournament starting. Get ready.';}
    else if(command.action==='range-stop'){stopFiringRange(sim,player,now);result.message='Range tournament completed. Shared results are ready.';}

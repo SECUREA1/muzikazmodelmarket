@@ -8,6 +8,22 @@ export async function openFiringRangeSession({client,prepare=()=>{},onReady=()=>
  return snapshot;
 }
 
+/** Each physical console opens its own function in the matching range area. */
+export async function useFiringRangeInteraction(interaction,{open,market,backpack,watch}){
+ if(!interaction)return false;
+ const locationId=interaction.locationId||null;
+ switch(interaction.intent){
+  case 'range-armory':await open('armory',locationId);break;
+  case 'range-start':await open('play',locationId);break;
+  case 'range-settings':await open('tournament',locationId);break;
+  case 'range-market':await market({category:'weapons',intent:'browse'});break;
+  case 'range-backpack':await backpack();break;
+  case 'range-watch':await watch(locationId?{locationId}:{});await open('results',locationId);break;
+  default:return false;
+ }
+ return true;
+}
+
 export function createFiringRangeSceneBridge({THREE,getRoots}){
  let scenes=[],state=null;
  const point=new THREE.Vector3();

@@ -1,6 +1,6 @@
 import {MARKET_USE_CASES,marketFacets,marketSubcategoryOptions} from './market-facets.js';
 import {materialBulkQuote,usdEquivalent} from './game-item-pricing.js';
-import {marketItemPreview,hydrateMarketPreviews} from './market-item-preview.js';
+import {marketItemPreview,hydrateMarketPreviews,openMarketPreview} from './market-item-preview.js';
 import {marketCategory,marketCategoryOptions} from './market-categories.js';
 import { decorateMenuClose } from './fullscreen-panels.js';
 import { SharedGameInventory, ownedBuilderModel, watchInventoryChange, signalInventoryChange } from './shared-game-inventory.js';
@@ -36,7 +36,7 @@ export function createGameMarketplace({onOpen=()=>{},onUse=async()=>{},canUse=()
  document.body.append(dialog);
  const body=dialog.querySelector('[data-market-body]'),status=dialog.querySelector('[data-market-status]');
  const selectedUses=new Set(),subcategoryCache=new Map();let facetRows=[],requestedCategory='';
- let tab='browse',epoch=0,busy=false,loading=false,data=[],peer='',balance=null;
+ let tab='browse',epoch=0,busy=false,loading=false,data=[],peer='',balance=null,previewItems=[],previewDialog=null;
  const announce=text=>status.textContent=text;
  function chooseTab(next){tab=next;selectedUses.clear();requestedCategory='';dialog.querySelector('[data-market-subcategory]').value='';dialog.querySelectorAll('[data-market-tab]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.marketTab===tab)));dialog.querySelector('[data-market-search]').value='';dialog.querySelector('[data-market-category]').value='';dialog.querySelector('[data-market-ownership]').value='';dialog.querySelector('[data-market-advanced]').hidden=!categorizedTabs.has(next);}
  const categorizedTabs=new Set(['upgrades','bundles','browse','pack','builder','owned']);
@@ -68,11 +68,11 @@ export function createGameMarketplace({onOpen=()=>{},onUse=async()=>{},canUse=()
   dialog.querySelector('[data-market-empty]').hidden=!categorized||visible>0||rows.length===0;
  }
 
- function row(title,description,actions){const item=title&&typeof title==='object'?title:null;title=item?(item.asset?.name||item.name||item.itemName||item.asset_id||item.id):title;return `<article class="game-market-row" data-market-row>${item?marketItemPreview(item):''}<div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></div><div class="game-market-actions">${actions}</div></article>`;}
+ function row(title,description,actions){const item=title&&typeof title==='object'?title:null;title=item?(item.asset?.name||item.name||item.itemName||item.asset_id||item.id):title;const preview=item?`<div class="game-market-visual">${marketItemPreview(item)}<button type="button" data-market-preview="${previewItems.push(item)-1}" aria-label="Preview ${escapeHtml(title)}">Preview item</button></div>`:'';return `<article class="game-market-row" data-market-row>${preview}<div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></div><div class="game-market-actions">${actions}</div></article>`;}
  const button=(attribute,id,label,disabled=false)=>`<button type="button" ${attribute}="${escapeHtml(id)}" ${disabled?'disabled data-market-locked="true"':''}>${escapeHtml(label)}</button>`;
  async function refresh(){
    const version=++epoch;loading=true;try{const bootstrap=await inventory.session();if(version!==epoch)return;canonicalOwner=String(bootstrap.owner_id).toLowerCase();}catch(error){if(version!==epoch)return;canonicalOwner='';balance=null;if(!['upgrades','bundles','builder','browse','members'].includes(tab)){loading=false;body.textContent=error.message;announce('Sign in through Members to open your session Backpack and body telemetry.');dialog.querySelector('[data-market-balance]').textContent='';return;}}const identity=owner();const balanceRequest=identity&&!identity.startsWith('guest-')&&tab!=='pack'?client.backpack().catch(()=>null):Promise.resolve(null);announce('Loading marketplace…');body.setAttribute('aria-busy','true');
-   try{
+   try{previewItems=[];
     if(tab==='upgrades'){const pack=await inventory.economy();if(version!==epoch)return;balance=pack.balance;data=pack.items;body.innerHTML='<p>100 MZK = $1. Basic tools and materials remain free. Buy individual items or prepaid building pieces. Bulk orders save 10% at 50 pieces and 20% at 100 pieces.</p>'+data.map((item,index)=>{
       if(item.kind==='material'&&!item.basic){const options=[1,10,50,100,500].map(quantity=>{const quote=materialBulkQuote(item,quantity);return `<option value="${quantity}">${quantity} ${quantity===1?'piece':'pieces'} · ${quote.priceMzk} MZK (${usdEquivalent(quote.priceMzk)})${quote.discountPercent?' · '+quote.discountPercent+'% off':''}</option>`;}).join('');return row(item,`${item.unitPriceMzk} MZK (${usdEquivalent(item.unitPriceMzk)}) / piece · ${item.stock||0} prepaid pieces remaining`,`<form data-market-material="${index}"><label>Quantity<select name="quantity">${options}</select></label><button type="submit">Buy materials</button></form>`);}
       return row(item,`${item.category} · ${item.basic?'Basic kit · free':item.owned?'Owned upgrade':item.priceMzk+' MZK ('+usdEquivalent(item.priceMzk)+')'} · ${item.useCostMzk} MZK / use`,button('data-market-upgrade',index,item.owned?'Owned':`Buy · ${item.priceMzk} MZK`,item.owned||pack.balance<item.priceMzk));}).join('');}
@@ -98,6 +98,7 @@ export function createGameMarketplace({onOpen=()=>{},onUse=async()=>{},canUse=()
    const bundle=event.target.closest('[data-market-bundle]');if(bundle){const item=data[Number(bundle.dataset.marketBundle)];if(item)mutate(()=>inventory.buyBundle(item.id,item.priceMzk),'Bundle purchased. Items are ready in your shared Backpack.');return;}
    const upgrade=event.target.closest('[data-market-upgrade]');if(upgrade){const item=data[Number(upgrade.dataset.marketUpgrade)];mutate(()=>inventory.economyAction('buy',item.sku),'Upgrade purchased. It is now owned in your Backpack and Tools.');return;}
    if(event.target.closest('[data-market-close]')){dialog.close();return;}if(busy||loading)return;
+   const preview=event.target.closest('[data-market-preview]');if(preview){const item=previewItems[Number(preview.dataset.marketPreview)];if(item){if(previewDialog?.open)previewDialog.close();previewDialog=openMarketPreview(item);}return;}
    const next=event.target.closest('[data-market-tab]')?.dataset.marketTab||event.target.closest('[data-care-section]')?.dataset.careSection;if(next){chooseTab(next);refresh();return;}
    if(event.target.closest('[data-market-refresh]')){refresh();return;}
    const careBuy=event.target.closest('[data-market-care-buy]');if(careBuy)mutate(()=>inventory.action('buy',supplies[Number(careBuy.dataset.marketCareBuy)].id),'Care supply added to your Backpack.');
@@ -105,11 +106,11 @@ export function createGameMarketplace({onOpen=()=>{},onUse=async()=>{},canUse=()
    const buy=event.target.closest('[data-market-buy]');if(buy){const item=data[Number(buy.dataset.marketBuy)];mutate(()=>client.buy(item.sellerId,item.itemId,item.priceMzk),'Purchase complete. Open My Backpack to use your item.');}
    const unlist=event.target.closest('[data-market-unlist]');if(unlist){const item=data[Number(unlist.dataset.marketUnlist)];mutate(()=>client.list(item.id,item.listing.priceMzk,false),'Listing removed.');}
    const builder=event.target.closest('[data-market-builder-buy]');if(builder){const item=data[Number(builder.dataset.marketBuilderBuy)];mutate(()=>client.builderBuy(item.listing_id),'Builder purchase complete. Your Builder Backpack is updated.');}
-   const use=event.target.closest('[data-market-use]');if(use)onUse(data[Number(use.dataset.marketUse)]).catch(error=>announce(error.message));
+   const use=event.target.closest('button[data-market-use]');if(use){const item=data[Number(use.dataset.marketUse)];if(item)Promise.resolve().then(()=>onUse(item)).catch(error=>announce(error.message));}
  });
  dialog.addEventListener('submit',event=>{event.preventDefault();if(busy||loading)return;const form=event.target;if(form.matches('[data-market-material]')){const item=data[Number(form.dataset.marketMaterial)],quantity=Number(form.elements.quantity.value),quote=materialBulkQuote(item,quantity);mutate(()=>inventory.buyMaterials(item.sku,quantity,quote.priceMzk),'Prepaid building materials added. Placements consume these pieces first.');}else if(form.matches('[data-market-list]')){const item=data[Number(form.dataset.marketList)];mutate(()=>client.list(item.id,form.elements.price.value),'Listing saved.');}else if(form.matches('[data-market-message]')){const text=form.elements.message.value;mutate(()=>client.message(peer,text),'Message delivered.');}});
  watchInventoryChange(()=>{if(dialog.open&&!busy&&!loading)refresh();});
  window.addEventListener('mzk:wallet-connection-changed',()=>{canonicalOwner='';balance=null;peer='';if(dialog.open)refresh();});
- dialog.addEventListener('close',()=>{epoch++;onClose();if(!document.querySelector('dialog[open]'))document.documentElement.classList.remove('game-menu-open');});
+ dialog.addEventListener('close',()=>{epoch++;if(previewDialog?.open)previewDialog.close();previewDialog=null;onClose();if(!document.querySelector('dialog[open]'))document.documentElement.classList.remove('game-menu-open');});
  return {open(section='upgrades',options={}){chooseTab(['upgrades','bundles','browse','pack','members','history','builder','owned','care'].includes(section)?section:'upgrades');dialog.querySelector('[data-market-search]').value=options.search||'';dialog.querySelector('[data-market-category]').value=options.category||'';requestedCategory=options.category||'';onOpen();(document.fullscreenElement||document.body).append(dialog);if(!dialog.open)dialog.showModal();document.documentElement.classList.add('game-menu-open');refresh();},close:()=>dialog.close(),client,dialog};
 }
