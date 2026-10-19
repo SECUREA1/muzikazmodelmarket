@@ -1,10 +1,9 @@
 import {randomUUID} from 'node:crypto';
 import {openMatch,finishMatch,healPlayer,matchRows} from './rpg-match.mjs';
 import {captureRadToxScorePhase} from './rad-tox-local-score.mjs';
+import {radToxWavePopulation,RAD_TOX_WAVE_MS,RAD_TOX_NORMAL_WAVES,RAD_TOX_BOSS_WAVE} from './public/js/rad-tox-wave-rules.js';
+export {RAD_TOX_WAVE_MS,RAD_TOX_NORMAL_WAVES,RAD_TOX_BOSS_WAVE} from './public/js/rad-tox-wave-rules.js';
 export const ROUND_COUNTDOWN_MS=10000;
-export const RAD_TOX_WAVE_MS=120000;
-export const RAD_TOX_NORMAL_WAVES=4;
-export const RAD_TOX_BOSS_WAVE=RAD_TOX_NORMAL_WAVES+1;
 const onlinePlayers=(sim,now)=>Object.entries(sim.players).filter(([,player])=>!player.basketballAI&&!player.replacedByRoom&&now-player.lastSeen<15000);
 
 export function supportsRadTox(environment) {
@@ -14,9 +13,7 @@ export function radToxWorldForLevel(level,fallback='muzikaz-main'){
  return level>=3?'sheepbase':level===2?'muzikaz-upper':fallback;
 }
 export function radToxWaveTargetCount(level,wave){
- if(wave>RAD_TOX_NORMAL_WAVES)return 1;
- const base=level===2?12:Math.min(18,8+(level-1)*2),snakes=level===2?3:2+(level>=3?2:0);
- return (base+snakes)*(wave===1?1:2)+2;
+ return radToxWavePopulation(level,wave).budget.total;
 }
 function removeServerEncounter(sim){
  for(const [id,actor]of Object.entries(sim.actors))if(actor.radTox)delete sim.actors[id];
@@ -29,11 +26,11 @@ function removeServerEncounter(sim){
 export function spawnRadToxWave(sim,now,_center){
  captureRadToxScorePhase(sim,now);
  removeServerEncounter(sim);
- const campaign=sim.radTox,boss=campaign.wave===RAD_TOX_BOSS_WAVE;
+ const campaign=sim.radTox,boss=campaign.wave===RAD_TOX_BOSS_WAVE,population=radToxWavePopulation(campaign.level,campaign.wave);
  Object.assign(campaign,{combatMode:'local',state:'active',nextWaveAt:null,transition:null,
   phaseId:randomUUID(),phaseKind:boss?'boss':'wave',normalWaveCount:RAD_TOX_NORMAL_WAVES,
   bossKind:boss?({1:'bee',2:'aape'})[campaign.level]||'beeduck':null,
-  targetCount:radToxWaveTargetCount(campaign.level,campaign.wave),
+  targetCount:population.budget.total,population,
   startedAt:now,endsAt:boss?null:now+RAD_TOX_WAVE_MS,
   participants:onlinePlayers(sim,now).map(([id])=>id),localProgress:{}});
  campaign.remaining=campaign.targetCount;

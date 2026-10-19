@@ -38,7 +38,7 @@ export function openMatch(sim,level,now){
 export function registerParticipant(sim,id,player,now,reset=false){
  player.actorId=id;
  if(!sim.match || sim.match.state!=='active')return;
- if(reset || player.matchId!==sim.match.id){player.combat=newCombatStats();player.score=0;player.matchId=sim.match.id;player.health=100;player.ammo=120;player.fuel=100;player.contributors={};player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.lifeRevision=(player.lifeRevision||0)+1;}
+ if(reset || player.matchId!==sim.match.id){player.combat=newCombatStats();player.score=0;player.matchId=sim.match.id;player.health=100;player.ammo=120;player.fuel=100;player.spray=24;player.contributors={};player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.lifeRevision=(player.lifeRevision||0)+1;}
  sim.match.participants[id] ||= {id,username:player.username,joinedAt:now};sim.match.participants[id].username=player.username;
  if(sim.radTox?.combatMode==='local')recordTournamentScore(sim,id,{},now);
 }

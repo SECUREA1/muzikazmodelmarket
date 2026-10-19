@@ -1,11 +1,12 @@
 export const RAD_TOX_SCORE_FIELDS = Object.freeze([
   'shots', 'hits', 'misses', 'enemyHits', 'enemyKills', 'bossKills',
-  'hitsTaken', 'deaths', 'damageDealt', 'damageTaken', 'score'
+  'hitsTaken', 'deaths', 'damageDealt', 'damageTaken', 'score',
+  'sprayActions', 'taserHits', 'blastHits'
 ]);
 const FRACTIONAL = new Set(['damageDealt', 'damageTaken']);
 export const emptyRadToxScore = () => Object.fromEntries(RAD_TOX_SCORE_FIELDS.map(field => [field, 0]));
 const phaseKey = ({matchId, phaseId}) => `${matchId}:${phaseId}`;
-const cloneReport = report => ({...report, stats: {...report.stats}});
+const cloneReport = report => ({...report, stats: {...report.stats}, ...(report.claimIds ? {claimIds: [...report.claimIds]} : {})});
 
 // Combat calls record synchronously. Networking only consumes the occasional
 // report; a lost response never discards local hits or counts the same kill twice.
@@ -33,7 +34,7 @@ export class RadToxScoreReporter {
       phase = {key, matchId: identity.matchId, phaseId: identity.phaseId,
         stats, status: {}, revision: 0, acknowledged: -1,
         sequence: Number.isSafeInteger(resume.sequence) && resume.sequence > 0 ? resume.sequence : 0,
-        pending: null, lastSentAt: -Infinity, closed: false};
+        pending: null, lastSentAt: -Infinity, closed: false, claimIds: new Set(), confirmedClaims: new Set()};
       this.phases.set(key, phase);
     }
     phase.closed = false;
@@ -54,7 +55,7 @@ export class RadToxScoreReporter {
       }
       if (value) {phase.stats[field] += value; changed = true;}
     }
-    for (const field of ['health', 'ammo', 'fuel', 'lifeRevision']) {
+    for (const field of ['health', 'ammo', 'fuel', 'spray', 'lifeRevision']) {
       const value = status[field];
       if (!Number.isFinite(value)) continue;
       if (phase.status[field] !== value) {phase.status[field] = value; changed = true;}
@@ -62,6 +63,13 @@ export class RadToxScoreReporter {
     if (status.bossDefeated && !phase.status.bossDefeated) {
       phase.status.bossDefeated = true;
       changed = true;
+    }
+    if (status.claimIds !== undefined) {
+      if (!Array.isArray(status.claimIds) || status.claimIds.length > 64 || status.claimIds.some(id => typeof id !== 'string' || !id || id.length > 160)) throw new TypeError('Invalid local RAD-TOX reward claims.');
+      if (new Set([...phase.claimIds, ...status.claimIds]).size > 64) throw new TypeError('Too many local RAD-TOX reward claims.');
+      for (const id of status.claimIds) {
+        if (!phase.claimIds.has(id)) {phase.claimIds.add(id); changed = true;}
+      }
     }
     if (changed) phase.revision++;
     return changed;
@@ -72,14 +80,19 @@ export class RadToxScoreReporter {
       if (phase.pending) {
         if (now - phase.lastSentAt < this.retryMs) continue;
         phase.lastSentAt = now;
+        this.phases.delete(phase.key);this.phases.set(phase.key, phase);
         return cloneReport(phase.pending.report);
       }
       if (phase.revision <= phase.acknowledged) continue;
+      if (phase.rewardRetry && now - phase.lastSentAt < this.intervalMs) continue;
       if (!force && !phase.closed && now - phase.lastSentAt < this.intervalMs) continue;
       const report = {matchId: phase.matchId, phaseId: phase.phaseId,
-        sequence: ++phase.sequence, stats: {...phase.stats}, ...phase.status};
+        sequence: ++phase.sequence, stats: {...phase.stats}, ...phase.status,
+        ...(phase.claimIds.size ? {claimIds: [...phase.claimIds]} : {})};
       phase.pending = {report, revision: phase.revision};
       phase.lastSentAt = now;
+      // A wallet retry from a closed wave must not starve current combat.
+      this.phases.delete(phase.key);this.phases.set(phase.key, phase);
       return cloneReport(report);
     }
     return null;
@@ -94,7 +107,13 @@ export class RadToxScoreReporter {
     // An acknowledgement for a future/unrelated sequence must not erase unsent hits.
     if (ack.sequence !== phase.pending.report.sequence) return false;
     phase.acknowledged = phase.pending.revision;
+    for (const id of ack.claimedIds || []) if (phase.claimIds.has(id)) phase.confirmedClaims.add(id);
     phase.pending = null;
+    // A score receipt is not a wallet receipt. Keep collected pickups queued
+    // when account storage is temporarily unavailable, including after a wave
+    // ends or a map changes, without replaying score deltas.
+    phase.rewardRetry = Boolean(ack.rewardsPending || [...phase.claimIds].some(id => !phase.confirmedClaims.has(id)));
+    if (phase.rewardRetry) phase.revision++;
     if (phase.closed && phase.revision <= phase.acknowledged) this.phases.delete(phase.key);
     return true;
   }

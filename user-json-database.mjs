@@ -7,6 +7,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { cleanDesignerDraft } from './public/js/designer-draft-rules.js';
 import { randomUUID } from 'node:crypto';
+import {validateRadToxRewardGrant,RAD_TOX_REWARD_PROGRESS_FIELDS} from './rad-tox-local-rewards.mjs';
 import { RPG_DEFAULT_STATS, applyRpgEffect } from './public/js/rpg-rules.js';
 const RPG_CATALOG=JSON.parse(await readFile(new URL('./public/models/ioncore-rpg-items.json',import.meta.url),'utf8')).items;
 
@@ -548,6 +549,57 @@ export class UserJsonDatabase {
     const wallet=cleanWallet(walletId),health=Number(input?.health);
     if(!Number.isFinite(health)||health<0||health>100)throw new Error('Health must be between 0 and 100.');
     return this.transaction(data=>{const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');const previous=user.memory.ioncoreRpg||{};user.memory.ioncoreRpg={stats:{...RPG_DEFAULT_STATS,...previous.stats,health},history:[...(previous.history||[]),{health,stats:{...RPG_DEFAULT_STATS,...previous.stats,health},reason:'gameplay',world:String(input.world||'').slice(0,140),recordedAt:new Date().toISOString()}].slice(-100)};user.updatedAt=new Date().toISOString();user.revision++;return user.memory.ioncoreRpg;});
+  }
+
+  grantRadToxRewards(walletId,input){
+    const wallet=cleanWallet(walletId),{playerId,phase,claims,progress}=validateRadToxRewardGrant(input);
+    return this.transaction(data=>{
+      const user=data.users[wallet];if(!user)throw new Error('Member Backpack not found.');
+      const accountId=user.memory?.account?.accountId;
+      if(accountId&&playerId!=='account:'+accountId)throw Object.assign(new Error('RAD-TOX rewards belong to another account.'),{statusCode:403});
+      const existing=new Map((data.transactions||[]).filter(entry=>entry.type==='RAD_TOX_LOCAL_REWARD').map(entry=>[entry.claimId,entry]));
+      for(const claim of claims){const prior=existing.get(claim.id);if(prior&&prior.walletId!==wallet)throw Object.assign(new Error('This RAD-TOX pickup belongs to another Backpack.'),{statusCode:409});}
+      const pending=claims.filter(claim=>!existing.has(claim.id));
+      const catalogCount=pending.filter(claim=>claim.kind==='catalog').length;
+      if(user.items.length+catalogCount>10000)throw new Error('Backpack is full.');
+      const amountMzk=pending.reduce((sum,claim)=>sum+(claim.amountMzk||0),0),balance=Number(user.tokens.MZK||0);
+      if(!Number.isSafeInteger(balance)||!Number.isSafeInteger(balance+amountMzk))throw new Error('Wallet balance exceeds the supported range.');
+      const now=new Date().toISOString();
+      user.memory ||= {};const rewards=user.memory.radToxRewards ||= {supplies:{},phases:{}};
+      rewards.supplies ||= {};rewards.phases ||= {};
+      const phaseKey=phase.matchId+':'+phase.phaseId;
+      const prior=rewards.phases[phaseKey]||{enemyKills:0,hits:0};
+      const accepted=Object.fromEntries([...RAD_TOX_REWARD_PROGRESS_FIELDS,'shots'].map(key=>[key,Math.max(prior[key]||0,progress[key])]));
+      const deltas=Object.fromEntries(RAD_TOX_REWARD_PROGRESS_FIELDS.map(key=>[key,accepted[key]-(prior[key]||0)]));
+      const hasProgress=Object.values(deltas).some(value=>value>0);
+      const bossDefeated=Boolean(prior.bossDefeated||progress.bossDefeated);
+      rewards.phases[phaseKey]={...accepted,bossDefeated,recordedAt:now};
+      const phaseKeys=Object.keys(rewards.phases);for(const key of phaseKeys.slice(0,Math.max(0,phaseKeys.length-2048)))delete rewards.phases[key];
+      if(hasProgress){
+        user.memory.memberRewards ||= {};
+        const day=now.slice(0,10),field=user.memory.memberRewards.field ||= {day,events:{},seen:[]};
+        if(field.day!==day){field.day=day;field.events={};field.seen=[];}
+        field.events ||= {};
+        for(const [key,event,rewardId]of [['enemyKills','defeat','field:first-contact'],['hits','laser-hit','field:trigger-happy'],['sprayActions','spray','field:leave-a-mark'],['taserHits','taser-hit','field:shock-wave'],['blastHits','blast-hit','field:big-bang']]){
+          field.events[event]=Math.min(MEMBER_REWARDS[rewardId].goal,(field.events[event]||0)+deltas[key]);
+        }
+      }
+      for(const claim of pending){
+        let item;
+        if(claim.kind==='mzk')user.tokens.MZK=Number(user.tokens.MZK||0)+claim.amountMzk;
+        else if(claim.kind==='catalog'){
+          const catalog=RPG_CATALOG.find(entry=>entry.id===claim.catalogId);if(!catalog)throw new Error('Unknown server RAD-TOX supply.');
+          item={id:'ioncore-'+claim.id,catalogId:catalog.id,name:catalog.name,type:'rpg-consumable',source:'rad-tox-local-loot',acquiredAt:now};
+          user.items.push(item);
+        }else rewards.supplies[claim.resource]=(rewards.supplies[claim.resource]||0)+claim.amount;
+        const receipt=appendTransaction(data,{type:'RAD_TOX_LOCAL_REWARD',walletId:wallet,playerId,matchId:phase.matchId,phaseId:phase.phaseId,claimId:claim.id,requestId:claim.id,
+          kind:claim.kind,amountMzk:claim.amountMzk||0,balanceAfterMzk:user.tokens.MZK,...(claim.resource?{resource:claim.resource,amount:claim.amount}:{}),...(item?{item,catalogId:claim.catalogId}:{})});
+        existing.set(claim.id,receipt);
+      }
+      if(pending.length||hasProgress){user.revision++;user.updatedAt=now;}
+      const receipts=claims.map(claim=>existing.get(claim.id));
+      return {claimedIds:claims.map(claim=>claim.id),receipts,amountMzk,balanceAfterMzk:user.tokens.MZK,items:receipts.flatMap(receipt=>receipt.item?[receipt.item]:[]),progress:{...accepted,bossDefeated}};
+    });
   }
 
   grantRpgLoot(walletId,itemId,requestId){

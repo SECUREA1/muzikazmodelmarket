@@ -77,6 +77,18 @@ test('boss completion is phase-specific, idempotent, and contributes its earned 
   assert.equal(playerRow(sim).bossKills, 1);
 });
 
+test('batched tool actions preserve field quest progress and reject impossible counts', () => {
+  const {sim, now} = encounter();
+  for (const stats of [{sprayActions: 41}, {taserHits: 1}, {blastHits: 1}]) {
+    assert.throws(() => applyRadToxProgress(sim, 'alice', progress(sim, stats), now), {statusCode: 422});
+  }
+  const report = progress(sim, {shots: 2, hits: 2, sprayActions: 4, taserHits: 1, blastHits: 1});
+  applyRadToxProgress(sim, 'alice', report, now);
+  applyRadToxProgress(sim, 'alice', report, now + 1);
+  assert.deepEqual(sim.players.alice.progress, {defeat: 0, 'laser-hit': 2, spray: 4, 'taser-hit': 1, 'blast-hit': 1});
+  assert.equal(playerRow(sim).score, 0, 'tool quests do not invent tournament points');
+});
+
 test('the results countdown refreshes when the last buffered combat report arrives', () => {
   const {sim, now} = encounter();
   sim.radTox.state = 'cleared';

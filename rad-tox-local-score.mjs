@@ -29,6 +29,7 @@ export function captureRadToxScorePhase(sim, now) {
     phase = ledger.phases[key] = {key, matchId: match.id, phaseId: campaign.phaseId,
       level: campaign.level, wave: campaign.wave, phaseKind: campaign.phaseKind,
       targetCount: Math.max(1, Math.floor(campaign.targetCount || 1)),
+      population: campaign.population ? structuredClone(campaign.population) : null,
       startedAt: Number.isFinite(campaign.startedAt) ? campaign.startedAt : now,
       endsAt: Number.isFinite(campaign.endsAt) ? campaign.endsAt : null,
       closedAt: null, players: {}, participants: []};
@@ -92,11 +93,12 @@ export function applyRadToxProgress(sim, playerId, report, now) {
   const elapsedMs = Math.max(0, Math.min(now, phase.endsAt ?? now, phase.closedAt ?? now) - phase.startedAt);
   const maxShots = Math.min(100000, Math.ceil(elapsedMs / 1000) * 20 + 40);
   if (stats.shots > maxShots || stats.hits > stats.shots || stats.misses + stats.hits > stats.shots || stats.enemyHits > maxShots * 64) fail('RAD-TOX shots exceed the phase limits.');
+  if (stats.sprayActions > maxShots || stats.taserHits > stats.shots || stats.blastHits > stats.shots) fail('RAD-TOX tool actions exceed the phase limits.');
   if (stats.enemyKills > phase.targetCount || stats.bossKills > (phase.phaseKind === 'boss' ? 1 : 0) || stats.bossKills > stats.enemyKills) fail('RAD-TOX kills exceed the phase enemy count.');
   if (stats.score > stats.enemyKills * 10 + stats.hits * (stats.hits + 1) / 2) fail('RAD-TOX points exceed the reported combat.');
   if (stats.damageDealt > phase.targetCount * 2000 || stats.hitsTaken > maxShots * 3 || stats.damageTaken > stats.hitsTaken * 100 || stats.deaths > stats.hitsTaken) fail('RAD-TOX damage exceeds the phase limits.');
   if (report.bossDefeated && (phase.phaseKind !== 'boss' || stats.enemyKills < 1)) fail('Only a defeated end boss can complete the boss phase.');
-  for (const [field, maximum] of [['health', 100], ['ammo', 10000], ['fuel', 100]]) {
+  for (const [field, maximum] of [['health', 100], ['ammo', 10000], ['fuel', 100], ['spray', 80]]) {
     if (report[field] !== undefined && (!Number.isFinite(report[field]) || report[field] < 0 || report[field] > maximum)) fail(`Invalid local RAD-TOX ${field}.`);
   }
   if (report.lifeRevision !== undefined && (!Number.isSafeInteger(report.lifeRevision) || report.lifeRevision < 0)) fail('Invalid local RAD-TOX life revision.');
@@ -108,6 +110,9 @@ export function applyRadToxProgress(sim, playerId, report, now) {
     player.progress ||= {};
     player.progress.defeat = (player.progress.defeat || 0) + delta.enemyKills;
     player.progress['laser-hit'] = (player.progress['laser-hit'] || 0) + delta.hits;
+    player.progress.spray = (player.progress.spray || 0) + delta.sprayActions;
+    player.progress['taser-hit'] = (player.progress['taser-hit'] || 0) + delta.taserHits;
+    player.progress['blast-hit'] = (player.progress['blast-hit'] || 0) + delta.blastHits;
     if (sim.match?.id === phase.matchId && sim.match.state === 'finished') {
       sim.match.results = matchRows(sim, now);
       // The archived copy was made when the clock finished; amend it too.
@@ -123,7 +128,7 @@ export function applyRadToxProgress(sim, playerId, report, now) {
     sim.radTox.localProgress[playerId] = {phaseId: phase.phaseId, sequence: report.sequence, ...stats, bossDefeated, updatedAt: now};
     // Late reports never revive/deplete the player in the next wave or map.
     if (!player.replacedByRoom && (report.lifeRevision ?? 0) === (player.lifeRevision ?? 0)) {
-      for (const field of ['health', 'ammo', 'fuel']) if (report[field] !== undefined) player[field] = report[field];
+      for (const field of ['health', 'ammo', 'fuel', 'spray']) if (report[field] !== undefined) player[field] = report[field];
     }
     if (sim.radTox.transition?.kind === 'wave') sim.radTox.transition.results = matchRows(sim, now);
     if (sim.match.state === 'finished') {

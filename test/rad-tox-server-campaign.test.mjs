@@ -7,6 +7,7 @@ import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 import {startRadTox,advanceRadTox,spawnRadToxWave,nextRadToxLevel,radToxWaveTargetCount,RAD_TOX_WAVE_MS,ROUND_COUNTDOWN_MS} from '../rad-tox-campaign.mjs';
 import {finishMatch,recordTournamentScore,tournamentView} from '../rpg-match.mjs';
+import {radToxWavePopulation} from '../public/js/rad-tox-wave-rules.js';
 
 const environment={id:'muzikaz-main',name:'House',modelUrl:'/house.glb',playable:true,spawn:{x:0,y:0,z:2}};
 function fixture(now=100000){
@@ -28,7 +29,7 @@ function reachBoss(sim,now){
 test('four synchronized two-minute waves run locally before the required end boss',()=>{
  let now=100000;const sim=fixture(now);startRadTox(sim,environment,now,environment.spawn);
  assert.equal(sim.radTox.combatMode,'local');assert.equal(sim.radTox.phaseKind,'wave');assert.equal(sim.radTox.normalWaveCount,4);
- assert.equal(sim.radTox.endsAt-now,RAD_TOX_WAVE_MS);assert.equal(sim.radTox.targetCount,12);
+ assert.equal(sim.radTox.endsAt-now,RAD_TOX_WAVE_MS);assert.equal(sim.radTox.targetCount,36);assert.equal(sim.radTox.population.concurrent.total,12);
  assert.deepEqual(sim.radTox.participants,['alice','bob']);assert.deepEqual(sim.actors,{});assert.deepEqual(sim.projectiles,{});
  const phase=sim.radTox.phaseId;now+=1000;online(sim,now);sim.radTox.remaining=0;advanceRadTox(sim,now,environment);
  assert.equal(sim.radTox.phaseId,phase,'local kills cannot skip the shared wave clock');assert.equal(sim.radTox.state,'active');
@@ -77,8 +78,29 @@ test('empty rooms do not race through unplayed stages and defeats retain the cur
 });
 
 test('authored enemy budgets retain mixed waves, repopulations and one boss',()=>{
- assert.deepEqual([1,2,3,4,5].map(wave=>radToxWaveTargetCount(1,wave)),[12,22,22,22,1]);
- assert.deepEqual([radToxWaveTargetCount(2,1),radToxWaveTargetCount(2,2),radToxWaveTargetCount(3,1),radToxWaveTargetCount(3,2)],[17,32,18,34]);
+ assert.deepEqual([1,2,3,4,5].map(wave=>radToxWaveTargetCount(1,wave)),[36,66,66,66,1]);
+ assert.deepEqual([radToxWaveTargetCount(2,1),radToxWaveTargetCount(2,2),radToxWaveTargetCount(3,1),radToxWaveTargetCount(3,2)],[51,96,54,102]);
+ assert.deepEqual([1,2,3,4].map(wave=>radToxWavePopulation(1,wave).concurrent.total),[12,22,22,22]);
+ assert.deepEqual(radToxWavePopulation(1,1).budget,{toxic:12,ghost:12,snake:6,brain:6,boss:0,total:36});
+ const boss=radToxWavePopulation(3,5);assert.equal(boss.batches,1);assert.equal(boss.concurrent.total,1);assert.equal(boss.budget.boss,1);
+});
+
+test('mobile enemy limits reduce simultaneous work while retaining each player’s full score budget',()=>{
+ for(const level of [1,2,3,8])for(const wave of [1,2,3,4,5]){
+  const desktop=radToxWavePopulation(level,wave),mobile=radToxWavePopulation(level,wave,{mobile:true});
+  assert.ok(mobile.concurrent.total<=desktop.concurrent.total);assert.ok(mobile.concurrent.total<=14);assert.ok(desktop.concurrent.total<=24);assert.deepEqual(mobile.budget,desktop.budget);
+  if(wave<5)for(const kind of ['toxic','ghost','snake','brain']){assert.ok(mobile.concurrent[kind]>0);assert.ok(desktop.budget[kind]>=desktop.concurrent[kind]*3);}
+ }
+ assert.equal(radToxWavePopulation(3,2).budget.total,102,'the full authored budget remains available while live enemies are capped');assert.equal(radToxWavePopulation(3,2).concurrent.total,24);assert.equal(radToxWavePopulation(3,2,{mobile:true}).concurrent.total,14);
+});
+
+test('reconnecting to an existing wave keeps its original enemy budget until the next shared phase',()=>{
+ const now=100000,sim=fixture(now);startRadTox(sim,environment,now,environment.spawn);
+ const phase=sim.radTox.phaseId;delete sim.radTox.population;sim.radTox.targetCount=12;
+ startRadTox(sim,environment,now+1000,environment.spawn);
+ assert.equal(sim.radTox.phaseId,phase);assert.equal(sim.radTox.targetCount,12);assert.equal(sim.radTox.population,undefined,'deploying refill rules cannot rewrite score receipts for an active wave');
+ online(sim,now+120000);advanceRadTox(sim,now+120000,environment);online(sim,now+130000);advanceRadTox(sim,now+130000,environment);
+ assert.equal(sim.radTox.wave,2);assert.equal(sim.radTox.targetCount,66);assert.equal(sim.radTox.population.concurrent.total,22);
 });
 
 test('joining a shared GLB room starts clocks without server enemy simulation or damage',async()=>{

@@ -6,6 +6,7 @@ import {combatStats,damagePlayer,registerParticipant,checkTeamDefeat,matchView,t
 import {startRadTox,advanceRadTox,nextRadToxLevel,supportsRadTox} from './rad-tox-campaign.mjs';
 import {applyRadToxProgress,hasRadToxScorePhase,captureRadToxScorePhase} from './rad-tox-local-score.mjs';
 import {syncRadToxTournament,transferRadToxPlayer} from './rad-tox-room-transfer.mjs';
+import {validateRadToxRewardClaims,claimRadToxRewards,radToxLocalRewardView} from './rad-tox-local-rewards.mjs';
 import {rayBoxDistance} from './server-combat-ray.mjs';
 import {createHash} from 'node:crypto';
 import {ServerBuilderCollision} from './server-builder-collision.mjs';
@@ -19,7 +20,7 @@ const copy=value=>JSON.parse(JSON.stringify(value));
 const fail=(message,statusCode=400,code)=>{throw Object.assign(new Error(message),{statusCode,code});};
 const damageByTool={laser:20,bat:25,taser:8,toxin:12,dynamite:60,flamethrower:15,'pulse-rifle':18,shotgun:35,marksman:45};
 export class AuthoritativeRooms {
- constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,collectLoot,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();}
+ constructor({store,now=Date.now,charge=async()=>{},resolveAsset=async()=>null,reward=async()=>{},telemetry=async()=>{},collectLoot=async()=>{throw new Error("Loot storage unavailable.");},grantLocalRewards=async()=>{throw new Error('Account rewards are temporarily unavailable.');},capacity=32}){Object.assign(this,{store,now,charge,resolveAsset,reward,telemetry,collectLoot,grantLocalRewards,capacity});this.collision=new ServerBuilderCollision();this.manifestCache=new Map();this.activeWorlds=new Map();this.ticking=false;this.telemetryPending=new Set();}
  async tickActive(){
   if(this.ticking)return;this.ticking=true;
   try{for(const [id,environment]of this.activeWorlds)await this.store.update(id,(room,allRooms)=>{
@@ -31,7 +32,7 @@ export class AuthoritativeRooms {
  prepareEncounter(sim,environment){
   if(!supportsRadTox(environment))return;
   if(sim.radTox)startRadTox(sim,environment,this.now(),environment.spawn);
-  for(const [id,actor]of Object.entries(sim.actors))if(actor.radTox)delete sim.actors[id];
+  for(const [id,actor]of Object.entries(sim.actors))if(actor.radTox||actor.loot&&id.startsWith('rpg-loot-'))delete sim.actors[id];
   sim.projectiles={};
  }
  initialize(room,environment){
@@ -104,7 +105,7 @@ export class AuthoritativeRooms {
   this.prepareEncounter(sim,environment);
   sim.sequence++;return {sim,manifest};
  }
- view(room){const sim=room.simulation,now=this.now();return {authoritative:true,basketball:sim.basketball?copy(sim.basketball):null,match:matchView(sim,now),tournament:tournamentView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,lifeRevision:p.lifeRevision||0,localScoreAck:p.localScoreAck||null,tournamentScore:p.tournamentScore||0,collisionNormals:p.collisionNormals||[],input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,basketballRole:p.basketballRole||'player',basketballTeam:p.basketballTeam||null,basketballJersey:p.basketballJersey||null,basketballPoints:p.basketballPoints||0,basketballAI:Boolean(p.basketballAI),basketballNumber:p.basketballNumber||null,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
+ view(room){const sim=room.simulation,now=this.now();return {authoritative:true,basketball:sim.basketball?copy(sim.basketball):null,match:matchView(sim,now),tournament:tournamentView(sim,now),radTox:sim.radTox?copy(sim.radTox):null,projectiles:sim.projectiles||{},streets:sim.streets||[],mapRevision:sim.mapRevision||0,serverTime:now,simulationTime:sim.time,sequence:sim.sequence,objects:room.objects,actors:sim.actors,players:Object.fromEntries(Object.entries(sim.players).filter(([,p])=>now-p.lastSeen<15000).map(([id,p])=>[id,{id,username:p.username,locationName:p.locationName,modelUrl:p.modelUrl,position:p.position,movementRevision:p.movementRevision||0,lifeRevision:p.lifeRevision||0,localScoreAck:p.localScoreAck||null,tournamentScore:p.tournamentScore||0,collisionNormals:p.collisionNormals||[],input:{...p.input,yaw:p.yaw},yaw:p.yaw,health:p.health,hitsRemaining:Math.round(p.health*PLAYER_HIT_CAPACITY/100),spawnProtectedUntil:p.spawnProtectedUntil||0,combat:combatStats(p),ammo:p.ammo??120,fuel:p.fuel??100,spray:p.spray??24,score:p.score,urbanMission:p.urbanMission||null,stats:{...p.stats,health:p.health},inventory:p.inventory,quests:p.quests,progress:p.progress||{},heldId:p.heldId,basketballRole:p.basketballRole||'player',basketballTeam:p.basketballTeam||null,basketballJersey:p.basketballJersey||null,basketballPoints:p.basketballPoints||0,basketballAI:Boolean(p.basketballAI),basketballNumber:p.basketballNumber||null,seatedId:p.seatedId,vehicleId:p.vehicleId,grounded:p.grounded}])),events:sim.events.slice(-30)};}
  snapshot(id,environment){return this.store.update(id,(room,allRooms)=>{if(room.simulation)syncRadToxTournament(room.simulation,allRooms);this.step(room,environment);syncRadToxTournament(room.simulation,allRooms);return this.view(room);},{persist:false});}
  command(id,environment,identity,command){this.activeWorlds.set(id,environment);return this.store.update(id,async (room,allRooms)=>{
   if(room.simulation)syncRadToxTournament(room.simulation,allRooms);
@@ -119,7 +120,7 @@ export class AuthoritativeRooms {
    const meeting=command.meetingId&&(environment.meetingPoints||[]).find(point=>point.id===command.meetingId);if(command.meetingId&&!meeting)fail('Shared meeting point not found.',404);let spawn=meeting?this.collision.meetingPosition(environment,meeting.position,sim.actors,room.objects):this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2});
    if(player&&player.floorVersion!==2&&!meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.floorVersion=2;}
    if(!player&&!meeting){const count=active.length;spawn=this.collision.safeSpawn(environment,sim.basketball?{x:-5.25+(count%8)*1.5,y:0,z:7.5-Math.floor(count/8)}:{...spawn,x:spawn.x+(count%4)*1.2,z:spawn.z+Math.floor(count/4)*1.2});}
-   if(!player)player=sim.players[actorId]={username:identity.username,position:{x:Number(spawn.x)||0,y:Number(spawn.y)||0,z:Number(spawn.z)||0},floor:Number(spawn.y)||0,floorVersion:2,yaw:0,velocityY:0,grounded:true,ammo:120,fuel:100,health:clamp(identity.stats?.health??100,0,100),stats:identity.stats||{},score:0,inventory:[],quests:{},cooldowns:{},lastSeen:now};
+   if(!player)player=sim.players[actorId]={username:identity.username,position:{x:Number(spawn.x)||0,y:Number(spawn.y)||0,z:Number(spawn.z)||0},floor:Number(spawn.y)||0,floorVersion:2,yaw:0,velocityY:0,grounded:true,ammo:120,fuel:100,spray:24,health:clamp(identity.stats?.health??100,0,100),stats:identity.stats||{},score:0,inventory:[],quests:{},cooldowns:{},lastSeen:now};
    for(const [otherId,otherRoom]of Object.entries(allRooms)){if(otherId===id)continue;const previous=otherRoom.simulation?.players[actorId];if(!previous)continue;previous.lastSeen=0;previous.replacedByRoom=id;previous.input={};for(const key of ['heldId','seatedId','vehicleId']){const held=otherRoom.simulation.actors[previous[key]];if(held)held.holderId=null;previous[key]=null;}}
    if(meeting){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;player.actorId=actorId;
    if(sim.basketball){player.health=100;enterBasketballGame(sim,player,now,{role:command.basketballRole,team:command.basketballTeam,menu:command.basketballEntry==='menu',returning,lateArrival:basketballLateArrival});}else{startRadTox(sim,environment,now,player.position);registerParticipant(sim,actorId,player,now);captureRadToxScorePhase(sim,now);syncRadToxTournament(sim,allRooms);}
@@ -144,11 +145,17 @@ export class AuthoritativeRooms {
    else if(command.action==='rad-tox-progress'){
     const source=hasRadToxScorePhase(sim,command,actorId)?sim:Object.values(allRooms).map(other=>other.simulation).find(other=>other&&other.players?.[actorId]&&hasRadToxScorePhase(other,command,actorId));
     if(!source)fail('This RAD-TOX phase does not belong to this player.',409);
-    syncRadToxTournament(source,allRooms);const accepted=applyRadToxProgress(source,actorId,command,now);syncRadToxTournament(source,allRooms);player.localScoreAck=accepted.ack;result.localScoreAck=accepted.ack;
+    validateRadToxRewardClaims(source,actorId,command,now);
+    syncRadToxTournament(source,allRooms);const accepted=applyRadToxProgress(source,actorId,command,now);syncRadToxTournament(source,allRooms);
+    let rewards;
+    try{rewards=await claimRadToxRewards(source,actorId,command,now,async grant=>{try{return await this.grantLocalRewards(identity,grant);}catch(error){error.localRewardDeferred=true;throw error;}});}
+    catch(error){if(!error.localRewardDeferred&&error.statusCode!==503)throw error;rewards={matchId:command.matchId,phaseId:command.phaseId,claimedIds:Object.keys(source.radToxScoreLedger.phases[command.matchId+':'+command.phaseId].rewardClaims?.[actorId]||{}),pending:true,message:'Score saved. Account rewards will retry when storage reconnects.'};}
+    const ack={...accepted.ack,claimedIds:rewards.claimedIds,rewardsPending:Boolean(rewards.pending)};
+    source.players[actorId].localScoreAck=ack;player.localScoreAck=ack;result.localScoreAck=ack;result.localRewards=rewards;
    }
    else if(command.action==='next-rad-tox'){if(sim.radTox?.transition&&now<sim.radTox.transition.at)fail('The next round starts after the 10-second results countdown.',409);if(nextRadToxLevel(sim,environment,now,command.matchId)){for(const [index,participantId] of Object.keys(sim.match.participants).entries()){const participant=sim.players[participantId],entry=environment.spawn||{x:0,y:0,z:2};participant.position=this.collision.safeSpawn(environment,{...entry,x:entry.x+(index%4)*1.2,z:entry.z+Math.floor(index/4)*1.2});participant.floor=participant.position.y;participant.velocityY=0;participant.grounded=true;participant.shieldUntil=0;participant.input={};participant.toolReady={};participant.toolUses={};}result.message='Next shared level started.';}else if(sim.match?.id===command.matchId)fail('Complete the current level before starting another.',409);}
    else if(sim.match?.state==='finished'&&command.action!=='input')fail('This level has ended. Review the results and start the next level.',409);
-   else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.lifeRevision=(player.lifeRevision||0)+1;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
+   else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.lifeRevision=(player.lifeRevision||0)+1;player.ammo=120;player.fuel=100;player.spray=24;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
    else if(player.health<=0)fail('Respawn before acting.',409);
    else if(command.action==='drop'){const held=sim.actors[player.heldId];if(held){held.holderId=null;held.position={...player.position};player.heldId=null;}}
    else if(command.action==='collect'){await this.collectNearbyLoot(sim,player,identity,id,now,command.entityId,result);}
@@ -282,7 +289,11 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
   if(now-(player.lastTelemetry||0)>5000&&!this.telemetryPending.has(identity.walletId)){const sample={health:player.health,world:id};player.lastTelemetry=now;this.telemetryPending.add(identity.walletId);Promise.resolve().then(()=>this.telemetry(identity.walletId,sample)).catch(error=>console.error('Gameplay telemetry failed:',error.message)).finally(()=>this.telemetryPending.delete(identity.walletId));}
   if(!['input','rad-tox-progress'].includes(command.action)){sim.events.push({id:requestId,actorId,action:command.action,...result,at:now});sim.events=sim.events.slice(-100);}
   sim.receipts[receiptKey]={action:command.action,result};const keys=Object.keys(sim.receipts);if(keys.length>500)for(const key of keys.slice(0,keys.length-500))delete sim.receipts[key];
-  return {...this.view(room),selfId:actorId,result};
+  const snapshot=this.view(room),rewardPhase=sim.match?.id+':'+sim.radTox?.phaseId;
+  if(sim.radTox?.combatMode==='local'&&(['join','start-rad-tox','rad-tox-progress'].includes(command.action)||player.localRewardManifestPhase!==rewardPhase)){
+   snapshot.radToxRewards=radToxLocalRewardView(sim,actorId);player.localRewardManifestPhase=rewardPhase;
+  }
+  return {...snapshot,selfId:actorId,result};
  },{persist:!['input','rad-tox-progress'].includes(command.action)});}
  async collectNearbyLoot(sim,player,identity,roomId,now,entityId,result){
   if(!entityId&&now<(player.lootRetryAt||0))return;

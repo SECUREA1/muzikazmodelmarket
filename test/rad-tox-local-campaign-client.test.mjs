@@ -5,6 +5,8 @@ import {runInNewContext} from 'node:vm';
 import * as THREE from '../public/vendor/three/three.module.min.js';
 import {healthAfterHit} from '../public/js/rpg-combat-rules.js';
 import {RadToxLocalCampaign,isLocalRadToxCampaign,isLocalRadToxEnvironment,radToxWaveSeconds} from '../public/js/rad-tox-local-campaign.js';
+import {LocalEnemyPopulation} from '../public/js/rad-tox-local-population.js';
+import {radToxWavePopulation} from '../public/js/rad-tox-wave-rules.js';
 
 const snapshot=(phaseId='wave-1',changes={})=>({serverTime:100000,match:{id:'level-1'},radTox:{combatMode:'local',phaseId,phaseKind:'wave',state:'active',startedAt:100000,endsAt:220000,wave:1,...changes}});
 
@@ -63,9 +65,9 @@ const prototype=runInNewContext(game.slice(game.indexOf('  class ToxicBubbleSyst
   usesLocalRadTox:()=>true,healthAfterHit,
   RAD_TOX_STATES:{ACTIVE:'active',CLEARED:'cleared'},
   BEE_CONFIG:{id:'bee',maxHealth:20},AAPE_BOSS_CONFIG:{id:'aape',maxHealth:20},BEEDUCK_BOSS_CONFIG:{id:'beeduck',maxHealth:20},
-  THREE,recordLocalCombat:(stats,status)=>bossReports.push({stats,status}),recordLocalEnemyDamage(){},flushLocalCombat(){},
+  THREE,recordLocalCombat:(stats,status)=>bossReports.push({stats,status}),recordLocalEnemyDamage(){},populateLocalRewards(){},claimLocalBossRewards(){},localBossRewardPhase:null,flushLocalCombat(){},
   AirborneHoneyBee:class {
-    constructor(options){this.options=options;this.health=20;}
+    constructor(options){this.options=options;this.health=20;this.root=new THREE.Group();}
     async load(){} setSpawnFromGround(){}
     takeDamage(amount){if(this.health===0)return false;this.health=Math.max(0,this.health-amount);if(this.health===0)this.options.onDefeated();return true;}
   }
@@ -118,7 +120,7 @@ test('Begin adopts authoritative local combat metadata even when the room render
   const render=game.slice(game.indexOf('  function renderServerRadTox(snapshot)'),game.indexOf('  async function followRadToxDestination'));
   runInNewContext(render+begin,{toxicBubbleSystem:system,localCampaign:local,isLocalRadToxCampaign,isLocalRadToxEnvironment,
     activeEnvironment:{id:'house',modelUrl:'house.glb'},serverHostedRoom:true,isCleanSportsEnvironment:()=>false,
-    authoritativeClient:{ready:true,send:async action=>{assert.equal(action,'start-rad-tox');return state;}},setStatus(){}});
+    acceptLocalRewards(){},authoritativeClient:{ready:true,send:async action=>{assert.equal(action,'start-rad-tox');return state;}},setStatus(){}});
   await system.begin();assert.equal(deployed,1);assert.equal(system.serverEncounter.combatMode,'local');
   assert.equal(system.active,true);
 });
@@ -126,19 +128,19 @@ test('Begin adopts authoritative local combat metadata even when the room render
 test('enemy placement yields to rendering and cancels stale wave spawning',async()=>{
   let yielded=0,current=true;
   const source=game.slice(game.indexOf('  async function spawnTimedLocalWave'),game.indexOf('  const localCampaign=new'));
+  const calls=[],population=new LocalEnemyPopulation({spawn:kind=>{calls.push(kind);return {userData:{}};},yieldFrame:async()=>{yielded++;}});
   const spawn=runInNewContext(source+'\nspawnTimedLocalWave;',{
-    requestAnimationFrame:callback=>{yielded++;queueMicrotask(callback);},
-    TOXIC_BUBBLE_CONFIG:{brainBugsPerWave:2}
+    radToxWavePopulation,mobileQualityMode:false,localPopulation:population
   });
-  const calls=[],system={baseEnemyTarget:8,snakeCountForLevel:()=>2,
-    placeOne:kind=>{calls.push(kind);return true;},spawnSnakes:()=>{calls.push('snake');return 1;},spawnBrainBug:()=>{calls.push('brain');return 1;}};
-  assert.equal(await spawn(system,{wave:1},()=>current),true);
-  assert.equal(system.levelTarget,12);assert.equal(yielded,12);
+  const system={localEnemyKills:0};
+  const campaign={phaseId:'one',level:1,wave:1,targetCount:36,population:radToxWavePopulation(1,1)};
+  assert.equal(await spawn(system,campaign,()=>current),true);
+  assert.equal(system.levelTarget,36);assert.equal(yielded,12);
   assert.equal(calls.filter(kind=>kind==='ghost').length,4);
   calls.length=0;yielded=0;
-  system.placeOne=kind=>{calls.push(kind);if(calls.length===2)current=false;return true;};
-  assert.equal(await spawn(system,{wave:2},()=>current),false);
-  assert.equal(calls.length,2);assert.equal(yielded,2);
+  population.spawn=kind=>{calls.push(kind);if(calls.length===2)current=false;return {userData:{}};};
+  assert.equal(await spawn(system,{...campaign,phaseId:'two'},()=>current),false);
+  assert.equal(calls.length,2);assert.equal(yielded,1);
 });
 
 test('tournament ranged accuracy counts enemies while building hits cannot earn a streak',()=>{
@@ -156,7 +158,7 @@ test('tournament ranged accuracy counts enemies while building hits cannot earn 
 
 test('the authored boss takes twenty local hits and reports one tournament boss defeat',async()=>{
   bossReports.length=0;let completed=0;
-  const system={level:1,score:0,state:'active',bossConfigForLevel:prototype.bossConfigForLevel,
+  const system={level:1,score:0,state:'active',serverEncounter:{phaseId:'boss'},bossConfigForLevel:prototype.bossConfigForLevel,
     validEnvironment:()=>true,getPlayerPosition:()=>new THREE.Vector3(),environmentSurfaces:()=>[],
     setState(){},completeLevelIfReady(){completed++;}};
   await prototype.spawnEndBoss.call(system);
@@ -167,4 +169,23 @@ test('the authored boss takes twenty local hits and reports one tournament boss 
   assert.equal(bossReports.length,1);assert.equal(bossReports[0].stats.enemyKills,1);
   assert.equal(bossReports[0].stats.bossKills,1);assert.equal(bossReports[0].stats.score,10);
   assert.equal(bossReports[0].status.bossDefeated,true);
+});
+
+test('network combat never creates unissued currency or random Backpack rewards',()=>{
+  const system={sheepCoins:0};
+  assert.equal(prototype.awardSheepCoin.call(system,new THREE.Vector3()),false);
+  assert.equal(system.sheepCoins,0);
+  assert.equal(prototype.createPickup.call(system,new THREE.Vector3()),undefined);
+});
+
+test('accepted field quest actions batch local counters without duplicating defeat or ranged hits',()=>{
+  const recorded=[];let local=true;
+  const source=game.slice(game.indexOf('  function trackGameQuest('),game.indexOf('  function toggleGameQuests('));
+  const track=runInNewContext(source+'\ntrackGameQuest;',{
+    serverHostedRoom:true,usesLocalRadTox:()=>local,recordLocalCombat:stats=>recorded.push({...stats}),
+    window:{MZKWallet:{rewardProgress(){throw Error('Per-action wallet requests are forbidden.');}}}
+  });
+  track('spray');track('taser-hit');track('blast-hit');track('defeat');track('laser-hit');track('spray',0);track('spray',-1);
+  assert.deepEqual(recorded,[{sprayActions:1},{taserHits:1},{blastHits:1}]);
+  local=false;track('spray');assert.equal(recorded.length,3);
 });

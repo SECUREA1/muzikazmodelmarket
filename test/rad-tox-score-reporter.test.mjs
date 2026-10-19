@@ -93,3 +93,36 @@ test('only an explicit expiry removes that exact queued phase while current prog
   reporter.acknowledge(next);
   assert.equal(reporter.pending, false);
 });
+
+test('collected rewards retry after a score acknowledgement until the account grant is confirmed',()=>{
+ const reporter=new RadToxScoreReporter();reporter.begin(identity,{health:80,spray:12});
+ reporter.record({enemyKills:1,score:10},{claimIds:['coin-a','supply-b']});
+ const first=reporter.report(0);first.claimIds.push('not-collected');
+ assert.deepEqual(reporter.report(1500).claimIds,['coin-a','supply-b'],'transport consumers cannot mutate pending pickup IDs');
+ reporter.acknowledge({...identity,sequence:1,claimedIds:['coin-a'],rewardsPending:true});
+ assert.equal(reporter.pending,true);reporter.begin({...identity,phaseId:'next'});
+ const retry=reporter.report(2500);assert.equal(retry.phaseId,identity.phaseId);assert.equal(retry.stats.score,10);assert.deepEqual(retry.claimIds,['coin-a','supply-b']);
+ reporter.acknowledge({...retry,claimedIds:['coin-a','supply-b']});
+ assert.equal(reporter.phases.has('level-1:wave-1'),false,'a completed old wave retires only after its final reward receipt');
+});
+
+test('a deferred quest update with no pickups is retried without requiring another shot',()=>{
+ const reporter=new RadToxScoreReporter();reporter.begin(identity);reporter.record({shots:5,hits:5,score:15});
+ const first=reporter.report(0);reporter.acknowledge({...first,rewardsPending:true,claimedIds:[]});
+ assert.equal(reporter.pending,true);const retry=reporter.report(1000);assert.equal(retry.stats.hits,5);assert.equal(retry.sequence,2);
+ reporter.acknowledge({...retry,rewardsPending:false,claimedIds:[]});assert.equal(reporter.pending,false);
+});
+
+test('a deferred wallet from an old wave cannot starve current multiplayer scores',()=>{
+ const reporter=new RadToxScoreReporter();reporter.begin(identity);reporter.record({enemyKills:1,score:10},{claimIds:['coin']});
+ let report=reporter.report(0);reporter.acknowledge({...report,rewardsPending:true});
+ reporter.begin({...identity,phaseId:'next'});reporter.record({enemyKills:1,score:10});
+ const phases=[];
+ for(let now=1000;now<=6000;now+=1000){
+  report=reporter.report(now);phases.push(report.phaseId);reporter.acknowledge({...report,rewardsPending:true});
+ }
+ assert.deepEqual(phases,['wave-1','next','wave-1','next','wave-1','next']);
+ assert.equal(reporter.flush(6001)?.phaseId,'wave-1');
+ reporter.acknowledge({...reporter.phases.get('level-1:wave-1').pending.report,rewardsPending:true});
+ assert.equal(reporter.flush(6002),null,'closed-wave account retries retain the batched interval');
+});
