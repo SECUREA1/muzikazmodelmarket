@@ -10,10 +10,19 @@ body .house-control-dock .house-bottom-controls{display:block;width:100%;height:
 .house-control-dock .game-dock-actions .house-bottom-control:focus-visible{outline:2px solid #d5ff8a;outline-offset:-2px;background:#263a21;}
 .house-control-dock .game-dock-actions #crib-online-count{position:absolute;top:1px;right:5px;color:#dcff94;font:700 9px/1.2 system-ui;}
 .house-control-dock .game-dock-actions .house-bottom-control:disabled{opacity:.45;cursor:default;}
+.house-control-dock .game-dock-actions .house-bottom-control[hidden]{display:none;}
 /* Flex the stage into the space remaining above the icon dock. */
 body .house-explorer-shell{min-width:0;min-height:0;max-width:100%;height:min(900px,calc(100svh - 24px));max-height:calc(100svh - 24px);}
 body .house-explorer-shell>.house-stage{flex:1 1 0;min-height:0!important;max-height:none;}
 body .house-explorer-shell .mobile-move-pad{flex:0 0 auto;}
+/* Give the court the full viewport, with actions and controls below it. */
+body.basketball-play-active>.site-header{position:relative!important;top:auto!important;}
+body .house-explorer.is-basketball-play{padding:0!important;}
+body .house-explorer.is-basketball-play>.section-title{display:none;}
+body .house-explorer-shell[data-basketball-play]{display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:none;gap:0;margin:0;height:var(--basketball-play-height,calc(100dvh - 4px));max-height:var(--basketball-play-height,calc(100dvh - 4px));border-radius:0;}
+body .house-explorer-shell[data-basketball-play]>.house-stage{width:100%;border-radius:0;}
+body .house-explorer-shell[data-basketball-play] .mobile-move-pad-glb::before{display:none;}
+body .house-explorer-shell[data-basketball-play] .mobile-move-pad.mobile-move-pad-glb{grid-template-areas:'left right'!important;max-width:none;padding:4px 12px;}
 /* Explorer options use the same controls without crowding the footer. */
 .game-view-options .game-dock-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:12px;}
 .game-view-options .game-dock-summary>*{min-width:0;box-sizing:border-box;}

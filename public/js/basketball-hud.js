@@ -35,10 +35,10 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
     .basketball-scoreboard{position:absolute;top:var(--basketball-scoreboard-top,8px);left:50%;transform:translateX(-50%);z-index:24;width:min(460px,calc(100% - 16px));display:flex;flex-direction:column;gap:6px;color:#f8f4eb;font-family:system-ui,sans-serif;pointer-events:none}
     .basketball-scoreboard[hidden]{display:none!important}
     .basketball-score-strip{box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 108px minmax(0,1fr);height:var(--basketball-scoreboard-height,56px);background:#09101ff2;border:1px solid #d8b27580;box-shadow:0 3px 12px #0006;border-radius:8px;overflow:hidden;text-align:center}
-    .basketball-scoreboard .basketball-screen-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0;padding:6px;background:#09101ff2;border:1px solid #d8b27580;border-radius:8px;pointer-events:auto}
-    .basketball-scoreboard .basketball-screen-actions button{min-width:0;min-height:44px;padding:8px 4px;font-size:12px;white-space:nowrap}
-    .basketball-scoreboard .basketball-screen-actions button.is-selected::after{display:none}
-    @media(max-width:380px){.basketball-scoreboard .basketball-screen-actions button{font-size:11px}}
+    .game-screen-actions.basketball-screen-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0;padding:6px;background:#09101ff2;border:1px solid #d8b27580;border-radius:8px;pointer-events:auto}
+    .game-screen-actions.basketball-screen-actions button{min-width:0;min-height:44px;padding:8px 4px;font-size:12px;white-space:nowrap}
+    .game-screen-actions.basketball-screen-actions button.is-selected::after{display:none}
+    @media(max-width:380px){.game-screen-actions.basketball-screen-actions button{font-size:11px}}
     .basketball-team-score{min-width:0;padding:5px 10px;border-top:3px solid #27b8ff;display:flex;align-items:center;justify-content:space-between;gap:8px}
     .basketball-team-score:last-child{border-color:#ff5a46;flex-direction:row-reverse}
     .basketball-team-score span{font-size:11px;letter-spacing:1px;font-weight:800}.basketball-team-score strong{font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
@@ -68,7 +68,8 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
     .basketball-hud-docked .basketball-match-toggle{grid-column:2;grid-row:1;margin:0;max-width:140px;min-height:44px;font-size:11px}
     .basketball-hud-docked .basketball-caption{grid-column:1;grid-row:1;max-width:100%;margin:0;font-size:11px;padding:2px 4px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .basketball-hud-docked .basketball-role{grid-column:1/-1;max-width:100%;margin:0;font-size:11px;padding:2px 4px}
-    .basketball-hud-docked.is-playing .basketball-role{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%)}
+    .basketball-hud.basketball-hud-docked.is-playing{display:block;min-height:0;padding:0;background:none}
+    .basketball-hud-docked.is-playing>:not(dialog){display:none!important}
     @media(prefers-reduced-motion:reduce){.basketball-scored .basketball-score-strip{animation:none}}
   `;
   document.head.append(style);
@@ -94,7 +95,7 @@ export function mountBasketballHud({ stage, actionParent=stage.parentElement, on
   mountGameMatchBrowser(match.querySelector('[data-game-match-browser]'),{game:'basketball',currentMapId:()=>new URL(location.href).searchParams.get('environment')||new URL(location.href).searchParams.get('house')});
   const screenBar=document.createElement('div');screenBar.className='game-screen-actions basketball-screen-actions';screenBar.hidden=true;screenBar.setAttribute('role','group');screenBar.setAttribute('aria-label','Basketball gameplay actions');
   for(const action of ['basketball-shoot','toss','catch','basketball-steal'])screenBar.append(root.querySelector(`[data-basketball-action="${action}"]`));
-  scoreboard.append(screenBar);actionParent.prepend(root);root.classList.add('basketball-hud-docked');
+  const bottomControls=actionParent.querySelector('.house-bottom-controls');if(bottomControls)actionParent.insertBefore(screenBar,bottomControls);else actionParent.append(screenBar);actionParent.prepend(root);root.classList.add('basketball-hud-docked');
   const rules = document.createElement('dialog');rules.className='basketball-rules';rules.setAttribute('aria-labelledby','basketball-rules-title');
   rules.innerHTML='<form><h2 id="basketball-rules-title">Quick match tuner</h2><p>Choose team size, human players and AI difficulty, then start. Both teams stay equal; AI fills every empty spot at tip-off.</p><button type="button" data-solo-setup>Solo vs AI</button><div class="basketball-rules-fields"><label>Players per team<select name="teamSize"><option value="1">1 vs 1</option><option value="2">2 vs 2</option><option value="3">3 vs 3</option><option value="4">4 vs 4</option><option value="5">5 vs 5</option></select></label><label>AI difficulty<select name="aiDifficulty"><option value="1">Tier 1 · Rookie</option><option value="2">Tier 2 · Amateur</option><option value="3">Tier 3 · Pro</option><option value="4">Tier 4 · All-Star</option><option value="5">Tier 5 · Legend</option></select></label><label>Home human slots<input name="homeHumans" type="number" min="0" max="5" step="1" required></label><label>Away human slots<input name="awayHumans" type="number" min="0" max="5" step="1" required></label></div><details><summary>Competition rules · timing &amp; scoring</summary><div class="basketball-rules-fields"><label>Minutes per period<input type="number" name="quarterMinutes" min="1" max="12" step="1" required></label><label>Number of periods<input type="number" name="quarters" min="1" max="4" step="1" required></label><label>Shot clock (seconds)<input type="number" name="shotClockSeconds" min="5" max="60" step="1" required></label><label>Score to win (0 = timed)<input type="number" name="scoreLimit" min="0" max="200" step="1" required></label><label>Win by points<input type="number" name="winBy" min="1" max="10" step="1" required></label></div></details><p data-roster-preview role="status" aria-live="polite"></p><p>Playing with friends? Save to lobby, let everyone join Home or Away, then start. AI wears numbered team jerseys. Late arrivals watch until the next game.</p><p data-rules-status role="status"></p><footer><button type="submit" name="start" value="true" data-start-match>Start game</button><button type="submit" name="save" data-save-rules>Save to lobby</button><button type="button" data-close-rules>Back to court</button></footer></form>';
   stage.append(rules);

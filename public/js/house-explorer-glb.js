@@ -74,8 +74,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage) {
   const canvas = legacyCanvas.cloneNode(false); canvas.width = 1280; canvas.height = 720; canvas.setAttribute('aria-label', 'Walkable MUZIKAZ GLB environment'); canvas.tabIndex = 0; legacyCanvas.replaceWith(canvas);
   const resetButton = document.querySelector('#house-reset')?.cloneNode(true); document.querySelector('#house-reset')?.replaceWith(resetButton);
   const fullscreenButton = document.querySelector('#house-fullscreen')?.cloneNode(true); document.querySelector('#house-fullscreen')?.replaceWith(fullscreenButton);
-  const beginResetButton = document.querySelector('#house-begin-reset')?.cloneNode(true); document.querySelector('#house-begin-reset')?.replaceWith(beginResetButton);
+  const existingBeginResetButton=document.querySelector('#house-begin-reset');
+  const beginResetButton=existingBeginResetButton?.cloneNode(true)||document.createElement('button');existingBeginResetButton?.replaceWith(beginResetButton);
   const bottomControls = document.querySelector('.house-bottom-controls');
+  if(!existingBeginResetButton){beginResetButton.type='button';beginResetButton.id='house-begin-reset';beginResetButton.className='house-bottom-control';beginResetButton.hidden=true;beginResetButton.innerHTML='<b aria-hidden="true">▶</b><span>Match</span>';bottomControls?.append(beginResetButton);}
   // This launch control lives in the page markup. script.js intentionally yields to
   // this GLB explorer, so the GLB implementation must own the overlay's action too.
   const gameStartButton = document.querySelector('[data-house-start]');
@@ -1548,6 +1550,30 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage) {
   const localBasketballPlayer={actorId:'local',lastSeen:Date.now(),position:{x:0,y:0,z:0},yaw:0,health:100,heldId:null,basketballTeam:'home',inventory:[]};
   let localBasketballSim={actors:{},players:{local:localBasketballPlayer},events:[]};
   const basketballHud=mountBasketballHud({stage,actionParent:controlDock,onAction:basketballAction,announce:setStatus,onTriggerChange:selection=>{if(isBasketballEnvironment(activeEnvironment))updateGameTriggerHint(mobilePad,selection?.label||'Action');}});
+  const basketballShell=stage.closest('.house-explorer-shell'),basketballSection=stage.closest('.house-explorer');
+  const beginResetLabel={aria:beginResetButton?.getAttribute('aria-label'),title:beginResetButton?.title,text:beginResetButton?.querySelector('span')?.textContent};
+  let basketballPlayExpanded=false;
+  function syncBasketballPlayLayout(enabled){
+    if(enabled===basketballPlayExpanded)return;
+    basketballPlayExpanded=enabled;
+    document.body.classList.toggle('basketball-play-active',enabled);
+    basketballSection?.classList.toggle('is-basketball-play',enabled);
+    basketballShell?.toggleAttribute('data-basketball-play',enabled);
+    if(beginResetButton){
+      if(!existingBeginResetButton)beginResetButton.hidden=!enabled;
+      const label='Basketball match · join / watch / start';
+      beginResetButton.setAttribute('aria-label',enabled?label:beginResetLabel.aria||beginResetLabel.text||'Begin / reset');
+      beginResetButton.title=enabled?label:beginResetLabel.title;
+      const text=beginResetButton.querySelector('span');if(text)text.textContent=enabled?label:beginResetLabel.text;
+      if(enabled)beginResetButton.setAttribute('aria-haspopup','dialog');else beginResetButton.removeAttribute('aria-haspopup');
+    }
+    if(enabled)requestAnimationFrame(()=>{
+      if(!basketballPlayExpanded)return;
+      basketballShell?.scrollIntoView({block:'start',behavior:'instant'});
+      scheduleGameResize();
+    });
+    else{basketballShell?.style.removeProperty('--basketball-play-height');scheduleGameResize();}
+  }
   cameraOverlayResize?.observe(stage.querySelector('.basketball-scoreboard'));positionCameraToggle();
   const basketballAim=mountBasketballAim({stage});
   const flightGeometry=new THREE.BufferGeometry();flightGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(256*3),3));flightGeometry.setDrawRange(0,0);
@@ -1558,6 +1584,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage) {
     const ball={id:root.uuid,asset,root,position:root.position.clone(),ballFloor:root.position.y};localBasketballs.push(ball);localBasketballSim.actors[ball.id]=ball;return ball;
   }
   function resetBasketballWorld(environment){
+    syncBasketballPlayLayout(gameplayStarted&&isBasketballEnvironment(environment));
     for(const root of localBasketballAIRoots.values())disposeProjection(root);localBasketballAIRoots.clear();
     basketballSnapshot=null;basketballSelf=null;basketballPlayers={};basketballMatchViewId=null;heldBasketball=null;localBasketballPlayer.heldId=null;
     for(const ball of localBasketballs)disposeProjection(ball.root);localBasketballs.length=0;
@@ -1602,6 +1629,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage) {
   }
   function updateBasketballs(delta){
     const arena=isBasketballEnvironment(activeEnvironment);
+    syncBasketballPlayLayout(gameplayStarted&&arena);
     for(const root of serverPlayerRoots.values())if(root.userData.basketballAI)animateBasketballAIAvatar(root.userData.serverBody,root.userData.basketballWalking,clock.elapsedTime);
     if(!serverHostedRoom&&arena){const constrained=constrainBasketballSpectator(localBasketballPlayer.position,{x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z},localBasketballSim,localBasketballPlayer);playerRig.position.set(constrained.x,constrained.y,constrained.z);playerCollider.start.set(constrained.x,constrained.y+player.radius,constrained.z);playerCollider.end.set(constrained.x,constrained.y+player.height,constrained.z);}
     localBasketballPlayer.position={x:playerRig.position.x,y:playerRig.position.y,z:playerRig.position.z};localBasketballPlayer.yaw=player.yaw;localBasketballPlayer.lastSeen=Date.now();
@@ -1814,7 +1842,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage) {
   }
   setupThumbstick('left'); setupThumbstick('right');
   fullscreenButton?.addEventListener('click', setFullscreen);
-  beginResetButton?.addEventListener('click', () => {if(serverHostedRoom){serverCommand('respawn');return;} resetPlayer(activeWorldSpawn.position, activeWorldSpawn.rotationY); toxicBubbleSystem.begin(); setStatus('RAD-TOX begin or reset requested.'); });
+  beginResetButton?.addEventListener('click', () => {if(isBasketballEnvironment(activeEnvironment)){basketballHud.openMatch();return;}if(serverHostedRoom){serverCommand('respawn');return;} resetPlayer(activeWorldSpawn.position, activeWorldSpawn.rotationY); toxicBubbleSystem.begin(); setStatus('RAD-TOX begin or reset requested.'); });
   let xrGameControls=null;
   function xrBasketballInteract(){const self=serverHostedRoom?authoritativeClient?.selfId:'local',balls=serverHostedRoom?Object.values(serverActors):localBasketballs;const held=balls.some(ball=>isBasketball(ball)&&ball.holderId&&ball.holderId!==self);return basketballAction(held?'basketball-steal':'catch');}
   async function setupVRControls(){
@@ -1855,15 +1883,17 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage) {
   function fitTouchGameLayout(){
     const shell=stage.closest('.house-explorer-shell');if(!shell)return;
     const touchLayout=matchMedia('(max-width:760px), (pointer:coarse)').matches;
-    if(!gameplayStarted||!touchLayout){shell.removeAttribute('data-touch-game-fit');return;}
+    const basketball=gameplayStarted&&isBasketballEnvironment(activeEnvironment);
+    if(!gameplayStarted||(!touchLayout&&!basketball)){shell.removeAttribute('data-touch-game-fit');return;}
     // Budget from the visible game position, rather than assuming the header is
     // outside the viewport. The dock and both sticks share this flex column.
     const viewport=window.visualViewport,viewportTop=viewport?.offsetTop||0;
     const bottom=viewportTop+(viewport?.height||window.innerHeight);
-    const available=Math.floor(bottom-Math.max(viewportTop,shell.getBoundingClientRect().top)-12);
+    const available=Math.floor(bottom-Math.max(viewportTop,shell.getBoundingClientRect().top)-(basketball?4:12));
     if(available<240)return;
     const height=available+'px';if(shell.style.getPropertyValue('--touch-game-height')!==height)shell.style.setProperty('--touch-game-height',height);
-    shell.dataset.touchGameFit='';
+    if(basketball)shell.style.setProperty('--basketball-play-height',height);
+    if(touchLayout)shell.dataset.touchGameFit='';else shell.removeAttribute('data-touch-game-fit');
   }
   function resize() {
     fitTouchGameLayout();
