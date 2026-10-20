@@ -20,3 +20,21 @@
 .sports-action-bar.is-collapsed>.sports-action-modes{display:none;}
 .sports-action-bar .sports-actions-popup:not([open]){display:none;}
 .sports-action-bar .rad-tox-game-toggle[aria-pressed=true]{background:#c7f36a;color:#10200b;border-color:#e0ffa5;}
+/* Score and utility controls share the upper row; the main action stays last. */
+.sports-action-header{display:flex;align-items:center;gap:4px;min-width:0;}
+.sports-action-header>.basketball-score-strip,.sports-action-header>.scoreboard{flex:1 1 auto;min-width:0;}
+.sports-action-header>.sports-collapse{order:2;}
+.sports-action-header>.basketball-aim{order:1;}
+.sports-action-header:has(.basketball-score-strip){margin-bottom:2px;}
+.sports-action-header .basketball-score-strip{display:flex;align-items:center;justify-content:center;border:0;background:none;box-shadow:none;border-radius:0;gap:8px;height:auto;}
+.sports-action-header .scoreboard{padding:2px!important;gap:4px!important;border:0!important;background:none!important;}
+.sports-action-header .scoreboard strong{font-size:14px!important;}
+.sports-action-header .scoreboard #clock{padding:2px!important;font-size:10px!important;}
+.sports-action-header .scoreboard #call{display:none;}
+.sports-action-bar>.sports-action-tools{flex-wrap:nowrap;}
+.sports-action-bar>.sports-action-tools>.sports-primary-trigger{min-width:0;}
+.sports-action-bar.is-collapsed>.sports-action-header .basketball-score-strip,.sports-action-bar.is-collapsed>.sports-action-header .scoreboard{display:none;}
+.sports-action-bar.is-collapsed>.sports-action-header{justify-content:flex-end;}
+@media(max-width:380px){.sports-action-header .basketball-team-score span{font-size:8px;letter-spacing:0;}.sports-action-header .basketball-clock{gap:3px;}.sports-action-header .basketball-clock small{font-size:7px;}.sports-action-header .basketball-score-strip{gap:5px;}}
+.room-building-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px;font:13px system-ui;}
+.room-building-toggle input{width:20px;height:20px;}

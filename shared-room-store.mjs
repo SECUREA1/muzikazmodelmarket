@@ -1,3 +1,4 @@
+import {requireBuildingAllowed} from './public/js/room-building-policy.js';
 import {mkdir,readFile,writeFile,rename} from 'node:fs/promises';
 import {dirname} from 'node:path';
 import {randomUUID} from 'node:crypto';
@@ -35,6 +36,7 @@ export class SharedRoomStore {
    if(!prior||prior.ownerId!==actor)fail('Only the placer can remove this object.',403);
    room.objects[key]={id:key,deleted:true,revision:room.revision+1,ownerId:actor};
   }else{
+   requireBuildingAllowed(room);
    if(prior&&prior.ownerId!==actor)fail('Only the placer can edit this object.',403);
    if(prior?.deleted)fail('Object was removed.',409);
    if(Object.keys(room.objects).length>=2000&&!prior)fail('Room building limit reached.',409);

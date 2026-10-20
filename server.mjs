@@ -1,3 +1,5 @@
+import {buildingPolicy,changeBuildingPolicy,requireBuildingAllowed} from './public/js/room-building-policy.js';
+import {sportsBuildingAccess} from './sports-building-access.mjs';
 import {applyHttpSecurity} from './http-security.mjs';
 import {staticCacheControl} from './static-cache-policy.mjs';
 import {CameraSignaling} from './server-camera-signaling.mjs';
@@ -934,8 +936,31 @@ const server = createServer(async (req, res) => {
     }
     const roomGameplay=url.pathname.match(/^\/api\/rooms\/([^/]+)\/gameplay$/);
     if(roomGameplay&&['GET','POST'].includes(req.method)){const id=decodeURIComponent(roomGameplay[1]),environment=await roomEnvironment(id);if(!environment)return sendJson(res,404,{message:'Room not found.'});if(req.method==='GET')return sendJson(res,200,assetResponse(await authoritativeRooms.snapshot(id,environment)));const command=await bodyJson(req,16000),identity=await roomIdentity(req,res,command.action==='join');if(!identity)return;const snapshot=await authoritativeRooms.command(id,environment,identity,command);broadcast('room-gameplay-updated',{roomId:id,sequence:snapshot.sequence});return sendJson(res,200,assetResponse(snapshot));}
+    const buildSettings=url.pathname.match(/^\/api\/rooms\/([^/]+)\/building$/);
+    if(buildSettings&&req.method==='POST'){
+      const id=decodeURIComponent(buildSettings[1]),environment=await roomEnvironment(id);if(!environment)return sendJson(res,404,{message:'Room not found.'});
+      const context=await memberContext(req,res,true);if(!context)return;const command=await bodyJson(req,1000),actor='account:'+context.account.accountId;
+      const native=sportsBuildingAccess(hockeyRooms.rooms.get(id),arcadeRooms.rooms.get(id),actor);
+      const room=await sharedRooms.update(id,current=>{changeBuildingPolicy(current,actor,command.enabled,native?.hostId||buildingPolicy(current).hostId);current.revision++;return current;});
+      broadcast('room-objects-updated',{roomId:id,revision:room.revision});return sendJson(res,200,assetResponse(room));
+    }
     const sharedRoom=url.pathname.match(/^\/api\/rooms\/([^/]+)\/objects$/);
-    if(sharedRoom&&['GET','POST'].includes(req.method)){const id=decodeURIComponent(sharedRoom[1]);if(!await roomEnvironment(id))return sendJson(res,404,{message:'Room not found.'});if(req.method==='GET')return sendJson(res,200,assetResponse(await sharedRooms.get(id)));const context=await memberContext(req,res,true);if(!context)return;const command=await bodyJson(req,20000);const joinedPlayer=await authoritativeRooms.player(id,'account:'+context.account.accountId);if(!joinedPlayer||Date.now()-joinedPlayer.lastSeen>15000)return authorizationError(res,409,'ROOM_REQUIRED','Join this server room before building.','room');const room=await sharedRooms.mutate(id,`account:${context.account.accountId}`,command,async(value,prior)=>{const player=await authoritativeRooms.player(id,'account:'+context.account.accountId);if(!player||Date.now()-player.lastSeen>15000)throw Object.assign(new Error('Join this server room before building.'),{statusCode:409});if(Math.hypot(value.position[0]-player.position.x,value.position[1]-player.position.y,value.position[2]-player.position.z)>20)throw Object.assign(new Error('Place building pieces within reach.'),{statusCode:400});const item=economyItem('material:'+value.materialId);if(!item||!ownsEconomyItem(context.state,item))throw Object.assign(new Error('Purchase this building material first.'),{statusCode:403});if(!prior)await userDatabase.economyAction(context.walletId,'use',item.sku,'build:'+id+':'+command.id);});if(command.action!=='delete'&&command.revision===0){await userDatabase.memberReward(context.walletId,'progress',{scope:'field',event:'brick',requestId:'build:'+id+':'+command.id});await sharedRooms.update(id,current=>{const player=current.simulation?.players['account:'+context.account.accountId];if(player){player.progress ||= {};player.progress.brick=(player.progress.brick||0)+1;}});}broadcast('room-objects-updated',{roomId:id,revision:room.revision});return sendJson(res,200,assetResponse(room));}
+    if(sharedRoom&&['GET','POST'].includes(req.method)){
+      const id=decodeURIComponent(sharedRoom[1]),environment=await roomEnvironment(id);if(!environment)return sendJson(res,404,{message:'Room not found.'});
+      if(req.method==='GET'){const room=await sharedRooms.get(id),nativeHost=hockeyRooms.rooms.get(id)?.state.host||arcadeRooms.rooms.get(id)?.host;return sendJson(res,200,assetResponse({...room,building:{...buildingPolicy(room,environment),hostId:nativeHost||buildingPolicy(room).hostId}}));}
+      const context=await memberContext(req,res,true);if(!context)return;const command=await bodyJson(req,20000),actor='account:'+context.account.accountId;
+      const builder=async()=>{const native=sportsBuildingAccess(hockeyRooms.rooms.get(id),arcadeRooms.rooms.get(id),actor);if(native)return native;const player=await authoritativeRooms.player(id,actor);return player&&Date.now()-player.lastSeen<15000?{position:player.position}:null;};
+      if(!await builder())return authorizationError(res,409,'ROOM_REQUIRED','Join this server room before building.','room');
+      const room=await sharedRooms.mutate(id,actor,command,async(value,prior)=>{
+        const player=await builder();if(!player)throw Object.assign(new Error('Join this server room before building.'),{statusCode:409});
+        requireBuildingAllowed(await sharedRooms.get(id),environment);
+        if(player.position&&Math.hypot(value.position[0]-player.position.x,value.position[1]-player.position.y,value.position[2]-player.position.z)>20||!player.position&&value.position.some(value=>Math.abs(value)>500))throw Object.assign(new Error('Place building pieces within reach of this room.'),{statusCode:400});
+        const item=economyItem('material:'+value.materialId);if(!item||!ownsEconomyItem(context.state,item))throw Object.assign(new Error('Purchase this building material first.'),{statusCode:403});
+        if(!prior)await userDatabase.economyAction(context.walletId,'use',item.sku,'build:'+id+':'+command.id);
+      });
+      if(command.action!=='delete'&&command.revision===0){await userDatabase.memberReward(context.walletId,'progress',{scope:'field',event:'brick',requestId:'build:'+id+':'+command.id});await sharedRooms.update(id,current=>{const player=current.simulation?.players[actor];if(player){player.progress ||= {};player.progress.brick=(player.progress.brick||0)+1;}});}
+      broadcast('room-objects-updated',{roomId:id,revision:room.revision});return sendJson(res,200,assetResponse(room));
+    }
     if(url.pathname==='/api/custom-maps'&&req.method==='GET'){const rooms=await sharedRooms.read();return sendJson(res,200,assetResponse((await readCustomMaps()).map(map=>liveRoomMetadata(map,rooms)).sort((a,b)=>b.playerCount-a.playerCount)));}
     if (url.pathname === '/api/custom-maps' && req.method === 'POST') {
       const input = await bodyJson(req,2_000_000); const serialized = JSON.stringify(input);
