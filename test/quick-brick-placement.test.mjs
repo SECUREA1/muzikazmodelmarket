@@ -61,3 +61,12 @@ test('repeated drops rise on confirmed items and save the visible stacked transf
   await placement.confirm();assert.equal(saves[1].transform.position[1],2);
  });
 });
+
+test('scaled centered items use their collider base rather than their origin as the floor',async()=>{
+ await withPlacement(async({placement,saves})=>{
+  await placement.start(brick);placement.pending.point.set(1,3,2);placement.pending.scale=2;placement.pending.yaw=.7;
+  placement.apply();placement.pending.root.updateMatrixWorld(true);
+  assert.equal(new THREE.Box3().setFromObject(placement.pending.root).min.y,3);
+  await placement.confirm();assert.equal(saves[0].transform.position[1],4);
+ });
+});

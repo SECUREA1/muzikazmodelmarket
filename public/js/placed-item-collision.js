@@ -32,6 +32,71 @@ export function drawingCollisionModel(THREE,settings={}){
  root.rotation.set((Number(settings.tilt)||0)*Math.PI/180,(Number(settings.yaw)||0)*Math.PI/180,(Number(settings.orientation)||0)*Math.PI/180);if(settings.mirrored)root.scale.x=-1;return root;
 }
 
+// Share exactly the same physical meshes for anchoring, placement and walking.
+// Explicit authored colliders replace decorative geometry; avatar selection
+// boxes and child helpers never become a support surface.
+export function placementMeshes(root){
+ const meshes=[],dedicated=[];
+ if(!root||root.userData.solid===false)return meshes;
+ root.traverse(mesh=>{
+  if(!mesh.isMesh||mesh.userData.avatarCollider||mesh.userData.brickPaintPart==='stud')return;
+  let collider=false;
+  for(let node=mesh;node;node=node.parent){
+   if(node.userData.collisionDisabled||node.userData.solid===false||node.userData.collider===false||node.userData.collision===false)return;
+   collider ||=node.userData.collider===true||node.userData.collision===true||/(^|[_ .-])(COLLIDER|COLLISION|NAVMESH)([_ .-]|$)/i.test(node.name||'');
+   if(node===root)break;
+  }
+  for(let node=mesh;node;node=node.parent){if(node.visible===false&&!collider)return;if(node===root)break;}
+  meshes.push(mesh);if(collider)dedicated.push(mesh);
+ });
+ return dedicated.length?dedicated:meshes;
+}
+export function placementBounds(THREE,root){
+ root.updateWorldMatrix(true,true);const bounds=new THREE.Box3();
+ for(const mesh of placementMeshes(root)){
+  // setFromObject includes descendants, including nonphysical helper boxes.
+  if(!mesh.geometry.boundingBox)mesh.geometry.computeBoundingBox();
+  if(mesh.geometry.boundingBox)bounds.union(mesh.geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld));
+ }
+ return bounds;
+}
 export function placementBoxes(THREE,roots,accept=()=>true){
- const boxes=[];for(const root of roots){if(!root||root.userData.solid===false||root.visible===false||!accept(root))continue;root.updateWorldMatrix(true,true);root.traverse(mesh=>{if(!mesh.isMesh||mesh.isInstancedMesh||mesh.userData.collisionDisabled||mesh.userData.brickPaintPart==='stud'||mesh.userData.avatarCollider)return;if(mesh.visible===false&&!mesh.userData.collider)return;boxes.push(new THREE.Box3().setFromObject(mesh));});}return boxes;
+ const boxes=[];
+ for(const root of roots){
+  if(!root||root.visible===false||!accept(root))continue;root.updateWorldMatrix(true,true);
+  for(const mesh of placementMeshes(root)){
+   if(!mesh.geometry.boundingBox)mesh.geometry.computeBoundingBox();
+   if(mesh.geometry.boundingBox)boxes.push(mesh.geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld));
+  }
+ }
+ return boxes;
+}
+const placementTriangleCache=new WeakMap();
+export function placementTriangles(THREE,roots){
+ const triangles=[];
+ for(const root of roots){
+  root.updateWorldMatrix(true,true);
+  for(const mesh of placementMeshes(root)){
+   const geometry=mesh.geometry,positions=geometry.attributes.position,index=geometry.index;
+   if(!positions)continue;
+   const end=Math.min(index?index.count:positions.count,geometry.drawRange.start+geometry.drawRange.count);
+   const matrix=mesh.matrixWorld.elements,cached=placementTriangleCache.get(mesh);
+   if(cached&&cached.geometry===geometry&&cached.positions===positions.version&&cached.index===index?.version&&cached.start===geometry.drawRange.start&&cached.end===end&&matrix.every((value,i)=>value===cached.matrix[i])){for(const triangle of cached.triangles)triangles.push(triangle);continue;}
+   const meshTriangles=[];
+   const point=i=>new THREE.Vector3().fromBufferAttribute(positions,index?index.getX(i):i).applyMatrix4(mesh.matrixWorld);
+   if(!geometry.boundingBox)geometry.computeBoundingBox();
+   const solidBounds=geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld);
+   for(let i=geometry.drawRange.start;i+2<end;i+=3){const triangle=new THREE.Triangle(point(i),point(i+1),point(i+2));triangle.solidBounds=solidBounds;meshTriangles.push(triangle);}
+   placementTriangleCache.set(mesh,{geometry,positions:positions.version,index:index?.version,start:geometry.drawRange.start,end,matrix:[...matrix],triangles:meshTriangles});
+   for(const triangle of meshTriangles)triangles.push(triangle);
+  }
+ }
+ return triangles;
+}
+
+export function placementFloorPoint(THREE,point,meshes,maxDrop=18){
+ // Search below the aim height, never down from the map's highest roof.
+ const ray=new THREE.Raycaster(point.clone(),new THREE.Vector3(0,-1,0),0,maxDrop);
+ const hit=ray.intersectObjects(meshes,false).find(hit=>!hit.object.userData.avatarCollider&&!hit.object.userData.collisionDisabled&&hit.object.userData.brickPaintPart!=='stud'&&hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y>.45);
+ return hit?hit.point.clone():null;
 }

@@ -1,3 +1,4 @@
+import {placementBounds} from './placed-item-collision.js';
 import {ServerMotion} from './server-motion.js';
 import {EnemySnapshotMotion} from './enemy-snapshot-motion.js';
 // Scene objects display confirmed state; they never decide gameplay outcomes.
@@ -98,7 +99,7 @@ export function disposeServerEnemyProjection(root) {
 
 // Keep authored model size and floor offsets inside a transformable anchor.
 export function anchorServerAsset(THREE,content){
- content.updateMatrixWorld(true);const bottom=new THREE.Box3().setFromObject(content).min.y;
+ content.updateMatrixWorld(true);const bounds=placementBounds(THREE,content);const bottom=(bounds.isEmpty()?new THREE.Box3().setFromObject(content):bounds).min.y;
  if(Number.isFinite(bottom))content.position.y-=bottom;
  const root=new THREE.Group();root.add(content);
  if(content.userData.serverMixer){root.userData.serverMixer=content.userData.serverMixer;root.userData.serverMixerRoot=content;delete content.userData.serverMixer;}

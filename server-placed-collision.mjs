@@ -3,15 +3,15 @@ import {createSolidPaint} from './public/js/solid-paint.js';
 import * as THREE from './public/vendor/three/three.module.min.js';
 import {createBuildingBlock,buildingMaterial} from './public/js/building-materials.js';
 import {createBuilderModel} from './public/js/builder-models-3d.js';
-import {drawingCollisionModel} from './public/js/placed-item-collision.js';
+import {drawingCollisionModel,placementBounds,placementMeshes} from './public/js/placed-item-collision.js';
 import {environmentGeometry} from './server-glb-geometry.mjs';
 export function placedCollisionWorld(actors={},objects={}){
  const root=new THREE.Group(),boxes=[],meshes=[];
  const add=(model,position,rotation,scale,anchor=false,id)=>{
   if(!model)return;const wrapper=new THREE.Group();
-  if(anchor){model.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(model);if(!bounds.isEmpty())model.position.y-=bounds.min.y;}
+  if(anchor){model.updateMatrixWorld(true);const bounds=placementBounds(THREE,model);if(!bounds.isEmpty())model.position.y-=bounds.min.y;}
   wrapper.add(model);wrapper.position.set(position.x||0,position.y||0,position.z||0);wrapper.rotation.set(rotation?.x||0,rotation?.y||0,rotation?.z||0);wrapper.scale.set(scale?.x||1,scale?.y||1,scale?.z||1);root.add(wrapper);wrapper.updateMatrixWorld(true);
-  wrapper.traverse(mesh=>{if(!mesh.isMesh||mesh.userData.collisionDisabled||mesh.userData.brickPaintPart==='stud')return;const box=new THREE.Box3().setFromObject(mesh);box.objectId=id;boxes.push(box);meshes.push(mesh);});
+  for(const mesh of placementMeshes(wrapper)){if(!mesh.geometry.boundingBox)mesh.geometry.computeBoundingBox();const box=mesh.geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld);box.objectId=id;boxes.push(box);meshes.push(mesh);}
  };
  for(const object of Object.values(objects)){
   if(object.deleted||object.open||buildingMaterial(object.materialId).solid===false)continue;
