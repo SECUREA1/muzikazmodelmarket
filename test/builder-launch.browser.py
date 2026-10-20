@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix='builder-launch-') as directory:
                 assert context.request.post(base + '/api/access/guest', data={}).status == 201
                 for mode in ['solo', 'multiplayer']:
                     session = context.request.get(base + '/api/market/session').json()['data']
-                    scene = {'id': 'builder-' + mode, 'name': 'Builder startup check', 'layout': 'grand-floor', 'mapSize': 40, 'objects': [], 'gameplay': {'multiplayer': mode == 'multiplayer'}}
+                    scene = {'id': 'builder-' + mode, 'name': 'Builder startup check', 'layout': 'grand-floor', 'mapSize': 40, 'baseTransform': {'x':180,'y':6,'z':-120,'rotation':90,'scale':1.25}, 'objects': [], 'gameplay': {'multiplayer': mode == 'multiplayer'}}
                     response = context.request.post(base + '/api/custom-maps', headers={'X-CSRF-Token': session['csrfToken']}, data={'scene': scene})
                     assert response.status == 201, response.text()
                     url = response.json()['data']['playUrl']
@@ -40,10 +40,24 @@ with tempfile.TemporaryDirectory(prefix='builder-launch-') as directory:
                     page.on('console',lambda message:print(message.text,flush=True) if message.type=='error' and message.text.startswith('STARTUP ERROR') else None)
                     page.on('response', lambda response: print('gameplay failure', response.status, response.text()[:500], flush=True) if '/gameplay' in response.url and response.status != 200 else None)
                     page.route('https://**/*', lambda route: route.abort())
+                    page.add_init_script("localStorage.setItem('muzikazAccountSessionToken','broken\\nheader');sessionStorage.setItem('muzikazGameSessionToken','雪')")
+                    rejected = []
+                    def gameplay(route):
+                        command = route.request.post_data_json
+                        if mode == 'multiplayer' and command.get('action') == 'join' and not rejected:
+                            rejected.append(True)
+                            route.fulfill(status=409,json={'success':False,'code':'MAP_ENTRY_UNAVAILABLE','message':'Entry is rebuilding. Select Try again.'})
+                        else:
+                            route.continue_()
+                    page.route('**/api/rooms/*/gameplay', gameplay)
                     page.goto(base + '/' + url, wait_until='domcontentloaded',timeout=90000)
+                    if mode == 'multiplayer':
+                        page.wait_for_function('document.querySelector("[data-house-start]")?.textContent === "Try again"',timeout=90000)
+                        page.locator('[data-house-start]').click()
                     page.wait_for_function('window.MuzikazHouseExplorer?.snapshot().gameplayStarted', timeout=90000)
                     state = page.evaluate('window.MuzikazHouseExplorer.snapshot()')
                     assert state['roomId'] == scene['id'], state
+                    assert state['player']['position'][0]>100 and state['player']['position'][1]>5, state
                     assert state['serverHostedRoom'] == (mode == 'multiplayer'), state
                     if mode == 'multiplayer':
                         assert state['serverReady'] and state['serverPlayerInitialized'], state
@@ -52,7 +66,7 @@ with tempfile.TemporaryDirectory(prefix='builder-launch-') as directory:
                     before = state['player']['position']
                     page.keyboard.down('w')
                     try:
-                        page.wait_for_function('(z)=>window.MuzikazHouseExplorer.snapshot().player.position[2] < z - .1', arg=before[2], timeout=15000)
+                        page.wait_for_function('(before)=>{const p=window.MuzikazHouseExplorer.snapshot().player.position;return Math.hypot(p[0]-before[0],p[2]-before[2])>.1}', arg=before, timeout=15000)
                     except Exception:
                         print('movement diagnostic', page.evaluate('({state:window.MuzikazHouseExplorer.snapshot(),dialogs:[...document.querySelectorAll("dialog[open]")].map(node=>node.textContent),hidden:document.hidden,status:document.querySelector("#house-status")?.textContent})'), flush=True)
                         print('server diagnostic', context.request.get(base + '/api/rooms/' + scene['id'] + '/gameplay').text()[:3000], flush=True)

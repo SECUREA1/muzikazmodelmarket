@@ -35,7 +35,7 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
 
 test('shared gameplay is confirmed before dismissing startup, with explicit solo and guest access', async () => {
   const game = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
-  assert.match(game, /await connectingClient\.whenReady\(\)/);
+  assert.match(game, /await connectingClient\.whenReady\(30000\)/);
   assert.match(game, /await startRoomGameplay\(\);\s+await toxicBubbleSystem\.begin\(\);\s+gameplayStarted=true;\s+gameStartScreen\?\.classList\.add\('is-hidden'\)/);
   assert.match(game, /await ensurePlayAccess\(sharedInventory\)/);
   assert.match(game, /if\(guestSolo\)\{serverHostedRoom=false/);

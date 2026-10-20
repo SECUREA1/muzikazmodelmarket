@@ -2150,11 +2150,14 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     const login=document.querySelector('#game-login-link');
     if(login) { login.hidden=false; login.textContent='Sign in to shared gameplay'; }
   }
+  function resetRoomConnection(){
+    authoritativeClient?.stop();authoritativeClient=null;serverPlayerInitialized=false;serverMotion.reset();stickSprinting=false;lockMenuInput();gameplayStarted=false;
+  }
   function showConnectionFailure(error) {
     connectionBadge.textContent='Live connection interrupted · reconnect';
     revealRoomLogin(error);
     if (!gameplayStarted || !serverHostedRoom) return;
-    gameInitializationPromise=null;
+    resetRoomConnection();gameInitializationPromise=null;
     gameStartScreen?.classList.remove('is-hidden', 'is-loading');
     document.dispatchEvent(new CustomEvent('muzikaz:rad-tox-native-error', { detail: { message: error.message } }));
   }
@@ -2171,7 +2174,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     publishGameStage('connecting-room', 'Joining the game server…');
     const connectingClient=authoritativeClient;
     try {
-      await connectingClient.whenReady();
+      await connectingClient.whenReady(30000);
       window.dispatchEvent(new CustomEvent('muzikaz:multiplayer-room-ready',{detail:{roomId:activeEnvironment.id}}));
     } catch (error) {
       if(authoritativeClient!==connectingClient)throw error;
@@ -2214,6 +2217,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
         refreshLibrary().catch(error => console.warn('[MUZIKAZ Library]', error));
         refreshAvatarLibrary().then(renderPicker).catch(error => console.warn('[MUZIKAZ Avatars]', error));
       } catch (error) {
+        resetRoomConnection();
         revealRoomLogin(error);
         const message = error.status===401 ? 'Sign in through Members to reconnect to shared gameplay, then select Try again.' : error?.message || 'Unable to load the MUZIKAZ house game.';
         gameStartScreen?.classList.remove('is-loading');

@@ -156,3 +156,15 @@ test('account credentials survive a new page and logout clears the shared browse
   await nextPage.window.MUZIKAZ_API.logout('csrf');
   assert.equal(first.window.MUZIKAZ_API.getSessionToken(), '');
 });
+
+test('invalid saved header tokens are cleared before browser fetch and valid drafts remain',async()=>{
+ const storage=new Map([['l:muzikazAccountSessionToken','broken\nheader'],['s:muzikazGameSessionToken','雪'],['l:muzikaz.builder.scene','keep this map']]);
+ const {window}=loadConnection(async(url,options)=>{new Headers(options?.headers);return health();},'',storage);
+ await window.MUZIKAZ_API.fetch('/api/game/room-session');
+ assert.equal(window.MUZIKAZ_API.getSessionToken(),'');assert.equal(window.MUZIKAZ_API.getGameSessionToken(),'');assert.equal(storage.get('l:muzikaz.builder.scene'),'keep this map');
+});
+
+test('a non-HTTP saved API base resets to the current web origin',async()=>{
+ const paths=[];const {window}=loadConnection(async url=>{paths.push(url);return health();},'data:text/plain,broken');
+ await window.MUZIKAZ_API.fetch('/api/market/session');assert.ok(paths.every(url=>url.startsWith('https://static.example/')));
+});

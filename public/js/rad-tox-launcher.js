@@ -14,7 +14,7 @@
     requested = false;
     document.body.dataset.gameControls='pending';
     if (overlay) { overlay.classList.remove('is-loading'); overlay.classList.add('has-error'); }
-    if (status) status.textContent = message + ' Select Try again to restart cleanly.';
+    if (status) status.textContent = /try again/i.test(message) ? message : message + ' Select Try again to restart cleanly.';
     if (button) { button.disabled = false; button.textContent = 'Try again'; }
   }
   function showStall() {

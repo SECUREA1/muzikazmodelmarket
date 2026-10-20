@@ -9,6 +9,7 @@
   var compatibleRoutes = { '/api/access/activate': ['/api/access-codes/redeem', '/api/loadout-codes/redeem'] };
   try {
     base = new window.URL(configured || window.location.origin, window.location.href);
+    if (!/^https?:$/.test(base.protocol) || !base.hostname) base = new window.URL(window.location.origin);
     /* Never let an old http configuration create mixed-content failures on mobile. */
     if (window.location.protocol === 'https:' && base.protocol === 'http:') base.protocol = 'https:';
   } catch (ignore) {
@@ -163,6 +164,7 @@
   function getSessionToken() {
     try {
       var token = window.localStorage.getItem('muzikazAccountSessionToken') || window.sessionStorage.getItem('muzikazAccountSessionToken') || '';
+      if (token && !/^[\x21-\x7e]+$/.test(token)) { window.localStorage.removeItem('muzikazAccountSessionToken'); window.sessionStorage.removeItem('muzikazAccountSessionToken'); return ''; }
       if (token) window.localStorage.setItem('muzikazAccountSessionToken', token);
       window.sessionStorage.removeItem('muzikazAccountSessionToken');
       return token;
@@ -178,7 +180,7 @@
   }
 
   function getGameSessionToken() {
-    try { return window.sessionStorage.getItem('muzikazGameSessionToken') || ''; } catch (ignore) { return ''; }
+    try { var token = window.sessionStorage.getItem('muzikazGameSessionToken') || ''; if (token && !/^[\x21-\x7e]+$/.test(token)) { window.sessionStorage.removeItem('muzikazGameSessionToken'); return ''; } return token; } catch (ignore) { return ''; }
   }
 
   function setGameSessionToken(token) {

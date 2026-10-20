@@ -63,3 +63,12 @@ test('ordinary movement does not reset presentation; deliberate relocation is ma
  const relocated=await f.send('teleport-floor',{position:{x:5,y:0,z:5}});
  assert.equal(relocated.players['account:you'].movementRevision,before+1);
 });
+
+test('legacy spawn variables reset once on join without discarding progress',async t=>{
+ const f=await fixture(t);
+ await f.setup((_room,player)=>Object.assign(player,{floorVersion:3,position:{x:999,y:-50,z:999},velocityY:-10,score:123,heldId:'stale-held',seatedId:'stale-seat',vehicleId:'stale-vehicle'}));
+ const first=(await f.send('join')).players['account:you'];
+ assert.ok(Math.abs(first.position.x)<20&&Math.abs(first.position.z)<20);assert.ok(first.position.y>=0);assert.equal(first.score,123);assert.equal(first.heldId,null);assert.equal(first.seatedId,null);assert.equal(first.vehicleId,null);
+ await f.setup((_room,player)=>{assert.equal(player.floorVersion,4);assert.equal(player.velocityY,0);player.position={x:4,y:.02,z:3};});
+ const second=(await f.send('join')).players['account:you'];assert.equal(second.position.x,4);assert.equal(second.position.z,3);assert.equal(second.movementRevision,first.movementRevision);
+});

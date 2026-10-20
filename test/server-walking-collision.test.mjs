@@ -168,3 +168,21 @@ test('enemy placement keeps distance and never falls back onto the player',()=>f
 test('compact rooms still receive enemies without placing them on the player',()=>fixture([], (collision,environment)=>{
  const player={x:0,y:.02,z:0},enemy=collision.encounterSpawn(environment,player,player,[],{enemy:true});assert.ok(enemy);assert.ok(Math.hypot(enemy.x,enemy.z)>=2.5);near(enemy.y,.02);
 },{floorVertices:floor.map(value=>value/4)}));
+
+test('a distant placed mesh cannot hide the only clear authored floor from spawn search',()=>fixture(
+ [0,0,-5,0,3,-5,0,3,5,0,0,-5,0,3,5,0,0,5],(collision,environment)=>{
+  const spawn=collision.safeSpawn(environment,{x:0,y:1,z:0});
+  assert.ok(spawn.x>=90&&spawn.x<=110);near(spawn.y,.02);assert.ok(collision.hasBodyClearance(environment,spawn));
+ },{floorVertices:floor.map((value,index)=>index%3===0?value+100:value)}));
+
+test('invalid saved entry coordinates recover onto verified geometry',()=>fixture([], (collision,environment)=>{
+ const spawn=collision.safeSpawn(environment,{x:NaN,y:Infinity,z:NaN});
+ assert.ok(Object.values(spawn).every(Number.isFinite));near(spawn.y,.02);
+}));
+
+test('a Builder entry blocked across the centre finds a clear perimeter floor',()=>{
+ const collision=new ServerBuilderCollision(),environment={id:'blocked-builder',builderScene:{layout:'grand-floor',mapSize:80,objects:[]}};
+ const objects={wall:{id:'wall',materialId:'brick',position:[0,1,0],rotation:[0,0,0],scale:[80,4,80]}};
+ const spawn=collision.meetingPosition(environment,{x:0,y:0,z:0},{},objects);
+ assert.ok(Math.abs(spawn.x)>12||Math.abs(spawn.z)>12);assert.ok(Number.isFinite(spawn.y));
+});
