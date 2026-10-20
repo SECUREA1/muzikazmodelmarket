@@ -197,3 +197,39 @@ html[data-arcade-host] body.playing:has(.muzikaz-controller) #camera-toggle{bott
 html[data-arcade-host] #game-lobby .lobby-settings>summary{padding:12px;color:#d8e6dc}
 html[data-arcade-host] body:has(#game-lobby[open]) #camera-toggle{visibility:hidden}
 @media(max-width:760px),(pointer:coarse){html[data-arcade-host] body:has(.muzikaz-controller) #game-lobby[open]{top:116px;max-height:calc(100dvh - 196px)}}
+
+/* Gameplay stays clear; secondary displays open from the SVG toolbar. */
+body.arcade-clear-display>header{height:58px;margin:0 12px;border:0;pointer-events:none;max-width:calc(100% - 212px)}
+body.arcade-clear-display>header .live{display:none}
+body.arcade-clear-display>header .brand{font-size:11px;gap:7px;letter-spacing:.4px;pointer-events:auto}
+body.arcade-clear-display>header .brand small{display:none}
+body.arcade-clear-display>header .mark{font-size:20px;padding:6px 10px 6px 5px}
+body.arcade-clear-display>main,body.arcade-clear-display>footer{display:none}
+.arcade-display-toolbar{position:fixed;top:max(8px,env(safe-area-inset-top));right:8px;z-index:30;display:flex;gap:4px}
+.arcade-display-toolbar button,.arcade-display-popup>header button{display:grid;place-items:center;width:44px!important;min-width:44px;height:44px;min-height:44px;padding:8px!important;border:1px solid #819c6880;background:#102521ed;color:#e7f8c8;transform:none!important;touch-action:manipulation}
+body.arcade-clear-display .arcade-display-toolbar #camera-toggle{position:static!important;inset:auto!important;transform:none!important;margin:0}
+body.arcade-clear-display:not(.playing) .arcade-display-toolbar #closegame{display:none}
+body.arcade-clear-display.playing>header{display:none}
+body.arcade-clear-display #game .game-head{top:8px;left:8px;right:252px;padding:6px;background:transparent;border:0;backdrop-filter:none}
+body.arcade-clear-display #game .game-head .eyebrow{display:none}
+body.arcade-clear-display #game .game-head h2{font-size:13px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.arcade-clear-display #game .scorebar{top:62px;left:8px;right:8px;bottom:auto;width:auto;min-height:32px;padding:7px 10px;gap:8px;font-size:12px;flex-wrap:wrap}
+body.arcade-clear-display #game .game-bottom{left:8px!important;right:8px!important;bottom:8px!important;padding:6px 10px;min-height:26px;font-size:11px;max-width:560px;pointer-events:none}
+body.arcade-clear-display #game .game-bottom #feedback{font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+.arcade-display-popup{position:fixed;inset:0;margin:auto;width:min(680px,calc(100vw - 20px));max-height:calc(100dvh - 24px);padding:16px;overflow:auto;overscroll-behavior:contain;color:#edf6e9;background:linear-gradient(145deg,#173235,#0d2023);border:1px solid #819c68;z-index:40}
+.arcade-display-popup>header{display:flex;position:sticky;top:-16px;justify-content:space-between;align-items:center;height:auto;min-height:56px;margin:0 0 12px;padding:5px 0;background:#12292a;z-index:2}
+.arcade-display-popup>header h2{font-size:21px;margin:0}
+.arcade-display-popup .intro,.arcade-display-popup aside,.arcade-display-popup .selection-heading,.arcade-display-popup #attractions,.arcade-display-popup #instructions,.arcade-display-popup #trigger-controls{position:static!important;inset:auto!important;transform:none!important;width:100%!important;max-width:100%;text-align:left;pointer-events:auto}
+.arcade-display-popup .intro h1{font-size:30px;letter-spacing:-1px}
+.arcade-display-popup aside{margin:12px 0;gap:5px}.arcade-display-popup aside strong{font-size:23px}
+.arcade-display-popup #attractions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:none;margin-top:10px;padding:0;overflow:visible}
+.arcade-display-popup #attractions button{height:auto;min-height:90px;padding:12px;white-space:normal}
+html[data-arcade-host] body.arcade-clear-display .arcade-display-popup #game-lobby{position:static!important;inset:auto!important;width:100%!important;max-height:none!important;padding:0;border:0;box-shadow:none;overflow:visible}
+.arcade-display-popup #game-lobby>summary{display:none!important}
+.arcade-display-popup #game-lobby .lobby-body{padding:0}
+.arcade-display-popup #trigger-controls{margin:12px 0;padding:10px}
+.arcade-display-popup #restart{margin:12px 0;min-height:44px}
+.arcade-display-popup #walk-help{display:block;position:static;margin:12px 0}
+@media(max-width:760px){body.arcade-clear-display>header .brand>div{display:none}body.arcade-clear-display #game .game-head{right:244px}body.arcade-clear-display #game .game-bottom{bottom:180px!important}body.arcade-clear-display:not(:has(.muzikaz-controller)) #game .game-bottom{bottom:8px!important}}
+@media(max-height:540px){body.arcade-clear-display #game .game-bottom{bottom:8px!important;max-width:calc(100% - 240px)}body.arcade-clear-display #game .scorebar{top:58px;font-size:11px}}
+@media(max-width:760px){body.arcade-clear-display #game .game-head{top:58px;left:8px;right:8px;padding:0}body.arcade-clear-display #game .game-head h2{font-size:12px}body.arcade-clear-display #game .scorebar{top:80px}}
