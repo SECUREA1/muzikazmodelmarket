@@ -22,7 +22,7 @@ try:
    item=page.locator('.builder-nearby-action:not(.builder-portal-action)');portal=page.locator('.builder-portal-action');fire=page.get_by_role('button',name='Fire',exact=True)
    boxes=[control.bounding_box() for control in [item,portal,fire]]
    panel=page.locator(".basketball-hud").bounding_box()
-   assert all(panel["y"]+panel["height"]<=box["y"] for box in boxes), "sports score and actions stay above nearby controls"
+   assert all(box["y"]+box["height"]<=panel["y"] for box in boxes), "nearby and fire controls stay above the sports panel"
    for control,box in zip([item,portal,fire],boxes):
     assert box['x']>=0 and box['x']+box['width']<=width and box['height']>=44
     assert control.evaluate('(el)=>{const r=el.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2).closest("button")===el}')
@@ -31,6 +31,14 @@ try:
    item.tap();assert page.get_by_role('dialog',name='Interactive device',exact=True).is_visible()
    page.locator('[data-device-close]').click();portal.tap();assert page.evaluate('window.commands')==[{'entityId':'arcade'},{'entityId':'portal'}]
    page.evaluate('window.pair.renderPortal(null)');assert item.is_visible() and not portal.is_visible()
+   page.evaluate('''()=>{const stage=document.querySelector('.house-stage');for(const name of ['game-camera-toggle','broadcast-controls']){const el=document.createElement(name==='game-camera-toggle'?'button':'div');el.className=name;if(name==='game-camera-toggle'){el.textContent='View';el.onclick=()=>window.viewClicks=(window.viewClicks||0)+1;}else for(let i=0;i<5;i++){const b=document.createElement('button');b.textContent='Camera '+i;el.append(b);}stage.append(el);}}''')
+   page.wait_for_selector('.game-display-flow-views .game-camera-toggle')
+   views=page.locator('.game-display-flow-views').bounding_box()
+   panel=page.locator('.basketball-hud').bounding_box()
+   assert views['y']+views['height']<=panel['y']
+   assert page.locator('.game-display-flow-views').evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
+   page.locator('.game-camera-toggle').tap()
+   assert page.evaluate('window.viewClicks')==1
    assert not errors,errors
    if width==390:page.screenshot(path='/tmp/separate-nearby-actions.png')
    page.close()

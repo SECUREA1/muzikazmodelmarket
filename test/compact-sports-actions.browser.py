@@ -30,6 +30,12 @@ try:
     assert scoreboard.is_visible()
     score_text=scoreboard.inner_text()
     score_box=scoreboard.bounding_box()
+    for button in panel.locator('.sports-action-header > button').all():
+     box=button.bounding_box()
+     assert box['y']+box['height']<=score_box['y']+1,(width,box,score_box)
+    assert score_box['width']>=panel.bounding_box()['width']-2
+    if panel.locator('.basketball-team-score span').count():
+     assert panel.locator('.basketball-team-score span').first.evaluate('(el)=>getComputedStyle(el).whiteSpace')=='nowrap'
     panel.locator('.sports-collapse').click()
     assert scoreboard.is_visible()
     assert scoreboard.inner_text()==score_text

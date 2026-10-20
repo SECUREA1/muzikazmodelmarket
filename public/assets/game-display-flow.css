@@ -5,3 +5,14 @@
 .house-stage .game-display-flow-actions>.nearby-gameplay-actions{position:static;inset:auto;flex:1 1 0;min-width:0;margin:0}
 .house-stage .game-display-flow-actions>.rad-tox-fire-trigger{position:static!important;inset:auto!important;transform:none!important;flex:0 0 64px;margin:0;pointer-events:auto}
 .house-stage .game-display-flow [hidden]{display:none!important}
+
+/* Sports controls grow upward from the footer; no floating button offsets. */
+.house-stage .game-display-flow:has(>.basketball-hud:not([hidden])){bottom:4px;gap:4px;}
+.house-stage .game-display-flow-views{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:4px;order:-3;pointer-events:auto;}
+.house-stage .game-display-flow-views:empty{display:none;}
+.house-stage .game-display-flow-views>.game-camera-toggle,.house-stage .game-display-flow-views>.broadcast-controls{position:static!important;inset:auto!important;margin:0;transform:none;}
+.house-stage .game-display-flow-views>.broadcast-controls{display:flex;flex-wrap:wrap;gap:4px;}
+.house-stage .game-display-flow-views button{box-sizing:border-box;min-height:44px;}
+.house-stage .game-display-flow:has(>.basketball-hud:not([hidden]))>.game-display-flow-actions{order:-1;justify-content:flex-end;}
+.house-stage .game-display-flow:has(>.basketball-hud:not([hidden]))>.game-live-connection{order:-2;}
+.house-stage .game-display-flow:has(>.basketball-hud:not([hidden])) .rad-tox-fire-trigger{flex-basis:44px;width:44px;height:44px;padding:8px;}

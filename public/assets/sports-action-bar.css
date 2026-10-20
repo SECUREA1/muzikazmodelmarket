@@ -36,3 +36,9 @@
 @media(max-width:380px){.sports-action-header .basketball-team-score span{font-size:8px;letter-spacing:0;}.sports-action-header .basketball-clock{gap:3px;}.sports-action-header .basketball-clock small{font-size:7px;}.sports-action-header .basketball-score-strip{gap:5px;}}
 .room-building-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px;font:13px system-ui;}
 .room-building-toggle input{width:20px;height:20px;}
+
+/* Keep view/tuning toggles above a full-width, always-visible scoreboard. */
+.sports-action-header{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;}
+.sports-action-header>.basketball-score-strip,.sports-action-header>.scoreboard{order:3;flex:1 0 100%;width:100%;box-sizing:border-box;min-height:28px;}
+.sports-action-header .basketball-team-score span{white-space:nowrap;word-break:normal;overflow-wrap:normal;}
+.sports-action-header .basketball-clock{white-space:nowrap;}
