@@ -369,3 +369,32 @@ html.game-menu-open { overflow:hidden; }
 .model-market-page .hero-copy .btn:not(.ghost){background:var(--market-action);color:#14210c;border:1px solid #d4ff81;box-shadow:inset 0 1px #fff6,0 5px 18px #0004}
 .model-market-page .hero-copy .world-kicker{color:var(--market-lime);letter-spacing:.12em}
 @media(max-width:600px){.owned-placement-controls{bottom:8px}.game-market-brand{gap:10px}.game-market-brand img{width:104px;height:auto}.game-market-brand>div{padding-left:10px}.game-market-row{padding:12px}.game-market-popup .game-menu-header{gap:10px;flex-wrap:wrap}}
+
+.building-material-menu{display:none!important}
+@media(max-width:700px){
+ .game-fullscreen-dialog .building-material-workspace .building-design-layout{display:grid!important;grid-template-columns:minmax(112px,36%) minmax(0,1fr)!important;gap:8px!important;align-items:start}
+ .game-fullscreen-dialog .building-material-workspace.building-items-collapsed .building-design-layout{grid-template-columns:44px minmax(0,1fr)!important}
+ .building-material-workspace .building-material-menu{display:flex!important;align-items:center;justify-content:center;gap:6px;width:100%;padding:8px!important;min-height:44px;position:sticky;top:0;z-index:2;background:#213822}
+ .building-material-menu svg{flex-shrink:0}
+ .building-items-collapsed .building-material-menu span,.building-items-collapsed .building-material-list{display:none!important}
+ .building-material-sidebar,.building-material-list{min-width:0}
+ .game-fullscreen-dialog .building-material-workspace .building-material-list{max-height:calc(100dvh - 180px);overflow-y:auto;overscroll-behavior:contain;padding-right:3px}
+ .game-fullscreen-dialog .building-material-workspace .rad-brick-material-grid{display:flex!important;flex-direction:column;gap:5px;max-height:none;overflow:visible}
+ .game-fullscreen-dialog .building-material-workspace [data-brick-material]{display:flex!important;align-items:center;gap:5px!important;min-height:52px!important;padding:7px!important;text-align:left!important}
+ .game-fullscreen-dialog .building-material-workspace .building-item-row{gap:0}
+ .game-fullscreen-dialog .building-material-workspace .building-row-use{display:none!important}
+ .building-material-workspace .building-item-copy strong{font-size:11px;line-height:1.3;overflow-wrap:anywhere}
+ .building-material-workspace .building-item-copy small{display:none}
+ .building-material-workspace [data-brick-material] svg,.building-material-workspace .building-item-art{width:28px!important;height:28px!important;flex-shrink:0}
+ .game-fullscreen-dialog .building-material-workspace .building-design-controls{padding:8px;position:sticky;top:0}
+ .game-fullscreen-dialog .building-material-workspace .building-design-controls canvas{height:145px}
+ .game-fullscreen-dialog .building-material-workspace .building-design-controls h4{font-size:12px;margin:10px 0 6px}
+ .game-fullscreen-dialog .building-material-workspace .building-design-controls p,.building-material-workspace [data-building-result-count]{font-size:11px;line-height:1.4}
+ .game-fullscreen-dialog .building-material-workspace .building-paint-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+ .game-fullscreen-dialog .building-material-workspace [data-brick-color]{min-width:0!important;padding:5px!important;font-size:10px!important;margin:0}
+ .game-fullscreen-dialog .building-material-workspace [data-building-types-toggle]{width:100%;padding:8px!important;font-size:11px}
+ .game-fullscreen-dialog .building-material-workspace [data-building-types]:not([hidden]){display:grid;grid-template-columns:1fr;padding:4px;gap:4px}
+ .game-fullscreen-dialog .building-material-workspace [data-building-types] button{padding:6px!important;font-size:11px;min-width:0}
+ .game-fullscreen-dialog .building-material-workspace input[data-building-search]{min-width:0;margin:5px 0;padding:7px;font-size:12px}
+ .building-material-workspace>p:first-of-type{display:none}
+}

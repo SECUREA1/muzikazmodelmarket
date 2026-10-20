@@ -1,3 +1,4 @@
+import {mountBuildingMaterialWorkspace} from './building-material-workspace.js';
 import {createSolidPaint} from './solid-paint.js';
 import {mountInteractiveDevices} from './interactive-device-ui.js';
 import {sharedNearbyActions} from './gameplay-actions.js';
@@ -947,6 +948,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   fullscreenMenus[0].dialog.addEventListener('close',()=>{if(fullscreenMenus[0].dialog.open)return;settingsUI.close();optionsButton.setAttribute('aria-expanded','false');});
   const pickerPanel=fullscreenPanel(library,{onOpen:lockMenuInput,collapsed:true});fullscreenMenus.push(pickerPanel);
   pickerPanel.dialog.addEventListener('close',()=>{if(!pickerPanel.dialog.open){document.querySelector('#add-avatar')?.setAttribute('aria-expanded','false');document.querySelector('#house-world-button')?.setAttribute('aria-expanded','false');}});
+  mountBuildingMaterialWorkspace(buildingPopup);
   let selectedBuildingType='all';
   const filterBuildingItems=()=>{const query=buildingPopup.querySelector('[data-building-search]').value;let count=0;buildingPopup.querySelectorAll('[data-brick-material]').forEach(button=>{const visible=matchesBuildingItem(buildingMaterial(button.dataset.brickMaterial),selectedBuildingType,query);button.closest('[data-building-row]').hidden=!visible;if(visible)count++;});buildingPopup.querySelector('[data-building-result-count]').textContent=count?`${count} items shown`:'No matching items. Change the type or search.';};
   buildingPopup.addEventListener('click',event=>{
