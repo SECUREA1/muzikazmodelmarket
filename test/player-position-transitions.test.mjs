@@ -13,7 +13,7 @@ function fixture(){
   const player={height:1.65,radius:.34,velocity:new THREE.Vector3(1,-2,3),onGround:true};
   const feet=new THREE.Vector3(4,1.2,-3);
   return vm.createContext({
-    THREE,Capsule,player,playerCollider:new Capsule(feet.clone().add(new THREE.Vector3(0,player.radius,0)),feet.clone().add(new THREE.Vector3(0,player.height,0)),player.radius),
+    THREE,Capsule,player,playerCollider:new Capsule(feet.clone().add(new THREE.Vector3(0,player.radius,0)),feet.clone().add(new THREE.Vector3(0,player.height-player.radius,0)),player.radius),
     playerRig:{position:new THREE.Vector3(4,.99,-3)},localGroundViewY:.99,
     alignSpawnToCurrentFloor:point=>point.setY(1.23),updateLandingFrame(){},setStatus(){},
     serverHostedRoom:false,currentSpaceScale:2,activeEnvironment:{},
@@ -30,7 +30,7 @@ function acceptedFeet(context){return context.playerCollider.start.clone().add(n
 function closeVector(actual,expected){assert.ok(actual.distanceTo(expected)<1e-10,`${actual.toArray()} ≈ ${expected.toArray()}`);}
 function consistentPose(context,expected){
   closeVector(acceptedFeet(context),expected);
-  closeVector(context.playerCollider.end.clone().add(new THREE.Vector3(0,-context.player.height,0)),expected);
+  closeVector(context.playerCollider.end.clone().add(new THREE.Vector3(0,context.player.radius-context.player.height,0)),expected);
   closeVector(context.playerRig.position,expected);
   assert.ok(Math.abs(context.localGroundViewY-expected.y)<1e-10);
 }
