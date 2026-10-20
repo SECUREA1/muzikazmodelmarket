@@ -18,7 +18,11 @@ try:
    page.evaluate("promptUI.open('material:gold')");dialog.get_by_role('button',name='View in marketplace').click();assert page.evaluate('market')==['material:gold'];assert not dialog.is_visible()
    page.evaluate("window.fail=true;promptUI.open('material:gold')");buy.click();page.get_by_role('status').filter(has_text='Insufficient MZK').wait_for();assert dialog.is_visible();assert buy.is_enabled()
    box=dialog.bounding_box();assert box['x']>=0 and box['x']+box['width']<=width
-   dialog.get_by_role('button',name='Keep browsing').click();assert not dialog.is_visible();page.close()
+   dialog.get_by_role('button',name='Keep browsing').click();assert not dialog.is_visible()
+   page.evaluate("""async()=>{const THREE=await import('/public/vendor/three/three.module.min.js');const {OwnedItemPlacement}=await import('/public/js/owned-item-placement.js');window.owned=false;window.previews=0;const stage=document.createElement('div'),canvas=document.createElement('canvas');stage.append(canvas);document.body.append(stage);window.placement=new OwnedItemPlacement({THREE,stage,canvas,scene:new THREE.Scene(),canPlace:()=>{if(owned)return true;promptUI.open('material:gold');return false;},pointAt:()=>new THREE.Vector3(),createPreview:async()=>{previews++;return new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial());},save:async()=>({id:'placed',revision:1})});await placement.start({id:'bench',name:'Park bench'});}""")
+   assert dialog.is_visible();assert page.evaluate('previews')==0;assert not page.locator('.owned-placement-controls').is_visible()
+   dialog.get_by_role('button',name='Keep browsing').click();page.evaluate("async()=>{window.owned=true;await placement.start({id:'bench',name:'Park bench'});}")
+   assert not page.locator('.owned-placement-controls').is_visible();page.locator('.owned-placement-edit').click();assert page.locator('.owned-placement-controls').is_visible();page.locator('.owned-placement-edit').click();assert not page.locator('.owned-placement-controls').is_visible();page.close()
   browser.close()
  print('Buy-now prompt, settlement arguments, duplicate protection, market link and failure recovery passed at 320, 390 and 1024px.')
 finally:server.shutdown()

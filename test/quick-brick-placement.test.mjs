@@ -25,13 +25,13 @@ test('set now saves settings and repeats placement without reopening or rebuildi
   assert.deepEqual(saves[1].transform.rotation,[0,Math.PI/4,0]);assert.deepEqual(saves[1].transform.scale,[1.5,1.5,1.5]);assert.equal(saves[1].existing,null);assert.equal(context.previews,1);
   placement.cancel();await placement.start(brick);assert.equal(saves.length,3);assert.equal(placement.panel.hidden,true,'saved preference bypasses the panel next time');
   placement.editButton.dispatchEvent(new Event('click'));assert.equal(placement.panel.hidden,false);placement.setQuickMode(false);await placement.confirm();assert.equal(placement.active,false);
-  await placement.start(brick);assert.equal(placement.panel.hidden,false,'single placement restores the normal panel');
+  await placement.start(brick);assert.equal(placement.panel.hidden,true,'single placement keeps controls closed until the SVG is toggled');
  });
 });
-test('failed saves reopen controls and retain the request ID for a safe retry',async()=>{
+test('failed saves keep controls hidden and retain the request ID for a safe retry',async()=>{
  await withPlacement(async({placement,setFail})=>{
   await placement.start(brick);placement.setQuickMode(true);const requestId=placement.pending.requestId;setFail();
-  assert.equal(await placement.confirm(),false);assert.equal(placement.panel.hidden,false);assert.equal(placement.pending.requestId,requestId);assert.equal(placement.pending.quick,false);
+  assert.equal(await placement.confirm(),false);assert.equal(placement.panel.hidden,true);assert.equal(placement.editButton.hidden,false);assert.equal(placement.pending.requestId,requestId);assert.equal(placement.pending.quick,true);
  });
 });
 test('inventory items can repeat while existing-item edits remain single placement',async()=>{
@@ -69,4 +69,16 @@ test('scaled centered items use their collider base rather than their origin as 
   assert.equal(new THREE.Box3().setFromObject(placement.pending.root).min.y,3);
   await placement.confirm();assert.equal(saves[0].transform.position[1],4);
  });
+});
+
+test('locked items are rejected before creating a preview or showing any placement controls',async()=>{
+ await withPlacement(async context=>{const {placement}=context;let prompts=0;placement.canPlace=()=>{prompts++;return false;};assert.equal(await placement.start({id:'bench',name:'Park bench'}),false);assert.equal(prompts,1);assert.equal(context.previews,0);assert.equal(placement.active,false);assert.equal(placement.panel.hidden,true);assert.equal(placement.editButton.hidden,true);});
+});
+test('ownership is rechecked on drop and revoked items never save or open the settings panel',async()=>{
+ await withPlacement(async({placement,saves})=>{let owned=true;placement.canPlace=()=>owned;await placement.start(brick);owned=false;assert.equal(await placement.confirm(),false);assert.equal(saves.length,0);assert.equal(placement.active,false);assert.equal(placement.panel.hidden,true);});
+});
+test('owned-item controls toggle only through the SVG and a normal tap drops without opening them',async()=>{
+ await withPlacement(async({placement,canvas,saves})=>{await placement.start(brick);assert.equal(placement.panel.hidden,true);placement.editButton.dispatchEvent(new Event('click'));assert.equal(placement.panel.hidden,false);placement.editButton.dispatchEvent(new Event('click'));assert.equal(placement.panel.hidden,true);
+ for(const type of ['pointerdown','pointerup']){const event=new Event(type,{cancelable:true});Object.assign(event,{pointerId:5,clientX:20,clientY:20,isPrimary:true});canvas.dispatchEvent(event);}
+ await Promise.resolve();await Promise.resolve();await Promise.resolve();assert.equal(saves.length,1);assert.equal(placement.panel.hidden,true);});
 });

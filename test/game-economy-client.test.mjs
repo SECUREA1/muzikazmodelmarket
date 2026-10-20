@@ -11,3 +11,8 @@ test('client gates locked upgrades, keeps basics free, and prevents duplicate us
  release();assert.equal((await first).balance,98);
  client.items=[];assert.equal((await client.use('tool:scanner')).ok,false,'selling an upgrade removes client access');
 });
+
+test('placement resolves material and catalogue aliases to the same ownership SKU',()=>{
+ const client=new GameEconomy({inventory:{},announce(){},shop(){}});client.items=[{kind:'material',id:'bench',materialId:'bench',sku:'material:bench',owned:false},{kind:'asset',id:'chair',buildAssetId:'armchair',sku:'backpack:chair',owned:false}];
+ assert.equal(client.skuForAsset({id:'bench',buildAssetId:'bench'}),'material:bench');assert.equal(client.skuForAsset({id:'preview',materialId:'bench'}),'material:bench');assert.equal(client.skuForAsset({id:'copy',sourceId:'chair'}),'backpack:chair');assert.equal(client.owns(client.skuForAsset({buildAssetId:'armchair'})),false);
+});
