@@ -12,9 +12,9 @@ async function withPlacement(run){
  const oldDocument=globalThis.document,oldStorage=globalThis.localStorage,stored=new Map();
  globalThis.document={createElement:()=>new Element(),exitPointerLock(){}};
  globalThis.localStorage={getItem:key=>stored.get(key),setItem:(key,value)=>stored.set(key,value)};
- const saves=[],canvas=new Element(),scene=new THREE.Scene();let previews=0,fail=false,release;
- const placement=new OwnedItemPlacement({THREE,scene,canvas,stage:new Element(),pointAt:()=>new THREE.Vector3(1,0,2),createPreview:async()=>{previews++;return new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial());},save:async(asset,transform,existing,root,requestId)=>{saves.push({asset,transform,existing,requestId});if(fail)throw Error('Not saved');if(release)await new Promise(resolve=>release.resolve=resolve);return{id:'brick-'+saves.length,revision:1};}});
- try{await run({placement,saves,canvas,stored,get previews(){return previews;},setFail:()=>fail=true,block:()=>release={}});}finally{placement.reset();globalThis.document=oldDocument;globalThis.localStorage=oldStorage;}
+ const saves=[],canvas=new Element(),scene=new THREE.Scene();let previews=0,fail=false,release;const solids=[];
+ const placement=new OwnedItemPlacement({THREE,scene,canvas,stage:new Element(),pointAt:()=>new THREE.Vector3(1,0,2),solids:()=>solids,createPreview:async()=>{previews++;return new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial());},save:async(asset,transform,existing,root,requestId)=>{saves.push({asset,transform,existing,requestId});if(fail)throw Error('Not saved');if(release)await new Promise(resolve=>release.resolve=resolve);return{id:'brick-'+saves.length,revision:1};}});
+ try{await run({placement,saves,canvas,stored,solids,get previews(){return previews;},setFail:()=>fail=true,block:()=>release={}});}finally{placement.reset();globalThis.document=oldDocument;globalThis.localStorage=oldStorage;}
 }
 const brick={id:'material:studs',materialId:'studs',name:'Studded block'};
 test('set now saves settings and repeats placement without reopening or rebuilding the panel',async()=>{
@@ -34,9 +34,9 @@ test('failed saves reopen controls and retain the request ID for a safe retry',a
   assert.equal(await placement.confirm(),false);assert.equal(placement.panel.hidden,false);assert.equal(placement.pending.requestId,requestId);assert.equal(placement.pending.quick,false);
  });
 });
-test('non-brick and existing-item edits do not enable repeat placement',async()=>{
+test('inventory items can repeat while existing-item edits remain single placement',async()=>{
  await withPlacement(async({placement})=>{
-  await placement.start({id:'chair',name:'Chair'});assert.equal(placement.setQuickMode(true),false);
+  await placement.start({id:'chair',name:'Chair'});assert.equal(placement.setQuickMode(true),true);
   await placement.start(brick,{id:'placed',placement:{position:[0,0,0],rotation:[0,0,0],scale:[1,1,1]}});assert.equal(placement.setQuickMode(true),false);
  });
 });
@@ -47,5 +47,17 @@ test('a tap places exactly once and a drag only positions the preview',async()=>
   pointer('pointerdown',20,20);pointer('pointermove',50,50);pointer('pointerup',50,50);await Promise.resolve();assert.equal(saves.length,0);
   pointer('pointerdown',20,20);pointer('pointerup',20,20);await Promise.resolve();await Promise.resolve();assert.equal(saves.length,1);
   canvas.dispatchEvent(new Event('click',{cancelable:true}));assert.equal(saves.length,1,'synthetic click cannot place a duplicate');
+ });
+});
+
+test('repeated drops rise on confirmed items and save the visible stacked transform',async()=>{
+ await withPlacement(async({placement,saves,solids})=>{
+  await placement.start(brick);placement.setQuickMode(true);
+  // The fixture cube has a centered origin; real item previews are bottom anchored.
+  solids.push(new THREE.Box3(new THREE.Vector3(.5,-.5,1.5),new THREE.Vector3(1.5,.5,2.5)));
+  placement.apply();assert.equal(placement.pending.root.position.y,1);
+  await placement.confirm();assert.equal(saves[0].transform.position[1],1);
+  solids.push(new THREE.Box3(new THREE.Vector3(.5,.5,1.5),new THREE.Vector3(1.5,1.5,2.5)));
+  await placement.confirm();assert.equal(saves[1].transform.position[1],2);
  });
 });

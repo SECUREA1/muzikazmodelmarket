@@ -1,3 +1,5 @@
+import {createImageProp} from './builder-image-prop.js';
+import {placementBoxes} from './placed-item-collision.js';
 import {sportIcon} from './sports-action-bar.js';
 import {RAD_TOX_WAVE_PAUSE_MS,RAD_TOX_RESULTS_PAUSE_MS} from './rad-tox-rules.js';
 import {createFiringRangeFeedback} from './firing-range-feedback.js';
@@ -801,11 +803,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       }else if(actor.loot){
         const root=new THREE.Group();root.userData.serverLoot=true;const supply=new THREE.Mesh(new THREE.OctahedronGeometry(.25),new THREE.MeshStandardMaterial({color:actor.loot.color,emissive:actor.loot.color,emissiveIntensity:.45}));supply.position.y=.4;root.add(supply);install(root);
       }else if(actor.asset?.renderKind==='image'){
-        new THREE.TextureLoader().load(actor.asset.thumbnailUrl,texture=>{
-          texture.colorSpace=THREE.SRGBColorSpace;
-          const root=new THREE.Mesh(new THREE.PlaneGeometry(1.5,1.5),new THREE.MeshBasicMaterial({map:texture,transparent:true,side:THREE.DoubleSide}));
-          root.scale.setScalar(actor.asset.configuration?.scale||1);root.userData.serverRenderOffset={x:0,y:.75*root.scale.y,z:0};install(root);
-        },undefined,failed);
+        const root=createImageProp(THREE,actor.asset.thumbnailUrl,actor.asset.configuration||{});root.scale.setScalar(actor.asset.configuration?.scale||1);install(root);
       }else if(actor.asset?.buildAssetId){
         const root=createBuilderModel(actor.asset.buildAssetId);if(root)install(root);else failed();
       }else if(actor.asset?.modelUrl){
@@ -859,18 +857,27 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if(asset.materialId)root=createBuildingBlock(THREE,asset.materialId);
     else if(asset.buildAssetId)root=createBuilderModel(asset.buildAssetId);
     else if(asset.renderKind==='image'||(/\.(?:png|jpe?g|webp|gif|svg)(?:$|[?#])/i.test(asset.modelUrl||asset.glb_url||'')||!(asset.modelUrl||asset.glb_url))&&(asset.thumbnailUrl||asset.thumbnail_url||asset.imageUrl||asset.image_url||asset.modelUrl)){
-      const texture=await new THREE.TextureLoader().loadAsync(asset.thumbnailUrl||asset.thumbnail_url||asset.imageUrl||asset.image_url||asset.modelUrl);texture.colorSpace=THREE.SRGBColorSpace;
-      root=new THREE.Mesh(new THREE.PlaneGeometry(1.5,1.5),new THREE.MeshBasicMaterial({map:texture,transparent:true,side:THREE.DoubleSide}));root.scale.setScalar(asset.configuration?.scale||1);
+      root=createImageProp(THREE,asset.thumbnailUrl||asset.thumbnail_url||asset.imageUrl||asset.image_url||asset.modelUrl,asset.configuration||{});root.scale.setScalar(asset.configuration?.scale||1);
     }else if(asset.modelUrl||asset.glb_url){const gltf=await avatarLoader.loadAsync(asset.modelUrl||asset.glb_url);root=prepareAuthoredBuilderModel(gltf.scene,asset);}
     if(!root)throw Error('This item has no placeable model or artwork.');
-    return anchorServerAsset(THREE,root);
+    const bottom=new THREE.Box3().setFromObject(root).min.y;
+    const anchored=anchorServerAsset(THREE,root);
+    if(asset.materialId){anchored.userData.solid=buildingMaterial(asset.materialId).solid;anchored.userData.materialOriginY=-bottom;}
+    return anchored;
   }
-  const ownedPlacement=new OwnedItemPlacement({THREE,scene,canvas,stage,createPreview:createOwnedPreview,announce:setStatus,
-    pointAt:pointer=>{const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(pointer.x,pointer.y),displayCamera());const surfaces=envLoader.floorMeshes?.length?envLoader.floorMeshes:toxicBubbleSystem.environmentSurfaces();const hit=ray.intersectObjects(surfaces,true).find(hit=>(isTopDownView()?hit.point.distanceTo(playerRig.position):hit.distance)<=18&&(!isTopDownView()||visibleOverviewHit(hit))&&(!hit.face||hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y>.45));if(hit)return hit.point.clone().add(new THREE.Vector3(0,.02,0));const origin=camera.getWorldPosition(new THREE.Vector3()),direction=camera.getWorldDirection(new THREE.Vector3());return floorPointAt(origin.addScaledVector(direction,3));},
+  function buildingSolids(existing=null){
+    return [...toxicBubbleSystem.bricks,...toxicBubbleSystem.drawingStrokes,...placedAvatars.children,...builderDecor.children].filter(root=>{
+      const actor=serverActors[root.userData.builderObjectId];
+      if(root===existing?.root||existing?.id&&(root.userData.sharedId===existing.id||root.userData.builderObjectId===existing.id))return false;
+      return root.visible!==false&&root.userData.solid!==false&&!root.userData.open&&!actor?.holderId&&!actor?.loot&&actor?.asset?.buildAssetId!=='basketball'&&root.userData.backpackAsset?.buildAssetId!=='basketball';
+    });
+  }
+  const ownedPlacement=new OwnedItemPlacement({THREE,scene,canvas,stage,createPreview:createOwnedPreview,announce:setStatus,solids:p=>placementBoxes(THREE,buildingSolids(p.existing)),
+    pointAt:pointer=>{const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(pointer.x,pointer.y),displayCamera());const surfaces=envLoader.floorMeshes?.length?envLoader.floorMeshes:toxicBubbleSystem.environmentSurfaces();const hit=ray.intersectObjects([...surfaces,...buildingSolids(ownedPlacement.pending?.existing)],true).find(hit=>!hit.object.userData.avatarCollider&&hit.object.userData.brickPaintPart!=='stud'&&!hit.object.userData.collisionDisabled&&(isTopDownView()?hit.point.distanceTo(playerRig.position):hit.distance)<=18&&(!isTopDownView()||visibleOverviewHit(hit))&&(!hit.face||hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y>.45));if(hit)return hit.point.clone();const origin=camera.getWorldPosition(new THREE.Vector3()),direction=camera.getWorldDirection(new THREE.Vector3());return floorPointAt(origin.addScaledVector(direction,3));},
     save:async(asset,placement,existing,preview,requestId)=>{
       if(serverHostedRoom){
         if(!authoritativeClient?.ready)throw Error('Reconnect to the multiplayer room before locking this item.');
-        if(asset.materialId){const id=existing?.id||'placement-'+requestId,command={id,revision:existing?.revision||0,object:{materialId:asset.materialId,position:placement.position,rotation:placement.rotation,scale:placement.scale,paint:[],open:false}};const state=await authoritativeClient.object(command);return {id,revision:state.objects[id].revision,placement};}
+        if(asset.materialId){const id=existing?.id||'placement-'+requestId,command={id,revision:existing?.revision||0,object:{materialId:asset.materialId,position:[placement.position[0],placement.position[1]+preview.userData.materialOriginY*placement.scale[1],placement.position[2]],rotation:placement.rotation,scale:placement.scale,paint:[],open:false}};const state=await authoritativeClient.object(command);return {id,revision:state.objects[id].revision,placement};}
         const fields=existing?{entityId:existing.id,revision:existing.revision,placement}:{itemId:asset.sourceId||asset.id,sku:gameEconomy?.skuForAsset(asset),placement};
         const state=await authoritativeClient.send(existing?'place-item':'spawn',fields,requestId),id=state.result.spawnedId,actor=state.actors[id];
         if(!actor)throw Error('The server did not confirm this item placement.');
@@ -1538,13 +1545,13 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // create invisible corners around rotated props.
   function walkingSurfaces(){
     const groups=[];
-    for(const root of [...toxicBubbleSystem.bricks,...toxicBubbleSystem.drawingStrokes]){
+    for(const root of buildingSolids()){
       if(root.userData.solid===false)continue;
       root.updateWorldMatrix(true,true);
       root.traverse(piece=>{
         const geometry=piece.geometry,positions=geometry?.attributes?.position;
-        if(!piece.isMesh||!positions)return;
-        for(let node=piece;node;node=node.parent)if(!node.visible||node.userData.collisionDisabled||node.userData.solid===false)return;
+        if(!piece.isMesh||!positions||piece.userData.avatarCollider||piece.userData.brickPaintPart==='stud')return;
+        for(let node=piece;node;node=node.parent)if((!node.visible&&!node.userData.collider)||node.userData.collisionDisabled||node.userData.solid===false)return;
         const elements=piece.matrixWorld.elements,cached=walkingSurfaceCache.get(piece),index=geometry.index;
         if(cached&&cached.geometry===geometry&&cached.version===positions.version&&cached.indexVersion===index?.version&&cached.drawStart===geometry.drawRange.start&&cached.drawCount===geometry.drawRange.count&&elements.every((value,i)=>value===cached.matrix[i])){groups.push(cached.group);return;}
         const count=index?index.count:positions.count,triangles=[];
