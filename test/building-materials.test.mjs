@@ -76,7 +76,7 @@ test('opening and closing a door updates visible and collision geometry', () => 
 
 test('expanded catalog adds 35 items and type filtering combines with search', async () => {
   const { BUILDING_TYPES, buildingType, matchesBuildingItem } = await import('../public/js/building-materials.js');
-  assert.equal(BUILDING_MATERIALS.length,74);
+  assert.equal(BUILDING_MATERIALS.length,102);
   for(const material of BUILDING_MATERIALS){
     assert.ok(BUILDING_TYPES.some(type=>type.id===buildingType(material)),material.id);
     const root=createBuildingBlock(THREE,material.id);

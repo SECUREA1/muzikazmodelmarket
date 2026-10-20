@@ -73,6 +73,34 @@ export const BUILDING_MATERIALS = Object.freeze([
   {"id": "canopy", "name": "Shade canopy", "color": 10254676, "roughness": 0.85, "shape": "canopy", "dimensions": [2.4, 2.4, 2.4], "type": "market"},
   {"id": "kiosk", "name": "Market kiosk", "color": 10254676, "roughness": 0.85, "shape": "kiosk", "dimensions": [2.4, 2.4, 1.8], "type": "market"},
   {"id": "barrier", "name": "Road barrier", "color": 10254676, "roughness": 0.85, "shape": "barrier", "dimensions": [2.4, 0.9, 0.6], "type": "fort"},
+  {"id": "smooth-plastic", "name": "Smooth plastic", "color": 14870505, "roughness": 0.35, "type": "blocks"},
+  {"id": "neon", "name": "Neon glow block", "color": 8453952, "roughness": 0.3, "type": "blocks", "emissive": 8453952, "emissiveIntensity": 0.75},
+  {"id": "rubber-tile", "name": "Rubber safety tile", "color": 3492944, "roughness": 0.8, "type": "blocks", "shape": "floor", "dimensions": [1.2, 0.1, 1.2]},
+  {"id": "baseplate", "name": "Large baseplate", "color": 6321002, "roughness": 0.8, "type": "fort", "shape": "floor", "dimensions": [4.8, 0.2, 4.8]},
+  {"id": "half-brick", "name": "Half brick", "color": 11951427, "roughness": 0.8, "type": "blocks", "shape": "box", "dimensions": [0.6, 0.4, 0.6]},
+  {"id": "long-brick", "name": "Long brick", "color": 11951427, "roughness": 0.8, "type": "blocks", "shape": "box", "dimensions": [2.4, 0.4, 0.6]},
+  {"id": "cube", "name": "Building cube", "color": 12109775, "roughness": 0.8, "type": "blocks", "shape": "box", "dimensions": [1.2, 1.2, 1.2]},
+  {"id": "thin-plate", "name": "Thin building plate", "color": 9411750, "roughness": 0.8, "type": "blocks", "shape": "floor", "dimensions": [1.2, 0.1, 0.6]},
+  {"id": "support-beam", "name": "Structural support beam", "color": 8097180, "roughness": 0.4, "type": "fort", "shape": "box", "dimensions": [3.6, 0.2, 0.2], "metalness": 0.75},
+  {"id": "round-column", "name": "Round support column", "color": 12893352, "roughness": 0.8, "type": "fort", "shape": "cylinder", "dimensions": [0.6, 2.4, 0.6]},
+  {"id": "round-plate", "name": "Round building plate", "color": 9214882, "roughness": 0.8, "type": "blocks", "shape": "cylinder", "dimensions": [1.2, 0.2, 1.2]},
+  {"id": "sphere", "name": "Building sphere", "color": 6266314, "roughness": 0.8, "type": "blocks", "shape": "sphere", "dimensions": [1.2, 1.2, 1.2]},
+  {"id": "dome", "name": "Roof dome", "color": 7447725, "roughness": 0.8, "type": "fort", "shape": "dome", "dimensions": [1.2, 0.6, 1.2]},
+  {"id": "wedge", "name": "Smooth wedge", "color": 11371860, "roughness": 0.8, "type": "fort", "shape": "wedge", "dimensions": [1.2, 0.6, 1.2]},
+  {"id": "corner-wedge", "name": "Corner wedge", "color": 11371860, "roughness": 0.8, "type": "fort", "shape": "corner-wedge", "dimensions": [1.2, 0.6, 1.2]},
+  {"id": "glass-wall", "name": "Clear glass wall", "color": 11001061, "roughness": 0.12, "type": "access", "shape": "box", "dimensions": [2.4, 2.4, 0.15], "opacity": 0.3},
+  {"id": "wood-log", "name": "Timber log", "color": 9857853, "roughness": 0.8, "type": "props", "shape": "log", "dimensions": [2.4, 0.6, 0.6]},
+  {"id": "paving-tile", "name": "Stone paving tile", "color": 11842988, "roughness": 0.8, "type": "blocks", "shape": "floor", "dimensions": [1.2, 0.2, 1.2]},
+  {"id": "metal-truss", "name": "Metal truss frame", "color": 8557989, "roughness": 0.4, "type": "fort", "shape": "frame", "dimensions": [2.4, 2.4, 0.4], "metalness": 0.75},
+  {"id": "stage-platform", "name": "Wide stage platform", "color": 4016212, "roughness": 0.65, "type": "entertainment", "shape": "floor", "dimensions": [4.8, 0.4, 2.4]},
+  {"id": "stage-steps", "name": "Stage access steps", "color": 7833235, "roughness": 0.65, "type": "entertainment", "shape": "steps", "dimensions": [2.4, 0.8, 1.8]},
+  {"id": "crowd-barrier", "name": "Crowd safety barrier", "color": 10004911, "roughness": 0.4, "type": "entertainment", "shape": "fence", "dimensions": [2.4, 1.2, 0.2], "metalness": 0.75},
+  {"id": "stage-canopy", "name": "Festival stage canopy", "color": 6192025, "roughness": 0.65, "type": "entertainment", "shape": "canopy", "dimensions": [4.8, 3.6, 2.4]},
+  {"id": "dance-floor", "name": "Checker dance floor", "color": 14543335, "roughness": 0.65, "type": "entertainment", "shape": "checker", "dimensions": [2.4, 0.2, 2.4]},
+  {"id": "neon-wall", "name": "Neon light panel", "color": 6863871, "roughness": 0.3, "type": "entertainment", "shape": "box", "dimensions": [2.4, 1.2, 0.15], "emissive": 6863871, "emissiveIntensity": 0.75},
+  {"id": "display-plinth", "name": "Round display plinth", "color": 13748666, "roughness": 0.8, "type": "market", "shape": "cylinder", "dimensions": [1.2, 0.6, 1.2]},
+  {"id": "tiered-seating", "name": "Tiered spectator seating", "color": 7046309, "roughness": 0.65, "type": "entertainment", "shape": "steps", "dimensions": [3.6, 1.2, 2.4]},
+  {"id": "race-curb", "name": "Racing track curb", "color": 13193033, "roughness": 0.65, "type": "entertainment", "shape": "curb", "dimensions": [2.4, 0.2, 0.4]},
 ].map(material => Object.freeze({ solid: true, metalness: 0, ...material })));
 
 export function buildingMaterial(id) {
@@ -83,7 +111,7 @@ export function createBuildingBlock(THREE, id, { width = 1.2, height = .4, depth
   const profile = buildingMaterial(id), root = new THREE.Group();
   if (profile.shape) return createStructure(THREE, profile, tint);
   const material = new THREE.MeshStandardMaterial({ color: tint ?? profile.color,
-    roughness: profile.roughness, metalness: profile.metalness,
+    roughness: profile.roughness, metalness: profile.metalness, emissive: profile.emissive ?? 0, emissiveIntensity: profile.emissiveIntensity ?? 0,
     transparent: profile.opacity !== undefined, opacity: profile.opacity ?? 1,
     depthWrite: profile.opacity === undefined });
   const body = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
@@ -122,14 +150,23 @@ export function buildingDimensions(id) {
 
 function createStructure(T, profile, tint) {
   const root = new T.Group(), [w, h, d] = profile.dimensions;
-  root.userData = { materialId: profile.id, solid: true, structure: true };
+  root.userData = { materialId: profile.id, solid: profile.solid, structure: true };
   const part = (width, height, depth, x=0, y=0, z=0, color=tint ?? profile.color) => {
-    const mesh = new T.Mesh(new T.BoxGeometry(width, height, depth), new T.MeshStandardMaterial({color, roughness:profile.roughness}));
+    const mesh = new T.Mesh(new T.BoxGeometry(width, height, depth), new T.MeshStandardMaterial({color,roughness:profile.roughness,metalness:profile.metalness,emissive:profile.emissive??0,emissiveIntensity:profile.emissiveIntensity??0,transparent:profile.opacity!==undefined,opacity:profile.opacity??1,depthWrite:profile.opacity===undefined}));
     mesh.position.set(x, y-h/2+height/2, z);
     mesh.userData.brickPaintPart='body'; mesh.castShadow=true; mesh.receiveShadow=true;
     root.add(mesh); return mesh;
   };
+  const shaped=geometry=>{const mesh=new T.Mesh(geometry,new T.MeshStandardMaterial({color:tint??profile.color,roughness:profile.roughness,metalness:profile.metalness,emissive:profile.emissive??0,emissiveIntensity:profile.emissiveIntensity??0}));mesh.userData.brickPaintPart='body';mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);return mesh;};
   switch(profile.shape) {
+    case 'cylinder': shaped(new T.CylinderGeometry(w/2,w/2,h,16)).scale.z=d/w;break;
+    case 'sphere': shaped(new T.SphereGeometry(.5,16,10)).scale.set(w,h,d);break;
+    case 'dome': {const mesh=shaped(new T.SphereGeometry(.5,16,8,0,Math.PI*2,0,Math.PI/2));mesh.scale.set(w,h*2,d);mesh.position.y=-h/2;break;}
+    case 'log': {const mesh=shaped(new T.CylinderGeometry(h/2,h/2,w,16));mesh.rotation.z=Math.PI/2;mesh.scale.z=d/h;break;}
+    case 'wedge': {const shape=new T.Shape();shape.moveTo(-d/2,-h/2);shape.lineTo(d/2,-h/2);shape.lineTo(d/2,h/2);shape.closePath();const geometry=new T.ExtrudeGeometry(shape,{depth:w,bevelEnabled:false,steps:1});geometry.rotateY(-Math.PI/2);geometry.translate(w/2,0,0);shaped(geometry);break;}
+    case 'corner-wedge': {const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute([-w/2,-h/2,-d/2,w/2,-h/2,-d/2,w/2,-h/2,d/2,-w/2,-h/2,d/2,w/2,h/2,d/2],3));geometry.setIndex([0,1,2,0,2,3,0,4,1,1,4,2,2,4,3,3,4,0]);geometry.computeVertexNormals();shaped(geometry);break;}
+    case 'checker': for(let x=0;x<4;x++)for(let z=0;z<4;z++)part(w/4,h,d/4,-w/2+w*(x+.5)/4,0,-d/2+d*(z+.5)/4,(x+z)%2?0x263237:(tint??profile.color));break;
+    case 'curb': for(let x=0;x<8;x++)part(w/8,h,d,-w/2+w*(x+.5)/8,0,0,x%2?0xf1eee6:(tint??profile.color));break;
     case 'bridge':
       part(w,.2,d);for(const x of [-w/2+.1,w/2-.1])part(.12,.3,d,x,.2);break;
     case 'balcony':
@@ -246,6 +283,7 @@ export function buildingIcon(T,id) {
 export const BUILDING_TYPES = Object.freeze([
   {id:'all',name:'All items'}, {id:'blocks',name:'Materials & blocks'},
   {id:'fort',name:'Fort walls & platforms'}, {id:'access',name:'Steps, doors & windows'},
+  {id:'entertainment',name:'Stages, events & play spaces'},
   {id:'market',name:'Markets & storage'}, {id:'props',name:'Furniture & scenery'},
 ]);
 export function buildingType(material) {
