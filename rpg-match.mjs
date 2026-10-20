@@ -15,12 +15,12 @@ export function damagePlayer(player,now,attacker=null){
 }
 export function openMatch(sim,level,now){
  const match=sim.match={id:randomUUID(),level,startedAt:now,state:'active',participants:{},endedAt:null,outcome:null,results:null};
- for(const [id,player]of Object.entries(sim.players))if(player.radToxReady!==false&&now-player.lastSeen<15000)registerParticipant(sim,id,player,now,true);
+ for(const [id,player]of Object.entries(sim.players))if(player.radToxReady!==false&&player.radToxEnabled!==false&&now-player.lastSeen<15000)registerParticipant(sim,id,player,now,true);
  return match;
 }
 export function registerParticipant(sim,id,player,now,reset=false){
  player.actorId=id;
- if(!sim.match || sim.match.state!=='active')return;
+ if(player.radToxEnabled===false || !sim.match || sim.match.state!=='active')return;
  if(reset || player.matchId!==sim.match.id){player.combat=newCombatStats();player.score=0;player.matchId=sim.match.id;player.health=100;player.ammo=120;player.fuel=100;player.contributors={};player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;}
  sim.match.participants[id] ||= {id,username:player.username,joinedAt:now};sim.match.participants[id].username=player.username;
 }
@@ -39,7 +39,7 @@ export function finishMatch(sim,outcome,now){
 }
 export function checkTeamDefeat(sim,now){
  if(sim.match?.state!=='active')return;
- const online=Object.keys(sim.match.participants).map(id=>sim.players[id]).filter(player=>player&&player.radToxReady!==false&&!player.replacedByRoom&&now-player.lastSeen<15000);
+ const online=Object.keys(sim.match.participants).map(id=>sim.players[id]).filter(player=>player&&player.radToxReady!==false&&player.radToxEnabled!==false&&!player.replacedByRoom&&now-player.lastSeen<15000);
  if(online.length && online.every(player=>player.health<=0))finishMatch(sim,'defeat',now);
 }
 export function matchView(sim,now){if(!sim.match)return null;return {...sim.match,results:sim.match.results||matchRows(sim,now)};}

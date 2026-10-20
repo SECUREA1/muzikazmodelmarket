@@ -42,11 +42,11 @@ export function advanceRadTox(sim,now,environment) {
  const campaign=sim.radTox;
  if(sim.match?.state==='finished'){
   campaign.transition ||= {kind:sim.match.outcome==='victory'?'level':'retry',at:sim.match.endedAt+ROUND_COUNTDOWN_MS};
-  if(environment&&now>=campaign.transition.at&&Object.values(sim.players).some(player=>player.radToxReady!==false&&!player.replacedByRoom&&now-player.lastSeen<15000))nextRadToxLevel(sim,environment,now,sim.match.id);
+  if(environment&&now>=campaign.transition.at&&Object.values(sim.players).some(player=>player.radToxReady!==false&&player.radToxEnabled!==false&&!player.replacedByRoom&&now-player.lastSeen<15000))nextRadToxLevel(sim,environment,now,sim.match.id);
   return;
  }
  campaign.remaining=Object.values(sim.actors).filter(actor=>actor.radTox&&actor.active&&actor.health>0).length;
- const players=Object.values(sim.players).filter(player=>player.radToxReady!==false&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
+ const players=Object.values(sim.players).filter(player=>player.radToxReady!==false&&player.radToxEnabled!==false&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0);
  if(campaign.remaining || !players.length)return;
  if(campaign.wave===4){finishMatch(sim,'victory',now);campaign.transition={kind:'level',at:now+ROUND_COUNTDOWN_MS};return;}
  if(!campaign.nextWaveAt){campaign.state='cleared';campaign.nextWaveAt=now+RAD_TOX_WAVE_PAUSE_MS;campaign.transition={kind:'wave',at:campaign.nextWaveAt,results:matchRows(sim,now)};return;}
@@ -61,7 +61,7 @@ export function nextRadToxLevel(sim,environment,now,expectedMatchId) {
  if(now<sim.match.endedAt+ROUND_COUNTDOWN_MS)return false;
  if(sim.match.outcome==='victory'&&(sim.radTox.wave!==4||Object.values(sim.actors).some(actor=>actor.radTox&&actor.active&&actor.health>0)))return false;
  const level=sim.match.outcome==='victory'?sim.radTox.level+1:sim.radTox.level;
- const center=Object.values(sim.players).find(player=>player.radToxReady!==false&&!player.replacedByRoom&&now-player.lastSeen<15000)?.position||environment.spawn||{x:0,y:0,z:2};
+ const center=Object.values(sim.players).find(player=>player.radToxReady!==false&&player.radToxEnabled!==false&&!player.replacedByRoom&&now-player.lastSeen<15000)?.position||environment.spawn||{x:0,y:0,z:2};
  sim.radTox={level,wave:1,state:'active',remaining:0,targetCount:0};
  openMatch(sim,level,now);spawnRadToxWave(sim,now,center);return true;
 }
