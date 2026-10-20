@@ -40,3 +40,19 @@ test('an item embedded in an existing block rises to its actual top for every la
   near(placementBounds(THREE,block).min.y,i);roots.push(block);
  }
 });
+
+test('instanced objects use each instance transform and update collision after edits',()=>{
+ const instances=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial(),2);
+ instances.setMatrixAt(0,new THREE.Matrix4().makeTranslation(-3,2,0));instances.setMatrixAt(1,new THREE.Matrix4().makeTranslation(4,5,0));instances.instanceMatrix.needsUpdate=true;
+ let boxes=placementBoxes(THREE,[instances]);near(boxes[0].min.x,-3.5);near(boxes[1].max.y,5.5);
+ let triangles=placementTriangles(THREE,[instances]);assert.equal(triangles.length,24);
+ const candidate=new THREE.Box3(new THREE.Vector3(3.75,4.5,-.25),new THREE.Vector3(4.25,5,.25));near(meshStackPlacementOffset(candidate,triangles),1);
+ instances.setMatrixAt(1,new THREE.Matrix4().makeTranslation(4,7,0));instances.instanceMatrix.needsUpdate=true;
+ triangles=placementTriangles(THREE,[instances]);near(Math.max(...triangles.map(t=>t.solidBounds.max.y)),7.5);
+});
+
+test('mirrored objects retain upward support triangles',()=>{
+ const block=box(2,1,2);block.scale.x=-1;block.position.y=.5;
+ const candidate=new THREE.Box3(new THREE.Vector3(-.25,0,-.25),new THREE.Vector3(.25,.5,.25));
+ near(meshStackPlacementOffset(candidate,placementTriangles(THREE,[block])),1);
+});

@@ -1,3 +1,4 @@
+import {placementBounds,placementTriangles} from './placed-item-collision.js';
 // Raise an overlapping placement just enough to rest on confirmed solids.
 // Touching edges are allowed so adjacent blocks can form a continuous wall.
 export function stackPlacementOffset(bounds,boxes){
@@ -47,4 +48,16 @@ export function meshStackPlacementOffset(bounds,triangles){
   if(rise===offset)break;offset=rise;
  }
  return offset;
+}
+
+// One base-alignment operation for catalog, inventory and editor placements.
+export function alignStackableObject(THREE,root,point,supports=[]){
+ root.position.copy(point);root.updateWorldMatrix(true,true);
+ let bounds=placementBounds(THREE,root);
+ if(bounds.isEmpty())bounds=new THREE.Box3().setFromObject(root);
+ if(bounds.isEmpty())return root.position;
+ root.position.y+=point.y-bounds.min.y;root.updateWorldMatrix(true,true);
+ bounds=placementBounds(THREE,root);
+ if(!bounds.isEmpty()&&supports.length)root.position.y+=meshStackPlacementOffset(bounds,placementTriangles(THREE,supports.filter(support=>support!==root)));
+ root.updateWorldMatrix(true,true);return root.position;
 }

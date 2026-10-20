@@ -51,12 +51,18 @@ export function placementMeshes(root){
  });
  return dedicated.length?dedicated:meshes;
 }
+export function placementMeshMatrices(THREE,mesh){
+ if(!mesh.isInstancedMesh)return [mesh.matrixWorld];
+ const matrices=[];
+ for(let i=0;i<mesh.count;i++){const local=new THREE.Matrix4();mesh.getMatrixAt(i,local);matrices.push(new THREE.Matrix4().multiplyMatrices(mesh.matrixWorld,local));}
+ return matrices;
+}
 export function placementBounds(THREE,root){
  root.updateWorldMatrix(true,true);const bounds=new THREE.Box3();
  for(const mesh of placementMeshes(root)){
   // setFromObject includes descendants, including nonphysical helper boxes.
   if(!mesh.geometry.boundingBox)mesh.geometry.computeBoundingBox();
-  if(mesh.geometry.boundingBox)bounds.union(mesh.geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld));
+  if(mesh.geometry.boundingBox)for(const matrix of placementMeshMatrices(THREE,mesh))bounds.union(mesh.geometry.boundingBox.clone().applyMatrix4(matrix));
  }
  return bounds;
 }
@@ -66,7 +72,7 @@ export function placementBoxes(THREE,roots,accept=()=>true){
   if(!root||root.visible===false||!accept(root))continue;root.updateWorldMatrix(true,true);
   for(const mesh of placementMeshes(root)){
    if(!mesh.geometry.boundingBox)mesh.geometry.computeBoundingBox();
-   if(mesh.geometry.boundingBox)boxes.push(mesh.geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld));
+   if(mesh.geometry.boundingBox)for(const matrix of placementMeshMatrices(THREE,mesh))boxes.push(mesh.geometry.boundingBox.clone().applyMatrix4(matrix));
   }
  }
  return boxes;
@@ -81,22 +87,30 @@ export function placementTriangles(THREE,roots){
    if(!positions)continue;
    const end=Math.min(index?index.count:positions.count,geometry.drawRange.start+geometry.drawRange.count);
    const matrix=mesh.matrixWorld.elements,cached=placementTriangleCache.get(mesh);
-   if(cached&&cached.geometry===geometry&&cached.positions===positions.version&&cached.index===index?.version&&cached.start===geometry.drawRange.start&&cached.end===end&&matrix.every((value,i)=>value===cached.matrix[i])){for(const triangle of cached.triangles)triangles.push(triangle);continue;}
+   if(cached&&cached.geometry===geometry&&cached.positions===positions.version&&cached.index===index?.version&&cached.start===geometry.drawRange.start&&cached.end===end&&cached.instances===mesh.instanceMatrix?.version&&cached.count===mesh.count&&matrix.every((value,i)=>value===cached.matrix[i])){for(const triangle of cached.triangles)triangles.push(triangle);continue;}
    const meshTriangles=[];
-   const point=i=>new THREE.Vector3().fromBufferAttribute(positions,index?index.getX(i):i).applyMatrix4(mesh.matrixWorld);
    if(!geometry.boundingBox)geometry.computeBoundingBox();
-   const solidBounds=geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld);
-   for(let i=geometry.drawRange.start;i+2<end;i+=3){const triangle=new THREE.Triangle(point(i),point(i+1),point(i+2));triangle.solidBounds=solidBounds;meshTriangles.push(triangle);}
-   placementTriangleCache.set(mesh,{geometry,positions:positions.version,index:index?.version,start:geometry.drawRange.start,end,matrix:[...matrix],triangles:meshTriangles});
+   for(const transform of placementMeshMatrices(THREE,mesh)){
+    const point=i=>new THREE.Vector3().fromBufferAttribute(positions,index?index.getX(i):i).applyMatrix4(transform);
+    const solidBounds=geometry.boundingBox.clone().applyMatrix4(transform);
+    for(let i=geometry.drawRange.start;i+2<end;i+=3){const triangle=new THREE.Triangle(point(i),point(i+1),point(i+2));if(transform.determinant()<0){const b=triangle.b;triangle.b=triangle.c;triangle.c=b;}triangle.solidBounds=solidBounds;meshTriangles.push(triangle);}
+   }
+   placementTriangleCache.set(mesh,{geometry,positions:positions.version,index:index?.version,start:geometry.drawRange.start,end,matrix:[...matrix],instances:mesh.instanceMatrix?.version,count:mesh.count,triangles:meshTriangles});
    for(const triangle of meshTriangles)triangles.push(triangle);
   }
  }
  return triangles;
 }
 
+export function placementHitNormal(THREE,hit){
+ if(!hit.face)return null;
+ let matrix=hit.object.matrixWorld;
+ if(hit.object.isInstancedMesh&&hit.instanceId!==undefined){const instance=new THREE.Matrix4();hit.object.getMatrixAt(hit.instanceId,instance);matrix=new THREE.Matrix4().multiplyMatrices(matrix,instance);}
+ return hit.face.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(matrix));
+}
 export function placementFloorPoint(THREE,point,meshes,maxDrop=18){
  // Search below the aim height, never down from the map's highest roof.
  const ray=new THREE.Raycaster(point.clone(),new THREE.Vector3(0,-1,0),0,maxDrop);
- const hit=ray.intersectObjects(meshes,false).find(hit=>!hit.object.userData.avatarCollider&&!hit.object.userData.collisionDisabled&&hit.object.userData.brickPaintPart!=='stud'&&hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y>.45);
+ const hit=ray.intersectObjects(meshes,false).find(hit=>!hit.object.userData.avatarCollider&&!hit.object.userData.collisionDisabled&&hit.object.userData.brickPaintPart!=='stud'&&placementHitNormal(THREE,hit)?.y>.45);
  return hit?hit.point.clone():null;
 }

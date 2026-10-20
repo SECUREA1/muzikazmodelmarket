@@ -1,8 +1,9 @@
+import {alignStackableObject} from './public/js/stack-placement.js';
 import {isBasketball} from './public/js/basketball.js';
 import {slideWalking} from './public/js/walking-collision.js';
 import {PLAYER_FLOOR_CLEARANCE} from './public/js/player-floor.js';
 import {builderBaseEnvironment,builderBaseSpawn,applyBuilderBaseTransform} from './public/js/environments/builder-base.js';
-import {drawingCollisionModel,resolvePlacedSolids} from './public/js/placed-item-collision.js';
+import {drawingCollisionModel,resolvePlacedSolids,placementFloorPoint,placementBounds,placementHitNormal,placementMeshes} from './public/js/placed-item-collision.js';
 import {placedCollisionWorld,disposePlacedCollision} from './server-placed-collision.mjs';
 import {environmentGeometry} from './server-glb-geometry.mjs';
 import {buildingDimensions,buildingMaterial,createBuildingBlock} from './public/js/building-materials.js';
@@ -68,7 +69,7 @@ export class ServerBuilderCollision {
   const key=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.builderScene?.baseTransform||{});if(this.cache.has(key))return this.cache.get(key);
   const definitions=new Map([...(environment.builderScene?.catalogModels||[]),...(environment.builderScene?.placedModels||[]),...(environment.builderScene?.customModels||[])].map(model=>[model.id,model]));
   const base=builderBaseEnvironment(environment);const glb=Boolean(base)||!environment.builderScene&&!environment.proceduralLand&&Boolean(environment.modelUrl||environment.modelUrls?.length);const root=new THREE.Group(),walls=[];if(!glb)root.add(createBuilderLand(environment));if(glb){const layer=environmentGeometry(base||environment);if(base)applyBuilderBaseTransform(layer,environment.builderScene.baseTransform);root.add(layer);}
-  for(const item of environment.builderScene?.objects||[]){if(isBasketball(item))continue;if(['hostile','patrol'].includes(item.functionalSettings?.behavior))continue;let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){object=environmentGeometry({modelUrl:definition.modelUrl});const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3());if(definition.targetHeight&&size.y)object.scale.multiplyScalar(definition.targetHeight/size.y);object.updateMatrixWorld(true);object.position.y-=new THREE.Box3().setFromObject(object).min.y;}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);object.userData.builderObjectId=item.id;root.add(object);}
+  for(const item of environment.builderScene?.objects||[]){if(isBasketball(item))continue;if(['hostile','patrol'].includes(item.functionalSettings?.behavior))continue;let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){object=environmentGeometry({modelUrl:definition.modelUrl});const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3());if(definition.targetHeight&&size.y)object.scale.multiplyScalar(definition.targetHeight/size.y);object.updateMatrixWorld(true);object.position.y-=new THREE.Box3().setFromObject(object).min.y;}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);if(item.placementAnchor==='collider-base'){object.updateMatrixWorld(true);const bounds=placementBounds(THREE,object);if(!bounds.isEmpty())object.position.y+=(Number(item.position?.y)||0)-bounds.min.y;}const physicalMeshes=new Set(placementMeshes(object));object.traverse(mesh=>{if(mesh.isMesh&&!physicalMeshes.has(mesh))mesh.userData.collisionDisabled=true;});object.userData.builderObjectId=item.id;root.add(object);}
   root.updateMatrixWorld(true);const floors=[];
   root.traverse(mesh=>{if(!mesh.isMesh||mesh.userData.streetVisual||/SKY|PARTICLE|VFX|WATER|HELPER/i.test(mesh.name))return;for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.collisionDisabled||parent.userData.collider===false||parent.userData.collision===false)return;floors.push(mesh);if(!glb&&!mesh.userData.streetVisual&&!mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')){let parent=mesh;while(parent&&!parent.userData.builderObjectId)parent=parent.parent;walls.push({box:new THREE.Box3().setFromObject(mesh),objectId:parent?.userData.builderObjectId});}});
   const triangles=floors.flatMap(wallTriangles),bounds=new THREE.Box3();for(const mesh of floors)bounds.expandByObject(mesh);
@@ -79,6 +80,17 @@ export class ServerBuilderCollision {
   const key=JSON.stringify([Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),Object.values(actors).filter(actor=>actor.spawned&&actor.active!==false&&!actor.holderId&&!actor.loot&&!isBasketball(actor)).map(actor=>[actor.id,actor.asset?.id,actor.asset?.buildAssetId,actor.placementRevision,actor.active,actor.holderId,actor.position,actor.rotation,actor.scale])]);
   if(this.placedCache?.key===key)return this.placedCache.world;
   disposePlacedCollision(this.placedCache?.world);const world=placedCollisionWorld(actors,objects);this.placedCache={key,world};return world;
+ }
+ stackAsset(environment,asset,position,rotation,scale,actors={},objects={}){
+  const preview=placedCollisionWorld({preview:{id:'preview',spawned:true,active:true,asset,position:{x:0,y:0,z:0},rotation,scale}});
+  try{
+   const root=preview.root.children[0];if(!root)return position;
+   const world=this.world(environment),placed=this.placedWorld(actors,objects);
+   const point=placementFloorPoint(THREE,new THREE.Vector3(position.x,position.y+1.6,position.z),[...world.floors,...placed.meshes]);
+   if(!point)return position;
+   alignStackableObject(THREE,root,point,[...world.root.children,...placed.root.children]);
+   return {x:root.position.x,y:root.position.y,z:root.position.z};
+  }finally{disposePlacedCollision(preview);}
  }
  resolvePlaced(environment,previous,next,actors={},objects={}){return resolvePlacedSolids(previous,{...next,floorY:next.floorY??(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length?-100:0)},this.placedWorld(actors,objects).boxes);}
  paintPoint(environment,origin,direction,actors,objects){
@@ -97,7 +109,7 @@ export class ServerBuilderCollision {
   const dynamic=actors||objects?this.placedWorld(actors,objects).meshes:[];
   const meshes=[...world.floors,...dynamic].filter(mesh=>!/ROOF|CEILING|CANOPY|AWNING/i.test(mesh.name)&&!actorDisablesCollision(actors[builderObjectId(mesh)]));
   const startY=entry?bounds.max.y+2:point.y+maxRise;
-  const hits=new THREE.Raycaster(new THREE.Vector3(point.x,startY,point.z),new THREE.Vector3(0,-1,0),0,Math.max(2,startY-bounds.min.y+2)).intersectObjects(meshes,false).filter(hit=>hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y>.55);
+  const hits=new THREE.Raycaster(new THREE.Vector3(point.x,startY,point.z),new THREE.Vector3(0,-1,0),0,Math.max(2,startY-bounds.min.y+2)).intersectObjects(meshes,false).filter(hit=>placementHitNormal(THREE,hit)?.y>.55);
   // Prefer a floor with overhead clearance and a ceiling above it. A roof may
   // share a mesh with the floor, so mesh names alone cannot protect the entry.
   const choices=hits.filter(hit=>!new THREE.Raycaster(hit.point.clone().add(new THREE.Vector3(0,.08,0)),new THREE.Vector3(0,1,0),0,1.7).intersectObjects([...world.floors,...dynamic],false).length);
@@ -172,7 +184,7 @@ export class ServerBuilderCollision {
   }
   const dynamic=Object.values(objects).filter(object=>!object.deleted&&!object.open).map(object=>{const size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);return {box:new THREE.Box3(new THREE.Vector3(...object.position.map((n,i)=>n-size[i]/2)),new THREE.Vector3(...object.position.map((n,i)=>n+size[i]/2)))};});
   for(const {x,z}of candidates){
-   const hit=new THREE.Raycaster(new THREE.Vector3(x,bounds.max.y+100,z),new THREE.Vector3(0,-1,0)).intersectObjects(terrain,false).find(hit=>hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y>.55);
+   const hit=new THREE.Raycaster(new THREE.Vector3(x,bounds.max.y+100,z),new THREE.Vector3(0,-1,0)).intersectObjects(terrain,false).find(hit=>placementHitNormal(THREE,hit)?.y>.55);
    if(!hit)continue;const y=hit.point.y;
    const blocked=[...world.walls,...dynamic].some(({box,objectId})=>{const actor=objectId&&actors[objectId];return !(actor&&(actor.open||!actor.active))&&x>box.min.x-.35&&x<box.max.x+.35&&z>box.min.z-.35&&z<box.max.z+.35&&y<box.max.y-.05&&y+1.8>box.min.y;});
    if(!blocked)return {x,y:y+PLAYER_FLOOR_CLEARANCE,z};
@@ -192,7 +204,7 @@ export class ServerBuilderCollision {
    const hits=new THREE.Raycaster(new THREE.Vector3(point.x,startY,point.z),new THREE.Vector3(0,-1,0),0,Math.max(2,startY-(world?.bounds.min.y??-100)+2)).intersectObjects(supportMeshes,false);
    let blockedStep=false;
    const hit=hits.find(hit=>{
-    if(!(hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y>.55))return false;
+    if(!(placementHitNormal(THREE,hit)?.y>.55))return false;
     const blocked=new THREE.Raycaster(hit.point.clone().add(new THREE.Vector3(0,.08,0)),new THREE.Vector3(0,1,0),0,PLAYER_HEIGHT).intersectObjects(meshes,false).length>0;
     if(blocked&&hit.point.y+FLOOR_GAP>previous.y+.04)blockedStep=true;
     return !blocked;
