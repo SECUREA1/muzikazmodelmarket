@@ -47,13 +47,27 @@ export function mountFiringRangeHud({ stage, onAction, announce = () => {}, onWe
     .firing-range-settings{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}.firing-range-panel label{display:grid;gap:5px;min-width:0;font-size:11px;font-weight:600;color:#c4d6ca}.firing-range-panel input,.firing-range-panel select{min-width:0;width:100%;min-height:38px;padding:8px;border:1px solid #4a6c58;border-radius:6px;background:#07150e;color:#f0f8ed;font:12px system-ui}.firing-range-panel input[type=range]{padding:0;accent-color:#bfe89e;touch-action:pan-x}.firing-range-field-wide{grid-column:span 2}.firing-range-panel select:disabled,.firing-range-panel input:disabled{opacity:.6}.firing-range-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.firing-range-row label{flex:1;min-width:110px}.firing-range-row button{flex:0 0 auto}.firing-range-panel [data-range-status]{min-height:18px;color:#e1edb2}.firing-range-panel footer{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid #456351}
     .firing-range-scoretable{width:100%;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums}.firing-range-scoretable th{text-align:right;color:#9eb6a7;font-size:9px;text-transform:uppercase;letter-spacing:.7px;font-weight:600;padding:7px 5px;border-bottom:1px solid #456351}.firing-range-scoretable th:first-child,.firing-range-scoretable td:first-child{text-align:left}.firing-range-scoretable td{padding:8px 5px;border-bottom:1px solid #263f31;text-align:right;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.firing-range-scoretable tr[data-self=true]{color:#ddf4b6;background:#bbef8510}.firing-range-results{margin:5px 0;padding-left:22px;max-height:120px;overflow:auto;color:#cfddcf;font-size:11px}.firing-range-results li{padding:4px}.firing-range-table-wrap{overflow:auto;max-height:200px;overscroll-behavior:contain}.firing-range-session-info{border-left:2px solid #bfe89e;padding-left:10px}.firing-range-scope-settings{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}.firing-range-panel :focus-visible,.firing-range-hud :focus-visible{outline:2px solid #dcfba8;outline-offset:3px}
     @media(max-width:600px){.firing-range-hud{top:8px;width:calc(100% - 16px)}.firing-range-strip{padding:7px 10px;gap:8px}.firing-range-strip strong{font-size:11px}.firing-range-strip small{font-size:8px;letter-spacing:.8px}.firing-range-strip [data-clock]{font-size:21px}.firing-range-actions button{min-height:38px;padding:7px 10px}.firing-range-caption{font-size:9px}.firing-range-panel{padding:16px;max-height:calc(100dvh - 20px)}.firing-range-panel h2{font-size:20px}.firing-range-settings{grid-template-columns:repeat(2,minmax(0,1fr))}.firing-range-scope-settings{grid-template-columns:1fr 1fr}.firing-range-scope-settings button{grid-column:span 2}.firing-range-panel footer{justify-content:stretch}.firing-range-panel footer button{flex:1;min-width:120px}}
+    .firing-range-telemetry[hidden]{display:none!important}
+    .firing-range-telemetry{position:absolute;top:8px;left:8px;right:8px;z-index:24;max-width:560px;margin-inline:auto;color:#eff9f4;font:12px system-ui;pointer-events:none}
+    .firing-range-telemetry .firing-range-strip{padding:7px 10px;box-shadow:0 3px 12px #0004}
+    .firing-range-strip>div{min-width:0}.firing-range-strip strong{overflow-wrap:anywhere}
+    .firing-range-hud{top:auto;bottom:8px}
+    .firing-range-hud .firing-range-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0;padding:6px;border:1px solid #668b7366;border-radius:12px;background:#081912e8}
+    .house-stage .firing-range-hud .firing-range-actions button{width:100%!important;min-width:0;min-height:44px;white-space:normal;margin:0;padding:7px 5px;line-height:1.25}
+    .firing-range-hud [data-range-open]{grid-column:1;grid-row:1}.firing-range-hud [data-range-aim]{grid-column:2;grid-row:1}.firing-range-hud [data-range-action]{grid-column:3;grid-row:1}
+    .firing-range-world .rad-tox-fire-trigger{display:none!important}
+    .firing-range-panel>header{position:sticky;top:-22px;z-index:2;background:#0b1c15;padding-block:10px}
+    @media(max-height:450px){.firing-range-telemetry{max-width:420px}.firing-range-telemetry .firing-range-strip{padding:4px 8px}.firing-range-telemetry .firing-range-caption{font-size:9px;padding:2px 6px;margin-top:2px}.firing-range-strip [data-clock]{font-size:19px}}
   `;
   document.head.append(style);
   const root = document.createElement('section');
   root.className = 'firing-range-hud';
   root.hidden = true;
   root.setAttribute('aria-label', 'Live firing range tournament');
-  root.innerHTML = '<div class="firing-range-strip"><div><small data-phase>RANGE READY</small><strong data-mode>Precision</strong></div><div><small data-round>ROUND 1 / 3</small><strong data-clock>1:00</strong></div><div data-score><small>YOUR SCORE</small><strong data-self-score>0</strong></div></div><div class="firing-range-actions"><button type="button" data-range-open aria-haspopup="dialog">Range operations</button><button type="button" class="primary" data-range-action="range-practice">Start open practice</button><button type="button" data-range-aim aria-pressed="false">Aim · 2×</button><button type="button" class="primary" data-range-action="range-fire" aria-label="Shoot at the center reticle" hidden>Shoot</button></div><p class="firing-range-caption" data-caption>Start open practice, or set up a tournament in Range operations.</p>';
+  root.innerHTML = '<div class="firing-range-strip"><div><small data-phase>RANGE READY</small><strong data-mode>Precision</strong></div><div><small data-round>ROUND 1 / 3</small><strong data-clock>1:00</strong></div><div data-score><small>YOUR SCORE</small><strong data-self-score>0</strong></div></div><div class="firing-range-actions"><button type="button" data-range-open aria-haspopup="dialog">Range menu</button><button type="button" class="primary" data-range-action="range-practice">Start open practice</button><button type="button" data-range-aim aria-pressed="false">Aim · 2×</button><button type="button" class="primary" data-range-action="range-fire" aria-label="Shoot at the center reticle" hidden>Shoot</button></div><p class="firing-range-caption" data-caption>Start open practice, or set up a tournament in Range operations.</p>';
+  const telemetry=document.createElement('section');telemetry.className='firing-range-telemetry';telemetry.hidden=true;telemetry.setAttribute('aria-label','Firing range score and session');
+  telemetry.append(root.querySelector('.firing-range-strip'),root.querySelector('.firing-range-caption'));
+  stage.append(telemetry);
   stage.append(root);
   const panel = document.createElement('dialog');
   panel.className = 'firing-range-panel';
@@ -129,7 +143,7 @@ export function mountFiringRangeHud({ stage, onAction, announce = () => {}, onWe
     query('[data-team-field]').hidden = !game?.settings?.teamMode;
     for (const button of [...panel.querySelectorAll('[data-range-action]'), ...root.querySelectorAll('[data-range-action]')]) {
       const action = button.dataset.rangeAction;
-      button.hidden = action === 'range-practice' ? !controls.showPractice : action === 'range-fire' ? !controls.canShoot : action === 'range-stop' ? !active || !host() : action === 'range-start' ? active : false;
+      button.hidden = action === 'range-practice' ? !controls.showPractice || (root.contains(button) && controls.canShoot) : action === 'range-fire' ? !controls.canShoot : action === 'range-stop' ? !active || !host() : action === 'range-start' ? active : false;
       button.disabled = !enabled || !selfId || busy || (['range-start', 'range-stop'].includes(action) && !host()) || (action === 'range-join' && !controls.canJoin) || (action === 'range-practice' && !controls.canPractice) || (action === 'range-fire' && !controls.canShoot);
       if (action === 'range-practice') button.textContent = controls.practiceLabel;
       if (action === 'range-watch') button.setAttribute('aria-pressed', String(self()?.role === 'spectator'));
@@ -220,7 +234,7 @@ export function mountFiringRangeHud({ stage, onAction, announce = () => {}, onWe
     const practice = game?.settings?.mode === 'freeplay' && status === 'live';
     const stateMessage = status === 'countdown' ? 'Stand by for the start' : status === 'intermission' ? 'Round complete · next round soon' : status === 'finished' ? 'Tournament complete' : practice ? 'Open practice live' : status === 'live' ? 'Live competition' : 'Ready to shoot';
     const instruction = practice ? own?.role === 'player' ? 'Aim at the reticle · tap Shoot' : 'Join open practice to shoot now' : status === 'live' && own?.role === 'player' ? own.completed ? 'Round complete · watch the scores' : 'Aim at the reticle · tap Shoot' : !lockedStates.has(status) ? host() ? 'Tap Start open practice, or set up a tournament' : 'Open Range operations to choose a lane' : 'Watch the event · join next tournament';
-    root.querySelector('[data-caption]').textContent = `${instruction} · ${ownRole} · ${playing} ${practice ? 'practicing' : 'competing'} / ${watching} watching`;
+    telemetry.querySelector('[data-caption]').textContent = `${ownRole} · ${playing} ${practice ? 'practicing' : 'competing'} / ${watching} watching`;
     query('[data-session-info]').textContent = `${stateMessage}. ${players.length} ${practice ? 'practicing' : `competitor${players.length === 1 ? '' : 's'}`} and ${watching} watching. ${own?.role === 'player' ? `You are in lane ${number(own.lane) + 1}. ${instruction}.` : practice ? 'Select a free lane and join at any time, or watch from the viewing area.' : 'Choose a lane before the start, or watch from the viewing area.'}`;
   }
   function renderResults() {
@@ -253,17 +267,17 @@ export function mountFiringRangeHud({ stage, onAction, announce = () => {}, onWe
       game = incoming && typeof incoming === 'object' ? incoming : null;
       selfId = actorId;
       enabled = Boolean(available && game);
-      root.hidden = !enabled;
+      root.hidden = telemetry.hidden = !enabled;
       stage.classList.toggle('firing-range-world', enabled);
       scope.render(enabled && self()?.role !== 'spectator');
       if (!enabled) { close(); return; }
       const settings = { ...FIRING_RANGE_SETUP_DEFAULTS, ...game.settings }, status = game.state || 'ready';
-      root.querySelector('[data-phase]').textContent = settings.mode === 'freeplay' && status === 'live' ? 'OPEN PRACTICE' : ({ ready: 'RANGE READY', countdown: 'GET READY', live: 'LIVE TOURNAMENT', intermission: 'INTERMISSION', finished: 'FINAL RESULTS' })[status] || 'FIRING RANGE';
-      root.querySelector('[data-mode]').textContent = modes[settings.mode] || 'Tournament';
-      root.querySelector('[data-round]').textContent = settings.mode === 'freeplay' ? 'OPEN SESSION' : `ROUND ${Math.max(1, number(game.round))} / ${settings.rounds}`;
+      telemetry.querySelector('[data-phase]').textContent = settings.mode === 'freeplay' && status === 'live' ? 'OPEN PRACTICE' : ({ ready: 'RANGE READY', countdown: 'GET READY', live: 'LIVE TOURNAMENT', intermission: 'INTERMISSION', finished: 'FINAL RESULTS' })[status] || 'FIRING RANGE';
+      telemetry.querySelector('[data-mode]').textContent = modes[settings.mode] || 'Tournament';
+      telemetry.querySelector('[data-round]').textContent = settings.mode === 'freeplay' ? 'OPEN SESSION' : `ROUND ${Math.max(1, number(game.round))} / ${settings.rounds}`;
       const remaining = status === 'intermission' ? Math.max(0, number(game.nextRoundAt) - number(game.serverTime || Date.now())) : game.remainingMs ?? Math.max(0, number(game.endsAt) - Date.now());
-      root.querySelector('[data-clock]').textContent = status === 'finished' ? 'FINAL' : settings.mode === 'freeplay' && status !== 'countdown' ? '∞' : status === 'ready' ? firingRangeClock(settings.durationSeconds * 1000) : firingRangeClock(remaining);
-      root.querySelector('[data-self-score]').textContent = self()?.role === 'spectator' ? 'WATCHING' : `${number(self()?.score).toLocaleString()} pts`;
+      telemetry.querySelector('[data-clock]').textContent = status === 'finished' ? 'FINAL' : settings.mode === 'freeplay' && status !== 'countdown' ? '∞' : status === 'ready' ? firingRangeClock(settings.durationSeconds * 1000) : firingRangeClock(remaining);
+      telemetry.querySelector('[data-self-score]').textContent = self()?.role === 'spectator' ? 'WATCHING' : `${number(self()?.score).toLocaleString()} pts`;
       const locationList = Array.isArray(game.locations) ? game.locations : Object.values(game.locations || {});
       const nextLocationsKey = JSON.stringify(locationList);
       if (locationsKey !== nextLocationsKey) {
@@ -281,6 +295,6 @@ export function mountFiringRangeHud({ stage, onAction, announce = () => {}, onWe
     close,
     scope: () => scope.options(),
     setScope: options => scope.set(options),
-    destroy() { close(); scope.destroy(); root.remove(); panel.remove(); style.remove(); stage.classList.remove('firing-range-world'); }
+    destroy() { close(); scope.destroy(); telemetry.remove(); root.remove(); panel.remove(); style.remove(); stage.classList.remove('firing-range-world'); }
   };
 }

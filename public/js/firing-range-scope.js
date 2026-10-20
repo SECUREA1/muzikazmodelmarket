@@ -21,14 +21,14 @@ export function mountFiringRangeScope({ stage, onChange = () => {} }) {
   const style = document.createElement('style');
   style.textContent = `
     .firing-range-scope[hidden]{display:none!important}
-    .firing-range-scope{position:absolute;inset:0;z-index:12;pointer-events:none;overflow:hidden;color:#b7ffad}
-    .firing-range-scope-lens{position:absolute;left:50%;top:50%;width:min(74vh,74vw);height:min(74vh,74vw);transform:translate(-50%,-50%);border:1px solid #c5f4b67a;border-radius:50%;box-shadow:0 0 0 200vmax #02070594,inset 0 0 32px #001b165c}
+    .firing-range-scope{position:absolute;inset:0;z-index:12;pointer-events:none;overflow:hidden;container-type:size;color:#b7ffad}
+    .firing-range-scope-lens{position:absolute;left:50%;top:50%;width:min(74cqh,74cqw);height:min(74cqh,74cqw);transform:translate(-50%,-50%);border:1px solid #c5f4b67a;border-radius:50%;box-shadow:0 0 0 200vmax #02070594,inset 0 0 32px #001b165c}
     .firing-range-scope-reticle{position:absolute;left:50%;top:50%;width:42px;height:42px;transform:translate(-50%,-50%);filter:drop-shadow(0 0 2px #000)}
     .firing-range-scope-reticle::before,.firing-range-scope-reticle::after{content:'';position:absolute;background:currentColor}
     .firing-range-scope-reticle[data-reticle=cross]::before{width:42px;height:1px;left:0;top:20px}.firing-range-scope-reticle[data-reticle=cross]::after{width:1px;height:42px;left:20px;top:0}
     .firing-range-scope-reticle[data-reticle=dot]::before{width:4px;height:4px;left:19px;top:19px;border-radius:50%}
     .firing-range-scope-reticle[data-reticle=ring]::before{width:22px;height:22px;left:9px;top:9px;border:1px solid currentColor;border-radius:50%;background:none}.firing-range-scope-reticle[data-reticle=ring]::after{width:2px;height:2px;left:20px;top:20px;border-radius:50%}
-    .firing-range-scope-label{position:absolute;left:50%;top:calc(50% + min(34vh,34vw));transform:translateX(-50%);font:700 10px system-ui;letter-spacing:1.5px;white-space:nowrap;text-shadow:0 1px 4px #000}
+    .firing-range-scope-label{position:absolute;left:50%;top:calc(50% + min(34cqh,34cqw));transform:translateX(-50%);font:700 10px system-ui;letter-spacing:1.5px;white-space:nowrap;text-shadow:0 1px 4px #000}
     .firing-range-scoped .house-reticle,.firing-range-scoped .rad-tox-reticle,.firing-range-scoped .game-reticle{visibility:hidden!important}
     @media(prefers-reduced-motion:reduce){.firing-range-scope{transition:none}}
   `;
