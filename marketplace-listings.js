@@ -1,6 +1,7 @@
 (async function () {
   'use strict';
   const {marketItemPreview,hydrateMarketPreviews}=await import('./public/js/market-item-preview.js');
+  const {organizeMarketWorkspace}=await import('./public/js/market-workspace.js');
   const shelves = [...document.querySelectorAll('[data-user-market-listings]')];
   if (!shelves.length) return;
   const statuses = [...document.querySelectorAll('[data-user-market-status]')];
@@ -29,7 +30,7 @@
     setStatus('Loading every active user listing…');
     const listings = await api('/api/market/listings');
     shelves.forEach((shelf) => { shelf.innerHTML = listings.length ? listings.map(card).join('') : '<p class="user-market-empty">No user items are listed yet. Active Backpack listings will appear here automatically.</p>'; });
-    shelves.forEach(hydrateMarketPreviews);
+    shelves.forEach(shelf=>{organizeMarketWorkspace(shelf,{rowSelector:'.user-market-card',records:listings,titleSelector:'h4'});hydrateMarketPreviews(shelf);});
     const sellers = new Set(listings.map((listing) => listing.sellerId)).size;
     setStatus(`${listings.length} active user listing${listings.length === 1 ? '' : 's'} shown from ${sellers} seller${sellers === 1 ? '' : 's'} in the shared MUZIKAZ market.`);
   }

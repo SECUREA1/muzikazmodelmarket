@@ -9,9 +9,9 @@ export function safePreviewUrl(value){
  return '';
 }
 export function previewDescriptor(record={}){
- const item=record.asset||record.model||record,config=item.function_data||{},name=item.name||item.itemName||record.name||'Market item';
+ const item=record.asset||record.model||record,config=item.function_data||{},name=item.name||item.itemName||record.name||record.itemName||'Market item';
  const modelUrl=item.modelUrl||item.glb_url;
- const descriptor={name,image:safePreviewUrl(item.thumbnailUrl||item.thumbnail_url||item.thumbnail||item.previewUrl||item.imageUrl||item.image_url||item.image||record.preview||(/\.(?:png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(modelUrl||'')?modelUrl:'')),model:safePreviewUrl(/\.(?:png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(modelUrl||'')?'':modelUrl),buildAssetId:item.buildAssetId||config.buildAssetId||config.modelId,deviceId:config.device||item.functionalSettings?.device||item.device,materialId:item.materialId,toolId:item.toolId,category:item.builder_category||item.category||item.itemType||item.type||item.kind||'Item',icon:item.icon||'',color:/^#[\da-f]{6}$/i.test(item.color)?item.color:'#9cff69',entries:item.entries?.slice(0,8).map(entry=>({name:entry.name,quantity:entry.quantity||1}))};
+ const descriptor={name,image:safePreviewUrl(item.thumbnailUrl||item.thumbnail_url||item.thumbnail||item.previewUrl||item.imageUrl||item.image_url||item.image||record.preview||(/\.(?:png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(modelUrl||'')?modelUrl:'')),model:safePreviewUrl(/\.(?:png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(modelUrl||'')?'':modelUrl),buildAssetId:item.buildAssetId||config.buildAssetId||config.modelId,deviceId:config.device||item.functionalSettings?.device||item.device,materialId:item.materialId,toolId:item.toolId,category:item.builder_category||item.category||item.itemType||item.type||item.kind||record.source||'Item',icon:item.icon||'',color:/^#[\da-f]{6}$/i.test(item.color)?item.color:'#9cff69',entries:item.entries?.slice(0,8).map(entry=>({name:entry.name,quantity:entry.quantity||1}))};
  if(descriptor.model&&/brand_name|logo|placeholder/i.test(descriptor.image))descriptor.image='';
  return descriptor;
 }

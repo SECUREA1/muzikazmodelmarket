@@ -36,7 +36,7 @@ test('listing prices and messages are validated before sending',()=>{
 test('in-game care panel loads the member inventory and records current arena health',async()=>{
  const previous={window:globalThis.window,document:globalThis.document,fetch:globalThis.fetch};
  const handlers=new Map(),nodes=new Map();
- const node=()=>({textContent:'',innerHTML:'',value:'',setAttribute(){},removeAttribute(){},querySelectorAll(){return [];}});
+ const node=()=>({textContent:'',innerHTML:'',value:'',before(){},append(){},setAttribute(){},removeAttribute(){},querySelectorAll(){return [];}});
  const dialog={...node(),open:false,querySelector(selector){if(!nodes.has(selector))nodes.set(selector,node());return nodes.get(selector);},addEventListener(name,fn){handlers.set(name,fn);},showModal(){this.open=true;},close(){this.open=false;}};
  const calls=[];
  globalThis.window={MZKWallet:{walletId:()=> 'guest-test'},addEventListener(){},MUZIKAZ_API:{async fetch(path,options={}){
