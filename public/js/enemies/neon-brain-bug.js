@@ -1,4 +1,4 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
+import * as THREE from '../../vendor/three/three.module.min.js';
 import { AnimatedSvgEffect } from '../effects/animated-svg-effect.js';
 
 export const BRAIN_BUG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><defs><radialGradient id="brain" cx="35%" cy="28%"><stop stop-color="#fff3fd"/><stop offset=".28" stop-color="#ff91cf"/><stop offset=".7" stop-color="#ff238e"/><stop offset="1" stop-color="#710044"/></radialGradient></defs><path d="M53 159C25 121 41 55 88 50c17-29 61-28 78 2 45 0 63 56 33 87 7 39-38 63-65 43-31 26-78 9-81-23Z" fill="url(#brain)" stroke="#ffd1ed" stroke-width="7"/><g fill="none" stroke="#8d075d" stroke-width="8" stroke-linecap="round"><path d="M74 78q24 15 8 43t20 39M115 60q-16 27 8 45t-3 54M157 70q-22 23-4 43t-11 45M186 92q-25 17-9 39"/></g></svg>`;

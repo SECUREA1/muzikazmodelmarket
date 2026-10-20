@@ -3,10 +3,10 @@ import {RANGED_WEAPONS} from './game-weapons.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
 import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory.js';
 
-export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,onError,deferRadTox=false,onShot=()=>{}}) {
+export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,onError,deferRadTox=false,radToxEnabled,onShot=()=>{}}) {
  const api = new SharedGameInventory();
  let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0, inputRequested=false,fireBusy=false;
- let radToxStarted=false;
+ let radToxStarted=false,radToxPreference=radToxEnabled;
  let fireRequest=null,queuedFire=null,inputSequence=0,inputEpoch=null,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
  const waiters=new Set(),collected=new Set();
  function firstPickup(id){if(collected.has(id))return false;collected.add(id);if(collected.size>1024)collected.delete(collected.values().next().value);return true;}
@@ -53,7 +53,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     if(stopped)return;
     const selfId=state?.selfId||client.selfId;
     if(!selfId||!state?.players?.[selfId])throw Error('The server has not confirmed your player in this room.');
-    if(action==='start-rad-tox'&&state.radTox)radToxStarted=true;
+    if(action==='start-rad-tox'&&state.radTox){radToxStarted=true;radToxPreference=true;}
+    if(action==='rad-tox-toggle')radToxPreference=fields.enabled===true;
     client.selfId=selfId;if(action==='join'){inputEpoch=state.result?.inputEpoch||null;inputSequence=0;}
     if(state.result?.loot&&firstPickup(state.result.loot.id)){signalInventoryChange();window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.loot}));if(state.result.loot.currency==='MZK')window.MZKWallet?.refreshShared?.().catch(()=>{});onStatus?.(state.result.message);}
     if(state.result?.pickup&&firstPickup(state.result.pickup.id)){window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.pickup}));}
@@ -98,7 +99,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   busy=true;
   try {
    if (!joined) {
-    const joinedState=await client.send('join',{...(deferRadTox&&!radToxStarted?{deferRadTox:true}:{}),...(meetingPending?{meetingId:meetingPending}:{}),...(arrivalPending?{travelFrom:arrivalPending.from,travelToken:arrivalPending.token}:{})});
+    const joinedState=await client.send('join',{...(typeof radToxPreference==='boolean'?{radToxEnabled:radToxPreference}:{}),...(deferRadTox&&!radToxStarted?{deferRadTox:true}:{}),...(meetingPending?{meetingId:meetingPending}:{}),...(arrivalPending?{travelFrom:arrivalPending.from,travelToken:arrivalPending.token}:{})});
     arrivalPending=null;meetingPending=null;
     if (stopped) return;
     joined=true;

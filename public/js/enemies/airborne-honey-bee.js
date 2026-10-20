@@ -1,5 +1,5 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
+import * as THREE from '../../vendor/three/three.module.min.js';
+import { GLTFLoader } from '../../vendor/three/addons/loaders/GLTFLoader.js';
 
 // BEEDEERE is the repository's non-BeeDuck bee asset.  Keeping this cache at
 // module scope makes React/dev re-entry and level restarts share one download.

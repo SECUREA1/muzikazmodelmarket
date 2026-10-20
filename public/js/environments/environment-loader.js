@@ -6,12 +6,12 @@ import { isCleanSportsEnvironment } from '../sports-worlds.js';
 import {createSlimeFloor,collectSlimeFloorMeshes} from './slime-floor.js';
 import { replaceServerStreets } from './server-streets.js';
 import { createBuilderLand } from './builder-land.js';
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
-import { DRACOLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/DRACOLoader.js/+esm';
-import { KTX2Loader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/KTX2Loader.js/+esm';
-import { MeshoptDecoder } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/meshopt_decoder.module.js/+esm';
-import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Octree.js/+esm';
+import * as THREE from '../../vendor/three/three.module.min.js';
+import { GLTFLoader } from '../../vendor/three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from '../../vendor/three/addons/loaders/DRACOLoader.js';
+import { KTX2Loader } from '../../vendor/three/addons/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from '../../vendor/three/addons/libs/meshopt_decoder.module.js';
+import { Octree } from '../../vendor/three/addons/math/Octree.js';
 import { applyWorldQuality } from './environment-quality.js';
 import {buildCollision,resolveSafeSpawn} from './environment-collision.js';
 
@@ -20,8 +20,8 @@ export class EnvironmentLoader {
     this.serverAuthoritative=serverAuthoritative;this.camera=camera;
     this.scene = scene; this.renderer = renderer; this.onProgress = onProgress; this.token = 0; this.world = null; this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; this.octree = new Octree(); this.bounds = new THREE.Box3(); this.activeEnvironment = null; this.baseScale = 1; this.spaceScale = 1;
     this.loader = new GLTFLoader();
-    const draco = new DRACOLoader(); draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/'); this.loader.setDRACOLoader(draco);
-    const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/basis/'); ktx2.detectSupport(renderer); this.loader.setKTX2Loader(ktx2);
+    const draco = new DRACOLoader(); draco.setDecoderPath('/public/vendor/three/addons/libs/draco/gltf/'); this.loader.setDRACOLoader(draco);
+    const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath('/public/vendor/three/addons/libs/basis/'); ktx2.detectSupport(renderer); this.loader.setKTX2Loader(ktx2);
     this.loader.setMeshoptDecoder(MeshoptDecoder);
   }
   disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture && !value.userData.sportsSurfaceShared) value.dispose(); material.dispose?.(); }

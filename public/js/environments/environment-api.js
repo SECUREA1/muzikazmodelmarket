@@ -2,6 +2,15 @@
 const PREFIX = '[MUZIKAZ Environment]';
 const apiFetch = (path, options = {}) => window.MUZIKAZ_API?.fetch ? window.MUZIKAZ_API.fetch(path, options) : fetch(path, options);
 
+export async function fetchEnvironment(id) {
+  const response=await apiFetch('/api/environments/'+encodeURIComponent(id),{headers:{Accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(15000)});
+  const payload=await response.json();
+  if(!response.ok)throw new Error(payload.message||`Map lookup failed (${response.status})`);
+  const record=payload.data||payload;
+  if(!record?.id)throw new Error('The map server returned an invalid map.');
+  return record;
+}
+
 export async function fetchEnvironmentList() {
   let records = [];
   try {

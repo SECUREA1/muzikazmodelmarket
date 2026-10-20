@@ -99,3 +99,20 @@ test('every district alias opens a populated room and a newly published map has 
  const districtIds=district.builderScene.objects.map(object=>object.id),revision=result.atlas.revision;
  result=await synchronizeWorldDirectory(atlas,[map]);assert.deepEqual(result.environments.find(place=>place.id===district.id).builderScene.objects.map(object=>object.id),districtIds,'refresh never duplicates plaza objects or portals');assert.equal(result.atlas.revision,revision);
 });
+
+test('Builder launch URLs preserve explicit solo mode and select the native game page',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'builder-launch-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const maps=[
+  {id:'solo-builder',layout:'grand-floor',multiplayer:false},
+  {id:'live-builder',layout:'grand-floor',multiplayer:true},
+  {id:'solo-rink',layout:'hockey-arena',multiplayer:false},
+  {id:'live-park',layout:'arcade-park',multiplayer:true}
+ ].map(({id,layout,multiplayer})=>({id,name:id,source:'custom-builder',visibility:'public',builderScene:{layout,objects:[],gameplay:{multiplayer}}}));
+ const {environments}=await synchronizeWorldDirectory(new WorldAtlas(join(dir,'atlas.json')),maps);
+ for(const original of maps){
+  const map=environments.find(map=>map.id===original.id),solo=original.builderScene.gameplay.multiplayer===false,url=new URL(map.playUrl,'https://world.example');
+  assert.equal(url.searchParams.get('mode'),solo?'solo':'multiplayer');assert.equal(map.multiplayer,!solo);assert.equal(map.sharedWorld,!solo);
+  assert.equal(url.pathname,original.id==='solo-rink'?'/hockey.html':original.id==='live-park'?'/arcade.html':'/model-explorer.html');
+  assert.equal(url.searchParams.get('environment'),original.id);assert.equal(url.searchParams.get('autoplay'),'1');
+ }
+});

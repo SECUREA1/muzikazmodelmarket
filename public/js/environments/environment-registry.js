@@ -1,8 +1,13 @@
-import { fetchEnvironmentList, deleteEnvironment } from './environment-api.js';
+import { fetchEnvironmentList, fetchEnvironment, deleteEnvironment } from './environment-api.js';
 
 export class EnvironmentRegistry {
   constructor() { this.environments = []; }
   async refresh() { this.environments = normalizeEnvironmentList(await fetchEnvironmentList()); return this.environments; }
+  async resolve(id) {
+    const existing=this.find(id);if(existing)return existing;
+    const [record]=normalizeEnvironmentList([await fetchEnvironment(id)]);
+    this.environments=this.environments.filter(env=>env.id!==record.id).concat(record);return record;
+  }
   all() { return this.environments; }
   find(id) { return this.environments.find((env) => env.id === id || env.aliases?.includes(id)); }
   async delete(id) { await deleteEnvironment(id); return this.refresh(); }
