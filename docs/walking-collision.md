@@ -88,3 +88,10 @@ shot feedback appears immediately, with server events deduplicated on arrival.
 Waves transition after one second and level results after three seconds. Results
 remain available from the dashboard without opening a modal at wave or level
 completion. Living players can keep walking during the results countdown. All three regular waves and the boss still run on the server.
+
+Solo RAD-TOX uses the same one-second wave pause and three-second level pause.
+Each level runs three regular waves at a stable target count before its configured
+boss, without doubling targets at every refill. Wave transitions are scheduled
+once, and pending wave or level timers cannot act after a map change or reset.
+The solo house keeps the swept capsule walking and stair view smoothing from
+`95d98547`; the fast shared baseline is `bd44fd5e` (October 19, 2026).
