@@ -233,3 +233,32 @@ html[data-arcade-host] body.arcade-clear-display .arcade-display-popup #game-lob
 @media(max-width:760px){body.arcade-clear-display>header .brand>div{display:none}body.arcade-clear-display #game .game-head{right:244px}body.arcade-clear-display #game .game-bottom{bottom:180px!important}body.arcade-clear-display:not(:has(.muzikaz-controller)) #game .game-bottom{bottom:8px!important}}
 @media(max-height:540px){body.arcade-clear-display #game .game-bottom{bottom:8px!important;max-width:calc(100% - 240px)}body.arcade-clear-display #game .scorebar{top:58px;font-size:11px}}
 @media(max-width:760px){body.arcade-clear-display #game .game-head{top:58px;left:8px;right:8px;padding:0}body.arcade-clear-display #game .game-head h2{font-size:12px}body.arcade-clear-display #game .scorebar{top:80px}}
+
+/* Neon Junction dashboard: measured chrome surrounding a dedicated viewport. */
+body.arcade-dashboard>header.arcade-dashboard-header{position:fixed;inset:0 0 auto;z-index:30;display:flex!important;flex-direction:column;align-items:stretch;justify-content:center;width:100%;max-width:none;height:auto;min-height:54px;margin:0;padding:max(8px,env(safe-area-inset-top)) 12px 8px;background:#102326;border-bottom:1px solid #627c5666;pointer-events:auto;gap:5px}
+body.arcade-dashboard>header .brand{font-size:12px;gap:9px;min-height:32px}
+body.arcade-dashboard>header .brand>div{display:block!important}
+body.arcade-dashboard>header .brand small{display:block;font-size:8px;letter-spacing:.08em;margin-top:3px}
+.arcade-dashboard-score{display:none;align-items:center;justify-content:space-between;gap:12px}
+body.arcade-dashboard.playing .arcade-dashboard-score{display:flex}
+.arcade-dashboard-score .game-head{position:static;min-width:0}
+.arcade-dashboard-score .game-head .eyebrow{display:none}
+.arcade-dashboard-score .game-head h2{margin:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:35vw}
+.arcade-dashboard-score .scorebar{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:12px;font-size:11px;min-width:0}
+body.arcade-dashboard>footer.arcade-dashboard-footer{position:fixed;inset:auto 0 0;z-index:30;display:flex!important;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px;width:100%;height:auto;max-height:46dvh;overflow:auto;margin:0;padding:6px 8px max(6px,env(safe-area-inset-bottom));background:#0d1e20;border-top:1px solid #627c5666;letter-spacing:0;font-size:11px}
+.arcade-dashboard-footer>span{display:none}
+.arcade-dashboard-footer .arcade-display-toolbar{position:static;display:flex;align-items:center;justify-content:center;flex-shrink:0;gap:8px}
+.arcade-dashboard-status{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px;color:#d7e7cb}
+.arcade-dashboard-status #nearby,.arcade-dashboard-status #interact,.arcade-dashboard-status #feedback{position:static!important;inset:auto!important;transform:none!important;margin:0;max-width:100%;font-size:11px;line-height:1.35}
+body.arcade-dashboard:not(.playing) .arcade-dashboard-status #feedback,body.arcade-dashboard.playing .arcade-dashboard-status #nearby,body.arcade-dashboard.playing .arcade-dashboard-status #interact{display:none}
+body.arcade-dashboard #game .game-bottom{display:none}
+body.arcade-dashboard #world,body.arcade-dashboard #game{position:fixed;inset:var(--arcade-header-height,54px) 0 var(--arcade-footer-height,80px);width:auto;height:auto;max-width:none;max-height:none}
+body.arcade-dashboard #world canvas{width:100%!important;height:100%!important}
+body.arcade-dashboard .arcade-dashboard-footer>.muzikaz-controller{position:static!important;inset:auto!important;width:100%;margin:0;display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"left right";gap:6px;padding:0;flex-shrink:0}
+.arcade-dashboard-footer .muzikaz-controller .rad-controller-brand,.arcade-dashboard-footer .muzikaz-controller .rad-controller-toolbar,.arcade-dashboard-footer .muzikaz-controller .rad-controller-quick-actions{display:none!important}
+.arcade-dashboard-footer .muzikaz-controller .thumbstick-base{width:76px;height:76px;min-height:76px}
+.arcade-dashboard-footer .muzikaz-controller .thumbstick-control{gap:2px}
+.arcade-dashboard-footer .muzikaz-controller .thumbstick-control small{display:none}
+.arcade-dashboard-footer .muzikaz-controller .thumbstick-label{font-size:9px}
+.arcade-display-popup .rad-controller-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+@media(max-height:540px){body.arcade-dashboard .arcade-dashboard-footer>.muzikaz-controller{display:none!important}.arcade-dashboard-header .brand small{display:none!important}.arcade-dashboard-status{min-height:16px}}

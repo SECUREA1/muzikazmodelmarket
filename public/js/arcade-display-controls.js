@@ -14,5 +14,16 @@ export function mountArcadeDisplayControls({lobby}){
  for(const [id,icon,label]of [['camera-toggle','camera','Change camera'],['sound','sound','Toggle sound'],['closegame','close','Return to park']]){const button=get(id);if(button){decorate(button,icon,label);toolbar.append(button);}}
  park.addEventListener('click',event=>{if(event.target.closest('#attractions button,#park-settings-button,#explore,#overview'))park.close();});
  const bodyObserver=new MutationObserver(()=>{if(!document.body.classList.contains('playing')){if(match.open)match.close();if(info.open)info.close();}});bodyObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
- document.body.classList.add('arcade-clear-display');syncLobby();
+ const dashboardHeader=document.querySelector('body>header'),dashboardFooter=document.querySelector('body>footer');
+ dashboardHeader.classList.add('arcade-dashboard-header');dashboardFooter.classList.add('arcade-dashboard-footer');
+ const heading=document.querySelector('#game .game-head'),score=document.querySelector('#game .scorebar');
+ const live=document.createElement('div');live.className='arcade-dashboard-score';live.append(heading,score);dashboardHeader.append(live);
+ const status=document.createElement('div');status.className='arcade-dashboard-status';
+ for(const id of ['nearby','interact','feedback']){const node=get(id);if(node)status.append(node);}
+ dashboardFooter.append(status,toolbar);
+ const controller=document.querySelector('.muzikaz-controller');
+ if(controller){const actions=controller.querySelector('.rad-controller-actions');if(actions)info.append(actions);dashboardFooter.append(controller);}
+ const measure=()=>{document.documentElement.style.setProperty('--arcade-header-height',dashboardHeader.offsetHeight+'px');document.documentElement.style.setProperty('--arcade-footer-height',dashboardFooter.offsetHeight+'px');};
+ const observer=new ResizeObserver(measure);observer.observe(dashboardHeader);observer.observe(dashboardFooter);
+ document.body.classList.add('arcade-clear-display','arcade-dashboard');measure();syncLobby();
 }

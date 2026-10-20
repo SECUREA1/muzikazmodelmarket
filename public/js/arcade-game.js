@@ -169,7 +169,7 @@ renderer.domElement.onpointerdown=e=>{if(ride!==null||game!==null)return;drag=tr
 renderer.domElement.onpointermove=e=>{if(!drag)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;moved+=Math.abs(dx)+Math.abs(dy);if(explorationMode==='walk')lookArcadeWalker(walker,dx,dy);else{yaw-=dx*.006;pitch=Math.max(.25,Math.min(1.3,pitch+dy*.004));}lastX=e.clientX;lastY=e.clientY;};
 renderer.domElement.onpointerup=e=>{
  drag=false;if(moved>=6||ride!==null||game!==null)return;
- const ray=new T.Raycaster();ray.setFromCamera(new T.Vector2(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1),camera);
+ const bounds=renderer.domElement.getBoundingClientRect();const ray=new T.Raycaster();ray.setFromCamera(new T.Vector2((e.clientX-bounds.left)/bounds.width*2-1,-(e.clientY-bounds.top)/bounds.height*2+1),camera);
  for(const hit of ray.intersectObjects(clickMeshes,true)){
   if(!visibleObject(hit.object))continue;
   if(explorationMode==='walk'&&hit.distance>7)continue;
@@ -179,7 +179,8 @@ renderer.domElement.onpointerup=e=>{
 };
 renderer.domElement.onpointercancel=()=>{drag=false;};
 renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();if(ride===null&&game===null&&explorationMode==='overview')distance=Math.max(28,Math.min(85,distance+e.deltaY*.04))},{passive:false});
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);lastParkRender=-Infinity;});
+function resizeArcadeViewport(){const width=Math.max(1,$('#world').clientWidth),height=Math.max(1,$('#world').clientHeight);camera.aspect=width/height;camera.updateProjectionMatrix();renderer.setSize(width,height);lastParkRender=-Infinity;}
+addEventListener('resize',resizeArcadeViewport);new ResizeObserver(resizeArcadeViewport).observe($('#world'));
 let slowDraws=0,quality='high';
 function animate(now){
  roomBuilding?.update();
@@ -225,7 +226,7 @@ function animate(now){
  const renderStart=performance.now();renderer.render(scene,camera);
  // Reduce fill cost once on a slow GPU, while simulation and timers retain real time.
  if(performance.now()-renderStart>70||dt>.12)slowDraws++;else slowDraws=Math.max(0,slowDraws-1);
- if(slowDraws>=4&&quality==='high'){quality='balanced';renderer.setPixelRatio(Math.min(devicePixelRatio,1));renderer.shadowMap.enabled=false;renderer.setSize(innerWidth,innerHeight);}
+ if(slowDraws>=4&&quality==='high'){quality='balanced';renderer.setPixelRatio(Math.min(devicePixelRatio,1));renderer.shadowMap.enabled=false;resizeArcadeViewport();}
 }
 camera.position.set(walker.x,walker.ground+walker.eyeHeight,walker.z);
 const canvas=$('#play');let gameConfig=config,game=null,score=0,remaining=45,gameElapsed=0,ended=false,pointer={x:400,y:370},puck,balls=[],shot=null,targets=[],attempts=0;const pressed=new Set();const instructions=[`Move to aim. Click or tap to shoot past the moving goalie. Score in ${config.roundSeconds} seconds.`,`Click or tap moving targets. Smaller targets earn more points. ${config.roundSeconds} seconds.`,`Click or tap when the ball lines up with the hoop. ${config.roundSeconds} seconds.`,`Move your mallet with mouse, arrows or touch. Score in the top goal; defend the bottom.`,`Aim the white ball with mouse, arrows or touch. Click or Space shoots. Sink all six colored balls.`];
