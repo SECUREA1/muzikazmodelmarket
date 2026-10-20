@@ -1,3 +1,4 @@
+import {createItemUnlockPrompt} from './item-unlock-prompt.js';
 import {mountBuildingMaterialWorkspace} from './building-material-workspace.js';
 import {createSolidPaint} from './solid-paint.js';
 import {mountInteractiveDevices} from './interactive-device-ui.js';
@@ -908,7 +909,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       placedAvatars.add(root);if(asset.buildAssetId==='basketball')registerLocalBasketball(root,asset);else addAvatarCollider(root);return {id:requestId,revision:1,root};
     }
   });
-  async function stageOwnedItem(asset){if(!currentBuildingPolicy.enabled){setStatus('Building is paused by the room host.');return false;}closeBackpack();closeTools();toggleBuildMenu(false);gameMarketplace.close();lockMenuInput();return ownedPlacement.start(asset);}
+  async function stageOwnedItem(asset){if(!currentBuildingPolicy.enabled){setStatus('Building is paused by the room host.');return false;}const sku=asset.materialId?'material:'+asset.materialId:gameEconomy?.skuForAsset(asset);if(sku&&gameEconomy&&!gameEconomy.require(sku))return false;buildingPopup.hidden=true;closeBackpack();closeTools();toggleBuildMenu(false);gameMarketplace.close();lockMenuInput();return ownedPlacement.start(asset);}
   toxicBubbleSystem.placeBrick=(...args)=>{if(ownedPlacement.active)return ownedPlacement.confirm();const material=buildingMaterial(toxicBubbleSystem.brickMaterialId);return stageOwnedItem({id:'material:'+material.id,materialId:material.id,name:material.name,basic:gameEconomy?.get('material:'+material.id)?.basic});};
 
   const setPlacementTool=toxicBubbleSystem.setTool.bind(toxicBubbleSystem);
@@ -927,7 +928,11 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     canUse:item=>Boolean(item.type==='land-entitlement'||item.type==='land-deed'||item.economySku||backpackAssets.find(asset=>asset.id===item.id||asset.name===item.name)||item.modelUrl||item.glb_url||item.buildAssetId),
     onUse:async item=>{if(item.type==='land-entitlement'){const deed=await gameEconomy.inventory.revealLand(item.id);location.href=deed.playUrl;return;}if(item.type==='land-deed'){location.href=item.playUrl||`model-explorer.html?environment=plot-${encodeURIComponent(item.id)}&autoplay=1`;return;}if(item.toolId){gameMarketplace.close();toxicBubbleSystem.setTool(item.toolId);return;}if(item.materialId){gameMarketplace.close();toxicBubbleSystem.setBrickMaterial(item.materialId);await stageOwnedItem(item);return;}const asset=backpackAssets.find(asset=>asset.id===item.id||asset.name===item.name)||{...item,type:item.type||'props',modelUrl:item.modelUrl||item.glb_url};gameMarketplace.close();closeTools();await deployBackpackAsset(asset);}
   });
-  gameEconomy=new GameEconomy({inventory:sharedInventory,announce:setStatus,shop:sku=>{closeTools();utilityPopup.close();weaponsPopup.close();gameMarketplace.open('upgrades',{search:gameEconomy.get(sku)?.name||''});},onChange:()=>{if(!borrowedRangeWeapon(toxicBubbleSystem.tool)&&!gameEconomy.owns('tool:'+toxicBubbleSystem.tool))toxicBubbleSystem.setTool('laser');if(library.classList.contains('backpack-panel'))renderPicker();}});
+  gameEconomy=new GameEconomy({inventory:sharedInventory,announce:setStatus,shop:sku=>itemUnlockPrompt.open(sku),onChange:()=>{if(!borrowedRangeWeapon(toxicBubbleSystem.tool)&&!gameEconomy.owns('tool:'+toxicBubbleSystem.tool))toxicBubbleSystem.setTool('laser');if(library.classList.contains('backpack-panel'))renderPicker();}});
+  const itemUnlockPrompt=createItemUnlockPrompt({getItem:sku=>gameEconomy.get(sku),inventory:sharedInventory,
+    onMarket:sku=>{closeTools();buildingPopup.hidden=true;utilityPopup.close();weaponsPopup.close();gameMarketplace.open('upgrades',{sku});},
+    onPurchased:async(sku,item)=>{await gameEconomy.refresh();if(!gameEconomy.owns(sku)){setStatus('Purchase saved. Refresh your Backpack before placing this item.');return;}if(item.materialId||item.kind==='asset'&&item.assetType!=='lands'){if(item.materialId)toxicBubbleSystem.setBrickMaterial(item.materialId);await stageOwnedItem({...item,economySku:sku});return;}else if(item.toolId)toxicBubbleSystem.setTool(item.toolId);setStatus(`${item.name} purchased. Ready to use from your Backpack.`);}
+  });
   toxicBubbleSystem.ownsBat=true;toxicBubbleSystem.syncBatTool();
   gameEconomy.install();gameEconomy.refresh();
   const paidAction=(method,sku,ready=()=>true)=>{const original=toxicBubbleSystem[method].bind(toxicBubbleSystem);let pending=false;toxicBubbleSystem[method]=(...args)=>{if(serverHostedRoom)return original(...args);const key=sku();if(!ready()||pending||!canActivateTool(toxicBubbleSystem.state,rangeActive||toxicBubbleSystem.tool==='spray'||Boolean(UTILITY_TOOLS[toxicBubbleSystem.tool]),Boolean(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))))return false;if(gameEconomy.owns(key)&&(!gameEconomy.get(key)||gameEconomy.get(key).basic))return original(...args);pending=true;return gameEconomy.use(key).then(payment=>payment.ok?original(...args):false).finally(()=>{pending=false;});};};
@@ -968,7 +973,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if(event.target.closest('[data-building-natural]')){if(toxicBubbleSystem.buildEditor.pending){toxicBubbleSystem.buildEditor.paint(buildingMaterial(toxicBubbleSystem.buildEditor.pending.root.userData.materialId).color);buildingPopup.querySelector('[data-building-paint-label]').textContent='Natural finish';toxicBubbleSystem.refreshBuildingPreview();}else toxicBubbleSystem.setBrickMaterial(toxicBubbleSystem.brickMaterialId);}
     if(material){toxicBubbleSystem.setBrickMaterial(material);buildingPopup.querySelector('[data-building-edit-status]').textContent=`${buildingMaterial(material).name} preview — choose paint, then Use in its row or Select item.`;}
     if(color!==undefined)toxicBubbleSystem.setBrickColor(Number(color));
-    if(event.target.closest('[data-building-equip]')){buildingPopup.hidden=true;closeTools();toxicBubbleSystem.setState(toxicBubbleSystem.state,`${buildingMaterial(toxicBubbleSystem.brickMaterialId).name} equipped — click to drop copies. XYZ / Scale adjusts the highlighted placement.`);}
+    if(event.target.closest('[data-building-equip]')){buildingPopup.hidden=true;closeTools();const material=buildingMaterial(toxicBubbleSystem.brickMaterialId);safelyInteract('Place selected material',()=>stageOwnedItem({id:'material:'+material.id,materialId:material.id,name:material.name,basic:gameEconomy?.get('material:'+material.id)?.basic}));}
     if(event.target.closest('[data-building-edit]'))toxicBubbleSystem.editAimedBuilding();
     if(event.target.closest('[data-building-lock]'))toxicBubbleSystem.lockBuildingEdit();
     if(event.target.closest('[data-building-cancel]'))toxicBubbleSystem.cancelBuildingEdit();
