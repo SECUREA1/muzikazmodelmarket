@@ -1,0 +1,24 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {AuthoritativeRooms} from '../authoritative-room.mjs';
+import {SharedRoomStore} from '../shared-room-store.mjs';
+import {createSolidPaint} from '../public/js/solid-paint.js';
+import * as THREE from '../public/vendor/three/three.module.min.js';
+test('paintballs report a real floor impact and color without spending laser ammo; drawing creates visible shared solids',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'paint-actions-'));t.after(()=>rm(dir,{recursive:true,force:true}));let now=100000;
+ const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),now:()=>now}),environment={id:'paint-actions',builderScene:{layout:'grand-floor',mapSize:40,objects:[]}},identity={accountId:'paint-user',username:'Painter'};
+ const send=(action,requestId,fields={})=>runtime.command(environment.id,environment,identity,{action,requestId,...fields});
+ const joined=await send('join','join'),id=Object.keys(joined.players)[0],ammo=joined.players[id].ammo;
+ const painted=await send('fire','paintball',{tool:'spray',direction:[0,-1,0],color:0xff33aa});
+ assert.equal(painted.result.tool,'spray');assert.equal(painted.result.color,0xff33aa);assert.ok(painted.result.paintNormal[1]>.99);assert.ok(Math.abs(painted.result.end.y)<1e-6);assert.equal(painted.players[id].ammo,ammo);
+ assert.equal(painted.events.at(-1).color,0xff33aa);
+ now+=300;const drawn=await send('draw-paint','draw',{direction:[0,-1,0],color:0x33aaff}),actor=Object.values(drawn.actors).find(actor=>actor.asset?.renderKind==='paint-stroke');assert.ok(actor);
+ const root=new THREE.Group();root.add(createSolidPaint(THREE,actor.asset));root.position.copy(actor.position);root.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(root);
+ assert.ok(bounds.min.y>=-1e-6,'solid paint rests on the hit floor');assert.equal(root.children[0].material.color.getHex(),0x33aaff);
+ const collision=runtime.collision.placedWorld(drawn.actors);assert.ok(collision.boxes.some(box=>Math.abs(box.max.y-bounds.max.y)<1e-6),'render and collider agree');
+ const cleared=await send('clear-paint','undo',{lastOnly:true});assert.equal(cleared.actors[actor.id],undefined);
+ now+=500;const laser=await send('fire','laser',{tool:'laser',direction:[0,0,-1]});assert.equal(laser.result.tool,'laser');assert.equal(laser.result.paintNormal,undefined);assert.equal(laser.players[id].ammo,ammo-1);
+});

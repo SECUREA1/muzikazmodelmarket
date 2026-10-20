@@ -39,7 +39,7 @@ test('jetpack avoids firing fallback, utility targeting is occluded, and resets 
  const source=readFileSync('public/js/house-explorer-glb.js','utf8');
  assert.ok(source.includes("if(this.tool==='jetpack'){this.setState"));
  assert.ok(source.includes('const target=hit&&hit.distance<=8&&this.bricks.includes(hit.target.root)'));
- assert.ok(source.includes('resetRun(){this.clearCombatEffects()'));
+ assert.match(source,/resetRun\(\)\{[^}]*this\.clearCombatEffects\(\)/);
  assert.ok(source.includes('if(message)setStatus(message)'));
  const flameDamage=source.slice(source.indexOf('    damageFlameTarget('),source.indexOf('    damageTarget('));
  assert.ok(!flameDamage.includes('gameplayHit'));

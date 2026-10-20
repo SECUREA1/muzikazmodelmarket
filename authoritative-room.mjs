@@ -337,9 +337,9 @@ export class AuthoritativeRooms {
     sim.actors[entityId]={id:entityId,spawned:true,ownerId:actorId,active:true,health:100,createdAt:now,placementRevision:1,position:{x:(start.x+point.x)/2,y:Math.min(start.y,point.y)-.18,z:(start.z+point.z)/2},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},asset:{id:entityId,name:'Solid paint',renderKind:'paint-stroke',strokeDelta:delta,color:clamp(command.color,0,0xffffff)}};
     player.lastPaintPoint={x:point.x,y:point.y,z:point.z};player.lastPaintAt=now;player.toolReady.spray=now+250;result.message='Solid paint placed for everyone.';
    }
-   else if(command.action==='fire'&&rangeHandlesFire(sim,player)){result=fireFiringRange(sim,player,command,now,{blocksShot:(origin,ray,distance)=>this.collision.blocksShot(environment,origin,ray,distance,sim.actors)});}
+   else if(command.action==='fire'&&RANGED_WEAPONS[command.tool||'laser']&&rangeHandlesFire(sim,player)){result=fireFiringRange(sim,player,command,now,{blocksShot:(origin,ray,distance)=>this.collision.blocksShot(environment,origin,ray,distance,sim.actors)});}
    else if(command.action==='fire'){
-    if(sim.basketball)fail('Basketball Arena is a sports court. Catch, pass or shoot the basketball.',409);
+    if(sim.basketball&&command.tool!=='spray'&&!UTILITY_TOOLS[command.tool])fail('Basketball Arena is a sports court. Catch, pass or shoot the basketball.',409);
     const tool=String(command.tool||'laser'),utility=UTILITY_TOOLS[tool],profile=RANGED_WEAPONS[tool],cooldown=sim.radTox&&!utility&&(profile||['bat','taser','toxin','flamethrower'].includes(tool))?RAD_TOX_SHOT_INTERVAL_MS:utility?utility.cooldown*1000:profile?profile.interval*1000:tool==='dynamite'?1200:250;if(!utility&&!profile&&!['bat','taser','toxin','flamethrower','spray','jetpack'].includes(tool))fail('This tool has no server action.',422);
     player.toolReady ||= {};if(now<(player.toolReady[tool]||0))fail('Tool is cooling down.',429);if(utility?.charges&&(player.toolUses?.[tool]||0)>=utility.charges)fail('Utility depleted until respawn.',409);
     if(tool==='flamethrower'&&(player.fuel??100)<5)fail('Refill your igniter fuel.',409);if(profile&&(player.ammo??120)<=0)fail('Refill ammunition.',409);if(tool==='medkit'&&player.health>=100)fail('Health is already full.',409);
@@ -379,6 +379,8 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
     player.progress ||= {};if(hit){const event=tool==='taser'?'taser-hit':tool==='dynamite'?'blast-hit':tool==='spray'?'spray':'laser-hit';await this.reward(identity,event,requestId+'-hit');player.progress[event]=(player.progress[event]||0)+1;}
     const shotDistance=hit?.along??Math.min(range,blocker?.along??range);
     const end={x:origin.x+ray[0]*shotDistance,y:origin.y+ray[1]*shotDistance,z:origin.z+ray[2]*shotDistance};
+    const paint=tool==='spray'?this.collision.paintSurface(environment,player.position,ray,sim.actors,room.objects):null;
+    if(paint){Object.assign(end,paint.point);result.color=clamp(command.color,0,0xffffff);result.paintNormal=paint.normal.toArray();}
     result={...result,firedAt:now,cooldownMs:cooldown,readyAt:player.toolReady[tool],tool,origin,end,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:hit?.playerId?'player':hit?'enemy':null};
    }else fail('This action has no server handler. It was not run locally.',422);
   }

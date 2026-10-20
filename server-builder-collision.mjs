@@ -93,10 +93,16 @@ export class ServerBuilderCollision {
   }finally{disposePlacedCollision(preview);}
  }
  resolvePlaced(environment,previous,next,actors={},objects={}){return resolvePlacedSolids(previous,{...next,floorY:next.floorY??(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length?-100:0)},this.placedWorld(actors,objects).boxes);}
- paintPoint(environment,origin,direction,actors,objects){
+ paintSurface(environment,origin,direction,actors,objects){
   const meshes=[...this.world(environment).floors,...this.placedWorld(actors,objects).meshes];
-  const start=new THREE.Vector3(origin.x,origin.y+1.5,origin.z),ray=new THREE.Raycaster(start,new THREE.Vector3(...direction),.2,8),hit=ray.intersectObjects(meshes,false)[0];
-  return hit?hit.point.clone().addScaledVector(hit.face?.normal.clone().transformDirection(hit.object.matrixWorld)||new THREE.Vector3(0,1,0),.18):start.addScaledVector(ray.ray.direction,4);
+  const start=new THREE.Vector3(origin.x,origin.y+1.5,origin.z),ray=new THREE.Raycaster(start,new THREE.Vector3(...direction),.02,8),hit=ray.intersectObjects(meshes,false)[0];
+  if(!hit?.face)return null;
+  const normal=hit.face.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld)).normalize();
+  return {point:hit.point,normal};
+ }
+ paintPoint(environment,origin,direction,actors,objects){
+  const hit=this.paintSurface(environment,origin,direction,actors,objects);
+  return hit?hit.point.clone().addScaledVector(hit.normal,.18):new THREE.Vector3(origin.x,origin.y+1.5,origin.z).addScaledVector(new THREE.Vector3(...direction),4);
  }
  blocksShot(environment,origin,direction,distance,actors={}){
   if(!environment.builderScene&&!environment.proceduralLand&&!environment.modelUrl&&!environment.modelUrls?.length)return false;
