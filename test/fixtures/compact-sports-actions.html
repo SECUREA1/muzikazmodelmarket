@@ -4,7 +4,7 @@ import {mountBasketballAim} from '../../public/js/basketball-aim.js';
 import {mountSportsActions,sportIcon} from '../../public/js/sports-action-bar.js';
 const stage=document.querySelector('.house-stage'),rad=document.createElement('button');rad.textContent='RAD-TOX';rad.setAttribute('aria-pressed','false');stage.append(rad);
 mountBasketballHud({stage,onAction(){},radToxToggle:rad});stage.querySelector('.basketball-hud').hidden=false;
-mountBasketballAim({stage});stage.querySelector('.basketball-aim').hidden=false;
+window.aimOpens=0;window.throwAim=mountBasketballAim({stage,onOpen:()=>window.aimOpens++});stage.querySelector('.basketball-aim').hidden=false;
 const hockey=mountSportsActions({parent:document.querySelector('.hockey-sports-bar'),modes:['auto','shoot','pass','steal','check','collect'],onMode(){},onTrigger(){},label:'Hockey quick actions'});
 const score=document.createElement('div');score.className='scoreboard';score.innerHTML='<strong>HOME 0</strong><span id="clock">12:00</span><strong>0 AWAY</strong>';hockey.header.prepend(score);
 const lobby=document.createElement('button');lobby.className='sports-icon-button';lobby.innerHTML=sportIcon('lobby');hockey.row.append(lobby);

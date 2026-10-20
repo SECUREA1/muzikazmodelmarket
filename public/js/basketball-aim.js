@@ -1,38 +1,58 @@
 import {sportIcon} from './sports-action-bar.js';
+let aimDialogCount=0;
 const defaults={power:.7,angle:55,mode:'assisted'};
 const clamp=(value,min,max,fallback)=>Number.isFinite(Number(value))?Math.max(min,Math.min(max,Number(value))):fallback;
 
-export function mountBasketballAim({stage}){
+export function mountBasketballAim({stage,onOpen=()=>{}}){
   let saved={};try{saved=JSON.parse(localStorage.getItem('muzikazBasketballAim')||'{}')||{};}catch{}
   const state={power:clamp(saved.power,.1,1,.7),angle:clamp(saved.angle,20,80,55),mode:saved.mode==='manual'?'manual':'assisted'};
   const style=document.createElement('style');
   style.textContent=`
     .basketball-aim[hidden]{display:none!important}
-    .basketball-aim{position:absolute;right:14px;bottom:104px;z-index:24;width:min(290px,calc(100% - 28px));padding:0;border:1px solid #d8b27580;border-radius:10px;background:#0c1728ee;color:#f5ead9;font:12px system-ui;box-shadow:0 8px 25px #0004}
-    .basketball-aim:not([open]){width:44px}.basketball-aim summary{padding:12px 14px;cursor:pointer;min-height:20px;font-weight:700;list-style-position:inside}
-    .basketball-aim-body{padding:0 14px 13px;display:grid;gap:11px}
-    .basketball-aim label{display:grid;gap:5px;font-size:12px}.basketball-aim label span{display:flex;justify-content:space-between}.basketball-aim [data-summary],.basketball-aim [data-power-output],.basketball-aim [data-angle-output]{font-variant-numeric:tabular-nums;color:#ffd58f}
-    .basketball-aim input[type=range]{width:100%;min-height:30px;accent-color:#e9ba72;touch-action:pan-x;margin:0}
-    .basketball-aim select{width:100%;border:1px solid #50617a;border-radius:5px;padding:8px;background:#111f34;color:#fff;min-height:36px}
-    .basketball-aim p{margin:0;font-size:10px;line-height:1.4;color:#c1cfdf}.basketball-aim [data-flight]{color:#efc783}
-    .basketball-aim button{width:auto!important;min-height:34px;border:1px solid #d8b27577;border-radius:5px;background:#1e314a;color:white;font:700 11px system-ui;padding:6px 10px;cursor:pointer}
-    .basketball-aim.basketball-aim-docked{position:relative;inset:auto;width:44px!important;border:0;box-shadow:none;background:none;pointer-events:auto;flex:0 0 44px}.basketball-aim-docked summary{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:44px;height:44px;padding:6px!important;list-style:none;border:1px solid #71849788;border-radius:9px;background:#111f2ff2}.basketball-aim-docked summary::-webkit-details-marker{display:none}.basketball-aim-docked summary svg{width:21px;height:21px}.basketball-aim-docked .basketball-aim-body{position:absolute;right:-40px;bottom:52px;width:min(280px,calc(100vw - 44px));max-height:calc(100dvh - 220px);overflow:auto;box-sizing:border-box;padding:14px;border:1px solid #718497;border-radius:12px;background:#0c1728fa}
-    @media(max-width:600px){.basketball-aim{bottom:92px;right:10px;width:min(270px,calc(100% - 20px))}.basketball-aim summary{padding:10px 12px}}
+    .basketball-aim{position:absolute;right:14px;bottom:104px;z-index:24;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:44px!important;min-width:44px;min-height:44px;padding:6px!important;border:1px solid #71849788;border-radius:9px;background:#111f2ff2;color:#f5ead9;cursor:pointer;pointer-events:auto;touch-action:manipulation}
+    .basketball-aim svg{width:21px;height:21px}.basketball-aim.basketball-aim-docked{position:relative;inset:auto;flex:0 0 44px}
+    .basketball-aim[aria-expanded=true]{border-color:#e9ba72;background:#293b4f}
+    .basketball-aim-dialog{box-sizing:border-box;width:min(440px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);padding:0;border:1px solid #8b9db3;border-radius:16px;background:#0c1728;color:#f5ead9;font:14px system-ui;box-shadow:0 16px 70px #0008;overflow:hidden;overscroll-behavior:contain}
+    .basketball-aim-dialog[open]{display:flex;flex-direction:column}.basketball-aim-dialog::backdrop{background:#000b}
+    .basketball-aim-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #526175;flex:none}
+    .basketball-aim-dialog h2{margin:0;font-size:20px}.basketball-aim-dialog header p{margin:4px 0 0;color:#bdcddd;font-size:12px}
+    .basketball-aim-body{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;padding:18px 16px;display:grid;gap:18px}
+    .basketball-aim-body label{display:grid;gap:8px;font-size:14px}.basketball-aim-body label>span{display:flex;justify-content:space-between;gap:8px}.basketball-aim-dialog [data-power-output],.basketball-aim-dialog [data-angle-output]{font-variant-numeric:tabular-nums;color:#ffd58f}
+    .basketball-aim-body input[type=range]{box-sizing:border-box;width:100%;min-width:0;min-height:44px;accent-color:#e9ba72;touch-action:pan-y;margin:0}
+    .basketball-aim-body select{box-sizing:border-box;width:100%;min-width:0;border:1px solid #657b98;border-radius:7px;padding:10px;background:#111f34;color:#fff;min-height:44px;font:16px system-ui}
+    .basketball-aim-body p{margin:0;font-size:12px;line-height:1.5;color:#c1cfdf}.basketball-aim-dialog [data-flight]{color:#efc783}.basketball-aim-body summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700}.basketball-aim-body details p{padding:4px 0 10px}
+    .basketball-aim-dialog button{box-sizing:border-box;width:auto!important;min-width:44px;min-height:44px;border:1px solid #718497;border-radius:8px;background:#1e314a;color:white;font:700 13px system-ui;padding:8px 12px;cursor:pointer;touch-action:manipulation}
+    .basketball-aim-dialog footer{display:flex;justify-content:space-between;gap:10px;flex:none;padding:12px 16px max(12px,env(safe-area-inset-bottom));border-top:1px solid #526175;background:#0c1728}.basketball-aim-dialog [data-done]{background:#c7f36a;color:#10200b;min-width:90px}
+    .basketball-aim-dialog :focus-visible,.basketball-aim:focus-visible{outline:3px solid #ffd58f;outline-offset:2px}
+    @media(max-height:480px){.basketball-aim-dialog header{padding:8px 12px}.basketball-aim-body{padding:10px 12px;gap:12px}.basketball-aim-dialog footer{padding:8px 12px}}
   `;
   document.head.append(style);
-  const root=document.createElement('details');root.className='basketball-aim';root.hidden=true;
-  root.innerHTML='<summary aria-label="Basketball throw settings" title="Basketball throw settings">'+sportIcon('aim')+'<span data-summary hidden></span></summary><div class="basketball-aim-body"><label><span>Throw power<span data-power-output></span></span><input type="range" name="basketball-power" aria-label="Basketball throw power" min="10" max="100" step="1"></label><label><span>Launch angle<span data-angle-output></span></span><input type="range" name="basketball-angle" aria-label="Basketball launch angle" min="20" max="80" step="1"></label><label>Aiming mode<select name="basketball-aim-mode" aria-label="Basketball aiming mode"><option value="assisted">Hoop assist</option><option value="manual">Free aim · look to direct</option></select></label><label>Flight preview<select name="basketball-preview" aria-label="Basketball flight preview"><option value="basketball-shoot">Shot at the hoop</option><option value="toss">Pass / free throw</option></select></label><p>Hoop assist requires aiming within 13% of the line to your team’s net. Shots outside this window count as misses. At 70% power, the speed is calibrated for your distance and chosen angle. Adjust power to throw shorter or farther. Pass uses free aim.</p><p data-flight>Catch a ball to see its predicted flight.</p><button type="button" data-calibrate>Calibrate shot</button></div>';
+  const root=document.createElement('button');root.type='button';root.className='basketball-aim';root.hidden=true;
+  root.setAttribute('aria-label','Basketball throw settings');root.title='Basketball throw settings';root.setAttribute('aria-haspopup','dialog');root.setAttribute('aria-expanded','false');
+  root.innerHTML=sportIcon('aim')+'<span data-summary hidden></span>';
   const tools=stage.querySelector('.sports-action-header');if(tools){tools.insertBefore(root,tools.lastElementChild);root.classList.add('basketball-aim-docked');}else stage.append(root);
-  const power=root.querySelector('[name="basketball-power"]'),angle=root.querySelector('[name="basketball-angle"]'),mode=root.querySelector('[name="basketball-aim-mode"]');
-  const refresh=()=>{power.value=Math.round(state.power*100);angle.value=state.angle;mode.value=state.mode;root.querySelector('[data-power-output]').textContent=`${Math.round(state.power*100)}%`;root.querySelector('[data-angle-output]').textContent=`${state.angle}°`;root.querySelector('[data-summary]').textContent=`${Math.round(state.power*100)}% · ${state.angle}°`;};
+  const dialog=document.createElement('dialog');dialog.className='basketball-aim-dialog';dialog.id='basketball-throw-settings-'+(++aimDialogCount);root.setAttribute('aria-controls',dialog.id);dialog.setAttribute('aria-label','Basketball throw settings');
+  dialog.innerHTML='<header><div><h2>Throw settings</h2><p>Changes save automatically.</p></div><button type="button" data-close aria-label="Close throw settings" autofocus>×</button></header><div class="basketball-aim-body"><label><span>Throw power<output data-power-output></output></span><input type="range" name="basketball-power" aria-label="Basketball throw power" min="10" max="100" step="1"></label><label><span>Launch angle<output data-angle-output></output></span><input type="range" name="basketball-angle" aria-label="Basketball launch angle" min="20" max="80" step="1"></label><label>Aiming mode<select name="basketball-aim-mode" aria-label="Basketball aiming mode"><option value="assisted">Hoop assist</option><option value="manual">Free aim · look to direct</option></select></label><label>Flight preview<select name="basketball-preview" aria-label="Basketball flight preview"><option value="basketball-shoot">Shot at the hoop</option><option value="toss">Pass / free throw</option></select></label><p data-flight aria-live="polite">Catch a ball to see its predicted flight.</p><details><summary>How aiming works</summary><p>Hoop assist requires aiming within 13% of the line to your team’s net. Shots outside this window count as misses. At 70% power, speed is calibrated for your distance and chosen angle. Adjust power to throw shorter or farther. Pass uses free aim.</p></details></div><footer><button type="button" data-calibrate>Reset calibration</button><button type="button" data-done>Done</button></footer>';
+  (document.fullscreenElement||document.body).append(dialog);
+  const power=dialog.querySelector('[name="basketball-power"]'),angle=dialog.querySelector('[name="basketball-angle"]'),mode=dialog.querySelector('[name="basketball-aim-mode"]');
+  const close=()=>{if(dialog.open)dialog.close();};
+  root.onclick=()=>{if(root.hidden||dialog.open)return;onOpen();(document.fullscreenElement||document.body).append(dialog);dialog.showModal();root.setAttribute('aria-expanded','true');dialog.querySelector('.basketball-aim-body').scrollTop=0;};
+  dialog.querySelector('[data-close]').onclick=close;dialog.querySelector('[data-done]').onclick=close;
+  dialog.addEventListener('close',()=>{root.setAttribute('aria-expanded','false');if(!root.hidden)root.focus({preventScroll:true});});
+  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
+  let backdropPressed=false;
+  const outside=event=>{const rect=dialog.getBoundingClientRect();return event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom;};
+  dialog.addEventListener('pointerdown',event=>{backdropPressed=event.target===dialog&&outside(event);event.stopPropagation();});
+  dialog.addEventListener('click',event=>{if(backdropPressed&&event.target===dialog&&outside(event))close();backdropPressed=false;event.stopPropagation();});
+  const refresh=()=>{power.value=Math.round(state.power*100);angle.value=state.angle;mode.value=state.mode;dialog.querySelector('[data-power-output]').textContent=`${Math.round(state.power*100)}%`;dialog.querySelector('[data-angle-output]').textContent=`${state.angle}°`;root.querySelector('[data-summary]').textContent=`${Math.round(state.power*100)}% · ${state.angle}°`;};
   const save=()=>{try{localStorage.setItem('muzikazBasketballAim',JSON.stringify(state));}catch{}refresh();};
   power.addEventListener('input',()=>{state.power=Number(power.value)/100;save();});
   angle.addEventListener('input',()=>{state.angle=Number(angle.value);save();});
   mode.addEventListener('change',()=>{state.mode=mode.value;save();});
-  root.querySelector('[data-calibrate]').onclick=()=>{Object.assign(state,defaults);save();};
-  root.addEventListener('pointerdown',event=>event.stopPropagation());
-  root.addEventListener('keydown',event=>{
+  dialog.querySelector('[data-calibrate]').onclick=()=>{Object.assign(state,defaults);save();};
+  dialog.addEventListener('keydown',event=>{
     event.stopPropagation();
+    if(event.key==='Escape'){event.preventDefault();close();return;}
     if(![power,angle].includes(event.target)||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'].includes(event.key))return;
     event.preventDefault();const isPower=event.target===power,min=isPower?10:20,max=isPower?100:80,change=['ArrowRight','ArrowUp','PageUp'].includes(event.key)?1:-1,step=event.key.startsWith('Page')?10:1;
     const current=isPower?Math.round(state.power*100):state.angle,next=event.key==='Home'?min:event.key==='End'?max:Math.max(min,Math.min(max,current+change*step));
@@ -41,10 +61,10 @@ export function mountBasketballAim({stage}){
   refresh();
   return {
     options:()=>({...state}),
-    previewAction:()=>root.querySelector('[name="basketball-preview"]').value,
+    previewAction:()=>dialog.querySelector('[name="basketball-preview"]').value,
     render({enabled,spectator,held,solution}){
-      root.hidden=!enabled||spectator;
-      const label=root.querySelector('[data-flight]');
+      root.hidden=!enabled||spectator;if(root.hidden)close();
+      const label=dialog.querySelector('[data-flight]');
       const speed=solution?Math.hypot(solution.velocity.x,solution.velocity.y,solution.velocity.z):0;
       const message=!held?'Catch a ball to see its predicted flight.':solution?.aimAligned===false?'Aim miss: outside 13% hoop alignment. Line up with the net before shooting.':solution?.reachable===false?'This angle cannot reach the hoop on a descending arc. Raise it or move closer.':solution?`${speed.toFixed(1)} m/s · ${solution.mode==='assisted'?'Hoop assist':'Free aim'} · dotted line previews your throw`:'This arc cannot reach the hoop from here. Raise the angle or move closer.';
       if(label.textContent!==message)label.textContent=message;
