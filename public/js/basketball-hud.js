@@ -43,11 +43,11 @@ export function mountBasketballHud({ stage, onAction, onTriggerMode = () => {}, 
     .house-control-dock .basketball-hud{position:relative;inset:auto;transform:none;width:100%;box-sizing:border-box;margin:0 0 6px;display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}
     .house-control-dock .basketball-score-strip{width:min(360px,100%)}
     .house-control-dock .basketball-team-score{padding:4px 8px}.house-control-dock .basketball-team-score strong{font-size:22px}.house-control-dock .basketball-clock b{font-size:16px}
-    .basketball-hud.controls-collapsed .basketball-game-actions,.basketball-hud.controls-collapsed .basketball-caption,.basketball-hud.controls-collapsed .basketball-role,.basketball-hud.controls-collapsed .basketball-score-strip{display:none!important}
+    .basketball-hud.controls-collapsed .basketball-game-actions,.basketball-hud.controls-collapsed .basketball-caption,.basketball-hud.controls-collapsed .basketball-role{display:none!important}
     .basketball-game-actions button{min-width:44px;min-height:44px}.basketball-match-toggle{margin:0}
     .house-stage .basketball-hud{top:auto!important;bottom:8px;left:8px;right:8px;transform:none;width:auto!important;max-width:580px;margin:0 auto;padding:5px 7px;border:1px solid #5e7699;border-radius:12px;background:#091321ed;box-sizing:border-box}
     .basketball-hud>.basketball-score-strip{display:flex;align-items:center;justify-content:center;border:0;background:none;box-shadow:none;border-radius:0;gap:12px;height:25px}.basketball-hud .basketball-team-score{border:0;padding:0;gap:6px}.basketball-hud .basketball-team-score strong{font-size:17px}.basketball-hud .basketball-team-score span{font-size:9px;letter-spacing:1px}.basketball-hud .basketball-clock{display:flex;align-items:center;gap:6px;padding:0;background:none}.basketball-hud .basketball-clock b{font-size:14px}.basketball-hud .basketball-clock small{font-size:8px}
-    .basketball-hud>.basketball-caption,.basketball-hud>.basketball-role,.basketball-hud>.basketball-game-actions,.basketball-hud>.basketball-trigger-control{display:none!important}.basketball-hud:has(.sports-action-bar.is-collapsed)>.basketball-score-strip{display:none}
+    .basketball-hud>.basketball-caption,.basketball-hud>.basketball-role,.basketball-hud>.basketball-game-actions,.basketball-hud>.basketball-trigger-control{display:none!important}
     .basketball-hud .sports-action-tools .basketball-match-toggle{width:44px;min-height:44px;padding:6px;border-radius:9px;margin:0}
     @media(prefers-reduced-motion:reduce){.basketball-scored .basketball-score-strip{animation:none}}
   `;

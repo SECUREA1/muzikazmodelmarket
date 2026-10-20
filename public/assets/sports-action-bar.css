@@ -33,8 +33,6 @@
 .sports-action-header .scoreboard #call{display:none;}
 .sports-action-bar>.sports-action-tools{flex-wrap:nowrap;}
 .sports-action-bar>.sports-action-tools>.sports-primary-trigger{min-width:0;}
-.sports-action-bar.is-collapsed>.sports-action-header .basketball-score-strip,.sports-action-bar.is-collapsed>.sports-action-header .scoreboard{display:none;}
-.sports-action-bar.is-collapsed>.sports-action-header{justify-content:flex-end;}
 @media(max-width:380px){.sports-action-header .basketball-team-score span{font-size:8px;letter-spacing:0;}.sports-action-header .basketball-clock{gap:3px;}.sports-action-header .basketball-clock small{font-size:7px;}.sports-action-header .basketball-score-strip{gap:5px;}}
 .room-building-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px;font:13px system-ui;}
 .room-building-toggle input{width:20px;height:20px;}
