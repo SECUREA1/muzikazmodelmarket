@@ -10,6 +10,7 @@ import {mountLiveCameraScreens} from './live-camera-screens.js';
 import {INTERACTIVE_DEVICES,deviceTime,deviceScreenGamer} from './interactive-devices.js';
 const cardName=card=>['2','3','4','5','6','7','8','9','10','J','Q','K','A'][card%13]+['♣','♦','♥','♠'][Math.floor(card/13)];
 export function mountInteractiveDevices({THREE,stage,send,getRoots,getPosition,market,upload,announce}){
+ if(!document.querySelector('[data-interactive-device-style]')){const style=document.createElement('link');style.rel='stylesheet';style.href=new URL('../css/interactive-devices.css',import.meta.url).href;style.dataset.interactiveDeviceStyle='';document.head.append(style);}
  const dialog=document.createElement('dialog');dialog.className='interactive-device-dialog';dialog.tabIndex=-1;dialog.setAttribute('aria-label','Interactive device');document.body.append(dialog);
  const sound=document.createElement('button');sound.className='shared-media-enable';sound.type='button';sound.textContent='Enable shared media audio';sound.hidden=true;stage.append(sound);
  const liveCamera=mountLiveCameraScreens({THREE,getRoots,getPosition,screenFor,announce});
@@ -54,7 +55,7 @@ export function mountInteractiveDevices({THREE,stage,send,getRoots,getPosition,m
 
   if(['arcade','slots','poker','trivia'].includes(kind))playerMenu=mountArcadePlayerMenu(dialog,{screen:dialog.querySelector('[data-arcade-game]'),multiGame:current?.multiGame,getType:()=>state()?.kind==='arcade'?state().game:state()?.kind,getState:state,getError:()=>deviceError,selfId:()=>snapshot.selfId,onSelect:async item=>{await command('select-game',{gameId:item.id});playerMenu?.show('play');}});
   devicePageTarget=null;if(!playerMenu)machineMenu=mountMachinePages(dialog);
-  dialog.showModal();refresh();
+  (document.fullscreenElement||document.body).append(dialog);dialog.showModal();refresh();
  }
  function disposePlayer(player){player.element?.pause();if(player.element){player.element.removeAttribute('src');player.element.load();}player.texture?.dispose();player.surface?.removeFromParent();player.surface?.geometry?.dispose();player.surface?.material?.dispose();player.context?.clearRect(0,0,768,432);}
  function rootFor(id){return getRoots().find(root=>root.userData.builderObjectId===id);}

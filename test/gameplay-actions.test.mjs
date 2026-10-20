@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {sharedNearbyAction} from '../public/js/gameplay-actions.js';
+import {sharedNearbyAction,sharedNearbyActions} from '../public/js/gameplay-actions.js';
 const player={id:'account:player',position:{x:0,y:0,z:0},health:100};
 const actor=(id,x=1)=>({id,position:{x,y:0,z:0},active:true});
 const definition=(objectId,behavior,extra={})=>({objectId,gameplay:{behavior,interactionDistance:4,...extra}});
@@ -25,4 +25,13 @@ test('unusable scenery and out-of-reach items never expose misleading action but
 test('spawned items carry their own usable interaction definitions',()=>{
  const spawned={...actor('spawned'),definition:{gameplay:{behavior:'pickup',interactionDistance:3}}};
  assert.equal(sharedNearbyAction(player,{spawned}).entityId,'spawned');
+});
+
+test('nearby portal and arcade retain separate exact targets even when the portal is closer',()=>{
+ const portal={...actor('portal',1),worldGateway:{name:'Return to Public Commons'}};
+ const arcade={...actor('arcade',2),asset:{buildAssetId:'market-atm'},definition:{gameplay:{behavior:'interact',device:'commons-arcade',interactionDistance:4}}};
+ const choices=sharedNearbyActions(player,{portal,arcade});assert.equal(choices.length,2);
+ assert.equal(choices.find(action=>action.portal).entityId,'portal');
+ const use=choices.find(action=>!action.portal);assert.equal(use.entityId,'arcade');assert.equal(use.title,'OPEN ARCADE');
+ arcade.active=false;assert.equal(sharedNearbyActions(player,{portal,arcade}).filter(action=>!action.portal).length,0);
 });

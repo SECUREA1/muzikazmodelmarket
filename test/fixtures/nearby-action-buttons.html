@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../../public/assets/game-control-dock.css"><link rel="stylesheet" href="../../public/css/game-menu-controls.css"><style>body{margin:0;background:#162619}.house-stage{position:relative;height:360px;width:100%;background:#112315}.builder-nearby-action{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:340px;min-height:62px}.builder-nearby-action[hidden]{display:none}.builder-nearby-action__icon{grid-row:1 / span 2}</style></head><body><div class="house-stage"><button class="rad-tox-fire-trigger" aria-label="Fire">⊕</button></div><script type="module">
+import * as THREE from '../../public/vendor/three/three.module.min.js';
+import {mountInteractiveDevices} from '../../public/js/interactive-device-ui.js';
+import {mountNearbyActionButtons} from '../../public/js/nearby-action-buttons.js';
+import {sharedNearbyActions} from '../../public/js/gameplay-actions.js';
+window.commands=[];
+const stage=document.querySelector('.house-stage'),button=document.createElement('button');button.className='builder-nearby-action';button.innerHTML='<span class="builder-nearby-action__icon">▣</span><strong>OPEN ARCADE</strong><small>Commons arcade</small>';
+const actions=sharedNearbyActions({id:'player',health:100,position:{x:0,y:0,z:0}},{portal:{id:'portal',active:true,position:{x:1,y:0,z:0},worldGateway:{name:'Return to Public Commons'}},arcade:{id:'arcade',active:true,position:{x:2,y:0,z:0},asset:{buildAssetId:'market-atm'},definition:{gameplay:{behavior:'interact',device:'commons-arcade',interactionDistance:4}}}});
+const deviceUI=mountInteractiveDevices({THREE,stage,send:async()=>({}),getRoots:()=>[],getPosition:()=>({x:0,y:0,z:0}),market(){},upload(){},announce:()=>{}});deviceUI.snapshot({devices:{arcade:{kind:'arcade',name:'Commons Arcade',multiGame:true,game:'tictactoe',selectedGame:'tictactoe',gamers:{},revision:0}},actors:{arcade:{id:'arcade',active:true,position:{x:2,y:0,z:0}}},players:{}},'player');
+const item=actions.find(action=>!action.portal);button.setAttribute('aria-label',item.label);button.onclick=()=>{commands.push({entityId:item.entityId});deviceUI.open(item.entityId,'arcade');};
+const pair=mountNearbyActionButtons({stage,itemButton:button,onPortal:entityId=>commands.push({entityId})});pair.renderPortal(actions.find(action=>action.portal));window.pair=pair;document.body.dataset.ready='true';
+</script></body></html>

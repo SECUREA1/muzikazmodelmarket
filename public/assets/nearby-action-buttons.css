@@ -1,0 +1,9 @@
+.house-stage .nearby-gameplay-actions{position:absolute;z-index:16;inset:auto 94px max(12px,env(safe-area-inset-bottom)) 12px;display:flex;flex-wrap:wrap;gap:8px;max-width:640px;margin-inline:auto;pointer-events:none;box-sizing:border-box}
+.house-stage .nearby-gameplay-actions[hidden]{display:none!important}
+.house-stage .nearby-gameplay-actions .builder-nearby-action,.house-stage .nearby-gameplay-actions .builder-nearby-action[data-vehicle-active=true]{position:static!important;inset:auto!important;transform:none!important;display:grid!important;grid-template-columns:20px minmax(0,1fr)!important;align-items:center;gap:3px 8px!important;flex:1 1 150px;width:auto!important;min-width:0!important;max-width:100%!important;min-height:48px!important;margin:0!important;padding:8px 10px!important;box-sizing:border-box;border:1px solid #caff69;border-radius:12px!important;background:linear-gradient(135deg,#caff49,#73bd00);color:#071007;text-align:left;pointer-events:auto;touch-action:manipulation;cursor:pointer}
+.house-stage .nearby-gameplay-actions .builder-nearby-action[hidden]{display:none!important}
+.house-stage .nearby-gameplay-actions .builder-portal-action{background:#10231cf5;color:#efffd7;border-color:#799966;box-shadow:none}
+.nearby-gameplay-actions .builder-nearby-action__icon{grid-row:1 / span 2;font-size:20px}
+.nearby-gameplay-actions .builder-nearby-action strong{font:900 11px/1.25 system-ui;letter-spacing:.02em;white-space:normal;overflow-wrap:anywhere}
+.nearby-gameplay-actions .builder-nearby-action small{font:500 10px/1.3 system-ui;white-space:normal;overflow-wrap:anywhere}
+.nearby-gameplay-actions button:focus-visible{outline:3px solid #fff;outline-offset:2px}
