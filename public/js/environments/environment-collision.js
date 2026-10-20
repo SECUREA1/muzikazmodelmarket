@@ -1,5 +1,5 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
-import { Octree } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/math/Octree.js/+esm';
+import * as THREE from '../../vendor/three/three.module.min.js';
+import { Octree } from '../../vendor/three/addons/math/Octree.js';
 
 const COLLISION_RE = /(^|[_ .-])(COLLIDER|COLLISION|NAVMESH)([_ .-]|$)/i;
 // Only effects with no physical surface are excluded.  In particular, do not

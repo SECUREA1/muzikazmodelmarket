@@ -257,3 +257,19 @@ test('RAD-TOX trigger gives immediate feedback and queues a press while its firs
   release();await Promise.all([first,second]);assert.equal(shots,2);assert.equal(feedback.length,2);assert.equal(feedback[1].requestId,'second');
  },{onShot:shot=>feedback.push(shot)});
 });
+
+test('Builder joins set RAD-TOX preference in the join and retain it after a reconnect',async()=>{
+ let sequence=0,expire=false;const joins=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='join')joins.push(command);
+  if(command.action==='input'&&expire){expire=false;return response({code:'ROOM_JOIN_REQUIRED',message:'Rejoin'},409);}
+  return response(confirmed(++sequence));
+ },async client=>{
+  await client.whenReady();assert.equal(joins[0].radToxEnabled,false);
+  await client.send('rad-tox-toggle',{enabled:true});expire=true;
+  for(let i=0;i<40&&joins.length<2;i++)await pause(25);
+  assert.equal(joins.length,2);assert.equal(joins[1].radToxEnabled,true);
+ },{deferRadTox:true,radToxEnabled:false});
+});

@@ -66,6 +66,7 @@ test('Builder rooms receive the shared RAD-TOX campaign',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'rad-tox-builder-'));
  try {
   const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json'))});
+  runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.encounterSpawn=(_,point)=>point;runtime.collision.resolve=(_,previous,next)=>next;
   const map={id:'builder',builderScene:{objects:[]}},identity={accountId:'alice',stats:{health:100}};
   await runtime.command(map.id,map,identity,{action:'join',requestId:'join'});
   const state=await runtime.command(map.id,map,identity,{action:'start-rad-tox',requestId:'start'});
@@ -107,5 +108,20 @@ test('one server-confirmed hit kills regular enemies and a previously saved high
    now+=100;const state=await send('fire',{tool:'laser',direction:[0,-.5,-4]});
    assert.equal(state.actors.target.health,0,kind+' dies in one hit');assert.equal(state.actors.target.active,false);
   }
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
+
+test('Builder join can keep RAD-TOX off without a second startup command',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'builder-ready-'));
+ try{
+  const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json'))});
+  runtime.collision.safeSpawn=(_,point)=>point;runtime.collision.encounterSpawn=(_,point)=>point;runtime.collision.resolve=(_,previous,next)=>next;
+  const map={id:'builder-ready',builderScene:{layout:'grand-floor',mapSize:40,objects:[]}},identity={accountId:'builder',username:'Builder',stats:{health:100}};
+  const state=await runtime.command(map.id,map,identity,{action:'join',requestId:'join-builder',deferRadTox:true,radToxEnabled:false});
+  assert.equal(state.players['account:builder'].radToxEnabled,false);
+  assert.equal(Object.values(state.actors).some(actor=>actor.radTox),false);
+  assert.equal(state.radTox,null);
+  const started=await runtime.command(map.id,map,identity,{action:'start-rad-tox',requestId:'start-builder'});
+  assert.equal(started.players['account:builder'].radToxEnabled,true);assert.equal(started.radTox.state,'active');
  }finally{await rm(dir,{recursive:true,force:true});}
 });

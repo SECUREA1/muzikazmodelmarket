@@ -67,7 +67,7 @@ with the results countdown enforced by the server.
 
 Entries require overhead clearance and 0.8 metres of space beside walls when
 available, with a capsule-width fallback for narrow maps. Existing players are
-recalibrated once on their next join using floor version 3. Walking itself does
+recalibrated once on their next join using floor version 4. Walking itself does
 not run spawn searches or reposition players at wall contact.
 
 Encounter placement version 2 requires verified floor, side clearance, the same
@@ -95,3 +95,13 @@ boss, without doubling targets at every refill. Wave transitions are scheduled
 once, and pending wave or level timers cannot act after a map change or reset.
 The solo house keeps the swept capsule walking and stair view smoothing from
 `95d98547`; the fast shared baseline is `bd44fd5e` (October 19, 2026).
+
+Spawn recalibration version 4 retries verified mesh footprints and a bounded map
+grid when the saved entry, centre and nearby ring are obstructed. Procedural
+Builder arrivals also search clear perimeter ground when central buildings block
+the local search. No floor or platform is invented when geometry has no support.
+Legacy player floor state resets once on join; scores and inventory are retained.
+Failed game launches stop the old room client and clear camera interpolation,
+control input and readiness before retrying. Room startup allows 30 seconds for
+confirmation. Invalid saved API schemes and malformed authentication header
+values are reset before requests are constructed; map drafts are retained.

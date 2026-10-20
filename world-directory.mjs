@@ -1,3 +1,5 @@
+import {isHockeyMap} from './public/js/hockey-rules.js';
+import {isArcadeMap} from './public/js/arcade-rules.js';
 import {memberPlotEnvironment} from './member-plots.mjs';
 import {WORLD_DISTRICTS,districtMapId} from './world-districts.mjs';
 import {attachAtlas} from './world-atlas.mjs';
@@ -16,7 +18,10 @@ export async function synchronizeWorldDirectory(atlas,published,deeds=[]){
  const all=[...new Map([...generated,...maps,...plots].map(map=>[map.id,attachAtlas(map,state)])).values()],byId=new Map(all.map(map=>[map.id,map]));
  for(const map of all){
   const region=WORLD_DISTRICTS.find(region=>districtMapId(region.id)===map.id);if(region)map.aliases=[...new Set([...(map.aliases||[]),region.id,'space-'+region.id,'district-'+region.id])];
-  map.sharedWorld=true;map.multiplayer=true;map.roomId=map.id;map.playUrl='model-explorer.html?environment='+encodeURIComponent(map.id)+'&house='+encodeURIComponent(map.id)+'&mode=multiplayer&autoplay=1';
+  const solo=map.source==='custom-builder'&&map.builderScene?.gameplay?.multiplayer===false;
+  map.sharedWorld=!solo;map.multiplayer=!solo;map.roomId=map.id;
+  const page=isHockeyMap(map)?'hockey.html':isArcadeMap(map)?'arcade.html':'model-explorer.html';
+  map.playUrl=page+'?environment='+encodeURIComponent(map.id)+'&house='+encodeURIComponent(map.id)+'&mode='+(solo?'solo':'multiplayer')+'&autoplay=1';
   if(map.source!=='community-atlas'){
    map.portalTargets=[...new Set([map.districtId,'public-commons'].filter(id=>id&&id!==map.id&&byId.has(id)))];
    map.travelPortals=map.portalTargets.map(id=>({mapId:id,name:byId.get(id).name,color:byId.get(id).districtColor}));

@@ -24,7 +24,9 @@ try:
      posted.append(route.request.post_data_json['scene']);route.fulfill(json={'data':{'playUrl':'/__camp_game','name':'Summer camp'}})
     else:route.fulfill(json={'data':{'models':[],'assets':[],'ownedAssets':[]},'models':[],'assets':[],'ownedAssets':[]})
    page.route('**/api/**',api)
-   page.add_init_script("const raf=requestAnimationFrame.bind(window);window.requestAnimationFrame=cb=>cb.name==='animate'?setTimeout(()=>cb(performance.now()),150):raf(cb)")
+   # This checks DOM controls and saved scene state. Disable the preview animation
+   # loop so software WebGL cannot starve input; game motion is tested separately.
+   page.add_init_script("const raf=requestAnimationFrame.bind(window);window.requestAnimationFrame=cb=>cb.name==='animate'?0:raf(cb)")
    page.goto(f'http://127.0.0.1:{server.server_port}/environment-builder.html')
    page.wait_for_function("window.MuzikazEnvironmentBuilder && document.querySelector('#layout-select option[value=camp-lakeside]')")
    def scene():return page.evaluate('window.MuzikazEnvironmentBuilder.getScene()')
@@ -59,10 +61,10 @@ try:
    choose('camp');reveal('select[aria-label="Camp world size"]').select_option('80');reveal('button:has-text("Generate camp map")').click()
    preserved=next(o for o in scene()['objects'] if o['id']==module_id);assert preserved['position']==moved['position'] and preserved['scale']==moved['scale']
    choose('layout-scenes');reveal('input[aria-label="Show activity scenes (editor)"]').check()
-   choose('games');reveal('[data-builder-screen=games] button:has-text("Save draft")').click()
+   choose('games');reveal('[data-builder-screen=games] button:has-text("Save draft")').click(no_wait_after=True)
    page.reload();page.wait_for_function('window.MuzikazEnvironmentBuilder')
    preserved=next(o for o in scene()['objects'] if o['id']==module_id);assert preserved['position']==moved['position'] and preserved['scale']==moved['scale']
-   choose('games');reveal('[data-builder-screen=games] button:has-text("Test this map")').click();page.wait_for_url('**/__camp_game',timeout=12000)
+   choose('games');reveal('[data-builder-screen=games] button:has-text("Test this map")').click(no_wait_after=True);page.wait_for_url('**/__camp_game',timeout=12000)
    assert any(o['id']==module_id and o['scale']['x']==.5 for o in posted[0]['objects']);assert not errors,errors
    print({'viewport':[width,height],'independent_activity_placement_sliders_visibility_save_play':'passed'},flush=True)
    page.close()

@@ -1,7 +1,7 @@
 import {isBasketball} from './public/js/basketball.js';
 import {slideWalking} from './public/js/walking-collision.js';
 import {PLAYER_FLOOR_CLEARANCE} from './public/js/player-floor.js';
-import {builderBaseEnvironment,applyBuilderBaseTransform} from './public/js/environments/builder-base.js';
+import {builderBaseEnvironment,builderBaseSpawn,applyBuilderBaseTransform} from './public/js/environments/builder-base.js';
 import {drawingCollisionModel,resolvePlacedSolids} from './public/js/placed-item-collision.js';
 import {placedCollisionWorld,disposePlacedCollision} from './server-placed-collision.mjs';
 import {environmentGeometry} from './server-glb-geometry.mjs';
@@ -130,10 +130,20 @@ export class ServerBuilderCollision {
   if(!builderBaseEnvironment(environment)&&!environment.modelUrl&&!environment.modelUrls?.length)return point;
   const world=this.world(environment),bounds=world.bounds,center=bounds.getCenter(new THREE.Vector3());
   const named=world.root.getObjectByName('SPAWN_PLAYER')||world.root.getObjectByName('SPAWN_DEFAULT');
-  const anchor=named?named.getWorldPosition(new THREE.Vector3()):point;
-  const candidates=[anchor,{x:center.x,y:point.y,z:center.z}];for(let r=1;r<=6;r++)for(let i=0;i<8;i++)candidates.push({x:anchor.x+Math.cos(i*Math.PI/4)*r,y:anchor.y,z:anchor.z+Math.sin(i*Math.PI/4)*r});
+  const finite=point&&['x','y','z'].every(axis=>Number.isFinite(point[axis]));
+  const anchor=named?named.getWorldPosition(new THREE.Vector3()):finite?point:builderBaseSpawn(environment)||center;
+  const candidates=[anchor,builderBaseSpawn(environment),{x:center.x,y:anchor.y,z:center.z}].filter(Boolean);
+  for(let r=1;r<=6;r++)for(let i=0;i<8;i++)candidates.push({x:anchor.x+Math.cos(i*Math.PI/4)*r,y:anchor.y,z:anchor.z+Math.sin(i*Math.PI/4)*r});
+  const accept=candidate=>{const floor=this.groundAt(environment,candidate,{entry:true});return floor&&this.hasBodyClearance(environment,floor,PLAYER_RADIUS+.08)?floor:null;};
   for(const clearance of [.8,PLAYER_RADIUS+.08])for(const candidate of candidates){const floor=this.groundAt(environment,candidate,{entry:true});if(floor&&this.hasBodyClearance(environment,floor,clearance))return floor;}
-  throw Object.assign(Error('This map has no safe ground-floor entry.'),{statusCode:409});
+  // A moved base, distant decoration or blocked centre must not strand a valid
+  // floor outside the small entry search. Sample real mesh footprints first.
+  const fallback=[];
+  for(const mesh of world.floors.slice(0,256)){const box=new THREE.Box3().setFromObject(mesh);if(!box.isEmpty())fallback.push(box.getCenter(new THREE.Vector3()));}
+  for(let x=0;x<11;x++)for(let z=0;z<11;z++)fallback.push({x:bounds.min.x+(x+.5)*(bounds.max.x-bounds.min.x)/11,y:anchor.y,z:bounds.min.z+(z+.5)*(bounds.max.z-bounds.min.z)/11});
+  fallback.sort((a,b)=>Math.hypot(a.x-anchor.x,a.z-anchor.z)-Math.hypot(b.x-anchor.x,b.z-anchor.z));
+  for(const candidate of fallback){const floor=accept(candidate);if(floor)return floor;}
+  throw Object.assign(Error('This map has no safe ground-floor entry.'),{statusCode:409,code:'MAP_ENTRY_UNAVAILABLE'});
  }
  encounterSpawn(environment,point,center,occupied=[],{enemy=false,players=[center]}={}) {
   if(!enemy&&!builderBaseEnvironment(environment)&&!environment.modelUrl&&!environment.modelUrls?.length)return point;
@@ -155,7 +165,18 @@ export class ServerBuilderCollision {
   if(builderBaseEnvironment(environment)||!environment.builderScene&&!environment.proceduralLand)return this.safeSpawn(environment,point);
   const world=this.world(environment),terrain=world.floors.filter(mesh=>mesh.name.startsWith('BUILDER_WALKABLE_FLOOR'));
   const bounds=new THREE.Box3();terrain.forEach(mesh=>bounds.expandByObject(mesh));
-  for(let radius=0;radius<=12;radius+=2)for(let step=0;step<(radius?8:1);step++){const x=Math.max(bounds.min.x+.5,Math.min(bounds.max.x-.5,point.x+Math.cos(step*Math.PI/4)*radius)),z=Math.max(bounds.min.z+.5,Math.min(bounds.max.z-.5,point.z+Math.sin(step*Math.PI/4)*radius));const hit=new THREE.Raycaster(new THREE.Vector3(x,1000,z),new THREE.Vector3(0,-1,0)).intersectObjects(terrain,false)[0];if(!hit)continue;const y=hit.point.y;const dynamic=Object.values(objects).filter(object=>!object.deleted&&!object.open).map(object=>{const size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);return {box:new THREE.Box3(new THREE.Vector3(...object.position.map((n,i)=>n-size[i]/2)),new THREE.Vector3(...object.position.map((n,i)=>n+size[i]/2)))};});const blocked=[...world.walls,...dynamic].some(({box,objectId})=>{const actor=objectId&&actors[objectId];return !(actor&&(actor.open||!actor.active))&&x>box.min.x-.35&&x<box.max.x+.35&&z>box.min.z-.35&&z<box.max.z+.35&&y<box.max.y-.05&&y+1.8>box.min.y;});if(!blocked)return {x,y:y+PLAYER_FLOOR_CLEARANCE,z};}
+  const candidates=[],entry={x:Number(point?.x)||0,z:Number(point?.z)||0};
+  if(!bounds.isEmpty()){
+   for(let radius=0;radius<=12;radius+=2)for(let step=0;step<(radius?8:1);step++)candidates.push({x:Math.max(bounds.min.x+.5,Math.min(bounds.max.x-.5,entry.x+Math.cos(step*Math.PI/4)*radius)),z:Math.max(bounds.min.z+.5,Math.min(bounds.max.z-.5,entry.z+Math.sin(step*Math.PI/4)*radius))});
+   for(let x=0;x<11;x++)for(let z=0;z<11;z++)candidates.push({x:bounds.min.x+(x+.5)*(bounds.max.x-bounds.min.x)/11,z:bounds.min.z+(z+.5)*(bounds.max.z-bounds.min.z)/11});
+  }
+  const dynamic=Object.values(objects).filter(object=>!object.deleted&&!object.open).map(object=>{const size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);return {box:new THREE.Box3(new THREE.Vector3(...object.position.map((n,i)=>n-size[i]/2)),new THREE.Vector3(...object.position.map((n,i)=>n+size[i]/2)))};});
+  for(const {x,z}of candidates){
+   const hit=new THREE.Raycaster(new THREE.Vector3(x,bounds.max.y+100,z),new THREE.Vector3(0,-1,0)).intersectObjects(terrain,false).find(hit=>hit.face?.normal.clone().transformDirection(hit.object.matrixWorld).y>.55);
+   if(!hit)continue;const y=hit.point.y;
+   const blocked=[...world.walls,...dynamic].some(({box,objectId})=>{const actor=objectId&&actors[objectId];return !(actor&&(actor.open||!actor.active))&&x>box.min.x-.35&&x<box.max.x+.35&&z>box.min.z-.35&&z<box.max.z+.35&&y<box.max.y-.05&&y+1.8>box.min.y;});
+   if(!blocked)return {x,y:y+PLAYER_FLOOR_CLEARANCE,z};
+  }
   throw Object.assign(new Error('This meeting location has no safe arrival point.'),{statusCode:409});
  }
  resolve(environment,previous,next,actors={},objects={}){

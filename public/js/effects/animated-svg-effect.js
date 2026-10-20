@@ -1,4 +1,4 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
+import * as THREE from '../../vendor/three/three.module.min.js';
 
 function svgDataUri(markup) {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup.trim())}`;

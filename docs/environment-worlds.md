@@ -80,3 +80,25 @@ npm run optimize:environment -- input.glb output.glb
 ```
 
 The script uses glTF-Transform and meshoptimizer when the optional packages are installed. It deduplicates data, prunes unused data, welds/reorders meshes for vertex-cache efficiency, resizes oversized textures using `MUZIKAZ_ENVIRONMENT_TEXTURE_MAX` (default `2048`), and reports before/after file sizes and glTF inspection data. It always writes a separate output file and does not intentionally remove animations, marker nodes, materials, or hierarchy.
+
+### Builder launch reliability
+
+Builder test/publish links retain an explicitly selected solo mode through the
+world directory. Multiplayer remains the default for existing shared maps;
+hockey and arcade destinations use their native pages. Atlas registration does
+not change these launch choices.
+
+The explorer, collision code, enemy effects and model loaders use the bundled
+Three.js r160 runtime. Draco, Basis/KTX2 and Meshopt decoders are served from
+`public/vendor/three`, so importing the game engine does not require a CDN.
+Run `node --test test/game-runtime-local.test.mjs test/world-directory.test.mjs`
+and `python3 test/builder-launch.browser.py` after `npm run build` to check
+routing and real solo/multiplayer publication, startup and walking with external
+browser requests blocked.
+The explorer also supplies its RAD-TOX on/off preference in the room join itself,
+avoiding a second startup command after initial scene projection. Rejoins retain
+the latest toggle preference. An off join does not create a background encounter.
+Explicit Builder links resolve their map through `/api/environments/:id` rather
+than racing the full world list against a five-second timeout. Live rooms serve
+cached map metadata immediately while one background directory refresh runs;
+a cold or unknown destination waits for that shared refresh.
