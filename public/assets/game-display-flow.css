@@ -1,6 +1,6 @@
 .house-stage .game-display-flow{position:absolute;z-index:24;inset:auto 8px max(8px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px;max-width:640px;max-height:calc(100% - 72px);margin-inline:auto;overflow-y:auto;pointer-events:none;box-sizing:border-box}
 .house-stage .game-display-flow>*{flex-shrink:0}
-.house-stage .game-display-flow>.basketball-hud,.house-stage .game-display-flow>.firing-range-hud,.house-stage .game-display-flow>.hockey-sports-bar,.house-stage .game-display-flow>.game-live-connection{position:static!important;inset:auto!important;transform:none!important;width:auto!important;max-width:100%;margin:0!important;box-sizing:border-box;pointer-events:auto}
+.house-stage .game-display-flow>.owned-placement-controls,.house-stage .game-display-flow>.basketball-hud,.house-stage .game-display-flow>.firing-range-hud,.house-stage .game-display-flow>.hockey-sports-bar,.house-stage .game-display-flow>.game-live-connection{position:static!important;inset:auto!important;transform:none!important;width:auto!important;max-width:100%;margin:0!important;box-sizing:border-box;pointer-events:auto}
 .house-stage .game-display-flow-actions{display:flex;align-items:flex-end;gap:8px;pointer-events:none}
 .house-stage .game-display-flow-actions>.nearby-gameplay-actions{position:static;inset:auto;flex:1 1 0;min-width:0;margin:0}
 .house-stage .game-display-flow-actions>.rad-tox-fire-trigger{position:static!important;inset:auto!important;transform:none!important;flex:0 0 64px;margin:0;pointer-events:auto}
