@@ -208,7 +208,7 @@ body.arcade-clear-display>main,body.arcade-clear-display>footer{display:none}
 .arcade-display-toolbar{position:fixed;top:max(8px,env(safe-area-inset-top));right:8px;z-index:30;display:flex;gap:4px}
 .arcade-display-toolbar button,.arcade-display-popup>header button{display:grid;place-items:center;width:44px!important;min-width:44px;height:44px;min-height:44px;padding:8px!important;border:1px solid #819c6880;background:#102521ed;color:#e7f8c8;transform:none!important;touch-action:manipulation}
 body.arcade-clear-display .arcade-display-toolbar #camera-toggle{position:static!important;inset:auto!important;transform:none!important;margin:0}
-body.arcade-clear-display:not(.playing) .arcade-display-toolbar #closegame{display:none}
+body.arcade-clear-display:not(.playing):not(.riding) .arcade-display-toolbar #closegame{display:none}
 body.arcade-clear-display.playing>header{display:none}
 body.arcade-clear-display #game .game-head{top:8px;left:8px;right:252px;padding:6px;background:transparent;border:0;backdrop-filter:none}
 body.arcade-clear-display #game .game-head .eyebrow{display:none}
