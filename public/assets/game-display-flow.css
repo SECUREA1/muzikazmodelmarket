@@ -16,3 +16,5 @@
 .house-stage .game-display-flow:has(>.basketball-hud:not([hidden]))>.game-display-flow-actions{order:-1;justify-content:flex-end;}
 .house-stage .game-display-flow:has(>.basketball-hud:not([hidden]))>.game-live-connection{order:-2;}
 .house-stage .game-display-flow:has(>.basketball-hud:not([hidden])) .rad-tox-fire-trigger{flex-basis:44px;width:44px;height:44px;padding:8px;}
+
+.house-stage .game-display-flow:has(>.basketball-hud:not([hidden])){overflow:visible;}

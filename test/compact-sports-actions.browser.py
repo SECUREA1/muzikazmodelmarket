@@ -20,9 +20,12 @@ try:
    hockey_style=re.search(r"compactStyle.textContent='(.*?)';",Path('public/js/hockey-game.js').read_text(),re.S).group(1)
    page.add_style_tag(content=hockey_style)
    for panel in page.locator('.sports-action-bar').all():
+    panel.locator('.sports-collapse').click()
+    page.wait_for_timeout(100)
     header=panel.locator('.sports-action-header').bounding_box();row=panel.locator('.sports-action-tools').bounding_box();primary=panel.locator('.sports-primary-trigger').bounding_box()
     assert header['y']+header['height']<=primary['y']+1
     assert row['height']<=48,(width,row)
+    assert panel.locator('.sports-action-tools > button').count()==1
     assert panel.locator('.sports-action-tools .rad-tox-game-toggle').count()==0
     assert panel.locator('.sports-action-tools .sports-collapse').count()==0
     assert panel.locator('.sports-action-tools').evaluate('(row)=>row.scrollWidth<=row.clientWidth+1')
@@ -30,9 +33,6 @@ try:
     assert scoreboard.is_visible()
     score_text=scoreboard.inner_text()
     score_box=scoreboard.bounding_box()
-    for button in panel.locator('.sports-action-header > button').all():
-     box=button.bounding_box()
-     assert box['y']+box['height']<=score_box['y']+1,(width,box,score_box)
     assert score_box['width']>=panel.bounding_box()['width']-2
     if panel.locator('.basketball-team-score span').count():
      assert panel.locator('.basketball-team-score span').first.evaluate('(el)=>getComputedStyle(el).whiteSpace')=='nowrap'
@@ -44,7 +44,7 @@ try:
     assert panel.locator('.sports-primary-trigger').is_visible()
     panel.locator('.sports-collapse').click()
     assert scoreboard.is_visible()
-   assert page.locator('.sports-action-header .basketball-aim').count()==1
+   assert page.locator('.sports-action-utilities .basketball-aim').count()==1
    assert not errors,errors
    if width==390:page.screenshot(path='/tmp/compact-sports-actions.png')
    page.close()

@@ -42,3 +42,18 @@
 .sports-action-header>.basketball-score-strip,.sports-action-header>.scoreboard{order:3;flex:1 0 100%;width:100%;box-sizing:border-box;min-height:28px;}
 .sports-action-header .basketball-team-score span{white-space:nowrap;word-break:normal;overflow-wrap:normal;}
 .sports-action-header .basketball-clock{white-space:nowrap;}
+
+/* Bottom score and action rows, with utilities at the playfield corner. */
+.house-stage .sports-action-header,.rad-sports-viewport .sports-action-header{position:static;display:flex;flex-wrap:wrap;gap:4px;}
+.sports-action-header>.basketball-score-strip,.sports-action-header>.scoreboard{order:0;background:#091321ed!important;border-radius:8px;padding:5px!important;}
+.sports-action-utilities{order:1;display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:4px;width:100%;pointer-events:none;}
+.sports-action-utilities>*{pointer-events:auto;}
+.sports-action-utilities .basketball-aim,.house-stage .sports-action-utilities .game-camera-toggle,.house-stage .sports-action-utilities .broadcast-controls{position:static!important;inset:auto!important;transform:none!important;margin:0;}
+.sports-action-utilities .broadcast-controls{display:flex;flex-wrap:wrap;gap:4px;}
+.sports-action-bar.is-collapsed>.sports-action-modes{display:none;}
+.sports-action-bar>.sports-action-tools{padding-top:0;}
+.sports-action-bar>.sports-action-tools>.sports-primary-trigger{width:100%!important;}
+
+.sports-action-bar{position:relative;}
+
+.sports-action-utilities{position:absolute;top:var(--sports-header-top,8px);right:0;left:0;width:100%;z-index:26;}

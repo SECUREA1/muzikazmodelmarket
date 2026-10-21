@@ -7,6 +7,6 @@ mountBasketballHud({stage,onAction(){},radToxToggle:rad});stage.querySelector('.
 window.aimOpens=0;window.throwAim=mountBasketballAim({stage,onOpen:()=>window.aimOpens++});stage.querySelector('.basketball-aim').hidden=false;
 const hockey=mountSportsActions({parent:document.querySelector('.hockey-sports-bar'),modes:['auto','shoot','pass','steal','check','collect'],onMode(){},onTrigger(){},label:'Hockey quick actions'});
 const score=document.createElement('div');score.className='scoreboard';score.innerHTML='<strong>HOME 0</strong><span id="clock">12:00</span><strong>0 AWAY</strong>';hockey.header.prepend(score);
-const lobby=document.createElement('button');lobby.className='sports-icon-button';lobby.innerHTML=sportIcon('lobby');hockey.row.append(lobby);
+const lobby=document.createElement('button');lobby.className='sports-icon-button';lobby.innerHTML=sportIcon('lobby');hockey.utilities.append(lobby);
 document.body.dataset.ready='true';
 </script></body></html>

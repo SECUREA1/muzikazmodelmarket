@@ -81,7 +81,7 @@ export function mountBasketballHud({ stage, onAction, onTriggerMode = () => {}, 
   actions.querySelector('.basketball-manual-actions')?.remove();
   trigger.hidden=true;quickActions.hidden=true;
   const actionBar=mountSportsActions({parent:root,modes:['auto','shoot','pass','toss','catch','steal'],onMode:onTriggerMode,onTrigger,onOverride,label:'Basketball quick actions'});
-  matchButton.classList.add('sports-icon-button');actionBar.row.append(matchButton);actionBar.header.prepend(root.querySelector('.basketball-score-strip'));
+  matchButton.classList.add('sports-icon-button');actionBar.utilities.append(matchButton);actionBar.header.prepend(root.querySelector('.basketball-score-strip'));
   match.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();match.close();}});
   stage.append(root);
   const rules = document.createElement('dialog');rules.className='basketball-rules';rules.setAttribute('aria-labelledby','basketball-rules-title');
