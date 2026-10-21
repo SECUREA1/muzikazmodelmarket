@@ -53,11 +53,14 @@ with tempfile.TemporaryDirectory(prefix='commons-landscape-') as directory:
                 assert not state['world']['cleanSportsWorld'],'Ordinary Commons tools must remain available.'
                 assert state['player']['position'][1]>=-.001
                 assert all(toggle.is_hidden() for toggle in page.get_by_role('button',name='RAD-TOX gaming off',exact=True,include_hidden=True).all())
+                for view in page.evaluate('captureCommonsViews()'):
+                    assert len(view['data'])>5000
+                    print('COMMONS_VIEW='+json.dumps(view,separators=(',',':')),flush=True)
                 initial_health=state['health']
                 trigger=page.get_by_role('button',name='Fire selected weapon',exact=True)
                 assert trigger.is_visible()
                 def is_shot(response):
-                    if '/gameplay' not in response.url or response.request.method!='POST': return False
+                    if not response.ok or '/gameplay' not in response.url or response.request.method!='POST': return False
                     try: return response.request.post_data_json.get('action')=='fire'
                     except Exception: return False
                 with page.expect_response(is_shot,timeout=20000) as shot:
@@ -66,9 +69,6 @@ with tempfile.TemporaryDirectory(prefix='commons-landscape-') as directory:
                 assert response.ok,response.text()
                 receipt=response.json()['data'];assert receipt['result']['tool']=='laser'
                 assert receipt['radTox'] is None
-                for view in page.evaluate('captureCommonsViews()'):
-                    assert len(view['data'])>5000
-                    print('COMMONS_VIEW='+json.dumps(view,separators=(',',':')),flush=True)
                 page.locator('#house-explorer-canvas').focus()
                 before=page.evaluate('MuzikazHouseExplorer.snapshot().player.position')
                 page.keyboard.down('w');page.wait_for_timeout(900);page.keyboard.up('w')
