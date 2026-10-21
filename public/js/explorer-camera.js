@@ -1,3 +1,4 @@
+import {broadcastCameraPose} from './broadcast-camera.js';
 // Presentation coordinates stay local to the browser. Shared rooms continue to
 // receive ordinary player-relative movement and eye-origin tool directions.
 export function explorerMovementInput(input, yaw = 0, topDown = false, viewYaw = 0) {
@@ -22,9 +23,10 @@ export function explorerTopDownPose(position, aspect = 1, zoom = 68) {
   return { position: [position.x, position.y + height, position.z], target: [position.x, position.y, position.z], up: [0, 0, -1], cutHeight: position.y + 2.6 };
 }
 
-export function explorerBroadcastPose(position, aspect = 1, zoom = 1, yaw = 0) {
-  const distance = 28 * Math.max(.35, Math.min(4, Number(zoom) || 1)) / Math.min(1, Math.max(.45, aspect));
-  return {position: [position.x + Math.sin(yaw)*distance, position.y + distance*.85, position.z + Math.cos(yaw)*distance], target: [position.x, position.y+1, position.z], up: [0,1,0], cutHeight: Infinity};
+export function explorerBroadcastPose(position, aspect = 1, zoom = 1, yaw = 0, {court=false}={}) {
+ const target=court?[0,1.8,0]:[position.x,position.y+1,position.z];
+ const pose=broadcastCameraPose({target,aspect,zoom,yaw,width:court?17:24,depth:court?31:24,height:court?4:3});
+ return {...pose,cutHeight:court?6:position.y+4};
 }
 
 export function explorerWalkingYaw(direction, fallback = 0) {

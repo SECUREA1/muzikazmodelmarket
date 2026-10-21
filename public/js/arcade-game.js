@@ -1,3 +1,4 @@
+import {explorerBroadcastPose} from './explorer-camera.js';
 import {mountArcadeDisplayControls} from './arcade-display-controls.js';
 import {mountSportsRoomBuilding} from './sports-room-building.js';
 import {mountXRGameControls} from './xr-game-controls.js';
@@ -63,7 +64,7 @@ await applySportsSurfaces(park.root,{theme:'arcade',renderer});
 if(builderObjects)await applySportsSurfaces(builderObjects.root,{theme:'arcade',renderer});
 const presentation=createArcadeGamePresentation({scene,park,config});
 const walker=createArcadeWalker();
-let cameraMode=readGameCameraMode('first-person'),explorationMode=cameraMode==='top-down'?'overview':'walk',nearby=null,activeInteraction=null;
+let cameraMode=readGameCameraMode('first-person'),explorationMode=cameraMode!=='first-person'?'overview':'walk',nearby=null,activeInteraction=null;
 let yaw=.62,pitch=.78,distance=61,drag=false,lastX,lastY,moved=0,ride=null,rideRuntime=null,rideConfig=null,ridePhase=null,trainT=0,coasterT=0,parkTime=0,lastParkRender=-Infinity;
 const center=new T.Vector3(0,0,0),desired=new T.Vector3(),frameClock=createArcadeClock(performance.now());
 const walkKeys=new Set(),touchKeys=new Set(),collisionBoxes=[],walkInteractions=[],walkSurfaces=[];
@@ -101,11 +102,11 @@ function updateWalkerGround(){
  walker.ground=height;
 }
 function syncCameraControls(){
- const label=cameraMode==='top-down'?'Top down':'First person',next=cameraMode==='top-down'?'First person':'Top down',button=$('#camera-toggle');
+ const names={'first-person':'First person','top-down':'Top down',broadcast:'Broadcast'},label=names[cameraMode],next=names[nextGameCameraMode(cameraMode)],button=$('#camera-toggle');
  button.textContent='View: '+label;button.title='Switch to '+next+' (V)';button.setAttribute('aria-label',button.title);button.dataset.gameCameraMode=cameraMode;
  button.disabled=ride!==null;if(ride!==null){button.title='Camera locked during ride';button.setAttribute('aria-label',button.title);}
  $('#explore').setAttribute('aria-pressed',String(cameraMode==='first-person'));$('#overview').setAttribute('aria-pressed',String(cameraMode==='top-down'));
- $('#walk-help').textContent=cameraMode==='top-down'?'WASD / arrows to move · Scroll to zoom · V to change view':'WASD / arrows · Drag to look · Shift to run · V to change view';
+ $('#walk-help').textContent=cameraMode!=='first-person'?'WASD / arrows to move · Scroll to zoom · V to change view':'WASD / arrows · Drag to look · Shift to run · V to change view';
 }
 function setExploration(mode){
  explorationMode=mode;drag=false;walkKeys.clear();touchKeys.clear();
@@ -115,7 +116,7 @@ function setExploration(mode){
 function setCameraMode(mode){
  if(ride!==null)return false;
  cameraMode=normalizeGameCameraMode(mode);writeGameCameraMode(cameraMode);
- setExploration(cameraMode==='top-down'?'overview':'walk');
+ setExploration(cameraMode!=='first-person'?'overview':'walk');
  if(game!==null)presentation.setCamera(camera,cameraMode);
  return true;
 }
@@ -124,7 +125,7 @@ function reset(reason='exit'){
  refreshAttractionButtons();
  $('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=false;
  document.body.classList.remove('riding');$('#ridehud').hidden=true;
- camera.up.set(0,1,0);setExploration(cameraMode==='top-down'?'overview':'walk');
+ camera.up.set(0,1,0);setExploration(cameraMode!=='first-person'?'overview':'walk');
 }
 $('#camera-toggle').onclick=()=>setCameraMode(nextGameCameraMode(cameraMode));
 $('#overview').onclick=()=>setCameraMode('top-down');
@@ -192,14 +193,14 @@ function animate(now){
  if(game!==null)updateGame(dt);
  if(ride===null&&game===null){
   const down=(...keys)=>keys.some(key=>walkKeys.has(key)||touchKeys.has(key)||controllerWalkKeys.has(key));
-  const walkingYaw=walker.yaw;if(cameraMode==='top-down')walker.yaw=0;
+  const walkingYaw=walker.yaw;if(cameraMode!=='first-person')walker.yaw=0;
   stepArcadeWalker(walker,dt,{forward:Number(down('KeyW','ArrowUp','forward'))-Number(down('KeyS','ArrowDown','back')),right:Number(down('KeyD','ArrowRight','right'))-Number(down('KeyA','ArrowLeft','left')),sprint:down('ShiftLeft','ShiftRight'),bounds,colliders:collisionBoxes});walker.yaw=walkingYaw;
   updateWalkerGround();nearby=nearestArcadeInteraction(walker,walkInteractions);
   $('#interact').hidden=!nearby;$('#nearby').textContent=nearby?'Enter / E · '+attractions[nearby.index].name:'Walk to an attraction';
  }
  if(ride!==null){let elapsed=dt*instanceRideSpeed(rideRuntime);while(elapsed>0&&session.ride){const step=Math.min(elapsed,.1);elapsed-=step;if(stepArcadeRide(session,step)){reset('complete');toast('Ride complete. Welcome back to the park!');break;}}}
  if(!renderer.xr.isPresenting&&now-lastParkRender<1000/30)return;lastParkRender=now;
- visitorMarker.visible=game===null&&ride===null&&cameraMode==='top-down';visitorMarker.position.set(walker.x,walker.ground+.04,walker.z);
+ visitorMarker.visible=game===null&&ride===null&&cameraMode!=='first-person';visitorMarker.position.set(walker.x,walker.ground+.04,walker.z);
  const phases=animateArcadePark(park.root,parkTime,config);trainT=phases.trainT;coasterT=phases.coasterT;
  for(const part of builderObjects?.rideParts||[]){const speed=arcadeAnimationSpeed(part.userData.arcadeAnimationEnabled,part.userData.arcadeAnimationSpeed);if(speed>0)animateArcadePark(part,parkTime*speed);}
  if(game!==null){
@@ -211,6 +212,10 @@ function animate(now){
   camera.up.copy(rideUp);desired.copy(curve.getPointAt(t)).addScaledVector(rideUp,pose.eyeHeight*rideScale);camera.position.copy(desired);
   if(isTrain){const scenic=curve.getPointAt(t).add(curve.getPointAt((t+.5)%1)).multiplyScalar(.5).addScaledVector(rideUp,(pose.eyeHeight+.8)*rideScale);camera.lookAt(scenic);}else camera.lookAt(curve.getPointAt((t+pose.lookAhead)%1).addScaledVector(rideUp,.9*rideScale));
   $('#rideprogress').value=session.ride?.progress||0;
+ }else if(cameraMode==='broadcast'){
+  const pose=explorerBroadcastPose({x:walker.x,y:walker.ground,z:walker.z},camera.aspect,distance/61);
+  if(camera.fov!==pose.fov){camera.fov=pose.fov;camera.updateProjectionMatrix();}
+  camera.position.fromArray(pose.position);camera.up.fromArray(pose.up);camera.lookAt(...pose.target);
  }else if(explorationMode==='walk'){
   if(camera.fov!==65){camera.fov=65;camera.updateProjectionMatrix();}
   camera.up.set(0,1,0);camera.position.set(walker.x,walker.ground+walker.eyeHeight,walker.z);
@@ -314,7 +319,7 @@ for(const button of document.querySelectorAll('[data-game-key]')){button.onpoint
 
 refreshAttractionButtons();$('#overview').disabled=$('#explore').disabled=$('#park-settings-button').disabled=$('#camera-toggle').disabled=false;
 window.NeonJunction=Object.freeze({snapshot:()=>({mode:session.mode,attraction:session.attraction,ride:session.ride?{...session.ride}:null,game,score,remaining,gameElapsed,ended,attempts,triggerMode,gameStarted,lobbyOpen:lobby.open,liveGame,localSpectator,pointer:{...pointer},shot:shot?{...shot}:null,basketball:basketballState,points:total,visited:[...seen],camera:camera.position.toArray(),cameraUp:camera.up.toArray(),cameraQuaternion:camera.quaternion.toArray(),cameraFov:camera.fov,cameraAspect:camera.aspect,trainT,coasterT,ridePhase,viewMode:game!==null?'game':ride!==null?'ride':explorationMode,cameraMode,cameraLocked:ride!==null,playerPosition:[walker.x,walker.ground+walker.eyeHeight,walker.z],walking:{...walker,nearby:nearby?.id||null,colliders:collisionBoxes.length},presentation:presentation.snapshot(),graphics:{park:park.root.userData.sportsSurfaceStatus||null,builder:builderObjects?.root.userData.sportsSurfaceStatus||null,game:presentation.root?.userData.sportsSurfaceStatus||null},render:{fps:30,pixelRatio:renderer.getPixelRatio(),quality,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles},puck:puck?{...puck}:null,balls:balls.map(b=>({...b})),targets:targets.map(t=>({...t}))}),ready:true});
-setExploration(cameraMode==='top-down'?'overview':'walk');
+setExploration(cameraMode!=='first-person'?'overview':'walk');
 // Always arrive in exploration, including links to an individual attraction.
 // Games and rides require the explicit Enter/E or attraction-menu action.
 const vrRig=new T.Group();scene.add(vrRig);vrRig.add(camera);

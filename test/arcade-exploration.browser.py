@@ -15,9 +15,13 @@ try:
   page.goto(f'http://127.0.0.1:{server.server_port}/arcade.html?environment=neon-junction&attraction=billiards&mode=solo')
   page.wait_for_function('window.NeonJunction&&document.body.classList.contains("arcade-dashboard")',timeout=45000)
   assert page.evaluate('NeonJunction.snapshot().game') is None;assert page.locator('.arcade-display-popup[open]').count()==0
+  page.locator('#camera-toggle').click();page.locator('#camera-toggle').click()
+  page.wait_for_function("NeonJunction.snapshot().cameraMode==='broadcast'&&NeonJunction.snapshot().cameraFov===55")
+  assert page.evaluate('NeonJunction.snapshot().camera[1]>NeonJunction.snapshot().playerPosition[1]+8')
   page.locator('.thumbstick-base').first.tap();assert page.evaluate('NeonJunction.snapshot().game') is None
   menu=page.get_by_role('button',name='Arcade menu and match lobby',exact=True);menu.click();page.locator('[data-attraction="billiards"]').click()
   page.wait_for_function('NeonJunction.snapshot().game===4&&NeonJunction.snapshot().gameStarted',timeout=15000);assert page.locator('.arcade-display-popup[open]').count()==0
+  assert page.evaluate("NeonJunction.snapshot().presentation.cameraMode==='broadcast'")
   page.locator('#closegame').click();page.wait_for_function('NeonJunction.snapshot().game===null')
   menu.click();page.locator('[data-attraction="train"]').click();page.wait_for_function('NeonJunction.snapshot().ride!==null');assert page.locator('#closegame').is_visible()
   page.locator('#closegame').click();page.wait_for_function('NeonJunction.snapshot().ride===null&&NeonJunction.snapshot().game===null')

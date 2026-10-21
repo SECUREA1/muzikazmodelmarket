@@ -1,3 +1,4 @@
+import {broadcastCameraPose} from './broadcast-camera.js';
 /** Presentation math only: movement remains input to the shared hockey simulation. */
 const number=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
@@ -11,10 +12,7 @@ export function hockeySkateVector(right,forward,heading=Math.PI){
  return {x:(-cos*right+sin*forward)/length,z:(sin*right+cos*forward)/length};
 }
 export function hockeyBroadcastPose(aspect=1.6){
- // Fit both goal lines and both boards at a consistent elevated sideline angle.
- const ratio=clamp(number(aspect,1.6),.3,4),fov=55,angle=55*Math.PI/180,tan=Math.tan(fov*Math.PI/360);
- const distance=Math.max(32/(tan*ratio)+15*Math.cos(angle),15*Math.sin(angle)/tan+15*Math.cos(angle))*1.1;
- return {position:[0,distance*Math.sin(angle),distance*Math.cos(angle)],target:[0,0,0],up:[0,1,0],fov,heading:Math.PI,immersive:false};
+ return {...broadcastCameraPose({width:64,depth:30,height:0,aspect}),heading:Math.PI,immersive:false};
 }
 export function hockeyCameraPose(view,{player,puck,attack=1,heading=hockeyViewHeading(attack),pitch=.3,aspect=1.6}={}){
  const broadcast=hockeyBroadcastPose(aspect),staticViews={lower:[0,7,23],upper:[0,19,34],end:[39,9,0],free:[0,24,34]};

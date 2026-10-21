@@ -1,3 +1,4 @@
+import {broadcastCameraPose} from './broadcast-camera.js';
 import * as T from '../vendor/three/three.module.min.js';
 import {createArcadePart} from './arcade-park.js';
 import {basketballPosition, basketballRelease} from './arcade-runtime.js';
@@ -367,6 +368,11 @@ export function arcadeGameCameraPose(game, mode = 'first-person', {aspect = 1.6,
   const id = gameId(game), definition = cameraDefinitions[id];
   if (!definition) return null;
   const ratio = Math.max(.3, finite(aspect, 1.6));
+  if(mode==='broadcast'){
+    const target=[0,id==='shooting'?1.9:1.5,id==='shooting'?-1.5:0];
+    const pose=broadcastCameraPose({target,width:definition.width,depth:definition.depth,height:3,aspect:ratio});
+    return {mode,eye:pose.position,target:pose.target,up:pose.up,fov:pose.fov,width:definition.width,depth:definition.depth};
+  }
   if (mode === 'top-down') {
     if (id === 'shooting') {
       const target = [0, 1.9, -1.5], eye = [0, 11.5, 6.8], distance = Math.hypot(9.6, 8.3);
