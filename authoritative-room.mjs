@@ -73,6 +73,7 @@ export class AuthoritativeRooms {
    for(const definition of manifest.objects)sim.actors[definition.objectId].destructible=definition.gameplay.destructible===true;
    sim.initialized=true;sim.environmentUpdatedAt=contentUpdatedAt;
   }
+  if((environment.airport?.enabled||environment.builderScene?.layoutMeta?.harbor)&&sim.radTox){for(const [key,actor]of Object.entries(sim.actors))if(actor.radTox)delete sim.actors[key];sim.radTox=null;sim.match=null;sim.projectiles={};}
   if(environment.airport?.enabled)sim.airport ||= {runwayHolder:null,expires:0};
   // Retain native identities for catalog assets, including rooms saved before
   // basketball metadata became part of authoritative actor snapshots.
@@ -202,7 +203,7 @@ export class AuthoritativeRooms {
    for(const [otherId,otherRoom]of Object.entries(allRooms)){if(otherId===id)continue;const previous=otherRoom.simulation?.players[actorId];if(!previous)continue;previous.lastSeen=0;previous.replacedByRoom=id;previous.input={};for(const key of ['heldId','seatedId','vehicleId']){const held=otherRoom.simulation.actors[previous[key]];if(held)held.holderId=null;previous[key]=null;}}
    if(travel){player.lastPortalArrival=travel;delete travelSource.pendingTravel;}
    if(meeting||travel){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.inputEpoch=randomUUID();player.lastInputSequence=-1;player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;player.actorId=actorId;
-   if(environment.airport?.enabled){player.radToxEnabled=false;player.radToxReady=true;}
+   if(environment.airport?.enabled||environment.builderScene?.layoutMeta?.harbor){player.radToxEnabled=false;player.radToxReady=true;}
    if(sim.basketball){player.health=100;if(basketballLateArrival)watchBasketballGame(sim,player,now);else assignBasketballTeam(sim,player,now);}else if(!isDedicatedFiringRange(environment)){player.radToxReady=command.deferRadTox!==true;if(typeof command.radToxEnabled==='boolean')player.radToxEnabled=command.radToxEnabled;if(player.radToxEnabled!==false){startRadTox(sim,environment,now,player.position);if(player.radToxReady)registerParticipant(sim,actorId,player,now);}}
    if(sim.firingRange){if(isDedicatedFiringRange(environment))player.health=100;registerFiringRangeArrival(sim,player,now,rangeWasActive);}
    room.building ||=buildingPolicy(room,environment);if(!room.building.hostId||!sim.players[room.building.hostId]||now-sim.players[room.building.hostId].lastSeen>=15000)room.building.hostId=actorId;
@@ -253,6 +254,25 @@ export class AuthoritativeRooms {
    else if(sim.match?.state==='finished'&&!['input','interact'].includes(command.action))fail('This level has ended. Review the results and start the next level.',409);
    else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
    else if(player.health<=0&&command.action!=='interact')fail('Respawn before acting.',409);
+   else if(command.action==='map-access'){
+    if(!environment.airport?.enabled&&!environment.builderScene?.layoutMeta?.harbor)fail('Map travel is unavailable here.',409);
+    if(player.seatedId||player.vehicleId)fail('Exit your seat or land and leave your vehicle before map travel.',409);
+    if(command.entityId){
+     const target=manifest.actors.find(a=>a.objectId===command.entityId&&a.gameplay.behavior==='vehicle'),entity=sim.actors[command.entityId];
+     if(!target||!entity||entity.active===false||(!isAircraft(entity)&&!isWatercraft(entity)))fail('This craft is unavailable.',409);
+     if(entity.holderId&&entity.holderId!==actorId)fail('Another player is using this craft.',409);
+     if(isAircraft(entity)&&entity.flight?.airborne)fail('Wait until this aircraft has landed.',409);
+     entity.holderId=actorId;player.vehicleId=entity.id;player.position={...entity.position,y:isWatercraft(entity) ? .35 : entity.position.y};player.yaw=entity.rotation?.y||0;
+     result.message='Boarded '+(target.name||'craft')+'. You are in the shared live room.';
+    }else{
+     const meta=environment.builderScene?.layoutMeta||{},place=(meta.locations||meta.commonsLocations||[]).find(location=>location.id===command.locationId);
+     if(!place)fail('Choose a listed map location.',422);
+     const base={x:place.arrival?.x??place.x,y:place.arrival?.y??0,z:place.arrival?.z??place.z};
+     const candidates=[base];for(const radius of [2,4,6,8,10,12])for(let step=0;step<8;step++)candidates.push({...base,x:base.x+Math.cos(step*Math.PI/4)*radius,z:base.z+Math.sin(step*Math.PI/4)*radius});
+     let arrival=null;for(const candidate of candidates){try{const point=this.collision.meetingPosition(environment,candidate,sim.actors,room.objects);if(environment.builderScene?.layoutMeta?.harbor&&point.y<-.05)continue;arrival=point;break;}catch{}}if(!arrival)fail('This location has no clear landing. Choose another location.',409);player.position=arrival;result.message='Arrived at '+place.name+'.';
+    }
+    player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;
+   }
    else if(command.action==='teleport-floor'){
     if(player.seatedId||player.vehicleId)fail('Leave the seat or vehicle before teleporting.',409);
     if(player.basketballRole==='spectator'&&sim.basketball?.state==='live'){if(!command.position||!['x','y','z'].every(axis=>Number.isFinite(command.position[axis])))fail('Choose a valid spectator floor position.',422);const accepted=constrainBasketballSpectator(player.position,command.position,sim,player);if(basketballSpectatorRestricted(command.position,sim)||distance(accepted,command.position)>.01)fail('Spectators can teleport between the stands and benches outside the active court.',409);}
