@@ -1,7 +1,7 @@
 // Predict only the local walking view. The server still owns collisions and position.
 // Reconcile against historical motion, then ease the visible correction separately.
 export class WalkingMotion {
- constructor(){this.reset();}
+ constructor({immediate=false,staleAfter=500,staleFade=200}={}){this.immediate=immediate;this.staleAfter=staleAfter;this.staleFade=staleFade;this.reset();}
  reset(){this.position=null;this.history=[];this.velocity={x:0,z:0};this.offset={x:0,z:0};this.lastSnapshot=-Infinity;this.receivedAt=0;this.clockOffset=null;this.bestRtt=Infinity;}
  reconcile(position,{serverTime,simulationTime=serverTime,sentAt,receivedAt}){
   if(Number.isFinite(sentAt)&&Number.isFinite(serverTime)){
@@ -46,12 +46,12 @@ export class WalkingMotion {
   if(!this.position)return target;
   const dt=Math.max(0,Math.min(.05,delta));
   const forward=Math.max(-1,Math.min(1,Number(input.forward)||0)),side=Math.max(-1,Math.min(1,Number(input.side)||0));
-  const yaw=Number(input.yaw)||0,fade=Math.max(0,Math.min(1,(500-(now-this.receivedAt))/200)),scale=speed*fade/Math.max(1,Math.hypot(forward,side));
+  const yaw=Number(input.yaw)||0,age=now-this.receivedAt,fade=this.staleFade>0?Math.max(0,Math.min(1,(this.staleAfter-age)/this.staleFade)):age<=this.staleAfter?1:0,scale=speed*fade/Math.max(1,Math.hypot(forward,side));
   const desired={x:(-Math.sin(yaw)*forward+Math.cos(yaw)*side)*scale,z:(-Math.cos(yaw)*forward-Math.sin(yaw)*side)*scale};
   const decay=Math.exp(-35*dt),correctionDecay=Math.exp(-18*dt);
   for(const axis of ['x','z']){
-   this.position[axis]+=desired[axis]*dt+(this.velocity[axis]-desired[axis])*(1-decay)/35;
-   this.velocity[axis]=desired[axis]+(this.velocity[axis]-desired[axis])*decay;
+   this.position[axis]+=this.immediate?desired[axis]*dt:desired[axis]*dt+(this.velocity[axis]-desired[axis])*(1-decay)/35;
+   this.velocity[axis]=this.immediate?desired[axis]:desired[axis]+(this.velocity[axis]-desired[axis])*decay;
    this.offset[axis]*=correctionDecay;
    target[axis]=this.position[axis]+this.offset[axis];
   }

@@ -30,11 +30,15 @@ the same horizontal sweep and triangle rules. Cached spatial bins avoid scanning
 the entire map for every player on every tick. Walking never calls the spawn
 search to repair a contact.
 
-The browser displays only accepted server positions through `ServerMotion`, with
-a fixed 50 ms interpolation buffer and no extrapolation. The local camera does not adapt playback speed or apply movement prediction. A second local movement
-predictor must not run alongside it: that would move the view through walls and
-require a later correction. Ordinary snapshots do not reset the view based on
-distance. Deliberate relocations use `movementRevision`/explicit resets.
+The local walking view responds on every render frame using current controls,
+without a snapshot playback buffer or a wait for the next HTTP response. Every
+predicted step and visible correction passes through the same swept capsule
+collision query against map and placed geometry. Server snapshots reconcile
+movement history; they do not replay an old walking position into the camera.
+Local jumps use the server's gravity and jump speed. Seats, vehicles, respawns,
+and map travel reset local walking; deliberate relocations apply immediately.
+A stale connection stops prediction instead of letting a disconnected player
+keep walking. Keyboard, touch and release edges request server input immediately.
 
 ## Geometry and updates
 
@@ -94,7 +98,9 @@ Each level runs three regular waves at a stable target count before its configur
 boss, without doubling targets at every refill. Wave transitions are scheduled
 once, and pending wave or level timers cannot act after a map change or reset.
 The solo house keeps the swept capsule walking and stair view smoothing from
-`95d98547`; the fast shared baseline is `bd44fd5e` (October 19, 2026).
+`95d98547`; local walking no longer uses the snapshot-only camera introduced by
+`95d98547` or the fixed-buffer override from `bd44fd5e`. The existing swept
+collision fixes remain in use for immediate local presentation and shared physics.
 
 Spawn recalibration version 4 retries verified mesh footprints and a bounded map
 grid when the saved entry, centre and nearby ring are obstructed. Procedural

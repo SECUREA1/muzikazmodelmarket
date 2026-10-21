@@ -1,33 +1,50 @@
-import {mountThumbstick} from '../public/js/thumbstick-input.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {isAircraft} from '../public/js/aircraft-flight.js';
+import {flightStickAxes} from '../public/js/aircraft-input.js';
 const {walkingStick,walkingSprint} = await import('data:text/javascript;base64,' + Buffer.from(readFileSync(new URL('../public/js/walking-motion.js', import.meta.url), 'utf8')).toString('base64'));
 const source = readFileSync(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
 function controller(name) {
-  const handlers = {}, knob = {style: {}}, input = {leftX:0,leftY:0}, flushes = [];
+  const handlers = {}, knob = {style: {}}, input = {leftX:0,leftY:0,rightX:0,rightY:0}, flushes = [];
   let shots = 0, jumps = 0;
   const stick = {querySelector: () => knob, getBoundingClientRect: () => ({left: 0, top: 0, width: 100, height: 100}), classList: {add(){}, remove(){}}, addEventListener(type, fn){handlers[type] = fn;}};
-  const context = vm.createContext({mountThumbstick,envLoader:{world:{}},gameplayOverlayOpen:()=>false,walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(){}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, safelyCapturePointer(){}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
+  const context = vm.createContext({isAircraft,flightStickAxes,serverActors:{},serverVehicleId:null,walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(){}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, safelyCapturePointer(){}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
   vm.runInContext(source.slice(source.indexOf('  function setupThumbstick(name)'), source.indexOf("  setupThumbstick('left')")), context);
   context.setupThumbstick(name);
-  return {input, flushes, send: (type,x,y) => handlers[type]({type, pointerId: 1, clientX: x, clientY: y, preventDefault(){}}), shots: () => shots, jumps: () => jumps};
+  return {input, flushes, send: (type,x,y) => handlers[type]({type, button:0, pointerId: 1, clientX: x, clientY: y, preventDefault(){}}), shots: () => shots, jumps: () => jumps};
 }
-test('left and right sticks have the same centered linear response, including small movements', () => {
+test('walking keeps an 8px neutral zone while the look stick retains fine linear response', () => {
   const left=controller('left'),right=controller('right');
-  for(const [type,x,y]of [['pointerdown',50,50],['pointermove',50,49],['pointermove',50,35.5],['pointermove',50,0]]){
-    left.send(type,x,y);right.send(type,x,y);assert.equal(left.input.leftX,right.input.rightX);assert.equal(left.input.leftY,right.input.rightY);
+  left.send('pointerdown',50,50);right.send('pointerdown',50,50);
+  for(const offset of [1,7,8]){
+    left.send('pointermove',50,50-offset);right.send('pointermove',50,50-offset);
+    assert.equal(left.input.leftX,0);assert.equal(left.input.leftY,0);
+    assert.ok(Math.abs(right.input.rightY+offset/29)<1e-10);
   }
-  assert.equal(left.input.leftY,-1);left.send('pointercancel',50,0);assert.equal(left.input.leftY,0);assert.equal(left.shots(),0);
+  left.send('pointermove',50,31.5);right.send('pointermove',50,35.5);
+  assert.ok(Math.abs(left.input.leftY+.5)<1e-10);
+  assert.ok(Math.abs(right.input.rightY+.5)<1e-10);
+  left.send('pointermove',50,0);right.send('pointermove',50,0);
+  assert.equal(left.input.leftY,-1);assert.equal(right.input.rightY,-1);
+  left.send('pointercancel',50,0);right.send('pointercancel',50,0);
+  assert.equal(left.input.leftY,0);assert.equal(right.input.rightY,0);
+  assert.equal(left.shots(),1);assert.equal(right.jumps(),1);
 });
-test('tap still shoots and right look and jump retain their response', () => {
+test('walking anchors at the touch origin and shoot and jump happen immediately on press', () => {
   const left = controller('left');
-  left.send('pointerdown', 30, 20); left.send('pointerup', 30, 20);
+  left.send('pointerdown', 30, 20);
+  assert.equal(left.input.leftX,0);assert.equal(left.input.leftY,0);
+  assert.equal(left.shots(),1);
+  left.send('pointermove',30,1.5);
+  assert.ok(Math.abs(left.input.leftY+.5)<1e-10);
+  left.send('pointerup', 30, 1.5);
   assert.equal(left.shots(), 1);
   const right = controller('right');
   right.send('pointerdown', 50, 35.5);
   assert.ok(Math.abs(right.input.rightY + .5) < 1e-10);
+  assert.equal(right.jumps(),1);
   right.send('pointerup', 50, 35.5);
   assert.equal(right.jumps(), 1);
 });
@@ -71,12 +88,13 @@ test('left stick supports strafe, reverse, bounded diagonal movement, and captur
   c.send('lostpointercapture',100,0);
   assert.equal(c.input.leftX,0);
   assert.equal(c.input.leftY,0);
-  assert.equal(c.shots(),0);
+  assert.equal(c.shots(),1);
 });
 
 test('left-stick edges flush immediately while continued drags share the normal update stream', () => {
   const c=controller('left');
   c.send('pointerdown',50,50);
+  c.send('pointermove',50,43);assert.equal(c.flushes.at(-1),false);
   c.send('pointermove',50,30);assert.equal(c.flushes.at(-1),true);
   c.send('pointermove',50,25);assert.equal(c.flushes.at(-1),false);
   c.send('pointerup',50,25);assert.equal(c.flushes.at(-1),true);

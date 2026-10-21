@@ -69,7 +69,7 @@ test('space scaling with keepPlayer disabled preserves the complete player pose'
 test('vehicle exit restores standing capsule dimensions, visible pose, and fresh grounding',()=>{
   const context=fixture();let options,avatarVisible=false;
   Object.assign(context,{
-    BuilderVehicleController:class{constructor(value){options=value;}},
+    BuilderVehicleController:class{constructor(value){options=value;}toggle(){return false;}},
     builderDecor:{},camera:{},keys:new Set(),mobile:new Set(),thumbInput:{leftX:0,leftY:0},
     setPlayerAvatarVisible:value=>{avatarVisible=value;}
   });
