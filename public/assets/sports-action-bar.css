@@ -57,3 +57,9 @@
 .sports-action-bar{position:relative;}
 
 .sports-action-utilities{position:absolute;top:var(--sports-header-top,8px);right:0;left:0;width:100%;z-index:26;}
+
+/* Keep tuner and collapse beside the primary action in one bottom row. */
+.sports-action-bar>.sports-action-tools{flex-wrap:nowrap;gap:4px;}
+.sports-action-bar>.sports-action-tools>.sports-primary-trigger{flex:1 1 0;width:auto!important;min-width:0;}
+.sports-action-tools>.sports-collapse,.sports-action-tools>.basketball-aim{flex:0 0 44px;width:44px!important;position:static!important;inset:auto!important;}
+.sports-action-utilities{left:52px;right:0;width:auto;justify-content:flex-start;}

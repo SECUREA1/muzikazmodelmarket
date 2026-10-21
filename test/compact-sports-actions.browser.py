@@ -25,9 +25,9 @@ try:
     header=panel.locator('.sports-action-header').bounding_box();row=panel.locator('.sports-action-tools').bounding_box();primary=panel.locator('.sports-primary-trigger').bounding_box()
     assert header['y']+header['height']<=primary['y']+1
     assert row['height']<=48,(width,row)
-    assert panel.locator('.sports-action-tools > button').count()==1
+    assert panel.locator('.sports-action-tools > button').count() in [2,3]
     assert panel.locator('.sports-action-tools .rad-tox-game-toggle').count()==0
-    assert panel.locator('.sports-action-tools .sports-collapse').count()==0
+    assert panel.locator('.sports-action-tools .sports-collapse').count()==1
     assert panel.locator('.sports-action-tools').evaluate('(row)=>row.scrollWidth<=row.clientWidth+1')
     scoreboard=panel.locator('.basketball-score-strip,.scoreboard')
     assert scoreboard.is_visible()
@@ -44,7 +44,7 @@ try:
     assert panel.locator('.sports-primary-trigger').is_visible()
     panel.locator('.sports-collapse').click()
     assert scoreboard.is_visible()
-   assert page.locator('.sports-action-utilities .basketball-aim').count()==1
+   assert page.locator('.sports-action-tools .basketball-aim').count()==1
    assert not errors,errors
    if width==390:page.screenshot(path='/tmp/compact-sports-actions.png')
    page.close()
