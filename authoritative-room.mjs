@@ -8,7 +8,7 @@ import {localMapLocations} from './public/js/local-map-locations.js';
 import {isAircraft,stepAircraftFlight,airportRadio} from './public/js/aircraft-flight.js';
 import {isWatercraft,harborWaterAt,watercraftFootprint,watercraftOverlap} from './public/js/harbor-water.js';
 import {buildingPolicy,changeBuildingPolicy,requireBuildingAllowed} from './public/js/room-building-policy.js';
-import {RAD_TOX_SHOT_INTERVAL_MS} from './public/js/rad-tox-rules.js';
+import {RAD_TOX_SHOT_INTERVAL_MS,isCleanCommonsEnvironment} from './public/js/rad-tox-rules.js';
 import {ensureFiringRange,registerFiringRangeArrival,joinFiringRange,watchFiringRange,configureFiringRange,startFiringRange,startFiringRangePractice,stopFiringRange,stepFiringRange,constrainFiringRangePlayer,rangeHandlesFire,fireFiringRange} from './server-firing-range.mjs';
 import {isDedicatedFiringRange,firingRangeLocationAt} from './public/js/firing-range.js';
 import {isBasketball,basketballCatchPosition,basketballJerseyTeam,tossBasketball,stepBasketball,basketballLaunchOptions,basketballShotSolution} from './public/js/basketball.js';
@@ -73,6 +73,11 @@ export class AuthoritativeRooms {
   const manifestKey=(isBasketballEnvironment(environment)?'basketball-runtime-v2:':isDedicatedFiringRange(environment)?'firing-range-runtime-v1:':'')+environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.travelPortals||[]);let base=this.manifestCache.get(manifestKey);if(!base){const scene=environment.builderScene||environment.placementScene||{};base=compileBuilderScene({...scene,objects:[...(scene.objects||[]),...worldTravelObjects(environment,this.collision)]});this.manifestCache.set(manifestKey,base);if(this.manifestCache.size>32)this.manifestCache.delete(this.manifestCache.keys().next().value);}const manifest={...base,actors:[...base.actors]};
   room.simulation ||= {version:1,players:{},actors:{},events:[],time:this.now(),sequence:0};
   const sim=room.simulation,contentUpdatedAt=manifestKey;
+  if(isCleanCommonsEnvironment(environment)){
+   for(const [id,actor]of Object.entries(sim.actors))if(actor.radTox)delete sim.actors[id];
+   sim.radTox=null;sim.match=null;sim.projectiles={};
+   for(const player of Object.values(sim.players)){player.radToxEnabled=false;player.radToxReady=true;}
+  }
   if(!sim.initialized||sim.environmentUpdatedAt!==contentUpdatedAt){
    const authored=new Set(manifest.objects.map(actor=>actor.objectId));for(const [id,actor]of Object.entries(sim.actors))if(!actor.spawned&&!actor.radTox&&!actor.basketballManaged&&!actor.rangeManaged&&!authored.has(id))delete sim.actors[id];
 
@@ -218,8 +223,8 @@ export class AuthoritativeRooms {
    for(const [otherId,otherRoom]of Object.entries(allRooms)){if(otherId===id)continue;const previous=otherRoom.simulation?.players[actorId];if(!previous)continue;previous.lastSeen=0;previous.replacedByRoom=id;previous.input={};for(const key of ['heldId','seatedId','vehicleId']){const held=otherRoom.simulation.actors[previous[key]];if(held)held.holderId=null;previous[key]=null;}}
    if(travel){player.lastPortalArrival=travel;delete travelSource.pendingTravel;}
    if(meeting||travel){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.inputEpoch=randomUUID();player.lastInputSequence=-1;player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;player.actorId=actorId;
-   if(environment.airport?.enabled||environment.builderScene?.layoutMeta?.harbor){player.radToxEnabled=false;player.radToxReady=true;}
-   if(sim.basketball){player.health=100;if(basketballLateArrival)watchBasketballGame(sim,player,now);else assignBasketballTeam(sim,player,now);}else if(!isDedicatedFiringRange(environment)){player.radToxReady=command.deferRadTox!==true;if(typeof command.radToxEnabled==='boolean')player.radToxEnabled=command.radToxEnabled;if(player.radToxEnabled!==false){startRadTox(sim,environment,now,player.position);if(player.radToxReady)registerParticipant(sim,actorId,player,now);}}
+   if(environment.airport?.enabled||environment.builderScene?.layoutMeta?.harbor||isCleanCommonsEnvironment(environment)){player.radToxEnabled=false;player.radToxReady=true;}
+   if(sim.basketball){player.health=100;if(basketballLateArrival)watchBasketballGame(sim,player,now);else assignBasketballTeam(sim,player,now);}else if(!isDedicatedFiringRange(environment)&&!isCleanCommonsEnvironment(environment)){player.radToxReady=command.deferRadTox!==true;if(typeof command.radToxEnabled==='boolean')player.radToxEnabled=command.radToxEnabled;if(player.radToxEnabled!==false){startRadTox(sim,environment,now,player.position);if(player.radToxReady)registerParticipant(sim,actorId,player,now);}}
    if(sim.firingRange){if(isDedicatedFiringRange(environment))player.health=100;registerFiringRangeArrival(sim,player,now,rangeWasActive);}
    room.building ||=buildingPolicy(room,environment);if(!room.building.hostId||!sim.players[room.building.hostId]||now-sim.players[room.building.hostId].lastSeen>=15000)room.building.hostId=actorId;
    result.message='Joined '+player.locationName;result.inputEpoch=player.inputEpoch;
@@ -273,7 +278,7 @@ export class AuthoritativeRooms {
    }
    else if(command.action==='aircraft-assist'){result.message=startAircraftAssist(sim,player,environment,command.operation,now,this.collision,room.objects);}
    else if(command.action==='airport-radio'){result.message=airportRadio(sim,player,actorId,command.operation,now,environment);}
-   else if(command.action==='rad-tox-toggle'){player.radToxEnabled=command.enabled===true;result.message=player.radToxEnabled?'RAD-TOX enabled.':'RAD-TOX disabled.';}
+   else if(command.action==='rad-tox-toggle'){player.radToxEnabled=!isCleanCommonsEnvironment(environment)&&command.enabled===true;result.message=player.radToxEnabled?'RAD-TOX enabled.':'RAD-TOX disabled.';}
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position)){const loading=player.radToxReady===false;player.radToxReady=true;player.radToxEnabled=true;registerParticipant(sim,actorId,player,now);if(loading)player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;result.message='RAD-TOX encounter active.';}else result.message='Builder gameplay active.';}
    else if(command.action==='next-rad-tox'){if(sim.radTox?.transition&&now<sim.radTox.transition.at)fail('The next round starts after the results countdown.',409);if(nextRadToxLevel(sim,environment,now,command.matchId)){for(const [index,participantId] of Object.keys(sim.match.participants).entries()){const participant=sim.players[participantId],entry=environment.spawn||{x:0,y:0,z:2};participant.position=this.collision.safeSpawn(environment,{...entry,x:entry.x+(index%4)*1.2,z:entry.z+Math.floor(index/4)*1.2});participant.floor=participant.position.y;participant.velocityY=0;participant.grounded=true;participant.shieldUntil=0;participant.input={};participant.toolReady={};participant.toolUses={};}result.message='Next shared level started.';}else if(sim.match?.id===command.matchId)fail('Complete the current level before starting another.',409);}
    else if(sim.match?.state==='finished'&&!['input','interact'].includes(command.action))fail('This level has ended. Review the results and start the next level.',409);

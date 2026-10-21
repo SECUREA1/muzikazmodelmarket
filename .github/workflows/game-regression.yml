@@ -1,7 +1,7 @@
 name: Game regression checks
 on:
   push:
-    branches: [main, work, recovery/airport-motion]
+    branches: [main, work, recovery/airport-motion, improve/public-commons]
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,7 +19,7 @@ jobs:
       - run: npm run build
       - run: npm run check
       - name: Movement, collider, aircraft and tower regressions
-        run: node --test test/tower-radio-audio.test.mjs test/airport-radio.test.mjs test/airport-world.test.mjs test/aircraft-cannon-effects.test.mjs test/aircraft-model.test.mjs test/aircraft-camera.test.mjs test/aircraft-controls.test.mjs test/aircraft-flight-simulation.test.mjs test/aircraft-dogfight.test.mjs test/aircraft-access.test.mjs test/authoritative-room-client.test.mjs test/walking-motion.test.mjs test/walking-network-jitter.test.mjs test/local-walking-view.test.mjs test/local-environment-collision.test.mjs test/environment-floor-winding.test.mjs test/server-builder-instanced-collision.test.mjs test/environment-collision-geometry.test.mjs test/environment-collision-contract.test.mjs test/builder-terrain-collision.test.mjs test/placed-item-collision.test.mjs test/walking-capsule.test.mjs test/walking-collision-regression.test.mjs test/server-walking-collision.test.mjs test/player-walking-stability.test.mjs test/walking-floor-presentation.test.mjs test/local-vehicle-collision.test.mjs test/mobile-flight-input.test.mjs test/mobile-flight-server.test.mjs test/mobile-flight-stick.test.mjs test/arcade-live-movement.test.mjs test/hockey-local-motion.test.mjs
+        run: node --test test/tower-radio-audio.test.mjs test/airport-radio.test.mjs test/airport-world.test.mjs test/aircraft-cannon-effects.test.mjs test/aircraft-model.test.mjs test/aircraft-camera.test.mjs test/aircraft-controls.test.mjs test/aircraft-flight-simulation.test.mjs test/aircraft-dogfight.test.mjs test/aircraft-access.test.mjs test/authoritative-room-client.test.mjs test/walking-motion.test.mjs test/walking-network-jitter.test.mjs test/local-walking-view.test.mjs test/local-environment-collision.test.mjs test/environment-floor-winding.test.mjs test/server-builder-instanced-collision.test.mjs test/environment-collision-geometry.test.mjs test/environment-collision-contract.test.mjs test/builder-terrain-collision.test.mjs test/placed-item-collision.test.mjs test/walking-capsule.test.mjs test/walking-collision-regression.test.mjs test/server-walking-collision.test.mjs test/player-walking-stability.test.mjs test/walking-floor-presentation.test.mjs test/local-vehicle-collision.test.mjs test/mobile-flight-input.test.mjs test/mobile-flight-server.test.mjs test/mobile-flight-stick.test.mjs test/arcade-live-movement.test.mjs test/hockey-local-motion.test.mjs test/commons-neighborhood.test.mjs test/commons-clean-ground.test.mjs test/commons-traversal.test.mjs test/generated-world-experiences.test.mjs test/district-neighborhoods.test.mjs test/world-atlas.test.mjs test/atlas-destinations.test.mjs test/slime-floor.test.mjs test/world-directory.test.mjs
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -31,3 +31,5 @@ jobs:
         run: |
           python test/airport-operations.browser.py
           python test/mobile-flight-controls.browser.py
+          python test/outdoor-scenery.browser.py
+          python test/commons-landscape.browser.py

@@ -122,12 +122,13 @@ export class ServerBuilderCollision {
  groundAt(environment,point,{entry=false,maxRise=.4,actors={},objects}={}){
   const world=this.world(environment),bounds=world.bounds;
   const dynamic=actors||objects?this.placedWorld(actors,objects).meshes:[];
-  const meshes=[...world.floors,...dynamic].filter(mesh=>!/ROOF|CEILING|CANOPY|AWNING/i.test(mesh.name)&&!actorDisablesCollision(actors[builderObjectId(mesh)]));
+  const available=[...world.floors,...dynamic].filter(mesh=>!actorDisablesCollision(actors[builderObjectId(mesh)]));
+  const meshes=available.filter(mesh=>!/ROOF|CEILING|CANOPY|AWNING/i.test(mesh.name));
   const startY=entry?bounds.max.y+2:point.y+maxRise;
   const hits=new THREE.Raycaster(new THREE.Vector3(point.x,startY,point.z),new THREE.Vector3(0,-1,0),0,Math.max(2,startY-bounds.min.y+2)).intersectObjects(meshes,false).filter(hit=>placementHitNormal(THREE,hit)?.y>.55);
   // Prefer a floor with overhead clearance and a ceiling above it. A roof may
   // share a mesh with the floor, so mesh names alone cannot protect the entry.
-  const choices=hits.filter(hit=>!new THREE.Raycaster(hit.point.clone().add(new THREE.Vector3(0,.08,0)),new THREE.Vector3(0,1,0),0,1.7).intersectObjects([...world.floors,...dynamic],false).length);
+  const choices=hits.filter(hit=>!new THREE.Raycaster(hit.point.clone().add(new THREE.Vector3(0,.08,0)),new THREE.Vector3(0,1,0),0,1.7).intersectObjects(available,false).length);
 
   if(entry){choices.sort((a,b)=>a.point.y-b.point.y);} // Ground entrance, never highest roof.
   const hit=choices[0];return hit?{x:point.x,y:hit.point.y+PLAYER_FLOOR_CLEARANCE,z:point.z}:null;

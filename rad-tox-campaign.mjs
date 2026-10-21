@@ -1,11 +1,11 @@
-import {RAD_TOX_WAVE_PAUSE_MS,RAD_TOX_RESULTS_PAUSE_MS} from './public/js/rad-tox-rules.js';
+import {RAD_TOX_WAVE_PAUSE_MS,RAD_TOX_RESULTS_PAUSE_MS,isCleanCommonsEnvironment} from './public/js/rad-tox-rules.js';
 import {isCleanSportsEnvironment} from './public/js/sports-worlds.js';
 import {ENEMY_BEHAVIORS} from './server-enemy-combat.mjs';
 import {damagePlayer,openMatch,finishMatch,healPlayer,matchRows} from './rpg-match.mjs';
 export const ROUND_COUNTDOWN_MS=RAD_TOX_RESULTS_PAUSE_MS;
 // Shared encounters are owned by the room, never by a client's local enemy list.
 export function supportsRadTox(environment) {
- return environment.playable!==false && !environment.airport?.enabled && !environment.builderScene?.layoutMeta?.harbor && !isCleanSportsEnvironment(environment) && Boolean(environment.builderScene || environment.proceduralLand || environment.modelUrl || environment.modelUrls?.length);
+ return environment.playable!==false && !isCleanCommonsEnvironment(environment) && !environment.airport?.enabled && !environment.builderScene?.layoutMeta?.harbor && !isCleanSportsEnvironment(environment) && Boolean(environment.builderScene || environment.proceduralLand || environment.modelUrl || environment.modelUrls?.length);
 }
 export function spawnRadToxWave(sim, now, center) {
  for (const [id,actor] of Object.entries(sim.actors)) if (actor.radTox) delete sim.actors[id];
