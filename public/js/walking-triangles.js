@@ -1,6 +1,8 @@
 // Geometry shared by local and authoritative walking. These helpers only
 // describe surfaces; they never move a player out of an overlap.
 const EPSILON = 1e-8;
+// Float32 model vertices can leave tiny cracks between adjacent floor faces.
+const BARYCENTRIC_EPSILON = 1e-7;
 
 export function triangleNormalY(triangle) {
   const {a, b, c} = triangle;
@@ -17,7 +19,7 @@ export function triangleHeightAt(x, z, triangle) {
   if (Math.abs(denominator) < EPSILON) return null;
   const u = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (z - c.z)) / denominator;
   const v = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (z - c.z)) / denominator;
-  if (u < -EPSILON || v < -EPSILON || u + v > 1 + EPSILON) return null;
+  if (u < -BARYCENTRIC_EPSILON || v < -BARYCENTRIC_EPSILON || u + v > 1 + BARYCENTRIC_EPSILON) return null;
   return u * a.y + v * b.y + (1 - u - v) * c.y;
 }
 

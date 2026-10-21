@@ -158,3 +158,38 @@ test('dynamic mesh triangles preserve door openings and broad-cull distant geome
   move(blocked, {x: 0, y: 0, z: -4}, options);
   near(blocked.start.z, .402); near(blocked.start.x, 1.5);
 });
+
+test('Float32 stair seams retain support across consecutive ascending treads', () => {
+  const treads = [.25, .3, .35, .4].flatMap((height, index) =>
+    trianglesForBox(box(-1.2, .2, 14.55 - index * .45, 1.2, height, 15 - index * .45)));
+  const octree = world([
+    ...floor(),
+    ...trianglesForBox(box(-1.2, 0, 15, 1.2, .2, 17.4)),
+    ...treads,
+    ...trianglesForBox(box(-2.4, 0, 10.8, 2.4, .4, 13.2))
+  ]);
+  const capsule = new Capsule(0, .22, 15.3);
+  for (const [targetZ, surface] of [[14.775,.25], [14.325,.3], [13.875,.35], [13.425,.4], [12,.4]]) {
+    const startZ = capsule.start.z, count = Math.ceil(Math.abs(targetZ - startZ) / .08);
+    for (let index = 1; index <= count; index++) {
+      const nextZ = startZ + (targetZ - startZ) * index / count, previousY = foot(capsule);
+      const result = move(capsule, {x:0, y:-.04, z:nextZ-capsule.start.z}, {octree});
+      near(capsule.start.z, nextZ);
+      assert.equal(result.onGround, true, 'each tread retains support at ' + nextZ);
+      assert.ok(foot(capsule) >= previousY - 1e-6, 'ascending seams cannot drop the feet at ' + nextZ);
+    }
+    near(foot(capsule), surface + .02);
+  }
+});
+
+test('numerical seam tolerance does not bridge a real centimetre gap', () => {
+  const capsule = new Capsule(-.01, .26);
+  const octree = world([
+    ...floor(),
+    ...trianglesForBox(box(-1.005,0,-1,-.005,.24,1)),
+    ...trianglesForBox(box(.005,0,-1,1.005,.24,1))
+  ]);
+  move(capsule, {x:.01, y:0, z:0}, {octree});
+  near(capsule.start.x, 0);
+  near(foot(capsule), .02);
+});

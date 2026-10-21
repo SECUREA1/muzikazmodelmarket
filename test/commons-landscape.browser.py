@@ -52,7 +52,7 @@ with tempfile.TemporaryDirectory(prefix='commons-landscape-') as directory:
                 assert not state['world']['slimeFloor']
                 assert not state['world']['cleanSportsWorld'],'Ordinary Commons tools must remain available.'
                 assert state['player']['position'][1]>=-.001
-                assert page.get_by_role('button',name='RAD-TOX gaming off',exact=True,include_hidden=True).is_hidden()
+                assert all(toggle.is_hidden() for toggle in page.get_by_role('button',name='RAD-TOX gaming off',exact=True,include_hidden=True).all())
                 initial_health=state['health']
                 trigger=page.get_by_role('button',name='Fire selected weapon',exact=True)
                 assert trigger.is_visible()
