@@ -1,3 +1,4 @@
+import {createHarborBoat} from './harbor-models.js';
 import {BUILDING_MATERIALS,createBuildingBlock,buildingDimensions} from './building-materials.js';
 import {finishGameItem} from './game-item-finish.js';
 import {CAMP_MODEL_INFO} from './summer-camp.js';
@@ -19,6 +20,8 @@ import {createBasketballJersey} from './basketball-jerseys.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  'harbor-skiff':['Harbor Launch','Board and steer a launch on harbor water.',[2.1,1.5,4.8]],
+  'harbor-sailboat':['Marina Sailboat','A steerable marina boat with a mast and sail.',[2.1,4.8,4.8]],
   ...CAMP_MODEL_INFO,
   ...LAYOUT_SCENE_INFO,
   ...Object.fromEntries(Object.entries(ENTERABLE_BUILDINGS).map(([id,item])=>[id,[item.name,item.description,[item.width+.7,item.height+.8,item.depth+3]]])),
@@ -263,6 +266,7 @@ function estateModule(id){
 }
 
 export function createBuilderModel(id,options={}) {
+  if(['harbor-skiff','harbor-sailboat'].includes(id))return createHarborBoat(id);
   if(id.startsWith('material:')){const materialId=id.slice(9);if(!BUILDING_MATERIALS.some(item=>item.id===materialId))return null;const root=new THREE.Group(),piece=createBuildingBlock(THREE,materialId);piece.position.y=buildingDimensions(materialId)[1]/2;root.add(piece);root.userData.builderObject=true;root.userData.modelId=id;return root;}
 
   if(id.startsWith('arcade-part-')){if(!ARCADE_PARTS.some(part=>part.id===id.slice(12)))return null;const root=createArcadePart(id.slice(12),options);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}

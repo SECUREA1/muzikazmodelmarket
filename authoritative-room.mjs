@@ -1,3 +1,4 @@
+import {isWatercraft,harborWaterAt,watercraftFootprint} from './public/js/harbor-water.js';
 import {buildingPolicy,changeBuildingPolicy,requireBuildingAllowed} from './public/js/room-building-policy.js';
 import {RAD_TOX_SHOT_INTERVAL_MS} from './public/js/rad-tox-rules.js';
 import {ensureFiringRange,registerFiringRangeArrival,joinFiringRange,watchFiringRange,configureFiringRange,startFiringRange,startFiringRangePractice,stopFiringRange,stepFiringRange,constrainFiringRangePlayer,rangeHandlesFire,fireFiringRange} from './server-firing-range.mjs';
@@ -109,9 +110,11 @@ export class AuthoritativeRooms {
    const input=player.input||{},forward=clamp(input.forward,-1,1),side=clamp(input.side,-1,1),length=Math.max(1,Math.hypot(forward,side));
    const hasGeometry=Boolean(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length);
    const boundControl=(current,target)=>hasGeometry?target:clamp(target,Math.min(current,-half),Math.max(current,half));
-   let speed=player.vehicleId?12:input.sprint?6:4;
+   const boat=sim.actors[player.vehicleId],boating=isWatercraft(boat)&&boat.active!==false;if(boat?.active===false)player.vehicleId=null;
+   let speed=boating?7:player.vehicleId?12:harborWaterAt(environment,player.position)?2.8:input.sprint?6:4;
    if(player.seatedId) speed=0;
    const next={...player.position,x:boundControl(player.position.x,player.position.x+(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*side)*speed*dt/length),z:boundControl(player.position.z,player.position.z+(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*side)*speed*dt/length)};
+   if(boating){const valid=watercraftFootprint(next,player.yaw).every(point=>harborWaterAt(environment,point,.25));const dx=next.x-player.position.x,dz=next.z-player.position.z,span=Math.hypot(dx,dz);const blocked=span>.001&&this.collision.blocksShot(environment,{x:player.position.x,y:.1,z:player.position.z},[dx/span,0,dz/span],span+.9,sim.actors);if(!valid||blocked){next.x=player.position.x;next.z=player.position.z;}next.y=.35;}
    const floor=hasGeometry?-100:Number(player.floor)||0;
    if(input.jump&&player.grounded){player.velocityY=6;player.grounded=false;}
    player.velocityY=(player.velocityY||0)-18*dt;next.y=Math.max(floor,next.y+player.velocityY*dt);player.grounded=next.y<=floor;if(player.grounded)player.velocityY=0;
@@ -122,6 +125,7 @@ export class AuthoritativeRooms {
    // Native resolvers explicitly report missing support as null. A custom
    // horizontal-only resolver keeps the legacy flat floor until it supplies
    // its own support data; this must not pin real elevated platforms.
+   if(boating){resolved.y=.35;resolved.floorY=.35;player.velocityY=0;}
    const ownsSupport=Object.hasOwn(resolved,'floorY');
    const floorY=ownsSupport?resolved.floorY:Number(player.floor)||0,blockedCeiling=resolved.blockedCeiling;
    if(!ownsSupport&&resolved.y<floorY)resolved.y=floorY;
@@ -135,7 +139,7 @@ export class AuthoritativeRooms {
    const street=(environment.streets||[]).map(street=>{const dx=street.to.x-street.from.x,dz=street.to.z-street.from.z,t=Math.max(0,Math.min(1,((player.position.x-street.from.x)*dx+(player.position.z-street.from.z)*dz)/Math.max(.01,dx*dx+dz*dz)));return {street,distance:Math.hypot(player.position.x-street.from.x-dx*t,player.position.z-street.from.z-dz*t)};}).filter(hit=>hit.distance<=hit.street.width/2+2).sort((a,b)=>a.distance-b.distance)[0];player.locationName=street?.street.name||player.meetingName||environment.name;
    updateUrbanMission(player,now);
 
-   if(player.vehicleId){const vehicle=sim.actors[player.vehicleId];if(vehicle){vehicle.position={...player.position};vehicle.rotation.y=player.yaw;}}
+   if(player.vehicleId){const vehicle=sim.actors[player.vehicleId];if(vehicle){vehicle.position={...player.position,...(isWatercraft(vehicle)?{y:0}:{})};vehicle.rotation.y=player.yaw;}}
    if(player.heldId){const held=sim.actors[player.heldId];if(held)held.position={x:player.position.x-Math.sin(player.yaw),y:player.position.y+1,z:player.position.z-Math.cos(player.yaw)};}
   }
   const active=Object.values(sim.players).filter(player=>player.radToxReady!==false&&player.radToxEnabled!==false&&!player.replacedByRoom&&now-player.lastSeen<15000&&player.health>0&&now>=(player.spawnProtectedUntil||0)&&!firingRangeLocationAt(sim.firingRange?.locations,player.position));
@@ -278,7 +282,7 @@ export class AuthoritativeRooms {
      else if(config.behavior==='door')entity.open=!entity.open;
      else if(config.behavior==='switch')entity.switched=!entity.switched;
      else if(['pickup','hold'].includes(config.behavior)){if(player.heldId)fail('Drop the held item first.',409);player.heldId=entity.id;entity.holderId=actorId;delete entity.ballVelocity;touchBasketball(sim,entity,player,now);if(!player.inventory.includes(target.modelId))player.inventory.push(target.modelId);result.pickup={id:entity.id+':'+now,kind:'item'};const collected=combatStats(player).itemsCollected ||= [];if(!collected.includes(target.modelId))collected.push(target.modelId);}
-     else if(config.behavior==='vehicle'){if(player.basketballRole==='spectator'&&sim.basketball?.state==='live')fail('Spectators can use the stands and benches while the court is active.',409);player.vehicleId=entity.id;entity.holderId=actorId;}
+     else if(config.behavior==='vehicle'){if(player.basketballRole==='spectator'&&sim.basketball?.state==='live')fail('Spectators can use the stands and benches while the court is active.',409);player.vehicleId=entity.id;entity.holderId=actorId;if(isWatercraft(entity)){player.position={...entity.position,y:.35};player.floor=.35;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;}}
      else if(config.behavior==='seat'){if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(entity.position,sim))fail('Spectators can sit on benches outside the active court.',409);player.seatedId=entity.id;entity.holderId=actorId;player.position={...entity.position};}
      else if(config.behavior==='heal')player.health=Math.min(100,player.health+clamp(config.value||25,0,100));
      else if(config.behavior==='hazard')entity.active=false;

@@ -12,9 +12,11 @@ export function mountDistrictMap({stage,fetchAtlas=async()=>{const response=awai
  let environment=null,generation=0;
  function node(tag,text,parent){const element=document.createElement(tag);if(text)element.textContent=text;parent?.append(element);return element;}
  function renderMap(){
-  visual.replaceChildren();const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','-130 -130 260 260');svg.setAttribute('role','img');svg.setAttribute('aria-label',environment.name+' locations, roads and portal buildings');
+  visual.replaceChildren();const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');const extent=environment.builderScene?.layoutMeta?.harbor?.extent||128;svg.setAttribute('viewBox',`${-extent-2} ${-extent-2} ${extent*2+4} ${extent*2+4}`);svg.setAttribute('role','img');svg.setAttribute('aria-label',environment.name+' locations, roads and portal buildings');
   const shape=(tag,attrs,label)=>{const element=document.createElementNS(ns,tag);for(const [key,value]of Object.entries(attrs))element.setAttribute(key,value);if(label){const title=document.createElementNS(ns,'title');title.textContent=label;element.append(title);}svg.append(element);return element;};
+  if(extent>128)shape('rect',{x:-extent,y:-extent,width:extent*2,height:extent*2,fill:'#12617a'});
   shape('rect',{x:-128,y:-128,width:256,height:256,fill:'#142b24',rx:5});
+  for(const island of environment.builderScene?.layoutMeta?.harbor?.islands||[])shape('rect',{x:island.x-island.width/2,y:island.z-island.depth/2,width:island.width,height:island.depth,fill:'#708b5b'},island.name);
   for(const street of environment.streets||environment.builderScene?.streets||[])shape('line',{x1:street.from.x,y1:street.from.z,x2:street.to.x,y2:street.to.z,stroke:'#728b85','stroke-width':street.width||5},street.name);
   for(const object of environment.builderScene?.objects||[])if(object.modelId==='material:paving-tile'){shape('rect',{x:object.position.x-1.2,y:object.position.z-1.2,width:2.4,height:2.4,fill:'#9ea995'});}
   for(const place of districtLocations(environment)){shape('rect',{x:place.x-place.width/2,y:place.z-place.depth/2,width:place.width,height:place.depth,fill:'#c7e88f',stroke:'#fff'},place.name);shape('text',{x:place.x,y:place.z-7,'text-anchor':'middle',fill:'#efffd7','font-size':4}).textContent=place.name;}

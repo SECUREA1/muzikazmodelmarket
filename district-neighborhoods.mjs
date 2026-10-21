@@ -11,7 +11,7 @@ export const DISTRICT_DESIGNS=Object.freeze({
 export function districtNeighborhood(environment){
  const region=environment.atlasDistrict?.id,design=DISTRICT_DESIGNS[region];if(!design)return null;
  const objects=[],locations=[],page=environment.atlasDistrict.page||0;
- const add=(id,modelId,x,y,z,extra={})=>{const item={id:'public-experience-district-'+region+'-'+id,modelId,name:extra.name||id.replaceAll('-',' '),position:{x,y,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},functionalSettings:{behavior:'decor',destructible:true,health:100},...extra};objects.push(item);return item;};
+ const add=(id,modelId,x,y,z,extra={})=>{const item={id:'public-experience-district-'+region+'-'+id,modelId,placementAnchor:'collider-base',name:extra.name||id.replaceAll('-',' '),position:{x,y,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},functionalSettings:{behavior:'decor',destructible:true,health:100},...extra};objects.push(item);return item;};
  const material=(id,type,x,y,z,scale=[1,1,1],yaw=0)=>add(id,'material:'+type,x,y,z,{scale:{x:scale[0],y:scale[1],z:scale[2]},rotation:{x:0,y:yaw,z:0}});
  const prop=(id,type,x,y,z,behavior='decor',extra={})=>add(id,type==='stage-platform'?'material:stage-platform':type,x,y,z,{functionalSettings:{behavior,destructible:true,health:100,interactionDistance:4,...extra}});
  function guide(id,title,x,z,text){add(id,'street-sign',x,0,z,{name:title,functionalSettings:{behavior:'talk',interactionDistance:4,prompt:'Read '+title},dialogueSettings:{text}});}

@@ -2,7 +2,7 @@
 export function commonsNeighborhood(){
  const objects=[],locations=[];
  function add(id,modelId,x,y,z,extra={}){
-  const item={id:'public-experience-commons-'+id,modelId,name:extra.name||id.replaceAll('-',' '),position:{x,y,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},functionalSettings:{behavior:'decor',destructible:true,health:100},...extra};objects.push(item);return item;
+  const item={id:'public-experience-commons-'+id,modelId,placementAnchor:'collider-base',name:extra.name||id.replaceAll('-',' '),position:{x,y,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},functionalSettings:{behavior:'decor',destructible:true,health:100},...extra};objects.push(item);return item;
  }
  const piece=(id,material,x,y,z,scale=[1,1,1],rotation=0)=>add(id,'material:'+material,x,y,z,{scale:{x:scale[0],y:scale[1],z:scale[2]},rotation:{x:0,y:rotation,z:0}});
  function sign(id,name,x,z,text){add(id,'street-sign',x,0,z,{name,functionalSettings:{behavior:'talk',interactionDistance:4,prompt:'Read '+name},dialogueSettings:{text}});}
