@@ -81,6 +81,16 @@ test('intentional walking follows supported steps but nearby edges do not lift t
  near(idle.y,.02);
 }));
 
+test('walking across an exact stair seam keeps grounded support and climbs without pausing',()=>fixture([
+ ...box([2,.24,2],[0,.12,0]),...box([2,.29,1],[0,.145,-.5])
+],(collision,environment)=>{
+ const start={x:0,y:.26,z:0};
+ const moved=collision.resolve(environment,start,{x:0,y:.22,z:-.05});
+ near(moved.x,0);near(moved.z,-.05);near(moved.y,.31);near(moved.floorY,.31);
+ const continuing=collision.resolve(environment,moved,{x:0,y:.27,z:-.15});
+ near(continuing.z,-.15);near(continuing.y,.31);
+}));
+
 test('tall obstacles block instead of being treated as steps',()=>fixture(box([2,.45,1],[0,.225,0]),(collision,environment)=>{
  const moved=collision.resolve(environment,{x:0,y:.02,z:1},{x:.4,y:-.1,z:0});
  near(moved.x,.4);near(moved.z,.802);near(moved.y,.02);

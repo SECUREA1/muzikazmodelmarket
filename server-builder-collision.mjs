@@ -214,27 +214,39 @@ export class ServerBuilderCollision {
   const meshes=[...(world?.floors||[]).filter(mesh=>!actorDisablesCollision(actors[builderObjectId(mesh)])),...placed.floors,...deployed];
   const supportMeshes=meshes.filter(mesh=>!/ROOF|CEILING|CANOPY|AWNING|TARGET/i.test(mesh.name));
   const moving=Math.hypot(next.x-previous.x,next.z-previous.z)>1e-7,descending=next.y<=previous.y+.01;
-  const floorAt=point=>{
-   const maxRise=moving&&descending?MAX_STEP_HEIGHT:.025;
+  const floorAt=(point,maxRise=moving&&descending?MAX_STEP_HEIGHT:.025)=>{
    const startY=Math.max(previous.y,next.y)+maxRise-FLOOR_GAP;
-   const hits=new THREE.Raycaster(new THREE.Vector3(point.x,startY,point.z),new THREE.Vector3(0,-1,0),0,Math.max(2,startY-(world?.bounds.min.y??-100)+2)).intersectObjects(supportMeshes,false);
    let blockedStep=false;
-   const hit=hits.find(hit=>{
-    if(!(placementHitNormal(THREE,hit)?.y>.55))return false;
-    const blocked=new THREE.Raycaster(hit.point.clone().add(new THREE.Vector3(0,.08,0)),new THREE.Vector3(0,1,0),0,PLAYER_HEIGHT).intersectObjects(meshes,false).length>0;
-    if(blocked&&hit.point.y+FLOOR_GAP>previous.y+.04)blockedStep=true;
-    return !blocked;
-   });
-   let floor=hit?{x:point.x,y:hit.point.y+FLOOR_GAP,z:point.z}:null;
-   // Match the browser's fixed-map containment floor beneath missing triangles.
-   // This supplies support without moving the player to another x/z location.
+   const sample=(dx=0,dz=0)=>{
+    const hits=new THREE.Raycaster(new THREE.Vector3(point.x+dx,startY,point.z+dz),new THREE.Vector3(0,-1,0),0,Math.max(2,startY-(world?.bounds.min.y??-100)+2)).intersectObjects(supportMeshes,false);
+    const hit=hits.find(hit=>{
+     if(!(placementHitNormal(THREE,hit)?.y>.55))return false;
+     const blocked=new THREE.Raycaster(hit.point.clone().add(new THREE.Vector3(0,.08,0)),new THREE.Vector3(0,1,0),0,PLAYER_HEIGHT).intersectObjects(meshes,false).length>0;
+     if(blocked&&hit.point.y+FLOOR_GAP>previous.y+.04)blockedStep=true;
+     return !blocked;
+    });
+    return hit?{x:point.x,y:hit.point.y+FLOOR_GAP,z:point.z}:null;
+   };
+   let floor=sample();
+   // Float32 top faces can leave sub-millimetre cracks at shared boundaries.
+   // Probe only when the centre loses nearby support. Real gaps wider than
+   // the numerical tolerance remain gaps.
+   if(!floor||floor.y<previous.y-.04){
+    for(const [dx,dz]of [[1e-4,0],[-1e-4,0],[0,1e-4],[0,-1e-4]]){
+     const candidate=sample(dx,dz);
+     if(candidate&&(!floor||candidate.y>floor.y))floor=candidate;
+    }
+   }
+   // Match browser containment beneath missing triangles without relocating x/z.
    const bounds=world?.bounds;
    if(!floor&&bounds&&!bounds.isEmpty()&&point.x>=bounds.min.x&&point.x<=bounds.max.x&&point.z>=bounds.min.z&&point.z<=bounds.max.z&&bounds.min.y+FLOOR_GAP<=previous.y+maxRise)floor={x:point.x,y:bounds.min.y+FLOOR_GAP,z:point.z};
    return floor?{...floor,blockedStep}:blockedStep?{blockedStep:true}:null;
   };
   // Low risers are traversable only from a grounded, intentional walk. Their
   // edges must not lift the capsule before its center has reached the top.
-  const previousFloor=floorAt(previous),canStep=moving&&descending&&previousFloor&&Math.abs(previous.y-previousFloor.y)<=.04;
+  // At a stair seam the taller tread can share the same x/z as the old one.
+  // Check existing support near the feet before looking for the next step.
+  const previousFloor=floorAt(previous,.025),canStep=moving&&descending&&previousFloor&&Math.abs(previous.y-previousFloor.y)<=.04;
   const top=Math.max(previous.y,next.y)+PLAYER_HEIGHT-.025;
   const padding=PLAYER_RADIUS+.002,minX=Math.min(previous.x,next.x)-padding,maxX=Math.max(previous.x,next.x)+padding,minZ=Math.min(previous.z,next.z)-padding,maxZ=Math.max(previous.z,next.z)+padding;
   const embedded=new Map();

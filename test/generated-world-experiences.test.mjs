@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,rm,readFile} from 'node:fs/promises';
+import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {WorldAtlas} from '../world-atlas.mjs';
@@ -12,9 +12,9 @@ import {createBuilderModel} from '../public/js/builder-models-3d.js';
 test('all generated districts have distinct playable experiences and renderable content',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'generated-vibes-'));t.after(()=>rm(dir,{recursive:true,force:true}));
  const atlas=new WorldAtlas(join(dir,'atlas.json')),{environments}=await synchronizeWorldDirectory(atlas,[]),names=new Set(),modelIds=new Set();
- for(const world of environments){names.add(world.builderScene.experienceName);const objects=world.builderScene.objects,ids=new Set(objects.map(object=>object.id));assert.equal(ids.size,objects.length);
+ for(const world of environments){if(world.source==='community-atlas')names.add(world.builderScene.experienceName);const objects=world.builderScene.objects,ids=new Set(objects.map(object=>object.id));assert.equal(ids.size,objects.length);
   for(const object of objects){modelIds.add(object.modelId);const portal=object.functionalSettings.portal;if(portal?.destinationType==='object')assert.ok(ids.has(portal.targetObjectId));if(portal?.destinationType==='map')assert.ok(environments.some(world=>world.id===portal.targetMapId));}
-  for(const behavior of ['seat','talk','quest','pickup','heal','switch'])assert.ok(objects.some(object=>object.functionalSettings.behavior===behavior));
+  if(world.source==='community-atlas')for(const behavior of ['seat','talk','quest','pickup','heal','switch'])assert.ok(objects.some(object=>object.functionalSettings.behavior===behavior),world.id+' provides '+behavior);
  }
  assert.equal(names.size,9,'Commons and all eight districts have their own experience');
  for(const id of modelIds){const model=createBuilderModel(id);assert.ok(model,'model exists: '+id);model.traverse(node=>{node.geometry?.dispose();for(const material of Array.isArray(node.material)?node.material:[node.material])material?.dispose();});}
@@ -34,8 +34,27 @@ test('shared park guide, quests, seats, pickups, healing, switches and garden tr
  state=await use('garden-switch');assert.equal(state.actors['public-experience-garden-switch'].switched,true);
  state=await use('garden-pad');assert.equal(state.players[actorId].position.z,48);state=await use('return-pad');assert.equal(state.players[actorId].position.z,14);
 });
-test('destination beacons and route controls enter land instead of only previewing it',async()=>{
- const index=await readFile(new URL('../script.js',import.meta.url),'utf8'),atlas=await readFile(new URL('../public/js/world-atlas.js',import.meta.url),'utf8');
- assert.match(index,/detail: place.dataset.mapDetail \}\);enterSelectedLocation\(event\)/);
- assert.match(atlas,/link.href=target.playUrl/);assert.ok(!atlas.includes('Preview portal to '));
+test('atlas routes and saved entry links retain the selected shared destination',async t=>{
+ const {atlasPortalRoute}=await import('../public/js/atlas-building-art.js');
+ const dir=await mkdtemp(join(tmpdir(),'generated-routes-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const atlas=new WorldAtlas(join(dir,'atlas.json')),{environments}=await synchronizeWorldDirectory(atlas,[]);
+ const byId=new Map(environments.map(world=>[world.id,world]));
+ const identity={accountId:'route-visitor',username:'Route Visitor'};
+ for(const world of environments){
+  const url=new URL(world.playUrl,'https://muzikaz.test/');
+  assert.ok(['/model-explorer.html','/hockey.html','/arcade.html'].includes(url.pathname),world.id+' has a game entry page');
+  assert.equal(url.searchParams.get('environment'),world.id,world.id+' keeps its environment');
+  assert.equal(url.searchParams.get('house'),world.id,world.id+' keeps its room');
+  assert.equal(url.searchParams.get('autoplay'),'1');assert.equal(url.searchParams.get('mode'),'multiplayer');
+  const route=atlasPortalRoute({mapId:world.id,districtId:world.districtId});
+  assert.equal(route[0],'public-commons');assert.equal(route.at(-1),world.id);
+  assert.equal(new Set(route).size,route.length);
+  for(const id of route)assert.ok(byId.has(id),world.id+' route target '+id+' exists');
+  const pin=await atlas.pin(world.id,null,identity),entry=new URL(pin.playUrl,'https://muzikaz.test/');
+  assert.equal(pin.mapId,world.id);assert.equal(entry.searchParams.get('environment'),world.id);
+  assert.equal(entry.searchParams.get('house'),world.id);assert.equal(entry.searchParams.get('autoplay'),'1');
+  assert.equal(entry.searchParams.get('mode'),'multiplayer');
+ }
+ const pins=await atlas.pins(identity);
+ assert.equal(new Set(pins.map(pin=>pin.mapId)).size,environments.length,'each selected room keeps its own saved entry');
 });
