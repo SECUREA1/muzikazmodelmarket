@@ -21,6 +21,7 @@ import {createBasketballJersey} from './basketball-jerseys.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  'harbor-yacht':['Tideglass Superyacht','A massive drivable yacht with bedroom, lounge, billiards and aft terrace.',[12,7,42]],
   'harbor-skiff':['Harbor Launch','Board and steer a launch on harbor water.',[2.1,1.5,4.8]],
   'harbor-sailboat':['Marina Sailboat','A steerable marina boat with a mast and sail.',[2.1,4.8,4.8]],
   ...CAMP_MODEL_INFO,
@@ -267,7 +268,7 @@ function estateModule(id){
 }
 
 export function createBuilderModel(id,options={}) {
-  if(['harbor-skiff','harbor-sailboat'].includes(id))return createHarborBoat(id);
+  if(['harbor-skiff','harbor-sailboat','harbor-yacht'].includes(id))return createHarborBoat(id);
   if(id.startsWith('material:')){const materialId=id.slice(9);if(!BUILDING_MATERIALS.some(item=>item.id===materialId))return null;const root=new THREE.Group(),piece=createBuildingBlock(THREE,materialId);piece.position.y=buildingDimensions(materialId)[1]/2;root.add(piece);root.userData.builderObject=true;root.userData.modelId=id;return root;}
 
   if(id.startsWith('arcade-part-')){if(!ARCADE_PARTS.some(part=>part.id===id.slice(12)))return null;const root=createArcadePart(id.slice(12),options);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}

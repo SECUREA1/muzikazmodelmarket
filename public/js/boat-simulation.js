@@ -30,7 +30,7 @@ export function stepBoatSimulation(boat,input={},dt,{environment,now=0,blocked=(
   if(anchor&&speed===0)throttle=0;
   yaw=normalizeAngle(yaw-rudder*(sailing?.64:.8)*clamp(speed/4,-.6,1)*step);
   position.x-=Math.sin(yaw)*speed*step;position.z-=Math.cos(yaw)*speed*step;
-  const valid=watercraftFootprint(position,yaw).every(point=>harborWaterAt(environment,point,.25));
+  const valid=watercraftFootprint(position,yaw,boat).every(point=>harborWaterAt(environment,point,.25));
   if(!valid||blocked(previous,position,yaw)){
    position.x=previous.x;position.z=previous.z;yaw=previousYaw;impactDamage+=Math.round(Math.max(0,Math.abs(speed)-2.5)*6);speed=0;held=true;break;
   }

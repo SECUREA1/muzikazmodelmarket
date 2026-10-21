@@ -12,8 +12,8 @@ import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 const marina=neonMarina();
 const world={id:'marina-test',updatedAt:'1',proceduralLand:true,spawn:{x:124,y:0,z:30},builderScene:{layout:'community-park',mapSize:256,layoutMeta:{harbor:marina.harbor},objects:marina.objects}};
-test('harbor has real sea outside the mainland, three land destinations, and six catalog boats at accessible slips',()=>{
- assert.equal(marina.harbor.islands.length,3);const boats=marina.objects.filter(isWatercraft);assert.equal(boats.length,6);
+test('harbor has real sea outside the mainland, three land destinations, and seven catalog boats at accessible slips',()=>{
+ assert.equal(marina.harbor.islands.length,3);const boats=marina.objects.filter(isWatercraft);assert.equal(boats.length,7);
  for(const boat of boats){assert.ok(watercraftFootprint(boat.position,boat.rotation.y).every(p=>harborWaterAt(world,p)));assert.ok(createBuilderModel(boat.modelId));}
  const land=createBuilderLand(world);assert.ok(land.getObjectByName('HARBOR_WATER_VISUAL').userData.collisionDisabled);const collision=new ServerBuilderCollision();
  assert.ok(Math.abs(collision.groundAt(world,{x:10,y:1,z:10}).y)<.1);
@@ -35,4 +35,16 @@ test('boats board without moving the mooring, cruise on the waterline, stop at l
  assert.ok(state.players[actorId].position.x<161);assert.ok(watercraftFootprint(state.players[actorId].position,-Math.PI/2).every(p=>harborWaterAt(world,p)));
  state=await send('interact');assert.equal(state.players[actorId].vehicleId,null);assert.equal(state.actors[boat.id].holderId,null);
  const restored=await new AuthoritativeRooms({store:new SharedRoomStore(store.file),now:()=>now}).snapshot(world.id,world);assert.equal(restored.actors[boat.id].position.x,state.actors[boat.id].position.x);
+});
+
+test('superyacht boards from its pier, moves on the shared server and releases the helm',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'yacht-server-'));t.after(()=>rm(dir,{recursive:true,force:true}));const store=new SharedRoomStore(join(dir,'rooms.json'));let now=100000,count=0;
+ const runtime=new AuthoritativeRooms({store,now:()=>now}),identity={accountId:'captain',username:'Captain',stats:{health:100}},actorId='account:captain',boat=marina.objects.find(o=>o.modelId==='harbor-yacht');
+ const send=(action,extra={})=>runtime.command(world.id,world,identity,{action,requestId:'yacht-'+ ++count,...extra});await send('join',{radToxEnabled:false});
+ await store.update(world.id,room=>{room.simulation.players[actorId].position={x:141,y:0,z:116};});
+ let state=await send('interact',{entityId:boat.id});assert.equal(state.players[actorId].vehicleId,boat.id);
+ for(let i=0;i<12;i++){now+=100;state=await send('input',{input:{forward:1,yaw:0}});}
+ assert.ok(state.actors[boat.id].position.z<boat.position.z-2);assert.equal(state.actors[boat.id].position.y,0);
+ await store.update(world.id,room=>{room.simulation.actors[boat.id].boating.speed=0;});
+ state=await send('interact');assert.equal(state.players[actorId].vehicleId,null);assert.equal(state.actors[boat.id].holderId,null);
 });

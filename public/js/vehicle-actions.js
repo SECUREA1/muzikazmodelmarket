@@ -12,8 +12,8 @@ export function boatWaterwayClear(environment,boat,actors={},distance=6){
  for(let index=0;index<=steps;index++){
   const travel=distance*index/steps;
   const point={x:boat.position.x-Math.sin(yaw)*travel*direction,z:boat.position.z-Math.cos(yaw)*travel*direction};
-  if(!watercraftFootprint(point,yaw).every(vertex=>harborWaterAt(environment,vertex,.5)))return false;
-  if(Object.values(actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(point,yaw,other.position,other.rotation?.y||0,.4)))return false;
+  if(!watercraftFootprint(point,yaw,boat).every(vertex=>harborWaterAt(environment,vertex,.5)))return false;
+  if(Object.values(actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(point,yaw,other.position,other.rotation?.y||0,.4,boat,other)))return false;
  }
  return true;
 }

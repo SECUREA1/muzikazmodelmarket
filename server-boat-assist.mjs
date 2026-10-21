@@ -1,4 +1,4 @@
-import {isWatercraft,watercraftOverlap} from './public/js/harbor-water.js';
+import {isWatercraft,watercraftOverlap,watercraftSize} from './public/js/harbor-water.js';
 import {boatWaterwayClear} from './public/js/vehicle-actions.js';
 import {planBoatNavigation} from './public/js/boat-navigation.js';
 import {harborRadio} from './server-harbor-operations.mjs';
@@ -8,11 +8,12 @@ export {boatAssistedInput} from './public/js/boat-assist.js';
 export function boatMovementBlocked(environment,boat,actors,collision,objects={}){
  const placed=collision?.placedObjects?.(objects)?.floors||[];
  return (from,to,yaw)=>{
-  if(Object.values(actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(to,yaw,other.position,other.rotation?.y||0)))return true;
+  if(Object.values(actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(to,yaw,other.position,other.rotation?.y||0,.12,boat,other)))return true;
   const dx=to.x-from.x,dz=to.z-from.z,span=Math.hypot(dx,dz);if(span<.001)return false;
   const direction=[dx/span,0,dz/span];
-  return [-.85,0,.85].some(side=>{
-   const origin={x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*2,y:.18,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*2};
+  const [beam,length]=(boat.modelId||boat.asset?.buildAssetId)==='harbor-yacht'?watercraftSize(boat):[.85,2];
+  return [-beam,0,beam].some(side=>{
+   const origin={x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*length,y:.18,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*length};
    if(collision?.blocksShot(environment,origin,direction,span+.12,actors))return true;
    return placed.length>0&&new THREE.Raycaster(new THREE.Vector3(origin.x,origin.y,origin.z),new THREE.Vector3(...direction),.001,span+.12).intersectObjects(placed,false).length>0;
   });

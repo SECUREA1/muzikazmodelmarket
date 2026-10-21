@@ -1,4 +1,4 @@
-export const HARBOR_BOATS=Object.freeze(['harbor-skiff','harbor-sailboat']);
+export const HARBOR_BOATS=Object.freeze(['harbor-skiff','harbor-sailboat','harbor-yacht']);
 export const isWatercraft=actor=>HARBOR_BOATS.includes(actor?.modelId||actor?.asset?.buildAssetId);
 export function harborWaterAt(environment,point,margin=0){
  const harbor=environment?.builderScene?.layoutMeta?.harbor;if(!harbor)return false;
@@ -6,12 +6,15 @@ export function harborWaterAt(environment,point,margin=0){
  const patches=[{x:0,z:0,width:256,depth:256},...(harbor.islands||[])];
  return !patches.some(p=>Math.abs(x-p.x)<=p.width/2+margin&&Math.abs(z-p.z)<=p.depth/2+margin);
 }
-export function watercraftFootprint(point,yaw=0){
- const sin=Math.sin(yaw),cos=Math.cos(yaw);
- return [[0,0],[-.9,-2],[.9,-2],[-.9,2],[.9,2]].map(([x,z])=>({x:point.x+x*cos+z*sin,z:point.z-x*sin+z*cos}));
+export const watercraftSize=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht'?[6,21]:[1,2.4];
+export function watercraftFootprint(point,yaw=0,actor=null){
+ const sin=Math.sin(yaw),cos=Math.cos(yaw),[w,l]=(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht'?watercraftSize(actor):[.9,2];
+ const points=[[0,0],[-w,-l],[w,-l],[-w,l],[w,l]];if(w>1)points.push([-w,0],[w,0],[0,-l],[0,l]);
+ return points.map(([x,z])=>({x:point.x+x*cos+z*sin,z:point.z-x*sin+z*cos}));
 }
 // Separating-axis test for complete oriented hulls, including occupied boats.
-export function watercraftOverlap(a,yawA,b,yawB,padding=.12){
+export function watercraftOverlap(a,yawA,b,yawB,padding=.12,actorA=null,actorB=null){
  const axes=yaw=>[{x:Math.cos(yaw),z:-Math.sin(yaw)},{x:Math.sin(yaw),z:Math.cos(yaw)}],first=axes(yawA),second=axes(yawB),delta={x:b.x-a.x,z:b.z-a.z},dot=(u,v)=>u.x*v.x+u.z*v.z;
- return [...first,...second].every(axis=>Math.abs(dot(delta,axis))<Math.abs(dot(first[0],axis))*(1+padding)+Math.abs(dot(first[1],axis))*(2.4+padding)+Math.abs(dot(second[0],axis))*(1+padding)+Math.abs(dot(second[1],axis))*(2.4+padding));
+ const [aw,al]=watercraftSize(actorA),[bw,bl]=watercraftSize(actorB);
+ return [...first,...second].every(axis=>Math.abs(dot(delta,axis))<Math.abs(dot(first[0],axis))*(aw+padding)+Math.abs(dot(first[1],axis))*(al+padding)+Math.abs(dot(second[0],axis))*(bw+padding)+Math.abs(dot(second[1],axis))*(bl+padding));
 }

@@ -1,10 +1,10 @@
 export function neonMarina(){
- const harbor={extent:256,islands:[{id:'beacon-island',name:'Beacon Island',x:185,z:24,width:48,depth:48},{id:'palm-key',name:'Palm Key',x:-185,z:-45,width:52,depth:52},{id:'north-haven',name:'North Haven',x:20,z:185,width:56,depth:48}]};
+ const harbor={extent:384,islands:[{id:'beacon-island',name:'Beacon Island',x:185,z:24,width:48,depth:48},{id:'palm-key',name:'Palm Key',x:-185,z:-45,width:52,depth:52},{id:'north-haven',name:'North Haven',x:20,z:185,width:56,depth:48}]};
  const objects=[],locations=[];
  const add=(id,modelId,x,y,z,extra={})=>{const item={id:'public-experience-marina-'+id,modelId,placementAnchor:'collider-base',name:extra.name||id.replaceAll('-',' '),position:{x,y,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},functionalSettings:{behavior:'decor',destructible:true,health:100},...extra};objects.push(item);return item;};
  const tile=(id,x,z,scale=[1,1,1],y=0)=>add(id,'material:floor',x,y,z,{scale:{x:scale[0],y:scale[1],z:scale[2]}});
  const guide=(id,title,x,z,text)=>add(id,'street-sign',x,0,z,{name:title,functionalSettings:{behavior:'talk',interactionDistance:4,prompt:'Read '+title},dialogueSettings:{text}});
- locations.push({id:'marina',name:'Neon Marina',x:132,z:30,width:28,depth:48,description:'Board a launch or sailboat with E / Use. Steer with movement controls. Use E again to leave the boat; landing piers and steps let you reach each island.'});
+ locations.push({id:'marina',name:'Neon Marina',x:151,z:64,width:66,depth:120,description:'Board a launch or sailboat with E / Use. Steer with movement controls. Use E again to leave the boat; landing piers and steps let you reach each island.'});
  // Main jetty connects the mainland edge to a spine and three finger slips.
  for(let i=0;i<10;i++)tile('main-jetty-'+i,124+i*2.4,30);
  for(let i=0;i<17;i++)tile('marina-spine-'+i,138,10.8+i*2.4);
@@ -14,6 +14,11 @@ export function neonMarina(){
   const boat=add('boat-'+slip,slip===1?'harbor-sailboat':'harbor-skiff',144,0,z+3.8,{placementAnchor:'waterline',name:['Neon Launch','Sea Glass Sailboat','Island Shuttle'][slip],functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:5,prompt:'Board boat · E / Use',destructible:true,health:200}});
   boat.rotation.y=-Math.PI/2;
  }
+ // Separate superyacht pier leaves a full turning basin south of the island channel.
+ for(let i=0;i<10;i++)tile('superyacht-pier-'+i,124+i*2.4,116);
+ add('superyacht','harbor-yacht',141,0,99,{placementAnchor:'waterline',name:'Tideglass Superyacht',functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:24,prompt:'Take superyacht helm · E / Use',destructible:true,health:2000}});
+ locations.push({id:'superyacht-berth',name:'Superyacht Berth',x:141,z:116,width:28,depth:6,description:'Tideglass: bedroom, lounge, aft sitting area, billiards table and live pole performance. Board with E / Use and steer into the enlarged harbour.'});
+ guide('superyacht-guide','Tideglass Superyacht',127,113,'The superyacht is berthed alongside this pier. E / Use takes the flybridge helm. WASD / arrows steer and power the boat. Use the helm controls to raise anchor. E / Use leaves the helm.');
  add('mainland-water-steps','material:stage-steps',130.8,-.65,28.2);
  guide('departure-guide','Marina Departures',122,26,'Three boats are docked in the slips. E / Use boards or leaves a boat. Steer with WASD, arrows or the left stick. Sail east to Beacon Island, west around the coast to Palm Key, or north to North Haven. Stay clear of docks and the shoreline.');
  for(const island of harbor.islands){

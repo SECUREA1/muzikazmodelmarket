@@ -11,7 +11,7 @@ export function harborApproach(environment,id){
  return {id,name:island.name+' approach',x:island.x-island.width/2-8,z:island.z-12};
 }
 function hullClear(environment,boat,point,yaw,actors,margin=.35){
- return watercraftFootprint(point,yaw).every(vertex=>harborWaterAt(environment,vertex,margin))&&!Object.values(actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(point,yaw,other.position,other.rotation?.y||0,.18));
+ return watercraftFootprint(point,yaw,boat).every(vertex=>harborWaterAt(environment,vertex,margin))&&!Object.values(actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(point,yaw,other.position,other.rotation?.y||0,.18,boat,other));
 }
 function legClear(environment,boat,from,to,actors,blocked,margin){
  const span=distance(from,to),yaw=Math.atan2(from.x-to.x,from.z-to.z),steps=Math.max(1,Math.ceil(span/2));

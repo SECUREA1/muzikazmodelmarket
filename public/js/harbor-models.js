@@ -1,6 +1,7 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 
 export const HARBOR_HELM_POSES=Object.freeze({
+ 'harbor-yacht':Object.freeze({position:Object.freeze([0,5.8,-9]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74}),
  'harbor-skiff':Object.freeze({position:Object.freeze([.30,1.43,1.12]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74}),
  'harbor-sailboat':Object.freeze({position:Object.freeze([.27,1.43,1.98]),lookForward:Object.freeze([0,0,-1]),near:.025,fov:74})
 });
@@ -32,6 +33,7 @@ function sailGeometry(front,top,rear){
  for(let i=0;i<segments;i++)for(let j=0;j<6;j++){const a=i*7+j,b=a+7;indices.push(a,b,a+1,b,b+1,a+1);}const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();return geometry;
 }
 export function createHarborBoat(id){
+ if(id==='harbor-yacht')return createSuperyacht();
  const sailboat=id==='harbor-sailboat',root=new THREE.Group();root.name=sailboat?'SEA_GLASS_COASTAL_SLOOP':'NEON_MARINA_SPORT_LAUNCH';
  const navy=material(0x123e51,.37,.37,{side:THREE.DoubleSide}),ivory=material(0xe2e5d8,.46,.12,{side:THREE.DoubleSide}),teak=material(0xa17d56,.88,.03),seam=material(0x4e4334,.95,.01),chrome=material(0xa7b8bf,.24,.78),black=material(0x17242b,.73,.12),cushion=material(0xc7d0c9,.88,.02),orange=material(0xefad66,.46,.1),white=material(0xeaf4ee,.65,.05),glass=material(0x9bcbd7,.14,.08,{transparent:true,opacity:.18,side:THREE.DoubleSide,depthWrite:false});
  const detail=new THREE.Group();detail.name='MARINE_FITTINGS';const needles=[];const add=(mesh,name,parent=root)=>{mesh.name=name;parent.add(mesh);return mesh;};const box=(name,size,position,mat,parent=root)=>add(part(new THREE.BoxGeometry(...size),mat,position),name,parent);
@@ -72,8 +74,42 @@ export function createHarborBoat(id){
 }
 export function updateHarborBoat(root,state={},elapsed=0){
  const rig=root?.userData?.boatRig;if(!rig)return;const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback,time=finite(elapsed),speed=finite(state.speed),throttle=THREE.MathUtils.clamp(finite(state.throttle),-1,1),rudder=THREE.MathUtils.clamp(finite(state.rudder,finite(state.steering)),-1,1),rpm=Math.max(0,finite(state.rpm,Math.abs(throttle)*4800)),trim=THREE.MathUtils.clamp(finite(state.sailTrim,.45),0,1),power=THREE.MathUtils.clamp(finite(state.sailPower,.6),0,1);
+ if(rig.dancer){rig.dancer.rotation.y=time*.65;rig.dancer.rotation.z=Math.sin(time*1.4)*.1;}
  rig.wheel.rotation.z=-rudder*2.6;rig.throttle.rotation.x=-throttle*.65;if(rig.rudder)rig.rudder.rotation.y=-rudder*.44;if(rig.propeller)rig.propeller.rotation.z=time*rpm*.08;if(rig.boom)rig.boom.rotation.y=(.05+trim*.28)*(finite(state.windSide,1)<0?-1:1);if(rig.sail)rig.sail.scale.x=.72+power*.28;rig.flag.rotation.y=Math.sin(time*2.8)*.12+rudder*.05;
  for(const needle of rig.needles){const kind=needle.userData.instrument;needle.rotation.z=kind==='speed'?-2.2+Math.min(1,Math.abs(speed)/14)*4.4:kind==='rpm'?-2.2+Math.min(1,rpm/6000)*4.4:-finite(state.heading)*Math.PI/180;}
  const strength=THREE.MathUtils.clamp(finite(state.wakeStrength,Math.abs(speed)/10),0,1);rig.wake.visible=strength>.025;rig.foam.forEach((mesh,index)=>{const phase=(time*.6+index/rig.foam.length)%1;mesh.position.set(0,-.165,2.05+phase*3.3);mesh.scale.set(.7+phase*(2.8+strength),1,.65+phase*1.6);mesh.material.opacity=strength*(1-phase)*.34;});
  root.userData.boatAnimationState={speed,throttle,rudder,rpm,sailTrim:trim,sailPower:power,wakeStrength:strength};root.userData.boatAnimatedAt=time;
+}
+
+// Everything aboard belongs to the vessel, including furnishings and animation rigs.
+function createSuperyacht(){
+ const root=new THREE.Group();root.name='TIDEGLASS_SUPERYACHT';
+ const white=material(0xf1eee5),navy=material(0x102d49),teak=material(0xad8055,.85),chrome=material(0xc7d7de,.22,.8),velvet=material(0x246d72,.9),glass=material(0x8ad9e3,.15,.2,{transparent:true,opacity:.24,side:THREE.DoubleSide}),felt=material(0x146442,.95),dark=material(0x17232c),gold=material(0xcda453,.3,.7);
+ const box=(name,size,pos,mat,parent=root)=>{const mesh=part(new THREE.BoxGeometry(...size),mat,pos);mesh.name=name;parent.add(mesh);return mesh;};
+ const hull=part(hullGeometry(),navy);hull.scale.set(6,5,9);hull.name='SUPERYACHT_SHAPED_HULL';root.add(hull);
+ box('MAIN_TEAK_DECK',[10,.3,31],[0,1.8,0],teak);
+ for(const x of [-4.9,4.9]){box('GLAZED_SALOON_WALL',[.12,2.8,21],[x,3.35,-1],glass);tube(root,[x,2,11],[x,3,15],.045,chrome);tube(root,[x,3,15],[x,3,-16],.045,chrome);for(let z=-15;z<=15;z+=3)tube(root,[x,2,z],[x,3,z],.035,chrome);}
+ box('FLYBRIDGE_ROOF',[10.2,.25,23],[0,4.9,-2],white);
+ box('FORWARD_PANORAMIC_WINDOW',[9.8,2.8,.12],[0,3.35,-11.5],glass);
+ // Open central corridor connects bedroom, lounge, games room and aft terrace.
+ for(const z of [-5,5])for(const x of [-3.3,3.3])box('ROOM_DIVIDER',[3.3,2.8,.12],[x,3.35,z],white);
+ box('MASTER_BED_BASE',[3.3,.5,4],[2,2.2,-8],navy);box('MASTER_BED_MATTRESS',[3.4,.25,4.1],[2,2.58,-8],white);box('MASTER_BED_DUVET',[3.4,.12,2.8],[2,2.76,-7.5],velvet);
+ for(const x of [1.15,2.85])box('MASTER_PILLOW',[1.3,.22,.7],[x,2.85,-9.4],white);
+ box('BEDROOM_WARDROBE',[1.2,2.5,3],[-3.6,3.2,-8],teak);
+ const sofa=(name,x,z,rotation=0)=>{const group=new THREE.Group();group.name=name;group.position.set(x,1.98,z);group.rotation.y=rotation;box('SOFA_SEAT',[3,.5,1.15],[0,.35,0],velvet,group);box('SOFA_BACK',[3,1,.22],[0,.85,.55],velvet,group);for(const side of [-1,1])box('SOFA_ARM',[.22,.8,1.3],[side*1.5,.55,0],velvet,group);root.add(group);};
+ sofa('LOUNGE_SOFA',-2.5,-2,Math.PI/2);sofa('LOUNGE_SOFA',2.5,-2,-Math.PI/2);box('LOUNGE_COFFEE_TABLE',[2,.55,1.2],[0,2.3,-2],teak);
+ box('BILLIARDS_TABLE_FRAME',[2.8,.35,4.8],[2.4,2.95,8],teak);box('BILLIARDS_GREEN_FELT',[2.5,.04,4.5],[2.4,3.15,8],felt);
+ for(const x of [1.3,3.5])for(const z of [6,10])box('BILLIARDS_TABLE_LEG',[.18,1,.18],[x,2.45,z],gold);
+ for(const x of [1.15,3.65])for(const z of [5.8,8,10.2]){const pocket=part(new THREE.CylinderGeometry(.13,.13,.03,16),dark,[x,3.18,z]);root.add(pocket);}
+ for(let i=0;i<10;i++){const ball=part(new THREE.SphereGeometry(.075,12,8),material([0xffffff,0xeac62c,0x2666c8,0xd82f3f,0x502762][i%5]),[2+(i%3)*.19,3.25,7+Math.floor(i/3)*.18]);ball.name='BILLIARD_BALL';root.add(ball);}
+ tube(root,[.9,3.3,6],[.9,3.3,10],.025,teak,'BILLIARD_CUE');
+ sofa('AFT_SITTING_AREA',-2.6,13);sofa('AFT_SITTING_AREA',2.6,13);box('AFT_TERRACE_TABLE',[1.7,.6,1.3],[0,2.3,13],white);
+ box('PERFORMANCE_STAGE',[3.2,.18,3.2],[-2.5,2.08,8],navy);tube(root,[-2.5,2.18,8],[-2.5,4.75,8],.045,chrome,'DANCE_POLE');
+ const dancer=new THREE.Group();dancer.name='ADULT_POLE_PERFORMER';dancer.position.set(-2.5,2.18,8);const skin=material(0xb97f63),costume=material(0x923d95,.55);
+ const body=new THREE.Group();body.position.x=.45;dancer.add(body);box('PERFORMER_COSTUME',[.4,.65,.27],[0,1.12,0],costume,body);const head=part(new THREE.SphereGeometry(.18,16,12),skin,[0,1.65,0]);body.add(head);
+ for(const side of [-1,1]){tube(body,[side*.13,.85,0],[side*.2,.15,side*.13],.08,costume,'DANCER_LEG');tube(body,[side*.2,1.35,0],[-.4,1.65,side*.1],.055,skin,'DANCER_ARM');}root.add(dancer);
+ for(let i=0;i<10;i++)box('FLYBRIDGE_STAIR',[1.1,.22,.6],[-3.9,2.1+i*.3,14-i*.55],teak);
+ box('FLYBRIDGE_HELM',[2,1.1,.7],[0,5.55,-10.5],navy);box('HELM_DISPLAY',[1.6,.35,.06],[0,5.85,-10.1],glass);const wheel=new THREE.Group();wheel.position.set(0,5.45,-10);wheel.add(part(new THREE.TorusGeometry(.32,.035,8,24),chrome));root.add(wheel);
+ const throttle=new THREE.Group(),flag=new THREE.Group(),wake=new THREE.Group();root.add(throttle,flag,wake);
+ root.userData={builderObject:true,modelId:'harbor-yacht',watercraft:true,boatModel:true,dimensions:[12,7,42],helmPose:HARBOR_HELM_POSES['harbor-yacht'],vehicle:{mode:'boat',seat:[...HARBOR_HELM_POSES['harbor-yacht'].position],speed:9,turnSpeed:.3},boatRig:{wheel,throttle,flag,wake,foam:[],needles:[],dancer}};return root;
 }
