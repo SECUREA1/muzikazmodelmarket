@@ -384,3 +384,34 @@ test('retry probes a recovered connection after backoff without waiting for an o
   },{input:()=>({side}),render:state=>rendered.push(state.sequence)});
  }finally{Date.now=previousNow;}
 });
+
+test('aircraft cannons keep a bounded firing window without waiting for late replies or blocking movement',async()=>{
+ let sequence=0;const shots=[],releases=[],events=[],previews=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='fire'){
+   shots.push(command);const state=confirmed(++sequence);state.serverTime=1000+sequence;
+   state.result={origin:{x:0,y:10,z:0},direction:command.direction,firedAt:state.serverTime};
+   return new Promise(resolve=>releases.push(()=>resolve(response(state))));
+  }
+  return response(confirmed(++sequence));
+ },async client=>{
+  window.dispatchEvent=event=>events.push(event);await client.whenReady();
+  const fields={tool:'laser',aircraftShot:true,direction:[0,0,-1],origin:{x:0,y:10,z:0}},pending=[];
+  try{
+   pending.push(client.send('fire',fields,'cannon-1'));await pause(5);
+   assert.equal(await client.send('fire',fields,'too-soon'),null,'local cooldown still applies');
+   await pause(205);pending.push(client.send('fire',fields,'cannon-2'));
+   await pause(205);pending.push(client.send('fire',fields,'cannon-3'));await pause(5);
+   assert.equal(shots.length,3,'three cannon shots can be in flight before the first reply');
+   await pause(205);assert.equal(await client.send('fire',fields,'over-capacity'),null,'a stalled connection cannot build an unlimited shot queue');
+   assert.equal(shots.length,3);
+   const state=await client.send('input',{input:{side:1}});assert.ok(state.players[state.selfId],'cannon latency does not occupy movement slots');
+   releases[2]();releases[0]();releases[1]();await Promise.all(pending);
+   assert.equal(events.filter(event=>event.type==='muzikaz:shot-confirmed').length,3,'each late shot still confirms once');
+   assert.deepEqual(previews.map(shot=>shot.requestId),['cannon-1','cannon-2','cannon-3']);
+   await pause(20);assert.equal(shots.length,3,'releasing a slot never replays dropped trigger ticks');
+  }finally{client.stop();for(const release of releases)release();await Promise.allSettled(pending);}
+ },{onShot:shot=>previews.push(shot)});
+});

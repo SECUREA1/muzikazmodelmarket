@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import vm from 'node:vm';
 import * as THREE from '../public/vendor/three/three.module.min.js';
 import {EnvironmentLoader} from '../public/js/environments/environment-loader.js';
 import {LocalWalkingView} from '../public/js/local-walking-view.js';
@@ -36,4 +38,24 @@ test('server-only viewers can still omit the local collision cache',()=>{
  const loader=fixture(false),ray=new THREE.Ray(new THREE.Vector3(0,4,0),new THREE.Vector3(0,-1,0));
  assert.equal(loader.octree.rayIntersect(ray),false);
  assert.ok(loader.floorMeshes.length>0);
+});
+
+test('the actual shared explorer loader configuration retains physical floors with current and legacy loaders',async t=>{
+ const source=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8'),declaration=source.split('\n').find(line=>line.includes('const envLoader = new EnvironmentLoader('));
+ assert.ok(declaration,'the explorer constructs its environment loader');
+ const expression=declaration.slice(declaration.indexOf('new EnvironmentLoader(')).trim().replace(/;$/,'');
+ class LegacyEnvironmentLoader extends EnvironmentLoader{
+  constructor(configuration){const {localCollision,...legacyConfiguration}=configuration;super(legacyConfiguration);}
+ }
+ for(const Loader of [EnvironmentLoader,LegacyEnvironmentLoader]){
+  const scene=new THREE.Scene(),renderer={extensions:{has:()=>false},capabilities:{isWebGL2:true}},context=vm.createContext({EnvironmentLoader:Loader,scene,renderer,camera:new THREE.PerspectiveCamera(),serverHostedRoom:true,loadingFill:{style:{}},updateLevelLoader:()=>{}}),loader=vm.runInContext(expression,context);
+  assert.ok(loader instanceof Loader);t.after(()=>loader.unload());
+  const world=new THREE.Group(),floor=new THREE.Mesh(new THREE.BoxGeometry(20,.2,20)),wall=new THREE.Mesh(new THREE.BoxGeometry(.2,3,10));floor.name='FLOOR';floor.position.y=-.1;wall.name='WALL';wall.position.set(1,1.5,0);world.add(floor,wall);scene.add(world);loader.world=world;loader.activeEnvironment={id:'shared-explorer-collider-map'};
+  for(const [refresh,scale] of [[()=>loader.setSpaceScale(1),1],[()=>loader.setSupplementalCollisionRoots([]),1],[()=>loader.setSpaceScale(2),2]]){
+   refresh();const ray=new THREE.Ray(new THREE.Vector3(0,4,0),new THREE.Vector3(0,-1,0)),hit=loader.octree.rayIntersect(ray);assert.ok(hit,Loader.name+': the actual explorer options must build the shared floor octree');assert.ok(Math.abs(hit.position.y)<1e-6);
+   const view=new LocalWalkingView(),target={};view.reconcile({x:0,y:.02,z:0},{receivedAt:0,grounded:true});
+   for(let frame=1;frame<=60;frame++){view.sample(frame*1000/60,1/60,{side:1},{octree:loader.octree,speed:4},target);assert.ok(Math.abs(target.y-.02)<1e-5,Loader.name+': feet must remain on the refreshed floor');}
+   const wallContact=.9*scale-.34-.002;assert.ok(target.x>wallContact-.005&&target.x<=wallContact+.00001,Loader.name+': refreshed geometry must still clip the actual wall');
+  }
+ }
 });

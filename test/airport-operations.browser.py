@@ -14,7 +14,7 @@ with sync_playwright() as p:
         page.evaluate('''async () => {
           window.spoken=[];window.commands=[];
           window.SpeechSynthesisUtterance=class {constructor(text){this.text=text}};
-          Object.defineProperty(window,'speechSynthesis',{value:{speak:u=>spoken.push(u.text)},configurable:true});
+          Object.defineProperty(window,'speechSynthesis',{value:{speak:u=>{spoken.push(u.text);queueMicrotask(()=>u.onend?.());},cancel(){},resume(){}},configurable:true});
           const {mountAirportOperations}=await import('/public/js/airport-operations.js');
           window.ops=mountAirportOperations({stage:document.querySelector('.house-stage'),getAim:()=>({origin:{x:0,y:1,z:0},direction:[0,0,-1]}),command:async(action,fields)=>{commands.push({action,...fields});return {result:{message:'Tower. Cleared for takeoff.'}}}});
           ops.updateEnvironment({airport:{enabled:true}});
@@ -23,11 +23,12 @@ with sync_playwright() as p:
         page.get_by_role('button',name='Show flight controls',exact=True).click()
         page.get_by_role('button',name='Airport tower radio',exact=True).click()
         dialog=page.get_by_role('dialog',name='Airport tower radio')
+        dialog.get_by_role('button',name='Mute tower audio').click()
         dialog.get_by_role('button',name='Enable tower audio').click()
         dialog.get_by_role('button',name='Takeoff clearance').click()
         assert page.evaluate('commands[0].action')=='airport-radio'
         assert page.evaluate('commands[0].operation')=='takeoff'
-        assert page.evaluate('spoken.length')==2
+        assert page.evaluate('spoken.length')==3
         assert dialog.evaluate('(el)=>el.scrollWidth<=el.clientWidth')
         dialog.get_by_role('button',name='Close',exact=True).click()
         climb=page.get_by_role('button',name='Climb aircraft')

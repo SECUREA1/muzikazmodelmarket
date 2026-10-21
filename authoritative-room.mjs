@@ -272,7 +272,7 @@ export class AuthoritativeRooms {
     result.message=isAircraft(vehicle)?startAircraftAssist(sim,player,environment,next.action,now,this.collision,room.objects):startBoatAssist(sim,player,environment,next.action,now);
    }
    else if(command.action==='aircraft-assist'){result.message=startAircraftAssist(sim,player,environment,command.operation,now,this.collision,room.objects);}
-   else if(command.action==='airport-radio'){result.message=airportRadio(sim,player,actorId,command.operation,now);}
+   else if(command.action==='airport-radio'){result.message=airportRadio(sim,player,actorId,command.operation,now,environment);}
    else if(command.action==='rad-tox-toggle'){player.radToxEnabled=command.enabled===true;result.message=player.radToxEnabled?'RAD-TOX enabled.':'RAD-TOX disabled.';}
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position)){const loading=player.radToxReady===false;player.radToxReady=true;player.radToxEnabled=true;registerParticipant(sim,actorId,player,now);if(loading)player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;result.message='RAD-TOX encounter active.';}else result.message='Builder gameplay active.';}
    else if(command.action==='next-rad-tox'){if(sim.radTox?.transition&&now<sim.radTox.transition.at)fail('The next round starts after the results countdown.',409);if(nextRadToxLevel(sim,environment,now,command.matchId)){for(const [index,participantId] of Object.keys(sim.match.participants).entries()){const participant=sim.players[participantId],entry=environment.spawn||{x:0,y:0,z:2};participant.position=this.collision.safeSpawn(environment,{...entry,x:entry.x+(index%4)*1.2,z:entry.z+Math.floor(index/4)*1.2});participant.floor=participant.position.y;participant.velocityY=0;participant.grounded=true;participant.shieldUntil=0;participant.input={};participant.toolReady={};participant.toolUses={};}result.message='Next shared level started.';}else if(sim.match?.id===command.matchId)fail('Complete the current level before starting another.',409);}
@@ -454,7 +454,7 @@ if(!hit.entity.destructible){if(hit.entity.radTox||['hostile','patrol'].includes
     const end={x:origin.x+ray[0]*shotDistance,y:origin.y+ray[1]*shotDistance,z:origin.z+ray[2]*shotDistance};
     const paint=tool==='spray'?this.collision.paintSurface(environment,player.position,ray,sim.actors,room.objects):null;
     if(paint){Object.assign(end,paint.point);result.color=clamp(command.color,0,0xffffff);result.paintNormal=paint.normal.toArray();}
-    result={...result,firedAt:now,cooldownMs:cooldown,readyAt:player.toolReady[tool],tool,origin,end,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:isAircraft(hit?.entity)?'aircraft':hit?.playerId?'player':hit?.entity.destructible?'building':hit?'enemy':null};
+    result={...result,...(gunAircraft?{aircraftId:gunAircraft.id}:{}),firedAt:now,cooldownMs:cooldown,readyAt:player.toolReady[tool],tool,origin,end,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:isAircraft(hit?.entity)?'aircraft':hit?.playerId?'player':hit?.entity.destructible?'building':hit?'enemy':null};
    }else fail('This action has no server handler. It was not run locally.',422);
   }
   player.position=constrainFiringRangePlayer(player.position,player.position,sim,player);

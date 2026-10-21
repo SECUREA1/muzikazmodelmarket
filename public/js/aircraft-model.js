@@ -2,6 +2,7 @@ import * as THREE from '../vendor/three/three.module.min.js';
 
 // Root origin and footprint deliberately match the public airport's aircraft stands.
 export const AIRCRAFT_COCKPIT_POSE=Object.freeze({position:Object.freeze([0,1.78,.68]),lookForward:Object.freeze([0,0,-1]),near:.035,fov:74});
+export const AIRCRAFT_CANNON_PORTS=Object.freeze([Object.freeze([-2.1,.43,-1.6]),Object.freeze([2.1,.43,-1.6])]);
 const mat=(color,roughness=.5,metalness=.3,extra={})=>new THREE.MeshStandardMaterial({color,roughness,metalness,...extra});
 const part=(geometry,material,position=[0,0,0],rotation=[0,0,0])=>{const mesh=new THREE.Mesh(geometry,material);mesh.position.set(...position);mesh.rotation.set(...rotation);return mesh;};
 function cosmetic(object){object.traverse(node=>{node.userData.collisionDisabled=true;node.userData.collider=false;});return object;}
@@ -53,6 +54,8 @@ export function createAircraftModel(){
   add(part(wingGeometry(side),paint),side<0?'PORT_GULL_WING':'STARBOARD_GULL_WING');
   const aileron=new THREE.Group();aileron.name=side<0?'PORT_AILERON':'STARBOARD_AILERON';aileron.position.set(side*3.65,.63,.56);aileron.add(part(new THREE.BoxGeometry(2.15,.055,.28),darkPaint));aileron.userData.side=side;add(aileron);ailerons.push(aileron);
   const flap=new THREE.Group();flap.name='LANDING_FLAP_'+side;flap.position.set(side*1.75,.38,.95);flap.add(part(new THREE.BoxGeometry(1.28,.06,.35),darkPaint,[0,0,.12]));add(flap);flaps.push(flap);
+  const cannon=cosmetic(new THREE.Group());cannon.name=side<0?'PORT_WING_CANNON':'STARBOARD_WING_CANNON';
+  cannon.add(part(new THREE.BoxGeometry(.16,.13,.38),darkPaint,[side*2.1,.43,-.97]),part(new THREE.CylinderGeometry(.035,.047,.7,10),steel,[side*2.1,.43,-1.25],[Math.PI/2,0,0]),part(new THREE.TorusGeometry(.035,.012,5,10),darkPaint,[side*2.1,.43,-1.6]));add(cannon);
   // Painted identification stripes follow the outer wing and remain visual only.
   const stripes=cosmetic(new THREE.Group());stripes.name='WING_IDENTIFICATION_'+side;for(let i=0;i<3;i++)stripes.add(part(new THREE.BoxGeometry(.18,.012,.68),pale,[side*(3.78+i*.25),.80,.02],[0,0,side*.12]));add(stripes);
   const lamp=cosmetic(part(new THREE.SphereGeometry(.065,10,8),new THREE.MeshBasicMaterial({color:side<0?0xff5546:0x63e8aa}),[side*5.17,.85,.04]));lamp.name=side<0?'PORT_NAV_LIGHT':'STARBOARD_NAV_LIGHT';add(lamp);

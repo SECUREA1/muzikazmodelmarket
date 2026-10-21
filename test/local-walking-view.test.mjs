@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../public/vendor/three/three.module.min.js';
+import {Octree} from '../public/vendor/three/addons/math/Octree.js';
 import {LocalWalkingView} from '../public/js/local-walking-view.js';
 
 const point=(x,y,z)=>new THREE.Vector3(x,y,z);
@@ -140,4 +141,28 @@ test('explicit teleports and world resets clear prediction while long outages st
  for(let frame=1;frame<=180;frame++)motion.sample(220+frame*1000/60,1/60,{side:1},geometry,target);
  const stopped={...target};motion.sample(4000,.05,{side:1},geometry,target);near(target.x,stopped.x);near(target.z,stopped.z);
  motion.reset();const sentinel={x:-99,y:-99,z:-99};motion.sample(4100,.02,{side:1},geometry,sentinel);assert.deepEqual(sentinel,{x:-99,y:-99,z:-99});near(motion.velocityY,0);
+});
+
+function actualFloorOctree({width=20,x=0,ceiling=false,rotate=.37}={}){
+ const root=new THREE.Group(),mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,20),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));mesh.rotation.x=-Math.PI/2;mesh.position.set(x,4,0);root.add(mesh);root.rotation.y=rotate;
+ if(ceiling){const roof=new THREE.Mesh(new THREE.BoxGeometry(10,.1,10),new THREE.MeshBasicMaterial());roof.position.y=5.2;root.add(roof);}
+ return new Octree().fromGraphNode(root);
+}
+test('actual rotated floor geometry restores a grounded player after a short missing-cache fall below the floor',()=>{
+ const {motion,target}=fixture({x:0,y:4.02,z:0}),missing={speed:4,octree:new Octree(),floorGap:.02};
+ for(let frame=1;frame<=12;frame++)motion.sample(frame*1000/60,1/60,{side:1},missing,target);
+ assert.ok(target.y<3.9);assert.ok(motion.velocityY<0);acknowledge(motion,{x:.6,y:4.02,z:0},150,200);
+ motion.sample(1000*13/60,1/60,{side:1},{speed:4,octree:actualFloorOctree(),floorGap:.02},target);
+ near(target.y,4.02);near(target.x,4*13/60);assert.equal(motion.grounded,true);near(motion.velocityY,0);
+ for(let frame=14;frame<=60;frame++)motion.sample(frame*1000/60,1/60,{}, {octree:actualFloorOctree(),floorGap:.02},target);near(target.y,4.02);
+});
+test('verified authoritative support repairs small floor-clearance errors instead of waiting for a three-metre fall',()=>{
+ const {motion,target}=fixture({x:0,y:4.02,z:0});for(let frame=1;frame<=3;frame++)motion.sample(frame*1000/60,1/60,{}, {octree:new Octree()},target);
+ const lost=4.02-target.y;assert.ok(lost>.008&&lost<.03);acknowledge(motion,{x:0,y:4.02,z:0},50,50);motion.sample(1000*4/60,1/60,{}, {octree:actualFloorOctree(),floorGap:.02},target);near(target.y,4.02);assert.equal(motion.grounded,true);near(motion.velocityY,0);
+});
+test('recovery cannot invent support over a ledge or place a capsule inside a low ceiling',()=>{
+ for(const geometry of [actualFloorOctree({width:1,x:-5,rotate:0}),actualFloorOctree({ceiling:true})]){
+  const {motion,target}=fixture({x:0,y:4.02,z:0});for(let frame=1;frame<=12;frame++)motion.sample(frame*1000/60,1/60,{}, {octree:new Octree()},target);
+  acknowledge(motion,{x:0,y:4.02,z:0},150,200);const before=target.y;motion.sample(1000*13/60,1/60,{}, {octree:geometry,floorGap:.02},target);assert.ok(target.y<=before,'no physical support or blocked standing space must not create a recovery floor');assert.equal(motion.grounded,false);
+ }
 });

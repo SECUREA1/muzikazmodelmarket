@@ -19,7 +19,13 @@ const CONTAINMENT_THICKNESS = 0.2;
 
 function isWalkableFloorHit(hit) {
   if (!hit?.face) return true;
-  const normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
+  let matrix = hit.object.matrixWorld;
+  if (hit.object.isInstancedMesh && hit.instanceId !== undefined) {
+    const instance = new THREE.Matrix4();
+    hit.object.getMatrixAt(hit.instanceId, instance);
+    matrix = new THREE.Matrix4().multiplyMatrices(matrix, instance);
+  }
+  const normal = hit.face.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(matrix));
   return normal.y >= WALKABLE_FLOOR_NORMAL_Y;
 }
 
@@ -215,22 +221,48 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
     supplementalRoot.updateWorldMatrix(true, true);
     supplementalRoot.traverse(collect);
   });
-  const source = new THREE.Group();
-  if(buildOctree)collisionMeshes.forEach((mesh) => {
-    const clone = mesh.clone(false);
-    clone.geometry = mesh.geometry;
-    clone.material = mesh.material;
+  const source = new THREE.Group(), mirroredGeometry = new Map();
+  const colliderGeometry = (geometry, matrix) => {
+    if (matrix.determinant() >= 0) return geometry;
+    if (mirroredGeometry.has(geometry)) return mirroredGeometry.get(geometry);
+    // Octree derives normals from vertex winding. Reflection reverses that
+    // winding, so use a private index copy without changing visible meshes.
+    const reversed = geometry.clone();
+    if (!reversed.index) reversed.setIndex(Array.from({ length: reversed.attributes.position.count }, (_, index) => index));
+    const indices = reversed.index;
+    for (let index = 0; index + 2 < indices.count; index += 3) {
+      const second = indices.getX(index + 1);
+      indices.setX(index + 1, indices.getX(index + 2));
+      indices.setX(index + 2, second);
+    }
+    mirroredGeometry.set(geometry, reversed);
+    return reversed;
+  };
+  if (buildOctree) collisionMeshes.forEach(mesh => {
     mesh.updateWorldMatrix(true, false);
-    // clone() already carries the local transform. Applying matrixWorld to it
-    // would transform the collider twice and put walls beside their visuals.
-    // Copy the exact matrix, including shear from scaled, rotated ancestors.
-    clone.matrixAutoUpdate = false;
-    clone.matrix.copy(mesh.matrixWorld);
-    source.add(clone);
+    const add = matrix => {
+      const clone = mesh.isInstancedMesh ? new THREE.Mesh(mesh.geometry, mesh.material) : mesh.clone(false);
+      clone.name = mesh.name;
+      clone.geometry = colliderGeometry(mesh.geometry, matrix);
+      clone.material = mesh.material;
+      clone.matrixAutoUpdate = false;
+      clone.matrix.copy(matrix);
+      source.add(clone);
+    };
+    if (mesh.isInstancedMesh) {
+      // Octree does not expand instanceMatrix. Each rendered instance needs
+      // its complete world transform in the collision source.
+      const instance = new THREE.Matrix4(), matrix = new THREE.Matrix4();
+      for (let index = 0; index < mesh.count; index++) {
+        mesh.getMatrixAt(index, instance);
+        add(matrix.multiplyMatrices(mesh.matrixWorld, instance));
+      }
+    } else add(mesh.matrixWorld);
   });
   if (containment.root) source.add(containment.root);
   const octree = new Octree();
-  if(buildOctree)octree.fromGraphNode(source);
+  if (buildOctree) octree.fromGraphNode(source);
+  mirroredGeometry.forEach(geometry => geometry.dispose());
   const floorMeshes = collisionMeshes.filter((mesh) => isSpawnFloorObject(mesh));
   if (containment.floor) floorMeshes.push(containment.floor);
   return { octree, visibleMeshes, collisionMeshes, floorMeshes, containment, dedicatedCollisionCount: collisionMeshes.filter(isDedicatedCollider).length };

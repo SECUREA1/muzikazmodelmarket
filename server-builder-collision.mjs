@@ -5,7 +5,7 @@ import {isBasketball} from './public/js/basketball.js';
 import {slideWalking} from './public/js/walking-collision.js';
 import {PLAYER_FLOOR_CLEARANCE} from './public/js/player-floor.js';
 import {builderBaseEnvironment,builderBaseSpawn,applyBuilderBaseTransform} from './public/js/environments/builder-base.js';
-import {drawingCollisionModel,resolvePlacedSolids,placementFloorPoint,placementBounds,placementHitNormal,placementMeshes} from './public/js/placed-item-collision.js';
+import {drawingCollisionModel,resolvePlacedSolids,placementFloorPoint,placementBounds,placementHitNormal,placementMeshes,placementMeshMatrices} from './public/js/placed-item-collision.js';
 import {placedCollisionWorld,disposePlacedCollision} from './server-placed-collision.mjs';
 import {environmentGeometry} from './server-glb-geometry.mjs';
 import {buildingDimensions,buildingMaterial,createBuildingBlock} from './public/js/building-materials.js';
@@ -23,8 +23,8 @@ function wallTriangles(mesh){
  const geometry=mesh.geometry,positions=geometry?.attributes?.position,index=geometry?.index,triangles=[];
  if(!positions)return triangles;
  const count=index?index.count:positions.count;
- for(let offset=0;offset+2<count;offset+=3){
-  const vertices=[0,1,2].map(corner=>new THREE.Vector3().fromBufferAttribute(positions,index?index.getX(offset+corner):offset+corner).applyMatrix4(mesh.matrixWorld));
+ for(const matrix of placementMeshMatrices(THREE,mesh))for(let offset=0;offset+2<count;offset+=3){
+  const vertices=[0,1,2].map(corner=>new THREE.Vector3().fromBufferAttribute(positions,index?index.getX(offset+corner):offset+corner).applyMatrix4(matrix));
   const [a,b,c]=vertices,normal=new THREE.Vector3().subVectors(b,a).cross(new THREE.Vector3().subVectors(c,a)).normalize();
   if(Math.abs(normal.y)>=.55)continue;
   triangles.push({a,b,c,mesh,objectId:builderObjectId(mesh),minX:Math.min(a.x,b.x,c.x),maxX:Math.max(a.x,b.x,c.x),minY:Math.min(a.y,b.y,c.y),maxY:Math.max(a.y,b.y,c.y),minZ:Math.min(a.z,b.z,c.z),maxZ:Math.max(a.z,b.z,c.z)});

@@ -8,7 +8,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
  let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0,fireBusy=false;
  let connectionRevision=0,tickToken=null,pendingInput=null;const automaticInputs=new Set();
  let radToxStarted=false,radToxPreference=radToxEnabled;
- let fireRequest=null,queuedFire=null,inputSequence=0,inputEpoch=null,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
+ let fireRequest=null,queuedFire=null,aircraftFireRequests=0,inputSequence=0,inputEpoch=null,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
  const waiters=new Set(),collected=new Set();
  function firstPickup(id){if(collected.has(id))return false;collected.add(id);if(collected.size>1024)collected.delete(collected.values().next().value);return true;}
  function settle(error) {
@@ -46,10 +46,14 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   },
   async send(action,fields={},requestId=crypto.randomUUID()) {
    if(stopped)throw failure||Error('Room closed.');
-   if(action==='fire'&&fireRequest){if(!radToxStarted)return fireRequest;if(!queuedFire)queuedFire=fireRequest.then(()=>client.send(action,fields,requestId)).finally(()=>{queuedFire=null;});return queuedFire;}
-   const fireTool=String(fields.tool||'laser');if(action==='fire'&&performance.now()<(nextFireAt.get(fireTool)||0))return null;
-   const sentAt=performance.now(),revision=connectionRevision,issuedEpoch=inputEpoch,fireInterval=radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
-   if(action==='fire'){nextFireAt.set(fireTool,sentAt+fireInterval);if(radToxStarted||fields.aircraftShot===true)onShot({requestId,tool:fireTool,direction:fields.direction,...(fields.aircraftShot===true?{aircraftShot:true,origin:fields.origin}:{})});}
+   const aircraftShot=action==='fire'&&fields.aircraftShot===true;
+   // A held cannon must not wait for the previous HTTP response. Keep a small
+   // independent window and drop excess shots instead of building a backlog.
+   if(aircraftShot&&aircraftFireRequests>=3)return null;
+   if(action==='fire'&&!aircraftShot&&fireRequest){if(!radToxStarted)return fireRequest;if(!queuedFire)queuedFire=fireRequest.then(()=>client.send(action,fields,requestId)).finally(()=>{queuedFire=null;});return queuedFire;}
+   const fireTool=String(fields.tool||'laser'),fireKey=aircraftShot?'aircraft-cannon':fireTool;if(action==='fire'&&performance.now()<(nextFireAt.get(fireKey)||0))return null;
+   const sentAt=performance.now(),revision=connectionRevision,issuedEpoch=inputEpoch,fireInterval=aircraftShot?200:radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
+   if(action==='fire'){nextFireAt.set(fireKey,sentAt+fireInterval);if(radToxStarted||aircraftShot)onShot({requestId,tool:fireTool,direction:fields.direction,...(aircraftShot?{aircraftShot:true,origin:fields.origin}:{})});}
    const perform=async()=>{
     const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(action==='input'?{inputSequence:++inputSequence,...(inputEpoch?{inputEpoch}:{})}:{}),action,requestId});
     if(stopped)return;
@@ -67,8 +71,9 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     if(action==='fire'&&state.result?.origin&&state.result?.direction){const event=state.events?.find(event=>event.id===requestId&&event.actorId===selfId)||{...state.result,id:requestId,actorId:selfId,action:'fire',at:state.result.firedAt??state.serverTime};window.dispatchEvent(new CustomEvent('muzikaz:shot-confirmed',{detail:{roomId,event,serverTime:state.serverTime}}));}
     if(['respawn','next-rad-tox'].includes(action))nextFireAt.clear();client.ready=true;settle();return state;
    };
-   const pending=perform();if(action==='fire')fireRequest=pending;
-   try{return await pending;}catch(error){if(action==='fire'&&error.status===429)nextFireAt.set(fireTool,Math.max(nextFireAt.get(fireTool)||0,performance.now()+fireInterval));throw error;}finally{if(fireRequest===pending)fireRequest=null;}
+   if(aircraftShot)aircraftFireRequests++;
+   const pending=perform();if(action==='fire'&&!aircraftShot)fireRequest=pending;
+   try{return await pending;}catch(error){if(action==='fire'&&error.status===429)nextFireAt.set(fireKey,Math.max(nextFireAt.get(fireKey)||0,performance.now()+fireInterval));throw error;}finally{if(aircraftShot)aircraftFireRequests--;if(fireRequest===pending)fireRequest=null;}
   },
   async object(command) {
    if (!client.ready) throw Error('Waiting for the server. Placement preview has not been saved.');

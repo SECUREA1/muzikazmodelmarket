@@ -7,6 +7,7 @@ import {mountHarborOperations} from './harbor-operations.js';
 import {createHarborCamera} from './harbor-camera.js';
 import {isWatercraft,harborWaterAt} from './harbor-water.js';
 import {aircraftGunPose} from './aircraft-combat.js';
+import {AircraftCannonEffects} from './aircraft-cannon-effects.js';
 import {createAircraftCamera} from './aircraft-camera.js';
 import {isAircraft} from './aircraft-flight.js';
 import {createOutdoorScenery} from './environments/outdoor-scenery.js';
@@ -484,7 +485,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // PMREM generation is an expensive GPU pass with no gameplay benefit on the
   // performance renderer. Skipping it keeps the first mobile frame responsive.
   const pmrem = performanceMode ? null : new THREE.PMREMGenerator(renderer); if (pmrem) scene.environment = pmrem.fromScene(Object.assign(new THREE.Scene(),{background:new THREE.Color(0x879ba8)}), 0.04).texture;
-  const clock = new THREE.Clock(); const registry = new EnvironmentRegistry(); const envLoader = new EnvironmentLoader({serverAuthoritative:()=>serverHostedRoom,localCollision:true, scene, renderer, camera, onProgress: (p) => { const progress = Math.max(4, Math.min(100, p)); loadingFill.style.width = `${progress}%`; updateLevelLoader(progress, 'Streaming world geometry and preparing the encounter…'); } });
+  const clock = new THREE.Clock(); const registry = new EnvironmentRegistry(); const envLoader = new EnvironmentLoader({localCollision:true, scene, renderer, camera, onProgress: (p) => { const progress = Math.max(4, Math.min(100, p)); loadingFill.style.width = `${progress}%`; updateLevelLoader(progress, 'Streaming world geometry and preparing the encounter…'); } });
   const builderDecor = new THREE.Group(); builderDecor.name='MUZIKAZ_BUILDER_ENVIRONMENT'; scene.add(builderDecor);
   let builderGameplay = new BuilderGameplayRuntime({manifest:{version:2,objects:[],actors:[]}}); let builderCollisionRefresh = 0; let seatedBuilderObject = null; let worldLoadGeneration = 0; let multiplayerWorldLoading = false;
   function refreshBuilderCollision(){if(serverHostedRoom)return;window.clearTimeout(builderCollisionRefresh);builderCollisionRefresh=window.setTimeout(()=>{builderCollisionRefresh=0;envLoader.setSupplementalCollisionRoots(builderDecor.children.length?[builderDecor]:[]);},0);}
@@ -696,9 +697,10 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   mountGameDisplayFlow(stage);
   const districtMap=mountDistrictMap({stage,command:serverCommand});
   const harborOps=mountHarborOperations({stage,command:serverCommand,onInput:()=>authoritativeClient?.requestInput(),announce:setStatus,onView:()=>setGameCameraMode('first-person',{announce:false})});
-  const airportOps=mountAirportOperations({stage,command:serverCommand,onInput:()=>authoritativeClient?.requestInput(),announce:setStatus,canvas,getAim:aircraftAim,fire:fireAircraft,onView:()=>setGameCameraMode('first-person',{announce:false}),onRecenter:()=>{const aircraft=displayVehicle();if(isAircraft(aircraft)){player.yaw=aircraft.rotation.y;player.pitch=0;}}});
-  radToxFireButton.addEventListener('pointerdown',event=>{if(event.button!==0)return;event.preventDefault();safelyCapturePointer(radToxFireButton,event.pointerId);if(serverHostedRoom||toxicBubbleSystem.tool==='flamethrower')toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())});shootAtReticle();});
-  radToxFireButton.addEventListener('click',event=>{if(event.detail===0)shootAtReticle();});radToxFireButton.addEventListener('lostpointercapture',()=>{toxicBubbleSystem.flameTrigger=null;});
+  const aircraftCannonEffects=new AircraftCannonEffects({scene});
+  const airportOps=mountAirportOperations({stage,command:serverCommand,onInput:()=>authoritativeClient?.requestInput(),announce:setStatus,canvas,getAim:aircraftAim,fire:sendAircraftShot,onFireVisual:showLocalAircraftFire,onView:()=>setGameCameraMode('first-person',{announce:false}),onRecenter:()=>{const aircraft=displayVehicle();if(isAircraft(aircraft)){player.yaw=aircraft.rotation.y;player.pitch=0;}}});
+  radToxFireButton.addEventListener('pointerdown',event=>{if(event.button!==0)return;event.preventDefault();safelyCapturePointer(radToxFireButton,event.pointerId);if(isAircraft(serverActors[serverVehicleId])){airportOps.startFiring({external:true});return;}if(serverHostedRoom||toxicBubbleSystem.tool==='flamethrower')toxicBubbleSystem.flameTrigger=()=>({origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3())});shootAtReticle();});
+  radToxFireButton.addEventListener('click',event=>{if(event.detail===0)shootAtReticle();});for(const type of ['pointerup','pointercancel','lostpointercapture'])radToxFireButton.addEventListener(type,()=>{toxicBubbleSystem.flameTrigger=null;airportOps.stopFiring();});
   // Opening or closing the pack never changes the game state.
   const toolsButton = document.querySelector('[data-house-tools]'); const closeTools = () => { toxicBubbleSystem.closeInventory(); toggleBuildMenu(false); toggleGameQuests(false); sprayTools.hidden=true; toolsToggle.setAttribute('aria-expanded','false'); toolsButton?.setAttribute('aria-expanded','false'); toolsButton?.focus(); }; const openTools = () => { gameEconomy?.decorate(); syncToolsPortal(); sprayTools.hidden=false; toolsToggle.setAttribute('aria-expanded','true'); toolsButton?.setAttribute('aria-expanded','true'); sprayTools.querySelector('[data-rad-tool]')?.focus(); }; const toggleTools = () => sprayTools.hidden ? openTools() : closeTools();
   utilityPopup.addEventListener('keydown',event=>event.stopPropagation());
@@ -717,10 +719,12 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const careEffects=new CareEffects({apply:effect=>{if(serverHostedRoom)return;if(!toxicBubbleSystem.active||!effect)return;if(effect.stat==='health'||effect.stat==='all'){toxicBubbleSystem.health=effect.stat==='all'?TOXIC_BUBBLE_CONFIG.maxHealth:Math.min(TOXIC_BUBBLE_CONFIG.maxHealth,toxicBubbleSystem.health+effect.amount);toxicBubbleSystem.updateHud();}setStatus('IonCore care applied. Your member body stats are recorded.');}});
   function displayVehicle(){return localVehicleActor?.id===serverVehicleId?localVehicleActor:serverActors[serverVehicleId];}
   function aircraftAim(){const aircraft=displayVehicle();if(!isAircraft(aircraft))return {origin:camera.getWorldPosition(new THREE.Vector3()),direction:camera.getWorldDirection(new THREE.Vector3()).toArray()};const aim=aircraftGunPose(aircraft),point=new THREE.Vector3(aim.origin.x,aim.origin.y,aim.origin.z).addScaledVector(new THREE.Vector3(...aim.direction),100).project(displayCamera());return {...aim,screen:{x:(point.x+1)/2,y:(1-point.y)/2,visible:point.z>=-1&&point.z<=1&&Math.abs(point.x)<1&&Math.abs(point.y)<1}};}
-  function fireAircraft(){if(!isAircraft(serverActors[serverVehicleId])||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return false;const aim=aircraftAim();return serverCommand('fire',{tool:'laser',direction:aim.direction,origin:aim.origin,aircraftShot:true});}
+  function showLocalAircraftFire(){const aircraft=displayVehicle();if(!isAircraft(aircraft)||!authoritativeClient?.ready)return false;const aim=aircraftAim();if(!aircraftCannonEffects.fire(aircraft,aim))return false;toxicBubbleSystem.initAudio();toxicBubbleSystem.tone(95,.085,'sawtooth',.065);toxicBubbleSystem.tone(230,.04,'square',.025);return true;}
+  function sendAircraftShot(){if(!isAircraft(serverActors[serverVehicleId])||document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return false;const aim=aircraftAim();return serverCommand('fire',{tool:'laser',direction:aim.direction,origin:aim.origin,aircraftShot:true});}
+  function fireAircraft(){return airportOps.fireOnce({external:true});}
   function serverCommand(action,fields={}){if(!authoritativeClient?.ready){setStatus('Waiting for the shared server. No local gameplay action was applied.');return Promise.resolve(false);}return authoritativeClient.send(action,fields).then(async state=>{if(state?.result?.message)setStatus(state.result.message);if(action==='interact'&&state?.result?.deviceId){lockMenuInput();deviceUI.open(state.result.deviceId,state.result.deviceKind);}if(state?.result?.destination){if(!registry.find(state.result.destination))await registry.refresh();await loadById(state.result.destination);}return state;}).catch(error=>{setStatus(error.message);return false;});}
   let stickSprinting=false;
-  function serverInput(){const vessel=isWatercraft(serverActors[serverVehicleId]);if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return {side:0,forward:0,yaw:player.yaw,jump:false,sprint:false,firing:false,...(isAircraft(serverActors[serverVehicleId])?airportOps.flightInput(0):vessel?harborOps.inputs(0):{})};const piloting=isAircraft(serverActors[serverVehicleId]),input=piloting||vessel?getInput(false):getMovementInput(),forward=vessel&&Math.abs(input.y)<.001?harborOps.ahead:input.y,gaze=(renderer.xr.isPresenting?renderer.xr.getCamera(camera):camera).getWorldDirection(new THREE.Vector3()),heading=renderer.xr.isPresenting?explorerWalkingYaw(gaze,player.yaw):player.yaw;const touchFlight=piloting&&(Math.abs(thumbInput.leftX)+Math.abs(thumbInput.leftY)>.001),keyboardPower=piloting?THREE.MathUtils.clamp(forward+thumbInput.leftY,-1,1):forward,flightAxes=touchFlight?airportOps.flightControls({side:thumbInput.leftX,forward:-thumbInput.leftY}):{};return {side:input.x,forward,yaw:heading,lift:airportOps.lift,...(isAircraft(serverActors[serverVehicleId])?airportOps.flightInput(keyboardPower):vessel?harborOps.inputs(forward):{}),...flightAxes,jump:keys.has(' ')||mobile.has('jump'),sprint:keys.has('shift')||(!piloting&&stickSprinting),firing:!ownedPlacement.active&&!!toxicBubbleSystem.flameTrigger,tool:toxicBubbleSystem.tool,eyeHeight:player.eyeHeight,direction:gaze.toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex};}
+  function serverInput(){const vessel=isWatercraft(serverActors[serverVehicleId]);if(document.querySelector('dialog[open], #crib-chat-panel:not([hidden])'))return {side:0,forward:0,yaw:player.yaw,jump:false,sprint:false,firing:false,...(isAircraft(serverActors[serverVehicleId])?airportOps.flightInput(0):vessel?harborOps.inputs(0):{})};const piloting=isAircraft(serverActors[serverVehicleId]),input=piloting||vessel?getInput(false):getMovementInput(),forward=vessel&&Math.abs(input.y)<.001?harborOps.ahead:input.y,gaze=(renderer.xr.isPresenting?renderer.xr.getCamera(camera):camera).getWorldDirection(new THREE.Vector3()),heading=renderer.xr.isPresenting?explorerWalkingYaw(gaze,player.yaw):player.yaw;const touchFlight=piloting&&(Math.abs(thumbInput.leftX)+Math.abs(thumbInput.leftY)>.001),keyboardPower=piloting?THREE.MathUtils.clamp(forward+thumbInput.leftY,-1,1):forward,flightAxes=touchFlight?airportOps.flightControls({side:thumbInput.leftX,forward:-thumbInput.leftY}):{};return {side:input.x,forward,yaw:heading,lift:airportOps.lift,...(isAircraft(serverActors[serverVehicleId])?airportOps.flightInput(keyboardPower):vessel?harborOps.inputs(forward):{}),...flightAxes,jump:keys.has(' ')||mobile.has('jump'),sprint:keys.has('shift')||(!piloting&&stickSprinting),firing:!piloting&&!ownedPlacement.active&&!!toxicBubbleSystem.flameTrigger,tool:toxicBubbleSystem.tool,eyeHeight:player.eyeHeight,direction:gaze.toArray(),color:SPRAY_COLORS[toxicBubbleSystem.sprayColorIndex||0]?.hex};}
 
 
   const serverAssetRetryAt=new Map();
@@ -731,7 +735,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   function disposeServerEnemy(root) {disposeServerEnemyProjection(root);}
   function clearServerRadTox() {
     for(const root of serverRadToxRoots.values())disposeServerEnemy(root);
-    enemyEffects.clear();serverRadToxRoots.clear();serverShotEvents.clear();toxicBubbleSystem.clearBrainSpray();toxicBubbleSystem.clearGhostGas();toxicBubbleSystem.clearParticles();toxicBubbleSystem.clearLasers();toxicBubbleSystem.serverEncounter=null;matchResults.reset();
+    enemyEffects.clear();serverRadToxRoots.clear();serverShotEvents.clear();aircraftCannonEffects.reset();toxicBubbleSystem.clearBrainSpray();toxicBubbleSystem.clearGhostGas();toxicBubbleSystem.clearParticles();toxicBubbleSystem.clearLasers();toxicBubbleSystem.serverEncounter=null;matchResults.reset();
   }
   function createServerEnemy(actor) {
     const system=toxicBubbleSystem,position=new THREE.Vector3(),before=system.bubbles.length;
@@ -791,7 +795,8 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
       }
       if(!event.direction)continue;
       const end=event.end?new THREE.Vector3(event.end.x,event.end.y,event.end.z):origin.clone().addScaledVector(new THREE.Vector3(...event.direction),30);
-      if(snapshot.firingRange&&FIRING_RANGE_WEAPONS.includes(event.tool))rangeFeedback.shot(event,event.actorId===selfId);
+      if(event.aircraftId&&isAircraft(snapshot.actors?.[event.aircraftId]))aircraftCannonEffects.fire(snapshot.actors[event.aircraftId],event);
+      else if(snapshot.firingRange&&FIRING_RANGE_WEAPONS.includes(event.tool))rangeFeedback.shot(event,event.actorId===selfId);
       else if(event.tool==='spray'){if(event.paintNormal)toxicBubbleSystem.paintImpact(end,new THREE.Vector3(...event.paintNormal),event.color);}
       else if(UTILITY_TOOLS[event.tool]||event.tool==='jetpack'){/* Utility actions have no laser effect. */}
       else if(event.tool==='toxin'||event.tool==='flamethrower'||event.tool==='dynamite')toxicBubbleSystem.createDynamiteGas(end,event.tool==='dynamite'?3:1);
@@ -2175,6 +2180,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if(!renderer.xr.isPresenting&&!isTopDownView())harborCamera.update({boat:isWatercraft(pilotedBoat)?pilotedBoat:null,model:boatModel,origin:new THREE.Vector3(playerRig.position.x,playerRig.position.y-.35,playerRig.position.z),lookYaw:pilotedBoat?Math.atan2(Math.sin(player.yaw-pilotedBoat.rotation.y),Math.cos(player.yaw-pilotedBoat.rotation.y)):0,lookPitch:player.pitch,delta,view:harborOps.view,immediate:!!localVehicleActor});
     if(isAircraft(pilotedAircraft)&&pilotedModel)updateAircraftSeat(pilotedModel,pilotedAircraft,{selfId:authoritativeClient?.selfId,view:isTopDownView()?'chase':airportOps.view});
     airportOps.updateAim();
+    aircraftCannonEffects.update(frameDelta);
     worldScenery.update(reducedMotion?0:clock.elapsedTime,displayCamera());
     renderer.render(scene, displayCamera());
 
@@ -2252,7 +2258,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     if (!serverHostedRoom) return;
     if (!authoritativeClient || !authoritativeClient.ready) {
       authoritativeClient?.stop();
-      authoritativeClient=connectAuthoritativeRoom({roomId:activeEnvironment.id,deferRadTox:true,radToxEnabled,meetingId:new URL(location.href).searchParams.get('meet'),input:serverInput,render:renderServerRoom,onShot:shot=>{if(!RANGED_WEAPONS[shot.tool]||!shot.direction)return;serverShotEvents.add(shot.requestId);const origin=shot.aircraftShot&&shot.origin?new THREE.Vector3(shot.origin.x,shot.origin.y,shot.origin.z):camera.getWorldPosition(new THREE.Vector3()),direction=new THREE.Vector3(...shot.direction).normalize();toxicBubbleSystem.showWeaponShot(shot.tool,origin,direction);},onStatus:setStatus,onError:showConnectionFailure});
+      authoritativeClient=connectAuthoritativeRoom({roomId:activeEnvironment.id,deferRadTox:true,radToxEnabled,meetingId:new URL(location.href).searchParams.get('meet'),input:serverInput,render:renderServerRoom,onShot:shot=>{if(!RANGED_WEAPONS[shot.tool]||!shot.direction)return;serverShotEvents.add(shot.requestId);if(shot.aircraftShot)return;const origin=camera.getWorldPosition(new THREE.Vector3()),direction=new THREE.Vector3(...shot.direction).normalize();toxicBubbleSystem.showWeaponShot(shot.tool,origin,direction);},onStatus:setStatus,onError:showConnectionFailure});
     }
     connectionBadge.textContent='Connecting to live server…';
     publishGameStage('connecting-room', 'Joining the game server…');
