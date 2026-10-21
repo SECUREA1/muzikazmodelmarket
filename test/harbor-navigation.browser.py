@@ -69,7 +69,7 @@ try:
             auto.click()
             page.wait_for_function("snapshot.actors.boat.boating.assist==='launch'")
             assert page.evaluate('commands.at(-1).mode') == 'auto'
-            marker = panel.get_by_label('Sailing destination')
+            marker = panel.get_by_label('Sailing destination',exact=True)
             assert marker.is_visible() and 'Open water' in marker.inner_text()
             assert readings.inner_text() == initial_readings
             assert_buttons_fit(panel)
