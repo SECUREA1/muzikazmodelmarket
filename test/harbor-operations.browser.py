@@ -14,6 +14,7 @@ try:
    page=browser.new_page(viewport={'width':width,'height':height});page.set_default_timeout(6000);errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
    page.goto(f'http://127.0.0.1:{server.server_port}/test/fixtures/compact-sports-actions.html');page.wait_for_selector('body[data-ready=true]')
    page.evaluate('''async()=>{const {mountHarborOperations}=await import('/public/js/harbor-operations.js');const {neonMarina}=await import('/neon-marina.mjs');const marina=neonMarina();window.env={builderScene:{layoutMeta:{harbor:marina.harbor}}};window.commands=[];window.ops=mountHarborOperations({stage:document.querySelector('.house-stage'),command:async(action,fields)=>{commands.push({action,...fields});return {result:{message:'Moored safely.'}}}});ops.updateEnvironment(env);window.snapshot={players:{pilot:{vehicleId:'boat',fuel:90}},actors:{boat:{id:'boat',modelId:'harbor-sailboat',health:180,position:{x:144,y:0,z:20},rotation:{y:0},boating:{speed:4,speedKnots:7.8,heading:90,windSpeed:6.5,windDirection:35,fuel:90,rpm:1800,sailTrim:.65}}}};ops.update(snapshot,'pilot',env);}''')
+   page.get_by_role('button',name='Show boat functions',exact=True).click()
    opener=page.get_by_role('button',name='Harbor navigation and helm',exact=True);opener.click();dialog=page.get_by_role('dialog',name='Harbor navigation and helm',exact=True)
    assert dialog.evaluate('(el)=>el.scrollWidth<=el.clientWidth')
    assert dialog.get_by_text('Beacon Island',exact=False).count()>0

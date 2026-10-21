@@ -1,3 +1,5 @@
+import {resolveVehicleAction} from './public/js/vehicle-actions.js';
+import {startBoatAssist,boatAssistedInput} from './server-boat-assist.mjs';
 import {startAircraftAssist,aircraftAssistedInput,aircraftExitPosition} from './server-aircraft-access.mjs';
 import {stepBoatSimulation} from './public/js/boat-simulation.js';
 import {harborRadio,stopBoat,boatExitPosition} from './server-harbor-operations.mjs';
@@ -131,7 +133,8 @@ export class AuthoritativeRooms {
    }
    const boat=sim.actors[player.vehicleId];if(boat?.active===false)player.vehicleId=null;
    if(isWatercraft(boat)&&boat.active!==false){
-    const pose=stepBoatSimulation(boat,(player.fuel??100)>0?input:{...input,throttle:0},dt,{environment,now,blocked:(from,to,yaw)=>{if(Object.values(sim.actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(to,yaw,other.position,other.rotation?.y||0)))return true;const dx=to.x-from.x,dz=to.z-from.z,span=Math.hypot(dx,dz);if(span<.001)return false;return [-.85,0,.85].some(side=>this.collision.blocksShot(environment,{x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*2,y:.18,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*2},[dx/span,0,dz/span],span+.12,sim.actors));}});
+    const blocked=(from,to,yaw)=>{if(Object.values(sim.actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(to,yaw,other.position,other.rotation?.y||0)))return true;const dx=to.x-from.x,dz=to.z-from.z,span=Math.hypot(dx,dz);if(span<.001)return false;return [-.85,0,.85].some(side=>this.collision.blocksShot(environment,{x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*2,y:.18,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*2},[dx/span,0,dz/span],span+.12,sim.actors));};
+    const assistedInput=boatAssistedInput(boat,input,environment,now,sim.actors,blocked);const pose=stepBoatSimulation(boat,(player.fuel??100)>0?assistedInput:{...assistedInput,throttle:0},dt,{environment,now,blocked});
     Object.assign(boat,pose);boat.maxHealth??=200;boat.health=Math.max(0,(boat.health??200)-(pose.boating.impactDamage||0));player.fuel=Math.max(0,(player.fuel??100)-dt*Math.abs(pose.boating.throttle)*.02);boat.boating.fuel=player.fuel;
     if(boat.health<=0){boat.active=false;boat.destroyedAt=now;boat.holderId=null;stopBoat(boat);player.vehicleId=null;player.position=this.collision.safeSpawn(environment,environment.spawn||{x:124,y:0,z:30});player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;continue;}
     player.position={...pose.position,y:.35};player.yaw=pose.rotation.y;player.floor=.35;player.velocityY=0;player.grounded=true;player.locationName=pose.boating.phase==='moored'||pose.boating.anchor?'Neon Marina berth':'Neon Harbor waterways';continue;
@@ -260,6 +263,14 @@ export class AuthoritativeRooms {
    else if(command.action==='basketball-shoot'){const ball=shootBasketball(sim,player,now,Object.fromEntries(['power','angle','mode','direction'].filter(key=>command[key]!==undefined).map(key=>[key,command[key]])));result.message=ball.basketballShot.aimMiss?'Aim miss: outside 13% hoop alignment. Line up with the net.':'Shot released!';}
    else if(sim.basketball&&['start-rad-tox','next-rad-tox'].includes(command.action))fail('Basketball Arena runs shared basketball games.',409);
    else if(command.action==='harbor-radio'){result.message=harborRadio(sim,player,environment,command.operation);}
+   else if(command.action==='vehicle-action'){
+    const vehicle=sim.actors[player.vehicleId],mode=command.mode||'auto';
+    if(!isAircraft(vehicle)&&!isWatercraft(vehicle))fail('Enter an aircraft or boat to use Auto.',409);
+    const next=mode==='auto'?resolveVehicleAction({vehicle,environment,actors:sim.actors}):{action:mode,enabled:true};
+    if(!next.enabled||!next.action)fail(next.reason||'This vehicle action is unavailable.',409);
+    result.vehicleAction={mode,action:next.action,label:next.label||next.action};
+    result.message=isAircraft(vehicle)?startAircraftAssist(sim,player,environment,next.action,now,this.collision,room.objects):startBoatAssist(sim,player,environment,next.action,now);
+   }
    else if(command.action==='aircraft-assist'){result.message=startAircraftAssist(sim,player,environment,command.operation,now,this.collision,room.objects);}
    else if(command.action==='airport-radio'){result.message=airportRadio(sim,player,actorId,command.operation,now);}
    else if(command.action==='rad-tox-toggle'){player.radToxEnabled=command.enabled===true;result.message=player.radToxEnabled?'RAD-TOX enabled.':'RAD-TOX disabled.';}

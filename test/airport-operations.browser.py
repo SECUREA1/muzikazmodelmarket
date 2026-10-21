@@ -20,6 +20,7 @@ with sync_playwright() as p:
           ops.updateEnvironment({airport:{enabled:true}});
           ops.update({players:{pilot:{vehicleId:'plane'}},actors:{plane:{id:'plane',modelId:'corsair-aircraft',flight:{phase:'parked'}}}},'pilot');
         }''')
+        page.get_by_role('button',name='Show flight controls',exact=True).click()
         page.get_by_role('button',name='Airport tower radio',exact=True).click()
         dialog=page.get_by_role('dialog',name='Airport tower radio')
         dialog.get_by_role('button',name='Enable tower audio').click()

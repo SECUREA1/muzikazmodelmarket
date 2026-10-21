@@ -123,6 +123,7 @@ try:
                     overlap_y = min(box['y'] + box['height'], other['y'] + other['height']) - max(box['y'], other['y'])
                     assert overlap_x < 1 or overlap_y < 1, (width, box, other)
 
+            page.get_by_role('button',name='Show flight controls',exact=True).click()
             # On-screen power and view controls work without opening a modal.
             page.get_by_role('slider', name='Flight power', exact=True).fill('63')
             assert page.evaluate('ops.flightInput(0).throttle') == .63

@@ -1,5 +1,5 @@
 import {isWatercraft,harborWaterAt} from './public/js/harbor-water.js';
-export function stopBoat(boat){if(!isWatercraft(boat))return;boat.boating={...boat.boating,speed:0,speedKnots:0,throttle:0,throttleCommand:0,rpm:0,anchor:true,phase:'anchored',warning:'',wakeStrength:0};}
+export function stopBoat(boat){if(!isWatercraft(boat))return;boat.boating={...boat.boating,assist:null,speed:0,speedKnots:0,throttle:0,throttleCommand:0,rpm:0,anchor:true,phase:'anchored',warning:'',wakeStrength:0};}
 export function harborRadio(sim,player,environment,operation){
  if(!environment.builderScene?.layoutMeta?.harbor)throw Object.assign(Error('This map has no harbor office.'),{statusCode:409});
  const boats=Object.values(sim.actors).filter(actor=>isWatercraft(actor)&&actor.active!==false),boat=sim.actors[player.vehicleId],points=(environment.builderScene.objects||[]).filter(isWatercraft);
