@@ -17,7 +17,8 @@ function fixture(){
     playerRig:{position:new THREE.Vector3(4,.99,-3)},localGroundViewY:.99,
     alignSpawnToCurrentFloor:point=>point.setY(1.23),updateLandingFrame(){},setStatus(){},
     serverHostedRoom:false,currentSpaceScale:2,activeEnvironment:{},
-    envLoader:{world:{},setSpaceScale:scale=>({scale})},
+    envLoader:{world:{scale:{x:1}},bounds:new THREE.Box3(),setSpaceScale:scale=>({scale})},
+    districtMap:{update(environment,{bounds}){this.environment=environment;this.bounds=bounds;this.count=(this.count||0)+1;}},
     scaleControl:{querySelector:()=>({})},toxicBubbleSystem:{handleSpaceScaleChanged(){}}
   });
 }
@@ -53,8 +54,11 @@ test('space scaling transforms accepted feet independently of stair camera easin
   consistentPose(context,new THREE.Vector3(8,2.4,-6));
   assert.equal(context.currentSpaceScale,4);
   assert.equal(context.activeEnvironment.spaceScale,4);
+  assert.equal(context.districtMap.bounds,context.envLoader.bounds);
+  assert.equal(context.districtMap.environment,context.activeEnvironment);
   context.applySpaceScale(2);
   consistentPose(context,new THREE.Vector3(4,1.2,-3));
+  assert.equal(context.districtMap.count,2);
 });
 
 test('space scaling with keepPlayer disabled preserves the complete player pose',()=>{

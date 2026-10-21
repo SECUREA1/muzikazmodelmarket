@@ -71,11 +71,15 @@ export class ServerBuilderCollision {
   const key=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.builderScene?.baseTransform||{});if(this.cache.has(key))return this.cache.get(key);
   const definitions=new Map([...(environment.builderScene?.catalogModels||[]),...(environment.builderScene?.placedModels||[]),...(environment.builderScene?.customModels||[])].map(model=>[model.id,model]));
   const base=builderBaseEnvironment(environment);const glb=Boolean(base)||!environment.builderScene&&!environment.proceduralLand&&Boolean(environment.modelUrl||environment.modelUrls?.length);const root=new THREE.Group(),walls=[];if(!glb)root.add(createBuilderLand(environment));if(glb){const layer=environmentGeometry(base||environment);if(base)applyBuilderBaseTransform(layer,environment.builderScene.baseTransform);root.add(layer);}
+  // The browser's map footprint comes from the loaded, normalized base before
+  // builder items are projected. Keep that footprint separate from collision
+  // bounds, which must still include objects placed beyond the base itself.
+  root.updateMatrixWorld(true);const mapBounds=new THREE.Box3().setFromObject(root);
   for(const item of environment.builderScene?.objects||[]){if(isBasketball(item)||isWatercraft(item)||isAircraft(item))continue;if(['hostile','patrol'].includes(item.functionalSettings?.behavior))continue;let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){object=environmentGeometry({modelUrl:definition.modelUrl});const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3());if(definition.targetHeight&&size.y)object.scale.multiplyScalar(definition.targetHeight/size.y);object.updateMatrixWorld(true);object.position.y-=new THREE.Box3().setFromObject(object).min.y;}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);if(item.placementAnchor==='collider-base'){object.updateMatrixWorld(true);const bounds=placementBounds(THREE,object);if(!bounds.isEmpty())object.position.y+=(Number(item.position?.y)||0)-bounds.min.y;}const physicalMeshes=new Set(placementMeshes(object));object.traverse(mesh=>{if(mesh.isMesh&&!physicalMeshes.has(mesh))mesh.userData.collisionDisabled=true;});object.userData.builderObjectId=item.id;root.add(object);}
   root.updateMatrixWorld(true);const floors=[];
   root.traverse(mesh=>{if(!mesh.isMesh||mesh.userData.streetVisual||/SKY|PARTICLE|VFX|WATER|HELPER/i.test(mesh.name))return;for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.collisionDisabled||parent.userData.collider===false||parent.userData.collision===false)return;floors.push(mesh);if(!glb&&!mesh.userData.streetVisual&&!mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')){let parent=mesh;while(parent&&!parent.userData.builderObjectId)parent=parent.parent;walls.push({box:new THREE.Box3().setFromObject(mesh),objectId:parent?.userData.builderObjectId});}});
   const triangles=floors.flatMap(wallTriangles),bounds=new THREE.Box3();for(const mesh of floors)bounds.expandByObject(mesh);
-  const world={root,walls,floors,triangles,wallIndex:indexWalls(triangles),glb,bounds};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
+  const world={root,walls,floors,triangles,wallIndex:indexWalls(triangles),glb,bounds,mapBounds};this.cache.set(key,world);if(this.cache.size>20){const [oldKey,old]=this.cache.entries().next().value;old.root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});this.cache.delete(oldKey);}return world;
 
  }
  placedWorld(actors={},objects={}){
@@ -142,14 +146,35 @@ export class ServerBuilderCollision {
   const world=this.world(environment);
   const dynamic=this.placedWorld(actors,objects).boxes.map(box=>({box,objectId:box.objectId}));
   if([...world.walls,...dynamic].some(({box,objectId})=>{const actor=actors[objectId];return !(actor&&(actor.open||!actor.active||actor.holderId))&&floor.x>box.min.x-.3&&floor.x<box.max.x+.3&&floor.z>box.min.z-.3&&floor.z<box.max.z+.3&&floor.y<box.max.y-.03&&floor.y+1.7>box.min.y+.03;}))reject();
+  // Authored GLBs use triangle walls rather than procedural wall boxes. A
+  // clear center ray is not enough room for the player's physical capsule.
+  if(!this.hasBodyClearance(environment,floor,PLAYER_RADIUS+.08,actors))reject();
   return floor;
  }
- hasBodyClearance(environment,point,radius=PLAYER_RADIUS+.08){
+ localMapPosition(environment,origin,point,actors={},objects={},{searchRadius=0,accept=null}={}){
+  if(!point||!['x','z'].every(axis=>Number.isFinite(point[axis])))throw Object.assign(Error('Choose a valid point on this map.'),{statusCode:422});
+  const radius=Math.max(0,Math.min(12,Number(searchRadius)||0)),candidates=[point];
+  for(let distance=2;distance<=radius;distance+=2)for(let step=0;step<8;step++)candidates.push({x:point.x+Math.cos(step*Math.PI/4)*distance,z:point.z+Math.sin(step*Math.PI/4)*distance});
+  // A map target is a destination, not a request to run join/spawn selection.
+  // This also keeps a GLB's SPAWN_PLAYER from overriding every local landmark.
+  for(const candidate of candidates){
+   const floor=this.groundAt(environment,{x:candidate.x,y:Number.isFinite(point.y)?point.y:origin.y,z:candidate.z},{entry:true,actors,objects});
+   if(!floor||environment.builderScene?.layoutMeta?.harbor&&floor.y<-.05)continue;
+   let arrival;try{arrival=this.teleportPosition(environment,origin,floor,actors,objects,{localMap:true});}catch(error){if(error.statusCode!==422)throw error;continue;}
+   if(accept&&!accept(arrival))continue;
+   return arrival;
+  }
+  throw Object.assign(Error('This location has no clear landing. Choose clear land or a floor away from walls and water.'),{statusCode:409,code:'MAP_LANDING_UNAVAILABLE'});
+ }
+ hasBodyClearance(environment,point,radius=PLAYER_RADIUS+.08,actors={}){
   const world=this.world(environment);
   const triangles=nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius);
-  for(const triangle of triangles)for(const {a,b} of triangleWallSegments(triangle,point.y+.1,point.y+PLAYER_HEIGHT)){
+  for(const triangle of triangles){
+   if(actorDisablesCollision(actors[triangle.objectId]))continue;
+   for(const {a,b} of triangleWallSegments(triangle,point.y+.1,point.y+PLAYER_HEIGHT)){
    const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.z-a.z)*dz)/Math.max(1e-12,dx*dx+dz*dz)));
    if(Math.hypot(point.x-a.x-t*dx,point.z-a.z-t*dz)<radius)return false;
+   }
   }
   return true;
  }

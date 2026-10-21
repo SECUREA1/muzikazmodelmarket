@@ -294,19 +294,18 @@ export class AuthoritativeRooms {
      if(isAircraft(entity)&&entity.flight?.airborne)fail('Wait until this aircraft has landed.',409);
      entity.holderId=actorId;player.vehicleId=entity.id;player.position={...entity.position,y:isWatercraft(entity) ? .35 : entity.position.y};player.yaw=entity.rotation?.y||0;
      result.message='Boarded '+(target.name||'craft')+'. You are in the shared live room.';
-    }else if(command.position){
-     if(!['x','z'].every(axis=>Number.isFinite(command.position[axis])))fail('Choose a valid point on this map.',422);
-     const floor=this.collision.groundAt(environment,{x:command.position.x,y:player.position.y,z:command.position.z},{entry:true,actors:sim.actors,objects:room.objects});
-     if(!floor||environment.builderScene?.layoutMeta?.harbor&&floor.y<-.05)fail('Choose clear land or a pier instead of water.',409);
-     const arrival=this.collision.teleportPosition(environment,player.position,floor,sim.actors,room.objects,{localMap:true});
-     if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(arrival,sim))fail('Choose a spectator area outside the court.',409);
-     player.position=arrival;result.message='Teleported to the selected floor.';
     }else{
-     const place=localMapLocations(environment).find(location=>location.id===command.locationId);
-     if(!place)fail('Choose a listed map location.',422);
-     const base={x:place.arrival?.x??place.x,y:place.arrival?.y??place.y??0,z:place.arrival?.z??place.z};
-     const candidates=[base];for(const radius of [2,4,6,8,10,12])for(let step=0;step<8;step++)candidates.push({...base,x:base.x+Math.cos(step*Math.PI/4)*radius,z:base.z+Math.sin(step*Math.PI/4)*radius});
-     let arrival=null;for(const candidate of candidates){try{const point=this.collision.meetingPosition(environment,candidate,sim.actors,room.objects);if(environment.builderScene?.layoutMeta?.harbor&&point.y<-.05)continue;arrival=point;break;}catch{}}if(!arrival)fail('This location has no clear landing. Choose another location.',409);if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(arrival,sim))fail('Choose a spectator area outside the court.',409);player.position=arrival;result.message='Arrived at '+place.name+'.';
+     let target,searchRadius=0,message='Teleported to the selected floor.';
+     if(command.position){
+      if(!['x','z'].every(axis=>Number.isFinite(command.position[axis])))fail('Choose a valid point on this map.',422);
+      target={x:command.position.x,y:player.position.y,z:command.position.z};
+     }else{
+      const world=this.collision.world(environment),place=localMapLocations(environment,world.mapBounds||world.bounds).find(location=>location.id===command.locationId);
+      if(!place)fail('Choose a listed map location.',422);
+      target={x:place.arrival?.x??place.x,y:place.arrival?.y??place.y??0,z:place.arrival?.z??place.z};searchRadius=12;message='Arrived at '+place.name+'.';
+     }
+     const accept=point=>!(player.basketballRole==='spectator'&&basketballSpectatorRestricted(point,sim))&&distance(constrainFiringRangePlayer(player.position,point,sim,player),point)<.01;
+     player.position=this.collision.localMapPosition(environment,player.position,target,sim.actors,room.objects,{searchRadius,accept});result.message=message;
     }
     player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;
    }

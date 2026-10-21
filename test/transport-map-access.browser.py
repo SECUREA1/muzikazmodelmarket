@@ -26,7 +26,7 @@ try:
     assert dialog.locator('[data-live-players] circle').count()==2
     occupied=dialog.get_by_role('button',name='Occupied',exact=True);assert occupied.is_disabled()
     assert dialog.evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
-    dialog.locator('summary').first.click();port=dialog.get_by_role('button',name='Port to ',exact=False).first;port.click();assert not dialog.is_visible()
+    port=dialog.locator('.district-map-destination').first;port.click();assert not dialog.is_visible()
     assert page.evaluate('commands[0].action')=='map-access'
     assert page.evaluate('commands[0].locationId')==page.evaluate('world.builderScene.layoutMeta.locations[0].id')
     opener.click();board=dialog.get_by_role('button',name='Board ',exact=False).first;board.click();assert not dialog.is_visible()
