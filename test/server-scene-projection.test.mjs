@@ -46,11 +46,11 @@ test('avatar changes discard late models, animate the confirmed model, and retai
 test('server enemy projection interpolates positions and turns, and snaps teleports',async()=>{
  const {targetServerEnemy,interpolateServerEnemy}=await import('../public/js/server-scene-projection.js');
  const root=new THREE.Group(),actor={position:{x:1,y:0,z:2},rotation:{y:3.1}};
- targetServerEnemy(root,actor,.62);assert.deepEqual(root.position.toArray(),[1,.62,2]);
- actor.position.x=2;actor.rotation.y=-3.1;targetServerEnemy(root,actor,.62);
- assert.equal(root.position.x,1);interpolateServerEnemy(root,.05);
+ targetServerEnemy(root,actor,.62,1000);assert.deepEqual(root.position.toArray(),[1,.62,2]);
+ actor.position.x=2;actor.rotation.y=-3.1;targetServerEnemy(root,actor,.62,1100);
+ assert.equal(root.position.x,1);interpolateServerEnemy(root,.05,1150);
  assert.ok(root.position.x>1&&root.position.x<2);assert.ok(root.rotation.y>3.1,'turn follows the short path across pi');
- actor.position.x=30;targetServerEnemy(root,actor,.62);assert.equal(root.position.x,30);
+ actor.position.x=30;targetServerEnemy(root,actor,.62,1300);assert.equal(root.position.x,30);
 });
 
 test('controller disposal detaches brain roots even when the controller only frees resources',async()=>{
@@ -66,9 +66,9 @@ test('enemy motion continues between snapshots and bounds prediction during a st
  targetServerEnemy(root,actor,0,1000);
  actor.position.x=.1;targetServerEnemy(root,actor,0,1100);
  interpolateServerEnemy(root,1,1150);
- assert.ok(Math.abs(root.position.x-.15)<.001);
+ assert.ok(Math.abs(root.position.x-.05)<.001);
  interpolateServerEnemy(root,1,5000);
- assert.ok(Math.abs(root.position.x-.2)<.001,'prediction stops after 100 ms');
+ assert.ok(Math.abs(root.position.x-.18)<.001,'prediction stops after the configured 80 ms');
  actor.position.x=30;targetServerEnemy(root,actor,0,5100);
  interpolateServerEnemy(root,1,5200);
  assert.equal(root.position.x,30,'teleports discard prior velocity');

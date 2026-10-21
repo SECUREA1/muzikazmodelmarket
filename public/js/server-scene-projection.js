@@ -1,3 +1,4 @@
+import {isAircraft} from './aircraft-flight.js';
 import {placementBounds} from './placed-item-collision.js';
 import {ServerMotion} from './server-motion.js';
 import {EnemySnapshotMotion} from './enemy-snapshot-motion.js';
@@ -31,7 +32,7 @@ export function syncServerAvatar({THREE,root,peer,loader,prepare,isCurrent,now=D
 
 export function projectServerActor(root,actor,{localId=null,now=performance.now()}={}) {
  if(!actor){root.visible=false;return;}
- const state=root.userData,offset=state.serverRenderOffset||{};
+ const state=root.userData,offset=state.serverRenderOffset||{};if(isAircraft(actor)){root.rotation.order='YXZ';state.aircraftFlight=actor.flight||{};state.aircraftHealth=actor.health;}
  const behavior=actor.definition?.gameplay?.behavior||state.functionalSettings?.behavior||actor.asset?.behavior;state.serverObjectMotion=['hostile','patrol','vehicle'].includes(behavior)&&!(localId&&actor.holderId===localId);if(state.serverObjectMotion)targetServerEnemy(root,{...actor,position:{x:actor.position.x+(offset.x||0),y:actor.position.y,z:actor.position.z+(offset.z||0)}},offset.y||0,now);else root.position.set(actor.position.x+(offset.x||0),actor.position.y+(offset.y||0),actor.position.z+(offset.z||0));
  root.visible=actor.active!==false;
  root.rotation.set(actor.rotation?.x||0,state.serverObjectMotion?root.rotation.y:(actor.rotation?.y||0)+(actor.open?-Math.PI/2:0),actor.rotation?.z||0);
@@ -45,7 +46,7 @@ export function projectServerActor(root,actor,{localId=null,now=performance.now(
  const collisionChanged=state.serverCollisionDisabled!==(!root.visible||!!actor.open);
  if(paintChanged||switchedChanged||collisionChanged)root.traverse(mesh=>{
   if(!mesh.isMesh)return;
-  mesh.userData.collisionDisabled=!root.visible||!!actor.open;
+  mesh.userData.serverBaseCollisionDisabled??=mesh.userData.collisionDisabled===true;mesh.userData.collisionDisabled=mesh.userData.serverBaseCollisionDisabled||!root.visible||!!actor.open;
   for(const material of [].concat(mesh.material||[])){
    if(paintChanged&&actor.paint!==undefined&&material.color)material.color.setHex(actor.paint);
    if(switchedChanged&&actor.switched!==undefined&&material.emissive){material.userData ||= {};material.userData.serverBaseEmissive ??= material.emissiveIntensity;material.emissiveIntensity=actor.switched?Math.max(1.5,material.userData.serverBaseEmissive):material.userData.serverBaseEmissive;}

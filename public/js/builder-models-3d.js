@@ -1,3 +1,4 @@
+import {createAircraftModel,updateAircraftModel} from './aircraft-model.js';
 import {createHarborBoat} from './harbor-models.js';
 import {BUILDING_MATERIALS,createBuildingBlock,buildingDimensions} from './building-materials.js';
 import {finishGameItem} from './game-item-finish.js';
@@ -283,7 +284,8 @@ export function createBuilderModel(id,options={}) {
   else if(id==='basketball-hoop')root=createBasketballHoop(THREE);
   else if(id==='basketball-jersey-home'||id==='basketball-jersey-away')root=createBasketballJersey(THREE,id.endsWith('home')?'home':'away');
   else if(['grand-floor','open-studio','connected-suite','garden-courtyard'].includes(id)) root=playableRoom(id);
-  else if(id==='corsair-aircraft'||id==='dune-quad') root=vehicle(id);
+  else if(id==='corsair-aircraft')root=createAircraftModel();
+  else if(id==='dune-quad')root=vehicle(id);
   else if(GAMEPLAY_ITEMS[id]) return gameplayItem(id);
   else if(EXPANDED[id]) return finishGameItem(THREE,expandedModel(id));
   else if(id==='pillow-ring'){root=new THREE.Group();root.add(mesh(new THREE.TorusGeometry(.58,.24,16,32),material(0x9cff00,.92),[0,.25,0],[Math.PI/2,0,0]));root.add(cylinder(.34,.38,.16,material(0x075b59,.88),[0,.18,0],24));} else if(id==='canopy-tree'||id==='pine-tree') root=plant(id); else if(id==='flower-bed')root=flowerBed(); else if(id==='hedge-corner')root=hedge(); else if(id==='garden-rocks')root=rocks(); else if(id==='pond')root=pond(); else if(id==='path-tile')root=box([2.2,.12,1.2],material(0xa39b8c,.95),[0,.06,0]); else if(id==='hill'){root=mesh(new THREE.SphereGeometry(2.1,24,12,0,Math.PI*2,0,Math.PI/2),material(0x4f9a45,.95),[0,0,0]);root.scale.z=.86;} else if(id==='lamp-post')root=lamp(true); else if(id==='planter')root=planter(); else if(id==='sofa'||id==='armchair')root=seating(id==='armchair'); else if(id==='coffee-table')root=coffeeTable(); else if(id==='bookshelf')root=bookshelf(); else if(id==='floor-lamp')root=lamp(false); else if(id==='room-divider')root=divider(); else if(id==='kitchen-island')root=island(); else if(id==='spiral-stairs')root=stairs(); else if(id==='archway')root=arch(); else if(id==='art-wall')root=artWall(); else if(BUILDER_MODEL_INFO[id])root=detailedInterior(id); else return null;
@@ -316,6 +318,6 @@ export function createGeneratedAsset(model) {
 }
 
 export function updateBuilderModels(group, elapsed) {
-  group.children.forEach(root=>{if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
+  group.children.forEach(root=>{if(root.userData.aircraftModel){updateAircraftModel(root,root.userData.aircraftFlight||{},elapsed);return;}if(root.userData.arcadePart&&root.userData.arcadeAnimationEnabled!==false)animateArcadePark(root,elapsed*(root.userData.arcadeAnimationSpeed||1));root.traverse(child=>{if(child.userData.itemFlame!==undefined)child.scale.y=.92+Math.sin(elapsed*7+child.userData.itemFlame*2)*.1;if(child.userData.vehiclePropeller)child.rotation.z=elapsed*18;if(child.userData.vehicleWheel)child.rotation.z=elapsed*5;if(child.userData.water){if(child.material.transparent)child.material.opacity=.72+Math.sin(elapsed*1.4)*.06;child.rotation.z=elapsed*.25;}if(child.userData.spin)child.rotation.z=elapsed*.8;if(child.userData.swayPhase!==undefined)child.rotation.z=Math.sin(elapsed*.65+child.userData.swayPhase)*.025;});});
 
 }

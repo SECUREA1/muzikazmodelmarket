@@ -73,7 +73,7 @@ test('interaction failures stay isolated from the WebGL render loop', async () =
   assert.match(game, /function safelyInteract\(context, action\)/);
   assert.match(game, /function safelyCapturePointer\(element, pointerId\)/);
   assert.match(game, /reportInteractionError\('Nearby interaction',error\)/);
-  assert.match(game, /safelyInteract\('Keyboard action',\(\)=>performGameplayAction\('f'\)/);
+  assert.match(game, /safelyInteract\('Vehicle interaction',\(\)=>vehicleController\.toggle\(\)\)/);
   assert.match(game, /safelyInteract\('World interaction'/);
   assert.doesNotMatch(game, /canvas\.setPointerCapture\?\.\(e\.pointerId\)/);
   assert.doesNotMatch(game, /stick\.setPointerCapture\?\.\(pointerId\)/);

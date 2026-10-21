@@ -41,6 +41,18 @@ with sync_playwright() as p:
         page.get_by_role('button',name='Fire aircraft cannons').click()
         assert page.evaluate('commands.at(-1).action')=='fire'
         assert page.locator('.airport-flight-controls').evaluate('(el)=>el.scrollWidth<=el.clientWidth')
+        page.get_by_role('button',name='Flight instruments and controls',exact=True).click()
+        deck=page.get_by_role('dialog',name='Flight instruments and controls',exact=True)
+        assert deck.evaluate('(el)=>el.scrollWidth<=el.clientWidth')
+        deck.get_by_role('slider',name='Engine throttle').fill('65')
+        assert page.evaluate('ops.flightInput(0).throttle')==.65
+        deck.get_by_role('button',name='Gear down',exact=True).click()
+        assert page.evaluate('ops.flightInput(0).gear')==False
+        deck.get_by_role('button',name='Flaps up',exact=True).click()
+        assert page.evaluate('ops.flightInput(0).flaps')==1
+        deck.get_by_role('button',name='Chase view',exact=True).click()
+        assert page.evaluate('ops.view')=='chase'
+        assert deck.is_hidden()
         page.evaluate("ops.update({players:{pilot:{vehicleId:null,health:0}},actors:{}},'pilot')")
         page.get_by_role('button',name='Respawn pilot').click()
         assert page.evaluate('commands.at(-1).action')=='respawn'
