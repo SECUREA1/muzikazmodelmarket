@@ -545,5 +545,7044 @@
     "playUrl": "arcade.html?environment=neon-junction&mode=multiplayer",
     "spaceScale": 1,
     "scale": 1
+  },
+  {
+    "id": "muzikaz-airport",
+    "name": "MUZIKAZ International Airport",
+    "label": "Public flight and airport experience",
+    "category": "Flight & transport",
+    "game": "airport",
+    "worldId": "skyline-deck",
+    "airport": {
+      "enabled": true,
+      "runway": {
+        "x": 40,
+        "z": 0,
+        "width": 16,
+        "length": 202
+      },
+      "ceiling": 80
+    },
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "scale": 1,
+    "spaceScale": 1,
+    "spawn": {
+      "x": -60,
+      "y": 0.02,
+      "z": 74,
+      "rotationY": 0
+    },
+    "description": "A brick-built public airport with three flyable aircraft, shared runway 18/36, taxiways, terminal, hangar, control tower, radio captions and optional spoken ATC, mobile flight controls and ground services.",
+    "streets": [
+      {
+        "id": "airport-access",
+        "name": "Terminal Access Road",
+        "from": {
+          "x": -88,
+          "z": -105
+        },
+        "to": {
+          "x": -88,
+          "z": 105
+        },
+        "width": 5
+      }
+    ],
+    "builderScene": {
+      "version": 3,
+      "layout": "grand-floor",
+      "mapSize": 256,
+      "objects": [
+        {
+          "id": "airport-runway-0",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 0",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": -96
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-1",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 1",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": -86.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-2",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 2",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": -76.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-3",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 3",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": -67.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-4",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 4",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": -57.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-5",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 5",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": -48
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-6",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 6",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": -38.400000000000006
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-7",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 7",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": -28.799999999999997
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-8",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 8",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": -19.200000000000003
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-9",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 9",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": -9.600000000000009
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-10",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 10",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-11",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 11",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 9.599999999999994
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-12",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 12",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 19.19999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-13",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 13",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 28.799999999999997
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-14",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 14",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 38.400000000000006
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-15",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 15",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 48
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-16",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 16",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 57.599999999999994
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-17",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 17",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 67.19999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-18",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 18",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 76.79999999999998
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-19",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 19",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 86.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-20",
+          "modelId": "material:rubber-tile",
+          "placementAnchor": "collider-base",
+          "name": "runway 20",
+          "position": {
+            "x": 40,
+            "y": 0,
+            "z": 96
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 12,
+            "y": 1,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline--90",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline  90",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": -90
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1--90",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1  90",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": -90
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1--90",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1  90",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": -90
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline--78",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline  78",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": -78
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1--78",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1  78",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": -78
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1--78",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1  78",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": -78
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline--66",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline  66",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": -66
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1--66",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1  66",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": -66
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1--66",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1  66",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": -66
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline--54",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline  54",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": -54
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1--54",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1  54",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": -54
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1--54",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1  54",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": -54
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline--42",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline  42",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": -42
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1--42",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1  42",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": -42
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1--42",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1  42",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": -42
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline--30",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline  30",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": -30
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1--30",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1  30",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": -30
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1--30",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1  30",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": -30
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline--18",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline  18",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": -18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1--18",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1  18",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": -18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1--18",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1  18",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": -18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline--6",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline  6",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": -6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1--6",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1  6",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": -6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1--6",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1  6",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": -6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline-6",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline 6",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": 6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1-6",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1 6",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": 6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1-6",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1 6",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": 6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline-18",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline 18",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": 18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1-18",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1 18",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": 18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1-18",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1 18",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": 18
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline-30",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline 30",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": 30
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1-30",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1 30",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": 30
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1-30",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1 30",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": 30
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline-42",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline 42",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": 42
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1-42",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1 42",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": 42
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1-42",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1 42",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": 42
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline-54",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline 54",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": 54
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1-54",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1 54",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": 54
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1-54",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1 54",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": 54
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline-66",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline 66",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": 66
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1-66",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1 66",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": 66
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1-66",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1 66",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": 66
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline-78",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline 78",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": 78
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1-78",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1 78",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": 78
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1-78",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1 78",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": 78
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-centerline-90",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "centerline 90",
+          "position": {
+            "x": 40,
+            "y": 0.11,
+            "z": 90
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.08,
+            "z": 6
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light--1-90",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light  1 90",
+          "position": {
+            "x": 32,
+            "y": 0.05,
+            "z": 90
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-runway-light-1-90",
+          "modelId": "material:neon",
+          "placementAnchor": "collider-base",
+          "name": "runway light 1 90",
+          "position": {
+            "x": 48,
+            "y": 0.05,
+            "z": 90
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2,
+            "y": 0.5,
+            "z": 0.4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-threshold--88-0",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "threshold  88 0",
+          "position": {
+            "x": 34,
+            "y": 0.11,
+            "z": -88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 9
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-threshold--88-1",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "threshold  88 1",
+          "position": {
+            "x": 36.4,
+            "y": 0.11,
+            "z": -88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 9
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-threshold--88-2",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "threshold  88 2",
+          "position": {
+            "x": 38.8,
+            "y": 0.11,
+            "z": -88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 9
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-threshold--88-3",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "threshold  88 3",
+          "position": {
+            "x": 41.2,
+            "y": 0.11,
+            "z": -88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 9
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-threshold--88-4",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "threshold  88 4",
+          "position": {
+            "x": 43.6,
+            "y": 0.11,
+            "z": -88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 9
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-threshold--88-5",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "threshold  88 5",
+          "position": {
+            "x": 46,
+            "y": 0.11,
+            "z": -88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 9
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-threshold-88-0",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "threshold 88 0",
+          "position": {
+            "x": 34,
+            "y": 0.11,
+            "z": 88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 9
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-threshold-88-1",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "threshold 88 1",
+          "position": {
+            "x": 36.4,
+            "y": 0.11,
+            "z": 88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 9
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-threshold-88-2",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "threshold 88 2",
+          "position": {
+            "x": 38.8,
+            "y": 0.11,
+            "z": 88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 9
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-threshold-88-3",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "threshold 88 3",
+          "position": {
+            "x": 41.2,
+            "y": 0.11,
+            "z": 88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 9
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-threshold-88-4",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "threshold 88 4",
+          "position": {
+            "x": 43.6,
+            "y": 0.11,
+            "z": 88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 9
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-threshold-88-5",
+          "modelId": "material:smooth-plastic",
+          "placementAnchor": "collider-base",
+          "name": "threshold 88 5",
+          "position": {
+            "x": 46,
+            "y": 0.11,
+            "z": 88
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 9
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxiway-0",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxiway 0",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": -70
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8,
+            "y": 0.7,
+            "z": 10
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxiway-1",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxiway 1",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": -58
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8,
+            "y": 0.7,
+            "z": 10
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxiway-2",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxiway 2",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": -46
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8,
+            "y": 0.7,
+            "z": 10
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxiway-3",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxiway 3",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": -34
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8,
+            "y": 0.7,
+            "z": 10
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxiway-4",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxiway 4",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8,
+            "y": 0.7,
+            "z": 10
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxiway-5",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxiway 5",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": -10
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8,
+            "y": 0.7,
+            "z": 10
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxiway-6",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxiway 6",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": 2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8,
+            "y": 0.7,
+            "z": 10
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxiway-7",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxiway 7",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": 14
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8,
+            "y": 0.7,
+            "z": 10
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxiway-8",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxiway 8",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": 26
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8,
+            "y": 0.7,
+            "z": 10
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxiway-9",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxiway 9",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": 38
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8,
+            "y": 0.7,
+            "z": 10
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxiway-10",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxiway 10",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": 50
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8,
+            "y": 0.7,
+            "z": 10
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxiway-11",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxiway 11",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": 62
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 8,
+            "y": 0.7,
+            "z": 10
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxi-link-0",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxi link 0",
+          "position": {
+            "x": 16,
+            "y": 0,
+            "z": 72
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxi-link-1",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxi link 1",
+          "position": {
+            "x": 20.8,
+            "y": 0,
+            "z": 72
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxi-link-2",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxi link 2",
+          "position": {
+            "x": 25.6,
+            "y": 0,
+            "z": 72
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxi-link-3",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxi link 3",
+          "position": {
+            "x": 30.4,
+            "y": 0,
+            "z": 72
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-taxi-link-4",
+          "modelId": "material:paving-tile",
+          "placementAnchor": "collider-base",
+          "name": "taxi link 4",
+          "position": {
+            "x": 35.2,
+            "y": 0,
+            "z": 72
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 0.7,
+            "z": 8
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-apron--1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "apron  1 0",
+          "position": {
+            "x": -17.6,
+            "y": 0,
+            "z": 50
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-apron--1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "apron  1 1",
+          "position": {
+            "x": -17.6,
+            "y": 0,
+            "z": 59.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-apron--1-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "apron  1 2",
+          "position": {
+            "x": -17.6,
+            "y": 0,
+            "z": 69.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-apron-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "apron 0 0",
+          "position": {
+            "x": -8,
+            "y": 0,
+            "z": 50
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-apron-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "apron 0 1",
+          "position": {
+            "x": -8,
+            "y": 0,
+            "z": 59.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-apron-0-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "apron 0 2",
+          "position": {
+            "x": -8,
+            "y": 0,
+            "z": 69.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-apron-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "apron 1 0",
+          "position": {
+            "x": 1.5999999999999996,
+            "y": 0,
+            "z": 50
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-apron-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "apron 1 1",
+          "position": {
+            "x": 1.5999999999999996,
+            "y": 0,
+            "z": 59.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-apron-1-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "apron 1 2",
+          "position": {
+            "x": 1.5999999999999996,
+            "y": 0,
+            "z": 69.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1,
+            "z": 2
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-floor-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal floor 0 0",
+          "position": {
+            "x": -65.19999999999999,
+            "y": 0,
+            "z": 55.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-roof-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal roof 0 0",
+          "position": {
+            "x": -65.19999999999999,
+            "y": 3,
+            "z": 55.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-floor-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal floor 0 1",
+          "position": {
+            "x": -65.19999999999999,
+            "y": 0,
+            "z": 60.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-roof-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal roof 0 1",
+          "position": {
+            "x": -65.19999999999999,
+            "y": 3,
+            "z": 60.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-floor-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal floor 1 0",
+          "position": {
+            "x": -60.39999999999999,
+            "y": 0,
+            "z": 55.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-roof-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal roof 1 0",
+          "position": {
+            "x": -60.39999999999999,
+            "y": 3,
+            "z": 55.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-floor-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal floor 1 1",
+          "position": {
+            "x": -60.39999999999999,
+            "y": 0,
+            "z": 60.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-roof-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal roof 1 1",
+          "position": {
+            "x": -60.39999999999999,
+            "y": 3,
+            "z": 60.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-floor-2-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal floor 2 0",
+          "position": {
+            "x": -55.59999999999999,
+            "y": 0,
+            "z": 55.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-roof-2-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal roof 2 0",
+          "position": {
+            "x": -55.59999999999999,
+            "y": 3,
+            "z": 55.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-floor-2-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal floor 2 1",
+          "position": {
+            "x": -55.59999999999999,
+            "y": 0,
+            "z": 60.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-roof-2-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal roof 2 1",
+          "position": {
+            "x": -55.59999999999999,
+            "y": 3,
+            "z": 60.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-floor-3-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal floor 3 0",
+          "position": {
+            "x": -50.79999999999999,
+            "y": 0,
+            "z": 55.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-roof-3-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal roof 3 0",
+          "position": {
+            "x": -50.79999999999999,
+            "y": 3,
+            "z": 55.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-floor-3-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal floor 3 1",
+          "position": {
+            "x": -50.79999999999999,
+            "y": 0,
+            "z": 60.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-roof-3-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "terminal roof 3 1",
+          "position": {
+            "x": -50.79999999999999,
+            "y": 3,
+            "z": 60.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-side--1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "terminal side  1",
+          "position": {
+            "x": -67.6,
+            "y": 0.2,
+            "z": 58
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-side-1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "terminal side 1",
+          "position": {
+            "x": -48.4,
+            "y": 0.2,
+            "z": 58
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-back-0",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "terminal back 0",
+          "position": {
+            "x": -66.39999999999999,
+            "y": 0.2,
+            "z": 53.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-back-1",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "terminal back 1",
+          "position": {
+            "x": -63.99999999999999,
+            "y": 0.2,
+            "z": 53.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-back-2",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "terminal back 2",
+          "position": {
+            "x": -61.599999999999994,
+            "y": 0.2,
+            "z": 53.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-back-3",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "terminal back 3",
+          "position": {
+            "x": -59.19999999999999,
+            "y": 0.2,
+            "z": 53.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-back-4",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "terminal back 4",
+          "position": {
+            "x": -56.79999999999999,
+            "y": 0.2,
+            "z": 53.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-back-5",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "terminal back 5",
+          "position": {
+            "x": -54.39999999999999,
+            "y": 0.2,
+            "z": 53.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-back-6",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "terminal back 6",
+          "position": {
+            "x": -51.99999999999999,
+            "y": 0.2,
+            "z": 53.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-back-7",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "terminal back 7",
+          "position": {
+            "x": -49.599999999999994,
+            "y": 0.2,
+            "z": 53.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-front-post--9.6",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "terminal front post  9.6",
+          "position": {
+            "x": -67.6,
+            "y": 0.2,
+            "z": 62.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-front-post-9.6",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "terminal front post 9.6",
+          "position": {
+            "x": -48.4,
+            "y": 0.2,
+            "z": 62.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-counter",
+          "modelId": "studio-desk",
+          "placementAnchor": "collider-base",
+          "name": "terminal counter",
+          "position": {
+            "x": -58,
+            "y": 0.2,
+            "z": 56
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-terminal-seat-a",
+          "modelId": "sofa",
+          "placementAnchor": "collider-base",
+          "name": "terminal seat a",
+          "position": {
+            "x": -64,
+            "y": 0.2,
+            "z": 60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "seat",
+            "interactionDistance": 3
+          }
+        },
+        {
+          "id": "airport-terminal-seat-b",
+          "modelId": "sofa",
+          "placementAnchor": "collider-base",
+          "name": "terminal seat b",
+          "position": {
+            "x": -52,
+            "y": 0.2,
+            "z": 60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "seat",
+            "interactionDistance": 3
+          }
+        },
+        {
+          "id": "airport-terminal-vending",
+          "modelId": "item-vending-machine",
+          "placementAnchor": "collider-base",
+          "name": "terminal vending",
+          "position": {
+            "x": -65,
+            "y": 0.2,
+            "z": 55
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "device": "item-vending-machine",
+            "interactionDistance": 4
+          }
+        },
+        {
+          "id": "airport-hangar-floor-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 0 0",
+          "position": {
+            "x": -23.6,
+            "y": 0,
+            "z": 81.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 0 0",
+          "position": {
+            "x": -23.6,
+            "y": 5,
+            "z": 81.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 0 1",
+          "position": {
+            "x": -23.6,
+            "y": 0,
+            "z": 86
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 0 1",
+          "position": {
+            "x": -23.6,
+            "y": 5,
+            "z": 86
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-0-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 0 2",
+          "position": {
+            "x": -23.6,
+            "y": 0,
+            "z": 90.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-0-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 0 2",
+          "position": {
+            "x": -23.6,
+            "y": 5,
+            "z": 90.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 1 0",
+          "position": {
+            "x": -18.8,
+            "y": 0,
+            "z": 81.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 1 0",
+          "position": {
+            "x": -18.8,
+            "y": 5,
+            "z": 81.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 1 1",
+          "position": {
+            "x": -18.8,
+            "y": 0,
+            "z": 86
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 1 1",
+          "position": {
+            "x": -18.8,
+            "y": 5,
+            "z": 86
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-1-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 1 2",
+          "position": {
+            "x": -18.8,
+            "y": 0,
+            "z": 90.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-1-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 1 2",
+          "position": {
+            "x": -18.8,
+            "y": 5,
+            "z": 90.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-2-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 2 0",
+          "position": {
+            "x": -14.000000000000002,
+            "y": 0,
+            "z": 81.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-2-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 2 0",
+          "position": {
+            "x": -14.000000000000002,
+            "y": 5,
+            "z": 81.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-2-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 2 1",
+          "position": {
+            "x": -14.000000000000002,
+            "y": 0,
+            "z": 86
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-2-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 2 1",
+          "position": {
+            "x": -14.000000000000002,
+            "y": 5,
+            "z": 86
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-2-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 2 2",
+          "position": {
+            "x": -14.000000000000002,
+            "y": 0,
+            "z": 90.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-2-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 2 2",
+          "position": {
+            "x": -14.000000000000002,
+            "y": 5,
+            "z": 90.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-3-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 3 0",
+          "position": {
+            "x": -9.200000000000003,
+            "y": 0,
+            "z": 81.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-3-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 3 0",
+          "position": {
+            "x": -9.200000000000003,
+            "y": 5,
+            "z": 81.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-3-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 3 1",
+          "position": {
+            "x": -9.200000000000003,
+            "y": 0,
+            "z": 86
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-3-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 3 1",
+          "position": {
+            "x": -9.200000000000003,
+            "y": 5,
+            "z": 86
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-3-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 3 2",
+          "position": {
+            "x": -9.200000000000003,
+            "y": 0,
+            "z": 90.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-3-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 3 2",
+          "position": {
+            "x": -9.200000000000003,
+            "y": 5,
+            "z": 90.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-4-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 4 0",
+          "position": {
+            "x": -4.400000000000002,
+            "y": 0,
+            "z": 81.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-4-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 4 0",
+          "position": {
+            "x": -4.400000000000002,
+            "y": 5,
+            "z": 81.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-4-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 4 1",
+          "position": {
+            "x": -4.400000000000002,
+            "y": 0,
+            "z": 86
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-4-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 4 1",
+          "position": {
+            "x": -4.400000000000002,
+            "y": 5,
+            "z": 86
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-floor-4-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar floor 4 2",
+          "position": {
+            "x": -4.400000000000002,
+            "y": 0,
+            "z": 90.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-roof-4-2",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "hangar roof 4 2",
+          "position": {
+            "x": -4.400000000000002,
+            "y": 5,
+            "z": 90.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-side--1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "hangar side  1",
+          "position": {
+            "x": -26,
+            "y": 0.2,
+            "z": 86
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 6,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-side-1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "hangar side 1",
+          "position": {
+            "x": -2,
+            "y": 0.2,
+            "z": 86
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 6,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-back-0",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "hangar back 0",
+          "position": {
+            "x": -24.8,
+            "y": 0.2,
+            "z": 78.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-back-1",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "hangar back 1",
+          "position": {
+            "x": -22.400000000000002,
+            "y": 0.2,
+            "z": 78.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-back-2",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "hangar back 2",
+          "position": {
+            "x": -20,
+            "y": 0.2,
+            "z": 78.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-back-3",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "hangar back 3",
+          "position": {
+            "x": -17.6,
+            "y": 0.2,
+            "z": 78.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-back-4",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "hangar back 4",
+          "position": {
+            "x": -15.200000000000001,
+            "y": 0.2,
+            "z": 78.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-back-5",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "hangar back 5",
+          "position": {
+            "x": -12.8,
+            "y": 0.2,
+            "z": 78.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-back-6",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "hangar back 6",
+          "position": {
+            "x": -10.400000000000002,
+            "y": 0.2,
+            "z": 78.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-back-7",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "hangar back 7",
+          "position": {
+            "x": -8,
+            "y": 0.2,
+            "z": 78.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-back-8",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "hangar back 8",
+          "position": {
+            "x": -5.600000000000001,
+            "y": 0.2,
+            "z": 78.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-back-9",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "hangar back 9",
+          "position": {
+            "x": -3.200000000000003,
+            "y": 0.2,
+            "z": 78.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-front-post--12",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "hangar front post  12",
+          "position": {
+            "x": -26,
+            "y": 0.2,
+            "z": 93.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-hangar-front-post-12",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "hangar front post 12",
+          "position": {
+            "x": -2,
+            "y": 0.2,
+            "z": 93.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 2.0833333333333335,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-floor-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "operations floor 0 0",
+          "position": {
+            "x": -64.8,
+            "y": 0,
+            "z": 9.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-roof-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "operations roof 0 0",
+          "position": {
+            "x": -64.8,
+            "y": 3,
+            "z": 9.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-floor-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "operations floor 0 1",
+          "position": {
+            "x": -64.8,
+            "y": 0,
+            "z": 14.399999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-roof-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "operations roof 0 1",
+          "position": {
+            "x": -64.8,
+            "y": 3,
+            "z": 14.399999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-floor-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "operations floor 1 0",
+          "position": {
+            "x": -60,
+            "y": 0,
+            "z": 9.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-roof-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "operations roof 1 0",
+          "position": {
+            "x": -60,
+            "y": 3,
+            "z": 9.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-floor-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "operations floor 1 1",
+          "position": {
+            "x": -60,
+            "y": 0,
+            "z": 14.399999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-roof-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "operations roof 1 1",
+          "position": {
+            "x": -60,
+            "y": 3,
+            "z": 14.399999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-floor-2-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "operations floor 2 0",
+          "position": {
+            "x": -55.199999999999996,
+            "y": 0,
+            "z": 9.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-roof-2-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "operations roof 2 0",
+          "position": {
+            "x": -55.199999999999996,
+            "y": 3,
+            "z": 9.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-floor-2-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "operations floor 2 1",
+          "position": {
+            "x": -55.199999999999996,
+            "y": 0,
+            "z": 14.399999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-roof-2-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "operations roof 2 1",
+          "position": {
+            "x": -55.199999999999996,
+            "y": 3,
+            "z": 14.399999999999999
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-side--1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "operations side  1",
+          "position": {
+            "x": -67.2,
+            "y": 0.2,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-side-1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "operations side 1",
+          "position": {
+            "x": -52.8,
+            "y": 0.2,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-back-0",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "operations back 0",
+          "position": {
+            "x": -66,
+            "y": 0.2,
+            "z": 7.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-back-1",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "operations back 1",
+          "position": {
+            "x": -63.6,
+            "y": 0.2,
+            "z": 7.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-back-2",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "operations back 2",
+          "position": {
+            "x": -61.2,
+            "y": 0.2,
+            "z": 7.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-back-3",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "operations back 3",
+          "position": {
+            "x": -58.8,
+            "y": 0.2,
+            "z": 7.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-back-4",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "operations back 4",
+          "position": {
+            "x": -56.4,
+            "y": 0.2,
+            "z": 7.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-back-5",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "operations back 5",
+          "position": {
+            "x": -54,
+            "y": 0.2,
+            "z": 7.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-front-post--7.2",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "operations front post  7.2",
+          "position": {
+            "x": -67.2,
+            "y": 0.2,
+            "z": 16.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-front-post-7.2",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "operations front post 7.2",
+          "position": {
+            "x": -52.8,
+            "y": 0.2,
+            "z": 16.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1.25,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-tools",
+          "modelId": "studio-desk",
+          "placementAnchor": "collider-base",
+          "name": "operations tools",
+          "position": {
+            "x": -60,
+            "y": 0.2,
+            "z": 10
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-operations-crates",
+          "modelId": "supply-crate",
+          "placementAnchor": "collider-base",
+          "name": "operations crates",
+          "position": {
+            "x": -64,
+            "y": 0.2,
+            "z": 12
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-floor-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "tower floor 0 0",
+          "position": {
+            "x": -74.39999999999999,
+            "y": 0,
+            "z": -24.400000000000002
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-roof-0-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "tower roof 0 0",
+          "position": {
+            "x": -74.39999999999999,
+            "y": 10,
+            "z": -24.400000000000002
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-floor-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "tower floor 0 1",
+          "position": {
+            "x": -74.39999999999999,
+            "y": 0,
+            "z": -19.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-roof-0-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "tower roof 0 1",
+          "position": {
+            "x": -74.39999999999999,
+            "y": 10,
+            "z": -19.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-floor-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "tower floor 1 0",
+          "position": {
+            "x": -69.6,
+            "y": 0,
+            "z": -24.400000000000002
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-roof-1-0",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "tower roof 1 0",
+          "position": {
+            "x": -69.6,
+            "y": 10,
+            "z": -24.400000000000002
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-floor-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "tower floor 1 1",
+          "position": {
+            "x": -69.6,
+            "y": 0,
+            "z": -19.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-roof-1-1",
+          "modelId": "material:baseplate",
+          "placementAnchor": "collider-base",
+          "name": "tower roof 1 1",
+          "position": {
+            "x": -69.6,
+            "y": 10,
+            "z": -19.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-side--1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "tower side  1",
+          "position": {
+            "x": -76.8,
+            "y": 0.2,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 4.166666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-side-1",
+          "modelId": "material:wall",
+          "placementAnchor": "collider-base",
+          "name": "tower side 1",
+          "position": {
+            "x": -67.2,
+            "y": 0.2,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 4.166666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-back-0",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "tower back 0",
+          "position": {
+            "x": -75.6,
+            "y": 0.2,
+            "z": -26.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 4.166666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-back-1",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "tower back 1",
+          "position": {
+            "x": -73.19999999999999,
+            "y": 0.2,
+            "z": -26.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 4.166666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-back-2",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "tower back 2",
+          "position": {
+            "x": -70.8,
+            "y": 0.2,
+            "z": -26.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 4.166666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-back-3",
+          "modelId": "material:glass-wall",
+          "placementAnchor": "collider-base",
+          "name": "tower back 3",
+          "position": {
+            "x": -68.39999999999999,
+            "y": 0.2,
+            "z": -26.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 4.166666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-front-post--4.8",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "tower front post  4.8",
+          "position": {
+            "x": -76.8,
+            "y": 0.2,
+            "z": -17.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 4.166666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-front-post-4.8",
+          "modelId": "material:round-column",
+          "placementAnchor": "collider-base",
+          "name": "tower front post 4.8",
+          "position": {
+            "x": -67.2,
+            "y": 0.2,
+            "z": -17.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 4.166666666666667,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-stair-0",
+          "modelId": "material:steps",
+          "placementAnchor": "collider-base",
+          "name": "tower stair 0",
+          "position": {
+            "x": -72,
+            "y": 0,
+            "z": -10
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-stair-1",
+          "modelId": "material:steps",
+          "placementAnchor": "collider-base",
+          "name": "tower stair 1",
+          "position": {
+            "x": -72,
+            "y": 1.2,
+            "z": -12.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-stair-2",
+          "modelId": "material:steps",
+          "placementAnchor": "collider-base",
+          "name": "tower stair 2",
+          "position": {
+            "x": -72,
+            "y": 2.4,
+            "z": -14.8
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-stair-3",
+          "modelId": "material:steps",
+          "placementAnchor": "collider-base",
+          "name": "tower stair 3",
+          "position": {
+            "x": -72,
+            "y": 3.5999999999999996,
+            "z": -17.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-stair-4",
+          "modelId": "material:steps",
+          "placementAnchor": "collider-base",
+          "name": "tower stair 4",
+          "position": {
+            "x": -72,
+            "y": 4.8,
+            "z": -19.6
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-stair-5",
+          "modelId": "material:steps",
+          "placementAnchor": "collider-base",
+          "name": "tower stair 5",
+          "position": {
+            "x": -72,
+            "y": 6,
+            "z": -22
+          },
+          "rotation": {
+            "x": 0,
+            "y": 3.141592653589793,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-observation-0",
+          "modelId": "material:floor",
+          "placementAnchor": "collider-base",
+          "name": "tower observation 0",
+          "position": {
+            "x": -75.6,
+            "y": 7.2,
+            "z": -24.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-observation-1",
+          "modelId": "material:floor",
+          "placementAnchor": "collider-base",
+          "name": "tower observation 1",
+          "position": {
+            "x": -73.19999999999999,
+            "y": 7.2,
+            "z": -24.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-observation-2",
+          "modelId": "material:floor",
+          "placementAnchor": "collider-base",
+          "name": "tower observation 2",
+          "position": {
+            "x": -70.8,
+            "y": 7.2,
+            "z": -24.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-observation-3",
+          "modelId": "material:floor",
+          "placementAnchor": "collider-base",
+          "name": "tower observation 3",
+          "position": {
+            "x": -68.39999999999999,
+            "y": 7.2,
+            "z": -24.4
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-flight-console",
+          "modelId": "studio-desk",
+          "placementAnchor": "collider-base",
+          "name": "tower flight console",
+          "position": {
+            "x": -72,
+            "y": 7.4,
+            "z": -25
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-tower-console",
+          "modelId": "studio-desk",
+          "placementAnchor": "collider-base",
+          "name": "tower console",
+          "position": {
+            "x": -72,
+            "y": 0.2,
+            "z": -24
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-flight-1",
+          "modelId": "corsair-aircraft",
+          "placementAnchor": "aircraft-origin",
+          "name": "MUZIKAZ Flight 1",
+          "position": {
+            "x": -18,
+            "y": 0.4,
+            "z": 62
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "prompt": "Enter aircraft · E / Use",
+            "destructible": true,
+            "health": 400
+          }
+        },
+        {
+          "id": "airport-stand-0",
+          "modelId": "street-sign",
+          "placementAnchor": "collider-base",
+          "name": "Flight 1 stand",
+          "position": {
+            "x": -13,
+            "y": 0,
+            "z": 68
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Flight 1 stand"
+          },
+          "dialogueSettings": {
+            "text": "Board with E / Use. Request Tower takeoff clearance from the radio SVG. W / left stick taxis and accelerates, A/D steer, Space or Climb rises, Shift or Descend lowers. Brake with S. Exit only after landing."
+          }
+        },
+        {
+          "id": "airport-flight-2",
+          "modelId": "corsair-aircraft",
+          "placementAnchor": "aircraft-origin",
+          "name": "MUZIKAZ Flight 2",
+          "position": {
+            "x": -4,
+            "y": 0.4,
+            "z": 62
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "prompt": "Enter aircraft · E / Use",
+            "destructible": true,
+            "health": 400
+          }
+        },
+        {
+          "id": "airport-stand-1",
+          "modelId": "street-sign",
+          "placementAnchor": "collider-base",
+          "name": "Flight 2 stand",
+          "position": {
+            "x": 1,
+            "y": 0,
+            "z": 68
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Flight 2 stand"
+          },
+          "dialogueSettings": {
+            "text": "Board with E / Use. Request Tower takeoff clearance from the radio SVG. W / left stick taxis and accelerates, A/D steer, Space or Climb rises, Shift or Descend lowers. Brake with S. Exit only after landing."
+          }
+        },
+        {
+          "id": "airport-flight-3",
+          "modelId": "corsair-aircraft",
+          "placementAnchor": "aircraft-origin",
+          "name": "MUZIKAZ Flight 3",
+          "position": {
+            "x": 10,
+            "y": 0.4,
+            "z": 62
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "vehicle",
+            "interactionKey": "e",
+            "interactionDistance": 5,
+            "prompt": "Enter aircraft · E / Use",
+            "destructible": true,
+            "health": 400
+          }
+        },
+        {
+          "id": "airport-stand-2",
+          "modelId": "street-sign",
+          "placementAnchor": "collider-base",
+          "name": "Flight 3 stand",
+          "position": {
+            "x": 15,
+            "y": 0,
+            "z": 68
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Flight 3 stand"
+          },
+          "dialogueSettings": {
+            "text": "Board with E / Use. Request Tower takeoff clearance from the radio SVG. W / left stick taxis and accelerates, A/D steer, Space or Climb rises, Shift or Descend lowers. Brake with S. Exit only after landing."
+          }
+        },
+        {
+          "id": "airport-welcome",
+          "modelId": "street-sign",
+          "placementAnchor": "collider-base",
+          "name": "Airport Arrivals",
+          "position": {
+            "x": -60,
+            "y": 0,
+            "z": 74
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Airport Arrivals"
+          },
+          "dialogueSettings": {
+            "text": "Welcome to MUZIKAZ International Airport. Explore the passenger terminal, hangar and control tower. Open the radio SVG for tower audio, runway clearance and ground services. The local map shows airport facilities and district connections."
+          }
+        },
+        {
+          "id": "airport-tower-guide",
+          "modelId": "street-sign",
+          "placementAnchor": "collider-base",
+          "name": "Tower Frequency",
+          "position": {
+            "x": -72,
+            "y": 0,
+            "z": -14
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "functionalSettings": {
+            "behavior": "talk",
+            "interactionDistance": 5,
+            "prompt": "Read Tower Frequency"
+          },
+          "dialogueSettings": {
+            "text": "Tower radio is available through the radio SVG. Captions always work; enable voice for spoken controller calls. One pilot at a time receives runway clearance. Airspace ceiling: 80 metres."
+          }
+        },
+        {
+          "id": "airport-fence--96--100",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence  96  100",
+          "position": {
+            "x": -96,
+            "y": 0,
+            "z": -100
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence--96--80",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence  96  80",
+          "position": {
+            "x": -96,
+            "y": 0,
+            "z": -80
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence--96--60",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence  96  60",
+          "position": {
+            "x": -96,
+            "y": 0,
+            "z": -60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence--96--40",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence  96  40",
+          "position": {
+            "x": -96,
+            "y": 0,
+            "z": -40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence--96--20",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence  96  20",
+          "position": {
+            "x": -96,
+            "y": 0,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence--96-0",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence  96 0",
+          "position": {
+            "x": -96,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence--96-20",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence  96 20",
+          "position": {
+            "x": -96,
+            "y": 0,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence--96-40",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence  96 40",
+          "position": {
+            "x": -96,
+            "y": 0,
+            "z": 40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence--96-60",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence  96 60",
+          "position": {
+            "x": -96,
+            "y": 0,
+            "z": 60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence--96-80",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence  96 80",
+          "position": {
+            "x": -96,
+            "y": 0,
+            "z": 80
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence--96-100",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence  96 100",
+          "position": {
+            "x": -96,
+            "y": 0,
+            "z": 100
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence-96--100",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence 96  100",
+          "position": {
+            "x": 96,
+            "y": 0,
+            "z": -100
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence-96--80",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence 96  80",
+          "position": {
+            "x": 96,
+            "y": 0,
+            "z": -80
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence-96--60",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence 96  60",
+          "position": {
+            "x": 96,
+            "y": 0,
+            "z": -60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence-96--40",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence 96  40",
+          "position": {
+            "x": 96,
+            "y": 0,
+            "z": -40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence-96--20",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence 96  20",
+          "position": {
+            "x": 96,
+            "y": 0,
+            "z": -20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence-96-0",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence 96 0",
+          "position": {
+            "x": 96,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence-96-20",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence 96 20",
+          "position": {
+            "x": 96,
+            "y": 0,
+            "z": 20
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence-96-40",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence 96 40",
+          "position": {
+            "x": 96,
+            "y": 0,
+            "z": 40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence-96-60",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence 96 60",
+          "position": {
+            "x": 96,
+            "y": 0,
+            "z": 60
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence-96-80",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence 96 80",
+          "position": {
+            "x": 96,
+            "y": 0,
+            "z": 80
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        },
+        {
+          "id": "airport-fence-96-100",
+          "modelId": "material:crowd-barrier",
+          "placementAnchor": "collider-base",
+          "name": "fence 96 100",
+          "position": {
+            "x": 96,
+            "y": 0,
+            "z": 100
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 4
+          },
+          "functionalSettings": {
+            "behavior": "decor",
+            "destructible": true,
+            "health": 160
+          }
+        }
+      ],
+      "layoutMeta": {
+        "color": 4350540,
+        "locations": [
+          {
+            "id": "terminal",
+            "name": "Passenger Terminal",
+            "x": -58,
+            "z": 58,
+            "width": 19.2,
+            "depth": 9.6,
+            "description": "Walk-in Passenger Terminal. Structural pieces use the Builder catalog."
+          },
+          {
+            "id": "hangar",
+            "name": "Open Aircraft Hangar",
+            "x": -14,
+            "z": 86,
+            "width": 24,
+            "depth": 14.4,
+            "description": "Walk-in Open Aircraft Hangar. Structural pieces use the Builder catalog."
+          },
+          {
+            "id": "operations",
+            "name": "Ground Services",
+            "x": -60,
+            "z": 12,
+            "width": 14.4,
+            "depth": 9.6,
+            "description": "Walk-in Ground Services. Structural pieces use the Builder catalog."
+          },
+          {
+            "id": "tower",
+            "name": "Control Tower",
+            "x": -72,
+            "z": -22,
+            "width": 9.6,
+            "depth": 9.6,
+            "description": "Walk-in Control Tower. Structural pieces use the Builder catalog."
+          },
+          {
+            "id": "runway",
+            "name": "Runway 18 / 36",
+            "x": 40,
+            "z": 0,
+            "width": 16,
+            "depth": 202,
+            "description": "Shared runway. Use the tower radio to request takeoff or landing clearance. Taxi to the runway before departure."
+          },
+          {
+            "id": "apron",
+            "name": "Aircraft Stands",
+            "x": -4,
+            "z": 62,
+            "width": 44,
+            "depth": 26,
+            "description": "Three public aircraft, ready to enter and fly. Ground service repairs and refuels parked aircraft."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "airport": {
+          "enabled": true
+        },
+        "friendlyFire": false
+      }
+    },
+    "playUrl": "model-explorer.html?environment=muzikaz-airport&autoplay=1&mode=multiplayer"
   }
 ]

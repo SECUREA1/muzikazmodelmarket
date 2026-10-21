@@ -28,6 +28,7 @@ export function spawnRadToxWave(sim, now, center) {
  campaign.targetCount=count;campaign.remaining=count;campaign.startedAt=now;
 }
 export function startRadTox(sim,environment,now,center) {
+ if(environment.airport?.enabled)return false;
  if(!supportsRadTox(environment))return false;
  if(sim.radTox&&!sim.match)openMatch(sim,sim.radTox.level||1,now);
  if(!sim.radTox) {

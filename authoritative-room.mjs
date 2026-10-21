@@ -1,3 +1,4 @@
+import {isAircraft,stepAircraftFlight,airportRadio} from './public/js/aircraft-flight.js';
 import {isWatercraft,harborWaterAt,watercraftFootprint} from './public/js/harbor-water.js';
 import {buildingPolicy,changeBuildingPolicy,requireBuildingAllowed} from './public/js/room-building-policy.js';
 import {RAD_TOX_SHOT_INTERVAL_MS} from './public/js/rad-tox-rules.js';
@@ -72,6 +73,7 @@ export class AuthoritativeRooms {
    for(const definition of manifest.objects)sim.actors[definition.objectId].destructible=definition.gameplay.destructible===true;
    sim.initialized=true;sim.environmentUpdatedAt=contentUpdatedAt;
   }
+  if(environment.airport?.enabled)sim.airport ||= {runwayHolder:null,expires:0};
   // Retain native identities for catalog assets, including rooms saved before
   // basketball metadata became part of authoritative actor snapshots.
   for(const actor of manifest.objects){const entity=sim.actors[actor.objectId];if(entity&&!entity.asset)entity.asset=copy(actor.asset);}
@@ -110,6 +112,15 @@ export class AuthoritativeRooms {
    const input=player.input||{},forward=clamp(input.forward,-1,1),side=clamp(input.side,-1,1),length=Math.max(1,Math.hypot(forward,side));
    const hasGeometry=Boolean(environment.builderScene||environment.proceduralLand||environment.modelUrl||environment.modelUrls?.length);
    const boundControl=(current,target)=>hasGeometry?target:clamp(target,Math.min(current,-half),Math.max(current,half));
+   const aircraft=sim.actors[player.vehicleId];
+   if(isAircraft(aircraft)&&aircraft.active!==false){
+    const groundPoint=this.collision.groundAt(environment,aircraft.position,{actors:sim.actors,objects:room.objects}),ground=(groundPoint?.y||0)+.4;
+    const runway=environment.airport?.runway;const onRunway=!runway||(Math.abs(aircraft.position.x-runway.x)<runway.width/2-1&&Math.abs(aircraft.position.z-runway.z)<runway.length/2);const cleared=!sim.airport||(onRunway&&sim.airport.runwayHolder===player.actorId&&sim.airport.expires>now);
+    const pose=stepAircraftFlight(aircraft,input,dt,{ground,ceiling:environment.airport?.ceiling||80,half,cleared,blocked:(from,to,yaw)=>{const delta=[to.x-from.x,to.y-from.y,to.z-from.z],span=Math.hypot(...delta);if(span<.001)return false;return [-4.8,0,4.8].some(side=>this.collision.blocksShot(environment,{x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*2.8,y:from.y+.9,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*2.8},delta.map(n=>n/span),span+.1,sim.actors));}});
+    Object.assign(aircraft,pose);player.position={...pose.position};player.yaw=pose.rotation.y;player.floor=pose.position.y;player.velocityY=0;player.grounded=!pose.flight.airborne;player.locationName=pose.flight.airborne?'Airport airspace':'Airport apron';
+    if(sim.airport?.runwayHolder===player.actorId&&(pose.flight.altitude>5||(pose.flight.clearance==='landing'&&!pose.flight.airborne&&!onRunway&&pose.flight.speed<.5))){sim.airport.runwayHolder=null;sim.airport.expires=0;}
+    continue;
+   }
    const boat=sim.actors[player.vehicleId],boating=isWatercraft(boat)&&boat.active!==false;if(boat?.active===false)player.vehicleId=null;
    let speed=boating?7:player.vehicleId?12:harborWaterAt(environment,player.position)?2.8:input.sprint?6:4;
    if(player.seatedId) speed=0;
@@ -191,6 +202,7 @@ export class AuthoritativeRooms {
    for(const [otherId,otherRoom]of Object.entries(allRooms)){if(otherId===id)continue;const previous=otherRoom.simulation?.players[actorId];if(!previous)continue;previous.lastSeen=0;previous.replacedByRoom=id;previous.input={};for(const key of ['heldId','seatedId','vehicleId']){const held=otherRoom.simulation.actors[previous[key]];if(held)held.holderId=null;previous[key]=null;}}
    if(travel){player.lastPortalArrival=travel;delete travelSource.pendingTravel;}
    if(meeting||travel){player.position={...spawn};player.floor=spawn.y;player.velocityY=0;player.grounded=true;}player.input={};player.inputEpoch=randomUUID();player.lastInputSequence=-1;player.username=identity.username;player.modelUrl=identity.avatar?.modelUrl||null;player.lastSeen=now;player.replacedByRoom=null;player.walletId=identity.walletId;player.meetingName=meeting?.name||environment.name;player.locationName=player.meetingName;player.actorId=actorId;
+   if(environment.airport?.enabled){player.radToxEnabled=false;player.radToxReady=true;}
    if(sim.basketball){player.health=100;if(basketballLateArrival)watchBasketballGame(sim,player,now);else assignBasketballTeam(sim,player,now);}else if(!isDedicatedFiringRange(environment)){player.radToxReady=command.deferRadTox!==true;if(typeof command.radToxEnabled==='boolean')player.radToxEnabled=command.radToxEnabled;if(player.radToxEnabled!==false){startRadTox(sim,environment,now,player.position);if(player.radToxReady)registerParticipant(sim,actorId,player,now);}}
    if(sim.firingRange){if(isDedicatedFiringRange(environment))player.health=100;registerFiringRangeArrival(sim,player,now,rangeWasActive);}
    room.building ||=buildingPolicy(room,environment);if(!room.building.hostId||!sim.players[room.building.hostId]||now-sim.players[room.building.hostId].lastSeen>=15000)room.building.hostId=actorId;
@@ -211,7 +223,7 @@ export class AuthoritativeRooms {
     result.resolvedAction=selection.action;result.actionLabel=selection.label;
     command={...command,...selection.fields,action:selection.action||'basketball-wait'};
    }
-   if(command.action==='input'){const input=command.input||{},inputSequence=command.inputSequence;if(inputSequence!==undefined&&(!Number.isSafeInteger(inputSequence)||inputSequence<0))fail('Invalid input sequence.',422);if((command.inputEpoch===undefined||command.inputEpoch===player.inputEpoch)&&(inputSequence===undefined||inputSequence>(player.lastInputSequence??-1))){if(inputSequence!==undefined)player.lastInputSequence=inputSequence;player.input=player.health<=0?{}:{forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}}
+   if(command.action==='input'){const input=command.input||{},inputSequence=command.inputSequence;if(inputSequence!==undefined&&(!Number.isSafeInteger(inputSequence)||inputSequence<0))fail('Invalid input sequence.',422);if((command.inputEpoch===undefined||command.inputEpoch===player.inputEpoch)&&(inputSequence===undefined||inputSequence>(player.lastInputSequence??-1))){if(inputSequence!==undefined)player.lastInputSequence=inputSequence;player.input=player.health<=0?{}:{forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),lift:clamp(input.lift,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}}
    else if(command.action==='range-ready'||isDedicatedFiringRange(environment)&&['start-rad-tox','next-rad-tox'].includes(command.action)){if(!sim.firingRange)fail('This map has no live firing range.',409);result.message='Firing range ready. Choose Quick practice, join a lane, or watch the live range.';}
    else if(command.action==='range-practice'){startFiringRangePractice(sim,player,now,command);result.message='Open practice is live. Join any free lane; training ammunition is free.';}
    else if(command.action==='range-join'){joinFiringRange(sim,player,now,command);result.message='Lane selected. Training ammunition is free.';}
@@ -234,6 +246,7 @@ export class AuthoritativeRooms {
    else if(command.action==='basketball-start'){startBasketballGame(sim,now);result.message='Tip-off! The shared basketball game has started.';}
    else if(command.action==='basketball-shoot'){const ball=shootBasketball(sim,player,now,Object.fromEntries(['power','angle','mode','direction'].filter(key=>command[key]!==undefined).map(key=>[key,command[key]])));result.message=ball.basketballShot.aimMiss?'Aim miss: outside 13% hoop alignment. Line up with the net.':'Shot released!';}
    else if(sim.basketball&&['start-rad-tox','next-rad-tox'].includes(command.action))fail('Basketball Arena runs shared basketball games.',409);
+   else if(command.action==='airport-radio'){result.message=airportRadio(sim,player,actorId,command.operation,now);}
    else if(command.action==='rad-tox-toggle'){player.radToxEnabled=command.enabled===true;result.message=player.radToxEnabled?'RAD-TOX enabled.':'RAD-TOX disabled.';}
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position)){const loading=player.radToxReady===false;player.radToxReady=true;player.radToxEnabled=true;registerParticipant(sim,actorId,player,now);if(loading)player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;result.message='RAD-TOX encounter active.';}else result.message='Builder gameplay active.';}
    else if(command.action==='next-rad-tox'){if(sim.radTox?.transition&&now<sim.radTox.transition.at)fail('The next round starts after the results countdown.',409);if(nextRadToxLevel(sim,environment,now,command.matchId)){for(const [index,participantId] of Object.keys(sim.match.participants).entries()){const participant=sim.players[participantId],entry=environment.spawn||{x:0,y:0,z:2};participant.position=this.collision.safeSpawn(environment,{...entry,x:entry.x+(index%4)*1.2,z:entry.z+Math.floor(index/4)*1.2});participant.floor=participant.position.y;participant.velocityY=0;participant.grounded=true;participant.shieldUntil=0;participant.input={};participant.toolReady={};participant.toolUses={};}result.message='Next shared level started.';}else if(sim.match?.id===command.matchId)fail('Complete the current level before starting another.',409);}
@@ -267,7 +280,7 @@ export class AuthoritativeRooms {
    else if(command.action==='collect'){await this.collectNearbyLoot(sim,player,identity,id,now,command.entityId,result);}
    else if(command.action==='interact'){
     if(command.entityId&&isBasketball(sim.actors[command.entityId]))requireBasketballPlayer(sim,player);
-    if(player.vehicleId){sim.actors[player.vehicleId].holderId=null;player.vehicleId=null;}
+    if(player.vehicleId){if(isAircraft(sim.actors[player.vehicleId])&&sim.actors[player.vehicleId].flight?.airborne)fail('Land the aircraft before exiting.',409);sim.actors[player.vehicleId].holderId=null;player.vehicleId=null;}
     else if(player.seatedId){sim.actors[player.seatedId].holderId=null;player.seatedId=null;}
     else{
      const target=manifest.actors.filter(a=>(!command.entityId||a.objectId===command.entityId)&&(!['hostile','patrol','decor'].includes(a.gameplay.behavior)||(a.gameplay.action&&a.gameplay.action!=='none'))&&sim.actors[a.objectId]?.active&&(command.entityId||!sim.actors[a.objectId].basketballSpectatorSeat||!sim.actors[a.objectId].holderId||sim.actors[a.objectId].holderId===actorId)&&distance(sim.actors[a.objectId].position,player.position)<=Math.min(5,a.gameplay.interactionDistance)).sort((a,b)=>distance(sim.actors[a.objectId].position,player.position)-distance(sim.actors[b.objectId].position,player.position))[0];
@@ -282,7 +295,7 @@ export class AuthoritativeRooms {
      else if(config.behavior==='door')entity.open=!entity.open;
      else if(config.behavior==='switch')entity.switched=!entity.switched;
      else if(['pickup','hold'].includes(config.behavior)){if(player.heldId)fail('Drop the held item first.',409);player.heldId=entity.id;entity.holderId=actorId;delete entity.ballVelocity;touchBasketball(sim,entity,player,now);if(!player.inventory.includes(target.modelId))player.inventory.push(target.modelId);result.pickup={id:entity.id+':'+now,kind:'item'};const collected=combatStats(player).itemsCollected ||= [];if(!collected.includes(target.modelId))collected.push(target.modelId);}
-     else if(config.behavior==='vehicle'){if(player.basketballRole==='spectator'&&sim.basketball?.state==='live')fail('Spectators can use the stands and benches while the court is active.',409);player.vehicleId=entity.id;entity.holderId=actorId;if(isWatercraft(entity)){player.position={...entity.position,y:.35};player.floor=.35;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;}}
+     else if(config.behavior==='vehicle'){if(player.basketballRole==='spectator'&&sim.basketball?.state==='live')fail('Spectators can use the stands and benches while the court is active.',409);player.vehicleId=entity.id;entity.holderId=actorId;if(isAircraft(entity)){player.position={...entity.position};player.movementRevision=(player.movementRevision||0)+1;}if(isWatercraft(entity)){player.position={...entity.position,y:.35};player.floor=.35;player.velocityY=0;player.grounded=true;player.movementRevision=(player.movementRevision||0)+1;}}
      else if(config.behavior==='seat'){if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(entity.position,sim))fail('Spectators can sit on benches outside the active court.',409);player.seatedId=entity.id;entity.holderId=actorId;player.position={...entity.position};}
      else if(config.behavior==='heal')player.health=Math.min(100,player.health+clamp(config.value||25,0,100));
      else if(config.behavior==='hazard')entity.active=false;
