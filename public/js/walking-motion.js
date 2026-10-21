@@ -1,8 +1,8 @@
 // Predict only the local walking view. The server still owns collisions and position.
 // Reconcile against historical motion, then ease the visible correction separately.
 export class WalkingMotion {
- constructor({immediate=false,staleAfter=500,staleFade=200}={}){this.immediate=immediate;this.staleAfter=staleAfter;this.staleFade=staleFade;this.reset();}
- reset(){this.position=null;this.history=[];this.velocity={x:0,z:0};this.offset={x:0,z:0};this.lastSnapshot=-Infinity;this.receivedAt=0;this.clockOffset=null;this.bestRtt=Infinity;}
+ constructor({immediate=false,staleAfter=500,staleFade=200,maxDelta=.05}={}){this.maxDelta=Math.max(.001,Math.min(.25,Number(maxDelta)||.05));this.immediate=immediate;this.staleAfter=staleAfter;this.staleFade=staleFade;this.reset();}
+ reset(){this.position=null;this.history=[];this.velocity={x:0,z:0};this.offset={x:0,z:0};this.lastSnapshot=-Infinity;this.receivedAt=0;this.clockOffset=null;this.bestRtt=Infinity;this.sampleFrom=null;}
  reconcile(position,{serverTime,simulationTime=serverTime,sentAt,receivedAt}){
   if(Number.isFinite(sentAt)&&Number.isFinite(serverTime)){
    const rtt=Math.max(0,receivedAt-sentAt);
@@ -21,10 +21,17 @@ export class WalkingMotion {
    }
    predicted=next;
   }
-  const latest=this.history.at(-1);
+  const latest=this.history.at(-1);let advanced=false;
   if(time>latest.time){
-   const ahead=Math.min(.1,(time-latest.time)/1000);
+   const ahead=Math.min(this.maxDelta>.05?.25:.1,(time-latest.time)/1000);
    predicted={x:latest.x+this.velocity.x*ahead,z:latest.z+this.velocity.z*ahead};
+   if(this.maxDelta>.05){
+    // At low FPS an acknowledgement can describe a time the next render has
+    // not reached yet. Advance to that authoritative time before integrating
+    // the rest of the frame, rather than counting that movement twice.
+    this.position.x+=this.velocity.x*ahead;this.position.z+=this.velocity.z*ahead;
+    this.history.push({time,x:this.position.x,z:this.position.z});this.sampleFrom=time;advanced=true;
+   }
   }
   const dx=position.x-predicted.x,dz=position.z-predicted.z;
   this.position.x+=dx;this.position.z+=dz;
@@ -32,7 +39,7 @@ export class WalkingMotion {
    this.position={x:position.x,z:position.z};this.offset={x:0,z:0};this.velocity={x:0,z:0};this.history=[{time,x:position.x,z:position.z}];return;
   }
   for(const entry of this.history){entry.x+=dx;entry.z+=dz;}
-  this.offset.x-=dx;this.offset.z-=dz;
+  if(!advanced){this.offset.x-=dx;this.offset.z-=dz;}
   // Bound visible wall penetration during a blocked move or a lost connection.
   const length=Math.hypot(this.offset.x,this.offset.z);
   if(length>.45){this.offset.x*=.45/length;this.offset.z*=.45/length;}
@@ -44,7 +51,8 @@ export class WalkingMotion {
  }
  sample(now,delta,input,speed,target){
   if(!this.position)return target;
-  const dt=Math.max(0,Math.min(.05,delta));
+  let dt=Math.max(0,Math.min(this.maxDelta,delta));
+  if(this.sampleFrom!==null){dt=Math.min(dt,Math.max(0,(now-this.sampleFrom)/1000));this.sampleFrom=null;}
   const forward=Math.max(-1,Math.min(1,Number(input.forward)||0)),side=Math.max(-1,Math.min(1,Number(input.side)||0));
   const yaw=Number(input.yaw)||0,age=now-this.receivedAt,fade=this.staleFade>0?Math.max(0,Math.min(1,(this.staleAfter-age)/this.staleFade)):age<=this.staleAfter?1:0,scale=speed*fade/Math.max(1,Math.hypot(forward,side));
   const desired={x:(-Math.sin(yaw)*forward+Math.cos(yaw)*side)*scale,z:(-Math.cos(yaw)*forward-Math.sin(yaw)*side)*scale};

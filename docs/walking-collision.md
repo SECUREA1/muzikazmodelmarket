@@ -35,10 +35,33 @@ without a snapshot playback buffer or a wait for the next HTTP response. Every
 predicted step and visible correction passes through the same swept capsule
 collision query against map and placed geometry. Server snapshots reconcile
 movement history; they do not replay an old walking position into the camera.
-Local jumps use the server's gravity and jump speed. Seats, vehicles, respawns,
-and map travel reset local walking; deliberate relocations apply immediately.
+Local jumps use the server's gravity and jump speed. Seats, aircraft, boats,
+respawns, and map travel reset local walking; deliberate relocations apply
+immediately. Other hosted rides use that same capsule at the server's ride speed.
 A stale connection stops prediction instead of letting a disconnected player
 keep walking. Keyboard, touch and release edges request server input immediately.
+
+Aircraft and boats run the shared flight/helm simulation for local presentation
+on every render frame. Timestamped controls replay from accepted snapshots;
+the local model, camera and aircraft aim use the same predicted pose. The camera
+adds no further attitude interpolation to that pose. Server snapshots retain
+authority over health, ownership, boarding, runway access and match outcomes.
+Map octrees and cached placed triangles constrain the view, including wing/bow
+sweeps, boat traffic, shoreline boundaries and actual ground support. Shared
+worlds build a local map collision cache; movable Builder objects remain dynamic
+triangle groups rather than being baked into that map cache.
+
+Walking and sports movement consume elapsed time up to 250 ms in bounded
+substeps. Aircraft and boats retain actual sample-to-sample elapsed time within
+the 1200 ms prediction horizon, including acknowledgments between slow frames.
+Visual animation timing is separate. Flight and helm axes remain independent
+of walking direction remapping and diagonal normalization.
+
+Input changes can send beside a pending heartbeat, with at most three automatic
+requests and one newest pending state. Sequence numbers and join epochs prevent
+old presses from replacing a later release. No event backlog is replayed. Live
+hockey and arcade sports also predict only the locally controlled skater or
+mallet; pucks, balls, opponents, scores and clocks remain server owned.
 
 ## Geometry and updates
 

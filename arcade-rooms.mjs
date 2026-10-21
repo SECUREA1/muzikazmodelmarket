@@ -1,7 +1,15 @@
 import {createArcadeMatch} from './public/js/arcade-match.js';
 import {arcadeSettings} from './public/js/arcade-rules.js';
+import {randomUUID} from 'node:crypto';
 const fail=(message,statusCode=409)=>{throw Object.assign(Error(message),{statusCode});};
 const IDS=['hockey','shooting','basketball','air-hockey','billiards'];
+function acceptInput(member,command){
+ if(command.inputSequence!==undefined&&(!Number.isSafeInteger(command.inputSequence)||command.inputSequence<0))fail('Invalid input sequence.',422);
+ if(command.inputEpoch!==undefined&&command.inputEpoch!==member.inputEpoch)return false;
+ if(command.inputSequence===undefined)return true;
+ if(command.inputSequence<=(member.lastInputSequence??-1))return false;
+ member.lastInputSequence=command.inputSequence;return true;
+}
 /** Server owns scores, physics, clock and occupancy. One round per map. */
 export class ArcadeRooms {
  constructor({now=Date.now}={}){this.now=now;this.rooms=new Map();}
@@ -16,15 +24,15 @@ export class ArcadeRooms {
  if(c.action==='join'&&game===r.game&&!r.started&&!r.host&&!r.slots.some(s=>s.actor)&&c.settings){const v=c.settings;r.config=arcadeSettings({...r.config,roundSeconds:v.roundSeconds??r.config.roundSeconds,periodSeconds:v.periodSeconds??r.config.periodSeconds,teamSize:v.teamSize??r.config.teamSize,difficulty:v.difficulty??r.config.difficulty,aiFill:v.aiFill??r.config.aiFill,basketballMode:v.basketballMode??r.config.basketballMode});r.match=createArcadeMatch(r.game,r.config);r.slots=Array.from({length:r.game===2&&r.config.basketballMode==='full'?r.config.teamSize*2:2},()=>({actor:null,name:r.config.aiFill?'AI':'Open'}));}
  if(['join','spectate'].includes(c.action)){
  if(game!==r.game)fail('Another game is active in this park. Leave it before choosing a different game.');
- if(c.action==='spectate'){if(!r.members.has(actor)&&r.members.size>=66)fail('Spectator places are full.');for(const slot of r.slots)if(slot.actor===actor){slot.actor=null;slot.name='AI';}r.members.set(actor,{role:'spectator',at:this.now()});if(r.host===actor)r.host=r.slots.find(s=>s.actor)?.actor||null;}
- else {const requested=c.slot===undefined?r.slots.findIndex(s=>!s.actor||s.actor===actor):Number(c.slot);const slot=r.slots[requested];if(!slot||slot.actor&&slot.actor!==actor)fail('That player spot is occupied. Choose another spot or spectate.');this.leave(actor);slot.actor=actor;slot.name=String(identity.username||'Player').slice(0,32);r.members.set(actor,{role:'player',at:this.now()});r.host ||= actor;}
+ if(c.action==='spectate'){if(!r.members.has(actor)&&r.members.size>=66)fail('Spectator places are full.');for(const slot of r.slots)if(slot.actor===actor){slot.actor=null;slot.name='AI';}r.members.set(actor,{role:'spectator',at:this.now(),inputEpoch:randomUUID(),lastInputSequence:-1});if(r.host===actor)r.host=r.slots.find(s=>s.actor)?.actor||null;}
+ else {const requested=c.slot===undefined?r.slots.findIndex(s=>!s.actor||s.actor===actor):Number(c.slot);const slot=r.slots[requested];if(!slot||slot.actor&&slot.actor!==actor)fail('That player spot is occupied. Choose another spot or spectate.');this.leave(actor);slot.actor=actor;slot.name=String(identity.username||'Player').slice(0,32);r.members.set(actor,{role:'player',at:this.now(),inputEpoch:randomUUID(),lastInputSequence:-1});r.host ||= actor;}
  }else{const member=r.members.get(actor);if(!member)fail('Join this room first.');member.at=this.now();if(c.action==='leave'){this.leave(actor);}
  else if(c.action==='watch'){}else {if(member.role!=='player')fail('Spectators cannot control or start the game.',403);const slot=r.slots.findIndex(s=>s.actor===actor);
  if(c.action==='start'||c.action==='restart'){if(r.host!==actor)fail('Only the host can start a round.',403);if(c.action==='restart'&&!r.match.snapshot().ended)fail('Finish this round before starting another.');if(r.started&&!r.match.snapshot().ended)fail('This game is already running.');r.started=true;r.match=createArcadeMatch(r.game,r.config);r.turn=0;}
  else if(c.action==='switch'){if(r.game!==2||r.config.basketballMode!=='full')fail('Switching is available in team basketball.',400);const size=r.config.teamSize,team=Math.floor(slot/size),target=r.slots.findIndex((s,i)=>Math.floor(i/size)===team&&!s.actor);if(target<0)fail('No AI teammate is available.');r.slots[target]={...r.slots[slot]};r.slots[slot]={actor:null,name:r.config.aiFill?'AI':'Open'};}
- else if(c.action==='input'){if(r.started&&(r.game===2&&r.config.basketballMode==='full'||r.game===3||slot===r.turn)){if(r.game===3&&slot===1)r.match.opponent(c.input);else r.match.input(c.input,slot);}}
- else if(c.action==='action'){if(r.started&&!r.match.snapshot().ended&&(r.game===2&&r.config.basketballMode==='full'||slot===r.turn)){r.match.input(c.input,slot);const before=r.match.snapshot().attempts;r.match.action(slot,['auto','pass','steal'].includes(c.kind)?c.kind:'shoot');if(r.game!==2||r.config.basketballMode!=='full')if(r.match.snapshot().attempts>before)r.turn=1-r.turn;}}
+ else if(c.action==='input'){if(acceptInput(member,c)&&r.started&&(r.game===2&&r.config.basketballMode==='full'||r.game===3||slot===r.turn)){if(r.game===3&&slot===1)r.match.opponent(c.input);else r.match.input(c.input,slot);}}
+ else if(c.action==='action'){const fresh=acceptInput(member,c),validEpoch=c.inputEpoch===undefined||c.inputEpoch===member.inputEpoch,unused=c.inputSequence===undefined||c.inputSequence>(member.lastActionSequence??-1);if(validEpoch&&unused&&r.started&&!r.match.snapshot().ended&&(r.game===2&&r.config.basketballMode==='full'||slot===r.turn)){if(c.inputSequence!==undefined)member.lastActionSequence=c.inputSequence;if(fresh)r.match.input(c.input,slot);const before=r.match.snapshot().attempts;r.match.action(slot,['auto','pass','steal'].includes(c.kind)?c.kind:'shoot');if(r.game!==2||r.config.basketballMode!=='full')if(r.match.snapshot().attempts>before)r.turn=1-r.turn;}}
  else fail('Unknown game action.',400);}}
- r.match.setRoster?.(r.slots);r.sequence++;return {config:r.config,selfId:actor,role:r.members.get(actor)?.role||'left',host:r.host,slots:structuredClone(r.slots),turn:r.turn,started:r.started,sequence:r.sequence,state:r.match.snapshot()};
+ r.match.setRoster?.(r.slots);r.sequence++;return {config:r.config,selfId:actor,role:r.members.get(actor)?.role||'left',inputEpoch:r.members.get(actor)?.inputEpoch||null,serverTime:this.now(),simulationTime:r.at,host:r.host,slots:structuredClone(r.slots),turn:r.turn,started:r.started,sequence:r.sequence,state:r.match.snapshot()};
  }
 }

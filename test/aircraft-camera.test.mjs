@@ -14,3 +14,37 @@ test('cockpit eye follows the complete confirmed attitude, chase view preserves 
 test('fixed forward cannons track pitch and bank and hits follow the rotated airframe',()=>{
  const plane={position:{x:0,y:25,z:0},rotation:{x:.3,y:.4,z:-.2}};const pose=aircraftGunPose(plane);assert.ok(pose.direction[1]>0);assert.ok(Math.abs(Math.hypot(...pose.direction)-1)<1e-9);const target={position:{x:pose.origin.x+pose.direction[0]*60,y:pose.origin.y+pose.direction[1]*60,z:pose.origin.z+pose.direction[2]*60},rotation:{...plane.rotation}};assert.ok(aircraftRayDistance(target,pose.origin,pose.direction)>50);
 });
+for(const view of ['cockpit','chase'])test(view+' applies predicted bank and yaw on the first frame without residual camera delay',()=>{
+ const rig=new THREE.Group(),camera=new THREE.PerspectiveCamera(68,1,.05,700),model=new THREE.Group();rig.position.set(10,25,50);rig.rotation.y=.4;rig.add(camera);
+ const controls=createAircraftCamera({camera,playerRig:rig}),plane={id:'plane',active:true,scale:{x:1.2,y:.9,z:1.1},rotation:{x:0,y:0,z:0}},origin=rig.position,lookYaw=.35,lookPitch=.2,scale=new THREE.Vector3(1.2,.9,1.1);
+ controls.update({aircraft:plane,model,origin,view,lookYaw,lookPitch});
+ for(const rotation of [{x:.2,y:1.1,z:-.45},{x:-.12,y:-.6,z:.4}]){
+  plane.rotation=rotation;
+  const body=new THREE.Quaternion().setFromEuler(new THREE.Euler(rotation.x,rotation.y,rotation.z,'YXZ'));
+  controls.update({aircraft:plane,model,origin,view,lookYaw,lookPitch,delta:0,immediate:true});
+  assert.ok(model.quaternion.angleTo(body)<1e-7,'local airframe attitude changes immediately');
+  let expected;
+  if(view==='cockpit'){
+   expected=new THREE.Vector3(...AIRCRAFT_COCKPIT_POSE.position).multiply(scale).applyQuaternion(body).add(origin);
+   const head=new THREE.Quaternion().setFromEuler(new THREE.Euler(lookPitch,lookYaw,0,'YXZ'));
+   assert.ok(camera.getWorldQuaternion(new THREE.Quaternion()).angleTo(body.clone().multiply(head))<1e-7);
+  }else{
+   const head=new THREE.Quaternion().setFromEuler(new THREE.Euler(lookPitch*.5,lookYaw,0,'YXZ'));
+   expected=new THREE.Vector3(0,3.8,12).multiply(scale).applyQuaternion(head);expected.y=Math.max(1.7,expected.y);expected.applyQuaternion(body).add(origin);
+   const target=new THREE.Vector3(0,1,-3).multiply(scale).applyQuaternion(body).add(origin);
+   assert.ok(camera.getWorldDirection(new THREE.Vector3()).dot(target.sub(expected).normalize())>1-1e-10);
+  }
+  assert.ok(camera.getWorldPosition(new THREE.Vector3()).distanceTo(expected)<1e-8);
+  const firstPosition=camera.getWorldPosition(new THREE.Vector3()),firstAttitude=camera.getWorldQuaternion(new THREE.Quaternion());
+  controls.update({aircraft:plane,model,origin,view,lookYaw,lookPitch,delta:1/120,immediate:true});
+  assert.ok(camera.getWorldPosition(new THREE.Vector3()).distanceTo(firstPosition)<1e-8);
+  assert.ok(camera.getWorldQuaternion(new THREE.Quaternion()).angleTo(firstAttitude)<1e-7);
+ }
+});
+test('aircraft camera preserves eased attitude for callers that omit immediate mode',()=>{
+ const rig=new THREE.Group(),camera=new THREE.PerspectiveCamera(),model=new THREE.Group();rig.add(camera);const controls=createAircraftCamera({camera,playerRig:rig}),plane={id:'plane',rotation:{y:0}};
+ controls.update({aircraft:plane,model,origin:rig.position});plane.rotation.y=1;
+ controls.update({aircraft:plane,model,origin:rig.position,delta:1/60});
+ const target=new THREE.Quaternion().setFromEuler(new THREE.Euler(0,1,0));
+ assert.ok(model.quaternion.angleTo(target)>.5);assert.ok(model.quaternion.angleTo(new THREE.Quaternion())>0);
+});

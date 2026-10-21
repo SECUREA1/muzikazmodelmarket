@@ -5,7 +5,8 @@ import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory
 
 export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,onError,deferRadTox=false,radToxEnabled,onShot=()=>{}}) {
  const api = new SharedGameInventory();
- let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0, inputRequested=false,fireBusy=false;
+ let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0,fireBusy=false;
+ let connectionRevision=0,tickToken=null,pendingInput=null;const automaticInputs=new Set();
  let radToxStarted=false,radToxPreference=radToxEnabled;
  let fireRequest=null,queuedFire=null,inputSequence=0,inputEpoch=null,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
  const waiters=new Set(),collected=new Set();
@@ -15,8 +16,9 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   waiters.clear();
  }
  function close(error) {
-  stopped=true; client.ready=false; failure=error; clearInterval(timer); settle(error);
+  stopped=true; client.ready=false; failure=error; invalidateInputs();clearInterval(timer); settle(error);
  }
+ function invalidateInputs(){connectionRevision++;pendingInput=null;busy=false;tickToken=null;}
  // Refresh only a rejected CSRF proof, and reuse the command request ID so an
  // ambiguous response cannot apply a gameplay action twice.
  async function post(path,body) {
@@ -46,11 +48,14 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    if(stopped)throw failure||Error('Room closed.');
    if(action==='fire'&&fireRequest){if(!radToxStarted)return fireRequest;if(!queuedFire)queuedFire=fireRequest.then(()=>client.send(action,fields,requestId)).finally(()=>{queuedFire=null;});return queuedFire;}
    const fireTool=String(fields.tool||'laser');if(action==='fire'&&performance.now()<(nextFireAt.get(fireTool)||0))return null;
-   const sentAt=performance.now(),fireInterval=radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
+   const sentAt=performance.now(),revision=connectionRevision,issuedEpoch=inputEpoch,fireInterval=radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
    if(action==='fire'){nextFireAt.set(fireTool,sentAt+fireInterval);if(radToxStarted||fields.aircraftShot===true)onShot({requestId,tool:fireTool,direction:fields.direction,...(fields.aircraftShot===true?{aircraftShot:true,origin:fields.origin}:{})});}
    const perform=async()=>{
     const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(action==='input'?{inputSequence:++inputSequence,...(inputEpoch?{inputEpoch}:{})}:{}),action,requestId});
     if(stopped)return;
+    // A response from before a failed connection/rejoin cannot revive it or
+    // replace a newer input epoch, even if that old response arrives last.
+    if(revision!==connectionRevision||action==='input'&&issuedEpoch!==inputEpoch)return state;
     const selfId=state?.selfId||client.selfId;
     if(!selfId||!state?.players?.[selfId])throw Error('The server has not confirmed your player in this room.');
     if(action==='start-rad-tox'&&state.radTox){radToxStarted=true;radToxPreference=true;}
@@ -72,8 +77,9 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    if (!stopped && state.sequence>sequence) { render(state,client.selfId); sequence=state.sequence; }
    return state;
   },
-  // Intermediate drags are read by the 50ms heartbeat; edges flush immediately.
-  requestInput(immediate=true) { if(!immediate||!client.ready||stopped)return; if(busy){inputRequested=true;return;}void tick(); },
+  // Keep two slots available for press/release beside a delayed heartbeat.
+  // Further edges retain only the newest state rather than an event backlog.
+  requestInput(immediate=true) { if(!immediate||!client.ready||stopped)return;pendingInput={controls:{...(document.hidden?{}:input())},revision:connectionRevision};flushInput(); },
   stop() { close(Error('Room closed.')); }
  };
  function handleError(error) {
@@ -83,40 +89,54 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    if (error.code==='ROOM_SWITCHED' || error.status===401 || (!joined && [400,403,404,409,422].includes(error.status))) {
     close(error); onStatus?.(error.message); onError?.(error);
    } else if (joined && error.code==='ROOM_JOIN_REQUIRED') {
+    invalidateInputs();
     client.ready=false;joined=false;nextFireAt.clear();
     onStatus?.('Rejoining the shared room…');
    } else if (joined && [400,403,409,422,429].includes(error.status)) {
     onStatus?.(error.message);
    } else {
     const wasReady=client.ready;
+    invalidateInputs();
     client.ready=false; session=null; retryAt=Date.now()+1000;
     if(wasReady)client.whenReady().catch(()=>{});
     onStatus?.('Server connection required: '+error.message);
    }
  }
+ function maybeFire(state){
+  const controls=document.hidden?{}:input();
+  if(stopped||!client.ready||!joined||fireBusy||!(state?.players?.[client.selfId]?.health>0)||state?.match?.state==='finished'||!controls.firing)return;
+  const revision=connectionRevision;fireBusy=true;
+  // Weapon responses never occupy a movement slot.
+  void client.send('fire',{tool:controls.tool,direction:controls.direction,color:controls.color,...(Number.isFinite(controls.eyeHeight)?{eyeHeight:controls.eyeHeight}:{})})
+   .catch(error=>{if(revision===connectionRevision&&error.status!==429)handleError(error);}).finally(()=>{fireBusy=false;});
+ }
+ function sendAutomaticInput(controls){
+  const token={revision:connectionRevision};automaticInputs.add(token);
+  return client.send('input',{input:controls}).then(state=>{if(token.revision===connectionRevision)maybeFire(state);return state;}).catch(error=>{if(token.revision===connectionRevision)handleError(error);})
+   .finally(()=>{automaticInputs.delete(token);flushInput();});
+ }
+ function flushInput(){
+  if(stopped||!joined||!client.ready||Date.now()<retryAt||!pendingInput||automaticInputs.size>=3)return;
+  const queued=pendingInput;pendingInput=null;if(queued.revision===connectionRevision)void sendAutomaticInput(queued.controls);
+ }
  async function tick() {
-  if (stopped || busy || Date.now()<retryAt) return;
-  busy=true;
+  const activeInput=[...automaticInputs].some(token=>token.revision===connectionRevision);
+  if (stopped || busy || Date.now()<retryAt||joined&&(activeInput||automaticInputs.size>=3)) return;
+  const token={revision:connectionRevision};tickToken=token;busy=true;
   try {
    if (!joined) {
     const joinedState=await client.send('join',{...(typeof radToxPreference==='boolean'?{radToxEnabled:radToxPreference}:{}),...(deferRadTox&&!radToxStarted?{deferRadTox:true}:{}),...(meetingPending?{meetingId:meetingPending}:{}),...(arrivalPending?{travelFrom:arrivalPending.from,travelToken:arrivalPending.token}:{})});
+    if(token.revision!==connectionRevision)return;
     arrivalPending=null;meetingPending=null;
     if (stopped) return;
     joined=true;
     onStatus?.(joinedState?.result?.message || 'Connected. Gameplay is ready.');
    } else {
     const controls=document.hidden?{}:input();
-    const state=await client.send('input',{input:controls});
-    const firingControls=document.hidden?{}:input();
-    if (!stopped && !fireBusy && state?.players?.[client.selfId]?.health>0 && state?.match?.state!=='finished' && firingControls.firing) {
-     fireBusy=true;
-     // A slow weapon response must not stall movement or room snapshots.
-     void client.send('fire',{tool:firingControls.tool,direction:firingControls.direction,color:firingControls.color,...(Number.isFinite(firingControls.eyeHeight)?{eyeHeight:firingControls.eyeHeight}:{})})
-      .catch(error=>{if(error.status!==429)handleError(error);}).finally(()=>{fireBusy=false;});
-    }
+    await sendAutomaticInput(controls);
    }
-  } catch (error) { handleError(error);
-  } finally { busy=false;if(inputRequested){inputRequested=false;if(!stopped&&client.ready)queueMicrotask(tick);} }
+  } catch (error) { if(token.revision===connectionRevision)handleError(error);
+  } finally { if(tickToken===token){tickToken=null;busy=false;}flushInput(); }
  }
  const timer=setInterval(tick,50);
  tick();

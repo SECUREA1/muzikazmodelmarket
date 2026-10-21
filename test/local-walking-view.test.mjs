@@ -35,8 +35,8 @@ function acknowledge(motion,position,serverTime,receivedAt,extra={}){
  motion.reconcile(position,{serverTime:1000+serverTime,simulationTime:1000+serverTime,sentAt:Math.max(0,2*serverTime-receivedAt),receivedAt,grounded:true,...extra});
 }
 
-test('walking starts on the first render frame and stops without inertia at 30, 60 and 120 FPS',()=>{
- for(const fps of [30,60,120]){
+test('walking starts on the first render frame and stops without inertia at 5, 10, 20, 30, 60 and 120 FPS',()=>{
+ for(const fps of [5,10,20,30,60,120]){
   const {motion,target}=fixture(),geometry=options();
   motion.sample(1000/fps,1/fps,{side:1,yaw:0},geometry,target);near(target.x,4/fps);near(target.y,.02);near(target.z,0);
   for(let frame=2;frame<=fps/5;frame++)motion.sample(frame*1000/fps,1/fps,{side:1,yaw:0},geometry,target);
@@ -48,7 +48,7 @@ test('walking starts on the first render frame and stops without inertia at 30, 
 });
 
 test('local walking stays continuous across delayed 120, 200 and 600 ms server acknowledgments',()=>{
- for(const cadence of [120,200,600])for(const fps of [30,60,120]){
+ for(const cadence of [120,200,600])for(const fps of [5,10,20,30,60,120]){
   const {motion,target}=fixture(),geometry=options();let previous=0,nextArrival=cadence;
   for(let frame=1;frame<=fps*3;frame++){
    const now=frame*1000/fps;

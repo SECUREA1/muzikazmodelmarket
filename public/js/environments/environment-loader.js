@@ -16,8 +16,8 @@ import { applyWorldQuality } from './environment-quality.js';
 import {buildCollision,resolveSafeSpawn} from './environment-collision.js';
 
 export class EnvironmentLoader {
-  constructor({ scene, renderer, camera = null, onProgress = () => {}, serverAuthoritative = () => false }) {
-    this.serverAuthoritative=serverAuthoritative;this.camera=camera;
+  constructor({ scene, renderer, camera = null, onProgress = () => {}, serverAuthoritative = () => false, localCollision = false }) {
+    this.serverAuthoritative=serverAuthoritative;this.localCollision=localCollision;this.camera=camera;
     this.scene = scene; this.renderer = renderer; this.onProgress = onProgress; this.token = 0; this.world = null; this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; this.octree = new Octree(); this.bounds = new THREE.Box3(); this.activeEnvironment = null; this.baseScale = 1; this.spaceScale = 1;
     this.loader = new GLTFLoader();
     const draco = new DRACOLoader(); draco.setDecoderPath('/public/vendor/three/addons/libs/draco/gltf/'); this.loader.setDRACOLoader(draco);
@@ -57,7 +57,7 @@ export class EnvironmentLoader {
     this.spaceScale = nextScale;
     this.world.scale.setScalar(this.baseScale * this.spaceScale);
     this.world.updateMatrixWorld(true);
-    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:!this.serverAuthoritative()});
+    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:this.localCollision||!this.serverAuthoritative()});
     this.meshes = collision.visibleMeshes;
     this.collisionMeshes = collision.collisionMeshes;
     this.floorMeshes = collision.floorMeshes;
@@ -68,7 +68,7 @@ export class EnvironmentLoader {
   setSupplementalCollisionRoots(roots = []) {
     this.supplementalCollisionRoots = roots.filter(Boolean);
     if (!this.world) return null;
-    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:!this.serverAuthoritative()});
+    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:this.localCollision||!this.serverAuthoritative()});
     this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree;
     return collision;
   }
@@ -110,7 +110,7 @@ export class EnvironmentLoader {
       // parallel shader compilation when the browser supports it.
       if(this.camera&&this.renderer.compileAsync)await this.renderer.compileAsync(nextWorld,this.camera,this.scene);
       if(token!==this.token){this.disposeWorld(nextWorld,nextMixers);return null;}
-      const collision = buildCollision(nextWorld, environment.collisionMode,[],{buildOctree:!this.serverAuthoritative()});
+      const collision = buildCollision(nextWorld, environment.collisionMode,[],{buildOctree:this.localCollision||!this.serverAuthoritative()});
       if (!collision.visibleMeshes.length) throw new Error('Missing meshes: the environment loaded, but no renderable world meshes were found.');
       const spawn = resolveSafeSpawn(nextWorld, collision.floorMeshes, (builderLand?builderBaseSpawn(environment):environment.spawn));
       this.unload({cancelPending:false}); this.baseScale=baseScale; this.spaceScale=spaceScale; this.world = nextWorld; this.activeEnvironment = environment; this.mixers = nextMixers; this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree; this.bounds = spawn.bounds; this.scene.add(nextWorld); this.refreshFloorEffects(); this.onProgress(100);

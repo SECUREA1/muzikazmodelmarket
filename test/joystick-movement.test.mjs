@@ -1,3 +1,4 @@
+import {isWatercraft} from '../public/js/harbor-water.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -10,7 +11,7 @@ function controller(name) {
   const handlers = {}, knob = {style: {}}, input = {leftX:0,leftY:0,rightX:0,rightY:0}, flushes = [];
   let shots = 0, jumps = 0;
   const stick = {querySelector: () => knob, getBoundingClientRect: () => ({left: 0, top: 0, width: 100, height: 100}), classList: {add(){}, remove(){}}, addEventListener(type, fn){handlers[type] = fn;}};
-  const context = vm.createContext({isAircraft,flightStickAxes,serverActors:{},serverVehicleId:null,walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(){}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, safelyCapturePointer(){}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
+  const context = vm.createContext({isAircraft,isWatercraft,flightStickAxes,serverActors:{},serverVehicleId:null,walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(){}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, safelyCapturePointer(){}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
   vm.runInContext(source.slice(source.indexOf('  function setupThumbstick(name)'), source.indexOf("  setupThumbstick('left')")), context);
   context.setupThumbstick(name);
   return {input, flushes, send: (type,x,y) => handlers[type]({type, button:0, pointerId: 1, clientX: x, clientY: y, preventDefault(){}}), shots: () => shots, jumps: () => jumps};
@@ -60,18 +61,18 @@ test('analog movement covers the same distance at 30, 60, and 120 FPS', () => {
   }
 });
 test('slow frames split collision work without losing elapsed time; menus and vehicles block walking', () => {
-  const start = source.indexOf('    if(!serverHostedRoom&&!menuOpen&&!vehicleController.update(delta))');
+  const start = source.indexOf('    if(!serverHostedRoom&&!menuOpen&&!vehicleController.update(frameDelta))');
   const end = source.indexOf('else if(serverHostedRoom)', start);
   const script = new vm.Script(source.slice(start, end));
   for (const delta of [1/120, 1/60, 1/30, .05]) {
     const steps = [];
-    script.runInNewContext({delta, serverHostedRoom:false, menuOpen:false, vehicleController:{update:()=>false}, updatePlayer:dt=>steps.push(dt)});
+    script.runInNewContext({delta, frameDelta:delta, serverHostedRoom:false, menuOpen:false, vehicleController:{update:()=>false}, updatePlayer:dt=>steps.push(dt)});
     assert.ok(steps.every(dt=>dt<=1/60));
     assert.ok(Math.abs(steps.reduce((a,b)=>a+b,0)-delta)<1e-10);
   }
   for (const [serverHostedRoom,menuOpen,vehicle] of [[true,false,false],[false,true,false],[false,false,true]]) {
     let calls = 0;
-    script.runInNewContext({delta:1/30,serverHostedRoom,menuOpen,vehicleController:{update:()=>vehicle},updatePlayer:()=>calls++});
+    script.runInNewContext({delta:1/30,frameDelta:1/30,serverHostedRoom,menuOpen,vehicleController:{update:()=>vehicle},updatePlayer:()=>calls++});
     assert.equal(calls,0);
   }
 });
@@ -91,12 +92,12 @@ test('left stick supports strafe, reverse, bounded diagonal movement, and captur
   assert.equal(c.shots(),1);
 });
 
-test('left-stick edges flush immediately while continued drags share the normal update stream', () => {
+test('left-stick presses, steering changes and releases flush immediately', () => {
   const c=controller('left');
   c.send('pointerdown',50,50);
-  c.send('pointermove',50,43);assert.equal(c.flushes.at(-1),false);
+  c.send('pointermove',50,43);assert.equal(c.flushes.at(-1),true);
   c.send('pointermove',50,30);assert.equal(c.flushes.at(-1),true);
-  c.send('pointermove',50,25);assert.equal(c.flushes.at(-1),false);
+  c.send('pointermove',50,25);assert.equal(c.flushes.at(-1),true);
   c.send('pointerup',50,25);assert.equal(c.flushes.at(-1),true);
   const right=controller('right');right.send('pointerdown',50,50);right.send('pointermove',60,50);right.send('pointerup',60,50);assert.equal(right.flushes.length,0);
 });

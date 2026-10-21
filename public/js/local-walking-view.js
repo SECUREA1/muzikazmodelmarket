@@ -10,7 +10,7 @@ const finitePosition=position=>['x','y','z'].every(axis=>Number.isFinite(positio
 export class LocalWalkingView {
  constructor({radius=.34,height=1.65}={}){
   this.radius=Math.max(.05,Number(radius)||.34);this.height=Math.max(this.radius*2+.01,Number(height)||1.65);
-  this.motion=new WalkingMotion({immediate:true,staleAfter:1200,staleFade:0});this.reset();
+  this.motion=new WalkingMotion({immediate:true,staleAfter:1200,staleFade:0,maxDelta:.25});this.reset();
  }
  reset(){
   this.motion.reset();this.capsule=null;this.position=null;this.grounded=false;this.velocityY=0;this.jumpQueued=false;this.jumpDown=false;this.verticalHistory=[];this.verticalCorrection=0;
@@ -42,7 +42,7 @@ export class LocalWalkingView {
  jump(){if(!this.capsule||!this.grounded)return false;this.jumpQueued=true;return true;}
  sample(now,delta,input={},options={},target={}){
   if(!this.capsule)return target;
-  const dt=Math.max(0,Math.min(.05,Number(delta)||0)),stale=now-this.motion.receivedAt>1200;
+  const dt=Math.max(0,Math.min(.25,Number(delta)||0)),stale=now-this.motion.receivedAt>1200;
   const jumpPressed=input.jump===true;if(jumpPressed&&!this.jumpDown&&!stale)this.jumpQueued=true;this.jumpDown=jumpPressed;
   if(this.jumpQueued&&this.grounded&&!stale){this.velocityY=6;this.grounded=false;}this.jumpQueued=false;
   const candidate={x:this.position.x,z:this.position.z};this.motion.sample(now,dt,stale?{}:input,Math.max(0,Number(options.speed??4)||0),candidate);

@@ -287,3 +287,100 @@ test('aircraft cannon feedback starts immediately while confirmed damage waits f
   await pause(5);assert.ok(release);release();await pending;assert.equal(states.at(-1).actors.target.health,350);
  },{onShot:shot=>flashes.push(shot),render:state=>states.push(state)});
 });
+
+// Control only the client's heartbeat so overlapping requests can be released
+// in a known order without waiting for polling or retry timers.
+async function withControlledRoom(fetch,run,options={}){
+ const previousInterval=globalThis.setInterval,previousClear=globalThis.clearInterval,token={};let heartbeat;
+ globalThis.setInterval=callback=>{heartbeat=callback;return token;};
+ globalThis.clearInterval=value=>{if(value!==token)previousClear(value);};
+ try{await withRoom(fetch,async client=>{await client.whenReady();await flushInputTasks();await run(client,()=>heartbeat());},options);}
+ finally{globalThis.setInterval=previousInterval;globalThis.clearInterval=previousClear;}
+}
+async function flushInputTasks(){for(let turn=0;turn<25;turn++)await Promise.resolve();}
+function controlledInputs(){
+ const commands=[],pending=[];let joins=0;
+ const fetch=async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);commands.push(command);
+  if(command.action==='join')return response({...confirmed(++joins===1?1:20),result:{inputEpoch:'epoch-'+joins}});
+  if(command.action==='input')return new Promise((resolve,reject)=>pending.push({command,resolve,reject}));
+  throw Error('Unexpected action '+command.action);
+ };
+ return {commands,pending,fetch};
+}
+
+test('press and release bypass an unresolved heartbeat with ordered input sequences and the joined epoch',async()=>{
+ const room=controlledInputs(),rendered=[];let side=0;
+ await withControlledRoom(room.fetch,async(client,heartbeat)=>{
+  void heartbeat();await flushInputTasks();assert.equal(room.pending.length,1);assert.equal(room.pending[0].command.input.side,0);
+  side=1;client.requestInput(true);await flushInputTasks();
+  side=0;client.requestInput(true);await flushInputTasks();
+  assert.equal(room.pending.length,3,'both input edges must reach fetch before the old heartbeat responds');
+  assert.deepEqual(room.pending.map(request=>request.command.input.side),[0,1,0]);
+  assert.deepEqual(room.pending.map(request=>request.command.inputSequence),[1,2,3]);
+  assert.ok(room.pending.every(request=>request.command.inputEpoch==='epoch-1'));
+  room.pending[2].resolve(response(confirmed(4)));await flushInputTasks();
+  room.pending[0].resolve(response(confirmed(2)));room.pending[1].resolve(response(confirmed(3)));await flushInputTasks();
+  assert.deepEqual(rendered,[1,4],'old heartbeat or press responses must not rewind the latest release');assert.equal(client.ready,true);
+ },{input:()=>({side}),render:state=>rendered.push(state.sequence)});
+});
+
+test('a hundred urgent input edges keep at most three requests and flush only the latest queued state',async()=>{
+ const room=controlledInputs();let side=0;
+ await withControlledRoom(room.fetch,async(client,heartbeat)=>{
+  void heartbeat();await flushInputTasks();side=1;client.requestInput(true);side=-1;client.requestInput(true);await flushInputTasks();assert.equal(room.pending.length,3);
+  for(let edge=0;edge<100;edge++){side=edge===99?0:edge%2?.75:-.75;client.requestInput(true);}
+  await flushInputTasks();assert.equal(room.pending.length,3,'a drag burst must not grow the in-flight request count');
+  room.pending[0].resolve(response(confirmed(2)));await flushInputTasks();assert.equal(room.pending.length,4,'one released slot flushes one coalesced state');
+  assert.equal(room.pending[3].command.input.side,0,'the queued release replaces every older intermediate edge');assert.equal(room.pending[3].command.inputSequence,4);assert.equal(room.pending[3].command.inputEpoch,'epoch-1');
+  room.pending[3].resolve(response(confirmed(5)));room.pending[1].resolve(response(confirmed(3)));room.pending[2].resolve(response(confirmed(4)));await flushInputTasks();
+  assert.equal(room.pending.length,4,'there is only one queued state, not a backlog of edge requests');assert.equal(client.ready,true);
+ },{input:()=>({side})});
+});
+
+test('stopping with three pending inputs discards queued edges and ignores late responses',async()=>{
+ const room=controlledInputs(),rendered=[];let side=0;
+ await withControlledRoom(room.fetch,async(client,heartbeat)=>{
+  void heartbeat();await flushInputTasks();side=1;client.requestInput(true);side=-1;client.requestInput(true);await flushInputTasks();
+  side=0;client.requestInput(true);await flushInputTasks();assert.equal(room.pending.length,3);
+  client.stop();for(let index=0;index<room.pending.length;index++)room.pending[index].resolve(response(confirmed(10+index)));await flushInputTasks();
+  assert.equal(room.pending.length,3);assert.deepEqual(rendered,[1]);assert.equal(client.ready,false);
+ },{input:()=>({side}),render:state=>rendered.push(state.sequence)});
+});
+
+test('a late successful heartbeat cannot revive a room after a newer input fails its connection',async()=>{
+ const room=controlledInputs(),rendered=[],statuses=[];let side=0;
+ await withControlledRoom(room.fetch,async(client,heartbeat)=>{
+  void heartbeat();await flushInputTasks();side=1;client.requestInput(true);await flushInputTasks();assert.equal(room.pending.length,2);
+  room.pending[1].reject(Error('connection interrupted'));await flushInputTasks();assert.equal(client.ready,false);assert.ok(statuses.some(message=>message.includes('Server connection required')));
+  room.pending[0].resolve(response(confirmed(99)));await flushInputTasks();assert.equal(client.ready,false,'an older in-flight success must not clear a newer network failure');assert.deepEqual(rendered,[1]);
+ },{input:()=>({side}),render:state=>rendered.push(state.sequence),onStatus:message=>statuses.push(message)});
+});
+
+test('rejoining assigns a fresh input epoch while old in-flight epoch responses remain obsolete',async()=>{
+ const room=controlledInputs(),rendered=[];let side=0;
+ await withControlledRoom(room.fetch,async(client,heartbeat)=>{
+  void heartbeat();await flushInputTasks();side=1;client.requestInput(true);await flushInputTasks();
+  room.pending[1].resolve(response({code:'ROOM_JOIN_REQUIRED',message:'Rejoin required'},409));await flushInputTasks();assert.equal(client.ready,false);
+  void heartbeat();await flushInputTasks();assert.equal(room.commands.filter(command=>command.action==='join').length,2);assert.equal(client.ready,true);
+  side=0;client.requestInput(true);await flushInputTasks();const renewed=room.pending.at(-1);assert.equal(renewed.command.inputEpoch,'epoch-2');assert.equal(renewed.command.inputSequence,1);
+  room.pending[0].resolve(response(confirmed(99)));await flushInputTasks();assert.ok(!rendered.includes(99),'a prior epoch cannot render over the renewed room');
+  renewed.resolve(response(confirmed(21)));await flushInputTasks();assert.equal(rendered.at(-1),21);assert.equal(client.ready,true);
+ },{input:()=>({side}),render:state=>rendered.push(state.sequence)});
+});
+
+test('retry probes a recovered connection after backoff without waiting for an obsolete hung heartbeat',async()=>{
+ const room=controlledInputs(),rendered=[],previousNow=Date.now;let side=0,clock=10000;
+ Date.now=()=>clock;
+ try{
+  await withControlledRoom(room.fetch,async(client,heartbeat)=>{
+   void heartbeat();await flushInputTasks();side=1;client.requestInput(true);await flushInputTasks();assert.equal(room.pending.length,2);
+   room.pending[1].reject(Error('temporary outage'));await flushInputTasks();assert.equal(client.ready,false);
+   clock+=1001;void heartbeat();await flushInputTasks();assert.equal(room.pending.length,3,'the retry must reach fetch while the old-generation heartbeat is still unresolved');
+   const probe=room.pending[2];assert.equal(probe.command.input.side,1);assert.equal(probe.command.inputEpoch,'epoch-1');assert.ok(probe.command.inputSequence>room.pending[1].command.inputSequence);
+   probe.resolve(response(confirmed(5)));await flushInputTasks();assert.equal(client.ready,true);assert.deepEqual(rendered,[1,5]);assert.equal(room.commands.filter(command=>command.action==='join').length,1);
+   room.pending[0].resolve(response(confirmed(99)));await flushInputTasks();assert.deepEqual(rendered,[1,5],'the obsolete success must not supersede the recovery probe');assert.equal(client.ready,true);
+  },{input:()=>({side}),render:state=>rendered.push(state.sequence)});
+ }finally{Date.now=previousNow;}
+});

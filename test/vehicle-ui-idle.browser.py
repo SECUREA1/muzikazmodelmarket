@@ -34,8 +34,9 @@ try:
           document.body.replaceChildren(stage);
           const flow=mountGameDisplayFlow(stage);
           const command=async()=>({result:{message:'Applied'}});
-          const air=mountAirportOperations({stage,command});
-          const harbor=mountHarborOperations({stage,command});
+          const inputs=[];
+          const air=mountAirportOperations({stage,command,onInput:()=>inputs.push({source:'air',...air.flightInput(0),lift:air.lift})});
+          const harbor=mountHarborOperations({stage,command,onInput:()=>inputs.push({source:'boat',...harbor.inputs(harbor.ahead),ahead:harbor.ahead})});
           const airport={id:'airport',airport:{enabled:true,ceiling:80,runway:{x:40,z:0,width:16,length:202}},builderScene:{objects:[],layoutMeta:{}}};
           const marina={id:'marina',builderScene:{objects:[],layoutMeta:{harbor:{extent:256,islands:[{id:'beacon',name:'Beacon Island',x:185,z:24}]}}}};
           const common={id:'common',builderScene:{objects:[],layoutMeta:{}}};
@@ -49,7 +50,7 @@ try:
           const setEnvironment=value=>{environment=value;air.updateEnvironment(value);harbor.updateEnvironment(value);refresh();};
           const measure=async(name,walk=false)=>{
             refresh();await settle();
-            const records=[];
+            const records=[],inputCount=inputs.length;
             const observer=new MutationObserver(changes=>records.push(...changes));
             observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true});
             for(let i=0;i<40;i++){
@@ -60,6 +61,7 @@ try:
               refresh();air.updateAim();
             }
             await settle();records.push(...observer.takeRecords());observer.disconnect();
+            if(inputs.length!==inputCount)throw Error(name+': unchanged snapshots requested new inputs');
             return {name,count:records.length,changes:records.slice(0,8).map(record=>({type:record.type,attribute:record.attributeName,target:record.target.className||record.target.nodeName}))};
           };
           const results=[];
@@ -73,6 +75,14 @@ try:
           state.players.pilot.vehicleId='plane';state.actors.plane.holderId='pilot';refresh();
           results.push(await measure('Seated aircraft with functions collapsed'));
           stage.querySelector('.aircraft-controls-toggle').click();
+          const power=stage.querySelector('[aria-label="Flight power"]');
+          power.value='65';power.dispatchEvent(new Event('input',{bubbles:true}));
+          if(inputs.at(-1)?.source!=='air'||inputs.at(-1)?.throttle!==.65)throw Error('Power input was not published synchronously');
+          const climb=stage.querySelector('[aria-label="Climb aircraft"]');
+          climb.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+          if(inputs.at(-1)?.lift!==1)throw Error('Held climb input was not published synchronously');
+          climb.dispatchEvent(new KeyboardEvent('keyup',{key:'Enter',bubbles:true}));
+          if(inputs.at(-1)?.lift!==0)throw Error('Released climb input was not published synchronously');
           results.push(await measure('Seated aircraft with functions expanded'));
           state.actors.plane.flight={...state.actors.plane.flight,speed:18,airspeed:18,airborne:true,altitude:35,phase:'cruise',assist:'cruise',assistStage:'level-flight'};
           refresh();results.push(await measure('Aircraft in assisted flight'));
@@ -80,6 +90,11 @@ try:
           state.players.pilot.vehicleId='boat';refresh();
           results.push(await measure('Boat with functions collapsed'));
           stage.querySelector('.harbor-functions-toggle').click();
+          const ahead=stage.querySelector('[aria-label="Ahead boat"]');
+          ahead.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+          if(inputs.at(-1)?.source!=='boat'||inputs.at(-1)?.ahead!==1)throw Error('Ahead input was not published synchronously');
+          ahead.dispatchEvent(new KeyboardEvent('keyup',{key:'Enter',bubbles:true}));
+          if(inputs.at(-1)?.ahead!==0)throw Error('Boat release input was not published synchronously');
           results.push(await measure('Boat with functions expanded'));
           // Readings still update when state actually changes.
           state.actors.boat.boating.speedKnots=9.5;refresh();

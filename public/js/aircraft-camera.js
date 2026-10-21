@@ -3,11 +3,11 @@ import {AIRCRAFT_COCKPIT_POSE} from './aircraft-model.js';
 // Camera presentation follows confirmed flight state; it never moves the vehicle.
 export function createAircraftCamera({camera,playerRig}){
  const scale=new THREE.Vector3(1,1,1),attitude=new THREE.Quaternion(),body=new THREE.Quaternion(),head=new THREE.Quaternion(),inverse=new THREE.Quaternion(),position=new THREE.Vector3(),target=new THREE.Vector3(),up=new THREE.Vector3(),eye=new THREE.Vector3();let activeId=null,originalNear=camera.near,originalFov=camera.fov;
- return {update({aircraft,model=null,origin,lookYaw=0,lookPitch=0,delta=.016,view='cockpit'}){
+ return {update({aircraft,model=null,origin,lookYaw=0,lookPitch=0,delta=.016,view='cockpit',immediate=false}){
   if(!aircraft||aircraft.active===false){if(activeId){camera.near=originalNear;camera.fov=originalFov;camera.updateProjectionMatrix();camera.up.set(0,1,0);camera.position.set(0,1.65,0);camera.quaternion.identity();activeId=null;}return false;}
   scale.set(aircraft.scale?.x||1,aircraft.scale?.y||1,aircraft.scale?.z||1);
   body.setFromEuler(new THREE.Euler(aircraft.rotation?.x||0,aircraft.rotation?.y||0,aircraft.rotation?.z||0,'YXZ'));
-  if(activeId!==aircraft.id){originalNear=camera.near;originalFov=camera.fov;camera.fov=AIRCRAFT_COCKPIT_POSE.fov||74;activeId=aircraft.id;attitude.copy(body);camera.near=.025;camera.updateProjectionMatrix();}else attitude.slerp(body,1-Math.exp(-Math.min(.1,delta)*12));
+  if(activeId!==aircraft.id){originalNear=camera.near;originalFov=camera.fov;camera.fov=AIRCRAFT_COCKPIT_POSE.fov||74;activeId=aircraft.id;attitude.copy(body);camera.near=.025;camera.updateProjectionMatrix();}else if(immediate)attitude.copy(body);else attitude.slerp(body,1-Math.exp(-Math.min(.1,delta)*12));
   if(model){model.position.copy(origin);model.quaternion.copy(attitude);model.updateMatrixWorld(true);}
   playerRig.updateMatrixWorld(true);playerRig.getWorldQuaternion(inverse).invert();
   if(view==='chase'){
