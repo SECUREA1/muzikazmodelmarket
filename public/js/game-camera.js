@@ -26,3 +26,10 @@ export function isGameCameraToggleKey(event) {
   const target = event.target;
   return !target?.isContentEditable && !target?.closest?.('input, textarea, select, [contenteditable="true"], [role="textbox"]');
 }
+
+export function gameCameraPresentation(mode){
+ const current=normalizeGameCameraMode(mode),next=nextGameCameraMode(current);
+ const labels={'first-person':'First person','top-down':'Top down',broadcast:'Broadcast'};
+ const icons={'first-person':'camera','top-down':'overhead',broadcast:'broadcast'};
+ return {mode:current,label:labels[current],next,icon:icons[current],title:`Camera: ${labels[current]}. Switch to ${labels[next]} (V)`};
+}

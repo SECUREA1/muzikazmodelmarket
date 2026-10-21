@@ -49,3 +49,11 @@ test('V changes view without consuming chat, settings, held keys, or browser sho
   assert.equal(camera.isGameCameraToggleKey({key: 'v', target: {closest: () => ({tagName: 'INPUT'})}}), false);
   assert.equal(camera.isGameCameraToggleKey({key: 'b'}), false);
 });
+
+test('shared camera controls identify every view with a distinct icon and next-view label',()=>{
+ const icons=new Set();for(const mode of camera.GAME_CAMERA_MODES){const view=camera.gameCameraPresentation(mode);assert.equal(view.mode,mode);assert.equal(view.next,camera.nextGameCameraMode(mode));assert.ok(view.title.includes(view.label));icons.add(view.icon);}assert.equal(icons.size,3);
+});
+test('all game entry pages connect to the shared camera engines',async()=>{
+ for(const page of ['index.html','model-market.html','model-explorer.html']){const html=await readFile(new URL('../'+page,import.meta.url),'utf8');assert.ok(html.includes('public/js/rad-tox-launcher.js'),page);}
+ for(const engine of ['house-explorer-glb.js','hockey-game.js','arcade-game.js']){const js=await readFile(new URL('../public/js/'+engine,import.meta.url),'utf8');assert.ok(js.includes('gameCameraPresentation'));assert.ok(js.includes('nextGameCameraMode'));}
+});

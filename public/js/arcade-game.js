@@ -1,3 +1,4 @@
+import {sportIcon} from './sports-action-bar.js';
 import {explorerBroadcastPose} from './explorer-camera.js';
 import {mountArcadeDisplayControls} from './arcade-display-controls.js';
 import {mountSportsRoomBuilding} from './sports-room-building.js';
@@ -9,7 +10,7 @@ import {resolveArcadeBasketballAction} from './arcade-basketball-actions.js';
 import {SharedGameInventory} from './shared-game-inventory.js';
 import {ensurePlayAccess} from './play-access.js';
 import * as T from '../vendor/three/three.module.min.js';
-import {readGameCameraMode,writeGameCameraMode,nextGameCameraMode,isGameCameraToggleKey,normalizeGameCameraMode} from './game-camera.js';
+import {readGameCameraMode,writeGameCameraMode,nextGameCameraMode,isGameCameraToggleKey,gameCameraPresentation,normalizeGameCameraMode} from './game-camera.js';
 import {createArcadePark,animateArcadePark} from './arcade-park.js';
 import {createArcadeWalker,lookArcadeWalker,stepArcadeWalker,nearestArcadeInteraction} from './arcade-navigation.js';
 import {createArcadeGamePresentation} from './arcade-3d-games.js';
@@ -102,8 +103,8 @@ function updateWalkerGround(){
  walker.ground=height;
 }
 function syncCameraControls(){
- const names={'first-person':'First person','top-down':'Top down',broadcast:'Broadcast'},label=names[cameraMode],next=names[nextGameCameraMode(cameraMode)],button=$('#camera-toggle');
- button.textContent='View: '+label;button.title='Switch to '+next+' (V)';button.setAttribute('aria-label',button.title);button.dataset.gameCameraMode=cameraMode;
+ const view=gameCameraPresentation(cameraMode),button=$('#camera-toggle');
+ button.innerHTML=sportIcon(view.icon);button.title=view.title;button.setAttribute('aria-label',view.title);button.dataset.gameCameraMode=view.mode;
  button.disabled=ride!==null;if(ride!==null){button.title='Camera locked during ride';button.setAttribute('aria-label',button.title);}
  $('#explore').setAttribute('aria-pressed',String(cameraMode==='first-person'));$('#overview').setAttribute('aria-pressed',String(cameraMode==='top-down'));
  $('#walk-help').textContent=cameraMode!=='first-person'?'WASD / arrows to move · Scroll to zoom · V to change view':'WASD / arrows · Drag to look · Shift to run · V to change view';
