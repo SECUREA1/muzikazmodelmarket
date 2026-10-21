@@ -1,7 +1,7 @@
 name: Game regression checks
 on:
   push:
-    branches: [main, work, recovery/airport-motion, improve/public-commons]
+    branches: [main, work, recovery/airport-motion, improve/public-commons, fix/live-motion-marina]
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,3 +33,5 @@ jobs:
           python test/mobile-flight-controls.browser.py
           python test/outdoor-scenery.browser.py
           python test/commons-landscape.browser.py
+      - name: Verify live walking under delayed network input
+        run: python test/live-motion.browser.py
