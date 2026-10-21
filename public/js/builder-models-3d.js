@@ -1,3 +1,4 @@
+import {BUILDING_MATERIALS,createBuildingBlock,buildingDimensions} from './building-materials.js';
 import {finishGameItem} from './game-item-finish.js';
 import {CAMP_MODEL_INFO} from './summer-camp.js';
 import {createCampModel} from './summer-camp-models.js';
@@ -262,6 +263,8 @@ function estateModule(id){
 }
 
 export function createBuilderModel(id,options={}) {
+  if(id.startsWith('material:')){const materialId=id.slice(9);if(!BUILDING_MATERIALS.some(item=>item.id===materialId))return null;const root=new THREE.Group(),piece=createBuildingBlock(THREE,materialId);piece.position.y=buildingDimensions(materialId)[1]/2;root.add(piece);root.userData.builderObject=true;root.userData.modelId=id;return root;}
+
   if(id.startsWith('arcade-part-')){if(!ARCADE_PARTS.some(part=>part.id===id.slice(12)))return null;const root=createArcadePart(id.slice(12),options);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
   if(id.startsWith('hockey-')){const root=createHockeyItem(id);if(root){root.userData.builderObject=true;root.userData.modelId=id;root.traverse(child=>{if(child.isMesh){child.userData.builderRoot=root;child.castShadow=child.receiveShadow=true;}});}return root;}
 

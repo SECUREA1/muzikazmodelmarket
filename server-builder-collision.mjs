@@ -104,6 +104,12 @@ export class ServerBuilderCollision {
   const hit=this.paintSurface(environment,origin,direction,actors,objects);
   return hit?hit.point.clone().addScaledVector(hit.normal,.18):new THREE.Vector3(origin.x,origin.y+1.5,origin.z).addScaledVector(new THREE.Vector3(...direction),4);
  }
+ destructibleHit(environment,origin,direction,range,actors={}){
+  const world=this.world(environment),ray=new THREE.Raycaster(new THREE.Vector3(origin.x,origin.y,origin.z),new THREE.Vector3(...direction),.02,range);
+  const hit=ray.intersectObjects(world.floors,false).find(hit=>!actorDisablesCollision(actors[builderObjectId(hit.object)]));
+  const id=hit&&builderObjectId(hit.object),actor=actors[id];
+  return actor?.destructible&&actor.active!==false?{entity:actor,along:hit.distance}:null;
+ }
  blocksShot(environment,origin,direction,distance,actors={}){
   if(!environment.builderScene&&!environment.proceduralLand&&!environment.modelUrl&&!environment.modelUrls?.length)return false;
   const world=this.world(environment),start=new THREE.Vector3(origin.x,origin.y,origin.z),aim=new THREE.Vector3(...direction),ray=new THREE.Ray(start,aim);

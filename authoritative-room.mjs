@@ -68,6 +68,7 @@ export class AuthoritativeRooms {
    const authored=new Set(manifest.objects.map(actor=>actor.objectId));for(const [id,actor]of Object.entries(sim.actors))if(!actor.spawned&&!actor.radTox&&!actor.basketballManaged&&!actor.rangeManaged&&!authored.has(id))delete sim.actors[id];
 
    for(const actor of manifest.objects){if(sim.actors[actor.objectId]){sim.actors[actor.objectId].position=copy(actor.transform.position);sim.actors[actor.objectId].rotation=copy(actor.transform.rotation);sim.actors[actor.objectId].scale=copy(actor.transform.scale);sim.actors[actor.objectId].asset=copy(actor.asset);sim.actors[actor.objectId].modelId=actor.modelId;sim.actors[actor.objectId].worldGateway=actor.gameplay.action==='teleport'&&actor.gameplay.portal?.destinationType==='map'?{destination:actor.gameplay.portal.targetMapId,name:actor.gameplay.prompt||actor.gameplay.portal.targetMapId,ownerName:actor.gameplay.portal.ownerName,deedId:actor.gameplay.portal.deedId,color:actor.gameplay.portal.color}:null;}if(!sim.actors[actor.objectId])sim.actors[actor.objectId]={id:actor.objectId,modelId:actor.modelId,asset:copy(actor.asset),worldGateway:actor.gameplay.action==='teleport'&&actor.gameplay.portal?.destinationType==='map'?{destination:actor.gameplay.portal.targetMapId,name:actor.gameplay.prompt||actor.gameplay.portal.targetMapId,ownerName:actor.gameplay.portal.ownerName,deedId:actor.gameplay.portal.deedId,color:actor.gameplay.portal.color}:null,position:copy(actor.transform.position),rotation:copy(actor.transform.rotation),scale:copy(actor.transform.scale),health:actor.gameplay.health,active:true,open:false,switched:false};}
+   for(const definition of manifest.objects)sim.actors[definition.objectId].destructible=definition.gameplay.destructible===true;
    sim.initialized=true;sim.environmentUpdatedAt=contentUpdatedAt;
   }
   // Retain native identities for catalog assets, including rooms saved before
@@ -347,8 +348,9 @@ export class AuthoritativeRooms {
     const direction=command.direction;if(!Array.isArray(direction)||direction.length!==3||!direction.every(Number.isFinite))fail('Invalid aim direction.');const length=Math.hypot(...direction);if(length<.1)fail('Invalid aim direction.');const ray=direction.map(n=>n/length);
     await this.charge(identity,'tool:'+tool,createHash('sha256').update('shot:'+id+':'+actorId+':'+requestId).digest('hex'));if(tool==='flamethrower')player.fuel=(player.fuel??100)-5;if(profile)player.ammo=(player.ammo??120)-1;player.lastShot=now;player.toolReady[tool]=now+cooldown;player.toolUses ||= {};player.toolUses[tool]=(player.toolUses[tool]||0)+1;
     const origin={...player.position,y:player.position.y+1.5},targets=[];
-    for(const entity of Object.values(sim.actors)){if(entity.loot||entity.rangeTarget||!entity.active||entity.pendingSpawn||entity.health<=0)continue;const offset=[entity.position.x-origin.x,entity.position.y+1-origin.y,entity.position.z-origin.z],along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along));if(along>0&&along<(tool==='bat'?3:40)&&perpendicular<1)targets.push({entity,along});}
+    for(const entity of Object.values(sim.actors)){if(entity.destructible||entity.loot||entity.rangeTarget||!entity.active||entity.pendingSpawn||entity.health<=0)continue;const offset=[entity.position.x-origin.x,entity.position.y+1-origin.y,entity.position.z-origin.z],along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along));if(along>0&&along<(tool==='bat'?3:40)&&perpendicular<1)targets.push({entity,along});}
     const range=tool==='bat'?3:tool==='taser'?4:tool==='toxin'?9:tool==='flamethrower'?12:Math.min(40,profile?.range||40);
+    const structureHit=this.collision.destructibleHit(environment,origin,ray,range,sim.actors);if(structureHit)targets.push(structureHit);
     for(const [targetId,target]of Object.entries(sim.players)){
      if(targetId===actorId||target.radToxReady===false||target.health<=0||target.replacedByRoom||now-target.lastSeen>15000||firingRangeLocationAt(sim.firingRange?.locations,target.position))continue;
      const along=rayBoxDistance(origin,ray,{x:target.position.x-.35,y:target.position.y,z:target.position.z-.35},{x:target.position.x+.35,y:target.position.y+1.8,z:target.position.z+.35});
@@ -356,7 +358,7 @@ export class AuthoritativeRooms {
     }
     const blocks=[];for(const object of Object.values(room.objects)){if(object.deleted||object.open)continue;const offset=object.position.map((n,i)=>n-[origin.x,origin.y,origin.z][i]),along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along)),size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);if(along>0&&along<40&&perpendicular<Math.max(...size)/2)blocks.push({object,along});}
     const blocker=blocks.sort((a,b)=>a.along-b.along)[0];let hit=targets.filter(target=>target.along<range).sort((a,b)=>a.along-b.along)[0];
-    if(hit&&this.collision.blocksShot(environment,origin,ray,hit.along,sim.actors))hit=null;if(blocker&&(!hit||blocker.along<hit.along)){hit=null;const object=blocker.object;if(tool==='spray')object.paint=object.paint.map(()=>clamp(command.color,0,0xffffff));else if(!utility){object.hits=(object.hits||0)+1;if(object.hits>=5)object.deleted=true;}object.revision=++room.revision;}
+    if(hit&&this.collision.blocksShot(environment,origin,ray,hit.along,hit.entity.destructible?{...sim.actors,[hit.entity.id]:{...hit.entity,active:false}}:sim.actors))hit=null;if(blocker&&(!hit||blocker.along<hit.along)){hit=null;const object=blocker.object;if(tool==='spray')object.paint=object.paint.map(()=>clamp(command.color,0,0xffffff));else if(!utility){object.hits=(object.hits||0)+1;if(object.hits>=5)object.deleted=true;}object.revision=++room.revision;}
 if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else if(tool==='shield-kit')player.shieldUntil=now+6000;else if(tool==='scanner')result.message='Scanner: '+targets.length+' targets in your aim path';else if(tool==='recycler'||tool==='repair-tool'){const candidates=Object.values(room.objects).filter(object=>!object.deleted&&object.ownerId===actorId&&distance({x:object.position[0],y:object.position[1],z:object.position[2]},player.position)<8).sort((a,b)=>distance({x:a.position[0],y:a.position[1],z:a.position[2]},player.position)-distance({x:b.position[0],y:b.position[1],z:b.position[2]},player.position));const target=candidates[0];if(target){if(tool==='recycler')target.deleted=true;target.hits=0;target.revision=++room.revision;}}else if(tool==='beacon')result.message='Waypoint beacon shared in room events';else if(tool==='supply-kit'){player.fuel=100;player.ammo=Math.min(120,(player.ammo??120)+12);}}
     else if(tool==='jetpack'){player.velocityY=8;player.grounded=false;}
     else if(tool==='spray'){if(hit&&!hit.playerId)hit.entity.paint=clamp(command.color,0,0xffffff);}
@@ -366,11 +368,11 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
      else {
       hit.entity.health=hit.entity.radTox?0:Math.max(0,before-(profile?.damage||damageByTool[tool]||20));
       combatStats(player).damageDealt+=before-hit.entity.health;
-      if(hit.entity.health===0){hit.entity.active=false;if(hit.entity.radTox||['hostile','patrol'].includes(manifest.actors.find(actor=>actor.objectId===hit.entity.id)?.gameplay.behavior))dropRpgLoot(sim,hit.entity,now);player.score+=10;const stats=combatStats(player);stats.enemyKills++;stats.score+=10;await this.reward(identity,'defeat',requestId+'-defeat');player.progress ||= {};player.progress.defeat=(player.progress.defeat||0)+1;}
+      if(hit.entity.health===0){hit.entity.active=false;if(!hit.entity.destructible){if(hit.entity.radTox||['hostile','patrol'].includes(manifest.actors.find(actor=>actor.objectId===hit.entity.id)?.gameplay.behavior))dropRpgLoot(sim,hit.entity,now);player.score+=10;const stats=combatStats(player);stats.enemyKills++;stats.score+=10;await this.reward(identity,'defeat',requestId+'-defeat');player.progress ||= {};player.progress.defeat=(player.progress.defeat||0)+1;}}
      }
      if(hit.entity.health<before){
       hit.entity.contributors ||= {};hit.entity.contributors[actorId]=true;
-      if(hit.entity.health===0)for(const helperId of Object.keys(hit.entity.contributors))if(helperId!==actorId&&sim.players[helperId]){const helper=sim.players[helperId];combatStats(helper).assists++;combatStats(helper).score+=5;helper.score+=5;}
+      if(hit.entity.health===0&&!hit.entity.destructible)for(const helperId of Object.keys(hit.entity.contributors))if(helperId!==actorId&&sim.players[helperId]){const helper=sim.players[helperId];combatStats(helper).assists++;combatStats(helper).score+=5;helper.score+=5;}
      }
     }
     if(!utility&&!['spray','jetpack'].includes(tool)){
@@ -381,7 +383,7 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
     const end={x:origin.x+ray[0]*shotDistance,y:origin.y+ray[1]*shotDistance,z:origin.z+ray[2]*shotDistance};
     const paint=tool==='spray'?this.collision.paintSurface(environment,player.position,ray,sim.actors,room.objects):null;
     if(paint){Object.assign(end,paint.point);result.color=clamp(command.color,0,0xffffff);result.paintNormal=paint.normal.toArray();}
-    result={...result,firedAt:now,cooldownMs:cooldown,readyAt:player.toolReady[tool],tool,origin,end,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:hit?.playerId?'player':hit?'enemy':null};
+    result={...result,firedAt:now,cooldownMs:cooldown,readyAt:player.toolReady[tool],tool,origin,end,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:hit?.playerId?'player':hit?.entity.destructible?'building':hit?'enemy':null};
    }else fail('This action has no server handler. It was not run locally.',422);
   }
   player.position=constrainFiringRangePlayer(player.position,player.position,sim,player);
