@@ -91,9 +91,9 @@ export function mountDistrictMap({stage,command=null,travelMode='teleport',fetch
     marker.addEventListener('click',activate);marker.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){if(event.repeat){event.preventDefault();event.stopPropagation();return;}activate(event);}});
    }
    const stem=shape('line',{x1:place.x,y1:place.z,x2:place.x,y2:place.z,stroke:'#b4d896','stroke-width':1.5,'vector-effect':'non-scaling-stroke','pointer-events':'none'});svg.insertBefore(stem,marker);
-   const hit=shape('rect',{x:-10,y:-10,width:20,height:20,rx:4,class:'district-map-marker-hit'},null,marker);
-   const dot=shape('circle',{r:6,class:'district-map-marker-dot'},null,marker);
-   const label=shape('text',{'text-anchor':'middle','dominant-baseline':'central',class:'district-map-marker-number'},null,marker);label.textContent=String(index+1);markers.push({marker,place,stem,hit,dot,label});
+   const hit=shape('rect',{x:0,y:0,width:0,height:0,rx:4,class:'district-map-marker-hit'},null,marker);
+   const dot=shape('circle',{r:0,class:'district-map-marker-dot'},null,marker);
+   const label=shape('text',{'text-anchor':'middle','dominant-baseline':'central','font-size':0,class:'district-map-marker-number'},null,marker);label.textContent=String(index+1);markers.push({marker,place,stem,hit,dot,label});
   }
   const spawn=places.find(place=>place.id==='map-arrival')||{x:0,z:0};shape('circle',{cx:spawn.x,cy:spawn.z,r:Math.max(width,depth)*.006,fill:'#ff748d','pointer-events':'none'},'Arrival');
   const players=shape('g',{'data-live-players':'','pointer-events':'none'});players.dataset.radius=String(Math.max(width,depth)*.006);visual.append(svg);

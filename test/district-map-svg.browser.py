@@ -47,7 +47,7 @@ try:
 
             def open_map():
                 opener.click()
-                page.wait_for_function("document.querySelector('.district-map-dialog[open] .district-map-marker-hit')?.getBoundingClientRect().width >= 43.9")
+                page.wait_for_function("Math.abs((document.querySelector('.district-map-dialog[open] .district-map-marker-hit')?.getBoundingClientRect().width || 0) - 44) < .1")
 
             def wait_closed():
                 page.wait_for_function("document.querySelector('.district-map-toggle').getAttribute('aria-expanded') === 'false'")
@@ -153,7 +153,7 @@ try:
             assert dialog.locator('.district-map-marker-hit').evaluate_all('''elements => {
                 const boxes=elements.map(el=>el.getBoundingClientRect());
                 return boxes.every((a,i)=>boxes.every((b,j)=>i===j||a.right<=b.left||b.right<=a.left||a.bottom<=b.top||b.bottom<=a.top));
-            }''')
+            }'''), f'{width}x{height}: ' + str(dialog.locator('.district-map-marker-hit').evaluate_all('elements=>elements.map(el=>({id:el.parentElement.dataset.localLocation,rect:el.getBoundingClientRect().toJSON()}))'))
             dialog.locator('[data-local-location="map-south"]').tap()
             wait_closed()
             assert page.evaluate('commands.at(-1)') == {'action':'map-access','locationId':'map-south'}
