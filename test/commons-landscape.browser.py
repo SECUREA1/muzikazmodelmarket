@@ -71,7 +71,11 @@ with tempfile.TemporaryDirectory(prefix='commons-landscape-') as directory:
                 assert receipt['radTox'] is None
                 page.locator('#house-explorer-canvas').focus()
                 before=page.evaluate('MuzikazHouseExplorer.snapshot().player.position')
-                page.keyboard.down('w');page.wait_for_timeout(900);page.keyboard.up('w')
+                page.keyboard.down('w')
+                try:
+                    page.wait_for_function("(before)=>MuzikazHouseExplorer.snapshot().player.position.reduce((total,value,index)=>total+(value-before[index])**2,0)>.01",arg=before,timeout=10000)
+                finally:
+                    page.keyboard.up('w')
                 after=page.evaluate('MuzikazHouseExplorer.snapshot()')
                 assert after['player']['position'][1]>=-.001
                 assert sum((a-b)**2 for a,b in zip(before,after['player']['position']))>.01

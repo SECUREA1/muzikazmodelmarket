@@ -166,3 +166,19 @@ test('recovery cannot invent support over a ledge or place a capsule inside a lo
   acknowledge(motion,{x:0,y:4.02,z:0},150,200);const before=target.y;motion.sample(1000*13/60,1/60,{}, {octree:geometry,floorGap:.02},target);assert.ok(target.y<=before,'no physical support or blocked standing space must not create a recovery floor');assert.equal(motion.grounded,false);
  }
 });
+
+test('large delayed walking acknowledgments never rewind held or released local controls',()=>{
+ for(const fps of [5,30,60,120])for(const released of [false,true]){
+  const {motion,target}=fixture(),geometry={...options(),speed:6},dt=1/fps;
+  for(let frame=1;frame<=fps;frame++)motion.sample(frame*1000/fps,dt,{side:1},geometry,target);
+  near(target.x,6);
+  acknowledge(motion,{x:.4,y:.02,z:0},800,1000);
+  let previous=target.x;
+  for(let frame=1;frame<=Math.max(1,Math.round(fps*.2));frame++){
+   motion.sample(1000+frame*1000/fps,dt,released?{}:{side:1},geometry,target);
+   if(released)near(target.x,previous);
+   else near(target.x-previous,6*dt);
+   near(target.y,.02);near(target.z,0);previous=target.x;
+  }
+ }
+});

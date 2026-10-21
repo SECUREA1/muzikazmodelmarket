@@ -41,7 +41,7 @@ export class WalkingMotion {
  correct(position,predicted,time){
   const dx=position.x-predicted.x,dz=position.z-predicted.z;
   this.position.x+=dx;this.position.z+=dz;
-  if(Math.hypot(dx,dz)>3){
+  if(!this.immediate&&Math.hypot(dx,dz)>3){
    this.position={x:position.x,z:position.z};this.offset={x:0,z:0};this.velocity={x:0,z:0};this.history=[{time,x:position.x,z:position.z}];return;
   }
   for(const entry of this.history){entry.x+=dx;entry.z+=dz;}
@@ -76,12 +76,14 @@ export class WalkingMotion {
    // A delayed movement acknowledgment must not restart a released stick or
    // overpower the current input. Independent sideways corrections can still
    // move the player, through the caller's physical collision sweep.
+   // Current controls own progress along the walking direction. Old
+   // acknowledgments cannot brake or replay that progress; safe lateral
+   // corrections still pass through the physical sweep. Relocations reset.
+   const along=correction.x*this.lastDirection.x+correction.z*this.lastDirection.z;
+   correction.x-=along*this.lastDirection.x;correction.z-=along*this.lastDirection.z;
    if(movementSpeed){
     const length=Math.hypot(correction.x,correction.z),limit=movementSpeed*dt*.2;
     if(length>limit){const scale=limit/length;correction.x*=scale;correction.z*=scale;}
-   }else{
-    const along=correction.x*this.lastDirection.x+correction.z*this.lastDirection.z;
-    correction.x-=along*this.lastDirection.x;correction.z-=along*this.lastDirection.z;
    }
   }
   for(const axis of ['x','z']){
