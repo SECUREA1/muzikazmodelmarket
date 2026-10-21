@@ -3,7 +3,7 @@ import {districtNeighborhood} from './district-neighborhoods.mjs';
 import {commonsNeighborhood} from './commons-neighborhood.mjs';
 import {furnishBuildings} from './public/js/building-furnishing.js';
 // Shared scene data uses the same models and interaction rules as authored maps.
-export const GENERATED_EXPERIENCE_VERSION=7;
+export const GENERATED_EXPERIENCE_VERSION=8;
 const themes={
  'studio-ridge':{name:'Creator courtyard',landmark:'recording-booth',guide:'forest-ranger',prop:'studio-desk',color:'#af8cff'},
  'volt-city':{name:'Neon makers plaza',landmark:'sci-fi-bunker',guide:'clockwork-knight',prop:'lever-switch',color:'#ffd45c'},

@@ -27,7 +27,7 @@ export class EnvironmentLoader {
   disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture && !value.userData.sportsSurfaceShared) value.dispose(); material.dispose?.(); }
   clearFloorEffects() { this.floorSlime?.dispose(); this.floorSlime=null; }
   refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world&&!this.activeEnvironment?.airport?.enabled&&!this.activeEnvironment?.builderScene?.layoutMeta?.harbor&&!isCleanSportsEnvironment(this.activeEnvironment)&&!isFiringRangeEnvironment(this.activeEnvironment)?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
-  updateEffects(elapsed, reducedMotion=false) { this.floorSlime?.update(elapsed,reducedMotion); this.world?.userData.updateBasketballEffects?.(elapsed,reducedMotion); }
+  updateEffects(elapsed, reducedMotion=false) { this.floorSlime?.update(elapsed,reducedMotion); this.world?.userData.updateBasketballEffects?.(elapsed,reducedMotion);this.world?.userData.updateHarborEffects?.(elapsed,reducedMotion); }
   unload({cancelPending=true} = {}) { if(cancelPending)this.token+=1; this.clearFloorEffects(); this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
   async loadOne(url, index, count) {
     let lastError;
@@ -83,7 +83,7 @@ export class EnvironmentLoader {
     nextWorld.userData.cleanSportsWorld=isCleanSportsEnvironment(environment);
     const nextMixers = [];
     try {
-      if (builderLand) {const land=this.createBuilderLand(environment);nextWorld.add(land);nextWorld.userData.streetHeightAt=land.userData.streetHeightAt;for(const key of ['basketball','updateBasketballScoreboard','setBasketballState','updateBasketballEffects'])if(land.userData[key])nextWorld.userData[key]=land.userData[key];}
+      if (builderLand) {const land=this.createBuilderLand(environment);nextWorld.add(land);nextWorld.userData.streetHeightAt=land.userData.streetHeightAt;for(const key of ['updateHarborEffects','basketball','updateBasketballScoreboard','setBasketballState','updateBasketballEffects'])if(land.userData[key])nextWorld.userData[key]=land.userData[key];}
 
       else if (!urls.length) throw new Error('This environment has neither a 3D model nor a playable builder land definition.');
       for (let i = 0; i < urls.length; i += 1) {

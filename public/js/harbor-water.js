@@ -10,3 +10,8 @@ export function watercraftFootprint(point,yaw=0){
  const sin=Math.sin(yaw),cos=Math.cos(yaw);
  return [[0,0],[-.9,-2],[.9,-2],[-.9,2],[.9,2]].map(([x,z])=>({x:point.x+x*cos+z*sin,z:point.z-x*sin+z*cos}));
 }
+// Separating-axis test for complete oriented hulls, including occupied boats.
+export function watercraftOverlap(a,yawA,b,yawB,padding=.12){
+ const axes=yaw=>[{x:Math.cos(yaw),z:-Math.sin(yaw)},{x:Math.sin(yaw),z:Math.cos(yaw)}],first=axes(yawA),second=axes(yawB),delta={x:b.x-a.x,z:b.z-a.z},dot=(u,v)=>u.x*v.x+u.z*v.z;
+ return [...first,...second].every(axis=>Math.abs(dot(delta,axis))<Math.abs(dot(first[0],axis))*(1+padding)+Math.abs(dot(first[1],axis))*(2.4+padding)+Math.abs(dot(second[0],axis))*(1+padding)+Math.abs(dot(second[1],axis))*(2.4+padding));
+}

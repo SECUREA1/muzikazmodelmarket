@@ -1,7 +1,9 @@
+import {stepBoatSimulation} from './public/js/boat-simulation.js';
+import {harborRadio,stopBoat,boatExitPosition} from './server-harbor-operations.mjs';
 import {aircraftRayDistance,aircraftGunPose,AIRCRAFT_HEALTH,AIRCRAFT_GUN_RANGE} from './public/js/aircraft-combat.js';
 import {localMapLocations} from './public/js/local-map-locations.js';
 import {isAircraft,stepAircraftFlight,airportRadio} from './public/js/aircraft-flight.js';
-import {isWatercraft,harborWaterAt,watercraftFootprint} from './public/js/harbor-water.js';
+import {isWatercraft,harborWaterAt,watercraftFootprint,watercraftOverlap} from './public/js/harbor-water.js';
 import {buildingPolicy,changeBuildingPolicy,requireBuildingAllowed} from './public/js/room-building-policy.js';
 import {RAD_TOX_SHOT_INTERVAL_MS} from './public/js/rad-tox-rules.js';
 import {ensureFiringRange,registerFiringRangeArrival,joinFiringRange,watchFiringRange,configureFiringRange,startFiringRange,startFiringRangePractice,stopFiringRange,stepFiringRange,constrainFiringRangePlayer,rangeHandlesFire,fireFiringRange} from './server-firing-range.mjs';
@@ -78,6 +80,7 @@ export class AuthoritativeRooms {
   if((environment.airport?.enabled||environment.builderScene?.layoutMeta?.harbor)&&sim.radTox){for(const [key,actor]of Object.entries(sim.actors))if(actor.radTox)delete sim.actors[key];sim.radTox=null;sim.match=null;sim.projectiles={};}
   if(environment.airport?.enabled)sim.airport ||= {runwayHolder:null,expires:0};
   for(const definition of manifest.objects){const aircraft=sim.actors[definition.objectId];if(!isAircraft(aircraft))continue;aircraft.maxHealth=AIRCRAFT_HEALTH;if(aircraft.active!==false&&aircraft.flight?.airborne&&!aircraft.holderId)aircraft.unoccupiedSince??=this.now();else delete aircraft.unoccupiedSince;if((aircraft.destroyedAt&&this.now()-aircraft.destroyedAt>=15000)||(aircraft.unoccupiedSince&&this.now()-aircraft.unoccupiedSince>=15000)){Object.assign(aircraft,{position:copy(definition.transform.position),rotation:copy(definition.transform.rotation),health:AIRCRAFT_HEALTH,active:true,holderId:null,flight:{speed:0,phase:'parked',altitude:0,airborne:false}});delete aircraft.destroyedAt;delete aircraft.unoccupiedSince;}}
+  for(const definition of manifest.objects){const boat=sim.actors[definition.objectId];if(!isWatercraft(boat))continue;boat.maxHealth??=200;if(boat.destroyedAt&&this.now()-boat.destroyedAt>=15000){Object.assign(boat,{position:copy(definition.transform.position),rotation:copy(definition.transform.rotation),health:200,active:true,holderId:null});stopBoat(boat);delete boat.destroyedAt;}else if(!boat.holderId&&(Math.abs(boat.boating?.speed||0)>.01||Math.abs(boat.boating?.throttleCommand||0)>.01))stopBoat(boat);}
   // Retain native identities for catalog assets, including rooms saved before
   // basketball metadata became part of authoritative actor snapshots.
   for(const actor of manifest.objects){const entity=sim.actors[actor.objectId];if(entity&&!entity.asset)entity.asset=copy(actor.asset);}
@@ -125,11 +128,17 @@ export class AuthoritativeRooms {
     if(sim.airport?.runwayHolder===player.actorId&&(pose.flight.altitude>5||(pose.flight.clearance==='landing'&&!pose.flight.airborne&&!onRunway&&pose.flight.speed<.5))){sim.airport.runwayHolder=null;sim.airport.expires=0;}
     continue;
    }
-   const boat=sim.actors[player.vehicleId],boating=isWatercraft(boat)&&boat.active!==false;if(boat?.active===false)player.vehicleId=null;
-   let speed=boating?7:player.vehicleId?12:harborWaterAt(environment,player.position)?2.8:input.sprint?6:4;
+   const boat=sim.actors[player.vehicleId];if(boat?.active===false)player.vehicleId=null;
+   if(isWatercraft(boat)&&boat.active!==false){
+    const pose=stepBoatSimulation(boat,(player.fuel??100)>0?input:{...input,throttle:0},dt,{environment,now,blocked:(from,to,yaw)=>{if(Object.values(sim.actors).some(other=>other.id!==boat.id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(to,yaw,other.position,other.rotation?.y||0)))return true;const dx=to.x-from.x,dz=to.z-from.z,span=Math.hypot(dx,dz);if(span<.001)return false;return [-.85,0,.85].some(side=>this.collision.blocksShot(environment,{x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*2,y:.18,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*2},[dx/span,0,dz/span],span+.12,sim.actors));}});
+    Object.assign(boat,pose);boat.maxHealth??=200;boat.health=Math.max(0,(boat.health??200)-(pose.boating.impactDamage||0));player.fuel=Math.max(0,(player.fuel??100)-dt*Math.abs(pose.boating.throttle)*.02);boat.boating.fuel=player.fuel;
+    if(boat.health<=0){boat.active=false;boat.destroyedAt=now;boat.holderId=null;stopBoat(boat);player.vehicleId=null;player.position=this.collision.safeSpawn(environment,environment.spawn||{x:124,y:0,z:30});player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;continue;}
+    player.position={...pose.position,y:.35};player.yaw=pose.rotation.y;player.floor=.35;player.velocityY=0;player.grounded=true;player.locationName=pose.boating.phase==='moored'||pose.boating.anchor?'Neon Marina berth':'Neon Harbor waterways';continue;
+   }
+   let speed=player.vehicleId?12:harborWaterAt(environment,player.position)?2.8:input.sprint?6:4;
    if(player.seatedId) speed=0;
    const next={...player.position,x:boundControl(player.position.x,player.position.x+(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*side)*speed*dt/length),z:boundControl(player.position.z,player.position.z+(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*side)*speed*dt/length)};
-   if(boating){const valid=watercraftFootprint(next,player.yaw).every(point=>harborWaterAt(environment,point,.25));const dx=next.x-player.position.x,dz=next.z-player.position.z,span=Math.hypot(dx,dz);const blocked=span>.001&&this.collision.blocksShot(environment,{x:player.position.x,y:.1,z:player.position.z},[dx/span,0,dz/span],span+.9,sim.actors);if(!valid||blocked){next.x=player.position.x;next.z=player.position.z;}next.y=.35;}
+
    const floor=hasGeometry?-100:Number(player.floor)||0;
    if(input.jump&&player.grounded){player.velocityY=6;player.grounded=false;}
    player.velocityY=(player.velocityY||0)-18*dt;next.y=Math.max(floor,next.y+player.velocityY*dt);player.grounded=next.y<=floor;if(player.grounded)player.velocityY=0;
@@ -140,7 +149,6 @@ export class AuthoritativeRooms {
    // Native resolvers explicitly report missing support as null. A custom
    // horizontal-only resolver keeps the legacy flat floor until it supplies
    // its own support data; this must not pin real elevated platforms.
-   if(boating){resolved.y=.35;resolved.floorY=.35;player.velocityY=0;}
    const ownsSupport=Object.hasOwn(resolved,'floorY');
    const floorY=ownsSupport?resolved.floorY:Number(player.floor)||0,blockedCeiling=resolved.blockedCeiling;
    if(!ownsSupport&&resolved.y<floorY)resolved.y=floorY;
@@ -227,7 +235,7 @@ export class AuthoritativeRooms {
     result.resolvedAction=selection.action;result.actionLabel=selection.label;
     command={...command,...selection.fields,action:selection.action||'basketball-wait'};
    }
-   if(command.action==='input'){const input=command.input||{},inputSequence=command.inputSequence;if(inputSequence!==undefined&&(!Number.isSafeInteger(inputSequence)||inputSequence<0))fail('Invalid input sequence.',422);if((command.inputEpoch===undefined||command.inputEpoch===player.inputEpoch)&&(inputSequence===undefined||inputSequence>(player.lastInputSequence??-1))){if(inputSequence!==undefined)player.lastInputSequence=inputSequence;player.input=player.health<=0?{}:{forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),lift:clamp(input.lift,-1,1),...(Number.isFinite(input.throttle)?{throttle:clamp(input.throttle,0,1)}:{}),...(typeof input.gear==='boolean'?{gear:input.gear}:{}),...(Number.isFinite(input.flaps)?{flaps:clamp(input.flaps,0,1)}:{}),brake:input.brake===true,rudder:clamp(input.rudder,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}}
+   if(command.action==='input'){const input=command.input||{},inputSequence=command.inputSequence;if(inputSequence!==undefined&&(!Number.isSafeInteger(inputSequence)||inputSequence<0))fail('Invalid input sequence.',422);if((command.inputEpoch===undefined||command.inputEpoch===player.inputEpoch)&&(inputSequence===undefined||inputSequence>(player.lastInputSequence??-1))){if(inputSequence!==undefined)player.lastInputSequence=inputSequence;player.input=player.health<=0?{}:{forward:clamp(input.forward,-1,1),side:clamp(input.side,-1,1),lift:clamp(input.lift,-1,1),...(Number.isFinite(input.throttle)?{throttle:clamp(input.throttle,isWatercraft(sim.actors[player.vehicleId])?-1:0,1)}:{}),...(typeof input.gear==='boolean'?{gear:input.gear}:{}),...(Number.isFinite(input.flaps)?{flaps:clamp(input.flaps,0,1)}:{}),brake:input.brake===true,...(typeof input.anchor==='boolean'?{anchor:input.anchor}:{}),...(Number.isFinite(input.sailTrim)?{sailTrim:clamp(input.sailTrim,0,1)}:{}),rudder:clamp(input.rudder,-1,1),jump:input.jump===true,sprint:input.sprint===true};player.yaw=clamp(input.yaw,-Math.PI*100,Math.PI*100);}}
    else if(command.action==='range-ready'||isDedicatedFiringRange(environment)&&['start-rad-tox','next-rad-tox'].includes(command.action)){if(!sim.firingRange)fail('This map has no live firing range.',409);result.message='Firing range ready. Choose Quick practice, join a lane, or watch the live range.';}
    else if(command.action==='range-practice'){startFiringRangePractice(sim,player,now,command);result.message='Open practice is live. Join any free lane; training ammunition is free.';}
    else if(command.action==='range-join'){joinFiringRange(sim,player,now,command);result.message='Lane selected. Training ammunition is free.';}
@@ -250,6 +258,7 @@ export class AuthoritativeRooms {
    else if(command.action==='basketball-start'){startBasketballGame(sim,now);result.message='Tip-off! The shared basketball game has started.';}
    else if(command.action==='basketball-shoot'){const ball=shootBasketball(sim,player,now,Object.fromEntries(['power','angle','mode','direction'].filter(key=>command[key]!==undefined).map(key=>[key,command[key]])));result.message=ball.basketballShot.aimMiss?'Aim miss: outside 13% hoop alignment. Line up with the net.':'Shot released!';}
    else if(sim.basketball&&['start-rad-tox','next-rad-tox'].includes(command.action))fail('Basketball Arena runs shared basketball games.',409);
+   else if(command.action==='harbor-radio'){result.message=harborRadio(sim,player,environment,command.operation);}
    else if(command.action==='airport-radio'){result.message=airportRadio(sim,player,actorId,command.operation,now);}
    else if(command.action==='rad-tox-toggle'){player.radToxEnabled=command.enabled===true;result.message=player.radToxEnabled?'RAD-TOX enabled.':'RAD-TOX disabled.';}
    else if(command.action==='start-rad-tox'){if(startRadTox(sim,environment,now,player.position)){const loading=player.radToxReady===false;player.radToxReady=true;player.radToxEnabled=true;registerParticipant(sim,actorId,player,now);if(loading)player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;result.message='RAD-TOX encounter active.';}else result.message='Builder gameplay active.';}
@@ -310,7 +319,7 @@ export class AuthoritativeRooms {
    else if(command.action==='collect'){await this.collectNearbyLoot(sim,player,identity,id,now,command.entityId,result);}
    else if(command.action==='interact'){
     if(command.entityId&&isBasketball(sim.actors[command.entityId]))requireBasketballPlayer(sim,player);
-    if(player.vehicleId){if(isAircraft(sim.actors[player.vehicleId])&&sim.actors[player.vehicleId].flight?.airborne)fail('Land the aircraft before exiting.',409);sim.actors[player.vehicleId].holderId=null;player.vehicleId=null;}
+    if(player.vehicleId){if(isAircraft(sim.actors[player.vehicleId])&&sim.actors[player.vehicleId].flight?.airborne)fail('Land the aircraft before exiting.',409);const vehicle=sim.actors[player.vehicleId];if(isWatercraft(vehicle)){if(Math.abs(vehicle.boating?.speed||0)>1.5)fail('Slow or anchor the boat before leaving.',409);player.position=boatExitPosition(environment,vehicle,this.collision,sim.actors,room.objects);player.floor=player.position.y;player.velocityY=0;player.input={};player.movementRevision=(player.movementRevision||0)+1;stopBoat(vehicle);}vehicle.holderId=null;player.vehicleId=null;}
     else if(player.seatedId){sim.actors[player.seatedId].holderId=null;player.seatedId=null;}
     else{
      const target=manifest.actors.filter(a=>(!command.entityId||a.objectId===command.entityId)&&(!['hostile','patrol','decor'].includes(a.gameplay.behavior)||(a.gameplay.action&&a.gameplay.action!=='none'))&&sim.actors[a.objectId]?.active&&(command.entityId||!sim.actors[a.objectId].basketballSpectatorSeat||!sim.actors[a.objectId].holderId||sim.actors[a.objectId].holderId===actorId)&&distance(sim.actors[a.objectId].position,player.position)<=Math.min(5,a.gameplay.interactionDistance)).sort((a,b)=>distance(sim.actors[a.objectId].position,player.position)-distance(sim.actors[b.objectId].position,player.position))[0];
@@ -365,8 +374,8 @@ export class AuthoritativeRooms {
     const entityId='spawn-'+requestId,position=chosenPlacement?.position||{x:player.position.x-Math.sin(player.yaw)*2,y:player.position.y,z:player.position.z-Math.cos(player.yaw)*2},rotation=chosenPlacement?.rotation||{x:0,y:player.yaw,z:0},scale=chosenPlacement?.scale||{x:1,y:1,z:1};
     if(!chosenPlacement&&!isBasketball({asset}))Object.assign(position,this.collision.stackAsset(environment,asset,position,rotation,scale,sim.actors,room.objects));
     const behavior=deviceDefinition(asset.buildAssetId)?'interact':asset.behavior||(asset.assetType==='vehicles'?'vehicle':asset.assetType==='pets'?'patrol':'interact');
-    const spawnHealth=isAircraft({asset})?AIRCRAFT_HEALTH:100;const definition={objectId:entityId,modelId:asset.id,position:{...position},transform:{position:{...position},rotation:{...rotation},scale:{...scale}},gameplay:{behavior,device:deviceDefinition(asset.buildAssetId)?asset.buildAssetId:undefined,health:spawnHealth,damage:0,interactionDistance:3,cooldown:1,action:'none',prompt:asset.configuration?.prompt||'',quest:asset.configuration?.quest},quest:asset.configuration?.quest,dialogue:{text:asset.configuration?.prompt||''},movement:{speed:1},asset};
-    sim.actors[entityId]={id:entityId,position,rotation,scale,placementRevision:1,active:true,health:spawnHealth,...(isAircraft({asset})?{modelId:'corsair-aircraft',maxHealth:AIRCRAFT_HEALTH,destructible:true}:{}),spawned:true,ownerId:actorId,asset,definition};
+    const spawnHealth=isAircraft({asset})?AIRCRAFT_HEALTH:isWatercraft({asset})?200:100;const definition={objectId:entityId,modelId:asset.id,position:{...position},transform:{position:{...position},rotation:{...rotation},scale:{...scale}},gameplay:{behavior,device:deviceDefinition(asset.buildAssetId)?asset.buildAssetId:undefined,health:spawnHealth,damage:0,interactionDistance:3,cooldown:1,action:'none',prompt:asset.configuration?.prompt||'',quest:asset.configuration?.quest},quest:asset.configuration?.quest,dialogue:{text:asset.configuration?.prompt||''},movement:{speed:1},asset};
+    sim.actors[entityId]={id:entityId,position,rotation,scale,placementRevision:1,active:true,health:spawnHealth,...(isAircraft({asset})?{modelId:'corsair-aircraft',maxHealth:AIRCRAFT_HEALTH,destructible:true}:isWatercraft({asset})?{modelId:asset.buildAssetId,maxHealth:200,destructible:true}:{}),spawned:true,ownerId:actorId,asset,definition};
     result.message=asset.name+' deployed to the shared room.';result.spawnedId=entityId;result.placementRevision=1;}
     }
    }
