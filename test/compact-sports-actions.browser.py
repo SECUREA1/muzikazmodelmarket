@@ -20,31 +20,40 @@ try:
    hockey_style=re.search(r"compactStyle.textContent='(.*?)';",Path('public/js/hockey-game.js').read_text(),re.S).group(1)
    page.add_style_tag(content=hockey_style)
    for panel in page.locator('.sports-action-bar').all():
-    panel.locator('.sports-collapse').click()
+    viewport=panel.locator('xpath=ancestor::*[contains(@class,"house-stage") or contains(@class,"rad-sports-viewport")][1]')
+    toggle=viewport.locator('.sports-collapse')
     page.wait_for_timeout(100)
     header=panel.locator('.sports-action-header').bounding_box();row=panel.locator('.sports-action-tools').bounding_box();primary=panel.locator('.sports-primary-trigger').bounding_box()
     assert header['y']+header['height']<=primary['y']+1
     assert row['height']<=48,(width,row)
-    assert panel.locator('.sports-action-tools > button').count() in [2,3]
+    assert panel.locator('.sports-action-tools > button').count()==3
     assert panel.locator('.sports-action-tools .rad-tox-game-toggle').count()==0
-    assert panel.locator('.sports-action-tools .sports-collapse').count()==1
+    assert panel.locator('.sports-action-tools .sports-collapse').count()==0
     assert panel.locator('.sports-action-tools').evaluate('(row)=>row.scrollWidth<=row.clientWidth+1')
     scoreboard=panel.locator('.basketball-score-strip,.scoreboard')
     assert scoreboard.is_visible()
+    for control in viewport.locator('.sports-action-utilities > button,.game-camera-toggle').all():
+     box=control.bounding_box()
+     assert box['y']+box['height']<=scoreboard.bounding_box()['y'],(width,box)
+     assert box['y']<=viewport.bounding_box()['y']+12
+     assert control.evaluate('(el)=>{const r=el.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2).closest("button")===el}')
     score_text=scoreboard.inner_text()
     score_box=scoreboard.bounding_box()
     assert score_box['width']>=panel.bounding_box()['width']-2
     if panel.locator('.basketball-team-score span').count():
      assert panel.locator('.basketball-team-score span').first.evaluate('(el)=>getComputedStyle(el).whiteSpace')=='nowrap'
-    panel.locator('.sports-collapse').click()
+    toggle.click()
+    assert toggle.get_attribute('aria-expanded')=='false'
     assert scoreboard.is_visible()
     assert scoreboard.inner_text()==score_text
     assert abs(scoreboard.bounding_box()['width']-score_box['width'])<1
     assert not panel.locator(':scope > .sports-action-modes').is_visible()
     assert panel.locator('.sports-primary-trigger').is_visible()
-    panel.locator('.sports-collapse').click()
+    toggle.click()
+    assert toggle.get_attribute('aria-expanded')=='true'
+    assert panel.locator(':scope > .sports-action-modes').is_visible()
     assert scoreboard.is_visible()
-   assert page.locator('.sports-action-tools .basketball-aim').count()==1
+   assert page.locator('.sports-action-utilities .basketball-aim').count()==1
    assert not errors,errors
    if width==390:page.screenshot(path='/tmp/compact-sports-actions.png')
    page.close()

@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../../public/assets/sports-action-bar.css"><style>body{margin:0;background:#182534}.house-stage,.rad-sports-viewport{position:relative;height:280px;width:100%;box-sizing:border-box}.hockey-sports-bar{position:absolute;bottom:8px;left:8px;right:8px;padding:5px 7px;background:#091321;border:1px solid #5e7699;border-radius:12px}.scoreboard{display:flex;justify-content:center;align-items:center}.basketball-hud .basketball-clock{white-space:nowrap}</style></head><body><div class="house-stage"></div><div class="rad-sports-viewport"><section class="hockey-sports-bar"></section></div><script type="module">
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../../public/assets/sports-action-bar.css"><style>body{margin:0;background:#182534}.house-stage,.rad-sports-viewport{position:relative;height:380px;width:100%;box-sizing:border-box}.hockey-sports-bar{position:absolute;bottom:8px;left:8px;right:8px;padding:5px 7px;background:#091321;border:1px solid #5e7699;border-radius:12px}.scoreboard{display:flex;justify-content:center;align-items:center}.basketball-hud .basketball-clock{white-space:nowrap}</style></head><body><div class="house-stage"></div><div class="rad-sports-viewport"><section class="hockey-sports-bar"></section></div><script type="module">
 import {mountBasketballHud} from '../../public/js/basketball-hud.js';
 import {mountBasketballAim} from '../../public/js/basketball-aim.js';
 import {mountSportsActions,sportIcon} from '../../public/js/sports-action-bar.js';
@@ -7,6 +7,8 @@ mountBasketballHud({stage,onAction(){},radToxToggle:rad});stage.querySelector('.
 window.aimOpens=0;window.throwAim=mountBasketballAim({stage,onOpen:()=>window.aimOpens++});stage.querySelector('.basketball-aim').hidden=false;
 const hockey=mountSportsActions({parent:document.querySelector('.hockey-sports-bar'),modes:['auto','shoot','pass','steal','check','collect'],onMode(){},onTrigger(){},label:'Hockey quick actions'});
 const score=document.createElement('div');score.className='scoreboard';score.innerHTML='<strong>HOME 0</strong><span id="clock">12:00</span><strong>0 AWAY</strong>';hockey.header.prepend(score);
-const lobby=document.createElement('button');lobby.className='sports-icon-button';lobby.innerHTML=sportIcon('lobby');hockey.utilities.append(lobby);
+const lobby=document.createElement('button');lobby.className='sports-icon-button';lobby.innerHTML=sportIcon('lobby');hockey.row.append(lobby);
+const {mountGameDisplayFlow}=await import('../../public/js/game-display-flow.js');mountGameDisplayFlow(stage);
+const camera=document.createElement('button');camera.className='game-camera-toggle';camera.textContent='View';stage.append(camera);
 document.body.dataset.ready='true';
 </script></body></html>

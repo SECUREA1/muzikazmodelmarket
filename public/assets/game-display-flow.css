@@ -24,3 +24,8 @@
 .house-stage>.game-display-flow-views>*{pointer-events:auto;}
 .house-stage>.game-display-flow-views>.broadcast-controls{flex-basis:100%;}
 .house-stage>.game-display-flow-views .broadcast-controls[hidden]{display:none!important;}
+
+.house-stage>.game-display-flow-views>.sports-action-utilities{position:static;display:contents;}
+.house-stage>.game-display-flow-views>.sports-action-utilities[hidden]{display:none!important;}
+.house-stage>.game-display-flow-views>.broadcast-controls{order:2;}
+.house-stage>.game-display-flow-views>.game-camera-toggle{order:-1;}
