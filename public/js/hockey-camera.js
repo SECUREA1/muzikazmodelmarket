@@ -2,23 +2,29 @@
 const number=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 export const HOCKEY_PLAYER_VIEWS=Object.freeze(['chase','ice','top-down']);
-export const hockeyViewForGameCamera=mode=>mode==='top-down'?'top-down':'ice';
-export const hockeyGameCameraForView=view=>view==='ice'?'first-person':view==='top-down'?'top-down':null;
+export const hockeyViewForGameCamera=mode=>mode==='broadcast'?'broadcast':mode==='top-down'?'top-down':'ice';
+export const hockeyGameCameraForView=view=>view==='broadcast'?'broadcast':view==='ice'?'first-person':view==='top-down'?'top-down':null;
 export function hockeyViewHeading(attack=1){return attack<0?-Math.PI/2:Math.PI/2;}
 export function hockeySkateVector(right,forward,heading=Math.PI){
  right=clamp(number(right),-1,1);forward=clamp(number(forward),-1,1);heading=number(heading,Math.PI);
  const length=Math.max(1,Math.hypot(right,forward)),sin=Math.sin(heading),cos=Math.cos(heading);
  return {x:(-cos*right+sin*forward)/length,z:(sin*right+cos*forward)/length};
 }
+export function hockeyBroadcastPose(aspect=1.6){
+ // Fit both goal lines and both boards at a consistent elevated sideline angle.
+ const ratio=clamp(number(aspect,1.6),.3,4),fov=55,angle=55*Math.PI/180,tan=Math.tan(fov*Math.PI/360);
+ const distance=Math.max(32/(tan*ratio)+15*Math.cos(angle),15*Math.sin(angle)/tan+15*Math.cos(angle))*1.1;
+ return {position:[0,distance*Math.sin(angle),distance*Math.cos(angle)],target:[0,0,0],up:[0,1,0],fov,heading:Math.PI,immersive:false};
+}
 export function hockeyCameraPose(view,{player,puck,attack=1,heading=hockeyViewHeading(attack),pitch=.3,aspect=1.6}={}){
- const narrow=number(aspect,1.6)<1.2,staticViews={broadcast:[0,narrow?65:43,narrow?58:38],lower:[0,7,23],upper:[0,19,34],end:[39,9,0],free:[0,24,34]};
+ const broadcast=hockeyBroadcastPose(aspect),staticViews={lower:[0,7,23],upper:[0,19,34],end:[39,9,0],free:[0,24,34]};
  if(view==='top-down'){
   const x=number(player?.x,number(puck?.x)),z=number(player?.z,number(puck?.z)),angle=number(heading,hockeyViewHeading(attack));
   // Stay below the suspended scoreboard and lights; this is a vertical player-following
   // view, with the attacking net toward the top of the screen.
   return {position:[x,11,z],target:[x,0,z],up:[Math.sin(angle),0,Math.cos(angle)],fov:78,heading:angle,immersive:!!player};
  }
- if(!HOCKEY_PLAYER_VIEWS.includes(view)||!player){const position=staticViews[view]||staticViews.broadcast;return {position:[...position],target:[0,0,0],up:[0,1,0],fov:48,heading:Math.atan2(-position[0],-position[2]),immersive:false};}
+ if(!HOCKEY_PLAYER_VIEWS.includes(view)||!player){if(!staticViews[view])return broadcast;const position=staticViews[view];return {position:[...position],target:[0,0,0],up:[0,1,0],fov:48,heading:Math.atan2(-position[0],-position[2]),immersive:false};}
  const x=number(player.x),z=number(player.z),angle=number(heading,hockeyViewHeading(attack)),fx=Math.sin(angle),fz=Math.cos(angle),first=view==='ice';
  // The chase camera sees over the skater's shoulder. The eye camera sits on the ice,
  // with a low sightline so the puck and stick remain in view without pointer lock.

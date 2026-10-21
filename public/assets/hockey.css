@@ -21,3 +21,8 @@ main .rad-sports-menu #match-controls{border-color:#3e5e74;background:#10283a}ma
 main .rad-sports-menu #match-controls button,main .rad-sports-menu #match-controls select{border-color:#567d94;background:#17384e;color:#e5f6ff}
 main .rad-sports-menu #match-controls #restart{background:#bddf99;color:#18301f;border-color:#daf7be}
 main .rad-controller-menu .sport-trigger-control{display:grid;gap:7px;font-size:12px;color:#c6dfeb;padding:12px;border:1px solid #517989;border-radius:9px;background:#0e2837}main .rad-controller-menu .sport-trigger-control select{min-height:44px;font-size:12px;background:#15384c;color:#edfbff;border-color:#6a92a9}
+
+/* Camera and action toggle share one wrapping toolbar anchored to the rink. */
+.rad-sports-shell .rad-sports-viewport>.sports-action-utilities{position:absolute;inset:8px 8px auto;display:flex;justify-content:flex-start;align-items:center;flex-wrap:wrap;gap:6px;z-index:6;}
+.rad-sports-shell .sports-action-utilities>#toggle-camera{position:static;inset:auto;flex:0 0 44px;width:44px;height:44px;margin:0;padding:8px;box-sizing:border-box;border-radius:9px;}
+.rad-sports-shell .sports-action-utilities svg{width:23px;height:23px;display:block;}
