@@ -74,3 +74,33 @@ test('irregular 350 and 500 ms renders follow actual elapsed time even when the 
   const wanted=reference(now/1000);assert.ok(Math.abs(view.actor.position.z-wanted.position.z)<.3,`${kind} irregular render timing must not accumulate snap-size error`);
  }
 });
+
+test('faster asymmetric boat replies never retime the established movement clock',()=>{
+ const initial=boat();initial.boating={speed:0,throttle:0,throttleCommand:0};
+ const controls={throttle:.9},environment=harbor,view=new LocalVehicleView();
+ function reference(time){
+  let actor=structuredClone(initial);
+  for(let elapsed=0;elapsed<time-1e-9;){
+   const dt=Math.min(1/60,time-elapsed);elapsed+=dt;
+   Object.assign(actor,stepBoatSimulation(actor,controls,dt,{environment,now:1000000+elapsed*1000}));
+  }
+  return actor;
+ }
+ view.reconcile(initial,{sentAt:-1000,receivedAt:0,serverTime:999500,simulationTime:999500});
+ for(let frame=1;frame<=72;frame++)view.sample(frame*1000/60,1/60,controls,{environment});
+ view.reconcile(reference(.7),{sentAt:200,receivedAt:1200,serverTime:1000700,simulationTime:1000700});
+ for(let frame=73;frame<=90;frame++)view.sample(frame*1000/60,1/60,controls,{environment});
+ const before={...view.actor.position},clock=view.clockOffset;
+ view.reconcile(reference(1.01),{sentAt:1000,receivedAt:1500,serverTime:1001010,simulationTime:1001010});
+ assert.equal(view.clockOffset,clock,'a faster response must not move the source timeline');
+ assert.equal(view.bestRtt,500,'latency telemetry still records the faster reply');
+ for(let frame=91;frame<=108;frame++){
+  const previous={...view.actor.position};
+  const actor=view.sample(frame*1000/60,1/60,controls,{environment});
+  const wanted=reference((frame-1)/60).position.z-reference(frame/60).position.z;
+  const moved=previous.z-actor.position.z;
+  assert.ok(moved>wanted*.9,'a delayed reply cannot make a powered boat retrace');
+  assert.ok(moved<wanted*1.1,'clock stability retains the physical boat speed');
+ }
+ assert.ok(view.actor.position.z<before.z);
+});

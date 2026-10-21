@@ -39,9 +39,10 @@ export function resolveVehicleAction({vehicle,environment={},actors={}}={}){
  if(isWatercraft(vehicle)){
   const state=vehicle.boating||{},speed=Math.abs(state.speed||0),distance=boatBerthDistance(environment,vehicle);
   const clear=boatWaterwayClear(environment,vehicle,actors,Math.max(6,speed*speed/10+3));
+  if(state.assist&&state.assistRoute?.length)return choice('continue',state.assistStage==='waiting'?'Wait for clear water':state.navigationName?'Sail to '+state.navigationName:'Follow the water passage','A water-safe route is active. Steer or use power to take manual control.');
   if(speed>.2&&!clear)return choice('slow','Slow for the waterway','Reduce power before shore, traffic, or the edge of the harbor.');
   if(state.assist)return choice('continue',state.assist==='slow'?'Continue slowing':state.assist==='launch'?'Leave the berth':'Cruise the waterway','Assistance is active. Steer or choose a manual function to take control.');
-  if(state.anchor||distance<.5&&speed<.15)return choice('launch','Weigh anchor and depart','Release the anchor and leave the berth at a gentle pace.',clear);
+  if(state.anchor||distance<.5&&speed<.15)return choice('launch','Weigh anchor and depart','Release the anchor and follow the marked departure passage.',clear||(environment?.builderScene?.layoutMeta?.harbor?.islands||[]).length>0);
   if(distance<=12&&speed<=2)return choice('moor','Moor at the landing','Secure the boat at an available nearby berth.');
   if(distance<=12&&speed>2)return choice('slow','Slow for mooring','Approach the landing below two metres per second.');
   if(!clear)return choice(null,'Turn toward open water','Use the rudder to face a clear waterway before applying power.',false);

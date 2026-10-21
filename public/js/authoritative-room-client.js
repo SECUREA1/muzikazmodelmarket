@@ -5,10 +5,10 @@ import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory
 
 export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,onError,deferRadTox=false,radToxEnabled,onShot=()=>{}}) {
  const api = new SharedGameInventory();
- let stopped=false, busy=false, session=null, joined=false, sequence=-1, failure=null, retryAt=0,fireBusy=false;
+ let stopped=false, busy=false, session=null, sessionRequest=null, joined=false, sequence=-1, failure=null, retryAt=0,fireBusy=false;
  let connectionRevision=0,tickToken=null,pendingInput=null;const automaticInputs=new Set();
  let radToxStarted=false,radToxPreference=radToxEnabled;
- let fireRequest=null,queuedFire=null,aircraftFireRequests=0,inputSequence=0,inputEpoch=null,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
+ let fireRequest=null,queuedFire=null,aircraftFireRequests=0,inputSequence=0,lastConfirmedInputSequence=0,inputEpoch=null,nextFireAt=new Map(),arrivalPending=arrival,meetingPending=meetingId;
  const waiters=new Set(),collected=new Set();
  function firstPickup(id){if(collected.has(id))return false;collected.add(id);if(collected.size>1024)collected.delete(collected.values().next().value);return true;}
  function settle(error) {
@@ -21,16 +21,25 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
  function invalidateInputs(){connectionRevision++;pendingInput=null;busy=false;tickToken=null;}
  // Refresh only a rejected CSRF proof, and reuse the command request ID so an
  // ambiguous response cannot apply a gameplay action twice.
+ function roomSession(){
+  if(session)return Promise.resolve(session);
+  // Share one proof refresh across overlapping inputs and cannon requests.
+  if(!sessionRequest)sessionRequest=api.roomSession().then(value=>{session=value;return value;}).finally(()=>{sessionRequest=null;});
+  return sessionRequest;
+ }
  async function post(path,body) {
-  session ||= await api.roomSession();
-  const request=()=>{if(stopped)throw failure || Error('Room closed.');return api.api(path,{method:'POST',headers:{'X-CSRF-Token':session.csrfToken},body:JSON.stringify(body)});};
+  let proof=session||await roomSession();
+  const request=()=>{if(stopped)throw failure || Error('Room closed.');return api.api(path,{method:'POST',headers:{'X-CSRF-Token':proof.csrfToken},body:JSON.stringify(body)});};
   try { return await request(); }
   catch (error) {
    if (error.code!=='CSRF_INVALID') throw error;
-   session=await api.roomSession();
+   // A late rejection can reuse the newer proof already fetched by a peer.
+   if(session===proof)session=null;
+   proof=session||await roomSession();
    return request();
   }
  }
+
  const client={
   ready:false, selfId:null,
   whenReady(timeoutMs=15000) {
@@ -52,10 +61,10 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    if(aircraftShot&&aircraftFireRequests>=3)return null;
    if(action==='fire'&&!aircraftShot&&fireRequest){if(!radToxStarted)return fireRequest;if(!queuedFire)queuedFire=fireRequest.then(()=>client.send(action,fields,requestId)).finally(()=>{queuedFire=null;});return queuedFire;}
    const fireTool=String(fields.tool||'laser'),fireKey=aircraftShot?'aircraft-cannon':fireTool;if(action==='fire'&&performance.now()<(nextFireAt.get(fireKey)||0))return null;
-   const sentAt=performance.now(),revision=connectionRevision,issuedEpoch=inputEpoch,fireInterval=aircraftShot?200:radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
+   const sentAt=performance.now(),revision=connectionRevision,issuedEpoch=inputEpoch,issuedInputSequence=action==='input'?++inputSequence:null,fireInterval=aircraftShot?200:radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
    if(action==='fire'){nextFireAt.set(fireKey,sentAt+fireInterval);if(radToxStarted||aircraftShot)onShot({requestId,tool:fireTool,direction:fields.direction,...(aircraftShot?{aircraftShot:true,origin:fields.origin}:{})});}
    const perform=async()=>{
-    const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(action==='input'?{inputSequence:++inputSequence,...(inputEpoch?{inputEpoch}:{})}:{}),action,requestId});
+    const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(action==='input'?{inputSequence:issuedInputSequence,...(issuedEpoch?{inputEpoch:issuedEpoch}:{})}:{}),action,requestId});
     if(stopped)return;
     // A response from before a failed connection/rejoin cannot revive it or
     // replace a newer input epoch, even if that old response arrives last.
@@ -64,7 +73,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     if(!selfId||!state?.players?.[selfId])throw Error('The server has not confirmed your player in this room.');
     if(action==='start-rad-tox'&&state.radTox){radToxStarted=true;radToxPreference=true;}
     if(action==='rad-tox-toggle')radToxPreference=fields.enabled===true;
-    client.selfId=selfId;if(action==='join'){inputEpoch=state.result?.inputEpoch||null;inputSequence=0;}
+    client.selfId=selfId;if(action==='join'){inputEpoch=state.result?.inputEpoch||null;inputSequence=0;lastConfirmedInputSequence=0;}
+    if(action==='input')lastConfirmedInputSequence=Math.max(lastConfirmedInputSequence,issuedInputSequence);
     if(state.result?.loot&&firstPickup(state.result.loot.id)){signalInventoryChange();window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.loot}));if(state.result.loot.currency==='MZK')window.MZKWallet?.refreshShared?.().catch(()=>{});onStatus?.(state.result.message);}
     if(state.result?.pickup&&firstPickup(state.result.pickup.id)){window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.pickup}));}
     if(state.sequence>sequence){render(state,selfId,{sentAt,receivedAt:performance.now()});sequence=state.sequence;}
@@ -100,10 +110,10 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    } else if (joined && [400,403,409,422,429].includes(error.status)) {
     onStatus?.(error.message);
    } else {
-    const wasReady=client.ready;
     invalidateInputs();
+    // Established sessions retry until they recover or receive an auth failure.
+    // The initial caller's readiness deadline still protects unconfirmed startup.
     client.ready=false; session=null; retryAt=Date.now()+1000;
-    if(wasReady)client.whenReady().catch(()=>{});
     onStatus?.('Server connection required: '+error.message);
    }
  }
@@ -116,10 +126,16 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    .catch(error=>{if(revision===connectionRevision&&error.status!==429)handleError(error);}).finally(()=>{fireBusy=false;});
  }
  function sendAutomaticInput(controls){
-  const token={revision:connectionRevision};automaticInputs.add(token);
-  return client.send('input',{input:controls}).then(state=>{if(token.revision===connectionRevision)maybeFire(state);return state;}).catch(error=>{if(token.revision===connectionRevision)handleError(error);})
-   .finally(()=>{automaticInputs.delete(token);flushInput();});
+  const token={revision:connectionRevision,epoch:inputEpoch,sequence:inputSequence+1};automaticInputs.add(token);
+  return client.send('input',{input:controls}).then(state=>{if(token.revision===connectionRevision)maybeFire(state);return state;}).catch(error=>{
+    if(token.revision!==connectionRevision)return;
+    // A superseded transient heartbeat failure cannot close a healthy stream.
+    const transient=!error.status||error.status===408||error.status>=500&&error.status<600;
+    if(transient&&error.code!=='ROOM_SWITCHED'&&error.code!=='ROOM_JOIN_REQUIRED'&&token.epoch===inputEpoch&&token.sequence<lastConfirmedInputSequence)return;
+    handleError(error);
+   }).finally(()=>{automaticInputs.delete(token);flushInput();});
  }
+
  function flushInput(){
   if(stopped||!joined||!client.ready||Date.now()<retryAt||!pendingInput||automaticInputs.size>=3)return;
   const queued=pendingInput;pendingInput=null;if(queued.revision===connectionRevision)void sendAutomaticInput(queued.controls);

@@ -57,20 +57,30 @@ test('Auto continues a low-speed runway roll without staging or bypassing anothe
  assert.equal(state.actors[planeId].flight.assist,null);assert.ok(state.actors[planeId].flight.altitude>=23.6);assert.equal(state.actors[planeId].health,400);assert.equal(state.players[aliceId].movementRevision,revision);
 });
 
-test('shared marina Auto launches a real authored boat and slows safely before island traffic',async t=>{
+test('shared marina Auto follows the departure passage, keeps both pilots live and supports manual override',async t=>{
  const world=marinaWorld(),{runtime,send,tick}=await session(t,world),boats=world.builderScene.objects.filter(object=>['harbor-skiff','harbor-sailboat'].includes(object.modelId)),boatId=boats[0].id;
  await send(alice,'map-access',{entityId:boatId});await send(bob,'map-access',{entityId:boats[1].id});
  await assert.rejects(send(bob,'map-access',{entityId:boatId}),/leave your vehicle|Another player/);
  await assert.rejects(send(alice,'vehicle-action',{mode:'takeoff'}),/Choose/);
- let state=await send(alice,'vehicle-action',{mode:'auto',requestId:'auto-boat-replay'});assert.equal(state.result.vehicleAction.action,'launch');assert.equal(state.actors[boatId].boating.assist,'launch');assert.equal(state.players[aliceId].vehicleSeat,'helm');assert.equal(state.actors[boatId].boating.anchor,false);
- const initialPosition={...state.actors[boatId].position};state=await send(alice,'vehicle-action',{mode:'auto',requestId:'auto-boat-replay'});assert.deepEqual(state.actors[boatId].position,initialPosition);assert.equal(state.events.filter(event=>event.id==='auto-boat-replay').length,1);
- let reachedSlow=false;
- for(let step=0;step<120;step++){
-  state=await tick();const boat=state.actors[boatId];reachedSlow ||= boat.boating.assist==='slow';
-  assert.equal(boat.active,true);assert.equal(boat.health,200);assert.ok(watercraftFootprint(boat.position,boat.rotation.y).every(point=>harborWaterAt(world,point,.25)));assert.equal(boat.boating.impactDamage,0);
-  if(step>15&&!boat.boating.assist&&Math.abs(boat.boating.speed)<.15)break;
+ let state=await send(alice,'vehicle-action',{mode:'auto',requestId:'auto-boat-replay'});
+ assert.equal(state.result.vehicleAction.action,'launch');assert.equal(state.actors[boatId].boating.assist,'launch');assert.equal(state.players[aliceId].vehicleSeat,'helm');assert.equal(state.actors[boatId].boating.anchor,false);
+ assert.equal(state.actors[boatId].boating.navigationDestinationId,'open-water');assert.ok(state.actors[boatId].boating.assistRoute.length>=3);
+ const initialPosition={...state.actors[boatId].position};state=await send(alice,'vehicle-action',{mode:'auto',requestId:'auto-boat-replay'});
+ assert.deepEqual(state.actors[boatId].position,initialPosition);assert.equal(state.events.filter(event=>event.id==='auto-boat-replay').length,1);
+ let completed=false;
+ for(let step=0;step<2400;step++){
+  state=await tick(alice,{},50);
+  if(step%80===0)state=await send(bob,'input',{input:{}});
+  const boat=state.actors[boatId];assert.equal(boat.active,true);assert.equal(boat.health,200);assert.equal(boat.boating.impactDamage,0);assert.notEqual(boat.boating.phase,'hold');
+  assert.ok(watercraftFootprint(boat.position,boat.rotation.y).every(point=>harborWaterAt(world,point,.25)));
+  for(const other of boats.slice(1))assert.equal(watercraftOverlap(boat.position,boat.rotation.y,state.actors[other.id].position,state.actors[other.id].rotation.y),false);
+  if(boat.boating.assistStage==='arrived'&&!boat.boating.assist){completed=true;break;}
  }
- const boat=state.actors[boatId];assert.equal(reachedSlow,true);assert.equal(boat.boating.assist,null);assert.ok(boat.position.x>initialPosition.x+1);assert.ok(boat.position.x<160);assert.ok(Math.abs(boat.boating.speed)<.15);assert.equal(boat.boating.throttleCommand,0);for(const other of boats.slice(1))assert.equal(watercraftOverlap(boat.position,boat.rotation.y,state.actors[other.id].position,state.actors[other.id].rotation.y),false);
+ const boat=state.actors[boatId];assert.equal(completed,true,'Auto reaches open water instead of stopping at the eastern island');
+ assert.ok(Math.hypot(boat.position.x-184,boat.position.z-80)<3);assert.equal(boat.boating.anchor,true);assert.ok(Math.abs(boat.boating.speed)<.15);
  const snapshot=await runtime.snapshot(world.id,world);assert.equal(snapshot.players[aliceId].vehicleId,boatId);assert.equal(snapshot.players[bobId].vehicleId,boats[1].id);assert.equal(Object.keys(snapshot.players).length,2);
- state=await send(alice,'vehicle-action',{mode:'moor'});assert.match(state.result.message,/Moored/);assert.equal(state.actors[boatId].boating.assist,null);assert.equal(state.actors[boatId].boating.anchor,true);assert.equal(state.actors[boatId].boating.speed,0);
+ state=await send(alice,'vehicle-action',{mode:'cruise'});assert.equal(state.actors[boatId].boating.assist,'cruise');
+ await send(alice,'input',{input:{side:.4,forward:0}});state=await tick(alice,{side:.4,forward:0},50);
+ assert.equal(state.actors[boatId].boating.assist,null,'a manual rudder takes control on the next physical step');
+ await assert.rejects(send(alice,'vehicle-action',{mode:'moor'}),/Approach a marina or island landing/,'open water cannot be teleported to a distant berth');
 });

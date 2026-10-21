@@ -20,7 +20,8 @@ export class LocalVehicleView {
   const changed=!this.state||this.state.id!==actor.id||this.state.holderId!==actor.holderId||this.state.active!==actor.active;
   if(teleport||changed)this.reset();
   if(Number.isFinite(sentAt)&&Number.isFinite(serverTime)){
-   const rtt=Math.max(0,receivedAt-sentAt);if(rtt<=this.bestRtt){this.bestRtt=rtt;this.clockOffset=(sentAt+receivedAt)/2-serverTime;}
+   const rtt=Math.max(0,receivedAt-sentAt);this.bestRtt=Math.min(this.bestRtt,rtt);
+   if(this.clockOffset===null)this.clockOffset=(sentAt+receivedAt)/2-serverTime;
   }
   const mapped=Number.isFinite(simulationTime)&&this.clockOffset!==null?simulationTime+this.clockOffset:receivedAt;
   const time=Math.min(receivedAt,mapped);

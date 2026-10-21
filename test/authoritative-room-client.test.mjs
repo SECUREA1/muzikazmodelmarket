@@ -415,3 +415,103 @@ test('aircraft cannons keep a bounded firing window without waiting for late rep
   }finally{client.stop();for(const release of releases)release();await Promise.allSettled(pending);}
  },{onShot:shot=>previews.push(shot)});
 });
+
+test('an older transient heartbeat failure cannot disconnect newer acknowledged input',async()=>{
+ for(const failure of [Error('old heartbeat timed out'),Object.assign(Error('old upstream failure'),{status:503})]){
+  const room=controlledInputs(),rendered=[],statuses=[];let side=0;
+  await withControlledRoom(room.fetch,async(client,heartbeat)=>{
+   void heartbeat();await flushInputTasks();side=1;client.requestInput();await flushInputTasks();
+   assert.equal(room.pending.length,2);
+   room.pending[1].resolve(response(confirmed(3)));await flushInputTasks();assert.equal(client.ready,true);
+   room.pending[0].reject(failure);await flushInputTasks();
+   assert.equal(client.ready,true,'a superseded failure must not interrupt a healthy live room');
+   assert.deepEqual(rendered,[1,3]);
+   assert.ok(!statuses.some(message=>message.includes('Server connection required')));
+   void heartbeat();await flushInputTasks();assert.equal(room.pending.length,3,'heartbeats continue without a retry delay');
+   assert.equal(room.pending[2].command.inputSequence,3);
+   room.pending[2].resolve(response(confirmed(4)));await flushInputTasks();
+  },{input:()=>({side}),render:state=>rendered.push(state.sequence),onStatus:message=>statuses.push(message)});
+ }
+});
+
+test('older authentication and room-switch failures still close the current live connection',async()=>{
+ for(const failure of [{status:401,code:'SESSION_REQUIRED'},{status:409,code:'ROOM_SWITCHED'}]){
+  const room=controlledInputs(),errors=[];
+  await withControlledRoom(room.fetch,async(client,heartbeat)=>{
+   void heartbeat();await flushInputTasks();client.requestInput();await flushInputTasks();
+   room.pending[1].resolve(response(confirmed(3)));await flushInputTasks();assert.equal(client.ready,true);
+   room.pending[0].resolve(response({message:'Session no longer authorized',code:failure.code},failure.status));await flushInputTasks();
+   assert.equal(client.ready,false);assert.equal(errors.length,1);
+   const sent=room.commands.length;void heartbeat();client.requestInput();await flushInputTasks();assert.equal(room.commands.length,sent);
+  },{onError:error=>errors.push(error)});
+ }
+});
+
+test('overlapping actions share one CSRF refresh and late old rejections reuse the new proof',async()=>{
+ let sessions=0,sequence=0,lateHeartbeat;const refreshes=[],attempts=[],actions=[];
+ const oldProof=()=>response({message:'Old CSRF proof',code:'CSRF_INVALID'},401);
+ await withControlledRoom(async(path,options)=>{
+  if(path==='/api/game/room-session'){
+   const number=++sessions;if(number===1)return response({csrfToken:'proof-1'});
+   return new Promise(resolve=>refreshes.push(()=>resolve(response({csrfToken:'proof-'+number}))));
+  }
+  const command=JSON.parse(options.body),proof=options.headers['X-CSRF-Token'];
+  if(command.action==='join')return response({...confirmed(++sequence),result:{inputEpoch:'shared-proof-epoch'}});
+  attempts.push({command,proof});
+  if(proof==='proof-1'){
+   if(command.action==='input'&&command.inputSequence===1)return new Promise(resolve=>{lateHeartbeat=()=>resolve(oldProof());});
+   return oldProof();
+  }
+  if(Number(proof.slice(6))<sessions-2)return oldProof();
+  return response(confirmed(++sequence));
+ },async(client,heartbeat)=>{
+  try{
+   void heartbeat();client.requestInput();client.requestInput();
+   for(let action=0;action<3;action++)actions.push(client.send('interact').catch(error=>error));
+   await flushInputTasks();assert.ok(lateHeartbeat);
+   assert.equal(refreshes.length,1,'concurrent stale proofs must create one shared refresh');
+   refreshes[0]();await flushInputTasks();
+   const results=await Promise.all(actions);assert.ok(results.every(state=>state.players?.[state.selfId]));
+   assert.equal(sessions,2);assert.equal(client.ready,true);
+   lateHeartbeat();await flushInputTasks();
+   assert.equal(sessions,2,'an old rejection arriving after the refresh must reuse its replacement');
+   assert.equal(client.ready,true);
+   const byRequest=new Map();
+   for(const attempt of attempts){const id=attempt.command.requestId;if(!byRequest.has(id))byRequest.set(id,[]);byRequest.get(id).push(attempt);}
+   assert.equal(byRequest.size,6);
+   for(const retries of byRequest.values()){
+    assert.equal(retries.length,2);assert.deepEqual(retries[0].command,retries[1].command,'retry preserves request ID, controls, input sequence and epoch');
+    assert.deepEqual(retries.map(attempt=>attempt.proof),['proof-1','proof-2']);
+   }
+  }finally{
+   client.stop();lateHeartbeat?.();
+   for(let turn=0;turn<4;turn++){for(const release of refreshes)release();await flushInputTasks();}
+   await Promise.allSettled(actions);
+  }
+ });
+});
+
+test('an established room keeps recovering beyond fifteen seconds without replaying its join',async()=>{
+ let recovered=false,sequence=0,joins=0,inputs=0;const errors=[];
+ await withControlledRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const command=JSON.parse(options.body);
+  if(command.action==='join'){joins++;return response({...confirmed(++sequence),result:{inputEpoch:'live-session-epoch'}});}
+  inputs++;if(!recovered)throw Error('temporary outage');return response(confirmed(++sequence));
+ },async(client,heartbeat)=>{
+  const priorNow=Date.now,priorTimeout=globalThis.setTimeout,priorClearTimeout=globalThis.clearTimeout,timers=new Map();let clock=10000,nextTimer=0;
+  Date.now=()=>clock;
+  globalThis.setTimeout=(callback,delay)=>{const id=++nextTimer;timers.set(id,{callback,at:clock+delay});return id;};
+  globalThis.clearTimeout=id=>{timers.delete(id);};
+  try{
+   void heartbeat();await flushInputTasks();assert.equal(client.ready,false,'a current outage still disables unconfirmed actions');
+   clock+=16001;
+   for(const [id,timer]of [...timers])if(timer.at<=clock){timers.delete(id);timer.callback();}
+   await flushInputTasks();recovered=true;void heartbeat();await flushInputTasks();
+   assert.equal(client.ready,true,'an established game can recover after the startup deadline would have elapsed');
+   assert.equal(joins,1,'recovery keeps the current room position and input epoch');assert.equal(inputs,2);assert.deepEqual(errors,[]);
+  }finally{
+   Date.now=priorNow;globalThis.setTimeout=priorTimeout;globalThis.clearTimeout=priorClearTimeout;
+  }
+ },{onError:error=>errors.push(error)});
+});
