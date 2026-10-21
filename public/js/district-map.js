@@ -1,4 +1,5 @@
-export function districtLocations(environment){const meta=environment?.builderScene?.layoutMeta||{};return meta.locations||meta.commonsLocations||[];}
+import {localMapLocations} from './local-map-locations.js';
+export function districtLocations(environment){return localMapLocations(environment);}
 export function districtDestinations(environment,locations){
  const base=environment?.atlasDistrict?.id?'world-district-'+environment.atlasDistrict.id:environment?.districtId||environment?.id;
  return locations.filter(place=>place.mapId!==environment?.id&&(place.districtId===base||place.districtId?.startsWith(base+'-')||environment?.id==='public-commons')).sort((a,b)=>Number(!!b.deedId)-Number(!!a.deedId)||a.name.localeCompare(b.name));
@@ -16,17 +17,17 @@ export function mountDistrictMap({stage,command=null,fetchAtlas=async()=>{const 
 
  function node(tag,text,parent){const element=document.createElement(tag);if(text)element.textContent=text;parent?.append(element);return element;}
  function renderMap(){
-  visual.replaceChildren();craftButtons.clear();const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');const extent=environment.builderScene?.layoutMeta?.harbor?.extent||128;svg.setAttribute('viewBox',`${-extent-2} ${-extent-2} ${extent*2+4} ${extent*2+4}`);svg.setAttribute('role','img');svg.setAttribute('aria-label',environment.name+' locations, roads and portal buildings');
+  visual.replaceChildren();craftButtons.clear();const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');const extent=environment.builderScene?.layoutMeta?.harbor?.extent||(Number(environment.builderScene?.mapSize)||Number(environment.playableSize)||256)/2;svg.setAttribute('viewBox',`${-extent-2} ${-extent-2} ${extent*2+4} ${extent*2+4}`);if(command){svg.style.cursor='crosshair';svg.addEventListener('click',event=>{const point=svg.createSVGPoint();point.x=event.clientX;point.y=event.clientY;const location=point.matrixTransform(svg.getScreenCTM().inverse());travel({position:{x:location.x,z:location.y}});});}svg.setAttribute('role','img');svg.setAttribute('aria-label',environment.name+' locations, roads and portal buildings');
   const shape=(tag,attrs,label)=>{const element=document.createElementNS(ns,tag);for(const [key,value]of Object.entries(attrs))element.setAttribute(key,value);if(label){const title=document.createElementNS(ns,'title');title.textContent=label;element.append(title);}svg.append(element);return element;};
   if(extent>128)shape('rect',{x:-extent,y:-extent,width:extent*2,height:extent*2,fill:'#12617a'});
-  shape('rect',{x:-128,y:-128,width:256,height:256,fill:'#142b24',rx:5});
+  const landExtent=environment.builderScene?.layoutMeta?.harbor?128:extent;shape('rect',{x:-landExtent,y:-landExtent,width:landExtent*2,height:landExtent*2,fill:'#142b24',rx:5});
   for(const island of environment.builderScene?.layoutMeta?.harbor?.islands||[])shape('rect',{x:island.x-island.width/2,y:island.z-island.depth/2,width:island.width,height:island.depth,fill:'#708b5b'},island.name);
   for(const street of environment.streets||environment.builderScene?.streets||[])shape('line',{x1:street.from.x,y1:street.from.z,x2:street.to.x,y2:street.to.z,stroke:'#728b85','stroke-width':street.width||5},street.name);
   for(const object of environment.builderScene?.objects||[])if(object.modelId==='material:paving-tile'){shape('rect',{x:object.position.x-1.2,y:object.position.z-1.2,width:2.4,height:2.4,fill:'#9ea995'});}
   for(const place of districtLocations(environment)){shape('rect',{x:place.x-place.width/2,y:place.z-place.depth/2,width:place.width,height:place.depth,fill:'#c7e88f',stroke:'#fff'},place.name);shape('text',{x:place.x,y:place.z-7,'text-anchor':'middle',fill:'#efffd7','font-size':4}).textContent=place.name;}
   for(const portal of environment.builderScene?.objects||[])if(portal.atlasDestination){shape('circle',{cx:portal.position.x,cy:portal.position.z,r:3,fill:portal.atlasDeedId?'#ffd781':'#67dcfa'},portal.name+(portal.atlasDeedId?' · Deed '+portal.atlasDeedId:''));}
-  const spawn=environment.spawn||{x:5,z:5};shape('circle',{cx:spawn.x,cy:spawn.z,r:2,fill:'#ff748d'},'Arrival');const players=document.createElementNS(ns,'g');players.setAttribute('data-live-players','');svg.append(players);visual.append(svg);node('p','Green: local landmarks · Blue: map portals · Gold: deed portals · Pink: arrival',visual);
-  for(const place of districtLocations(environment)){const details=node('details',null,visual);node('summary',place.name,details);node('p',place.description||'Walk to X '+place.x+', Z '+place.z+'.',details);if(transport()&&command){const go=node('button','Port to '+place.name,details);go.type='button';go.onclick=()=>travel({locationId:place.id});}}
+  const spawn=environment.spawn?.position||environment.spawn||{x:5,z:5};shape('circle',{cx:spawn.x,cy:spawn.z,r:2,fill:'#ff748d'},'Arrival');const players=document.createElementNS(ns,'g');players.setAttribute('data-live-players','');svg.append(players);visual.append(svg);node('p','Green: local landmarks · Blue: map portals · Gold: deed portals · Pink: arrival · Tap clear ground to teleport',visual);
+  for(const place of districtLocations(environment)){const details=node('details',null,visual);node('summary',place.name,details);node('p',place.description||'Walk to X '+place.x+', Z '+place.z+'.',details);if(command){const go=node('button','Port to '+place.name,details);go.type='button';go.onclick=()=>travel({locationId:place.id});}}
   if(transport()&&command){node('h3','Live boats and aircraft',visual);node('p','Board a free craft directly. Everyone shares this room. Land and exit before using map travel.',visual);for(const craft of environment.builderScene?.objects||[]){if(!['corsair-aircraft','harbor-skiff','harbor-sailboat'].includes(craft.modelId))continue;const card=node('article',null,visual);node('h4',craft.name||craft.id,card);const board=node('button','Board '+(craft.name||craft.id),card);board.type='button';board.dataset.name=craft.name||craft.id;board.onclick=()=>travel({entityId:craft.id});craftButtons.set(craft.id,board);}}
   refreshLive();
  }
@@ -38,5 +39,5 @@ export function mountDistrictMap({stage,command=null,fetchAtlas=async()=>{const 
   }catch(error){if(current===generation)status.textContent=error.message;}
  };
  dialog.addEventListener('close',()=>{generation++;button.setAttribute('aria-expanded','false');button.focus({preventScroll:true});});
- return {button,dialog,updateLive(snapshot,id){live=snapshot;selfId=id;if(dialog.open)refreshLive();},update(value){live=null;craftButtons.clear();environment=value;generation++;button.hidden=!districtLocations(value).length;if(dialog.open)dialog.close();},dispose(){generation++;button.remove();dialog.remove();css.remove();}};
+ return {button,dialog,updateLive(snapshot,id){live=snapshot;selfId=id;if(dialog.open)refreshLive();},update(value){live=null;craftButtons.clear();environment=value;generation++;button.hidden=!value;if(dialog.open)dialog.close();},dispose(){generation++;button.remove();dialog.remove();css.remove();}};
 }

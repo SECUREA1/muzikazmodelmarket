@@ -4,12 +4,13 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import * as THREE from '../public/vendor/three/three.module.min.js';
 import {TOOL_IDS} from '../public/js/game-tool-rules.js';
+import {isAircraft} from '../public/js/aircraft-flight.js';
 import {UTILITY_TOOLS} from '../public/js/game-utilities.js';
 const source=readFileSync('public/js/house-explorer-glb.js','utf8');
 function fixture(){
  const sent=[],calls=[],system={tool:'laser',sprayMode:'paintball',sprayColorIndex:0,placeBrick:()=>calls.push('brick')};
  for(const method of ['handlePointerInteraction','handleXRInteraction','fireFlame','fireExtraWeapon','swingBat','fireTaser','fireToxin','throwDynamite','useUtility','sprayAt'])system[method]=()=>calls.push(method);
- const context=vm.createContext({THREE,UTILITY_TOOLS,toxicBubbleSystem:system,radToxEnabled:true,serverHostedRoom:true,activeEnvironment:{},ownedPlacement:{active:false,confirm:()=>calls.push('placement')},isBasketballEnvironment:()=>false,isFiringRangeEnvironment:()=>false,liveRangeSnapshot:null,isTopDownView:()=>false,document:{querySelector:()=>false},camera:{getWorldDirection:target=>target.set(0,0,-1)},sharedRangeAim:()=>[0,0,-1],player:{eyeHeight:1.65},SPRAY_COLORS:[{hex:0xff33aa}],serverCommand:(action,fields)=>{sent.push({action,...fields});return true;}});
+ const context=vm.createContext({THREE,UTILITY_TOOLS,isAircraft,serverActors:{},serverVehicleId:null,fireAircraft:()=>calls.push('aircraft-cannon'),toxicBubbleSystem:system,radToxEnabled:true,serverHostedRoom:true,activeEnvironment:{},ownedPlacement:{active:false,confirm:()=>calls.push('placement')},isBasketballEnvironment:()=>false,isFiringRangeEnvironment:()=>false,liveRangeSnapshot:null,isTopDownView:()=>false,document:{querySelector:()=>false},camera:{getWorldDirection:target=>target.set(0,0,-1)},sharedRangeAim:()=>[0,0,-1],player:{eyeHeight:1.65},SPRAY_COLORS:[{hex:0xff33aa}],serverCommand:(action,fields)=>{sent.push({action,...fields});return true;}});
  const start=source.indexOf("  for(const name of ['handlePointerInteraction'");
  vm.runInContext(source.slice(start,source.indexOf("  for(const [method,lastOnly]",start)),context);
  return {context,system,sent,calls};
@@ -39,3 +40,5 @@ test('shared paint effects use their chosen color and never render a laser; util
  context.renderSharedToolEvents({serverTime:1000,events:[{id:'paint',action:'fire',tool:'spray',origin:{x:0,y:1.5,z:0},direction:[0,-1,0],end:{x:0,y:0,z:0},paintNormal:[0,1,0],color:0xff33aa,at:1000},{id:'heal',action:'fire',tool:'medkit',origin:{x:0,y:1.5,z:0},direction:[0,0,-1],at:1000},{id:'laser',action:'fire',tool:'laser',origin:{x:0,y:1.5,z:0},direction:[0,0,-1],at:1000}]},'self');
  assert.deepEqual(effects,[['paint',0,0xff33aa],['weapon','laser']]);
 });
+
+test('aircraft pilots fire their onboard cannons even when ground combat is off',()=>{const {context,system,sent,calls}=fixture();context.serverActors={plane:{modelId:'corsair-aircraft'}};context.serverVehicleId='plane';context.radToxEnabled=false;system.handlePointerInteraction({}, {centre:true});assert.equal(calls.at(-1),'aircraft-cannon');assert.equal(sent.length,0);});

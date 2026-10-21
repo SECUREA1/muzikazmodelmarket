@@ -1,3 +1,5 @@
+import {aircraftRayDistance,AIRCRAFT_HEALTH,AIRCRAFT_GUN_RANGE} from './public/js/aircraft-combat.js';
+import {localMapLocations} from './public/js/local-map-locations.js';
 import {isAircraft,stepAircraftFlight,airportRadio} from './public/js/aircraft-flight.js';
 import {isWatercraft,harborWaterAt,watercraftFootprint} from './public/js/harbor-water.js';
 import {buildingPolicy,changeBuildingPolicy,requireBuildingAllowed} from './public/js/room-building-policy.js';
@@ -75,6 +77,7 @@ export class AuthoritativeRooms {
   }
   if((environment.airport?.enabled||environment.builderScene?.layoutMeta?.harbor)&&sim.radTox){for(const [key,actor]of Object.entries(sim.actors))if(actor.radTox)delete sim.actors[key];sim.radTox=null;sim.match=null;sim.projectiles={};}
   if(environment.airport?.enabled)sim.airport ||= {runwayHolder:null,expires:0};
+  for(const definition of manifest.objects){const aircraft=sim.actors[definition.objectId];if(!isAircraft(aircraft))continue;aircraft.maxHealth=AIRCRAFT_HEALTH;if(aircraft.destroyedAt&&this.now()-aircraft.destroyedAt>=15000){Object.assign(aircraft,{position:copy(definition.transform.position),rotation:copy(definition.transform.rotation),health:AIRCRAFT_HEALTH,active:true,holderId:null,flight:{speed:0,phase:'parked',altitude:0,airborne:false}});delete aircraft.destroyedAt;}}
   // Retain native identities for catalog assets, including rooms saved before
   // basketball metadata became part of authoritative actor snapshots.
   for(const actor of manifest.objects){const entity=sim.actors[actor.objectId];if(entity&&!entity.asset)entity.asset=copy(actor.asset);}
@@ -255,21 +258,28 @@ export class AuthoritativeRooms {
    else if(command.action==='respawn'){if(player.health>0)fail('Respawn is available after defeat.',409);player.position={...this.collision.safeSpawn(environment,manifest.spawn?.position||builderBaseSpawn(environment)||environment.spawn||{x:0,y:0,z:2})};player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.health=100;player.ammo=120;player.fuel=100;player.input={};player.toolReady={};player.toolUses={};player.shieldUntil=0;player.spawnProtectedUntil=now+SPAWN_PROTECTION_MS;player.contributors={};}
    else if(player.health<=0&&command.action!=='interact')fail('Respawn before acting.',409);
    else if(command.action==='map-access'){
-    if(!environment.airport?.enabled&&!environment.builderScene?.layoutMeta?.harbor)fail('Map travel is unavailable here.',409);
     if(player.seatedId||player.vehicleId)fail('Exit your seat or land and leave your vehicle before map travel.',409);
     if(command.entityId){
+     if(!environment.airport?.enabled&&!environment.builderScene?.layoutMeta?.harbor)fail('Direct craft boarding is unavailable here.',409);
      const target=manifest.actors.find(a=>a.objectId===command.entityId&&a.gameplay.behavior==='vehicle'),entity=sim.actors[command.entityId];
      if(!target||!entity||entity.active===false||(!isAircraft(entity)&&!isWatercraft(entity)))fail('This craft is unavailable.',409);
      if(entity.holderId&&entity.holderId!==actorId)fail('Another player is using this craft.',409);
      if(isAircraft(entity)&&entity.flight?.airborne)fail('Wait until this aircraft has landed.',409);
      entity.holderId=actorId;player.vehicleId=entity.id;player.position={...entity.position,y:isWatercraft(entity) ? .35 : entity.position.y};player.yaw=entity.rotation?.y||0;
      result.message='Boarded '+(target.name||'craft')+'. You are in the shared live room.';
+    }else if(command.position){
+     if(!['x','z'].every(axis=>Number.isFinite(command.position[axis])))fail('Choose a valid point on this map.',422);
+     const floor=this.collision.groundAt(environment,{x:command.position.x,y:player.position.y,z:command.position.z},{entry:true,actors:sim.actors,objects:room.objects});
+     if(!floor||environment.builderScene?.layoutMeta?.harbor&&floor.y<-.05)fail('Choose clear land or a pier instead of water.',409);
+     const arrival=this.collision.teleportPosition(environment,player.position,floor,sim.actors,room.objects,{localMap:true});
+     if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(arrival,sim))fail('Choose a spectator area outside the court.',409);
+     player.position=arrival;result.message='Teleported to the selected floor.';
     }else{
-     const meta=environment.builderScene?.layoutMeta||{},place=(meta.locations||meta.commonsLocations||[]).find(location=>location.id===command.locationId);
+     const place=localMapLocations(environment).find(location=>location.id===command.locationId);
      if(!place)fail('Choose a listed map location.',422);
-     const base={x:place.arrival?.x??place.x,y:place.arrival?.y??0,z:place.arrival?.z??place.z};
+     const base={x:place.arrival?.x??place.x,y:place.arrival?.y??place.y??0,z:place.arrival?.z??place.z};
      const candidates=[base];for(const radius of [2,4,6,8,10,12])for(let step=0;step<8;step++)candidates.push({...base,x:base.x+Math.cos(step*Math.PI/4)*radius,z:base.z+Math.sin(step*Math.PI/4)*radius});
-     let arrival=null;for(const candidate of candidates){try{const point=this.collision.meetingPosition(environment,candidate,sim.actors,room.objects);if(environment.builderScene?.layoutMeta?.harbor&&point.y<-.05)continue;arrival=point;break;}catch{}}if(!arrival)fail('This location has no clear landing. Choose another location.',409);player.position=arrival;result.message='Arrived at '+place.name+'.';
+     let arrival=null;for(const candidate of candidates){try{const point=this.collision.meetingPosition(environment,candidate,sim.actors,room.objects);if(environment.builderScene?.layoutMeta?.harbor&&point.y<-.05)continue;arrival=point;break;}catch{}}if(!arrival)fail('This location has no clear landing. Choose another location.',409);if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(arrival,sim))fail('Choose a spectator area outside the court.',409);player.position=arrival;result.message='Arrived at '+place.name+'.';
     }
     player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;
    }
@@ -378,22 +388,23 @@ export class AuthoritativeRooms {
    else if(command.action==='fire'&&RANGED_WEAPONS[command.tool||'laser']&&rangeHandlesFire(sim,player)){result=fireFiringRange(sim,player,command,now,{blocksShot:(origin,ray,distance)=>this.collision.blocksShot(environment,origin,ray,distance,sim.actors)});}
    else if(command.action==='fire'){
     if(sim.basketball&&command.tool!=='spray'&&!UTILITY_TOOLS[command.tool])fail('Basketball Arena is a sports court. Catch, pass or shoot the basketball.',409);
-    const tool=String(command.tool||'laser'),utility=UTILITY_TOOLS[tool],profile=RANGED_WEAPONS[tool],cooldown=sim.radTox&&!utility&&(profile||['bat','taser','toxin','flamethrower'].includes(tool))?RAD_TOX_SHOT_INTERVAL_MS:utility?utility.cooldown*1000:profile?profile.interval*1000:tool==='dynamite'?1200:250;if(!utility&&!profile&&!['bat','taser','toxin','flamethrower','spray','jetpack'].includes(tool))fail('This tool has no server action.',422);
+    const tool=String(command.tool||'laser'),gunAircraft=isAircraft(sim.actors[player.vehicleId])&&sim.actors[player.vehicleId].active!==false&&tool==='laser'?sim.actors[player.vehicleId]:null,utility=UTILITY_TOOLS[tool],profile=RANGED_WEAPONS[tool],cooldown=sim.radTox&&!utility&&(profile||['bat','taser','toxin','flamethrower'].includes(tool))?RAD_TOX_SHOT_INTERVAL_MS:utility?utility.cooldown*1000:profile?profile.interval*1000:tool==='dynamite'?1200:250;if(!utility&&!profile&&!['bat','taser','toxin','flamethrower','spray','jetpack'].includes(tool))fail('This tool has no server action.',422);
     player.toolReady ||= {};if(now<(player.toolReady[tool]||0))fail('Tool is cooling down.',429);if(utility?.charges&&(player.toolUses?.[tool]||0)>=utility.charges)fail('Utility depleted until respawn.',409);
     if(tool==='flamethrower'&&(player.fuel??100)<5)fail('Refill your igniter fuel.',409);if(profile&&(player.ammo??120)<=0)fail('Refill ammunition.',409);if(tool==='medkit'&&player.health>=100)fail('Health is already full.',409);
     if(['repair-tool','recycler'].includes(tool)&&!Object.values(room.objects).some(object=>!object.deleted&&object.ownerId===actorId&&(tool==='recycler'||object.hits>0)&&distance({x:object.position[0],y:object.position[1],z:object.position[2]},player.position)<8))fail('No eligible building piece is within reach.',409);
     const direction=command.direction;if(!Array.isArray(direction)||direction.length!==3||!direction.every(Number.isFinite))fail('Invalid aim direction.');const length=Math.hypot(...direction);if(length<.1)fail('Invalid aim direction.');const ray=direction.map(n=>n/length);
-    await this.charge(identity,'tool:'+tool,createHash('sha256').update('shot:'+id+':'+actorId+':'+requestId).digest('hex'));if(tool==='flamethrower')player.fuel=(player.fuel??100)-5;if(profile)player.ammo=(player.ammo??120)-1;player.lastShot=now;player.toolReady[tool]=now+cooldown;player.toolUses ||= {};player.toolUses[tool]=(player.toolUses[tool]||0)+1;
-    const origin={...player.position,y:player.position.y+1.5},targets=[];
-    for(const entity of Object.values(sim.actors)){if(entity.destructible||entity.loot||entity.rangeTarget||!entity.active||entity.pendingSpawn||entity.health<=0)continue;const offset=[entity.position.x-origin.x,entity.position.y+1-origin.y,entity.position.z-origin.z],along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along));if(along>0&&along<(tool==='bat'?3:40)&&perpendicular<1)targets.push({entity,along});}
-    const range=tool==='bat'?3:tool==='taser'?4:tool==='toxin'?9:tool==='flamethrower'?12:Math.min(40,profile?.range||40);
+    if(!gunAircraft)await this.charge(identity,'tool:'+tool,createHash('sha256').update('shot:'+id+':'+actorId+':'+requestId).digest('hex'));if(tool==='flamethrower')player.fuel=(player.fuel??100)-5;if(profile)player.ammo=(player.ammo??120)-1;player.lastShot=now;player.toolReady[tool]=now+cooldown;player.toolUses ||= {};player.toolUses[tool]=(player.toolUses[tool]||0)+1;
+    const origin=gunAircraft?{x:gunAircraft.position.x-Math.sin(gunAircraft.rotation.y)*4.3,y:gunAircraft.position.y+1,z:gunAircraft.position.z-Math.cos(gunAircraft.rotation.y)*4.3}:{...player.position,y:player.position.y+1.5},targets=[];
+    for(const entity of Object.values(sim.actors)){if(isAircraft(entity)||entity.destructible||entity.loot||entity.rangeTarget||!entity.active||entity.pendingSpawn||entity.health<=0)continue;const offset=[entity.position.x-origin.x,entity.position.y+1-origin.y,entity.position.z-origin.z],along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along));if(along>0&&along<(tool==='bat'?3:40)&&perpendicular<1)targets.push({entity,along});}
+    const range=gunAircraft?AIRCRAFT_GUN_RANGE:tool==='bat'?3:tool==='taser'?4:tool==='toxin'?9:tool==='flamethrower'?12:Math.min(40,profile?.range||40);
+    for(const entity of Object.values(sim.actors)){if(!isAircraft(entity)||entity.id===player.vehicleId||entity.active===false||entity.health<=0)continue;const along=aircraftRayDistance(entity,origin,ray);if(along!==null&&along<range)targets.push({entity,along,aircraft:true});}
     const structureHit=this.collision.destructibleHit(environment,origin,ray,range,sim.actors);if(structureHit)targets.push(structureHit);
     for(const [targetId,target]of Object.entries(sim.players)){
-     if(targetId===actorId||target.radToxReady===false||target.health<=0||target.replacedByRoom||now-target.lastSeen>15000||firingRangeLocationAt(sim.firingRange?.locations,target.position))continue;
+     if(isAircraft(sim.actors[target.vehicleId])||targetId===actorId||target.radToxReady===false||target.health<=0||target.replacedByRoom||now-target.lastSeen>15000||firingRangeLocationAt(sim.firingRange?.locations,target.position))continue;
      const along=rayBoxDistance(origin,ray,{x:target.position.x-.35,y:target.position.y,z:target.position.z-.35},{x:target.position.x+.35,y:target.position.y+1.8,z:target.position.z+.35});
      if(along!==null&&along<range)targets.push({entity:target,along,playerId:targetId});
     }
-    const blocks=[];for(const object of Object.values(room.objects)){if(object.deleted||object.open)continue;const offset=object.position.map((n,i)=>n-[origin.x,origin.y,origin.z][i]),along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along)),size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);if(along>0&&along<40&&perpendicular<Math.max(...size)/2)blocks.push({object,along});}
+    const blocks=[];for(const object of Object.values(room.objects)){if(object.deleted||object.open)continue;const offset=object.position.map((n,i)=>n-[origin.x,origin.y,origin.z][i]),along=offset.reduce((sum,n,i)=>sum+n*ray[i],0),perpendicular=Math.sqrt(Math.max(0,offset.reduce((sum,n)=>sum+n*n,0)-along*along)),size=buildingDimensions(object.materialId).map((n,i)=>n*object.scale[i]);if(along>0&&along<range&&perpendicular<Math.max(...size)/2)blocks.push({object,along});}
     const blocker=blocks.sort((a,b)=>a.along-b.along)[0];let hit=targets.filter(target=>target.along<range).sort((a,b)=>a.along-b.along)[0];
     if(hit&&this.collision.blocksShot(environment,origin,ray,hit.along,hit.entity.destructible?{...sim.actors,[hit.entity.id]:{...hit.entity,active:false}}:sim.actors))hit=null;if(blocker&&(!hit||blocker.along<hit.along)){hit=null;const object=blocker.object;if(tool==='spray')object.paint=object.paint.map(()=>clamp(command.color,0,0xffffff));else if(!utility){object.hits=(object.hits||0)+1;if(object.hits>=5)object.deleted=true;}object.revision=++room.revision;}
 if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else if(tool==='shield-kit')player.shieldUntil=now+6000;else if(tool==='scanner')result.message='Scanner: '+targets.length+' targets in your aim path';else if(tool==='recycler'||tool==='repair-tool'){const candidates=Object.values(room.objects).filter(object=>!object.deleted&&object.ownerId===actorId&&distance({x:object.position[0],y:object.position[1],z:object.position[2]},player.position)<8).sort((a,b)=>distance({x:a.position[0],y:a.position[1],z:a.position[2]},player.position)-distance({x:b.position[0],y:b.position[1],z:b.position[2]},player.position));const target=candidates[0];if(target){if(tool==='recycler')target.deleted=true;target.hits=0;target.revision=++room.revision;}}else if(tool==='beacon')result.message='Waypoint beacon shared in room events';else if(tool==='supply-kit'){player.fuel=100;player.ammo=Math.min(120,(player.ammo??120)+12);}}
@@ -405,7 +416,8 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
      else {
       hit.entity.health=hit.entity.radTox?0:Math.max(0,before-(profile?.damage||damageByTool[tool]||20));
       combatStats(player).damageDealt+=before-hit.entity.health;
-      if(hit.entity.health===0){hit.entity.active=false;if(!hit.entity.destructible){if(hit.entity.radTox||['hostile','patrol'].includes(manifest.actors.find(actor=>actor.objectId===hit.entity.id)?.gameplay.behavior))dropRpgLoot(sim,hit.entity,now);player.score+=10;const stats=combatStats(player);stats.enemyKills++;stats.score+=10;await this.reward(identity,'defeat',requestId+'-defeat');player.progress ||= {};player.progress.defeat=(player.progress.defeat||0)+1;}}
+      if(hit.entity.health===0){hit.entity.active=false;if(isAircraft(hit.entity)){hit.entity.destroyedAt=now;hit.entity.flight={...hit.entity.flight,speed:0,phase:'destroyed'};const pilot=sim.players[hit.entity.holderId];if(pilot){pilot.vehicleId=null;pilot.input={};pilot.health=0;combatStats(pilot).deaths++;combatStats(player).playerKills++;combatStats(player).score+=25;player.score+=25;pilot.position=this.collision.safeSpawn(environment,environment.spawn||{x:0,y:0,z:0});pilot.floor=pilot.position.y;pilot.velocityY=0;pilot.movementRevision=(pilot.movementRevision||0)+1;}hit.entity.holderId=null;result.message='Aircraft shot down. A replacement will be ready at the stand in 15 seconds.';}
+if(!hit.entity.destructible){if(hit.entity.radTox||['hostile','patrol'].includes(manifest.actors.find(actor=>actor.objectId===hit.entity.id)?.gameplay.behavior))dropRpgLoot(sim,hit.entity,now);player.score+=10;const stats=combatStats(player);stats.enemyKills++;stats.score+=10;await this.reward(identity,'defeat',requestId+'-defeat');player.progress ||= {};player.progress.defeat=(player.progress.defeat||0)+1;}}
      }
      if(hit.entity.health<before){
       hit.entity.contributors ||= {};hit.entity.contributors[actorId]=true;
@@ -420,7 +432,7 @@ if(utility){if(tool==='medkit')player.health=Math.min(100,player.health+30);else
     const end={x:origin.x+ray[0]*shotDistance,y:origin.y+ray[1]*shotDistance,z:origin.z+ray[2]*shotDistance};
     const paint=tool==='spray'?this.collision.paintSurface(environment,player.position,ray,sim.actors,room.objects):null;
     if(paint){Object.assign(end,paint.point);result.color=clamp(command.color,0,0xffffff);result.paintNormal=paint.normal.toArray();}
-    result={...result,firedAt:now,cooldownMs:cooldown,readyAt:player.toolReady[tool],tool,origin,end,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:hit?.playerId?'player':hit?.entity.destructible?'building':hit?'enemy':null};
+    result={...result,firedAt:now,cooldownMs:cooldown,readyAt:player.toolReady[tool],tool,origin,end,direction:ray,hitId:hit?.playerId||hit?.entity.id||null,targetType:isAircraft(hit?.entity)?'aircraft':hit?.playerId?'player':hit?.entity.destructible?'building':hit?'enemy':null};
    }else fail('This action has no server handler. It was not run locally.',422);
   }
   player.position=constrainFiringRangePlayer(player.position,player.position,sim,player);

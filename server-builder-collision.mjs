@@ -132,12 +132,12 @@ export class ServerBuilderCollision {
   if(entry){choices.sort((a,b)=>a.point.y-b.point.y);} // Ground entrance, never highest roof.
   const hit=choices[0];return hit?{x:point.x,y:hit.point.y+PLAYER_FLOOR_CLEARANCE,z:point.z}:null;
  }
- teleportPosition(environment,origin,point,actors={},objects={}){
+ teleportPosition(environment,origin,point,actors={},objects={},{localMap=false}={}){
   const reject=()=>{throw Object.assign(Error('Choose a visible, clear floor spot.'),{statusCode:422});};
-  if(!point||!['x','y','z'].every(axis=>Number.isFinite(point[axis]))||Math.hypot(point.x-origin.x,point.y-origin.y,point.z-origin.z)>256)reject();
+  if(!point||!['x','y','z'].every(axis=>Number.isFinite(point[axis]))||(!localMap&&Math.hypot(point.x-origin.x,point.y-origin.y,point.z-origin.z)>256))reject();
   const floor=this.groundAt(environment,point,{actors,objects});if(!floor||Math.abs(floor.y-point.y)>.45)reject();
   const eye={x:origin.x,y:origin.y+1.6,z:origin.z},delta=[floor.x-eye.x,floor.y+.08-eye.y,floor.z-eye.z],length=Math.hypot(...delta);
-  if(length>.1&&this.blocksShot(environment,eye,delta.map(n=>n/length),length,actors))reject();
+  if(!localMap&&length>.1&&this.blocksShot(environment,eye,delta.map(n=>n/length),length,actors))reject();
   const world=this.world(environment);
   const dynamic=this.placedWorld(actors,objects).boxes.map(box=>({box,objectId:box.objectId}));
   if([...world.walls,...dynamic].some(({box,objectId})=>{const actor=actors[objectId];return !(actor&&(actor.open||!actor.active||actor.holderId))&&floor.x>box.min.x-.3&&floor.x<box.max.x+.3&&floor.z>box.min.z-.3&&floor.z<box.max.z+.3&&floor.y<box.max.y-.03&&floor.y+1.7>box.min.y+.03;}))reject();

@@ -20,7 +20,7 @@ export function airportRadio(sim,player,actorId,operation,now){
  if(!isAircraft(aircraft))throw Object.assign(Error('Board an aircraft before requesting flight services.'),{statusCode:409});
  if(operation==='service'){
   if(aircraft.flight?.airborne||(aircraft.flight?.speed||0)>.5)throw Object.assign(Error('Park the aircraft before requesting ground service.'),{statusCode:409});
-  aircraft.health=400;player.fuel=100;return 'Ground crew. Aircraft inspected, repaired and refueled. Ready for taxi.';
+  aircraft.health=400;player.fuel=100;player.ammo=120;return 'Ground crew. Aircraft inspected, repaired and refueled. Ready for taxi.';
  }
  if(airport.runwayHolder&&airport.runwayHolder!==actorId&&airport.expires>now)return 'Tower. Hold position. Another pilot has runway clearance. Request again when the runway is clear.';
  airport.runwayHolder=actorId;airport.expires=now+120000;aircraft.flight||={};aircraft.flight.clearance=operation;

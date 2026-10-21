@@ -16,7 +16,7 @@ with sync_playwright() as p:
           window.SpeechSynthesisUtterance=class {constructor(text){this.text=text}};
           Object.defineProperty(window,'speechSynthesis',{value:{speak:u=>spoken.push(u.text)},configurable:true});
           const {mountAirportOperations}=await import('/public/js/airport-operations.js');
-          window.ops=mountAirportOperations({stage:document.querySelector('.house-stage'),command:async(action,fields)=>{commands.push({action,...fields});return {result:{message:'Tower. Cleared for takeoff.'}}}});
+          window.ops=mountAirportOperations({stage:document.querySelector('.house-stage'),getAim:()=>({origin:{x:0,y:1,z:0},direction:[0,0,-1]}),command:async(action,fields)=>{commands.push({action,...fields});return {result:{message:'Tower. Cleared for takeoff.'}}}});
           ops.updateEnvironment({airport:{enabled:true}});
           ops.update({players:{pilot:{vehicleId:'plane'}},actors:{plane:{id:'plane',modelId:'corsair-aircraft',flight:{phase:'parked'}}}},'pilot');
         }''')
@@ -36,6 +36,14 @@ with sync_playwright() as p:
         page.mouse.up();assert page.evaluate('ops.lift')==0
         page.evaluate("ops.update({players:{pilot:{vehicleId:'plane'}},actors:{plane:{id:'plane',modelId:'corsair-aircraft',flight:{phase:'climb',altitude:12,speed:15,airborne:true}}}},'pilot')")
         assert page.get_by_role('button',name='Exit parked aircraft').is_disabled()
+        page.evaluate("ops.update({players:{pilot:{vehicleId:'plane',health:100}},actors:{plane:{id:'plane',modelId:'corsair-aircraft',health:350,flight:{phase:'climb',airborne:true}},enemy:{id:'enemy',modelId:'corsair-aircraft',active:true,health:200,position:{x:0,y:0,z:-50},rotation:{y:0}}}},'pilot');ops.updateAim()")
+        assert page.get_by_label('Aircraft target').inner_text().endswith('HP 200')
+        page.get_by_role('button',name='Fire aircraft cannons').click()
+        assert page.evaluate('commands.at(-1).action')=='fire'
+        assert page.locator('.airport-flight-controls').evaluate('(el)=>el.scrollWidth<=el.clientWidth')
+        page.evaluate("ops.update({players:{pilot:{vehicleId:null,health:0}},actors:{}},'pilot')")
+        page.get_by_role('button',name='Respawn pilot').click()
+        assert page.evaluate('commands.at(-1).action')=='respawn'
         page.evaluate('ops.updateEnvironment({})')
         assert page.get_by_role('button',name='Airport tower radio',exact=True).is_hidden()
         page.close()

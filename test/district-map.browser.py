@@ -21,7 +21,7 @@ try:
    assert dialog.locator('svg').get_attribute('aria-label')=='Neon Docks locations, roads and portal buildings'
    assert dialog.evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
    dialog.get_by_role('button',name='Close',exact=True).click();assert not dialog.is_visible();page.wait_for_function("document.querySelector('.district-map-toggle').getAttribute('aria-expanded')==='false'")
-   page.evaluate("localMap.update({id:'ordinary-room',name:'Room'})");assert not button.is_visible();assert not errors,errors
+   page.evaluate("localMap.update({id:'ordinary-room',name:'Room'})");assert button.is_visible();button.click();assert page.get_by_text('Arrival',exact=True).count()>0;assert not errors,errors
    page.close()
   browser.close()
  print('District maps show the actual local scene and regional deed identity/link, exclude other districts, fit mobile and desktop, and close/reset cleanly.')
