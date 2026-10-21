@@ -12,7 +12,7 @@ export function aircraftRayDistance(aircraft,origin,direction){
 }
 export function aircraftGunPose(aircraft){
  const rotation=aircraft.rotation||{},orientation=new THREE.Quaternion().setFromEuler(new THREE.Euler(rotation.x||0,rotation.y||0,rotation.z||0,'YXZ'));
- const origin=new THREE.Vector3(0,1,-4.3).applyQuaternion(orientation).add(new THREE.Vector3(aircraft.position.x,aircraft.position.y,aircraft.position.z)),direction=new THREE.Vector3(0,0,-1).applyQuaternion(orientation);
+ const origin=new THREE.Vector3(0,1,-4.3).multiply(new THREE.Vector3(aircraft.scale?.x||1,aircraft.scale?.y||1,aircraft.scale?.z||1)).applyQuaternion(orientation).add(new THREE.Vector3(aircraft.position.x,aircraft.position.y,aircraft.position.z)),direction=new THREE.Vector3(0,0,-1).applyQuaternion(orientation);
  return {origin:{x:origin.x,y:origin.y,z:origin.z},direction:direction.toArray()};
 }
 export function aircraftAimTarget(actors,selfId,origin,direction){

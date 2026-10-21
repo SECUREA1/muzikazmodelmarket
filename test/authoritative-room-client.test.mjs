@@ -273,3 +273,17 @@ test('Builder joins set RAD-TOX preference in the join and retain it after a rec
   assert.equal(joins.length,2);assert.equal(joins[1].radToxEnabled,true);
  },{deferRadTox:true,radToxEnabled:false});
 });
+
+test('aircraft cannon feedback starts immediately while confirmed damage waits for the room response',async()=>{
+ let release,sequence=0;const flashes=[],states=[];
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  const body=options?.body?JSON.parse(options.body):{};
+  if(body.action==='fire')return new Promise(resolve=>{release=()=>resolve(response({...confirmed(++sequence),actors:{target:{health:350}}}));});
+  return response({...confirmed(++sequence),actors:{target:{health:400}}});
+ },async client=>{
+  await client.whenReady();const pending=client.send('fire',{tool:'laser',direction:[0,0,-1],origin:{x:0,y:20,z:0},aircraftShot:true});
+  assert.equal(flashes.length,1);assert.equal(flashes[0].aircraftShot,true);assert.deepEqual(flashes[0].origin,{x:0,y:20,z:0});assert.equal(states.at(-1).actors.target.health,400);
+  await pause(5);assert.ok(release);release();await pending;assert.equal(states.at(-1).actors.target.health,350);
+ },{onShot:shot=>flashes.push(shot),render:state=>states.push(state)});
+});

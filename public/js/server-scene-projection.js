@@ -1,3 +1,4 @@
+import {updateAircraftSeat} from './aircraft-seat.js';
 import {isWatercraft} from './harbor-water.js';
 import {isAircraft} from './aircraft-flight.js';
 import {placementBounds} from './placed-item-collision.js';
@@ -33,7 +34,7 @@ export function syncServerAvatar({THREE,root,peer,loader,prepare,isCurrent,now=D
 
 export function projectServerActor(root,actor,{localId=null,now=performance.now()}={}) {
  if(!actor){root.visible=false;return;}
- const state=root.userData,offset=state.serverRenderOffset||{};if(isAircraft(actor)){root.rotation.order='YXZ';state.aircraftFlight=actor.flight||{};state.aircraftHealth=actor.health;}
+ const state=root.userData,offset=state.serverRenderOffset||{};if(isAircraft(actor)){updateAircraftSeat(root,actor,{selfId:localId});root.rotation.order='YXZ';state.aircraftFlight=actor.flight||{};state.aircraftHealth=actor.health;}
  if(isWatercraft(actor)){root.rotation.order='YXZ';state.boatState=actor.boating||{};}
  const behavior=actor.definition?.gameplay?.behavior||state.functionalSettings?.behavior||actor.asset?.behavior;state.serverObjectMotion=['hostile','patrol','vehicle'].includes(behavior)&&!(localId&&actor.holderId===localId);if(state.serverObjectMotion)targetServerEnemy(root,{...actor,position:{x:actor.position.x+(offset.x||0),y:actor.position.y,z:actor.position.z+(offset.z||0)}},offset.y||0,now);else root.position.set(actor.position.x+(offset.x||0),actor.position.y+(offset.y||0),actor.position.z+(offset.z||0));
  root.visible=actor.active!==false;
@@ -50,7 +51,7 @@ export function projectServerActor(root,actor,{localId=null,now=performance.now(
   if(!mesh.isMesh)return;
   mesh.userData.serverBaseCollisionDisabled??=mesh.userData.collisionDisabled===true;mesh.userData.collisionDisabled=mesh.userData.serverBaseCollisionDisabled||!root.visible||!!actor.open;
   for(const material of [].concat(mesh.material||[])){
-   if(paintChanged&&actor.paint!==undefined&&material.color)material.color.setHex(actor.paint);
+   if(paintChanged&&actor.paint!==undefined&&material.color&&!mesh.userData.aircraftPilot)material.color.setHex(actor.paint);
    if(switchedChanged&&actor.switched!==undefined&&material.emissive){material.userData ||= {};material.userData.serverBaseEmissive ??= material.emissiveIntensity;material.emissiveIntensity=actor.switched?Math.max(1.5,material.userData.serverBaseEmissive):material.userData.serverBaseEmissive;}
   }
  });

@@ -47,7 +47,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    if(action==='fire'&&fireRequest){if(!radToxStarted)return fireRequest;if(!queuedFire)queuedFire=fireRequest.then(()=>client.send(action,fields,requestId)).finally(()=>{queuedFire=null;});return queuedFire;}
    const fireTool=String(fields.tool||'laser');if(action==='fire'&&performance.now()<(nextFireAt.get(fireTool)||0))return null;
    const sentAt=performance.now(),fireInterval=radToxStarted&&!UTILITY_TOOLS[fireTool]&&(RANGED_WEAPONS[fireTool]||['bat','taser','toxin','flamethrower'].includes(fireTool))?RAD_TOX_SHOT_INTERVAL_MS:(RANGED_WEAPONS[fireTool]?.interval||UTILITY_TOOLS[fireTool]?.cooldown||(fireTool==='dynamite'?1.2:.25))*1000;
-   if(action==='fire'){nextFireAt.set(fireTool,sentAt+fireInterval);if(radToxStarted)onShot({requestId,tool:fireTool,direction:fields.direction});}
+   if(action==='fire'){nextFireAt.set(fireTool,sentAt+fireInterval);if(radToxStarted||fields.aircraftShot===true)onShot({requestId,tool:fireTool,direction:fields.direction,...(fields.aircraftShot===true?{aircraftShot:true,origin:fields.origin}:{})});}
    const perform=async()=>{
     const state=await post('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{...fields,...(action==='input'?{inputSequence:++inputSequence,...(inputEpoch?{inputEpoch}:{})}:{}),action,requestId});
     if(stopped)return;

@@ -32,7 +32,7 @@ export function stepAircraftFlight(aircraft,input={},dt,{ground=.4,ceiling=80,ha
    verticalSpeed=stall?-2.5-Math.max(0,stallSpeed-speed)*.22:clamp(Math.sin(pitch)*speed-bankSink,-8.5,8.5);
    // Explicit Descend is an assisted approach command, including a controlled
    // descent after the player applies the airbrake at low airspeed.
-   if(lift<-.1)verticalSpeed=Math.min(verticalSpeed,-Math.max(4.5,-lift*speed*.36));
+   if(lift<-.1)verticalSpeed=Math.min(verticalSpeed,-Math.max(.6,-lift*4.5,-lift*speed*.36));
   }else verticalSpeed=cleared&&speed>=stallSpeed&&lift>0?Math.max(0,Math.sin(pitch)*speed):0;
   position.x-=Math.sin(yaw)*speed*step;
   position.z-=Math.cos(yaw)*speed*step;
