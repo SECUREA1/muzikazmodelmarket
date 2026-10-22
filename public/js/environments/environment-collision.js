@@ -1,3 +1,4 @@
+import {layoutCollisionGeometry} from './layout-terrain.js';
 import * as THREE from '../../vendor/three/three.module.min.js';
 import { Octree } from '../../vendor/three/addons/math/Octree.js';
 
@@ -221,10 +222,11 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
     supplementalRoot.updateWorldMatrix(true, true);
     supplementalRoot.traverse(collect);
   });
-  const triangleCount=collisionMeshes.reduce((sum,mesh)=>sum+Math.floor((mesh.geometry.index?.count||mesh.geometry.attributes.position?.count||0)/3)*(mesh.isInstancedMesh?mesh.count:1),0);
+  const triangleCount=collisionMeshes.reduce((sum,mesh)=>sum+Math.floor((layoutCollisionGeometry(mesh.geometry).index?.count||layoutCollisionGeometry(mesh.geometry).attributes.position?.count||0)/3)*(mesh.isInstancedMesh?mesh.count:1),0);
   buildOctree=buildOctree&&triangleCount<=maxTriangles;
   const source = new THREE.Group(), mirroredGeometry = new Map();
   const colliderGeometry = (geometry, matrix) => {
+    geometry=layoutCollisionGeometry(geometry);
     if (matrix.determinant() >= 0) return geometry;
     if (mirroredGeometry.has(geometry)) return mirroredGeometry.get(geometry);
     // Octree derives normals from vertex winding. Reflection reverses that

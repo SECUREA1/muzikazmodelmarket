@@ -26,7 +26,7 @@ with tempfile.TemporaryDirectory(prefix='builder-launch-') as directory:
                     except Exception:
                         time.sleep(.25)
                 assert context.request.post(base + '/api/access/guest', data={}).status == 201
-                for mode in ['solo', 'multiplayer']:
+                for mode in os.environ.get('MUZIKAZ_STARTUP_MODES','solo,multiplayer').split(','):
                     session = context.request.get(base + '/api/market/session').json()['data']
                     scene = {'id': 'builder-' + mode, 'name': 'Builder startup check', 'layout': 'grand-floor', 'mapSize': 40, 'baseTransform': {'x':180,'y':6,'z':-120,'rotation':90,'scale':1.25}, 'objects': [], 'gameplay': {'multiplayer': mode == 'multiplayer'}}
                     response = context.request.post(base + '/api/custom-maps', headers={'X-CSRF-Token': session['csrfToken']}, data={'scene': scene})
@@ -38,7 +38,7 @@ with tempfile.TemporaryDirectory(prefix='builder-launch-') as directory:
                     page.on('pageerror', lambda error: errors.append(str(error)))
                     page.add_init_script("document.addEventListener('muzikaz:rad-tox-native-error',event=>console.error('STARTUP ERROR',event.detail?.message))")
                     page.on('console',lambda message:print(message.text,flush=True) if message.type=='error' and message.text.startswith('STARTUP ERROR') else None)
-                    page.on('response', lambda response: print('gameplay failure', response.status, response.text()[:500], flush=True) if '/gameplay' in response.url and response.status != 200 else None)
+                    page.on('response', lambda response: print('gameplay failure', response.status, flush=True) if '/gameplay' in response.url and response.status != 200 else None)
                     page.route('https://**/*', lambda route: route.abort())
                     page.add_init_script("localStorage.setItem('muzikazAccountSessionToken','broken\\nheader');sessionStorage.setItem('muzikazGameSessionToken','雪')")
                     rejected = []
@@ -62,6 +62,8 @@ with tempfile.TemporaryDirectory(prefix='builder-launch-') as directory:
                     if mode == 'multiplayer':
                         assert state['serverReady'] and state['serverPlayerInitialized'], state
                     page.locator('#house-explorer-canvas').scroll_into_view_if_needed()
+                    # A closed menu can retain open markup under a hidden parent. It must not lock input.
+                    page.evaluate("""()=>{const parent=document.createElement('div');parent.hidden=true;const dialog=document.createElement('dialog');dialog.open=true;parent.append(dialog);document.body.append(parent);}""")
                     page.locator('#house-explorer-canvas').focus()
                     before = state['player']['position']
                     page.keyboard.down('w')
@@ -73,6 +75,26 @@ with tempfile.TemporaryDirectory(prefix='builder-launch-') as directory:
                         raise
                     finally:
                         page.keyboard.up('w')
+                    # Exercise the actual mobile stick, not just keyboard input.
+                    stick=page.locator('[data-thumbstick="left"] .thumbstick-base')
+                    stick.scroll_into_view_if_needed()
+                    rect=stick.bounding_box()
+                    before=page.evaluate('window.MuzikazHouseExplorer.snapshot().player.position')
+                    page.mouse.move(rect['x']+rect['width']/2,rect['y']+rect['height']/2)
+                    page.mouse.down()
+                    page.mouse.move(rect['x']+rect['width']/2,rect['y']+rect['height']/2-rect['width']*.28,steps=4)
+                    try:
+                        page.wait_for_function('(before)=>{const p=window.MuzikazHouseExplorer.snapshot().player.position;return Math.hypot(p[0]-before[0],p[2]-before[2])>.1}',arg=before,timeout=15000)
+                    finally:
+                        page.mouse.up()
+                    print('startup input verified',mode,page.url,flush=True)
+                    try:
+                        page.locator('.district-map-toggle').click()
+                    except Exception:
+                        print('map startup diagnostic',page.url,errors,page.evaluate('({state:window.MuzikazHouseExplorer?.snapshot(),status:document.querySelector("#house-status")?.textContent})'),flush=True)
+                        raise
+                    page.locator('.district-map-dialog').wait_for(state='visible',timeout=10000)
+                    page.locator('.district-map-dialog>header button').click()
                     assert not errors, errors
                     print(mode, 'publish, load, start and walk passed', flush=True)
                     page.close()

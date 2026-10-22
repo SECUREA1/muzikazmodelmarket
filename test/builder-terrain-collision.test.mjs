@@ -6,7 +6,7 @@ import {createBuilderLand} from '../public/js/environments/builder-land.js';
 
 const three = new URL('../public/vendor/three/three.module.min.js', import.meta.url).href;
 const source = (await readFile(new URL('../public/js/environments/environment-collision.js', import.meta.url), 'utf8'))
-  .replace("'../../vendor/three/three.module.min.js'", JSON.stringify(three))
+  .replace("'./layout-terrain.js'",JSON.stringify(new URL('../public/js/environments/layout-terrain.js',import.meta.url).href)).replace("'../../vendor/three/three.module.min.js'", JSON.stringify(three))
   .replace(/import \{ Octree \} from [^;]+;/, 'class Octree { fromGraphNode(root) { this.source = root; } }');
 const {buildCollision, resolveSafeSpawn, FLOOR_ENTRY_OFFSET} = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 
@@ -83,4 +83,11 @@ test('visible explicit colliders can render while helper and hidden colliders st
   assert.ok(namedHelpers.every((object) => object.visible === false), 'named collider helpers remain forcibly hidden');
   assert.ok(!collision.visibleMeshes.includes(collision.containment.floor));
   disposeRoots(root, collision.containment.root);
+});
+test('flat terrain retains detailed artwork while collision uses an exact two-triangle floor',async()=>{
+ const {createLayoutTerrain,layoutCollisionGeometry}=await import('../public/js/environments/layout-terrain.js');
+ const geometry=createLayoutTerrain('grand-floor',256),root=new THREE.Group(),mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial());mesh.name='BUILDER_WALKABLE_FLOOR_test';mesh.rotation.x=-Math.PI/2;root.add(mesh);
+ const count=geometry.index.count,collision=buildCollision(root,undefined,[],{buildOctree:true,maxTriangles:10});assert.equal(collision.triangleCount,2);assert.equal(collision.octreeBuilt,true);assert.equal(mesh.geometry,geometry);assert.equal(geometry.index.count,count);assert.ok(count>1000);
+ const proxy=layoutCollisionGeometry(geometry);assert.equal(proxy.index.count,6);assert.equal(proxy.parameters.width,256);assert.equal(proxy.parameters.height,256);
+ const mountain=createLayoutTerrain('mountain-pass',128);assert.equal(layoutCollisionGeometry(mountain),mountain,'non-flat terrain keeps its exact slopes');geometry.dispose();mountain.dispose();mesh.material.dispose();proxy.dispose();
 });

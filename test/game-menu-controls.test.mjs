@@ -10,6 +10,7 @@ test('visible popups block action controls while hidden panels do not',()=>{
  assert.equal(gameplayOverlayOpen({querySelectorAll:()=>[]}),false);
  assert.equal(gameplayOverlayOpen({querySelectorAll:()=>[node(true),node(false,true),node(false,false,0)]}),false);
  assert.equal(gameplayOverlayOpen({querySelectorAll:()=>[node(false)]}),true);
+ assert.equal(gameplayOverlayOpen({querySelectorAll:()=>[{...node(false),checkVisibility:()=>false}]}),false);
 });
 test('radial menu retains original tool buttons and compact actions share touch and keyboard activation',async()=>{
  const module=await readFile(new URL('../public/js/game-menu-controls.js',import.meta.url),'utf8'),game=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
@@ -31,4 +32,17 @@ test('bottom HUD moves original controls into separate flowing rows without dupl
  const stage=node(),menu=node(),actions=node(),prompt=node(),status=node(),connection=node(),balance=node();stage.append(menu,actions,prompt,status,connection,balance);
  const stack=mountBottomHud(stage,{menu,actions,prompt,status,connection,balance});
  assert.deepEqual(stage.children,[stack]);assert.equal(stack.children[0],actions);assert.deepEqual(stack.children[1].children,[menu,prompt]);assert.deepEqual(stack.children.slice(2),[status,connection,balance]);
+});
+
+test('overlay cache picks up newly added dialogs without scanning the page each frame',t=>{
+ const previous=globalThis.MutationObserver;let observer,scans=0;
+ globalThis.MutationObserver=class{constructor(callback){this.callback=callback;this.records=[];observer=this;}observe(){}takeRecords(){return this.records.splice(0);}};
+ t.after(()=>{if(previous===undefined)delete globalThis.MutationObserver;else globalThis.MutationObserver=previous;});
+ const root={nodeType:9,querySelectorAll(){scans++;return [];}};
+ assert.equal(gameplayOverlayOpen(root),false);assert.equal(gameplayOverlayOpen(root),false);assert.equal(scans,1);
+ const dialog={nodeType:1,localName:'dialog',open:false,hidden:false,isConnected:true,childElementCount:0,matches:()=>true,closest:()=>null,getClientRects:()=>[{}]};
+ observer.records.push({addedNodes:[dialog]});assert.equal(gameplayOverlayOpen(root),false);
+ dialog.open=true;assert.equal(gameplayOverlayOpen(root),true);
+ dialog.hidden=true;assert.equal(gameplayOverlayOpen(root),false);
+ dialog.hidden=false;dialog.isConnected=false;assert.equal(gameplayOverlayOpen(root),false);assert.equal(scans,1);
 });

@@ -16,3 +16,7 @@ test('moving vehicles and players use live positions and suppress stale authored
  const tags=localMapTags(world,live,'pilot'),plane=tags.filter(tag=>tag.entityId===craft.id);assert.equal(plane.length,1);assert.equal(plane[0].x,90);assert.equal(plane[0].y,25);assert.equal(plane[0].occupied,true);assert.equal(tags.find(tag=>tag.id==='player:pilot').kind,'self');
  live.actors[craft.id].active=false;assert.equal(localMapTags(world,live).filter(tag=>tag.entityId===craft.id).length,0);
 });
+test('local maps open before the first room snapshot and in solo play',()=>{
+ const environment={id:'startup-map',spawn:{x:3,y:0,z:4},builderScene:{objects:[{id:'startup-car',modelId:'grand-tourer',position:{x:10,y:0,z:10}}]}};
+ const tags=localMapTags(environment,null);assert.ok(tags.some(tag=>tag.id==='arrival'&&tag.x===3&&tag.z===4));assert.ok(tags.some(tag=>tag.entityId==='startup-car'));
+});
