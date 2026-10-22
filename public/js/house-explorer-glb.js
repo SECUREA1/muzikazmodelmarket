@@ -134,6 +134,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     promise,
     new Promise((_, reject) => window.setTimeout(() => reject(new Error(`${label} timed out.`)), milliseconds))
   ]);
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const gameLoadingDisplay=createGameLoadingDisplay({root:levelLoader,stage,reducedMotion,schedule:scheduleGameResize});
   const updateLevelLoader=(progress,message)=>gameLoadingDisplay.update(progress,message);
   const showLevelLoader=(level,message)=>gameLoadingDisplay.show(level,message);
@@ -424,7 +425,6 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   // our lower-cost renderer. That must not disable WebXR: the headset browser
   // still needs to be able to start an immersive session.
   const webXrAvailable = Boolean(navigator.xr?.isSessionSupported);
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050807); scene.fog = new THREE.Fog(0x050807, 36, performanceMode ? 95 : 180);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !performanceMode, alpha: false, powerPreference: 'high-performance' }); renderer.xr.enabled = webXrAvailable; let quality = configureRenderer(renderer, performanceMode ? 'performance' : 'auto');
   const worldScenery=createOutdoorScenery({scene});

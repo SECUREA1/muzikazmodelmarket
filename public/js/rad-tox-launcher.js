@@ -32,10 +32,9 @@
       document.dispatchEvent(event('muzikaz:rad-tox-request'));
       return;
     }
-    var module = document.createElement('script');
-    module.type = 'module'; module.src = 'public/js/house-explorer-glb.js?v=sports-actions-3';
-    module.onerror = function () { showError('The game engine could not be loaded.'); };
-    document.body.appendChild(module);
+    import('./house-explorer-glb.js?v=engine-startup-20261022').catch(function (error) {
+      showError('The game engine could not start: ' + (error && error.message || 'Please reload this page.'));
+    });
     loadTimer = window.setTimeout(showStall, 30000);
   }
   if (button) button.addEventListener('click', function (click) { click.preventDefault(); begin(); });

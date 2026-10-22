@@ -226,7 +226,7 @@ if (launcher.includes('data-radtox-retry') || launcher.includes('supportsModern'
 if (mainHtml.includes('<script type="module" src="public/js/house-explorer-glb.js"></script>')) {
   throw new Error('index.html must defer the large House Explorer module until the player starts RAD-TOX.');
 }
-if (!/module\.src = 'public\/js\/house-explorer-glb\.js(?:\?[^']*)?'/.test(launcher) || !launcher.includes('function begin()')) {
+if (!/function begin\(\)[\s\S]*import\('\.\/house-explorer-glb\.js(?:\?[^']*)?'\)\.catch/.test(launcher)) {
   throw new Error('RAD-TOX launcher must load the House Explorer module only after a start request.');
 }
 
