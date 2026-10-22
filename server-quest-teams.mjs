@@ -19,7 +19,7 @@ export function teamCommand(sim,player,operation,now,{teamId,role}={}){
   q.team[player.actorId]={role,vehicleId:player.vehicleId||null,revision:player.movementRevision||0,placementRevision:craft?.placementRevision||0,contribution:0};player.vehicleMission={...structuredClone(q),teamLeader:leader.actorId,teamRole:role,vehicleId:player.vehicleId||null};questRadio(sim,now,'Dispatch',player.username+' joined '+leader.username+' as '+role+'.');return 'Joined shared assignment as '+role+'.';
  }
  if(!q||q.status!=='active'||player.vehicleMission?.status!=='active'||!q.team?.[player.actorId])throw Error('Accept an assignment first.');
- if(operation==='share'){if(player.vehicleMission.teamLeader)throw Error('Only the leader can open an assignment.');q.shared=true;questRadio(sim,now,'Dispatch',player.username+' opened '+q.title+' to helpers and observers.');return 'Team open · up to four players.';}
+ if(operation==='share'){if(!q.questId)throw Error('Choose a full quest to open a shared team.');if(player.vehicleMission.teamLeader)throw Error('Only the leader can open an assignment.');q.shared=true;questRadio(sim,now,'Dispatch',player.username+' opened '+q.title+' to helpers and observers.');return 'Team open · up to four players.';}
  if(operation==='radio') {if(now<(player.questRadioAt||0)+4000)throw Error('Let the current radio call finish.');player.questRadioAt=now;questRadio(sim,now,player.username,'Dispatch, requesting current mission status.');const point=q.checkpoints[q.index];questRadio(sim,now,q.supportId?'Support crew':'Dispatch',(q.supportId?'Support on station. ':'')+(point?.name||q.title)+'. '+(q.kills||0)+' opponents secured; '+Object.keys(q.team||{}).length+' team members.');return 'Crew response received.';}
  return null;
 }

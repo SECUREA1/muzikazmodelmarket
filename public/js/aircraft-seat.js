@@ -11,5 +11,5 @@ export function seatedPilot(){
 export function updateAircraftSeat(model,actor,{selfId=null,view='cockpit'}={}){
  if(!model?.userData?.aircraftModel)return;let pilot=model.userData.seatedPilot;
  if(!pilot){pilot=seatedPilot();const seat=aircraftType(actor)?.seat||[0,.89,.63];pilot.position.set(seat[0],seat[1]-.89,seat[2]-.63);model.add(pilot);model.userData.seatedPilot=pilot;}
- const occupied=!!(actor?.holderId||actor?.trafficAI&&!actor?.crewRecovered)&&actor.active!==false;pilot.visible=occupied&&!(selfId&&actor.holderId===selfId&&view==='cockpit');model.userData.cockpitOccupied=occupied;model.userData.cockpitOccupant=actor?.crew?.name||actor?.holderId||null;if(actor?.trafficAI){const head=pilot.getObjectByName('CREW_HEAD');if(head)head.rotation.y=Math.sin((actor.trafficAngle||0)*12)*.16;}
+ const occupied=!!(actor?.holderId||actor?.trafficAI&&!actor?.crewRecovered)&&actor.active!==false;pilot.visible=occupied&&!(selfId&&actor.holderId===selfId&&view==='cockpit');model.userData.cockpitOccupied=occupied;model.userData.cockpitOccupant=actor?.crew?.name||actor?.holderId||null;if(actor?.trafficAI){const head=pilot.getObjectByName('CREW_HEAD');if(head){head.rotation.y=Math.sin((actor.trafficAngle||0)*12)*.16;head.rotation.x=actor.speaking?Math.sin(performance.now()*.009)*.065:0;}}
 }
