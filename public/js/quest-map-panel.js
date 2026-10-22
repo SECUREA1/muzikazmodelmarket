@@ -2,10 +2,11 @@ import {mountQuestTeamPanel} from './quest-team-panel.js';
 import {isCombatBoat} from './patrol-combat.js';
 import {questCatalog,questMapTags} from './quest-catalog.js';
 import {isAircraft} from './aircraft-flight.js';import {isWatercraft} from './harbor-water.js';import {armedAircraft} from './aircraft-types.js';
+let questPanelSequence=0;
 export function mountQuestMapPanel(root,{command,getEnvironment,getLive,getSelfId,onChange=()=>{}}){
  const section=document.createElement('section');section.className='local-map-quests';section.setAttribute('aria-label','Local quest directory');
- const toggle=document.createElement('button');toggle.type='button';toggle.textContent='⚑ Quests';toggle.setAttribute('aria-label','Quests and mission information');toggle.setAttribute('aria-expanded','false');
- const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Quests · objectives, crews & competitions';details.append(summary);
+ const toggle=document.createElement('button');toggle.type='button';toggle.className='local-map-quest-toggle';toggle.title='Quests and mission information';toggle.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 21V3m0 1c5-4 9 4 14 0v10c-5 4-9-4-14 0"/><path d="m9 9 2 2 4-4"/></svg><span>Quests</span>';toggle.setAttribute('aria-label','Quests and mission information');toggle.setAttribute('aria-expanded','false');
+ const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Quests · objectives, crews & competitions';details.id='local-map-quests-'+ ++questPanelSequence;toggle.setAttribute('aria-controls',details.id);toggle.setAttribute('aria-pressed','false');details.append(summary);
  const markerLabel=document.createElement('label'),markers=document.createElement('input');markers.type='checkbox';markers.checked=true;markerLabel.append(markers,' Show quest markers');markers.onchange=()=>onChange();
  const filter=document.createElement('select');filter.setAttribute('aria-label','Quest activity filter');for(const [value,label]of [['all','All quests'],['foot','On foot'],['boat','Boats & docks'],['air','Aircraft & airport']]){const option=document.createElement('option');option.value=value;option.textContent=label;filter.append(option);}
  const status=document.createElement('p');status.setAttribute('role','status');const current=document.createElement('div'),offers=document.createElement('div'),standings=document.createElement('div');details.append(markerLabel,filter,status,current,offers,standings);section.append(details);root.append(section);const teams=mountQuestTeamPanel(details,{command});let signature='',busy=false;
@@ -17,6 +18,6 @@ export function mountQuestMapPanel(root,{command,getEnvironment,getLive,getSelfI
   if(!catalog.length)node('p','No assignments are offered on this map yet.',offers);
   if(records.length){node('h3','Shared competition results',standings);const list=node('ol','',standings);for(const record of records)node('li',record.username+' · '+record.title+' · '+(record.elapsed/1000).toFixed(1)+'s · '+record.score+' score'+(record.kind==='race'?(record.won?' · Won heat':' · Finished heat'):'')+(record.opponentTime?' · AI '+(record.opponentTime/1000).toFixed(1)+'s':''),list);}
  }
- filter.onchange=()=>{signature='';render();};toggle.onclick=()=>{details.open=!details.open;if(details.open)section.scrollIntoView({block:'nearest'});};details.ontoggle=()=>{toggle.setAttribute('aria-expanded',String(details.open));if(details.open)render();};
+ filter.onchange=()=>{signature='';render();};toggle.onclick=()=>{details.open=!details.open;toggle.setAttribute('aria-expanded',String(details.open));toggle.setAttribute('aria-pressed',String(details.open));if(details.open){render();section.scrollIntoView({block:'nearest'});}};details.ontoggle=()=>{toggle.setAttribute('aria-expanded',String(details.open));toggle.setAttribute('aria-pressed',String(details.open));if(details.open)render();};
  return {section,toggle,markers,get tags(){return markers.checked?questMapTags(getLive(),getSelfId()):[];},update(){if(details.open)render();},dispose(){teams.dispose();toggle.remove();section.remove();}};
 }
