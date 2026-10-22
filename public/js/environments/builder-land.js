@@ -1,3 +1,4 @@
+import {createSkiResortLand} from './ski-resort-land.js';
 import {createHarborLand} from './harbor-land.js';
 import {applyBuilderBaseTransform} from './builder-base.js';
 import {addFiringRangeDressing,createFiringRangeFloorMaterial} from './layout-firing-range.js';
@@ -19,6 +20,7 @@ function sportsLand(root,theme) {
     root.userData.cleanSportsWorld=true;return root;
 }
 export function createBuilderLand(environment) {
+    if(environment.builderScene?.layout==='ski-resort')return createSkiResortLand();
     if(environment.builderScene?.layoutMeta?.harbor)return createHarborLand(environment);
     if(isBasketballEnvironment(environment)){const root=createBasketballStadium(THREE,environment);root.userData.cleanSportsWorld=true;return root;}
     if((environment.builderScene?.layout||environment.layout)==='arcade-park')return sportsLand(createArcadePark(environment.builderScene?.gameplay?.arcade||environment.arcade).root,'arcade');

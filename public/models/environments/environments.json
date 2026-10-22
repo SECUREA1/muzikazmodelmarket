@@ -49,6 +49,540 @@
     "roomId": "firing-range"
   },
   {
+    "id": "pixel-peaks-ski-resort",
+    "name": "Pixel Peaks Ski Resort",
+    "label": "Mountain skiing · lifts · château",
+    "category": "Winter sports",
+    "game": "ski",
+    "worldId": "pixel-peaks",
+    "permanent": true,
+    "publicDestination": true,
+    "proceduralLand": true,
+    "source": "repository",
+    "visibility": "public",
+    "playable": true,
+    "multiplayer": true,
+    "canDelete": false,
+    "canEdit": false,
+    "ownerId": "muzikaz",
+    "ownerName": "MUZIKAZ",
+    "scale": 1,
+    "spaceScale": 1,
+    "spawn": {
+      "x": 0,
+      "y": 0.02,
+      "z": 370,
+      "rotationY": 0
+    },
+    "description": "A massive 1.2 km alpine resort with a 300 m natural summit and 180 m ski vertical, four color-coded ski trails, two rideable chairlifts, three snow ramps, woodland trails, warming hut and a walk-in château with a glowing fireplace, lounge, dining room, stairs and observation balcony. Multiplayer skiing, braking and jumping on the shared mountain.",
+    "builderScene": {
+      "version": 3,
+      "layout": "ski-resort",
+      "mapSize": 1200,
+      "objects": [
+        {
+          "id": "ski-rental",
+          "modelId": "street-sign",
+          "name": "Ski Rental & Equipment",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -35,
+            "y": 0.02,
+            "z": 355
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 6,
+            "prompt": "Ski Rental & Equipment · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use to equip or remove skis. W / forward pushes, look to steer, S / back brakes, Space jumps. Remove skis before entering the château. The resort controls also let you equip skis anywhere on snow."
+          }
+        },
+        {
+          "id": "ski-summit-express-base",
+          "modelId": "street-sign",
+          "name": "Summit Express Chairlift · Board here",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -178,
+            "y": 0.02,
+            "z": 305
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 6,
+            "prompt": "Summit Express Chairlift · Board here · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use to board the moving chairlift. Enjoy the mountain ride; disembark automatically at the summit."
+          }
+        },
+        {
+          "id": "ski-summit-express-summit",
+          "modelId": "street-sign",
+          "name": "Summit Express Chairlift · Summit station",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -178,
+            "y": 180.02,
+            "z": -405
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 6,
+            "prompt": "Summit Express Chairlift · Summit station · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Summit arrival. Equip skis, face downhill and choose a marked run."
+          }
+        },
+        {
+          "id": "ski-park-lift-base",
+          "modelId": "street-sign",
+          "name": "Terrain Park Chairlift · Board here",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 247,
+            "y": 0.02,
+            "z": 300
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 6,
+            "prompt": "Terrain Park Chairlift · Board here · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Use to board the moving chairlift. Enjoy the mountain ride; disembark automatically at the summit."
+          }
+        },
+        {
+          "id": "ski-park-lift-summit",
+          "modelId": "street-sign",
+          "name": "Terrain Park Chairlift · Summit station",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 247,
+            "y": 109.1745189504373,
+            "z": -100
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 6,
+            "prompt": "Terrain Park Chairlift · Summit station · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Summit arrival. Equip skis, face downhill and choose a marked run."
+          }
+        },
+        {
+          "id": "ski-pine-trail",
+          "modelId": "street-sign",
+          "name": "Pine Trail · Beginner",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -113.75853144289437,
+            "y": 179.77558309037903,
+            "z": -385
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 6,
+            "prompt": "Pine Trail · Beginner · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Follow the color-coded poles downhill to the base village. Broad groomed snow with mountain views."
+          }
+        },
+        {
+          "id": "ski-glacier-run",
+          "modelId": "street-sign",
+          "name": "Glacier Run · Intermediate",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -1.6107991898118685,
+            "y": 179.77558309037903,
+            "z": -385
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 6,
+            "prompt": "Glacier Run · Intermediate · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Follow the color-coded poles downhill to the base village. Broad groomed snow with mountain views."
+          }
+        },
+        {
+          "id": "ski-black-diamond",
+          "modelId": "street-sign",
+          "name": "Black Diamond · Expert",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 107.04686815201157,
+            "y": 179.77558309037903,
+            "z": -385
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 6,
+            "prompt": "Black Diamond · Expert · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Follow the color-coded poles downhill to the base village. Broad groomed snow with mountain views."
+          }
+        },
+        {
+          "id": "ski-terrain-park",
+          "modelId": "street-sign",
+          "name": "Freestyle Terrain Park",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 195,
+            "y": 112.2856594164765,
+            "z": -100
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 6,
+            "prompt": "Freestyle Terrain Park · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Follow the color-coded poles downhill to the base village. Three sculpted snow ramps with landing slopes."
+          }
+        },
+        {
+          "id": "ski-chateau",
+          "modelId": "street-sign",
+          "name": "Château Pixel Peaks · Fireplace Lounge",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -74,
+            "y": 0.02,
+            "z": 380
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 6,
+            "prompt": "Château Pixel Peaks · Fireplace Lounge · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Walk through the wide front doors to the fireplace lounge, dining room and upstairs observation balcony. Skis are removed automatically indoors."
+          }
+        },
+        {
+          "id": "ski-warming-hut",
+          "modelId": "street-sign",
+          "name": "Mid-mountain Warming Hut",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": -245,
+            "y": 86.16390670553935,
+            "z": -40
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 6,
+            "prompt": "Mid-mountain Warming Hut · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "A sheltered rest stop beside the Summit Express. Open the local 3D map to find every run, lift and lodge."
+          }
+        },
+        {
+          "id": "ski-village",
+          "modelId": "street-sign",
+          "name": "Base Village & Trail Map",
+          "placementAnchor": "collider-base",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 385
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          },
+          "functionalSettings": {
+            "behavior": "interact",
+            "interactionDistance": 6,
+            "prompt": "Base Village & Trail Map · E / Use",
+            "destructible": false
+          },
+          "dialogueSettings": {
+            "text": "Welcome to Pixel Peaks. Rent skis, board Summit Express, explore four marked runs and three ramps, or warm up at the château fireplace. Open Map for real 3D resort geometry and travel tags."
+          }
+        }
+      ],
+      "layoutMeta": {
+        "color": 15201018,
+        "sky": 10471912,
+        "locations": [
+          {
+            "id": "rental",
+            "name": "Ski Rental & Equipment",
+            "x": -35,
+            "y": 0,
+            "z": 355,
+            "width": 14,
+            "depth": 12,
+            "description": "Use to equip or remove skis. W / forward pushes, look to steer, S / back brakes, Space jumps. Remove skis before entering the château. The resort controls also let you equip skis anywhere on snow."
+          },
+          {
+            "id": "summit-express-base",
+            "name": "Summit Express Chairlift · Board here",
+            "x": -178,
+            "y": 0,
+            "z": 305,
+            "width": 14,
+            "depth": 12,
+            "description": "Use to board the moving chairlift. Enjoy the mountain ride; disembark automatically at the summit."
+          },
+          {
+            "id": "summit-express-summit",
+            "name": "Summit Express Chairlift · Summit station",
+            "x": -178,
+            "y": 180,
+            "z": -405,
+            "width": 14,
+            "depth": 12,
+            "description": "Summit arrival. Equip skis, face downhill and choose a marked run."
+          },
+          {
+            "id": "park-lift-base",
+            "name": "Terrain Park Chairlift · Board here",
+            "x": 247,
+            "y": 0,
+            "z": 300,
+            "width": 14,
+            "depth": 12,
+            "description": "Use to board the moving chairlift. Enjoy the mountain ride; disembark automatically at the summit."
+          },
+          {
+            "id": "park-lift-summit",
+            "name": "Terrain Park Chairlift · Summit station",
+            "x": 247,
+            "y": 109.1545189504373,
+            "z": -100,
+            "width": 14,
+            "depth": 12,
+            "description": "Summit arrival. Equip skis, face downhill and choose a marked run."
+          },
+          {
+            "id": "pine-trail",
+            "name": "Pine Trail · Beginner",
+            "x": -113.75853144289437,
+            "y": 179.75558309037902,
+            "z": -385,
+            "width": 14,
+            "depth": 12,
+            "description": "Follow the color-coded poles downhill to the base village. Broad groomed snow with mountain views.",
+            "color": "#35c98a",
+            "icon": "●"
+          },
+          {
+            "id": "glacier-run",
+            "name": "Glacier Run · Intermediate",
+            "x": -1.6107991898118685,
+            "y": 179.75558309037902,
+            "z": -385,
+            "width": 14,
+            "depth": 12,
+            "description": "Follow the color-coded poles downhill to the base village. Broad groomed snow with mountain views.",
+            "color": "#439fff",
+            "icon": "■"
+          },
+          {
+            "id": "black-diamond",
+            "name": "Black Diamond · Expert",
+            "x": 107.04686815201157,
+            "y": 179.75558309037902,
+            "z": -385,
+            "width": 14,
+            "depth": 12,
+            "description": "Follow the color-coded poles downhill to the base village. Broad groomed snow with mountain views.",
+            "color": "#292947",
+            "icon": "◆"
+          },
+          {
+            "id": "terrain-park",
+            "name": "Freestyle Terrain Park",
+            "x": 195,
+            "y": 112.26565941647651,
+            "z": -100,
+            "width": 14,
+            "depth": 12,
+            "description": "Follow the color-coded poles downhill to the base village. Three sculpted snow ramps with landing slopes.",
+            "color": "#ffa547",
+            "icon": "✦"
+          },
+          {
+            "id": "chateau",
+            "name": "Château Pixel Peaks · Fireplace Lounge",
+            "x": -74,
+            "y": 0,
+            "z": 380,
+            "width": 14,
+            "depth": 12,
+            "description": "Walk through the wide front doors to the fireplace lounge, dining room and upstairs observation balcony. Skis are removed automatically indoors."
+          },
+          {
+            "id": "warming-hut",
+            "name": "Mid-mountain Warming Hut",
+            "x": -245,
+            "y": 86.14390670553935,
+            "z": -40,
+            "width": 14,
+            "depth": 12,
+            "description": "A sheltered rest stop beside the Summit Express. Open the local 3D map to find every run, lift and lodge."
+          },
+          {
+            "id": "village",
+            "name": "Base Village & Trail Map",
+            "x": 0,
+            "y": 0,
+            "z": 385,
+            "width": 14,
+            "depth": 12,
+            "description": "Welcome to Pixel Peaks. Rent skis, board Summit Express, explore four marked runs and three ramps, or warm up at the château fireplace. Open Map for real 3D resort geometry and travel tags."
+          }
+        ]
+      },
+      "gameplay": {
+        "multiplayer": true,
+        "friendlyFire": false
+      }
+    },
+    "playUrl": "model-explorer.html?environment=pixel-peaks-ski-resort&autoplay=1&mode=multiplayer"
+  },
+  {
     "id": "force-training-range",
     "name": "Firing Range — Force Training",
     "label": "Classic five-lane qualification range",
