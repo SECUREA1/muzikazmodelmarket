@@ -4424,6 +4424,45 @@
         "speed": 12,
         "turnSpeed": 0.7
       }
+    },
+    {
+      "id": "builder-alpine-quad",
+      "name": "Atlas Trail Quad",
+      "owner": "MUZIKAZ",
+      "type": "vehicles",
+      "thumbnailUrl": "/public/images/vehicles/alpine-quad.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "vehicles",
+      "buildAssetId": "alpine-quad",
+      "description": "All-terrain quad with luggage racks, exposed suspension, LED lights and digital instruments.",
+      "behavior": "vehicle"
+    },
+    {
+      "id": "builder-grand-tourer",
+      "name": "Aurelia Grand Tourer",
+      "owner": "MUZIKAZ",
+      "type": "vehicles",
+      "thumbnailUrl": "/public/images/vehicles/grand-tourer.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "vehicles",
+      "buildAssetId": "grand-tourer",
+      "description": "Luxury four-seat touring car with panoramic glass, leather cabin and live digital dashboard.",
+      "behavior": "vehicle"
+    },
+    {
+      "id": "builder-touring-motorcycle",
+      "name": "Veloce Touring Motorcycle",
+      "owner": "MUZIKAZ",
+      "type": "vehicles",
+      "thumbnailUrl": "/public/images/vehicles/touring-motorcycle.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "vehicles",
+      "buildAssetId": "touring-motorcycle",
+      "description": "Touring motorcycle with detailed engine, mirrors, luggage cases and digital instruments.",
+      "behavior": "vehicle"
     }
   ]
 }

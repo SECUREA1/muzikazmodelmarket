@@ -1,3 +1,4 @@
+import {isRoadVehicle,stepRoadVehicle} from './road-vehicles.js';
 import {isAircraft,stepAircraftFlight} from './aircraft-flight.js';
 import {aircraftAssistedInput} from './aircraft-assist.js';
 import {isWatercraft} from './harbor-water.js';
@@ -7,7 +8,7 @@ const finite=(value,fallback=0)=>Number.isFinite(value)?value:fallback;
 const validPosition=actor=>actor?.position&&['x','y','z'].every(axis=>Number.isFinite(actor.position[axis]));
 const wrap=value=>Math.atan2(Math.sin(value),Math.cos(value));
 const copyState=state=>state?structuredClone(state):state;
-const cloneActor=actor=>({...actor,position:{...actor.position},rotation:{...actor.rotation},...(actor.scale?{scale:{...actor.scale}}:{}),...(actor.flight?{flight:copyState(actor.flight)}:{}),...(actor.boating?{boating:copyState(actor.boating)}:{})});
+const cloneActor=actor=>({...actor,position:{...actor.position},rotation:{...actor.rotation},...(actor.scale?{scale:{...actor.scale}}:{}),...(actor.flight?{flight:copyState(actor.flight)}:{}),...(actor.boating?{boating:copyState(actor.boating)}:{}),...(actor.driving?{driving:copyState(actor.driving)}:{})});
 // Only the local vehicle's presentation is predicted. Snapshots retain all
 // authority over health, ownership, impacts, boarding and travel operations.
 export class LocalVehicleView {
@@ -73,7 +74,7 @@ export class LocalVehicleView {
    pose.flight.impactDamage=0;Object.assign(state,pose);
   }else if(isWatercraft(state)){
    const controls=boatAssistedInput(state,{...input},environment,serverNow,options.actors||{},blocked);const pose=stepBoatSimulation(state,options.fuel<=0?{...controls,throttle:0}:controls,delta,{environment,now:serverNow,blocked});pose.boating.impactDamage=0;Object.assign(state,pose);
-  }else if(options.step){state={...state,...options.step({actor:state,input:{...input},dt:delta,options})};}
+  }else if(isRoadVehicle(state)){Object.assign(state,stepRoadVehicle(state,input,delta,{groundAt:point=>{const floor=options.groundAt?.(point,state);return typeof floor==='number'?{...point,y:floor}:floor||(!options.groundAt?point:null);},blocked}));}else if(options.step){state={...state,...options.step({actor:state,input:{...input},dt:delta,options})};}
   return state;
  }
  publish(delta,options){

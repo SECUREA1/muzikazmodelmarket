@@ -1,3 +1,4 @@
+import {isRoadVehicle,roadVehicleType} from './road-vehicles.js';
 import {Box3,Ray,Vector3} from '../vendor/three/three.module.min.js';
 import {isAircraft} from './aircraft-flight.js';
 import {isWatercraft,harborWaterAt,watercraftFootprint,watercraftOverlap,watercraftSize} from './harbor-water.js';
@@ -33,13 +34,14 @@ export function createVehicleCollision({octree=null,triangleGroups=[],actors={},
  }
  return {blocked(from,to,yaw=0,actor=null){
   if(!from||!to)return false;
-  const vessel=isWatercraft(actor),plane=isAircraft(actor),id=value(ignoreId)??actor?.id,all=value(actors)||{};
+  const road=isRoadVehicle(actor),config=roadVehicleType(actor),vessel=isWatercraft(actor),plane=isAircraft(actor),id=value(ignoreId)??actor?.id,all=value(actors)||{};
+  if(road&&Object.values(all).some(other=>other.id!==id&&other.active!==false&&isRoadVehicle(other)&&Math.hypot(other.position.x-to.x,other.position.z-to.z)<(config.width+roadVehicleType(other).width)/2+.3))return true;
   if(vessel){
    if(Object.values(all).some(other=>other.id!==id&&other.active!==false&&isWatercraft(other)&&watercraftOverlap(to,yaw,other.position,other.rotation?.y||0,.12,actor,other)))return true;
    const map=value(environment);if(map&&!watercraftFootprint(to,yaw,actor).every(vertex=>harborWaterAt(map,vertex,.25)))return true;
   }
   direction.set(to.x-from.x,to.y-from.y,to.z-from.z);if(vessel)direction.y=0;const span=direction.length();if(span<.001)return false;direction.multiplyScalar(1/span);
-  const yacht=(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht',[beam,length]=yacht?watercraftSize(actor):[.85,2],nose=plane?2.8:vessel?length:0,padding=plane?.1:vessel?.12:.05,sides=plane?[-4.8,0,4.8]:vessel?[-beam,0,beam]:[0];
+  const yacht=(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht',[beam,length]=yacht?watercraftSize(actor):[.85,2],nose=plane?2.8:vessel?length:road?config.length*.4:0,padding=plane?.1:vessel?.12:.05,sides=plane?[-4.8,0,4.8]:vessel?[-beam,0,beam]:road?[-config.width*.45,0,config.width*.45]:[0];
   for(const side of sides){
    origin.set(from.x+Math.cos(yaw)*side-Math.sin(yaw)*nose,vessel?.18:from.y+(plane?.9:.9),from.z-Math.sin(yaw)*side-Math.cos(yaw)*nose);
    if(hitMap(origin,direction,span+padding)||hitPlaced(origin,direction,span+padding,id))return true;
