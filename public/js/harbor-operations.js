@@ -47,6 +47,7 @@ export function mountHarborOperations({stage,command,onView=()=>{},announce=()=>
   shape('rect',{x:-extent,y:-extent,width:extent*2,height:extent*2,rx:12,fill:'#174f65'});
   shape('rect',{x:-128,y:-128,width:256,height:256,rx:6,fill:'#405f48'});
   for(const island of environment?.builderScene?.layoutMeta?.harbor?.islands||[])shape('rect',{x:island.x-island.width/2,y:island.z-island.depth/2,width:island.width,height:island.depth,rx:4,fill:'#6d8c60'});
+  for(const lake of environment?.builderScene?.layoutMeta?.harbor?.lakes||[])shape('rect',{x:lake.x-lake.width/2,y:lake.z-lake.depth/2,width:lake.width,height:lake.depth,fill:'#174f65'});
   for(const [index,destination]of destinations.entries()){
    const marker=shape('circle',{cx:destination.x,cy:destination.z,r:20,fill:'#8ce7df',stroke:'#091e29','stroke-width':2});routeMarkers.set(destination.id,marker);
    const title=document.createElementNS(ns,'title');title.textContent=destination.name;marker.append(title);

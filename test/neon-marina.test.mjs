@@ -12,13 +12,13 @@ import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {SharedRoomStore} from '../shared-room-store.mjs';
 const marina=neonMarina();
 const world={id:'marina-test',updatedAt:'1',proceduralLand:true,spawn:{x:124,y:0,z:30},builderScene:{layout:'community-park',mapSize:256,layoutMeta:{harbor:marina.harbor},objects:marina.objects}};
-test('harbor has real sea outside the mainland, three land destinations, and eight catalog boats at accessible slips',()=>{
- assert.equal(marina.harbor.islands.length,3);const boats=marina.objects.filter(isWatercraft);assert.equal(boats.length,8);
+test('harbor has real sea outside the mainland, seven island destinations, and fourteen catalog boats at accessible slips',()=>{
+ assert.equal(marina.harbor.islands.length,7);const boats=marina.objects.filter(isWatercraft);assert.equal(boats.length,14);
  for(const boat of boats){assert.ok(watercraftFootprint(boat.position,boat.rotation.y).every(p=>harborWaterAt(world,p)));assert.ok(createBuilderModel(boat.modelId));}
  const land=createBuilderLand(world);assert.ok(land.getObjectByName('HARBOR_WATER_VISUAL').userData.collisionDisabled);const collision=new ServerBuilderCollision();
  assert.ok(Math.abs(collision.groundAt(world,{x:10,y:1,z:10}).y)<.1);
  assert.ok(collision.groundAt(world,{x:155,y:1,z:75}).y<-.5,'sea does not hide a mainland floor at y=0');
- for(const island of marina.harbor.islands){assert.equal(harborWaterAt(world,island),false);assert.ok(Math.abs(collision.groundAt(world,{x:island.x+island.width/2-3,z:island.z+island.depth/2-3,y:1}).y)<.1);}
+ for(const island of marina.harbor.islands){const arrival=marina.locations.find(place=>place.id===island.id)?.arrival||island;assert.equal(harborWaterAt(world,arrival),false);assert.ok(Math.abs(collision.groundAt(world,{x:island.x+island.width/2-3,z:island.z+island.depth/2-3,y:1}).y)<.1);}
 });
 test('boats board without moving the mooring, cruise on the waterline, stop at land, and support clean exits',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'boat-sailing-'));t.after(()=>rm(dir,{recursive:true,force:true}));const store=new SharedRoomStore(join(dir,'rooms.json'));let now=100000,count=0;const runtime=new AuthoritativeRooms({store,now:()=>now}),identity={accountId:'sailor',walletId:'sailor',username:'Sailor',stats:{health:100}},actorId='account:sailor';

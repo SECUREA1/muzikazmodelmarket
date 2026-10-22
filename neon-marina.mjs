@@ -1,6 +1,7 @@
 import {resortProductPlacement} from './public/js/resort-products.js';
+export const NEON_MARINA_VERSION=2;
 export function neonMarina(){
- const harbor={extent:512,islands:[{id:'beacon-island',name:'Beacon Island',x:185,z:24,width:48,depth:48},{id:'palm-key',name:'Palm Key',x:-185,z:-45,width:52,depth:52},{id:'north-haven',name:'North Haven',x:20,z:185,width:56,depth:48}]};
+ const harbor={version:NEON_MARINA_VERSION,extent:768,islands:[{id:'beacon-island',name:'Beacon Island',x:185,z:24,width:48,depth:48},{id:'palm-key',name:'Palm Key',x:-185,z:-45,width:52,depth:52},{id:'north-haven',name:'North Haven',x:20,z:185,width:56,depth:48},{id:'crescent-island',name:'Crescent Island',x:-390,z:270,width:240,depth:200},{id:'silver-coast',name:'Silver Coast',x:430,z:-300,width:220,depth:200},{id:'reed-cay',name:'Reed Cay',x:360,z:340,width:88,depth:72},{id:'sunset-key',name:'Sunset Key',x:-370,z:-310,width:96,depth:80}],lakes:[{id:'crescent-lake',name:'Crescent Lake',x:-390,z:280,width:96,depth:64},{id:'silver-lake',name:'Silver Lake',x:430,z:-280,width:80,depth:64}]};
  const objects=[],locations=[];
  const add=(id,modelId,x,y,z,extra={})=>{const item={id:'public-experience-marina-'+id,modelId,placementAnchor:'collider-base',name:extra.name||id.replaceAll('-',' '),position:{x,y,z},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},functionalSettings:{behavior:'decor',destructible:true,health:100},...extra};objects.push(item);return item;};
  const tile=(id,x,z,scale=[1,1,1],y=0)=>add(id,'material:floor',x,y,z,{scale:{x:scale[0],y:scale[1],z:scale[2]}});
@@ -26,14 +27,14 @@ export function neonMarina(){
  add('mainland-water-steps','material:stage-steps',130.8,-.65,28.2);
  guide('departure-guide','Marina Departures',122,26,'Launches, a sailboat and Sentinel 07 combat patrol are docked here. E / Use boards or leaves a boat. Steer with WASD, arrows or the left stick. Sail east to Beacon Island, west around the coast to Palm Key, or north to North Haven. Stay clear of docks and the shoreline.');
  for(const island of harbor.islands){
-  locations.push({...island,description:'A real land destination with a landing pier, return boat, seating and a local landmark.'});
-  const edge=island.x-island.width/2;
+  locations.push({...island,...(harbor.lakes.some(lake=>Math.abs(lake.x-island.x)<island.width/2&&Math.abs(lake.z-island.z)<island.depth/2)?{arrival:{x:island.x-island.width/2+12,y:0,z:island.z}}:{}),description:'A real land destination with a landing pier, return boat, seating and a local landmark.'});
+  const edge=island.x-island.width/2,landX=harbor.lakes.some(lake=>Math.abs(lake.x-island.x)<island.width/2&&Math.abs(lake.z-island.z)<island.depth/2)?edge+18:island.x;
   for(let i=0;i<6;i++)tile(island.id+'-landing-'+i,edge-10.8+i*2.4,island.z);
   add(island.id+'-steps','material:stage-steps',edge-7.2,-.65,island.z-1.8);
   add(island.id+'-boat','harbor-skiff',edge-3,0,island.z-4,{placementAnchor:'waterline',name:island.name+' return launch',rotation:{x:0,y:Math.PI/2,z:0},functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:5,prompt:'Board return boat',destructible:true,health:200}});
-  for(const side of [-1,1])add(island.id+'-seat-'+side,'material:bench',island.x+side*7,0,island.z+7,{functionalSettings:{behavior:'seat',interactionDistance:3,destructible:true,health:100}});
-  for(let i=0;i<5;i++)add(island.id+'-tree-'+i,island.id==='palm-key'?'palm-cluster':'canopy-tree',island.x-14+i*7,0,island.z-15);
-  guide(island.id+'-guide',island.name,island.x-4,island.z+9,'Welcome to '+island.name+'. The landing pier and return launch are west of this landmark. Neon Marina is on the east coast of the main island. Open the local map to find the other islands and deed portals.');
+  for(const side of [-1,1])add(island.id+'-seat-'+side,'material:bench',landX+side*7,0,island.z+7,{functionalSettings:{behavior:'seat',interactionDistance:3,destructible:true,health:100}});
+  for(let i=0;i<5;i++)add(island.id+'-tree-'+i,island.id==='palm-key'?'palm-cluster':'canopy-tree',landX-14+i*7,0,island.z-15);
+  guide(island.id+'-guide',island.name,landX-4,island.z+9,'Welcome to '+island.name+'. The landing pier and return launch are west of this landmark. Neon Marina is on the east coast of the main island. Open the local map to find the other islands and deed portals.');
  }
  // Two additional large docks offer separate approaches for launches and the yacht.
  harbor.docks=[
@@ -48,6 +49,20 @@ export function neonMarina(){
   locations.push({...dock,description:'Large public landing dock with a marked approach and room for the superyacht. Select Sail to on the map.'});
   guide(dock.id+'-sign',dock.name,dock.x,dock.z,'Choose this dock on the map while piloting a boat. The automatic helm follows clear water and stops alongside the quay. Slow or anchor before leaving the helm.');
   for(const side of [-1,1])add(dock.id+'-light-'+side,'lamp-post',dock.x+(dock.width>10?side*22:0),0,dock.z+(dock.depth>10?side*22:0));
+ }
+ // Outer-harbor quays use long modular decks to keep the expanded map light.
+ for(const island of harbor.islands.slice(3)){
+  const edge=island.x-island.width/2,dock={id:island.id+'-dock',name:island.name+' Harbour',x:edge-20,z:island.z,width:2.4,depth:48,approach:{x:edge-26,z:island.z},entry:{x:edge-26,z:island.z+72},yachtApproach:{x:edge-32,z:island.z},yachtEntry:{x:edge-32,z:island.z+80}};
+  harbor.docks.push(dock);tile(dock.id+'-quay',dock.x,dock.z,[1,1,20]);tile(dock.id+'-link',edge-10,dock.z,[8.5,1,1]);
+  locations.push({...dock,arrival:{x:edge-18,y:0,z:island.z},description:'Outer-harbor landing quay with a clear offshore approach, island footpath and return launch.'});
+  guide(dock.id+'-sign',dock.name,edge+6,island.z+6,'Explore '+island.name+' or choose this harbour in the sailing map. The offshore approach keeps large boats clear of the shore.');
+ }
+ for(const lake of harbor.lakes){
+  const shore=lake.x-lake.width/2;
+  locations.push({...lake,arrival:{x:shore-6,y:0,z:lake.z},description:'An inland freshwater lake with a walkable shore, fishing pier and local launch. Reach the island by sea, then explore the lake on foot.'});
+  tile(lake.id+'-pier',shore+3.6,lake.z,[5,1,1]);
+  add(lake.id+'-boat','harbor-skiff',shore+7,0,lake.z+5,{placementAnchor:'waterline',name:lake.name+' launch',rotation:{x:0,y:0,z:0},functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:5,prompt:'Explore the lake · E / Use',destructible:true,health:200}});
+  guide(lake.id+'-guide',lake.name,shore-6,lake.z-4,'This freshwater lake has its own launch. Board from the pier with E / Use, cruise within the lake, and return to the pier to explore the island.');
  }
  // Walk-in properties use individual Builder pieces throughout their structure.
  const part=(id,material,x,y,z,scale=[1,1,1],rotation=0)=>add(id,'material:'+material,x,y,z,{scale:{x:scale[0],y:scale[1],z:scale[2]},rotation:{x:0,y:rotation,z:0}});

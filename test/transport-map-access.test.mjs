@@ -14,7 +14,7 @@ for(const world of [airportWorld(),marina])test(world.name+' map travel and boar
  const alice={accountId:'alice',username:'Alice',stats:{health:100}},bob={accountId:'bob',username:'Bob',stats:{health:100}};
  const send=(user,action,fields={})=>runtime.command(world.id,world,user,{action,requestId:'map-'+ ++request,...fields});
  await send(alice,'join');await send(bob,'join');assert.equal(supportsRadTox(world),false);
- for(const place of world.builderScene.layoutMeta.locations){const state=await send(alice,'map-access',{locationId:place.id});const position=state.players['account:alice'].position;assert.ok(Math.hypot(position.x-place.x,position.z-place.z)<=13,place.name+' arrives nearby');assert.ok(position.y>=0);assert.equal(Object.keys(state.players).length,2);assert.equal(state.players['account:alice'].radToxEnabled,false);}
+ for(const place of world.builderScene.layoutMeta.locations){const state=await send(alice,'map-access',{locationId:place.id});const position=state.players['account:alice'].position;assert.ok(Math.hypot(position.x-(place.arrival||place).x,position.z-(place.arrival||place).z)<=13,place.name+' arrives nearby');assert.ok(position.y>=0);assert.equal(Object.keys(state.players).length,2);assert.equal(state.players['account:alice'].radToxEnabled,false);}
  const craft=world.builderScene.objects.filter(o=>['corsair-aircraft','diamond-da40','piper-cub','harbor-skiff','harbor-sailboat'].includes(o.modelId));
  let state=await send(alice,'map-access',{entityId:craft[0].id});assert.equal(state.players['account:alice'].vehicleId,craft[0].id);assert.equal(state.actors[craft[0].id].holderId,'account:alice');
  await assert.rejects(send(bob,'map-access',{entityId:craft[0].id}),/Another player/);

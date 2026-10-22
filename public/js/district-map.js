@@ -110,6 +110,7 @@ export function mountDistrictMap({stage,command=null,getRoots=null,fetchAtlas=as
   if(extent>128)shape('rect',{x:-extent,y:-extent,width:extent*2,height:extent*2,fill:'#12617a'});
   const landExtent=environment.builderScene?.layoutMeta?.harbor?128:extent;shape('rect',{x:-landExtent,y:-landExtent,width:landExtent*2,height:landExtent*2,fill:'#142b24',rx:5});
   for(const island of environment.builderScene?.layoutMeta?.harbor?.islands||[])shape('rect',{x:island.x-island.width/2,y:island.z-island.depth/2,width:island.width,height:island.depth,fill:'#708b5b'},island.name);
+  for(const lake of environment.builderScene?.layoutMeta?.harbor?.lakes||[])shape('rect',{x:lake.x-lake.width/2,y:lake.z-lake.depth/2,width:lake.width,height:lake.depth,fill:'#12617a'},lake.name);
   for(const street of environment.streets||environment.builderScene?.streets||[])shape('line',{x1:street.from.x,y1:street.from.z,x2:street.to.x,y2:street.to.z,stroke:'#728b85','stroke-width':street.width||5},street.name);
   for(const object of environment.builderScene?.objects||[])if(object.modelId==='material:paving-tile'){shape('rect',{x:object.position.x-1.2,y:object.position.z-1.2,width:2.4,height:2.4,fill:'#9ea995'});}
   for(const place of districtLocations(environment)){shape('rect',{x:place.x-place.width/2,y:place.z-place.depth/2,width:place.width,height:place.depth,fill:'#c7e88f','fill-opacity':.1,stroke:'#c7e88f','stroke-width':.5},place.name);shape('text',{x:place.x,y:place.z-7,'text-anchor':'middle',fill:'#efffd7','font-size':4}).textContent=place.name;}

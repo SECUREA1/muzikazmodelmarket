@@ -11,10 +11,10 @@ import {boatAssistedInput} from '../public/js/boat-assist.js';
 import {stepBoatSimulation} from '../public/js/boat-simulation.js';
 import {harborWaterAt,watercraftFootprint} from '../public/js/harbor-water.js';
 const airport=airportWorld(),marina=neonMarina(),harbor={builderScene:{objects:marina.objects,layoutMeta:{harbor:marina.harbor}}};
-test('expanded worlds expose three landing strips, two additional docks, and relevant vehicle routes',()=>{
- assert.equal(airportRunways(airport).length,3);assert.ok(airport.builderScene.mapSize>=1024);assert.equal(marina.harbor.docks.length,2);assert.ok(marina.harbor.extent>=512);
+test('expanded worlds expose three landing strips, six harbour docks, and relevant vehicle routes',()=>{
+ assert.equal(airportRunways(airport).length,3);assert.ok(airport.builderScene.mapSize>=1024);assert.equal(marina.harbor.docks.length,6);assert.ok(marina.harbor.extent>=512);
  assert.equal(vehicleDestinations(airport,{modelId:'corsair-aircraft'}).length,3);assert.deepEqual(vehicleDestinations(airport,{modelId:'harbor-skiff'}),[]);
- assert.ok(vehicleDestinations(harbor,{modelId:'harbor-yacht'}).every(place=>!marina.harbor.islands.some(island=>island.id===place.id)));assert.equal(vehicleDestinations(harbor,{modelId:'harbor-yacht'}).length,4);
+ assert.ok(vehicleDestinations(harbor,{modelId:'harbor-yacht'}).every(place=>!marina.harbor.islands.some(island=>island.id===place.id)));assert.equal(vehicleDestinations(harbor,{modelId:'harbor-yacht'}).length,8);
 });
 for(const origin of airportRunways(airport))for(const destination of airportRunways(airport))test('automatic flight '+origin.id+' to '+destination.id+' lands and parks without damage',()=>{
  const plane={id:'plane',modelId:'corsair-aircraft',active:true,position:{x:origin.x-21,y:.4,z:origin.z},rotation:{y:0},flight:{}},player={actorId:'pilot',vehicleId:plane.id,input:{}},sim={actors:{plane},players:{pilot:player},airport:{runwayHolder:null,expires:0}};

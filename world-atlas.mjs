@@ -1,3 +1,4 @@
+import {NEON_MARINA_VERSION} from './neon-marina.mjs';
 import {COMMONS_NEIGHBORHOOD_VERSION} from './commons-neighborhood.mjs';
 import {generatedExperience,GENERATED_EXPERIENCE_VERSION} from './generated-world-experiences.mjs';
 import {WORLD_DISTRICTS,DISTRICT_PAGE_SIZE,districtMapId,districtFor} from './world-districts.mjs';
@@ -31,10 +32,10 @@ function upgradePublicPlazas(data){
   if(!cell.generated||!cell.environment?.builderScene)continue;
   const scene=cell.environment.builderScene;let changed=false;
   if(scene.publicPlazaVersion!==1){scene.objects.push(...publicPlazaObjects());scene.publicPlazaVersion=1;changed=true;}
-  if(scene.publicExperienceVersion!==GENERATED_EXPERIENCE_VERSION||cell.mapId==='public-commons'&&scene.commonsNeighborhoodVersion!==COMMONS_NEIGHBORHOOD_VERSION){
+  if(scene.publicExperienceVersion!==GENERATED_EXPERIENCE_VERSION||cell.mapId==='public-commons'&&scene.commonsNeighborhoodVersion!==COMMONS_NEIGHBORHOOD_VERSION||cell.environment.atlasDistrict?.id==='neon-docks'&&!cell.environment.atlasDistrict.page&&scene.layoutMeta?.harbor?.version!==NEON_MARINA_VERSION){
    const experience=generatedExperience(cell.environment);
    scene.objects=scene.objects.filter(object=>!object.id.startsWith('public-experience-'));scene.objects.push(...experience.objects);
-   scene.layoutMeta={...scene.layoutMeta,...experience.layoutMeta};scene.publicExperienceVersion=GENERATED_EXPERIENCE_VERSION;scene.experienceName=experience.name;if(cell.mapId==='public-commons')scene.commonsNeighborhoodVersion=COMMONS_NEIGHBORHOOD_VERSION;cell.environment.description=experience.description;
+   scene.layoutMeta={...scene.layoutMeta,...experience.layoutMeta};if(experience.layoutMeta.harbor)scene.mapSize=experience.layoutMeta.harbor.extent*2;scene.publicExperienceVersion=GENERATED_EXPERIENCE_VERSION;scene.experienceName=experience.name;if(cell.mapId==='public-commons')scene.commonsNeighborhoodVersion=COMMONS_NEIGHBORHOOD_VERSION;cell.environment.description=experience.description;
    changed=true;
   }
   if(changed){cell.environment.updatedAt=new Date().toISOString();cell.updatedAt=cell.environment.updatedAt;cell.environment.contentUpdatedAt=(cell.environment.contentUpdatedAt||'')+':experience-'+GENERATED_EXPERIENCE_VERSION+(cell.mapId==='public-commons'?':commons-'+COMMONS_NEIGHBORHOOD_VERSION:'');data.revision++;}

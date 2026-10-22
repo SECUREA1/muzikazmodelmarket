@@ -5,7 +5,9 @@ const wrap=value=>Math.atan2(Math.sin(value),Math.cos(value));
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 export function harborApproach(environment,id,boat=null){
  const harbor=environment?.builderScene?.layoutMeta?.harbor;if(!harbor)return null;
- if(id==='open-water')return {id,name:'Open-water passage',x:184,z:80};
+ const lake=(harbor.lakes||[]).find(lake=>boat?.position&&Math.abs(boat.position.x-lake.x)<lake.width/2&&Math.abs(boat.position.z-lake.z)<lake.depth/2);
+ if(id==='open-water')return lake?{id,name:lake.name+' open water',x:lake.x+lake.width*.25,z:lake.z+lake.depth*.2}:{id,name:'Open-water passage',x:184,z:80};
+ if(lake&&id===lake.id)return {id,name:lake.name+' pier',x:lake.x-lake.width/2+7,z:lake.z+5};
  if(id==='marina'&&boat?.modelId==='harbor-yacht')return {id,name:'Superyacht Marina Approach',x:170,z:99,entry:{x:225,z:99}};
  if(id==='marina')return {id,name:'Neon Marina approach',x:153,z:64};
  const dock=(harbor.docks||[]).find(value=>value.id===id);if(dock){const yacht=boat?.modelId==='harbor-yacht';return {id,name:dock.name,...(yacht?dock.yachtApproach:dock.approach),entry:yacht?dock.yachtEntry:dock.entry};}
