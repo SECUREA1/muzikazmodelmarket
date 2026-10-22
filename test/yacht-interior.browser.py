@@ -30,7 +30,8 @@ try:
    const actors={yacht:{id:'yacht',modelId:'harbor-yacht',active:true,position:{x:0,y:0,z:0},rotation:{y:0},boating:{speed:0},yachtBilliards:createYachtBilliards()}};window.actors=actors;
    const camera=new T.PerspectiveCamera(70,1000/700,.025,150);camera.position.set(-.3,3.65,12);camera.lookAt(1,2.95,6);
    const renderer=new T.WebGLRenderer({antialias:true});renderer.setSize(1000,700);stage.append(renderer.domElement);
-   const ui=mountYachtGames({THREE:T,stage,getRoots:()=>[yacht],getActors:()=>actors,getPosition:()=>new T.Vector3(0,1.97,8),getVehicleId:()=>null,send:async(action,command)=>{
+   const css=document.createElement('link');css.rel='stylesheet';css.href='/public/assets/game-menus.css';document.head.append(css);
+   const ui=window.yachtUI=mountYachtGames({THREE:T,stage,getRoots:()=>[yacht],getActors:()=>actors,getPosition:()=>new T.Vector3(0,1.97,8),getVehicleId:()=>null,send:async(action,command)=>{
     const state=actors.yacht.yachtBilliards;
     if(command.operation==='rack')actors.yacht.yachtBilliards=createYachtBilliards(state.revision+1);else shootYachtBilliards(state,command.angle,command.power);
     return true;
@@ -42,13 +43,17 @@ try:
    if(capsule.start.y-.34<5.03)throw Error('Upper deck is not walkable.');
    window.yachtPreview={camera,renderer,scene};
   }''')
-  page.locator('[data-yacht-billiards]').click()
+  assert page.locator('[data-yacht-billiards]').count()==0
+  page.evaluate('yachtUI.open()')
   page.locator('[data-aim]').fill('8');page.locator('[data-strength]').fill('70')
   page.locator('[data-shoot]').click()
   page.wait_for_function('actors.yacht.yachtBilliards.shots===1')
   page.screenshot(path='/workspace/yacht-interior-preview.png')
   page.locator('[data-close]').click()
-  assert page.locator('[data-yacht-billiards]').is_visible()
+  assert page.evaluate('yachtUI.available()')
+  assert not page.locator('dialog[open]').count()
+  page.evaluate('yachtUI.open()');page.keyboard.press('Escape')
+  assert not page.locator('dialog[open]').count()
   page.evaluate('''()=>{const {camera,renderer,scene}=yachtPreview;camera.position.set(18,15,25);camera.lookAt(0,2,1);renderer.render(scene,camera);}''')
   page.screenshot(path='/workspace/yacht-stairs-preview.png')
   assert not errors, errors

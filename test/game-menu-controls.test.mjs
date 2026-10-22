@@ -15,10 +15,13 @@ test('radial menu retains original tool buttons and compact actions share touch 
  const module=await readFile(new URL('../public/js/game-menu-controls.js',import.meta.url),'utf8'),game=await readFile(new URL('../public/js/house-explorer-glb.js',import.meta.url),'utf8');
  assert.ok(module.includes('wheel.append(button)'));assert.ok(!module.includes('cloneNode'));
  assert.ok(game.includes("builderActionButton.addEventListener('click',activateNearbyAction)"));
- assert.ok(game.includes("e.target.closest('button,a,summary,[role=button]')"));
- assert.ok(game.includes('if(overlayOpen||now<actionMessageUntil)'));
+ assert.ok(game.includes("builderActionButton.addEventListener('pointerup'"));
+ assert.ok(game.includes("if(nearbyAction.kind==='yacht-game'){yachtGames.open();return;}"));
+ assert.ok(game.includes('gameplayOverlayOpen()||!yachtGames.available()'));
  assert.ok(game.includes('builderPrompt.hidden=true;builderActionButton.hidden=hidden'));
- assert.ok(!game.includes('touchActionsExpanded'));assert.ok(!game.includes("className='game-action-menu-toggle'"));assert.ok(game.includes('touchActions.hidden=!envLoader.world'));
+ const yacht=await readFile(new URL('../public/js/yacht-games-ui.js',import.meta.url),'utf8');
+ assert.ok(!yacht.includes('yacht-game-entry'));assert.ok(yacht.includes('fullscreenPanel(panel'));
+
 });
 
 test('bottom HUD moves original controls into separate flowing rows without duplicate buttons',t=>{

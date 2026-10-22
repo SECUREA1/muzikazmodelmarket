@@ -34,8 +34,9 @@ export function fullscreenPanel(panel, { onOpen = () => {}, onClose = () => {}, 
       const host=document.fullscreenElement || document.body;
       if(dialog.parentElement!==host)host.append(dialog);
       returnFocus=document.activeElement;
-      document.querySelectorAll('dialog.game-fullscreen-dialog[open],dialog.rad-weapons-popup[open]').forEach(other=>{if(other!==dialog)other.close();});
-      onOpen();dialog.showModal();wasOpen=true;document.documentElement.classList.add('game-menu-open');
+      document.querySelectorAll('dialog[open]').forEach(other=>{if(other!==dialog)other.close();});
+      onOpen();dialog.showModal();wasOpen=true;
+      if(panel.id)document.querySelectorAll?.('[aria-controls]').forEach(trigger=>{if((trigger.getAttribute('aria-controls')||'').split(/\s+/).includes(panel.id))trigger.setAttribute('aria-expanded','true');});document.documentElement.classList.add('game-menu-open');
     } else if(!isVisible() && dialog.open)hide();
   };
   close.addEventListener('click',hide);
