@@ -19,7 +19,7 @@ function overview(world){
  add('circle',{cx:px(world.spawn?.x),cy:pz(world.spawn?.z),r:4,fill:'#d5ff98',stroke:'#10241a','stroke-width':2});return svg;
 }
 function disposeObject(root){root?.traverse(node=>{node.geometry?.dispose();for(const material of Array.isArray(node.material)?node.material:[node.material]){if(!material)continue;for(const value of Object.values(material))if(value?.isTexture)value.dispose();material.dispose();}});}
-export function mountWorldPreview(root,world,{resolve=true}={}){
+export function mountWorldPreview(root,world,{resolve=true,autoStart=false}={}){
  const key=previewWorldId(world)+':'+(world.updatedAt||'');if(mounted.get(root)?.key===key)return mounted.get(root);
  mounted.get(root)?.dispose();root.replaceChildren();root.classList.add('world-destination-preview');
  if(!document.querySelector('[data-world-preview-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('../assets/world-destination-preview.css',import.meta.url).href;link.dataset.worldPreviewStyle='';document.head.append(link);}
@@ -28,7 +28,7 @@ export function mountWorldPreview(root,world,{resolve=true}={}){
  let current=world,destroyed=false,stop3d=null,loading=false,generation=0;
  const setPoster=record=>{const data=worldPreviewData(record);poster.replaceChildren();if(data.image){const image=document.createElement('img');image.src=data.image;image.alt=data.name+' destination artwork';image.loading='lazy';image.addEventListener('error',()=>poster.replaceChildren(overview(record)),{once:true});poster.append(image);status.textContent='Destination artwork';}else{poster.append(overview(record));status.textContent=data.procedural?'Saved map overview':'Explore the destination in 3D';}};
  setPoster(current);
- const result={key,dispose(){destroyed=true;stop3d?.();generation++;}};mounted.set(root,result);
+ const result={key,dispose(){destroyed=true;stop3d?.();generation++;if(mounted.get(root)===result)mounted.delete(root);}};mounted.set(root,result);
  if(resolve)fetchWorld(world).then(record=>{if(!destroyed&&root.isConnected){current=record;if(!stop3d&&!loading)setPoster(record);}}).catch(()=>{if(!destroyed)status.textContent='Preview available when the server reconnects';});
  button.addEventListener('click',async event=>{
   event.preventDefault();event.stopPropagation();if(loading||destroyed)return;if(stop3d){stop3d();return;}
@@ -40,7 +40,7 @@ export function mountWorldPreview(root,world,{resolve=true}={}){
    if(destroyed||request!==generation||!root.isConnected){stop();return;}
    scene=new THREE.Scene();scene.background=new THREE.Color(0x10201f);scene.add(new THREE.HemisphereLight(0xd9f5ff,0x435245,2.4));const sun=new THREE.DirectionalLight(0xffffff,2.5);sun.position.set(30,60,25);scene.add(sun);const content=new THREE.Group();scene.add(content);const data=worldPreviewData(current),rangeLocation=data.firingRange?firingRangeLocations(current).find(location=>location.id==='main'):null;
    if(data.model){
-    const response=await fetch(data.model,{signal:abort.signal});if(!response.ok)throw Error('World model unavailable');const buffer=await response.arrayBuffer();if(request!==generation||!root.isConnected){stop();return;}const gltf=await new GLTFLoader().parseAsync(buffer,new URL('.',new URL(data.model,location.href)).href);if(request!==generation||!root.isConnected){disposeObject(gltf.scene);stop();return;}content.add(gltf.scene);content.scale.setScalar((Number(current.scale)||1)*(Number(current.spaceScale)||1));content.rotation.set(Number(current.rotation?.x)||0,Number(current.rotation?.y)||0,Number(current.rotation?.z)||0);
+    for(const model of data.models){const response=await fetch(model,{signal:abort.signal});if(!response.ok)throw Error('World model unavailable');const buffer=await response.arrayBuffer();if(request!==generation||!root.isConnected){stop();return;}const gltf=await new GLTFLoader().parseAsync(buffer,new URL('.',new URL(model,location.href)).href);if(request!==generation||!root.isConnected){disposeObject(gltf.scene);stop();return;}content.add(gltf.scene);}content.scale.setScalar((Number(current.scale)||1)*(Number(current.spaceScale)||1));content.rotation.set(Number(current.rotation?.x)||0,Number(current.rotation?.y)||0,Number(current.rotation?.z)||0);
    }else if(data.procedural){
     content.add(createBuilderLand(current));const definitions=new Map([...(current.builderScene?.catalogModels||[]),...(current.builderScene?.placedModels||[])].map(model=>[model.id,model]));
     for(const item of data.objects.slice(0,100)){const definition=definitions.get(item.modelId);let object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.generated)object=createGeneratedAsset(definition);if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);content.add(object);}
@@ -54,5 +54,5 @@ export function mountWorldPreview(root,world,{resolve=true}={}){
    let last=0;const draw=time=>{if(request!==generation)return;if(!root.isConnected){stop();return;}frame=requestAnimationFrame(draw);if(document.hidden||!visible||!viewport.clientWidth||root.closest('dialog')&&!root.closest('dialog').open||time-last<33)return;last=time;controls.update();if(data.basketball)content.traverse(node=>node.userData.updateBasketballEffects?.(time/1000));if(data.firingRange)content.traverse(node=>node.userData.updateFiringRangeEffects?.(time));renderer.render(scene,camera);};frame=requestAnimationFrame(draw);
    loading=false;button.disabled=false;button.textContent='Close 3D';status.textContent=data.model?'GLB sample · drag to orbit · pinch to zoom':'3D scene sample · drag to orbit · pinch to zoom';
   }catch(error){if(request===generation){stop();status.textContent='3D preview unavailable · you can still enter this world';}}
- });return result;
+ });if(autoStart)queueMicrotask(()=>{if(!destroyed&&root.isConnected)button.click();});return result;
 }

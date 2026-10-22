@@ -409,3 +409,5 @@ html.game-menu-open { overflow:hidden; }
 .item-unlock-prompt [data-unlock-buy]{background:linear-gradient(135deg,#d5ff7b,#92cd2d);color:#14210c}
 .item-unlock-prompt button:disabled{opacity:.55;cursor:wait}
 .item-unlock-prompt button:focus-visible{outline:3px solid #e5ffb4;outline-offset:2px}
+
+.world-lobby-card[data-kind=harbor]{border-color:#51cbd0;background:linear-gradient(135deg,#154754,#10252c)}.world-lobby-card[data-kind=airport]{border-color:#78b7ff;background:linear-gradient(135deg,#23466e,#152436)}
