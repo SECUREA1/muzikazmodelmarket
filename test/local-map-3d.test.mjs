@@ -5,7 +5,7 @@ import {mirrorMapMeshes} from '../public/js/local-map-3d.js';
 test('map mirrors actual transformed game meshes without altering or disposing shared resources',()=>{
  const parent=new THREE.Group(),root=new THREE.Group(),geometry=new THREE.BoxGeometry(2,3,4),material=new THREE.MeshBasicMaterial(),mesh=new THREE.Mesh(geometry,material);parent.position.set(10,2,-8);root.rotation.y=.7;root.scale.setScalar(2);mesh.position.set(3,0,9);parent.add(root);root.add(mesh);
  const map=mirrorMapMeshes([root]),copy=map.group.children[0];assert.deepEqual(copy.matrix.elements,mesh.matrixWorld.elements);assert.equal(copy.geometry,geometry);assert.equal(copy.material,material);assert.equal(mesh.parent,root);
- mesh.position.x=14;map.update();assert.deepEqual(copy.matrix.elements,mesh.matrixWorld.elements);
+ assert.equal(map.update(),false,'idle geometry does not request a redraw');mesh.position.x=14;assert.equal(map.update(),true);assert.deepEqual(copy.matrix.elements,mesh.matrixWorld.elements);
  root.visible=false;map.update();assert.equal(copy.visible,false);
  let disposed=0;geometry.addEventListener('dispose',()=>disposed++);material.addEventListener('dispose',()=>disposed++);map.dispose();assert.equal(disposed,0);assert.equal(root.children[0],mesh);
 });
