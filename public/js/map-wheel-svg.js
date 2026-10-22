@@ -1,5 +1,7 @@
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const icons={basketball:'<circle r="13"/><path d="M-13 0h26M0-13v26M-9-9Q7 0-9 9M9-9Q-7 0 9 9"/>',hockey:'<path d="m-10-13 13 24h10v-5H6L-6-15m16 2L-3 11h-10V6h7L6-15"/>',range:'<circle r="14"/><circle r="9"/><circle r="3"/><path d="M0-19v9M0 10v9M-19 0h9M10 0h9"/>',arcade:'<circle cy="-3" r="12"/><path d="M0-15V9M-12-3h24M-9-12 9 6M9-12-9 6M0 9l-8 9m8-9 8 9M-10 18h20"/>',world:'<path d="M-14 0 0-12 14 0M-10-3v17h20V-3M-3 14V4h6v10"/>'};
+icons.harbor='<circle cy="-10" r="4"/><path d="M0-6v22M-10 0h20M-15 5c0 15 30 15 30 0m-30 0-3 5m3-5 5 3m25-3 3 5m-3-5-5 3"/>';
+icons.airport='<path d="m0-18 4 15 14 8v4L4 5l-1 10 5 3v3l-8-2-8 2v-3l5-3-1-10-14 4V5l14-8z"/>';
 export function mapSectorKind(env = {}) {
  const layout=env.builderScene?.layout||env.layout;
  return env.builderScene?.layoutMeta?.harbor||env.id==='neon-docks'||env.atlasDistrict?.id==='neon-docks'&&!env.atlasDistrict?.page?'harbor':env.airport?.enabled||env.id==='muzikaz-airport'?'airport':env.basketball===true||env.basketballCourt===true||env.id==='basketball-arena'||['basketball-arena','basketball-stadium'].includes(layout)?'basketball'

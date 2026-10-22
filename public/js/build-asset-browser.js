@@ -1,0 +1,13 @@
+import {organizeMarketWorkspace,releaseMarketWorkspacePreview} from './market-workspace.js';
+import {marketItemPreview,hydrateMarketPreviews} from './market-item-preview.js';
+const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Browsing selects a preview; the original build-inventory button keeps its
+// delegated ownership and purchase checks in the game engine.
+export function mountBuildAssetBrowser(root,{assets,tray=[],previous={}}){
+ root.innerHTML='<label class="build-asset-search">Find a building item<input type="search" data-build-search placeholder="Search names, categories and uses" autocomplete="off"></label><p data-build-results role="status"></p><p data-build-empty hidden>No building items match your search.</p><section data-build-items></section>';
+ const items=root.querySelector('[data-build-items]'),search=root.querySelector('[data-build-search]'),selected=new Set(tray.map(item=>item.id));
+ items.innerHTML=assets.map(asset=>`<article data-build-row data-build-id="${escape(asset.id)}">${marketItemPreview(asset)}<div><h3>${escape(asset.name)}</h3><p>${escape(asset.description)}</p><small>${escape(asset.category)}</small></div><div class="game-market-actions"><button type="button" data-build-asset="${escape(asset.id)}" aria-pressed="${selected.has(asset.id)}">${selected.has(asset.id)?'Remove from build inventory':'Add to build inventory'}</button></div></article>`).join('');
+ function render(){const words=search.value.toLowerCase().trim().split(/\s+/).filter(Boolean);let count=0;for(const row of items.querySelectorAll('[data-build-row]')){row.hidden=!words.every(word=>row.textContent.toLowerCase().includes(word));if(!row.hidden)count++;}root.querySelector('[data-build-results]').textContent=count+' of '+assets.length+' building items';root.querySelector('[data-build-empty]').hidden=count!==0;organizeMarketWorkspace(items,{rowSelector:'[data-build-row]',records:assets});}
+ search.value=previous.query||'';search.addEventListener('input',render);render();const rows=[...items.querySelectorAll('[data-build-row]')].filter(row=>!row.hidden),index=rows.findIndex(row=>row.dataset.buildId===previous.selectedId);if(index>=0)items.querySelectorAll('.market-workspace-item')[index]?.click();if(previous.view==='tiles')items.querySelectorAll('.market-workspace-views button')[1]?.click();hydrateMarketPreviews(items);
+ return {state(){return {query:search.value,selectedId:items.querySelector('.is-market-selected')?.dataset.buildId,view:items.querySelector('.market-workspace')?.dataset.itemView};},dispose(){releaseMarketWorkspacePreview(items);}};
+}
