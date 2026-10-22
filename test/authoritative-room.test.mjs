@@ -17,7 +17,7 @@ test('server room controls movement, interactions, health, cooldowns, replay and
  state=await runtime.snapshot('test',map);assert.equal(state.players['account:alice'].position.x,1);assert.equal(state.players['account:alice'].health,100);
  await send('input',{input:{}},'input-stop');await send('interact',{},'door-on');assert.equal((await runtime.snapshot('test',map)).actors.door.open,true);
  await send('fire',{tool:'laser',direction:[-.25,0,-1]},'shot-1');await send('fire',{tool:'laser',direction:[-.25,0,-1]},'shot-1');assert.equal(charged.length,1);
- await assert.rejects(send('fire',{tool:'laser',direction:[0,0,-1]},'shot-too-soon'),{statusCode:429});now+=500;await send('fire',{tool:'laser',direction:[-.25,0,-1]},'shot-2');assert.equal(charged.length,2);
+ const rapid=await send('fire',{tool:'laser',direction:[0,0,-1]},'shot-immediate');assert.equal(rapid.result.cooldownMs,0);assert.equal(charged.length,2);now+=500;await send('fire',{tool:'laser',direction:[-.25,0,-1]},'shot-2');assert.equal(charged.length,3);
  assert.equal((await new AuthoritativeRooms({store:new SharedRoomStore(store.file),now:()=>now}).snapshot('test',map)).actors.door.open,true);
  assert.ok(recorded.every(([,sample])=>sample.health===100));assert.ok(rewards.length>0);
  await assert.rejects(send('client-health',{health:1000},'spoof'),{statusCode:422});

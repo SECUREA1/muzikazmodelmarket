@@ -45,3 +45,5 @@ test('weapon category opens a native modal and selection equips through the game
   assert.ok(source.includes("if(RANGED_WEAPONS[this.tool])return this.fireExtraWeapon(origin,direction)"));
   assert.ok(source.includes('return toxicBubbleSystem.fireExtraWeapon(rangeRaycaster.ray.origin'));
 });
+
+test('laser has no cooldown even immediately after another weapon',()=>{const result=fireWeapon(THREE,'laser',{origin:new THREE.Vector3(),direction:new THREE.Vector3(0,0,-1),cooldown:1,ammo:5,raycast:()=>null,damage:()=>{},feedback:()=>{}});assert.equal(result.cooldown,0);assert.equal(result.ammo,4);});

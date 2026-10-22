@@ -169,7 +169,8 @@ export class AuthoritativeRooms {
     player.position={...pose.position,y:.35};player.yaw=pose.rotation.y;player.floor=.35;player.velocityY=0;player.grounded=true;player.locationName=pose.boating.phase==='moored'||pose.boating.anchor?'Neon Marina berth':'Neon Harbor waterways';continue;
    }
    const road=sim.actors[player.vehicleId];if(isRoadVehicle(road)&&road.active!==false){
-    const others=Object.fromEntries(Object.entries(sim.actors).filter(([id])=>id!==road.id));
+    // The inactive marker suppresses the vehicle’s original authored collider.
+    const others={...sim.actors,[road.id]:{...road,active:false}};
     for(let remaining=dt;remaining>0;remaining-=.05)Object.assign(road,stepRoadVehicle(road,input,Math.min(.05,remaining),{groundAt:point=>this.collision.groundAt(environment,point,{actors:others,objects:room.objects}),speedLimit:roadSpeedLimit(environment,road.position)/3.6,blocked:(from,to,yaw)=>harborWaterAt(environment,to)||roadMovementBlocked(this.collision,environment,sim.actors,room.objects,road,from,to,yaw)}));
     player.position={...road.position};player.yaw=road.rotation.y;player.floor=road.position.y;player.grounded=true;player.velocityY=0;player.locationName=roadVehicleType(road).name;continue;
    }
@@ -503,7 +504,7 @@ export class AuthoritativeRooms {
    else if(command.action==='fire'){
     if(sim.basketball&&command.tool!=='spray'&&!UTILITY_TOOLS[command.tool])fail('Basketball Arena is a sports court. Catch, pass or shoot the basketball.',409);
     if(isAircraft(sim.actors[player.vehicleId])&&!armedAircraft(sim.actors[player.vehicleId]))fail('This civilian aircraft is unarmed.',409);
-    const tool=String(command.tool||'laser'),gunAircraft=isAircraft(sim.actors[player.vehicleId])&&sim.actors[player.vehicleId].active!==false&&tool==='laser'?sim.actors[player.vehicleId]:null,utility=UTILITY_TOOLS[tool],profile=RANGED_WEAPONS[tool],cooldown=sim.radTox&&!utility&&(profile||['bat','taser','toxin','flamethrower'].includes(tool))?RAD_TOX_SHOT_INTERVAL_MS:utility?utility.cooldown*1000:profile?profile.interval*1000:tool==='dynamite'?1200:250;if(!utility&&!profile&&!['bat','taser','toxin','flamethrower','spray','jetpack'].includes(tool))fail('This tool has no server action.',422);
+    const tool=String(command.tool||'laser'),gunAircraft=isAircraft(sim.actors[player.vehicleId])&&sim.actors[player.vehicleId].active!==false&&tool==='laser'?sim.actors[player.vehicleId]:null,utility=UTILITY_TOOLS[tool],profile=RANGED_WEAPONS[tool],cooldown=tool==='laser'?0:sim.radTox&&!utility&&(profile||['bat','taser','toxin','flamethrower'].includes(tool))?RAD_TOX_SHOT_INTERVAL_MS:utility?utility.cooldown*1000:profile?profile.interval*1000:tool==='dynamite'?1200:250;if(!utility&&!profile&&!['bat','taser','toxin','flamethrower','spray','jetpack'].includes(tool))fail('This tool has no server action.',422);
     player.toolReady ||= {};if(now<(player.toolReady[tool]||0))fail('Tool is cooling down.',429);if(utility?.charges&&(player.toolUses?.[tool]||0)>=utility.charges)fail('Utility depleted until respawn.',409);
     if(tool==='flamethrower'&&(player.fuel??100)<5)fail('Refill your igniter fuel.',409);if(profile&&(player.ammo??120)<=0)fail('Refill ammunition.',409);if(tool==='medkit'&&player.health>=100)fail('Health is already full.',409);
     if(['repair-tool','recycler'].includes(tool)&&!Object.values(room.objects).some(object=>!object.deleted&&object.ownerId===actorId&&(tool==='recycler'||object.hits>0)&&distance({x:object.position[0],y:object.position[1],z:object.position[2]},player.position)<8))fail('No eligible building piece is within reach.',409);
