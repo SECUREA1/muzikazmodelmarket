@@ -1,4 +1,5 @@
 export const HARBOR_BOATS=Object.freeze(['harbor-skiff','harbor-sailboat','harbor-yacht']);
+export const hasWalkableInterior=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='harbor-yacht';
 export const isWatercraft=actor=>HARBOR_BOATS.includes(actor?.modelId||actor?.asset?.buildAssetId);
 export function harborWaterAt(environment,point,margin=0){
  const harbor=environment?.builderScene?.layoutMeta?.harbor;if(!harbor)return false;
@@ -17,4 +18,14 @@ export function watercraftOverlap(a,yawA,b,yawB,padding=.12,actorA=null,actorB=n
  const axes=yaw=>[{x:Math.cos(yaw),z:-Math.sin(yaw)},{x:Math.sin(yaw),z:Math.cos(yaw)}],first=axes(yawA),second=axes(yawB),delta={x:b.x-a.x,z:b.z-a.z},dot=(u,v)=>u.x*v.x+u.z*v.z;
  const [aw,al]=watercraftSize(actorA),[bw,bl]=watercraftSize(actorB);
  return [...first,...second].every(axis=>Math.abs(dot(delta,axis))<Math.abs(dot(first[0],axis))*(aw+padding)+Math.abs(dot(first[1],axis))*(al+padding)+Math.abs(dot(second[0],axis))*(bw+padding)+Math.abs(dot(second[1],axis))*(bl+padding));
+}
+// On deck, E belongs at the actual helm. The berth remains boardable from its pier.
+export function watercraftInteractionPoint(actor,feet){
+ const position=actor?.position;if(!position||!hasWalkableInterior(actor)||!feet)return position;
+ const yaw=actor.rotation?.y||0,dx=feet.x-position.x,dz=feet.z-position.z,x=dx*Math.cos(yaw)-dz*Math.sin(yaw),z=dx*Math.sin(yaw)+dz*Math.cos(yaw);
+ if(feet.y>=position.y+1.8&&Math.abs(x)<=5.2&&z>=-16&&z<=18)return {x:position.x-Math.sin(yaw)*9,y:position.y+5.025,z:position.z-Math.cos(yaw)*9};
+ return position;
+}
+export function watercraftInteractionReach(actor,feet,reach=5){
+ return hasWalkableInterior(actor)?watercraftInteractionPoint(actor,feet)!==actor.position?3:Math.min(24,reach):Math.min(5,reach);
 }

@@ -1,5 +1,5 @@
 import {isAircraft} from './public/js/aircraft-flight.js';
-import {isWatercraft} from './public/js/harbor-water.js';
+import {isWatercraft,hasWalkableInterior} from './public/js/harbor-water.js';
 import {isBasketball} from './public/js/basketball.js';
 import {createSolidPaint} from './public/js/solid-paint.js';
 import * as THREE from './public/vendor/three/three.module.min.js';
@@ -21,7 +21,7 @@ export function placedCollisionWorld(actors={},objects={}){
   add(createBuildingBlock(THREE,object.materialId),vector(object.position),vector(object.rotation),vector(object.scale),false,object.id);
  }
  for(const actor of Object.values(actors)){
-  if((!actor.spawned&&!isWatercraft(actor)&&!isAircraft(actor))||actor.active===false||actor.holderId||actor.loot||isBasketball(actor))continue;
+  if((!actor.spawned&&!isWatercraft(actor)&&!isAircraft(actor))||actor.active===false||(actor.holderId&&!hasWalkableInterior(actor))||actor.loot||isBasketball(actor))continue;
   const asset=actor.asset||{},settings=asset.configuration||{};let model;
   if(asset.renderKind==='paint-stroke')model=createSolidPaint(THREE,asset);
   else if(isWatercraft(actor)||isAircraft(actor))model=createBuilderModel(actor.modelId||asset.buildAssetId);

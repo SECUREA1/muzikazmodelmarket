@@ -1,3 +1,4 @@
+import {yachtGameCommand,stepYachtGames} from './server-yacht-games.mjs';
 import {resolveVehicleAction} from './public/js/vehicle-actions.js';
 import {startBoatAssist,boatAssistedInput,boatMovementBlocked} from './server-boat-assist.mjs';
 import {startAircraftAssist,aircraftAssistedInput,aircraftExitPosition} from './server-aircraft-access.mjs';
@@ -6,7 +7,7 @@ import {harborRadio,stopBoat,boatExitPosition} from './server-harbor-operations.
 import {aircraftRayDistance,aircraftGunPose,AIRCRAFT_HEALTH,AIRCRAFT_GUN_RANGE} from './public/js/aircraft-combat.js';
 import {localMapLocations} from './public/js/local-map-locations.js';
 import {isAircraft,stepAircraftFlight,airportRadio} from './public/js/aircraft-flight.js';
-import {isWatercraft,harborWaterAt,watercraftFootprint,watercraftOverlap} from './public/js/harbor-water.js';
+import {isWatercraft,harborWaterAt,watercraftFootprint,watercraftOverlap,watercraftInteractionPoint,watercraftInteractionReach} from './public/js/harbor-water.js';
 import {buildingPolicy,changeBuildingPolicy,requireBuildingAllowed} from './public/js/room-building-policy.js';
 import {RAD_TOX_SHOT_INTERVAL_MS,isCleanCommonsEnvironment} from './public/js/rad-tox-rules.js';
 import {ensureFiringRange,registerFiringRangeArrival,joinFiringRange,watchFiringRange,configureFiringRange,startFiringRange,startFiringRangePractice,stopFiringRange,stepFiringRange,constrainFiringRangePlayer,rangeHandlesFire,fireFiringRange} from './server-firing-range.mjs';
@@ -117,7 +118,7 @@ export class AuthoritativeRooms {
   return {sim,manifest};
  }
  step(room,environment){
-  const {sim,manifest}=this.initialize(room,environment),now=this.now();advanceDevicePlayback(sim,now);if(now-sim.time<33){stepFiringRange(sim,now);if(sim.basketball)stepBasketballGame(sim,now,0);checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;
+  const {sim,manifest}=this.initialize(room,environment),now=this.now();advanceDevicePlayback(sim,now);if(now-sim.time<33){stepFiringRange(sim,now);if(sim.basketball)stepBasketballGame(sim,now,0);checkTeamDefeat(sim,now);advanceRadTox(sim,now,environment);sim.sequence++;return {sim,manifest};}const dt=clamp((now-sim.time)/1000,0,.25);sim.time=now;stepYachtGames(sim.actors,dt);
   const half=clamp(environment.builderScene?.mapSize||200,20,2000)/2;const baseBounds=environment.builderScene&&(environment.builderScene.baseEnvironment||environment.builderScene.baseTransform)?this.collision.world(environment).bounds:null;
   for(const player of Object.values(sim.players)){
    if(player.basketballAI)continue;
@@ -337,10 +338,10 @@ export class AuthoritativeRooms {
    else if(command.action==='collect'){await this.collectNearbyLoot(sim,player,identity,id,now,command.entityId,result);}
    else if(command.action==='interact'){
     if(command.entityId&&isBasketball(sim.actors[command.entityId]))requireBasketballPlayer(sim,player);
-    if(player.vehicleId){if(isAircraft(sim.actors[player.vehicleId])&&sim.actors[player.vehicleId].flight?.airborne)fail('Land the aircraft before exiting.',409);const vehicle=sim.actors[player.vehicleId];if(isAircraft(vehicle)){if(Math.max(vehicle.flight?.speed||0,vehicle.flight?.airspeed||0)>2.5)fail('Brake or use Land assistance before leaving the cockpit.',409);player.position=aircraftExitPosition(environment,vehicle,this.collision,sim.actors,room.objects);player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;vehicle.flight={...vehicle.flight,assist:null,assistStage:null,speed:0,airspeed:0,throttle:0,throttleCommand:0,brake:1};vehicle.rotation.x=vehicle.rotation.z=0;if(sim.airport?.runwayHolder===actorId){sim.airport.runwayHolder=null;sim.airport.expires=0;}}if(isWatercraft(vehicle)){if(Math.abs(vehicle.boating?.speed||0)>1.5)fail('Slow or anchor the boat before leaving.',409);player.position=boatExitPosition(environment,vehicle,this.collision,sim.actors,room.objects);player.floor=player.position.y;player.velocityY=0;player.input={};player.movementRevision=(player.movementRevision||0)+1;stopBoat(vehicle);}vehicle.holderId=null;player.vehicleId=null;}
+    if(player.vehicleId){if(isAircraft(sim.actors[player.vehicleId])&&sim.actors[player.vehicleId].flight?.airborne)fail('Land the aircraft before exiting.',409);const vehicle=sim.actors[player.vehicleId];if(isAircraft(vehicle)){if(Math.max(vehicle.flight?.speed||0,vehicle.flight?.airspeed||0)>2.5)fail('Brake or use Land assistance before leaving the cockpit.',409);player.position=aircraftExitPosition(environment,vehicle,this.collision,sim.actors,room.objects);player.floor=player.position.y;player.velocityY=0;player.grounded=true;player.input={};player.movementRevision=(player.movementRevision||0)+1;vehicle.flight={...vehicle.flight,assist:null,assistStage:null,speed:0,airspeed:0,throttle:0,throttleCommand:0,brake:1};vehicle.rotation.x=vehicle.rotation.z=0;if(sim.airport?.runwayHolder===actorId){sim.airport.runwayHolder=null;sim.airport.expires=0;}}if(isWatercraft(vehicle)){if(Math.abs(vehicle.boating?.speed||0)>1.5)fail('Slow or anchor the boat before leaving.',409);stopBoat(vehicle);player.position=boatExitPosition(environment,vehicle,this.collision,sim.actors,room.objects);player.grounded=true;player.floor=player.position.y;player.velocityY=0;player.input={};player.movementRevision=(player.movementRevision||0)+1;}vehicle.holderId=null;player.vehicleId=null;}
     else if(player.seatedId){sim.actors[player.seatedId].holderId=null;player.seatedId=null;}
     else{
-     const target=manifest.actors.filter(a=>(!command.entityId||a.objectId===command.entityId)&&(!['hostile','patrol','decor'].includes(a.gameplay.behavior)||(a.gameplay.action&&a.gameplay.action!=='none'))&&sim.actors[a.objectId]?.active&&(command.entityId||!sim.actors[a.objectId].basketballSpectatorSeat||!sim.actors[a.objectId].holderId||sim.actors[a.objectId].holderId===actorId)&&distance(sim.actors[a.objectId].position,player.position)<=Math.min(a.modelId==='harbor-yacht'?24:5,a.gameplay.interactionDistance)).sort((a,b)=>distance(sim.actors[a.objectId].position,player.position)-distance(sim.actors[b.objectId].position,player.position))[0];
+     const target=manifest.actors.filter(a=>(!command.entityId||a.objectId===command.entityId)&&(!['hostile','patrol','decor'].includes(a.gameplay.behavior)||(a.gameplay.action&&a.gameplay.action!=='none'))&&sim.actors[a.objectId]?.active&&(command.entityId||!sim.actors[a.objectId].basketballSpectatorSeat||!sim.actors[a.objectId].holderId||sim.actors[a.objectId].holderId===actorId)&&distance(watercraftInteractionPoint(sim.actors[a.objectId],player.position),player.position)<=watercraftInteractionReach(sim.actors[a.objectId],player.position,a.gameplay.interactionDistance)).sort((a,b)=>distance(sim.actors[a.objectId].position,player.position)-distance(sim.actors[b.objectId].position,player.position))[0];
      if(!target)fail('No usable item is within reach.',409);const entity=sim.actors[target.objectId],config=target.gameplay;
      if(isBasketball(entity))requireBasketballPlayer(sim,player);
      if(config.action!=='teleport'||config.portal?.destinationType!=='map'){if(player.radToxEnabled!==false&&sim.match?.state==='finished')fail('This level has ended.',409);if(player.health<=0)fail('Respawn before acting.',409);}
@@ -365,6 +366,7 @@ export class AuthoritativeRooms {
      if(config.action==='teleport'){const portal=config.portal;if(!portal?.enabled)fail('Portal is locked.',409);if(portal.destinationType==='map'){if(this.resolveDestination&&!await this.resolveDestination(portal.targetMapId))fail('This destination is no longer listed in the shared world.',404,'DESTINATION_UNAVAILABLE');result.destination=portal.targetMapId;const travel=player.pendingTravel?.to===portal.targetMapId&&player.pendingTravel.expiresAt>=now?player.pendingTravel:{from:id,to:portal.targetMapId,token:randomUUID(),expiresAt:now+120000};player.pendingTravel=travel;result.travel=travel;}else{const destination=sim.actors[portal.targetObjectId];if(!destination)fail('Destination is unavailable.');player.position={...destination.position};}}
     }
    }
+   else if(command.action==='yacht-game'){result=yachtGameCommand(sim,player,command);}
    else if(command.action==='device'){result=deviceCommand(sim,manifest,player,actorId,command,now);}
    else if(command.action==='building-settings'){changeBuildingPolicy(room,actorId,command.enabled);result.message=command.enabled?'Building allowed in this room.':'Building paused in this room.';}
    else if(command.action==='place-item'){

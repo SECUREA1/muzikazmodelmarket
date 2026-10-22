@@ -18,7 +18,7 @@ export function neonMarina(){
  for(let i=0;i<10;i++)tile('superyacht-pier-'+i,124+i*2.4,116);
  add('superyacht','harbor-yacht',141,0,99,{placementAnchor:'waterline',name:'Tideglass Superyacht',functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:24,prompt:'Take superyacht helm · E / Use',destructible:true,health:2000}});
  locations.push({id:'superyacht-berth',name:'Superyacht Berth',x:141,z:116,width:28,depth:6,description:'Tideglass: bedroom, lounge, aft sitting area, billiards table and live pole performance. Board with E / Use and steer into the enlarged harbour.'});
- guide('superyacht-guide','Tideglass Superyacht',127,113,'The superyacht is berthed alongside this pier. E / Use takes the flybridge helm. WASD / arrows steer and power the boat. Use the helm controls to raise anchor. E / Use leaves the helm.');
+ guide('superyacht-guide','Tideglass Superyacht',127,113,'The superyacht is berthed alongside this pier. Walk up the stern gangway to explore the bedroom, lounge and billiards room. The port stairs lead to the flybridge helm: E / Use to drive. Stop or anchor, then E / Use returns you to the aft deck. At the billiards table choose Play billiards; aim, set power and shoot.');
  add('mainland-water-steps','material:stage-steps',130.8,-.65,28.2);
  guide('departure-guide','Marina Departures',122,26,'Three boats are docked in the slips. E / Use boards or leaves a boat. Steer with WASD, arrows or the left stick. Sail east to Beacon Island, west around the coast to Palm Key, or north to North Haven. Stay clear of docks and the shoreline.');
  for(const island of harbor.islands){

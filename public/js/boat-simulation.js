@@ -35,7 +35,7 @@ export function stepBoatSimulation(boat,input={},dt,{environment,now=0,blocked=(
    position.x=previous.x;position.z=previous.z;yaw=previousYaw;impactDamage+=Math.round(Math.max(0,Math.abs(speed)-2.5)*6);speed=0;held=true;break;
   }
  }
- const elapsed=finite(old.elapsed)+duration,time=finite(now)>0?finite(now)/1000:elapsed,moving=Math.min(1,Math.abs(speed)/maximum),pitch=Math.sin(time*1.7+position.z*.03)*(.004+moving*.008),roll=Math.sin(time*1.3+position.x*.025)*.006-rudder*moving*.035;
+ const elapsed=finite(old.elapsed)+duration,time=finite(now)>0?finite(now)/1000:elapsed,moving=Math.min(1,Math.abs(speed)/maximum),pitch=anchor&&speed===0?0:Math.sin(time*1.7+position.z*.03)*(.004+moving*.008),roll=anchor&&speed===0?0:Math.sin(time*1.3+position.x*.025)*.006-rudder*moving*.035;
  const phase=held?'hold':anchor?'anchored':Math.abs(speed)<.12?'moored':speed<0?'astern':sailing?'sailing':Math.abs(speed)>5?'cruise':'maneuvering';
  return {position,rotation:{x:pitch,y:yaw,z:roll},boating:{...old,speed,speedKnots:Math.abs(speed)*1.94384,throttle,throttleCommand,rpm:Math.round(anchor?0:650+Math.abs(throttle)*(sailing?1550:3850)),rudder,rudderCommand,heading:degrees(-yaw),windSpeed,windDirection,windEfficiency,trimEfficiency,sailTrim,sailPower:sailing?windEfficiency*Math.max(0,throttle):0,wakeStrength:moving,anchor,brake,phase,warning:held?'WATERWAY OBSTRUCTION':anchor&&Math.abs(throttleCommand)>.05?'ANCHOR SET':sailing&&windEfficiency<.18&&throttleCommand>.1?'HEAD TO WIND — TURN TO FILL SAIL':'',impactDamage,elapsed,sailing}};
 }

@@ -1,5 +1,5 @@
 import {isAircraft} from './public/js/aircraft-flight.js';
-import {isWatercraft} from './public/js/harbor-water.js';
+import {isWatercraft,hasWalkableInterior} from './public/js/harbor-water.js';
 import {alignStackableObject} from './public/js/stack-placement.js';
 import {isBasketball} from './public/js/basketball.js';
 import {slideWalking} from './public/js/walking-collision.js';
@@ -17,7 +17,7 @@ import {triangleWallSegments} from './public/js/walking-triangles.js';
 const PLAYER_RADIUS=.3,PLAYER_HEIGHT=1.7,MAX_STEP_HEIGHT=.35,FLOOR_GAP=.02;
 const WALL_GRID_SIZE=2;
 
-function actorDisablesCollision(actor){return actor&&(actor.open||actor.active===false||actor.holderId);}
+function actorDisablesCollision(actor){return actor&&(actor.open||actor.active===false||(actor.holderId&&!hasWalkableInterior(actor)));}
 function builderObjectId(mesh){for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.builderObjectId)return parent.userData.builderObjectId;}
 function wallTriangles(mesh){
  const geometry=mesh.geometry,positions=geometry?.attributes?.position,index=geometry?.index,triangles=[];
@@ -79,7 +79,7 @@ export class ServerBuilderCollision {
 
  }
  placedWorld(actors={},objects={}){
-  const key=JSON.stringify([Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),Object.values(actors).filter(actor=>(actor.spawned||isWatercraft(actor)||isAircraft(actor))&&actor.active!==false&&!actor.holderId&&!actor.loot&&!isBasketball(actor)).map(actor=>[actor.id,actor.asset?.id,actor.asset?.buildAssetId,actor.placementRevision,actor.active,actor.holderId,actor.position,actor.rotation,actor.scale])]);
+  const key=JSON.stringify([Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),Object.values(actors).filter(actor=>(actor.spawned||isWatercraft(actor)||isAircraft(actor))&&actor.active!==false&&(!actor.holderId||hasWalkableInterior(actor))&&!actor.loot&&!isBasketball(actor)).map(actor=>[actor.id,actor.asset?.id,actor.asset?.buildAssetId,actor.placementRevision,actor.active,actor.holderId,actor.position,actor.rotation,actor.scale])]);
   if(this.placedCache?.key===key)return this.placedCache.world;
   disposePlacedCollision(this.placedCache?.world);const world=placedCollisionWorld(actors,objects);this.placedCache={key,world};return world;
  }

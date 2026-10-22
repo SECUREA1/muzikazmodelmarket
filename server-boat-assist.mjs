@@ -14,7 +14,7 @@ export function boatMovementBlocked(environment,boat,actors,collision,objects={}
   const [beam,length]=(boat.modelId||boat.asset?.buildAssetId)==='harbor-yacht'?watercraftSize(boat):[.85,2];
   return [-beam,0,beam].some(side=>{
    const origin={x:from.x+Math.cos(yaw)*side-Math.sin(yaw)*length,y:.18,z:from.z-Math.sin(yaw)*side-Math.cos(yaw)*length};
-   if(collision?.blocksShot(environment,origin,direction,span+.12,actors))return true;
+   if(collision?.blocksShot(environment,origin,direction,span+.12,Object.fromEntries(Object.entries(actors).filter(([id])=>id!==boat.id))))return true;
    return placed.length>0&&new THREE.Raycaster(new THREE.Vector3(origin.x,origin.y,origin.z),new THREE.Vector3(...direction),.001,span+.12).intersectObjects(placed,false).length>0;
   });
  };

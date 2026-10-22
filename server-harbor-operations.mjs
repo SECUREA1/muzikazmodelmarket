@@ -1,5 +1,5 @@
 import {isWatercraft,harborWaterAt} from './public/js/harbor-water.js';
-export function stopBoat(boat){if(!isWatercraft(boat))return;boat.boating={...boat.boating,assist:null,speed:0,speedKnots:0,throttle:0,throttleCommand:0,rpm:0,anchor:true,phase:'anchored',warning:'',wakeStrength:0};}
+export function stopBoat(boat){if(!isWatercraft(boat))return;boat.rotation={...boat.rotation,x:0,z:0};boat.boating={...boat.boating,assist:null,speed:0,speedKnots:0,throttle:0,throttleCommand:0,rpm:0,anchor:true,phase:'anchored',warning:'',wakeStrength:0};}
 export function harborRadio(sim,player,environment,operation){
  if(!environment.builderScene?.layoutMeta?.harbor)throw Object.assign(Error('This map has no harbor office.'),{statusCode:409});
  const boats=Object.values(sim.actors).filter(actor=>isWatercraft(actor)&&actor.active!==false),boat=sim.actors[player.vehicleId],points=(environment.builderScene.objects||[]).filter(isWatercraft);
@@ -16,7 +16,16 @@ export function harborRadio(sim,player,environment,operation){
 }
 export function boatExitPosition(environment,boat,collision,actors,objects){
  const yaw=boat.rotation?.y||0;
- if(boat.modelId==='harbor-yacht')return {x:boat.position.x+Math.sin(yaw)*12,y:1.96,z:boat.position.z+Math.cos(yaw)*12};
+ if(boat.modelId==='harbor-yacht'){
+  // Query the released vessel itself, never the swim floor beneath its hull.
+  const released={...actors,[boat.id]:{...boat,holderId:null}};
+  for(const [x,z] of [[0,12],[0,11],[1.1,11],[-1.1,11]]){
+   const candidate={x:boat.position.x+x*Math.cos(yaw)+z*Math.sin(yaw),y:boat.position.y+2.1,z:boat.position.z-x*Math.sin(yaw)+z*Math.cos(yaw)};
+   const floor=collision.groundAt(environment,candidate,{actors:released,objects,maxRise:.2});
+   if(floor&&floor.y>=boat.position.y+1.9&&floor.y<boat.position.y+2.3)return floor;
+  }
+  throw Object.assign(Error('The aft deck is obstructed. Clear the deck before leaving the helm.'),{statusCode:409});
+ }
  for(const distance of [1.8,2.8,4,6])for(const side of [-1,1]){const point={x:boat.position.x+Math.cos(yaw)*distance*side,y:.4,z:boat.position.z-Math.sin(yaw)*distance*side};const floor=collision.groundAt(environment,point,{entry:true,actors,objects});if(!floor||floor.y<-.05)continue;try{return collision.teleportPosition(environment,{...boat.position,y:.35},floor,actors,objects,{localMap:true});}catch{}}
  // Open-water exits remain possible once the boat is stopped; the swimmer uses
  // the harbor's authored shallow support plane rather than an invisible island.

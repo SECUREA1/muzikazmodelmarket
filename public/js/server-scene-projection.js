@@ -35,7 +35,7 @@ export function syncServerAvatar({THREE,root,peer,loader,prepare,isCurrent,now=D
 export function projectServerActor(root,actor,{localId=null,now=performance.now()}={}) {
  if(!actor){root.visible=false;return;}
  const state=root.userData,offset=state.serverRenderOffset||{};if(isAircraft(actor)){updateAircraftSeat(root,actor,{selfId:localId});root.rotation.order='YXZ';state.aircraftFlight=actor.flight||{};state.aircraftHealth=actor.health;}
- if(isWatercraft(actor)){root.rotation.order='YXZ';state.boatState=actor.boating||{};}
+ if(isWatercraft(actor)){root.rotation.order='YXZ';state.boatState=actor.boating||{};state.yachtBilliards=actor.yachtBilliards||null;}
  const behavior=actor.definition?.gameplay?.behavior||state.functionalSettings?.behavior||actor.asset?.behavior;state.serverObjectMotion=['hostile','patrol','vehicle'].includes(behavior)&&!(localId&&actor.holderId===localId);if(state.serverObjectMotion)targetServerEnemy(root,{...actor,position:{x:actor.position.x+(offset.x||0),y:actor.position.y,z:actor.position.z+(offset.z||0)}},offset.y||0,now);else root.position.set(actor.position.x+(offset.x||0),actor.position.y+(offset.y||0),actor.position.z+(offset.z||0));
  root.visible=actor.active!==false;
  root.rotation.set(actor.rotation?.x||0,state.serverObjectMotion?root.rotation.y:(actor.rotation?.y||0)+(actor.open?-Math.PI/2:0),actor.rotation?.z||0);

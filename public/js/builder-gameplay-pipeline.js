@@ -141,7 +141,7 @@ export class BuilderGameplayRuntime {
     return this.manifest.actors.reduce((best, actor) => {
       if (actor.gameplay.interactionKey !== key || this.instances.get(actor.objectId)?.active === false) return best;
       const next = distance(playerPosition, this.position(actor));
-      return next <= actor.gameplay.interactionDistance && (!best || next < best.distance) ? { actor, distance: next } : best;
+      return next <= (this.instances.get(actor.objectId)?.getInteractionDistance?.()??actor.gameplay.interactionDistance) && (!best || next < best.distance) ? { actor, distance: next } : best;
     }, null);
   }
   prompt(playerPosition) {
