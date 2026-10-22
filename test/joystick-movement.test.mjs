@@ -8,15 +8,38 @@ import {isRoadVehicle} from '../public/js/road-vehicles.js';
 import {flightStickAxes} from '../public/js/aircraft-input.js';
 const {walkingStick,walkingSprint} = await import('data:text/javascript;base64,' + Buffer.from(readFileSync(new URL('../public/js/walking-motion.js', import.meta.url), 'utf8')).toString('base64'));
 const source = readFileSync(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
-function controller(name) {
+function controller(name, ready=true) {
   const handlers = {}, windowHandlers = {}, resetters = new Set(), knob = {style: {}}, input = {leftX:0,leftY:0,rightX:0,rightY:0}, flushes = [];
-  let shots = 0, jumps = 0;
+  let shots = 0, jumps = 0, captures = 0;
   const stick = {querySelector: () => knob, getBoundingClientRect: () => ({left: 0, top: 0, width: 100, height: 100}), classList: {add(){}, remove(){}}, addEventListener(type, fn){handlers[type] = fn;}};
-  const context = vm.createContext({isAircraft,isWatercraft,isRoadVehicle,flightStickAxes,serverActors:{},serverVehicleId:null,walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(type,fn){windowHandlers[type]=fn;}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, thumbstickResetters:resetters, safelyCapturePointer(){}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
+  const context = vm.createContext({gameplayControlsReady:()=>ready,isAircraft,isWatercraft,isRoadVehicle,flightStickAxes,serverActors:{},serverVehicleId:null,walkingStick, authoritativeClient:{requestInput:(immediate=true)=>flushes.push(immediate)}, document: {querySelector: () => stick}, window: {addEventListener(type,fn){windowHandlers[type]=fn;}}, THREE: {MathUtils: {clamp: (v,a,b) => Math.max(a,Math.min(b,v))}}, thumbInput: input, thumbstickResetters:resetters, safelyCapturePointer(){captures++;}, safelyInteract: (_,fn) => fn(), shootAtReticle: () => shots++, jump: () => jumps++});
   vm.runInContext(source.slice(source.indexOf('  function setupThumbstick(name)'), source.indexOf("  setupThumbstick('left')")), context);
   context.setupThumbstick(name);
-  return {input, flushes, reset:()=>{for(const reset of resetters)reset(false);}, windowSend:(type,pointerId=1)=>windowHandlers[type]({type,pointerId}), send: (type,x,y,fields={}) => handlers[type]({type, button:0, pointerId: 1, clientX: x, clientY: y, preventDefault(){},...fields}), shots: () => shots, jumps: () => jumps};
+  return {input, flushes, setReady:value=>{ready=value;}, captures:()=>captures, reset:()=>{for(const reset of resetters)reset(false);}, windowSend:(type,pointerId=1)=>windowHandlers[type]({type,pointerId}), send: (type,x,y,fields={}) => handlers[type]({type, button:0, pointerId: 1, clientX: x, clientY: y, preventDefault(){},...fields}), shots: () => shots, jumps: () => jumps};
 }
+test('touches before world readiness neither capture nor own a drag, and the next ready gesture works',()=>{
+  for(const name of ['left','right']){
+    const c=controller(name,false);
+    c.send('pointerdown',50,50);
+    c.send('pointermove',70,20);
+    assert.equal(c.captures(),0,'joining must not capture a finger');
+    assert.equal(c.shots()+c.jumps(),0,'joining must not fire or jump');
+    assert.deepEqual(c.input,{leftX:0,leftY:0,rightX:0,rightY:0});
+    assert.equal(c.flushes.length,0,'joining must not queue walking input');
+    c.setReady(true);
+    c.send('pointermove',70,20);
+    assert.equal(c.input[name+'Y'],0,'an early drag must not become active when joining completes');
+    // No release or primary-touch reset: the ignored gesture cannot retain
+    // private ownership that would block the next finger after readiness.
+    c.send('pointerdown',50,50,{pointerId:7});
+    c.send('pointermove',70,20,{pointerId:7});
+    assert.equal(c.captures(),1);
+    assert.equal(c.shots()+c.jumps(),1);
+    assert.ok(c.input[name+'Y']<0,'a new ready gesture must steer');
+    c.send('pointerup',70,20,{pointerId:7});
+    assert.equal(c.input[name+'Y'],0);
+  }
+});
 test('walking keeps an 8px neutral zone while the look stick retains fine linear response', () => {
   const left=controller('left'),right=controller('right');
   left.send('pointerdown',50,50);right.send('pointerdown',50,50);

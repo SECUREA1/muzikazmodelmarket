@@ -50,6 +50,33 @@ jobs:
           python test/mobile-touch-recovery.browser.py
           python test/mobile-controller-viewport.browser.py
           python test/world-travel-input-order.browser.py
+  login-controls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run build
+      - name: Verify startup and map interaction lifecycle
+        run: node --test test/gameplay-startup-readiness.test.mjs test/rad-tox-startup.test.mjs test/live-map-interaction.test.mjs test/vehicle-input-routing.test.mjs test/xr-game-controls.test.mjs
+      - name: Install browser test tools
+        run: |
+          python -m pip install playwright
+          sudo ln -sf /usr/bin/google-chrome /usr/bin/chromium
+      - name: Verify login, basketball buttons and both maps
+        run: |
+          python test/basketball-quick-controls.browser.py
+          python test/xr-visibility.browser.py
+          python test/mobile-map-layout.browser.py
+          python test/map-readiness.browser.py
+          python test/login-map-controls.browser.py
   world-input:
     runs-on: ubuntu-latest
     timeout-minutes: 40

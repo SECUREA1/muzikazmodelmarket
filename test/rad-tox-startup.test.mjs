@@ -19,13 +19,12 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
   assert.match(game, /if \(!envLoader.world\) throw new Error/, 'a missing world cannot be reported as a successful launch');
   assert.match(game, /gameInitializationPromise = null/, 'a failed game initialization can be started again');
   assert.match(game, /addEventListener\('muzikaz:rad-tox-request', startRadToxGame\);/, 'the loaded engine accepts a retry request');
-  assert.match(
-    game,
-    /await openHouseMap\(\);[\s\S]{0,700}resetPlayer\(activeWorldSpawn\.position, activeWorldSpawn\.rotationY\);[\s\S]{0,150}await toxicBubbleSystem\.begin\(\);/,
-    'a launch passes the loaded world spawn to the player reset before gameplay and multiplayer presence start'
-  );
+  const startup=game.slice(game.indexOf('  function startRadToxGame()'),game.indexOf("  canvas.addEventListener('webglcontextlost'"));
+  const startupSteps=['await openHouseMap()','resetPlayer(activeWorldSpawn.position, activeWorldSpawn.rotationY)','await warmGameDisplay()','await startRoomGameplay(initializationWorld)','await toxicBubbleSystem.begin()','gameplayStarted=true'];
+  const stepOffsets=startupSteps.map(step=>startup.indexOf(step));
+  assert.ok(stepOffsets.every((offset,index)=>offset>=0&&(!index||offset>stepOffsets[index-1])),'a launch uses the resolved spawn, prepares graphics, confirms the room and starts gameplay in that order');
   assert.match(game, /activeWorldSpawn=\{position:spawn\.position\.clone\(\),rotationY:Number\(spawn\.rotationY\)\|\|0\};resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\)/, 'map loading preserves the resolved GLB or Builder spawn for game start');
-  assert.doesNotMatch(game, /await openHouseMap\(\);[\s\S]{0,700}resetPlayer\(\);/, 'game start never resets the spawn without an explicit map argument');
+  assert.doesNotMatch(startup, /resetPlayer\(\);/, 'game start never resets the spawn without an explicit map argument');
   assert.match(game, /if\(localSandbox\|\|multiplayerWorldLoading\|\|serverHostedRoom\)return/, 'legacy avatar polling stays off in authoritative multiplayer to avoid duplicate bodies');
   assert.match(game, /resetPlayer\(activeWorldSpawn\.position,activeWorldSpawn\.rotationY\);[\s\S]{0,500}roomId:env\.id,position:/, 'the new room is announced only after its spawn is loaded and applied');
   assert.match(game, /if\(previousRoom!==env\.id\)window\.dispatchEvent/, 'multiplayer reconnects only after a successful world transition');
@@ -36,7 +35,9 @@ test('RAD-TOX startup is bounded and can be retried after a failure', async () =
 test('shared gameplay is confirmed before dismissing startup, with explicit solo and guest access', async () => {
   const game = await readFile(new URL('../public/js/house-explorer-glb.js', import.meta.url), 'utf8');
   assert.match(game, /await connectingClient\.whenReady\(30000\)/);
-  assert.match(game, /await startRoomGameplay\(\);\s+await toxicBubbleSystem\.begin\(\);\s+gameplayStarted=true;\s+gameStartScreen\?\.classList\.add\('is-hidden'\)/);
+  const startup=game.slice(game.indexOf('  function startRadToxGame()'),game.indexOf("  canvas.addEventListener('webglcontextlost'"));
+  assert.match(startup, /if\(await startRoomGameplay\(initializationWorld\)===false\|\|!current\(\)\)return;/);
+  assert.match(startup, /await toxicBubbleSystem\.begin\(\);\s+if\(!current\(\)\)return;\s+gameplayStarted=true;\s+setGameplayReadiness\(\);\s+gameStartScreen\?\.classList\.add\('is-hidden'\)/);
   assert.match(game, /await ensurePlayAccess\(sharedInventory\)/);
   assert.match(game, /if\(guestSolo\)\{serverHostedRoom=false/);
   assert.match(game, /await choosePlayAccess\(sharedInventory\)/);
