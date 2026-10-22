@@ -185,7 +185,7 @@ export function findSpawnNode(root) {
   return nodes.find((node) => SPAWN_PRIORITY.includes(node.name.toUpperCase())) || nodes[0] || null;
 }
 
-export function buildCollision(root, mode = 'auto', supplementalRoots = [], {buildOctree=true} = {}) {
+export function buildCollision(root, mode = 'auto', supplementalRoots = [], {buildOctree=true,maxTriangles=Infinity} = {}) {
   const visibleMeshes = [];
   const collisionMeshes = [];
   const collectedMeshes = new Set();
@@ -221,6 +221,8 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
     supplementalRoot.updateWorldMatrix(true, true);
     supplementalRoot.traverse(collect);
   });
+  const triangleCount=collisionMeshes.reduce((sum,mesh)=>sum+Math.floor((mesh.geometry.index?.count||mesh.geometry.attributes.position?.count||0)/3)*(mesh.isInstancedMesh?mesh.count:1),0);
+  buildOctree=buildOctree&&triangleCount<=maxTriangles;
   const source = new THREE.Group(), mirroredGeometry = new Map();
   const colliderGeometry = (geometry, matrix) => {
     if (matrix.determinant() >= 0) return geometry;
@@ -265,7 +267,7 @@ export function buildCollision(root, mode = 'auto', supplementalRoots = [], {bui
   mirroredGeometry.forEach(geometry => geometry.dispose());
   const floorMeshes = collisionMeshes.filter((mesh) => isSpawnFloorObject(mesh));
   if (containment.floor) floorMeshes.push(containment.floor);
-  return { octree, visibleMeshes, collisionMeshes, floorMeshes, containment, dedicatedCollisionCount: collisionMeshes.filter(isDedicatedCollider).length };
+  return { octree, octreeBuilt:buildOctree, triangleCount, visibleMeshes, collisionMeshes, floorMeshes, containment, dedicatedCollisionCount: collisionMeshes.filter(isDedicatedCollider).length };
 }
 
 export function resolveSafeSpawn(root, floorMeshes, metadataSpawn = {}, playerHeight = 1.65) {

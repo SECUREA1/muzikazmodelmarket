@@ -515,3 +515,17 @@ test('an established room keeps recovering beyond fifteen seconds without replay
   }
  },{onError:error=>errors.push(error)});
 });
+
+test('cold joins get a longer bounded deadline and stopping aborts in-flight gameplay',async()=>{
+ let joinOptions;
+ await withRoom(async(path,options)=>{
+  if(path==='/api/game/room-session')return response({csrfToken:'proof'});
+  joinOptions=options;return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(new DOMException('Stopped','AbortError')),{once:true}));
+ },async client=>{await pause(10);assert.equal(joinOptions.timeout,25000);assert.equal(joinOptions.signal.aborted,false);client.stop();assert.equal(joinOptions.signal.aborted,true);});
+});
+test('frequent snapshots coalesce to the newest state and no queued render runs after stop',async()=>{
+ let sequence=0;const rendered=[];
+ await withRoom(async(path)=>path==='/api/game/room-session'?response({csrfToken:'proof'}):response(confirmed(++sequence)),async client=>{
+  await client.whenReady();assert.equal(rendered.length,1);await client.send('input',{input:{}});await client.send('input',{input:{}});await client.send('input',{input:{}});assert.equal(rendered.length,1);await pause(120);assert.ok(rendered.length<=3);assert.equal(rendered.at(-1),sequence);const before=rendered.length;await client.send('input',{input:{}});client.stop();await pause(130);assert.equal(rendered.length,before);
+ },{render:state=>rendered.push(state.sequence),renderInterval:100,inputInterval:1000});
+});

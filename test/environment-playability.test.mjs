@@ -8,7 +8,7 @@ import {furnishBuildings} from '../public/js/building-furnishing.js';
 import {createBuildingDistrict,BUILDING_DISTRICTS} from '../public/js/building-districts.js';
 import {compileBuilderScene} from '../public/js/builder-gameplay-pipeline.js';
 const threeUrl=new URL('../public/vendor/three/three.module.min.js',import.meta.url).href;
-const source=(await readFile(new URL('../public/js/environments/environment-collision.js',import.meta.url),'utf8')).replace(/https:\/\/cdn.jsdelivr.net\/npm\/three@0.160.0\/\+esm/g,threeUrl).replace(/import \{ Octree \} from '[^']+';/,"class Octree {fromGraphNode(){}}" );
+const source=(await readFile(new URL('../public/js/environments/environment-collision.js',import.meta.url),'utf8')).replace("'../../vendor/three/three.module.min.js'",JSON.stringify(threeUrl)).replace(/https:\/\/cdn.jsdelivr.net\/npm\/three@0.160.0\/\+esm/g,threeUrl).replace(/import \{ Octree \} from '[^']+';/,"class Octree {fromGraphNode(){}}" );
 const {buildCollision,resolveSafeSpawn}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 test('empty builder and urban maps retain visible terrain, colliders and a safe spawn',()=>{
  for(const layout of ['grand-floor','urban-downtown',...Object.keys(BUILDING_DISTRICTS)]){
@@ -27,7 +27,7 @@ test('explicit invisible collider helpers stay hidden and do not count as render
 test('entire repository playlist has finite triangle geometry and collision spawn floors',async()=>{
  const records=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url)));
  for(const record of records){
-  const root=environmentGeometry(record);let triangles=0;root.traverse(mesh=>{if(mesh.isMesh)triangles+=(mesh.geometry.index?.count||mesh.geometry.attributes.position?.count||0)/3;});assert.ok(triangles>0,record.id);
+  const root=record.proceduralLand||record.builderScene?createBuilderLand(record):environmentGeometry(record);let triangles=0;root.traverse(mesh=>{if(mesh.isMesh)triangles+=(mesh.geometry.index?.count||mesh.geometry.attributes.position?.count||0)/3;});assert.ok(triangles>0,record.id);
   const collision=buildCollision(root,'auto',[],{buildOctree:false});assert.ok(collision.visibleMeshes.length,record.id);assert.ok(collision.floorMeshes.length,record.id);
   const spawn=resolveSafeSpawn(root,collision.floorMeshes,record.spawn);assert.ok(Number.isFinite(spawn.position.y),record.id);
   root.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose?.();});
@@ -41,7 +41,7 @@ test('automatic furnishing is deterministic, compiles interactive actors and pre
  const owned=furnishBuildings(bare,{backpack:true,models:[{id:'owned-atm',buildAssetId:'market-atm',category:'backpack'},{id:'unowned',buildAssetId:'cinema-screen',category:'interactive'}]});assert.equal(owned.length,1);assert.equal(owned[0].modelId,'owned-atm');assert.equal(owned[0].position.y,2.36);assert.equal(owned[0].functionalSettings.device,'market-atm');
 });
 const loaderSource=(await readFile(new URL('../public/js/environments/environment-loader.js',import.meta.url),'utf8')).replace(/^import .+;\n/gm,'');
-const loaderDependencies=`import {isCleanSportsEnvironment} from '${new URL('../public/js/sports-worlds.js',import.meta.url).href}';import {builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn} from '${new URL('../public/js/environments/builder-base.js',import.meta.url).href}';import * as THREE from '${threeUrl}';import {createBuilderLand} from '${new URL('../public/js/environments/builder-land.js',import.meta.url).href}';import {buildCollision,resolveSafeSpawn} from '${'data:text/javascript;base64,'+Buffer.from(source).toString('base64')}';class Octree {fromGraphNode(){}}const applyWorldQuality=()=>({});`;
+const loaderDependencies=`import {isBasketballEnvironment} from '${new URL('../public/js/basketball-rules.js',import.meta.url).href}';import {isCleanSportsEnvironment} from '${new URL('../public/js/sports-worlds.js',import.meta.url).href}';import {builderBaseEnvironment,applyBuilderBaseTransform,builderBaseSpawn} from '${new URL('../public/js/environments/builder-base.js',import.meta.url).href}';import * as THREE from '${threeUrl}';import {createBuilderLand} from '${new URL('../public/js/environments/builder-land.js',import.meta.url).href}';import {buildCollision,resolveSafeSpawn} from '${'data:text/javascript;base64,'+Buffer.from(source).toString('base64')}';class Octree {fromGraphNode(){}}const applyWorldQuality=()=>({});`;
 const {EnvironmentLoader}=await import('data:text/javascript;base64,'+Buffer.from(loaderDependencies+loaderSource).toString('base64'));
 function testLoader(){return Object.assign(Object.create(EnvironmentLoader.prototype),{token:0,scene:new THREE.Scene(),renderer:{},serverAuthoritative:()=>true,onProgress:()=>{},mixers:[],supplementalCollisionRoots:[],refreshFloorEffects(){},clearFloorEffects(){},createBuilderLand});}
 test('loader enters empty saved builder maps and keeps the previous world if a new asset fails',async()=>{
@@ -60,7 +60,7 @@ test('unloading cancels a pending model so it cannot reattach after leaving a pa
  const loader=testLoader();let finish;loader.loadOne=()=>new Promise(resolve=>{finish=resolve;});const pending=loader.load({id:'old',modelUrl:'slow.glb'});loader.unload();const scene=new THREE.Group();scene.add(new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial()));finish({scene});assert.equal(await pending,null);assert.equal(loader.world,null);assert.equal(loader.scene.children.length,0);
 });
 test('saved authored base loads the original meshes with the custom identity and matching scale',async()=>{
- const record=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url)))[0];
+ const record=JSON.parse(await readFile(new URL('../public/models/environments/environments.json',import.meta.url))).find(record=>!record.proceduralLand&&!record.builderScene&&record.modelUrl);
  const loader=testLoader();let loaded=0;
  loader.loadOne=async url=>{loaded++;return {scene:environmentGeometry({modelUrl:url}),animations:[]};};
  const environment={id:'my-edited-map',builderScene:{layout:'repository-'+record.id,baseEnvironment:record,objects:[]}};

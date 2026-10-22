@@ -25,11 +25,13 @@ export class EnvironmentLoader {
     const ktx2 = new KTX2Loader(); ktx2.setTranscoderPath('/public/vendor/three/addons/libs/basis/'); ktx2.detectSupport(renderer); this.loader.setKTX2Loader(ktx2);
     this.loader.setMeshoptDecoder(MeshoptDecoder);
   }
-  disposeMaterial(material) { if (!material) return; for (const value of Object.values(material)) if (value?.isTexture && !value.userData.sportsSurfaceShared) value.dispose(); material.dispose?.(); }
+  disposeMaterial(material,materials=new Set(),textures=new Set()) { if(!material||materials.has(material))return;materials.add(material);for(const value of Object.values(material))if(value?.isTexture&&!value.userData.sportsSurfaceShared&&!textures.has(value)){textures.add(value);value.dispose();}material.dispose?.(); }
+
   clearFloorEffects() { this.floorSlime?.dispose(); this.floorSlime=null; }
   refreshFloorEffects() { this.clearFloorEffects(); this.floorSlime=this.world&&!isCleanCommonsEnvironment(this.activeEnvironment)&&!this.activeEnvironment?.airport?.enabled&&!this.activeEnvironment?.builderScene?.layoutMeta?.harbor&&!isCleanSportsEnvironment(this.activeEnvironment)&&!isFiringRangeEnvironment(this.activeEnvironment)?createSlimeFloor(collectSlimeFloorMeshes(this.world)):null; }
   updateEffects(elapsed, reducedMotion=false) { this.floorSlime?.update(elapsed,reducedMotion); this.world?.userData.updateBasketballEffects?.(elapsed,reducedMotion);this.world?.userData.updateHarborEffects?.(elapsed,reducedMotion); }
-  unload({cancelPending=true} = {}) { if(cancelPending)this.token+=1; this.clearFloorEffects(); this.mixers.forEach((m) => m.stopAllAction()); this.mixers = []; this.meshes = []; this.collisionMeshes = []; this.floorMeshes = []; this.supplementalCollisionRoots = []; if (this.world) { this.scene.remove(this.world); this.world.traverse((o) => { o.geometry?.dispose?.(); Array.isArray(o.material) ? o.material.forEach((m) => this.disposeMaterial(m)) : this.disposeMaterial(o.material); }); } this.world = null; this.octree = new Octree(); }
+  unload({cancelPending=true} = {}) { if(cancelPending)this.token+=1;this.clearFloorEffects();if(this.world){this.scene.remove(this.world);this.disposeWorld(this.world,this.mixers);}else this.mixers.forEach(m=>m.stopAllAction());this.mixers=[];this.meshes=[];this.collisionMeshes=[];this.floorMeshes=[];this.supplementalCollisionRoots=[];this.world=null;this.octree=new Octree();this.localCollisionReady=false;this.renderer.renderLists?.dispose?.(); }
+
   async loadOne(url, index, count) {
     let lastError;
     for (let attempt=0; attempt<2; attempt+=1) {
@@ -58,8 +60,8 @@ export class EnvironmentLoader {
     this.spaceScale = nextScale;
     this.world.scale.setScalar(this.baseScale * this.spaceScale);
     this.world.updateMatrixWorld(true);
-    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:this.localCollision||!this.serverAuthoritative()});
-    this.meshes = collision.visibleMeshes;
+    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:this.localCollision||!this.serverAuthoritative(),maxTriangles:this.serverAuthoritative()?60000:Infinity});
+    this.localCollisionReady=collision.octreeBuilt!==false;this.meshes = collision.visibleMeshes;
     this.collisionMeshes = collision.collisionMeshes;
     this.floorMeshes = collision.floorMeshes;
     this.octree = collision.octree;
@@ -69,14 +71,15 @@ export class EnvironmentLoader {
   setSupplementalCollisionRoots(roots = []) {
     this.supplementalCollisionRoots = roots.filter(Boolean);
     if (!this.world) return null;
-    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:this.localCollision||!this.serverAuthoritative()});
-    this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree;
+    const collision = buildCollision(this.world, this.activeEnvironment?.collisionMode, this.supplementalCollisionRoots,{buildOctree:this.localCollision||!this.serverAuthoritative(),maxTriangles:this.serverAuthoritative()?60000:Infinity});
+    this.localCollisionReady=collision.octreeBuilt!==false;this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree;
     return collision;
   }
   disposeWorld(world,mixers=[]) {
-    mixers.forEach(mixer=>mixer.stopAllAction());
-    world.traverse(object=>{object.geometry?.dispose?.();[].concat(object.material||[]).forEach(material=>this.disposeMaterial(material));});
+    mixers.forEach(mixer=>mixer.stopAllAction());const geometries=new Set(),materials=new Set(),textures=new Set();
+    world.traverse(object=>{if(object.geometry&&!geometries.has(object.geometry)){geometries.add(object.geometry);object.geometry.dispose?.();}for(const material of [].concat(object.material||[]))this.disposeMaterial(material,materials,textures);});
   }
+
   async load(environment) {
     const base=builderBaseEnvironment(environment);if(base)environment={...base,...environment,modelUrl:base.modelUrl,modelUrls:base.modelUrls,scale:base.scale,spaceScale:base.spaceScale,rotation:base.rotation,playableSize:base.playableSize,spawn:builderBaseSpawn(environment)};
     const token = ++this.token; const builderLand = Boolean(!base&&(environment.builderScene || environment.proceduralLand)); const urls = builderLand ? [] : (environment.modelUrls?.length ? environment.modelUrls : [environment.modelUrl].filter(Boolean));
@@ -109,12 +112,12 @@ export class EnvironmentLoader {
       const quality = applyWorldQuality(nextWorld, this.renderer);
       // Prepare streamed materials before the world becomes visible. Three uses
       // parallel shader compilation when the browser supports it.
-      if(this.camera&&this.renderer.compileAsync)await this.renderer.compileAsync(nextWorld,this.camera,this.scene);
+      if(this.camera&&this.renderer.compileAsync&&(!this.serverAuthoritative()||Number(quality.triangleCount||0)<=60000))await this.renderer.compileAsync(nextWorld,this.camera,this.scene);
       if(token!==this.token){this.disposeWorld(nextWorld,nextMixers);return null;}
-      const collision = buildCollision(nextWorld, environment.collisionMode,[],{buildOctree:this.localCollision||!this.serverAuthoritative()});
+      const collision = buildCollision(nextWorld, environment.collisionMode,[],{buildOctree:this.localCollision||!this.serverAuthoritative(),maxTriangles:this.serverAuthoritative()?60000:Infinity});
       if (!collision.visibleMeshes.length) throw new Error('Missing meshes: the environment loaded, but no renderable world meshes were found.');
       const spawn = resolveSafeSpawn(nextWorld, collision.floorMeshes, (builderLand?builderBaseSpawn(environment):environment.spawn));
-      this.unload({cancelPending:false}); this.baseScale=baseScale; this.spaceScale=spaceScale; this.world = nextWorld; this.activeEnvironment = environment; this.mixers = nextMixers; this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree; this.bounds = spawn.bounds; this.scene.add(nextWorld); this.refreshFloorEffects(); this.onProgress(100);
+      this.unload({cancelPending:false}); this.baseScale=baseScale; this.spaceScale=spaceScale; this.world = nextWorld; this.activeEnvironment = environment; this.mixers = nextMixers; this.localCollisionReady=collision.octreeBuilt!==false;this.meshes = collision.visibleMeshes; this.collisionMeshes = collision.collisionMeshes; this.floorMeshes = collision.floorMeshes; this.octree = collision.octree; this.bounds = spawn.bounds; this.scene.add(nextWorld); this.refreshFloorEffects(); this.onProgress(100);
       return { world: nextWorld, mixers: nextMixers, meshes: collision.visibleMeshes, octree: collision.octree, spawn, quality, collision, scale: this.spaceScale };
     } catch (error) { this.disposeWorld(nextWorld,nextMixers); if(token!==this.token)return null; throw error; }
   }

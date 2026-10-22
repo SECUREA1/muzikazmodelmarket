@@ -3,8 +3,9 @@ import {RANGED_WEAPONS} from './game-weapons.js';
 import {UTILITY_TOOLS} from './game-utilities.js';
 import {SharedGameInventory,signalInventoryChange} from './shared-game-inventory.js';
 
-export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,onError,deferRadTox=false,radToxEnabled,onShot=()=>{}}) {
- const api = new SharedGameInventory();
+export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId=null,arrival=null,onError,deferRadTox=false,radToxEnabled,onShot=()=>{},inputInterval=50,renderInterval=0}) {
+ const api = new SharedGameInventory(),lifecycle=new AbortController();
+ let renderTimer=null,pendingRender=null,lastRenderAt=null;
  let stopped=false, busy=false, session=null, sessionRequest=null, joined=false, sequence=-1, failure=null, retryAt=0,fireBusy=false;
  let connectionRevision=0,tickToken=null,pendingInput=null;const automaticInputs=new Set();
  let radToxStarted=false,radToxPreference=radToxEnabled;
@@ -16,20 +17,20 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   waiters.clear();
  }
  function close(error) {
-  stopped=true; client.ready=false; failure=error; invalidateInputs();clearInterval(timer); settle(error);
+  stopped=true; client.ready=false; failure=error; invalidateInputs();clearInterval(timer);clearTimeout(renderTimer);renderTimer=null;pendingRender=null;lifecycle.abort();settle(error);
  }
- function invalidateInputs(){connectionRevision++;pendingInput=null;busy=false;tickToken=null;}
+ function invalidateInputs(){connectionRevision++;pendingInput=null;busy=false;tickToken=null;clearTimeout(renderTimer);renderTimer=null;pendingRender=null;}
  // Refresh only a rejected CSRF proof, and reuse the command request ID so an
  // ambiguous response cannot apply a gameplay action twice.
  function roomSession(){
   if(session)return Promise.resolve(session);
   // Share one proof refresh across overlapping inputs and cannon requests.
-  if(!sessionRequest)sessionRequest=api.roomSession().then(value=>{session=value;return value;}).finally(()=>{sessionRequest=null;});
+  if(!sessionRequest)sessionRequest=api.roomSession({signal:lifecycle.signal}).then(value=>{session=value;return value;}).finally(()=>{sessionRequest=null;});
   return sessionRequest;
  }
  async function post(path,body) {
   let proof=session||await roomSession();
-  const request=()=>{if(stopped)throw failure || Error('Room closed.');return api.api(path,{method:'POST',headers:{'X-CSRF-Token':proof.csrfToken},body:JSON.stringify(body)});};
+  const request=()=>{if(stopped)throw failure || Error('Room closed.');return api.api(path,{method:'POST',signal:lifecycle.signal,timeout:body.action==='join'?25000:8000,headers:{'X-CSRF-Token':proof.csrfToken},body:JSON.stringify(body)});};
   try { return await request(); }
   catch (error) {
    if (error.code!=='CSRF_INVALID') throw error;
@@ -40,6 +41,16 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   }
  }
 
+ function flushRender(){
+  renderTimer=null;const next=pendingRender;pendingRender=null;if(stopped||!next)return;
+  try{render(next.state,next.selfId,next.timing);lastRenderAt=performance.now();}
+  catch(cause){const error=Object.assign(new Error('Unable to display this world: '+cause.message),{code:'GAME_RENDER_FAILED',cause});close(error);onStatus?.(error.message);onError?.(error);throw error;}
+ }
+ function present(state,selfId,timing={},immediate=false){
+  if(stopped||state.sequence<=sequence)return;sequence=state.sequence;pendingRender={state,selfId,timing};
+  if(immediate||!renderInterval||lastRenderAt===null){clearTimeout(renderTimer);flushRender();}
+  else if(renderTimer===null)renderTimer=setTimeout(()=>{try{flushRender();}catch{}},Math.max(0,renderInterval-(performance.now()-lastRenderAt)));
+ }
  const client={
   ready:false, selfId:null,
   whenReady(timeoutMs=15000) {
@@ -77,7 +88,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     if(action==='input')lastConfirmedInputSequence=Math.max(lastConfirmedInputSequence,issuedInputSequence);
     if(state.result?.loot&&firstPickup(state.result.loot.id)){signalInventoryChange();window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.loot}));if(state.result.loot.currency==='MZK')window.MZKWallet?.refreshShared?.().catch(()=>{});onStatus?.(state.result.message);}
     if(state.result?.pickup&&firstPickup(state.result.pickup.id)){window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.pickup}));}
-    if(state.sequence>sequence){render(state,selfId,{sentAt,receivedAt:performance.now()});sequence=state.sequence;}
+    present(state,selfId,{sentAt,receivedAt:performance.now()},action!=='input');
     if(action==='fire'&&state.result?.origin&&state.result?.direction){const event=state.events?.find(event=>event.id===requestId&&event.actorId===selfId)||{...state.result,id:requestId,actorId:selfId,action:'fire',at:state.result.firedAt??state.serverTime};window.dispatchEvent(new CustomEvent('muzikaz:shot-confirmed',{detail:{roomId,event,serverTime:state.serverTime}}));}
     if(['respawn','next-rad-tox'].includes(action))nextFireAt.clear();client.ready=true;settle();return state;
    };
@@ -88,8 +99,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   async object(command) {
    if (!client.ready) throw Error('Waiting for the server. Placement preview has not been saved.');
    await post('/api/rooms/'+encodeURIComponent(roomId)+'/objects',command);
-   const state=await api.api('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay');
-   if (!stopped && state.sequence>sequence) { render(state,client.selfId); sequence=state.sequence; }
+   const state=await api.api('/api/rooms/'+encodeURIComponent(roomId)+'/gameplay',{signal:lifecycle.signal});
+   present(state,client.selfId,{},true);
    return state;
   },
   // Keep two slots available for press/release beside a delayed heartbeat.
@@ -101,7 +112,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
    if (stopped) return;
    // Failed joins and expired sessions must leave the loading state. A denied
    // tool action in an already joined room is not a connection failure.
-   if (error.code==='ROOM_SWITCHED' || error.status===401 || (!joined && [400,403,404,409,422].includes(error.status))) {
+   if (error.code==='GAME_RENDER_FAILED' || error.code==='ROOM_SWITCHED' || error.status===401 || (!joined && [400,403,404,409,422].includes(error.status))) {
     close(error); onStatus?.(error.message); onError?.(error);
    } else if (joined && error.code==='ROOM_JOIN_REQUIRED') {
     invalidateInputs();
@@ -159,7 +170,7 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
   } catch (error) { if(token.revision===connectionRevision)handleError(error);
   } finally { if(tickToken===token){tickToken=null;busy=false;}flushInput(); }
  }
- const timer=setInterval(tick,50);
+ const timer=setInterval(tick,Math.max(50,Math.min(1000,Number(inputInterval)||50)));
  tick();
  return client;
 }

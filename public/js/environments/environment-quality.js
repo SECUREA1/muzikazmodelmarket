@@ -28,11 +28,12 @@ export function configureRenderer(renderer, presetName = 'auto') {
 
 export function applyWorldQuality(root, renderer) {
   const maxAnisotropy = renderer.capabilities.getMaxAnisotropy?.() || 1;
-  let lights = 0;
+  let lights = 0,meshCount=0,triangleCount=0;
   const materialsSeen = new Set(), texturesSeen = new Set();
   root.traverse((object) => {
     if (object.isLight) lights += 1;
     if (!object.isMesh) return;
+    meshCount++;triangleCount+=Math.floor((object.geometry?.index?.count||object.geometry?.attributes?.position?.count||0)/3)*(object.isInstancedMesh?object.count:1);
     object.frustumCulled = true;
     object.castShadow = !/floor|ceiling|sky/i.test(object.name || '');
     object.receiveShadow = true;
@@ -51,5 +52,5 @@ export function applyWorldQuality(root, renderer) {
       if (material.transparent) material.depthWrite = false;
     });
   });
-  return { embeddedLights: lights };
+  return { embeddedLights: lights, meshCount, triangleCount, materialCount:materialsSeen.size };
 }
