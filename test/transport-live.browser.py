@@ -29,7 +29,7 @@ with tempfile.TemporaryDirectory(prefix='transport-live-') as directory:
      raise
     print('Live airport connected',flush=True)
     page.get_by_role('button',name='Crew radio and vehicle quests',exact=True).wait_for(state='visible',timeout=30000)
-    page.locator('.district-map-toggle').click()
+    page.evaluate("()=>{document.querySelector('.district-map-toggle').click();[...document.querySelectorAll('.local-map-view-toggle button')].find(button=>button.textContent==='2D plan').click();}")
     ai=page.locator('[data-craft-id="transport-traffic-aircraft-0"]')
     ai.wait_for(state='attached',timeout=30000)
     assert ai.is_disabled()
@@ -40,8 +40,11 @@ with tempfile.TemporaryDirectory(prefix='transport-live-') as directory:
     # Close the map if it stays open after boarding.
     if page.locator('.district-map-dialog[open]').count():page.locator('.district-map-dialog').evaluate('(node)=>node.close()')
     page.get_by_role('button',name='Crew radio and vehicle quests',exact=True).click(force=True)
+    page.get_by_label('Choose assignment',exact=True).select_option('air-delivery')
     page.get_by_role('button',name='Request assignment',exact=True).click()
     page.get_by_label('Next mission checkpoint').wait_for(state='visible',timeout=20000)
+    page.locator('.transport-radio-panel [data-action]').click()
+    page.wait_for_function("document.querySelector('.transport-mission-hud')?.textContent.toLowerCase().includes('departure beacon')")
     reading=page.get_by_label('Next mission checkpoint').inner_text()
     assert 'departure beacon' in reading.lower(),reading
     print('Live assignment:',reading,flush=True)
@@ -49,5 +52,5 @@ with tempfile.TemporaryDirectory(prefix='transport-live-') as directory:
     page.get_by_label('Next mission checkpoint').wait_for(state='hidden',timeout=20000)
     assert not errors,errors
     browser.close()
-   print('Live airport starts, shared AI is unavailable for boarding, DA40 boards and dispatch starts/cancels through the authoritative server.')
+   print('Live airport starts, shared AI is unavailable for boarding, DA40 boards and cargo pickup, aircraft dispatch and cancellation work through the authoritative server.')
   finally:server.terminate();server.wait(timeout=10)

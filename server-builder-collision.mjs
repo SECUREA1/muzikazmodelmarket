@@ -1,3 +1,4 @@
+import {syncTrafficCollision} from './server-traffic-collision.mjs';
 import {isAircraft} from './public/js/aircraft-flight.js';
 import {isWatercraft,hasWalkableInterior} from './public/js/harbor-water.js';
 import {alignStackableObject} from './public/js/stack-placement.js';
@@ -79,9 +80,10 @@ export class ServerBuilderCollision {
 
  }
  placedWorld(actors={},objects={}){
-  const key=JSON.stringify([Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),Object.values(actors).filter(actor=>(actor.spawned||isWatercraft(actor)||isAircraft(actor))&&actor.active!==false&&(!actor.holderId||hasWalkableInterior(actor))&&!actor.loot&&!isBasketball(actor)).map(actor=>[actor.id,actor.asset?.id,actor.asset?.buildAssetId,actor.placementRevision,actor.active,actor.holderId,actor.position,actor.rotation,actor.scale])]);
-  if(this.placedCache?.key===key)return this.placedCache.world;
-  disposePlacedCollision(this.placedCache?.world);const world=placedCollisionWorld(actors,objects);this.placedCache={key,world};return world;
+  const stableActors=Object.fromEntries(Object.entries(actors).filter(([,actor])=>!actor.trafficAI));
+  const key=JSON.stringify([Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),Object.values(stableActors).filter(actor=>(actor.spawned||isWatercraft(actor)||isAircraft(actor))&&actor.active!==false&&(!actor.holderId||hasWalkableInterior(actor))&&!actor.loot&&!isBasketball(actor)).map(actor=>[actor.id,actor.asset?.id,actor.asset?.buildAssetId,actor.placementRevision,actor.active,actor.holderId,actor.position,actor.rotation,actor.scale])]);
+  if(this.placedCache?.key!==key){this.placedCache?.world?.root.removeFromParent();disposePlacedCollision(this.placedCache?.world);this.placedCache={key,world:placedCollisionWorld(stableActors,objects)};}
+  const world=this.placedCache.world;this.trafficCollision=syncTrafficCollision(this.trafficCollision,actors);this.placedCombinedRoot||=new THREE.Group();if(world.root.parent!==this.placedCombinedRoot)this.placedCombinedRoot.add(world.root);if(this.trafficCollision.root.parent!==this.placedCombinedRoot)this.placedCombinedRoot.add(this.trafficCollision.root);return {root:this.placedCombinedRoot,boxes:[...world.boxes,...this.trafficCollision.boxes],meshes:[...world.meshes,...this.trafficCollision.meshes]};
  }
  stackAsset(environment,asset,position,rotation,scale,actors={},objects={}){
   const preview=placedCollisionWorld({preview:{id:'preview',spawned:true,active:true,asset,position:{x:0,y:0,z:0},rotation,scale}});

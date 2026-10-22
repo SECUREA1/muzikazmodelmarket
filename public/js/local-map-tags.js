@@ -1,3 +1,4 @@
+import {questMapTags} from './quest-catalog.js';
 import {aircraftDisplayName} from './aircraft-types.js';
 import {localMapLocations} from './local-map-locations.js';
 import {isAircraft} from './aircraft-flight.js';
@@ -15,8 +16,8 @@ export function localMapTags(environment,live={},selfId=null){
  for(const object of objects){const actor=actors[object.id]||object;if(actor.active===false)continue;if(object.atlasDestination)add('portal:'+object.id,object.name||'World portal',object.atlasDeedId?'deed':'portal',actor.position,{mapId:object.atlasDestination,deedId:object.atlasDeedId});}
  const craft=new Map(objects.filter(object=>isAircraft(object)||isWatercraft(object)).map(object=>[object.id,object]));
  for(const actor of Object.values(actors))if(isAircraft(actor)||isWatercraft(actor))craft.set(actor.id,{...craft.get(actor.id),...actor});
- for(const [id,source]of craft){const actor=actors[id]||source;if(actor.active===false)continue;add('craft:'+id,isAircraft(actor)?aircraftDisplayName({...source,...actor}):actor.name||source.name||id,isAircraft(actor)?'aircraft':'boat',actor.position,{entityId:id,occupied:!!actor.trafficAI||!!actor.holderId||!!actor.flight?.airborne,description:actor.trafficAI?'AI crew · '+actor.crew?.name:actor.holderId?'Occupied':actor.flight?.airborne?'In flight':'Available to board'});}
- const mission=live?.players?.[selfId]?.vehicleMission;if(mission?.status==='active')for(const [index,point]of mission.checkpoints.entries())if(index>=mission.index)add('mission:'+index,(index+1)+'. '+point.name,'mission',point,{description:index===mission.index?'Next quest checkpoint':'Quest checkpoint'});
+ for(const [id,source]of craft){const actor=actors[id]||source;if(actor.active===false||actor.questOwner===selfId&&live.players?.[selfId]?.vehicleMission?.status==='active')continue;add('craft:'+id,isAircraft(actor)?aircraftDisplayName({...source,...actor}):actor.name||source.name||id,isAircraft(actor)?'aircraft':'boat',actor.position,{entityId:id,occupied:!!actor.trafficAI||!!actor.holderId||!!actor.flight?.airborne,description:actor.trafficAI?'AI crew · '+actor.crew?.name:actor.holderId?'Occupied':actor.flight?.airborne?'In flight':'Available to board'});}
+ for(const tag of questMapTags(live,selfId))add(tag.id,tag.name,tag.kind,tag,tag);
  const spawn=environment.spawn?.position||environment.spawn||{x:0,y:0,z:0};add('arrival','Arrival','arrival',spawn,{arrival:true});
  for(const [id,player]of Object.entries(live?.players||{}))add('player:'+id,id===selfId?'You':player.username||'Player',id===selfId?'self':'player',player.position,{description:id===selfId?'Your live position':'Live player'});
  return tags;

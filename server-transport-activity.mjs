@@ -1,9 +1,10 @@
+import {questRadio as radio} from './server-quest-radio.mjs';
+import {startExpandedQuest,cancelExpandedQuest,expandedQuestAction} from './server-expanded-quests.mjs';
 import {boatMovementBlocked} from './server-boat-assist.mjs';
 import {isAircraft} from './public/js/aircraft-flight.js';
 import {isWatercraft,harborWaterAt,watercraftOverlap} from './public/js/harbor-water.js';
 import {airportRunways} from './public/js/airport-navigation.js';
 const separation=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
-const radio=(sim,now,speaker,text)=>{sim.transportRadio||=[];sim.transportRadio.push({id:(sim.transportRadioSequence=(sim.transportRadioSequence||0)+1),at:now,speaker,text});sim.transportRadio=sim.transportRadio.slice(-12);};
 const routeCache=new WeakMap();
 function routes(environment){if(routeCache.has(environment))return routeCache.get(environment);const result=buildRoutes(environment);routeCache.set(environment,result);return result;}
 function buildRoutes(environment){
@@ -32,11 +33,13 @@ export function stepTransportTraffic(sim,environment,now,dt,{collision,objects={
   sim.transportNextRadioAt=now+11000;
  }
 }
-export function vehicleMissionCommand(sim,player,environment,operation,now){
- if(operation==='cancel'){if(player.vehicleMission?.status==='active'){player.vehicleMission.status='cancelled';player.vehicleMission.message='Assignment cancelled.';}return 'Assignment cancelled.';}
+export function vehicleMissionCommand(sim,player,environment,operation,now,options={}){
+ if(operation==='interact')return expandedQuestAction(sim,player,now);
+ if(operation==='cancel'){cancelExpandedQuest(sim,player,now);if(player.vehicleMission?.status==='active'){player.vehicleMission.status='cancelled';player.vehicleMission.message='Assignment cancelled.';}return 'Assignment cancelled.';}
  if(operation!=='start')throw new Error('Choose start or cancel.');
  if(player.vehicleMission?.status==='active')throw new Error('Finish or cancel the current assignment.');
  if(player.transportRewardAt!=null&&now<player.transportRewardAt+60000)throw new Error('Dispatch is preparing your next assignment. Try again shortly.');
+ if(options.questId)return startExpandedQuest(sim,player,environment,options.questId,now,options);
  const craft=sim.actors[player.vehicleId];if(!craft||craft.trafficAI||craft.active===false||craft.holderId!==player.actorId||player.health<=0)throw new Error('Board your own boat or aircraft first.');
  let checkpoints,title;
  if(isAircraft(craft)&&environment.airport?.enabled){const runway=airportRunways(environment)[0];if(!runway)throw new Error('No runway is available.');title='Air courier circuit';checkpoints=[{name:'Departure beacon',x:runway.x,y:22,z:runway.z-runway.length/2-30,radius:40,airborne:true},{name:'Coastal survey beacon',x:Math.min((environment.builderScene?.mapSize||1024)*.28,300),y:35,z:-180,radius:45,airborne:true},{name:'Return and stop on the main runway',x:runway.x,y:.4,z:runway.z,radius:Math.max(15,runway.width),landed:true,runwayWidth:runway.width}];}
@@ -45,7 +48,7 @@ export function vehicleMissionCommand(sim,player,environment,operation,now){
  player.vehicleMission={title,status:'active',vehicleId:craft.id,startedAt:now,deadline:now+600000,index:0,checkpoints,reward:500,message:'Follow the numbered beacons, then return safely.'};radio(sim,now,'Dispatch',title+' assigned. '+checkpoints[0].name+'.');return title+' started. Complete the circuit for 500 score points.';
 }
 export function stepVehicleMissions(sim,now){
- for(const player of Object.values(sim.players)){const mission=player.vehicleMission;if(mission?.status!=='active')continue;const craft=sim.actors[mission.vehicleId];
+ for(const player of Object.values(sim.players)){const mission=player.vehicleMission;if(mission?.status!=='active'||mission.questId)continue;const craft=sim.actors[mission.vehicleId];
   if(player.vehicleId!==mission.vehicleId||!craft||craft.active===false||craft.holderId!==player.actorId||player.health<=0||now-player.lastSeen>15000){mission.status='cancelled';mission.message='Assignment ended: you left the craft or disconnected.';continue;}
   if(now>mission.deadline){mission.status='expired';mission.message='Time expired. Ask dispatch for another assignment.';continue;}
   const point=mission.checkpoints[mission.index];mission.distance=Math.round(separation(craft.position,point));

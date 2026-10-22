@@ -2187,7 +2187,9 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
     aircraftCannonEffects.update(frameDelta);
     worldScenery.update(reducedMotion?0:clock.elapsedTime,displayCamera());
     if(!renderer.xr.isPresenting)yachtGames.presentCamera(displayCamera(),playerRig);
-    renderer.render(scene, displayCamera());
+    // The local map renders the same scene separately behind this modal.
+    // Keep transforms live without paying for two full world draws per frame.
+    if(!districtMap.dialog.open||renderer.xr.isPresenting)renderer.render(scene, displayCamera());
 
   });
   // This is the launch-critical half of checkForHouseUpdates({ startup: true }).

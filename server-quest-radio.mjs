@@ -1,0 +1,1 @@
+export function questRadio(sim,now,speaker,text){sim.transportRadio||=[];sim.transportRadio.push({id:(sim.transportRadioSequence=(sim.transportRadioSequence||0)+1),at:now,speaker,text});sim.transportRadio=sim.transportRadio.slice(-12);}
