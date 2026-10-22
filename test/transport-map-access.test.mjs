@@ -10,7 +10,7 @@ import {AuthoritativeRooms} from '../authoritative-room.mjs';
 import {supportsRadTox} from '../rad-tox-campaign.mjs';
 const port=neonMarina();const marina={id:'neon-docks-map-test',name:'Neon Docks',proceduralLand:true,spawn:{x:124,y:0,z:30},builderScene:{layout:'community-park',mapSize:256,layoutMeta:{harbor:port.harbor,locations:port.locations},objects:port.objects}};
 for(const world of [airportWorld(),marina])test(world.name+' map travel and boarding share one authoritative space',async t=>{
- const dir=await mkdtemp(join(tmpdir(),'transport-map-'));t.after(()=>rm(dir,{recursive:true,force:true}));const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json'))});let request=0;
+ const dir=await mkdtemp(join(tmpdir(),'transport-map-'));t.after(()=>rm(dir,{recursive:true,force:true}));const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),now:()=>100000});let request=0;
  const alice={accountId:'alice',username:'Alice',stats:{health:100}},bob={accountId:'bob',username:'Bob',stats:{health:100}};
  const send=(user,action,fields={})=>runtime.command(world.id,world,user,{action,requestId:'map-'+ ++request,...fields});
  await send(alice,'join');await send(bob,'join');assert.equal(supportsRadTox(world),false);
@@ -31,4 +31,12 @@ test('transport floors preserve their authored materials and clear previous slim
   loader.activeEnvironment=world;loader.refreshFloorEffects();assert.equal(loader.floorSlime,null);assert.equal(floor.material,material,'restores original terrain material');
   if(world.builderScene.layoutMeta.harbor){const water=loader.world.getObjectByName('HARBOR_WATER_VISUAL');assert.equal(water.userData.waterSurface,true);assert.equal(water.userData.collisionDisabled,true);assert.ok(water.material.transparent);}
  }
+});
+test('travel rotates input epoch so delayed pre-travel controls cannot move or turn the new position',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'travel-input-'));t.after(()=>rm(dir,{recursive:true,force:true}));let now=100000,n=0;
+ const runtime=new AuthoritativeRooms({store:new SharedRoomStore(join(dir,'rooms.json')),now:()=>now}),world={id:'public-commons',proceduralLand:true,spawn:{x:0,y:0,z:0},builderScene:{layout:'grand-floor',mapSize:100,objects:[]}},who={accountId:'traveler'},send=(action,fields={})=>runtime.command(world.id,world,who,{action,requestId:'epoch-'+ ++n,...fields});
+ const joined=await send('join'),oldEpoch=joined.result.inputEpoch;const moved=await send('map-access',{position:{x:15,z:15}}),newEpoch=moved.result.inputEpoch;
+ assert.ok(newEpoch);assert.notEqual(newEpoch,oldEpoch);const start={...moved.players['account:traveler'].position};
+ await send('input',{inputEpoch:oldEpoch,inputSequence:999,input:{forward:1,yaw:2}});now+=100;const stale=await send('input',{inputEpoch:oldEpoch,inputSequence:1000,input:{forward:1,yaw:2}});assert.deepEqual(stale.players['account:traveler'].position,start);assert.notEqual(stale.players['account:traveler'].yaw,2);
+ await send('input',{inputEpoch:newEpoch,inputSequence:1,input:{forward:1,yaw:0}});now+=100;const fresh=await send('input',{inputEpoch:newEpoch,inputSequence:2,input:{forward:1,yaw:0}});assert.ok(fresh.players['account:traveler'].position.z<start.z);
 });

@@ -84,7 +84,8 @@ export function connectAuthoritativeRoom({roomId,input,render,onStatus,meetingId
     if(!selfId||!state?.players?.[selfId])throw Error('The server has not confirmed your player in this room.');
     if(action==='start-rad-tox'&&state.radTox){radToxStarted=true;radToxPreference=true;}
     if(action==='rad-tox-toggle')radToxPreference=fields.enabled===true;
-    client.selfId=selfId;if(action==='join'){inputEpoch=state.result?.inputEpoch||null;inputSequence=0;lastConfirmedInputSequence=0;}
+    client.selfId=selfId;if(action==='join'||state.sequence>sequence&&state.result?.inputEpoch&&state.result.inputEpoch!==inputEpoch){inputEpoch=state.result?.inputEpoch||null;inputSequence=0;lastConfirmedInputSequence=0;pendingInput=null;}
+    if(action==='join'){sequence=-1;pendingRender=null;clearTimeout(renderTimer);renderTimer=null;}
     if(action==='input')lastConfirmedInputSequence=Math.max(lastConfirmedInputSequence,issuedInputSequence);
     if(state.result?.loot&&firstPickup(state.result.loot.id)){signalInventoryChange();window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.loot}));if(state.result.loot.currency==='MZK')window.MZKWallet?.refreshShared?.().catch(()=>{});onStatus?.(state.result.message);}
     if(state.result?.pickup&&firstPickup(state.result.pickup.id)){window.dispatchEvent(new CustomEvent('muzikaz:pickup-confirmed',{detail:state.result.pickup}));}

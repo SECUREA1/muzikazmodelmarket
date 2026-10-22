@@ -557,6 +557,8 @@ if(!hit.entity.destructible){if(hit.entity.radTox||['hostile','patrol'].includes
   if(player.basketballRole==='spectator'&&basketballSpectatorRestricted(player.position,sim)){player.position=constrainBasketballSpectator(player.position,player.position,sim,player);player.input={};player.movementRevision=(player.movementRevision||0)+1;}
   if(priorCommandPosition&&requestedAction!=='input'&&distance(priorCommandPosition,player.position)>.001&&(player.movementRevision||0)===priorMovementRevision)player.movementRevision=priorMovementRevision+1;
 
+  if(requestedAction!=='join'&&(player.movementRevision||0)!==priorMovementRevision){player.input={};player.inputEpoch=randomUUID();player.lastInputSequence=-1;result.inputEpoch=player.inputEpoch;}
+
   if(command.action==='input'&&player.health>0)await this.collectNearbyLoot(sim,player,identity,id,now,null,result);
   this.prepareEncounter(sim,environment);
   checkTeamDefeat(sim,now);
