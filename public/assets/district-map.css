@@ -8,3 +8,6 @@
 .local-map-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px}
 
 .local-map-pin-leader{position:absolute;height:1px;transform-origin:left center;opacity:.7;pointer-events:none}.local-map-pin-dot{position:absolute;width:5px;height:5px;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}.local-map-pin-dot[hidden],.local-map-pin-leader[hidden]{display:none!important}
+
+/* Compact labels keep dense resort maps selectable; full names remain in tooltips and the selection panel. */
+.district-map-dialog .local-map-3d-tag{width:max-content;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

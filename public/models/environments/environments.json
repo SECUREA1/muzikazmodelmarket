@@ -74,7 +74,7 @@
       "z": 370,
       "rotationY": 0
     },
-    "description": "A massive 1.2 km alpine resort with a 300 m natural summit and 180 m ski vertical, four color-coded ski trails, two rideable chairlifts, three snow ramps, woodland trails, warming hut and a walk-in château with a glowing fireplace, lounge, dining room, stairs and observation balcony. Multiplayer skiing, braking and jumping on the shared mountain.",
+    "description": "A massive 1.2 km alpine resort with a 300 m natural summit and 180 m ski vertical, four color-coded ski trails, two rideable chairlifts, three snow ramps, woodland trails, warming hut and a walk-in château with a glowing fireplace, lounge, dining room, stairs and observation balcony. Smooth multiplayer skiing with easy steering, ordered race gates, jump points, timed finishes, medals and shared leaderboards. Wide boarding lanes and complete lift rides with automatic summit exits.",
     "builderScene": {
       "version": 3,
       "layout": "ski-resort",
@@ -137,7 +137,7 @@
             "destructible": false
           },
           "dialogueSettings": {
-            "text": "Use to board the moving chairlift. Enjoy the mountain ride; disembark automatically at the summit."
+            "text": "Enter the yellow boarding lane and press Board lift or E / Use. Ride all the way to the summit; skis equip automatically on the clear exit platform."
           }
         },
         {
@@ -167,7 +167,7 @@
             "destructible": false
           },
           "dialogueSettings": {
-            "text": "Summit arrival. Equip skis, face downhill and choose a marked run."
+            "text": "Automatic summit exit, facing downhill with skis ready. Choose Race from start for timed gates, jump bonuses, medals and the live leaderboard."
           }
         },
         {
@@ -197,7 +197,7 @@
             "destructible": false
           },
           "dialogueSettings": {
-            "text": "Use to board the moving chairlift. Enjoy the mountain ride; disembark automatically at the summit."
+            "text": "Enter the yellow boarding lane and press Board lift or E / Use. Ride all the way to the summit; skis equip automatically on the clear exit platform."
           }
         },
         {
@@ -227,7 +227,7 @@
             "destructible": false
           },
           "dialogueSettings": {
-            "text": "Summit arrival. Equip skis, face downhill and choose a marked run."
+            "text": "Automatic summit exit, facing downhill with skis ready. Choose Race from start for timed gates, jump bonuses, medals and the live leaderboard."
           }
         },
         {
@@ -257,7 +257,7 @@
             "destructible": false
           },
           "dialogueSettings": {
-            "text": "Follow the color-coded poles downhill to the base village. Broad groomed snow with mountain views."
+            "text": "Race through every colored gate for points and a timed finish. Easy steering helps you follow the course. Broad groomed snow with mountain views."
           }
         },
         {
@@ -287,7 +287,7 @@
             "destructible": false
           },
           "dialogueSettings": {
-            "text": "Follow the color-coded poles downhill to the base village. Broad groomed snow with mountain views."
+            "text": "Race through every colored gate for points and a timed finish. Easy steering helps you follow the course. Broad groomed snow with mountain views."
           }
         },
         {
@@ -317,7 +317,7 @@
             "destructible": false
           },
           "dialogueSettings": {
-            "text": "Follow the color-coded poles downhill to the base village. Broad groomed snow with mountain views."
+            "text": "Race through every colored gate for points and a timed finish. Easy steering helps you follow the course. Broad groomed snow with mountain views."
           }
         },
         {
@@ -347,7 +347,7 @@
             "destructible": false
           },
           "dialogueSettings": {
-            "text": "Follow the color-coded poles downhill to the base village. Three sculpted snow ramps with landing slopes."
+            "text": "Race through every colored gate for points and a timed finish. Easy steering helps you follow the course. Three sculpted snow ramps with landing slopes."
           }
         },
         {
@@ -463,7 +463,7 @@
             "z": 305,
             "width": 14,
             "depth": 12,
-            "description": "Use to board the moving chairlift. Enjoy the mountain ride; disembark automatically at the summit."
+            "description": "Enter the yellow boarding lane and press Board lift or E / Use. Ride all the way to the summit; skis equip automatically on the clear exit platform."
           },
           {
             "id": "summit-express-summit",
@@ -473,7 +473,7 @@
             "z": -405,
             "width": 14,
             "depth": 12,
-            "description": "Summit arrival. Equip skis, face downhill and choose a marked run."
+            "description": "Automatic summit exit, facing downhill with skis ready. Choose Race from start for timed gates, jump bonuses, medals and the live leaderboard."
           },
           {
             "id": "park-lift-base",
@@ -483,7 +483,7 @@
             "z": 300,
             "width": 14,
             "depth": 12,
-            "description": "Use to board the moving chairlift. Enjoy the mountain ride; disembark automatically at the summit."
+            "description": "Enter the yellow boarding lane and press Board lift or E / Use. Ride all the way to the summit; skis equip automatically on the clear exit platform."
           },
           {
             "id": "park-lift-summit",
@@ -493,7 +493,7 @@
             "z": -100,
             "width": 14,
             "depth": 12,
-            "description": "Summit arrival. Equip skis, face downhill and choose a marked run."
+            "description": "Automatic summit exit, facing downhill with skis ready. Choose Race from start for timed gates, jump bonuses, medals and the live leaderboard."
           },
           {
             "id": "pine-trail",
@@ -503,7 +503,7 @@
             "z": -385,
             "width": 14,
             "depth": 12,
-            "description": "Follow the color-coded poles downhill to the base village. Broad groomed snow with mountain views.",
+            "description": "Race through every colored gate for points and a timed finish. Easy steering helps you follow the course. Broad groomed snow with mountain views.",
             "color": "#35c98a",
             "icon": "●"
           },
@@ -515,7 +515,7 @@
             "z": -385,
             "width": 14,
             "depth": 12,
-            "description": "Follow the color-coded poles downhill to the base village. Broad groomed snow with mountain views.",
+            "description": "Race through every colored gate for points and a timed finish. Easy steering helps you follow the course. Broad groomed snow with mountain views.",
             "color": "#439fff",
             "icon": "■"
           },
@@ -527,7 +527,7 @@
             "z": -385,
             "width": 14,
             "depth": 12,
-            "description": "Follow the color-coded poles downhill to the base village. Broad groomed snow with mountain views.",
+            "description": "Race through every colored gate for points and a timed finish. Easy steering helps you follow the course. Broad groomed snow with mountain views.",
             "color": "#292947",
             "icon": "◆"
           },
@@ -539,7 +539,7 @@
             "z": -100,
             "width": 14,
             "depth": 12,
-            "description": "Follow the color-coded poles downhill to the base village. Three sculpted snow ramps with landing slopes.",
+            "description": "Race through every colored gate for points and a timed finish. Easy steering helps you follow the course. Three sculpted snow ramps with landing slopes.",
             "color": "#ffa547",
             "icon": "✦"
           },

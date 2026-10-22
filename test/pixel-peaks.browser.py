@@ -35,10 +35,24 @@ with tempfile.TemporaryDirectory(prefix='ski-browser-') as directory:
      print(page.evaluate('({snapshot:window.MuzikazHouseExplorer?.snapshot(),status:document.querySelector("#house-status")?.textContent,panel:document.querySelector(".ski-resort-controls")?.outerHTML})'),flush=True);raise
     page.get_by_role('button',name='Remove skis',exact=True).click()
     page.get_by_role('button',name='Equip skis',exact=True).wait_for(timeout=30000)
+    page.locator('.ski-resort-controls summary').click()
+    page.locator('[data-ski-course]').select_option('pine-trail')
+    page.get_by_role('button',name='Race from start',exact=True).click()
+    page.wait_for_function('document.querySelector("[data-ski-score]").textContent.includes("Gate 0/8")',timeout=30000)
+    assert page.locator('[data-ski-assist]').is_checked()
+    page.locator('.ski-resort-controls summary').click()
     page.get_by_role('button',name='Local map and land deeds',exact=True).click()
     page.wait_for_function("document.querySelector('[data-local-map-3d]')?.getAttribute('aria-busy')==='false'",timeout=60000)
     assert page.locator('[data-local-map-3d] canvas').count()==1
     assert page.locator('[data-map-tag="location:summit-express-base"]').count()>0
+    page.locator('[data-map-tag="location:summit-express-base"]').click()
+    page.get_by_role('button',name='Go to Summit Express Chairlift · Board here',exact=True).click()
+    page.get_by_role('button',name='Board Summit Express Chairlift',exact=True).wait_for(timeout=30000)
+    page.get_by_role('button',name='Board Summit Express Chairlift',exact=True).click()
+    page.wait_for_function('document.querySelector("[data-ski-ride]").value>0',timeout=15000)
+    assert page.locator('[data-ski-equip]').is_disabled()
+    assert page.locator('[data-ski-race]').is_disabled()
+    assert 'automatic exit' in page.locator('[data-ski-state]').inner_text()
     assert not errors,errors
     print('Pixel Peaks resort render, live startup, ski toggles and accurate local 3D map passed.',flush=True)
     browser.close()

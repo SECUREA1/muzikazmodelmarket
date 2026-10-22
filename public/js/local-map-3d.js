@@ -43,8 +43,13 @@ export async function mountLocalMap3D(root,{environment,getRoots=null,live=null,
    const width=viewport.clientWidth,height=viewport.clientHeight;
    const occupied=[];
    for(const {tag,button,leader,dot}of tagEntries){point.set(tag.x,tag.y+1.8,tag.z).project(camera);const hidden=point.z< -1||point.z>1||Math.abs(point.x)>1||Math.abs(point.y)>1;button.hidden=leader.hidden=dot.hidden=hidden;if(hidden)continue;
-    const px=(point.x+1)*width/2,py=(1-point.y)*height/2,bw=button.offsetWidth||100,bh=button.offsetHeight||30,x=Math.max(bw/2+3,Math.min(width-bw/2-3,px));let y=Math.max(bh+3,Math.min(height-3,py-8));
-    for(let step=0;step<24;step++){const candidate=step?py-8+(step%2?-1:1)*Math.ceil(step/2)*(bh+5):y;if(candidate<bh+3||candidate>height-3)continue;const box={left:x-bw/2,right:x+bw/2,top:candidate-bh,bottom:candidate};if(!occupied.some(other=>box.left<other.right+3&&box.right>other.left-3&&box.top<other.bottom+3&&box.bottom>other.top-3)){y=candidate;break;}}
+    const px=(point.x+1)*width/2,py=(1-point.y)*height/2,bw=button.offsetWidth||100,bh=button.offsetHeight||28,clampX=value=>Math.max(bw/2+3,Math.min(width-bw/2-3,value)),startX=clampX(px),startY=Math.max(bh+3,Math.min(height-3,py-8));
+    const xs=[startX];for(let column=bw/2+3;column<=width-bw/2-3;column+=bw+6)xs.push(column);
+    const ys=[startY];for(let row=bh+3;row<=height-3;row+=bh+5)ys.push(row);
+    const candidates=xs.flatMap(x=>ys.map(y=>({x,y,distance:Math.abs(x-startX)+Math.abs(y-startY)}))).sort((a,b)=>a.distance-b.distance);
+    const slot=candidates.find(({x,y})=>!occupied.some(other=>x-bw/2<other.right+3&&x+bw/2>other.left-3&&y-bh<other.bottom+3&&y>other.top-3));
+    if(!slot){button.hidden=leader.hidden=true;dot.style.left=px+'px';dot.style.top=py+'px';dot.style.background=tag.color;continue;}
+    const {x,y}=slot;
     occupied.push({left:x-bw/2,right:x+bw/2,top:y-bh,bottom:y});button.style.left=x+'px';button.style.top=y+'px';dot.style.left=px+'px';dot.style.top=py+'px';dot.style.background=leader.style.background=tag.color;const dx=x-px,dy=y-py;leader.style.left=px+'px';leader.style.top=py+'px';leader.style.width=Math.hypot(dx,dy)+'px';leader.style.transform='rotate('+Math.atan2(dy,dx)+'rad)';
    }
    compass.style.transform='rotate('+(-Math.atan2(camera.position.x-controls.target.x,camera.position.z-controls.target.z))+'rad)';renderer.render(scene,camera);
