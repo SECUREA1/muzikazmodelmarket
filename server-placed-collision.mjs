@@ -1,3 +1,4 @@
+import {isConstructionMachine} from './public/js/construction-state.js';
 import {isAircraft} from './public/js/aircraft-flight.js';
 import {isWatercraft,hasWalkableInterior} from './public/js/harbor-water.js';
 import {isBasketball} from './public/js/basketball.js';
@@ -21,6 +22,7 @@ export function placedCollisionWorld(actors={},objects={}){
   add(createBuildingBlock(THREE,object.materialId),vector(object.position),vector(object.rotation),vector(object.scale),false,object.id);
  }
  for(const actor of Object.values(actors)){
+  if(isConstructionMachine(actor)||actor.constructionManaged)continue;
   if((!actor.spawned&&!isWatercraft(actor)&&!isAircraft(actor))||actor.active===false||(actor.holderId&&!hasWalkableInterior(actor))||actor.loot||isBasketball(actor))continue;
   const asset=actor.asset||{},settings=asset.configuration||{};let model;
   if(asset.renderKind==='paint-stroke')model=createSolidPaint(THREE,asset);

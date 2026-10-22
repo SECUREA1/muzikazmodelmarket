@@ -1,3 +1,6 @@
+import {constructionColliders,constructionBox,constructionBoxContact} from './public/js/construction-collision.js';
+import {isConstructionMachine} from './public/js/construction-state.js';
+import {syncConstructionCollision} from './server-construction-collision.mjs';
 import {layoutCollisionGeometry} from './public/js/environments/layout-terrain.js';
 import {syncTrafficCollision} from './server-traffic-collision.mjs';
 import {isAircraft} from './public/js/aircraft-flight.js';
@@ -33,7 +36,7 @@ function indexCollisionMeshes(meshes){
 function queryCollisionMeshes(index,minX,maxX,minZ,maxZ){const found=new Set(index.large);for(let x=Math.floor(minX/8);x<=Math.floor(maxX/8);x++)for(let z=Math.floor(minZ/8);z<=Math.floor(maxZ/8);z++)for(const mesh of index.cells.get(x+':'+z)||[])found.add(mesh);return nearCollisionMeshes([...found],minX,maxX,minZ,maxZ);}
 
 
-function actorDisablesCollision(actor){return actor&&(actor.open||actor.active===false||(actor.holderId&&!hasWalkableInterior(actor)));}
+function actorDisablesCollision(actor){return actor&&(actor.open||actor.active===false||(actor.holderId&&!hasWalkableInterior(actor)&&!isConstructionMachine(actor)&&!actor.constructionManaged));}
 function builderObjectId(mesh){for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.builderObjectId)return parent.userData.builderObjectId;}
 function wallTriangles(mesh){
  const geometry=mesh.geometry,positions=geometry?.attributes?.position,index=geometry?.index,triangles=[];
@@ -90,7 +93,7 @@ export class ServerBuilderCollision {
   const key=environment.id+':'+(environment.contentUpdatedAt||environment.updatedAt||'')+':'+JSON.stringify(environment.builderScene?.baseTransform||{});if(this.cache.has(key))return this.cache.get(key);
   const definitions=new Map([...(environment.builderScene?.catalogModels||[]),...(environment.builderScene?.placedModels||[]),...(environment.builderScene?.customModels||[])].map(model=>[model.id,model]));
   const base=builderBaseEnvironment(environment);const glb=Boolean(base)||!environment.builderScene&&!environment.proceduralLand&&Boolean(environment.modelUrl||environment.modelUrls?.length);const root=new THREE.Group(),walls=[];if(!glb)root.add(createBuilderLand(environment));if(glb){const layer=environmentGeometry(base||environment);if(base)applyBuilderBaseTransform(layer,environment.builderScene.baseTransform);root.add(layer);}
-  for(const item of environment.builderScene?.objects||[]){if(isBasketball(item)||isWatercraft(item)||isAircraft(item))continue;if(['hostile','patrol'].includes(item.functionalSettings?.behavior))continue;let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){object=environmentGeometry({modelUrl:definition.modelUrl});const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3());if(definition.targetHeight&&size.y)object.scale.multiplyScalar(definition.targetHeight/size.y);object.updateMatrixWorld(true);object.position.y-=new THREE.Box3().setFromObject(object).min.y;}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);if(item.placementAnchor==='collider-base'){object.updateMatrixWorld(true);const bounds=placementBounds(THREE,object);if(!bounds.isEmpty())object.position.y+=(Number(item.position?.y)||0)-bounds.min.y;}const physicalMeshes=new Set(placementMeshes(object));object.traverse(mesh=>{if(mesh.isMesh&&!physicalMeshes.has(mesh))mesh.userData.collisionDisabled=true;});object.userData.builderObjectId=item.id;root.add(object);}
+  for(const item of environment.builderScene?.objects||[]){if(isBasketball(item)||isWatercraft(item)||isAircraft(item)||isConstructionMachine(item)||item.constructionManaged)continue;if(['hostile','patrol'].includes(item.functionalSettings?.behavior))continue;let object;try{const definition=definitions.get(item.modelId);object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId);if(!object&&definition?.renderKind==='image'){object=new THREE.Group();object.add(drawingCollisionModel(THREE,definition.configuration));}if(!object&&definition?.modelUrl){object=environmentGeometry({modelUrl:definition.modelUrl});const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3());if(definition.targetHeight&&size.y)object.scale.multiplyScalar(definition.targetHeight/size.y);object.updateMatrixWorld(true);object.position.y-=new THREE.Box3().setFromObject(object).min.y;}}catch{}if(!object)continue;object.position.set(Number(item.position?.x)||0,Number(item.position?.y)||0,Number(item.position?.z)||0);object.rotation.set(Number(item.rotation?.x)||0,Number(item.rotation?.y)||0,Number(item.rotation?.z)||0);object.scale.set(Number(item.scale?.x)||1,Number(item.scale?.y)||1,Number(item.scale?.z)||1);if(item.placementAnchor==='collider-base'){object.updateMatrixWorld(true);const bounds=placementBounds(THREE,object);if(!bounds.isEmpty())object.position.y+=(Number(item.position?.y)||0)-bounds.min.y;}const physicalMeshes=new Set(placementMeshes(object));object.traverse(mesh=>{if(mesh.isMesh&&!physicalMeshes.has(mesh))mesh.userData.collisionDisabled=true;});object.userData.builderObjectId=item.id;root.add(object);}
   root.updateMatrixWorld(true);const floors=[];
   root.traverse(mesh=>{if(mesh.isMesh)mesh.geometry=layoutCollisionGeometry(mesh.geometry);if(!mesh.isMesh||mesh.userData.streetVisual||/SKY|PARTICLE|VFX|WATER|HELPER/i.test(mesh.name))return;for(let parent=mesh;parent;parent=parent.parent)if(parent.userData.collisionDisabled||parent.userData.collider===false||parent.userData.collision===false)return;floors.push(mesh);if(!glb&&!mesh.userData.streetVisual&&!mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')){let parent=mesh;while(parent&&!parent.userData.builderObjectId)parent=parent.parent;walls.push({box:new THREE.Box3().setFromObject(mesh),objectId:parent?.userData.builderObjectId});}});
   if(!glb)for(const mesh of floors)if(mesh.name.startsWith('BUILDER_WALKABLE_FLOOR')&&!mesh.isInstancedMesh&&!Array.isArray(mesh.material))accelerateStaticRaycast(mesh,{respectMaterialSide:true});
@@ -99,10 +102,28 @@ export class ServerBuilderCollision {
 
  }
  placedWorld(actors={},objects={}){
-  const stableActors=Object.fromEntries(Object.entries(actors).filter(([,actor])=>!actor.trafficAI));
+  const stableActors=Object.fromEntries(Object.entries(actors).filter(([,actor])=>!actor.trafficAI&&!isConstructionMachine(actor)&&!actor.constructionManaged));
   const key=JSON.stringify([Object.values(objects).map(object=>[object.id,object.revision,object.deleted,object.open,object.position,object.rotation,object.scale]),Object.values(stableActors).filter(actor=>(actor.spawned||isWatercraft(actor)||isAircraft(actor))&&actor.active!==false&&(!actor.holderId||hasWalkableInterior(actor))&&!actor.loot&&!isBasketball(actor)).map(actor=>[actor.id,actor.asset?.id,actor.asset?.buildAssetId,actor.placementRevision,actor.active,actor.holderId,actor.position,actor.rotation,actor.scale])]);
   if(this.placedCache?.key!==key){this.placedCache?.world?.root.removeFromParent();disposePlacedCollision(this.placedCache?.world);this.placedCache={key,world:placedCollisionWorld(stableActors,objects)};}
-  const world=this.placedCache.world;this.trafficCollision=syncTrafficCollision(this.trafficCollision,actors);this.placedCombinedRoot||=new THREE.Group();if(world.root.parent!==this.placedCombinedRoot)this.placedCombinedRoot.add(world.root);if(this.trafficCollision.root.parent!==this.placedCombinedRoot)this.placedCombinedRoot.add(this.trafficCollision.root);const traffic=this.trafficCollision;return {root:this.placedCombinedRoot,boxes:[...world.boxes,...this.trafficCollision.boxes],meshes:[...world.meshes,...this.trafficCollision.meshes],nearbyMeshes(minX,maxX,minZ,maxZ){return [...queryCollisionMeshes(world.meshIndex ||= indexCollisionMeshes(world.meshes),minX,maxX,minZ,maxZ),...nearCollisionMeshes(traffic.meshes,minX,maxX,minZ,maxZ)];},get triangles(){return [...(world.wallTriangles ||= world.meshes.flatMap(wallTriangles)),...traffic.meshes.flatMap(wallTriangles)];}};
+  const world=this.placedCache.world;
+  this.constructionCollision=syncConstructionCollision(this.constructionCollision,actors);
+  this.trafficCollision=syncTrafficCollision(this.trafficCollision,actors);
+  this.placedCombinedRoot||=new THREE.Group();
+  if(world.root.parent!==this.placedCombinedRoot)this.placedCombinedRoot.add(world.root);
+  if(this.trafficCollision.root.parent!==this.placedCombinedRoot)this.placedCombinedRoot.add(this.trafficCollision.root);
+  if(this.constructionCollision.meshes.length){if(this.constructionCollision.root.parent!==this.placedCombinedRoot)this.placedCombinedRoot.add(this.constructionCollision.root);}else this.constructionCollision.root.removeFromParent();
+  const traffic=this.trafficCollision,construction=this.constructionCollision;
+  return {
+   root:this.placedCombinedRoot,
+   boxes:[...world.boxes,...traffic.boxes,...construction.boxes],
+   meshes:[...world.meshes,...traffic.meshes,...construction.meshes],
+   nearbyMeshes(minX,maxX,minZ,maxZ){return [
+    ...queryCollisionMeshes(world.meshIndex ||= indexCollisionMeshes(world.meshes),minX,maxX,minZ,maxZ),
+    ...nearCollisionMeshes(traffic.meshes,minX,maxX,minZ,maxZ),
+    ...nearCollisionMeshes(construction.meshes,minX,maxX,minZ,maxZ)
+   ];},
+   get triangles(){return [...(world.wallTriangles ||= world.meshes.flatMap(wallTriangles)),...traffic.meshes.flatMap(wallTriangles),...construction.meshes.flatMap(wallTriangles)];}
+  };
  }
  stackAsset(environment,asset,position,rotation,scale,actors={},objects={}){
   const preview=placedCollisionWorld({preview:{id:'preview',spawned:true,active:true,asset,position:{x:0,y:0,z:0},rotation,scale}});
@@ -138,7 +159,7 @@ export class ServerBuilderCollision {
   const world=this.world(environment),start=new THREE.Vector3(origin.x,origin.y,origin.z),aim=new THREE.Vector3(...direction),ray=new THREE.Ray(start,aim);
   if(world.glb)return new THREE.Raycaster(start,aim,.02,Math.max(.02,distance-.05)).intersectObjects(world.floors,false).length>0;
   if(this.placedWorld(actors,{}).boxes.some(box=>{const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;}))return true;
-  return world.walls.some(({box,objectId})=>{const actor=actors[objectId];if(actor&&(actor.open||!actor.active||actor.holderId))return false;const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;});
+  return world.walls.some(({box,objectId})=>{const actor=actors[objectId];if(actor&&(actor.open||!actor.active||(actor.holderId&&!isConstructionMachine(actor)&&!actor.constructionManaged)))return false;const point=ray.intersectBox(box,new THREE.Vector3());return point&&point.distanceTo(start)<distance-.05;});
  }
  groundAt(environment,point,{entry=false,maxRise=.4,actors={},objects}={}){
   const world=this.world(environment),bounds=world.bounds;
@@ -162,11 +183,12 @@ export class ServerBuilderCollision {
   if(!localMap&&length>.1&&this.blocksShot(environment,eye,delta.map(n=>n/length),length,actors))reject();
   const world=this.world(environment);
   const dynamic=this.placedWorld(actors,objects).boxes.map(box=>({box,objectId:box.objectId}));
-  if([...world.walls,...dynamic].some(({box,objectId})=>{const actor=actors[objectId];return !(actor&&(actor.open||!actor.active||actor.holderId))&&floor.x>box.min.x-.3&&floor.x<box.max.x+.3&&floor.z>box.min.z-.3&&floor.z<box.max.z+.3&&floor.y<box.max.y-.03&&floor.y+1.7>box.min.y+.03;}))reject();
+  if([...world.walls,...dynamic].some(({box,objectId})=>{const actor=actors[objectId];return !(actor&&(actor.open||!actor.active||(actor.holderId&&!isConstructionMachine(actor)&&!actor.constructionManaged)))&&floor.x>box.min.x-.3&&floor.x<box.max.x+.3&&floor.z>box.min.z-.3&&floor.z<box.max.z+.3&&floor.y<box.max.y-.03&&floor.y+1.7>box.min.y+.03;}))reject();
   return floor;
  }
  hasBodyClearance(environment,point,radius=PLAYER_RADIUS+.08,placed=null){
   const world=this.world(environment);
+  if(placed){const body=constructionBox('walking-clearance',{x:point.x,y:point.y+PLAYER_HEIGHT/2,z:point.z},{x:radius*2,y:PLAYER_HEIGHT-.06,z:radius*2});for(const actor of Object.values(placed.actors||{}))for(const part of constructionColliders(actor))if(constructionBoxContact(body,part))return false;}
   const triangles=[...nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius)];
   if(placed)triangles.push(...this.placedWorld(placed.actors,placed.objects).triangles.filter(t=>t.maxX>=point.x-radius&&t.minX<=point.x+radius&&t.maxZ>=point.z-radius&&t.minZ<=point.z+radius));
   for(const triangle of triangles.filter(triangle=>!actorDisablesCollision(placed?.actors?.[triangle.objectId])))for(const {a,b} of triangleWallSegments(triangle,point.y+.1,point.y+PLAYER_HEIGHT)){

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Construction controls verification</title>
+<link rel="stylesheet" href="../../public/assets/sports-action-bar.css">
+<style>body{margin:0;background:#18252c;color:white;font-family:system-ui}.house-stage{position:relative;width:100%;height:min(850px,100dvh);overflow:hidden}</style>
+<main class="house-stage"><canvas tabindex="0" aria-label="Game viewport"></canvas></main>
+<script type="module">
+import {mountConstructionUI} from '../../public/js/construction-ui.js';
+import {mountRoadVehicleUI} from '../../public/js/road-vehicle-ui.js';
+import {mountGameDisplayFlow} from '../../public/js/game-display-flow.js';
+const stage=document.querySelector('main');
+window.calls=[];
+const command=async(action,fields)=>{calls.push({action,...structuredClone(fields)});return {result:{message:'Confirmed'}};};
+window.state={players:{me:{health:100,vehicleId:'machine'}},actors:{machine:{id:'machine',modelId:'tower-crane',active:true,construction:{kind:'crane',slew:.5,trolley:20,hoist:4,load:null},driving:{speed:0}},car:{id:'car',modelId:'grand-tourer',active:true,driving:{speed:0}}},construction:{tower:{floors:2,maxFloors:16,placed:8},excavation:{depth:1.2}}};
+window.dashboard=mountConstructionUI(stage,command);
+window.road=mountRoadVehicleUI(stage,command);
+window.flow=mountGameDisplayFlow(stage);
+window.selectMachine=(modelId,kind)=>{state.players.me.vehicleId='machine';state.actors.machine.modelId=modelId;state.actors.machine.construction={kind,slew:0,trolley:20,hoist:4,boom:.7,stick:-.8,bucket:0,blade:1,bed:0,load:0};dashboard.update(state,'me');road.update(state,'me');};
+window.selectCar=()=>{state.players.me.vehicleId='car';dashboard.update(state,'me');road.update(state,'me');};
+selectMachine('tower-crane','crane');
+document.body.dataset.ready='true';
+</script>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Construction instrument and control verification</title>
+<link rel="stylesheet" href="../../public/assets/sports-action-bar.css">
+<style>body{margin:0;background:#17252d;color:#fff;font-family:system-ui}.house-stage{position:relative;height:min(850px,100dvh);overflow:hidden}canvas{width:100%;height:100%}</style>
+<main class="house-stage"><canvas tabindex="0" aria-label="Game viewport"></canvas></main>
+<script type="module">
+import {mountConstructionUI} from '../../public/js/construction-ui.js';
+import {mountGameDisplayFlow} from '../../public/js/game-display-flow.js';
+const stage=document.querySelector('main');
+window.calls=[];window.inputCalls=[];
+window.state={serverTime:1000,players:{me:{id:'me',health:100,vehicleId:null}},actors:{},construction:{tower:{x:15,z:5,width:18,depth:18,baseY:0,floorHeight:4,maxFloors:16,placed:8,floors:2,target:{x:15,y:12,z:-4}},supply:{x:0,y:.8,z:10},excavation:{x:20,z:20,radius:12,depth:1.2,volume:16},stockpile:{x:25,z:30,volume:8},graded:20}};
+const command=async(action,fields={})=>{
+ calls.push({action,...structuredClone(fields)});
+ if(action==='construction-controls'&&fields.operation==='precision'){
+  const actor=state.actors[state.players.me.vehicleId];actor.construction.precision=fields.enabled;actor.construction.telemetry.precision=fields.enabled;dashboard.update(state,'me');
+ }
+ return {result:{message:'Confirmed'}};
+};
+window.dashboard=mountConstructionUI(stage,command,{onInput:()=>inputCalls.push(dashboard.inputs()||{forward:0,side:0,brake:false})});
+window.flow=mountGameDisplayFlow(stage);
+window.refresh=()=>dashboard.update(state,'me');
+window.setMachine=(modelId,kind)=>{
+ const id='machine-'+kind;
+ state.players.me.vehicleId=id;
+ state.actors={[id]:{id,modelId,active:true,health:100,holderId:'me',position:{x:0,y:0,z:0},rotation:{x:0,y:0,z:0},driving:{speed:0,parked:true,steering:0,blocked:false},construction:{kind,slew:.5,trolley:20,hoist:8,hook:{x:0,y:8,z:0},boom:.7,stick:-.8,bucket:.2,swing:.3,blade:.8,bed:0,load:kind==='crane'?null:2,precision:false,working:false,assist:null,axes:{},telemetry:{travelAllowed:kind!=='crane',travelReason:'',canAttach:true,attachReason:'',canRelease:true,releaseReason:'',canWork:true,workReason:'',load:2,loadCapacity:kind==='truck'?40:kind==='crane'?12:2,loadPercent:25,cycleProgress:0,cyclePhase:'idle',hydraulicsActive:false,precision:false,blocked:false,blockedPart:null,blockedReason:'',limits:{},status:'Ready',axes:{}}}}};
+ calls.length=0;refresh();
+};
+window.machine=()=>state.actors[state.players.me.vehicleId];
+window.setTelemetry=fields=>{Object.assign(machine().construction.telemetry,fields);refresh();};
+window.setHydraulics=fields=>{Object.assign(machine().construction,fields);refresh();};
+window.setDriving=fields=>{Object.assign(machine().driving,fields);refresh();};
+window.lastAxes=()=>calls.filter(call=>call.operation==='control').at(-1)?.axes||{};
+window.clearCalls=()=>{calls.length=0;};
+setMachine('tower-crane','crane');document.body.dataset.ready='true';
+</script>
+</html>

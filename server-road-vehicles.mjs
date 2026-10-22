@@ -1,9 +1,11 @@
+import {isConstructionMachine,constructionTravelStatus} from './public/js/construction-state.js';
+import {constructionMovementBlocked} from './server-construction-collision.mjs';
 import {ROAD_VEHICLES,isRoadVehicle,roadVehicleType} from './public/js/road-vehicles.js';
 import {roadFleetAnchors} from './public/js/road-network.js';
 export {roadFleetAnchors} from './public/js/road-network.js';
 export function ensureRoadFleet(sim,environment,collision,objects){
  const revision='road-v2:'+(sim.environmentUpdatedAt||environment.id);if(sim.roadFleetRevision===revision)return;sim.roadFleetRevision=revision;const roads=roadFleetAnchors(environment);if(!roads.length)return;
- for(const [index,[modelId,config]]of Object.entries(ROAD_VEHICLES).entries()){
+ for(const [index,[modelId,config]]of Object.entries(ROAD_VEHICLES).filter(([,config])=>!config.siteOnly).entries()){
   const id='public-road-'+modelId;if(sim.actors[id]?.roadFleetVersion===2||sim.actors[id]?.holderId)continue;let position=null,yaw=0;
   for(const road of roads){const dx=road.to.x-road.from.x,dz=road.to.z-road.from.z,length=Math.hypot(dx,dz);if(length<8)continue;
    for(const t of [.2+index*.2,.1,.9]){const point={x:road.from.x+dx*t-dz/length*((road.width||8)/2+config.width/2+.4),y:road.from.y||0,z:road.from.z+dz*t+dx/length*((road.width||8)/2+config.width/2+.4)},floor=collision.groundAt(environment,point,{actors:sim.actors,objects});if(!floor||!collision.hasBodyClearance(environment,floor,config.width/2,{actors:sim.actors,objects})||Object.values(sim.actors).some(a=>a.active!==false&&isRoadVehicle(a)&&Math.hypot(a.position.x-floor.x,a.position.z-floor.z)<5))continue;position=floor;yaw=Math.atan2(-dx,-dz);break;}if(position)break;
@@ -13,6 +15,7 @@ export function ensureRoadFleet(sim,environment,collision,objects){
  }
 }
 export function roadMovementBlocked(collision,environment,actors,objects,actor,from,to,yaw){
+ if(isConstructionMachine(actor)){const status=constructionTravelStatus(actor);if(!status.allowed&&Math.hypot(to.x-from.x,to.z-from.z)>1e-6)return true;const hit=constructionMovementBlocked({actors,players:{}},actor,{...actor,position:{...to},rotation:{...actor.rotation,y:yaw}},{collision,environment,objects});actor.construction.blocked=hit;actor.driving||={};actor.driving.blockedReason=hit?.reason||'';actor.driving.blockedPart=hit?.part||null;if(hit)return true;}
  const config=roadVehicleType(actor),travel=Math.hypot(to.x-from.x,to.z-from.z),steps=Math.max(1,Math.ceil(travel/.3));
  // Retain the ID so authored map geometry is excluded as well as spawned meshes.
  const others={...actors,[actor.id]:{...actor,active:false}};

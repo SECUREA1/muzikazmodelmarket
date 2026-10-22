@@ -104,3 +104,17 @@ test('faster asymmetric boat replies never retime the established movement clock
  }
  assert.ok(view.actor.position.z<before.z);
 });
+
+test('construction travel prediction obeys raised-body and active-work interlocks before a server reply',()=>{
+ const view=new LocalVehicleView(),actor={id:'truck',modelId:'site-dumptruck',holderId:'me',active:true,position:{x:0,y:0,z:0},rotation:{x:0,y:0,z:0},construction:{kind:'truck',bed:.6},driving:{speed:0,parked:true}},saved=structuredClone(actor),options={groundAt:point=>({...point,y:0}),blocked:()=>false};
+ view.reconcile(actor,{serverTime:1000,receivedAt:0});view.sample(0,0,{forward:1},options);const held=view.sample(100,.1,{forward:1},options);assert.equal(held.position.z,0);assert.equal(held.driving.speed,0);assert.deepEqual(actor,saved);
+ const working={...actor,construction:{kind:'truck',bed:0,workCycle:{mode:'dump'}}};view.reconcile(working,{serverTime:1100,receivedAt:100});const stopped=view.sample(200,.1,{forward:1},options);assert.equal(stopped.position.z,0);
+ view.reconcile({...actor,construction:{kind:'truck',bed:0}},{serverTime:1200,receivedAt:200});const moving=view.sample(300,.1,{forward:1},options);assert.ok(moving.position.z<0,'lowering the body and ending the cycle restores driving');
+});
+
+test('crawler prediction stays supported when its center crosses a shallow slab edge before its tracks',()=>{
+ const view=new LocalVehicleView(),actor={id:'dozer',modelId:'site-bulldozer',holderId:'me',active:true,position:{x:0,y:.04,z:0},rotation:{x:0,y:0,z:0},construction:{kind:'bulldozer',blade:1},driving:{speed:1,parked:false}},queries=[];
+ const settings={groundAt:point=>{queries.push({...point});return {...point,y:point.z>=0?.04:.02};},blocked:()=>false};
+ view.reconcile(actor,{serverTime:1000,receivedAt:0});view.sample(0,0,{forward:.5},settings);const moved=view.sample(100,.1,{forward:.5},settings);
+ assert.ok(moved.position.z<0,'the chassis center has left the raised slab');assert.equal(moved.position.y,.04,'rear tracks keep the chassis above the slab until they leave it');assert.ok(queries.some(point=>point.z>2),'the physical track footprint is sampled');
+});

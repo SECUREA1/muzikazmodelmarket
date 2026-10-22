@@ -4463,6 +4463,71 @@
       "buildAssetId": "touring-motorcycle",
       "description": "Touring motorcycle with detailed engine, mirrors, luggage cases and digital instruments.",
       "behavior": "vehicle"
+    },
+    {
+      "id": "builder-tower-crane",
+      "name": "Titan 78 Tower Crane",
+      "owner": "MUZIKAZ",
+      "type": "vehicles",
+      "thumbnailUrl": "/public/images/construction/tower-crane.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "vehicles",
+      "buildAssetId": "tower-crane",
+      "description": "Slewing lattice tower crane with trolley, wire rope, hook block and remote operator cab.",
+      "behavior": "vehicle"
+    },
+    {
+      "id": "builder-site-dumptruck",
+      "name": "Terra 40 Articulated Dump Truck",
+      "owner": "MUZIKAZ",
+      "type": "vehicles",
+      "thumbnailUrl": "/public/images/construction/site-dumptruck.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "vehicles",
+      "buildAssetId": "site-dumptruck",
+      "description": "Six-wheel site hauler with hydraulic tipping bed, payload indicator and detailed operator cab.",
+      "behavior": "vehicle"
+    },
+    {
+      "id": "builder-site-bulldozer",
+      "name": "D9 Crawler Bulldozer",
+      "owner": "MUZIKAZ",
+      "type": "vehicles",
+      "thumbnailUrl": "/public/images/construction/site-bulldozer.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "vehicles",
+      "buildAssetId": "site-bulldozer",
+      "description": "Tracked bulldozer with hydraulic grading blade and twin joystick controls.",
+      "behavior": "vehicle"
+    },
+    {
+      "id": "builder-site-excavator",
+      "name": "HX350 Hydraulic Excavator",
+      "owner": "MUZIKAZ",
+      "type": "vehicles",
+      "thumbnailUrl": "/public/images/construction/site-excavator.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "vehicles",
+      "buildAssetId": "site-excavator",
+      "description": "Tracked excavator with rotating house, boom, stick, bucket and moving hydraulic rams.",
+      "behavior": "vehicle"
+    },
+    {
+      "id": "builder-construction-steel-beam",
+      "name": "Structural Steel I-Beam",
+      "owner": "MUZIKAZ",
+      "type": "props",
+      "thumbnailUrl": "/public/images/construction/construction-steel-beam.svg",
+      "format": "procedural-3d",
+      "visibility": "public",
+      "builderCategory": "props",
+      "buildAssetId": "construction-steel-beam",
+      "description": "Eighteen metre structural steel beam with lift points for skyscraper construction.",
+      "behavior": "decor"
     }
   ]
 }
