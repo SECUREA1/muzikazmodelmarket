@@ -1,3 +1,5 @@
+import {createLandSaleModel} from './land-sale-models.js';
+import {createCivilAircraft} from './civil-aircraft-models.js';
 import {RESORT_PRODUCTS} from './resort-products.js';
 import {createResortProduct} from './resort-product-models.js';
 import {createAircraftModel,updateAircraftModel} from './aircraft-model.js';
@@ -23,7 +25,12 @@ import {createBasketballJersey} from './basketball-jerseys.js';
 // Gameplay-ready replacements for the flat SVG editor thumbnails. Dimensions are
 // in metres so furniture, plants, and architecture retain believable human scale.
 export const BUILDER_MODEL_INFO = Object.freeze({
+  'lot-owned-sign':['Claimed Deed Sign','Timber sign marking a lot with an existing deed owner.',[1.5,1.95,.14]],
+  'lot-boundary-stake':['Deed Boundary Stake','Timber survey stake with a brass cap for marking lot corners.',[.19,1.1,.19]],
+  ...Object.fromEntries([5000,7500,10000,15000,20000,25000].map(price=>['lot-sale-sign-'+price,['Land Sale Sign · '+price+' MZK','A timber lot sign with a clearly displayed MZK price.',[1.5,1.95,.14]]])),
   ...Object.fromEntries(Object.values(RESORT_PRODUCTS).map(p=>[p.id,[p.name,p.description,p.dimensions]])),
+  'diamond-da40':['Diamond DA40','Low-wing touring aircraft with a hinged canopy, four seats and a live glass cockpit.',[11.9,2.7,8.1]],
+  'piper-cub':['Piper Cub','Yellow high-wing taildragger with opening side window, tandem seating and analog instruments.',[10.7,2.6,6.8]],
   'harbor-yacht':['Tideglass Superyacht','A massive drivable yacht with bedroom, lounge, billiards and aft terrace.',[12,7,42]],
   'harbor-skiff':['Harbor Launch','Board and steer a launch on harbor water.',[2.1,1.5,4.8]],
   'harbor-sailboat':['Marina Sailboat','A steerable marina boat with a mast and sail.',[2.1,4.8,4.8]],
@@ -272,6 +279,8 @@ function estateModule(id){
 
 export function createBuilderModel(id,options={}) {
   if(RESORT_PRODUCTS[id])return createResortProduct(THREE,id);
+  if(id==='lot-owned-sign'||id==='lot-boundary-stake'||id.startsWith('lot-sale-sign-'))return createLandSaleModel(id);
+  if(['diamond-da40','piper-cub'].includes(id))return createCivilAircraft(id);
   if(['harbor-skiff','harbor-sailboat','harbor-yacht'].includes(id))return createHarborBoat(id);
   if(id.startsWith('material:')){const materialId=id.slice(9);if(!BUILDING_MATERIALS.some(item=>item.id===materialId))return null;const root=new THREE.Group(),piece=createBuildingBlock(THREE,materialId);piece.position.y=buildingDimensions(materialId)[1]/2;root.add(piece);root.userData.builderObject=true;root.userData.modelId=id;return root;}
 

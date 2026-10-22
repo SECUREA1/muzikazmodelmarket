@@ -1,3 +1,4 @@
+import {landFieldWorlds} from './land-field-worlds.mjs';
 import {isHockeyMap} from './public/js/hockey-rules.js';
 import {isArcadeMap} from './public/js/arcade-rules.js';
 import {memberPlotEnvironment} from './member-plots.mjs';
@@ -9,7 +10,7 @@ const permanentWorlds=JSON.parse(readFileSync(new URL('./public/models/environme
 export async function synchronizeWorldDirectory(atlas,published,deeds=[]){
  // Permanent destinations are part of the world itself. A refresh of uploaded
  // or player-authored maps cannot remove them or override their shared room.
- const maps=[...new Map([...published,...permanentWorlds].filter(map=>map.id!=='public-commons'&&!map.id.startsWith('world-district-')&&map.visibility!=='private'&&map.playable!==false).map(map=>[map.id,map])).values()];
+ const maps=[...new Map([...published,...permanentWorlds,...landFieldWorlds(deeds)].filter(map=>map.id!=='public-commons'&&!map.id.startsWith('world-district-')&&map.visibility!=='private'&&map.playable!==false).map(map=>[map.id,map])).values()];
  const initial=await atlas.synchronize(maps);
  const templates=[...maps,...Object.values(initial.cells).filter(cell=>cell.generated).map(cell=>cell.environment)];
  const plots=deeds.map(deed=>memberPlotEnvironment(deed,templates)).filter(Boolean);
@@ -23,7 +24,7 @@ export async function synchronizeWorldDirectory(atlas,published,deeds=[]){
   const page=isHockeyMap(map)?'hockey.html':isArcadeMap(map)?'arcade.html':'model-explorer.html';
   map.playUrl=page+'?environment='+encodeURIComponent(map.id)+'&house='+encodeURIComponent(map.id)+'&mode='+(solo?'solo':'multiplayer')+'&autoplay=1';
   if(map.source!=='community-atlas'){
-   map.portalTargets=[...new Set([map.districtId,'public-commons'].filter(id=>id&&id!==map.id&&byId.has(id)))];
+   map.portalTargets=[...new Set([map.lot?.mapId,map.districtId,'public-commons'].filter(id=>id&&id!==map.id&&byId.has(id)))];
    map.travelPortals=map.portalTargets.map(id=>({mapId:id,name:byId.get(id).name,color:byId.get(id).districtColor}));
   }
  }

@@ -1,3 +1,5 @@
+import {landLotById} from './public/js/land-lots.js';
+import {armedAircraft,aircraftType} from './public/js/aircraft-types.js';
 import {RESORT_PRODUCTS,resortProductSettings} from './public/js/resort-products.js';
 import {startSkiRace,stepSkiRace,skiCompetitionView,skiLobbyCommand,stepSkiLobby,stepSkiAI} from './server-ski-competition.mjs';
 import {skiLifts,skiRuns,skiCourseStart,nearestSkiLift,startSkiLift,stepSkiLift,skiMotion,skiHeight} from './public/js/ski-resort.js';
@@ -357,6 +359,9 @@ export class AuthoritativeRooms {
     const lift=nearestSkiLift(player.position);if(!lift||command.liftId&&command.liftId!==lift.id)fail('Move onto the marked lift boarding area.',409);
     startSkiLift(player,lift,now);result.message='Boarded '+lift.name+'. Stay seated; automatic exit at the top.';
    }
+   else if(command.action==='aircraft-window'){
+    const craft=sim.actors[player.vehicleId];if(!isAircraft(craft)||aircraftType(craft).armed)fail('Board a DA40 or Piper Cub to use the window controls.',409);if(craft.flight?.airborne||Math.max(craft.flight?.speed||0,craft.flight?.airspeed||0)>.5)fail('Park the aircraft before opening its canopy or window.',409);craft.flight||={};craft.flight.windowOpen=!craft.flight.windowOpen;result.message=craft.flight.windowOpen?'Canopy / window open. Close it before taxiing.':'Canopy / window closed.';
+   }
    else if(command.action==='ski-assist'){
     if(environment.game!=='ski')fail('Ski steering is available at Pixel Peaks.',409);player.skiAssist=command.enabled!==false;result.message=player.skiAssist?'Easy steering on. Follow the gates and use Left / Right to carve.':'Free steering on. Look and carve to steer.';
    }
@@ -398,6 +403,7 @@ export class AuthoritativeRooms {
      const skiLift=environment.game==='ski'&&skiLifts.find(lift=>target.objectId==='ski-'+lift.id+'-base');
      if(skiLift){startSkiLift(player,skiLift,now);result.message='Boarded '+skiLift.name+'. Automatic summit arrival.';}
      else if(environment.game==='ski'&&(target.objectId==='ski-rental'||target.modelId==='alpine-ski-service'||target.asset?.buildAssetId==='alpine-ski-service')){player.skiing=!player.skiing;player.skiSpeed=0;player.skiHeading=null;if(['racing','countdown'].includes(player.skiRace?.status)){player.skiRace.status='cancelled';player.skiRace.message='Equipment change ended this run.';}result.message=player.skiing?'Skis equipped. Forward pushes, Back brakes, look to steer.':'Skis returned. Explore the château on foot.';}
+     else if(config.action==='land-sale'){const lot=landLotById(config.landLotId);if(!lot||lot.mapId!==environment.id)fail('This sale sign is not attached to a registered land lot.',409);result.landLotId=lot.id;result.message=lot.name+' · '+lot.priceMzk+' MZK · Review the deed before purchase.';}
      else if(deviceDefinition(target.modelId,config)){Object.assign(result,deviceCommand(sim,manifest,player,actorId,{entityId:entity.id,operation:'open'},now));}
      else if(basketballJerseyTeam(entity)||basketballJerseyTeam(target)){const team=basketballJerseyTeam(entity)||basketballJerseyTeam(target);if(sim.basketball)assignBasketballTeam(sim,player,now,team);player.basketballJersey=team;result.message=(team==='home'?'Home':'Away')+' basketball jersey equipped.';}
 
@@ -446,7 +452,7 @@ export class AuthoritativeRooms {
     if(!chosenPlacement&&!isBasketball({asset}))Object.assign(position,this.collision.stackAsset(environment,asset,position,rotation,scale,sim.actors,room.objects));
     const behavior=deviceDefinition(asset.buildAssetId)?'interact':asset.behavior||(asset.assetType==='vehicles'?'vehicle':asset.assetType==='pets'?'patrol':'interact');
     const spawnHealth=isAircraft({asset})?AIRCRAFT_HEALTH:isWatercraft({asset})?200:100;const definition={objectId:entityId,modelId:asset.id,position:{...position},transform:{position:{...position},rotation:{...rotation},scale:{...scale}},gameplay:{behavior,device:deviceDefinition(asset.buildAssetId)?asset.buildAssetId:undefined,health:spawnHealth,damage:0,interactionDistance:3,cooldown:1,action:'none',prompt:asset.configuration?.prompt||'',quest:asset.configuration?.quest,...(RESORT_PRODUCTS[asset.buildAssetId]?resortProductSettings(RESORT_PRODUCTS[asset.buildAssetId]):{})},quest:asset.configuration?.quest,dialogue:{text:asset.configuration?.prompt||''},movement:{speed:1},asset};
-    sim.actors[entityId]={id:entityId,position,rotation,scale,placementRevision:1,active:true,health:spawnHealth,...(isAircraft({asset})?{modelId:'corsair-aircraft',maxHealth:AIRCRAFT_HEALTH,destructible:true}:isWatercraft({asset})?{modelId:asset.buildAssetId,maxHealth:200,destructible:true}:{}),spawned:true,ownerId:actorId,asset,definition};
+    sim.actors[entityId]={id:entityId,position,rotation,scale,placementRevision:1,active:true,health:spawnHealth,...(isAircraft({asset})?{modelId:asset.buildAssetId,maxHealth:AIRCRAFT_HEALTH,destructible:true}:isWatercraft({asset})?{modelId:asset.buildAssetId,maxHealth:200,destructible:true}:{}),spawned:true,ownerId:actorId,asset,definition};
     result.message=asset.name+' deployed to the shared room.';result.spawnedId=entityId;result.placementRevision=1;}
     }
    }
@@ -468,6 +474,7 @@ export class AuthoritativeRooms {
    else if(command.action==='fire'&&RANGED_WEAPONS[command.tool||'laser']&&rangeHandlesFire(sim,player)){result=fireFiringRange(sim,player,command,now,{blocksShot:(origin,ray,distance)=>this.collision.blocksShot(environment,origin,ray,distance,sim.actors)});}
    else if(command.action==='fire'){
     if(sim.basketball&&command.tool!=='spray'&&!UTILITY_TOOLS[command.tool])fail('Basketball Arena is a sports court. Catch, pass or shoot the basketball.',409);
+    if(isAircraft(sim.actors[player.vehicleId])&&!armedAircraft(sim.actors[player.vehicleId]))fail('This civilian aircraft is unarmed.',409);
     const tool=String(command.tool||'laser'),gunAircraft=isAircraft(sim.actors[player.vehicleId])&&sim.actors[player.vehicleId].active!==false&&tool==='laser'?sim.actors[player.vehicleId]:null,utility=UTILITY_TOOLS[tool],profile=RANGED_WEAPONS[tool],cooldown=sim.radTox&&!utility&&(profile||['bat','taser','toxin','flamethrower'].includes(tool))?RAD_TOX_SHOT_INTERVAL_MS:utility?utility.cooldown*1000:profile?profile.interval*1000:tool==='dynamite'?1200:250;if(!utility&&!profile&&!['bat','taser','toxin','flamethrower','spray','jetpack'].includes(tool))fail('This tool has no server action.',422);
     player.toolReady ||= {};if(now<(player.toolReady[tool]||0))fail('Tool is cooling down.',429);if(utility?.charges&&(player.toolUses?.[tool]||0)>=utility.charges)fail('Utility depleted until respawn.',409);
     if(tool==='flamethrower'&&(player.fuel??100)<5)fail('Refill your igniter fuel.',409);if(profile&&(player.ammo??120)<=0)fail('Refill ammunition.',409);if(tool==='medkit'&&player.health>=100)fail('Health is already full.',409);

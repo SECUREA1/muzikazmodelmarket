@@ -479,7 +479,7 @@ export class UserJsonDatabase {
     });
   }
 
-  claimLand({ walletId, worldId, name, priceMzk, requestId }) {
+  claimLand({ walletId, worldId, name, priceMzk, requestId, lot = null }) {
     const wallet = cleanWallet(walletId); const world = String(worldId || '').trim().toLowerCase(); const request = String(requestId || '').trim(); const price = Math.trunc(Number(priceMzk));
     if (!/^[a-z0-9][a-z0-9-]{1,79}$/.test(world)) throw new Error('A valid world id is required.');
     if (!request || request.length > 140) throw new Error('A land claim request id is required.');
@@ -493,10 +493,10 @@ export class UserJsonDatabase {
       const balance = Number(user.tokens?.MZK || 0); if (balance < price) throw new Error('The wallet does not have enough MZK.');
       user.tokens.MZK = balance - price;
       const now = new Date().toISOString();
-      const deed = { id: `deed-${world}`, worldId: world, name: String(name || world).slice(0, 140), ownerId: wallet, priceMzk: price, requestId: request, status: 'active', hostedSpace:{id:`plot-deed-${world}`,environmentId:'muzikaz-main',name:String(name||world)+' · Member plot'}, acquiredAt: now, updatedAt: now };
-      deed.spaceId=plotSpaceId(deed);deed.playUrl=plotPlayUrl(deed);
+      const deed = { ...(lot?{lot:clone(lot)}:{}),id: `deed-${world}`, worldId: world, name: String(name || world).slice(0, 140), ownerId: wallet, priceMzk: price, requestId: request, status: 'active', hostedSpace:{id:`plot-deed-${world}`,environmentId:'muzikaz-main',name:String(name||world)+' · Member plot'}, acquiredAt: now, updatedAt: now };
+      if(lot)deed.hostedSpace={id:plotSpaceId(deed),environmentId:'land-field-'+lot.regionId,name:lot.name+' · Deeded plot'};deed.spaceId=plotSpaceId(deed);deed.playUrl=plotPlayUrl(deed);
       data.landDeeds[world] = deed;
-      if (!user.items.some((item) => item.id === deed.id)) user.items.push({ id: deed.id, type: 'land-deed', worldId: world, name: deed.name, spaceId:plotSpaceId(deed),playUrl:plotPlayUrl(deed),hostedSpace:clone(deed.hostedSpace), acquiredAt: now });
+      if (!user.items.some((item) => item.id === deed.id)) user.items.push({ ...(lot?{lot:clone(lot)}:{}),id: deed.id, type: 'land-deed', worldId: world, name: deed.name, spaceId:plotSpaceId(deed),playUrl:plotPlayUrl(deed),hostedSpace:clone(deed.hostedSpace), acquiredAt: now });
       user.revision = Number(user.revision || 0) + 1; user.updatedAt = now;
       appendTransaction(data, { type: 'LAND_DEED_PURCHASE', walletId: wallet, amountMzk: -price, balanceAfterMzk: user.tokens.MZK, requestId: request, deedId: deed.id, worldId: world });
       return deed;

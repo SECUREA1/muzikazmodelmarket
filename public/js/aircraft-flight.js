@@ -1,5 +1,6 @@
+import {aircraftType} from './aircraft-types.js';
 import {aircraftRunway,runwayClearance} from './airport-navigation.js';
-export const isAircraft=actor=>(actor?.modelId||actor?.asset?.buildAssetId)==='corsair-aircraft';
+export const isAircraft=actor=>!!aircraftType(actor);
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const blend=(current,target,rate,dt)=>current+(target-current)*(1-Math.exp(-rate*dt));
@@ -7,19 +8,19 @@ const blend=(current,target,rate,dt)=>current+(target-current)*(1-Math.exp(-rate
 // sends control positions and displays this flight/instrument state.
 export function stepAircraftFlight(aircraft,input={},dt,{ground=.4,ceiling=80,half=128,cleared=true,blocked=()=>false}={}){
  input ||= {};
- const old=aircraft.flight||{},elapsed=clamp(finite(dt),0,.25),floor=finite(ground,.4),top=Math.max(floor,finite(ceiling,80)),edge=Math.max(8,finite(half,128))-8;
+ const spec=aircraftType(aircraft)||{maxSpeed:29,thrust:16,stallSpeed:7},old=aircraft.flight||{},elapsed=clamp(finite(dt),0,.25),floor=finite(ground,.4),top=Math.max(floor,finite(ceiling,80)),edge=Math.max(8,finite(half,128))-8;
  const start={x:clamp(finite(aircraft.position?.x),-edge,edge),y:clamp(finite(aircraft.position?.y,floor),floor,top),z:clamp(finite(aircraft.position?.z),-edge,edge)};
  let position={...start},speed=clamp(finite(old.airspeed,finite(old.speed)),0,40),pitch=clamp(finite(old.pitch,finite(aircraft.rotation?.x)),-.6,.6),bank=clamp(finite(old.bank,finite(aircraft.rotation?.z)),-.85,.85),yaw=finite(aircraft.rotation?.y),throttle=clamp(finite(old.throttle),0,1),verticalSpeed=finite(old.verticalSpeed),impactDamage=0,touchdown=false,held=false;
  const forward=clamp(finite(input.forward),-1,1),side=clamp(finite(input.side),-1,1),rudder=clamp(finite(input.rudder),-1,1),lift=clamp(finite(input.lift)||((input.jump?1:0)-(input.sprint?1:0)),-1,1);
- const commandedThrottle=Number.isFinite(Number(input.throttle))&&input.throttle!==null?clamp(Number(input.throttle),0,1):forward>0?forward:forward<0?0:clamp(finite(old.throttleCommand,finite(old.throttle)),0,1);
- const brake=clamp(Math.max(forward<0?-forward:0,finite(input.brake)),0,1),flaps=clamp(input.flaps!==undefined?finite(input.flaps):finite(old.flaps),0,1),requestedGear=input.gear!==undefined?input.gear!==false:old.gear!==false,stallSpeed=7-flaps*1.6;
- let airborne=position.y>floor+.08,gear=airborne?requestedGear:true,stall=false;
+ const commandedThrottle=old.windowOpen?0:Number.isFinite(Number(input.throttle))&&input.throttle!==null?clamp(Number(input.throttle),0,1):forward>0?forward:forward<0?0:clamp(finite(old.throttleCommand,finite(old.throttle)),0,1);
+ const brake=clamp(Math.max(forward<0?-forward:0,finite(input.brake)),0,1),flaps=clamp(input.flaps!==undefined?finite(input.flaps):finite(old.flaps),0,1),requestedGear=input.gear!==undefined?input.gear!==false:old.gear!==false,stallSpeed=spec.stallSpeed-flaps*1.6;
+ let airborne=position.y>floor+.08,gear=spec.fixedGear||!airborne?true:requestedGear,stall=false;
  for(let remaining=elapsed;remaining>1e-8;){
   const step=Math.min(1/60,remaining);remaining-=step;const previous={...position};
   throttle=blend(throttle,commandedThrottle,2.8,step);
   const drag=(.025+flaps*.018+(gear?.003:0))*speed*speed+.15*speed;
-  const acceleration=throttle*16-drag-Math.sin(pitch)*2.2-brake*(airborne?10:23)-(airborne?0:.35);
-  speed=clamp(speed+acceleration*step,0,29);
+  const acceleration=throttle*spec.thrust-drag-Math.sin(pitch)*2.2-brake*(airborne?10:23)-(airborne?0:.35);
+  speed=clamp(speed+acceleration*step,0,spec.maxSpeed);
   stall=airborne&&speed<stallSpeed;
   // Pitch remains responsive enough for touch controls, while bank and engine
   // spool retain inertia. Stall assistance lowers the nose to recover airspeed.
@@ -43,7 +44,7 @@ export function stepAircraftFlight(aircraft,input={},dt,{ground=.4,ceiling=80,ha
    position.y=floor;
    touchdown=true;const sink=Math.max(0,-verticalSpeed);impactDamage+=Math.round(Math.max(0,sink-4.6)*18+(gear?0:70)+Math.max(0,Math.abs(bank)-.45)*90+Math.max(0,speed-22)*4);verticalSpeed=0;pitch=0;bank=0;
   }
-  airborne=position.y>floor+.08;gear=airborne?requestedGear:true;
+  airborne=position.y>floor+.08;gear=spec.fixedGear||!airborne?true:requestedGear;
   if(Math.abs(position.x)>edge||Math.abs(position.z)>edge||blocked(previous,position,yaw)){
    position=previous;impactDamage+=Math.round(Math.max(0,speed-9)*9);speed=0;verticalSpeed=0;held=true;break;
   }

@@ -963,12 +963,16 @@
       "name": "Blackwing Corsair",
       "owner": "MUZIKAZ",
       "type": "vehicles",
-      "thumbnailUrl": "/public/images/builder-pack/corsair-aircraft.svg",
+      "thumbnailUrl": "/public/images/aircraft/corsair-aircraft.svg",
       "format": "procedural-3d",
       "visibility": "public",
       "builderCategory": "vehicles",
       "buildAssetId": "corsair-aircraft",
-      "description": "Blackwing Corsair from the Environment Builder, ready to drop into the running game."
+      "description": "Blackwing Corsair from the Environment Builder, ready to drop into the running game.",
+      "previewImages": [
+        "/public/images/aircraft/corsair-aircraft.svg",
+        "/public/images/aircraft/corsair-aircraft-cockpit.svg"
+      ]
     },
     {
       "id": "builder-dune-quad",
@@ -4203,6 +4207,192 @@
         3,
         0.55
       ],
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-diamond-da40",
+      "name": "Diamond DA40",
+      "type": "vehicles",
+      "visibility": "public",
+      "buildAssetId": "diamond-da40",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/aircraft/diamond-da40.svg",
+      "previewImages": [
+        "/public/images/aircraft/diamond-da40.svg",
+        "/public/images/aircraft/diamond-da40-cockpit.svg"
+      ],
+      "description": "Flyable aircraft with an opening canopy or window and a model-specific working cockpit.",
+      "function_data": {
+        "behavior": "vehicle",
+        "interactionDistance": 5
+      },
+      "vehicleSettings": {
+        "mode": "fly"
+      }
+    },
+    {
+      "id": "builder-piper-cub",
+      "name": "Piper Cub",
+      "type": "vehicles",
+      "visibility": "public",
+      "buildAssetId": "piper-cub",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/aircraft/piper-cub.svg",
+      "previewImages": [
+        "/public/images/aircraft/piper-cub.svg",
+        "/public/images/aircraft/piper-cub-cockpit.svg"
+      ],
+      "description": "Flyable aircraft with an opening canopy or window and a model-specific working cockpit.",
+      "function_data": {
+        "behavior": "vehicle",
+        "interactionDistance": 5
+      },
+      "vehicleSettings": {
+        "mode": "fly"
+      }
+    },
+    {
+      "id": "builder-lot-owned-sign",
+      "name": "Claimed Deed Sign",
+      "description": "Timber sign marking a lot with an existing deed owner.",
+      "dimensions": [
+        1.5,
+        1.95,
+        0.14
+      ],
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "lot-owned-sign",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-lot-boundary-stake",
+      "name": "Deed Boundary Stake",
+      "description": "Timber survey stake with a brass cap for marking lot corners.",
+      "dimensions": [
+        0.19,
+        1.1,
+        0.19
+      ],
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "lot-boundary-stake",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-lot-sale-sign-5000",
+      "name": "Land Sale Sign · 5000 MZK",
+      "description": "A timber lot sign with a clearly displayed MZK price.",
+      "dimensions": [
+        1.5,
+        1.95,
+        0.14
+      ],
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "lot-sale-sign-5000",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-lot-sale-sign-7500",
+      "name": "Land Sale Sign · 7500 MZK",
+      "description": "A timber lot sign with a clearly displayed MZK price.",
+      "dimensions": [
+        1.5,
+        1.95,
+        0.14
+      ],
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "lot-sale-sign-7500",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-lot-sale-sign-10000",
+      "name": "Land Sale Sign · 10000 MZK",
+      "description": "A timber lot sign with a clearly displayed MZK price.",
+      "dimensions": [
+        1.5,
+        1.95,
+        0.14
+      ],
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "lot-sale-sign-10000",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-lot-sale-sign-15000",
+      "name": "Land Sale Sign · 15000 MZK",
+      "description": "A timber lot sign with a clearly displayed MZK price.",
+      "dimensions": [
+        1.5,
+        1.95,
+        0.14
+      ],
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "lot-sale-sign-15000",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-lot-sale-sign-20000",
+      "name": "Land Sale Sign · 20000 MZK",
+      "description": "A timber lot sign with a clearly displayed MZK price.",
+      "dimensions": [
+        1.5,
+        1.95,
+        0.14
+      ],
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "lot-sale-sign-20000",
+      "format": "procedural-3d",
+      "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
+      "function_data": {
+        "behavior": "decor"
+      }
+    },
+    {
+      "id": "builder-lot-sale-sign-25000",
+      "name": "Land Sale Sign · 25000 MZK",
+      "description": "A timber lot sign with a clearly displayed MZK price.",
+      "dimensions": [
+        1.5,
+        1.95,
+        0.14
+      ],
+      "type": "props",
+      "visibility": "public",
+      "buildAssetId": "lot-sale-sign-25000",
+      "format": "procedural-3d",
       "thumbnailUrl": "/public/images/builder-pack/reusable-item.svg",
       "function_data": {
         "behavior": "decor"

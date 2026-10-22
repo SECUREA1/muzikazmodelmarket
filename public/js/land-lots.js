@@ -1,0 +1,5 @@
+export const LAND_REGIONS=[['volt-city','Volt City'],['skyline-deck','Skyline Deck'],['echo-gardens','Echo Gardens'],['crew-plaza','Crew Plaza'],['studio-ridge','Studio Ridge'],['neon-docks','Neon Docks'],['bassline-badlands','Bassline Badlands'],['pixel-peaks','Pixel Peaks']];
+const sizes=[48,56,64,80,96,112],prices=[5000,7500,10000,15000,20000,25000];
+export const LAND_LOTS=Object.freeze(LAND_REGIONS.flatMap(([regionId,name])=>sizes.map((size,index)=>Object.freeze({id:'lot-'+regionId+'-'+String(index+1).padStart(2,'0'),regionId,mapId:'land-field-'+regionId,name:name+' · Lot '+(index+1),size,priceMzk:prices[index],priceUsd:prices[index]/100,position:{x:(index%3-1)*150,y:0,z:index<3?-105:105},entry:{x:(index%3-1)*150,y:.02,z:(index<3?-105:105)+size/2+5}}))));
+export const landLotById=id=>LAND_LOTS.find(lot=>lot.id===id)||null;
+export const lotVisitUrl=lot=>'model-explorer.html?environment='+encodeURIComponent(lot.mapId)+'&house='+encodeURIComponent(lot.mapId)+'&meet='+encodeURIComponent(lot.id)+'&autoplay=1&mode=multiplayer';

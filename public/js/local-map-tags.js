@@ -7,8 +7,9 @@ export function localMapTags(environment,live={},selfId=null){
  if(!environment)return [];
  const tags=[],seen=new Set();
  const add=(id,name,kind,position,extra={})=>{if(seen.has(id)||!Number.isFinite(Number(position?.x))||!Number.isFinite(Number(position?.z)))return;seen.add(id);tags.push({id,name,kind,...styles[kind],x:Number(position.x),y:Number(position.y)||0,z:Number(position.z),...extra});};
- for(const place of localMapLocations(environment))if(place.id!=='map-arrival')add('location:'+place.id,place.name,localMapTagKind(place),place,{locationId:place.id,description:place.description||'',...(place.color?{color:place.color}:{}),...(place.icon?{icon:place.icon}:{})});
+ for(const place of localMapLocations(environment))if(place.id!=='map-arrival'&&!(environment.landLots||environment.builderScene?.layoutMeta?.landLots||[]).some(lot=>lot.id===place.id))add('location:'+place.id,place.name,localMapTagKind(place),place,{locationId:place.id,description:place.description||'',...(place.color?{color:place.color}:{}),...(place.icon?{icon:place.icon}:{})});
  for(const street of environment.streets||environment.builderScene?.streets||[])if(street.from&&street.to)add('street:'+street.id,street.name||'Road','road',{x:(street.from.x+street.to.x)/2,z:(street.from.z+street.to.z)/2});
+ for(const lot of environment.landLots||environment.builderScene?.layoutMeta?.landLots||[])add('lot:'+lot.id,lot.name+(lot.claimed?' · Owned':' · '+lot.priceMzk+' MZK'),'deed',lot.position,{lotId:lot.id,deedId:lot.deedId,locationId:lot.id,description:lot.size+' × '+lot.size+' m · XYZ '+lot.position.x+', '+lot.position.y+', '+lot.position.z});
  const objects=environment.builderScene?.objects||[],actors=live?.actors||{};
  for(const object of objects){const actor=actors[object.id]||object;if(actor.active===false)continue;if(object.atlasDestination)add('portal:'+object.id,object.name||'World portal',object.atlasDeedId?'deed':'portal',actor.position,{mapId:object.atlasDestination,deedId:object.atlasDeedId});}
  const craft=new Map(objects.filter(object=>isAircraft(object)||isWatercraft(object)).map(object=>[object.id,object]));

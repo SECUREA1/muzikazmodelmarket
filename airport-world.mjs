@@ -31,7 +31,7 @@ export function airportWorld(){
  add('tower-console','studio-desk',-72,.2,-24);
  for(let i=0;i<3;i++){
   const x=-18+i*14;
-  add('flight-'+(i+1),'corsair-aircraft',x,.4,62,{placementAnchor:'aircraft-origin',name:'MUZIKAZ Flight '+(i+1),functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:5,prompt:'Enter aircraft · E / Use',destructible:true,health:400}});
+  add('flight-'+(i+1),['corsair-aircraft','diamond-da40','piper-cub'][i%3],x,.4,62,{placementAnchor:'aircraft-origin',name:'MUZIKAZ Flight '+(i+1),functionalSettings:{behavior:'vehicle',interactionKey:'e',interactionDistance:5,prompt:'Enter aircraft · E / Use',destructible:true,health:400}});
   sign('stand-'+i,'Flight '+(i+1)+' stand',x+5,68,'Board with E / Use. Request Tower takeoff clearance from the radio SVG. W / left stick taxis and accelerates, A/D steer, Space or Climb rises, Shift or Descend lowers. Brake with S. Exit only after landing.');
  }
  for(const strip of runways.slice(1)){

@@ -15,7 +15,7 @@ test('aircraft targeting covers wings, rotated hulls, misses, and nearest live t
  assert.equal(aircraftAimTarget({plane:{...plane,active:false}},'self',{x:0,y:21,z:0},[0,0,-1]),null);
 });
 test('live pilots exchange cannon fire, share damage, respect cover and cooldowns, and recover after a shot-down',async t=>{
- const dir=await mkdtemp(join(tmpdir(),'dogfight-'));t.after(()=>rm(dir,{recursive:true,force:true}));const world=airportWorld(),store=new SharedRoomStore(join(dir,'rooms.json'));let now=100000,request=0,charges=0;const runtime=new AuthoritativeRooms({store,now:()=>now,charge:async()=>charges++});
+ const dir=await mkdtemp(join(tmpdir(),'dogfight-'));t.after(()=>rm(dir,{recursive:true,force:true}));const world=airportWorld();world.builderScene.objects.find(object=>object.id==='airport-flight-2').modelId='corsair-aircraft';const store=new SharedRoomStore(join(dir,'rooms.json'));let now=100000,request=0,charges=0;const runtime=new AuthoritativeRooms({store,now:()=>now,charge:async()=>charges++});
  const alice={accountId:'alice',username:'Alice',stats:{health:100}},bob={accountId:'bob',username:'Bob',stats:{health:100}};
  const send=(user,action,fields={})=>runtime.command(world.id,world,user,{action,requestId:'dogfight-'+ ++request,...fields});
  await send(alice,'join');await send(bob,'join');await send(alice,'map-access',{entityId:'airport-flight-1'});await send(bob,'map-access',{entityId:'airport-flight-2'});

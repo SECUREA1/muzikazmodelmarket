@@ -1,3 +1,4 @@
+import {AIRCRAFT_TYPES} from './aircraft-types.js';
 import {RESORT_PRODUCTS,resortProductSettings} from './resort-products.js';
 import {CAMP_ITEMS} from './summer-camp.js';
 export const mapSourceLayout=map=>map.builderScene?.sourceLayout||map.builderScene?.layout||map.layout||(map.game==='hockey'?'hockey-arena':map.game==='arcade'?'arcade-park':map.basketball?'basketball-stadium':'grand-floor');
@@ -9,6 +10,7 @@ export function editableMapScene(map,{id='custom-'+map.id,layout='repository-'+m
 }
 export function editableMapChoices(...sources){const found=new Map();for(const source of sources){const rows=Array.isArray(source)?source:Array.isArray(source?.data)?source.data:Array.isArray(source?.environments)?source.environments:[];for(const map of rows)if(map?.id&&map.playable!==false&&map.visibility!=='private')found.set(map.id,map);}return [...found.values()];}
 export function nativeItemGameplay(id){
+ if(AIRCRAFT_TYPES[id]){const spec=AIRCRAFT_TYPES[id];return {type:'vehicle',category:'vehicles',behavior:'vehicle',action:'fly',vehicleSettings:{mode:'fly',seat:spec.seat,cockpit:spec.eye,speed:spec.maxSpeed,turnSpeed:1},function_data:{behavior:'vehicle',interactionDistance:5,prompt:'Enter '+spec.name}};}
  if(['harbor-yacht','harbor-skiff','harbor-sailboat'].includes(id))return {type:'vehicle',category:'vehicles',behavior:'vehicle',action:'boat',function_data:{behavior:'vehicle',interactionDistance:id==='harbor-yacht'?24:5,prompt:'Board '+(id==='harbor-yacht'?'superyacht':'boat')},vehicleSettings:{mode:'boat',speed:id==='harbor-yacht'?9:11,turnSpeed:id==='harbor-yacht'?.3:.8}};
  if(RESORT_PRODUCTS[id])return {behavior:RESORT_PRODUCTS[id].behavior,function_data:resortProductSettings(RESORT_PRODUCTS[id])};
  if(CAMP_ITEMS[id])return {...CAMP_ITEMS[id]};

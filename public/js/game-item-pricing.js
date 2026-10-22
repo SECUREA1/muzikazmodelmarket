@@ -28,5 +28,5 @@ export function materialBulkQuote(item,quantity){
  return {sku:item.sku,quantity,unitPriceMzk,discountPercent,subtotalMzk,priceMzk,savingsMzk:subtotalMzk-priceMzk};
 }
 export const LAND_VALUES=Object.freeze({
- 'skyline-deck':{size:32,type:'Rooftop plot',priceMzk:1000},'crew-plaza':{size:48,type:'Social plaza',priceMzk:2500},'studio-ridge':{size:64,type:'Creative district',priceMzk:4000},'echo-gardens':{size:80,type:'Garden estate',priceMzk:5000},'neon-docks':{size:96,type:'Waterfront district',priceMzk:6500},'bassline-badlands':{size:120,type:'Adventure terrain',priceMzk:7500},'volt-city':{size:160,type:'City district',priceMzk:9000},'pixel-peaks':{size:200,type:'Mountain region',priceMzk:10000}
+ 'skyline-deck':{size:32,type:'Rooftop plot',priceMzk:5000},'crew-plaza':{size:48,type:'Social plaza',priceMzk:6500},'studio-ridge':{size:64,type:'Creative district',priceMzk:8000},'echo-gardens':{size:80,type:'Garden estate',priceMzk:10000},'neon-docks':{size:96,type:'Waterfront district',priceMzk:12500},'bassline-badlands':{size:120,type:'Adventure terrain',priceMzk:15000},'volt-city':{size:160,type:'City district',priceMzk:20000},'pixel-peaks':{size:200,type:'Mountain region',priceMzk:25000}
 });
