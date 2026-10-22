@@ -29,6 +29,16 @@ try:
   assert abs(float(tag.get_attribute('data-world-x'))-57.6)<.01
   assert abs(float(tag.get_attribute('data-world-z'))-46.08)<.01
   assert page.evaluate("requests.some(path=>path==='/api/rooms/map-a/gameplay')")
+  toggle=page.get_by_role('button',name='Destinations',exact=True)
+  assert toggle.get_attribute('aria-expanded')=='true'
+  assert page.locator('.atlas-browse-toggle svg').evaluate('(el)=>el.getBoundingClientRect().height')==20
+  toggle.click();assert not page.locator('.atlas-sidebar').is_visible()
+  toggle.click();assert page.locator('.atlas-sidebar').is_visible()
+  page.locator('[data-destination-id="map-b"]').click()
+  assert page.locator('[data-atlas-destination]').input_value()=='map-b'
+  assert page.locator('[data-destination-id="map-b"]').get_attribute('aria-current')=='true'
+  page.locator('[data-destination-id="map-a"]').click()
+  assert not page.locator('.atlas-advanced').evaluate('(el)=>el.open')
   page.screenshot(path='/workspace/connected-world-preview.png')
   page.evaluate("snapshot.objects.block.position[0]=12")
   page.get_by_role('button',name='Refresh live world',exact=True).click()
@@ -41,6 +51,12 @@ try:
   page.get_by_role('button',name='Connected 3D world',exact=True).click();assert page.locator('.connected-world-map canvas').is_visible()
   page.set_viewport_size({'width':390,'height':844});page.locator('.connected-world-map canvas').scroll_into_view_if_needed();page.wait_for_timeout(200)
   assert page.locator('.connected-world-map').evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
+  assert page.locator('#world-map').evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
+  toggle.click();assert not page.locator('.atlas-sidebar').is_visible()
+  assert page.locator('.connected-world-map canvas').is_visible()
+  toggle.click();page.locator('[data-atlas-search]').fill('nothing-matches-this')
+  assert page.locator('.atlas-empty').is_visible()
+  page.locator('[data-atlas-search]').fill('')
   page.screenshot(path='/workspace/connected-world-mobile-preview.png')
   assert not errors,errors;browser.close()
  print('Main-page connected world: real models and building coordinates, zoom detail streaming, growth updates and 2D/3D switching passed.')

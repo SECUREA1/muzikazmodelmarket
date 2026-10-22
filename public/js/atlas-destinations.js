@@ -4,6 +4,11 @@ export function destinationIcon(place) {
   if (place.basketball || /basketball/i.test(label)) return '🏀';
   if (/hockey/i.test(label)) return '🏒';
   if (/range/i.test(label)) return '🎯';
+  if (/pixel.?peak|ski|alpine/i.test(label)) return '⛷';
+  if (/marina|dock|yacht|harbou?r/i.test(label)) return '⚓';
+  if (/airport|airfield|runway/i.test(label)) return '✈';
+  if (/forest|woodland/i.test(label)) return '🌲';
+  if (/music|main.?floor|muzikaz.?floor/i.test(label)) return '♫';
   if (/arcade|neon-junction/i.test(label)) return '🎮';
   return '🏠';
 }
