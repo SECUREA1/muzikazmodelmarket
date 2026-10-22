@@ -17,14 +17,15 @@ export function harborRadio(sim,player,environment,operation){
 export function boatExitPosition(environment,boat,collision,actors,objects){
  const yaw=boat.rotation?.y||0;
  if(boat.modelId==='harbor-yacht'){
+  // Return to the clear central aisle beside the aft billiards table.
   // Query the released vessel itself, never the swim floor beneath its hull.
   const released={...actors,[boat.id]:{...boat,holderId:null}};
-  for(const [x,z] of [[0,12],[0,11],[1.1,11],[-1.1,11]]){
+  for(const [x,z] of [[0,9],[0,8],[0,7],[0,6]]){
    const candidate={x:boat.position.x+x*Math.cos(yaw)+z*Math.sin(yaw),y:boat.position.y+2.1,z:boat.position.z-x*Math.sin(yaw)+z*Math.cos(yaw)};
    const floor=collision.groundAt(environment,candidate,{actors:released,objects,maxRise:.2});
-   if(floor&&floor.y>=boat.position.y+1.9&&floor.y<boat.position.y+2.3)return floor;
+   if(floor&&floor.y>=boat.position.y+1.9&&floor.y<boat.position.y+2.3&&collision.hasBodyClearance(environment,floor,.38,{actors:released,objects}))return floor;
   }
-  throw Object.assign(Error('The aft deck is obstructed. Clear the deck before leaving the helm.'),{statusCode:409});
+  throw Object.assign(Error('The billiards-room aisle is obstructed. Clear it before leaving the helm.'),{statusCode:409});
  }
  for(const distance of [1.8,2.8,4,6])for(const side of [-1,1]){const point={x:boat.position.x+Math.cos(yaw)*distance*side,y:.4,z:boat.position.z-Math.sin(yaw)*distance*side};const floor=collision.groundAt(environment,point,{entry:true,actors,objects});if(!floor||floor.y<-.05)continue;try{return collision.teleportPosition(environment,{...boat.position,y:.35},floor,actors,objects,{localMap:true});}catch{}}
  // Open-water exits remain possible once the boat is stopped; the swimmer uses

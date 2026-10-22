@@ -17,7 +17,9 @@ function fixture(yaw=0){
 }
 for(const yaw of [0,.8,-1.7])test('leaving tilted yacht at heading '+yaw+' has a confirmed floor through idle and walking ticks',()=>{
  const {boat,actors,collision,world}=fixture(yaw),exit=boatExitPosition(environment,boat,collision,actors,{});boat.holderId=null;
- assert.ok(Math.abs(exit.y-1.97)<.001);let position=exit;
+ assert.ok(Math.abs(exit.y-1.97)<.001);
+ const expected=world({x:0,y:1.97,z:9});assert.ok(Math.hypot(exit.x-expected.x,exit.z-expected.z)<.001,'exit returns to aft billiards-room aisle');
+ assert.equal(collision.hasBodyClearance(environment,exit,.38,{actors,objects:{}}),true);let position=exit;
  for(let i=0;i<40;i++)position=collision.resolve(environment,position,{...position,y:position.y-.03},actors,{});
  assert.ok(position.y>1.96);
  const destination=world({x:0,y:1.97,z:-10});
@@ -48,4 +50,27 @@ test('the boarding gangway joins the pier to the main deck for server and browse
  const triangleGroups=[{bounds:placementBounds(THREE,group),triangles:placementTriangles(THREE,[group])}],capsule=new Capsule(new THREE.Vector3(0,.52,18.1),new THREE.Vector3(0,1.49,18.1),.34);let grounded=true;
  for(let i=0;i<85;i++){const result=moveWalkingCapsule(capsule,{x:0,y:-.02,z:-.045},{triangleGroups,grounded,maxStepHeight:.26,floorGap:.02});grounded=result.onGround;}
  assert.ok(capsule.start.y-.34>1.96,'browser reaches main deck from dock: '+JSON.stringify(capsule.start));
+});
+
+test('yacht exit skips obstructed aisle spots and refuses an unsafe exit',()=>{
+ const {boat,actors,collision,world}=fixture(.8);
+ const groundAt=collision.groundAt.bind(collision),clearance=collision.hasBodyClearance.bind(collision);
+ // Use the real dynamic wall geometry to reject a point inside the yacht wall.
+ assert.equal(clearance(environment,world({x:4.85,y:1.97,z:0}),.38,{actors,objects:{}}),false);
+ let calls=0;collision.hasBodyClearance=(...args)=>++calls>1&&clearance(...args);
+ const exit=boatExitPosition(environment,boat,collision,actors,{}),expected=world({x:0,y:1.97,z:8});
+ assert.ok(Math.hypot(exit.x-expected.x,exit.z-expected.z)<.001);
+ collision.hasBodyClearance=()=>false;
+ assert.throws(()=>boatExitPosition(environment,boat,collision,actors,{}),/billiards-room aisle is obstructed/);
+ assert.ok(groundAt(environment,world({x:0,y:2.1,z:9}),{actors,objects:{}}));
+});
+test('browser walker remains on the billiards floor and collides with cabin walls',()=>{
+ const model=createBuilderModel('harbor-yacht');model.updateMatrixWorld(true);
+ const triangleGroups=[{bounds:placementBounds(THREE,model),triangles:placementTriangles(THREE,[model])}],capsule=new Capsule(new THREE.Vector3(0,1.97+.34,9),new THREE.Vector3(0,1.97+1.65-.34,9),.34);
+ let grounded=true;
+ const step=delta=>{grounded=moveWalkingCapsule(capsule,delta,{triangleGroups,grounded,maxStepHeight:.26,floorGap:.02}).onGround;assert.ok(capsule.start.y-.34>1.94);};
+ for(let i=0;i<40;i++)step({x:0,y:-.02,z:0});
+ for(let i=0;i<180;i++)step({x:0,y:-.02,z:-.05});
+ for(let i=0;i<140;i++)step({x:.05,y:-.02,z:0});
+ assert.ok(capsule.start.x<4.6,'side wall prevents walking out of the yacht');assert.ok(capsule.start.x>4);
 });

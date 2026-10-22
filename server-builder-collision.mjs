@@ -144,9 +144,10 @@ export class ServerBuilderCollision {
   if([...world.walls,...dynamic].some(({box,objectId})=>{const actor=actors[objectId];return !(actor&&(actor.open||!actor.active||actor.holderId))&&floor.x>box.min.x-.3&&floor.x<box.max.x+.3&&floor.z>box.min.z-.3&&floor.z<box.max.z+.3&&floor.y<box.max.y-.03&&floor.y+1.7>box.min.y+.03;}))reject();
   return floor;
  }
- hasBodyClearance(environment,point,radius=PLAYER_RADIUS+.08){
+ hasBodyClearance(environment,point,radius=PLAYER_RADIUS+.08,placed=null){
   const world=this.world(environment);
-  const triangles=nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius);
+  const triangles=[...nearbyWalls(world,point.x-radius,point.x+radius,point.z-radius,point.z+radius)];
+  if(placed)triangles.push(...this.placedWorld(placed.actors,placed.objects).meshes.flatMap(wallTriangles));
   for(const triangle of triangles)for(const {a,b} of triangleWallSegments(triangle,point.y+.1,point.y+PLAYER_HEIGHT)){
    const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.z-a.z)*dz)/Math.max(1e-12,dx*dx+dz*dz)));
    if(Math.hypot(point.x-a.x-t*dx,point.z-a.z-t*dz)<radius)return false;

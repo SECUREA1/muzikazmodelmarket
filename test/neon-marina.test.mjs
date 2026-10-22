@@ -49,7 +49,8 @@ test('superyacht boards from its pier, moves on the shared server and releases t
  state=await send('interact');assert.equal(state.players[actorId].vehicleId,null);assert.equal(state.actors[boat.id].holderId,null);
  for(let i=0;i<30;i++){now+=100;state=await send('input',{input:{}});assert.ok(state.players[actorId].position.y>=1.96,'exited player stays on deck');}
  assert.equal(state.players[actorId].grounded,true);assert.equal(state.actors[boat.id].rotation.x,0);assert.equal(state.actors[boat.id].rotation.z,0);
- await store.update(world.id,room=>{const yacht=room.simulation.actors[boat.id];room.simulation.players[actorId].position={x:yacht.position.x-.2,y:1.97,z:yacht.position.z+8};});
+ const yacht=state.actors[boat.id],exit=state.players[actorId].position,yaw=yacht.rotation.y;
+ assert.ok(Math.hypot(exit.x-yacht.position.x-9*Math.sin(yaw),exit.z-yacht.position.z-9*Math.cos(yaw))<.01,'exit places player beside billiards, ready to play');
  state=await send('yacht-game',{entityId:boat.id,operation:'shoot',revision:0,angle:0,power:.6});assert.equal(state.actors[boat.id].yachtBilliards.shots,1);
  const cueZ=state.actors[boat.id].yachtBilliards.balls[0].z;now+=100;const shared=await runtime.snapshot(world.id,world);assert.ok(shared.actors[boat.id].yachtBilliards.balls[0].z<cueZ,'shared table advances on server');
 });
