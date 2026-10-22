@@ -1,0 +1,50 @@
+import * as THREE from '../vendor/three/three.module.min.js';
+import {OrbitControls} from '../vendor/three/addons/controls/OrbitControls.js';
+import {localMapTags} from './local-map-tags.js';
+// Mirror renderable meshes in world coordinates. Shared game resources are read
+// only: closing the map must never dispose a gameplay mesh, material or texture.
+export function mirrorMapMeshes(roots){
+ const group=new THREE.Group(),pairs=[];
+ for(const root of roots.filter(Boolean)){root.updateWorldMatrix(true,true);root.traverseVisible(source=>{
+  if(!source.isMesh||!source.geometry)return;
+  const mesh=source.isInstancedMesh?new THREE.InstancedMesh(source.geometry,source.material,source.count):new THREE.Mesh(source.geometry,source.material);
+  if(source.isInstancedMesh){mesh.instanceMatrix=source.instanceMatrix;mesh.instanceColor=source.instanceColor;}
+  mesh.matrixAutoUpdate=false;mesh.matrix.copy(source.matrixWorld);mesh.frustumCulled=false;group.add(mesh);pairs.push({source,mesh});
+ });}
+ return {group,pairs,update(){for(const {source,mesh}of pairs){source.updateWorldMatrix(true,false);mesh.matrix.copy(source.matrixWorld);mesh.visible=true;for(let node=source;node;node=node.parent)if(!node.visible){mesh.visible=false;break;}}},dispose(){group.clear();pairs.length=0;}};
+}
+export async function mountLocalMap3D(root,{environment,getRoots=null,live=null,selfId=null,onSelect=()=>{},onTravel=()=>{}}){
+ let disposed=false,frame=0,mirror=null,ownedLoader=null,ownedDecor=null,liveState=live,viewerId=selfId,lastRebuild=0;
+ const scene=new THREE.Scene();scene.background=new THREE.Color('#0c242b');scene.add(new THREE.HemisphereLight(0xe4f7ff,0x4b6149,2.5));const sun=new THREE.DirectionalLight(0xffffff,2.5);sun.position.set(100,250,80);scene.add(sun);
+ const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'low-power'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.domElement.setAttribute('aria-label',environment.name+' accurate 3D local map');renderer.domElement.setAttribute('role','img');
+ const viewport=document.createElement('div');viewport.className='local-map-3d-viewport';const labels=document.createElement('div');labels.className='local-map-3d-tags';const compass=document.createElement('span');compass.className='local-map-compass';compass.textContent='↑ N';compass.title='North is negative world Z';viewport.append(renderer.domElement,labels,compass);
+ const toolbar=document.createElement('div');toolbar.className='local-map-3d-controls';toolbar.setAttribute('role','group');toolbar.setAttribute('aria-label','3D map controls');
+ const makeButton=(text,run)=>{const button=document.createElement('button');button.type='button';button.textContent=text;button.onclick=run;toolbar.append(button);return button;};
+ const camera=new THREE.PerspectiveCamera(42,1,.05,20000),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.48;controls.minDistance=2;controls.screenSpacePanning=false;
+ const bounds=new THREE.Box3(),center=new THREE.Vector3();let span=80,topDown=false;
+ function fit(){if(!mirror)return;bounds.setFromObject(mirror.group);if(bounds.isEmpty()){center.set(0,0,0);span=80;}else{bounds.getCenter(center);const size=bounds.getSize(new THREE.Vector3());span=Math.max(size.x,size.z,size.y,10);}controls.target.copy(center);camera.near=Math.max(.025,span/10000);camera.far=Math.max(1000,span*20);camera.position.copy(center).add(new THREE.Vector3(0,span*(topDown?1.6:1.1)/Math.min(camera.aspect,1),span*(topDown?.001:.9)/Math.min(camera.aspect,1)));camera.updateProjectionMatrix();controls.maxDistance=span*5;controls.update();}
+ makeButton('Fit map',fit);const angle=makeButton('Top view',()=>{topDown=!topDown;angle.textContent=topDown?'3D angle':'Top view';fit();});
+ const showTags=document.createElement('label'),tagsInput=document.createElement('input');tagsInput.type='checkbox';tagsInput.checked=true;showTags.append(tagsInput,' Tags & icons');toolbar.append(showTags);tagsInput.onchange=()=>{labels.hidden=!tagsInput.checked;};
+ const cutaway=document.createElement('label'),cutawayInput=document.createElement('input');cutawayInput.type='checkbox';cutawayInput.checked=!!(environment.modelUrl||environment.modelUrls?.length)&&!environment.airport?.enabled&&!environment.builderScene?.layoutMeta?.harbor;cutaway.append(cutawayInput,' Interior cutaway');toolbar.append(cutaway);
+ const legend=document.createElement('p');legend.className='local-map-legend';for(const [name,color]of [['Places','#bced8b'],['Docks & boats','#71e4e3'],['Runways & aircraft','#8fc6ff'],['Portals','#70dcff'],['Deeds','#ffd581'],['You & arrival','#ff9bae']]){const key=document.createElement('span');key.textContent='● '+name;key.style.color=color;legend.append(key);}
+ const hint=document.createElement('p');hint.textContent='Drag to orbit · scroll or pinch to zoom · right-drag / two fingers to pan · select a tag for details';root.replaceChildren(toolbar,viewport,legend,hint);
+ let tagEntries=[];
+ function updateTags(){const tags=localMapTags(environment,liveState,viewerId),existing=new Map(tagEntries.map(entry=>[entry.tag.id,entry]));tagEntries=tags.map(tag=>{let entry=existing.get(tag.id);if(entry)existing.delete(tag.id);else{const button=document.createElement('button');button.type='button';button.className='local-map-3d-tag';button.dataset.mapTag=tag.id;labels.append(button);entry={button,tag};button.onclick=event=>{event.stopPropagation();onSelect(entry.tag);};}entry.tag=tag;entry.button.dataset.worldX=tag.x;entry.button.dataset.worldY=tag.y;entry.button.dataset.worldZ=tag.z;entry.button.textContent=tag.icon+' '+tag.name;entry.button.style.setProperty('--tag-color',tag.color);entry.button.setAttribute('aria-label',tag.name+' · '+tag.kind+(tag.occupied?' · occupied':''));entry.button.title=tag.description||tag.name;return entry;});for(const {button}of existing.values())button.remove();}
+ const resize=()=>{const width=Math.max(1,viewport.clientWidth),height=Math.max(1,viewport.clientHeight);renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();};const observer=new ResizeObserver(resize);observer.observe(viewport);
+ const rebuild=()=>{mirror?.dispose();if(mirror)scene.remove(mirror.group);mirror=mirrorMapMeshes(getRoots?getRoots():[ownedLoader?.world,ownedDecor]);scene.add(mirror.group);};
+ const stop=()=>{if(disposed)return;disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();mirror?.dispose();ownedLoader?.unload();ownedDecor?.traverse(node=>{node.geometry?.dispose();for(const material of [].concat(node.material||[]))material?.dispose();});renderer.dispose();renderer.forceContextLoss();root.replaceChildren();};
+ try{
+  if(!getRoots){const [{EnvironmentLoader},{createBuilderModel,createGeneratedAsset}]=await Promise.all([import('./environments/environment-loader.js'),import('./builder-models-3d.js')]);ownedLoader=new EnvironmentLoader({scene:new THREE.Scene(),renderer,serverAuthoritative:()=>true});await ownedLoader.load(environment);ownedDecor=new THREE.Group();const definitions=new Map([...(environment.builderScene?.catalogModels||[]),...(environment.builderScene?.placedModels||[])].map(model=>[model.id,model]));for(const item of environment.builderScene?.objects||[]){const definition=definitions.get(item.modelId),object=createBuilderModel(item.asset?.buildAssetId||definition?.buildAssetId||item.modelId)||(definition?.generated?createGeneratedAsset(definition):null);if(!object)continue;object.userData.builderObjectId=item.id;object.position.set(item.position?.x||0,item.position?.y||0,item.position?.z||0);object.rotation.set(item.rotation?.x||0,item.rotation?.y||0,item.rotation?.z||0);object.scale.set(item.scale?.x??1,item.scale?.y??1,item.scale?.z??1);ownedDecor.add(object);}}
+  rebuild();resize();fit();updateTags();
+  const point=new THREE.Vector3(),clipPlane=new THREE.Plane(new THREE.Vector3(0,-1,0),4);
+  let lastDraw=0;
+  function draw(time){if(disposed)return;frame=requestAnimationFrame(draw);if(document.hidden||!root.isConnected||!root.closest('dialog')?.open||root.closest('[hidden]')||time-lastDraw<50)return;lastDraw=time;if(getRoots&&time-lastRebuild>2000){rebuild();lastRebuild=time;}mirror.update();controls.update();
+   const player=liveState?.players?.[viewerId];clipPlane.constant=(player?.position?.y??environment.spawn?.y??center.y)+3;renderer.clippingPlanes=cutawayInput.checked?[clipPlane]:[];
+   const width=viewport.clientWidth,height=viewport.clientHeight;
+   for(const {tag,button}of tagEntries){point.set(tag.x,tag.y+1.8,tag.z).project(camera);button.hidden=point.z< -1||point.z>1||Math.abs(point.x)>1||Math.abs(point.y)>1;button.style.left=(point.x+1)*width/2+'px';button.style.top=(1-point.y)*height/2+'px';}
+   compass.style.transform='rotate('+(-Math.atan2(camera.position.x-controls.target.x,camera.position.z-controls.target.z))+'rad)';renderer.render(scene,camera);
+  }frame=requestAnimationFrame(draw);
+  const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();renderer.domElement.addEventListener('dblclick',event=>{if(!onTravel)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObject(mirror.group,true).find(hit=>!cutawayInput.checked||hit.point.y<=clipPlane.constant);if(hit)onTravel({position:{x:hit.point.x,z:hit.point.z}});});
+  return {updateLive(snapshot,id){liveState=snapshot;viewerId=id;for(const object of ownedDecor?.children||[]){const actor=snapshot?.actors?.[object.userData.builderObjectId];if(!actor)continue;object.visible=actor.active!==false;if(actor.position)object.position.set(actor.position.x,actor.position.y,actor.position.z);if(actor.rotation)object.rotation.set(actor.rotation.x||0,actor.rotation.y||0,actor.rotation.z||0);}updateTags();},dispose:stop};
+ }catch(error){stop();throw error;}
+}

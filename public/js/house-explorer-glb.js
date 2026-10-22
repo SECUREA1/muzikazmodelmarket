@@ -681,7 +681,7 @@ if (legacyCanvas instanceof HTMLCanvasElement && stage && hud) {
   const toxicBubbleSystem = new ToxicBubbleSystem({ scene, camera, canvas, loader: envLoader, getEnvironment: () => activeEnvironment, getPlayerPosition: () => playerRig.position.clone(), advanceEnvironment: () => loadNextEnvironment() });
   const radToxFireButton=document.createElement('button');radToxFireButton.type='button';radToxFireButton.className='rad-tox-fire-trigger';radToxFireButton.hidden=true;radToxFireButton.title='Fire';radToxFireButton.setAttribute('aria-label','Fire selected weapon');radToxFireButton.innerHTML='<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 1v7m0 8v7M1 12h7m8 0h7"/></svg>';stage.append(radToxFireButton);
   mountGameDisplayFlow(stage);
-  const districtMap=mountDistrictMap({stage,command:serverCommand});
+  const districtMap=mountDistrictMap({stage,command:serverCommand,getRoots:()=>[envLoader.world,builderDecor]});
   const harborOps=mountHarborOperations({stage,command:serverCommand,onInput:()=>authoritativeClient?.requestInput(),announce:setStatus,onView:()=>setGameCameraMode('first-person',{announce:false})});
   const aircraftCannonEffects=new AircraftCannonEffects({scene});
   const airportOps=mountAirportOperations({stage,command:serverCommand,onInput:()=>authoritativeClient?.requestInput(),announce:setStatus,canvas,getAim:aircraftAim,fire:sendAircraftShot,onFireVisual:showLocalAircraftFire,onView:()=>setGameCameraMode('first-person',{announce:false}),onRecenter:()=>{const aircraft=displayVehicle();if(isAircraft(aircraft)){player.yaw=aircraft.rotation.y;player.pitch=0;}}});
