@@ -14,7 +14,7 @@ test('walking presentation follows accepted feet immediately on ascending and de
 });
 test('walking and placement share mirrored floor normals and complete solid bounds',()=>{
  const mesh=new THREE.Mesh(new THREE.BoxGeometry(2,.4,2));mesh.scale.x=-1;mesh.position.y=.2;
- const context=vm.createContext({THREE,placementBounds,placementMeshes,placementTriangles,buildingSolids:()=>[mesh],walkingSurfaceCache:new WeakMap()});
+ const context=vm.createContext({THREE,placementBounds,placementMeshes,placementTriangles,buildingSolids:()=>[mesh],walkingSurfaceCache:new WeakMap(),walkingRootBounds:new WeakMap(),serverActors:{},serverVehicleId:null,playerRig:{position:new THREE.Vector3()}});
  vm.runInContext(source.slice(source.indexOf('  function walkingSurfaces()'),source.indexOf('  function updatePlayer(delta)')),context);
  for(let repeat=0;repeat<2;repeat++){
   const [{triangles}]=context.walkingSurfaces();const tops=triangles.filter(triangle=>triangle.getNormal(new THREE.Vector3()).y>.55);

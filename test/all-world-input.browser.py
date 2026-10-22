@@ -43,7 +43,7 @@ async def position(page, kind):
 
 async def touch_move(page, cdp, dx=0, dy=-.85, duration=1400):
     stick = page.locator('[data-thumbstick="left"] .thumbstick-base').first
-    await stick.wait_for(state='visible', timeout=10000)
+    await stick.wait_for(state='visible', timeout=30000)
     await stick.scroll_into_view_if_needed()
     await page.wait_for_timeout(80)
     box = await stick.bounding_box()

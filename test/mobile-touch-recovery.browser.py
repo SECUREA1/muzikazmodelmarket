@@ -4,8 +4,8 @@ Chromium emulates an iPhone viewport and receives CDP touch input. Discarded
 terminal events simulate an OS/browser suspension; this is not a WebKit test.
 """
 from pathlib import Path
-import asyncio, os, shutil, socket, subprocess, tempfile
-from playwright.async_api import async_playwright
+import asyncio, json, os, shutil, socket, subprocess, tempfile, time
+from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 
 os.chdir(Path(__file__).resolve().parents[1])
 
@@ -32,8 +32,37 @@ async def main():
                     for world in os.environ.get('MUZIKAZ_TEST_WORLDS', 'muzikaz-airport,world-district-neon-docks').split(','):
                         page = await context.new_page()
                         page.set_default_timeout(30000)
-                        errors, inputs = [], []
+                        errors, inputs, server_frames, phase_traces = [], [], [], []
+                        await page.add_init_script('''(() => {
+                            const NativeObserver=window.IntersectionObserver;
+                            window.touchStageIntersections=[];
+                            window.touchContextEvents=[];
+                            for(const type of ['webglcontextlost','webglcontextrestored'])document.addEventListener(type,event=>touchContextEvents.push({type,at:performance.now(),canvas:event.target.id}),true);
+                            window.IntersectionObserver=class extends NativeObserver {
+                                constructor(callback,options){super((entries,observer)=>{
+                                    for(const entry of entries)if(entry.target.matches('.house-stage')){
+                                        touchStageIntersections.push({at:performance.now(),intersecting:entry.isIntersecting,ratio:entry.intersectionRatio,rect:{x:entry.boundingClientRect.x,y:entry.boundingClientRect.y,width:entry.boundingClientRect.width,height:entry.boundingClientRect.height}});
+                                        if(touchStageIntersections.length>64)touchStageIntersections.shift();
+                                    }
+                                    callback(entries,observer);
+                                },options);}
+                            };
+                        })();''')
                         page.on('pageerror', lambda error: errors.append(str(error)))
+                        async def record_state(response):
+                            if '/api/rooms/' + world + '/gameplay' not in response.url or not response.ok:
+                                return
+                            try:
+                                payload = await response.json()
+                                state = payload.get('data', payload)
+                                players = state.get('players', {})
+                                own = players.get(state.get('selfId')) or next((player for key, player in players.items() if key.startswith('account:')), None)
+                                if own:
+                                    server_frames.append({'sequence': state.get('sequence'), 'serverTime': state.get('serverTime'), 'simulationTime':state.get('simulationTime'), 'receivedAt':time.time()*1000, 'position': own.get('position'), 'input': own.get('input'), 'movementRevision': own.get('movementRevision')})
+                                    del server_frames[:-8]
+                            except Exception:
+                                pass
+                        page.on('response', record_state)
                         def record_input(request):
                             if request.method == 'POST' and '/gameplay' in request.url:
                                 body = request.post_data_json or {}
@@ -50,6 +79,25 @@ async def main():
                         await page.evaluate('''async () => {
                             await new Promise(requestAnimationFrame);
                             await new Promise(requestAnimationFrame);
+                            const {LocalWalkingView}=await import('/public/js/local-walking-view.js');
+                            const originalSample=LocalWalkingView.prototype.sample;
+                            window.touchWalkingSamples=0;
+                            window.touchWalkingHeldSamples=0;
+                            LocalWalkingView.prototype.sample=function(now,delta,input,...rest){
+                                const result=originalSample.call(this,now,delta,input,...rest);
+                                touchWalkingSamples++;
+                                if(delta>0&&Math.abs(input.forward||0)+Math.abs(input.side||0)>.3)touchWalkingHeldSamples++;
+                                window.touchWalkingLatest={at:performance.now(),now,delta,input:{...input},receivedAt:this.motion.receivedAt,lastSnapshot:this.motion.lastSnapshot,position:{...this.position},grounded:this.grounded};
+                                return result;
+                            };
+                            const originalReconcile=LocalWalkingView.prototype.reconcile;
+                            window.touchWalkingReconciles=[];
+                            LocalWalkingView.prototype.reconcile=function(position,options){
+                                const result=originalReconcile.call(this,position,options);
+                                touchWalkingReconciles.push({at:performance.now(),position:{...position},options:{...options},receivedAt:this.motion.receivedAt,lastSnapshot:this.motion.lastSnapshot});
+                                if(touchWalkingReconciles.length>8)touchWalkingReconciles.shift();
+                                return result;
+                            };
                             window.touchFrameCount=0;
                             const sample=()=>{touchFrameCount++;requestAnimationFrame(sample);};
                             requestAnimationFrame(sample);
@@ -72,7 +120,7 @@ async def main():
                         async def touch(kind, points):
                             await cdp.send('Input.dispatchTouchEvent', {'type': kind, 'touchPoints': points})
 
-                        async def begin(names=('left',), reverse=False):
+                        async def begin(names=('left',), reverse=False, direction=None):
                             nonlocal touch_id
                             points = []
                             for name in names:
@@ -80,33 +128,67 @@ async def main():
                                 x, y = await center(name)
                                 points.append({'id': touch_id, 'x': x, 'y': y})
                             await touch('touchStart', points)
-                            moved = [{**point, 'y': point['y'] + (23 if reverse else -23)} if name == 'left' else {**point, 'x': point['x'] + (-10 if reverse else 10)} for name, point in zip(names, points)]
+                            dx, dy = direction or (0, 1 if reverse else -1)
+                            moved = [{**point, 'x':point['x']+23*dx, 'y': point['y'] + 23*dy} if name == 'left' else {**point, 'x': point['x'] + (-10 if reverse else 10)} for name, point in zip(names, points)]
                             await touch('touchMove', moved)
                             return moved
+
+                        async def diagnose():
+                            result = await page.evaluate('''() => {
+                                const rect=node=>{if(!node)return null;const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
+                                return {state:MuzikazHouseExplorer.snapshot(),frames:touchFrameCount,hidden:document.hidden,visibility:document.visibilityState,scroll:{x:scrollX,y:scrollY},viewport:{width:innerWidth,height:innerHeight,visualWidth:visualViewport?.width,visualHeight:visualViewport?.height,offsetTop:visualViewport?.offsetTop,offsetLeft:visualViewport?.offsetLeft,scale:visualViewport?.scale},stage:rect(document.querySelector('.house-stage')),stageClientHeight:document.querySelector('.house-stage')?.clientHeight,shell:rect(document.querySelector('.house-explorer-shell')),sticks:[...document.querySelectorAll('.thumbstick-base')].map(rect),intersections:window.touchStageIntersections?.slice(-8),contexts:window.touchContextEvents,walkingSamples:window.touchWalkingSamples,walkingHeldSamples:window.touchWalkingHeldSamples,walkingLatest:window.touchWalkingLatest,walkingReconciles:window.touchWalkingReconciles,overlays:[...document.querySelectorAll('dialog[open], #crib-chat-panel:not([hidden]), .world-resident-ui:not([hidden]) .world-resident-panel:not([hidden])')].map(node=>node.className)};
+                            }''')
+                            result['serverFrames']=server_frames[:]
+                            return result
+
+                        async def move_once(label, names=('left',), reverse=False, direction=None):
+                            await begin(names, reverse, direction)
+                            held_samples = await page.evaluate('touchWalkingHeldSamples')
+                            await page.wait_for_timeout(650)
+                            # Require a real, positive-delta game sample with this
+                            # finger still held; a global RAF is not sufficient.
+                            try:
+                                await page.wait_for_function('(before)=>touchWalkingHeldSamples>before', arg=held_samples, timeout=4000)
+                            except PlaywrightTimeoutError as error:
+                                diagnostic = await diagnose()
+                                diagnostic['phase'] = label
+                                Path('/tmp/mobile-touch-failed-diagnostic.json').write_text(json.dumps(diagnostic))
+                                await page.screenshot(path='/tmp/mobile-touch-failed.png')
+                                await touch('touchEnd', [])
+                                raise AssertionError((world, label, 'no actual game input sample while finger held', diagnostic, errors)) from error
+                            await touch('touchEnd', [])
+                            await page.wait_for_timeout(120)
+                            return await page.evaluate('MuzikazHouseExplorer.snapshot().player.position')
 
                         async def drag(label, reverse=False, dual=False):
                             inputs.clear()
                             start = await page.evaluate('MuzikazHouseExplorer.snapshot().player.position')
                             yaw = await page.evaluate('MuzikazHouseExplorer.snapshot().player.yaw')
-                            await begin(('left', 'right') if dual else ('left',), reverse)
-                            await page.wait_for_timeout(650)
-                            await touch('touchEnd', [])
-                            await page.wait_for_timeout(120)
-                            end = await page.evaluate('MuzikazHouseExplorer.snapshot().player.position')
-                            diagnostic = await page.evaluate('''() => ({state:MuzikazHouseExplorer.snapshot(),frames:touchFrameCount,status:document.querySelector('[data-house-status]')?.textContent,overlays:[...document.querySelectorAll('dialog[open], #crib-chat-panel:not([hidden]), .world-resident-ui:not([hidden]) .world-resident-panel:not([hidden])')].map(node=>node.className),sticks:[...document.querySelectorAll('.thumbstick-base')].map(node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,hit:document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.outerHTML.slice(0,200)};})})''')
+                            end = await move_once(label, ('left', 'right') if dual else ('left',), reverse)
+                            diagnostic = await diagnose()
                             assert any(abs(value.get('forward', 0)) > .4 for value in inputs), (world, label, 'new touch was ignored', diagnostic, errors)
                             if dual:
                                 turn = await page.evaluate('MuzikazHouseExplorer.snapshot().player.yaw')
                                 assert abs(turn - yaw) > .01, (world, label, 'look finger was ignored')
-                            # The real scene has solid buildings. If this gesture
-                            # meets a wall, verify that backing away still moves.
+                            # A real building can block forward and reverse. Try
+                            # all remaining directions before reporting a freeze.
+                            escapes = []
                             if ((end[0] - start[0]) ** 2 + (end[2] - start[2]) ** 2) ** .5 <= .1:
-                                await begin(reverse=not reverse)
-                                await page.wait_for_timeout(650)
-                                await touch('touchEnd', [])
-                                await page.wait_for_timeout(120)
-                                end = await page.evaluate('MuzikazHouseExplorer.snapshot().player.position')
-                            diagnostic = await page.evaluate('''() => ({state:MuzikazHouseExplorer.snapshot(),frames:touchFrameCount,status:document.querySelector('[data-house-status]')?.textContent,overlays:[...document.querySelectorAll('dialog[open], #crib-chat-panel:not([hidden]), .world-resident-ui:not([hidden]) .world-resident-panel:not([hidden])')].map(node=>node.className)})''')
+                                end = await move_once(label + ' reverse', reverse=not reverse)
+                                escapes.append({'direction':'reverse','position':end})
+                            if ((end[0] - start[0]) ** 2 + (end[2] - start[2]) ** 2) ** .5 <= .1:
+                                for direction in [(-1,0),(1,0),(-1,-1),(1,-1),(-1,1),(1,1)]:
+                                    end = await move_once(label + ' escape', direction=direction)
+                                    escapes.append({'direction':direction,'position':end})
+                                    if ((end[0] - start[0]) ** 2 + (end[2] - start[2]) ** 2) ** .5 > .1:
+                                        break
+                            diagnostic = await diagnose()
+                            diagnostic['escapeAttempts'] = escapes
+                            phase_traces.append({'phase':label,'start':start,'end':end,'diagnostic':diagnostic})
+                            Path('/tmp/mobile-touch-'+world+'-diagnostic.json').write_text(json.dumps(phase_traces))
+                            if ((end[0] - start[0]) ** 2 + (end[2] - start[2]) ** 2) ** .5 <= .1:
+                                Path('/tmp/mobile-touch-failed-diagnostic.json').write_text(json.dumps(diagnostic))
+                                await page.screenshot(path='/tmp/mobile-touch-failed.png')
                             assert ((end[0] - start[0]) ** 2 + (end[2] - start[2]) ** 2) ** .5 > .1, (world, label, 'view stopped responding', start, end, diagnostic, errors)
                             assert not await page.locator('.thumbstick-base.is-active').count(), (world, label, 'release left controller captured')
 
@@ -114,6 +196,10 @@ async def main():
                         # dual gestures exercise distinct fingers on both sticks.
                         for index in range(8):
                             await drag('sustained ' + str(index), reverse=index % 2 == 1, dual=index in (2, 3))
+                        if os.environ.get('MUZIKAZ_TOUCH_REPRO_ONLY') == '1':
+                            print(world + ': sustained-only diagnostic saved at /tmp/mobile-touch-' + world + '-diagnostic.json', flush=True)
+                            await page.close()
+                            continue
 
                         # Use actual touch taps on the overlays that used to trap
                         # keyboard focus, then continue with a new finger gesture.
